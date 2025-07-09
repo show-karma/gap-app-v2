@@ -28,7 +28,12 @@ export const GrantCompleteButton: FC<GrantCompleteProps> = ({
     (state) => state.isCommunityAdmin
   );
   const isAuthorized = isOwner || isProjectAdmin || isCommunityAdmin;
-  if (grant.completed) {
+  const hasMilestonesCompleted =
+    grant.milestones.length > 0
+      ? grant.milestones.filter((milestone) => !!milestone.completed).length > 0
+      : false;
+
+  if (grant.completed || hasMilestonesCompleted) {
     return (
       <div className="flex flex-row items-center  justify-center gap-2 rounded-md border border-emerald-600 bg-green-100 px-3.5 py-2 text-sm font-semibold text-emerald-700 hover:bg-green-100">
         Grant marked as complete

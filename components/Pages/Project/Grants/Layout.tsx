@@ -14,8 +14,11 @@ import { useGrantCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { cn } from "@/utilities/tailwind";
 import { CheckCircleIcon, PlusIcon } from "@heroicons/react/20/solid";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
-import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import Link from "next/link";
+import {
+  IGrantResponse,
+  IProjectResponse,
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import Link, { useLinkStatus } from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
@@ -25,6 +28,7 @@ import { GrantDelete } from "../../GrantMilestonesAndUpdates/GrantDelete";
 import { GrantLinkExternalAddressButton } from "../../GrantMilestonesAndUpdates/GrantLinkExternalAddressButton";
 import { EmptyGrantsSection } from "../../GrantMilestonesAndUpdates/screens/EmptyGrantsSection";
 import { ProjectGrantsLayoutLoading } from "../Loading/Grants/Layout";
+import { Spinner } from "@/components/Utilities/Spinner";
 
 interface GrantsLayoutProps {
   children: React.ReactNode;
@@ -69,6 +73,111 @@ const getScreen = (pathname: string): GrantScreen | undefined => {
   return "overview";
 };
 
+const NavigationRow = ({
+  project,
+  item,
+}: {
+  project: IProjectResponse;
+  item: {
+    uid: `0x${string}`;
+    name: string;
+    href: string;
+    icon: string;
+    current: boolean;
+    completed: boolean;
+  };
+}) => {
+  const { pending } = useLinkStatus();
+  return (
+    <Link
+      id="project-grant"
+      href={PAGES.PROJECT.GRANT(
+        project.details?.data.slug || project?.uid || "",
+        item.uid
+      )}
+      className={cn(
+        item.current
+          ? "bg-[#eef4ff] dark:bg-zinc-800 dark:text-primary-300  text-[#155eef]"
+          : "text-gray-700 hover:text-primary-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700",
+        "flex items-center rounded-md text-sm leading-6 font-semibold w-full"
+      )}
+    >
+      <div className="flex flex-row w-full items-center gap-2 justify-between px-4 py-2">
+        <div className="flex flex-row items-center gap-2">
+          <img
+            src={item.icon}
+            alt=""
+            className={cn(
+              item.current
+                ? "text-primary-600"
+                : "text-gray-400 group-hover:text-primary-600",
+              "h-5 w-5 shrink-0 rounded-full object-cover"
+            )}
+          />
+          <p className="line-clamp-2 break-normal font-medium text-left text-lg">
+            {item.name}
+          </p>
+        </div>
+        <div className="w-6 min-w-6">
+          {pending ? (
+            <Spinner className="w-5 h-5 min-w-5 max-w-5 min-h-5 max-h-5" />
+          ) : (
+            item?.completed && (
+              <CheckCircleIcon className="w-5 h-5 text-green-600" />
+            )
+          )}
+        </div>
+      </div>
+    </Link>
+  );
+};
+
+const MobileNavigationRow = ({
+  project,
+  item,
+}: {
+  project: IProjectResponse;
+  item: {
+    uid: `0x${string}`;
+    name: string;
+    href: string;
+    icon: string;
+    current: boolean;
+    completed: boolean;
+  };
+}) => {
+  const { pending } = useLinkStatus();
+  return (
+    <Link
+      href={PAGES.PROJECT.GRANT(
+        project.details?.data.slug || project?.uid || "",
+        item.uid
+      )}
+      className={cn(
+        " text-[#155eef] hover:text-primary-600",
+        "flex items-center rounded-md text-sm leading-6 font-semibold w-full"
+      )}
+    >
+      <div className="flex flex-row w-full items-center gap-2 justify-between">
+        <div className="flex flex-row items-center">
+          <p className="line-clamp-2 break-normal font-medium text-left text-base underline">
+            {item.name}
+          </p>
+        </div>
+        <div className="w-6 min-w-6">
+          {pending ? (
+            <Spinner className="w-5 h-5 min-w-5 max-w-5 min-h-5 max-h-5" />
+          ) : (
+            item?.completed && (
+              <CheckCircleIcon className="w-5 h-5 text-green-600" />
+            )
+          )}
+        </div>
+      </div>
+    </Link>
+  );
+};
+
 export const GrantsLayout = ({
   children,
   fetchedProject,
@@ -92,6 +201,7 @@ export const GrantsLayout = ({
   const setIsCommunityAdmin = useCommunityAdminStore(
     (state) => state.setIsCommunityAdmin
   );
+  const { pending } = useLinkStatus();
 
   // Use React Query hook to check admin status with Zustand sync
   useGrantCommunityAdmin(
@@ -147,17 +257,24 @@ export const GrantsLayout = ({
   }
 
   const navigation =
-    project?.grants?.map((item) => ({
-      uid: item.uid,
-      name: item.details?.data?.title || "",
-      href: PAGES.PROJECT.GRANT(
-        project.details?.data?.slug || project.uid,
-        item.uid
-      ),
-      icon: item.community?.details?.data?.imageURL || "",
-      current: item.uid === grantIdFromQueryParam || item.uid === grant?.uid,
-      completed: item.completed,
-    })) || [];
+    project?.grants?.map((item) => {
+      const hasMilestonesCompleted =
+        item?.milestones?.length > 0
+          ? item?.milestones?.filter((milestone) => !!milestone.completed)
+              .length > 0
+          : false;
+      return {
+        uid: item.uid,
+        name: item.details?.data?.title || "",
+        href: PAGES.PROJECT.GRANT(
+          project.details?.data?.slug || project.uid,
+          item.uid
+        ),
+        icon: item.community?.details?.data?.imageURL || "",
+        current: item.uid === grantIdFromQueryParam || item.uid === grant?.uid,
+        completed: !!item.completed || hasMilestonesCompleted,
+      };
+    }) || [];
 
   const defaultTabs: {
     name: string;
@@ -202,29 +319,7 @@ export const GrantsLayout = ({
               <GrantsAccordion>
                 {navigation.map((item) => (
                   <div key={item.uid}>
-                    <Link
-                      href={PAGES.PROJECT.GRANT(
-                        project.details?.data.slug || project?.uid || "",
-                        item.uid
-                      )}
-                      className={cn(
-                        " text-[#155eef] hover:text-primary-600",
-                        "flex items-center rounded-md text-sm leading-6 font-semibold w-full"
-                      )}
-                    >
-                      <div className="flex flex-row w-full items-center gap-2 justify-between">
-                        <div className="flex flex-row items-center">
-                          <p className="line-clamp-2 break-normal font-medium text-left text-base underline">
-                            {item.name}
-                          </p>
-                        </div>
-                        <div className="w-6 min-w-6">
-                          {item?.completed && (
-                            <CheckCircleIcon className="w-5 h-5 text-green-600" />
-                          )}
-                        </div>
-                      </div>
-                    </Link>
+                    <MobileNavigationRow project={project} item={item} />
                   </div>
                 ))}
                 {(isAuthorized || isCommunityAdminOfSome) && (
@@ -297,42 +392,7 @@ export const GrantsLayout = ({
               <ul role="list" className="space-y-2 mt-4">
                 {navigation.map((item) => (
                   <li key={item.uid}>
-                    <Link
-                      id="project-grant"
-                      href={PAGES.PROJECT.GRANT(
-                        project.details?.data.slug || project?.uid || "",
-                        item.uid
-                      )}
-                      className={cn(
-                        item.current
-                          ? "bg-[#eef4ff] dark:bg-zinc-800 dark:text-primary-300  text-[#155eef]"
-                          : "text-gray-700 hover:text-primary-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700",
-                        "flex items-center rounded-md text-sm leading-6 font-semibold w-full"
-                      )}
-                    >
-                      <div className="flex flex-row w-full items-center gap-2 justify-between px-4 py-2">
-                        <div className="flex flex-row items-center gap-2">
-                          <img
-                            src={item.icon}
-                            alt=""
-                            className={cn(
-                              item.current
-                                ? "text-primary-600"
-                                : "text-gray-400 group-hover:text-primary-600",
-                              "h-5 w-5 shrink-0 rounded-full object-cover"
-                            )}
-                          />
-                          <p className="line-clamp-2 break-normal font-medium text-left text-lg">
-                            {item.name}
-                          </p>
-                        </div>
-                        <div className="w-6 min-w-6">
-                          {item?.completed && (
-                            <CheckCircleIcon className="w-5 h-5 text-green-600" />
-                          )}
-                        </div>
-                      </div>
-                    </Link>
+                    <NavigationRow project={project} item={item} />
                   </li>
                 ))}
               </ul>

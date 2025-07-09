@@ -10,6 +10,10 @@ type TProps = {
 
 export const GrantPercentage: React.FC<TProps> = ({ grant, className }) => {
   const percentage = useMemo(() => {
+    if (!!grant.completed) {
+      return 100;
+    }
+
     if (grant.updates && grant.updates.length > 0) {
       const sortedUpdates = [...grant.updates].sort(
         (a, b) =>
