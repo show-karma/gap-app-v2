@@ -359,10 +359,7 @@ export const MilestonesScreen: React.FC = () => {
             />
             <NextButton
               onClick={createNewGrant}
-              disabled={
-                !allMilestonesValidated ||
-                (flowType === "program" && milestonesForms.length === 0)
-              }
+              disabled={!allMilestonesValidated}
               text={
                 flowType === "grant"
                   ? isEditing
