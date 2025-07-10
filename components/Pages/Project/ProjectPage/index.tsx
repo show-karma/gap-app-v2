@@ -43,6 +43,7 @@ import pluralize from "pluralize";
 import { useAccount } from "wagmi";
 import { InformationBlock } from "./ProjectBodyTabs";
 import { useProjectInstance } from "@/hooks/useProjectInstance";
+import { useMemberRoles } from "@/hooks/useMemberRoles";
 
 const ContributorProfileDialog = dynamic(
   () =>
@@ -76,15 +77,7 @@ function ProjectPage() {
     data: memberRoles,
     isLoading: isLoadingRoles,
     isFetching: isFetchingRoles,
-  } = useQuery<Record<string, Member["role"]>>({
-    queryKey: ["memberRoles", project?.uid],
-    queryFn: () =>
-      project && projectInstance
-        ? getProjectMemberRoles(project, projectInstance)
-        : {},
-    enabled: !!project && !!projectInstance,
-    staleTime: 1000 * 60 * 5,
-  });
+  } = useMemberRoles();
 
   useEffect(() => {
     if (project?.members) {

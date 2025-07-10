@@ -16,6 +16,7 @@ import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useWallet } from "@/hooks/useWallet";
+import { queryClient } from "@/components/Utilities/WagmiProvider";
 
 const DeleteDialog = dynamic(() =>
   import("@/components/DeleteDialog").then((mod) => mod.DeleteDialog)
@@ -107,8 +108,7 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({
               "POST",
               {}
             );
-            
-            // Check if member was removed
+
             let retries = 1000;
             while (retries > 0) {
               const refreshedProject = await refreshProject();
@@ -116,6 +116,9 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({
                 (item) =>
                   item.recipient.toLowerCase() === memberAddress.toLowerCase()
               );
+              queryClient.invalidateQueries({
+                queryKey: ["memberRoles", project?.uid],
+              });
               if (!currentMember) {
                 toast.success("Member removed successfully", {
                   id: toastLoading,
