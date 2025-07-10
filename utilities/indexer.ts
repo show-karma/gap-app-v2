@@ -185,6 +185,7 @@ export const INDEXER = {
       `/communities/${communityIdOrSlug}/page-header-stats`,
     ADMINS: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/admins`,
+    BATCH_UPDATE: (idOrSlug: string) => `/communities/${idOrSlug}/batch-update`,
     INDICATORS: {
       COMMUNITY: {
         LIST: (communityId: string) =>
