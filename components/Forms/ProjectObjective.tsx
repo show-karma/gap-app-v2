@@ -7,7 +7,7 @@ import { MarkdownEditor } from "../Utilities/MarkdownEditor";
 import { Button } from "../Utilities/Button";
 import { errorManager } from "../Utilities/errorManager";
 
-import { useProjectStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
 

@@ -3,7 +3,8 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useProjectQuery } from "@/hooks/useProjectQuery";
 import { useWallet } from "@/hooks/useWallet";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import fetchData from "@/utilities/fetchData";
@@ -33,7 +34,7 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
 
   const { changeStepperStep, setIsStepper } = useStepper();
 
-  const { isProjectOwner } = useProjectStore();
+  const { isProjectOwner } = useProjectPermissions();
   const { isOwner: isContractOwner } = useOwnerStore();
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
   const { gap } = useGap();

@@ -7,7 +7,8 @@ import { useEffect, Suspense } from "react";
 import dynamic from "next/dynamic";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useGrantFormStore } from "./store";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 
 import { MESSAGES } from "@/utilities/messages";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
@@ -69,7 +70,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   } = useGrantFormStore();
 
   const { data: selectedProject } = useProjectQuery();
-  const { isProjectAdmin } = useProjectStore();
+  const { isProjectAdmin } = useProjectPermissions();
   const { isOwner } = useOwnerStore();
   const { isCommunityAdmin } = useCommunityAdminStore();
   const isAuthorized = isProjectAdmin || isOwner || isCommunityAdmin;

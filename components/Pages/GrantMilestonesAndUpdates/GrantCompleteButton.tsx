@@ -1,6 +1,7 @@
 "use client";
 
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { PAGES } from "@/utilities/pages";
 import { CheckCircleIcon } from "@heroicons/react/24/outline";
@@ -23,7 +24,7 @@ export const GrantCompleteButton: FC<GrantCompleteProps> = ({
   text = "Mark as Complete",
 }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isProjectAdmin } = useProjectStore();
+  const { isProjectAdmin } = useProjectPermissions();
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );

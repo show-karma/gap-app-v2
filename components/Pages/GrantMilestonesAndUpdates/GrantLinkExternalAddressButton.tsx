@@ -1,7 +1,8 @@
 "use client";
 
 import { Button } from "@/components/Utilities/Button";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { envVars } from "@/utilities/enviromentVars";
 import fetchData from "@/utilities/fetchData";
@@ -20,7 +21,7 @@ export const GrantLinkExternalAddressButton: FC<
   GrantLinkExternalAddressButtonProps
 > = ({ grant }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isProjectOwner } = useProjectStore();
+  const { isProjectOwner } = useProjectPermissions();
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );

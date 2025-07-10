@@ -7,7 +7,8 @@ import { FarcasterIcon } from "@/components/Icons/Farcaster";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useENS } from "@/store/ens";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import {
@@ -36,8 +37,8 @@ export const MemberCard = ({ member }: { member: string }) => {
     (item) => item.recipient.toLowerCase() === member.toLowerCase()
   );
   const [, copy] = useCopyToClipboard();
-  const { isProjectOwner } = useProjectStore();
-  const { isProjectAdmin } = useProjectStore();
+  const { isProjectOwner } = useProjectPermissions();
+  const { isProjectAdmin } = useProjectPermissions();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const { address } = useWallet();
   const isAuthorized = isProjectOwner || isContractOwner;

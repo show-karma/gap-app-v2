@@ -1,7 +1,8 @@
 "use client";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useGap } from "@/hooks/useGap";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useGrantGenieModalStore } from "@/store/modals/genie";
 import { useMergeModalStore } from "@/store/modals/merge";
 import { useProjectEditModalStore } from "@/store/modals/projectEdit";
@@ -79,7 +80,7 @@ const MergeProjectDialog = dynamic(() =>
 const buttonClassName = `group border-none ring-none font-normal bg-transparent dark:bg-transparent text-gray-900 dark:text-zinc-100 dark:hover:bg-brand-blue dark:hover:opacity-100 dark:hover:text-white hover:bg-brand-blue hover:opacity-100 hover:text-white flex w-full items-start justify-start rounded-md px-2 py-2 text-sm`;
 
 export const ProjectOptionsMenu = () => {
-  const { data: project } = useProjectQuery();
+  const { data: project, refetch: refreshProject } = useProjectQuery();
   const params = useParams();
   const projectId = params.projectId as string;
   const [isDeleting, setIsDeleting] = useState(false);
@@ -102,7 +103,7 @@ export const ProjectOptionsMenu = () => {
     useTransferOwnershipModalStore();
   const { isAdminTransferOwnershipModalOpen, openAdminTransferOwnershipModal } =
     useAdminTransferOwnershipModalStore();
-  const { isProjectOwner } = useProjectStore();
+  const { isProjectOwner } = useProjectPermissions();
   const { data: contactsInfo } = useContactInfo(projectId);
   const { isOwner: isContractOwner } = useOwnerStore();
   const isAuthorized = isProjectOwner || isContractOwner;
@@ -149,7 +150,8 @@ export const ProjectOptionsMenu = () => {
         walletSigner,
         gap,
         router,
-        changeStepperStep
+        changeStepperStep,
+        refreshProject
       ).then(async () => {
         toast.success(MESSAGES.PROJECT.DELETE.SUCCESS);
       });

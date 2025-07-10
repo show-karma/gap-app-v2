@@ -3,7 +3,8 @@ import { type FC, useEffect, useState } from "react";
 
 import { Button } from "@/components/Utilities/Button";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
@@ -51,7 +52,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
 
   const { changeStepperStep, setIsStepper } = useStepper();
   const { gap } = useGap();
-  const { isProjectOwner } = useProjectStore();
+  const { isProjectOwner } = useProjectPermissions();
   const { isOwner: isContractOwner } = useOwnerStore();
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
 
@@ -157,7 +158,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
     }
   };
 
-  const { isProjectAdmin } = useProjectStore();
+  const { isProjectAdmin } = useProjectPermissions();
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );

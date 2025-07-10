@@ -1,6 +1,6 @@
 "use client";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useProjectStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useStepper } from "@/store/modals/txStepper";
 import fetchData from "@/utilities/fetchData";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";

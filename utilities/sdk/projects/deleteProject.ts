@@ -4,6 +4,8 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
 import { Project } from "@show-karma/karma-gap-sdk";
+import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { QueryObserverResult } from "@tanstack/react-query";
 import { Hex } from "viem";
 
 export const deleteProject = async (
@@ -11,13 +13,14 @@ export const deleteProject = async (
   signer: any,
   gap: any,
   router: any,
-  changeStepperStep: (step: TxStepperSteps) => void
+  changeStepperStep: (step: TxStepperSteps) => void,
+  refreshProject: () => Promise<QueryObserverResult<IProjectResponse, Error>>
 ) => {
   try {
     if (!gap) return;
     await project.revoke(signer as any, changeStepperStep).then(async (res) => {
       let retries = 1000;
-      let fetchedProject: Project | null = null;
+      let fetchedProject: IProjectResponse | undefined = undefined;
       changeStepperStep("indexing");
       const txHash = res?.tx[0]?.hash;
       if (txHash) {
@@ -29,10 +32,7 @@ export const deleteProject = async (
       }
       while (retries > 0) {
         // eslint-disable-next-line no-await-in-loop
-        fetchedProject = await (project.details?.slug
-          ? gap.fetch.projectBySlug(project.details.slug)
-          : gap.fetch.projectById(project.uid as Hex)
-        ).catch(() => null);
+        fetchedProject = (await refreshProject())?.data;
         if (!fetchedProject) {
           retries = 0;
           changeStepperStep("indexed");

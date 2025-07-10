@@ -17,7 +17,8 @@ import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObject
 import { useQuery } from "@tanstack/react-query";
 import { useProgressModalStore } from "@/store/modals/progress";
 import { Button } from "@/components/Utilities/Button";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { MESSAGES } from "@/utilities/messages";
 import { UnifiedMilestone } from "@/types/roadmap";
 import { useProjectQuery } from "@/hooks/useProjectQuery";
@@ -30,7 +31,7 @@ export const ProjectRoadmap = () => {
   const { projectId } = useParams();
   const searchParams = useSearchParams();
 
-  const { isProjectAdmin } = useProjectStore();
+  const { isProjectAdmin } = useProjectPermissions();
   const { data: project } = useProjectQuery();
 
   const { milestones = [], isLoading } = useAllMilestones(projectId as string);

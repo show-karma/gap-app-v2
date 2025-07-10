@@ -1,6 +1,6 @@
 import { FC } from "react";
 import Link from "next/link";
-import { useProjectStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useUpdateActions } from "@/hooks/useUpdateActions";
 import { ActivityStatus } from "./ActivityStatus";
 import { ActivityStatusHeader } from "./ActivityStatusHeader";

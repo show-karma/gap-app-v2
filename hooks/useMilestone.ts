@@ -3,7 +3,7 @@ import { useState } from "react";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 
 import { useStepper } from "@/store/modals/txStepper";
-import { useProjectStore, useOwnerStore } from "@/store";
+import { useOwnerStore } from "@/store";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { useParams, useRouter } from "next/navigation";
@@ -25,6 +25,7 @@ import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/
 import { sanitizeInput } from "@/utilities/sanitize";
 import { useWallet } from "./useWallet";
 import { useProjectQuery } from "./useProjectQuery";
+import { useProjectPermissions } from "./useProjectPermissions";
 
 export const useMilestone = () => {
   const [isDeleting, setIsDeleting] = useState(false);
@@ -35,7 +36,7 @@ export const useMilestone = () => {
   const { projectId } = useParams();
   const { refetch } = useAllMilestones(projectId as string);
   const router = useRouter();
-  const { isProjectOwner } = useProjectStore();
+  const { isProjectOwner } = useProjectPermissions();
   const { isOwner: isContractOwner } = useOwnerStore();
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
 

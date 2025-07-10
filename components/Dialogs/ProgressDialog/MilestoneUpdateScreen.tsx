@@ -2,7 +2,7 @@
 "use client";
 import { MilestoneUpdateForm } from "@/components/Forms/MilestoneUpdate";
 import { Button } from "@/components/Utilities/Button";
-import { useProjectStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useProgressModalStore } from "@/store/modals/progress";
 import {
   IGrantResponse,

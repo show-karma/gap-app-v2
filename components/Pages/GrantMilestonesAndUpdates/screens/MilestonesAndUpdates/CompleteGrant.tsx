@@ -3,7 +3,7 @@ import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useProjectStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useGrantStore } from "@/store/grant";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
@@ -13,7 +13,10 @@ import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { XMarkIcon } from "@heroicons/react/24/solid";
-import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import {
+  IGrantResponse,
+  IProjectResponse,
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -76,7 +79,7 @@ export const GrantCompletion: FC = () => {
         .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
-          let fetchedProject = null;
+          let fetchedProject: IProjectResponse | undefined = undefined;
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
             await fetchData(
@@ -86,9 +89,7 @@ export const GrantCompletion: FC = () => {
             );
           }
           while (retries > 0) {
-            fetchedProject = await gapClient!.fetch
-              .projectById(project?.uid as Hex)
-              .catch(() => null);
+            fetchedProject = (await refreshProject()).data;
             const grant = fetchedProject?.grants?.find(
               (g) => g.uid === grantToComplete.uid
             );

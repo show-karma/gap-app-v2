@@ -1,7 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
@@ -58,8 +59,8 @@ const ContributorProfileDialog = dynamic(
 
 function ProjectPage() {
   const { data: project } = useProjectQuery();
-  const { isProjectOwner } = useProjectStore();
-  const { isProjectAdmin } = useProjectStore();
+  const { isProjectOwner } = useProjectPermissions();
+  const { isProjectAdmin } = useProjectPermissions();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isAuthorized = isProjectOwner || isContractOwner;
   const isAdminOrAbove = isProjectOwner || isContractOwner || isProjectAdmin;

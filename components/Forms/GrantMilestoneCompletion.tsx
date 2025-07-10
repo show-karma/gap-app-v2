@@ -11,7 +11,7 @@ import { useGap, getGapClient } from "@/hooks/useGap";
 import { sanitizeObject } from "@/utilities/sanitize";
 
 import { useStepper } from "@/store/modals/txStepper";
-import { useProjectStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import toast from "react-hot-toast";
 import { MESSAGES } from "@/utilities/messages";
 import { GapContract } from "@show-karma/karma-gap-sdk/core/class/contract/GapContract";

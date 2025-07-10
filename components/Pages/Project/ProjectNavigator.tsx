@@ -1,6 +1,7 @@
 "use client";
 import { Button } from "@/components/Utilities/Button";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useProgressModalStore } from "@/store/modals/progress";
 import formatCurrency from "@/utilities/formatCurrency";
 import { PAGES } from "@/utilities/pages";
@@ -49,7 +50,7 @@ export const ProjectNavigator = ({
   const [tabs, setTabs] = useState<typeof publicTabs>(publicTabs);
 
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isProjectAdmin } = useProjectStore();
+  const { isProjectAdmin } = useProjectPermissions();
 
   const isAuthorized = isOwner || isProjectAdmin;
   useEffect(() => {

@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { useProjectStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import fetchData from "@/utilities/fetchData";
@@ -47,8 +47,8 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
 
   const { chain, address, switchChainAsync, getSigner } = useWallet();
   const { data: project, refetch: refreshProject } = useProjectQuery();
-  const { isProjectAdmin } = useProjectStore();
-  const { setIsProjectOwner } = useProjectStore();
+  const { isProjectAdmin } = useProjectPermissions();
+  const { refetch: refetchPermissions } = useProjectPermissions();
   const { changeStepperStep, setIsStepper } = useStepper();
 
   const transfer = async () => {
@@ -91,7 +91,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
             );
 
             if (isTransfered) {
-              setIsProjectOwner(false);
+              refetchPermissions();
               retries = 0;
               await refreshProject();
               changeStepperStep("indexed");

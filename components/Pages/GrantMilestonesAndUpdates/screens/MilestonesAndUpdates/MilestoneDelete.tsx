@@ -1,6 +1,7 @@
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import fetchData from "@/utilities/fetchData";
@@ -27,7 +28,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
   const { data: project, refetch: refreshProject } = useProjectQuery();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
-  const { isProjectOwner } = useProjectStore();
+  const { isProjectOwner } = useProjectPermissions();
   const { isOwner: isContractOwner } = useOwnerStore();
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
 

@@ -3,7 +3,7 @@
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
@@ -34,6 +34,7 @@ import { SHARE_TEXTS } from "@/utilities/share/text";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectQuery } from "@/hooks/useProjectQuery";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 
 interface MilestoneUpdateFormProps {
   milestone: IMilestoneResponse;
@@ -80,7 +81,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   const [isUpdating, setIsUpdating] = useState(false);
   const [isSubmitLoading, setIsSubmitLoading] = useState(false);
   const { chain, address, switchChainAsync, getSigner } = useWallet();
-  const { isProjectAdmin } = useProjectStore();
+  const { isProjectAdmin } = useProjectPermissions();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin

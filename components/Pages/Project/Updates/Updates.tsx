@@ -1,6 +1,7 @@
 "use client";
 
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import {
   IGrantUpdate,
   IMilestoneResponse,
@@ -21,7 +22,7 @@ export const UpdatesPage: FC = () => {
   const { data: project } = useProjectQuery();
 
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isProjectAdmin } = useProjectStore();
+  const { isProjectAdmin } = useProjectPermissions();
   const isAuthorized = isOwner || isProjectAdmin;
 
   const [allUpdates, setAllUpdates] = useState<any[]>([]);

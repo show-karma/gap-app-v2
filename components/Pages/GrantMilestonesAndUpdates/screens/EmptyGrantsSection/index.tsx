@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { useProjectQuery } from "@/hooks/useProjectQuery";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useCommunitiesStore } from "@/store/communities";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { MESSAGES } from "@/utilities/messages";
@@ -9,7 +10,7 @@ import Link from "next/link";
 import type { FC } from "react";
 
 export const EmptyGrantsSection: FC = () => {
-  const { isProjectAdmin } = useProjectStore();
+  const { isProjectAdmin } = useProjectPermissions();
   const isOwner = useOwnerStore((state) => state.isOwner);
   const { data: project } = useProjectQuery();
   const isCommunityAdmin = useCommunityAdminStore(

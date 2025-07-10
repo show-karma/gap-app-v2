@@ -1,4 +1,4 @@
-import { useProjectStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { Tab } from "@headlessui/react";
 import { Fragment, useState } from "react";
 import { cn } from "@/utilities/tailwind";
@@ -9,7 +9,7 @@ import { useParams } from "next/navigation";
 import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 export const ProjectActivity = () => {
-  const { isProjectAdmin } = useProjectStore();
+  const { isProjectAdmin } = useProjectPermissions();
   const { data: project } = useProjectQuery();
   const { projectId } = useParams();
   const { milestones = [] } = useAllMilestones(projectId as string);

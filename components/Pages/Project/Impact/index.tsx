@@ -3,7 +3,8 @@ import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useStepper } from "@/store/modals/txStepper";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
@@ -41,7 +42,7 @@ interface ImpactComponentProps {}
 
 export const ImpactComponent: FC<ImpactComponentProps> = () => {
   const { data: project, refetch: refreshProject } = useProjectQuery();
-  const { isProjectOwner, isProjectAdmin } = useProjectStore();
+  const { isProjectOwner, isProjectAdmin } = useProjectPermissions();
 
   const [orderedImpacts, setOrderedImpacts] = useState<IProjectImpact[]>(
     project?.impacts || []

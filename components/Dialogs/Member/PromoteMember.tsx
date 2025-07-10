@@ -1,7 +1,7 @@
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useProjectStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useStepper } from "@/store/modals/txStepper";
 import fetchData from "@/utilities/fetchData";
 import { getProjectMemberRoles } from "@/utilities/getProjectMemberRoles";

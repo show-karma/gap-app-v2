@@ -2,7 +2,7 @@
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useProjectStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useStepper } from "@/store/modals/txStepper";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";

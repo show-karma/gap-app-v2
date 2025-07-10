@@ -24,7 +24,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { shareOnX } from "@/utilities/share/shareOnX";
-import { useProjectStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { getQueryClient } from "@/utilities/queries/client";
 import { useProjectQuery } from "@/hooks/useProjectQuery";
 

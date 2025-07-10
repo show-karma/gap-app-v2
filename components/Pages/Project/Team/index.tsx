@@ -2,7 +2,8 @@
 
 import { ContributorProfileDialog } from "@/components/Dialogs/ContributorProfileDialog";
 import { InviteMemberDialog } from "@/components/Dialogs/Member/InviteMember";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import {
   getProjectMemberRoles,
   Member,
@@ -25,7 +26,7 @@ export const Team = () => {
       )
     : [];
 
-  const { isProjectOwner } = useProjectStore();
+  const { isProjectOwner } = useProjectPermissions();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isAuthorized = isProjectOwner || isContractOwner;
   const { project: projectInstance } = useProjectInstance(

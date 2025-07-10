@@ -4,5 +4,5 @@ export const defaultQueryOptions = {
   refetchOnWindowFocus: false,
   refetchOnMount: true,
   refetchOnReconnect: false,
-  retry: 1,
+  retry: false,
 };

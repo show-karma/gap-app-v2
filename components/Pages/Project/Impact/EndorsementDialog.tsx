@@ -5,7 +5,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useContactInfo } from "@/hooks/useContactInfo";
-import { useProjectStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useStepper } from "@/store/modals/txStepper";
 import fetchData from "@/utilities/fetchData";
@@ -24,6 +24,7 @@ import { Hex } from "viem";
 
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectQuery } from "@/hooks/useProjectQuery";
+import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 type EndorsementDialogProps = {};
 
@@ -123,12 +124,10 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
           }
           let retries = 1000;
           refreshProject();
-          let fetchedProject: Project | null = null;
+          let fetchedProject: IProjectResponse | undefined = undefined;
           changeStepperStep("indexing");
           while (retries > 0) {
-            fetchedProject = await gapClient!.fetch
-              .projectById(project.uid as Hex)
-              .catch(() => null);
+            fetchedProject = (await refreshProject()).data;
             if (
               fetchedProject?.endorsements?.find(
                 (end) => end.uid === endorsement.uid

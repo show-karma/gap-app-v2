@@ -13,12 +13,14 @@ import { getGapClient, useGap } from "@/hooks/useGap";
 
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { useStepper } from "@/store/modals/txStepper";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { Hex } from "viem";
 import { getProjectById } from "@/utilities/sdk";
 import {
   IProjectImpact,
   IProjectImpactStatus,
+  IProjectResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
@@ -117,11 +119,9 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
           }
           let retries = 1000;
           changeStepperStep("indexing");
-          let fetchedProject = null;
+          let fetchedProject: IProjectResponse | undefined = undefined;
           while (retries > 0) {
-            fetchedProject = await gapClient!.fetch
-              .projectById(project.uid as Hex)
-              .catch(() => null);
+            fetchedProject = (await refreshProject()).data;
             if (
               fetchedProject?.impacts?.find((impact) =>
                 impact.verified?.find(
@@ -169,7 +169,7 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
     }
   };
   const { isLoggedIn } = useWallet();
-  const { isProjectAdmin } = useProjectStore();
+  const { isProjectAdmin } = useProjectPermissions();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const verifyPermission = () => {
     if (!isLoggedIn) return false;

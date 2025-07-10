@@ -4,7 +4,8 @@ import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useWallet } from "@/hooks/useWallet";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -35,7 +36,7 @@ export const LinkDivviWalletButton: FC<LinkDivviWalletButtonProps> = ({
   onClose,
 }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isProjectOwner } = useProjectStore();
+  const { isProjectOwner } = useProjectPermissions();
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );

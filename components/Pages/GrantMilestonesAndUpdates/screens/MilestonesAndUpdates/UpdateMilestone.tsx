@@ -3,7 +3,8 @@
 
 import { MilestoneUpdateForm } from "@/components/Forms/MilestoneUpdate";
 import { Button } from "@/components/Utilities/Button";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { PencilSquareIcon, ShareIcon } from "@heroicons/react/24/outline";
 import {
@@ -81,7 +82,7 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
   cancelEditing,
 }) => {
   const [isUpdating, setIsUpdating] = useState(false);
-  const { isProjectAdmin } = useProjectStore();
+  const { isProjectAdmin } = useProjectPermissions();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin

@@ -3,7 +3,7 @@ import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useProjectStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useStepper } from "@/store/modals/txStepper";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
@@ -30,6 +30,7 @@ import { z } from "zod";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectQuery } from "@/hooks/useProjectQuery";
+import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 const updateSchema = z.object({
   startedAt: z.date({
@@ -123,11 +124,9 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
           }
           let retries = 1000;
           changeStepperStep("indexing");
-          let fetchedProject = null;
+          let fetchedProject: IProjectResponse | undefined = undefined;
           while (retries > 0) {
-            fetchedProject = await gapClient!.fetch
-              .projectById(project.uid as Hex)
-              .catch(() => null);
+            fetchedProject = (await refreshProject()).data;
             if (
               fetchedProject?.impacts?.find(
                 (impact) => impact.uid === newImpact.uid

@@ -1,7 +1,7 @@
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useProjectQuery } from "@/hooks/useProjectQuery";
-import { useProjectStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useIntroModalStore } from "@/store/modals/intro";
 import { envVars } from "@/utilities/enviromentVars";

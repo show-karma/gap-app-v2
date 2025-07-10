@@ -3,7 +3,8 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { APIContact } from "@/types/project";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { useWallet } from "./useWallet";
@@ -20,7 +21,7 @@ export const useContactInfo = (
   isAuthorized?: boolean
 ) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isProjectAdmin } = useProjectStore();
+  const { isProjectAdmin } = useProjectPermissions();
   const isDefaultAuthorized = isOwner || isProjectAdmin;
   const { address } = useWallet();
   return useQuery({

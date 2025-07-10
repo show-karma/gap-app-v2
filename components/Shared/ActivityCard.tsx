@@ -1,7 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 import { FC } from "react";
 import { cn } from "@/utilities/tailwind";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { UpdateCard } from "./ActivityCard/UpdateCard";
 import { MilestoneCard } from "./ActivityCard/MilestoneCard";
 import {
@@ -39,7 +40,7 @@ export const ActivityCard: FC<ActivityCardProps> = ({
   isAuthorized = false,
 }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isProjectAdmin } = useProjectStore();
+  const { isProjectAdmin } = useProjectPermissions();
   const isAuthenticatedUser = isOwner || isProjectAdmin || isAuthorized;
 
   return (

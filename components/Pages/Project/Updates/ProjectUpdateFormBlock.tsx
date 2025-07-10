@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { useProjectStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useRouter } from "next/navigation";
 import { ProjectUpdateForm } from "@/components/Forms/ProjectUpdate";
 import { useState, useEffect } from "react";

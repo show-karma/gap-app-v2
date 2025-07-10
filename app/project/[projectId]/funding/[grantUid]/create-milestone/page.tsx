@@ -5,7 +5,6 @@ import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
 import Link from "next/link";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { PAGES } from "@/utilities/pages";
-import { useProjectStore } from "@/store";
 import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 const MilestoneForm = dynamic(

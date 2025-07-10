@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { useProjectStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectQuery } from "@/hooks/useProjectQuery";

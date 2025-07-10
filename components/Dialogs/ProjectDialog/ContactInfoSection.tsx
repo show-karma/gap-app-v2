@@ -3,7 +3,7 @@ import { FC, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import toast from "react-hot-toast";
-import { useProjectStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { APIContact, Contact } from "@/types/project";
 import { INDEXER } from "@/utilities/indexer";
 import fetchData from "@/utilities/fetchData";

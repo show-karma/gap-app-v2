@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { useProjectStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useAdminTransferOwnershipModalStore } from "@/store/modals/adminTransferOwnership";
 import fetchData from "@/utilities/fetchData";
 import { sanitizeInput } from "@/utilities/sanitize";

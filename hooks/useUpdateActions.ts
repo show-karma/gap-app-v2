@@ -2,7 +2,8 @@ import { useState } from "react";
 
 import toast from "react-hot-toast";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import fetchData from "@/utilities/fetchData";
@@ -38,7 +39,7 @@ export const useUpdateActions = (update: UpdateType) => {
   const { changeStepperStep, setIsStepper } = useStepper();
   const { gap } = useGap();
   const { chain, switchChainAsync, getSigner } = useWallet();
-  const { isProjectOwner } = useProjectStore();
+  const { isProjectOwner } = useProjectPermissions();
   const { data: project, refetch: refreshProject } = useProjectQuery();
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isOnChainAuthorized = isProjectOwner || isOwner;
@@ -228,6 +229,7 @@ export const useUpdateActions = (update: UpdateType) => {
         await findUpdate
           .revoke(walletSigner as any, changeStepperStep)
           .then(async (res: any) => {
+            changeStepperStep("indexing");
             const txHash = res?.tx[0]?.hash;
             if (txHash) {
               await fetchData(

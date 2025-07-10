@@ -3,7 +3,8 @@
 
 import { GrantsAccordion } from "@/components/GrantsAccordion";
 import { Button } from "@/components/Utilities/Button";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useCommunitiesStore } from "@/store/communities";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useGrantStore } from "@/store/grant";
@@ -82,7 +83,7 @@ export const GrantsLayout = ({
   const { grant, setGrant, loading, setLoading } = useGrantStore();
 
   const router = useRouter();
-  const { isProjectAdmin } = useProjectStore();
+  const { isProjectAdmin } = useProjectPermissions();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin

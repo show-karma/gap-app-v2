@@ -13,7 +13,7 @@ import { MESSAGES } from "@/utilities/messages";
 import toast from "react-hot-toast";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useStepper } from "@/store/modals/txStepper";
-import { useProjectStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useRouter } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
 import { useGrantFormStore } from "@/components/Pages/GrantMilestonesAndUpdates/screens/NewGrant/store";

@@ -2,8 +2,9 @@ import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { getGapClient, useGap } from "@/hooks/useGap";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useWallet } from "@/hooks/useWallet";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import fetchData from "@/utilities/fetchData";
@@ -43,10 +44,9 @@ export const ObjectiveCardComplete = ({
   isCompleting: boolean;
   handleCompleting: (isCompleting: boolean) => void;
 }) => {
-  const { isProjectAdmin } = useProjectStore();
+  const { isProjectAdmin, isProjectOwner } = useProjectPermissions();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isAuthorized = isProjectAdmin || isContractOwner;
-  const { isProjectOwner } = useProjectStore();
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
 
   const { changeStepperStep, setIsStepper } = useStepper();

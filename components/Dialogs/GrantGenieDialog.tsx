@@ -5,7 +5,7 @@ import { Dialog, Transition } from "@headlessui/react";
 import { DocumentCheckIcon, LightBulbIcon } from "@heroicons/react/24/solid";
 import { Button } from "../Utilities/Button";
 import toast from "react-hot-toast";
-import { useProjectStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
@@ -92,7 +92,7 @@ export const GrantsGenieDialog: FC<Props> = () => {
     openGrantGenieModal: openModal,
   } = useGrantGenieModalStore();
   const { data: project } = useProjectQuery();
-  const { isProjectAdmin } = useProjectStore();
+  const { isProjectAdmin } = useProjectPermissions();
   const [isLoading, setIsLoading] = useState(false);
 
   return (

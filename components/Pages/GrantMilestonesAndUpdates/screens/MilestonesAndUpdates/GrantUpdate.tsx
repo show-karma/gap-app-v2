@@ -1,6 +1,7 @@
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
@@ -83,7 +84,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
   const [isDeletingGrantUpdate, setIsDeletingGrantUpdate] = useState(false);
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
-  const { isProjectOwner } = useProjectStore();
+  const { isProjectOwner } = useProjectPermissions();
   const { isOwner: isContractOwner } = useOwnerStore();
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
 
@@ -193,7 +194,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
     }
   };
 
-  const { isProjectAdmin } = useProjectStore();
+  const { isProjectAdmin } = useProjectPermissions();
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );

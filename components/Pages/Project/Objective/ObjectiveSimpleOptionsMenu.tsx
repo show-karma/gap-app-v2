@@ -4,7 +4,8 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useProjectQuery } from "@/hooks/useProjectQuery";
 import { useWallet } from "@/hooks/useWallet";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useStepper } from "@/store/modals/txStepper";
 import fetchData from "@/utilities/fetchData";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
@@ -47,7 +48,7 @@ export const ObjectiveSimpleOptionsMenu = ({
   const router = useRouter();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
-  const { isProjectOwner } = useProjectStore();
+  const { isProjectOwner } = useProjectPermissions();
   const { data: project } = useProjectQuery();
   const { isOwner: isContractOwner } = useOwnerStore();
   const isOnChainAuthorized = isProjectOwner || isContractOwner;

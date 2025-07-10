@@ -1,6 +1,7 @@
 "use client";
 
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { formatDate } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";
@@ -105,7 +106,7 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
   milestone,
   index,
 }) => {
-  const { isProjectAdmin } = useProjectStore();
+  const { isProjectAdmin } = useProjectPermissions();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin

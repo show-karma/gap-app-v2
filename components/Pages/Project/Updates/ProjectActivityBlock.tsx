@@ -7,7 +7,8 @@ import {
   FilteredOutputsAndOutcomes,
   filterIndicators,
 } from "../Impact/FilteredOutputsAndOutcomes";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useMemo } from "react";
 import { PAGES } from "@/utilities/pages";
@@ -22,7 +23,7 @@ export const ProjectActivityBlock = ({
 }: {
   activity: IProjectUpdate;
 }) => {
-  const { isProjectOwner } = useProjectStore();
+  const { isProjectOwner } = useProjectPermissions();
   const { data: project } = useProjectQuery();
 
   const isContractOwner = useOwnerStore((state) => state.isOwner);

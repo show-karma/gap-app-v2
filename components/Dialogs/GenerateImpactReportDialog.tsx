@@ -12,7 +12,7 @@ import toast from "react-hot-toast";
 import Html from "react-pdf-html";
 import { Button } from "../Utilities/Button";
 
-import { useProjectStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { envVars } from "@/utilities/enviromentVars";
 import { getProjectById } from "@/utilities/sdk";

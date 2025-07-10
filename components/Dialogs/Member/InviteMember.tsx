@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 import { Button } from "@/components/Utilities/Button";
-import { useProjectStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { Dialog, Transition } from "@headlessui/react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { FC, Fragment, useEffect, useState } from "react";
@@ -21,7 +21,7 @@ type InviteMemberDialogProps = {};
 export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
-  const { isProjectOwner } = useProjectStore();
+  const { isProjectOwner } = useProjectPermissions();
   const { data: project } = useProjectQuery();
   const [, copyToClipboard] = useCopyToClipboard();
 

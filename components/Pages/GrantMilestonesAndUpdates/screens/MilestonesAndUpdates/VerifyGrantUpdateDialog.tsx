@@ -11,7 +11,8 @@ import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { MESSAGES } from "@/utilities/messages";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useStepper } from "@/store/modals/txStepper";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import {
   IGrantUpdate,
   IGrantUpdateStatus,
@@ -166,7 +167,7 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
     }
   };
   const { isLoggedIn } = useWallet();
-  const { isProjectAdmin } = useProjectStore();
+  const { isProjectAdmin } = useProjectPermissions();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const verifyPermission = () => {
     if (!isLoggedIn) return false;

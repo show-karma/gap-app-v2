@@ -4,7 +4,7 @@ import { Dialog, Transition } from "@headlessui/react";
 import { FC, Fragment, useEffect, useState } from "react";
 
 import { Button } from "@/components/Utilities/Button";
-import { useProjectStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useContributorProfile } from "@/hooks/useContributorProfile";
 import toast from "react-hot-toast";
 

@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getAllMilestones } from "@/utilities/gapIndexerApi/getAllMilestones";
 import { UnifiedMilestone } from "@/types/roadmap";
-import { useProjectStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { getQueryClient } from "@/utilities/queries/client";
 import { useProjectQuery } from "./useProjectQuery";
 

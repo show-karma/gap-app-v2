@@ -1,11 +1,12 @@
 /* eslint-disable @next/next/no-img-element */
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { MESSAGES } from "@/utilities/messages";
 import { useQueryState } from "nuqs";
 import { FC } from "react";
 
 export const EmptyImpactScreen: FC = () => {
-  const { isProjectAdmin } = useProjectStore();
+  const { isProjectAdmin } = useProjectPermissions();
   const isOwner = useOwnerStore((state) => state.isOwner);
 
   const isAuthorized = isProjectAdmin || isOwner;

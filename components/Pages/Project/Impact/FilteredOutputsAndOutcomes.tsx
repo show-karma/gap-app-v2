@@ -1,7 +1,8 @@
 "use client";
 
 import { Button } from "@/components/Utilities/Button";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import { formatDate } from "@/utilities/formatDate";
@@ -67,7 +68,7 @@ export const FilteredOutputsAndOutcomes = ({
   indicatorIds,
   indicatorNames,
 }: FilteredOutputsAndOutcomesProps) => {
-  const { isProjectOwner } = useProjectStore();
+  const { isProjectOwner } = useProjectPermissions();
   const { data: project } = useProjectQuery();
 
   const isContractOwner = useOwnerStore((state) => state.isOwner);

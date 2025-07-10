@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useProjectStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useOwnerStore } from "@/store/owner";
 import { MESSAGES } from "@/utilities/messages";
 import { Dialog, Transition } from "@headlessui/react";
@@ -518,14 +518,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               {}
             );
           }
-          let fetchedProject: Project | null = null;
+          let fetchedProject: IProjectResponse | undefined = undefined;
           changeStepperStep("indexing");
           while (retries > 0) {
             // eslint-disable-next-line no-await-in-loop
-            fetchedProject = await (slug
-              ? gapClient.fetch.projectBySlug(slug)
-              : gapClient.fetch.projectById(project.uid as Hex)
-            ).catch(() => null);
+            fetchedProject = (await refreshProject()).data;
             if (fetchedProject?.uid && fetchedProject.uid !== zeroHash) {
               if (data.github) {
                 const githubFromField = data.github.includes("http")

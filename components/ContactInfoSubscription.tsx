@@ -5,7 +5,7 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "./Utilities/Button";
 import toast from "react-hot-toast";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
 import { Contact } from "@/types/project";
 import { INDEXER } from "@/utilities/indexer";
 import fetchData from "@/utilities/fetchData";
@@ -15,6 +15,7 @@ import { errorManager } from "./Utilities/errorManager";
 import { generateRandomString } from "@/utilities/generateRandomString";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { useProjectQuery } from "@/hooks/useProjectQuery";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 
 const labelStyle = "text-sm font-bold";
 const inputStyle =
@@ -118,7 +119,7 @@ interface ContactInfoSubscriptionProps {
 export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
   contactInfo,
 }) => {
-  const { isProjectAdmin } = useProjectStore();
+  const { isProjectAdmin } = useProjectPermissions();
   const { data: project, refetch: refreshProject } = useProjectQuery();
   const projectId = project?.uid;
   const isOwner = useOwnerStore((state) => state.isOwner);

@@ -3,7 +3,8 @@
 import { ActivityCard } from "@/components/Shared/ActivityCard";
 import { useQueryState } from "nuqs";
 import { StatusOptions } from "@/utilities/gapIndexerApi/getProjectObjectives";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SetAnObjective } from "@/components/Pages/Project/Objective/SetAnObjective";
 import { UnifiedMilestone } from "@/types/roadmap";
@@ -42,7 +43,7 @@ export const MilestonesList = ({
   totalItems,
 }: MilestonesListProps) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isProjectAdmin } = useProjectStore();
+  const { isProjectAdmin } = useProjectPermissions();
   const isAuthorized = isOwner || isProjectAdmin;
 
   const [status] = useQueryState<StatusOptions>("status", {

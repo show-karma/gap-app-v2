@@ -5,7 +5,7 @@ import { EndorsementDialog } from "@/components/Pages/Project/Impact/Endorsement
 import { ProjectNavigator } from "@/components/Pages/Project/ProjectNavigator";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useIntroModalStore } from "@/store/modals/intro";
 import { useProgressModalStore } from "@/store/modals/progress";
@@ -27,7 +27,7 @@ interface ProjectWrapperProps {
 }
 
 export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
-  const { isProjectAdmin, isProjectOwner } = useProjectStore();
+  const { isProjectAdmin, isProjectOwner } = useProjectPermissions();
   const { data: project } = useProjectQuery();
 
   const isOwner = useOwnerStore((state: any) => state.isOwner);

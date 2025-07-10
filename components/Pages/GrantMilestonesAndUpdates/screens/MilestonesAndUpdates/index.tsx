@@ -1,6 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 // import { MilestonesList } from "./MilestonesList";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { formatDate } from "@/utilities/formatDate";
@@ -35,7 +36,7 @@ export const EmptyMilestone = ({
   grant?: IGrantResponse;
   project?: IProjectResponse;
 }) => {
-  const { isProjectAdmin } = useProjectStore();
+  const { isProjectAdmin } = useProjectPermissions();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
@@ -138,7 +139,7 @@ export const MilestonesAndUpdates = () => {
 
   const hasMilestonesOrUpdates =
     grant?.milestones?.length || grant?.updates?.length;
-  const { isProjectAdmin } = useProjectStore();
+  const { isProjectAdmin } = useProjectPermissions();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin

@@ -1,7 +1,8 @@
 "use client";
 
 import { Button } from "@/components/Utilities/Button";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import fetchData from "@/utilities/fetchData";
@@ -50,7 +51,7 @@ type OutputForm = {
 };
 
 export const OutputsAndOutcomes = () => {
-  const { isProjectOwner } = useProjectStore();
+  const { isProjectOwner } = useProjectPermissions();
   const { data: project } = useProjectQuery();
 
   const isContractOwner = useOwnerStore((state) => state.isOwner);

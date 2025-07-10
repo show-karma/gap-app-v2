@@ -3,7 +3,7 @@ import { Button } from "@/components/Utilities/Button";
 import { useGrantFormStore } from "../store";
 import { usePathname, useRouter } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
-import { useProjectStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { Milestone } from "../Milestone";
 import { PlusIcon } from "@heroicons/react/24/outline";
 
@@ -29,6 +29,7 @@ import { CancelButton } from "./buttons/CancelButton";
 import { NextButton } from "./buttons/NextButton";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectQuery } from "@/hooks/useProjectQuery";
+import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 export const MilestonesScreen: React.FC = () => {
   const {
@@ -193,7 +194,7 @@ export const MilestonesScreen: React.FC = () => {
         .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
-          let fetchedProject = null;
+          let fetchedProject: IProjectResponse | undefined = undefined;
           const txHash = res?.tx[0]?.hash;
 
           if (txHash) {
@@ -205,9 +206,7 @@ export const MilestonesScreen: React.FC = () => {
           }
 
           while (retries > 0) {
-            fetchedProject = await gapClient.fetch
-              .projectById(selectedProject.uid as Hex)
-              .catch(() => null);
+            fetchedProject = (await refreshProject()).data;
 
             if (
               fetchedProject?.grants?.find(

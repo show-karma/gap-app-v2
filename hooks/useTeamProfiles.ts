@@ -2,12 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { getContributorProfiles } from "@/utilities/indexer/getContributorProfiles";
 import { ContributorProfile } from "@show-karma/karma-gap-sdk";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useProjectStore } from "@/store";
-import { useEffect } from "react";
 
 export const useTeamProfiles = (project: IProjectResponse | undefined) => {
-  const { setTeamProfiles } = useProjectStore();
-
   const rawAddresses =
     project?.members?.map((member) => member.recipient) || [];
   const uniqueLowercasedAddresses = Array.from(
@@ -25,12 +21,6 @@ export const useTeamProfiles = (project: IProjectResponse | undefined) => {
     enabled: uniqueLowercasedAddresses.length > 0,
     staleTime: 10 * 60 * 1000, // 10 minutes
   });
-
-  useEffect(() => {
-    if (query.data) {
-      setTeamProfiles(query.data);
-    }
-  }, [query.data, setTeamProfiles]);
 
   return {
     // Team profiles data

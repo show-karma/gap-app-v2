@@ -1,6 +1,7 @@
 import { useState } from "react";
 
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { Milestone } from "@show-karma/karma-gap-sdk";
 import { useStepper } from "@/store/modals/txStepper";

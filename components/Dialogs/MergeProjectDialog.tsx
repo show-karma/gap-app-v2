@@ -4,7 +4,7 @@ import { Dialog, Transition } from "@headlessui/react";
 import { PlusIcon } from "@heroicons/react/24/solid";
 import { Button } from "../Utilities/Button";
 import toast from "react-hot-toast";
-import { useProjectStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 
 import { useStepper } from "@/store/modals/txStepper";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
@@ -188,8 +188,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
     setIsOpen(true);
   }
   const { data: project, refetch: refreshProject } = useProjectQuery();
-  const { isProjectAdmin } = useProjectStore();
-  const { setIsProjectAdmin } = useProjectStore();
+  const { isProjectAdmin } = useProjectPermissions();
   const { changeStepperStep, setIsStepper } = useStepper();
 
   const createProjectPointer = async ({ ogProjectUID }: PointerType) => {

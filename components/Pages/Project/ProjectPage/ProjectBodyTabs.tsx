@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { useProjectStore } from "@/store";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { ReadMore } from "@/utilities/ReadMore";
 import {
   CheckCircleIcon,
