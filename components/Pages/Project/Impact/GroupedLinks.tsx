@@ -2,9 +2,21 @@ import { useState, useEffect, useRef } from "react";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { linkName, mapLinks } from "./utils/links";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
+import { useProjectStore } from "@/store";
+import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+
+export interface ProjectWithExternal extends IProjectResponse {
+  external?: {
+    network_addresses?: string[];
+  };
+}
 
 export const GroupedLinks = ({ proofs }: { proofs: string[] }) => {
-  const links = mapLinks(proofs);
+  const { project } = useProjectStore();
+  const links = mapLinks(
+    proofs,
+    (project as ProjectWithExternal)?.external?.network_addresses
+  );
   const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>(
     {}
   );
