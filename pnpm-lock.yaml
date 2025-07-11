@@ -128,6 +128,9 @@ importers:
       babel-loader:
         specifier: ^10.0.0
         version: 10.0.0(@babel/core@7.27.4)(webpack@5.99.9)
+      babel-plugin-transform-remove-imports:
+        specifier: ^1.8.0
+        version: 1.8.0(@babel/core@7.27.4)
       blo:
         specifier: ^1.1.1
         version: 1.2.0
