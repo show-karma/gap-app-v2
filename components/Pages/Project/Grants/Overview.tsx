@@ -16,9 +16,23 @@ import { ProjectGrantsOverviewLoading } from "../Loading/Grants/Overview";
 import { GrantPercentage } from "./components/GrantPercentage";
 import { TrackTags } from "@/components/TrackTags";
 
-const isValidAmount = (amount?: string | undefined) => {
-  if (!amount) return undefined;
-  let amountToFormat = amount;
+const isValidAmount = (grant?: {
+  amount?: Hex;
+  details?: { data?: { amount?: string } };
+}) => {
+  // First check root-level amount (Hex format)
+  if (grant?.amount) {
+    const formattedAmount = formatCurrency(Number(grant?.amount));
+    if (formattedAmount === "0.00") return "0";
+    if (Number.isNaN(formattedAmount)) return grant?.amount;
+    return formattedAmount;
+  }
+
+  // Fallback to details.data.amount
+  const detailsAmount = grant?.details?.data?.amount;
+  if (!detailsAmount) return undefined;
+
+  let amountToFormat = detailsAmount;
 
   const split = amountToFormat.split(" ");
   const split0 = split[0]?.replace(",", "");
@@ -47,7 +61,7 @@ export const GrantOverview = () => {
 
   const grantData: { stat?: number | string; title: string }[] = [
     {
-      stat: isValidAmount(grant?.details?.data?.amount),
+      stat: isValidAmount(grant),
       title: "Total Grant Amount",
     },
     {
