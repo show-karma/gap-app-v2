@@ -45,7 +45,7 @@ export const useGrantsTable = ({
     },
     [searchParams]
   );
-  console.log(grants);
+
   const uniquePrograms = useMemo(() => {
     const programsSet = new Set();
     const programs = grants?.reduce((acc, grant) => {
