@@ -125,6 +125,9 @@ importers:
       axios:
         specifier: ^1.4.0
         version: 1.10.0(debug@4.4.1)
+      babel-loader:
+        specifier: ^10.0.0
+        version: 10.0.0(@babel/core@7.27.4)(webpack@5.99.9)
       blo:
         specifier: ^1.1.1
         version: 1.2.0
@@ -5493,6 +5496,13 @@ packages:
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     peerDependencies:
       '@babel/core': ^7.8.0
+
+  babel-loader@10.0.0:
+    resolution: {integrity: sha512-z8jt+EdS61AMw22nSfoNJAZ0vrtmhPRVi6ghL3rCeRZI8cdNYFiV5xeV3HbE7rlZZNmGH8BVccwWt8/ED0QOHA==}
+    engines: {node: ^18.20.0 || ^20.10.0 || >=22.0.0}
+    peerDependencies:
+      '@babel/core': ^7.12.0
+      webpack: '>=5.61.0'
 
   babel-loader@9.2.1:
     resolution: {integrity: sha512-fqe8naHt46e0yIdkjUZYqddSXfej3AHajX+CSO5X7oy0EmPc6o5Xh+RClNoHjnieWz9AW4kZxW9yyFMhVB1QLA==}
@@ -20259,6 +20269,12 @@ snapshots:
       slash: 3.0.0
     transitivePeerDependencies:
       - supports-color
+
+  babel-loader@10.0.0(@babel/core@7.27.4)(webpack@5.99.9):
+    dependencies:
+      '@babel/core': 7.27.4
+      find-up: 5.0.0
+      webpack: 5.99.9
 
   babel-loader@9.2.1(@babel/core@7.27.4)(webpack@5.99.9):
     dependencies:
