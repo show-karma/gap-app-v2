@@ -96,7 +96,7 @@ export default function PayoutsAdminPage() {
     useIsCommunityAdmin(community?.uid, address);
 
   // Extract the actual programId from the composite value (programId_chainId)
-  const actualProgramId = selectedProgramId?.split('_')[0] || null;
+  const actualProgramId = selectedProgramId?.split("_")[0] || null;
 
   // Fetch grants data with filter and pagination
   const {
@@ -104,7 +104,9 @@ export default function PayoutsAdminPage() {
     isLoading: isLoadingGrants,
     refetch: refreshGrants,
   } = useGrants(communityId, {
-    filter: actualProgramId ? { selectedProgramId: actualProgramId } : undefined,
+    filter: actualProgramId
+      ? { selectedProgramId: actualProgramId }
+      : undefined,
     paginationOps: {
       page: currentPage - 1, // Backend expects 0-based page index
       pageLimit: itemsPerPage,
@@ -139,7 +141,6 @@ export default function PayoutsAdminPage() {
 
     return grantsArray;
   }, [grants]);
-
 
   // Since we're now using backend pagination, we don't need to filter or paginate client-side
   const paginatedData = tableData;
@@ -331,9 +332,9 @@ export default function PayoutsAdminPage() {
   const hasChanges = Object.keys(editedFields).length > 0;
 
   return (
-    <div className="mt-4 flex gap-8 flex-row max-lg:flex-col-reverse w-full">
+    <div className="my-4 flex gap-8 flex-row max-lg:flex-col-reverse w-full">
       <div className="w-full flex flex-col gap-8">
-        <div className="w-full flex flex-row items-center justify-between px-4">
+        <div className="w-full flex flex-wrap flex-row items-center justify-between px-4">
           <Link
             href={PAGES.ADMIN.ROOT(
               community?.details?.data?.slug || (community?.uid as string)
@@ -344,11 +345,9 @@ export default function PayoutsAdminPage() {
               Return to admin page
             </Button>
           </Link>
-          <div className="flex flex-row justify-between items-center gap-4">
+          <div className="flex flex-row flex-wrap justify-between items-center gap-4">
             <div className="flex items-center gap-4">
-              <ProgramFilter
-                onChange={handleProgramChange}
-              />
+              <ProgramFilter onChange={handleProgramChange} />
             </div>
             <div className="flex items-center gap-2">
               <p className="text-sm text-gray-600 dark:text-gray-400">Show</p>
