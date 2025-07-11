@@ -515,7 +515,7 @@ export default function PayoutsAdminPage() {
                               "dark:border-zinc-700 dark:text-white",
                               payoutError ? "border-red-500" : "border-gray-300"
                             )}
-                            placeholder="0xabcdefghijklmnopqrstuvwxyz"
+                            placeholder="Enter payout address"
                             value={
                               editedFields[fieldId]?.hasOwnProperty(
                                 "payoutAddress"
