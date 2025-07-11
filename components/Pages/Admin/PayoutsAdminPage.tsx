@@ -27,6 +27,11 @@ import { cn } from "@/utilities/tailwind";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import TablePagination from "@/components/Utilities/TablePagination";
 import { ProgramFilter } from "@/components/Pages/Communities/Impact/ProgramFilter";
+import {
+  PayoutsCsvUpload,
+  CsvPayoutData,
+  CsvParseResult,
+} from "./PayoutsCsvUpload";
 
 // Component-specific types
 interface EditableFields {
@@ -63,7 +68,7 @@ export default function PayoutsAdminPage() {
 
   // Get values from URL params or use defaults
   const selectedProgramId = searchParams.get("programId");
-  const itemsPerPage = Number(searchParams.get("limit")) || 20;
+  const itemsPerPage = Number(searchParams.get("limit")) || 200;
   const currentPage = Number(searchParams.get("page")) || 1;
 
   // Create URLSearchParams utility function
@@ -221,6 +226,60 @@ export default function PayoutsAdminPage() {
     return true;
   };
 
+  // State to store last CSV result for display
+  const [lastCsvResult, setLastCsvResult] = useState<{
+    unmatchedProjects: string[];
+  } | null>(null);
+
+  // Handle CSV data
+  const handleCsvData = useCallback(
+    (parseResult: CsvParseResult) => {
+      const unmatchedProjects: string[] = [];
+      let matchedCount = 0;
+
+      // Clear previous results when new CSV is uploaded
+      setLastCsvResult(null);
+
+      // Use functional state update to avoid stale closure issues
+      setEditedFields((prevEditedFields) => {
+        const newEditedFields = { ...prevEditedFields };
+
+        parseResult.data.forEach((csvRow) => {
+          // Find matching project in table data
+          const matchingProject = tableData.find(
+            (item) => item.projectSlug === csvRow.projectSlug
+          );
+
+          if (matchingProject) {
+            matchedCount++;
+            newEditedFields[matchingProject.uid] = {
+              ...newEditedFields[matchingProject.uid],
+              payoutAddress: csvRow.payoutAddress,
+              amount: csvRow.amount,
+            };
+          } else {
+            unmatchedProjects.push(csvRow.projectSlug);
+          }
+        });
+
+        return newEditedFields;
+      });
+
+      // Store unmatched projects for display
+      setLastCsvResult({ unmatchedProjects });
+
+      // Show feedback about matches
+      if (matchedCount > 0) {
+        toast.success(`Matched ${matchedCount} projects`);
+      }
+
+      if (unmatchedProjects.length > 0) {
+        console.warn("Unmatched projects:", unmatchedProjects);
+      }
+    },
+    [tableData]
+  );
+
   // Handle save
   const handleSave = async () => {
     // Clear all errors
@@ -235,8 +294,12 @@ export default function PayoutsAdminPage() {
       if (!item) return;
 
       // Validate fields
-      if (fields.payoutAddress) {
-        if (!validateField(uid, "payoutAddress", fields.payoutAddress)) {
+      if (fields.hasOwnProperty("payoutAddress")) {
+        // Allow empty string to clear the field
+        if (
+          fields.payoutAddress &&
+          !validateField(uid, "payoutAddress", fields.payoutAddress)
+        ) {
           hasValidationError = true;
           return;
         }
@@ -249,8 +312,9 @@ export default function PayoutsAdminPage() {
         });
       }
 
-      if (fields.amount) {
-        if (!validateField(uid, "amount", fields.amount)) {
+      if (fields.hasOwnProperty("amount")) {
+        // Allow empty string to clear the field
+        if (fields.amount && !validateField(uid, "amount", fields.amount)) {
           hasValidationError = true;
           return;
         }
@@ -371,6 +435,14 @@ export default function PayoutsAdminPage() {
         </div>
 
         <div className="px-4">
+          <PayoutsCsvUpload
+            onDataParsed={handleCsvData}
+            disabled={isSaving}
+            unmatchedProjects={lastCsvResult?.unmatchedProjects}
+          />
+        </div>
+
+        <div className="px-4">
           <div className="flex flex-col justify-center w-full max-w-full overflow-x-auto rounded-md border">
             <table className="pt-3 min-w-full divide-y dark:bg-zinc-900 divide-gray-300 dark:divide-zinc-800 dark:text-white">
               <thead>
@@ -445,9 +517,11 @@ export default function PayoutsAdminPage() {
                             )}
                             placeholder="0xabcdefghijklmnopqrstuvwxyz"
                             value={
-                              editedFields[fieldId]?.payoutAddress ||
-                              item.currentPayoutAddress ||
-                              ""
+                              editedFields[fieldId]?.hasOwnProperty(
+                                "payoutAddress"
+                              )
+                                ? editedFields[fieldId].payoutAddress
+                                : item.currentPayoutAddress || ""
                             }
                             onChange={(e) =>
                               handleFieldChange(
@@ -477,9 +551,9 @@ export default function PayoutsAdminPage() {
                             )}
                             placeholder="0"
                             value={
-                              editedFields[fieldId]?.amount ||
-                              item.currentAmount ||
-                              ""
+                              editedFields[fieldId]?.hasOwnProperty("amount")
+                                ? editedFields[fieldId].amount
+                                : item.currentAmount || ""
                             }
                             onChange={(e) =>
                               handleFieldChange(
