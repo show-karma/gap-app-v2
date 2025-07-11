@@ -1,6 +1,6 @@
 import { errorManager } from "@/components/Utilities/errorManager";
 import { reduceText } from "@/utilities/reduceText";
-import { getGrants } from "@/utilities/sdk/communities/getGrants";
+import { getGrants, GrantsFilter } from "@/utilities/sdk/communities/getGrants";
 import { useQuery } from "@tanstack/react-query";
 import { Hex } from "viem";
 
@@ -10,20 +10,42 @@ export type SimplifiedGrant = {
   description: string;
   createdOn: string;
   categories: string[];
+  grantChainId: number;
   uid: string;
   projectUid: string;
   projectSlug: string;
+  projectChainId: number;
   programId: string;
+  payoutAddress?: string;
+  payoutAmount?: string;
 };
 
-export const useGrants = (communityId: string) => {
-  return useQuery<SimplifiedGrant[]>({
-    queryKey: ["all-grants", communityId],
+interface UseGrantsOptions {
+  filter?: GrantsFilter;
+  paginationOps?: {
+    page: number;
+    pageLimit: number;
+  };
+  sortBy?: string;
+}
+
+interface UseGrantsResult {
+  grants: SimplifiedGrant[];
+  totalItems: number;
+}
+
+export const useGrants = (communityId: string, options?: UseGrantsOptions) => {
+  return useQuery<UseGrantsResult>({
+    queryKey: ["all-grants", communityId, options?.filter, options?.paginationOps, options?.sortBy],
     queryFn: async () => {
       try {
-        const { grants: fetchedGrants } = await getGrants(communityId as Hex);
+        const { grants: fetchedGrants, pageInfo } = await getGrants(
+          communityId as Hex,
+          { ...options?.filter, sortBy: options?.sortBy as any },
+          options?.paginationOps
+        );
         if (fetchedGrants) {
-          return fetchedGrants.map((grant: any) => ({
+          const grants = fetchedGrants.map((grant) => ({
             grant: grant.details?.data?.title || grant.uid || "",
             project: grant.project?.details?.data?.title || "",
             description: reduceText(grant.details?.data?.description || ""),
@@ -31,16 +53,25 @@ export const useGrants = (communityId: string) => {
             uid: grant.uid,
             projectUid: grant.project?.uid || "",
             projectSlug: grant.project?.details?.data?.slug || "",
-            createdOn: grant.createdOn || "",
+            createdOn: grant.createdAt || "",
             programId: grant.details?.data?.programId || "",
+            chainId: grant.chainID,
+            payoutAddress: grant.project?.payoutAddress,
+            payoutAmount: grant.amount,
+            grantChainId: grant.chainID,
+            projectChainId: grant.project?.chainID,
           }));
+          return {
+            grants,
+            totalItems: pageInfo?.totalItems || 0,
+          };
         }
-        return [];
+        return { grants: [], totalItems: 0 };
       } catch (error: any) {
         errorManager(`Error fetching grants of ${communityId}`, error, {
           communityUID: communityId,
         });
-        return [];
+        return { grants: [], totalItems: 0 };
       }
     },
     enabled: !!communityId && communityId !== "0x0",

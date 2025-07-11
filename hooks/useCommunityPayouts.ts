@@ -6,7 +6,7 @@ import { INDEXER } from "@/utilities/indexer";
 import toast from "react-hot-toast";
 
 // Types based on backend implementation
-interface AttestationBatchUpdateItem {
+export interface AttestationBatchUpdateItem {
   uid: string;
   chainId: number;
   type: "Project" | "Grant";
@@ -14,7 +14,7 @@ interface AttestationBatchUpdateItem {
   amount?: string; // Only for Grant type
 }
 
-interface BatchUpdateResponse {
+export interface BatchUpdateResponse {
   success: string[];
   failed: Array<{
     uid: string;

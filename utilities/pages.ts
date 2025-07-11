@@ -27,6 +27,7 @@ export const PAGES = {
     COMMUNITIES: `/admin/communities`,
     COMMUNITY_STATS: `/admin/communities/stats`,
     PROJECTS: `/admin/projects`,
+    PAYOUTS: (community: string) => `/community/${community}/admin/payouts`,
   },
   PROJECT: {
     OVERVIEW: (project: string) => `/project/${project}`,

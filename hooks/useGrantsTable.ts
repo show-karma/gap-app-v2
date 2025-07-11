@@ -45,9 +45,10 @@ export const useGrantsTable = ({
     },
     [searchParams]
   );
+  console.log(grants);
   const uniquePrograms = useMemo(() => {
     const programsSet = new Set();
-    const programs = grants.reduce((acc, grant) => {
+    const programs = grants?.reduce((acc, grant) => {
       const key = grant.programId;
       if (!programsSet.has(key)) {
         if (key) {
@@ -139,7 +140,6 @@ export const useGrantsTable = ({
       field: sortField || undefined,
       direction: sortDirection || undefined,
     },
-
     handlePageChange,
     handleProgramChange,
     handleSortChange,
