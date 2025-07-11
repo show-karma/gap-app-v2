@@ -4,7 +4,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useCategories } from "@/hooks/useCategories";
 import { useCommunityDetails } from "@/hooks/useCommunityDetails";
-import { useGrants } from "@/hooks/useGrants";
+import { SimplifiedGrant, useGrants } from "@/hooks/useGrants";
 import { useGrantsTable } from "@/hooks/useGrantsTable";
 import { useAuthStore } from "@/store/auth";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
@@ -66,7 +66,7 @@ export default function EditCategoriesPage() {
 
   // Fetch grants data
   const {
-    data: grants = [],
+    data,
     isLoading: isLoadingGrants,
     refetch: refreshGrants,
   } = useGrants(communityId);
@@ -83,7 +83,7 @@ export default function EditCategoriesPage() {
     handleProgramChange,
     handleSortChange,
   } = useGrantsTable({
-    grants,
+    grants: (data?.grants as SimplifiedGrant[]) || [],
     itemsPerPage: 12,
   });
 
