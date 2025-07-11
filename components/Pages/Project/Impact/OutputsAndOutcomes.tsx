@@ -24,6 +24,9 @@ import { GroupedLinks } from "./GroupedLinks";
 // Helper function to handle comma-separated URLs
 const parseProofUrls = (proof: string): string[] => {
   if (!proof) return [];
+  if (proof.includes("dune.com")) {
+    return [proof];
+  }
   // Split by comma and trim whitespace
   return proof
     .split(",")
