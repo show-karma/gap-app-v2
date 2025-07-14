@@ -130,6 +130,19 @@ export default function PayoutsAdminPage() {
     const grantsArray: PayoutsTableData[] = [];
 
     grants.forEach((grant) => {
+      // Extract payout address for this community from the project's payoutAddress dictionary
+      // Note: grant.payoutAddress is actually the project's payoutAddress extracted by useGrants hook
+      let currentPayoutAddress = "";
+      if (grant.payoutAddress) {
+        if (typeof grant.payoutAddress === 'string') {
+          // Backward compatibility: if it's still a string, use it directly
+          currentPayoutAddress = grant.payoutAddress;
+        } else if (typeof grant.payoutAddress === 'object' && community?.uid) {
+          // New structure: extract address for this specific community
+          currentPayoutAddress = grant.payoutAddress[community.uid] || "";
+        }
+      }
+
       grantsArray.push({
         uid: grant.uid,
         projectUid: grant.projectUid,
@@ -139,13 +152,13 @@ export default function PayoutsAdminPage() {
         grantProgramId: grant.programId,
         grantChainId: grant.grantChainId,
         projectChainId: grant.projectChainId,
-        currentPayoutAddress: grant.payoutAddress || "",
+        currentPayoutAddress: currentPayoutAddress,
         currentAmount: grant.payoutAmount || "",
       });
     });
 
     return grantsArray;
-  }, [grants]);
+  }, [grants, community?.uid]);
 
   // Since we're now using backend pagination, we don't need to filter or paginate client-side
   const paginatedData = tableData;
