@@ -5,7 +5,7 @@ import { PAGES } from "@/utilities/pages";
 import Link from "next/link";
 
 const bannerLink =
-  "https://farcaster.xyz/miniapps/fEVg6B21KEJN/karma-celo-community";
+  "https://www.notion.so/Job-Board-15b0525cb96480fd98a5c1f4f31ee792";
 
 export function NewFeatureBanner() {
   return (
@@ -15,14 +15,14 @@ export function NewFeatureBanner() {
           <MegaphoneIcon />
           <div className="flex flex-row gap-1">
             <p className="text-sm font-semibold text-[#080a0e] max-md:text-xs">
-              We launched Farcaster miniapp for Celo ecosystem.
+              We are hiring!
             </p>{" "}
-            <Link
+            {/* <Link
               href={bannerLink}
               className="text-sm font-semibold text-blue-600 max-md:text-xs underline"
             >
-              Explore projects on Farcaster and tip them!
-            </Link>
+              Check out our open positions!
+            </Link> */}
             {/* <p>
                               Visibility and accountability for community funded and public
                               goods projects.
