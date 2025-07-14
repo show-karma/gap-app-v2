@@ -15,14 +15,15 @@ export function NewFeatureBanner() {
           <MegaphoneIcon />
           <div className="flex flex-row gap-1">
             <p className="text-sm font-semibold text-[#080a0e] max-md:text-xs">
-              We are hiring!
+              Are you a dev interested in working on challenging funding
+              infrastructure?
             </p>{" "}
-            {/* <Link
+            <Link
               href={bannerLink}
               className="text-sm font-semibold text-blue-600 max-md:text-xs underline"
             >
-              Check out our open positions!
-            </Link> */}
+              {`We're hiring!`}
+            </Link>
             {/* <p>
                               Visibility and accountability for community funded and public
                               goods projects.
