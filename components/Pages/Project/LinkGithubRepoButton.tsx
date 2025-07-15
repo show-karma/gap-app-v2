@@ -66,6 +66,7 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
   const [validatedRepos, setValidatedRepos] = useState<Record<number, boolean>>(
     {}
   );
+  const { refreshProject } = useProjectStore();
 
   // Auto open the dialog if buttonElement is null
   useEffect(() => {
@@ -271,6 +272,7 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
           setIsOpen(false);
           onClose();
         }
+        refreshProject();
       }
 
       if (error) {

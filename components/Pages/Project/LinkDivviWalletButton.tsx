@@ -47,6 +47,7 @@ export const LinkDivviWalletButton: FC<LinkDivviWalletButtonProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const { refreshProject } = useProjectStore();
 
   useEffect(() => {
     if (project?.external?.divvi_wallets?.length) {
@@ -71,7 +72,7 @@ export const LinkDivviWalletButton: FC<LinkDivviWalletButtonProps> = ({
   const validateWalletAddress = useCallback((address: string): boolean => {
     if (!address) return true; // Empty is valid (for removing a wallet)
 
-    if (!ETH_ADDRESS_REGEX.test(address)) {
+    if (!ETH_ADDRESS_REGEX.test(address.trim())) {
       setValidationError(
         "Please enter a valid Ethereum wallet address (0x followed by 40 hexadecimal characters)"
       );
@@ -115,6 +116,7 @@ export const LinkDivviWalletButton: FC<LinkDivviWalletButtonProps> = ({
           setIsOpen(false);
           onClose();
         }
+        refreshProject();
       }
 
       if (error) {
