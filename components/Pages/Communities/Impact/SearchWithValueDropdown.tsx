@@ -129,6 +129,11 @@ export const SearchWithValueDropdown: FC<SearchWithValueDropdownProps> = ({
             </CommandEmpty>
 
             <CommandGroup>
+              {customAddButton && (
+                <div className="px-4 py-2 border-b border-gray-200 dark:border-zinc-700">
+                  {customAddButton}
+                </div>
+              )}
               {cleanFunction ? (
                 <CommandItem>
                   <div
@@ -186,11 +191,6 @@ export const SearchWithValueDropdown: FC<SearchWithValueDropdownProps> = ({
                   </div>
                 </CommandItem>
               ))}
-              {customAddButton && (
-                <div className="px-4 py-2 border-t border-gray-200 dark:border-zinc-700">
-                  {customAddButton}
-                </div>
-              )}
             </CommandGroup>
           </Command>
 

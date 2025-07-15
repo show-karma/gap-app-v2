@@ -113,6 +113,7 @@ export const INDEXER = {
   INDICATORS: {
     CREATE_OR_UPDATE: () => `/indicators`,
     DELETE: (indicatorId: string) => `/indicators/${indicatorId}`,
+    UNLINKED: () => `/indicators/unlinked`,
   },
   COMMUNITY: {
     GET: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}`,
