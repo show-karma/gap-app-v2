@@ -196,9 +196,9 @@ const CategorizedIndicatorDropdown: FC<{
     (ind) => ind.source === "unlinked"
   );
 
-  // Create flat list with community indicators from selected communities and unlinked indicators
+  // Create flat list with community indicators first, then unlinked indicators
   const dropdownList = [
-    // Community indicators from selected communities
+    // Community indicators from selected communities (shown first)
     ...communityIndicators.map((indicator) => {
       const communityName = indicator.communityName || "Community";
       return {
@@ -206,7 +206,7 @@ const CategorizedIndicatorDropdown: FC<{
         title: `${indicator.name} [${communityName}]`,
       };
     }),
-    // Unlinked indicators
+    // Unlinked indicators (shown after community indicators)
     ...unlinkedIndicators.map((indicator) => ({
       value: indicator.id,
       title: `${indicator.name} [Global]`,
@@ -226,6 +226,7 @@ const CategorizedIndicatorDropdown: FC<{
       type="indicator"
       prefixUnselected="Select"
       buttonClassname="w-full"
+      shouldSort={false}
       customAddButton={
         <Button
           type="button"
