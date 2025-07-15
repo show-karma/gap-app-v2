@@ -3,7 +3,7 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { FC, Fragment, useEffect, useState } from "react";
 
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import { useProjectStore } from "@/store";
 import { useContributorProfile } from "@/hooks/useContributorProfile";
 import toast from "react-hot-toast";
@@ -11,9 +11,9 @@ import { useAccount } from "wagmi";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useAuthStore } from "@/store/auth";
-import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
-import { useStepper } from "@/store/modals/txStepper";
+import { useAuthStore } from "@/features/auth/store";
+import { useContributorProfileModalStore } from "@/features/modals/store/contributorProfile";
+import { useStepper } from "@/features/modals/store/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { cn } from "@/utilities/tailwind";

@@ -6,7 +6,7 @@ import {
   EllipsisVerticalIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import { cn } from "@/utilities/tailwind";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { useMilestone } from "@/hooks/useMilestone";

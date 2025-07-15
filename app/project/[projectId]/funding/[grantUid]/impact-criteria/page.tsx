@@ -1,4 +1,4 @@
-import { GrantImpactCriteria } from "@/components/Pages/Grants/ImpactCriteria";
+import { GrantImpactCriteria } from "@/features/grants/components/ImpactCriteria";
 import { zeroUID } from "@/utilities/commons";
 import { envVars } from "@/utilities/enviromentVars";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";

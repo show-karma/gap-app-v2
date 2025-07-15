@@ -5,10 +5,10 @@ import { MyProgramList } from "@/components/Pages/ProgramRegistry/MyProgramList"
 import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
 import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
-import { Button } from "@/components/Utilities/Button";
-import Pagination from "@/components/Utilities/Pagination";
-import { useAuthStore } from "@/store/auth";
-import { useStepper } from "@/store/modals/txStepper";
+import { Button } from "@/components/ui/Button";
+import Pagination from "@/components/ui/Pagination";
+import { useAuthStore } from "@/features/auth/store";
+import { useStepper } from "@/features/modals/store/txStepper";
 import { useRegistryStore } from "@/store/registry";
 import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
 import { useSigner } from "@/utilities/eas-wagmi-utils";

@@ -2,14 +2,14 @@
 import { FC, Fragment, ReactNode, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { PlusIcon } from "@heroicons/react/24/solid";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import { z } from "zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
 import fetchData from "@/utilities/fetchData";
 import { useParams } from "next/navigation";
-import { useAuthStore } from "@/store/auth";
+import { useAuthStore } from "@/features/auth/store";
 import { useAuth } from "@/hooks/useAuth";
 import { INDEXER } from "@/utilities/indexer";
 

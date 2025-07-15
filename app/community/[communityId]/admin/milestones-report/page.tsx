@@ -2,7 +2,7 @@ import { defaultMetadata } from "@/utilities/meta";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { notFound } from "next/navigation";
 import { zeroUID } from "@/utilities/commons";
-import { ReportMilestonePage } from "@/components/Pages/Admin/ReportMilestonePage";
+import { ReportMilestonePage } from "@/features/admin/components/ReportMilestonePage";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { errorManager } from "@/components/Utilities/errorManager";

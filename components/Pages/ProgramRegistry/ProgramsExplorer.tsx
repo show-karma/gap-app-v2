@@ -7,7 +7,7 @@ import {
   ProgramList,
 } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
-import Pagination from "@/components/Utilities/Pagination";
+import Pagination from "@/components/ui/Pagination";
 import { useRegistryStore } from "@/store/registry";
 import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
 import fetchData from "@/utilities/fetchData";

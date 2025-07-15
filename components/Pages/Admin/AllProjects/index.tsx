@@ -1,10 +1,10 @@
 "use client";
 import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
 import { errorManager } from "@/components/Utilities/errorManager";
-import Pagination from "@/components/Utilities/Pagination";
+import Pagination from "@/components/ui/Pagination";
 import { useOwnerStore } from "@/store";
 import { PageInfo } from "@/types/pagination";
-import { ProjectReport } from "@/types/project";
+import { ProjectReport } from "@/features/projects/types";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
@@ -16,10 +16,10 @@ import { useState } from "react";
 import { ProjectDescriptionDialog } from "./Dialog";
 import { ProjectContacts } from "./Contacts";
 import { AllProjectsLoadingTable } from "./Loading";
-import { useAuthStore } from "@/store/auth";
+import { useAuthStore } from "@/features/auth/store";
 import { PAGES } from "@/utilities/pages";
 import Link from "next/link";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { ExternalLink } from "@/components/ui/ExternalLink";
 
 const getAllProjects = async (
   offset: number,

@@ -1,8 +1,8 @@
 "use client";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { Spinner } from "@/components/Utilities/Spinner";
+import { ExternalLink } from "@/components/ui/ExternalLink";
+import { Spinner } from "@/components/ui/Spinner";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { zodResolver } from "@hookform/resolvers/zod";

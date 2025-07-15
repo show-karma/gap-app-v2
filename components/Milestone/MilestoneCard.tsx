@@ -23,7 +23,7 @@ const ProjectObjectiveCompletion = dynamic(
 
 const ObjectiveOptionsMenu = dynamic(
   () =>
-    import("@/components/Pages/Project/Objective/Options").then(
+    import("@/features/projects/components/Objective/Options").then(
       (mod) => mod.ObjectiveOptionsMenu
     ),
   {

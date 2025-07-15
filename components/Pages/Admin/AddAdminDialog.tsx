@@ -16,7 +16,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { cn } from "@/utilities/tailwind";
 
-import { useStepper } from "@/store/modals/txStepper";
+import { useStepper } from "@/features/modals/store/txStepper";
 import toast from "react-hot-toast";
 import { config } from "@/utilities/wagmi/config";
 import fetchData from "@/utilities/fetchData";

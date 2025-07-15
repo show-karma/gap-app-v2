@@ -2,7 +2,7 @@
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { useState, useEffect } from "react";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
 import { Card, LineChart, Title } from "@tremor/react";
 import { errorManager } from "@/components/Utilities/errorManager";

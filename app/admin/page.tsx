@@ -2,7 +2,7 @@
 import { defaultMetadata } from "@/utilities/meta";
 import { CommunitiesToAdmin } from "@/components/Pages/Admin";
 import { Suspense } from "react";
-import { Spinner } from "@/components/Utilities/Spinner";
+import { Spinner } from "@/components/ui/Spinner";
 
 export const metadata = defaultMetadata;
 

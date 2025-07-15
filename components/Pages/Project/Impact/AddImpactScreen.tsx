@@ -1,10 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
+import { useStepper } from "@/features/modals/store/txStepper";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
@@ -28,7 +28,7 @@ import toast from "react-hot-toast";
 import { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { z } from "zod";
-import { DatePicker } from "@/components/Utilities/DatePicker";
+import { DatePicker } from "@/components/ui/DatePicker";
 import { useWallet } from "@/hooks/useWallet";
 
 const updateSchema = z.object({

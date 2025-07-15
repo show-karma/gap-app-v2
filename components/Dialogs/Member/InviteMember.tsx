@@ -1,13 +1,13 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import { useProjectStore } from "@/store";
 import { Dialog, Transition } from "@headlessui/react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { FC, Fragment, useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 
-import { Spinner } from "@/components/Utilities/Spinner";
+import { Spinner } from "@/components/ui/Spinner";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useInviteLink, useInviteUrl } from "@/hooks/useInviteLink";
 import {

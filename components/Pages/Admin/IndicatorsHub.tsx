@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useIndicators } from "@/hooks/useIndicators";
 import fetchData from "@/utilities/fetchData";

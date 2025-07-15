@@ -1,6 +1,6 @@
 "use client";
-import { Button } from "@/components/Utilities/Button";
-import { Spinner } from "@/components/Utilities/Spinner";
+import { Button } from "@/components/ui/Button";
+import { Spinner } from "@/components/ui/Spinner";
 import { zeroUID } from "@/utilities/commons";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
@@ -22,11 +22,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 import { Disclosure } from "@headlessui/react";
 
-import { IndicatorsHub } from "@/components/Pages/Admin/IndicatorsHub";
-import { ManageCategoriesOutputs } from "@/components/Pages/Admin/ManageCategoriesOutputs";
+import { IndicatorsHub } from "@/features/admin/components/IndicatorsHub";
+import { ManageCategoriesOutputs } from "@/features/admin/components/ManageCategoriesOutputs";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { useAuthStore } from "@/store/auth";
-import { Category, ImpactSegment } from "@/types/impactMeasurement";
+import { useAuthStore } from "@/features/auth/store";
+import { Category, ImpactSegment } from "@/features/impact/typesMeasurement";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { cn } from "@/utilities/tailwind";

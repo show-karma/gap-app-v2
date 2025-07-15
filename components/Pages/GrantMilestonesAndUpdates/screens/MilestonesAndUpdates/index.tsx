@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { useOwnerStore, useProjectStore } from "@/store";
 // import { MilestonesList } from "./MilestonesList";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
+import { useCommunityAdminStore } from "@/features/communities/storeAdmin";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -14,7 +14,7 @@ import {
 import Link from "next/link";
 
 import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
-import { useGrantStore } from "@/store/grant";
+import { useGrantStore } from "@/features/grants/store";
 import dynamic from "next/dynamic";
 
 const MilestonesList = dynamic(

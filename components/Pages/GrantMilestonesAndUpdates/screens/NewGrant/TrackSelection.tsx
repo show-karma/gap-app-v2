@@ -2,7 +2,7 @@ import React from "react";
 import { CheckIcon } from "@heroicons/react/24/solid";
 import { cn } from "@/utilities/tailwind/index";
 import { useTracksForProgram } from "@/hooks/useTracks";
-import { Spinner } from "@/components/Utilities/Spinner";
+import { Spinner } from "@/components/ui/Spinner";
 import { Track } from "@/services/tracks";
 
 interface TrackSelectionProps {

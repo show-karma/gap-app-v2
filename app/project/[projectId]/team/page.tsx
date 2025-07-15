@@ -6,7 +6,7 @@ import { zeroUID } from "@/utilities/commons";
 import { defaultMetadata } from "@/utilities/meta";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { envVars } from "@/utilities/enviromentVars";
-import { Team } from "@/components/Pages/Project/Team";
+import { Team } from "@/features/projects/components/Team";
 import { notFound } from "next/navigation";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
 

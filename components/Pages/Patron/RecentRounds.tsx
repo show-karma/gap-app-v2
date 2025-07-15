@@ -1,4 +1,4 @@
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { ExternalLink } from "@/components/ui/ExternalLink";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import * as Accordion from "@radix-ui/react-accordion";
 import "./styles.css";

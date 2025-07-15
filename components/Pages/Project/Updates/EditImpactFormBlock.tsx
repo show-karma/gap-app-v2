@@ -1,11 +1,11 @@
-import { Button } from "@/components/Utilities/Button";
-import { DatePicker } from "@/components/Utilities/DatePicker";
+import { Button } from "@/components/ui/Button";
+import { DatePicker } from "@/components/ui/DatePicker";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
+import { useStepper } from "@/features/modals/store/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";

@@ -1,8 +1,8 @@
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
-import { useStepper } from "@/store/modals/txStepper";
+import { useCommunityAdminStore } from "@/features/communities/storeAdmin";
+import { useStepper } from "@/features/modals/store/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
@@ -23,7 +23,7 @@ import { VerifiedBadge } from "./VerifiedBadge";
 import { VerifyGrantUpdateDialog } from "./VerifyGrantUpdateDialog";
 
 import { errorManager } from "@/components/Utilities/errorManager";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { ExternalLink } from "@/components/ui/ExternalLink";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";

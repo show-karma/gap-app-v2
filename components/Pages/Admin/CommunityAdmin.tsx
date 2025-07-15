@@ -2,9 +2,9 @@
 "use client";
 import CommunityStats from "@/components/CommunityStats";
 import { CommunityDialog } from "@/components/Dialogs/CommunityDialog";
-import { AddAdmin } from "@/components/Pages/Admin/AddAdminDialog";
-import { RemoveAdmin } from "@/components/Pages/Admin/RemoveAdminDialog";
-import { Spinner } from "@/components/Utilities/Spinner";
+import { AddAdmin } from "@/features/admin/components/AddAdminDialog";
+import { RemoveAdmin } from "@/features/admin/components/RemoveAdminDialog";
+import { Spinner } from "@/components/ui/Spinner";
 import { useGap } from "@/hooks/useGap";
 import { useStaff } from "@/hooks/useStaff";
 import { useOwnerStore } from "@/store";

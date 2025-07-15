@@ -1,5 +1,5 @@
 "use client";
-import { useGrantStore } from "@/store/grant";
+import { useGrantStore } from "@/features/grants/store";
 import dynamic from "next/dynamic";
 import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
 import Link from "next/link";

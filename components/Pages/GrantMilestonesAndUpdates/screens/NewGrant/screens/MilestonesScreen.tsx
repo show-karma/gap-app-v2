@@ -1,14 +1,14 @@
 import { StepBlock } from "../StepBlock";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import { useGrantFormStore } from "../store";
 import { usePathname, useRouter } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
 import { useProjectStore } from "@/store";
 import { Milestone } from "../Milestone";
 import { PlusIcon } from "@heroicons/react/24/outline";
-import { useAuthStore } from "@/store/auth";
+import { useAuthStore } from "@/features/auth/store";
 import { useAccount } from "wagmi";
-import { useStepper } from "@/store/modals/txStepper";
+import { useStepper } from "@/features/modals/store/txStepper";
 import toast from "react-hot-toast";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useGap } from "@/hooks/useGap";

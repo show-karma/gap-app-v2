@@ -1,10 +1,10 @@
 "use client";
 
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { ExternalLink } from "@/components/ui/ExternalLink";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
+import { useCommunityAdminStore } from "@/features/communities/storeAdmin";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";

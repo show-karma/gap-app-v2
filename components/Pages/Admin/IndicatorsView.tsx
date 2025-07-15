@@ -1,9 +1,9 @@
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import {
   Category,
   ImpactIndicator,
   ImpactIndicatorWithData,
-} from "@/types/impactMeasurement";
+} from "@/features/impact/typesMeasurement";
 import {
   TrashIcon,
   PlusIcon,
@@ -14,7 +14,7 @@ import Image from "next/image";
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { IndicatorForm } from "@/components/Forms/IndicatorForm";
-import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
+import { autosyncedIndicators } from "@/features/admin/components/IndicatorsHub";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import toast from "react-hot-toast";
 import fetchData from "@/utilities/fetchData";

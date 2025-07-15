@@ -1,9 +1,9 @@
 "use client";
 
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
-import { ImpactIndicatorWithData } from "@/types/impactMeasurement";
+import { useCommunityAdminStore } from "@/features/communities/storeAdmin";
+import { ImpactIndicatorWithData } from "@/features/impact/typesMeasurement";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
@@ -17,8 +17,8 @@ import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { prepareChartData } from "../../Communities/Impact/ImpactCharts";
 import { GrantsOutputsLoading } from "../Loading/Grants/Outputs";
-import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
-import { useImpactAnswers } from "@/hooks/useImpactAnswers";
+import { autosyncedIndicators } from "@/features/admin/components/IndicatorsHub";
+import { useImpactAnswers } from "@/features/impact/hooks/useImpactAnswers";
 import { GroupedLinks } from "./GroupedLinks";
 
 // Helper function to handle comma-separated URLs

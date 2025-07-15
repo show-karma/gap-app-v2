@@ -1,6 +1,6 @@
 "use client";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { useAuthStore } from "@/store/auth";
+import { Spinner } from "@/components/ui/Spinner";
+import { useAuthStore } from "@/features/auth/store";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 
 import { errorManager } from "@/components/Utilities/errorManager";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import {
   ChevronRightIcon,
   Square2StackIcon,
@@ -19,7 +19,7 @@ import {
   TagIcon,
   BanknotesIcon,
 } from "@heroicons/react/24/outline";
-import { Skeleton } from "@/components/Utilities/Skeleton";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { cn } from "@/utilities/tailwind";
 
 interface AdminButtonProps {

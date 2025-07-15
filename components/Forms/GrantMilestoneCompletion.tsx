@@ -1,6 +1,6 @@
 "use client";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -11,7 +11,7 @@ import { useGap, getGapClient } from "@/hooks/useGap";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { useStepper } from "@/store/modals/txStepper";
+import { useStepper } from "@/features/modals/store/txStepper";
 import { useProjectStore } from "@/store";
 import toast from "react-hot-toast";
 import { MESSAGES } from "@/utilities/messages";

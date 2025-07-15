@@ -11,7 +11,7 @@ import { SearchGrantProgram } from "../index";
 import { CancelButton } from "./buttons/CancelButton";
 import { NextButton } from "./buttons/NextButton";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
-import { useGrant } from "@/hooks/useGrant";
+import { useGrant } from "@/features/grants/hooks/useGrant";
 
 export const CommunitySelectionScreen: React.FC = () => {
   const {

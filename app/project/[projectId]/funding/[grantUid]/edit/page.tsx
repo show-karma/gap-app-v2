@@ -1,6 +1,6 @@
 "use client";
 import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
-import { useGrantStore } from "@/store/grant";
+import { useGrantStore } from "@/features/grants/store";
 import dynamic from "next/dynamic";
 
 const NewGrant = dynamic(

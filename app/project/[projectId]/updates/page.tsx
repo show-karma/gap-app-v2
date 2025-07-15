@@ -1,4 +1,4 @@
-import { ProjectRoadmap } from "@/components/Pages/Project/Roadmap";
+import { ProjectRoadmap } from "@/features/projects/components/Roadmap";
 import { envVars } from "@/utilities/enviromentVars";
 import { getAllMilestones } from "@/utilities/gapIndexerApi/getAllMilestones";
 import { defaultMetadata } from "@/utilities/meta";

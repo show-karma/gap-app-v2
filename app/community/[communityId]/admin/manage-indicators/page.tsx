@@ -1,4 +1,4 @@
-import ManageIndicatorsPage from "@/components/Pages/Admin/ManageIndicatorsPage";
+import ManageIndicatorsPage from "@/features/admin/components/ManageIndicatorsPage";
 
 export default function Page() {
   return <ManageIndicatorsPage />;

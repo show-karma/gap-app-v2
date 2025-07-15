@@ -2,7 +2,7 @@
 import {
   ProgressModalScreen,
   useProgressModalStore,
-} from "@/store/modals/progress";
+} from "@/features/modals/store/progress";
 import {
   ArrowLeftCircleIcon,
   ArrowLeftIcon,

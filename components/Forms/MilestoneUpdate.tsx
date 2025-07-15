@@ -1,11 +1,11 @@
 "use client";
 
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
-import { useStepper } from "@/store/modals/txStepper";
+import { useCommunityAdminStore } from "@/features/communities/storeAdmin";
+import { useStepper } from "@/features/modals/store/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
@@ -32,7 +32,7 @@ import { z } from "zod";
 import { errorManager } from "../Utilities/errorManager";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { SHARE_TEXTS } from "@/utilities/share/text";
-import { useShareDialogStore } from "@/store/modals/shareDialog";
+import { useShareDialogStore } from "@/features/modals/store/shareDialog";
 import { useWallet } from "@/hooks/useWallet";
 
 interface MilestoneUpdateFormProps {

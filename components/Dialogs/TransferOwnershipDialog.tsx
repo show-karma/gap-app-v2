@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
+import { useStepper } from "@/features/modals/store/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
@@ -15,7 +15,7 @@ import { isAddress } from "viem";
 import { useAccount } from "wagmi";
 import { Button } from "../Utilities/Button";
 
-import { useTransferOwnershipModalStore } from "@/store/modals/transferOwnership";
+import { useTransferOwnershipModalStore } from "@/features/modals/store/transferOwnership";
 import { sanitizeInput } from "@/utilities/sanitize";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { errorManager } from "../Utilities/errorManager";

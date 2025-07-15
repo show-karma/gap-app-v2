@@ -1,14 +1,14 @@
 "use client";
 
-import { Button } from "@/components/Utilities/Button";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { useCommunityDetails } from "@/hooks/useCommunityDetails";
-import { useGrants } from "@/hooks/useGrants";
+import { Button } from "@/components/ui/Button";
+import { Spinner } from "@/components/ui/Spinner";
+import { useCommunityDetails } from "@/features/communities/hooks/useCommunityDetails";
+import { useGrants } from "@/features/grants/hooks/useGrants";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import {
   useBatchUpdatePayouts,
   AttestationBatchUpdateItem,
-} from "@/hooks/useCommunityPayouts";
+} from "@/features/communities/hooks/useCommunityPayouts";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { ChevronLeftIcon } from "@heroicons/react/20/solid";
@@ -24,9 +24,9 @@ import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { isAddress } from "viem";
 import { cn } from "@/utilities/tailwind";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import TablePagination from "@/components/Utilities/TablePagination";
-import { ProgramFilter } from "@/components/Pages/Communities/Impact/ProgramFilter";
+import { ExternalLink } from "@/components/ui/ExternalLink";
+import TablePagination from "@/components/ui/TablePagination";
+import { ProgramFilter } from "@/features/communities/components/Impact/ProgramFilter";
 import {
   PayoutsCsvUpload,
   CsvPayoutData,

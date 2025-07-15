@@ -1,8 +1,8 @@
 "use client";
 
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
+import { useCommunityAdminStore } from "@/features/communities/storeAdmin";
 import { envVars } from "@/utilities/enviromentVars";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";

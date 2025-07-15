@@ -1,10 +1,10 @@
 import { defaultMetadata } from "@/utilities/meta";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { notFound } from "next/navigation";
-import { CommunityAdminPage } from "@/components/Pages/Communities/CommunityAdminPage";
+import { CommunityAdminPage } from "@/features/communities/components/CommunityAdminPage";
 import { zeroUID } from "@/utilities/commons";
 import { Suspense } from "react";
-import { Spinner } from "@/components/Utilities/Spinner";
+import { Spinner } from "@/components/ui/Spinner";
 import { getCommunityData } from "@/utilities/queries/getCommunityData";
 
 export const metadata = defaultMetadata;

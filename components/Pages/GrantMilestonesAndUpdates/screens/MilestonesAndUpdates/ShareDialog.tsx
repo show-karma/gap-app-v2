@@ -2,9 +2,9 @@ import { FC, Fragment, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import JSConfetti from "js-confetti";
-import { Button } from "@/components/Utilities/Button";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { useShareDialogStore } from "@/store/modals/shareDialog";
+import { Button } from "@/components/ui/Button";
+import { ExternalLink } from "@/components/ui/ExternalLink";
+import { useShareDialogStore } from "@/features/modals/store/shareDialog";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { TwitterIcon } from "@/components/Icons";
 

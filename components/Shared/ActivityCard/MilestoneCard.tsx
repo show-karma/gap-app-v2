@@ -14,8 +14,8 @@ import dynamic from "next/dynamic";
 import { cn } from "@/utilities/tailwind";
 import { containerClassName } from "../ActivityCard";
 import { MilestoneVerificationSection } from "@/components/Shared/MilestoneVerification";
-import { Button } from "@/components/Utilities/Button";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { Button } from "@/components/ui/Button";
+import { ExternalLink } from "@/components/ui/ExternalLink";
 import {
   CheckCircleIcon,
   ShareIcon,

@@ -1,6 +1,6 @@
 "use client";
-import { CommunityImpactCharts } from "@/components/Pages/Communities/Impact/ImpactCharts";
-import { CommunityImpactAggregateCharts } from "@/components/Pages/Communities/Impact/ImpactAggregateCharts";
+import { CommunityImpactCharts } from "@/features/communities/components/Impact/ImpactCharts";
+import { CommunityImpactAggregateCharts } from "@/features/communities/components/Impact/ImpactAggregateCharts";
 import { useSearchParams } from "next/navigation";
 
 export default function ImpactPage() {

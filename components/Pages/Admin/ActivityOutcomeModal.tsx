@@ -1,10 +1,10 @@
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import {
   Category,
   ImpactIndicator,
   ImpactSegment,
-} from "@/types/impactMeasurement";
+} from "@/features/impact/typesMeasurement";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { Dialog, Transition } from "@headlessui/react";

@@ -13,7 +13,7 @@ import React from "react";
 
 import { Spinner } from "../Utilities/Spinner";
 import { cn } from "@/utilities/tailwind";
-import { useGrantGenieModalStore } from "@/store/modals/genie";
+import { useGrantGenieModalStore } from "@/features/modals/store/genie";
 type Props = {};
 
 function GrantGenieRecommendations({ projectId }: { projectId: string }) {

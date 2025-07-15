@@ -1,6 +1,6 @@
 import { FC, Fragment, useState, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import { useProjectStore } from "@/store";
 import { useAccount } from "wagmi";
 import fetchData from "@/utilities/fetchData";
@@ -8,7 +8,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { ContributorProfile } from "@show-karma/karma-gap-sdk";
 import { Twitter2Icon } from "@/components/Icons/Twitter2";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { ExternalLink } from "@/components/ui/ExternalLink";
 import { GithubIcon, LinkedInIcon } from "@/components/Icons";
 import { FarcasterIcon } from "@/components/Icons/Farcaster";
 

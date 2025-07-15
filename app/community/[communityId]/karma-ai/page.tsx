@@ -1,4 +1,4 @@
-import { CommunityProjectEvaluatorPage } from "@/components/Pages/Communities/CommunityProjectEvaluatorPage";
+import { CommunityProjectEvaluatorPage } from "@/features/communities/components/CommunityProjectEvaluatorPage";
 import { zeroUID } from "@/utilities/commons";
 import { envVars } from "@/utilities/enviromentVars";
 import fetchData from "@/utilities/fetchData";

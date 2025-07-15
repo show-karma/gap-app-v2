@@ -1,11 +1,11 @@
 "use client";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useProjectStore } from "@/store";
-import { useGrantStore } from "@/store/grant";
-import { useStepper } from "@/store/modals/txStepper";
+import { useGrantStore } from "@/features/grants/store";
+import { useStepper } from "@/features/modals/store/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";

@@ -1,4 +1,4 @@
-import { CommunityPageNavigator } from "@/components/Pages/Communities/CommunityPageNavigator";
+import { CommunityPageNavigator } from "@/features/communities/components/CommunityPageNavigator";
 import { communityColors } from "@/utilities/communityColors";
 import { envVars } from "@/utilities/enviromentVars";
 import { defaultMetadata } from "@/utilities/meta";
@@ -6,7 +6,7 @@ import { pagesOnRoot } from "@/utilities/pagesOnRoot";
 import { getCommunityData } from "@/utilities/queries/getCommunityData";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { Metadata } from "next";
-import { CommunityImpactStatCards } from "@/components/Pages/Communities/Impact/StatCards";
+import { CommunityImpactStatCards } from "@/features/communities/components/Impact/StatCards";
 
 type Params = Promise<{
   communityId: string;

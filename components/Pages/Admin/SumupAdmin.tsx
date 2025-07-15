@@ -5,7 +5,7 @@ import { z } from "zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import axios from "axios";
 import { envVars } from "@/utilities/enviromentVars";
 import { errorManager } from "@/components/Utilities/errorManager";

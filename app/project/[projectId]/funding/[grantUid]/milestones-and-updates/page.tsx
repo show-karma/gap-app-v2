@@ -1,11 +1,11 @@
 import { zeroUID } from "@/utilities/commons";
 import { defaultMetadata } from "@/utilities/meta";
-import MilestonesAndUpdates from "@/components/Pages/Grants/MilestonesAndUpdates";
+import MilestonesAndUpdates from "@/features/grants/components/MilestonesAndUpdates";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { Suspense } from "react";
-import { ProjectGrantsMilestonesAndUpdatesLoading } from "@/components/Pages/Project/Loading/Grants/MilestonesAndUpdate";
+import { ProjectGrantsMilestonesAndUpdatesLoading } from "@/features/projects/components/Loading/Grants/MilestonesAndUpdate";
 import { envVars } from "@/utilities/enviromentVars";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";

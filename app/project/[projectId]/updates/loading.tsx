@@ -1,4 +1,4 @@
-import { ProjectRoadmapLoading } from "@/components/Pages/Project/Loading/Roadmap";
+import { ProjectRoadmapLoading } from "@/features/projects/components/Loading/Roadmap";
 
 export default function Loading() {
   return <ProjectRoadmapLoading />;

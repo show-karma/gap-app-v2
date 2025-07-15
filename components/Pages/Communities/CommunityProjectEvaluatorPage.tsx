@@ -15,12 +15,12 @@ import { cn } from "@/utilities/tailwind";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import { formatDate } from "@/utilities/formatDate";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { ExternalLink } from "@/components/ui/ExternalLink";
 import { PAGES } from "@/utilities/pages";
 import pluralize from "pluralize";
 import { ShareIcon } from "@heroicons/react/24/outline";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
+import { ProfilePicture } from "@/components/ui/ProfilePicture";
 
 const sanitizeMarkdown = (text: string) => {
   return (

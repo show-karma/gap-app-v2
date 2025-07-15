@@ -11,7 +11,7 @@ import {
 import { FC, useEffect, useState } from "react";
 import { ActivityList } from "@/components/Shared/ActivityList";
 import { MESSAGES } from "@/utilities/messages";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import { useProgressModalStore } from "@/store/modals/progress";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { useQuery } from "@tanstack/react-query";

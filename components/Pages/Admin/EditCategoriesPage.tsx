@@ -1,12 +1,12 @@
 "use client";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { Spinner } from "@/components/Utilities/Spinner";
+import { Spinner } from "@/components/ui/Spinner";
 import { useCategories } from "@/hooks/useCategories";
-import { useCommunityDetails } from "@/hooks/useCommunityDetails";
-import { SimplifiedGrant, useGrants } from "@/hooks/useGrants";
-import { useGrantsTable } from "@/hooks/useGrantsTable";
-import { useAuthStore } from "@/store/auth";
+import { useCommunityDetails } from "@/features/communities/hooks/useCommunityDetails";
+import { SimplifiedGrant, useGrants } from "@/features/grants/hooks/useGrants";
+import { useGrantsTable } from "@/features/grants/hooks/useGrantsTable";
+import { useAuthStore } from "@/features/auth/store";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";

@@ -1,11 +1,11 @@
 /* eslint-disable @next/next/no-img-element */
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { DatePicker } from "@/components/Utilities/DatePicker";
+import { DatePicker } from "@/components/ui/DatePicker";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
-import { useStepper } from "@/store/modals/txStepper";
+import { useCommunityAdminStore } from "@/features/communities/storeAdmin";
+import { useStepper } from "@/features/modals/store/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";

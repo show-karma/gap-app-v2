@@ -1,9 +1,9 @@
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import {
   Category,
   ImpactSegment,
   ImpactIndicator,
-} from "@/types/impactMeasurement";
+} from "@/features/impact/typesMeasurement";
 import { cn } from "@/utilities/tailwind";
 import pluralize from "pluralize";
 import Image from "next/image";

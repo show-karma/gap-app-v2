@@ -1,4 +1,4 @@
-import { OutputsAndOutcomesLoading } from "@/components/Pages/Project/Loading/OutputsAndOutcomes";
+import { OutputsAndOutcomesLoading } from "@/features/projects/components/Loading/OutputsAndOutcomes";
 
 export default function Loading() {
   return <OutputsAndOutcomesLoading />;

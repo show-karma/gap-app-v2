@@ -1,12 +1,12 @@
 "use client";
 import { ReasonsModal } from "@/components/Dialogs/ReasonsModal";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { Skeleton } from "@/components/Utilities/Skeleton";
-import TablePagination from "@/components/Utilities/TablePagination";
+import { ExternalLink } from "@/components/ui/ExternalLink";
+import { Skeleton } from "@/components/ui/Skeleton";
+import TablePagination from "@/components/ui/TablePagination";
 import { useOwnerStore } from "@/store";
-import { useAuthStore } from "@/store/auth";
+import { useAuthStore } from "@/features/auth/store";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";

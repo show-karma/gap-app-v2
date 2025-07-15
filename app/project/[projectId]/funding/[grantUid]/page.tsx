@@ -1,5 +1,5 @@
-import { GrantOverview } from "@/components/Pages/Project/Grants/Overview";
-import { ProjectGrantsOverviewLoading } from "@/components/Pages/Project/Loading/Grants/Overview";
+import { GrantOverview } from "@/features/projects/components/Grants/Overview";
+import { ProjectGrantsOverviewLoading } from "@/features/projects/components/Loading/Grants/Overview";
 import { zeroUID } from "@/utilities/commons";
 import { envVars } from "@/utilities/enviromentVars";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";

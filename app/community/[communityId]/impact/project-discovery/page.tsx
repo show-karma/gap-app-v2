@@ -1,4 +1,4 @@
-import { ProjectDiscovery } from "@/components/Pages/Communities/Impact/ProjectDiscovery";
+import { ProjectDiscovery } from "@/features/communities/components/Impact/ProjectDiscovery";
 
 export default function ImpactPage() {
   return (

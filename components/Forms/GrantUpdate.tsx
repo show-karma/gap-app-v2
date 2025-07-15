@@ -1,9 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
+import { useStepper } from "@/features/modals/store/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -22,11 +22,11 @@ import { z } from "zod";
 import { errorManager } from "../Utilities/errorManager";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { sanitizeObject } from "@/utilities/sanitize";
-import { useGrantStore } from "@/store/grant";
+import { useGrantStore } from "@/features/grants/store";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { useShareDialogStore } from "@/store/modals/shareDialog";
+import { useShareDialogStore } from "@/features/modals/store/shareDialog";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { useWallet } from "@/hooks/useWallet";
 

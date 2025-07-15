@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { ExternalLink } from "@/components/ui/ExternalLink";
 import { PAGES } from "@/utilities/pages";
 import { useProjectStore } from "@/store";
 import {

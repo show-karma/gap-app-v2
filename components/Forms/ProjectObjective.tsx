@@ -12,7 +12,7 @@ import { getGapClient, useGap } from "@/hooks/useGap";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
 
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { useStepper } from "@/store/modals/txStepper";
+import { useStepper } from "@/features/modals/store/txStepper";
 import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
 import toast from "react-hot-toast";
 import { useState } from "react";

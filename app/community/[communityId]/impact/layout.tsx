@@ -1,6 +1,6 @@
-import { CommunityImpactFilterRow } from "@/components/Pages/Communities/Impact/FilterRow";
-import { ImpactTabNavigator } from "@/components/Pages/Communities/Impact/ImpactTabNavigator";
-import { CommunityImpactStatCards } from "@/components/Pages/Communities/Impact/StatCards";
+import { CommunityImpactFilterRow } from "@/features/communities/components/Impact/FilterRow";
+import { ImpactTabNavigator } from "@/features/communities/components/Impact/ImpactTabNavigator";
+import { CommunityImpactStatCards } from "@/features/communities/components/Impact/StatCards";
 
 export default function ImpactLayout({
   children,

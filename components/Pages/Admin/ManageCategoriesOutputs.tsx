@@ -1,12 +1,12 @@
-import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown";
-import { Button } from "@/components/Utilities/Button";
+import { SearchWithValueDropdown } from "@/features/communities/components/Impact/SearchWithValueDropdown";
+import { Button } from "@/components/ui/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useIndicators } from "@/hooks/useIndicators";
 import {
   Category,
   ImpactIndicator,
   ImpactSegment,
-} from "@/types/impactMeasurement";
+} from "@/features/impact/typesMeasurement";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";

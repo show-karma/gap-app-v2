@@ -1,6 +1,6 @@
 "use client";
 
-import PayoutsAdminPage from "@/components/Pages/Admin/PayoutsAdminPage";
+import PayoutsAdminPage from "@/features/admin/components/PayoutsAdminPage";
 
 export default function CommunityPayoutsPage() {
   return <PayoutsAdminPage />;

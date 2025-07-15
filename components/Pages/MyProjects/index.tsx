@@ -1,12 +1,12 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import Pagination from "@/components/Utilities/Pagination";
-import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
+import Pagination from "@/components/ui/Pagination";
+import { ProfilePicture } from "@/components/ui/ProfilePicture";
 import { useMixpanel } from "@/hooks/useMixpanel";
-import { useAuthStore } from "@/store/auth";
-import { useOnboarding } from "@/store/modals/onboarding";
+import { useAuthStore } from "@/features/auth/store";
+import { useOnboarding } from "@/features/modals/store/onboarding";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";

@@ -1,10 +1,10 @@
 "use client";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { ExternalLink } from "@/components/ui/ExternalLink";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
+import { useStepper } from "@/features/modals/store/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
@@ -27,10 +27,10 @@ import { useAccount } from "wagmi";
 import { AddImpactScreen } from "./AddImpactScreen";
 import { EmptyImpactScreen } from "./EmptyImpactScreen";
 import { ImpactVerifications } from "./ImpactVerifications";
-import { OutputsAndOutcomes } from "@/components/Pages/Project/Impact/OutputsAndOutcomes";
-import { Tabs } from "@/components/Utilities/Tabs";
-import { TabTrigger } from "@/components/Utilities/Tabs";
-import { TabContent } from "@/components/Utilities/Tabs";
+import { OutputsAndOutcomes } from "@/features/projects/components/Impact/OutputsAndOutcomes";
+import { Tabs } from "@/components/ui/Tabs";
+import { TabTrigger } from "@/components/ui/Tabs";
+import { TabContent } from "@/components/ui/Tabs";
 import { OSOMetrics } from "./OSOMetrics";
 import { useWallet } from "@/hooks/useWallet";
 

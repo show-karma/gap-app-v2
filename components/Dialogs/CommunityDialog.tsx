@@ -20,7 +20,7 @@ import { cn } from "@/utilities/tailwind";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import toast from "react-hot-toast";
-import { useStepper } from "@/store/modals/txStepper";
+import { useStepper } from "@/features/modals/store/txStepper";
 import { config } from "@/utilities/wagmi/config";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";

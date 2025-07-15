@@ -1,13 +1,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { ImpactIndicatorWithData } from "@/types/impactMeasurement";
+import { ImpactIndicatorWithData } from "@/features/impact/typesMeasurement";
 import { useState, useEffect } from "react";
-import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown";
+import { SearchWithValueDropdown } from "@/features/communities/components/Impact/SearchWithValueDropdown";
 import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import type { SubmitHandler } from "react-hook-form";
 

@@ -1,9 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 import { MilestoneUpdateForm } from "@/components/Forms/MilestoneUpdate";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import { useProjectStore } from "@/store";
-import { useProgressModalStore } from "@/store/modals/progress";
+import { useProgressModalStore } from "@/features/modals/store/progress";
 import {
   IGrantResponse,
   IMilestoneResponse,

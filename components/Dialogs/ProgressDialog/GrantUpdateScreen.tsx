@@ -1,7 +1,7 @@
 "use client";
 import { GrantUpdateForm } from "@/components/Forms/GrantUpdate";
 import { useProjectStore } from "@/store";
-import { useProgressModalStore } from "@/store/modals/progress";
+import { useProgressModalStore } from "@/features/modals/store/progress";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useState } from "react";
 import { Dropdown } from "./Dropdown";

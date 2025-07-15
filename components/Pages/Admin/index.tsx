@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { Spinner } from "@/components/Utilities/Spinner";
+import { Spinner } from "@/components/ui/Spinner";
 import { useCommunitiesStore } from "@/store/communities";
 import { PAGES } from "@/utilities/pages";
 import { MESSAGES } from "@/utilities/messages";

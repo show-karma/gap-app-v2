@@ -10,9 +10,9 @@ import { useGrantFormStore } from "./store";
 import { useOwnerStore, useProjectStore } from "@/store";
 
 import { MESSAGES } from "@/utilities/messages";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
+import { useCommunityAdminStore } from "@/features/communities/storeAdmin";
 import Link from "next/link";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import { PAGES } from "@/utilities/pages";
 import { TypeSelectionScreen } from "./screens/TypeSelectionScreen";
 import { DefaultLoading } from "@/components/Utilities/DefaultLoading";

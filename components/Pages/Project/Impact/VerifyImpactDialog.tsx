@@ -1,12 +1,12 @@
 /* eslint-disable @next/next/no-img-element */
 import { FC, Fragment, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import { z } from "zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
-import { useAuthStore } from "@/store/auth";
+import { useAuthStore } from "@/features/auth/store";
 
 import { useAccount } from "wagmi";
 import { getWalletClient } from "@wagmi/core";
@@ -16,7 +16,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { getGapClient, useGap } from "@/hooks/useGap";
 
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { useStepper } from "@/store/modals/txStepper";
+import { useStepper } from "@/features/modals/store/txStepper";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { Hex } from "viem";
 import { config } from "@/utilities/wagmi/config";

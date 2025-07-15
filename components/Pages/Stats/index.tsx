@@ -11,7 +11,7 @@ import type {
 import { LineChart } from "./LineChart";
 import { WeeklyActiveUsersChart } from "./WeeklyActiveUsersChart";
 import { GlobalCount } from "./GlobalCount";
-import { Spinner } from "@/components/Utilities/Spinner";
+import { Spinner } from "@/components/ui/Spinner";
 import { getGAPStats } from "@/utilities/indexer/stats";
 import { fillDateRangeWithValues } from "@/utilities/fillDateRangeWithValues";
 import { Listbox, Transition } from "@headlessui/react";

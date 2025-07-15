@@ -7,7 +7,7 @@ import {
   TwitterIcon,
   WebsiteIcon,
 } from "@/components/Icons";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useProjectStore } from "@/store";
@@ -41,13 +41,13 @@ import { useAccount } from "wagmi";
 import { z } from "zod";
 
 import { errorManager } from "@/components/Utilities/errorManager";
-import { ExternalLink as ExternalLinkComponent } from "@/components/Utilities/ExternalLink";
-import { Skeleton } from "@/components/Utilities/Skeleton";
-import { useAuthStore } from "@/store/auth";
-import { useProjectEditModalStore } from "@/store/modals/projectEdit";
-import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
-import { useStepper } from "@/store/modals/txStepper";
-import type { Contact } from "@/types/project";
+import { ExternalLink as ExternalLinkComponent } from "@/components/ui/ExternalLink";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { useAuthStore } from "@/features/auth/store";
+import { useProjectEditModalStore } from "@/features/modals/store/projectEdit";
+import { useSimilarProjectsModalStore } from "@/features/modals/store/similarProjects";
+import { useStepper } from "@/features/modals/store/txStepper";
+import type { Contact } from "@/features/projects/types";
 import fetchData from "@/utilities/fetchData";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";

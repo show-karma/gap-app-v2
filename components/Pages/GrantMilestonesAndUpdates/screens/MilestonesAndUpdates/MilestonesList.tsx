@@ -1,7 +1,7 @@
 import pluralize from "pluralize";
 import { type FC, useEffect, useMemo, useState, use } from "react";
 
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import { GrantUpdate } from "./GrantUpdate";
 import { MilestoneDetails } from "./MilestoneDetails";
 import { cn } from "@/utilities/tailwind";

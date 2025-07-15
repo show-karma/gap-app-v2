@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { ProjectWrapper } from "@/components/Pages/Project/ProjectWrapper";
+import { ProjectWrapper } from "@/features/projects/components/ProjectWrapper";
 import {
   dehydrate,
   HydrationBoundary,

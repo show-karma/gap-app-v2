@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { useProjectStore } from "@/store";
-import { useAdminTransferOwnershipModalStore } from "@/store/modals/adminTransferOwnership";
+import { useAdminTransferOwnershipModalStore } from "@/features/modals/store/adminTransferOwnership";
 import fetchData from "@/utilities/fetchData";
 import { sanitizeInput } from "@/utilities/sanitize";
 import { Dialog, Transition } from "@headlessui/react";

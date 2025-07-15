@@ -27,8 +27,8 @@ import { DemoteMemberDialog } from "@/components/Dialogs/Member/DemoteMember";
 import { InviteMemberDialog } from "@/components/Dialogs/Member/InviteMember";
 import { PromoteMemberDialog } from "@/components/Dialogs/Member/PromoteMember";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { Skeleton } from "@/components/Utilities/Skeleton";
-import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { useContributorProfileModalStore } from "@/features/modals/store/contributorProfile";
 import fetchData from "@/utilities/fetchData";
 import {
   getProjectMemberRoles,
@@ -42,7 +42,7 @@ import dynamic from "next/dynamic";
 import pluralize from "pluralize";
 import { useAccount } from "wagmi";
 import { InformationBlock } from "./ProjectBodyTabs";
-import { useProjectInstance } from "@/hooks/useProjectInstance";
+import { useProjectInstance } from "@/features/projects/hooks/useProjectInstance";
 import { useMemberRoles } from "@/hooks/useMemberRoles";
 
 const ContributorProfileDialog = dynamic(

@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { defaultMetadata } from "@/utilities/meta";
 
-import CommunitiesToAdminPage from "@/components/Pages/Admin/CommunityAdmin";
+import CommunitiesToAdminPage from "@/features/admin/components/CommunityAdmin";
 
 export const metadata = defaultMetadata;
 

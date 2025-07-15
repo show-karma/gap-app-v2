@@ -1,14 +1,14 @@
 "use client";
 import { ProjectObjectiveForm } from "@/components/Forms/ProjectObjective";
-import { Button } from "@/components/Utilities/Button";
-import { DatePicker } from "@/components/Utilities/DatePicker";
+import { Button } from "@/components/ui/Button";
+import { DatePicker } from "@/components/ui/DatePicker";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useAllMilestones } from "@/hooks/useAllMilestones";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useProjectStore } from "@/store";
-import { useProgressModalStore } from "@/store/modals/progress";
-import { useStepper } from "@/store/modals/txStepper";
+import { useProgressModalStore } from "@/features/modals/store/progress";
+import { useStepper } from "@/features/modals/store/txStepper";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";

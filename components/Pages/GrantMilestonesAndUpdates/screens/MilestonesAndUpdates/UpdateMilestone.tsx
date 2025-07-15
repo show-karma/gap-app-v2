@@ -2,9 +2,9 @@
 "use client";
 
 import { MilestoneUpdateForm } from "@/components/Forms/MilestoneUpdate";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
+import { useCommunityAdminStore } from "@/features/communities/storeAdmin";
 import { PencilSquareIcon, ShareIcon } from "@heroicons/react/24/outline";
 import {
   IMilestoneCompleted,
@@ -13,7 +13,7 @@ import {
 import { type FC, useState } from "react";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { ExternalLink } from "@/components/ui/ExternalLink";
 
 interface NotUpdatingCaseProps {
   milestone: IMilestoneResponse;

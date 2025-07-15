@@ -1,6 +1,6 @@
 "use client";
 import { ProjectUpdateForm } from "@/components/Forms/ProjectUpdate";
-import { useProgressModalStore } from "@/store/modals/progress";
+import { useProgressModalStore } from "@/features/modals/store/progress";
 
 export const ProjectUpdateScreen = () => {
   const { closeProgressModal } = useProgressModalStore();

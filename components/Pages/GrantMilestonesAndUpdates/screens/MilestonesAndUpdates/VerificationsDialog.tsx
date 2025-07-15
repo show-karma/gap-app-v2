@@ -5,7 +5,7 @@ import { XMarkIcon } from "@heroicons/react/24/solid";
 
 import { Hex } from "viem";
 import { useENS } from "@/store/ens";
-import { useProjectStore } from "@/store/project";
+import { useProjectStore } from "@/features/projects/store";
 import { formatDate } from "@/utilities/formatDate";
 import {
   ICommunityAdminsResponse,
@@ -13,7 +13,7 @@ import {
   IMilestoneCompleted,
   IProjectImpactStatus,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { Tabs, TabContent, TabTrigger } from "@/components/Utilities/Tabs";
+import { Tabs, TabContent, TabTrigger } from "@/components/ui/Tabs";
 import { useGrant } from "@/components/Pages/GrantMilestonesAndUpdates/GrantContext";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { useAccount } from "wagmi";

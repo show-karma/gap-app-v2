@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import ImpactWrapper from "@/components/Pages/Project/Impact/ImpactWrapper";
+import ImpactWrapper from "@/features/projects/components/Impact/ImpactWrapper";
 import { zeroUID } from "@/utilities/commons";
 import { envVars } from "@/utilities/enviromentVars";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";

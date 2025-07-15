@@ -1,5 +1,5 @@
 import { useProjectStore } from "@/store";
-import { useProgressModalStore } from "@/store/modals/progress";
+import { useProgressModalStore } from "@/features/modals/store/progress";
 import { PAGES } from "@/utilities/pages";
 import { useRouter } from "next/navigation";
 

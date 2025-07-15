@@ -5,7 +5,7 @@ import { useQueryState } from "nuqs";
 import { StatusOptions } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { SetAnObjective } from "@/components/Pages/Project/Objective/SetAnObjective";
+import { SetAnObjective } from "@/features/projects/components/Objective/SetAnObjective";
 import { UnifiedMilestone } from "@/types/roadmap";
 import {
   IGrantUpdate,

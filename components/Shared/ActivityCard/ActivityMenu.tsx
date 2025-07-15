@@ -6,9 +6,9 @@ import {
   ShareIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import { DeleteDialog } from "@/components/DeleteDialog";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { ExternalLink } from "@/components/ui/ExternalLink";
 import { cn } from "@/utilities/tailwind";
 
 interface ActivityMenuProps {

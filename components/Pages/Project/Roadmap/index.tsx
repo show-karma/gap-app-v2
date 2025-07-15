@@ -1,5 +1,5 @@
 "use client";
-import { ObjectivesSub } from "@/components/Pages/Project/Objective/ObjectivesSub";
+import { ObjectivesSub } from "@/features/projects/components/Objective/ObjectivesSub";
 import { RoadmapListLoading } from "../Loading/Roadmap";
 import {
   IGrantUpdate,
@@ -15,8 +15,8 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { useQuery } from "@tanstack/react-query";
-import { useProgressModalStore } from "@/store/modals/progress";
-import { Button } from "@/components/Utilities/Button";
+import { useProgressModalStore } from "@/features/modals/store/progress";
+import { Button } from "@/components/ui/Button";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { MESSAGES } from "@/utilities/messages";
 import { UnifiedMilestone } from "@/types/roadmap";

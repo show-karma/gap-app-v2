@@ -2,12 +2,12 @@
 /* eslint-disable @next/next/no-img-element */
 import { FC, Fragment, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useProjectStore } from "@/store";
 import { shortAddress } from "@/utilities/shortAddress";
 import { useGap } from "@/hooks/useGap";
-import { useIntroModalStore } from "@/store/modals/intro";
+import { useIntroModalStore } from "@/features/modals/store/intro";
 import fetchData from "@/utilities/fetchData";
 import toast from "react-hot-toast";
 import { MESSAGES } from "@/utilities/messages";

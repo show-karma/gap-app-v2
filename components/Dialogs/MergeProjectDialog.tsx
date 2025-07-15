@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import { useProjectStore } from "@/store";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 
-import { useStepper } from "@/store/modals/txStepper";
+import { useStepper } from "@/features/modals/store/txStepper";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import debounce from "lodash.debounce";
 import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
@@ -28,7 +28,7 @@ import { errorManager } from "../Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { sanitizeInput } from "@/utilities/sanitize";
-import { useMergeModalStore } from "@/store/modals/merge";
+import { useMergeModalStore } from "@/features/modals/store/merge";
 import EthereumAddressToENSName from "../EthereumAddressToENSName";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useWallet } from "@/hooks/useWallet";

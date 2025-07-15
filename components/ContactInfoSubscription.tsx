@@ -6,7 +6,7 @@ import { z } from "zod";
 import { Button } from "./Utilities/Button";
 import toast from "react-hot-toast";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { Contact } from "@/types/project";
+import { Contact } from "@/features/projects/types";
 import { INDEXER } from "@/utilities/indexer";
 import fetchData from "@/utilities/fetchData";
 import { TrashIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
