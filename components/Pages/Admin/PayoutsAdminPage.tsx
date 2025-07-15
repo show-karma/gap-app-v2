@@ -134,10 +134,10 @@ export default function PayoutsAdminPage() {
       // Note: grant.payoutAddress is actually the project's payoutAddress extracted by useGrants hook
       let currentPayoutAddress = "";
       if (grant.payoutAddress) {
-        if (typeof grant.payoutAddress === 'string') {
+        if (typeof grant.payoutAddress === "string") {
           // Backward compatibility: if it's still a string, use it directly
           currentPayoutAddress = grant.payoutAddress;
-        } else if (typeof grant.payoutAddress === 'object' && community?.uid) {
+        } else if (typeof grant.payoutAddress === "object" && community?.uid) {
           // New structure: extract address for this specific community
           currentPayoutAddress = grant.payoutAddress[community.uid] || "";
         }
@@ -293,6 +293,56 @@ export default function PayoutsAdminPage() {
     [tableData]
   );
 
+  // Handle example CSV download
+  const handleDownloadExampleCsv = useCallback(() => {
+    // Create example CSV data with actual project slugs from current data
+    const exampleData = tableData.slice(0, 3).map((item, index) => ({
+      projectSlug: item.projectSlug,
+      payoutAddress: `0x${"1".repeat(40)}`, // Example address
+      amount: `${(index + 1) * 100}.00`, // Example amounts: 100.00, 200.00, 300.00
+    }));
+
+    // If no data available, create generic examples
+    if (exampleData.length === 0) {
+      exampleData.push(
+        {
+          projectSlug: "https://gap.karmahq.xyz/project/example-project-1",
+          payoutAddress: "0x1111111111111111111111111111111111111111",
+          amount: "100.00",
+        },
+        {
+          projectSlug: "https://gap.karmahq.xyz/project/example-project-2",
+          payoutAddress: "0x2222222222222222222222222222222222222222",
+          amount: "200.00",
+        },
+        {
+          projectSlug: "https://gap.karmahq.xyz/project/example-project-3",
+          payoutAddress: "0x3333333333333333333333333333333333333333",
+          amount: "300.00",
+        }
+      );
+    }
+
+    // Convert to CSV format
+    const csvHeader = "Project URL,Wallet Address,Amount\n";
+    const csvRows = exampleData
+      .map((row) => `${row.projectSlug},${row.payoutAddress},${row.amount}`)
+      .join("\n");
+    const csvContent = csvHeader + csvRows;
+
+    // Create and trigger download
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", "payouts-example.csv");
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, [tableData]);
+
   // Handle save
   const handleSave = async () => {
     // Clear all errors
@@ -447,13 +497,16 @@ export default function PayoutsAdminPage() {
           </div>
         </div>
 
-        <div className="px-4">
-          <PayoutsCsvUpload
-            onDataParsed={handleCsvData}
-            disabled={isSaving}
-            unmatchedProjects={lastCsvResult?.unmatchedProjects}
-          />
-        </div>
+        {selectedProgramId && (
+          <div className="px-4">
+            <PayoutsCsvUpload
+              onDataParsed={handleCsvData}
+              disabled={isSaving}
+              unmatchedProjects={lastCsvResult?.unmatchedProjects}
+              onDownloadExample={handleDownloadExampleCsv}
+            />
+          </div>
+        )}
 
         <div className="px-4">
           <div className="flex flex-col justify-center w-full max-w-full overflow-x-auto rounded-md border">

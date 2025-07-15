@@ -23,12 +23,14 @@ interface PayoutsCsvUploadProps {
   onDataParsed: (result: CsvParseResult) => void;
   disabled?: boolean;
   unmatchedProjects?: string[];
+  onDownloadExample?: () => void;
 }
 
 export function PayoutsCsvUpload({
   onDataParsed,
   disabled,
   unmatchedProjects,
+  onDownloadExample,
 }: PayoutsCsvUploadProps) {
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -288,13 +290,25 @@ export function PayoutsCsvUpload({
         )}
       >
         <div className="p-4 border-t border-gray-200 dark:border-zinc-700">
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            Upload a CSV file to bulk populate payout addresses and amounts.
-            <br /> The CSV should contain columns for project URLs, wallet
-            addresses, and amounts.
-            <br />
-            <b>Select a program to properly match the project with the CSV.</b>
-          </p>
+          <div className="flex items-start justify-between mb-4">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Upload a CSV file to bulk populate payout addresses and amounts.
+              <br /> The CSV should contain columns for project URLs, wallet
+              addresses, and amounts.
+              <br />
+              <b>
+                Select a program to properly match the project with the CSV.
+              </b>
+            </p>
+            {onDownloadExample && (
+              <button
+                onClick={onDownloadExample}
+                className="ml-4 text-sm text-blue-600 dark:text-blue-400 hover:underline whitespace-nowrap"
+              >
+                Download Example CSV
+              </button>
+            )}
+          </div>
 
           {file && parseResults ? (
             <div className="space-y-4">
