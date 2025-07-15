@@ -80,12 +80,12 @@ export const chosenCommunities = () => {
       },
     },
     {
-      name: "OpenCivics",
-      slug: "opencivics",
-      uid: "0x22dd5bed20dc47c3608d3b872351a672fe1b5cfd8f2a4d7854fd81e88bd821c9",
+      name: "Scroll",
+      slug: "scroll",
+      uid: "0x92c22819704c38087f22ad1d7b900bc9bedb4f4946fafaf90e047e6eb43fc0da",
       imageURL: {
-        light: "/logos/karma-opencivics.webp",
-        dark: "/logos/karma-opencivics.webp",
+        light: "/logos/karma-scroll.jpg",
+        dark: "/logos/karma-scroll.jpg",
       },
     },
     {
