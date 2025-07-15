@@ -144,7 +144,7 @@ export const CommunityAdminPage = ({
               colorClass=""
               icon={<TagIcon className="w-6 h-6" />}
             />
-            <AdminButton
+            {/* <AdminButton
               href={PAGES.ADMIN.PAYOUTS(
                 community?.details?.data?.slug || communityId
               )}
@@ -152,7 +152,7 @@ export const CommunityAdminPage = ({
               description="Manage payout addresses and amounts"
               colorClass=""
               icon={<BanknotesIcon className="w-6 h-6" />}
-            />
+            /> */}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center p-8 bg-gray-50 dark:bg-zinc-800/50 rounded-lg">
