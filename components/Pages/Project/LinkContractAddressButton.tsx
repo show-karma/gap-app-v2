@@ -91,7 +91,7 @@ export const LinkContractAddressButton: FC<
   );
   const { address } = useAccount();
   const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
-
+  const { refreshProject } = useProjectStore();
   const [isOpen, setIsOpen] = useState(false);
   const [networkAddressPairs, setNetworkAddressPairs] = useState<
     NetworkAddressPair[]
@@ -173,6 +173,7 @@ export const LinkContractAddressButton: FC<
         if (buttonElement === null && onClose) {
           setIsOpen(false);
           onClose();
+          refreshProject();
         }
       }
 
