@@ -295,10 +295,6 @@ export function PayoutsCsvUpload({
               Upload a CSV file to bulk populate payout addresses and amounts.
               <br /> The CSV should contain columns for project URLs, wallet
               addresses, and amounts.
-              <br />
-              <b>
-                Select a program to properly match the project with the CSV.
-              </b>
             </p>
             {onDownloadExample && (
               <button
