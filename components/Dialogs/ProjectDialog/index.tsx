@@ -154,10 +154,10 @@ export const projectSchema = z.object({
   farcaster: z.string().optional(),
   profilePicture: z
     .string({
-      required_error: "Profile picture URL is required",
+      required_error: "Project Logo URL is required",
     })
     .min(1, {
-      message: "Profile picture URL is required",
+      message: "Project Logo URL is required",
     }),
   businessModel: z.string().optional(),
   stageIn: z.string().optional(),
@@ -214,7 +214,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     )?.url,
     profilePicture: projectToUpdate?.details?.data?.imageURL,
     tags: projectToUpdate?.details?.data?.tags?.map((item) => item.name),
-    members: projectToUpdate?.members.map((item) => item.recipient),
     recipient: projectToUpdate?.recipient,
     businessModel: projectToUpdate?.details?.data?.businessModel,
     stageIn: projectToUpdate?.details?.data?.stageIn,
@@ -257,51 +256,12 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   });
   const { errors, isValid } = formState;
 
-  const [team, setTeam] = useState<string[]>(dataToUpdate?.members || []);
-  const [teamInput, setTeamInput] = useState<string>("");
-  const [teamInputError, setTeamInputError] = useState<string | undefined>("");
-
   function closeModal() {
     setIsOpen(false);
   }
   function openModal() {
     setIsOpen(true);
   }
-
-  const addMemberToArray = () => {
-    event?.preventDefault();
-    event?.stopPropagation();
-    const splittedMembers = new Set(
-      teamInput.split(",").map((m: string) => m.trim().toLowerCase())
-    );
-    const uniqueMembers = Array.from(splittedMembers).filter(
-      (m: string) => !team.includes(m)
-    );
-    setTeamInput("");
-    setTeam((prev) => [...prev, ...uniqueMembers]);
-  };
-
-  const checkTeamError = () => {
-    if (isAddress(teamInput as string) || (teamInput as string).length === 0) {
-      setTeamInputError(undefined);
-      return;
-    }
-    const splittedMembers = (teamInput as string)
-      .split(",")
-      .map((m: string) => m.trim().toLowerCase());
-    const checkArray = splittedMembers.every((address: string) => {
-      return isAddress(address);
-    });
-    if (checkArray) {
-      setTeamInputError(undefined);
-      return;
-    }
-    setTeamInputError(MESSAGES.PROJECT_FORM.MEMBERS);
-  };
-
-  useEffect(() => {
-    checkTeamError();
-  }, [teamInput]);
 
   const hasErrors = () => {
     if (step === 0) {
@@ -335,9 +295,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     }
     if (step === 3) {
       return !contacts.length || !!errors?.chainID || !watch("chainID");
-    }
-    if (step === 4) {
-      return !!teamInputError || !team.length;
     }
 
     return false;
@@ -416,10 +373,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       const { chainID, ...rest } = data;
       const newProjectInfo: NewProjectData = {
         ...rest,
-        members: [
-          (data.recipient || address) as Hex,
-          ...team.map((item) => item as Hex),
-        ],
+        members: [(data.recipient || address) as Hex],
         links: [
           {
             type: "twitter",
@@ -600,7 +554,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 }
                 retries = 0;
                 toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
-                router.push(PAGES.PROJECT.GRANTS(slug || project.uid));
+                router.push(
+                  PAGES.PROJECT.SCREENS.NEW_GRANT(slug || project.uid)
+                );
                 router.refresh();
                 changeStepperStep("indexed");
                 return;
@@ -613,8 +569,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         });
 
       reset();
-      setTeam([]);
-      setTeamInput("");
       setStep(0);
       setIsStepper(false);
       setContacts([]);
@@ -1093,16 +1047,16 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
             <p className="text-red-500">{errors.farcaster?.message}</p>
           </div>
           <div className="flex w-full flex-col gap-2">
-            <label htmlFor="profile-picture-input" className={labelStyle}>
-              Profile Picture
+            <label htmlFor="profile-logo-input" className={labelStyle}>
+              Project Logo
             </label>
             <div className="flex w-full flex-row items-center gap-2 rounded-lg border border-gray-400 px-4 py-2">
               <UserCircleIcon className="h-5 w-5" />
               <input
-                id="profile-picture-input"
+                id="profile-logo-input"
                 type="text"
                 className={socialMediaInputStyle}
-                placeholder="https://example.com/profile-picture.jpg"
+                placeholder="https://example.com/profile-logo.jpg"
                 {...register("profilePicture")}
               />
             </div>
@@ -1229,65 +1183,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         </div>
       ),
     },
-    {
-      id: "teamMembers",
-      title: "Team members",
-      desc: "The wonderful people who built it",
-      fields: (
-        <div className="flex w-full flex-col gap-8">
-          <div className="flex w-full flex-col gap-2">
-            <label htmlFor="members-input" className={labelStyle}>
-              Invite team members *
-            </label>
-            <div className="flex w-full flex-row items-center gap-2 max-sm:flex-col">
-              <input
-                id="members-input"
-                type="text"
-                className="flex flex-1 rounded-lg border border-gray-400 bg-transparent p-2 px-4 focus-visible:outline-none max-sm:w-full"
-                placeholder="ETH address, comma separated"
-                value={teamInput}
-                onChange={(e) => setTeamInput(e.target.value)}
-              />
-              <button
-                type="button"
-                onClick={addMemberToArray}
-                className="bg-black px-12 py-2 rounded-lg text-white transition-all duration-300 ease-in-out disabled:opacity-40 max-sm:w-full"
-                disabled={!!teamInputError || !teamInput.length}
-              >
-                Add
-              </button>
-            </div>
-            <p className="text-red-500">{teamInputError}</p>
-            <div className="flex w-full flex-col items-center gap-4">
-              {team.length ? (
-                <div className="mt-2 h-1 w-20 rounded-full bg-gray-400" />
-              ) : null}
-              <div className="flex w-full flex-col gap-2">
-                {team.map((member) => (
-                  <div
-                    key={member}
-                    className="flex w-full flex-row items-center justify-between truncate rounded border border-gray-400 p-2 max-sm:max-w-[330px]"
-                  >
-                    <p className="w-min truncate font-sans font-normal text-slate-700 dark:text-zinc-100">
-                      {member}
-                    </p>
-                    <button
-                      type="button"
-                      className="border border-black bg-white px-8 py-2 text-black transition-all duration-300 ease-in-out disabled:opacity-40"
-                      onClick={() =>
-                        setTeam((prev) => prev.filter((m) => m !== member))
-                      }
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      ),
-    },
   ];
 
   return (
@@ -1357,15 +1252,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                       </p>
                     </div>
                   )}
-                  {!projectToUpdate && (
-                    <div className="bg-yellow-100  max-w-3xl flex flex-row gap-4 rounded-md text-sm px-4 py-2 items-center my-3 dark:bg-yellow-900  text-orange-900 dark:text-white">
-                      <ExclamationTriangleIcon className="w-5 h-5" />
-                      <p>
-                        If you have already created this project in another
-                        platform, make sure you connect to the right wallet.
-                      </p>
-                    </div>
-                  )}
+
                   {/* Screens start */}
                   <form onSubmit={handleSubmit(onSubmit)}>
                     <div className="w-full px-2 py-4 sm:px-0 max-w-3xl">
