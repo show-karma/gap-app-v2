@@ -10,11 +10,14 @@ import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import { PAGES } from "@/utilities/pages";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { Hex } from "viem";
 import { ProjectGrantsOverviewLoading } from "../Loading/Grants/Overview";
 import { GrantPercentage } from "./components/GrantPercentage";
 import { TrackTags } from "@/components/TrackTags";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
+import { useProjectStore } from "@/store";
+import { useRouter } from "next/navigation";
 
 const isValidAmount = (grant?: {
   amount?: Hex;
@@ -55,9 +58,6 @@ const isValidAmount = (grant?: {
 export const GrantOverview = () => {
   const { grant, loading, refreshGrant } = useGrantStore();
   const isOwner = useOwnerStore((state) => state.isOwner);
-  if (loading) {
-    return <ProjectGrantsOverviewLoading />;
-  }
 
   const grantData: { stat?: number | string; title: string }[] = [
     {
@@ -93,6 +93,10 @@ export const GrantOverview = () => {
 
   // Check if we have valid track IDs to display
   const hasTrackIds = selectedTrackIds && selectedTrackIds.length > 0;
+
+  if (loading) {
+    return <ProjectGrantsOverviewLoading />;
+  }
 
   return (
     <Suspense fallback={<ProjectGrantsOverviewLoading />}>
