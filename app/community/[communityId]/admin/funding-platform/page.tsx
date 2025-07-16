@@ -11,6 +11,8 @@ import Link from "next/link";
 import { MESSAGES } from "@/utilities/messages";
 import { cn } from "@/utilities/tailwind";
 import { useState, useMemo } from "react";
+import { fundingPlatformService } from "@/services/fundingPlatformService";
+import toast from "react-hot-toast";
 
 export default function FundingPlatformAdminPage() {
   const { communityId } = useParams() as { communityId: string };
@@ -27,6 +29,28 @@ export default function FundingPlatformAdminPage() {
   } = useFundingPrograms(communityId);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [togglingPrograms, setTogglingPrograms] = useState<Set<string>>(new Set());
+
+  const handleToggleProgram = async (programId: string, chainId: number, currentEnabled: boolean) => {
+    const programKey = `${programId}_${chainId}`;
+    setTogglingPrograms(prev => new Set(prev).add(programKey));
+
+    try {
+      await fundingPlatformService.programs.toggleProgramStatus(programId, chainId, !currentEnabled);
+      toast.success(`Program ${!currentEnabled ? 'enabled' : 'disabled'} successfully`);
+      // Refresh the programs list
+      window.location.reload();
+    } catch (error) {
+      console.error('Error toggling program status:', error);
+      toast.error('Failed to update program status');
+    } finally {
+      setTogglingPrograms(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(programKey);
+        return newSet;
+      });
+    }
+  };
 
   // Calculate statistics from programs
   const statistics = useMemo(() => {
@@ -166,6 +190,48 @@ export default function FundingPlatformAdminPage() {
                       'Deadline coming on Sep 2, 3 weeks left'
                     )}
                   </div>
+                </div>
+
+                {/* Program Enable/Disable Toggle */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center space-x-3">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Program Status:
+                    </span>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleToggleProgram(program.programId, program.chainID, program.configuration?.isEnabled || false)}
+                        disabled={togglingPrograms.has(`${program.programId}_${program.chainID}`)}
+                        className={cn(
+                          "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
+                          program.configuration?.isEnabled 
+                            ? "bg-green-600" 
+                            : "bg-gray-200 dark:bg-gray-700"
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+                            program.configuration?.isEnabled ? "translate-x-6" : "translate-x-1"
+                          )}
+                        />
+                      </button>
+                      <span className={cn(
+                        "text-sm font-medium",
+                        program.configuration?.isEnabled
+                          ? "text-green-600"
+                          : "text-gray-500 dark:text-gray-400"
+                      )}>
+                        {togglingPrograms.has(`${program.programId}_${program.chainID}`) 
+                          ? 'Updating...' 
+                          : program.configuration?.isEnabled ? 'Enabled' : 'Disabled'
+                        }
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-xs text-gray-400">
+                    ID: {program.programId}
+                  </span>
                 </div>
                 
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">

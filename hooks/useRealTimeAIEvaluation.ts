@@ -6,6 +6,7 @@ interface UseRealTimeAIEvaluationProps {
   programId: string;
   chainId: number;
   isEnabled: boolean;
+  debounceMs?: number;
 }
 
 interface RealTimeEvaluationResponse {
@@ -27,7 +28,8 @@ const apiClient = axios.create({
 export function useRealTimeAIEvaluation({
   programId,
   chainId,
-  isEnabled
+  isEnabled,
+  debounceMs = 2000
 }: UseRealTimeAIEvaluationProps) {
   const [evaluation, setEvaluation] = useState<AIEvaluationData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -35,15 +37,9 @@ export function useRealTimeAIEvaluation({
   
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastEvaluationRef = useRef<string>('');
-  
-  // Use refs to store current values to avoid recreating the callback
-  const configRef = useRef({ programId, chainId, isEnabled });
-  configRef.current = { programId, chainId, isEnabled };
 
   const triggerEvaluation = useCallback(async (applicationData: Record<string, any>) => {
-    const { programId: currentProgramId, chainId: currentChainId, isEnabled: currentIsEnabled } = configRef.current;
-    
-    if (!currentIsEnabled || !currentProgramId || !currentChainId) {
+    if (!isEnabled || !programId || !chainId) {
       return;
     }
 
@@ -53,34 +49,37 @@ export function useRealTimeAIEvaluation({
       return;
     }
 
-    // Clear any existing timeout from previous calls
+    // Clear any existing debounce
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
     }
 
-    // No need for debouncing since blur events are naturally debounced by user action
+    // Set loading state immediately
     setIsLoading(true);
     setError(null);
-    
-    try {
-      const response = await apiClient.post<RealTimeEvaluationResponse>(
-        `/grant-programs/${currentProgramId}/${currentChainId}/evaluate-realtime`,
-        { applicationData }
-      );
 
-      if (response.data.success) {
-        setEvaluation(response.data.data);
-        lastEvaluationRef.current = dataHash;
-      } else {
-        setError('AI response failed');
+    // Debounce the actual API call
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const response = await apiClient.post<RealTimeEvaluationResponse>(
+          `/grant-programs/${programId}/${chainId}/evaluate-realtime`,
+          { applicationData }
+        );
+
+        if (response.data.success) {
+          setEvaluation(response.data.data);
+          lastEvaluationRef.current = dataHash;
+        } else {
+          throw new Error('Evaluation failed');
+        }
+      } catch (err: any) {
+        console.error('Real-time evaluation error:', err);
+        setError(err.response?.data?.message || 'Failed to evaluate application');
+      } finally {
+        setIsLoading(false);
       }
-    } catch (err: any) {
-      console.error('AI evaluation failed:', err.response?.data?.message || err.message);
-      setError('AI response failed');
-    } finally {
-      setIsLoading(false);
-    }
-  }, []); // No dependencies - use refs instead
+    }, debounceMs);
+  }, [programId, chainId, isEnabled, debounceMs]);
 
   const clearEvaluation = useCallback(() => {
     setEvaluation(null);
