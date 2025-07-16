@@ -49,8 +49,8 @@ import { useWallet } from "@/hooks/useWallet";
 
 const ProjectDialog = dynamic(
   () =>
-    import("@/components/Dialogs/ProjectDialog/EditProjectDialog").then(
-      (mod) => mod.EditProjectDialog
+    import("@/components/Dialogs/ProjectDialog").then(
+      (mod) => mod.ProjectDialog
     ),
   { ssr: false }
 );
@@ -186,7 +186,8 @@ export const ProjectOptionsMenu = () => {
           key={`${project?.uid}-${address}`}
           buttonElement={null}
           projectToUpdate={project}
-          previousContacts={contactsInfo}
+          previousContacts={contactsInfo || []}
+          useEditModalStore={true}
         />
       ) : null}
       {isMergeModalOpen ? <MergeProjectDialog buttonElement={null} /> : null}
