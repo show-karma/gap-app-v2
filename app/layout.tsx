@@ -19,6 +19,7 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 import { Suspense } from "react";
 import { headers } from "next/headers";
 import HotjarAnalytics from "@/components/Utilities/HotjarAnalytics";
+import { ContributorProfileDialog } from "@/components/Dialogs/ContributorProfileDialog";
 
 export const metadata = defaultMetadata;
 
@@ -49,6 +50,7 @@ export default async function RootLayout({
           <WagmiProvider cookie={cookie}>
             <Toaster />
             <StepperDialog />
+            <ContributorProfileDialog />
             <ProgressBarWrapper />
             <div className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white">
               <div className="flex flex-col w-full h-full">

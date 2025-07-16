@@ -25,6 +25,7 @@ import { GrantDelete } from "../../GrantMilestonesAndUpdates/GrantDelete";
 import { GrantLinkExternalAddressButton } from "../../GrantMilestonesAndUpdates/GrantLinkExternalAddressButton";
 import { EmptyGrantsSection } from "../../GrantMilestonesAndUpdates/screens/EmptyGrantsSection";
 import { ProjectGrantsLayoutLoading } from "../Loading/Grants/Layout";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 
 interface GrantsLayoutProps {
   children: React.ReactNode;
@@ -80,7 +81,8 @@ export const GrantsLayout = ({
   const { grant, setGrant, loading, setLoading } = useGrantStore();
   const { project: storedProject } = useProjectStore();
   const router = useRouter();
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const { isProjectAdmin, isProjectOwner } = useProjectPermissions();
+
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin

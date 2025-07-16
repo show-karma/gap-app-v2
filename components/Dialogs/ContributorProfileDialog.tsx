@@ -76,7 +76,11 @@ export const ContributorProfileDialog: FC<
 > = () => {
   const project = useProjectStore((state) => state.project);
   const { address, chain, isConnected } = useAccount();
-  const { closeModal, isModalOpen: isOpen } = useContributorProfileModalStore();
+  const {
+    closeModal,
+    isModalOpen: isOpen,
+    isGlobal,
+  } = useContributorProfileModalStore();
 
   // Fetch contributor profile using React Query
   const {
@@ -88,9 +92,12 @@ export const ContributorProfileDialog: FC<
   // Fetch team profiles using React Query
   const { refetch: refetchTeamProfiles } = useTeamProfiles(project);
 
-  const isEditing = !!project?.members.find(
-    (item) => item.recipient.toLowerCase() === address?.toLowerCase()
+  const isProjectMember = !!project?.members.find(
+    (item) =>
+      item.recipient.toLowerCase() === address?.toLowerCase() ||
+      project?.recipient?.toLowerCase() === address?.toLowerCase()
   );
+  const isEditing = isProjectMember || isGlobal;
   const inviteCodeParam = useSearchParams().get("invite-code");
   const { gap } = useGap();
   const { switchChainAsync } = useWallet();
@@ -100,6 +107,7 @@ export const ContributorProfileDialog: FC<
     handleSubmit,
     watch,
     clearErrors,
+    reset,
     formState: { errors, isValid },
   } = useForm<SchemaType>({
     resolver: zodResolver(profileSchema),
@@ -116,17 +124,22 @@ export const ContributorProfileDialog: FC<
 
   const onSubmit = async (data: SchemaType) => {
     let gapClient = gap;
-    if (!address || !project) return;
+    if (!address) return;
+    if (!isGlobal && !project) return;
     try {
       setIsLoading(true);
-      if (chain?.id !== project.chainID) {
-        await switchChainAsync?.({ chainId: project.chainID });
-        gapClient = getGapClient(project.chainID);
+      const targetChainId = isGlobal ? chain?.id : project?.chainID;
+      if (!targetChainId) {
+        toast.error("Chain not found");
+        setIsLoading(false);
+        return;
+      }
+      if (chain?.id !== targetChainId) {
+        await switchChainAsync?.({ chainId: targetChainId });
+        gapClient = getGapClient(targetChainId);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        project.chainID
-      );
+      const { walletClient, error } = await safeGetWalletClient(targetChainId);
 
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
@@ -147,7 +160,7 @@ export const ContributorProfileDialog: FC<
       await contributorProfile
         .attest(walletSigner as any, changeStepperStep)
         .then(async (res) => {
-          if (!isEditing) {
+          if (!isProjectMember && !isGlobal && inviteCodeParam) {
             const [data, error] = await fetchData(
               INDEXER.PROJECT.INVITATION.ACCEPT_LINK(project?.uid as string),
               "POST",
@@ -162,14 +175,14 @@ export const ContributorProfileDialog: FC<
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
             await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, project.chainID),
+              INDEXER.ATTESTATION_LISTENER(txHash, targetChainId),
               "POST",
               {}
             );
           }
 
           while (retries > 0) {
-            if (!isEditing) {
+            if (!isProjectMember && !isGlobal) {
               await refreshProject().then(async (refreshedProject) => {
                 // Check if the member is already in the project
                 const hasMember = refreshedProject?.members.find(
@@ -253,6 +266,8 @@ export const ContributorProfileDialog: FC<
       setValue("farcaster", profile.data.farcaster, {
         shouldValidate: !!profile.data.farcaster,
       });
+    } else {
+      reset();
     }
   }, [profile, setValue]);
 

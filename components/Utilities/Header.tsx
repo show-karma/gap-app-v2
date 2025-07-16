@@ -10,7 +10,11 @@ import { useOwnerStore } from "@/store/owner";
 import { useRegistryStore } from "@/store/registry";
 import { PAGES } from "@/utilities/pages";
 import { SOCIALS } from "@/utilities/socials";
-import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import {
+  Bars3Icon,
+  UserCircleIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 import { MoonIcon, SunIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
@@ -28,6 +32,8 @@ import { Searchbar } from "../Searchbar";
 import { Button } from "./Button";
 import { ExternalLink } from "./ExternalLink";
 import { ParagraphIcon } from "../Icons/Paragraph";
+import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
+import { useContributorProfile } from "@/hooks/useContributorProfile";
 
 const ProjectDialog = dynamic(
   () =>
@@ -40,6 +46,105 @@ const ProjectDialog = dynamic(
 const buttonStyle: HTMLButtonElement["className"] =
   "rounded-md bg-white w-max dark:bg-black px-0 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 hover:bg-transparent dark:hover:bg-opacity-75 dark:border-zinc-900";
 
+const UserMenu: React.FC<{
+  account: { address: string; displayName: string };
+}> = ({ account }) => {
+  const { disconnect } = useAuth();
+  const { openModal } = useContributorProfileModalStore();
+  const { profile } = useContributorProfile(account.address as `0x${string}`);
+
+  const firstName = profile?.data?.name?.split(" ")[0] || "";
+
+  const displayName = firstName || profile?.data?.name || account.displayName;
+
+  return (
+    <Popover.Root>
+      <Popover.Trigger asChild>
+        <div className="flex cursor-pointer w-max items-center flex-row gap-2 rounded-full bg-gray-500 p-0 pl-3 text-sm font-semibold text-white hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
+          <span className="truncate max-w-36 w-full">{displayName}</span>
+          <EthereumAddressToENSAvatar
+            address={account.address}
+            className="h-10 w-10 min-h-10 min-w-10 max-h-10 max-w-10 rounded-full"
+          />
+        </div>
+      </Popover.Trigger>
+      <Popover.Content
+        className="z-50 w-48 rounded-md bg-white p-1 shadow-lg dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700"
+        sideOffset={5}
+        align="end"
+      >
+        <div className="py-1">
+          <button
+            onClick={() => openModal({ isGlobal: true })}
+            className="focus-visible:outline-none flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-700"
+          >
+            <UserCircleIcon className="mr-2 h-4 w-4" />
+            My Profile
+          </button>
+          <button
+            onClick={async () => {
+              disconnect();
+            }}
+            className="focus-visible:outline-none flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-700"
+          >
+            <LogOutIcon className="mr-2 h-4 w-4" />
+            Logout
+          </button>
+        </div>
+      </Popover.Content>
+    </Popover.Root>
+  );
+};
+const UserMenuMobile: React.FC<{
+  account: { address: string; displayName: string };
+}> = ({ account }) => {
+  const { disconnect } = useAuth();
+  const { openModal } = useContributorProfileModalStore();
+  const { profile } = useContributorProfile(account.address as `0x${string}`);
+
+  const firstName = profile?.data?.name?.split(" ")[0] || "";
+
+  const displayName = firstName || profile?.data?.name || account.displayName;
+
+  return (
+    <Popover.Root>
+      <Popover.Trigger asChild>
+        <div className="cursor-pointer flex w-full py-1 justify-center items-center flex-row gap-2 rounded-md bg-gray-500 text-sm font-semibold text-white  hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
+          {displayName}
+
+          <EthereumAddressToENSAvatar
+            address={account.address}
+            className="h-10 w-10 min-h-10 min-w-10 max-h-10 max-w-10 rounded-full"
+          />
+        </div>
+      </Popover.Trigger>
+      <Popover.Content
+        className="z-50 w-48 rounded-md bg-white p-1 shadow-lg dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700"
+        sideOffset={5}
+        align="center"
+      >
+        <div className="py-1">
+          <button
+            onClick={() => openModal({ isGlobal: true })}
+            className="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-700"
+          >
+            <UserCircleIcon className="mr-2 h-4 w-4" />
+            My Profile
+          </button>
+          <button
+            onClick={async () => {
+              disconnect();
+            }}
+            className="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-700"
+          >
+            <LogOutIcon className="mr-2 h-4 w-4" />
+            Logout
+          </button>
+        </div>
+      </Popover.Content>
+    </Popover.Root>
+  );
+};
 export default function Header() {
   const { theme: currentTheme, setTheme: changeCurrentTheme } = useTheme();
   const { isConnected, address, chain } = useAccount();
@@ -289,35 +394,9 @@ export default function Header() {
                                       }
 
                                       return (
-                                        <Popover.Root>
-                                          <Popover.Trigger asChild>
-                                            <div className="cursor-pointer flex w-full py-1 justify-center items-center flex-row gap-2 rounded-full bg-gray-500 text-sm font-semibold text-white  hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
-                                              {account.displayName}
-
-                                              <EthereumAddressToENSAvatar
-                                                address={account.address}
-                                                className="h-8 w-8 min-h-8 min-w-8 rounded-full"
-                                              />
-                                            </div>
-                                          </Popover.Trigger>
-                                          <Popover.Content
-                                            className="z-50 w-48 rounded-md bg-white p-1 shadow-lg dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700"
-                                            sideOffset={5}
-                                            align="center"
-                                          >
-                                            <div className="py-1">
-                                              <button
-                                                onClick={async () => {
-                                                  disconnect();
-                                                }}
-                                                className="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-700"
-                                              >
-                                                <LogOutIcon className="mr-2 h-4 w-4" />
-                                                Logout
-                                              </button>
-                                            </div>
-                                          </Popover.Content>
-                                        </Popover.Root>
+                                        <UserMenuMobile
+                                          account={account as any}
+                                        />
                                       );
                                     })()}
                                   </div>
@@ -438,37 +517,7 @@ export default function Header() {
                             );
                           }
 
-                          return (
-                            <Popover.Root>
-                              <Popover.Trigger asChild>
-                                <div className="flex cursor-pointer w-max items-center flex-row gap-2 rounded-full bg-gray-500 p-0 pl-3 text-sm font-semibold text-white hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
-                                  {account.displayName}
-
-                                  <EthereumAddressToENSAvatar
-                                    address={account.address}
-                                    className="h-10 w-10 rounded-full"
-                                  />
-                                </div>
-                              </Popover.Trigger>
-                              <Popover.Content
-                                className="z-50 w-48 rounded-md bg-white p-1 shadow-lg dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700"
-                                sideOffset={5}
-                                align="end"
-                              >
-                                <div className="py-1">
-                                  <button
-                                    onClick={async () => {
-                                      disconnect();
-                                    }}
-                                    className="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-700"
-                                  >
-                                    <LogOutIcon className="mr-2 h-4 w-4" />
-                                    Logout
-                                  </button>
-                                </div>
-                              </Popover.Content>
-                            </Popover.Root>
-                          );
+                          return <UserMenu account={account as any} />;
                         })()}
                       </div>
                     );

@@ -215,7 +215,11 @@ function ProjectPage() {
                               <button
                                 type="button"
                                 className="p-2 rounded-lg hover:opacity-80 hover:bg-zinc-200 dark:hover:bg-zinc-700"
-                                onClick={() => openModal(member.recipient)}
+                                onClick={() =>
+                                  openModal({
+                                    isGlobal: false,
+                                  })
+                                }
                               >
                                 <PencilIcon className="w-4 h-4 text-black dark:text-zinc-100" />
                               </button>
@@ -284,7 +288,9 @@ function ProjectPage() {
     if (isAlreadyMember) return;
     checkCodeValidation().then((isValid) => {
       if (isValid) {
-        openModal(address);
+        openModal({
+          isGlobal: false,
+        });
       }
     });
   }, [project, address, inviteCodeParam]);
