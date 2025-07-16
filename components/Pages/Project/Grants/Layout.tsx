@@ -125,17 +125,16 @@ export const GrantsLayout = ({
   }, [screen, isAuthorized, project, currentTab, router]);
 
   useEffect(() => {
-    if (project?.grants?.length && project?.grants?.length > 0) {
-      return;
+    if (project?.grants?.length && project?.grants?.length === 0) {
+      if (isProjectAdmin || isProjectOwner) {
+        router.push(
+          PAGES.PROJECT.SCREENS.NEW_GRANT(
+            (project?.details?.data?.slug || project?.uid) as string
+          )
+        );
+      }
     }
-    if (isProjectAdmin || isProjectOwner) {
-      router.push(
-        PAGES.PROJECT.SCREENS.NEW_GRANT(
-          (project?.details?.data?.slug || project?.uid) as string
-        )
-      );
-    }
-  }, [isProjectAdmin, isProjectOwner, project]);
+  }, [isProjectAdmin, isProjectOwner, project, router]);
 
   useEffect(() => {
     if (project) {
