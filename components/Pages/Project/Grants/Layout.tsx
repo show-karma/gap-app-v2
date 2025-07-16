@@ -125,18 +125,6 @@ export const GrantsLayout = ({
   }, [screen, isAuthorized, project, currentTab, router]);
 
   useEffect(() => {
-    if (project?.grants?.length === 0) {
-      if (isProjectAdmin || isProjectOwner) {
-        router.push(
-          PAGES.PROJECT.SCREENS.NEW_GRANT(
-            (project?.details?.data?.slug || project?.uid) as string
-          )
-        );
-      }
-    }
-  }, [isProjectAdmin, isProjectOwner, project, router]);
-
-  useEffect(() => {
     if (project) {
       setLoading(true);
       if (grantIdFromQueryParam) {
