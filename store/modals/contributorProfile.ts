@@ -2,29 +2,21 @@ import { create } from "zustand";
 
 interface ContributorProfileStore {
   isModalOpen: boolean;
-  targetAddress?: string;
-  isEditing: boolean;
-  setIsModalOpen: (isContributorProfileModalOpen: boolean) => void;
-  openModal: (targetAddress?: string) => void;
+  isGlobal: boolean;
+  openModal: (options?: { isGlobal?: boolean }) => void;
   closeModal: () => void;
-  setTargetAddress: (targetAddress: string) => void;
-  setIsEditing: (isEditing: boolean) => void;
 }
 
 export const useContributorProfileModalStore = create<ContributorProfileStore>(
   (set) => ({
     isModalOpen: false,
-    targetAddress: undefined,
-    isEditing: false,
-    setIsModalOpen: (isModalOpen: boolean) => set({ isModalOpen }),
-    openModal: (targetAddress?: string) => {
+    isGlobal: false,
+    openModal: (options) => {
       set({
         isModalOpen: true,
-        targetAddress,
+        isGlobal: options?.isGlobal ?? false,
       });
     },
-    closeModal: () => set({ isModalOpen: false, targetAddress: undefined }),
-    setTargetAddress: (targetAddress: string) => set({ targetAddress }),
-    setIsEditing: (isEditing: boolean) => set({ isEditing }),
+    closeModal: () => set({ isModalOpen: false, isGlobal: false }),
   })
 );
