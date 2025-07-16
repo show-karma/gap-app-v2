@@ -125,7 +125,7 @@ export const GrantsLayout = ({
   }, [screen, isAuthorized, project, currentTab, router]);
 
   useEffect(() => {
-    if (project?.grants?.length && project?.grants?.length === 0) {
+    if (project?.grants?.length === 0) {
       if (isProjectAdmin || isProjectOwner) {
         router.push(
           PAGES.PROJECT.SCREENS.NEW_GRANT(
