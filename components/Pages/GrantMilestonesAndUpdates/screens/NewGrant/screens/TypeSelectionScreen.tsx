@@ -32,7 +32,7 @@ export const TypeSelectionScreen: React.FC = () => {
     {
       icon: "/icons/rocket.svg",
       type: "program",
-      title: "Join a Funding Program",
+      title: "Join a Program",
       description:
         "Apply to participate in available funding programs to access new financial opportunities for your work.",
     },

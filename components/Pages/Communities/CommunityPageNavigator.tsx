@@ -40,8 +40,7 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
     Icon: FolderIcon,
     isActive: (pathname: string) =>
       !pathname.includes("/impact") &&
-      !pathname.includes("/project-discovery") &&
-      !pathname.includes("/karma-ai"),
+      !pathname.includes("/project-discovery"),
   },
   {
     path: (communityId: string) => PAGES.COMMUNITY.IMPACT(communityId),
@@ -50,12 +49,12 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
     isActive: (pathname: string) => pathname.includes("/impact"),
     showNewTag: true,
   },
-  {
-    path: (communityId: string) => `/community/${communityId}/karma-ai`,
-    title: () => "Ask Karma AI",
-    Icon: SparklesIcon,
-    isActive: (pathname: string) => pathname.includes("/karma-ai"),
-  },
+  // {
+  //   path: (communityId: string) => `/community/${communityId}/karma-ai`,
+  //   title: () => "Ask Karma AI",
+  //   Icon: SparklesIcon,
+  //   isActive: (pathname: string) => pathname.includes("/karma-ai"),
+  // },
 ] as const;
 
 const getPathWithProgramId = (program: string | null, basePath: string) => {

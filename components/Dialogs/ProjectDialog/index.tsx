@@ -1189,7 +1189,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 id="profile-logo-input"
                 type="text"
                 className={socialMediaInputStyle}
-                placeholder="https://example.com/profile-logo.jpg"
+                placeholder="https://example.com/project-logo.jpg"
                 {...register("profilePicture")}
               />
             </div>
