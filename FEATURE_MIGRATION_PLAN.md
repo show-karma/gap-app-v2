@@ -369,87 +369,98 @@ This document provides a detailed, step-by-step plan to migrate the GAP App v2 c
 
 #### Create Feature Structure
 
-- [ ] Create `src/features/search/` directory with standard subfolders
+- [x] Create `src/features/search/` directory with standard subfolders
 
 #### Migrate Components
 
-- [ ] Move `components/Searchbar/*` → `features/search/components/`
+- [x] Move `components/Searchbar/*` → `features/search/components/`
 
 #### Migrate Types
 
-- [ ] Move `types/explorer.ts` → `features/search/types.ts`
+- [x] Move `types/explorer.ts` → `features/search/types.ts`
+- [x] Create `features/search/actions.ts` for future server actions
+- [x] Create `services/api/gap-indexer.ts` for API client
 
 ### 4.6 ENS Integration Feature
 
 #### Create Feature Structure
 
-- [ ] Create `src/features/ens/` directory with standard subfolders
+- [x] Create `src/features/ens/` directory with standard subfolders
 
 #### Migrate Components
 
-- [ ] Move `components/EthereumAddressToENSName.tsx` → `features/ens/components/address-to-ens-name.tsx`
-- [ ] Move `components/EthereumAddressToENSAvatar.tsx` → `features/ens/components/address-to-ens-avatar.tsx`
+- [x] Move `components/EthereumAddressToENSName.tsx` → `features/ens/components/address-to-ens-name.tsx`
+- [x] Move `components/EthereumAddressToENSAvatar.tsx` → `features/ens/components/address-to-ens-avatar.tsx`
 
 #### Migrate Store
 
-- [ ] Move `store/ens.ts` → `features/ens/lib/store.ts`
+- [x] Move `store/ens.ts` → `features/ens/lib/store.ts`
+- [x] Create `features/ens/types.ts` with ENS-specific types
+- [x] Create `features/ens/actions.ts` for future server actions
 
 ### 4.7 Tracks Feature
 
 #### Create Feature Structure
 
-- [ ] Create `src/features/tracks/` directory with standard subfolders
+- [x] Create `src/features/tracks/` directory with standard subfolders
 
 #### Migrate Components
 
-- [ ] Move `components/Pages/Communities/Tracks/*` → `features/tracks/components/`
-- [ ] Move `components/TrackTags.tsx` → `features/tracks/components/track-tags.tsx`
+- [x] Move `components/Pages/Communities/Tracks/*` → `features/tracks/components/`
+- [x] Move `components/Pages/Communities/TracksAdminPage.tsx` → `features/tracks/components/tracks-admin-page.tsx`
+- [x] Move `components/TrackTags.tsx` → `features/tracks/components/track-tags.tsx`
 
 #### Migrate Hooks & Services
 
-- [ ] Move `hooks/useTracks.ts` → `features/tracks/hooks/use-tracks.ts`
-- [ ] Move `services/tracks.ts` → `features/tracks/api/tracks.ts`
+- [x] Move `hooks/useTracks.ts` → `features/tracks/hooks/use-tracks.ts`
+- [x] Move `services/tracks.ts` → `features/tracks/api/tracks.ts`
+- [x] Create `features/tracks/types.ts` with track-specific types
+- [x] Create `features/tracks/actions.ts` for future server actions
 
 ### 4.8 Payouts Feature
 
 #### Create Feature Structure
 
-- [ ] Create `src/features/payouts/` directory with standard subfolders
+- [x] Create `src/features/payouts/` directory with standard subfolders
 
 #### Migrate Components
 
-- [ ] Move `components/Pages/Admin/PayoutsAdminPage.tsx` → `features/payouts/components/admin-page.tsx`
-- [ ] Move `components/Pages/Admin/PayoutsCsvUpload.tsx` → `features/payouts/components/csv-upload.tsx`
+- [x] Move `components/Pages/Admin/PayoutsAdminPage.tsx` → `features/payouts/components/admin-page.tsx`
+- [x] Move `components/Pages/Admin/PayoutsCsvUpload.tsx` → `features/payouts/components/csv-upload.tsx`
 
 #### Migrate Hooks
 
-- [ ] Move `hooks/useCommunityPayouts.ts` → `features/payouts/hooks/use-community-payouts.ts`
+- [x] Move `hooks/useCommunityPayouts.ts` → `features/payouts/hooks/use-community-payouts.ts`
+- [x] Create `features/payouts/types.ts` with payout-specific types
+- [x] Create `features/payouts/actions.ts` for future server actions
 
 ### 4.9 OSO Integration Feature
 
 #### Create Feature Structure
 
-- [ ] Create `src/features/oso/` directory with standard subfolders
+- [x] Create `src/features/oso/` directory with standard subfolders
 
 #### Migrate Components
 
-- [ ] Move `components/Pages/Project/Impact/OSOMetrics.tsx` → `features/oso/components/metrics.tsx`
+- [x] Copy OSO metrics component → `features/oso/components/metrics.tsx`
 
 #### Migrate Hooks & Types
 
-- [ ] Move `hooks/useOSOMetrics.ts` → `features/oso/hooks/use-oso-metrics.ts`
-- [ ] Move `types/oso.ts` → `features/oso/types.ts`
+- [x] Move `hooks/useOSOMetrics.ts` → `features/oso/hooks/use-oso-metrics.ts`
+- [x] Move `types/oso.ts` → `features/oso/types.ts`
+- [x] Create `features/oso/actions.ts` for future server actions
 
 ### 4.10 Modals Feature
 
 #### Create Feature Structure
 
-- [ ] Create `src/features/modals/` directory with standard subfolders
+- [x] Create `src/features/modals/` directory with standard subfolders
 
 #### Migrate Stores
 
-- [ ] Move all modal stores from `store/modals/*` → `features/modals/lib/stores/`
-- [ ] Move modal components from `components/Dialogs/*` → `features/modals/components/`
+- [x] Move all modal stores from `store/modals/*` → `features/modals/lib/stores/`
+- [x] Move modal components from `components/Dialogs/*` → `features/modals/components/`
+- [x] Create `features/modals/types.ts` with modal-specific types
 
 ## Phase 5: Update Imports & Clean Up (Week 6)
 
