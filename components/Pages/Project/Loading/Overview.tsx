@@ -56,6 +56,41 @@ export const ProjectOverviewLoading = () => {
 
         <div className="flex flex-col gap-1">
           <p className="text-black dark:text-zinc-400 font-bold text-sm">
+            Project impact
+          </p>
+          <div className="flex flex-row  max-lg:flex-col gap-4">
+            <div className="flex flex-1 rounded border border-[#EAECf0] dark:border-zinc-600 border-l-[#155EEF] dark:border-l-[#155EEF] border-l-[4px] p-4 justify-between items-center">
+              <div className="flex flex-col gap-2">
+                <Skeleton className="rounded-lg px-2 py-1 flex justify-center items-center min-h-[40px] min-w-[40px] w-max h-max" />
+                <div className="flex flex-row gap-2 items-center">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="w-5 h-5" />
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-1 rounded border border-[#EAECf0] dark:border-zinc-600 border-l-[#155EEF] dark:border-l-[#155EEF] border-l-[4px] p-4 justify-between items-center">
+              <div className="flex flex-col gap-2">
+                <Skeleton className="rounded-lg px-2 py-1 flex justify-center items-center min-h-[40px] min-w-[40px] w-max h-max" />
+                <div className="flex flex-row gap-2 items-center">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="w-5 h-5" />
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-1 rounded border border-[#EAECf0] dark:border-zinc-600 border-l-[#155EEF] dark:border-l-[#155EEF] border-l-[4px] p-4 justify-between items-center">
+              <div className="flex flex-col gap-2">
+                <Skeleton className="rounded-lg px-2 py-1 flex justify-center items-center min-h-[40px] min-w-[40px] w-max h-max" />
+                <div className="flex flex-row gap-2 items-center">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="w-5 h-5" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <p className="text-black dark:text-zinc-400 font-bold text-sm">
             This project has received
           </p>
           <div className="flex flex-row  max-lg:flex-col gap-4">

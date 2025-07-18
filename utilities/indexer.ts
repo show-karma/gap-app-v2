@@ -114,6 +114,11 @@ export const INDEXER = {
     CREATE_OR_UPDATE: () => `/indicators`,
     DELETE: (indicatorId: string) => `/indicators/${indicatorId}`,
     UNLINKED: () => `/indicators/unlinked`,
+    BY_TIMERANGE: (projectUID: string, params: Record<string, number>) =>
+        `/projects/${projectUID}/indicators/data/byTimeRange?${Object
+          .entries(params)
+          .map(([key, value]) => `${key}=${value}`)
+          .join("&")}`,
   },
   COMMUNITY: {
     GET: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}`,
