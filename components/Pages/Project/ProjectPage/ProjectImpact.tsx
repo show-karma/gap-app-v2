@@ -5,6 +5,7 @@ import pluralize from "pluralize";
 // Global variables for indicator types
 const GITHUB_COMMITS = "GitHub Commits";
 const NO_OF_TXS = "no_of_txs";
+const UNIQ_USER_TXS = "uniq_user_txs";
 
 interface ProjectImpactProps {
   projectId: string;
@@ -15,7 +16,8 @@ export const ProjectImpact = ({ projectId }: ProjectImpactProps) => {
     data: impactIndicators = {},
   } = useProjectImpactIndicators(projectId, {
     [NO_OF_TXS]: 30,
-    [GITHUB_COMMITS]: 30
+    [GITHUB_COMMITS]: 30,
+    [UNIQ_USER_TXS]: 30
   });
 
   const hasAnyImpactIndicators = Object.keys(impactIndicators).length > 0 && 
@@ -56,6 +58,21 @@ export const ProjectImpact = ({ projectId }: ProjectImpactProps) => {
               <div className="flex flex-row gap-3">
                 <p className="font-normal text-brand-gray text-sm dark:text-zinc-301">
                   {pluralize("Git Commit", impactIndicators[GITHUB_COMMITS].totalValue)} <span className="text-xs text-gray-500 dark:text-zinc-400">(last 30 days)</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        {impactIndicators[UNIQ_USER_TXS] &&
+          impactIndicators[UNIQ_USER_TXS].totalValue > 0 && (
+          <div className="flex flex-1 rounded border border-[#EAECf0] dark:border-zinc-600 border-l-[#155EEF] dark:border-l-[#155EEF] border-l-[4px] p-4 justify-between items-center">
+            <div className="flex flex-col gap-3">
+              <p className="text-black dark:text-zinc-301 dark:bg-zinc-800 text-2xl font-bold bg-[#EFF4FF] rounded-lg px-2 py-1 flex justify-center items-center min-h-[40px]  min-w-[40px] w-max h-max">
+                {formatCurrency(impactIndicators[UNIQ_USER_TXS].totalValue)}
+              </p>
+              <div className="flex flex-row gap-3">
+                <p className="font-normal text-brand-gray text-sm dark:text-zinc-301">
+                  {pluralize("Unique users transactions", impactIndicators[UNIQ_USER_TXS].totalValue)} <span className="text-xs text-gray-500 dark:text-zinc-400">(last 30 days)</span>
                 </p>
               </div>
             </div>
