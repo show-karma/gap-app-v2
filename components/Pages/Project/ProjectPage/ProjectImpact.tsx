@@ -40,7 +40,7 @@ export const ProjectImpact = ({ projectId }: ProjectImpactProps) => {
               </p>
               <div className="flex flex-row gap-3">
                 <p className="font-normal text-brand-gray text-sm dark:text-zinc-301">
-                  {pluralize("Transaction", impactIndicators[NO_OF_TXS].totalValue)}
+                  {pluralize("Transaction", impactIndicators[NO_OF_TXS].totalValue)} <span className="text-xs text-gray-500 dark:text-zinc-400">(last 30 days)</span>
                 </p>
               </div>
             </div>
@@ -55,7 +55,7 @@ export const ProjectImpact = ({ projectId }: ProjectImpactProps) => {
               </p>
               <div className="flex flex-row gap-3">
                 <p className="font-normal text-brand-gray text-sm dark:text-zinc-301">
-                  {pluralize("Git Commit", impactIndicators[GITHUB_COMMITS].totalValue)}
+                  {pluralize("Git Commit", impactIndicators[GITHUB_COMMITS].totalValue)} <span className="text-xs text-gray-500 dark:text-zinc-400">(last 30 days)</span>
                 </p>
               </div>
             </div>
