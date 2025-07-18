@@ -21,7 +21,8 @@
       "WebFetch(domain:dev.to)",
       "Bash(mkdir:*)",
       "Bash(pnpm tsc:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(cp:*)"
     ],
     "deny": []
   }

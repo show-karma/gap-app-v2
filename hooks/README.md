@@ -39,9 +39,9 @@ This directory should only contain hooks that are truly generic and used across 
 - `useUnlinkedIndicators.ts`
 
 ### Milestones Feature
-- `useMilestone.ts`
-- `useMilestoneActions.ts`
-- `useAllMilestones.ts`
+- `useMilestone.ts` → ✅ Migrated to features/milestones/hooks/use-milestone.ts
+- `useMilestoneActions.ts` → ✅ Migrated to features/milestones/hooks/use-milestone-actions.ts
+- `useAllMilestones.ts` → ✅ Migrated to features/milestones/hooks/use-all-milestones.ts
 
 ### Auth Feature
 - `useAuth.ts`

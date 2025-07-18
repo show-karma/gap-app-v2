@@ -1,12 +1,12 @@
 "use client";
 
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/button";
 import { useProjectStore } from "@/src/features/projects/lib/store";
 import { useOwnerStore } from "@/store/owner";
 import { useCommunityAdminStore } from "@/src/features/communities/lib/community-admin-store";
-import { formatDate } from "@/utilities/formatDate";
+import { formatDate } from "@/lib/format/date";
 import { MESSAGES } from "@/config/messages";
-import { urlRegex } from "@/utilities/regexs/urlRegex";
+import { urlRegex } from "@/lib/utils/regex";
 import { cn } from "@/lib/utils/cn";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { AreaChart, Card, Title } from "@tremor/react";
@@ -16,7 +16,7 @@ import { useAccount } from "wagmi";
 import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
 import { useImpactAnswers } from "@/src/features/impact/hooks/use-impact-answers";
 import { GroupedLinks } from "@/src/features/impact/components/project-impact/GroupedLinks";
-import { prepareChartData } from "@/src/lib/analytics/chart";
+import { prepareChartData } from "@/lib/analytics/chart";
 import { GrantsOutputsLoading } from "@/src/features/projects/components/loading/Grants/Outputs";
 import { ImpactIndicatorWithData } from "@/src/features/impact/types";
 

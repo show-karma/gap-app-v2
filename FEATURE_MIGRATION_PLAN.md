@@ -63,7 +63,6 @@ This document provides a detailed, step-by-step plan to migrate the GAP App v2 c
 - [x] Move `utilities/fetchData.ts` → `lib/utils/fetch-data.ts`
 - [x] Move `utilities/misc.ts` → `lib/utils/misc.ts` (generateRandomString + zeroUID)
 - [x] Move `utilities/mixpanel.ts` → `lib/analytics/mixpanel.ts` (mixpanelEvent.ts)
-- [ ] Move `utilities/Amplitude.ts` → `lib/analytics/amplitude.ts` (not found)
 - [x] Move `utilities/sentry.ts` → `lib/monitoring/sentry.ts` (sentry/ignoreErrors.ts)
 - [x] Move `utilities/formatNumber.ts` → `lib/format/number.ts`
 - [x] Move `utilities/reduceText.ts` → `lib/utils/text.ts`
@@ -123,35 +122,35 @@ This document provides a detailed, step-by-step plan to migrate the GAP App v2 c
 
 #### Create Feature Structure
 
-- [ ] Create `src/features/projects/` directory
-- [ ] Create `src/features/projects/components/`
-- [ ] Create `src/features/projects/hooks/`
-- [ ] Create `src/features/projects/lib/`
-- [ ] Create `src/features/projects/api/`
-- [ ] Create `src/features/projects/actions.ts`
-- [ ] Create `src/features/projects/types.ts`
+- [x] Create `src/features/projects/` directory
+- [x] Create `src/features/projects/components/`
+- [x] Create `src/features/projects/hooks/`
+- [x] Create `src/features/projects/lib/`
+- [x] Create `src/features/projects/api/`
+- [x] Create `src/features/projects/actions.ts`
+- [x] Create `src/features/projects/types.ts`
 
 #### Migrate Components
 
-- [ ] Move `components/Pages/Project/*` → `features/projects/components/`
-- [ ] Move `components/Pages/MyProjects/*` → `features/projects/components/my-projects/`
-- [ ] Move `components/Pages/NewProjects/*` → `features/projects/components/new-projects/`
-- [ ] Move `components/ProjectFeed.tsx` → `features/projects/components/project-feed.tsx`
-- [ ] Move project-related dialogs from `components/Dialogs/`
+- [x] Move `components/Pages/Project/*` → `features/projects/components/`
+- [x] Move `components/Pages/MyProjects/*` → `features/projects/components/my-projects/`
+- [x] Move `components/Pages/NewProjects/*` → `features/projects/components/new-projects/`
+- [x] Move `components/ProjectFeed.tsx` → `features/projects/components/project-feed.tsx`
+- [ ] Move project-related dialogs from `components/Dialogs/` (planned for Phase 3)
 
 #### Migrate Hooks
 
-- [ ] Move `hooks/useProject.ts` → `features/projects/hooks/use-project.ts`
-- [ ] Move `hooks/useProjectInstance.ts` → `features/projects/hooks/use-project-instance.ts`
-- [ ] Move `hooks/useProjectMembers.ts` → `features/projects/hooks/use-project-members.ts`
-- [ ] Move `hooks/useProjectPermissions.ts` → `features/projects/hooks/use-project-permissions.ts`
-- [ ] Move `hooks/useProjectSocials.ts` → `features/projects/hooks/use-project-socials.ts`
-- [ ] Move `hooks/useProjectMilestoneForm.ts` → `features/projects/hooks/use-project-milestone-form.ts`
+- [x] Move `hooks/useProject.ts` → `features/projects/hooks/use-project.ts`
+- [x] Move `hooks/useProjectInstance.ts` → `features/projects/hooks/use-project-instance.ts`
+- [x] Move `hooks/useProjectMembers.ts` → `features/projects/hooks/use-project-members.ts`
+- [x] Move `hooks/useProjectPermissions.ts` → `features/projects/hooks/use-project-permissions.ts`
+- [x] Move `hooks/useProjectSocials.ts` → `features/projects/hooks/use-project-socials.ts`
+- [x] Move `hooks/useProjectMilestoneForm.ts` → `features/projects/hooks/use-project-milestone-form.ts`
 
 #### Migrate Store & Types
 
-- [ ] Move `store/project.ts` → `features/projects/lib/store.ts`
-- [ ] Move `types/project.ts` → `features/projects/types.ts`
+- [x] Move `store/project.ts` → `features/projects/lib/store.ts`
+- [x] Move `types/project.ts` → `features/projects/types.ts`
 - [ ] Create `features/projects/api/` with project-specific API calls
 
 #### Create Actions
@@ -164,57 +163,57 @@ This document provides a detailed, step-by-step plan to migrate the GAP App v2 c
 
 #### Create Feature Structure
 
-- [ ] Create `src/features/communities/` directory with standard subfolders
+- [x] Create `src/features/communities/` directory with standard subfolders
 
 #### Migrate Components
 
-- [ ] Move `components/Pages/Communities/*` → `features/communities/components/`
-- [ ] Move `components/CommunitiesDropdown.tsx` → `features/communities/components/communities-dropdown.tsx`
-- [ ] Move `components/CommunitiesSelect.tsx` → `features/communities/components/communities-select.tsx`
-- [ ] Move `components/CommunityFeed.tsx` → `features/communities/components/community-feed.tsx`
-- [ ] Move `components/CommunityStats.tsx` → `features/communities/components/community-stats.tsx`
+- [x] Move `components/Pages/Communities/*` → `features/communities/components/`
+- [x] Move `components/CommunitiesDropdown.tsx` → `features/communities/components/communities-dropdown.tsx`
+- [x] Move `components/CommunitiesSelect.tsx` → `features/communities/components/communities-select.tsx`
+- [x] Move `components/CommunityFeed.tsx` → `features/communities/components/community-feed.tsx`
+- [x] Move `components/CommunityStats.tsx` → `features/communities/components/community-stats.tsx`
 
 #### Migrate Hooks
 
-- [ ] Move `hooks/useCommunityDetails.ts` → `features/communities/hooks/use-community-details.ts`
-- [ ] Move `hooks/useCommunityCategory.ts` → `features/communities/hooks/use-community-category.ts`
-- [ ] Move `hooks/useIsCommunityAdmin.ts` → `features/communities/hooks/use-is-community-admin.ts`
-- [ ] Move `hooks/useAdminCommunities.ts` → `features/communities/hooks/use-admin-communities.ts`
+- [x] Move `hooks/useCommunityDetails.ts` → `features/communities/hooks/use-community-details.ts`
+- [x] Move `hooks/useCommunityCategory.ts` → `features/communities/hooks/use-community-category.ts`
+- [x] Move `hooks/useIsCommunityAdmin.ts` → `features/communities/hooks/use-is-community-admin.ts`
+- [x] Move `hooks/useAdminCommunities.ts` → `features/communities/hooks/use-admin-communities.ts`
 
 #### Migrate Store & Types
 
-- [ ] Move `store/communities.ts` → `features/communities/lib/communities-store.ts`
-- [ ] Move `store/community.ts` → `features/communities/lib/community-store.ts`
-- [ ] Move `store/communityAdmin.ts` → `features/communities/lib/community-admin-store.ts`
-- [ ] Extract community types to `features/communities/types.ts`
+- [x] Move `store/communities.ts` → `features/communities/lib/communities-store.ts`
+- [x] Move `store/community.ts` → `features/communities/lib/community-store.ts`
+- [x] Move `store/communityAdmin.ts` → `features/communities/lib/community-admin-store.ts`
+- [x] Extract community types to `features/communities/types.ts`
 
 ### 2.3 Grants Feature
 
 #### Create Feature Structure
 
-- [ ] Create `src/features/grants/` directory with standard subfolders
+- [x] Create `src/features/grants/` directory with standard subfolders
 
 #### Migrate Components
 
-- [ ] Move `components/Pages/Grants/*` → `features/grants/components/`
-- [ ] Move `components/Pages/GrantMilestonesAndUpdates/*` → `features/grants/components/milestones-updates/`
-- [ ] Move `components/GrantCard.tsx` → `features/grants/components/grant-card.tsx`
-- [ ] Move `components/GrantsAccordion.tsx` → `features/grants/components/grants-accordion.tsx`
-- [ ] Move `components/GrantProgramDropdown.tsx` → `features/grants/components/grant-program-dropdown.tsx`
-- [ ] Move `components/GrantSizeSlider.tsx` → `features/grants/components/grant-size-slider.tsx`
-- [ ] Move `components/CommunityGrants.tsx` → `features/grants/components/community-grants.tsx`
+- [x] Move `components/Pages/Grants/*` → `features/grants/components/`
+- [x] Move `components/Pages/GrantMilestonesAndUpdates/*` → `features/grants/components/milestones-updates/`
+- [ ] Move `components/GrantCard.tsx` → `features/grants/components/grant-card.tsx` (planned for Phase 3)
+- [ ] Move `components/GrantsAccordion.tsx` → `features/grants/components/grants-accordion.tsx` (planned for Phase 3)
+- [ ] Move `components/GrantProgramDropdown.tsx` → `features/grants/components/grant-program-dropdown.tsx` (planned for Phase 3)
+- [ ] Move `components/GrantSizeSlider.tsx` → `features/grants/components/grant-size-slider.tsx` (planned for Phase 3)
+- [ ] Move `components/CommunityGrants.tsx` → `features/grants/components/community-grants.tsx` (planned for Phase 3)
 
 #### Migrate Hooks
 
-- [ ] Move `hooks/useGrant.ts` → `features/grants/hooks/use-grant.ts`
-- [ ] Move `hooks/useGrants.ts` → `features/grants/hooks/use-grants.ts`
-- [ ] Move `hooks/useGrantsTable.ts` → `features/grants/hooks/use-grants-table.ts`
-- [ ] Move `hooks/useGrantMilestoneForm.ts` → `features/grants/hooks/use-grant-milestone-form.ts`
+- [x] Move `hooks/useGrant.ts` → `features/grants/hooks/use-grant.ts`
+- [x] Move `hooks/useGrants.ts` → `features/grants/hooks/use-grants.ts`
+- [ ] Move `hooks/useGrantsTable.ts` → `features/grants/hooks/use-grants-table.ts` (planned for Phase 3)
+- [x] Move `hooks/useGrantMilestoneForm.ts` → `features/grants/hooks/use-grant-milestone-form.ts`
 
 #### Migrate Store & Types
 
-- [ ] Move `store/grant.ts` → `features/grants/lib/store.ts`
-- [ ] Move `types/grant.ts` → `features/grants/types.ts`
+- [x] Move `store/grant.ts` → `features/grants/lib/store.ts`
+- [x] Move `types/grant.ts` → `features/grants/types.ts`
 
 ## Phase 3: Migrate Supporting Features (Week 4)
 
@@ -222,46 +221,46 @@ This document provides a detailed, step-by-step plan to migrate the GAP App v2 c
 
 #### Create Feature Structure
 
-- [ ] Create `src/features/impact/` directory with standard subfolders
+- [x] Create `src/features/impact/` directory with standard subfolders
 
 #### Migrate Components
 
-- [ ] Move `components/Pages/Communities/Impact/*` → `features/impact/components/community-impact/`
-- [ ] Move `components/Pages/Project/Impact/*` → `features/impact/components/project-impact/`
-- [ ] Move `components/Pages/Admin/ImpactPage.tsx` → `features/impact/components/admin/impact-page.tsx`
+- [x] Move `components/Pages/Communities/Impact/*` → `features/impact/components/community-impact/`
+- [x] Move `components/Pages/Project/Impact/*` → `features/impact/components/project-impact/`
+- [x] Move `components/Pages/Admin/ImpactPage.tsx` → `features/impact/components/admin/impact-page.tsx`
 
 #### Migrate Hooks
 
-- [ ] Move `hooks/useImpactAnswers.ts` → `features/impact/hooks/use-impact-answers.ts`
-- [ ] Move `hooks/useImpactCommunityAggregate.ts` → `features/impact/hooks/use-impact-community-aggregate.ts`
-- [ ] Move `hooks/useImpactMeasurement.ts` → `features/impact/hooks/use-impact-measurement.ts`
-- [ ] Move `hooks/useIndicators.ts` → `features/impact/hooks/use-indicators.ts`
-- [ ] Move `hooks/useGroupedIndicators.ts` → `features/impact/hooks/use-grouped-indicators.ts`
-- [ ] Move `hooks/useUnlinkedIndicators.ts` → `features/impact/hooks/use-unlinked-indicators.ts`
+- [x] Move `hooks/useImpactAnswers.ts` → `features/impact/hooks/use-impact-answers.ts`
+- [x] Move `hooks/useImpactCommunityAggregate.ts` → `features/impact/hooks/use-impact-community-aggregate.ts`
+- [x] Move `hooks/useImpactMeasurement.ts` → `features/impact/hooks/use-impact-measurement.ts`
+- [x] Move `hooks/useIndicators.ts` → `features/impact/hooks/use-indicators.ts`
+- [x] Move `hooks/useGroupedIndicators.ts` → `features/impact/hooks/use-grouped-indicators.ts`
+- [x] Move `hooks/useUnlinkedIndicators.ts` → `features/impact/hooks/use-unlinked-indicators.ts`
 
 #### Migrate Services & Types
 
-- [ ] Move `services/impactService.ts` → `features/impact/api/impact-service.ts`
-- [ ] Move `types/impactMeasurement.ts` → `features/impact/types.ts`
+- [x] Move `services/impactService.ts` → `features/impact/api/impact-service.ts`
+- [x] Move `types/impactMeasurement.ts` → `features/impact/types.ts`
 
 ### 3.2 Milestones Feature
 
 #### Create Feature Structure
 
-- [ ] Create `src/features/milestones/` directory with standard subfolders
+- [x] Create `src/features/milestones/` directory with standard subfolders
 
 #### Migrate Components
 
-- [ ] Move `components/Milestone/*` → `features/milestones/components/`
-- [ ] Move `components/Forms/Milestone.tsx` → `features/milestones/components/forms/milestone-form.tsx`
-- [ ] Move `components/Forms/MilestoneUpdate.tsx` → `features/milestones/components/forms/milestone-update-form.tsx`
-- [ ] Move `components/Forms/GrantMilestoneCompletion.tsx` → `features/milestones/components/forms/grant-milestone-completion.tsx`
+- [x] Move `components/Milestone/*` → `features/milestones/components/`
+- [x] Move `components/Forms/Milestone.tsx` → `features/milestones/components/forms/milestone-form.tsx`
+- [x] Move `components/Forms/MilestoneUpdate.tsx` → `features/milestones/components/forms/milestone-update-form.tsx`
+- [x] Move `components/Forms/GrantMilestoneCompletion.tsx` → `features/milestones/components/forms/grant-milestone-completion.tsx`
 
 #### Migrate Hooks
 
-- [ ] Move `hooks/useMilestone.ts` → `features/milestones/hooks/use-milestone.ts`
-- [ ] Move `hooks/useMilestoneActions.ts` → `features/milestones/hooks/use-milestone-actions.ts`
-- [ ] Move `hooks/useAllMilestones.ts` → `features/milestones/hooks/use-all-milestones.ts`
+- [x] Move `hooks/useMilestone.ts` → `features/milestones/hooks/use-milestone.ts`
+- [x] Move `hooks/useMilestoneActions.ts` → `features/milestones/hooks/use-milestone-actions.ts`
+- [x] Move `hooks/useAllMilestones.ts` → `features/milestones/hooks/use-all-milestones.ts`
 
 ### 3.3 Admin Feature
 
@@ -519,9 +518,9 @@ This document provides a detailed, step-by-step plan to migrate the GAP App v2 c
 
 - ✅ Keep feature modules self-contained
 - ✅ Co-locate related code within features
-- ✅ Use barrel exports (index.ts) for clean imports
 - ✅ Maintain consistent naming conventions
 - ✅ Test after each major migration step
+- ✅ Run `pnpm tsc --noEmit` after each migration step
 
 ### Don'ts
 
@@ -530,6 +529,7 @@ This document provides a detailed, step-by-step plan to migrate the GAP App v2 c
 - ❌ Don't mix feature-specific and generic code
 - ❌ Don't skip testing after migrations
 - ❌ Don't rush - take time to organize properly
+- ❌ Don't use barrel exports (index.ts) - import directly from files
 
 ## Success Metrics
 
