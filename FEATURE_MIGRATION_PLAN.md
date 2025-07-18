@@ -266,33 +266,33 @@ This document provides a detailed, step-by-step plan to migrate the GAP App v2 c
 
 #### Create Feature Structure
 
-- [ ] Create `src/features/admin/` directory with standard subfolders
+- [x] Create `src/features/admin/` directory with standard subfolders
 
 #### Migrate Components
 
-- [ ] Move `components/Pages/Admin/*` → `features/admin/components/`
-- [ ] Organize by sub-feature (community-admin, super-admin, etc.)
+- [x] Move `components/Pages/Admin/*` → `features/admin/components/`
+- [x] Organize by sub-feature (community-admin, super-admin, etc.)
 
 ### 3.4 Program Registry Feature
 
 #### Create Feature Structure
 
-- [ ] Create `src/features/program-registry/` directory with standard subfolders
+- [x] Create `src/features/program-registry/` directory with standard subfolders
 
 #### Migrate Components
 
-- [ ] Move `components/Pages/ProgramRegistry/*` → `features/program-registry/components/`
+- [x] Move `components/Pages/ProgramRegistry/*` → `features/program-registry/components/`
 
 #### Migrate Hooks & Services
 
-- [ ] Move `hooks/usePrograms.ts` → `features/program-registry/hooks/use-programs.ts`
-- [ ] Move `services/programService.ts` → `features/program-registry/api/program-service.ts`
-- [ ] Move `services/programs.ts` → `features/program-registry/api/programs.ts`
+- [x] Move `hooks/usePrograms.ts` → `features/program-registry/hooks/use-programs.ts`
+- [x] Move `services/programService.ts` → `features/program-registry/api/program-service.ts`
+- [x] Move `services/programs.ts` → `features/program-registry/api/programs.ts`
 
 #### Migrate Store & Types
 
-- [ ] Move `store/registry.ts` → `features/program-registry/lib/store.ts`
-- [ ] Move `types/programs.ts` → `features/program-registry/types.ts`
+- [x] Move `store/registry.ts` → `features/program-registry/lib/store.ts`
+- [x] Create `features/program-registry/types.ts`
 
 ## Phase 4: Migrate Remaining Features (Week 5)
 
