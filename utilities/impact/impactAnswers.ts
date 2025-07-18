@@ -1,5 +1,4 @@
-import { ImpactIndicatorWithData } from "@/types/impactMeasurement";
-import fetchData from "../fetchData";
+import { fetchData } from "@/lib/utils/fetch-data";
 import { INDEXER } from "../indexer";
 import { MESSAGES } from "../messages";
 import toast from "react-hot-toast";

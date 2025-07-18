@@ -1,4 +1,4 @@
-import { ProjectFromList } from "@/types/project";
+import { ProjectFromList } from "@/types";
 import fetchData from "../fetchData";
 import { INDEXER } from "../indexer";
 import { PageInfo } from "@/types/pagination";

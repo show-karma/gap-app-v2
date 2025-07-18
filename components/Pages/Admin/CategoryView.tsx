@@ -1,9 +1,5 @@
 import { Button } from "@/components/Utilities/Button";
-import {
-  Category,
-  ImpactSegment,
-  ImpactIndicator,
-} from "@/types/impactMeasurement";
+
 import { cn } from "@/utilities/tailwind";
 import pluralize from "pluralize";
 import Image from "next/image";
@@ -17,7 +13,6 @@ import {
 import { PencilSquareIcon } from "@heroicons/react/24/solid";
 import { useRef, useState, useEffect, Fragment, useMemo } from "react";
 import { ActivityOutcomeModal } from "./ActivityOutcomeModal";
-import { useGroupedIndicators } from "@/hooks/useGroupedIndicators";
 import { Menu, Transition } from "@headlessui/react";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import fetchData from "@/utilities/fetchData";
@@ -26,6 +21,8 @@ import toast from "react-hot-toast";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MESSAGES } from "@/utilities/messages";
 import { useAccount } from "wagmi";
+import { Category, ImpactSegment } from "@/src/features/impact/types";
+import { useGroupedIndicators } from "@/src/features/impact/hooks/use-grouped-indicators";
 
 interface CategoryViewProps {
   selectedCategory: Category;
@@ -128,16 +125,25 @@ export const CategoryView = ({
   );
 
   const {
-    data: groupedIndicators = { communityAdminCreated: [], projectOwnerCreated: [] },
+    data: groupedIndicators = {
+      communityAdminCreated: [],
+      projectOwnerCreated: [],
+    },
     isLoading: isLoadingIndicators,
   } = useGroupedIndicators({
     communityId: communityId,
   });
 
-  const impact_indicators = useMemo(() => [
-    ...groupedIndicators.communityAdminCreated,
-    ...groupedIndicators.projectOwnerCreated,
-  ], [groupedIndicators.communityAdminCreated, groupedIndicators.projectOwnerCreated]);
+  const impact_indicators = useMemo(
+    () => [
+      ...groupedIndicators.communityAdminCreated,
+      ...groupedIndicators.projectOwnerCreated,
+    ],
+    [
+      groupedIndicators.communityAdminCreated,
+      groupedIndicators.projectOwnerCreated,
+    ]
+  );
 
   // Count activities and outcomes for a category
   const getCategoryStats = (category: Category) => {

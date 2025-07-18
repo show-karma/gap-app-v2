@@ -7,7 +7,7 @@ import { MarkdownEditor } from "../Utilities/MarkdownEditor";
 import { Button } from "../Utilities/Button";
 import { errorManager } from "../Utilities/errorManager";
 import { useAccount } from "wagmi";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
 

@@ -1,12 +1,7 @@
 import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { useIndicators } from "@/hooks/useIndicators";
-import {
-  Category,
-  ImpactIndicator,
-  ImpactSegment,
-} from "@/types/impactMeasurement";
+
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -23,6 +18,12 @@ import toast from "react-hot-toast";
 import { z } from "zod";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { useAccount } from "wagmi";
+import {
+  Category,
+  ImpactIndicator,
+  ImpactSegment,
+} from "@/src/features/impact/types";
+import { useIndicators } from "@/src/features/impact/hooks/use-indicators";
 
 const OUTPUT_TYPES = ["output", "outcome"] as const;
 type OutputType = (typeof OUTPUT_TYPES)[number];

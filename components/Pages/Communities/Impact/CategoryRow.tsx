@@ -13,8 +13,8 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import pluralize from "pluralize";
 import { useState } from "react";
-import { prepareChartData } from "./ImpactCharts";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
+import { prepareChartData } from "@/src/lib/analytics/chart";
 
 export const fundedAmountFormatter = (value: string) => {
   const amount = Number(value.includes(" ") ? value.split(" ")[0] : value);

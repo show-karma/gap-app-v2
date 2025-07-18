@@ -1,5 +1,5 @@
 "use client";
-import { useImpactMeasurement } from "@/hooks/useImpactMeasurement";
+import { useImpactMeasurement } from "@/src/features/impact/hooks/use-impact-measurement";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useQueryState } from "nuqs";

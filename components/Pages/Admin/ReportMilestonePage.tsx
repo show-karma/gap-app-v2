@@ -5,7 +5,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import TablePagination from "@/components/Utilities/TablePagination";
-import { useOwnerStore } from "@/store";
+import { useOwnerStore } from "@/store/owner";
 import { useAuthStore } from "@/store/auth";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";

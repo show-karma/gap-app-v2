@@ -3,9 +3,9 @@ import Link from "next/link";
 import { DiscordIcon, TelegramIcon, TwitterIcon } from "../Icons";
 import { ExternalLink } from "@/components/ui/external-link";
 import { SOCIALS } from "@/utilities/socials";
-import { karmaLinks } from "@/utilities/karma";
 import { ParagraphIcon } from "../Icons/Paragraph";
 import { PAGES } from "@/utilities/pages";
+import { karmaLinks } from "@/utilities/karma/karma";
 
 const navigation = {
   social: [

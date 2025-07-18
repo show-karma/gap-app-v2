@@ -6,7 +6,7 @@ import { useENS } from "@/store/ens";
 import { shortAddress } from "@/utilities/shortAddress";
 import { formatDate } from "@/utilities/formatDate";
 import { EmptyEndorsmentList } from "../Project/Impact/EmptyEndorsmentList";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { IProjectEndorsement } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";

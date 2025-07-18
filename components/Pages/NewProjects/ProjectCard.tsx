@@ -6,7 +6,7 @@ import { MarkdownPreview } from "../../Utilities/MarkdownPreview";
 import { formatPercentage } from "@/utilities/formatNumber";
 import { PAGES } from "@/utilities/pages";
 import { formatDate } from "@/utilities/formatDate";
-import { ProjectFromList } from "@/types/project";
+import { ProjectFromList } from "@/types";
 import Link from "next/link";
 import { ProfilePicture } from "../../Utilities/ProfilePicture";
 

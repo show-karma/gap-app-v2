@@ -5,7 +5,8 @@ import { EndorsementDialog } from "@/components/Pages/Project/Impact/Endorsement
 import { ProjectNavigator } from "@/components/Pages/Project/ProjectNavigator";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useOwnerStore } from "@/store/owner";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useIntroModalStore } from "@/store/modals/intro";
 import { useProgressModalStore } from "@/store/modals/progress";

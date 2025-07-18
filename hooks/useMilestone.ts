@@ -4,15 +4,13 @@ import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { useStepper } from "@/store/modals/txStepper";
-import { useProjectStore, useOwnerStore } from "@/store";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { useParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { getGapClient, useGap } from "./useGap";
+import { getGapClient, useGap } from "@/hooks/useGap";
 import { UnifiedMilestone } from "@/types/roadmap";
-import { getProjectById } from "@/utilities/sdk";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { useAllMilestones } from "./useAllMilestones";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
@@ -24,7 +22,10 @@ import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
 import { sanitizeInput } from "@/utilities/sanitize";
-import { useWallet } from "./useWallet";
+import { useWallet } from "@/hooks/useWallet";
+import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useOwnerStore } from "@/store/owner";
+import { getProjectById } from "@/utilities/sdk/projects";
 
 export const useMilestone = () => {
   const [isDeleting, setIsDeleting] = useState(false);

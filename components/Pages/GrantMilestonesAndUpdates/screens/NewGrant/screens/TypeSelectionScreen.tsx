@@ -3,7 +3,7 @@ import { StepBlock } from "../StepBlock";
 import { useGrantFormStore } from "../store";
 import { useRouter } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
 import Image from "next/image";
 import { NextButton } from "./buttons/NextButton";
 import { CancelButton } from "./buttons/CancelButton";

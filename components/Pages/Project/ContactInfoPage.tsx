@@ -1,5 +1,6 @@
 "use client";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useOwnerStore } from "@/store/owner";
 import { ContactInfoSubscription } from "@/components/ContactInfoSubscription";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useContactInfo } from "@/hooks/useContactInfo";

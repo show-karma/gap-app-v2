@@ -1,6 +1,7 @@
 "use client";
 
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useOwnerStore } from "@/store/owner";
 import {
   IGrantUpdate,
   IMilestoneResponse,

@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { useIndicators } from "@/hooks/useIndicators";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { TrashIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
@@ -17,6 +16,7 @@ import { Indicator } from "@/utilities/queries/getIndicatorsByCommunity";
 import { ProgramCard } from "./ProgramCard";
 import { MESSAGES } from "@/utilities/messages";
 import { useAccount } from "wagmi";
+import { useIndicators } from "@/src/features/impact/hooks/use-indicators";
 
 interface Program {
   programId: string;

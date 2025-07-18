@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { useCommunitiesStore } from "@/store/communities";
+import { useCommunitiesStore } from "@/src/features/communities/lib/communities-store";
 import { PAGES } from "@/utilities/pages";
 import { MESSAGES } from "@/utilities/messages";
 import { Community } from "@show-karma/karma-gap-sdk";

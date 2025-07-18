@@ -1,5 +1,4 @@
 /* eslint-disable @next/next/no-img-element */
-import { useProjectStore } from "@/store";
 import { useAdminTransferOwnershipModalStore } from "@/store/modals/adminTransferOwnership";
 import fetchData from "@/utilities/fetchData";
 import { sanitizeInput } from "@/utilities/sanitize";
@@ -13,6 +12,7 @@ import { z } from "zod";
 import { Button } from "../Utilities/Button";
 import { errorManager } from "../Utilities/errorManager";
 import { useAccount } from "wagmi";
+import { useProjectStore } from "@/src/features/projects/lib/store";
 
 const schema = z.object({
   newOwner: z

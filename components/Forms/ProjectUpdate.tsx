@@ -1,8 +1,6 @@
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useImpactAnswers } from "@/hooks/useImpactAnswers";
-import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
@@ -39,11 +37,9 @@ import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/S
 import { cn } from "@/utilities/tailwind";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { AreaChart, Card, Title } from "@tremor/react";
-import { prepareChartData } from "@/components/Pages/Communities/Impact/ImpactCharts";
 import * as Dialog from "@radix-ui/react-dialog";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
-import { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import { IndicatorForm, IndicatorFormData } from "./IndicatorForm";
 import { sendImpactAnswers } from "@/utilities/impact";
 import { autosyncedIndicators } from "../Pages/Admin/IndicatorsHub";
@@ -58,8 +54,11 @@ import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getIndicatorsByCommunity } from "@/utilities/queries/getIndicatorsByCommunity";
-import { useUnlinkedIndicators } from "@/hooks/useUnlinkedIndicators";
 import { useWallet } from "@/hooks/useWallet";
+import { ImpactIndicatorWithData } from "@/src/features/impact/types";
+import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useImpactAnswers } from "@/src/features/impact/hooks/use-impact-answers";
+import { useUnlinkedIndicators } from "@/src/features/impact/hooks/use-unlinked-indicators";
 
 interface GrantOption {
   title: string;
@@ -492,7 +491,11 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
       source: "unlinked" as const,
     }));
 
-    return [...projectIndicators, ...communityIndicators, ...unlinkedIndicators];
+    return [
+      ...projectIndicators,
+      ...communityIndicators,
+      ...unlinkedIndicators,
+    ];
   }, [indicatorsData, communityIndicatorsData, unlinkedIndicatorsData]);
 
   // Custom handlers for deliverables
@@ -701,7 +704,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
               [];
 
             const filteredDatapoints = restOfDatapoints.filter(
-              (dp) =>
+              (dp: any) =>
                 dp.startDate !== indicator.startDate &&
                 dp.endDate !== indicator.endDate
             );
@@ -1280,8 +1283,8 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         {selectedOutputs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8">
             <p className="text-gray-500 dark:text-zinc-400 mb-4">
-              Select from your project indicators, community indicators, or global indicators to add
-              metrics
+              Select from your project indicators, community indicators, or
+              global indicators to add metrics
             </p>
             <Button
               type="button"

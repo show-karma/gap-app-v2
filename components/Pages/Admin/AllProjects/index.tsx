@@ -2,9 +2,8 @@
 import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
 import { errorManager } from "@/components/Utilities/errorManager";
 import Pagination from "@/components/Utilities/Pagination";
-import { useOwnerStore } from "@/store";
 import { PageInfo } from "@/types/pagination";
-import { ProjectReport } from "@/types/project";
+import { ProjectReport } from "@/types";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
@@ -20,6 +19,7 @@ import { useAuthStore } from "@/store/auth";
 import { PAGES } from "@/utilities/pages";
 import Link from "next/link";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { useOwnerStore } from "@/store/owner";
 
 const getAllProjects = async (
   offset: number,

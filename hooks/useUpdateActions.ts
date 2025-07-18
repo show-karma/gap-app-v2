@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useAccount } from "wagmi";
 import toast from "react-hot-toast";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useOwnerStore } from "@/store/owner";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -23,7 +24,7 @@ import {
   IProjectMilestoneResponse,
   IProjectUpdate,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useWallet } from "./useWallet";
+import { useWallet } from "@/hooks/useWallet";
 
 type UpdateType =
   | IProjectUpdate

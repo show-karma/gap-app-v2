@@ -4,7 +4,7 @@ import {
   Category,
   ImpactIndicator,
   ImpactSegment,
-} from "@/types/impactMeasurement";
+} from "@/src/features/impact/types";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { Dialog, Transition } from "@headlessui/react";

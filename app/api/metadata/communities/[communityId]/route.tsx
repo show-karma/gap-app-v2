@@ -1,12 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { getTotalProjects } from "@/utilities/karma/totalProjects";
-import { getGrants, getProjectById } from "@/utilities/sdk";
+import { getGrants } from "@/utilities/sdk/communities";
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
 import pluralize from "pluralize";
-// App router includes @vercel/og.
-// No need to install it.
 
 export async function GET(
   request: NextRequest,

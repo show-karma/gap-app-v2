@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 import { Button } from "@/components/Utilities/Button";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
 import { Dialog, Transition } from "@headlessui/react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { FC, Fragment, useEffect, useState } from "react";

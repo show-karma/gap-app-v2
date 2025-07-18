@@ -1,9 +1,7 @@
 "use client";
 
 import { Button } from "@/components/Utilities/Button";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
-import { ImpactIndicatorWithData } from "@/types/impactMeasurement";
+import { useCommunityAdminStore } from "@/src/features/communities/lib/community-admin-store";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
@@ -13,11 +11,14 @@ import { AreaChart, Card, Title } from "@tremor/react";
 import { useState, useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
-import { prepareChartData } from "../../Communities/Impact/ImpactCharts";
 import { GrantsOutputsLoading } from "../Loading/Grants/Outputs";
 import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
-import { useImpactAnswers } from "@/hooks/useImpactAnswers";
 import { GroupedLinks } from "./GroupedLinks";
+import { prepareChartData } from "@/src/lib/analytics/chart";
+import { ImpactIndicatorWithData } from "@/src/features/impact/types";
+import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useOwnerStore } from "@/store/owner";
+import { useImpactAnswers } from "@/src/features/impact/hooks/use-impact-answers";
 
 type OutputForm = {
   id: string;

@@ -3,7 +3,7 @@ import { Button } from "@/components/Utilities/Button";
 import { useGrantFormStore } from "../store";
 import { usePathname, useRouter } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
 import { Milestone } from "../Milestone";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { useAuthStore } from "@/store/auth";

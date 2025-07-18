@@ -1,12 +1,11 @@
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { getProjectById } from "@/utilities/sdk";
 import { Dialog, Transition } from "@headlessui/react";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import * as Tooltip from "@radix-ui/react-tooltip";
@@ -17,6 +16,7 @@ import { useAccount } from "wagmi";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useWallet } from "@/hooks/useWallet";
 import { queryClient } from "@/components/Utilities/WagmiProvider";
+import { getProjectById } from "@/utilities/sdk/projects";
 
 const DeleteDialog = dynamic(() =>
   import("@/components/DeleteDialog").then((mod) => mod.DeleteDialog)

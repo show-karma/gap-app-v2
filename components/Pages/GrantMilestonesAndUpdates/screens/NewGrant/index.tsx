@@ -7,10 +7,11 @@ import { useEffect, Suspense } from "react";
 import dynamic from "next/dynamic";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useGrantFormStore } from "./store";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useOwnerStore } from "@/store/owner";
 
 import { MESSAGES } from "@/utilities/messages";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
+import { useCommunityAdminStore } from "@/src/features/communities/lib/community-admin-store";
 import Link from "next/link";
 import { Button } from "@/components/Utilities/Button";
 import { PAGES } from "@/utilities/pages";

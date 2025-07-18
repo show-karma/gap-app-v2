@@ -1,7 +1,8 @@
 "use client";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useGap } from "@/hooks/useGap";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useOwnerStore } from "@/store/owner";
 import { useGrantGenieModalStore } from "@/store/modals/genie";
 import { useMergeModalStore } from "@/store/modals/merge";
 import { useProjectEditModalStore } from "@/store/modals/projectEdit";
@@ -9,8 +10,6 @@ import { useTransferOwnershipModalStore } from "@/store/modals/transferOwnership
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
-import { PAGES } from "@/utilities/pages";
-import { deleteProject, getProjectById } from "@/utilities/sdk";
 
 import { Menu, Transition } from "@headlessui/react";
 import {
@@ -46,6 +45,7 @@ import { LinkOSOProfileButton } from "./LinkOSOProfileButton";
 import { LinkDivviWalletButton } from "./LinkDivviWalletButton";
 import { GithubIcon } from "@/components/Icons";
 import { useWallet } from "@/hooks/useWallet";
+import { deleteProject, getProjectById } from "@/utilities/sdk/projects";
 
 const ProjectDialog = dynamic(
   () =>

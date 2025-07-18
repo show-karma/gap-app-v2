@@ -1,4 +1,4 @@
-import { getProjectById } from "@/utilities/sdk";
+import { getProjectById } from "@/utilities/sdk/projects";
 import { Project } from "@show-karma/karma-gap-sdk/core/class/entities/Project";
 import { useQuery } from "@tanstack/react-query";
 

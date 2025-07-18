@@ -1,9 +1,9 @@
 "use client";
 import { useState } from "react";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { getGapClient, useGap } from "./useGap";
+import { getGapClient, useGap } from "@/hooks/useGap";
 import { useAccount } from "wagmi";
-import { getProjectById } from "@/utilities/sdk";
+import { getProjectById } from "@/utilities/sdk/projects";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -14,11 +14,11 @@ import { MESSAGES } from "@/utilities/messages";
 import toast from "react-hot-toast";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useStepper } from "@/store/modals/txStepper";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
 import { useRouter } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
 import { useGrantFormStore } from "@/components/Pages/GrantMilestonesAndUpdates/screens/NewGrant/store";
-import { useWallet } from "./useWallet";
+import { useWallet } from "@/hooks/useWallet";
 
 export function useGrant() {
   const [isLoading, setIsLoading] = useState(false);

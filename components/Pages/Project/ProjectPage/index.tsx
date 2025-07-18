@@ -1,7 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useOwnerStore } from "@/store/owner";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";

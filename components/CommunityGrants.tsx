@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
-import { useCommunityStore } from "@/store/community";
+import { useCommunityStore } from "@/src/features/communities/lib/community-store";
 import { SortByOptions, StatusOptions, MaturityStageOptions } from "@/types";
 import { zeroUID } from "@/utilities/commons";
 import { getGrants } from "@/utilities/sdk/communities/getGrants";

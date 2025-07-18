@@ -1,4 +1,4 @@
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
 import {
   getProjectMemberRoles,
   Member,

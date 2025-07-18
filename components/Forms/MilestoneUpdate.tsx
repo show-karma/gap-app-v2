@@ -3,8 +3,7 @@
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
+import { useCommunityAdminStore } from "@/src/features/communities/lib/community-admin-store";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -34,6 +33,8 @@ import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useOwnerStore } from "@/store/owner";
 
 interface MilestoneUpdateFormProps {
   milestone: IMilestoneResponse;

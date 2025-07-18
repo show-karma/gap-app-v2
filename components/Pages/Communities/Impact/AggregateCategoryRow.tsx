@@ -15,27 +15,7 @@ import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { EmptySegment, fundedAmountFormatter } from "./CategoryRow";
 import pluralize from "pluralize";
-
-export const prepareChartData = (
-  timestamps: string[],
-  avg_values: number[],
-  total_values: number[],
-  min_values: number[],
-  max_values: number[]
-): { date: string; [key: string]: number | string }[] => {
-  const timestampsData = timestamps
-    .map((timestamp, index) => {
-      return {
-        date: formatDate(new Date(timestamp), "UTC"),
-        Avg: Number(avg_values[index]) || 0,
-        Total: Number(total_values[index]) || 0,
-        Min: Number(min_values[index]) || 0,
-        Max: Number(max_values[index]) || 0,
-      };
-    })
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  return timestampsData;
-};
+import { prepareChartDataTimestamp } from "@/src/lib/analytics/chart";
 
 // Create a reusable card component to reduce duplication
 const AggregateMetricCard = ({
@@ -71,7 +51,7 @@ const AggregateMetricCard = ({
       </div>
     </div>
     <AreaChart
-      data={prepareChartData(
+      data={prepareChartDataTimestamp(
         item.datapoints.map(
           (datapoint) => datapoint.outputTimestamp || new Date().toISOString()
         ),

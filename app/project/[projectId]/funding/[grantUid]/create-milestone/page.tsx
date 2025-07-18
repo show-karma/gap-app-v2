@@ -1,11 +1,11 @@
 "use client";
-import { useGrantStore } from "@/store/grant";
+import { useGrantStore } from "@/src/features/grants/lib/store";
 import dynamic from "next/dynamic";
 import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
 import Link from "next/link";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { PAGES } from "@/utilities/pages";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
 
 const MilestoneForm = dynamic(
   () => import("@/components/Forms/Milestone").then((mod) => mod.MilestoneForm),
@@ -16,7 +16,7 @@ const MilestoneForm = dynamic(
 export default function Page() {
   const { grant } = useGrantStore();
   const project = useProjectStore((state) => state.project);
-  
+
   if (!grant) {
     return null;
   }

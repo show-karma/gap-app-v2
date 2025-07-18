@@ -1,5 +1,5 @@
 "use client";
-import { useOwnerStore } from "@/store";
+import { useOwnerStore } from "@/store/owner";
 import { useState } from "react";
 import { z } from "zod";
 import { SubmitHandler, useForm } from "react-hook-form";

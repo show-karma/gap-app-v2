@@ -1,11 +1,14 @@
 /* eslint-disable @next/next/no-img-element */
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { getProjectById, isOwnershipTransfered } from "@/utilities/sdk";
+import {
+  getProjectById,
+  isOwnershipTransfered,
+} from "@/utilities/sdk/projects";
 import { Dialog, Transition } from "@headlessui/react";
 import { PlusIcon } from "@heroicons/react/24/solid";
 

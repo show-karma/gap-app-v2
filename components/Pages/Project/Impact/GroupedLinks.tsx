@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { linkName, mapLinks } from "./utils/links";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 export interface ProjectWithExternal extends IProjectResponse {

@@ -1,7 +1,7 @@
 "use client";
 
 import { getTotalProjects } from "@/utilities/karma/totalProjects";
-import { getGrants } from "@/utilities/sdk";
+import { getGrants } from "@/utilities/sdk/communities";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import pluralize from "pluralize";

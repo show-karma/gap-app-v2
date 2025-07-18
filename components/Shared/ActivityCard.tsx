@@ -1,7 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 import { FC } from "react";
 import { cn } from "@/utilities/tailwind";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useOwnerStore } from "@/store/owner";
 import { UpdateCard } from "./ActivityCard/UpdateCard";
 import { MilestoneCard } from "./ActivityCard/MilestoneCard";
 import {

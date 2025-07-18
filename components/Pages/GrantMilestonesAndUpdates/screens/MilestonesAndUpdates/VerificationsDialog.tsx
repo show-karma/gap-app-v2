@@ -5,7 +5,7 @@ import { XMarkIcon } from "@heroicons/react/24/solid";
 
 import { Hex } from "viem";
 import { useENS } from "@/store/ens";
-import { useProjectStore } from "@/store/project";
+import { useProjectStore } from "@/src/features/projects/lib/store";
 import { formatDate } from "@/utilities/formatDate";
 import {
   ICommunityAdminsResponse,

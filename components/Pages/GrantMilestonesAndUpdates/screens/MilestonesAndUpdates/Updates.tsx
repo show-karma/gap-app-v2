@@ -3,8 +3,9 @@ import { type FC, useEffect, useState } from "react";
 
 import { Button } from "@/components/Utilities/Button";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
+import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useOwnerStore } from "@/store/owner";
+import { useCommunityAdminStore } from "@/src/features/communities/lib/community-admin-store";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";

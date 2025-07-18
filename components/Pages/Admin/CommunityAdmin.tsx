@@ -7,7 +7,6 @@ import { RemoveAdmin } from "@/components/Pages/Admin/RemoveAdminDialog";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useGap } from "@/hooks/useGap";
 import { useStaff } from "@/hooks/useStaff";
-import { useOwnerStore } from "@/store";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import fetchData from "@/utilities/fetchData";
@@ -22,10 +21,9 @@ import Link from "next/link";
 import React, { useCallback, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { isAddress } from "viem";
-import { useAccount } from "wagmi";
-import { z } from "zod";
 
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useOwnerStore } from "@/store/owner";
 
 interface CommunityAdmin {
   id: string;

@@ -5,7 +5,7 @@ import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useAccount } from "wagmi";
 import { useAuthStore } from "@/store/auth";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 export const ProjectSubTabs = () => {

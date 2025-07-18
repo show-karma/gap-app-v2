@@ -1,7 +1,7 @@
 "use client";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import { useGrantStore } from "@/store/grant";
+import { useGrantStore } from "@/src/features/grants/lib/store";
 import { useOwnerStore } from "@/store/owner";
 import markdownStyles from "@/styles/markdown.module.css";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
@@ -16,7 +16,7 @@ import { ProjectGrantsOverviewLoading } from "../Loading/Grants/Overview";
 import { GrantPercentage } from "./components/GrantPercentage";
 import { TrackTags } from "@/components/TrackTags";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
 import { useRouter } from "next/navigation";
 
 const isValidAmount = (grant?: {

@@ -1,38 +1,11 @@
 "use client";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { useImpactMeasurement } from "@/hooks/useImpactMeasurement";
 import { useSearchParams } from "next/navigation";
 import { CategoryRow } from "./CategoryRow";
 import { formatDate } from "@/utilities/formatDate";
 import pluralize from "pluralize";
 import { ProgramBanner } from "./ProgramBanner";
-
-export const prepareChartData = (
-  values: number[],
-  timestamps: string[],
-  name: string,
-  runningValues?: number[],
-  proofs?: string[]
-): { date: string; [key: string]: number | string }[] => {
-  const chartData = timestamps
-    .map((timestamp, index) => {
-      if (runningValues?.length) {
-        return {
-          date: formatDate(new Date(timestamp), "UTC"),
-          [name]: Number(values[index]) || 0,
-          Cumulative: Number(runningValues[index]) || 0,
-          proof: proofs?.[index] || "",
-        };
-      }
-      return {
-        date: formatDate(new Date(timestamp), "UTC"),
-        [name]: Number(values[index]) || 0,
-        proof: proofs?.[index] || "",
-      };
-    })
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  return chartData;
-};
+import { useImpactMeasurement } from "@/src/features/impact/hooks/use-impact-measurement";
 
 export const CommunityImpactCharts = () => {
   const searchParams = useSearchParams();

@@ -6,7 +6,6 @@ import {
 } from "@heroicons/react/24/outline";
 import * as Popover from "@radix-ui/react-popover";
 import { FC, useEffect, useState } from "react";
-import { ImpactIndicator } from "@/types/impactMeasurement";
 import { Button } from "@/components/Utilities/Button";
 import { IndicatorForm } from "@/components/Forms/IndicatorForm";
 import { Dialog, Transition } from "@headlessui/react";
@@ -15,6 +14,7 @@ import { XMarkIcon } from "@heroicons/react/24/outline";
 import { Switch } from "@headlessui/react";
 import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
 import { LoadingSpinner } from "@/components/Disbursement/components/LoadingSpinner";
+import { ImpactIndicator } from "@/src/features/impact/types";
 
 interface IndicatorsDropdownProps {
   selectedIndicators: string[];
@@ -161,7 +161,11 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
 
             <div className="max-h-60 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700">
               {isLoading ? (
-                <LoadingSpinner size="md" color="blue" message="Loading indicators..." />
+                <LoadingSpinner
+                  size="md"
+                  color="blue"
+                  message="Loading indicators..."
+                />
               ) : filteredIndicators.length === 0 ? (
                 <div className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400 text-center flex flex-col items-center">
                   <MagnifyingGlassIcon className="h-6 w-6 mb-2 text-gray-400" />

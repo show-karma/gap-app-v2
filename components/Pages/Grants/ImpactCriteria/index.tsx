@@ -1,5 +1,5 @@
 "use client";
-import { useGrantStore } from "@/store/grant";
+import { useGrantStore } from "@/src/features/grants/lib/store";
 import { MESSAGES } from "@/utilities/messages";
 import { ProjectGrantsImpactLoading } from "../../Project/Loading/Grants/Impact";
 

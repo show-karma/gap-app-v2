@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAdminCommunities } from "@/hooks/useAdminCommunities";
 import { useContractOwner } from "@/hooks/useContractOwner";
 import { useAuthStore } from "@/store/auth";
-import { useCommunitiesStore } from "@/store/communities";
+import { useCommunitiesStore } from "@/src/features/communities/lib/communities-store";
 import { useMobileStore } from "@/store/mobile";
 import { useOwnerStore } from "@/store/owner";
 import { useRegistryStore } from "@/store/registry";

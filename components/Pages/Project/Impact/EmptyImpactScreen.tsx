@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useOwnerStore } from "@/store/owner";
 import { MESSAGES } from "@/utilities/messages";
 import { useQueryState } from "nuqs";
 import { FC } from "react";

@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { APIContact } from "@/types/project";
+import { APIContact } from "@/types";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useOwnerStore } from "@/store/owner";
 import { useAccount } from "wagmi";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 

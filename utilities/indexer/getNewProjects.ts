@@ -1,6 +1,6 @@
 import { SortByOptions, SortOrder } from "@/types/newProjects";
 import { PageInfo } from "@/types/pagination";
-import { ProjectFromList } from "@/types/project";
+import { ProjectFromList } from "@/types";
 import fetchData from "../fetchData";
 import { INDEXER } from "../indexer";
 import { errorManager } from "@/components/Utilities/errorManager";

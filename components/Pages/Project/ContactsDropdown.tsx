@@ -8,7 +8,7 @@ import {
 } from "cmdk";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
-import { Contact } from "@/types/project";
+import { Contact } from "@/types";
 import { cn } from "@/utilities/tailwind";
 
 interface ContactsDropdownProps {

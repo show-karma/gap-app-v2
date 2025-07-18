@@ -17,7 +17,8 @@ import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObject
 import { useQuery } from "@tanstack/react-query";
 import { useProgressModalStore } from "@/store/modals/progress";
 import { Button } from "@/components/Utilities/Button";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useOwnerStore } from "@/store/owner";
 import { MESSAGES } from "@/utilities/messages";
 import { UnifiedMilestone } from "@/types/roadmap";
 

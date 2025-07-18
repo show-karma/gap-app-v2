@@ -3,7 +3,8 @@
 import { ActivityCard } from "@/components/Shared/ActivityCard";
 import { useQueryState } from "nuqs";
 import { StatusOptions } from "@/utilities/gapIndexerApi/getProjectObjectives";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useOwnerStore } from "@/store/owner";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SetAnObjective } from "@/components/Pages/Project/Objective/SetAnObjective";
 import { UnifiedMilestone } from "@/types/roadmap";

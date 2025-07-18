@@ -1,6 +1,6 @@
 "use client";
 import { Skeleton } from "@/components/Utilities/Skeleton";
-import { useImpactMeasurement } from "@/hooks/useImpactMeasurement";
+import { useImpactMeasurement } from "@/src/features/impact/hooks/use-impact-measurement";
 import formatCurrency from "@/utilities/formatCurrency";
 import { getHeaderStats } from "@/utilities/karma/getHeaderStats";
 import { useQuery } from "@tanstack/react-query";

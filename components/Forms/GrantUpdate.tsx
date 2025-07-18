@@ -2,7 +2,7 @@
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
@@ -22,7 +22,7 @@ import { z } from "zod";
 import { errorManager } from "../Utilities/errorManager";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { sanitizeObject } from "@/utilities/sanitize";
-import { useGrantStore } from "@/store/grant";
+import { useGrantStore } from "@/src/features/grants/lib/store";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";

@@ -1,7 +1,8 @@
 "use client";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
-import { useGrantStore } from "@/store/grant";
+import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useOwnerStore } from "@/store/owner";
+import { useCommunityAdminStore } from "@/src/features/communities/lib/community-admin-store";
+import { useGrantStore } from "@/src/features/grants/lib/store";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";

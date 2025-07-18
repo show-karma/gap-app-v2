@@ -24,7 +24,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { shareOnX } from "@/utilities/share/shareOnX";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
 import { queryClient } from "@/components/Utilities/WagmiProvider";
 
 const ProjectObjectiveCompletion = dynamic(

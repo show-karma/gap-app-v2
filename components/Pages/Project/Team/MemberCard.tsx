@@ -7,7 +7,8 @@ import { FarcasterIcon } from "@/components/Icons/Farcaster";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useOwnerStore } from "@/store/owner";
 import { useENS } from "@/store/ens";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import {

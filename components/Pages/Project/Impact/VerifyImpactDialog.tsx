@@ -17,10 +17,11 @@ import { getGapClient, useGap } from "@/hooks/useGap";
 
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useStepper } from "@/store/modals/txStepper";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useOwnerStore } from "@/store/owner";
 import { Hex } from "viem";
 import { config } from "@/utilities/wagmi/config";
-import { getProjectById } from "@/utilities/sdk";
+import { getProjectById } from "@/utilities/sdk/projects";
 import {
   IProjectImpact,
   IProjectImpactStatus,

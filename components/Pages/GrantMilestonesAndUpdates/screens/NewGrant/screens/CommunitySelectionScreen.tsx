@@ -3,7 +3,7 @@ import { StepBlock } from "../StepBlock";
 import { useGrantFormStore } from "../store";
 import { useRouter, usePathname, useParams } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
 import { CommunitiesDropdown } from "@/components/CommunitiesDropdown";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";

@@ -1,9 +1,7 @@
 "use client";
 
 import { Button } from "@/components/Utilities/Button";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
-import { ImpactIndicatorWithData } from "@/types/impactMeasurement";
+import { useCommunityAdminStore } from "@/src/features/communities/lib/community-admin-store";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
@@ -15,11 +13,15 @@ import { AreaChart, Card, Title } from "@tremor/react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
-import { prepareChartData } from "../../Communities/Impact/ImpactCharts";
 import { GrantsOutputsLoading } from "../Loading/Grants/Outputs";
 import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
-import { useImpactAnswers } from "@/hooks/useImpactAnswers";
+
 import { GroupedLinks } from "./GroupedLinks";
+import { prepareChartData } from "@/src/lib/analytics/chart";
+import { useImpactAnswers } from "@/src/features/impact/hooks/use-impact-answers";
+import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useOwnerStore } from "@/store/owner";
+import { ImpactIndicatorWithData } from "@/src/features/impact/types";
 
 // Helper function to handle comma-separated URLs
 const parseProofUrls = (proof: string): string[] => {
@@ -163,7 +165,7 @@ export const OutputsAndOutcomes = () => {
       }, {} as Record<string, { isEditing: boolean; isEdited: boolean }>);
 
       setForms(
-        impactAnswers.map((item) => ({
+        impactAnswers.map((item: ImpactIndicatorWithData) => ({
           id: item.id,
           categoryId: "",
           datapoints:

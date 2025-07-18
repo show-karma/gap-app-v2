@@ -1,4 +1,4 @@
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
 import { Tab } from "@headlessui/react";
 import { Fragment, useState } from "react";
 import { cn } from "@/utilities/tailwind";

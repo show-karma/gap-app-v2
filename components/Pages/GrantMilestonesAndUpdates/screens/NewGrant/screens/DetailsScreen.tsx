@@ -3,7 +3,8 @@ import { StepBlock } from "../StepBlock";
 import { useGrantFormStore } from "../store";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useOwnerStore } from "@/store/owner";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { formatDate } from "@/utilities/formatDate";
@@ -19,7 +20,7 @@ import { useGap } from "@/hooks/useGap";
 import { useGrant } from "@/hooks/useGrant";
 import { NextButton } from "./buttons/NextButton";
 import { CancelButton } from "./buttons/CancelButton";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
+import { useCommunityAdminStore } from "@/src/features/communities/lib/community-admin-store";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";

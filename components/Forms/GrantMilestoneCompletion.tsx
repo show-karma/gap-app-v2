@@ -12,7 +12,7 @@ import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useStepper } from "@/store/modals/txStepper";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
 import toast from "react-hot-toast";
 import { MESSAGES } from "@/utilities/messages";
 import { GapContract } from "@show-karma/karma-gap-sdk/core/class/contract/GapContract";

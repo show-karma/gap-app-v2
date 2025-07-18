@@ -7,12 +7,13 @@ import {
   FilteredOutputsAndOutcomes,
   filterIndicators,
 } from "../Impact/FilteredOutputsAndOutcomes";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useOwnerStore } from "@/store/owner";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useMemo } from "react";
 import { PAGES } from "@/utilities/pages";
-import { useImpactAnswers } from "@/hooks/useImpactAnswers";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
+import { useImpactAnswers } from "@/src/features/impact/hooks/use-impact-answers";
+import { useCommunityAdminStore } from "@/src/features/communities/lib/community-admin-store";
 import { useAccount } from "wagmi";
 
 export const ProjectActivityBlock = ({

@@ -1,6 +1,6 @@
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
@@ -17,7 +17,7 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
-import { useWallet } from "./useWallet";
+import { useWallet } from "@/hooks/useWallet";
 
 export interface ProjectMilestoneFormData {
   title: string;

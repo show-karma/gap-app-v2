@@ -3,7 +3,8 @@ import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useOwnerStore } from "@/store/owner";
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
@@ -12,7 +13,7 @@ import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObject
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { retryUntilConditionMet } from "@/utilities/retries";
-import { getProjectById } from "@/utilities/sdk";
+import { getProjectById } from "@/utilities/sdk/projects";
 import { cn } from "@/utilities/tailwind";
 import { config } from "@/utilities/wagmi/config";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";

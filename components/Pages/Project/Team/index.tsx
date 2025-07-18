@@ -2,7 +2,8 @@
 
 import { ContributorProfileDialog } from "@/components/Dialogs/ContributorProfileDialog";
 import { InviteMemberDialog } from "@/components/Dialogs/Member/InviteMember";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useOwnerStore } from "@/store/owner";
 import {
   getProjectMemberRoles,
   Member,

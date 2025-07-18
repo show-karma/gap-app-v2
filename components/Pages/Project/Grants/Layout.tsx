@@ -3,10 +3,11 @@
 
 import { GrantsAccordion } from "@/components/GrantsAccordion";
 import { Button } from "@/components/Utilities/Button";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunitiesStore } from "@/store/communities";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
-import { useGrantStore } from "@/store/grant";
+import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useOwnerStore } from "@/store/owner";
+import { useCommunitiesStore } from "@/src/features/communities/lib/communities-store";
+import { useCommunityAdminStore } from "@/src/features/communities/lib/community-admin-store";
+import { useGrantStore } from "@/src/features/grants/lib/store";
 import { GrantScreen } from "@/types";
 
 import { PAGES } from "@/utilities/pages";

@@ -1,6 +1,6 @@
 "use client";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
@@ -9,7 +9,7 @@ import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObject
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
-import { getProjectById } from "@/utilities/sdk";
+import { getProjectById } from "@/utilities/sdk/projects";
 import { config } from "@/utilities/wagmi/config";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";

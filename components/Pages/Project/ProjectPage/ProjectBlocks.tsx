@@ -1,10 +1,8 @@
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useIntroModalStore } from "@/store/modals/intro";
-import { envVars } from "@/utilities/enviromentVars";
-import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import Image from "next/image";
 import { useParams } from "next/navigation";

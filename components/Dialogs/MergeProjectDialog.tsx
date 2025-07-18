@@ -4,7 +4,7 @@ import { Dialog, Transition } from "@headlessui/react";
 import { PlusIcon } from "@heroicons/react/24/solid";
 import { Button } from "../Utilities/Button";
 import toast from "react-hot-toast";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 
 import { useStepper } from "@/store/modals/txStepper";

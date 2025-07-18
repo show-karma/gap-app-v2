@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getContributorProfiles } from "@/utilities/indexer/getContributorProfiles";
 import { ContributorProfile } from "@show-karma/karma-gap-sdk";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
 import { useEffect } from "react";
 
 export const useTeamProfiles = (project: IProjectResponse | undefined) => {

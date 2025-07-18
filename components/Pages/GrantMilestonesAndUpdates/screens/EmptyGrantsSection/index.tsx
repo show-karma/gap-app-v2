@@ -1,7 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
-import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunitiesStore } from "@/store/communities";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
+import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useOwnerStore } from "@/store/owner";
+import { useCommunitiesStore } from "@/src/features/communities/lib/communities-store";
+import { useCommunityAdminStore } from "@/src/features/communities/lib/community-admin-store";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import Link from "next/link";

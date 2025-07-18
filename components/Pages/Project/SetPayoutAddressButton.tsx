@@ -2,13 +2,18 @@
 
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
+import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useOwnerStore } from "@/store/owner";
+import { useCommunityAdminStore } from "@/src/features/communities/lib/community-admin-store";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { Dialog, Transition } from "@headlessui/react";
-import { CurrencyDollarIcon, CheckIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
+import {
+  CurrencyDollarIcon,
+  CheckIcon,
+  ChevronDownIcon,
+} from "@heroicons/react/24/outline";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { FC, ReactNode } from "react";
 import { Fragment, useEffect, useState, useCallback, useMemo } from "react";
@@ -20,7 +25,7 @@ import debounce from "lodash.debounce";
 // Updated interface to handle new JSON payoutAddress structure
 interface SetPayoutAddressButtonProps {
   buttonClassName?: string;
-  project: IProjectResponse & { 
+  project: IProjectResponse & {
     payoutAddress?: string | { [communityUID: string]: string };
   };
   "data-set-payout-button"?: string;
@@ -54,7 +59,8 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
 
   const [isOpen, setIsOpen] = useState(false);
   const [payoutAddress, setPayoutAddress] = useState("");
-  const [selectedCommunity, setSelectedCommunity] = useState<CommunityOption | null>(null);
+  const [selectedCommunity, setSelectedCommunity] =
+    useState<CommunityOption | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -66,24 +72,27 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
     if (!project?.grants) return [];
 
     const communityMap = new Map<string, CommunityOption>();
-    
+
     project.grants.forEach((grant) => {
       if (grant.community?.uid) {
         const communityUID = grant.community.uid;
-        const payoutAddresses = typeof project.payoutAddress === 'object' && project.payoutAddress 
-          ? project.payoutAddress as { [key: string]: string }
-          : {};
-        
+        const payoutAddresses =
+          typeof project.payoutAddress === "object" && project.payoutAddress
+            ? (project.payoutAddress as { [key: string]: string })
+            : {};
+
         communityMap.set(communityUID, {
           uid: communityUID,
-          name: grant.community.details?.data?.name || 'Unknown Community',
+          name: grant.community.details?.data?.name || "Unknown Community",
           imageURL: grant.community.details?.data?.imageURL,
-          currentPayoutAddress: payoutAddresses[communityUID]
+          currentPayoutAddress: payoutAddresses[communityUID],
         });
       }
     });
 
-    return Array.from(communityMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+    return Array.from(communityMap.values()).sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
   }, [project?.grants, project?.payoutAddress]);
 
   // Helper function for default error messages based on status code
@@ -246,9 +255,10 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
         toast.success(data.message || MESSAGES.PROJECT.PAYOUT_ADDRESS.SUCCESS);
 
         // Update project store with new payout address structure
-        const currentPayoutAddresses = typeof project.payoutAddress === 'object' && project.payoutAddress 
-          ? { ...(project.payoutAddress as { [key: string]: string }) } 
-          : ({} as { [key: string]: string });
+        const currentPayoutAddresses =
+          typeof project.payoutAddress === "object" && project.payoutAddress
+            ? { ...(project.payoutAddress as { [key: string]: string }) }
+            : ({} as { [key: string]: string });
 
         if (payoutAddress.trim()) {
           currentPayoutAddresses[selectedCommunity.uid] = payoutAddress.trim();
@@ -265,7 +275,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
         // Update selected community's current address
         setSelectedCommunity({
           ...selectedCommunity,
-          currentPayoutAddress: payoutAddress.trim() || undefined
+          currentPayoutAddress: payoutAddress.trim() || undefined,
         });
 
         // Close modal
@@ -327,17 +337,19 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
         toast.success(data.message || "Payout address removed successfully");
 
         // Update project store to remove payout address for this community
-        const currentPayoutAddresses = typeof project.payoutAddress === 'object' && project.payoutAddress 
-          ? { ...(project.payoutAddress as { [key: string]: string }) } 
-          : {};
-        
+        const currentPayoutAddresses =
+          typeof project.payoutAddress === "object" && project.payoutAddress
+            ? { ...(project.payoutAddress as { [key: string]: string }) }
+            : {};
+
         delete currentPayoutAddresses[selectedCommunity.uid];
 
-        const updatedProject = { 
-          ...project, 
-          payoutAddress: Object.keys(currentPayoutAddresses).length > 0 
-            ? currentPayoutAddresses 
-            : undefined 
+        const updatedProject = {
+          ...project,
+          payoutAddress:
+            Object.keys(currentPayoutAddresses).length > 0
+              ? currentPayoutAddresses
+              : undefined,
         };
         setProject(updatedProject as any);
 
@@ -346,7 +358,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
         setIsValidated(false);
         setSelectedCommunity({
           ...selectedCommunity,
-          currentPayoutAddress: undefined
+          currentPayoutAddress: undefined,
         });
 
         // Close modal
@@ -391,10 +403,10 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
 
   // Check if project has any payout addresses
   const hasAnyPayoutAddress = useMemo(() => {
-    if (typeof project?.payoutAddress === 'string') {
+    if (typeof project?.payoutAddress === "string") {
       return !!project.payoutAddress;
     }
-    if (typeof project?.payoutAddress === 'object' && project.payoutAddress) {
+    if (typeof project?.payoutAddress === "object" && project.payoutAddress) {
       return Object.keys(project.payoutAddress).length > 0;
     }
     return false;
@@ -418,9 +430,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
           data-set-payout-button={dataAttr}
         >
           <CurrencyDollarIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
-          {hasAnyPayoutAddress
-            ? "Manage Payout Address"
-            : "Set Payout Address"}
+          {hasAnyPayoutAddress ? "Manage Payout Address" : "Set Payout Address"}
         </Button>
       )}
       <Transition appear show={isOpen} as={Fragment}>
@@ -470,7 +480,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
                         <label className="text-md font-bold text-gray-900 dark:text-zinc-100 mb-2 block">
                           Select Community
                         </label>
-                        <div 
+                        <div
                           className="flex items-center justify-between p-3 bg-gray-100 dark:bg-zinc-700 rounded-lg cursor-pointer border border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400 transition-colors"
                           onClick={() => setShowDropdown(!showDropdown)}
                         >
@@ -478,8 +488,8 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
                             {selectedCommunity ? (
                               <>
                                 {selectedCommunity.imageURL && (
-                                  <img 
-                                    src={selectedCommunity.imageURL} 
+                                  <img
+                                    src={selectedCommunity.imageURL}
                                     alt={selectedCommunity.name}
                                     className="w-8 h-8 rounded-full object-cover"
                                   />
@@ -490,7 +500,8 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
                                   </span>
                                   {selectedCommunity.currentPayoutAddress && (
                                     <span className="text-sm text-gray-500 dark:text-gray-400">
-                                      Current: {selectedCommunity.currentPayoutAddress}
+                                      Current:{" "}
+                                      {selectedCommunity.currentPayoutAddress}
                                     </span>
                                   )}
                                 </div>
@@ -501,10 +512,10 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
                               </span>
                             )}
                           </div>
-                          <ChevronDownIcon 
+                          <ChevronDownIcon
                             className={`h-5 w-5 text-gray-400 transition-transform ${
-                              showDropdown ? 'rotate-180' : ''
-                            }`} 
+                              showDropdown ? "rotate-180" : ""
+                            }`}
                           />
                         </div>
 
@@ -521,8 +532,8 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
                                 }}
                               >
                                 {community.imageURL && (
-                                  <img 
-                                    src={community.imageURL} 
+                                  <img
+                                    src={community.imageURL}
                                     alt={community.name}
                                     className="w-8 h-8 rounded-full object-cover"
                                   />

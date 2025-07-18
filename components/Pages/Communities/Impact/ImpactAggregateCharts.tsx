@@ -1,7 +1,7 @@
 "use client";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { useImpactCommunityAggregate } from "@/hooks/useImpactCommunityAggregate";
 import { AggregateCategoryRow } from "./AggregateCategoryRow";
+import { useImpactCommunityAggregate } from "@/src/features/impact/hooks/use-impact-community-aggregate";
 
 export const CommunityImpactAggregateCharts = () => {
   const { data, isLoading } = useImpactCommunityAggregate();

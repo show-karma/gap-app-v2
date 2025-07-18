@@ -3,8 +3,9 @@
 
 import { MilestoneUpdateForm } from "@/components/Forms/MilestoneUpdate";
 import { Button } from "@/components/Utilities/Button";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
+import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useOwnerStore } from "@/store/owner";
+import { useCommunityAdminStore } from "@/src/features/communities/lib/community-admin-store";
 import { PencilSquareIcon, ShareIcon } from "@heroicons/react/24/outline";
 import {
   IMilestoneCompleted,

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAccount } from "wagmi";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useOwnerStore } from "@/store/owner";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { Milestone } from "@show-karma/karma-gap-sdk";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -16,7 +17,7 @@ import { Hex } from "viem";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MESSAGES } from "@/utilities/messages";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { useWallet } from "./useWallet";
+import { useWallet } from "@/hooks/useWallet";
 
 export interface GrantMilestoneFormData {
   title: string;

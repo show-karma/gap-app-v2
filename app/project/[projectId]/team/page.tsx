@@ -1,7 +1,7 @@
 import React from "react";
 import { Hex } from "viem";
 import { Metadata } from "next";
-import { getMetadata } from "@/utilities/sdk";
+import { getMetadata } from "@/utilities/sdk/getMetadata";
 import { zeroUID } from "@/utilities/commons";
 import { defaultMetadata } from "@/utilities/meta";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
@@ -20,7 +20,6 @@ export async function generateMetadata({
   params: Params;
 }): Promise<Metadata> {
   const { projectId } = await params;
-
 
   const projectInfo = await getMetadata<IProjectResponse>(
     "project",

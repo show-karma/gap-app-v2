@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useProjectStore, useOwnerStore } from "@/store";
 import { useAuthStore } from "@/store/auth";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getRPCClient } from "@/utilities/rpcClient";
@@ -9,6 +8,7 @@ import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karm
 import { useAccount } from "wagmi";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { useProjectInstance } from "./useProjectInstance";
+import { useProjectStore } from "@/src/features/projects/lib/store";
 
 interface ProjectPermissionsResult {
   isProjectOwner: boolean;
