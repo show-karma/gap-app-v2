@@ -3,7 +3,7 @@
 
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useParams, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 
 import { PAGES } from "@/utilities/pages";
@@ -44,6 +44,7 @@ import { useAccount } from "wagmi";
 import { InformationBlock } from "./ProjectBodyTabs";
 import { useProjectInstance } from "@/hooks/useProjectInstance";
 import { useMemberRoles } from "@/hooks/useMemberRoles";
+import { useProjectImpactIndicators } from "@/hooks/useProjectImpactIndicators";
 
 const ContributorProfileDialog = dynamic(
   () =>
@@ -281,6 +282,13 @@ function ProjectPage() {
     }
   };
 
+  const {
+    data: impactIndicators = {},
+  } = useProjectImpactIndicators(projectId);
+
+  const hasAnyImpactIndicators = Object.keys(impactIndicators).length > 0 && 
+    Object.values(impactIndicators).every(indicator => indicator.totalValue > 0);
+
   useEffect(() => {
     const isAlreadyMember = project?.members.some(
       (member) => member.recipient.toLowerCase() === address?.toLowerCase()
@@ -309,6 +317,46 @@ function ProjectPage() {
         <div className="flex w-full flex-col gap-2 lg:hidden">
           <Team />
         </div>
+
+        {hasAnyImpactIndicators && (
+          <div className="flex flex-col gap-2">
+            <p className="text-black dark:text-zinc-401 font-bold text-sm">
+              Project impact
+            </p>
+            <div className="flex flex-row  max-lg:flex-col gap-4">
+              {impactIndicators.no_of_txs && 
+                impactIndicators.no_of_txs.totalValue > 0 && (
+                <div className="flex flex-1 rounded border border-[#EAECf0] dark:border-zinc-600 border-l-[#155EEF] dark:border-l-[#155EEF] border-l-[4px] p-4 justify-between items-center">
+                  <div className="flex flex-col gap-3">
+                    <p className="text-black dark:text-zinc-301 dark:bg-zinc-800 text-2xl font-bold bg-[#EFF4FF] rounded-lg px-2 py-1 flex justify-center items-center min-h-[40px]  min-w-[40px] w-max h-max">
+                      {formatCurrency(impactIndicators.no_of_txs.totalValue)}
+                    </p>
+                    <div className="flex flex-row gap-3">
+                      <p className="font-normal text-brand-gray text-sm dark:text-zinc-301">
+                        {pluralize("Transaction", impactIndicators.no_of_txs.totalValue)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {impactIndicators.github_commits &&
+                impactIndicators.github_commits.totalValue > 0 && (
+                <div className="flex flex-1 rounded border border-[#EAECf0] dark:border-zinc-600 border-l-[#155EEF] dark:border-l-[#155EEF] border-l-[4px] p-4 justify-between items-center">
+                  <div className="flex flex-col gap-3">
+                    <p className="text-black dark:text-zinc-301 dark:bg-zinc-800 text-2xl font-bold bg-[#EFF4FF] rounded-lg px-2 py-1 flex justify-center items-center min-h-[40px]  min-w-[40px] w-max h-max">
+                      {formatCurrency(impactIndicators.github_commits.totalValue)}
+                    </p>
+                    <div className="flex flex-row gap-3">
+                      <p className="font-normal text-brand-gray text-sm dark:text-zinc-301">
+                        {pluralize("Git Commit", impactIndicators.github_commits.totalValue)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {project ? <ProjectSubscription project={project} /> : null}
         <div className="flex flex-col gap-1">
