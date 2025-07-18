@@ -15,7 +15,7 @@ export const ProjectImpact = ({ projectId }: ProjectImpactProps) => {
     data: impactIndicators = {},
   } = useProjectImpactIndicators(projectId, {
     [NO_OF_TXS]: 30,
-    [GITHUB_COMMITS]: 120
+    [GITHUB_COMMITS]: 30
   });
 
   const hasAnyImpactIndicators = Object.keys(impactIndicators).length > 0 && 
