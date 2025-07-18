@@ -300,65 +300,70 @@ This document provides a detailed, step-by-step plan to migrate the GAP App v2 c
 
 #### Create Feature Structure
 
-- [ ] Create `src/features/auth/` directory with standard subfolders
+- [x] Create `src/features/auth/` directory with standard subfolders
 
 #### Migrate Hooks
 
-- [ ] Move `hooks/useAuth.ts` → `features/auth/hooks/use-auth.ts`
-- [ ] Move `hooks/useWallet.ts` → `features/auth/hooks/use-wallet.ts`
+- [x] Move `hooks/useAuth.ts` → `features/auth/hooks/use-auth.ts`
+- [x] Move `hooks/useWallet.ts` → `features/auth/hooks/use-wallet.ts`
 
 #### Migrate Store & Types
 
-- [ ] Move `store/auth.ts` → `features/auth/lib/store.ts`
-- [ ] Move `types/auth.ts` → `features/auth/types.ts`
+- [x] Move `store/auth.ts` → `features/auth/lib/store.ts`
+- [x] Move `types/auth.ts` → `features/auth/types.ts`
 
 #### Migrate Components
 
-- [ ] Move member dialogs from `components/Dialogs/Member/*` → `features/auth/components/`
+- [x] Move auth utilities to `features/auth/lib/`
+- [x] Create `features/auth/actions.ts` for future server actions
 
 ### 4.2 Disbursements Feature
 
 #### Create Feature Structure
 
-- [ ] Create `src/features/disbursements/` directory with standard subfolders
+- [x] Create `src/features/disbursements/` directory with standard subfolders
 
 #### Migrate Components
 
-- [ ] Move `components/Disbursement/*` → `features/disbursements/components/`
+- [x] Move `components/Disbursement/*` → `features/disbursements/components/`
 
 #### Migrate Types
 
-- [ ] Move `types/disbursement.ts` → `features/disbursements/types.ts`
+- [x] Move `types/disbursement.ts` → `features/disbursements/types.ts`
+- [x] Create `features/disbursements/actions.ts` for future server actions
 
 ### 4.3 Stats & Analytics Feature
 
 #### Create Feature Structure
 
-- [ ] Create `src/features/stats/` directory with standard subfolders
+- [x] Create `src/features/stats/` directory with standard subfolders
 
 #### Migrate Components
 
-- [ ] Move `components/Pages/Stats/*` → `features/stats/components/`
+- [x] Move `components/Pages/Stats/*` → `features/stats/components/`
 
 #### Migrate Types
 
-- [ ] Move `types/stats.ts` → `features/stats/types.ts`
+- [x] Move `types/stats.ts` → `features/stats/types.ts`
+- [x] Create `features/stats/actions.ts` for future server actions
 
 ### 4.4 Feed Feature
 
 #### Create Feature Structure
 
-- [ ] Create `src/features/feed/` directory with standard subfolders
+- [x] Create `src/features/feed/` directory with standard subfolders
 
 #### Migrate Components
 
-- [ ] Move `components/Shared/ActivityCard/*` → `features/feed/components/activity-card/`
-- [ ] Move `components/Shared/ActivityList.tsx` → `features/feed/components/activity-list.tsx`
+- [x] Move `components/Shared/ActivityCard/*` → `features/feed/components/activity-card/`
+- [x] Move `components/Shared/ActivityList.tsx` → `features/feed/components/activity-list.tsx`
+- [x] Move `components/Shared/ActivityCard.tsx` → `features/feed/components/activity-card.tsx`
 
 #### Migrate Store & Types
 
-- [ ] Move `store/activityTab.ts` → `features/feed/lib/store.ts`
-- [ ] Move `types/feed.ts` → `features/feed/types.ts`
+- [x] Move `store/activityTab.ts` → `features/feed/lib/store.ts`
+- [x] Move `types/feed.ts` → `features/feed/types.ts`
+- [x] Create `features/feed/actions.ts` for future server actions
 
 ### 4.5 Search Feature
 
