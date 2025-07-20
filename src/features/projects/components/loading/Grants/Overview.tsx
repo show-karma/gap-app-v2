@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/Utilities/Skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const ProjectGrantsOverviewLoading = () => {
   const grantData: { stat?: number | string; title: string }[] = [
@@ -84,7 +84,9 @@ export const ProjectGrantsOverviewLoading = () => {
                     >
                       {data.title}
                     </h4>
-                    <div className={"text-base text-gray-900 dark:text-gray-100"}>
+                    <div
+                      className={"text-base text-gray-900 dark:text-gray-100"}
+                    >
                       <Skeleton className="h-7 w-20 rounded-lg" />
                     </div>
                   </div>

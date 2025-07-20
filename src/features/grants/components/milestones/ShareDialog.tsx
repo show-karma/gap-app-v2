@@ -2,11 +2,11 @@ import { FC, Fragment, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import JSConfetti from "js-confetti";
-import { Button } from "@/components/Utilities/Button";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { useShareDialogStore } from "@/store/modals/shareDialog";
+import { Button } from "@/components/ui/button";
+import { ExternalLink } from "@/components/ui/external-link";
+import { useShareDialogStore } from "@/features/modals/lib/stores/shareDialog";
 import { shareOnX } from "@/utilities/share/shareOnX";
-import { TwitterIcon } from "@/components/Icons";
+import { TwitterIcon } from "@/components/icons";
 
 export const ShareDialog: FC = () => {
   const {

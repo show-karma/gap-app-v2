@@ -1,10 +1,10 @@
 "use client";
-import { LoadingPrograms } from "@/components/Pages/ProgramRegistry/Loading/Programs";
 import dynamic from "next/dynamic";
+import { LoadingPrograms } from "./Loading/Programs";
 
 const ProgramsExplorer = dynamic(
   () =>
-    import("@/components/Pages/ProgramRegistry/ProgramsExplorer").then(
+    import("@/features/program-registry/components/ProgramsExplorer").then(
       (mod) => mod.ProgramsExplorer
     ),
   {

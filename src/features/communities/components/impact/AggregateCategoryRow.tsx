@@ -1,6 +1,6 @@
 "use client";
-import { Carousel, CarouselItem } from "@/components/SnapCarousel";
-import { Button } from "@/components/Utilities/Button";
+import { Carousel, CarouselItem } from "@/components/ui/snap-carousel";
+import { Button } from "@/components/ui/button";
 import {
   ImpactAggregateData,
   ImpactAggregateIndicator,
@@ -15,7 +15,7 @@ import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { EmptySegment, fundedAmountFormatter } from "./CategoryRow";
 import pluralize from "pluralize";
-import { prepareChartDataTimestamp } from "@/src/lib/analytics/chart";
+import { prepareChartDataTimestamp } from "@/lib/analytics/chart";
 
 // Create a reusable card component to reduce duplication
 const AggregateMetricCard = ({

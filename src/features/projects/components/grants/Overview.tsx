@@ -1,8 +1,8 @@
 "use client";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import { useGrantStore } from "@/src/features/grants/lib/store";
-import { useOwnerStore } from "@/store/owner";
+import { ExternalLink } from "@/components/ui/external-link";
+import { MarkdownPreview } from "@/components/ui/markdown-preview";
+import { useGrantStore } from "@/features/grants/lib/store";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 import markdownStyles from "@/styles/markdown.module.css";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
@@ -14,10 +14,7 @@ import { Suspense, useEffect } from "react";
 import { Hex } from "viem";
 import { ProjectGrantsOverviewLoading } from "../loading/Grants/Overview";
 import { GrantPercentage } from "./components/GrantPercentage";
-import { TrackTags } from "@/components/TrackTags";
-import { useProjectPermissions } from "@/hooks/useProjectPermissions";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useRouter } from "next/navigation";
+import { TrackTags } from "@/features/tracks/components/track-tags";
 
 const isValidAmount = (grant?: {
   amount?: Hex;

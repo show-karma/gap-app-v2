@@ -2,8 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { useCommunitiesStore } from "@/src/features/communities/lib/communities-store";
+import { useCommunitiesStore } from "@/features/communities/lib/communities-store";
 import { PAGES } from "@/config/pages";
 import { MESSAGES } from "@/config/messages";
 import { Community } from "@show-karma/karma-gap-sdk";
@@ -15,11 +14,12 @@ import { AddAdmin } from "./community-admin/AddAdminDialog";
 import { RemoveAdmin } from "./community-admin/RemoveAdminDialog";
 import { formatDate } from "@/lib/format/date";
 import { blo } from "blo";
-import { CommunityDialog } from "@/components/Dialogs/CommunityDialog";
+import { CommunityDialog } from "@/features/modals/components/CommunityDialog";
 import { LinkIcon } from "@heroicons/react/24/solid";
-import CommunityStats from "@/components/CommunityStats";
 import { chainImgDictionary } from "@/config/chains";
 import { chainNameDictionary } from "@/config/chains";
+import CommunityStats from "@/features/communities/components/shared/community-stats";
+import { Spinner } from "@/components/ui/spinner";
 
 export const CommunitiesToAdmin = () => {
   const [allCommunities, setAllCommunities] = useState<Community[]>([]);

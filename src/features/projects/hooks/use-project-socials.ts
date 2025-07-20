@@ -5,8 +5,8 @@ import {
   LinkedInIcon,
   TwitterIcon,
   WebsiteIcon,
-} from "@/components/Icons";
-import { FarcasterIcon } from "@/components/Icons/Farcaster";
+} from "@/components/icons";
+import { FarcasterIcon } from "@/components/icons/Farcaster";
 import type { IProjectDetails } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 interface SocialLink {

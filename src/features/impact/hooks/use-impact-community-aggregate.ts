@@ -1,8 +1,8 @@
 "use client";
+import { useCommunityCategory } from "@/features/communities/hooks/use-community-category";
 import { getAllProgramsImpactAggregate } from "@/utilities/registry/getAllProgramsImpactAggregate";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
-import useCommunityCategory from "../../communities/hooks/use-community-category";
 
 export function useImpactCommunityAggregate() {
   const { communityId } = useParams();

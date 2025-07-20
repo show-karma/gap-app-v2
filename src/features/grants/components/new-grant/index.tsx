@@ -7,16 +7,16 @@ import { useEffect, Suspense } from "react";
 import dynamic from "next/dynamic";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useGrantFormStore } from "./store";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useOwnerStore } from "@/store/owner";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 
 import { MESSAGES } from "@/config/messages";
-import { useCommunityAdminStore } from "@/src/features/communities/lib/community-admin-store";
+import { useCommunityAdminStore } from "@/features/communities/lib/community-admin-store";
 import Link from "next/link";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/button";
 import { PAGES } from "@/utilities/pages";
 import { TypeSelectionScreen } from "./screens/TypeSelectionScreen";
-import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
+import { DefaultLoading } from "@/components/ui/default-loading";
 export { SearchGrantProgram } from "./SearchGrantProgram";
 
 const DetailsScreen = dynamic(

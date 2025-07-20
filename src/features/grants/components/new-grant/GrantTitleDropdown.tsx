@@ -11,7 +11,7 @@ import { CheckIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
 import { cn } from "@/lib/utils/cn";
 import pluralize from "pluralize";
-import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import { GrantProgram } from "@/features/program-registry/components/ProgramList";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 

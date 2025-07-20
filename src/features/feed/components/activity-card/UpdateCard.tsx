@@ -1,15 +1,14 @@
 import { FC } from "react";
 import Link from "next/link";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useUpdateActions } from "@/hooks/useUpdateActions";
+import { useProjectStore } from "@/features/projects/lib/store";
 import { ActivityStatus } from "./ActivityStatus";
 import { ActivityStatusHeader } from "./ActivityStatusHeader";
 import { ActivityMenu } from "./ActivityMenu";
 import { ActivityAttribution } from "./ActivityAttribution";
 import { ReadMore } from "@/utilities/ReadMore";
 import { PAGES } from "@/config/pages";
-import { ProjectActivityBlock } from "@/src/features/projects/components/updates/ProjectActivityBlock";
-import { EditUpdateDialog } from "@/src/features/projects/components/updates/EditUpdateDialog";
+import { ProjectActivityBlock } from "@/features/projects/components/updates/ProjectActivityBlock";
+import { EditUpdateDialog } from "@/features/projects/components/updates/EditUpdateDialog";
 import { formatDate } from "@/lib/format/date";
 import {
   IGrantUpdate,
@@ -19,6 +18,7 @@ import {
   IProjectUpdate,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { ActivityType } from "./ActivityTypes";
+import { useUpdateActions } from "@/features/grants/hooks/use-update-actions";
 
 type UpdateType =
   | IProjectUpdate

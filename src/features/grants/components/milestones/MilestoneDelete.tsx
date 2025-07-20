@@ -1,8 +1,8 @@
-import { DeleteDialog } from "@/components/DeleteDialog";
+import { DeleteDialog } from "@/components/ui/delete-dialog";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useOwnerStore } from "@/store/owner";
-import { useStepper } from "@/store/modals/txStepper";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
+import { useStepper } from "@/features/modals/lib/stores/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { fetchData } from "@/lib/utils/fetch-data";
@@ -11,14 +11,14 @@ import { MESSAGES } from "@/config/messages";
 import { config } from "@/utilities/wagmi/config";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
 import { type FC, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 
 import { errorManager } from "@/lib/utils/error-manager";
-import { retryUntilConditionMet } from "@/utilities/retries";
-import { useWallet } from "@/hooks/useWallet";
+import { retryUntilConditionMet } from "@/lib/utils/retries";
+import { useWallet } from "@/features/auth/hooks/use-wallet";
 interface MilestoneDeleteProps {
   milestone: IMilestoneResponse;
 }

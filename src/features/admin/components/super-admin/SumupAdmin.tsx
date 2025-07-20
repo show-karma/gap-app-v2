@@ -1,15 +1,15 @@
 "use client";
-import { useOwnerStore } from "@/store/owner";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 import { useState } from "react";
 import { z } from "zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/button";
 import axios from "axios";
-import { envVars } from "@/utilities/enviromentVars";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { MESSAGES } from "@/utilities/messages";
+import { envVars } from "@/config/env";
+import errorManager from "@/lib/utils/error-manager";
+import { MESSAGES } from "@/config/messages";
 
 const schema = z.object({
   addressOrEmail: z

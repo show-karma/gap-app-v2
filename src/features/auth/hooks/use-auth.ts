@@ -1,7 +1,7 @@
 "use client";
 import { errorManager } from "@/lib/utils/error-manager";
 import { useAuthStore } from "../lib/store";
-import { useOnboarding } from "@/store/modals/onboarding";
+import { useOnboarding } from "@/features/modals/lib/stores/onboarding";
 import { IExpirationStatus, ISession } from "../types";
 import { checkExpirationStatus } from "@/utilities/checkExpirationStatus";
 import { fetchData } from "@/lib/utils/fetch-data";
@@ -28,7 +28,7 @@ import {
   AUTH_IN_PROGRESS_COOKIE,
   getAddressSpecificAuthCookie,
   getAddressSpecificWalletTypeCookie,
-} from "@/utilities/cookies";
+} from "@/lib/utils/cookies";
 
 const getNonce = async (publicAddress: string) => {
   try {

@@ -1,12 +1,12 @@
 /* eslint-disable @next/next/no-img-element */
 import { FC, Fragment, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/button";
 import { z } from "zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
-import { useAuthStore } from "@/store/auth";
+import { useAuthStore } from "@/features/auth/lib/store";
 
 import { useAccount } from "wagmi";
 import { getWalletClient } from "@wagmi/core";
@@ -16,9 +16,9 @@ import { MESSAGES } from "@/config/messages";
 import { getGapClient, useGap } from "@/hooks/useGap";
 
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { useStepper } from "@/store/modals/txStepper";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useOwnerStore } from "@/store/owner";
+import { useStepper } from "@/features/modals/lib/stores/txStepper";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 import { Hex } from "viem";
 import { config } from "@/utilities/wagmi/config";
 import { getProjectById } from "@/utilities/sdk/projects";
@@ -29,9 +29,9 @@ import {
 import { errorManager } from "@/lib/utils/error-manager";
 import { fetchData } from "@/lib/utils/fetch-data";
 import { INDEXER } from "@/utilities/indexer";
-import { sanitizeObject } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { useWallet } from "@/hooks/useWallet";
+import { sanitizeObject } from "@/lib/utils/sanitize";
+import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
+import { useWallet } from "@/features/auth/hooks/use-wallet";
 
 type VerifyImpactDialogProps = {
   impact: IProjectImpact;

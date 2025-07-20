@@ -1,13 +1,12 @@
 "use client";
-import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
-import { errorManager } from "@/components/Utilities/errorManager";
-import Pagination from "@/components/Utilities/Pagination";
+import { DefaultLoading } from "@/components/ui/default-loading";
+import errorManager from "@/lib/utils/error-manager";
+import Pagination from "@/components/ui/pagination/pagination";
 import { PageInfo } from "@/types/pagination";
-import { ProjectReport } from "@/types";
-import fetchData from "@/utilities/fetchData";
+import fetchData from "@/lib/utils/fetch-data";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
-import { MESSAGES } from "@/utilities/messages";
+import { MESSAGES } from "@/config/messages";
 import { ReadMore } from "@/utilities/ReadMore";
 import { cn } from "@/utilities/tailwind";
 import { useQuery } from "@tanstack/react-query";
@@ -15,11 +14,12 @@ import { useState } from "react";
 import { ProjectDescriptionDialog } from "./Dialog";
 import { ProjectContacts } from "./Contacts";
 import { AllProjectsLoadingTable } from "./Loading";
-import { useAuthStore } from "@/store/auth";
+import { useAuthStore } from "@/features/auth/lib/store";
 import { PAGES } from "@/utilities/pages";
 import Link from "next/link";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { useOwnerStore } from "@/store/owner";
+import { ExternalLink } from "@/components/ui/external-link";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
+import { ProjectReport } from "@/features/projects/types";
 
 const getAllProjects = async (
   offset: number,

@@ -4,8 +4,8 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 import Link from "next/link";
 
-import { Spinner } from "@/components/Utilities/Spinner";
-import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
+import { Spinner } from "@/components/ui/spinner";
+import EthereumAddressToENSName from "@/features/ens/components/address-to-ens-name";
 
 import { PAGES } from "@/config/pages";
 import {
@@ -14,14 +14,14 @@ import {
   ISearchResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useAccount } from "wagmi";
-import { useAuthStore } from "@/src/features/auth/lib/store";
+import { useAuthStore } from "@/features/auth/lib/store";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useEffect, useState } from "react";
-import { useMobileStore } from "@/store/mobile";
 
-import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import EthereumAddressToENSAvatar from "@/features/ens/components/address-to-ens-avatar";
 import { groupSimilarCommunities } from "@/utilities/communityHelpers"; // You'll need to create this utility function
 import { useRouter } from "next/navigation";
+import { useMobileStore } from "@/hooks/use-mobile-store";
 
 interface Props {
   data: ISearchResponse; // Will be modular in the future

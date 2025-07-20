@@ -1,9 +1,9 @@
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/button";
 
 import { cn } from "@/utilities/tailwind";
 import pluralize from "pluralize";
 import Image from "next/image";
-import { pickColor } from "@/components/GrantCard";
+import { pickColor } from "@/features/grants/components/grant-card";
 import {
   PlusIcon,
   TrashIcon,
@@ -14,15 +14,15 @@ import { PencilSquareIcon } from "@heroicons/react/24/solid";
 import { useRef, useState, useEffect, Fragment, useMemo } from "react";
 import { ActivityOutcomeModal } from "../indicators/ActivityOutcomeModal";
 import { Menu, Transition } from "@headlessui/react";
-import { DeleteDialog } from "@/components/DeleteDialog";
-import fetchData from "@/utilities/fetchData";
+import fetchData from "@/lib/utils/fetch-data";
 import { INDEXER } from "@/utilities/indexer";
 import toast from "react-hot-toast";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { MESSAGES } from "@/utilities/messages";
+import errorManager from "@/lib/utils/error-manager";
+import { MESSAGES } from "@/config/messages";
 import { useAccount } from "wagmi";
-import { Category, ImpactSegment } from "@/src/features/impact/types";
-import { useGroupedIndicators } from "@/src/features/impact/hooks/use-grouped-indicators";
+import { Category, ImpactSegment } from "@/features/impact/types";
+import { useGroupedIndicators } from "@/features/impact/hooks/use-grouped-indicators";
+import { DeleteDialog } from "@/components/ui/delete-dialog";
 
 interface CategoryViewProps {
   selectedCategory: Category;

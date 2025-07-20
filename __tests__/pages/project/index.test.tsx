@@ -1,7 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import ProjectPageIndex from "@/app/project/[projectId]/page";
-import { ProjectOverviewLoading } from "@/components/Pages/Project/Loading/Overview";
 
 jest.mock("next/dynamic", () => ({
   __esModule: true,

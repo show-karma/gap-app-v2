@@ -1,9 +1,9 @@
 "use client";
 
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useOwnerStore } from "@/store/owner";
-import { useCommunityAdminStore } from "@/src/features/communities/lib/community-admin-store";
-import { formatDate } from "@/utilities/formatDate";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
+import { useCommunityAdminStore } from "@/features/communities/lib/community-admin-store";
+import { formatDate } from "@/lib/format/date";
 import { ReadMore } from "@/utilities/ReadMore";
 import { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { type FC } from "react";

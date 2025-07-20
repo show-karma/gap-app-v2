@@ -1,11 +1,11 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 import dynamic from "next/dynamic";
-import { LoadingManagePrograms } from "@/components/Pages/ProgramRegistry/Loading/ManagePrograms";
+import { LoadingManagePrograms } from "./Loading/ManagePrograms";
 
 const ManagePrograms = dynamic(
   () =>
-    import("@/components/Pages/ProgramRegistry/ManagePrograms").then(
+    import("@/features/program-registry/components/ManagePrograms").then(
       (mod) => mod.ManagePrograms
     ),
   {

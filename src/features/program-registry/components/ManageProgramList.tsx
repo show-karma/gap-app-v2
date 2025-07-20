@@ -5,12 +5,12 @@ import Image from "next/image";
 import { FC, useEffect, useMemo, useRef, useState } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { registryHelper } from "./helper";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { Discord2Icon, Telegram2Icon, Twitter2Icon } from "@/components/Icons";
-import { DiscussionIcon } from "@/components/Icons/Discussion";
-import { BlogIcon } from "@/components/Icons/Blog";
-import { OrganizationIcon } from "@/components/Icons/Organization";
-import { Button } from "@/components/Utilities/Button";
+import { ExternalLink } from "@/components/ui/external-link";
+import { Discord2Icon, Telegram2Icon, Twitter2Icon } from "@/components/icons";
+import { DiscussionIcon } from "@/components/icons/Discussion";
+import { BlogIcon } from "@/components/icons/Blog";
+import { OrganizationIcon } from "@/components/icons/Organization";
+import { Button } from "@/components/ui/button";
 import {
   ColumnDef,
   Row,

@@ -7,20 +7,20 @@ import { INDEXER } from "@/utilities/indexer";
 import { fetchData } from "@/lib/utils/fetch-data";
 import { useChat } from "./useChat";
 import React from "react";
-import { envVars } from "@/utilities/enviromentVars";
+import { envVars } from "@/config/env";
 import Image from "next/image";
 import { SearchDropdown } from "../ProgramRegistry/SearchDropdown";
 import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { cn } from "@/lib/utils/cn";
-import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import EthereumAddressToENSAvatar from "@/features/ens/components/address-to-ens-avatar";
 import { formatDate } from "@/utilities/formatDate";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { MarkdownPreview } from "@/components/ui/markdown-preview";
+import { ExternalLink } from "@/components/ui/external-link";
 import { PAGES } from "@/utilities/pages";
 import pluralize from "pluralize";
 import { ShareIcon } from "@heroicons/react/24/outline";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
+import { ProfilePicture } from "@/components/ui/profile-picture";
 
 const sanitizeMarkdown = (text: string) => {
   return (

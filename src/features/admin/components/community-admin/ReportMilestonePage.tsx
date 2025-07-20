@@ -1,19 +1,18 @@
 "use client";
-import { ReasonsModal } from "@/components/Dialogs/ReasonsModal";
-import { Button } from "@/components/Utilities/Button";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { Skeleton } from "@/components/Utilities/Skeleton";
-import TablePagination from "@/components/Utilities/TablePagination";
-import { useOwnerStore } from "@/store/owner";
-import { useAuthStore } from "@/store/auth";
+import { Button } from "@/components/ui/button";
+import errorManager from "@/lib/utils/error-manager";
+import { ExternalLink } from "@/components/ui/external-link";
+import { Skeleton } from "@/components/ui/skeleton";
+import TablePagination from "@/components/ui/pagination/table-pagination";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
+import { useAuthStore } from "@/features/auth/lib/store";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
-import fetchData from "@/utilities/fetchData";
+import fetchData from "@/lib/utils/fetch-data";
 import { INDEXER } from "@/utilities/indexer";
-import { MESSAGES } from "@/utilities/messages";
+import { MESSAGES } from "@/config/messages";
 import { defaultMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useIsCommunityAdmin } from "@/features/admin/hooks/use-is-community-admin";
 import { ChevronLeftIcon } from "@heroicons/react/20/solid";
 import {
   ChevronDownIcon,
@@ -27,10 +26,11 @@ import { useParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
-import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
+import { SearchDropdown } from "@/features/program-registry/components/SearchDropdown";
 import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
-import { envVars } from "@/utilities/enviromentVars";
+import { envVars } from "@/config/env";
 import { downloadCommunityReport } from "@/utilities/downloadReports";
+import { ReasonsModal } from "@/features/modals/components/reasons-modal";
 
 interface Report {
   _id: {

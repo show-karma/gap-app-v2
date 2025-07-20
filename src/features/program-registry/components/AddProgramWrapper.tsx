@@ -1,10 +1,10 @@
 "use client";
 import dynamic from "next/dynamic";
-import { Spinner } from "@/components/Utilities/Spinner";
+import { Spinner } from "@/components/ui/spinner";
 
 const AddProgram = dynamic(
   () =>
-    import("@/components/Pages/ProgramRegistry/AddProgram").then(
+    import("@/features/program-registry/components/AddProgram").then(
       (mod) => mod.default
     ),
   {

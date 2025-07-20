@@ -1,11 +1,11 @@
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/button";
 import { errorManager } from "@/lib/utils/error-manager";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { ExternalLink } from "@/components/ui/external-link";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useWallet } from "@/hooks/useWallet";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useOwnerStore } from "@/store/owner";
-import { useStepper } from "@/store/modals/txStepper";
+import { useWallet } from "@/features/auth/hooks/use-wallet";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
+import { useStepper } from "@/features/modals/lib/stores/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { fetchData } from "@/lib/utils/fetch-data";
@@ -14,10 +14,10 @@ import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObject
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/config/messages";
 import { ReadMore } from "@/utilities/ReadMore";
-import { retryUntilConditionMet } from "@/utilities/retries";
+import { retryUntilConditionMet } from "@/lib/utils/retries";
 import { getProjectById } from "@/utilities/sdk/projects";
 import { config } from "@/utilities/wagmi/config";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
 import { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
@@ -30,9 +30,9 @@ import { useAccount } from "wagmi";
 
 const ProjectObjectiveCompletion = dynamic(
   () =>
-    import("@/components/Forms/ProjectObjectiveCompletion").then(
-      (mod) => mod.ProjectObjectiveCompletionForm
-    ),
+    import(
+      "@/features/projects/components/forms/project-objective-completion-form"
+    ).then((mod) => mod.ProjectObjectiveCompletionForm),
   {
     ssr: false,
   }

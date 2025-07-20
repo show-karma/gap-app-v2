@@ -1,8 +1,8 @@
 "use client";
-import { Button } from "@/components/Utilities/Button";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useOwnerStore } from "@/store/owner";
-import { useProgressModalStore } from "@/store/modals/progress";
+import { Button } from "@/components/ui/button";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
+import { useProgressModalStore } from "@/features/modals/lib/stores/progress";
 import formatCurrency from "@/utilities/formatCurrency";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/lib/utils/cn";

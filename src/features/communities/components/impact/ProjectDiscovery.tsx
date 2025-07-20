@@ -3,7 +3,7 @@
 import { useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Listbox } from "@headlessui/react";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/button";
 import * as Slider from "@radix-ui/react-slider";
 import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import { INDEXER } from "@/utilities/indexer";

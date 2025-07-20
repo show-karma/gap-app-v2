@@ -1,11 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { MilestoneUpdateForm } from "@/components/Forms/MilestoneUpdate";
-import { Button } from "@/components/Utilities/Button";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useOwnerStore } from "@/store/owner";
-import { useCommunityAdminStore } from "@/src/features/communities/lib/community-admin-store";
+import { Button } from "@/components/ui/button";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
+import { useCommunityAdminStore } from "@/features/communities/lib/community-admin-store";
 import { PencilSquareIcon, ShareIcon } from "@heroicons/react/24/outline";
 import {
   IMilestoneCompleted,
@@ -14,7 +13,8 @@ import {
 import { type FC, useState } from "react";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { ExternalLink } from "@/components/ui/external-link";
+import { MilestoneUpdateForm } from "@/features/milestones/components/forms/milestone-update-form";
 
 interface NotUpdatingCaseProps {
   milestone: IMilestoneResponse;

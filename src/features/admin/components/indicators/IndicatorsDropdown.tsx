@@ -6,15 +6,15 @@ import {
 } from "@heroicons/react/24/outline";
 import * as Popover from "@radix-ui/react-popover";
 import { FC, useEffect, useState } from "react";
-import { Button } from "@/components/Utilities/Button";
-import { IndicatorForm } from "@/components/Forms/IndicatorForm";
+import { Button } from "@/components/ui/button";
+import { IndicatorForm } from "@/features/admin/components/forms/indicator-form";
 import { Dialog, Transition } from "@headlessui/react";
 import { Fragment } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { Switch } from "@headlessui/react";
-import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
-import { LoadingSpinner } from "@/components/Disbursement/components/LoadingSpinner";
-import { ImpactIndicator } from "@/src/features/impact/types";
+import { autosyncedIndicators } from "@/features/admin/components/indicators/IndicatorsHub";
+import { LoadingSpinner } from "@/features/disbursements/components/components/LoadingSpinner";
+import { ImpactIndicator } from "@/features/impact/types";
 
 interface IndicatorsDropdownProps {
   selectedIndicators: string[];

@@ -4,20 +4,20 @@ import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 
 import { Hex } from "viem";
-import { useENS } from "@/store/ens";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { formatDate } from "@/utilities/formatDate";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { formatDate } from "@/lib/format/date";
 import {
   ICommunityAdminsResponse,
   IGrantUpdateStatus,
   IMilestoneCompleted,
   IProjectImpactStatus,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { Tabs, TabContent, TabTrigger } from "@/components/Utilities/Tabs";
+import { Tabs, TabContent, TabTrigger } from "@/components/ui/tabs";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { useAccount } from "wagmi";
-import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import EthereumAddressToENSAvatar from "@/features/ens/components/address-to-ens-avatar";
 import { useGrant } from "../../lib/grant-context";
+import { useENS } from "@/features/ens/lib/store";
 
 interface VerificationsDialogProps {
   verifications: (

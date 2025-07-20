@@ -2,7 +2,7 @@
 
 import React from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { Spinner } from "@/components/Utilities/Spinner";
+import { Spinner } from "@/components/ui/spinner";
 import { TagIcon } from "@heroicons/react/24/outline";
 import { useTracksForCommunity } from "../hooks/use-tracks";
 

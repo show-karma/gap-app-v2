@@ -2,15 +2,15 @@
 /* eslint-disable @next/next/no-img-element */
 import { FC, useEffect, useMemo, useState } from "react";
 import { Hex } from "viem";
-import { useENS } from "@/store/ens";
+import { useENS } from "@/features/ens/lib/store";
 import { shortAddress } from "@/utilities/shortAddress";
 import { formatDate } from "@/utilities/formatDate";
-import { EmptyEndorsmentList } from "@/src/features/impact/components/project-impact/EmptyEndorsmentList";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { Button } from "@/components/Utilities/Button";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { Button } from "@/components/ui/button";
+import { MarkdownPreview } from "@/components/ui/markdown-preview";
 import { IProjectEndorsement } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import EthereumAddressToENSAvatar from "@/features/ens/components/address-to-ens-avatar";
+import { EmptyEndorsmentList } from "@/features/projects/components/impact/EmptyEndorsmentList";
 
 interface EndorsementRowProps {
   endorsement: IProjectEndorsement;

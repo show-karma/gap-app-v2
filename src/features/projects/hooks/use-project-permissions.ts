@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useAuthStore } from "@/store/auth";
+import { useAuthStore } from "@/features/auth/lib/store";
 import { errorManager } from "@/lib/utils/error-manager";
 import { getRPCClient } from "@/utilities/rpcClient";
 import type { Project } from "@show-karma/karma-gap-sdk/core/class/entities/Project";

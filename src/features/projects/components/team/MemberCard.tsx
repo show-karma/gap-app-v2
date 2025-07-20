@@ -1,16 +1,13 @@
 /* eslint-disable @next/next/no-img-element */
-import { DeleteMemberDialog } from "@/components/Dialogs/Member/DeleteMember";
-import { DemoteMemberDialog } from "@/components/Dialogs/Member/DemoteMember";
-import { PromoteMemberDialog } from "@/components/Dialogs/Member/PromoteMember";
-import { GithubIcon, LinkedInIcon, Twitter2Icon } from "@/components/Icons";
-import { FarcasterIcon } from "@/components/Icons/Farcaster";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { Skeleton } from "@/components/Utilities/Skeleton";
+import { GithubIcon, LinkedInIcon, Twitter2Icon } from "@/components/icons";
+import { FarcasterIcon } from "@/components/icons/Farcaster";
+import { ExternalLink } from "@/components/ui/external-link";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useOwnerStore } from "@/store/owner";
-import { useENS } from "@/store/ens";
-import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
+import { useENS } from "@/features/ens/lib/store";
+import { useContributorProfileModalStore } from "@/features/modals/lib/stores/contributorProfile";
 import {
   getProjectMemberRoles,
   Member,
@@ -21,7 +18,10 @@ import { useEffect } from "react";
 import { useAccount } from "wagmi";
 import { type Hex } from "viem";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
-import { useProjectInstance } from "@/hooks/useProjectInstance";
+import useProjectInstance from "../../hooks/use-project-instance";
+import { PromoteMemberDialog } from "../dialogs/Member/PromoteMember";
+import { DemoteMemberDialog } from "../dialogs/Member/DemoteMember";
+import { DeleteMemberDialog } from "../dialogs/Member/DeleteMember";
 
 const iconsClassnames = {
   general:

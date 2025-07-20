@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
-import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useProjectStore } from "@/features/projects/lib/store";
 import { useRouter } from "next/navigation";
-import { ProjectUpdateForm } from "@/components/Forms/ProjectUpdate";
+import { ProjectUpdateForm } from "@/features/projects/components/forms/project-update-form";
 import { useState, useEffect } from "react";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 

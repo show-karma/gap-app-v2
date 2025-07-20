@@ -1,8 +1,8 @@
 "use client";
-import { TxStepperSteps, useStepper } from "@/store/modals/txStepper";
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { Fragment } from "react";
+import { TxStepperSteps, useStepper } from "../lib/stores/txStepper";
 
 const StepNumberDictionary: Record<TxStepperSteps, number> = {
   preparing: 1,

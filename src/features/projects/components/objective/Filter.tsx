@@ -8,8 +8,8 @@ import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import { useQueryState } from "nuqs";
 import { StatusOptions } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { useParams } from "next/navigation";
-import { queryClient } from "@/components/Utilities/WagmiProvider";
-import { useAllMilestones } from "@/hooks/useAllMilestones";
+import { queryClient } from "@/components/providers/wagmi-provider";
+import { useAllMilestones } from "@/features/milestones/hooks/use-all-milestones";
 
 const statuses: Record<StatusOptions, string> = {
   all: "All",

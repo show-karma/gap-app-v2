@@ -1,13 +1,11 @@
 "use client";
 import { errorManager } from "@/lib/utils/error-manager";
 import { useGap } from "@/hooks/useGap";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useOwnerStore } from "@/store/owner";
-import { useGrantGenieModalStore } from "@/store/modals/genie";
-import { useMergeModalStore } from "@/store/modals/merge";
-import { useProjectEditModalStore } from "@/store/modals/projectEdit";
-import { useTransferOwnershipModalStore } from "@/store/modals/transferOwnership";
-import { useStepper } from "@/store/modals/txStepper";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
+import { useGrantGenieModalStore } from "@/features/modals/lib/stores/genie";
+import { useProjectEditModalStore } from "@/features/modals/lib/stores/projectEdit";
+import { useStepper } from "@/features/modals/lib/stores/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/config/messages";
 import { PAGES } from "@/utilities/pages";
@@ -26,7 +24,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { EllipsisVerticalIcon, PlusIcon } from "@heroicons/react/24/solid";
 
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -34,46 +32,45 @@ import { Fragment, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 
-import { AdminTransferOwnershipDialog } from "@/components/Dialogs/AdminTransferOwnershipDialog";
 import { useContactInfo } from "@/hooks/useContactInfo";
-import { useStaff } from "@/hooks/useStaff";
-import { useAdminTransferOwnershipModalStore } from "@/store/modals/adminTransferOwnership";
+import { useAdminTransferOwnershipModalStore } from "@/features/modals/lib/stores/adminTransferOwnership";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { GithubIcon } from "@/components/Icons";
-import { useWallet } from "@/hooks/useWallet";
+import { GithubIcon } from "@/components/icons";
+import { useWallet } from "@/features/auth/hooks/use-wallet";
 import { deleteProject, getProjectById } from "@/utilities/sdk/projects";
 import LinkContractAddressButton from "../shared/LinkContractAddressButton";
 import LinkGithubRepoButton from "../shared/LinkGithubRepoButton";
 import LinkOSOProfileButton from "../shared/LinkOSOProfileButton";
 import LinkDivviWalletButton from "../shared/LinkDivviWalletButton";
 import SetPayoutAddressButton from "../shared/set-payout-address-button";
+import { useMergeModalStore } from "@/features/modals/lib/stores/merge";
+import { useTransferOwnershipModalStore } from "@/features/modals/lib/stores/transferOwnership";
+import { useStaff } from "@/features/admin/hooks/use-staff";
+import { AdminTransferOwnershipDialog } from "@/features/modals/components/AdminTransferOwnershipDialog";
 
 const ProjectDialog = dynamic(
-  () =>
-    import("@/components/Dialogs/ProjectDialog").then(
-      (mod) => mod.ProjectDialog
-    ),
+  () => import("../dialogs/ProjectDialog").then((mod) => mod.ProjectDialog),
   { ssr: false }
 );
 const GrantsGenieDialog = dynamic(
   () =>
-    import("@/components/Dialogs/GrantGenieDialog").then(
+    import("@/features/modals/components/GrantGenieDialog").then(
       (mod) => mod.GrantsGenieDialog
     ),
   { ssr: false }
 );
 
 const DeleteDialog = dynamic(() =>
-  import("@/components/DeleteDialog").then((mod) => mod.DeleteDialog)
+  import("@/components/ui/delete-dialog").then((mod) => mod.DeleteDialog)
 );
 
 const TransferOwnershipDialog = dynamic(() =>
-  import("@/components/Dialogs/TransferOwnershipDialog").then(
+  import("@/features/projects/components/dialogs/TransferOwnershipDialog").then(
     (mod) => mod.TransferOwnershipDialog
   )
 );
 const MergeProjectDialog = dynamic(() =>
-  import("@/components/Dialogs/MergeProjectDialog").then(
+  import("@/features/projects/components/dialogs/MergeProjectDialog").then(
     (mod) => mod.MergeProjectDialog
   )
 );

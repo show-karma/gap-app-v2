@@ -1,15 +1,13 @@
 import React, { useEffect, useState } from "react";
-import * as Tooltip from "@radix-ui/react-tooltip";
-import { useParams, useSearchParams } from "next/navigation";
-import { useTracksForCommunity, useTracksForProgram } from "@/hooks/useTracks";
+import { useSearchParams } from "next/navigation";
 import { Track } from "@/services/tracks";
-import { FunnelIcon } from "@heroicons/react/24/outline";
 import { cn } from "@/lib/utils/cn";
 import pluralize from "pluralize";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import { CheckIcon } from "@heroicons/react/20/solid";
 import { Fragment } from "react";
 import { Listbox, Transition } from "@headlessui/react";
+import { useTracksForProgram } from "@/features/tracks/hooks/use-tracks";
 
 interface TrackFilterProps {
   onChange: (trackIds: string[] | null) => void;

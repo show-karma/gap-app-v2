@@ -1,10 +1,10 @@
 "use client";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useOwnerStore } from "@/store/owner";
-import { ContactInfoSubscription } from "@/components/ContactInfoSubscription";
-import { Spinner } from "@/components/Utilities/Spinner";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
+import { Spinner } from "@/components/ui/spinner";
 import { useContactInfo } from "@/hooks/useContactInfo";
-import { useProjectPermissions } from "@/hooks/useProjectPermissions";
+import useProjectPermissions from "../../hooks/use-project-permissions";
+import { ContactInfoSubscription } from "./contact-info-subscription";
 
 const ContactInfoPage = () => {
   const isOwnerLoading = useOwnerStore((state) => state.isOwnerLoading);

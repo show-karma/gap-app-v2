@@ -1,6 +1,6 @@
 import { formatDate } from "@/utilities/formatDate";
-import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
-import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
+import EthereumAddressToENSAvatar from "@/features/ens/components/address-to-ens-avatar";
+import EthereumAddressToENSName from "@/features/ens/components/address-to-ens-name";
 
 interface ActivityAttributionProps {
   createdAt: number | string;

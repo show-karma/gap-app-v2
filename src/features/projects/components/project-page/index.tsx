@@ -1,8 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useOwnerStore } from "@/store/owner";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
@@ -10,23 +10,17 @@ import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 import { PAGES } from "@/utilities/pages";
 import Link from "next/link";
 
-import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import EthereumAddressToENSAvatar from "@/features/ens/components/address-to-ens-avatar";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import { useActivityTabStore } from "@/store/activityTab";
-import { useENS } from "@/store/ens";
+import { useENS } from "@/features/ens/lib/store";
 import formatCurrency from "@/utilities/formatCurrency";
 import { shortAddress } from "@/utilities/shortAddress";
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
 import { Hex } from "viem";
 
-import { MemberDialog } from "@/components/Dialogs/Member";
-import { DeleteMemberDialog } from "@/components/Dialogs/Member/DeleteMember";
-import { DemoteMemberDialog } from "@/components/Dialogs/Member/DemoteMember";
-import { InviteMemberDialog } from "@/components/Dialogs/Member/InviteMember";
-import { PromoteMemberDialog } from "@/components/Dialogs/Member/PromoteMember";
 import { errorManager } from "@/lib/utils/error-manager";
-import { Skeleton } from "@/components/Utilities/Skeleton";
-import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useContributorProfileModalStore } from "@/features/modals/lib/stores/contributorProfile";
 import { fetchData } from "@/lib/utils/fetch-data";
 import {
   getProjectMemberRoles,
@@ -40,14 +34,20 @@ import dynamic from "next/dynamic";
 import pluralize from "pluralize";
 import { useAccount } from "wagmi";
 import { InformationBlock } from "./ProjectBodyTabs";
-import { useProjectInstance } from "@/hooks/useProjectInstance";
 import { useMemberRoles } from "@/hooks/useMemberRoles";
 import ProjectSubscription from "../shared/subscription";
 import { ProjectSubTabs } from "./sub-tabs";
+import useProjectInstance from "../../hooks/use-project-instance";
+import { useActivityTabStore } from "@/features/feed/lib/store";
+import { MemberDialog } from "../dialogs/Member";
+import { PromoteMemberDialog } from "../dialogs/Member/PromoteMember";
+import { DemoteMemberDialog } from "../dialogs/Member/DemoteMember";
+import { DeleteMemberDialog } from "../dialogs/Member/DeleteMember";
+import { InviteMemberDialog } from "../dialogs/Member/InviteMember";
 
 const ContributorProfileDialog = dynamic(
   () =>
-    import("@/components/Dialogs/ContributorProfileDialog").then(
+    import("@/features/modals/components/ContributorProfileDialog").then(
       (mod) => mod.ContributorProfileDialog
     ),
   {

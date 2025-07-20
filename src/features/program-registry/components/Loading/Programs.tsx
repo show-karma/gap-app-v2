@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/Utilities/Skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ProgramHeader } from "../ProgramHeader";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 

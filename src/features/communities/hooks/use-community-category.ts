@@ -3,7 +3,7 @@ import { getCommunityCategory } from "@/utilities/queries/getCommunityCategory";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 
-function useCommunityCategory() {
+export function useCommunityCategory() {
   const { communityId } = useParams();
 
   return useQuery({
@@ -11,5 +11,3 @@ function useCommunityCategory() {
     queryFn: () => getCommunityCategory(communityId as string),
   });
 }
-
-export default useCommunityCategory;

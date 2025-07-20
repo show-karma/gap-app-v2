@@ -1,16 +1,16 @@
 "use client";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { useAuthStore } from "@/store/auth";
+import { Spinner } from "@/components/ui/spinner";
+import { useAuthStore } from "@/features/auth/lib/store";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/config/messages";
 import { PAGES } from "@/utilities/pages";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useIsCommunityAdmin } from "@/features/admin/hooks/use-is-community-admin";
 import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 
 import { errorManager } from "@/lib/utils/error-manager";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/button";
 import {
   ChevronRightIcon,
   Square2StackIcon,
@@ -19,7 +19,7 @@ import {
   TagIcon,
   BanknotesIcon,
 } from "@heroicons/react/24/outline";
-import { Skeleton } from "@/components/Utilities/Skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils/cn";
 
 interface AdminButtonProps {

@@ -1,15 +1,15 @@
 /* eslint-disable @next/next/no-img-element */
 import { type FC, useEffect, useState } from "react";
 
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/button";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useOwnerStore } from "@/store/owner";
-import { useStepper } from "@/store/modals/txStepper";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
+import { useStepper } from "@/features/modals/lib/stores/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { fetchData } from "@/lib/utils/fetch-data";
-import { formatDate } from "@/utilities/formatDate";
+import { formatDate } from "@/lib/format/date";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/config/messages";
 import { ReadMore } from "@/utilities/ReadMore";
@@ -22,20 +22,20 @@ import {
   IMilestoneCompleted,
   IMilestoneResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { UpdateMilestone } from "./UpdateMilestone";
-import { MilestoneVerificationSection } from "@/components/Shared/MilestoneVerification";
 
 import { errorManager } from "@/lib/utils/error-manager";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { retryUntilConditionMet } from "@/utilities/retries";
+import { ExternalLink } from "@/components/ui/external-link";
+import { retryUntilConditionMet } from "@/lib/utils/retries";
 import { SHARE_TEXTS } from "@/utilities/share/text";
-import { useShareDialogStore } from "@/store/modals/shareDialog";
+import { useShareDialogStore } from "@/features/modals/lib/stores/shareDialog";
 import { shareOnX } from "@/utilities/share/shareOnX";
-import { useWallet } from "@/hooks/useWallet";
-import { useCommunityAdminStore } from "@/src/features/communities/lib/community-admin-store";
+import { useWallet } from "@/features/auth/hooks/use-wallet";
+import { useCommunityAdminStore } from "@/features/communities/lib/community-admin-store";
+import { MilestoneVerificationSection } from "@/features/milestones/components/shared";
 
 interface UpdatesProps {
   milestone: IMilestoneResponse;
@@ -286,7 +286,6 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
                       onVerificationAdded={addVerifiedMilestone}
                     />
                     <ExternalLink
-                      type="button"
                       className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
                       href={shareOnX(
                         SHARE_TEXTS.MILESTONE_COMPLETED(

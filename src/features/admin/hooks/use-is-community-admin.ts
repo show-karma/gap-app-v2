@@ -6,7 +6,7 @@ import { useAccount } from "wagmi";
 import type { Hex } from "viem";
 import { useEffect, useState } from "react";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { useAuthStore } from "@/store/auth";
+import { useAuthStore } from "@/features/auth/lib/store";
 import { defaultQueryOptions } from "@/config/query";
 
 /**

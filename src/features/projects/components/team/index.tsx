@@ -1,16 +1,16 @@
 "use client";
 
-import { ContributorProfileDialog } from "@/components/Dialogs/ContributorProfileDialog";
-import { InviteMemberDialog } from "@/components/Dialogs/Member/InviteMember";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useOwnerStore } from "@/store/owner";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 import {
   getProjectMemberRoles,
   Member,
 } from "@/utilities/getProjectMemberRoles";
 import { useQuery } from "@tanstack/react-query";
 import { MemberCard } from "./MemberCard";
-import { useProjectInstance } from "@/hooks/useProjectInstance";
+import useProjectInstance from "../../hooks/use-project-instance";
+import { ContributorProfileDialog } from "@/features/modals/components/ContributorProfileDialog";
+import { InviteMemberDialog } from "../dialogs/Member/InviteMember";
 
 export const Team = () => {
   const project = useProjectStore((state) => state.project);

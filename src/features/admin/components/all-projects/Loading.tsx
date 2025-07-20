@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/Utilities/Skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/utilities/tailwind";
 import { FC } from "react";
 

@@ -1,21 +1,21 @@
 "use client";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/button";
 import { errorManager } from "@/lib/utils/error-manager";
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useGrantStore } from "@/src/features/grants/lib/store";
-import { useStepper } from "@/store/modals/txStepper";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useGrantStore } from "@/features/grants/lib/store";
+import { useStepper } from "@/features/modals/lib/stores/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { fetchData } from "@/lib/utils/fetch-data";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/config/messages";
 import { PAGES } from "@/utilities/pages";
-import { sanitizeObject } from "@/utilities/sanitize";
+import { sanitizeObject } from "@/lib/utils/sanitize";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { FC } from "react";
@@ -23,7 +23,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { Hex } from "viem";
 import { useAccount } from "wagmi";
-import { useWallet } from "@/hooks/useWallet";
+import { useWallet } from "@/features/auth/hooks/use-wallet";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 

@@ -1,7 +1,7 @@
 "use client";
-import { Button } from "@/components/Utilities/Button";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { Spinner } from "@/components/Utilities/Spinner";
+import { Button } from "@/components/ui/button";
+import errorManager from "@/lib/utils/error-manager";
+import { Spinner } from "@/components/ui/spinner";
 import { zeroUID } from "@/utilities/commons";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { defaultMetadata } from "@/utilities/meta";
@@ -13,7 +13,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { OutputMetrics } from "./indicators/OutputMetrics";
-import { CommunityImpactCharts } from "@/components/Pages/Communities/Impact/ImpactCharts";
+import { CommunityImpactCharts } from "@/features/communities/components/impact/ImpactCharts";
 
 type Tab = "metrics" | "impact";
 

@@ -16,13 +16,11 @@ interface ProgramFilterProps {
   onChange: (programId: string | null) => void;
 }
 
-
 export const ProgramFilter = ({
   programs,
   selectedProgramId,
   onChange,
 }: ProgramFilterProps) => {
-
   return (
     <div className="relative w-64">
       <Listbox
@@ -34,15 +32,17 @@ export const ProgramFilter = ({
           }
           onChange(value);
         }}
-
       >
         <div className="relative">
           <Listbox.Button className="dark:bg-zinc-800 dark:text-white relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-600 sm:text-sm sm:leading-6">
             <span className="block truncate">
-              {selectedProgramId ? programs.find(program => program.programId === selectedProgramId)?.grant || "Filter by Grant Program" : "Filter by Grant Program"}
+              {selectedProgramId
+                ? programs.find(
+                    (program) => program.programId === selectedProgramId
+                  )?.grant || "Filter by Grant Program"
+                : "Filter by Grant Program"}
             </span>
             <span className="absolute inset-y-0 right-0 flex items-center pr-2">
-
               {selectedProgramId ? (
                 <XMarkIcon
                   className="h-5 w-5 text-gray-400 hover:text-gray-700 cursor-pointer"

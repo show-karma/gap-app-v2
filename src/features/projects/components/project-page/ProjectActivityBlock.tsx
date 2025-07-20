@@ -7,13 +7,13 @@ import {
   FilteredOutputsAndOutcomes,
   filterIndicators,
 } from "../impact/FilteredOutputsAndOutcomes";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useOwnerStore } from "@/store/owner";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
+import { ExternalLink } from "@/components/ui/external-link";
 import { useMemo } from "react";
 import { PAGES } from "@/utilities/pages";
-import { useImpactAnswers } from "@/src/features/impact/hooks/use-impact-answers";
-import { useCommunityAdminStore } from "@/src/features/communities/lib/community-admin-store";
+import { useImpactAnswers } from "@/features/impact/hooks/use-impact-answers";
+import { useCommunityAdminStore } from "@/features/communities/lib/community-admin-store";
 import { useAccount } from "wagmi";
 
 export const ProjectActivityBlock = ({
@@ -121,7 +121,6 @@ export const ProjectActivityBlock = ({
                               }
                               className="inline-flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium"
                               aria-label={`View proof for ${deliverable.name}`}
-                              tabIndex={0}
                             >
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -199,7 +198,6 @@ export const ProjectActivityBlock = ({
                       aria-label={`View grant: ${
                         grant.details?.data?.title || grant.uid
                       }`}
-                      tabIndex={0}
                     >
                       {grant.details?.data?.title || grant.uid}
                     </ExternalLink>

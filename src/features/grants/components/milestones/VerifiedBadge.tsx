@@ -3,8 +3,8 @@
 import { blo } from "blo";
 import { FC, useEffect, useMemo, useState } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { useENS } from "@/store/ens";
-import { formatDate } from "@/utilities/formatDate";
+import { useENS } from "@/features/ens/lib/store";
+import { formatDate } from "@/lib/format/date";
 import { VerificationsDialog } from "./VerificationsDialog";
 import {
   IMilestoneCompleted,
@@ -12,7 +12,7 @@ import {
   IGrantUpdateStatus,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { Hex } from "viem";
-import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import EthereumAddressToENSAvatar from "@/features/ens/components/address-to-ens-avatar";
 
 interface VerifiedBadgeProps {
   verifications:

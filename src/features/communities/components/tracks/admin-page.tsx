@@ -1,14 +1,14 @@
 "use client";
 import { useState, useEffect, Fragment } from "react";
-import { useAuthStore } from "@/store/auth";
+import { useAuthStore } from "@/features/auth/lib/store";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/config/messages";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useIsCommunityAdmin } from "@/features/admin/hooks/use-is-community-admin";
 import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/lib/utils/error-manager";
-import { Button } from "@/components/Utilities/Button";
-import { Spinner } from "@/components/Utilities/Spinner";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import {
   PlusIcon,
   PencilIcon,
@@ -29,9 +29,9 @@ import {
   useAssignTracksToProgram,
   useRemoveTrackFromProgram,
   useRemoveTracksFromProgramBatch,
-} from "@/hooks/useTracks";
+} from "@/features/tracks/hooks/use-tracks";
 import { Track } from "@/services/tracks";
-import { useCommunityPrograms } from "@/hooks/usePrograms";
+import { useCommunityPrograms } from "@/features/program-registry/hooks/use-programs";
 import { CreateTrackModal } from "./CreateTrackModal";
 import { useRouter } from "next/navigation";
 import Link from "next/link";

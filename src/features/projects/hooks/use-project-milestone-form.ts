@@ -1,15 +1,15 @@
 import { errorManager } from "@/lib/utils/error-manager";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useStepper } from "@/store/modals/txStepper";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useStepper } from "@/features/modals/lib/stores/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { fetchData } from "@/lib/utils/fetch-data";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/config/messages";
-import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { sanitizeInput, sanitizeObject } from "@/lib/utils/sanitize";
+import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
 import { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useQuery } from "@tanstack/react-query";
@@ -17,7 +17,7 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
-import { useWallet } from "@/hooks/useWallet";
+import { useWallet } from "@/features/auth/hooks/use-wallet";
 
 export interface ProjectMilestoneFormData {
   title: string;

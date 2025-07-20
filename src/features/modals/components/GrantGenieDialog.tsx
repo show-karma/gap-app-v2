@@ -5,15 +5,15 @@ import { Dialog, Transition } from "@headlessui/react";
 import { DocumentCheckIcon, LightBulbIcon } from "@heroicons/react/24/solid";
 import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import fetchData from "@/utilities/fetchData";
+import { useProjectStore } from "@/features/projects/lib/store";
+import fetchData from "@/lib/utils/fetch-data";
 import { INDEXER } from "@/utilities/indexer";
 
 import React from "react";
 
-import { Spinner } from "@/components/Utilities/Spinner";
 import { cn } from "@/utilities/tailwind";
-import { useGrantGenieModalStore } from "@/store/modals/genie";
+import { useGrantGenieModalStore } from "@/features/modals/lib/stores/genie";
+import { Spinner } from "@/components/ui/spinner";
 type Props = {};
 
 function GrantGenieRecommendations({ projectId }: { projectId: string }) {

@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useProjectStore } from "@/features/projects/lib/store";
 import { ReadMore } from "@/utilities/ReadMore";
 import {
   CheckCircleIcon,
@@ -9,11 +9,11 @@ import {
 import { Bars4Icon } from "@heroicons/react/24/solid";
 import { FC } from "react";
 
-import { BusinessModelIcon } from "@/components/Icons/BusinessModel";
-import { FundsRaisedIcon } from "@/components/Icons/FundsRaised";
-import { PathIcon } from "@/components/Icons/PathIcon";
-import { StageIcon } from "@/components/Icons/StageIcon";
-import { TargetIcon } from "@/components/Icons/Target";
+import { BusinessModelIcon } from "@/components/icons/BusinessModel";
+import { FundsRaisedIcon } from "@/components/icons/FundsRaised";
+import { PathIcon } from "@/components/icons/PathIcon";
+import { StageIcon } from "@/components/icons/StageIcon";
+import { TargetIcon } from "@/components/icons/Target";
 import { ProjectBlocks } from "./ProjectBlocks";
 
 export const InformationBlock: FC = () => {

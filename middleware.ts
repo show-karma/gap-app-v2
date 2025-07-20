@@ -1,8 +1,8 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { chosenCommunities } from "./utilities/chosenCommunities";
+import { chosenCommunities } from "./src/utilities/chosenCommunities";
 import type { Community } from "@show-karma/karma-gap-sdk";
-import { envVars } from "./utilities/enviromentVars";
+import { envVars } from "@/config/env";
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;

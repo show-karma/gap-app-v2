@@ -1,6 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
 import { FC } from "react";
-import { useOSOMetrics } from "@/hooks/useOSOMetrics";
 import { MetricCard } from "./MetricCard";
 import {
   ExclamationCircleIcon,
@@ -18,6 +17,7 @@ import {
   UserPlusIcon,
   ArrowLeftOnRectangleIcon,
 } from "@heroicons/react/24/outline";
+import { useOSOMetrics } from "@/features/oso/hooks/use-oso-metrics";
 
 type MetricConfig = {
   title: string;

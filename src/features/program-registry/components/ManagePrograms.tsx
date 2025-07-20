@@ -1,18 +1,12 @@
 "use client";
-import AddProgram from "@/components/Pages/ProgramRegistry/AddProgram";
-import { ManageProgramList } from "@/components/Pages/ProgramRegistry/ManageProgramList";
-import { MyProgramList } from "@/components/Pages/ProgramRegistry/MyProgramList";
-import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
-import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
-import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
-import { Button } from "@/components/Utilities/Button";
-import Pagination from "@/components/Utilities/Pagination";
-import { useAuthStore } from "@/store/auth";
-import { useStepper } from "@/store/modals/txStepper";
-import { useRegistryStore } from "@/store/registry";
+import { GrantProgram } from "@/features/program-registry/components/ProgramList";
+import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/features/auth/lib/store";
+import { useStepper } from "@/features/modals/lib/stores/txStepper";
+import { useRegistryStore } from "@/features/program-registry/lib/store";
 import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
-import fetchData from "@/utilities/fetchData";
+import fetchData from "@/lib/utils/fetch-data";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
 import { checkIsPoolManager } from "@/utilities/registry/checkIsPoolManager";
@@ -30,9 +24,15 @@ import React, { Dispatch, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 
-import { errorManager } from "@/components/Utilities/errorManager";
+import errorManager from "@/lib/utils/error-manager";
 import { LoadingProgramTable } from "./Loading/Programs";
 import { SearchDropdown } from "./SearchDropdown";
+import Pagination from "@/components/ui/pagination/pagination";
+import { registryHelper } from "./helper";
+import { MyProgramList } from "./MyProgramList";
+import { ManageProgramList } from "./ManageProgramList";
+import AddProgram from "./AddProgram";
+import { ProgramDetailsDialog } from "./ProgramDetailsDialog";
 
 export const ManagePrograms = () => {
   const searchParams = useSearchParams();

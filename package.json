@@ -17,7 +17,8 @@
     "e2e:headless": "start-server-and-test dev http://localhost:3000 \"yarn cypress run --e2e\"",
     "component": "cypress open --component",
     "component:headless": "cypress run --component",
-    "prepare": "husky"
+    "prepare": "husky",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@headlessui/react": "^2.1.2",

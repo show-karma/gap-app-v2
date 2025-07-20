@@ -1,7 +1,7 @@
 "use client";
 
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useOwnerStore } from "@/store/owner";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 import {
   IGrantUpdate,
   IMilestoneResponse,
@@ -10,12 +10,12 @@ import {
   IProjectUpdate,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { FC, useEffect, useState } from "react";
-import { ActivityList } from "@/components/Shared/ActivityList";
 import { MESSAGES } from "@/config/messages";
-import { Button } from "@/components/Utilities/Button";
-import { useProgressModalStore } from "@/store/modals/progress";
+import { Button } from "@/components/ui/button";
+import { useProgressModalStore } from "@/features/modals/lib/stores/progress";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { useQuery } from "@tanstack/react-query";
+import { ActivityList } from "@/features/feed/components/activity-list";
 
 export const UpdatesPage: FC = () => {
   const { project } = useProjectStore();

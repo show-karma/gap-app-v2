@@ -1,26 +1,26 @@
 "use client";
 import React from "react";
-import { ProgressDialog } from "@/components/Dialogs/ProgressDialog";
-import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
-import { ProjectNavigator } from "@/components/Pages/Project/ProjectNavigator";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useOwnerStore } from "@/store/owner";
-import { useEndorsementStore } from "@/store/modals/endorsement";
-import { useIntroModalStore } from "@/store/modals/intro";
-import { useProgressModalStore } from "@/store/modals/progress";
+import { ExternalLink } from "@/components/ui/external-link";
+import { ProfilePicture } from "@/components/ui/profile-picture";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
+import { useEndorsementStore } from "@/features/modals/lib/stores/endorsement";
 import Image from "next/image";
 
 import { useContactInfo } from "@/hooks/useContactInfo";
-import { useShareDialogStore } from "@/store/modals/shareDialog";
-import { useProject } from "@/hooks/useProject";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
-import { useProjectPermissions } from "@/hooks/useProjectPermissions";
-import { useProjectSocials } from "@/hooks/useProjectSocials";
-import { useProjectMembers } from "@/hooks/useProjectMembers";
+import useProjectMembers from "@/features/projects/hooks/use-project-members";
 import IntroDialog from "../shared/intro-dialog";
-import { ShareDialog } from "@/src/features/grants/components/milestones/ShareDialog";
+import { ShareDialog } from "@/features/grants/components/milestones/ShareDialog";
+import { useIntroModalStore } from "@/features/modals/lib/stores/intro";
+import useProjectSocials from "../../hooks/use-project-socials";
+import useProjectPermissions from "../../hooks/use-project-permissions";
+import useProject from "../../hooks/use-project";
+import { useShareDialogStore } from "@/features/modals/lib/stores/shareDialog";
+import { useProgressModalStore } from "@/features/modals/lib/stores/progress";
+import { EndorsementDialog } from "../impact/EndorsementDialog";
+import { ProgressDialog } from "../dialogs/ProgressDialog";
+import { ProjectNavigator } from "./navigator";
 
 interface ProjectWrapperProps {
   projectId: string;

@@ -3,15 +3,15 @@ import { StepBlock } from "../StepBlock";
 import { useGrantFormStore } from "../store";
 import { useRouter, usePathname, useParams } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { CommunitiesDropdown } from "@/components/CommunitiesDropdown";
+import { useProjectStore } from "@/features/projects/lib/store";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { SearchGrantProgram } from "../index";
 import { CancelButton } from "./buttons/CancelButton";
 import { NextButton } from "./buttons/NextButton";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
-import { useGrant } from "@/hooks/useGrant";
+import useGrant from "../../../hooks/use-grant";
+import { CommunitiesDropdown } from "@/features/communities/components/shared/communities-dropdown";
 
 export const CommunitySelectionScreen: React.FC = () => {
   const {

@@ -1,14 +1,14 @@
 "use client";
-import { Button } from "@/components/Utilities/Button";
-import { Spinner } from "@/components/Utilities/Spinner";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { zeroUID } from "@/utilities/commons";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
-import fetchData from "@/utilities/fetchData";
+import fetchData from "@/lib/utils/fetch-data";
 import { INDEXER } from "@/utilities/indexer";
-import { MESSAGES } from "@/utilities/messages";
+import { MESSAGES } from "@/config/messages";
 import { defaultMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useIsCommunityAdmin } from "@/features/admin/hooks/use-is-community-admin";
 import {
   ChevronLeftIcon,
   TrashIcon,
@@ -22,15 +22,15 @@ import { useEffect, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 import { Disclosure } from "@headlessui/react";
 
-import { IndicatorsHub } from "@/components/Pages/Admin/IndicatorsHub";
-import { ManageCategoriesOutputs } from "@/components/Pages/Admin/ManageCategoriesOutputs";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { useAuthStore } from "@/store/auth";
-import { Category, ImpactSegment } from "@/src/features/impact/types";
+import { IndicatorsHub } from "@/features/admin/components/indicators/IndicatorsHub";
+import { ManageCategoriesOutputs } from "@/features/admin/components/categories/ManageCategoriesOutputs";
+import errorManager from "@/lib/utils/error-manager";
+import { useAuthStore } from "@/features/auth/lib/store";
+import { Category, ImpactSegment } from "@/features/impact/types";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { cn } from "@/utilities/tailwind";
-import { pickColor } from "@/components/GrantCard";
+import { pickColor } from "@/features/grants/components/grant-card";
 import { CategoryView } from "../categories/CategoryView";
 import { IndicatorsView } from "./IndicatorsView";
 

@@ -1,11 +1,11 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { Button } from "@/components/Utilities/Button";
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import { DatePicker } from "@/components/Utilities/DatePicker";
+import { Button } from "@/components/ui/button";
+import { MarkdownEditor } from "@/components/ui/markdown-editor";
+import { MarkdownPreview } from "@/components/ui/markdown-preview";
+import { DatePicker } from "@/components/ui/date-picker";
 
-import { formatDate } from "@/utilities/formatDate";
+import { formatDate } from "@/lib/format/date";
 import { Popover } from "@headlessui/react";
 import {
   CalendarIcon,

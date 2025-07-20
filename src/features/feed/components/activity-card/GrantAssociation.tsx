@@ -1,7 +1,7 @@
 import Image from "next/image";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { ExternalLink } from "@/components/ui/external-link";
 import { PAGES } from "@/utilities/pages";
-import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useProjectStore } from "@/features/projects/lib/store";
 import {
   IGrantUpdate,
   IProjectUpdate,

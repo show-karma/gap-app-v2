@@ -1,7 +1,7 @@
 "use client";
-import { FolderIcon } from "@/components/Icons/Folder";
-import { Target2Icon } from "@/components/Icons/Target2";
-import { SparklesIcon } from "@/components/Icons/Sparkles";
+import { FolderIcon } from "@/components/icons/Folder";
+import { Target2Icon } from "@/components/icons/Target2";
+import { SparklesIcon } from "@/components/icons/Sparkles";
 import { getCommunityBySlug } from "@/utilities/gapIndexerApi/getCommunityBySlug";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/lib/utils/cn";

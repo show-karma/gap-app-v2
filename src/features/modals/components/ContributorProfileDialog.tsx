@@ -4,16 +4,16 @@ import { Dialog, Transition } from "@headlessui/react";
 import { FC, Fragment, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useProjectStore } from "@/features/projects/lib/store";
 import { useContributorProfile } from "@/hooks/useContributorProfile";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 
 import { errorManager } from "@/lib/utils/error-manager";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useAuthStore } from "@/store/auth";
-import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
-import { useStepper } from "@/store/modals/txStepper";
+import { useAuthStore } from "@/features/auth/lib/store";
+import { useContributorProfileModalStore } from "@/features/modals/lib/stores/contributorProfile";
+import { useStepper } from "@/features/modals/lib/stores/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { cn } from "@/utilities/tailwind";
@@ -24,11 +24,11 @@ import { ContributorProfile } from "@show-karma/karma-gap-sdk";
 import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import fetchData from "@/utilities/fetchData";
+import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
+import fetchData from "@/lib/utils/fetch-data";
 import { INDEXER } from "@/utilities/indexer";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
-import { useWallet } from "@/hooks/useWallet";
+import { useWallet } from "@/features/auth/hooks/use-wallet";
 
 type ContributorProfileDialogProps = {};
 

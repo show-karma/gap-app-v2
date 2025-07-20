@@ -2,20 +2,20 @@ import { useState } from "react";
 import { useAccount } from "wagmi";
 import toast from "react-hot-toast";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useOwnerStore } from "@/store/owner";
-import { useStepper } from "@/store/modals/txStepper";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
+import { useStepper } from "@/features/modals/lib/stores/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { fetchData } from "@/lib/utils/fetch-data";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/config/messages";
-import { retryUntilConditionMet } from "@/utilities/retries";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { retryUntilConditionMet } from "@/lib/utils/retries";
+import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
 import { errorManager } from "@/lib/utils/error-manager";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
-import { queryClient } from "@/components/Utilities/WagmiProvider";
+import { queryClient } from "@/components/providers/wagmi-provider";
 import { useParams, useRouter } from "next/navigation";
 import {
   IGrantUpdate,
@@ -24,7 +24,7 @@ import {
   IProjectMilestoneResponse,
   IProjectUpdate,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useWallet } from "@/hooks/useWallet";
+import { useWallet } from "@/features/auth/hooks/use-wallet";
 
 type UpdateType =
   | IProjectUpdate
@@ -33,7 +33,7 @@ type UpdateType =
   | IProjectImpact
   | IProjectMilestoneResponse;
 
-const useUpdateActions = (update: UpdateType) => {
+export const useUpdateActions = (update: UpdateType) => {
   const [isDeletingUpdate, setIsDeletingUpdate] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { changeStepperStep, setIsStepper } = useStepper();
@@ -329,5 +329,3 @@ const useUpdateActions = (update: UpdateType) => {
     canShare: !!getShareText(),
   };
 };
-
-export default useUpdateActions;

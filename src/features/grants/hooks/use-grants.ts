@@ -34,9 +34,15 @@ interface UseGrantsResult {
   totalItems: number;
 }
 
-const useGrants = (communityId: string, options?: UseGrantsOptions) => {
+export const useGrants = (communityId: string, options?: UseGrantsOptions) => {
   return useQuery<UseGrantsResult>({
-    queryKey: ["all-grants", communityId, options?.filter, options?.paginationOps, options?.sortBy],
+    queryKey: [
+      "all-grants",
+      communityId,
+      options?.filter,
+      options?.paginationOps,
+      options?.sortBy,
+    ],
     queryFn: async () => {
       try {
         const { grants: fetchedGrants, pageInfo } = await getGrants(
@@ -77,5 +83,3 @@ const useGrants = (communityId: string, options?: UseGrantsOptions) => {
     enabled: !!communityId && communityId !== "0x0",
   });
 };
-
-export default useGrants;

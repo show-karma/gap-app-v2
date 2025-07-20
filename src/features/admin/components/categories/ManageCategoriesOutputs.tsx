@@ -1,10 +1,10 @@
-import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown";
-import { Button } from "@/components/Utilities/Button";
-import { errorManager } from "@/components/Utilities/errorManager";
+import { SearchWithValueDropdown } from "@/features/communities/components/impact/SearchWithValueDropdown";
+import { Button } from "@/components/ui/button";
+import errorManager from "@/lib/utils/error-manager";
 
-import fetchData from "@/utilities/fetchData";
+import fetchData from "@/lib/utils/fetch-data";
 import { INDEXER } from "@/utilities/indexer";
-import { MESSAGES } from "@/utilities/messages";
+import { MESSAGES } from "@/config/messages";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { ChevronDownIcon, TrashIcon } from "@heroicons/react/24/outline";
@@ -16,14 +16,14 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
-import { DeleteDialog } from "@/components/DeleteDialog";
+import { DeleteDialog } from "@/components/ui/delete-dialog";
 import { useAccount } from "wagmi";
 import {
   Category,
   ImpactIndicator,
   ImpactSegment,
-} from "@/src/features/impact/types";
-import { useIndicators } from "@/src/features/impact/hooks/use-indicators";
+} from "@/features/impact/types";
+import { useIndicators } from "@/features/impact/hooks/use-indicators";
 
 const OUTPUT_TYPES = ["output", "outcome"] as const;
 type OutputType = (typeof OUTPUT_TYPES)[number];

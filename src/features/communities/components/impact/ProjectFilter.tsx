@@ -3,7 +3,7 @@ import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { SearchWithValueDropdown } from "./SearchWithValueDropdown";
-import { useImpactMeasurement } from "@/src/features/impact/hooks/use-impact-measurement";
+import { useImpactMeasurement } from "@/features/impact/hooks/use-impact-measurement";
 
 interface ProjectFilterProps {
   defaultProjectSelected?: string;

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import { GrantProgram } from "@/features/program-registry/components/ProgramList";
 import { fetchData } from "@/lib/utils/fetch-data";
 import { INDEXER } from "@/utilities/indexer";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";

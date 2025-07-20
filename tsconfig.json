@@ -16,7 +16,7 @@
     "jsx": "preserve",
     "incremental": true,
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./src/*"]
     },
     "plugins": [
       {
@@ -34,7 +34,7 @@
     "pages/api/all-apis",
     "components/Utilities/ChildrenBlur.jsx",
     ".next/types/**/*.ts",
-    "app/_error.jsx"
+    "src/app/_error.jsx"
   ],
   "exclude": [
     "node_modules",

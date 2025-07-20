@@ -10,12 +10,12 @@ import {
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
 import { cn } from "@/utilities/tailwind";
-import { ChevronDown } from "@/components/Icons/ChevronDown";
+import { ChevronDown } from "@/components/icons/ChevronDown";
 import pluralize from "pluralize";
 import Image from "next/image";
-import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import { GrantProgram } from "@/features/program-registry/components/ProgramList";
 import { useAccount } from "wagmi";
-import fetchData from "@/utilities/fetchData";
+import fetchData from "@/lib/utils/fetch-data";
 import { INDEXER } from "@/utilities/indexer";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 

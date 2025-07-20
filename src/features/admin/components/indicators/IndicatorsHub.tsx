@@ -1,22 +1,22 @@
 "use client";
 
-import { Button } from "@/components/Utilities/Button";
-import { errorManager } from "@/components/Utilities/errorManager";
-import fetchData from "@/utilities/fetchData";
+import { Button } from "@/components/ui/button";
+import errorManager from "@/lib/utils/error-manager";
+import fetchData from "@/lib/utils/fetch-data";
 import { INDEXER } from "@/utilities/indexer";
 import { TrashIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { DeleteDialog } from "@/components/DeleteDialog";
+import { DeleteDialog } from "@/components/ui/delete-dialog";
 import {
   IndicatorForm,
   IndicatorFormData,
-} from "@/components/Forms/IndicatorForm";
+} from "@/features/admin/components/forms/indicator-form";
 import { Indicator } from "@/utilities/queries/getIndicatorsByCommunity";
 import { ProgramCard } from "../programs/ProgramCard";
-import { MESSAGES } from "@/utilities/messages";
+import { MESSAGES } from "@/config/messages";
 import { useAccount } from "wagmi";
-import { useIndicators } from "@/src/features/impact/hooks/use-indicators";
+import { useIndicators } from "@/features/impact/hooks/use-indicators";
 
 interface Program {
   programId: string;

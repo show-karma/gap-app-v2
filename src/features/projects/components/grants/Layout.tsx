@@ -1,16 +1,12 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { GrantsAccordion } from "@/components/GrantsAccordion";
-import { Button } from "@/components/Utilities/Button";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useOwnerStore } from "@/store/owner";
-import { useCommunitiesStore } from "@/src/features/communities/lib/communities-store";
-import { useGrantStore } from "@/src/features/grants/lib/store";
-import { GrantScreen } from "@/types";
+import { Button } from "@/components/ui/button";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useCommunitiesStore } from "@/features/communities/lib/communities-store";
+import { useGrantStore } from "@/features/grants/lib/store";
 
 import { PAGES } from "@/utilities/pages";
-import { useGrantCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { cn } from "@/lib/utils/cn";
 import { CheckCircleIcon, PlusIcon } from "@heroicons/react/20/solid";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
@@ -19,14 +15,18 @@ import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
-import { useProjectPermissions } from "@/hooks/useProjectPermissions";
-import { useCommunityAdminStore } from "@/src/features/communities/lib/community-admin-store";
+import { useCommunityAdminStore } from "@/features/communities/lib/community-admin-store";
 import { ProjectGrantsLayoutLoading } from "../loading/Grants/Layout";
-import { GrantLinkExternalAddressButton } from "@/src/features/grants/components/shared/GrantLinkExternalAddressButton";
-import { GrantCompleteButton } from "@/src/features/grants/components/shared/GrantCompleteButton";
-import { GrantDelete } from "@/src/features/grants/components/shared/GrantDelete";
-import { EmptyGrantsSection } from "@/src/features/grants/components/shared";
-import { GrantContext } from "@/src/features/grants/lib/grant-context";
+import { GrantLinkExternalAddressButton } from "@/features/grants/components/shared/GrantLinkExternalAddressButton";
+import { GrantCompleteButton } from "@/features/grants/components/shared/GrantCompleteButton";
+import { GrantDelete } from "@/features/grants/components/shared/GrantDelete";
+import { EmptyGrantsSection } from "@/features/grants/components/shared";
+import { GrantContext } from "@/features/grants/lib/grant-context";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
+import { GrantScreen } from "@/features/grants/types";
+import { useGrantCommunityAdmin } from "@/features/admin/hooks/use-is-community-admin";
+import useProjectPermissions from "../../hooks/use-project-permissions";
+import { GrantsAccordion } from "@/features/grants/components/grants-accordion";
 
 interface GrantsLayoutProps {
   children: React.ReactNode;

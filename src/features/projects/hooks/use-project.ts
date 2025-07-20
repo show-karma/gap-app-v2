@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useProjectStore } from "@/features/projects/lib/store";
 import { useEffect } from "react";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 

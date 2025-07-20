@@ -1,8 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useOwnerStore } from "@/store/owner";
-import { useCommunitiesStore } from "@/src/features/communities/lib/communities-store";
-import { useCommunityAdminStore } from "@/src/features/communities/lib/community-admin-store";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
+import { useCommunitiesStore } from "@/features/communities/lib/communities-store";
+import { useCommunityAdminStore } from "@/features/communities/lib/community-admin-store";
 import { MESSAGES } from "@/config/messages";
 import { PAGES } from "@/utilities/pages";
 import Link from "next/link";

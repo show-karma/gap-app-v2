@@ -1,9 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import GrantProgramRegistry from "@/app/funding-map/page";
-import { FundingMapWrapper } from "@/components/Pages/ProgramRegistry/FundingMapWrapper";
+import { FundingMapWrapper } from "@/features/program-registry/components/FundingMapWrapper";
 
-jest.mock("@/components/Pages/ProgramRegistry/FundingMapWrapper", () => ({
+jest.mock("@/features/program-registry/components/FundingMapWrapper", () => ({
   FundingMapWrapper: jest.fn(() => <div data-testid="funding-map-wrapper" />),
 }));
 

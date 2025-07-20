@@ -40,7 +40,10 @@ export const SearchDropdown: React.FC<SearchDropdownProps> = ({
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -56,7 +59,7 @@ export const SearchDropdown: React.FC<SearchDropdownProps> = ({
     item.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const processedList = shouldSort 
+  const processedList = shouldSort
     ? filteredList.sort((a, b) => a.localeCompare(b))
     : filteredList;
 
@@ -66,9 +69,8 @@ export const SearchDropdown: React.FC<SearchDropdownProps> = ({
     setSearchTerm("");
   };
 
-  const displayText = selected.length > 0 
-    ? selected[0] 
-    : `${prefixUnselected} ${type}`;
+  const displayText =
+    selected.length > 0 ? selected[0] : `${prefixUnselected} ${type}`;
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -85,11 +87,11 @@ export const SearchDropdown: React.FC<SearchDropdownProps> = ({
       >
         <div className="flex items-center gap-3 flex-1 min-w-0">
           {leftIcon && <div className="flex-shrink-0">{leftIcon}</div>}
-          <span 
+          <span
             className={cn(
               "block truncate text-left",
-              selected.length === 0 
-                ? "text-gray-500 dark:text-zinc-400" 
+              selected.length === 0
+                ? "text-gray-500 dark:text-zinc-400"
                 : "text-gray-900 dark:text-white",
               paragraphClassname
             )}
@@ -123,7 +125,7 @@ export const SearchDropdown: React.FC<SearchDropdownProps> = ({
               />
             </div>
           )}
-          
+
           <div className="max-h-60 overflow-auto py-1">
             {processedList.length === 0 ? (
               <div className="px-3 py-2 text-sm text-gray-500 dark:text-zinc-400">

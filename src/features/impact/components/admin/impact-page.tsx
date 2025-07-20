@@ -1,7 +1,7 @@
 "use client";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/button";
 import { errorManager } from "@/lib/utils/error-manager";
-import { Spinner } from "@/components/Utilities/Spinner";
+import { Spinner } from "@/components/ui/spinner";
 import { zeroUID } from "@/utilities/commons";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { defaultMetadata } from "@/utilities/meta";
@@ -12,8 +12,8 @@ import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-i
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { CommunityImpactCharts } from "@/components/Pages/Communities/Impact/ImpactCharts";
-import OutputMetrics from "@/components/Pages/Admin/OutputMetrics";
+import { CommunityImpactCharts } from "@/features/communities/components/impact/ImpactCharts";
+import OutputMetrics from "@/features/admin/components/indicators/OutputMetrics";
 
 type Tab = "metrics" | "impact";
 

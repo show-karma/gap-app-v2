@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, FormEvent, ChangeEvent } from "react";
-import { envVars } from "@/utilities/enviromentVars";
+import { envVars } from "@/config/env";
 
 interface ChatMessage {
   id: string;
@@ -50,7 +50,7 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
   const handleSubmit = useCallback(
     async (e: FormEvent) => {
       e.preventDefault();
-      
+
       if (!input.trim() || isLoading) {
         return;
       }
@@ -76,12 +76,12 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
 
         abortControllerRef.current = new AbortController();
 
-        const apiEndpoint = options.api || '/api/chat';
-        
+        const apiEndpoint = options.api || "/api/chat";
+
         const response = await fetch(apiEndpoint, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             messages: [...messages, userMessage],
@@ -98,7 +98,7 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
         const decoder = new TextDecoder();
 
         if (!reader) {
-          throw new Error('No response body');
+          throw new Error("No response body");
         }
 
         const assistantMessage: ChatMessage = {
@@ -117,20 +117,20 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
 
           if (value) {
             const chunk = decoder.decode(value);
-            const lines = chunk.split('\n');
+            const lines = chunk.split("\n");
 
             for (const line of lines) {
-              if (line.startsWith('data: ')) {
+              if (line.startsWith("data: ")) {
                 const data = line.slice(6);
-                if (data === '[DONE]') {
+                if (data === "[DONE]") {
                   done = true;
                   break;
                 }
 
                 try {
                   const parsed = JSON.parse(data);
-                  const content = parsed.choices?.[0]?.delta?.content || '';
-                  
+                  const content = parsed.choices?.[0]?.delta?.content || "";
+
                   if (content) {
                     setMessages((prev) =>
                       prev.map((msg) =>
@@ -157,18 +157,19 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
           }
         }
       } catch (err: any) {
-        if (err.name === 'AbortError') {
+        if (err.name === "AbortError") {
           return; // Request was cancelled
         }
 
-        console.error('Chat error:', err);
+        console.error("Chat error:", err);
         setError(err);
-        
+
         // Add error message
         const errorMessage: ChatMessage = {
           id: generateId(),
           role: "assistant",
-          content: "Sorry, I encountered an error while processing your request. Please try again.",
+          content:
+            "Sorry, I encountered an error while processing your request. Please try again.",
           timestamp: new Date().toISOString(),
         };
 

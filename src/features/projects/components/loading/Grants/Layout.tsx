@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/Utilities/Skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ReactNode } from "react";
 
 export const ProjectGrantsLayoutLoading = ({

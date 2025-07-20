@@ -1,12 +1,12 @@
 "use client";
 import { useMemo } from "react";
-import { useEndorsementStore } from "@/store/modals/endorsement";
+import { useEndorsementStore } from "@/features/modals/lib/stores/endorsement";
 import { useAccount } from "wagmi";
-import { useAuthStore } from "@/store/auth";
+import { useAuthStore } from "@/features/auth/lib/store";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useProjectStore } from "@/features/projects/lib/store";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { EndorsementList } from "@/components/Pages/ProgramRegistry/EndorsementList";
+import { EndorsementList } from "@/features/program-registry/components/EndorsementList";
 
 export const ProjectSubTabs = () => {
   const project = useProjectStore((state) => state.project);

@@ -3,7 +3,7 @@ import { fetchData } from "@/lib/utils/fetch-data";
 import { INDEXER } from "@/utilities/indexer";
 import { useState, Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/button";
 import { ArrowPathIcon, ChartBarSquareIcon } from "@heroicons/react/24/solid";
 
 import { errorManager } from "@/lib/utils/error-manager";

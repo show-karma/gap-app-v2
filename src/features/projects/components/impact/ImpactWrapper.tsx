@@ -5,7 +5,7 @@ import { OutputsAndOutcomesLoading } from "../loading/OutputsAndOutcomes";
 
 const ImpactComponent = dynamic(
   () =>
-    import("@/components/Pages/Project/Impact").then(
+    import("@/features/projects/components/impact").then(
       (mod) => mod.ImpactComponent
     ),
   {

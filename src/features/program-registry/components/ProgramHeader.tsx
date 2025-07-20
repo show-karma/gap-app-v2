@@ -1,4 +1,4 @@
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { ExternalLink } from "@/components/ui/external-link";
 const links = {
   funding_block: "https://tally.so/r/w2rJ8M",
   add_program: "/funding-map/add-program",

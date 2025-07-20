@@ -1,13 +1,13 @@
-import { DeleteDialog } from "@/components/DeleteDialog";
+import { DeleteDialog } from "@/components/ui/delete-dialog";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useOwnerStore } from "@/store/owner";
-import { useCommunityAdminStore } from "@/src/features/communities/lib/community-admin-store";
-import { useStepper } from "@/store/modals/txStepper";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
+import { useCommunityAdminStore } from "@/features/communities/lib/community-admin-store";
+import { useStepper } from "@/features/modals/lib/stores/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { fetchData } from "@/lib/utils/fetch-data";
-import { formatDate } from "@/utilities/formatDate";
+import { formatDate } from "@/lib/format/date";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/config/messages";
 import { ReadMore } from "@/utilities/ReadMore";
@@ -16,7 +16,7 @@ import {
   IGrantUpdate,
   IGrantUpdateStatus,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
 import { useEffect, useState, type FC } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
@@ -24,12 +24,12 @@ import { VerifiedBadge } from "./VerifiedBadge";
 import { VerifyGrantUpdateDialog } from "./VerifyGrantUpdateDialog";
 
 import { errorManager } from "@/lib/utils/error-manager";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { retryUntilConditionMet } from "@/utilities/retries";
+import { ExternalLink } from "@/components/ui/external-link";
+import { retryUntilConditionMet } from "@/lib/utils/retries";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { ShareIcon } from "@heroicons/react/24/outline";
-import { useWallet } from "@/hooks/useWallet";
+import { useWallet } from "@/features/auth/hooks/use-wallet";
 
 interface UpdateTagProps {
   index: number;

@@ -1,6 +1,6 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import type { Feed } from "@/types";
+import { Feed } from "@/features/feed/types";
 import { feedIconDictionary, getFeedHref } from "@/utilities/feed";
 import { fetchData } from "@/lib/utils/fetch-data";
 import { formatDate } from "@/utilities/formatDate";
@@ -10,11 +10,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useTheme } from "next-themes";
 import { useParams } from "next/navigation";
 import { useState } from "react";
-import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
-import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import { Spinner } from "@/components/Utilities/Spinner";
+import EthereumAddressToENSAvatar from "@/features/ens/components/address-to-ens-avatar";
+import EthereumAddressToENSName from "@/features/ens/components/address-to-ens-name";
+import { ExternalLink } from "@/components/ui/external-link";
+import { MarkdownPreview } from "@/components/ui/markdown-preview";
+import { Spinner } from "@/components/ui/spinner";
 
 export const CommunityFeed = () => {
   const params = useParams<{ communityId: string }>();

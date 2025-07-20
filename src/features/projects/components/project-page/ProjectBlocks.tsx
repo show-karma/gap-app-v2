@@ -1,7 +1,7 @@
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { ExternalLink } from "@/components/ui/external-link";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import { useEndorsementStore } from "@/store/modals/endorsement";
-import { useIntroModalStore } from "@/store/modals/intro";
+import { useEndorsementStore } from "@/features/modals/lib/stores/endorsement";
+import { useIntroModalStore } from "@/features/modals/lib/stores/intro";
 import { cn } from "@/lib/utils/cn";
 import Image from "next/image";
 import { useParams } from "next/navigation";

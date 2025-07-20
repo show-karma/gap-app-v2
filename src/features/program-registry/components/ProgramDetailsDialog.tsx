@@ -7,9 +7,9 @@ import {
   OrganizationIcon,
   Telegram2Icon,
   Twitter2Icon,
-} from "@/components/Icons";
-import { Button } from "@/components/Utilities/Button";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
+} from "@/components/icons";
+import { Button } from "@/components/ui/button";
+import { ExternalLink } from "@/components/ui/external-link";
 import formatCurrency from "@/utilities/formatCurrency";
 import { cn } from "@/utilities/tailwind";
 import { Dialog, Transition } from "@headlessui/react";

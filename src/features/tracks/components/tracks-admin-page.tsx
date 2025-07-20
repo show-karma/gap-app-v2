@@ -1,14 +1,12 @@
 "use client";
 import { useState, useEffect, Fragment } from "react";
-import { useAuthStore } from "@/store/auth";
+import { useAuthStore } from "@/features/auth/lib/store";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
-import { MESSAGES } from "@/utilities/messages";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { MESSAGES } from "@/config/messages";
+import { useIsCommunityAdmin } from "@/features/admin/hooks/use-is-community-admin";
 import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useAccount } from "wagmi";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { Button } from "@/components/Utilities/Button";
-import { Spinner } from "@/components/Utilities/Spinner";
+import { Button } from "@/components/ui/button";
 import {
   PlusIcon,
   PencilIcon,
@@ -18,8 +16,6 @@ import {
 } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
 import { cn } from "@/utilities/tailwind";
-import { Dialog, Transition } from "@headlessui/react";
-import { INDEXER } from "@/utilities/indexer";
 import {
   useTracksForCommunity,
   useTracksForProgram,
@@ -31,13 +27,14 @@ import {
   useRemoveTracksFromProgramBatch,
 } from "../hooks/use-tracks";
 import { Track } from "../api/tracks";
-import { useCommunityPrograms } from "@/src/features/program-registry/hooks/use-programs";
+import { useCommunityPrograms } from "@/features/program-registry/hooks/use-programs";
 import { CreateTrackModal } from "./CreateTrackModal";
 import { EditTrackModal } from "./EditTrackModal";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { PAGES } from "@/config/pages";
 import { ChevronLeftIcon } from "@heroicons/react/24/solid";
+import { Spinner } from "@/components/ui/spinner";
 
 export const TracksAdminPage = ({
   communityId,

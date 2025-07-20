@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { useCommunitiesStore } from "@/src/features/communities/lib/communities-store";
-import { useAuthStore } from "@/store/auth";
+import { useCommunitiesStore } from "@/features/communities/lib/communities-store";
 import { useEffect } from "react";
-import { errorManager } from "@/components/Utilities/errorManager";
+import errorManager from "@/lib/utils/error-manager";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useAuthStore } from "@/features/auth/lib/store";
 
 const fetchAdminCommunities = async (
   address: string

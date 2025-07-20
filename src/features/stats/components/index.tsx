@@ -11,7 +11,7 @@ import type {
 import { LineChart } from "./LineChart";
 import { WeeklyActiveUsersChart } from "./WeeklyActiveUsersChart";
 import { GlobalCount } from "./GlobalCount";
-import { Spinner } from "@/components/Utilities/Spinner";
+import { Spinner } from "@/components/ui/spinner";
 import { getGAPStats } from "@/utilities/indexer/stats";
 import { fillDateRangeWithValues } from "@/utilities/fillDateRangeWithValues";
 import { Listbox, Transition } from "@headlessui/react";
@@ -19,7 +19,7 @@ import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import { formatDate } from "@/lib/format/date";
 import { cn } from "@/lib/utils/cn";
 import { useQueryState } from "nuqs";
-import { errorManager } from "@/components/Utilities/errorManager";
+import errorManager from "@/lib/utils/error-manager";
 
 // const valueFormatter = (number) =>
 //   `$ ${new Intl.NumberFormat('us').format(number).toString()}`;

@@ -2,12 +2,12 @@
 import { useEffect, useState } from "react";
 import { Community } from "@show-karma/karma-gap-sdk";
 import { useGap } from "@/hooks/useGap";
-import { useOwnerStore } from "@/store/owner";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { MESSAGES } from "@/utilities/messages";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
+import { Spinner } from "@/components/ui/spinner";
+import { MESSAGES } from "@/config/messages";
 import React from "react";
 import { blo } from "blo";
-import fetchData from "@/utilities/fetchData";
+import fetchData from "@/lib/utils/fetch-data";
 import { INDEXER } from "@/utilities/indexer";
 
 interface CommunityStatsData {

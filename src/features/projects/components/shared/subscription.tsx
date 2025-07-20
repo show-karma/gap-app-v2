@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { FC, Fragment, ReactNode, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/button";
 import { shortAddress } from "@/utilities/shortAddress";
 import { z } from "zod";
 import { MESSAGES } from "@/config/messages";

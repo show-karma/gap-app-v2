@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { envVars } from "@/utilities/enviromentVars";
+import { envVars } from "@/config/env";
 import { OSOMetricsResponse } from "../types";
 
 const OSO_API_URL = "https://www.opensource.observer/api/v1/graphql";

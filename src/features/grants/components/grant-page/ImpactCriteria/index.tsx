@@ -1,7 +1,7 @@
 "use client";
-import { useGrantStore } from "@/src/features/grants/lib/store";
+import { useGrantStore } from "@/features/grants/lib/store";
 import { MESSAGES } from "@/config/messages";
-import { ProjectGrantsImpactLoading } from "@/src/features/projects/components/loading/Grants/Impact";
+import { ProjectGrantsImpactLoading } from "@/features/projects/components/loading/Grants/Impact";
 
 export const GrantImpactCriteria = () => {
   const { grant } = useGrantStore();

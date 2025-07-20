@@ -1,8 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useOwnerStore } from "@/store/owner";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 
 import { fetchData } from "@/lib/utils/fetch-data";
 import { formatDate } from "@/lib/format/date";
@@ -15,12 +15,12 @@ import { AreaChart, Card, Title } from "@tremor/react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
-import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
+import { autosyncedIndicators } from "@/features/admin/components/indicators/IndicatorsHub";
 import { prepareChartData } from "@/lib/analytics/chart";
 import { GrantsOutputsLoading } from "../loading/Grants/Outputs";
-import { GroupedLinks } from "@/src/features/impact/components/project-impact/GroupedLinks";
-import { useCommunityAdminStore } from "@/src/features/communities/lib/community-admin-store";
-import { useImpactAnswers } from "@/src/features/impact/hooks/use-impact-answers";
+import { useCommunityAdminStore } from "@/features/communities/lib/community-admin-store";
+import { useImpactAnswers } from "@/features/impact/hooks/use-impact-answers";
+import { GroupedLinks } from "./GroupedLinks";
 
 // Helper function to handle comma-separated URLs
 const parseProofUrls = (proof: string): string[] => {

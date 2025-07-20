@@ -1,6 +1,6 @@
 import { INDEXER } from "@/utilities/indexer";
-import fetchData from "@/utilities/fetchData";
-import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import fetchData from "@/lib/utils/fetch-data";
+import { GrantProgram } from "@/features/program-registry/components/ProgramList";
 import { useEffect, useState } from "react";
 import { cn } from "@/utilities/tailwind";
 import { chainIdToNetwork } from "@show-karma/karma-gap-sdk";

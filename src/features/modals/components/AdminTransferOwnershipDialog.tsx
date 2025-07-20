@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
-import { useAdminTransferOwnershipModalStore } from "@/store/modals/adminTransferOwnership";
-import fetchData from "@/utilities/fetchData";
-import { sanitizeInput } from "@/utilities/sanitize";
+import { useAdminTransferOwnershipModalStore } from "@/features/modals/lib/stores/adminTransferOwnership";
+import fetchData from "@/lib/utils/fetch-data";
+import { sanitizeInput } from "@/lib/utils/sanitize";
 import { Dialog, Transition } from "@headlessui/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FC, Fragment, useEffect } from "react";
@@ -12,7 +12,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { errorManager } from "@/lib/utils/error-manager";
 import { useAccount } from "wagmi";
-import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useProjectStore } from "@/features/projects/lib/store";
 
 const schema = z.object({
   newOwner: z

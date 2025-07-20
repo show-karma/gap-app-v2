@@ -8,7 +8,7 @@ import { type FC, useState } from "react";
 import { SearchList } from "./SearchList";
 import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
 import { ISearchResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { gapIndexerApi } from "@/services/api/gap-indexer";
+import { gapIndexerApi } from "@/services/gap-indexer/gap-indexer";
 
 export const Searchbar: FC = () => {
   const [results, setResults] = useState<ISearchResponse>({

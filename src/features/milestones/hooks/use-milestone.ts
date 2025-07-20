@@ -3,7 +3,7 @@ import { useAccount } from "wagmi";
 import { checkNetworkIsValid } from "@/config/network";
 import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
 import { walletClientToSigner } from "@/services/blockchain/utils/eas-wagmi-utils";
-import { useStepper } from "@/store/modals/txStepper";
+import { useStepper } from "@/features/modals/lib/stores/txStepper";
 import { fetchData } from "@/lib/utils/fetch-data";
 import { INDEXER } from "@/utilities/indexer";
 import { useParams, useRouter } from "next/navigation";
@@ -22,9 +22,9 @@ import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
 import { sanitizeInput } from "@/lib/utils/sanitize";
-import { useWallet } from "@/hooks/useWallet";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useOwnerStore } from "@/store/owner";
+import { useWallet } from "@/features/auth/hooks/use-wallet";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 import { getProjectById } from "@/utilities/sdk/projects";
 
 export const useMilestone = () => {

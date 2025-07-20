@@ -1,19 +1,15 @@
 "use client";
-import { Button } from "@/components/Utilities/Button";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { Spinner } from "@/components/Utilities/Spinner";
+import errorManager from "@/lib/utils/error-manager";
+import { Spinner } from "@/components/ui/spinner";
 import { useCategories } from "@/hooks/useCategories";
-import { useCommunityDetails } from "@/hooks/useCommunityDetails";
-import { SimplifiedGrant, useGrants } from "@/hooks/useGrants";
-import { useGrantsTable } from "@/hooks/useGrantsTable";
-import { useAuthStore } from "@/store/auth";
+import { useAuthStore } from "@/features/auth/lib/store";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
-import fetchData from "@/utilities/fetchData";
+import fetchData from "@/lib/utils/fetch-data";
 import { INDEXER } from "@/utilities/indexer";
-import { MESSAGES } from "@/utilities/messages";
+import { MESSAGES } from "@/config/messages";
 import { defaultMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useIsCommunityAdmin } from "@/features/admin/hooks/use-is-community-admin";
 import { ChevronLeftIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -23,6 +19,10 @@ import { useAccount } from "wagmi";
 import { CategoryCreationDialog } from "./CategoryCreationDialog";
 import { GrantsTable } from "../community-admin/GrantsTable";
 import { ProgramFilter } from "../programs/ProgramFilter";
+import { useCommunityDetails } from "@/features/communities/hooks/use-community-details";
+import { useGrants, SimplifiedGrant } from "@/features/grants/hooks/use-grants";
+import { useGrantsTable } from "@/features/grants/hooks/use-grants-table";
+import { Button } from "@/components/ui/button";
 
 export const metadata = defaultMetadata;
 

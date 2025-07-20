@@ -1,9 +1,9 @@
 "use client";
 
-import { Button } from "@/components/Utilities/Button";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useOwnerStore } from "@/store/owner";
-import { useCommunityAdminStore } from "@/src/features/communities/lib/community-admin-store";
+import { Button } from "@/components/ui/button";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
+import { useCommunityAdminStore } from "@/features/communities/lib/community-admin-store";
 import { fetchData } from "@/lib/utils/fetch-data";
 import { INDEXER } from "@/utilities/indexer";
 import { Dialog, Transition } from "@headlessui/react";
@@ -20,7 +20,7 @@ import toast from "react-hot-toast";
 import { errorManager } from "@/lib/utils/error-manager";
 import { MESSAGES } from "@/config/messages";
 import { useAccount } from "wagmi";
-import SearchDropdown from "@/src/features/communities/components/ProgramRegistry/SearchDropdown";
+import SearchDropdown from "@/features/communities/components/ProgramRegistry/SearchDropdown";
 
 interface LinkContractAddressesButtonProps {
   buttonClassName?: string;

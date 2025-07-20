@@ -1,22 +1,22 @@
 "use client";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/button";
 import { errorManager } from "@/lib/utils/error-manager";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useWallet } from "@/hooks/useWallet";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useOwnerStore } from "@/store/owner";
-import { useStepper } from "@/store/modals/txStepper";
+import { useWallet } from "@/features/auth/hooks/use-wallet";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
+import { useStepper } from "@/features/modals/lib/stores/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { fetchData } from "@/lib/utils/fetch-data";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/config/messages";
-import { retryUntilConditionMet } from "@/utilities/retries";
+import { retryUntilConditionMet } from "@/lib/utils/retries";
 import { getProjectById } from "@/utilities/sdk/projects";
 import { cn } from "@/lib/utils/cn";
 import { config } from "@/utilities/wagmi/config";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
 import { Menu, Transition } from "@headlessui/react";
 import { CheckCircleIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
@@ -31,7 +31,7 @@ import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 
 const DeleteDialog = dynamic(() =>
-  import("@/components/DeleteDialog").then((mod) => mod.DeleteDialog)
+  import("@/components/ui/delete-dialog").then((mod) => mod.DeleteDialog)
 );
 
 const buttonClassName = `group border-none ring-none font-normal bg-transparent dark:bg-transparent text-gray-900 dark:text-zinc-100 hover:bg-white dark:hover:bg-zinc-800 dark:hover:opacity-75 hover:opacity-75 flex w-full items-start justify-start rounded-md px-2 py-2 text-sm flex-row gap-2`;

@@ -1,25 +1,25 @@
 "use client";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/button";
 import { errorManager } from "@/lib/utils/error-manager";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { ExternalLink } from "@/components/ui/external-link";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useOwnerStore } from "@/store/owner";
-import { useStepper } from "@/store/modals/txStepper";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
+import { useStepper } from "@/features/modals/lib/stores/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { fetchData } from "@/lib/utils/fetch-data";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/config/messages";
 import { ReadMore } from "@/utilities/ReadMore";
-import { retryUntilConditionMet } from "@/utilities/retries";
+import { retryUntilConditionMet } from "@/lib/utils/retries";
 import { getProjectById } from "@/utilities/sdk/projects";
 import { cn } from "@/lib/utils/cn";
 import { config } from "@/utilities/wagmi/config";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { IProjectImpact } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { getWalletClient } from "@wagmi/core";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
 import { useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { FC, useEffect, useState } from "react";
@@ -28,12 +28,10 @@ import { useAccount } from "wagmi";
 import { AddImpactScreen } from "./AddImpactScreen";
 import { EmptyImpactScreen } from "./EmptyImpactScreen";
 import { ImpactVerifications } from "./ImpactVerifications";
-import { OutputsAndOutcomes } from "@/components/Pages/Project/Impact/OutputsAndOutcomes";
-import { Tabs } from "@/components/Utilities/Tabs";
-import { TabTrigger } from "@/components/Utilities/Tabs";
-import { TabContent } from "@/components/Utilities/Tabs";
 import { OSOMetrics } from "./OSOMetrics";
-import { useWallet } from "@/hooks/useWallet";
+import { useWallet } from "@/features/auth/hooks/use-wallet";
+import { OutputsAndOutcomes } from "./OutputsAndOutcomes";
+import { TabContent, Tabs, TabTrigger } from "@/components/ui/tabs";
 
 const headClasses =
   "text-black dark:text-white text-xs font-medium uppercase text-left px-6 py-3 font-body";
@@ -260,6 +258,7 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
                                       return (
                                         <ExternalLink
                                           className="text-blue-500"
+                                          href={props.href || ""}
                                           {...props}
                                         >
                                           {children}
@@ -286,6 +285,7 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
                                       return (
                                         <ExternalLink
                                           className="text-blue-500"
+                                          href={props.href || ""}
                                           {...props}
                                         >
                                           {children}
@@ -311,6 +311,7 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
                                       return (
                                         <ExternalLink
                                           className="text-blue-500"
+                                          href={props.href || ""}
                                           {...props}
                                         >
                                           {children}

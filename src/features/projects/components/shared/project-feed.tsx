@@ -1,21 +1,21 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { Feed } from "@/types";
 import { fetchData } from "@/lib/utils/fetch-data";
 import { INDEXER } from "@/utilities/indexer";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { Spinner } from "@/components/ui/spinner";
+import { ExternalLink } from "@/components/ui/external-link";
 import { feedIconDictionary, getFeedHref } from "@/utilities/feed";
 import { formatDate } from "@/utilities/formatDate";
-import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import EthereumAddressToENSName from "@/features/ens/components/address-to-ens-name";
+import { MarkdownPreview } from "@/components/ui/markdown-preview";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils/cn";
 
-import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import EthereumAddressToENSAvatar from "@/features/ens/components/address-to-ens-avatar";
 import { errorManager } from "@/lib/utils/error-manager";
+import { Feed } from "@/features/feed/types";
 
 interface ProjectFeedProps {
   initialFeed?: Feed[];
@@ -103,9 +103,12 @@ export const ProjectFeed = ({ initialFeed = [] }: ProjectFeedProps) => {
                                 <ExternalLink
                                   className="text-black font-bold hover:underline dark:text-zinc-100"
                                   href={getFeedHref(item)}
-                                  style={{
-                                    color: theme === "dark" ? "white" : "black",
-                                  }}
+                                  style={
+                                    {
+                                      color:
+                                        theme === "dark" ? "white" : "black",
+                                    } as React.CSSProperties
+                                  }
                                 >
                                   {children}
                                 </ExternalLink>

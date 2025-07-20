@@ -1,18 +1,18 @@
 import { StepBlock } from "../StepBlock";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/button";
 import { useGrantFormStore } from "../store";
 import { usePathname, useRouter } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
-import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useProjectStore } from "@/features/projects/lib/store";
 import { Milestone } from "../Milestone";
 import { PlusIcon } from "@heroicons/react/24/outline";
-import { useAuthStore } from "@/store/auth";
+import { useAuthStore } from "@/features/auth/lib/store";
 import { useAccount } from "wagmi";
-import { useStepper } from "@/store/modals/txStepper";
+import { useStepper } from "@/features/modals/lib/stores/txStepper";
 import toast from "react-hot-toast";
 import { errorManager } from "@/lib/utils/error-manager";
 import { useGap } from "@/hooks/useGap";
-import { sanitizeObject } from "@/utilities/sanitize";
+import { sanitizeObject } from "@/lib/utils/sanitize";
 import {
   Grant,
   GrantDetails,
@@ -26,10 +26,10 @@ import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { INDEXER } from "@/utilities/indexer";
 import { fetchData } from "@/lib/utils/fetch-data";
 import { MESSAGES } from "@/config/messages";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
 import { CancelButton } from "./buttons/CancelButton";
 import { NextButton } from "./buttons/NextButton";
-import { useWallet } from "@/hooks/useWallet";
+import { useWallet } from "@/features/auth/hooks/use-wallet";
 
 export const MilestonesScreen: React.FC = () => {
   const {

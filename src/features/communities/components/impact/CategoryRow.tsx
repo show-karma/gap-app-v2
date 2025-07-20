@@ -1,6 +1,6 @@
 "use client";
-import { Carousel, CarouselItem } from "@/components/SnapCarousel";
-import { Button } from "@/components/Utilities/Button";
+import { Carousel, CarouselItem } from "@/components/ui/snap-carousel";
+import { Button } from "@/components/ui/button";
 import {
   ImpactIndicator,
   ProgramImpactDataResponse,
@@ -14,7 +14,7 @@ import { useSearchParams } from "next/navigation";
 import pluralize from "pluralize";
 import { useState } from "react";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
-import { prepareChartData } from "@/src/lib/analytics/chart";
+import { prepareChartData } from "@/lib/analytics/chart";
 
 export const fundedAmountFormatter = (value: string) => {
   const amount = Number(value.includes(" ") ? value.split(" ")[0] : value);

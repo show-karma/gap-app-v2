@@ -1,6 +1,6 @@
 "use client";
 import { formatDate } from "@/utilities/formatDate";
-import { useAllMilestones } from "@/hooks/useAllMilestones";
+import { useAllMilestones } from "@/features/milestones/hooks/use-all-milestones";
 import { useParams } from "next/navigation";
 import pluralize from "pluralize";
 

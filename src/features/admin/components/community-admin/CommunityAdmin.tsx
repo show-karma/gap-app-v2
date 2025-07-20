@@ -1,10 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
-import CommunityStats from "@/components/CommunityStats";
-import { CommunityDialog } from "@/components/Dialogs/CommunityDialog";
+import { CommunityDialog } from "@/features/modals/components/CommunityDialog";
 import { AddAdmin } from "./AddAdminDialog";
 import { RemoveAdmin } from "./RemoveAdminDialog";
-import { Spinner } from "@/components/Utilities/Spinner";
+import { Spinner } from "@/components/ui/spinner";
 import { useGap } from "@/hooks/useGap";
 import { useStaff } from "../../hooks/use-staff";
 import { chainImgDictionary } from "@/config/chains";
@@ -23,7 +22,8 @@ import { useQuery } from "@tanstack/react-query";
 import { isAddress } from "viem";
 
 import { errorManager } from "@/lib/utils/error-manager";
-import { useOwnerStore } from "@/store/owner";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
+import CommunityStats from "@/features/communities/components/shared/community-stats";
 
 interface CommunityAdmin {
   id: string;

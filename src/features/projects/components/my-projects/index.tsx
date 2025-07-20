@@ -1,12 +1,12 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { Button } from "@/components/Utilities/Button";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import Pagination from "@/components/Utilities/Pagination";
-import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
+import { Button } from "@/components/ui/button";
+import { MarkdownPreview } from "@/components/ui/markdown-preview";
+import Pagination from "@/components/ui/pagination/pagination";
+import { ProfilePicture } from "@/components/ui/profile-picture";
 import { useMixpanel } from "@/hooks/useMixpanel";
-import { useAuthStore } from "@/store/auth";
-import { useOnboarding } from "@/store/modals/onboarding";
+import { useAuthStore } from "@/features/auth/lib/store";
+import { useOnboarding } from "@/features/modals/lib/stores/onboarding";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/config/messages";
@@ -24,7 +24,7 @@ import { LoadingCard } from "./LoadingCard";
 
 const ProjectDialog = dynamic(
   () =>
-    import("@/components/Dialogs/ProjectDialog/index").then(
+    import("@/features/projects/components/dialogs/ProjectDialog/index").then(
       (mod) => mod.ProjectDialog
     ),
   { ssr: false }

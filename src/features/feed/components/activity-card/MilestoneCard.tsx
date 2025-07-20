@@ -1,8 +1,6 @@
 import { FC } from "react";
 import Link from "next/link";
-import { useMilestoneActions } from "@/hooks/useMilestoneActions";
-import { useMilestone } from "@/hooks/useMilestone";
-import { useAllMilestones } from "@/hooks/useAllMilestones";
+import { useAllMilestones } from "@/features/milestones/hooks/use-all-milestones";
 import { useParams } from "next/navigation";
 import { ActivityStatus } from "./ActivityStatus";
 import { ActivityStatusHeader } from "./ActivityStatusHeader";
@@ -13,9 +11,7 @@ import { UnifiedMilestone } from "@/types/roadmap";
 import dynamic from "next/dynamic";
 import { cn } from "@/lib/utils/cn";
 import { containerClassName } from "../activity-card";
-import { MilestoneVerificationSection } from "@/components/Shared/MilestoneVerification";
 import { Button } from "@/components/ui/button";
-import { ExternalLink } from "@/components/ui/external-link";
 import {
   CheckCircleIcon,
   ShareIcon,
@@ -24,14 +20,18 @@ import {
 } from "@heroicons/react/24/outline";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { shareOnX } from "@/utilities/share/shareOnX";
-import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useProjectStore } from "@/features/projects/lib/store";
 import { queryClient } from "@/components/providers/wagmi-provider";
+import { useMilestoneActions } from "@/features/milestones/hooks/use-milestone-actions";
+import { useMilestone } from "@/features/milestones/hooks/use-milestone";
+import { ExternalLink } from "@/components/ui/external-link";
+import { MilestoneVerificationSection } from "@/features/milestones/components/shared";
 
 const ProjectObjectiveCompletion = dynamic(
   () =>
-    import("@/components/Forms/ProjectObjectiveCompletion").then(
-      (mod) => mod.ProjectObjectiveCompletionForm
-    ),
+    import(
+      "@/features/projects/components/forms/project-objective-completion-form"
+    ).then((mod) => mod.ProjectObjectiveCompletionForm),
   {
     ssr: false,
   }
@@ -40,7 +40,7 @@ const ProjectObjectiveCompletion = dynamic(
 const ObjectiveSimpleOptionsMenu = dynamic(
   () =>
     import(
-      "@/components/Pages/Project/Objective/ObjectiveSimpleOptionsMenu"
+      "@/features/projects/components/objective/ObjectiveSimpleOptionsMenu"
     ).then((mod) => mod.ObjectiveSimpleOptionsMenu),
   {
     ssr: false,
@@ -49,9 +49,9 @@ const ObjectiveSimpleOptionsMenu = dynamic(
 
 const GrantMilestoneSimpleOptionsMenu = dynamic(
   () =>
-    import("@/components/Milestone/GrantMilestoneSimpleOptionsMenu").then(
-      (mod) => mod.GrantMilestoneSimpleOptionsMenu
-    ),
+    import(
+      "@/features/milestones/components/GrantMilestoneSimpleOptionsMenu"
+    ).then((mod) => mod.GrantMilestoneSimpleOptionsMenu),
   {
     ssr: false,
   }
@@ -59,9 +59,9 @@ const GrantMilestoneSimpleOptionsMenu = dynamic(
 
 const GrantMilestoneCompletion = dynamic(
   () =>
-    import("@/components/Forms/GrantMilestoneCompletion").then(
-      (mod) => mod.GrantMilestoneCompletionForm
-    ),
+    import(
+      "@/features/milestones/components/forms/grant-milestone-completion"
+    ).then((mod) => mod.GrantMilestoneCompletionForm),
   {
     ssr: false,
   }
@@ -70,7 +70,7 @@ const GrantMilestoneCompletion = dynamic(
 // Dynamic import for editing milestone completion form
 const MilestoneUpdateForm = dynamic(
   () =>
-    import("@/components/Forms/MilestoneUpdate").then(
+    import("@/features/milestones/components/forms/milestone-update-form").then(
       (mod) => mod.MilestoneUpdateForm
     ),
   {

@@ -1,9 +1,9 @@
 "use client";
-import { Spinner } from "@/components/Utilities/Spinner";
+import { Spinner } from "@/components/ui/spinner";
 import { useSearchParams } from "next/navigation";
 import { CategoryRow } from "./CategoryRow";
-import { ProgramBanner } from "./ProgramBanner";
-import { useImpactMeasurement } from "@/src/features/impact/hooks/use-impact-measurement";
+import { useImpactMeasurement } from "@/features/impact/hooks/use-impact-measurement";
+import { ProgramBanner } from "@/features/impact/components/community-impact/ProgramBanner";
 
 export const CommunityImpactCharts = () => {
   const searchParams = useSearchParams();

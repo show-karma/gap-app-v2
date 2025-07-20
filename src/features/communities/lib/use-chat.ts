@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { envVars } from "@/utilities/enviromentVars";
+import { envVars } from "@/config/env";
 import { useAccount } from "wagmi";
 import { Project } from "../components/community-page/project-evaluator-page";
 

@@ -1,5 +1,4 @@
 "use client";
-import { ObjectivesSub } from "@/components/Pages/Project/Objective/ObjectivesSub";
 import { RoadmapListLoading } from "../loading/Roadmap";
 import {
   IGrantUpdate,
@@ -9,18 +8,16 @@ import {
   IProjectResponse,
   IProjectUpdate,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useAllMilestones } from "@/hooks/useAllMilestones";
-import { MilestonesList } from "@/components/Milestone/MilestonesList";
+import { useAllMilestones } from "@/features/milestones/hooks/use-all-milestones";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
-import { useQuery } from "@tanstack/react-query";
-import { useProgressModalStore } from "@/store/modals/progress";
-import { Button } from "@/components/Utilities/Button";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useOwnerStore } from "@/store/owner";
+import { useProgressModalStore } from "@/features/modals/lib/stores/progress";
+import { Button } from "@/components/ui/button";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 import { MESSAGES } from "@/config/messages";
 import { UnifiedMilestone } from "@/types/roadmap";
+import { MilestonesList } from "@/features/milestones/components/MilestonesList";
 
 interface ProjectRoadmapProps {
   project?: IProjectResponse;

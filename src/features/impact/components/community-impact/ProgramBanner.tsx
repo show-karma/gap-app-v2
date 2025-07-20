@@ -1,6 +1,5 @@
-import { Skeleton } from "@/components/Utilities/Skeleton";
-import { useCommunityCategory } from "@/hooks/useCommunityCategory";
-import { useImpactMeasurement } from "@/src/features/impact/hooks/use-impact-measurement";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useImpactMeasurement } from "@/features/impact/hooks/use-impact-measurement";
 import { getAllProgramsOfCommunity } from "@/utilities/registry/getAllProgramsOfCommunity";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useSearchParams } from "next/navigation";

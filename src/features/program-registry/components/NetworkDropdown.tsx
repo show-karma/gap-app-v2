@@ -10,7 +10,7 @@ import {
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
 import { cn } from "@/utilities/tailwind";
-import { ChevronDown } from "@/components/Icons/ChevronDown";
+import { ChevronDown } from "@/components/icons/ChevronDown";
 
 interface Items {
   value: number;

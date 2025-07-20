@@ -1,20 +1,20 @@
 /* eslint-disable @next/next/no-img-element */
-import { Button } from "@/components/Utilities/Button";
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { DatePicker } from "@/components/Utilities/DatePicker";
+import { Button } from "@/components/ui/button";
+import { MarkdownEditor } from "@/components/ui/markdown-editor";
+import { DatePicker } from "@/components/ui/date-picker";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useOwnerStore } from "@/store/owner";
-import { useCommunityAdminStore } from "@/src/features/communities/lib/community-admin-store";
-import { useStepper } from "@/store/modals/txStepper";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
+import { useCommunityAdminStore } from "@/features/communities/lib/community-admin-store";
+import { useStepper } from "@/features/modals/lib/stores/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import fetchData from "@/utilities/fetchData";
+import fetchData from "@/lib/utils/fetch-data";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
-import { MESSAGES } from "@/utilities/messages";
+import { MESSAGES } from "@/config/messages";
 import { PAGES } from "@/utilities/pages";
-import { sanitizeObject } from "@/utilities/sanitize";
+import { sanitizeObject } from "@/lib/utils/sanitize";
 import { config } from "@/utilities/wagmi/config";
 import { Popover } from "@headlessui/react";
 import { CalendarIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
@@ -36,8 +36,8 @@ import { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import { errorManager } from "@/lib/utils/error-manager";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { useWallet } from "@/hooks/useWallet";
+import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
+import { useWallet } from "@/features/auth/hooks/use-wallet";
 
 const milestoneSchema = z.object({
   title: z

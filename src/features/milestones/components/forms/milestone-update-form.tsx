@@ -1,18 +1,18 @@
 "use client";
 
-import { Button } from "@/components/Utilities/Button";
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { Button } from "@/components/ui/button";
+import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useCommunityAdminStore } from "@/src/features/communities/lib/community-admin-store";
-import { useStepper } from "@/store/modals/txStepper";
+import { useCommunityAdminStore } from "@/features/communities/lib/community-admin-store";
+import { useStepper } from "@/features/modals/lib/stores/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import fetchData from "@/utilities/fetchData";
+import fetchData from "@/lib/utils/fetch-data";
 import { INDEXER } from "@/utilities/indexer";
-import { MESSAGES } from "@/utilities/messages";
+import { MESSAGES } from "@/config/messages";
 import { PAGES } from "@/utilities/pages";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
-import { sanitizeObject } from "@/utilities/sanitize";
+import { sanitizeObject } from "@/lib/utils/sanitize";
 import { cn } from "@/utilities/tailwind";
 import { config } from "@/utilities/wagmi/config";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
@@ -29,12 +29,12 @@ import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import { errorManager } from "@/lib/utils/error-manager";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
 import { SHARE_TEXTS } from "@/utilities/share/text";
-import { useShareDialogStore } from "@/store/modals/shareDialog";
-import { useWallet } from "@/hooks/useWallet";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useOwnerStore } from "@/store/owner";
+import { useShareDialogStore } from "@/features/modals/lib/stores/shareDialog";
+import { useWallet } from "@/features/auth/hooks/use-wallet";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 
 interface MilestoneUpdateFormProps {
   milestone: IMilestoneResponse;

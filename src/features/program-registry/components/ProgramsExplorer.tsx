@@ -2,12 +2,9 @@
 /* eslint-disable @next/next/no-img-element */
 import { registryHelper } from "./helper";
 import { ProgramDetailsDialog } from "./ProgramDetailsDialog";
-import {
-  GrantProgram,
-  ProgramList,
-} from "./ProgramList";
+import { GrantProgram, ProgramList } from "./ProgramList";
 import { SearchDropdown } from "./SearchDropdown";
-import Pagination from "@/components/Utilities/Pagination";
+import Pagination from "@/components/ui/pagination/pagination";
 import { useRegistryStore } from "../lib/store";
 import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
 import { fetchData } from "@/lib/utils/fetch-data";

@@ -1,6 +1,6 @@
 "use client";
-import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
-import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
+import EthereumAddressToENSAvatar from "@/features/ens/components/address-to-ens-avatar";
+import EthereumAddressToENSName from "@/features/ens/components/address-to-ens-name";
 import { formatDate } from "@/lib/format/date";
 import { ReadMore } from "@/utilities/ReadMore";
 import { useState } from "react";
@@ -13,9 +13,9 @@ import { PAGES } from "@/config/pages";
 
 const ProjectObjectiveCompletion = dynamic(
   () =>
-    import("@/components/Forms/ProjectObjectiveCompletion").then(
-      (mod) => mod.ProjectObjectiveCompletionForm
-    ),
+    import(
+      "@/features/projects/components/forms/project-objective-completion-form"
+    ).then((mod) => mod.ProjectObjectiveCompletionForm),
   {
     ssr: false,
   }
@@ -23,7 +23,7 @@ const ProjectObjectiveCompletion = dynamic(
 
 const ObjectiveOptionsMenu = dynamic(
   () =>
-    import("@/components/Pages/Project/Objective/Options").then(
+    import("@/features/projects/components/objective/Options").then(
       (mod) => mod.ObjectiveOptionsMenu
     ),
   {
@@ -43,9 +43,9 @@ const GrantMilestoneOptionsMenu = dynamic(
 
 const GrantMilestoneCompletion = dynamic(
   () =>
-    import("@/components/Forms/GrantMilestoneCompletion").then(
-      (mod) => mod.GrantMilestoneCompletionForm
-    ),
+    import(
+      "@/features/milestones/components/forms/grant-milestone-completion"
+    ).then((mod) => mod.GrantMilestoneCompletionForm),
   {
     ssr: false,
   }

@@ -1,11 +1,11 @@
-import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useProjectStore } from "@/features/projects/lib/store";
 import { Tab } from "@headlessui/react";
 import { Fragment, useState } from "react";
 import { cn } from "@/lib/utils/cn";
-import { ActivityList } from "@/components/Shared/ActivityList";
 import { UnifiedMilestone } from "@/types/roadmap";
-import { useAllMilestones } from "@/hooks/useAllMilestones";
+import { useAllMilestones } from "@/features/milestones/hooks/use-all-milestones";
 import { useParams } from "next/navigation";
+import { ActivityList } from "@/features/feed/components/activity-list";
 
 export const ProjectActivity = () => {
   const { project, isProjectAdmin } = useProjectStore();

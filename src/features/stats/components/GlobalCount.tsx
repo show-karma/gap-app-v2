@@ -1,11 +1,11 @@
 "use client";
-import fetchData from "@/utilities/fetchData";
+import fetchData from "@/lib/utils/fetch-data";
 import { INDEXER } from "@/utilities/indexer";
 import { useState, useEffect } from "react";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/button";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
-import { Card, LineChart, Title } from "@tremor/react";
-import { errorManager } from "@/components/Utilities/errorManager";
+import { Card, Title } from "@tremor/react";
+import errorManager from "@/lib/utils/error-manager";
 
 export function GlobalCount() {
   const [stats, setStats] = useState<any>([]);

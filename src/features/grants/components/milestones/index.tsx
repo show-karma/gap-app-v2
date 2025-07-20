@@ -1,10 +1,10 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useOwnerStore } from "@/store/owner";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 // import { MilestonesList } from "./MilestonesList";
-import { useCommunityAdminStore } from "@/src/features/communities/lib/community-admin-store";
-import { formatDate } from "@/utilities/formatDate";
+import { useCommunityAdminStore } from "@/features/communities/lib/community-admin-store";
+import { formatDate } from "@/lib/format/date";
 import { MESSAGES } from "@/config/messages";
 import { PAGES } from "@/utilities/pages";
 import { ReadMore } from "@/utilities/ReadMore";
@@ -14,15 +14,15 @@ import {
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Link from "next/link";
 
-import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
-import { useGrantStore } from "@/src/features/grants/lib/store";
+import { DefaultLoading } from "@/components/ui/default-loading";
+import { useGrantStore } from "@/features/grants/lib/store";
 import dynamic from "next/dynamic";
 
 const MilestonesList = dynamic(
   () =>
-    import(
-      "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/MilestonesList"
-    ).then((mod) => mod.MilestonesList),
+    import("@/features/grants/components/milestones/MilestonesList").then(
+      (mod) => mod.MilestonesList
+    ),
   {
     loading: () => <DefaultLoading />,
   }

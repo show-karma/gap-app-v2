@@ -13,17 +13,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useAccount } from "wagmi";
 import { GAP } from "@show-karma/karma-gap-sdk";
 import { Button } from "@/components/ui/button";
-import { MESSAGES } from "@/utilities/messages";
+import { MESSAGES } from "@/config/messages";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { useStepper } from "@/store/modals/txStepper";
+import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
+import { useStepper } from "@/features/modals/lib/stores/txStepper";
 import toast from "react-hot-toast";
 import { config } from "@/utilities/wagmi/config";
-import fetchData from "@/utilities/fetchData";
+import fetchData from "@/lib/utils/fetch-data";
 import { INDEXER } from "@/utilities/indexer";
 
-import { errorManager } from "@/components/Utilities/errorManager";
-import { useWallet } from "@/hooks/useWallet";
+import errorManager from "@/lib/utils/error-manager";
+import { useWallet } from "@/features/auth/hooks/use-wallet";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";

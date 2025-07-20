@@ -4,7 +4,7 @@ import {
   IProjectImpact,
   IProjectImpactStatus,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { VerifiedBadge } from "@/src/features/grants/components/milestones/VerifiedBadge";
+import { VerifiedBadge } from "@/features/grants/components/milestones/VerifiedBadge";
 
 interface ImpactVerificationsProps {
   impact: IProjectImpact;

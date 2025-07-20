@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useAccount } from "wagmi";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useOwnerStore } from "@/store/owner";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { Milestone } from "@show-karma/karma-gap-sdk";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { useStepper } from "@/store/modals/txStepper";
-import { sanitizeObject } from "@/utilities/sanitize";
+import { useStepper } from "@/features/modals/lib/stores/txStepper";
+import { sanitizeObject } from "@/lib/utils/sanitize";
 import toast from "react-hot-toast";
 import { fetchData } from "@/lib/utils/fetch-data";
 import { INDEXER } from "@/utilities/indexer";
@@ -16,8 +16,8 @@ import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { Hex } from "viem";
 import { errorManager } from "@/lib/utils/error-manager";
 import { MESSAGES } from "@/config/messages";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { useWallet } from "@/hooks/useWallet";
+import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
+import { useWallet } from "@/features/auth/hooks/use-wallet";
 
 export interface GrantMilestoneFormData {
   title: string;

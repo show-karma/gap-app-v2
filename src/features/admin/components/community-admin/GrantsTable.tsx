@@ -1,17 +1,14 @@
-import { Button } from "@/components/Utilities/Button";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import TablePagination from "@/components/Utilities/TablePagination";
-import { SimplifiedGrant } from "@/hooks/useGrants";
+import { Button } from "@/components/ui/button";
+import { ExternalLink } from "@/components/ui/external-link";
+import TablePagination from "@/components/ui/pagination/table-pagination";
 import { PAGES } from "@/utilities/pages";
-import { cn } from "@/utilities/tailwind";
 import {
   ChevronDownIcon,
   ChevronUpDownIcon,
   ChevronUpIcon,
 } from "@heroicons/react/20/solid";
-import pluralize from "pluralize";
-import { Fragment } from "react";
-import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown";
+import { SearchWithValueDropdown } from "@/features/communities/components/impact/SearchWithValueDropdown";
+import { SimplifiedGrant } from "@/features/grants/hooks/use-grants";
 
 type SortField = "project" | "grant" | "description" | "categories";
 type SortDirection = "asc" | "desc";

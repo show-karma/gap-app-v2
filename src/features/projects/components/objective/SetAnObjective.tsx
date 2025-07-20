@@ -1,7 +1,7 @@
 "use client";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/button";
 import { useParams } from "next/navigation";
-import { useProgressModalStore } from "@/store/modals/progress";
+import { useProgressModalStore } from "@/features/modals/lib/stores/progress";
 
 export const SetAnObjective = ({
   hasObjectives,

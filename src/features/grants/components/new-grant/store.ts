@@ -1,4 +1,4 @@
-import { appNetwork } from "@/utilities/network";
+import { appNetwork } from "@/config/network";
 import { IMilestone } from "@show-karma/karma-gap-sdk";
 import { create } from "zustand";
 

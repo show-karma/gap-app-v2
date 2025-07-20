@@ -1,5 +1,5 @@
-import { Button } from "@/components/Utilities/Button";
-import { Skeleton } from "@/components/Utilities/Skeleton";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface TabButtonProps {
   tabName: string;

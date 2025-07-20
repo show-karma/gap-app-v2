@@ -2,13 +2,13 @@
 import { Grant, GrantDetails, ProjectDetails } from "@show-karma/karma-gap-sdk";
 import pluralize from "pluralize";
 import formatCurrency from "@/utilities/formatCurrency";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { MarkdownPreview } from "@/components/ui/markdown-preview";
 import { formatPercentage } from "@/utilities/formatNumber";
 import { PAGES } from "@/utilities/pages";
 import { formatDate } from "@/utilities/formatDate";
-import { ProjectFromList } from "@/types";
 import Link from "next/link";
-import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
+import { ProfilePicture } from "@/components/ui/profile-picture";
+import { ProjectFromList } from "../../types";
 
 interface ProjectCardProps {
   project: ProjectFromList;

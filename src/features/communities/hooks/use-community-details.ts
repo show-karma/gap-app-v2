@@ -14,7 +14,7 @@ const fetchCommunityDetails = async (communityId: string) => {
   return result;
 };
 
-const useCommunityDetails = (communityId: string) => {
+export const useCommunityDetails = (communityId: string) => {
   return useQuery<ICommunityResponse, Error>({
     queryKey: ["community", communityId],
     queryFn: () => fetchCommunityDetails(communityId),
@@ -22,5 +22,3 @@ const useCommunityDetails = (communityId: string) => {
     retry: false,
   });
 };
-
-export default useCommunityDetails;

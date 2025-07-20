@@ -2,20 +2,20 @@
 import { FC, Fragment, ReactNode, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { PlusIcon } from "@heroicons/react/24/solid";
-import { Button } from "@/components/Utilities/Button";
 import { z } from "zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
-import fetchData from "@/utilities/fetchData";
+import fetchData from "@/lib/utils/fetch-data";
 import { useParams } from "next/navigation";
-import { useAuthStore } from "@/store/auth";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthStore } from "@/features/auth/lib/store";
 import { INDEXER } from "@/utilities/indexer";
 
-import { errorManager } from "@/components/Utilities/errorManager";
-import { MESSAGES } from "@/utilities/messages";
+import errorManager from "@/lib/utils/error-manager";
+import { MESSAGES } from "@/config/messages";
 import { useAccount } from "wagmi";
+import { useAuth } from "@/features/auth/hooks/use-auth";
+import { Button } from "@/components/ui/button";
 
 type CategoryCreationDialogProps = {
   refreshCategories: () => Promise<void>;

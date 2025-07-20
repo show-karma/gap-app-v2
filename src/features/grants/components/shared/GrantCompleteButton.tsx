@@ -1,8 +1,8 @@
 "use client";
 
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useOwnerStore } from "@/store/owner";
-import { useCommunityAdminStore } from "@/src/features/communities/lib/community-admin-store";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
+import { useCommunityAdminStore } from "@/features/communities/lib/community-admin-store";
 import { PAGES } from "@/utilities/pages";
 import { CheckCircleIcon } from "@heroicons/react/24/outline";
 import {

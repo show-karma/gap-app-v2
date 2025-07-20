@@ -4,7 +4,7 @@
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
 import * as Sentry from "@sentry/nextjs";
-import { sentryIgnoreErrors } from "./utilities/sentry/ignoreErrors";
+import { sentryIgnoreErrors } from "./src/utilities/sentry/ignoreErrors";
 
 Sentry.init({
   enabled: process.env.NEXT_PUBLIC_VERCEL_ENV === "production",

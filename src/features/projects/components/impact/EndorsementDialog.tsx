@@ -1,21 +1,21 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/button";
 import { errorManager } from "@/lib/utils/error-manager";
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useContactInfo } from "@/hooks/useContactInfo";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useEndorsementStore } from "@/store/modals/endorsement";
-import { useStepper } from "@/store/modals/txStepper";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useEndorsementStore } from "@/features/modals/lib/stores/endorsement";
+import { useStepper } from "@/features/modals/lib/stores/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { fetchData } from "@/lib/utils/fetch-data";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
-import { sanitizeObject } from "@/utilities/sanitize";
+import { sanitizeObject } from "@/lib/utils/sanitize";
 import { shortAddress } from "@/utilities/shortAddress";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { useShareDialogStore } from "@/store/modals/shareDialog";
+import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
+import { useShareDialogStore } from "@/features/modals/lib/stores/shareDialog";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { Dialog, Transition } from "@headlessui/react";
 import { Project, ProjectEndorsement } from "@show-karma/karma-gap-sdk";
@@ -23,7 +23,7 @@ import { useRouter } from "next/navigation";
 import { FC, Fragment, useState } from "react";
 import { Hex } from "viem";
 import { useAccount } from "wagmi";
-import { useWallet } from "@/hooks/useWallet";
+import { useWallet } from "@/features/auth/hooks/use-wallet";
 
 type EndorsementDialogProps = {};
 

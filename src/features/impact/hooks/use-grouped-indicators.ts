@@ -6,7 +6,12 @@ import { QueryKey, QueryOptions, useQuery } from "@tanstack/react-query";
 
 interface UseGroupedIndicatorsProps {
   communityId: string;
-  queryOptions?: QueryOptions<GroupedIndicators, Error, GroupedIndicators, QueryKey>;
+  queryOptions?: QueryOptions<
+    GroupedIndicators,
+    Error,
+    GroupedIndicators,
+    QueryKey
+  >;
 }
 
 export const useGroupedIndicators = ({
@@ -19,4 +24,4 @@ export const useGroupedIndicators = ({
     enabled: !!communityId,
     ...queryOptions,
   });
-}; 
+};

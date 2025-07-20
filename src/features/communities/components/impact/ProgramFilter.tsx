@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { SearchWithValueDropdown } from "./SearchWithValueDropdown";
-import { useCommunityPrograms } from "@/hooks/usePrograms";
+import { useCommunityPrograms } from "@/features/program-registry/hooks/use-programs";
 
 interface ProgramFilterProps {
   defaultProgramSelected?: string;

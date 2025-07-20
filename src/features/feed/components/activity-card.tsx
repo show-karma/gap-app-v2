@@ -1,8 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 import { FC } from "react";
 import { cn } from "@/lib/utils/cn";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useOwnerStore } from "@/store/owner";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 import { UpdateCard } from "./activity-card/UpdateCard";
 import { MilestoneCard } from "./activity-card/MilestoneCard";
 import {

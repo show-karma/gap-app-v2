@@ -19,15 +19,16 @@ import { formatNumber } from "@/lib/format/number";
 import { StatusAlert } from "./components/StatusAlert";
 import { Button } from "./components/Button";
 import { Card } from "./components/Card";
+
+import { useWallet } from "@/features/auth/hooks/use-wallet";
 import {
-  CheckIcon,
   CheckCircleIcon,
-  ExternalLinkIcon,
-  PlusIcon,
+  CheckIcon,
   ConfigIcon,
   DocumentIcon,
+  ExternalLinkIcon,
+  PlusIcon,
 } from "./components/Icons";
-import { useWallet } from "@/hooks/useWallet";
 
 const NETWORK_OPTIONS = [
   { id: 42220, name: "Celo" },

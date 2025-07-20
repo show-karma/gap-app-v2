@@ -1,9 +1,9 @@
 import React from "react";
 import { CheckIcon } from "@heroicons/react/24/solid";
-import { useTracksForProgram } from "@/hooks/useTracks";
-import { Spinner } from "@/components/Utilities/Spinner";
 import { Track } from "@/services/tracks";
 import { cn } from "@/lib/utils/cn";
+import { Spinner } from "@/components/ui/spinner";
+import { useTracksForProgram } from "@/features/tracks/hooks/use-tracks";
 
 interface TrackSelectionProps {
   programId?: string;

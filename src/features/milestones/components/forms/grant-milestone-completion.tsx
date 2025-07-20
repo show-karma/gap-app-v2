@@ -1,6 +1,6 @@
 "use client";
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { Button } from "@/components/Utilities/Button";
+import { MarkdownEditor } from "@/components/ui/markdown-editor";
+import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -9,15 +9,15 @@ import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { useAccount } from "wagmi";
 import { useGap, getGapClient } from "@/hooks/useGap";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { sanitizeObject } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { useStepper } from "@/store/modals/txStepper";
-import { useProjectStore } from "@/src/features/projects/lib/store";
+import { sanitizeObject } from "@/lib/utils/sanitize";
+import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
+import { useStepper } from "@/features/modals/lib/stores/txStepper";
+import { useProjectStore } from "@/features/projects/lib/store";
 import toast from "react-hot-toast";
-import { MESSAGES } from "@/utilities/messages";
+import { MESSAGES } from "@/config/messages";
 import { GapContract } from "@show-karma/karma-gap-sdk/core/class/contract/GapContract";
-import { errorManager } from "@/components/Utilities/errorManager";
-import fetchData from "@/utilities/fetchData";
+import errorManager from "@/lib/utils/error-manager";
+import fetchData from "@/lib/utils/fetch-data";
 import { INDEXER } from "@/utilities/indexer";
 import { useRouter } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
@@ -27,7 +27,7 @@ import { cn } from "@/utilities/tailwind";
 import { Milestone } from "@show-karma/karma-gap-sdk/core/class/entities/Milestone";
 import { MilestoneCompleted } from "@show-karma/karma-gap-sdk/core/class/types/attestations";
 import { UnifiedMilestone } from "@/types/roadmap";
-import { useMilestone } from "@/hooks/useMilestone";
+import { useMilestone } from "@/features/milestones/hooks/use-milestone";
 
 // Create form schema with zod
 const formSchema = z.object({

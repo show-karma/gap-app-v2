@@ -1,7 +1,7 @@
 "use client";
-import { TelegramIcon } from "@/components/Icons";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { Contact } from "@/types";
+import { TelegramIcon } from "@/components/icons";
+import { ExternalLink } from "@/components/ui/external-link";
+import { Contact } from "@/features/projects/types";
 import { cn } from "@/utilities/tailwind";
 import { AtSymbolIcon, InboxArrowDownIcon } from "@heroicons/react/24/solid";
 import { FC, useState } from "react";

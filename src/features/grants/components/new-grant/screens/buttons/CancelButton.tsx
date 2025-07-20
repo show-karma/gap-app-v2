@@ -1,5 +1,5 @@
 import React from "react";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils/cn";
 
 interface CancelButtonProps {

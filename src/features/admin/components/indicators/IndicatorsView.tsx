@@ -1,9 +1,9 @@
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/button";
 import {
   Category,
   ImpactIndicator,
   ImpactIndicatorWithData,
-} from "@/src/features/impact/types";
+} from "@/features/impact/types";
 import {
   TrashIcon,
   PlusIcon,
@@ -13,18 +13,18 @@ import { useState, Fragment, useRef, useEffect } from "react";
 import Image from "next/image";
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import { IndicatorForm } from "@/components/Forms/IndicatorForm";
-import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
-import { DeleteDialog } from "@/components/DeleteDialog";
+import { IndicatorForm } from "@/features/admin/components/forms/indicator-form";
+import { autosyncedIndicators } from "@/features/admin/components/indicators/IndicatorsHub";
+import { DeleteDialog } from "@/components/ui/delete-dialog";
 import toast from "react-hot-toast";
-import fetchData from "@/utilities/fetchData";
+import fetchData from "@/lib/utils/fetch-data";
 import { INDEXER } from "@/utilities/indexer";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { useGroupedIndicators } from "@/src/features/impact/hooks/use-grouped-indicators";
+import errorManager from "@/lib/utils/error-manager";
+import { useGroupedIndicators } from "@/features/impact/hooks/use-grouped-indicators";
 import { ProgramCard } from "../programs/ProgramCard";
-import { MESSAGES } from "@/utilities/messages";
+import { MESSAGES } from "@/config/messages";
 import { useAccount } from "wagmi";
-import { LoadingSpinner } from "@/components/Disbursement/components/LoadingSpinner";
+import { LoadingSpinner } from "@/features/disbursements/components/components/LoadingSpinner";
 
 // Custom Dropdown Menu Component - copied from CategoryView.tsx
 const DropdownMenu = ({

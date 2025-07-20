@@ -4,11 +4,11 @@ import Image from "next/image";
 import { FC, useMemo, useRef } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { registryHelper } from "./helper";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { Discord2Icon, Telegram2Icon, Twitter2Icon } from "@/components/Icons";
-import { DiscussionIcon } from "@/components/Icons/Discussion";
-import { BlogIcon } from "@/components/Icons/Blog";
-import { OrganizationIcon } from "@/components/Icons/Organization";
+import { ExternalLink } from "@/components/ui/external-link";
+import { Discord2Icon, Telegram2Icon, Twitter2Icon } from "@/components/icons";
+import { DiscussionIcon } from "@/components/icons/Discussion";
+import { BlogIcon } from "@/components/icons/Blog";
+import { OrganizationIcon } from "@/components/icons/Organization";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   ColumnDef,
@@ -17,10 +17,9 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/button";
 import { formatDate } from "@/utilities/formatDate";
 import Link from "next/link";
-import { PAGES } from "@/utilities/pages";
 
 import { GrantProgram } from "../types";
 export type { GrantProgram } from "../types";
@@ -443,17 +442,12 @@ export const ProgramList: FC<ProgramListProps> = ({
             <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
               {grant.metadata?.socialLinks?.grantsSite ? (
                 <ExternalLink
-                  onClick={(event) => {
-                    if (isDisabled()) {
-                      event.preventDefault();
-                    }
-                  }}
                   href={
                     isDisabled()
                       ? ""
                       : grant.metadata?.socialLinks?.grantsSite.includes("http")
-                        ? grant.metadata?.socialLinks?.grantsSite
-                        : `https://${grant.metadata?.socialLinks?.grantsSite}`
+                      ? grant.metadata?.socialLinks?.grantsSite
+                      : `https://${grant.metadata?.socialLinks?.grantsSite}`
                   }
                 >
                   <div className={`relative group`}>
@@ -539,7 +533,9 @@ export const ProgramList: FC<ProgramListProps> = ({
                   key={row.id}
                   style={{
                     height: `${virtualRow.size}px`,
-                    transform: `translateY(${virtualRow.start - index * virtualRow.size}px)`,
+                    transform: `translateY(${
+                      virtualRow.start - index * virtualRow.size
+                    }px)`,
                   }}
                 >
                   {row.getVisibleCells().map((cell) => {

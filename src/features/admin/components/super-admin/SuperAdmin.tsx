@@ -1,5 +1,5 @@
 "use client";
-import { useOwnerStore } from "@/store/owner";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 import { PAGES } from "@/utilities/pages";
 
 export default function SuperAdminPage() {

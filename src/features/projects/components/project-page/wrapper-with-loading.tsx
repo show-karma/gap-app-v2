@@ -1,5 +1,5 @@
 "use client";
-import { useProject } from "@/hooks/useProject";
+import useProject from "../../hooks/use-project";
 import ProjectHeaderLoading from "../loading/Header";
 import { ProjectWrapper } from "./wrapper";
 

@@ -1,9 +1,9 @@
 "use client";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useOwnerStore } from "@/store/owner";
-import { useCommunityAdminStore } from "@/src/features/communities/lib/community-admin-store";
-import { useGrantStore } from "@/src/features/grants/lib/store";
-import { formatDate } from "@/utilities/formatDate";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useOwnerStore } from "@/features/contract-owner/lib/owner";
+import { useCommunityAdminStore } from "@/features/communities/lib/community-admin-store";
+import { useGrantStore } from "@/features/grants/lib/store";
+import { formatDate } from "@/lib/format/date";
 import { MESSAGES } from "@/config/messages";
 import { PAGES } from "@/utilities/pages";
 import { ReadMore } from "@/utilities/ReadMore";
@@ -13,7 +13,7 @@ import {
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { ProjectGrantsMilestonesListLoading } from "@/src/features/projects/components/loading/Grants/MilestonesAndUpdate";
+import { ProjectGrantsMilestonesListLoading } from "@/features/projects/components/loading/Grants/MilestonesAndUpdate";
 
 const EmptyMilestone = ({
   grant,
@@ -121,9 +121,9 @@ const GrantCompletionCard = ({ completion }: GrantCompletionCardProps) => {
 
 const MilestonesList = dynamic(
   () =>
-    import(
-      "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/MilestonesList"
-    ).then((mod) => mod.MilestonesList),
+    import("@/features/grants/components/milestones/MilestonesList").then(
+      (mod) => mod.MilestonesList
+    ),
   {
     loading: () => <ProjectGrantsMilestonesListLoading />,
   }

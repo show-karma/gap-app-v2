@@ -1,23 +1,23 @@
 /* eslint-disable @next/next/no-img-element */
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/button";
 import { errorManager } from "@/lib/utils/error-manager";
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useProjectStore } from "@/src/features/projects/lib/store";
-import { useStepper } from "@/store/modals/txStepper";
+import { useProjectStore } from "@/features/projects/lib/store";
+import { useStepper } from "@/features/modals/lib/stores/txStepper";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { fetchData } from "@/lib/utils/fetch-data";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/config/messages";
-import { sanitizeObject } from "@/utilities/sanitize";
+import { sanitizeObject } from "@/lib/utils/sanitize";
 import { config } from "@/utilities/wagmi/config";
 import { Popover } from "@headlessui/react";
 import { CalendarIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ProjectImpact } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact";
 import { getWalletClient } from "@wagmi/core";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
 import { useQueryState } from "nuqs";
 import type { FC } from "react";
 import { useState } from "react";
@@ -28,8 +28,8 @@ import toast from "react-hot-toast";
 import { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { z } from "zod";
-import { DatePicker } from "@/components/Utilities/DatePicker";
-import { useWallet } from "@/hooks/useWallet";
+import { DatePicker } from "@/components/ui/date-picker";
+import { useWallet } from "@/features/auth/hooks/use-wallet";
 
 const updateSchema = z.object({
   startedAt: z.date({

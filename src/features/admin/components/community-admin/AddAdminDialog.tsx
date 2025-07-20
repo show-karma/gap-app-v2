@@ -12,21 +12,20 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useAccount } from "wagmi";
 import { GAP } from "@show-karma/karma-gap-sdk";
 import { Button } from "@/components/ui/button";
-import { MESSAGES } from "@/utilities/messages";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { cn } from "@/utilities/tailwind";
 
-import { useStepper } from "@/store/modals/txStepper";
 import toast from "react-hot-toast";
 import { config } from "@/utilities/wagmi/config";
-import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
-import { errorManager } from "@/components/Utilities/errorManager";
-import { sanitizeInput } from "@/utilities/sanitize";
+import errorManager from "@/lib/utils/error-manager";
 import { isAddress } from "viem";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { useWallet } from "@/hooks/useWallet";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { useWallet } from "@/features/auth/hooks/use-wallet";
+import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
+import { sanitizeInput } from "@/lib/utils/sanitize";
+import fetchData from "@/lib/utils/fetch-data";
+import { useStepper } from "@/features/modals/lib/stores/txStepper";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";

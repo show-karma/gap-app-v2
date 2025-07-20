@@ -3,8 +3,8 @@ import { useState } from "react";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useAccount } from "wagmi";
 import { getProjectById } from "@/utilities/sdk/projects";
-import { sanitizeObject } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { sanitizeObject } from "@/lib/utils/sanitize";
+import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { INDEXER } from "@/utilities/indexer";
 import { fetchData } from "@/lib/utils/fetch-data";
@@ -12,13 +12,13 @@ import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { MESSAGES } from "@/config/messages";
 import toast from "react-hot-toast";
 import { errorManager } from "@/lib/utils/error-manager";
-import { useStepper } from "@/store/modals/txStepper";
-import { useProjectStore } from "@/src/features/projects/lib/store";
+import { useStepper } from "@/features/modals/lib/stores/txStepper";
+import { useProjectStore } from "@/features/projects/lib/store";
 import { useRouter } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
 import { useGrantFormStore } from "../components/new-grant/store";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useWallet } from "@/hooks/useWallet";
+import { useWallet } from "@/features/auth/hooks/use-wallet";
 
 function useGrant() {
   const [isLoading, setIsLoading] = useState(false);
