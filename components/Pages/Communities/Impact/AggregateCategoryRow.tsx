@@ -15,6 +15,7 @@ import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { EmptySegment, fundedAmountFormatter } from "./CategoryRow";
 import pluralize from "pluralize";
+import formatCurrency from "@/utilities/formatCurrency";
 
 export const prepareChartData = (
   timestamps: string[],
@@ -91,7 +92,7 @@ const AggregateMetricCard = ({
       index={"date"}
       categories={["Avg", "Total", "Min", "Max"]}
       colors={["blue", "green", "red", "yellow"]}
-      valueFormatter={(value) => `${value}`}
+      valueFormatter={(value) => `${formatCurrency(value)}`}
       yAxisWidth={40}
       enableLegendSlider
       noDataText="Awaiting grantees to submit values"

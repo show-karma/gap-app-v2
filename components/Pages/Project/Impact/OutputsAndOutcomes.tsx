@@ -20,6 +20,7 @@ import { GrantsOutputsLoading } from "../Loading/Grants/Outputs";
 import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
 import { useImpactAnswers } from "@/hooks/useImpactAnswers";
 import { GroupedLinks } from "./GroupedLinks";
+import formatCurrency from "@/utilities/formatCurrency";
 
 // Helper function to handle comma-separated URLs
 const parseProofUrls = (proof: string): string[] => {
@@ -416,7 +417,9 @@ export const OutputsAndOutcomes = () => {
                             index="date"
                             categories={[item.name]}
                             colors={["blue"]}
-                            valueFormatter={(value) => `${value}`}
+                            valueFormatter={(value) =>
+                              `${formatCurrency(value)}`
+                            }
                             showLegend={false}
                             noDataText="Awaiting grantees to submit values"
                             onValueChange={(v) => {
