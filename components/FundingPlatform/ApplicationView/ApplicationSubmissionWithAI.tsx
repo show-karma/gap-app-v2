@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 import { AIEvaluationDisplay } from '@/components/FundingPlatform/AIEvaluationDisplay';
 import { useRealTimeAIEvaluation } from '@/hooks/useRealTimeAIEvaluation';
 import { FormSchema } from '@/types/question-builder';
+import { LoadingOverlay } from '@/components/Utilities/LoadingOverlay';
 
 interface IApplicationSubmissionWithAIProps {
   programId: string;
@@ -480,7 +481,13 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       {/* Form Section */}
       <div className="lg:col-span-2">
-        <div className="flex flex-col w-full space-y-6">
+        <div className="relative flex flex-col w-full space-y-6">
+          {/* Loading Overlay for form submission */}
+          <LoadingOverlay 
+            isLoading={submitting} 
+            message="Submitting application..." 
+          />
+          
           {/* Header */}
           <div className="flex flex-col space-y-2">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -538,7 +545,13 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
 
       {/* AI Evaluation Sidebar */}
       <div className="lg:col-span-1">
-        <div className="sticky top-6">
+        <div className="sticky top-6 relative">
+          {/* Loading Overlay for AI evaluation */}
+          <LoadingOverlay 
+            isLoading={isEvaluating} 
+            message="Evaluating with AI..." 
+          />
+          
           <AIEvaluationDisplay
             evaluation={evaluation}
             isLoading={isEvaluating}
