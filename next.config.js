@@ -17,7 +17,7 @@ const nextConfig = {
   staticPageGenerationTimeout: 10000,
   turbopack: {},
   eslint: {
-    dirs: ["app", "components", "utilities", "hooks", "store", "types"],
+    dirs: ["src"],
   },
 
   webpack: (config, { isServer, webpack }) => {
