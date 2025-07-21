@@ -4,19 +4,17 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import toast from "react-hot-toast";
 import { useProjectStore } from "@/features/projects/lib/store";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import fetchData from "@/lib/utils/fetch-data";
 import { Button } from "@/components/ui/button";
-import { Hex } from "viem";
 import Image from "next/image";
 import { TrashIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
-import { generateRandomString } from "@/utilities/generateRandomString";
 
 import { errorManager } from "@/lib/utils/error-manager";
-import { useContactInfo } from "@/hooks/useContactInfo";
-import { useMutation } from "@tanstack/react-query";
+import { useContactInfo } from "@/features/projects/hooks/use-contact-info";
 import { useAccount } from "wagmi";
 import { Contact } from "@/features/projects/types";
+import { generateRandomString } from "@/lib/utils/generateRandomString";
 
 const labelStyle = "text-sm font-bold";
 const inputStyle =

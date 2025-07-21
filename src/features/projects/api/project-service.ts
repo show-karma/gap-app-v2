@@ -1,6 +1,6 @@
 import { fetchData } from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { INDEXER } from "@/services/indexer";
+import { gapIndexerApi } from "@/services/gap-indexer/gap-indexer";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { Hex } from "viem";
 

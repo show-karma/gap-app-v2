@@ -1,6 +1,6 @@
 import { useProjectStore } from "@/features/projects/lib/store";
 import { useProgressModalStore } from "@/features/modals/lib/stores/progress";
-import { PAGES } from "@/utilities/pages";
+import { PAGES } from "@/config/pages";
 import { useRouter } from "next/navigation";
 
 export const NoGrant = () => {

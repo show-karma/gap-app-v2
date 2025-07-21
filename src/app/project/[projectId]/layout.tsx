@@ -5,10 +5,10 @@ import {
   QueryClient,
 } from "@tanstack/react-query";
 
-import { generateProjectOverviewMetadata } from "@/utilities/metadata/projectMetadata";
-import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
+import { generateProjectOverviewMetadata } from "@/features/projects/lib/metadata/projectMetadata";
+import { getProjectCachedData } from "@/lib/queries/getProjectCachedData";
 import { Metadata } from "next";
-import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
+import { defaultQueryOptions } from "@/lib/queries/defaultOptions";
 import { ProjectWrapper } from "@/features/projects/components/project-page/wrapper";
 
 type Params = Promise<{

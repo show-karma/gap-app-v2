@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { gapIndexerApi } from "@/services/gap-indexer/gap-indexer";
 import { useCommunitiesStore } from "@/features/communities/lib/communities-store";
 import { useEffect } from "react";
 import errorManager from "@/lib/utils/error-manager";

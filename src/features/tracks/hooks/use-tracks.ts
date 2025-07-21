@@ -1,9 +1,9 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchTrackById, fetchProjectsByTrack } from "@/utilities/sdk/tracks";
 import { trackService, Track } from "../api/tracks";
 import toast from "react-hot-toast";
+import { fetchProjectsByTrack, fetchTrackById } from "../api/sdk";
 
 // Query keys
 export const TRACK_QUERY_KEYS = {

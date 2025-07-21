@@ -6,7 +6,7 @@ import { isAddress } from "viem";
 import { FileUpload } from "@/components/ui/file-upload";
 import toast from "react-hot-toast";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
-import { cn } from "@/utilities/tailwind";
+import { cn } from "@/lib/utils/cn";
 
 export interface CsvPayoutData {
   projectSlug: string;

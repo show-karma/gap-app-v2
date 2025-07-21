@@ -1,9 +1,9 @@
 "use client";
 import { cookieToInitialState, WagmiProvider as Wagmi } from "wagmi";
 import { RainbowKitProvider, lightTheme } from "@rainbow-me/rainbowkit";
-import { config } from "@/utilities/wagmi/config";
+import { config } from "@/lib/web3/wagmi/config";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
+import { defaultQueryOptions } from "@/lib/queries/defaultOptions";
 
 export const queryClient = new QueryClient({
   defaultOptions: {

@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { defaultMetadata } from "@/utilities/meta";
+import { defaultMetadata } from "@/lib/metadata/meta";
 import { Suspense } from "react";
 import { Spinner } from "@/components/ui/spinner";
 import { CommunitiesToAdmin } from "@/features/admin/components";

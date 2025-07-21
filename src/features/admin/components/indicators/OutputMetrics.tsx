@@ -3,7 +3,7 @@ import { Card, Title, AreaChart, Grid, Metric, Text } from "@tremor/react";
 import axios from "axios";
 import { envVars } from "@/config/env";
 import { Field, Label, Radio, RadioGroup } from "@headlessui/react";
-import { cn } from "@/utilities/tailwind";
+import { cn } from "@/lib/utils/cn";
 
 type MetricDataPoint = {
   _id: {

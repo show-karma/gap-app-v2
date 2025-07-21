@@ -1,11 +1,11 @@
 "use client";
 import fetchData from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
 import { Card, Title } from "@tremor/react";
 import errorManager from "@/lib/utils/error-manager";
+import { INDEXER } from "@/services/indexer";
 
 export function GlobalCount() {
   const [stats, setStats] = useState<any>([]);

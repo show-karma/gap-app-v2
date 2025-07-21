@@ -11,11 +11,11 @@ import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/24/solid";
 import { cn } from "@/lib/utils/cn";
 import { CheckIcon } from "@heroicons/react/20/solid";
 import { queryClient } from "@/components/providers/wagmi-provider";
-import { getExplorerProjects } from "@/utilities/indexer/getExplorerProjects";
 import {
   ExplorerSortByOptions,
   ExplorerSortOrder,
 } from "@/features/search/types";
+import { getExplorerProjects } from "@/services/indexer";
 
 const sortOptions: Record<ExplorerSortByOptions, string> = {
   createdAt: "Recently Added",

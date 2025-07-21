@@ -1,5 +1,5 @@
 import { FundingMapWrapper } from "@/features/program-registry/components/FundingMapWrapper";
-import { customMetadata } from "@/utilities/meta";
+import { customMetadata } from "@/lib/metadata/meta";
 import { Metadata } from "next";
 
 export const metadata: Metadata = customMetadata({

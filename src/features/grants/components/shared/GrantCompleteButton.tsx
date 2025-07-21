@@ -3,7 +3,7 @@
 import { useProjectStore } from "@/features/projects/lib/store";
 import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 import { useCommunityAdminStore } from "@/features/communities/lib/community-admin-store";
-import { PAGES } from "@/utilities/pages";
+import { PAGES } from "@/config/pages";
 import { CheckCircleIcon } from "@heroicons/react/24/outline";
 import {
   IGrantResponse,

@@ -1,9 +1,9 @@
 import { envVars } from "@/config/env";
+import { getAllMilestones } from "@/features/milestones/api/getAllMilestones";
 import { ProjectRoadmap } from "@/features/projects/components/roadmap";
-import { getAllMilestones } from "@/utilities/gapIndexerApi/getAllMilestones";
-import { defaultMetadata } from "@/utilities/meta";
-import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
-import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
+import { defaultMetadata } from "@/lib/metadata/meta";
+import { defaultQueryOptions } from "@/lib/queries/defaultOptions";
+import { getProjectCachedData } from "@/lib/queries/getProjectCachedData";
 import {
   dehydrate,
   HydrationBoundary,

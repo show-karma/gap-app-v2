@@ -1,4 +1,4 @@
-import { cn } from "@/utilities/tailwind";
+import { cn } from "@/lib/utils/cn";
 import React from "react";
 
 interface SkeletonProps {

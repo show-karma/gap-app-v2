@@ -1,5 +1,5 @@
 import React from "react";
-import { cn } from "@/utilities/tailwind";
+import { cn } from "@/lib/utils/cn";
 
 interface LogOutIconProps {
   className?: string;

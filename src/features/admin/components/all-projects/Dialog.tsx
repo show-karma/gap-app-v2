@@ -3,7 +3,7 @@ import { FC, Fragment, ReactNode, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { MarkdownPreview } from "@/components/ui/markdown-preview";
 import { Button } from "@/components/ui/button";
-import { ReadMore } from "@/utilities/ReadMore";
+import { ReadMore } from "@/components/ui/read-more";
 
 type ProjectDescriptionDialogProps = {
   projectName: string;

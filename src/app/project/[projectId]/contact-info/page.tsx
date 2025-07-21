@@ -3,12 +3,12 @@ import React from "react";
 
 import { Hex } from "viem";
 import { Metadata } from "next";
-import { zeroUID } from "@/utilities/commons";
-import { defaultMetadata } from "@/utilities/meta";
+import { zeroUID } from "@/lib/utils/misc";
+import { defaultMetadata } from "@/lib/metadata/meta";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { envVars } from "@/config/env";
-import { cleanMarkdownForPlainText } from "@/utilities/markdown";
-import { getMetadata } from "@/utilities/sdk/getMetadata";
+import { cleanMarkdownForPlainText } from "@/lib/markdown";
+import { getMetadata } from "@/services/meta/getMetadata";
 import ContactInfoPage from "@/features/projects/components/shared/contact-info-page";
 
 type Params = Promise<{

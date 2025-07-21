@@ -1,9 +1,9 @@
-import { defaultMetadata } from "@/utilities/meta";
+import { defaultMetadata } from "@/lib/metadata/meta";
 import { notFound } from "next/navigation";
-import { zeroUID } from "@/utilities/commons";
+import { zeroUID } from "@/lib/utils/misc";
 import { Suspense } from "react";
 import { Spinner } from "@/components/ui/spinner";
-import { getCommunityData } from "@/utilities/queries/getCommunityData";
+import { getCommunityData } from "@/lib/queries/getCommunityData";
 import CommunityAdminPage from "@/features/communities/components/community-page/admin-page";
 
 export const metadata = defaultMetadata;

@@ -11,10 +11,10 @@ import {
 import { CheckIcon } from "@heroicons/react/24/solid";
 import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import * as Popover from "@radix-ui/react-popover";
-import { shortAddress } from "@/utilities/shortAddress";
+import { shortAddress } from "@/lib/format/address";
 import { cn } from "@/lib/utils/cn";
-import { chainImgDictionary } from "@/utilities/chainImgDictionary";
-import { chainNameDictionary } from "@/utilities/chainNameDictionary";
+import { chainImgDictionary } from "@/lib/web3/chainImgDictionary";
+import { chainNameDictionary } from "@/lib/web3/chainNameDictionary";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { createElement, ElementType } from "react";
 

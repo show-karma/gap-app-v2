@@ -1,5 +1,5 @@
 "use client";
-import { getCommunityCategory } from "@/utilities/queries/getCommunityCategory";
+import { getCommunityCategory } from "@/lib/queries/getCommunityCategory";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 

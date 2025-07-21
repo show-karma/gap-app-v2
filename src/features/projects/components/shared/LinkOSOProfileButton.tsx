@@ -6,7 +6,7 @@ import { useProjectStore } from "@/features/projects/lib/store";
 import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 import { useCommunityAdminStore } from "@/features/communities/lib/community-admin-store";
 import { fetchData } from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import { MESSAGES } from "@/config/messages";
 import { Dialog, Transition } from "@headlessui/react";
 import {

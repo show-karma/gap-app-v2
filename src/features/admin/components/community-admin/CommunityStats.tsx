@@ -8,7 +8,7 @@ import { MESSAGES } from "@/config/messages";
 import React from "react";
 import { blo } from "blo";
 import fetchData from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 
 interface CommunityStatsData {
   projects: number;

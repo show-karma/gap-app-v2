@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchData } from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import toast from "react-hot-toast";
 
 // Types based on backend implementation

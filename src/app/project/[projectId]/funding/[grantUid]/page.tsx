@@ -1,9 +1,9 @@
-import { zeroUID } from "@/utilities/commons";
+import { zeroUID } from "@/lib/utils/misc";
 import { envVars } from "@/config/env";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { cleanMarkdownForPlainText } from "@/utilities/markdown";
-import { defaultMetadata } from "@/utilities/meta";
-import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
+import { gapIndexerApi } from "@/services/gap-indexer/gap-indexer";
+import { cleanMarkdownForPlainText } from "@/lib/markdown";
+import { defaultMetadata } from "@/lib/metadata/meta";
+import { getProjectCachedData } from "@/lib/queries/getProjectCachedData";
 
 import { Metadata } from "next";
 import { notFound } from "next/navigation";

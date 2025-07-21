@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "@/components/ui/external-link";
 import TablePagination from "@/components/ui/pagination/table-pagination";
-import { PAGES } from "@/utilities/pages";
+import { PAGES } from "@/config/pages";
 import {
   ChevronDownIcon,
   ChevronUpDownIcon,

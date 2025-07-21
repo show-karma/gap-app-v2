@@ -7,11 +7,11 @@ import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
 import { useProjectStore } from "@/features/projects/lib/store";
 import fetchData from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 
 import React from "react";
 
-import { cn } from "@/utilities/tailwind";
+import { cn } from "@/lib/utils/cn";
 import { useGrantGenieModalStore } from "@/features/modals/lib/stores/genie";
 import { Spinner } from "@/components/ui/spinner";
 type Props = {};

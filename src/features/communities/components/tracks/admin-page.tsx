@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, Fragment } from "react";
 import { useAuthStore } from "@/features/auth/lib/store";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { useSigner } from "@/lib/web3/eas-wagmi-utils";
 import { MESSAGES } from "@/config/messages";
 import { useIsCommunityAdmin } from "@/features/admin/hooks/use-is-community-admin";
 import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
@@ -19,7 +19,7 @@ import {
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils/cn";
 import { Dialog, Transition } from "@headlessui/react";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import {
   useTracksForCommunity,
   useTracksForProgram,
@@ -35,7 +35,7 @@ import { useCommunityPrograms } from "@/features/program-registry/hooks/use-prog
 import { CreateTrackModal } from "./CreateTrackModal";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { PAGES } from "@/utilities/pages";
+import { PAGES } from "@/config/pages";
 import { ChevronLeftIcon } from "@heroicons/react/24/solid";
 import { EditTrackModal } from "./EditTrackModal";
 

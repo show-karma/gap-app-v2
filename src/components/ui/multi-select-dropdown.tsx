@@ -6,7 +6,7 @@ import {
   CheckIcon,
   MagnifyingGlassIcon,
 } from "@heroicons/react/24/solid";
-import { cn } from "@/utilities/tailwind";
+import { cn } from "@/lib/utils/cn";
 
 export interface DropdownItem {
   id: string;

@@ -1,5 +1,5 @@
-import { zeroUID } from "@/utilities/commons";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { zeroUID } from "@/lib/utils/misc";
+import { gapIndexerApi } from "@/services/gap-indexer/gap-indexer";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useQuery } from "@tanstack/react-query";
 

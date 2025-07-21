@@ -5,16 +5,16 @@ import { useProjectStore } from "@/features/projects/lib/store";
 import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
-import { useTeamProfiles } from "@/hooks/useTeamProfiles";
+import { useTeamProfiles } from "@/features/projects/hooks/use-team-profiles";
 
-import { PAGES } from "@/utilities/pages";
+import { PAGES } from "@/config/pages";
 import Link from "next/link";
 
 import EthereumAddressToENSAvatar from "@/features/ens/components/address-to-ens-avatar";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useENS } from "@/features/ens/lib/store";
-import formatCurrency from "@/utilities/formatCurrency";
-import { shortAddress } from "@/utilities/shortAddress";
+import { formatCurrency } from "@/lib/format/currency";
+import { shortAddress } from "@/lib/format/address";
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
 import { Hex } from "viem";
 
@@ -25,8 +25,8 @@ import { fetchData } from "@/lib/utils/fetch-data";
 import {
   getProjectMemberRoles,
   Member,
-} from "@/utilities/getProjectMemberRoles";
-import { INDEXER } from "@/utilities/indexer";
+} from "@/features/projects/lib/getProjectMemberRoles";
+import { INDEXER } from "@/services/indexer";
 import { PencilIcon } from "@heroicons/react/24/outline";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { useQuery } from "@tanstack/react-query";
@@ -34,7 +34,7 @@ import dynamic from "next/dynamic";
 import pluralize from "pluralize";
 import { useAccount } from "wagmi";
 import { InformationBlock } from "./ProjectBodyTabs";
-import { useMemberRoles } from "@/hooks/useMemberRoles";
+import { useMemberRoles } from "@/features/projects/hooks/use-member-roles";
 import ProjectSubscription from "../shared/subscription";
 import { ProjectSubTabs } from "./sub-tabs";
 import useProjectInstance from "../../hooks/use-project-instance";

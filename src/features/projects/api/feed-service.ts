@@ -1,5 +1,5 @@
 import { fetchData } from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 
 /**
  * Fetches the activity feed for a project

@@ -11,7 +11,7 @@ import {
 } from "@/services/blockchain/utils/eas-wagmi-utils";
 
 import { useStepper } from "@/features/modals/lib/stores/txStepper";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { gapIndexerApi } from "@/services/gap-indexer/gap-indexer";
 import debounce from "lodash.debounce";
 import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
 import { PAGES } from "@/config/pages";
@@ -28,7 +28,7 @@ import { useRouter } from "next/navigation";
 import EthereumAddressToENSAvatar from "@/features/ens/components/address-to-ens-avatar";
 import { errorManager } from "@/lib/utils/error-manager";
 import fetchData from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import { sanitizeInput } from "@/lib/utils/sanitize";
 import EthereumAddressToENSName from "@/features/ens/components/address-to-ens-name";
 import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";

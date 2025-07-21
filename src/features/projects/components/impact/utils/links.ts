@@ -1,4 +1,4 @@
-import { urlRegex } from "@/utilities/regexs/urlRegex";
+import { urlRegex } from "@/lib/utils/regex/urlRegex";
 
 // Map network to block explorer URL
 const explorerUrls: Record<string, string> = {

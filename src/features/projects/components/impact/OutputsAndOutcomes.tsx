@@ -6,9 +6,9 @@ import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 
 import { fetchData } from "@/lib/utils/fetch-data";
 import { formatDate } from "@/lib/format/date";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import { MESSAGES } from "@/config/messages";
-import { urlRegex } from "@/lib/utils/regex";
+import { urlRegex } from "@/lib/utils/regex/urlRegex";
 import { cn } from "@/lib/utils/cn";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { AreaChart, Card, Title } from "@tremor/react";

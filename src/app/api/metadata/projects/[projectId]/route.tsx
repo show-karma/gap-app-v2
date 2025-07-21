@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
-import { cleanMarkdownForPlainText } from "@/utilities/markdown";
-import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
+import { cleanMarkdownForPlainText } from "@/lib/markdown";
+import { getProjectCachedData } from "@/lib/queries/getProjectCachedData";
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
 import pluralize from "pluralize";

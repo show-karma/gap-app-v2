@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { getAllMilestones } from "@/utilities/gapIndexerApi/getAllMilestones";
 import { UnifiedMilestone } from "@/types/roadmap";
 import { queryClient } from "@/components/providers/wagmi-provider";
 import { useProjectStore } from "@/features/projects/lib/store";
+import { getAllMilestones } from "../api/getAllMilestones";
 
 const sortDescendly = (milestones: UnifiedMilestone[]) => {
   const sortedMilestones = milestones.sort((a, b) => {

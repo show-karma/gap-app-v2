@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { gapIndexerApi } from "@/services/gap-indexer/gap-indexer";
 
 interface GrantStore {
   grant: IGrantResponse | undefined;

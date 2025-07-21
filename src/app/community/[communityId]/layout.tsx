@@ -1,8 +1,8 @@
-import { communityColors } from "@/utilities/communityColors";
+import { communityColors } from "@/features/communities/lib/communityColors";
 import { envVars } from "@/config/env";
-import { defaultMetadata } from "@/utilities/meta";
-import { pagesOnRoot } from "@/utilities/pagesOnRoot";
-import { getCommunityData } from "@/utilities/queries/getCommunityData";
+import { defaultMetadata } from "@/lib/metadata/meta";
+import { pagesOnRoot } from "@/config/pagesOnRoot";
+import { getCommunityData } from "@/lib/queries/getCommunityData";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { Metadata } from "next";
 import { CommunityImpactStatCards } from "@/features/communities/components/impact/StatCards";

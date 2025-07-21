@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import errorManager from "@/lib/utils/error-manager";
 import { ExternalLink } from "@/components/ui/external-link";
 import fetchData from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import { useState, useTransition } from "react";

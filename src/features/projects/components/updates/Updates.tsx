@@ -13,7 +13,7 @@ import { FC, useEffect, useState } from "react";
 import { MESSAGES } from "@/config/messages";
 import { Button } from "@/components/ui/button";
 import { useProgressModalStore } from "@/features/modals/lib/stores/progress";
-import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
+import { getProjectObjectives } from "@/features/projects/api/getProjectObjectives";
 import { useQuery } from "@tanstack/react-query";
 import { ActivityList } from "@/features/feed/components/activity-list";
 

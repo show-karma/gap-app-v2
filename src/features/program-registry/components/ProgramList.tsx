@@ -1,5 +1,5 @@
 "use client";
-import { ReadMore } from "@/utilities/ReadMore";
+import { ReadMore } from "@/components/ui/read-more";
 import Image from "next/image";
 import { FC, useMemo, useRef } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
@@ -18,7 +18,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { formatDate } from "@/utilities/formatDate";
+import { formatDate } from "@/lib/format/date";
 import Link from "next/link";
 
 import { GrantProgram } from "../types";

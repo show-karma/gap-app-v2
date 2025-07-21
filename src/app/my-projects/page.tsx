@@ -1,5 +1,5 @@
 import MyProjects from "@/features/projects/components/my-projects";
-import { defaultMetadata } from "@/utilities/meta";
+import { defaultMetadata } from "@/lib/metadata/meta";
 
 export const metadata = defaultMetadata;
 

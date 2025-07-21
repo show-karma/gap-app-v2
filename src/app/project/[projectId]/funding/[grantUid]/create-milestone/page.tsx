@@ -3,7 +3,7 @@ import { useGrantStore } from "@/features/grants/lib/store";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { XMarkIcon } from "@heroicons/react/24/solid";
-import { PAGES } from "@/utilities/pages";
+import { PAGES } from "@/config/pages";
 import { useProjectStore } from "@/features/projects/lib/store";
 import { DefaultLoading } from "@/components/ui/default-loading";
 

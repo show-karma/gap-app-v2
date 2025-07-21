@@ -1,4 +1,4 @@
-import { cn } from "@/utilities/tailwind";
+import { cn } from "@/lib/utils/cn";
 import Image from "next/image";
 import { ActivityType } from "./ActivityTypes";
 

@@ -8,7 +8,7 @@ import {
   sepolia,
   sei,
   lisk,
-  scroll
+  scroll,
 } from "viem/chains";
 import type { TNetwork } from "@show-karma/karma-gap-sdk";
 
@@ -115,6 +115,3 @@ export function getChainNameById(id: number): TNetwork {
     }
   }
 }
-
-export const checkNetworkIsValid = (networkId?: number) =>
-  networkId && (appNetwork.map((a) => a.id) as number[]).includes(networkId);

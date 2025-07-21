@@ -1,5 +1,5 @@
 import { fetchData } from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 
 /**
  * Updates external links for a project

@@ -1,7 +1,7 @@
 import {
   authCookiePath,
   authWalletTypeCookiePath,
-} from "@/utilities/auth-keys";
+} from "@/features/auth/lib/auth-keys";
 
 // Constants for cookie keys and BroadcastChannel
 export const AUTH_IN_PROGRESS_COOKIE = "gap_auth_in_progress";

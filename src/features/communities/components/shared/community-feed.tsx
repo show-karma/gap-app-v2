@@ -1,10 +1,10 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 import { Feed } from "@/features/feed/types";
-import { feedIconDictionary, getFeedHref } from "@/utilities/feed";
+import { feedIconDictionary, getFeedHref } from "@/features/feed/lib/feed";
 import { fetchData } from "@/lib/utils/fetch-data";
-import { formatDate } from "@/utilities/formatDate";
-import { INDEXER } from "@/utilities/indexer";
+import { formatDate } from "@/lib/format/date";
+import { INDEXER } from "@/services/indexer";
 import { cn } from "@/lib/utils/cn";
 import { useQuery } from "@tanstack/react-query";
 import { useTheme } from "next-themes";

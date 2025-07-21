@@ -1,7 +1,6 @@
 "use client";
 
 import { useQueryState } from "nuqs";
-import { StatusOptions } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { useProjectStore } from "@/features/projects/lib/store";
 import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -16,9 +15,10 @@ import { Listbox, Transition } from "@headlessui/react";
 import { CheckIcon } from "@heroicons/react/20/solid";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import { Fragment, useState, useEffect, useMemo } from "react";
-import { cn } from "@/utilities/tailwind";
+import { cn } from "@/lib/utils/cn";
 import pluralize from "pluralize";
 import { ActivityCard } from "@/features/feed/components/activity-card";
+import { StatusOptions } from "@/features/projects/api/getProjectObjectives";
 
 // Filter options for the content type filter
 const CONTENT_TYPE_OPTIONS: Record<string, string> = {

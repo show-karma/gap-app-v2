@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useProjectStore } from "@/features/projects/lib/store";
 import { useAccount } from "wagmi";
 import fetchData from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import { errorManager } from "@/lib/utils/error-manager";
 import { ContributorProfile } from "@show-karma/karma-gap-sdk";
 import { Twitter2Icon } from "@/components/icons/Twitter2";

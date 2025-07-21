@@ -3,7 +3,7 @@
 import { GrantProgram } from "@/features/program-registry/components/ProgramList";
 import { useCommunityStore } from "@/features/communities/lib/community-store";
 import { zeroUID } from "@/lib/utils/misc";
-import { getGrants } from "@/utilities/sdk/communities/getGrants";
+import { getGrants } from "@/features/communities/api/sdk/getGrants";
 import { cn } from "@/lib/utils/cn";
 import { Listbox, Transition } from "@headlessui/react";
 import { CheckIcon } from "@heroicons/react/20/solid";

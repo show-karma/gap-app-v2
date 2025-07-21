@@ -1,5 +1,5 @@
+import { getMetadata } from "@/services/meta/getMetadata";
 import { NextRequest, NextResponse } from "next/server";
-import { getMetadata } from "@/utilities/sdk/getMetadata";
 import { Hex } from "viem";
 
 export async function GET(request: NextRequest) {

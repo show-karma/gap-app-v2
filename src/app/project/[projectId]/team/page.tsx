@@ -1,13 +1,13 @@
 import React from "react";
 import { Hex } from "viem";
 import { Metadata } from "next";
-import { getMetadata } from "@/utilities/sdk/getMetadata";
-import { zeroUID } from "@/utilities/commons";
-import { defaultMetadata } from "@/utilities/meta";
+import { getMetadata } from "@/services/meta/getMetadata";
+import { zeroUID } from "@/lib/utils/misc";
+import { defaultMetadata } from "@/lib/metadata/meta";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { envVars } from "@/config/env";
 import { notFound } from "next/navigation";
-import { cleanMarkdownForPlainText } from "@/utilities/markdown";
+import { cleanMarkdownForPlainText } from "@/lib/markdown";
 import { Team } from "@/features/projects/components/team";
 
 type Params = Promise<{

@@ -2,8 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { PlusIcon } from "@heroicons/react/24/solid";
 import { Button } from "@/components/ui/button";
-import { chosenCommunities } from "@/utilities/chosenCommunities";
-import { PAGES } from "@/utilities/pages";
+import { chosenCommunities } from "@/features/communities/lib/chosenCommunities";
+import { PAGES } from "@/config/pages";
 import { ImageTheme } from "@/components/ui/image-theme";
 
 export const Communities = () => {

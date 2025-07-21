@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { DeleteDialog } from "@/components/ui/delete-dialog";
 import { ExternalLink } from "@/components/ui/external-link";
-import { cn } from "@/utilities/tailwind";
+import { cn } from "@/lib/utils/cn";
 
 interface ActivityMenuProps {
   onShare?: () => void;

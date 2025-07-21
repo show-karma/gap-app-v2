@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { useProjectStore } from "@/features/projects/lib/store";
-import { ReadMore } from "@/utilities/ReadMore";
+import { ReadMore } from "@/components/ui/read-more";
 import {
   CheckCircleIcon,
   ExclamationTriangleIcon,

@@ -10,8 +10,8 @@ import { useAuthStore } from "@/features/auth/lib/store";
 
 import { useAccount } from "wagmi";
 import { getWalletClient } from "@wagmi/core";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
+import { walletClientToSigner } from "@/lib/web3/eas-wagmi-utils";
+import { checkNetworkIsValid } from "@/lib/web3/network-validation";
 import { MESSAGES } from "@/config/messages";
 import { getGapClient, useGap } from "@/hooks/useGap";
 
@@ -20,15 +20,15 @@ import { useStepper } from "@/features/modals/lib/stores/txStepper";
 import { useProjectStore } from "@/features/projects/lib/store";
 import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 import { Hex } from "viem";
-import { config } from "@/utilities/wagmi/config";
-import { getProjectById } from "@/utilities/sdk/projects";
+import { config } from "@/lib/web3/wagmi/config";
+import { getProjectById } from "@/features/projects/api/sdk";
 import {
   IProjectImpact,
   IProjectImpactStatus,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { errorManager } from "@/lib/utils/error-manager";
 import { fetchData } from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import { sanitizeObject } from "@/lib/utils/sanitize";
 import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
 import { useWallet } from "@/features/auth/hooks/use-wallet";

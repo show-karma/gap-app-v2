@@ -4,10 +4,10 @@ import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useProjectStore } from "@/features/projects/lib/store";
 import { useStepper } from "@/features/modals/lib/stores/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { walletClientToSigner } from "@/lib/web3/eas-wagmi-utils";
 import { MESSAGES } from "@/config/messages";
-import { PAGES } from "@/utilities/pages";
-import { cn } from "@/utilities/tailwind";
+import { PAGES } from "@/config/pages";
+import { cn } from "@/lib/utils/cn";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { GrantUpdate } from "@show-karma/karma-gap-sdk";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
@@ -20,15 +20,15 @@ import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 import errorManager from "@/lib/utils/error-manager";
-import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { sanitizeObject } from "@/lib/utils/sanitize";
 import { useGrantStore } from "@/features/grants/lib/store";
 import fetchData from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
 import { useShareDialogStore } from "@/features/modals/lib/stores/shareDialog";
-import { SHARE_TEXTS } from "@/utilities/share/text";
+import { SHARE_TEXTS } from "@/features/share/lib/text";
 import { useWallet } from "@/features/auth/hooks/use-wallet";
+import { urlRegex } from "@/lib/utils/regex/urlRegex";
 
 const updateSchema = z.object({
   title: z

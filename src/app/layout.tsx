@@ -1,4 +1,4 @@
-import { defaultMetadata } from "@/utilities/meta";
+import { defaultMetadata } from "@/lib/metadata/meta";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "@/styles/globals.css";
 import "@/styles/index.scss";

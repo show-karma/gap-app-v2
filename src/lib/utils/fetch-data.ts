@@ -1,7 +1,7 @@
 import axios, { Method } from "axios";
 import { envVars } from "@/config/env";
 import { sanitizeObject } from "@/lib/utils/sanitize";
-import { getCookiesFromStoredWallet } from "@/utilities/getCookiesFromStoredWallet";
+import { getCookiesFromStoredWallet } from "@/features/auth/lib/get-cookies-from-stored-wallet";
 
 async function fetchData(
   endpoint: string,

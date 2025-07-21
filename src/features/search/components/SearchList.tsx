@@ -19,7 +19,7 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useEffect, useState } from "react";
 
 import EthereumAddressToENSAvatar from "@/features/ens/components/address-to-ens-avatar";
-import { groupSimilarCommunities } from "@/utilities/communityHelpers"; // You'll need to create this utility function
+import { groupSimilarCommunities } from "@/features/communities/lib/communityHelpers"; // You'll need to create this utility function
 import { useRouter } from "next/navigation";
 import { useMobileStore } from "@/hooks/use-mobile-store";
 

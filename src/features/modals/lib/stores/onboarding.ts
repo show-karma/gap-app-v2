@@ -1,4 +1,4 @@
-import { mixpanelEvent } from "@/utilities/mixpanelEvent";
+import { mixpanelEvent } from "@/lib/analytics/mixpanel";
 import { Hex } from "viem";
 import { create } from "zustand";
 

@@ -5,7 +5,7 @@ import { ActivityStatus } from "./ActivityStatus";
 import { ActivityStatusHeader } from "./ActivityStatusHeader";
 import { ActivityMenu } from "./ActivityMenu";
 import { ActivityAttribution } from "./ActivityAttribution";
-import { ReadMore } from "@/utilities/ReadMore";
+import { ReadMore } from "@/components/ui/read-more";
 import { PAGES } from "@/config/pages";
 import { ProjectActivityBlock } from "@/features/projects/components/updates/ProjectActivityBlock";
 import { EditUpdateDialog } from "@/features/projects/components/updates/EditUpdateDialog";

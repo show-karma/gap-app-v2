@@ -3,7 +3,7 @@
 
 import { formatCurrency } from "@/lib/format/currency";
 import { formatDate } from "@/lib/format/date";
-import { PAGES } from "@/utilities/pages";
+import { PAGES } from "@/config/pages";
 import pluralize from "pluralize";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Link from "next/link";

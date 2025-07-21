@@ -1,11 +1,11 @@
-import { defaultMetadata } from "@/utilities/meta";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { defaultMetadata } from "@/lib/metadata/meta";
+import { gapIndexerApi } from "@/services/gap-indexer/gap-indexer";
 import { notFound } from "next/navigation";
-import { zeroUID } from "@/utilities/commons";
+import { zeroUID } from "@/lib/utils/misc";
 import fetchData from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import { GrantProgram } from "@/features/program-registry/types";
-import { getCommunityData } from "@/utilities/queries/getCommunityData";
+import { getCommunityData } from "@/lib/queries/getCommunityData";
 import errorManager from "@/lib/utils/error-manager";
 import { ReportMilestonePage } from "@/features/admin/components/community-admin/ReportMilestonePage";
 

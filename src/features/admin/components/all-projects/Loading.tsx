@@ -1,5 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/utilities/tailwind";
+import { cn } from "@/lib/utils/cn";
 import { FC } from "react";
 
 const rowClass =

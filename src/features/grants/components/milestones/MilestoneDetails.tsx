@@ -4,7 +4,7 @@ import { useProjectStore } from "@/features/projects/lib/store";
 import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 import { useCommunityAdminStore } from "@/features/communities/lib/community-admin-store";
 import { formatDate } from "@/lib/format/date";
-import { ReadMore } from "@/utilities/ReadMore";
+import { ReadMore } from "@/components/ui/read-more";
 import { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { type FC } from "react";
 import { MilestoneDelete } from "./MilestoneDelete";

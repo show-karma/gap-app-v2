@@ -6,15 +6,15 @@ import { z } from "zod";
 import toast from "react-hot-toast";
 import { useProjectStore } from "@/features/projects/lib/store";
 import { useOwnerStore } from "@/features/contract-owner/lib/owner";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import fetchData from "@/lib/utils/fetch-data";
 import { TrashIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 
-import { generateRandomString } from "@/utilities/generateRandomString";
-import { useContactInfo } from "@/hooks/useContactInfo";
+import { useContactInfo } from "@/features/projects/hooks/use-contact-info";
 import { Contact } from "@/features/projects/types";
 import errorManager from "@/lib/utils/error-manager";
 import { Button } from "@/components/ui/button";
+import { generateRandomString } from "@/lib/utils/generateRandomString";
 
 const labelStyle = "text-sm font-bold";
 const inputStyle =

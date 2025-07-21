@@ -2,7 +2,7 @@
 import EthereumAddressToENSAvatar from "@/features/ens/components/address-to-ens-avatar";
 import EthereumAddressToENSName from "@/features/ens/components/address-to-ens-name";
 import { formatDate } from "@/lib/format/date";
-import { ReadMore } from "@/utilities/ReadMore";
+import { ReadMore } from "@/components/ui/read-more";
 import { useState } from "react";
 import { cn } from "@/lib/utils/cn";
 import dynamic from "next/dynamic";

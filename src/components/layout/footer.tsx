@@ -1,10 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import { DiscordIcon, TelegramIcon, TwitterIcon } from "../icons";
-import { SOCIALS } from "@/utilities/socials";
+import { SOCIALS } from "@/config/socials";
 import { ParagraphIcon } from "../icons/Paragraph";
-import { PAGES } from "@/utilities/pages";
-import { karmaLinks } from "@/utilities/karma/karma";
+import { PAGES } from "@/config/pages";
+import { karmaLinks } from "@/features/karma-gap/lib/karma";
 import { ExternalLink } from "../ui/external-link";
 
 const navigation = {

@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 import fetchData from "@/lib/utils/fetch-data";
 import { useParams } from "next/navigation";
 import { useAuthStore } from "@/features/auth/lib/store";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 
 import errorManager from "@/lib/utils/error-manager";
 import { MESSAGES } from "@/config/messages";

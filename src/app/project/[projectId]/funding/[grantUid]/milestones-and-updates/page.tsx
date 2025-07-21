@@ -1,12 +1,12 @@
-import { zeroUID } from "@/utilities/commons";
-import { defaultMetadata } from "@/utilities/meta";
+import { zeroUID } from "@/lib/utils/misc";
+import { defaultMetadata } from "@/lib/metadata/meta";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { gapIndexerApi } from "@/services/gap-indexer/gap-indexer";
 import { Suspense } from "react";
 import { envVars } from "@/config/env";
-import { cleanMarkdownForPlainText } from "@/utilities/markdown";
-import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
+import { cleanMarkdownForPlainText } from "@/lib/markdown";
+import { getProjectCachedData } from "@/lib/queries/getProjectCachedData";
 import { ProjectGrantsMilestonesAndUpdatesLoading } from "@/features/projects/components/loading/Grants/MilestonesAndUpdate";
 import MilestonesAndUpdates from "@/features/grants/components/grant-page/MilestonesAndUpdates";
 

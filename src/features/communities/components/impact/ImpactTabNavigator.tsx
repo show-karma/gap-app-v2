@@ -1,5 +1,5 @@
 "use client";
-import { PAGES } from "@/utilities/pages";
+import { PAGES } from "@/config/pages";
 import { cn } from "@/lib/utils/cn";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";

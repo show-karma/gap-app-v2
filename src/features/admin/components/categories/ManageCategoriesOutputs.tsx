@@ -3,10 +3,10 @@ import { Button } from "@/components/ui/button";
 import errorManager from "@/lib/utils/error-manager";
 
 import fetchData from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import { MESSAGES } from "@/config/messages";
-import { PAGES } from "@/utilities/pages";
-import { cn } from "@/utilities/tailwind";
+import { PAGES } from "@/config/pages";
+import { cn } from "@/lib/utils/cn";
 import { ChevronDownIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as Accordion from "@radix-ui/react-accordion";

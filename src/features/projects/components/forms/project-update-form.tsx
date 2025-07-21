@@ -2,11 +2,11 @@ import { Button } from "@/components/ui/button";
 import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useStepper } from "@/features/modals/lib/stores/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { walletClientToSigner } from "@/lib/web3/eas-wagmi-utils";
 import fetchData from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import { MESSAGES } from "@/config/messages";
-import { PAGES } from "@/utilities/pages";
+import { PAGES } from "@/config/pages";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IProjectUpdate, ProjectUpdate } from "@show-karma/karma-gap-sdk";
 import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
@@ -20,12 +20,11 @@ import { useAccount } from "wagmi";
 import { z } from "zod";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { CalendarIcon, TrashIcon } from "@heroicons/react/24/solid";
-import { formatDate } from "@/utilities/formatDate";
+import { formatDate } from "@/lib/format/date";
 import { SearchWithValueDropdown } from "@/features/communities/components/impact/SearchWithValueDropdown";
-import { cn } from "@/utilities/tailwind";
+import { cn } from "@/lib/utils/cn";
 import * as Dialog from "@radix-ui/react-dialog";
 import { XMarkIcon } from "@heroicons/react/24/solid";
-import { sendImpactAnswers } from "@/utilities/impact";
 import Link from "next/link";
 import {
   IProjectResponse,
@@ -33,9 +32,9 @@ import {
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { DatePicker } from "@/components/ui/date-picker";
 import { useShareDialogStore } from "@/features/modals/lib/stores/shareDialog";
-import { SHARE_TEXTS } from "@/utilities/share/text";
+import { SHARE_TEXTS } from "@/features/share/lib/text";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getIndicatorsByCommunity } from "@/utilities/queries/getIndicatorsByCommunity";
+import { getIndicatorsByCommunity } from "@/lib/queries/getIndicatorsByCommunity";
 import { useWallet } from "@/features/auth/hooks/use-wallet";
 import { ImpactIndicatorWithData } from "@/features/impact/types";
 import { useProjectStore } from "@/features/projects/lib/store";
@@ -46,6 +45,7 @@ import { ExternalLink } from "@/components/ui/external-link";
 import { InfoTooltip } from "@/components/ui/tooltip";
 import { IndicatorForm } from "@/features/admin/components/forms/indicator-form";
 import { autosyncedIndicators } from "@/features/admin/components/indicators/IndicatorsHub";
+import { sendImpactAnswers } from "@/features/impact/api/impact-service";
 
 interface GrantOption {
   title: string;
@@ -695,20 +695,15 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                 dp.startDate !== indicator.startDate &&
                 dp.endDate !== indicator.endDate
             );
-            return sendImpactAnswers(
-              projectUid,
-              indicator.id,
-              [
-                ...filteredDatapoints,
-                {
-                  value: indicator.value,
-                  proof: indicator.proof || "",
-                  startDate: indicator.startDate || new Date().toISOString(),
-                  endDate: indicator.endDate || new Date().toISOString(),
-                },
-              ],
-              () => {}
-            );
+            return sendImpactAnswers(projectUid, indicator.id, [
+              ...filteredDatapoints,
+              {
+                value: indicator.value,
+                proof: indicator.proof || "",
+                startDate: indicator.startDate || new Date().toISOString(),
+                endDate: indicator.endDate || new Date().toISOString(),
+              },
+            ]);
           })
         );
       }

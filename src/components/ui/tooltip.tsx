@@ -4,7 +4,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { cn } from "@/utilities/tailwind";
+import { cn } from "@/lib/utils/cn";
 import { ReactNode } from "react";
 
 interface InfoTooltipProps {

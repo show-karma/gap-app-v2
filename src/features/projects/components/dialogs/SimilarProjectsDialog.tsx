@@ -3,7 +3,7 @@ import { FC, Fragment, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { useSimilarProjectsModalStore } from "@/features/modals/lib/stores/similarProjects";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { PAGES } from "@/utilities/pages";
+import { PAGES } from "@/config/pages";
 import { ExternalLink } from "@/components/ui/external-link";
 import { Button } from "@/components/ui/button";
 

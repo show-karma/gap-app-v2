@@ -5,7 +5,7 @@ import { useCommunityDetails } from "@/features/communities/hooks/use-community-
 import { useIsCommunityAdmin } from "@/features/admin/hooks/use-is-community-admin";
 
 import { MESSAGES } from "@/config/messages";
-import { PAGES } from "@/utilities/pages";
+import { PAGES } from "@/config/pages";
 import { ChevronLeftIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
 import {
@@ -18,7 +18,7 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { isAddress } from "viem";
-import { cn } from "@/utilities/tailwind";
+import { cn } from "@/lib/utils/cn";
 import { ExternalLink } from "@/components/ui/external-link";
 import { ProgramFilter } from "@/features/communities/components/impact/ProgramFilter";
 import {

@@ -12,15 +12,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useAccount } from "wagmi";
 import { GAP } from "@show-karma/karma-gap-sdk";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/utilities/tailwind";
+import { cn } from "@/lib/utils/cn";
 
 import toast from "react-hot-toast";
-import { config } from "@/utilities/wagmi/config";
-import { INDEXER } from "@/utilities/indexer";
+import { config } from "@/lib/web3/wagmi/config";
+import { INDEXER } from "@/services/indexer";
 
 import errorManager from "@/lib/utils/error-manager";
 import { isAddress } from "viem";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { walletClientToSigner } from "@/lib/web3/eas-wagmi-utils";
 import { useWallet } from "@/features/auth/hooks/use-wallet";
 import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
 import { sanitizeInput } from "@/lib/utils/sanitize";

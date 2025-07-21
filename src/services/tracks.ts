@@ -1,5 +1,5 @@
 import fetchData from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import { envVars } from "@/config/env";
 import errorManager from "@/lib/utils/error-manager";
 

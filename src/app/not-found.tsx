@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { defaultMetadata } from "@/utilities/meta";
+import { defaultMetadata } from "@/lib/metadata/meta";
 
 export const metadata = defaultMetadata;
 

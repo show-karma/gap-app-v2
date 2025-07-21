@@ -5,7 +5,7 @@ import JSConfetti from "js-confetti";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "@/components/ui/external-link";
 import { useShareDialogStore } from "@/features/modals/lib/stores/shareDialog";
-import { shareOnX } from "@/utilities/share/shareOnX";
+import { shareOnX } from "@/features/share/lib/shareOnX";
 import { TwitterIcon } from "@/components/icons";
 
 export const ShareDialog: FC = () => {

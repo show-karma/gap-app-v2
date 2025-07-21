@@ -1,4 +1,4 @@
-import { defaultMetadata } from "@/utilities/meta";
+import { defaultMetadata } from "@/lib/metadata/meta";
 import { Presentation } from "@/features/home/components/Presentation";
 import { NewFeatureBanner } from "@/features/home/components/NewFeatureBanner";
 import { Communities } from "@/features/home/components/Communities";

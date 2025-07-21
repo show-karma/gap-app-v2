@@ -1,4 +1,4 @@
-import { chosenCommunities } from "@/utilities/chosenCommunities";
+import { chosenCommunities } from "@/features/communities/lib/chosenCommunities";
 import { MetadataRoute } from "next";
 import axios from "axios";
 

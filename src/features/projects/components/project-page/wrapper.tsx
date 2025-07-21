@@ -7,8 +7,8 @@ import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 import { useEndorsementStore } from "@/features/modals/lib/stores/endorsement";
 import Image from "next/image";
 
-import { useContactInfo } from "@/hooks/useContactInfo";
-import { useTeamProfiles } from "@/hooks/useTeamProfiles";
+import { useContactInfo } from "@/features/projects/hooks/use-contact-info";
+import { useTeamProfiles } from "@/features/projects/hooks/use-team-profiles";
 import useProjectMembers from "@/features/projects/hooks/use-project-members";
 import IntroDialog from "../shared/intro-dialog";
 import { ShareDialog } from "@/features/grants/components/milestones/ShareDialog";

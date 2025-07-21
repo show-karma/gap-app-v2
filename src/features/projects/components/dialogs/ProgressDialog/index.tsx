@@ -13,7 +13,7 @@ import { ProjectUpdateScreen } from "./ProjectUpdateScreen";
 import { MilestoneScreen } from "./MilestoneScreen";
 import { MilestoneUpdateScreen } from "./MilestoneUpdateScreen";
 import { UnifiedMilestoneScreen } from "./UnifiedMilestoneScreen";
-import { cn } from "@/utilities/tailwind";
+import { cn } from "@/lib/utils/cn";
 import {
   ProgressModalScreen,
   useProgressModalStore,

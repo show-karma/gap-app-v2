@@ -1,6 +1,6 @@
 import React from "react";
-import { customMetadata } from "@/utilities/meta";
 import { AddProgramWrapper } from "@/features/program-registry/components/AddProgramWrapper";
+import { customMetadata } from "@/lib/metadata/meta";
 
 export const metadata = customMetadata({
   title: "Karma GAP - Grant Program Registry",

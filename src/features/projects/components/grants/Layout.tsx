@@ -6,7 +6,7 @@ import { useProjectStore } from "@/features/projects/lib/store";
 import { useCommunitiesStore } from "@/features/communities/lib/communities-store";
 import { useGrantStore } from "@/features/grants/lib/store";
 
-import { PAGES } from "@/utilities/pages";
+import { PAGES } from "@/config/pages";
 import { cn } from "@/lib/utils/cn";
 import { CheckCircleIcon, PlusIcon } from "@heroicons/react/20/solid";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";

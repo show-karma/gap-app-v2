@@ -1,8 +1,8 @@
-import { zeroUID } from "@/utilities/commons";
+import { zeroUID } from "@/lib/utils/misc";
 import fetchData from "@/lib/utils/fetch-data";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { INDEXER } from "@/utilities/indexer";
-import { defaultMetadata } from "@/utilities/meta";
+import { gapIndexerApi } from "@/services/gap-indexer/gap-indexer";
+import { INDEXER } from "@/services/indexer";
+import { defaultMetadata } from "@/lib/metadata/meta";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { envVars } from "@/config/env";

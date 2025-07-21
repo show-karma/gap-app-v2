@@ -6,7 +6,7 @@ import {
   ImpactSegment,
 } from "@/features/impact/types";
 import fetchData from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import { Dialog, Transition } from "@headlessui/react";
 import { Fragment, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";

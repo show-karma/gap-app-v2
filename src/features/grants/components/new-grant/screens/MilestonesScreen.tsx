@@ -2,7 +2,7 @@ import { StepBlock } from "../StepBlock";
 import { Button } from "@/components/ui/button";
 import { useGrantFormStore } from "../store";
 import { usePathname, useRouter } from "next/navigation";
-import { PAGES } from "@/utilities/pages";
+import { PAGES } from "@/config/pages";
 import { useProjectStore } from "@/features/projects/lib/store";
 import { Milestone } from "../Milestone";
 import { PlusIcon } from "@heroicons/react/24/outline";
@@ -20,10 +20,10 @@ import {
   nullRef,
 } from "@show-karma/karma-gap-sdk";
 import { Hex } from "viem";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
+import { checkNetworkIsValid } from "@/lib/web3/network-validation";
 import { getGapClient } from "@/hooks/useGap";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { INDEXER } from "@/utilities/indexer";
+import { walletClientToSigner } from "@/lib/web3/eas-wagmi-utils";
+import { INDEXER } from "@/services/indexer";
 import { fetchData } from "@/lib/utils/fetch-data";
 import { MESSAGES } from "@/config/messages";
 import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";

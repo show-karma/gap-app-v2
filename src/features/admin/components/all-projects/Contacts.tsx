@@ -2,7 +2,7 @@
 import { TelegramIcon } from "@/components/icons";
 import { ExternalLink } from "@/components/ui/external-link";
 import { Contact } from "@/features/projects/types";
-import { cn } from "@/utilities/tailwind";
+import { cn } from "@/lib/utils/cn";
 import { AtSymbolIcon, InboxArrowDownIcon } from "@heroicons/react/24/solid";
 import { FC, useState } from "react";
 

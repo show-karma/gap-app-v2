@@ -1,14 +1,13 @@
 /* eslint-disable @next/next/no-img-element */
 import { Grant, GrantDetails, ProjectDetails } from "@show-karma/karma-gap-sdk";
 import pluralize from "pluralize";
-import formatCurrency from "@/utilities/formatCurrency";
+import { formatCurrency } from "@/lib/format/currency";
 import { MarkdownPreview } from "@/components/ui/markdown-preview";
-import { formatPercentage } from "@/utilities/formatNumber";
-import { PAGES } from "@/utilities/pages";
-import { formatDate } from "@/utilities/formatDate";
+import { PAGES } from "@/config/pages";
 import Link from "next/link";
 import { ProfilePicture } from "@/components/ui/profile-picture";
 import { ProjectFromList } from "../../types";
+import { formatDate } from "@/lib/format/date";
 
 interface ProjectCardProps {
   project: ProjectFromList;

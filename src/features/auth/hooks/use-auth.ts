@@ -3,9 +3,8 @@ import { errorManager } from "@/lib/utils/error-manager";
 import { useAuthStore } from "../lib/store";
 import { useOnboarding } from "@/features/modals/lib/stores/onboarding";
 import { IExpirationStatus, ISession } from "../types";
-import { checkExpirationStatus } from "@/utilities/checkExpirationStatus";
 import { fetchData } from "@/lib/utils/fetch-data";
-import { PAGES } from "@/utilities/pages";
+import { PAGES } from "@/config/pages";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { jwtDecode } from "jwt-decode";
 import { usePathname, useRouter } from "next/navigation";
@@ -22,13 +21,14 @@ import { useEffect, useRef } from "react";
 import {
   authCookiePath,
   authWalletTypeCookiePath,
-} from "@/utilities/auth-keys";
+} from "@/features/auth/lib/auth-keys";
 import {
   AUTH_CHANNEL_NAME,
   AUTH_IN_PROGRESS_COOKIE,
   getAddressSpecificAuthCookie,
   getAddressSpecificWalletTypeCookie,
 } from "@/lib/utils/cookies";
+import { checkExpirationStatus } from "@/lib/utils/date";
 
 const getNonce = async (publicAddress: string) => {
   try {

@@ -6,7 +6,7 @@ import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 import { useCommunityAdminStore } from "@/features/communities/lib/community-admin-store";
 import { formatDate } from "@/lib/format/date";
 import { MESSAGES } from "@/config/messages";
-import { urlRegex } from "@/lib/utils/regex";
+import { urlRegex } from "@/lib/utils/regex/urlRegex";
 import { cn } from "@/lib/utils/cn";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { AreaChart, Card, Title } from "@tremor/react";

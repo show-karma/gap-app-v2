@@ -13,7 +13,7 @@ import {
   getSafeTokenBalance,
   signAndProposeDisbursement,
   isSafeDeployed,
-} from "@/utilities/safe";
+} from "@/features/safe/lib/safe";
 import { formatNumber } from "@/lib/format/number";
 // Import our new reusable components
 import { StatusAlert } from "./components/StatusAlert";

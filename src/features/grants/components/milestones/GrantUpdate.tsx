@@ -4,13 +4,12 @@ import { useProjectStore } from "@/features/projects/lib/store";
 import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 import { useCommunityAdminStore } from "@/features/communities/lib/community-admin-store";
 import { useStepper } from "@/features/modals/lib/stores/txStepper";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { walletClientToSigner } from "@/lib/web3/eas-wagmi-utils";
 import { fetchData } from "@/lib/utils/fetch-data";
 import { formatDate } from "@/lib/format/date";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import { MESSAGES } from "@/config/messages";
-import { ReadMore } from "@/utilities/ReadMore";
+import { ReadMore } from "@/components/ui/read-more";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import {
   IGrantUpdate,
@@ -26,10 +25,11 @@ import { VerifyGrantUpdateDialog } from "./VerifyGrantUpdateDialog";
 import { errorManager } from "@/lib/utils/error-manager";
 import { ExternalLink } from "@/components/ui/external-link";
 import { retryUntilConditionMet } from "@/lib/utils/retries";
-import { shareOnX } from "@/utilities/share/shareOnX";
-import { SHARE_TEXTS } from "@/utilities/share/text";
+import { shareOnX } from "@/features/share/lib/shareOnX";
+import { SHARE_TEXTS } from "@/features/share/lib/text";
 import { ShareIcon } from "@heroicons/react/24/outline";
 import { useWallet } from "@/features/auth/hooks/use-wallet";
+import { checkNetworkIsValid } from "@/lib/web3/network-validation";
 
 interface UpdateTagProps {
   index: number;

@@ -2,8 +2,8 @@
 // The added config here will be used whenever a users loads a page in their browser.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
+import { sentryIgnoreErrors } from "@/lib/monitoring/sentry";
 import * as Sentry from "@sentry/nextjs";
-import { sentryIgnoreErrors } from "./src/utilities/sentry/ignoreErrors";
 
 Sentry.init({
   enabled: process.env.NEXT_PUBLIC_VERCEL_ENV === "production",

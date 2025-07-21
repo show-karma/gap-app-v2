@@ -10,8 +10,8 @@ import {
 } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "@/components/ui/external-link";
-import formatCurrency from "@/utilities/formatCurrency";
-import { cn } from "@/utilities/tailwind";
+import { formatCurrency } from "@/lib/format/currency";
+import { cn } from "@/lib/utils/cn";
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";

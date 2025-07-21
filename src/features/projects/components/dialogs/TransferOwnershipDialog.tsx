@@ -1,17 +1,13 @@
 /* eslint-disable @next/next/no-img-element */
 import { useProjectStore } from "@/features/projects/lib/store";
 import { useStepper } from "@/features/modals/lib/stores/txStepper";
-import { checkNetworkIsValid } from "@/config/network";
 import {
   useSigner,
   walletClientToSigner,
 } from "@/services/blockchain/utils/eas-wagmi-utils";
 import fetchData from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
-import {
-  getProjectById,
-  isOwnershipTransfered,
-} from "@/utilities/sdk/projects";
+import { INDEXER } from "@/services/indexer";
+
 import { Dialog, Transition } from "@headlessui/react";
 import { PlusIcon } from "@heroicons/react/24/solid";
 
@@ -26,6 +22,8 @@ import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
 import { errorManager } from "@/lib/utils/error-manager";
 import { useWallet } from "@/features/auth/hooks/use-wallet";
 import { useTransferOwnershipModalStore } from "@/features/modals/lib/stores/transferOwnership";
+import { checkNetworkIsValid } from "@/lib/web3/network-validation";
+import { getProjectById, isOwnershipTransfered } from "../../api/sdk";
 
 type TransferOwnershipProps = {
   buttonElement?: {

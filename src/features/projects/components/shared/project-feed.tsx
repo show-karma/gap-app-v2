@@ -1,13 +1,13 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 import { fetchData } from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Spinner } from "@/components/ui/spinner";
 import { ExternalLink } from "@/components/ui/external-link";
-import { feedIconDictionary, getFeedHref } from "@/utilities/feed";
-import { formatDate } from "@/utilities/formatDate";
+import { feedIconDictionary, getFeedHref } from "@/features/feed/lib/feed";
+import { formatDate } from "@/lib/format/date";
 import EthereumAddressToENSName from "@/features/ens/components/address-to-ens-name";
 import { MarkdownPreview } from "@/components/ui/markdown-preview";
 import { useTheme } from "next-themes";

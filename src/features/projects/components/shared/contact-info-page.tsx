@@ -2,7 +2,7 @@
 import { useProjectStore } from "@/features/projects/lib/store";
 import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 import { Spinner } from "@/components/ui/spinner";
-import { useContactInfo } from "@/hooks/useContactInfo";
+import { useContactInfo } from "@/features/projects/hooks/use-contact-info";
 import useProjectPermissions from "../../hooks/use-project-permissions";
 import { ContactInfoSubscription } from "./contact-info-subscription";
 

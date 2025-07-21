@@ -2,12 +2,12 @@
 import { FolderIcon } from "@/components/icons/Folder";
 import { Target2Icon } from "@/components/icons/Target2";
 import { SparklesIcon } from "@/components/icons/Sparkles";
-import { getCommunityBySlug } from "@/utilities/gapIndexerApi/getCommunityBySlug";
-import { PAGES } from "@/utilities/pages";
+import { PAGES } from "@/config/pages";
 import { cn } from "@/lib/utils/cn";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
+import { getCommunityBySlug } from "../../api/getCommunityBySlug";
 
 const activeLinkStyle =
   "text-brand-darkblue dark:text-white font-bold border-b border-b-4 border-b-brand-blue dark:border-b-brand-blue";

@@ -9,8 +9,8 @@ import toast from "react-hot-toast";
 import { useAuthStore } from "@/features/auth/lib/store";
 import { useAccount } from "wagmi";
 import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
+import { walletClientToSigner } from "@/lib/web3/eas-wagmi-utils";
+import { checkNetworkIsValid } from "@/lib/web3/network-validation";
 import { MESSAGES } from "@/config/messages";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useStepper } from "@/features/modals/lib/stores/txStepper";
@@ -23,7 +23,7 @@ import {
 
 import { errorManager } from "@/lib/utils/error-manager";
 import { fetchData } from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import { sanitizeObject } from "@/lib/utils/sanitize";
 import { ArrowRightIcon } from "@heroicons/react/24/solid";
 import { useWallet } from "@/features/auth/hooks/use-wallet";

@@ -2,13 +2,13 @@
 import { FC, Fragment, ReactNode, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { Button } from "@/components/ui/button";
-import { shortAddress } from "@/utilities/shortAddress";
+import { shortAddress } from "@/lib/format/address";
 import { z } from "zod";
 import { MESSAGES } from "@/config/messages";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { fetchData } from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import toast from "react-hot-toast";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { cn } from "@/lib/utils/cn";

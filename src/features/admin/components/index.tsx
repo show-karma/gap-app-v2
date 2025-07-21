@@ -6,7 +6,7 @@ import { useCommunitiesStore } from "@/features/communities/lib/communities-stor
 import { PAGES } from "@/config/pages";
 import { MESSAGES } from "@/config/messages";
 import { Community } from "@show-karma/karma-gap-sdk";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import { fetchData } from "@/lib/utils/fetch-data";
 import { useGap } from "@/hooks/useGap";
 import { errorManager } from "@/lib/utils/error-manager";

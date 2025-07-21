@@ -4,7 +4,7 @@ import { getGapClient, useGap } from "@/hooks/useGap";
 import { useStepper } from "@/features/modals/lib/stores/txStepper";
 import { walletClientToSigner } from "@/services/blockchain/utils/eas-wagmi-utils";
 import fetchData from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import { Dialog, Transition } from "@headlessui/react";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import * as Tooltip from "@radix-ui/react-tooltip";
@@ -14,7 +14,7 @@ import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
 import { queryClient } from "@/components/providers/wagmi-provider";
-import { getProjectById } from "@/utilities/sdk/projects";
+import { getProjectById } from "@/features/projects/api/sdk";
 import { useProjectStore } from "../../../lib/store";
 import { useWallet } from "@/features/auth/hooks/use-wallet";
 

@@ -18,7 +18,7 @@ import { autosyncedIndicators } from "@/features/admin/components/indicators/Ind
 import { DeleteDialog } from "@/components/ui/delete-dialog";
 import toast from "react-hot-toast";
 import fetchData from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import errorManager from "@/lib/utils/error-manager";
 import { useGroupedIndicators } from "@/features/impact/hooks/use-grouped-indicators";
 import { ProgramCard } from "../programs/ProgramCard";

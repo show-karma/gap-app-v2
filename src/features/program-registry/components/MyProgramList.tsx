@@ -1,6 +1,6 @@
-import { ReadMore } from "@/utilities/ReadMore";
-import formatCurrency from "@/utilities/formatCurrency";
-import { formatDate } from "@/utilities/formatDate";
+import { ReadMore } from "@/components/ui/read-more";
+import { formatCurrency } from "@/lib/format/currency";
+import { formatDate } from "@/lib/format/date";
 import Image from "next/image";
 import { FC, useEffect, useMemo, useRef, useState } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
@@ -23,7 +23,7 @@ import {
 import { useQueryState } from "nuqs";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { GrantProgram } from "./ProgramList";
-import { shortAddress } from "@/utilities/shortAddress";
+import { shortAddress } from "@/lib/format/address";
 import { useAccount } from "wagmi";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
 import { useSearchParams } from "next/navigation";

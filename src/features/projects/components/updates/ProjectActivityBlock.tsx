@@ -8,7 +8,7 @@ import { useProjectStore } from "@/features/projects/lib/store";
 import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 import { ExternalLink } from "@/components/ui/external-link";
 import { useMemo } from "react";
-import { PAGES } from "@/utilities/pages";
+import { PAGES } from "@/config/pages";
 import { useCommunityAdminStore } from "@/features/communities/lib/community-admin-store";
 import { useAccount } from "wagmi";
 import { useImpactAnswers } from "@/features/impact/hooks/use-impact-answers";

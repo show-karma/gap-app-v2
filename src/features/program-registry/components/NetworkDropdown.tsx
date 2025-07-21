@@ -9,7 +9,7 @@ import {
 } from "cmdk";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
-import { cn } from "@/utilities/tailwind";
+import { cn } from "@/lib/utils/cn";
 import { ChevronDown } from "@/components/icons/ChevronDown";
 
 interface Items {

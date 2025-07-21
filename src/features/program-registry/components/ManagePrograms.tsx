@@ -4,12 +4,12 @@ import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/features/auth/lib/store";
 import { useStepper } from "@/features/modals/lib/stores/txStepper";
 import { useRegistryStore } from "@/features/program-registry/lib/store";
-import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { isMemberOfProfile } from "@/features/allo/lib/isMemberOf";
+import { useSigner } from "@/lib/web3/eas-wagmi-utils";
 import fetchData from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
-import { PAGES } from "@/utilities/pages";
-import { checkIsPoolManager } from "@/utilities/registry/checkIsPoolManager";
+import { INDEXER } from "@/services/indexer";
+import { PAGES } from "@/config/pages";
+import { checkIsPoolManager } from "@/features/program-registry/lib/checkIsPoolManager";
 import {
   ChevronLeftIcon,
   MagnifyingGlassIcon,

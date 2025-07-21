@@ -1,6 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { useImpactMeasurement } from "@/features/impact/hooks/use-impact-measurement";
-import { getAllProgramsOfCommunity } from "@/utilities/registry/getAllProgramsOfCommunity";
+import { getAllProgramsOfCommunity } from "@/features/program-registry/lib/getAllProgramsOfCommunity";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";

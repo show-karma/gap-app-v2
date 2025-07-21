@@ -1,4 +1,4 @@
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { gapIndexerApi } from "@/services/gap-indexer/gap-indexer";
 import { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 /**

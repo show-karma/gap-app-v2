@@ -1,5 +1,5 @@
 "use client";
-import { getAllProgramsOfCommunity } from "@/utilities/registry/getAllProgramsOfCommunity";
+import { getAllProgramsOfCommunity } from "@/features/program-registry/lib/getAllProgramsOfCommunity";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 import { useParams } from "next/navigation";

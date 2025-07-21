@@ -1,7 +1,7 @@
 import { GrantProgram } from "../types";
 import { errorManager } from "@/lib/utils/error-manager";
 import { fetchData } from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 
 export const programService = {
   // Get all programs for a community

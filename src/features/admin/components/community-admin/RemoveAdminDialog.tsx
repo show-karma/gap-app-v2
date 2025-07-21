@@ -14,13 +14,13 @@ import { useAccount } from "wagmi";
 import { GAP } from "@show-karma/karma-gap-sdk";
 import { Button } from "@/components/ui/button";
 import { MESSAGES } from "@/config/messages";
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { useSigner, walletClientToSigner } from "@/lib/web3/eas-wagmi-utils";
 import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
 import { useStepper } from "@/features/modals/lib/stores/txStepper";
 import toast from "react-hot-toast";
-import { config } from "@/utilities/wagmi/config";
+import { config } from "@/lib/web3/wagmi/config";
 import fetchData from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 
 import errorManager from "@/lib/utils/error-manager";
 import { useWallet } from "@/features/auth/hooks/use-wallet";

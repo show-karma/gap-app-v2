@@ -1,9 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
-import { zeroUID } from "@/utilities/commons";
+import { zeroUID } from "@/lib/utils/misc";
 import { envVars } from "@/config/env";
-import { cleanMarkdownForPlainText } from "@/utilities/markdown";
-import { defaultMetadata } from "@/utilities/meta";
-import { getMetadata } from "@/utilities/sdk/getMetadata";
+import { cleanMarkdownForPlainText } from "@/lib/markdown";
+import { defaultMetadata } from "@/lib/metadata/meta";
+import { getMetadata } from "@/services/meta/getMetadata";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";

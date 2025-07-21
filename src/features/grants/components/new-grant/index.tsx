@@ -14,7 +14,7 @@ import { MESSAGES } from "@/config/messages";
 import { useCommunityAdminStore } from "@/features/communities/lib/community-admin-store";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { PAGES } from "@/utilities/pages";
+import { PAGES } from "@/config/pages";
 import { TypeSelectionScreen } from "./screens/TypeSelectionScreen";
 import { DefaultLoading } from "@/components/ui/default-loading";
 export { SearchGrantProgram } from "./SearchGrantProgram";

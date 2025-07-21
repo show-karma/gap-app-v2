@@ -58,27 +58,27 @@ import { useSimilarProjectsModalStore } from "@/features/modals/lib/stores/simil
 import { useStepper } from "@/features/modals/lib/stores/txStepper";
 import { Contact } from "@/features/projects/types";
 import fetchData from "@/lib/utils/fetch-data";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { INDEXER } from "@/utilities/indexer";
+import { gapIndexerApi } from "@/services/gap-indexer/gap-indexer";
+import { INDEXER } from "@/services/indexer";
 import { appNetwork } from "@/config/network";
-import { PAGES } from "@/utilities/pages";
+import { PAGES } from "@/config/pages";
 import { sanitizeObject } from "@/lib/utils/sanitize";
-import { getProjectById } from "@/utilities/sdk/projects";
-import { updateProject } from "@/utilities/sdk/projects/editProject";
-import { SOCIALS } from "@/utilities/socials";
-import { cn } from "@/utilities/tailwind";
+import { updateProject } from "@/features/projects/api/sdk/editProject";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import debounce from "lodash.debounce";
 import { SimilarProjectsDialog } from "../SimilarProjectsDialog";
 import { ContactInfoSection } from "./ContactInfoSection";
 import { NetworkDropdown } from "./NetworkDropdown";
 import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
-import { useContactInfo } from "@/hooks/useContactInfo";
+import { useContactInfo } from "@/features/projects/hooks/use-contact-info";
 import { FarcasterIcon } from "@/components/icons/Farcaster";
 import { DeckIcon } from "@/components/icons/Deck";
 import { VideoIcon } from "@/components/icons/Video";
 import { useWallet } from "@/features/auth/hooks/use-wallet";
 import { MarkdownEditor } from "@/components/ui/markdown-editor";
+import { getProjectById } from "@/features/projects/api/sdk";
+import { SOCIALS } from "@/config/socials";
+import { cn } from "@/lib/utils/cn";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";

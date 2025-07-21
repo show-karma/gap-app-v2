@@ -6,10 +6,10 @@ import { useProjectStore } from "@/features/projects/lib/store";
 import { useStepper } from "@/features/modals/lib/stores/txStepper";
 import { walletClientToSigner } from "@/services/blockchain/utils/eas-wagmi-utils";
 import fetchData from "@/lib/utils/fetch-data";
-import { getProjectMemberRoles } from "@/utilities/getProjectMemberRoles";
-import { INDEXER } from "@/utilities/indexer";
+import { getProjectMemberRoles } from "@/features/projects/lib/getProjectMemberRoles";
+import { INDEXER } from "@/services/indexer";
 import { retryUntilConditionMet } from "@/lib/utils/retries";
-import { getProjectById } from "@/utilities/sdk/projects";
+import { getProjectById } from "@/features/projects/api/sdk";
 import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
 import { Dialog, Transition } from "@headlessui/react";
 import { ShieldCheckIcon } from "@heroicons/react/24/outline";
@@ -18,7 +18,7 @@ import * as Tooltip from "@radix-ui/react-tooltip";
 import { FC, Fragment, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
-import { useTeamProfiles } from "@/hooks/useTeamProfiles";
+import { useTeamProfiles } from "@/features/projects/hooks/use-team-profiles";
 import { useWallet } from "@/features/auth/hooks/use-wallet";
 
 interface PromoteMemberDialogProps {

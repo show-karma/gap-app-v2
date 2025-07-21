@@ -1,6 +1,6 @@
 import { GrantProgram } from "@/features/program-registry/types";
 import errorManager from "@/lib/utils/error-manager";
-import { getPrograms } from "@/utilities/sdk/communities/getPrograms";
+import { getPrograms } from "@/features/communities/api/sdk/getPrograms";
 import { Hex } from "viem";
 
 export const programService = {

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 
-import { cn } from "@/utilities/tailwind";
+import { cn } from "@/lib/utils/cn";
 import pluralize from "pluralize";
 import Image from "next/image";
 import { pickColor } from "@/features/grants/components/grant-card";
@@ -15,7 +15,7 @@ import { useRef, useState, useEffect, Fragment, useMemo } from "react";
 import { ActivityOutcomeModal } from "../indicators/ActivityOutcomeModal";
 import { Menu, Transition } from "@headlessui/react";
 import fetchData from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import toast from "react-hot-toast";
 import errorManager from "@/lib/utils/error-manager";
 import { MESSAGES } from "@/config/messages";

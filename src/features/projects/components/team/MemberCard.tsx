@@ -11,13 +11,13 @@ import { useContributorProfileModalStore } from "@/features/modals/lib/stores/co
 import {
   getProjectMemberRoles,
   Member,
-} from "@/utilities/getProjectMemberRoles";
+} from "@/features/projects/lib/getProjectMemberRoles";
 import { PencilIcon } from "@heroicons/react/24/outline";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useAccount } from "wagmi";
 import { type Hex } from "viem";
-import { useTeamProfiles } from "@/hooks/useTeamProfiles";
+import { useTeamProfiles } from "@/features/projects/hooks/use-team-profiles";
 import useProjectInstance from "../../hooks/use-project-instance";
 import { PromoteMemberDialog } from "../dialogs/Member/PromoteMember";
 import { DemoteMemberDialog } from "../dialogs/Member/DemoteMember";

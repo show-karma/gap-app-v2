@@ -1,5 +1,5 @@
 import Avatar from "boring-avatars";
-import { cn } from "@/utilities/tailwind";
+import { cn } from "@/lib/utils/cn";
 
 interface ProfilePictureProps {
   imageURL?: string;

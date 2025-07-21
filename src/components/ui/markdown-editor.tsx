@@ -5,7 +5,7 @@ import "@uiw/react-markdown-preview/markdown.css";
 import dynamic from "next/dynamic";
 import type { FC } from "react";
 import rehypeSanitize from "rehype-sanitize";
-import { cn } from "@/utilities/tailwind";
+import { cn } from "@/lib/utils/cn";
 
 interface MarkdownEditorProps {
   value: string;

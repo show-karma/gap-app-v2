@@ -4,8 +4,8 @@ import { FC, useState } from "react";
 import { Command, CommandGroup, CommandItem } from "cmdk";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
-import { cn } from "@/utilities/tailwind";
-import { chainImgDictionary } from "@/utilities/chainImgDictionary";
+import { cn } from "@/lib/utils/cn";
+import { chainImgDictionary } from "@/lib/web3/chainImgDictionary";
 import { Chain } from "viem";
 
 interface NetworkDropdownProps {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { GrantProgram } from "@/features/program-registry/components/ProgramList";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import fetchData from "@/lib/utils/fetch-data";
 
 export function SearchGrantProgram({

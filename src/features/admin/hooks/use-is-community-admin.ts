@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
+import { isCommunityAdminOf } from "@/features/communities/api/sdk/isCommunityAdmin";
 import { useSigner } from "@/services/blockchain/utils/eas-wagmi-utils";
 import { useAccount } from "wagmi";
 import type { Hex } from "viem";
 import { useEffect, useState } from "react";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { gapIndexerApi } from "@/services/gap-indexer/gap-indexer";
 import { useAuthStore } from "@/features/auth/lib/store";
 import { defaultQueryOptions } from "@/config/query";
 

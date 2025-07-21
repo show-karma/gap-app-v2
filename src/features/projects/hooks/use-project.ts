@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { gapIndexerApi } from "@/services/gap-indexer/gap-indexer";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useProjectStore } from "@/features/projects/lib/store";
 import { useEffect } from "react";
-import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
+import { defaultQueryOptions } from "@/lib/queries/defaultOptions";
 
 const useProject = (projectId: string) => {
   const setProject = useProjectStore((state) => state.setProject);

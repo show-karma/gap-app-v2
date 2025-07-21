@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import Projects from "@/app/projects/page";
 import "@testing-library/jest-dom";
-import { getNewProjects } from "@/utilities/indexer/getNewProjects";
+import { getNewProjects } from "@/services/indexer";
 
 jest.mock("@/components/Pages/NewProjects", () => ({
   NewProjectsPage: () => (

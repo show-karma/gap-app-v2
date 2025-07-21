@@ -3,8 +3,8 @@
 import { CalendarIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
 import { DayPicker } from "react-day-picker";
-import { formatDate } from "@/utilities/formatDate";
-import { cn } from "@/utilities/tailwind";
+import { formatDate } from "@/lib/format/date";
+import { cn } from "@/lib/utils/cn";
 
 interface DatePickerProps {
   selected?: Date;

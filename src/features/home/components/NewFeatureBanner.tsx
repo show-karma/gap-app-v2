@@ -1,7 +1,7 @@
 import { MegaphoneIcon } from "@/components/icons/Megaphone";
 import { RightArrowIcon } from "@/components/icons/RightArrow";
 import { ExternalLink } from "@/components/ui/external-link";
-import { PAGES } from "@/utilities/pages";
+import { PAGES } from "@/config/pages";
 import Link from "next/link";
 
 const bannerLink =

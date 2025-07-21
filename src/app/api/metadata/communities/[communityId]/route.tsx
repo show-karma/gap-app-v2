@@ -1,10 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { getTotalProjects } from "@/utilities/karma/totalProjects";
-import { getGrants } from "@/utilities/sdk/communities";
+import { gapIndexerApi } from "@/services/gap-indexer/gap-indexer";
+import { getTotalProjects } from "@/features/karma-gap/lib/totalProjects";
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
 import pluralize from "pluralize";
+import { getGrants } from "@/features/communities/api/sdk";
 
 export async function GET(
   request: NextRequest,

@@ -1,8 +1,8 @@
 import {
   getCommunityData,
   getCommunityCategories,
-} from "@/utilities/queries/getCommunityData";
-import { pagesOnRoot } from "@/utilities/pagesOnRoot";
+} from "@/lib/queries/getCommunityData";
+import { pagesOnRoot } from "@/config/pagesOnRoot";
 import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { MaturityStageOptions, SortByOptions } from "@/types/filters";
 import { CommunityGrants } from "@/features/grants/components/community-grants";

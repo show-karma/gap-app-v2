@@ -10,10 +10,10 @@ import {
 } from "cmdk";
 import { CheckIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
-import { shortAddress } from "@/utilities/shortAddress";
+import { shortAddress } from "@/lib/format/address";
 import { cn } from "@/lib/utils/cn";
-import { chainImgDictionary } from "@/utilities/chainImgDictionary";
-import { chainNameDictionary } from "@/utilities/chainNameDictionary";
+import { chainImgDictionary } from "@/lib/web3/chainImgDictionary";
+import { chainNameDictionary } from "@/lib/web3/chainNameDictionary";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { ChevronDown } from "@/components/icons/ChevronDown";
 import pluralize from "pluralize";

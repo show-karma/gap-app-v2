@@ -1,5 +1,5 @@
 import { NewProjectsPage } from "@/features/projects/components/new-projects";
-import { customMetadata } from "@/utilities/meta";
+import { customMetadata } from "@/lib/metadata/meta";
 import { Suspense } from "react";
 
 export const metadata = customMetadata({

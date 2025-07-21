@@ -1,7 +1,7 @@
 "use client";
 
 import { formatDate } from "@/lib/format/date";
-import { getGAPWeeklyActiveUsers } from "@/utilities/indexer/stats";
+import { getGAPWeeklyActiveUsers } from "@/services/indexer";
 import { Card, LineChart, Title } from "@tremor/react";
 import { useEffect, useState } from "react";
 

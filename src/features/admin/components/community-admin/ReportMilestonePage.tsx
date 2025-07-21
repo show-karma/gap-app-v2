@@ -6,12 +6,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import TablePagination from "@/components/ui/pagination/table-pagination";
 import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 import { useAuthStore } from "@/features/auth/lib/store";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { useSigner } from "@/lib/web3/eas-wagmi-utils";
 import fetchData from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import { MESSAGES } from "@/config/messages";
-import { defaultMetadata } from "@/utilities/meta";
-import { PAGES } from "@/utilities/pages";
+import { defaultMetadata } from "@/lib/metadata/meta";
+import { PAGES } from "@/config/pages";
 import { useIsCommunityAdmin } from "@/features/admin/hooks/use-is-community-admin";
 import { ChevronLeftIcon } from "@heroicons/react/20/solid";
 import {
@@ -29,7 +29,7 @@ import { useAccount } from "wagmi";
 import { SearchDropdown } from "@/features/program-registry/components/SearchDropdown";
 import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import { envVars } from "@/config/env";
-import { downloadCommunityReport } from "@/utilities/downloadReports";
+import { downloadCommunityReport } from "@/features/reports/lib/downloadReports";
 import { ReasonsModal } from "@/features/modals/components/reasons-modal";
 
 interface Report {

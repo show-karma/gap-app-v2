@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import errorManager from "@/lib/utils/error-manager";
 import fetchData from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import { TrashIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -12,7 +12,7 @@ import {
   IndicatorForm,
   IndicatorFormData,
 } from "@/features/admin/components/forms/indicator-form";
-import { Indicator } from "@/utilities/queries/getIndicatorsByCommunity";
+import { Indicator } from "@/lib/queries/getIndicatorsByCommunity";
 import { ProgramCard } from "../programs/ProgramCard";
 import { MESSAGES } from "@/config/messages";
 import { useAccount } from "wagmi";

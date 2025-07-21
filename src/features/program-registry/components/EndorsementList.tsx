@@ -3,8 +3,8 @@
 import { FC, useEffect, useMemo, useState } from "react";
 import { Hex } from "viem";
 import { useENS } from "@/features/ens/lib/store";
-import { shortAddress } from "@/utilities/shortAddress";
-import { formatDate } from "@/utilities/formatDate";
+import { shortAddress } from "@/lib/format/address";
+import { formatDate } from "@/lib/format/date";
 import { useProjectStore } from "@/features/projects/lib/store";
 import { Button } from "@/components/ui/button";
 import { MarkdownPreview } from "@/components/ui/markdown-preview";

@@ -6,10 +6,10 @@ import { Listbox } from "@headlessui/react";
 import { Button } from "@/components/ui/button";
 import * as Slider from "@radix-ui/react-slider";
 import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import { fetchData } from "@/lib/utils/fetch-data";
 import Link from "next/link";
-import formatCurrency from "@/utilities/formatCurrency";
+import { formatCurrency } from "@/lib/format/currency";
 
 interface Category {
   id: string;

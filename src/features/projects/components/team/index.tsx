@@ -5,7 +5,7 @@ import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 import {
   getProjectMemberRoles,
   Member,
-} from "@/utilities/getProjectMemberRoles";
+} from "@/features/projects/lib/getProjectMemberRoles";
 import { useQuery } from "@tanstack/react-query";
 import { MemberCard } from "./MemberCard";
 import useProjectInstance from "../../hooks/use-project-instance";

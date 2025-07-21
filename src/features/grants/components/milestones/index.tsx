@@ -6,8 +6,8 @@ import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 import { useCommunityAdminStore } from "@/features/communities/lib/community-admin-store";
 import { formatDate } from "@/lib/format/date";
 import { MESSAGES } from "@/config/messages";
-import { PAGES } from "@/utilities/pages";
-import { ReadMore } from "@/utilities/ReadMore";
+import { PAGES } from "@/config/pages";
+import { ReadMore } from "@/components/ui/read-more";
 import {
   IGrantResponse,
   IProjectResponse,

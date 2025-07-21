@@ -12,14 +12,14 @@ import { LineChart } from "./LineChart";
 import { WeeklyActiveUsersChart } from "./WeeklyActiveUsersChart";
 import { GlobalCount } from "./GlobalCount";
 import { Spinner } from "@/components/ui/spinner";
-import { getGAPStats } from "@/utilities/indexer/stats";
-import { fillDateRangeWithValues } from "@/utilities/fillDateRangeWithValues";
 import { Listbox, Transition } from "@headlessui/react";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import { formatDate } from "@/lib/format/date";
 import { cn } from "@/lib/utils/cn";
 import { useQueryState } from "nuqs";
 import errorManager from "@/lib/utils/error-manager";
+import { getGAPStats } from "@/services/indexer";
+import { fillDateRangeWithValues } from "@/lib/utils/fill-date-range";
 
 // const valueFormatter = (number) =>
 //   `$ ${new Intl.NumberFormat('us').format(number).toString()}`;

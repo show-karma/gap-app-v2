@@ -1,6 +1,6 @@
 "use client";
 import { useOwnerStore } from "@/features/contract-owner/lib/owner";
-import { PAGES } from "@/utilities/pages";
+import { PAGES } from "@/config/pages";
 
 export default function SuperAdminPage() {
   const isOwner = useOwnerStore((state) => state.isOwner);

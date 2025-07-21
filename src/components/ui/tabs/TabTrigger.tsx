@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { cn } from "@/utilities/tailwind";
+import { cn } from "@/lib/utils/cn";
 
 import { Button } from "../button";
 import { useTabsContext } from "./Tabs";

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { StepBlock } from "../StepBlock";
 import { useGrantFormStore } from "../store";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import { PAGES } from "@/utilities/pages";
+import { PAGES } from "@/config/pages";
 import { useProjectStore } from "@/features/projects/lib/store";
 import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 import { MarkdownEditor } from "@/components/ui/markdown-editor";

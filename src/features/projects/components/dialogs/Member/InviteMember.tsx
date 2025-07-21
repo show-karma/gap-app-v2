@@ -8,7 +8,7 @@ import { FC, Fragment, useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import { useInviteLink, useInviteUrl } from "@/hooks/useInviteLink";
+import { useInviteLink, useInviteUrl } from "@/features/projects/hooks/use-invite-link";
 import {
   ArrowPathIcon,
   CheckIcon,

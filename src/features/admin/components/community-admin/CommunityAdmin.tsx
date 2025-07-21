@@ -10,7 +10,7 @@ import { chainImgDictionary } from "@/config/chains";
 import { chainNameDictionary } from "@/config/chains";
 import { fetchData } from "@/lib/utils/fetch-data";
 import { formatDate } from "@/lib/format/date";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import { MESSAGES } from "@/config/messages";
 import { PAGES } from "@/config/pages";
 import { LinkIcon } from "@heroicons/react/24/solid";

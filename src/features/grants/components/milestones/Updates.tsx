@@ -6,13 +6,13 @@ import { getGapClient, useGap } from "@/hooks/useGap";
 import { useProjectStore } from "@/features/projects/lib/store";
 import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 import { useStepper } from "@/features/modals/lib/stores/txStepper";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { checkNetworkIsValid } from "@/lib/web3/network-validation";
+import { walletClientToSigner } from "@/lib/web3/eas-wagmi-utils";
 import { fetchData } from "@/lib/utils/fetch-data";
 import { formatDate } from "@/lib/format/date";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import { MESSAGES } from "@/config/messages";
-import { ReadMore } from "@/utilities/ReadMore";
+import { ReadMore } from "@/components/ui/read-more";
 import {
   PencilSquareIcon,
   ShareIcon,
@@ -30,9 +30,9 @@ import { UpdateMilestone } from "./UpdateMilestone";
 import { errorManager } from "@/lib/utils/error-manager";
 import { ExternalLink } from "@/components/ui/external-link";
 import { retryUntilConditionMet } from "@/lib/utils/retries";
-import { SHARE_TEXTS } from "@/utilities/share/text";
+import { SHARE_TEXTS } from "@/features/share/lib/text";
 import { useShareDialogStore } from "@/features/modals/lib/stores/shareDialog";
-import { shareOnX } from "@/utilities/share/shareOnX";
+import { shareOnX } from "@/features/share/lib/shareOnX";
 import { useWallet } from "@/features/auth/hooks/use-wallet";
 import { useCommunityAdminStore } from "@/features/communities/lib/community-admin-store";
 import { MilestoneVerificationSection } from "@/features/milestones/components/shared";

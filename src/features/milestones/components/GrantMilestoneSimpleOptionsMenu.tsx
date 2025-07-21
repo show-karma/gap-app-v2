@@ -2,7 +2,7 @@
 import { Menu, Transition } from "@headlessui/react";
 import { Fragment } from "react";
 import { EllipsisVerticalIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { cn } from "@/utilities/tailwind";
+import { cn } from "@/lib/utils/cn";
 import { DeleteDialog } from "@/components/ui/delete-dialog";
 import { useMilestone } from "@/features/milestones/hooks/use-milestone";
 import { UnifiedMilestone } from "@/types/roadmap";

@@ -6,7 +6,7 @@ import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 import { useCommunityAdminStore } from "@/features/communities/lib/community-admin-store";
 import { envVars } from "@/config/env";
 import { fetchData } from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import { Dialog, Transition } from "@headlessui/react";
 import { CheckCircleIcon, LinkIcon } from "@heroicons/react/24/outline";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";

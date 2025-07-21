@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, Fragment } from "react";
 import { useAuthStore } from "@/features/auth/lib/store";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { useSigner } from "@/lib/web3/eas-wagmi-utils";
 import { MESSAGES } from "@/config/messages";
 import { useIsCommunityAdmin } from "@/features/admin/hooks/use-is-community-admin";
 import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
@@ -15,7 +15,7 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
-import { cn } from "@/utilities/tailwind";
+import { cn } from "@/lib/utils/cn";
 import {
   useTracksForCommunity,
   useTracksForProgram,

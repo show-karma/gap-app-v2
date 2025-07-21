@@ -1,4 +1,4 @@
-import { PAGES } from "@/utilities/pages";
+import { PAGES } from "@/config/pages";
 
 const styles = {
   h1: "text-2xl font-bold text-start text-black dark:text-white",

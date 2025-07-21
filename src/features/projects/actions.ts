@@ -6,10 +6,10 @@ import {
   IProjectResponse,
   IGrantResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { getProjectData } from "@/utilities/api/project";
-import { zeroUID } from "@/utilities/commons";
-import { getAllMilestones as getAllMilestonesUtil } from "@/utilities/gapIndexerApi/getAllMilestones";
+import { gapIndexerApi } from "@/services/gap-indexer/gap-indexer";
+import { getProjectData } from "@/features/projects/api/project";
+import { zeroUID } from "@/lib/utils/misc";
+import { getAllMilestones as getAllMilestonesUtil } from "@/features/milestones/api/getAllMilestones";
 import {
   subscribeToProject,
   updateProjectCategories,

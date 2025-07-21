@@ -1,10 +1,10 @@
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import fetchData from "@/lib/utils/fetch-data";
 import { GrantProgram } from "@/features/program-registry/components/ProgramList";
 import { useEffect, useState } from "react";
-import { cn } from "@/utilities/tailwind";
+import { cn } from "@/lib/utils/cn";
 import { chainIdToNetwork } from "@show-karma/karma-gap-sdk";
-import { chainNameDictionary } from "@/utilities/chainNameDictionary";
+import { chainNameDictionary } from "@/lib/web3/chainNameDictionary";
 
 interface ProgramCardProps {
   programId: string;

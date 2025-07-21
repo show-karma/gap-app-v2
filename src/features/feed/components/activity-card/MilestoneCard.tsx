@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { ActivityStatus } from "./ActivityStatus";
 import { ActivityStatusHeader } from "./ActivityStatusHeader";
 import { ActivityAttribution } from "./ActivityAttribution";
-import { ReadMore } from "@/utilities/ReadMore";
+import { ReadMore } from "@/components/ui/read-more";
 import { formatDate } from "@/lib/format/date";
 import { UnifiedMilestone } from "@/types/roadmap";
 import dynamic from "next/dynamic";
@@ -18,8 +18,8 @@ import {
   PencilSquareIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
-import { SHARE_TEXTS } from "@/utilities/share/text";
-import { shareOnX } from "@/utilities/share/shareOnX";
+import { SHARE_TEXTS } from "@/features/share/lib/text";
+import { shareOnX } from "@/features/share/lib/shareOnX";
 import { useProjectStore } from "@/features/projects/lib/store";
 import { queryClient } from "@/components/providers/wagmi-provider";
 import { useMilestoneActions } from "@/features/milestones/hooks/use-milestone-actions";

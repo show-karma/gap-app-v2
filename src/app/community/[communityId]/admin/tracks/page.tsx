@@ -1,9 +1,9 @@
-import { defaultMetadata } from "@/utilities/meta";
+import { defaultMetadata } from "@/lib/metadata/meta";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Spinner } from "@/components/ui/spinner";
-import { zeroUID } from "@/utilities/commons";
-import { getCommunityData } from "@/utilities/queries/getCommunityData";
+import { zeroUID } from "@/lib/utils/misc";
+import { getCommunityData } from "@/lib/queries/getCommunityData";
 import { TracksAdminPage } from "@/features/tracks/components/tracks-admin-page";
 
 export const metadata = defaultMetadata;

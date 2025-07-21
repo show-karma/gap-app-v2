@@ -5,7 +5,7 @@ import { TypedLoading } from "@/features/home/components/ReactTypedWrap";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { PAGES } from "@/utilities/pages";
+import { PAGES } from "@/config/pages";
 
 const ReactTypedWrapper = dynamic(
   () =>

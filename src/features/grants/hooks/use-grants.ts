@@ -1,8 +1,11 @@
 import { errorManager } from "@/lib/utils/error-manager";
-import { reduceText } from "@/utilities/reduceText";
-import { getGrants, GrantsFilter } from "@/utilities/sdk/communities/getGrants";
+import {
+  getGrants,
+  GrantsFilter,
+} from "@/features/communities/api/sdk/getGrants";
 import { useQuery } from "@tanstack/react-query";
 import { Hex } from "viem";
+import { reduceText } from "@/lib/utils/reduceText";
 
 export type SimplifiedGrant = {
   grant: string;

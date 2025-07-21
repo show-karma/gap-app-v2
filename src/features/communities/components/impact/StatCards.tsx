@@ -1,8 +1,8 @@
 "use client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useImpactMeasurement } from "@/features/impact/hooks/use-impact-measurement";
-import formatCurrency from "@/utilities/formatCurrency";
-import { getHeaderStats } from "@/utilities/karma/getHeaderStats";
+import { formatCurrency } from "@/lib/format/currency";
+import { getHeaderStats } from "@/features/karma-gap/lib/getHeaderStats";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, usePathname } from "next/navigation";
 

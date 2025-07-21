@@ -1,6 +1,6 @@
 "use client";
 import { fetchData } from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import { useState, Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { Button } from "@/components/ui/button";

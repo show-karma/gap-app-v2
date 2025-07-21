@@ -1,12 +1,12 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 import { useAuth } from "@/features/auth/hooks/use-auth";
-import { useContractOwner } from "@/hooks/useContractOwner";
+import { useContractOwner } from "@/features/contract-owner/hooks/use-contract-owner";
 import { useAuthStore } from "@/features/auth/lib/store";
 import { useCommunitiesStore } from "@/features/communities/lib/communities-store";
 import { useOwnerStore } from "@/features/contract-owner/lib/owner";
-import { PAGES } from "@/utilities/pages";
-import { SOCIALS } from "@/utilities/socials";
+import { PAGES } from "@/config/pages";
+import { SOCIALS } from "@/config/socials";
 import {
   Bars3Icon,
   UserCircleIcon,

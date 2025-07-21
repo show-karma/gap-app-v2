@@ -2,7 +2,7 @@
 import { useTheme } from "next-themes";
 import dynamic from "next/dynamic";
 import styles from "@/styles/markdown.module.css";
-import { cn } from "@/utilities/tailwind";
+import { cn } from "@/lib/utils/cn";
 import rehypeSanitize from "rehype-sanitize";
 import rehypeExternalLinks from "rehype-external-links";
 

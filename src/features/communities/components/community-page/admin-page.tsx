@@ -1,9 +1,9 @@
 "use client";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuthStore } from "@/features/auth/lib/store";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { useSigner } from "@/lib/web3/eas-wagmi-utils";
 import { MESSAGES } from "@/config/messages";
-import { PAGES } from "@/utilities/pages";
+import { PAGES } from "@/config/pages";
 import { useIsCommunityAdmin } from "@/features/admin/hooks/use-is-community-admin";
 import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useEffect, useState } from "react";

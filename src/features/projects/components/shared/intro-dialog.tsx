@@ -5,7 +5,7 @@ import { Dialog, Transition } from "@headlessui/react";
 import { Button } from "@/components/ui/button";
 import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { useProjectStore } from "@/features/projects/lib/store";
-import { shortAddress } from "@/utilities/shortAddress";
+import { shortAddress } from "@/lib/format/address";
 import { useGap } from "@/hooks/useGap";
 import { useIntroModalStore } from "@/features/modals/lib/stores/intro";
 import { fetchData } from "@/lib/utils/fetch-data";
@@ -14,10 +14,10 @@ import { MESSAGES } from "@/config/messages";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 
 import { errorManager } from "@/lib/utils/error-manager";
-import { useContactInfo } from "@/hooks/useContactInfo";
+import { useContactInfo } from "@/features/projects/hooks/use-contact-info";
 import { useAccount } from "wagmi";
 
 type IntroDialogProps = {};

@@ -1,7 +1,7 @@
 import {
   Indicator,
   getIndicatorsByCommunity,
-} from "@/utilities/queries/getIndicatorsByCommunity";
+} from "@/lib/queries/getIndicatorsByCommunity";
 import { QueryKey, QueryOptions, useQuery } from "@tanstack/react-query";
 
 interface UseIndicatorsProps {

@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { Metadata } from "next";
-import { defaultMetadata } from "@/utilities/meta";
+import { defaultMetadata } from "@/lib/metadata/meta";
 import ManageProgramsWrapper from "@/features/program-registry/components/ManageProgramsWrapper";
 
 export const metadata: Metadata = {

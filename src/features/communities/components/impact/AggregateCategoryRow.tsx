@@ -6,7 +6,7 @@ import {
   ImpactAggregateIndicator,
   ImpactAggregateSegment,
 } from "@/types/programs";
-import { formatDate } from "@/utilities/formatDate";
+import { formatDate } from "@/lib/format/date";
 import { cn } from "@/lib/utils/cn";
 import { AreaChart, Card } from "@tremor/react";
 import Image from "next/image";

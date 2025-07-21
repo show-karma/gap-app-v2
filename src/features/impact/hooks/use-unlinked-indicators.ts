@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   getUnlinkedIndicators,
   UnlinkedIndicator,
-} from "@/utilities/queries/getUnlinkedIndicators";
+} from "@/lib/queries/getUnlinkedIndicators";
 
 export const useUnlinkedIndicators = () => {
   return useQuery<UnlinkedIndicator[]>({

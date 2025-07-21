@@ -6,9 +6,9 @@ import { useOwnerStore } from "@/features/contract-owner/lib/owner";
 import { useGrantGenieModalStore } from "@/features/modals/lib/stores/genie";
 import { useProjectEditModalStore } from "@/features/modals/lib/stores/projectEdit";
 import { useStepper } from "@/features/modals/lib/stores/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { walletClientToSigner } from "@/lib/web3/eas-wagmi-utils";
 import { MESSAGES } from "@/config/messages";
-import { PAGES } from "@/utilities/pages";
+import { PAGES } from "@/config/pages";
 
 import { Menu, Transition } from "@headlessui/react";
 import {
@@ -32,12 +32,11 @@ import { Fragment, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 
-import { useContactInfo } from "@/hooks/useContactInfo";
+import { useContactInfo } from "@/features/projects/hooks/use-contact-info";
 import { useAdminTransferOwnershipModalStore } from "@/features/modals/lib/stores/adminTransferOwnership";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { GithubIcon } from "@/components/icons";
 import { useWallet } from "@/features/auth/hooks/use-wallet";
-import { deleteProject, getProjectById } from "@/utilities/sdk/projects";
 import LinkContractAddressButton from "../shared/LinkContractAddressButton";
 import LinkGithubRepoButton from "../shared/LinkGithubRepoButton";
 import LinkOSOProfileButton from "../shared/LinkOSOProfileButton";
@@ -47,6 +46,7 @@ import { useMergeModalStore } from "@/features/modals/lib/stores/merge";
 import { useTransferOwnershipModalStore } from "@/features/modals/lib/stores/transferOwnership";
 import { useStaff } from "@/features/admin/hooks/use-staff";
 import { AdminTransferOwnershipDialog } from "@/features/modals/components/AdminTransferOwnershipDialog";
+import { deleteProject, getProjectById } from "../../api/sdk";
 
 const ProjectDialog = dynamic(
   () => import("../dialogs/ProjectDialog").then((mod) => mod.ProjectDialog),

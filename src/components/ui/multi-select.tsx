@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { CheckIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
-import { cn } from "@/utilities/tailwind";
+import { cn } from "@/lib/utils/cn";
 
 interface Option {
   value: string;

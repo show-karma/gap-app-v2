@@ -1,13 +1,13 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { zeroUID } from "@/utilities/commons";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { zeroUID } from "@/lib/utils/misc";
+import { useSigner } from "@/lib/web3/eas-wagmi-utils";
 import fetchData from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import { MESSAGES } from "@/config/messages";
-import { defaultMetadata } from "@/utilities/meta";
-import { PAGES } from "@/utilities/pages";
+import { defaultMetadata } from "@/lib/metadata/meta";
+import { PAGES } from "@/config/pages";
 import { useIsCommunityAdmin } from "@/features/admin/hooks/use-is-community-admin";
 import {
   ChevronLeftIcon,
@@ -27,9 +27,9 @@ import { ManageCategoriesOutputs } from "@/features/admin/components/categories/
 import errorManager from "@/lib/utils/error-manager";
 import { useAuthStore } from "@/features/auth/lib/store";
 import { Category, ImpactSegment } from "@/features/impact/types";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { gapIndexerApi } from "@/services/gap-indexer/gap-indexer";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { cn } from "@/utilities/tailwind";
+import { cn } from "@/lib/utils/cn";
 import { pickColor } from "@/features/grants/components/grant-card";
 import { CategoryView } from "../categories/CategoryView";
 import { IndicatorsView } from "./IndicatorsView";

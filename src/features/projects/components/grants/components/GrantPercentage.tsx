@@ -1,4 +1,4 @@
-import { formatPercentage } from "@/utilities/formatNumber";
+import { formatPercentage } from "@/lib/format/number";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useMemo } from "react";
 

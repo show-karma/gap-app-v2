@@ -2,10 +2,10 @@
 import { Button } from "@/components/ui/button";
 import { errorManager } from "@/lib/utils/error-manager";
 import { Spinner } from "@/components/ui/spinner";
-import { zeroUID } from "@/utilities/commons";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { defaultMetadata } from "@/utilities/meta";
-import { PAGES } from "@/utilities/pages";
+import { zeroUID } from "@/lib/utils/misc";
+import { gapIndexerApi } from "@/services/gap-indexer/gap-indexer";
+import { defaultMetadata } from "@/lib/metadata/meta";
+import { PAGES } from "@/config/pages";
 import { cn } from "@/lib/utils/cn";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";

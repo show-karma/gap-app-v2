@@ -9,23 +9,23 @@ import { useProjectStore } from "@/features/projects/lib/store";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
 
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { walletClientToSigner } from "@/lib/web3/eas-wagmi-utils";
 import { useStepper } from "@/features/modals/lib/stores/txStepper";
 import { sanitizeInput, sanitizeObject } from "@/lib/utils/sanitize";
 import toast from "react-hot-toast";
 import { useState } from "react";
 import fetchData from "@/lib/utils/fetch-data";
-import { INDEXER } from "@/utilities/indexer";
+import { INDEXER } from "@/services/indexer";
 import { useParams, useRouter } from "next/navigation";
-import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { gapIndexerApi } from "@/services/gap-indexer/gap-indexer";
 import { safeGetWalletClient } from "@/lib/utils/wallet-helpers";
 import { useAllMilestones } from "@/features/milestones/hooks/use-all-milestones";
-import { PAGES } from "@/utilities/pages";
+import { PAGES } from "@/config/pages";
 import { useWallet } from "@/features/auth/hooks/use-wallet";
 import { Button } from "@/components/ui/button";
 import { MarkdownEditor } from "@/components/ui/markdown-editor";
+import { getProjectObjectives } from "@/features/projects/api/getProjectObjectives";
 
 const objectiveSchema = z.object({
   title: z

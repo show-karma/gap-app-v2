@@ -1,4 +1,4 @@
-import { formatDate } from "@/utilities/formatDate";
+import { formatDate } from "@/lib/format/date";
 import EthereumAddressToENSAvatar from "@/features/ens/components/address-to-ens-avatar";
 import EthereumAddressToENSName from "@/features/ens/components/address-to-ens-name";
 

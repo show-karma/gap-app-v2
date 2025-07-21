@@ -11,8 +11,8 @@ import {
   IMilestoneResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { type FC, useState } from "react";
-import { shareOnX } from "@/utilities/share/shareOnX";
-import { SHARE_TEXTS } from "@/utilities/share/text";
+import { shareOnX } from "@/features/share/lib/shareOnX";
+import { SHARE_TEXTS } from "@/features/share/lib/text";
 import { ExternalLink } from "@/components/ui/external-link";
 import { MilestoneUpdateForm } from "@/features/milestones/components/forms/milestone-update-form";
 

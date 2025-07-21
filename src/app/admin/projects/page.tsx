@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { AllProjects } from "@/features/admin/components/all-projects";
-import { defaultMetadata } from "@/utilities/meta";
+import { defaultMetadata } from "@/lib/metadata/meta";
 
 export const metadata = defaultMetadata;
 

@@ -1,5 +1,4 @@
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { getContributorProfiles } from "@/utilities/indexer/getContributorProfiles";
+import { gapIndexerApi } from "@/services/gap-indexer/gap-indexer";
 import { ContributorProfile } from "@show-karma/karma-gap-sdk";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { create } from "zustand";

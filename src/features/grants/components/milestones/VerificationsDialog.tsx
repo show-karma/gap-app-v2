@@ -13,7 +13,7 @@ import {
   IProjectImpactStatus,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { Tabs, TabContent, TabTrigger } from "@/components/ui/tabs";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { gapIndexerApi } from "@/services/gap-indexer/gap-indexer";
 import { useAccount } from "wagmi";
 import EthereumAddressToENSAvatar from "@/features/ens/components/address-to-ens-avatar";
 import { useGrant } from "../../lib/grant-context";

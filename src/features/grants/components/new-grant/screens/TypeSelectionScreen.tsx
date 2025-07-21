@@ -2,7 +2,7 @@ import React from "react";
 import { StepBlock } from "../StepBlock";
 import { useGrantFormStore } from "../store";
 import { useRouter } from "next/navigation";
-import { PAGES } from "@/utilities/pages";
+import { PAGES } from "@/config/pages";
 import { useProjectStore } from "@/features/projects/lib/store";
 import Image from "next/image";
 import { NextButton } from "./buttons/NextButton";
