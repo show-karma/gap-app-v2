@@ -24,22 +24,15 @@ const config: Config = {
   // testEnvironment: "jsdom",
   testEnvironment: "jest-environment-jsdom",
   moduleNameMapper: {
-    "^@/app/(.*)$": "<rootDir>/app/$1",
-    "^@/components/(.*)$": "<rootDir>/components/$1",
-    "^@/contexts/(.*)$": "<rootDir>/contexts/$1",
-    "^@/hooks/(.*)$": "<rootDir>/hooks/$1",
-    "^@/lib/(.*)$": "<rootDir>/lib/$1",
-    "^@/store/(.*)$": "<rootDir>/store/$1",
-    "^@/types/(.*)$": "<rootDir>/types/$1",
-    "^@/utilities/(.*)$": "<rootDir>/utilities/$1",
+    "^@/(.*)$": "<rootDir>/src/$1",
   },
   transformIgnorePatterns: [
     "/node_modules/",
     "!node_modules/",
     "/node_modules/(?!@show-karma/karma-gap-sdk)",
   ],
-  globalSetup: "./tests/global.js",
-  setupFilesAfterEnv: ["./tests/setup.js"],
+  globalSetup: "./src/tests/global.js",
+  setupFilesAfterEnv: ["./src/tests/setup.js"],
   testMatch: ["**/?(*.)+(spec|test).[jt]s?(x)"],
 };
 
