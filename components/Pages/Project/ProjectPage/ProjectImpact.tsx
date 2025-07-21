@@ -25,7 +25,7 @@ export const ProjectImpact = ({
 
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-black dark:text-zinc-401 font-bold text-sm">
+      <p className="text-black dark:text-zinc-400 font-bold text-sm">
         Project Impact
       </p>
       <div className="flex flex-row  max-lg:flex-col gap-4">
