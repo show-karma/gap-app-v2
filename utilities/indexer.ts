@@ -115,7 +115,7 @@ export const INDEXER = {
     DELETE: (indicatorId: string) => `/indicators/${indicatorId}`,
     UNLINKED: () => `/indicators/unlinked`,
     BY_TIMERANGE: (projectUID: string, params: Record<string, number>) =>
-        `/projects/${projectUID}/indicators/data/byTimeRange?${Object
+        `/projects/${projectUID}/indicator-dashboard-metrics?${Object
           .entries(params)
           .map(([key, value]) => `${key}=${value}`)
           .join("&")}`,

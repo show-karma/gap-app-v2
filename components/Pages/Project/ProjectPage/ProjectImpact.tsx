@@ -2,30 +2,24 @@ import { useProjectImpactIndicators } from "@/hooks/useProjectImpactIndicators";
 import formatCurrency from "@/utilities/formatCurrency";
 import pluralize from "pluralize";
 
-// Global variables for indicator types
-const GITHUB_COMMITS = "GitHub Commits";
-const NO_OF_TXS = "no_of_txs";
-const UNIQ_USER_TXS = "uniq_user_txs";
-
 interface ProjectImpactProps {
   projectId: string;
+  range?: number; // Optional range parameter (30, 90, 180, 360)
 }
 
-export const ProjectImpact = ({ projectId }: ProjectImpactProps) => {
+export const ProjectImpact = ({ projectId, range = 30 }: ProjectImpactProps) => {
   const {
-    data: impactIndicators = {},
-  } = useProjectImpactIndicators(projectId, {
-    [NO_OF_TXS]: 30,
-    [GITHUB_COMMITS]: 30,
-    [UNIQ_USER_TXS]: 30
-  });
+    data: impactData,
+  } = useProjectImpactIndicators(projectId, range);
 
-  const hasAnyImpactIndicators = Object.keys(impactIndicators).length > 0 && 
-    Object.values(impactIndicators).some(indicator => indicator.totalValue > 0);
+  const hasAnyImpactIndicators = impactData?.metrics && 
+    Object.values(impactData.metrics).some(metric => metric.value > 0);
 
   if (!hasAnyImpactIndicators) {
     return null;
   }
+
+  const { metrics } = impactData;
 
   return (
     <div className="flex flex-col gap-2">
@@ -33,46 +27,43 @@ export const ProjectImpact = ({ projectId }: ProjectImpactProps) => {
         Project impact
       </p>
       <div className="flex flex-row  max-lg:flex-col gap-4">
-        {impactIndicators[NO_OF_TXS] && 
-          impactIndicators[NO_OF_TXS].totalValue > 0 && (
+        {metrics.transactions && metrics.transactions.value > 0 && (
           <div className="flex flex-1 rounded border border-[#EAECf0] dark:border-zinc-600 border-l-[#155EEF] dark:border-l-[#155EEF] border-l-[4px] p-4 justify-between items-center">
             <div className="flex flex-col gap-3">
               <p className="text-black dark:text-zinc-301 dark:bg-zinc-800 text-2xl font-bold bg-[#EFF4FF] rounded-lg px-2 py-1 flex justify-center items-center min-h-[40px]  min-w-[40px] w-max h-max">
-                {formatCurrency(impactIndicators[NO_OF_TXS].totalValue)}
+                {formatCurrency(metrics.transactions.value)}
               </p>
               <div className="flex flex-row gap-3">
                 <p className="font-normal text-brand-gray text-sm dark:text-zinc-301">
-                  {pluralize("Transaction", impactIndicators[NO_OF_TXS].totalValue)} <span className="text-xs text-gray-500 dark:text-zinc-400">(last 30 days)</span>
+                  {pluralize("Transaction", metrics.transactions.value)} <span className="text-xs text-gray-500 dark:text-zinc-400">(last {range} days)</span>
                 </p>
               </div>
             </div>
           </div>
         )}
-        {impactIndicators[GITHUB_COMMITS] &&
-          impactIndicators[GITHUB_COMMITS].totalValue > 0 && (
+        {metrics.gitCommits && metrics.gitCommits.value > 0 && (
           <div className="flex flex-1 rounded border border-[#EAECf0] dark:border-zinc-600 border-l-[#155EEF] dark:border-l-[#155EEF] border-l-[4px] p-4 justify-between items-center">
             <div className="flex flex-col gap-3">
               <p className="text-black dark:text-zinc-301 dark:bg-zinc-800 text-2xl font-bold bg-[#EFF4FF] rounded-lg px-2 py-1 flex justify-center items-center min-h-[40px]  min-w-[40px] w-max h-max">
-                {formatCurrency(impactIndicators[GITHUB_COMMITS].totalValue)}
+                {formatCurrency(metrics.gitCommits.value)}
               </p>
               <div className="flex flex-row gap-3">
                 <p className="font-normal text-brand-gray text-sm dark:text-zinc-301">
-                  {pluralize("Git Commit", impactIndicators[GITHUB_COMMITS].totalValue)} <span className="text-xs text-gray-500 dark:text-zinc-400">(last 30 days)</span>
+                  {pluralize("Git Commit", metrics.gitCommits.value)} <span className="text-xs text-gray-500 dark:text-zinc-400">(last {range} days)</span>
                 </p>
               </div>
             </div>
           </div>
         )}
-        {impactIndicators[UNIQ_USER_TXS] &&
-          impactIndicators[UNIQ_USER_TXS].totalValue > 0 && (
+        {metrics.uniqueUsers && metrics.uniqueUsers.value > 0 && (
           <div className="flex flex-1 rounded border border-[#EAECf0] dark:border-zinc-600 border-l-[#155EEF] dark:border-l-[#155EEF] border-l-[4px] p-4 justify-between items-center">
             <div className="flex flex-col gap-3">
               <p className="text-black dark:text-zinc-301 dark:bg-zinc-800 text-2xl font-bold bg-[#EFF4FF] rounded-lg px-2 py-1 flex justify-center items-center min-h-[40px]  min-w-[40px] w-max h-max">
-                {formatCurrency(impactIndicators[UNIQ_USER_TXS].totalValue)}
+                {formatCurrency(metrics.uniqueUsers.value)}
               </p>
               <div className="flex flex-row gap-3">
                 <p className="font-normal text-brand-gray text-sm dark:text-zinc-301">
-                  {pluralize("Unique users transactions", impactIndicators[UNIQ_USER_TXS].totalValue)} <span className="text-xs text-gray-500 dark:text-zinc-400">(last 30 days)</span>
+                  {pluralize("Unique Users Transactions", metrics.uniqueUsers.value)} <span className="text-xs text-gray-500 dark:text-zinc-400">(last {range} days)</span>
                 </p>
               </div>
             </div>
