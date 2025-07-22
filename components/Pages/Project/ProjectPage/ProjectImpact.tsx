@@ -38,7 +38,7 @@ export const ProjectImpact = ({
               <div className="flex flex-row gap-3">
                 <div className="flex flex-col">
                   <p className="font-normal text-brand-gray text-sm dark:text-zinc-300">
-                    {pluralize("Transaction", metrics.transactions.value)}
+                    {pluralize("Total Transaction", metrics.transactions.value)}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-zinc-400">
                     (last {range} days)
@@ -77,7 +77,7 @@ export const ProjectImpact = ({
                 <div className="flex flex-col">
                   <p className="font-normal text-brand-gray text-sm dark:text-zinc-300">
                     {pluralize(
-                      "Unique Users Transaction",
+                      "Unique User",
                       metrics.uniqueUsers.value
                     )}
                   </p>
