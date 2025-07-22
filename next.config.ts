@@ -44,8 +44,6 @@ const nextConfig: NextConfig = {
       };
     }
 
-
-
     // Add external modules that should not be bundled
     config.externals.push("pino-pretty", "lokijs", "encoding");
 
