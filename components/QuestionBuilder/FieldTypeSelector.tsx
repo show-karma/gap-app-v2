@@ -1,22 +1,67 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { FormField } from '@/types/question-builder';
+import React from "react";
+import { FormField } from "@/types/question-builder";
 
 interface FieldTypeSelectorProps {
-  onFieldAdd: (fieldType: FormField['type']) => void;
+  onFieldAdd: (fieldType: FormField["type"]) => void;
 }
 
-const fieldTypes = [
-  { type: 'text' as const, label: 'Text Input', icon: '📝', description: 'Single line text input' },
-  { type: 'textarea' as const, label: 'Textarea', icon: '📄', description: 'Multi-line text input' },
-  { type: 'select' as const, label: 'Dropdown', icon: '📋', description: 'Select from options' },
-  { type: 'radio' as const, label: 'Radio Buttons', icon: '🔘', description: 'Choose one option' },
-  { type: 'checkbox' as const, label: 'Checkboxes', icon: '☑️', description: 'Choose multiple options' },
-  { type: 'number' as const, label: 'Number', icon: '🔢', description: 'Numeric input' },
-  { type: 'email' as const, label: 'Email', icon: '📧', description: 'Email address input' },
-  { type: 'url' as const, label: 'URL', icon: '🔗', description: 'Website URL input' },
-  { type: 'date' as const, label: 'Date', icon: '📅', description: 'Date picker' },
+export const fieldTypes = [
+  {
+    type: "text" as const,
+    label: "Text Input",
+    icon: "📝",
+    description: "Single line text input",
+  },
+  {
+    type: "textarea" as const,
+    label: "Textarea",
+    icon: "📄",
+    description: "Multi-line text input",
+  },
+  {
+    type: "select" as const,
+    label: "Dropdown",
+    icon: "📋",
+    description: "Select from options",
+  },
+  {
+    type: "radio" as const,
+    label: "Radio Button",
+    icon: "🔘",
+    description: "Choose one option",
+  },
+  {
+    type: "checkbox" as const,
+    label: "Checkbox",
+    icon: "☑️",
+    description: "Choose multiple options",
+  },
+  {
+    type: "number" as const,
+    label: "Number",
+    icon: "🔢",
+    description: "Numeric input",
+  },
+  {
+    type: "email" as const,
+    label: "Email",
+    icon: "📧",
+    description: "Email address input",
+  },
+  {
+    type: "url" as const,
+    label: "URL",
+    icon: "🔗",
+    description: "Website URL input",
+  },
+  {
+    type: "date" as const,
+    label: "Date",
+    icon: "📅",
+    description: "Date picker",
+  },
 ];
 
 export function FieldTypeSelector({ onFieldAdd }: FieldTypeSelectorProps) {
@@ -25,7 +70,7 @@ export function FieldTypeSelector({ onFieldAdd }: FieldTypeSelectorProps) {
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
         Add Form Field
       </h3>
-      
+
       <div className="grid grid-cols-1 gap-2">
         {fieldTypes.map((fieldType) => (
           <button

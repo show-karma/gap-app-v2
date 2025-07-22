@@ -2,12 +2,18 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { FormField, FormSchema } from "@/types/question-builder";
-import { FieldTypeSelector } from "./FieldTypeSelector";
+import { fieldTypes, FieldTypeSelector } from "./FieldTypeSelector";
 import { FieldEditor } from "./FieldEditor";
 import { FormPreview } from "./FormPreview";
 import { AIPromptConfiguration } from "./AIPromptConfiguration";
 import { Button } from "@/components/Utilities/Button";
-import { EyeIcon, Cog6ToothIcon, CpuChipIcon, ChevronDownIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
+import {
+  EyeIcon,
+  Cog6ToothIcon,
+  CpuChipIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+} from "@heroicons/react/24/solid";
 
 interface QuestionBuilderProps {
   initialSchema?: FormSchema;
@@ -54,8 +60,8 @@ export function QuestionBuilder({
     if (selectedFieldId && fieldRefs.current[selectedFieldId]) {
       setTimeout(() => {
         fieldRefs.current[selectedFieldId]?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'nearest',
+          behavior: "smooth",
+          block: "nearest",
         });
       }, 100);
     }
@@ -98,7 +104,7 @@ export function QuestionBuilder({
     if (selectedFieldId === fieldId) {
       setSelectedFieldId(null);
     }
-    
+
     // Clean up the ref
     delete fieldRefs.current[fieldId];
   };
@@ -248,7 +254,9 @@ export function QuestionBuilder({
                       {schema.fields.map((field, index) => (
                         <div
                           key={field.id}
-                          ref={(el) => { fieldRefs.current[field.id] = el; }}
+                          ref={(el) => {
+                            fieldRefs.current[field.id] = el;
+                          }}
                           className={`border rounded-lg transition-all ${
                             selectedFieldId === field.id
                               ? "border-blue-500 bg-white dark:bg-gray-800 shadow-lg"
@@ -257,13 +265,19 @@ export function QuestionBuilder({
                         >
                           <div
                             className="p-4 cursor-pointer"
-                            onClick={() => setSelectedFieldId(selectedFieldId === field.id ? null : field.id)}
+                            onClick={() =>
+                              setSelectedFieldId(
+                                selectedFieldId === field.id ? null : field.id
+                              )
+                            }
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex-1">
                                 <div className="flex items-center space-x-2">
                                   <span className="text-xs font-medium px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded">
-                                    {field.type}
+                                    {fieldTypes.find(
+                                      (item) => item.type === field.type
+                                    )?.label || field.type}
                                   </span>
                                   {field.required && (
                                     <span className="text-xs text-red-500">
@@ -294,7 +308,7 @@ export function QuestionBuilder({
                               </div>
                             </div>
                           </div>
-                          
+
                           {/* Field Editor - appears inside the same block when expanded */}
                           {selectedFieldId === field.id && (
                             <div className="border-t border-gray-200 dark:border-gray-700">
