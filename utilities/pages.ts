@@ -12,6 +12,8 @@ export const PAGES = {
       `/community/${community}/impact/project-discovery`,
     RECEIVEPROJECTUPDATES: (community: string) =>
       `/community/${community}/receive-project-updates`,
+    FUNDING_PLATFORM_APPLY: (community: string, programId: string) =>
+      `/community/${community}/funding-platform/${programId}/apply`,
   },
   MY_PROJECTS: `/my-projects`,
   ADMIN: {
@@ -25,6 +27,10 @@ export const PAGES = {
       `/community/${community}/admin/manage-indicators`,
     TRACKS: (community: string) => `/community/${community}/admin/tracks`,
     FUNDING_PLATFORM: (community: string) => `/community/${community}/admin/funding-platform`,
+    FUNDING_PLATFORM_QUESTION_BUILDER: (community: string, programId: string) => 
+      `/community/${community}/admin/funding-platform/${programId}/question-builder`,
+    FUNDING_PLATFORM_APPLICATIONS: (community: string, programId: string) => 
+      `/community/${community}/admin/funding-platform/${programId}/applications`,
     COMMUNITIES: `/admin/communities`,
     COMMUNITY_STATS: `/admin/communities/stats`,
     PROJECTS: `/admin/projects`,

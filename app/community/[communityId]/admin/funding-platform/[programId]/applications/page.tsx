@@ -11,6 +11,7 @@ import { Button } from "@/components/Utilities/Button";
 import { ArrowLeftIcon, CogIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
 
 export default function ApplicationsPage() {
   const router = useRouter();
@@ -34,7 +35,7 @@ export default function ApplicationsPage() {
   const hasAccess = isCommunityAdmin || isOwner || isStaff;
 
   const handleBackClick = () => {
-    router.push(`/community/${communityId}/admin/funding-platform`);
+    router.push(PAGES.ADMIN.FUNDING_PLATFORM(communityId));
   };
 
   const handleApplicationSelect = (application: IFundingApplication) => {
@@ -103,7 +104,7 @@ export default function ApplicationsPage() {
 
             <div className="flex items-center space-x-3">
               <Link
-                href={`/community/${communityId}/admin/funding-platform/${combinedProgramId}/form-builder`}
+                href={PAGES.ADMIN.FUNDING_PLATFORM_QUESTION_BUILDER(communityId, combinedProgramId)}
               >
                 <Button
                   variant="secondary"

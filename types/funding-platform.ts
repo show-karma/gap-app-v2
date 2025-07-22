@@ -1,5 +1,13 @@
 export interface IFormField {
-  type: 'text' | 'textarea' | 'number' | 'email' | 'url' | 'select' | 'checkbox' | 'radio';
+  type:
+    | "text"
+    | "textarea"
+    | "number"
+    | "email"
+    | "url"
+    | "select"
+    | "checkbox"
+    | "radio";
   label: string;
   placeholder?: string;
   required?: boolean;
@@ -22,13 +30,13 @@ export interface IFundingProgramConfig {
   programId: string;
   chainId: number;
   formSchema?: any; // React Hook Form schema
-  schemaType?: 'react-hook-form'; // Always React Hook Form now
+  schemaType?: "react-hook-form"; // Always React Hook Form now
   aiConfig?: {
     systemPrompt?: string;
     detailedPrompt?: string;
     model?: string;
   };
-  enabled: boolean;
+  isEnabled: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -40,7 +48,7 @@ export interface IFundingApplication {
   chainId: number;
   applicantAddress: string;
   applicationData: Record<string, any>;
-  status: 'submitted' | 'under_review' | 'approved' | 'rejected';
+  status: "submitted" | "under_review" | "approved" | "rejected";
   aiEvaluation?: {
     systemEvaluation?: {
       rating: number;
@@ -73,11 +81,15 @@ export interface IFormBuilderProps {
 
 export interface IApplicationViewProps {
   application: IFundingApplication;
-  onStatusChange?: (applicationId: string, status: string, note?: string) => void;
+  onStatusChange?: (
+    applicationId: string,
+    status: string,
+    note?: string
+  ) => void;
 }
 
 export interface IApplicationListProps {
   programId: string;
   chainId: number;
   onApplicationSelect?: (application: IFundingApplication) => void;
-} 
+}

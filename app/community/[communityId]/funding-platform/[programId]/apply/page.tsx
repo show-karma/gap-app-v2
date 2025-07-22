@@ -4,28 +4,33 @@ import { useProgramConfig } from "@/hooks/useFundingPlatform";
 import ApplicationSubmissionWithAI from "@/components/FundingPlatform/ApplicationView/ApplicationSubmissionWithAI";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/Utilities/Button";
-import { ArrowLeftIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
+import {
+  ArrowLeftIcon,
+  ExclamationTriangleIcon,
+} from "@heroicons/react/24/solid";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
 export default function FundingApplicationPage() {
   const router = useRouter();
-  const { communityId, programId: combinedProgramId } = useParams() as { 
-    communityId: string; 
-    programId: string; 
+  const { communityId, programId: combinedProgramId } = useParams() as {
+    communityId: string;
+    programId: string;
   };
-  
+
   // Extract programId and chainId from the combined format (e.g., "777_11155111")
-  const [programId, chainId] = combinedProgramId.split('_');
+  const [programId, chainId] = combinedProgramId.split("_");
   const parsedChainId = parseInt(chainId, 10);
-  
+
   const [applicationSubmitted, setApplicationSubmitted] = useState(false);
-  const [submittedApplicationId, setSubmittedApplicationId] = useState<string | null>(null);
-  
+  const [submittedApplicationId, setSubmittedApplicationId] = useState<
+    string | null
+  >(null);
+
   const {
     config,
     isLoading: isLoadingConfig,
-    error: configError
+    error: configError,
   } = useProgramConfig(programId, parsedChainId);
 
   const handleSubmissionSuccess = (applicationId: string) => {
@@ -41,15 +46,25 @@ export default function FundingApplicationPage() {
     router.push(`/community/${communityId}`);
   };
 
-  const handleApplicationSubmit = async (applicationData: Record<string, any>) => {
+  const handleApplicationSubmit = async (
+    applicationData: Record<string, any>
+  ) => {
     try {
       // Use the proper API service to submit application
-      const { fundingApplicationsAPI } = await import('@/services/fundingPlatformService');
-      const result = await fundingApplicationsAPI.submitApplication(programId, parsedChainId, applicationData);
-      handleSubmissionSuccess(result.id || result.referenceNumber || 'APP-' + Date.now());
+      const { fundingApplicationsAPI } = await import(
+        "@/services/fundingPlatformService"
+      );
+      const result = await fundingApplicationsAPI.submitApplication(
+        programId,
+        parsedChainId,
+        applicationData
+      );
+      handleSubmissionSuccess(
+        result.id || result.referenceNumber || "APP-" + Date.now()
+      );
     } catch (error) {
-      console.error('Error submitting application:', error);
-      toast.error('Failed to submit application. Please try again.');
+      console.error("Error submitting application:", error);
+      toast.error("Failed to submit application. Please try again.");
       throw error; // Re-throw to let ApplicationSubmissionWithAI handle it
     }
   };
@@ -76,7 +91,8 @@ export default function FundingApplicationPage() {
             Program Not Found
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            The funding program you&apos;re looking for doesn&apos;t exist or is no longer available.
+            The funding program you&apos;re looking for doesn&apos;t exist or is
+            no longer available.
           </p>
           <Button
             onClick={handleBackToCommunity}
@@ -90,7 +106,7 @@ export default function FundingApplicationPage() {
     );
   }
 
-  if (!config.enabled) {
+  if (!config.isEnabled) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 text-center">
@@ -99,7 +115,8 @@ export default function FundingApplicationPage() {
             Applications Closed
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            This funding program is not currently accepting applications. Please check back later or contact the community administrators.
+            This funding program is not currently accepting applications. Please
+            check back later or contact the community administrators.
           </p>
           <Button
             onClick={handleBackToCommunity}
@@ -122,7 +139,8 @@ export default function FundingApplicationPage() {
             Form Not Ready
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            The application form for this funding program is still being configured. Please check back later.
+            The application form for this funding program is still being
+            configured. Please check back later.
           </p>
           <Button
             onClick={handleBackToCommunity}
@@ -155,15 +173,16 @@ export default function FundingApplicationPage() {
               />
             </svg>
           </div>
-          
+
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
             Application Submitted!
           </h1>
-          
+
           <p className="text-lg text-gray-600 dark:text-gray-400 mb-6">
-            Thank you for your funding application. We&apos;ve received your submission and will review it shortly.
+            Thank you for your funding application. We&apos;ve received your
+            submission and will review it shortly.
           </p>
-          
+
           <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-8">
             <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
               Application Reference Number:
@@ -172,14 +191,14 @@ export default function FundingApplicationPage() {
               {submittedApplicationId}
             </div>
           </div>
-          
+
           <div className="space-y-4 text-sm text-gray-600 dark:text-gray-400 mb-8">
             <p>• Your application has been automatically evaluated using AI</p>
             <p>• Community administrators will review your submission</p>
             <p>• You&apos;ll be notified of any status updates via email</p>
             <p>• Keep your reference number for future inquiries</p>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
               onClick={handleBackToCommunity}
@@ -189,7 +208,7 @@ export default function FundingApplicationPage() {
               <ArrowLeftIcon className="w-4 h-4 mr-2" />
               Back to Community
             </Button>
-            
+
             <Button
               onClick={() => {
                 setApplicationSubmitted(false);
@@ -218,4 +237,4 @@ export default function FundingApplicationPage() {
       </div>
     </div>
   );
-} 
+}
