@@ -14,21 +14,22 @@ import { useEffect } from "react";
 
 export default function QuestionBuilderPage() {
   const router = useRouter();
-  const { communityId, programId: combinedProgramId } = useParams() as { 
-    communityId: string; 
-    programId: string; 
+  const { communityId, programId: combinedProgramId } = useParams() as {
+    communityId: string;
+    programId: string;
   };
-  
+
   // Extract programId and chainId from the combined format (e.g., "777_11155111")
-  const [programId, chainId] = combinedProgramId.split('_');
+  const [programId, chainId] = combinedProgramId.split("_");
   const parsedChainId = parseInt(chainId, 10);
-  
-  const { isCommunityAdmin, isLoading: isLoadingAdmin } = useIsCommunityAdmin(communityId);
+
+  const { isCommunityAdmin, isLoading: isLoadingAdmin } =
+    useIsCommunityAdmin(communityId);
   const isOwner = useOwnerStore((state) => state.isOwner);
   const { isStaff } = useStaff();
-  
+
   const hasAccess = isCommunityAdmin || isOwner || isStaff;
-  
+
   const {
     schema: existingSchema,
     isLoading: isLoadingSchema,
@@ -69,7 +70,8 @@ export default function QuestionBuilderPage() {
             Error Loading Form Schema
           </h3>
           <p className="text-red-600 dark:text-red-400 mb-4">
-            Unable to load the form schema. This might be the first time creating a form for this program.
+            Unable to load the form schema. This might be the first time
+            creating a form for this program.
           </p>
           <div className="flex space-x-3">
             <Button
@@ -107,7 +109,7 @@ export default function QuestionBuilderPage() {
                 <ArrowLeftIcon className="w-4 h-4 mr-2" />
                 Back
               </Button>
-              
+
               <div>
                 <h1 className="text-xl font-bold text-gray-900 dark:text-white">
                   Form Builder
@@ -125,7 +127,7 @@ export default function QuestionBuilderPage() {
                   <span className="ml-2">Saving...</span>
                 </div>
               )}
-              
+
               <div className="text-sm text-gray-500 dark:text-gray-400">
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300">
                   Form Builder
@@ -137,36 +139,10 @@ export default function QuestionBuilderPage() {
       </div>
 
       {/* Question Builder */}
-      <QuestionBuilder 
+      <QuestionBuilder
         initialSchema={existingSchema || undefined}
-        onSave={handleSchemaChange} 
+        onSave={handleSchemaChange}
       />
-
-      {/* Footer */}
-      <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-        <div className="px-4 sm:px-6 lg:px-12 py-3">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-gray-500 dark:text-gray-400">
-            <div className="mb-2 sm:mb-0">
-              <span>Built with React Hook Form + Custom Components. </span>
-              <span className="font-medium">Drag and drop form builder for funding applications.</span>
-            </div>
-            <div className="flex items-center space-x-4">
-              <a 
-                href="#" 
-                className="text-brand-blue hover:text-brand-blue/80 underline"
-              >
-                Form Builder Guide
-              </a>
-              <a 
-                href="#" 
-                className="text-brand-blue hover:text-brand-blue/80 underline"
-              >
-                Best Practices
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

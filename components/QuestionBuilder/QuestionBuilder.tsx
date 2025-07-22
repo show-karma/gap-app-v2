@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { FormField, FormSchema } from '@/types/question-builder';
-import { FieldTypeSelector } from './FieldTypeSelector';
-import { FieldEditor } from './FieldEditor';
-import { FormPreview } from './FormPreview';
-import { AIPromptConfiguration } from './AIPromptConfiguration';
-import { Button } from '@/components/Utilities/Button';
-import { EyeIcon, Cog6ToothIcon, CpuChipIcon } from '@heroicons/react/24/solid';
+import React, { useState, useEffect, useRef } from "react";
+import { FormField, FormSchema } from "@/types/question-builder";
+import { FieldTypeSelector } from "./FieldTypeSelector";
+import { FieldEditor } from "./FieldEditor";
+import { FormPreview } from "./FormPreview";
+import { AIPromptConfiguration } from "./AIPromptConfiguration";
+import { Button } from "@/components/Utilities/Button";
+import { EyeIcon, Cog6ToothIcon, CpuChipIcon, ChevronDownIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 
 interface QuestionBuilderProps {
   initialSchema?: FormSchema;
@@ -15,22 +15,29 @@ interface QuestionBuilderProps {
   className?: string;
 }
 
-export function QuestionBuilder({ initialSchema, onSave, className = '' }: QuestionBuilderProps) {
+export function QuestionBuilder({
+  initialSchema,
+  onSave,
+  className = "",
+}: QuestionBuilderProps) {
   const [schema, setSchema] = useState<FormSchema>(
     initialSchema || {
       id: `form_${Date.now()}`,
-      title: 'New Application Form',
-      description: 'Please fill out this application form',
+      title: "New Application Form",
+      description: "Please fill out this application form",
       fields: [],
       settings: {
-        submitButtonText: 'Submit Application',
-        confirmationMessage: 'Thank you for your submission!',
+        submitButtonText: "Submit Application",
+        confirmationMessage: "Thank you for your submission!",
       },
     }
   );
 
-  const [activeTab, setActiveTab] = useState<'build' | 'preview' | 'ai-config'>('build');
+  const [activeTab, setActiveTab] = useState<"build" | "preview" | "ai-config">(
+    "build"
+  );
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
+  const fieldRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   // Update schema when initialSchema changes (e.g., after loading from API)
   useEffect(() => {
@@ -42,16 +49,30 @@ export function QuestionBuilder({ initialSchema, onSave, className = '' }: Quest
     }
   }, [initialSchema]);
 
-  const handleFieldAdd = (fieldType: FormField['type']) => {
+  // Scroll to the selected field editor when it opens
+  useEffect(() => {
+    if (selectedFieldId && fieldRefs.current[selectedFieldId]) {
+      setTimeout(() => {
+        fieldRefs.current[selectedFieldId]?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+        });
+      }, 100);
+    }
+  }, [selectedFieldId]);
+
+  const handleFieldAdd = (fieldType: FormField["type"]) => {
     const newField: FormField = {
       id: `field_${Date.now()}`,
       type: fieldType,
       label: `New ${fieldType} field`,
       required: false,
-      options: ['select', 'radio', 'checkbox'].includes(fieldType) ? ['Option 1', 'Option 2'] : undefined,
+      options: ["select", "radio", "checkbox"].includes(fieldType)
+        ? ["Option 1", "Option 2"]
+        : undefined,
     };
 
-    setSchema(prev => ({
+    setSchema((prev) => ({
       ...prev,
       fields: [...(prev.fields || []), newField],
     }));
@@ -60,50 +81,55 @@ export function QuestionBuilder({ initialSchema, onSave, className = '' }: Quest
   };
 
   const handleFieldUpdate = (updatedField: FormField) => {
-    setSchema(prev => ({
+    setSchema((prev) => ({
       ...prev,
-      fields: (prev.fields || []).map(field => 
+      fields: (prev.fields || []).map((field) =>
         field.id === updatedField.id ? updatedField : field
       ),
     }));
   };
 
   const handleFieldDelete = (fieldId: string) => {
-    setSchema(prev => ({
+    setSchema((prev) => ({
       ...prev,
-      fields: (prev.fields || []).filter(field => field.id !== fieldId),
+      fields: (prev.fields || []).filter((field) => field.id !== fieldId),
     }));
-    
+
     if (selectedFieldId === fieldId) {
       setSelectedFieldId(null);
     }
+    
+    // Clean up the ref
+    delete fieldRefs.current[fieldId];
   };
 
-  const handleFieldMove = (fieldId: string, direction: 'up' | 'down') => {
+  const handleFieldMove = (fieldId: string, direction: "up" | "down") => {
     if (!schema.fields) return;
-    
-    const currentIndex = schema.fields.findIndex(field => field.id === fieldId);
+
+    const currentIndex = schema.fields.findIndex(
+      (field) => field.id === fieldId
+    );
     if (currentIndex === -1) return;
 
-    const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
     if (newIndex < 0 || newIndex >= schema.fields.length) return;
 
     const newFields = [...schema.fields];
     const [movedField] = newFields.splice(currentIndex, 1);
     newFields.splice(newIndex, 0, movedField);
 
-    setSchema(prev => ({
+    setSchema((prev) => ({
       ...prev,
       fields: newFields,
     }));
   };
 
   const handleTitleChange = (title: string) => {
-    setSchema(prev => ({ ...prev, title }));
+    setSchema((prev) => ({ ...prev, title }));
   };
 
   const handleDescriptionChange = (description: string) => {
-    setSchema(prev => ({ ...prev, description }));
+    setSchema((prev) => ({ ...prev, description }));
   };
 
   const handleSave = () => {
@@ -111,7 +137,7 @@ export function QuestionBuilder({ initialSchema, onSave, className = '' }: Quest
   };
 
   const handleFormSubmit = (data: Record<string, any>) => {
-    console.log('Form preview submission:', data);
+    console.log("Form preview submission:", data);
     alert(schema.settings.confirmationMessage);
   };
 
@@ -120,57 +146,59 @@ export function QuestionBuilder({ initialSchema, onSave, className = '' }: Quest
   };
 
   return (
-    <div className={`flex flex-col h-full bg-gray-50 dark:bg-gray-900 ${className}`}>
+    <div
+      className={`flex flex-col h-full bg-gray-50 dark:bg-gray-900 ${className}`}
+    >
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-          <div className="mb-4 sm:mb-0">
+          <div className="flex flex-col gap-2 mb-4 sm:mb-0">
             <input
               type="text"
               value={schema.title}
               onChange={(e) => handleTitleChange(e.target.value)}
-              className="text-xl font-bold bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-400"
+              className="text-xl font-bold bg-transparent border-none outline-none bg-zinc-100 dark:bg-zinc-800 rounded-md text-gray-900 dark:text-white placeholder-gray-400"
               placeholder="Form Title"
             />
             <input
               type="text"
-              value={schema.description || ''}
+              value={schema.description || ""}
               onChange={(e) => handleDescriptionChange(e.target.value)}
-              className="block mt-1 text-sm bg-transparent border-none outline-none text-gray-600 dark:text-gray-400 placeholder-gray-500"
+              className="mt-1 text-sm bg-transparent border-none outline-none bg-zinc-100 dark:bg-zinc-800 rounded-md text-gray-600 dark:text-gray-400 placeholder-gray-500"
               placeholder="Form Description"
             />
           </div>
 
           <div className="flex items-center space-x-3">
-            <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg">
+            <div className="flex bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
               <button
-                onClick={() => setActiveTab('build')}
-                className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  activeTab === 'build'
-                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                onClick={() => setActiveTab("build")}
+                className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${
+                  activeTab === "build"
+                    ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
+                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
                 }`}
               >
                 <Cog6ToothIcon className="w-4 h-4 mr-2" />
                 Build
               </button>
               <button
-                onClick={() => setActiveTab('ai-config')}
-                className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  activeTab === 'ai-config'
-                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                onClick={() => setActiveTab("ai-config")}
+                className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${
+                  activeTab === "ai-config"
+                    ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
+                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
                 }`}
               >
                 <CpuChipIcon className="w-4 h-4 mr-2" />
                 AI Config
               </button>
               <button
-                onClick={() => setActiveTab('preview')}
-                className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  activeTab === 'preview'
-                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
+                onClick={() => setActiveTab("preview")}
+                className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${
+                  activeTab === "preview"
+                    ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
+                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
                 }`}
               >
                 <EyeIcon className="w-4 h-4 mr-2" />
@@ -178,7 +206,10 @@ export function QuestionBuilder({ initialSchema, onSave, className = '' }: Quest
               </button>
             </div>
 
-            <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
+            <Button
+              onClick={handleSave}
+              className="bg-blue-600 hover:bg-blue-700 py-2"
+            >
               Save Form
             </Button>
           </div>
@@ -187,7 +218,7 @@ export function QuestionBuilder({ initialSchema, onSave, className = '' }: Quest
 
       {/* Content */}
       <div className="flex-1 overflow-hidden">
-        {activeTab === 'build' ? (
+        {activeTab === "build" ? (
           <div className="h-full grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 sm:p-6 lg:p-8">
             {/* Field Types Panel */}
             <div className="lg:col-span-1">
@@ -206,7 +237,8 @@ export function QuestionBuilder({ initialSchema, onSave, className = '' }: Quest
                       No fields yet
                     </h3>
                     <p className="text-gray-600 dark:text-gray-400">
-                      Add form fields from the panel on the left to start building your form.
+                      Add form fields from the panel on the left to start
+                      building your form.
                     </p>
                   </div>
                 ) : (
@@ -216,65 +248,87 @@ export function QuestionBuilder({ initialSchema, onSave, className = '' }: Quest
                       {schema.fields.map((field, index) => (
                         <div
                           key={field.id}
-                          className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                          ref={(el) => { fieldRefs.current[field.id] = el; }}
+                          className={`border rounded-lg transition-all ${
                             selectedFieldId === field.id
-                              ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                              : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
+                              ? "border-blue-500 bg-white dark:bg-gray-800 shadow-lg"
+                              : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600"
                           }`}
-                          onClick={() => setSelectedFieldId(field.id)}
                         >
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-2">
-                                <span className="text-xs font-medium px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded">
-                                  {field.type}
-                                </span>
-                                {field.required && (
-                                  <span className="text-xs text-red-500">Required</span>
-                                )}
-                                {field.aiEvaluation?.triggerOnChange && (
-                                  <span className="text-xs text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded">
-                                    AI Trigger
+                          <div
+                            className="p-4 cursor-pointer"
+                            onClick={() => setSelectedFieldId(selectedFieldId === field.id ? null : field.id)}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-2">
+                                  <span className="text-xs font-medium px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded">
+                                    {field.type}
                                   </span>
+                                  {field.required && (
+                                    <span className="text-xs text-red-500">
+                                      Required
+                                    </span>
+                                  )}
+                                  {field.aiEvaluation?.triggerOnChange && (
+                                    <span className="text-xs text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded">
+                                      AI Trigger
+                                    </span>
+                                  )}
+                                </div>
+                                <h4 className="font-medium text-gray-900 dark:text-white mt-1">
+                                  {field.label}
+                                </h4>
+                                {field.description && (
+                                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                    {field.description}
+                                  </p>
                                 )}
                               </div>
-                              <h4 className="font-medium text-gray-900 dark:text-white mt-1">
-                                {field.label}
-                              </h4>
-                              {field.description && (
-                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                  {field.description}
-                                </p>
-                              )}
+                              <div className="ml-4">
+                                {selectedFieldId === field.id ? (
+                                  <ChevronDownIcon className="w-5 h-5 text-gray-400" />
+                                ) : (
+                                  <ChevronRightIcon className="w-5 h-5 text-gray-400" />
+                                )}
+                              </div>
                             </div>
                           </div>
+                          
+                          {/* Field Editor - appears inside the same block when expanded */}
+                          {selectedFieldId === field.id && (
+                            <div className="border-t border-gray-200 dark:border-gray-700">
+                              <FieldEditor
+                                key={selectedFieldId}
+                                field={field}
+                                onUpdate={handleFieldUpdate}
+                                onDelete={handleFieldDelete}
+                                onMoveUp={
+                                  index === 0
+                                    ? undefined
+                                    : () => handleFieldMove(field.id, "up")
+                                }
+                                onMoveDown={
+                                  index === schema.fields.length - 1
+                                    ? undefined
+                                    : () => handleFieldMove(field.id, "down")
+                                }
+                              />
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
-
-                    {/* Field Editor */}
-                    {selectedFieldId && (
-                      <div className="mt-6">
-                        <FieldEditor
-                          key={selectedFieldId}
-                          field={schema.fields.find(f => f.id === selectedFieldId)!}
-                          onUpdate={handleFieldUpdate}
-                          onDelete={handleFieldDelete}
-                          onMoveUp={selectedFieldId === schema.fields[0]?.id ? undefined : () => handleFieldMove(selectedFieldId, 'up')}
-                          onMoveDown={selectedFieldId === schema.fields[schema.fields.length - 1]?.id ? undefined : () => handleFieldMove(selectedFieldId, 'down')}
-                        />
-                      </div>
-                    )}
                   </>
                 )}
               </div>
             </div>
           </div>
-        ) : activeTab === 'ai-config' ? (
+        ) : activeTab === "ai-config" ? (
           <div className="h-full p-4 sm:p-6 lg:p-8 overflow-y-auto">
             <div className="max-w-4xl mx-auto">
-              <AIPromptConfiguration 
-                schema={schema} 
+              <AIPromptConfiguration
+                schema={schema}
                 onUpdate={handleAIConfigUpdate}
               />
             </div>

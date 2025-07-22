@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { FormField } from '@/types/question-builder';
 import { Button } from '@/components/Utilities/Button';
-import { TrashIcon } from '@heroicons/react/24/solid';
+import { TrashIcon, ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/solid';
 
 const fieldSchema = z.object({
   label: z.string().min(1, 'Label is required'),
@@ -100,33 +100,33 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown }:
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-          Edit {field.type} Field
+    <div className="p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">
+          Field Settings
         </h3>
         <div className="flex items-center space-x-2">
           {onMoveUp && (
             <button
               onClick={() => onMoveUp(field.id)}
-              className="p-1 text-gray-400 hover:text-gray-600"
+              className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
               title="Move up"
             >
-              ↑
+              <ChevronUpIcon className="w-4 h-4" />
             </button>
           )}
           {onMoveDown && (
             <button
               onClick={() => onMoveDown(field.id)}
-              className="p-1 text-gray-400 hover:text-gray-600"
+              className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
               title="Move down"
             >
-              ↓
+              <ChevronDownIcon className="w-4 h-4" />
             </button>
           )}
           <button
             onClick={() => onDelete(field.id)}
-            className="p-1 text-red-400 hover:text-red-600"
+            className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
             title="Delete field"
           >
             <TrashIcon className="w-4 h-4" />
