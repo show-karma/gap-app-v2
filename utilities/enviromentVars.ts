@@ -6,9 +6,6 @@ export const envVars = {
   NEXT_PUBLIC_KARMA_API: "https://api.karmahq.xyz/api",
   NEXT_PUBLIC_GAP_INDEXER_URL: process.env
     .NEXT_PUBLIC_GAP_INDEXER_URL as string,
-  NEXT_PUBLIC_ALLO_V2_GRAPHQL_URL: isDev
-    ? "https://indexer-staging.fly.dev/graphql"
-    : "https://grants-stack-indexer-v2.gitcoin.co/graphql",
   NEXT_PUBLIC_IPFS_SPONSOR_URL: isDev
     ? `${process.env.NEXT_PUBLIC_GAP_INDEXER_URL}/ipfs`
     : "https://gapapi.karmahq.xyz/ipfs",
@@ -24,6 +21,7 @@ export const envVars = {
     SEPOLIA: process.env.NEXT_PUBLIC_RPC_SEPOLIA as string,
     SEI: process.env.NEXT_PUBLIC_RPC_SEI as string,
     LISK: process.env.NEXT_PUBLIC_RPC_LISK as string,
+    SCROLL: process.env.NEXT_PUBLIC_RPC_SCROLL as string,
   },
   PROJECT_ID: process.env.NEXT_PUBLIC_PROJECT_ID || "",
   IPFS_TOKEN: process.env.NEXT_PUBLIC_IPFS_TOKEN || "",

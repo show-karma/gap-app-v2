@@ -113,6 +113,12 @@ export const INDEXER = {
   INDICATORS: {
     CREATE_OR_UPDATE: () => `/indicators`,
     DELETE: (indicatorId: string) => `/indicators/${indicatorId}`,
+    UNLINKED: () => `/indicators/unlinked`,
+    BY_TIMERANGE: (projectUID: string, params: Record<string, number>) =>
+        `/projects/${projectUID}/indicator-dashboard-metrics?${Object
+          .entries(params)
+          .map(([key, value]) => `${key}=${value}`)
+          .join("&")}`,
   },
   COMMUNITY: {
     GET: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}`,
@@ -185,6 +191,7 @@ export const INDEXER = {
       `/communities/${communityIdOrSlug}/page-header-stats`,
     ADMINS: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/admins`,
+    BATCH_UPDATE: (idOrSlug: string) => `/communities/${idOrSlug}/batch-update`,
     INDICATORS: {
       COMMUNITY: {
         LIST: (communityId: string) =>

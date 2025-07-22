@@ -5,10 +5,12 @@ import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import Link from "next/link";
-import type { FC } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, type FC } from "react";
 
 export const EmptyGrantsSection: FC = () => {
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isOwner = useOwnerStore((state) => state.isOwner);
   const project = useProjectStore((state) => state.project);
   const isCommunityAdmin = useCommunityAdminStore(
@@ -18,6 +20,20 @@ export const EmptyGrantsSection: FC = () => {
   const isCommunityAdminOfSome = communities.length !== 0;
   const isAuthorized =
     isProjectAdmin || isOwner || isCommunityAdmin || isCommunityAdminOfSome;
+  const router = useRouter();
+
+  useEffect(() => {
+    if (project?.grants?.length === 0) {
+      if (isAuthorized) {
+        router.push(
+          PAGES.PROJECT.SCREENS.NEW_GRANT(
+            (project?.details?.data?.slug || project?.uid) as string
+          )
+        );
+      }
+    }
+  }, [isAuthorized, project, router]);
+
   if (!isAuthorized) {
     return (
       <div className="flex w-full items-center justify-center rounded border border-gray-200 px-6 py-10">

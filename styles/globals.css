@@ -188,3 +188,48 @@ option {
     opacity: 1;
   }
 }
+
+/* Improved scrollbar styling for dropdown content */
+.popover-content::-webkit-scrollbar {
+  width: 10px;
+  min-width: 10px;
+}
+
+.popover-content::-webkit-scrollbar-track {
+  background: rgb(243 244 246);
+  border-radius: 6px;
+  margin: 4px;
+}
+
+.popover-content::-webkit-scrollbar-thumb {
+  background: rgb(156 163 175);
+  border-radius: 6px;
+  border: 2px solid rgb(243 244 246);
+  min-height: 20px;
+}
+
+.popover-content::-webkit-scrollbar-thumb:hover {
+  background: rgb(107 114 128);
+}
+
+.popover-content::-webkit-scrollbar-thumb:active {
+  background: rgb(75 85 99);
+}
+
+/* Dark mode scrollbar styling */
+.dark .popover-content::-webkit-scrollbar-track {
+  background: rgb(63 63 70);
+}
+
+.dark .popover-content::-webkit-scrollbar-thumb {
+  background: rgb(113 113 122);
+  border-color: rgb(63 63 70);
+}
+
+.dark .popover-content::-webkit-scrollbar-thumb:hover {
+  background: rgb(82 82 91);
+}
+
+.dark .popover-content::-webkit-scrollbar-thumb:active {
+  background: rgb(63 63 70);
+}

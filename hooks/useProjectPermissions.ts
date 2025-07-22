@@ -62,6 +62,7 @@ export const useProjectPermissions = () => {
     queryFn: checkPermissions,
     enabled: !!projectInstance && !!project?.chainID && !!isAuth && !!address,
     ...defaultQueryOptions,
+    gcTime: 1 * 60 * 1000, // 1 minutes
   });
 
   // Update permission states when data changes

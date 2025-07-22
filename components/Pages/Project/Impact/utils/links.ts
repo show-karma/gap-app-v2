@@ -73,64 +73,35 @@ export const linkName = (link: string) => {
   return link;
 };
 
-export const mapLinks = (linksToMap: string[]) => {
+export const mapLinks = (linksToMap: string[], networkAddresses?: string[]) => {
   const linksMap = linksToMap
     .map((datapoint) =>
       urlRegex.test(datapoint) ? linkFormatter(datapoint) : null
     )
     .filter(Boolean);
 
-  // Get contract URLs for any Dune links
-  const contractUrls = linksMap
-    .filter((link) => link && link.includes("dune.com"))
-    .flatMap((link) => getContractUrl(link as string));
+  // // Get contract URLs for any Dune links
+  let contractUrls: string[] = [];
+  const hasDuneQuery = linksMap.some(
+    (link) => link && link.includes("dune.com")
+  );
+  if (networkAddresses && hasDuneQuery) {
+    contractUrls = networkAddresses.map((address) => {
+      const addressParts = address.split(":");
+      const chain = addressParts[0];
+      const parsedAddress = addressParts[1];
+      const explorerUrl = explorerUrls[chain];
+      if (!explorerUrl) return "";
+      return `${explorerUrl}/address/${parsedAddress.trim()}`;
+    });
+    contractUrls = contractUrls.filter(Boolean);
+  }
+  // const contractUrls = linksMap
+  //   .filter((link) => link && link.includes("dune.com"))
+  //   .flatMap((link) => getContractUrl(link as string));
 
   const linksSet = new Set([...linksMap, ...contractUrls]);
 
   const links = Array.from(linksSet);
   return links;
-};
-
-export const getContractUrl = (link: string) => {
-  if (!link || !link.includes("dune.com")) return [];
-
-  try {
-    const url = new URL(link);
-    const params = new URLSearchParams(url.search);
-
-    // Extract contract addresses
-    const contractAddressesParam = params.get("contract_addresses");
-    if (!contractAddressesParam) return [];
-
-    // Get all contract addresses
-    const contractAddresses = contractAddressesParam
-      .split(",")
-      .map((addr) => addr.trim());
-
-    // Extract networks
-    const networkParam = params.get("network");
-    if (!networkParam) return [];
-
-    // Parse all networks from format like "'celo','ethereum'"
-    const networks = networkParam
-      .replace(/'/g, "")
-      .split(",")
-      .map((net) => net.trim());
-
-    // Generate URLs for all combinations of contract addresses and networks
-    const urls: string[] = [];
-    for (const network of networks) {
-      const explorerUrl = explorerUrls[network];
-      if (!explorerUrl) continue;
-
-      for (const contractAddress of contractAddresses) {
-        urls.push(`${explorerUrl}/address/${contractAddress}`);
-      }
-    }
-
-    return urls;
-  } catch (error) {
-    console.error("Error parsing Dune URL:", error);
-    return [];
-  }
 };

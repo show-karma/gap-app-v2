@@ -18,6 +18,7 @@ import {
   ChartBarIcon,
   TagIcon,
   CurrencyDollarIcon,
+  BanknotesIcon,
 } from "@heroicons/react/24/outline";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { cn } from "@/utilities/tailwind";
@@ -153,6 +154,15 @@ export const CommunityAdminPage = ({
               description="Create forms and manage funding applications"
               colorClass=""
               icon={<CurrencyDollarIcon className="w-6 h-6" />}
+            />
+            <AdminButton
+              href={PAGES.ADMIN.PAYOUTS(
+                community?.details?.data?.slug || communityId
+              )}
+              label="Payouts"
+              description="Manage payout addresses and amounts"
+              colorClass=""
+              icon={<BanknotesIcon className="w-6 h-6" />}
             />
           </div>
         ) : (

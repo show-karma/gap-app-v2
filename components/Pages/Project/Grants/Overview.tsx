@@ -1,5 +1,4 @@
 "use client";
-import ExternalIds from "@/components/Pages/Grants/ExternalId/ExternalIds";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { useGrantStore } from "@/store/grant";
@@ -11,15 +10,32 @@ import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import { PAGES } from "@/utilities/pages";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { Hex } from "viem";
 import { ProjectGrantsOverviewLoading } from "../Loading/Grants/Overview";
 import { GrantPercentage } from "./components/GrantPercentage";
 import { TrackTags } from "@/components/TrackTags";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
+import { useProjectStore } from "@/store";
+import { useRouter } from "next/navigation";
 
-const isValidAmount = (amount?: string | undefined) => {
-  if (!amount) return undefined;
-  let amountToFormat = amount;
+const isValidAmount = (grant?: {
+  amount?: Hex;
+  details?: { data?: { amount?: string } };
+}) => {
+  // First check root-level amount (Hex format)
+  if (grant?.amount) {
+    const formattedAmount = formatCurrency(Number(grant?.amount));
+    if (formattedAmount === "0.00") return "0";
+    if (Number.isNaN(formattedAmount)) return grant?.amount;
+    return formattedAmount;
+  }
+
+  // Fallback to details.data.amount
+  const detailsAmount = grant?.details?.data?.amount;
+  if (!detailsAmount) return undefined;
+
+  let amountToFormat = detailsAmount;
 
   const split = amountToFormat.split(" ");
   const split0 = split[0]?.replace(",", "");
@@ -42,13 +58,10 @@ const isValidAmount = (amount?: string | undefined) => {
 export const GrantOverview = () => {
   const { grant, loading, refreshGrant } = useGrantStore();
   const isOwner = useOwnerStore((state) => state.isOwner);
-  if (loading) {
-    return <ProjectGrantsOverviewLoading />;
-  }
 
   const grantData: { stat?: number | string; title: string }[] = [
     {
-      stat: isValidAmount(grant?.details?.data?.amount),
+      stat: isValidAmount(grant),
       title: "Total Grant Amount",
     },
     {
@@ -80,6 +93,10 @@ export const GrantOverview = () => {
 
   // Check if we have valid track IDs to display
   const hasTrackIds = selectedTrackIds && selectedTrackIds.length > 0;
+
+  if (loading) {
+    return <ProjectGrantsOverviewLoading />;
+  }
 
   return (
     <Suspense fallback={<ProjectGrantsOverviewLoading />}>
@@ -234,16 +251,6 @@ export const GrantOverview = () => {
           ) : null}
         </div>
       </div>
-      {isOwner && grant?.refUID ? (
-        <div className="mt-8">
-          <ExternalIds
-            projectUID={grant?.refUID as string}
-            communityUID={grant?.community.uid as string}
-            externalIds={(grant as any)?.external?.gitcoin}
-            refreshGrant={refreshGrant}
-          />
-        </div>
-      ) : null}
 
       {/* Grant Overview End */}
     </Suspense>

@@ -4,6 +4,8 @@ import { ContributorProfile } from "@show-karma/karma-gap-sdk";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { create } from "zustand";
 import { useGrantStore } from "./grant";
+import { QueryClient } from "@tanstack/react-query";
+import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 
 interface ProjectStore {
   project: IProjectResponse | undefined;
@@ -36,6 +38,12 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     if (shareSameGrant) {
       currentGrantState.setGrant(shareSameGrant);
     }
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: defaultQueryOptions,
+      },
+    });
+    await queryClient.invalidateQueries({ queryKey: ["project"] });
 
     set({ project: refreshedProject });
 

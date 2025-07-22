@@ -108,7 +108,11 @@ export const MemberCard = ({ member }: { member: string }) => {
               <button
                 type="button"
                 className="p-2 rounded-lg hover:opacity-80 hover:bg-zinc-200 dark:hover:bg-zinc-700"
-                onClick={() => openModal(member)}
+                onClick={() =>
+                  openModal({
+                    isGlobal: false,
+                  })
+                }
               >
                 <PencilIcon className="w-4 h-4 text-black dark:text-zinc-100" />
               </button>

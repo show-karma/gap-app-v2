@@ -56,8 +56,9 @@ import { ExternalLink } from "../Utilities/ExternalLink";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { SHARE_TEXTS } from "@/utilities/share/text";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getIndicatorsByCommunity } from "@/utilities/queries/getIndicatorsByCommunity";
+import { useUnlinkedIndicators } from "@/hooks/useUnlinkedIndicators";
 import { useWallet } from "@/hooks/useWallet";
 
 interface GrantOption {
@@ -82,7 +83,7 @@ interface CommunityIndicator {
 }
 
 interface CategorizedIndicator extends ImpactIndicatorWithData {
-  source: "project" | "community";
+  source: "project" | "community" | "unlinked";
   communityName?: string;
   communityId?: string;
 }
@@ -191,10 +192,13 @@ const CategorizedIndicatorDropdown: FC<{
       ind.communityId &&
       selectedCommunityIds.includes(ind.communityId)
   );
+  const unlinkedIndicators = indicators.filter(
+    (ind) => ind.source === "unlinked"
+  );
 
-  // Create flat list with only community indicators from selected communities
+  // Create flat list with community indicators first, then unlinked indicators
   const dropdownList = [
-    // Only community indicators from selected communities
+    // Community indicators from selected communities (shown first)
     ...communityIndicators.map((indicator) => {
       const communityName = indicator.communityName || "Community";
       return {
@@ -202,6 +206,11 @@ const CategorizedIndicatorDropdown: FC<{
         title: `${indicator.name} [${communityName}]`,
       };
     }),
+    // Unlinked indicators (shown after community indicators)
+    ...unlinkedIndicators.map((indicator) => ({
+      value: indicator.id,
+      title: `${indicator.name} [Global]`,
+    })),
   ];
 
   return (
@@ -217,18 +226,18 @@ const CategorizedIndicatorDropdown: FC<{
       type="indicator"
       prefixUnselected="Select"
       buttonClassname="w-full"
+      shouldSort={false}
       customAddButton={
-        // <Button
-        //   type="button"
-        //   onClick={(e) => {
-        //     e.stopPropagation();
-        //     onCreateNew();
-        //   }}
-        //   className="text-sm w-full bg-zinc-700 text-white"
-        // >
-        //   Create Project Indicator
-        // </Button>
-        null
+        <Button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onCreateNew();
+          }}
+          className="text-sm w-full bg-zinc-700 text-white"
+        >
+          Create New Metric
+        </Button>
       }
     />
   );
@@ -254,7 +263,7 @@ const OutputDialog: FC<{
       >
         <div className="flex items-center justify-between mb-4">
           <Dialog.Title className="text-lg font-semibold">
-            Create New Project Indicator
+            Create New Metric
           </Dialog.Title>
           <Dialog.Close className="text-gray-400 hover:text-gray-500">
             <XMarkIcon className="h-5 w-5" />
@@ -262,7 +271,7 @@ const OutputDialog: FC<{
         </div>
 
         <IndicatorForm
-          preSelectedPrograms={selectedPrograms}
+          preSelectedPrograms={[]} // Empty array for unlinked indicators
           onSuccess={onSuccess}
           onError={onError}
         />
@@ -344,6 +353,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   const searchParams = useSearchParams();
   const editId = propEditId || searchParams.get("editId");
   const [isEditMode, setIsEditMode] = useState(false);
+  const queryClient = useQueryClient();
 
   const {
     register,
@@ -440,7 +450,10 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     enabled: selectedCommunities.length > 0,
   });
 
-  // Categorized indicators combining project and community indicators
+  // Fetch unlinked indicators
+  const { data: unlinkedIndicatorsData = [] } = useUnlinkedIndicators();
+
+  // Categorized indicators combining project, community, and unlinked indicators
   const categorizedIndicators = useMemo((): CategorizedIndicator[] => {
     const projectIndicators: CategorizedIndicator[] = (
       indicatorsData || []
@@ -465,8 +478,22 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
       communityId: indicator.communityId,
     }));
 
-    return [...projectIndicators, ...communityIndicators];
-  }, [indicatorsData, communityIndicatorsData]);
+    const unlinkedIndicators: CategorizedIndicator[] = (
+      unlinkedIndicatorsData || []
+    ).map((indicator) => ({
+      id: indicator.id,
+      name: indicator.name,
+      description: indicator.description,
+      unitOfMeasure: indicator.unitOfMeasure,
+      datapoints: [],
+      programs: [], // Unlinked indicators don't have specific programs associated
+      hasData: false, // Unlinked indicators start without data
+      isAssociatedWithPrograms: false, // Unlinked indicators are not associated with specific programs
+      source: "unlinked" as const,
+    }));
+
+    return [...projectIndicators, ...communityIndicators, ...unlinkedIndicators];
+  }, [indicatorsData, communityIndicatorsData, unlinkedIndicatorsData]);
 
   // Custom handlers for deliverables
   const handleAddDeliverable = () => {
@@ -844,6 +871,9 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     // Update the project indicators list
     setOutputs((prev) => [...prev, newIndicator]);
 
+    // Invalidate and refetch unlinked indicators to show the new indicator
+    queryClient.invalidateQueries({ queryKey: ["unlinkedIndicators"] });
+
     const currentOutputs = watch("outputs") || [];
     if (selectedToCreate !== undefined) {
       // Update the existing output at the selected index
@@ -1218,7 +1248,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h3 className={cn(labelStyle)}>Metrics</h3>
-            <InfoTooltip content="Select from your project indicators or community indicators (created by community admins). You can also create new indicators. Metrics are quantitative data points that capture the direct results of the activity." />
+            <InfoTooltip content="Select from your project indicators, community indicators (created by community admins), or global indicators available to all projects. You can also create new global indicators. Metrics are quantitative data points that capture the direct results of the activity." />
           </div>
           {selectedOutputs.length > 0 && (
             <Button
@@ -1250,7 +1280,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         {selectedOutputs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8">
             <p className="text-gray-500 dark:text-zinc-400 mb-4">
-              Select from your project indicators or community indicators to add
+              Select from your project indicators, community indicators, or global indicators to add
               metrics
             </p>
             <Button
