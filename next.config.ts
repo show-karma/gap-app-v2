@@ -1,3 +1,5 @@
+import type { NextConfig } from "next";
+
 const withBundleAnalyzer = require("@next/bundle-analyzer")({
   enabled: process.env.ANALYZE === "true",
 });
@@ -12,14 +14,13 @@ const securityHeaders = [
 const removeImports = require("next-remove-imports")();
 
 /** @type {import('next').NextConfig} */
-const nextConfig = {
+const nextConfig: NextConfig = {
   reactStrictMode: true,
   staticPageGenerationTimeout: 10000,
   turbopack: {},
   eslint: {
     dirs: ["app", "components", "utilities", "hooks", "store", "types"],
   },
-
   webpack: (config, { isServer, webpack }) => {
     // Fix for browserslist and other Node.js modules
     if (!isServer) {
@@ -77,14 +78,14 @@ const nextConfig = {
   },
 };
 
-module.exports = withBundleAnalyzer(removeImports(nextConfig));
+const bundleAnalyzer = withBundleAnalyzer(removeImports(nextConfig));
 
 // Injected content via Sentry wizard below
 
 const { withSentryConfig } = require("@sentry/nextjs");
 
-module.exports = withSentryConfig(
-  module.exports,
+const withSentry = withSentryConfig(
+  bundleAnalyzer,
   {
     // For all available options, see:
     // https://github.com/getsentry/sentry-webpack-plugin#options
@@ -125,3 +126,5 @@ module.exports = withSentryConfig(
     automaticVercelMonitors: true,
   }
 );
+
+export default withSentry;
