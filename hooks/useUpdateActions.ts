@@ -65,10 +65,6 @@ export const useUpdateActions = (update: UpdateType) => {
         queryClient.invalidateQueries({
           queryKey: ["project", project?.details?.data?.slug],
         }),
-        // Community feed queries (if any)
-        queryClient.invalidateQueries({
-          queryKey: ["communityFeed"],
-        }),
         // Refresh the project data from the store
         refreshProject(),
       ]);
