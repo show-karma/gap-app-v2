@@ -1,42 +1,55 @@
-'use client';
+"use client";
 
-import { FC, useState, useEffect, useMemo } from 'react';
-import { Button } from '@/components/Utilities/Button';
-import { IApplicationListProps, IFundingApplication } from '@/types/funding-platform';
-import { cn } from '@/utilities/tailwind';
-import { format, isValid, parseISO } from 'date-fns';
+import { FC, useState, useEffect, useMemo } from "react";
+import { Button } from "@/components/Utilities/Button";
+import {
+  IApplicationListProps,
+  IFundingApplication,
+} from "@/types/funding-platform";
+import { cn } from "@/utilities/tailwind";
+import { format, isValid, parseISO } from "date-fns";
+import { ArrowDownTrayIcon, XMarkIcon } from "@heroicons/react/24/solid";
+import { CheckIcon } from "@heroicons/react/24/outline";
 
 interface IApplicationListComponentProps extends IApplicationListProps {
   applications: IFundingApplication[];
   isLoading?: boolean;
-  onStatusChange?: (applicationId: string, status: string, note?: string) => Promise<void>;
+  onStatusChange?: (
+    applicationId: string,
+    status: string,
+    note?: string
+  ) => Promise<void>;
   onExport?: () => void;
   showStatusActions?: boolean;
 }
 
 const statusColors = {
-  submitted: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-  under_review: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
-  approved: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-  rejected: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
+  submitted: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
+  under_review:
+    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
+  approved: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+  rejected: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
 };
 
 /**
  * Safely format a date string, handling invalid dates gracefully
  */
-const formatDate = (dateString: string | Date | undefined | null, formatString: string = 'MMM dd, yyyy HH:mm'): string => {
+const formatDate = (
+  dateString: string | Date | undefined | null,
+  formatString: string = "MMM dd, yyyy HH:mm"
+): string => {
   try {
     // Handle null/undefined cases
     if (!dateString) {
-      return 'No date';
+      return "No date";
     }
-    
+
     let date: Date;
-    
-    if (typeof dateString === 'string') {
+
+    if (typeof dateString === "string") {
       // Try parsing as ISO string first
       date = parseISO(dateString);
-      
+
       // If that fails, try regular Date constructor
       if (!isValid(date)) {
         date = new Date(dateString);
@@ -44,15 +57,15 @@ const formatDate = (dateString: string | Date | undefined | null, formatString: 
     } else {
       date = dateString;
     }
-    
+
     // Check if the date is valid
     if (!isValid(date)) {
-      return 'Invalid date';
+      return "Invalid date";
     }
-    
+
     return format(date, formatString);
   } catch (error) {
-    return 'Invalid date';
+    return "Invalid date";
   }
 };
 
@@ -63,13 +76,12 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
   isLoading = false,
   onApplicationSelect,
   onStatusChange,
-  onExport,
   showStatusActions = false,
 }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<'date' | 'status' | 'rating'>('date');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<"date" | "status" | "rating">("date");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
 
@@ -79,41 +91,54 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
 
     // Apply search filter
     if (searchTerm) {
-      filtered = filtered.filter(app => 
-        app.referenceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        app.applicantAddress.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        Object.values(app.applicationData).some(value => 
-          String(value).toLowerCase().includes(searchTerm.toLowerCase())
-        )
+      filtered = filtered.filter(
+        (app) =>
+          app.referenceNumber
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          app.applicantAddress
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          Object.values(app.applicationData).some((value) =>
+            String(value).toLowerCase().includes(searchTerm.toLowerCase())
+          )
       );
     }
 
     // Apply status filter
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(app => app.status === statusFilter);
+    if (statusFilter !== "all") {
+      filtered = filtered.filter((app) => app.status === statusFilter);
     }
 
     // Apply sorting
     filtered.sort((a, b) => {
       let comparison = 0;
-      
+
       switch (sortBy) {
-        case 'date':
+        case "date":
           const aDate = new Date(a.submittedAt);
           const bDate = new Date(b.submittedAt);
-          comparison = (isValid(aDate) ? aDate.getTime() : 0) - (isValid(bDate) ? bDate.getTime() : 0);
+          comparison =
+            (isValid(aDate) ? aDate.getTime() : 0) -
+            (isValid(bDate) ? bDate.getTime() : 0);
           break;
-        case 'status':
+        case "status":
           comparison = a.status.localeCompare(b.status);
           break;
-        case 'rating':
-          const aRating = a.aiEvaluation?.systemEvaluation?.rating || a.aiEvaluation?.detailedEvaluation?.rating || 0;
-          const bRating = b.aiEvaluation?.systemEvaluation?.rating || b.aiEvaluation?.detailedEvaluation?.rating || 0;
+        case "rating":
+          const aRating =
+            a.aiEvaluation?.systemEvaluation?.rating ||
+            a.aiEvaluation?.detailedEvaluation?.rating ||
+            0;
+          const bRating =
+            b.aiEvaluation?.systemEvaluation?.rating ||
+            b.aiEvaluation?.detailedEvaluation?.rating ||
+            0;
           comparison = aRating - bRating;
           break;
       }
 
-      return sortOrder === 'asc' ? comparison : -comparison;
+      return sortOrder === "asc" ? comparison : -comparison;
     });
 
     return filtered;
@@ -126,34 +151,43 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
     currentPage * pageSize
   );
 
-  const handleStatusChange = async (applicationId: string, newStatus: string) => {
+  const handleStatusChange = async (
+    applicationId: string,
+    newStatus: string
+  ) => {
     if (onStatusChange) {
       try {
         await onStatusChange(applicationId, newStatus);
       } catch (error) {
-        console.error('Failed to update status:', error);
+        console.error("Failed to update status:", error);
       }
     }
   };
 
   const getStatusBadge = (status: string) => (
-    <span className={cn(
-      'px-2 py-1 rounded-full text-xs font-medium',
-      statusColors[status as keyof typeof statusColors] || 'bg-gray-100 text-gray-800'
-    )}>
-      {status.replace('_', ' ')}
+    <span
+      className={cn(
+        "px-2 py-1 rounded-full text-xs font-medium",
+        statusColors[status as keyof typeof statusColors] ||
+          "bg-gray-100 text-gray-800"
+      )}
+    >
+      {status.replace("_", " ")}
     </span>
   );
 
   const getRatingBadge = (rating?: number) => {
     if (!rating) return null;
-    
-    const color = rating >= 8 ? 'bg-green-100 text-green-800' :
-                 rating >= 6 ? 'bg-yellow-100 text-yellow-800' :
-                 'bg-red-100 text-red-800';
-    
+
+    const color =
+      rating >= 8
+        ? "bg-green-100 text-green-800"
+        : rating >= 6
+        ? "bg-yellow-100 text-yellow-800"
+        : "bg-red-100 text-red-800";
+
     return (
-      <span className={cn('px-2 py-1 rounded-full text-xs font-medium', color)}>
+      <span className={cn("px-2 py-1 rounded-full text-xs font-medium", color)}>
         {rating}/10
       </span>
     );
@@ -168,27 +202,20 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
   }
 
   return (
-    <div className="flex flex-col w-full space-y-6">
+    <div className="flex flex-col w-full space-y-6 px-4 py-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
         <div>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
             Funding Applications
           </h2>
+        </div>
+
+        <div className="flex flex-row gap-4 items-center">
           <p className="text-sm text-gray-600 dark:text-gray-400">
             {filteredAndSortedApplications.length} application(s) found
           </p>
         </div>
-        
-        {onExport && (
-          <Button
-            onClick={onExport}
-            variant="secondary"
-            className="w-fit"
-          >
-            Export Data
-          </Button>
-        )}
       </div>
 
       {/* Filters */}
@@ -202,7 +229,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
             className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300"
           />
         </div>
-        
+
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
@@ -218,9 +245,9 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
         <select
           value={`${sortBy}-${sortOrder}`}
           onChange={(e) => {
-            const [field, order] = e.target.value.split('-');
-            setSortBy(field as 'date' | 'status' | 'rating');
-            setSortOrder(order as 'asc' | 'desc');
+            const [field, order] = e.target.value.split("-");
+            setSortBy(field as "date" | "status" | "rating");
+            setSortOrder(order as "asc" | "desc");
           }}
           className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100"
         >
@@ -237,7 +264,9 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
       {paginatedApplications.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-gray-500 dark:text-gray-400">
-            {applications.length === 0 ? 'No applications found.' : 'No applications match your filters.'}
+            {applications.length === 0
+              ? "No applications found."
+              : "No applications match your filters."}
           </div>
         </div>
       ) : (
@@ -256,20 +285,27 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                       {application.referenceNumber}
                     </h3>
                     {getStatusBadge(application.status)}
-                    {getRatingBadge(application.aiEvaluation?.systemEvaluation?.rating || application.aiEvaluation?.detailedEvaluation?.rating)}
+                    {getRatingBadge(
+                      application.aiEvaluation?.systemEvaluation?.rating ||
+                        application.aiEvaluation?.detailedEvaluation?.rating
+                    )}
                   </div>
-                  
+
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     From: {application.applicantAddress}
                   </p>
-                  
+
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     Submitted: {formatDate(application.submittedAt)}
                   </p>
 
-                  {(application.aiEvaluation?.systemEvaluation?.reasoning || application.aiEvaluation?.detailedEvaluation?.reasoning) && (
+                  {(application.aiEvaluation?.systemEvaluation?.reasoning ||
+                    application.aiEvaluation?.detailedEvaluation
+                      ?.reasoning) && (
                     <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                      AI Summary: {application.aiEvaluation?.systemEvaluation?.reasoning || application.aiEvaluation?.detailedEvaluation?.reasoning}
+                      AI Summary:{" "}
+                      {application.aiEvaluation?.systemEvaluation?.reasoning ||
+                        application.aiEvaluation?.detailedEvaluation?.reasoning}
                     </p>
                   )}
                 </div>
@@ -277,57 +313,65 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                 {/* Actions */}
                 {showStatusActions && onStatusChange && (
                   <div className="flex flex-wrap gap-2">
-                    {application.status === 'submitted' && (
+                    {application.status === "submitted" && (
                       <>
                         <Button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleStatusChange(application.id, 'under_review');
+                            handleStatusChange(application.id, "under_review");
                           }}
                           variant="secondary"
-                          className="text-xs px-3 py-1"
+                          className="w-fit px-3 py-1 border bg-transparent border-gray-200 font-medium dark:border-gray-700 flex flex-row gap-2"
                         >
                           Review
                         </Button>
                         <Button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleStatusChange(application.id, 'approved');
+                            handleStatusChange(application.id, "approved");
                           }}
-                          className="text-xs px-3 py-1 bg-green-600 hover:bg-green-700"
+                          variant="secondary"
+                          className="w-fit px-3 py-1 border bg-transparent text-green-500 font-medium border-green-200 dark:border-green-700 flex flex-row gap-2"
                         >
+                          <CheckIcon className="w-4 h-4" />
                           Approve
                         </Button>
                         <Button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleStatusChange(application.id, 'rejected');
+                            handleStatusChange(application.id, "rejected");
                           }}
-                          className="text-xs px-3 py-1 bg-red-600 hover:bg-red-700"
+                          variant="secondary"
+                          className="w-fit px-3 py-1 border bg-transparent text-red-500 font-medium border-red-200 dark:border-red-700 flex flex-row gap-2"
                         >
+                          <XMarkIcon className="w-4 h-4" />
                           Reject
                         </Button>
                       </>
                     )}
-                    
-                    {application.status === 'under_review' && (
+
+                    {application.status === "under_review" && (
                       <>
                         <Button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleStatusChange(application.id, 'approved');
+                            handleStatusChange(application.id, "approved");
                           }}
-                          className="text-xs px-3 py-1 bg-green-600 hover:bg-green-700"
+                          variant="secondary"
+                          className="w-fit px-3 py-1 border bg-transparent text-green-500 font-medium border-green-200 dark:border-green-700 flex flex-row gap-2"
                         >
+                          <CheckIcon className="w-4 h-4" />
                           Approve
                         </Button>
                         <Button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleStatusChange(application.id, 'rejected');
+                            handleStatusChange(application.id, "rejected");
                           }}
-                          className="text-xs px-3 py-1 bg-red-600 hover:bg-red-700"
+                          variant="secondary"
+                          className="w-fit px-3 py-1 border bg-transparent text-red-500 font-medium border-red-200 dark:border-red-700 flex flex-row gap-2"
                         >
+                          <XMarkIcon className="w-4 h-4" />
                           Reject
                         </Button>
                       </>
@@ -344,25 +388,32 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-gray-600 dark:text-gray-400">
-            Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredAndSortedApplications.length)} of {filteredAndSortedApplications.length} applications
+            Showing {(currentPage - 1) * pageSize + 1} to{" "}
+            {Math.min(
+              currentPage * pageSize,
+              filteredAndSortedApplications.length
+            )}{" "}
+            of {filteredAndSortedApplications.length} applications
           </div>
-          
+
           <div className="flex space-x-2">
             <Button
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
               disabled={currentPage === 1}
               variant="secondary"
               className="text-xs px-3 py-1"
             >
               Previous
             </Button>
-            
+
             <span className="flex items-center px-3 py-1 text-sm">
               Page {currentPage} of {totalPages}
             </span>
-            
+
             <Button
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+              }
               disabled={currentPage === totalPages}
               variant="secondary"
               className="text-xs px-3 py-1"
@@ -376,4 +427,4 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
   );
 };
 
-export default ApplicationList; 
+export default ApplicationList;
