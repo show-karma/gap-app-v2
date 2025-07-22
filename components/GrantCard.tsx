@@ -200,7 +200,7 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
     <Link
       href={href}
       prefetch={false}
-      className="flex h-full w-full max-w-[320px] relative flex-col items-start justify-between gap-3 rounded-2xl border border-zinc-200 bg-white dark:bg-zinc-900 p-2 transition-all duration-300 ease-in-out hover:opacity-80"
+      className="flex h-full w-full max-w-[620px] max-sm:w-[320px] relative flex-col items-start justify-between gap-3 rounded-2xl border border-zinc-200 bg-white dark:bg-zinc-900 p-2 transition-all duration-300 ease-in-out hover:opacity-80"
     >
       <GrantCardContent grant={grant} index={index} />
     </Link>

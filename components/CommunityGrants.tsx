@@ -562,21 +562,26 @@ export const CommunityGrants = ({
             >
               <AutoSizer disableHeight>
                 {({ width }) => {
-                  const cardWidth = 320;
-                  const columnCounter = Math.min(6, Math.max(1, Math.floor(width / cardWidth)));
-                  
+                  const columns = Math.floor(width / 360);
+                  const columnCounter = columns
+                    ? columns > 6
+                      ? 6
+                      : columns
+                    : 1;
+
                   const columnWidth = Math.floor(width / columnCounter);
                   const gutterSize = 20;
-                  const height = Math.ceil(grants.length / columnCounter) * 360;
-                  
+                  const height =
+                    Math.ceil(grants.length / columnCounter) * 260;
+
                   return (
                     <Grid
                       key={`grid-${width}-${columnCounter}`} // Force re-render on width/column change
-                      height={height + 120}
+                      height={height + 60}
                       width={width}
                       rowCount={Math.ceil(grants.length / columnCounter)}
-                      rowHeight={360}
-                      columnWidth={Math.max(240, columnWidth - gutterSize)}
+                      rowHeight={260}
+                      columnWidth={columnWidth}
                       columnCount={columnCounter}
                       cellRenderer={({ columnIndex, key, rowIndex, style }) => {
                         const grant =
@@ -605,6 +610,7 @@ export const CommunityGrants = ({
                               <div
                                 style={{
                                   height: "100%",
+                                  width: "100%",
                                 }}
                               >
                                 <GrantCard
