@@ -1,26 +1,26 @@
+import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useQuery } from "@tanstack/react-query";
-import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
-import { useAccount } from "wagmi";
-import type { Hex } from "viem";
 import { useEffect, useState } from "react";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import type { Hex } from "viem";
+import { useAccount } from "wagmi";
 import { useAuthStore } from "@/store/auth";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
+import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
 
 /**
  * Options for configuring the useIsCommunityAdmin hook
  */
 interface UseIsCommunityAdminOptions {
-  /** Whether the query should be enabled. Defaults to true when prerequisites are met */
-  enabled?: boolean;
-  /** Optional Zustand store sync configuration for backwards compatibility */
-  zustandSync?: {
-    /** Function to update the community admin status in Zustand store */
-    setIsCommunityAdmin?: (isAdmin: boolean) => void;
-    /** Function to update the loading state in Zustand store */
-  };
+	/** Whether the query should be enabled. Defaults to true when prerequisites are met */
+	enabled?: boolean;
+	/** Optional Zustand store sync configuration for backwards compatibility */
+	zustandSync?: {
+		/** Function to update the community admin status in Zustand store */
+		setIsCommunityAdmin?: (isAdmin: boolean) => void;
+		/** Function to update the loading state in Zustand store */
+	};
 }
 
 /**
@@ -47,96 +47,96 @@ interface UseIsCommunityAdminOptions {
  * ```
  */
 export const useIsCommunityAdmin = (
-  communityUID?: string,
-  address?: string | Hex,
-  options?: UseIsCommunityAdminOptions,
-  community?: ICommunityResponse // Optional community object to avoid API calls
+	communityUID?: string,
+	address?: string | Hex,
+	options?: UseIsCommunityAdminOptions,
+	community?: ICommunityResponse, // Optional community object to avoid API calls
 ) => {
-  const { address: accountAddress } = useAccount();
-  const signer = useSigner();
-  const { isAuth } = useAuthStore();
-  const [resolvedCommunity, setResolvedCommunity] =
-    useState<ICommunityResponse | null>(null);
+	const { address: accountAddress } = useAccount();
+	const signer = useSigner();
+	const { isAuth } = useAuthStore();
+	const [resolvedCommunity, setResolvedCommunity] =
+		useState<ICommunityResponse | null>(null);
 
-  // Use provided address or connected account address
-  const checkAddress = address || accountAddress;
+	// Use provided address or connected account address
+	const checkAddress = address || accountAddress;
 
-  // Determine if input is a community or grant, and resolve community data
-  useEffect(() => {
-    // If community object is provided, use it directly
-    if (community) {
-      setResolvedCommunity(community);
-      return;
-    }
+	// Determine if input is a community or grant, and resolve community data
+	useEffect(() => {
+		// If community object is provided, use it directly
+		if (community) {
+			setResolvedCommunity(community);
+			return;
+		}
 
-    // Otherwise, fetch community data by UID
-    if (!communityUID) {
-      setResolvedCommunity(null);
-      return;
-    }
+		// Otherwise, fetch community data by UID
+		if (!communityUID) {
+			setResolvedCommunity(null);
+			return;
+		}
 
-    let cancelled = false; // Flag to prevent race conditions
+		let cancelled = false; // Flag to prevent race conditions
 
-    const resolveCommunity = async () => {
-      try {
-        const response = await gapIndexerApi
-          .communityBySlug(communityUID)
-          .catch(() => null);
+		const resolveCommunity = async () => {
+			try {
+				const response = await gapIndexerApi
+					.communityBySlug(communityUID)
+					.catch(() => null);
 
-        // Only update state if this effect hasn't been cancelled
-        if (!cancelled) {
-          const communityData = response?.data || null;
-          setResolvedCommunity(communityData);
-        }
-      } catch (error: any) {
-        console.error("Error fetching community data:", error);
-        if (!cancelled) {
-          setResolvedCommunity(null);
-        }
-      }
-    };
+				// Only update state if this effect hasn't been cancelled
+				if (!cancelled) {
+					const communityData = response?.data || null;
+					setResolvedCommunity(communityData);
+				}
+			} catch (error: any) {
+				console.error("Error fetching community data:", error);
+				if (!cancelled) {
+					setResolvedCommunity(null);
+				}
+			}
+		};
 
-    resolveCommunity();
+		resolveCommunity();
 
-    // Cleanup function to prevent race conditions
-    return () => {
-      cancelled = true;
-    };
-  }, [communityUID, community]);
+		// Cleanup function to prevent race conditions
+		return () => {
+			cancelled = true;
+		};
+	}, [communityUID, community]);
 
-  const query = useQuery({
-    queryKey: [
-      "isCommunityAdmin",
-      resolvedCommunity?.uid,
-      resolvedCommunity?.chainID,
-      checkAddress,
-      !!isAuth,
-      signer,
-    ],
-    queryFn: async () => {
-      if (!resolvedCommunity || !checkAddress || !isAuth) {
-        return false;
-      }
+	const query = useQuery({
+		queryKey: [
+			"isCommunityAdmin",
+			resolvedCommunity?.uid,
+			resolvedCommunity?.chainID,
+			checkAddress,
+			!!isAuth,
+			signer,
+		],
+		queryFn: async () => {
+			if (!resolvedCommunity || !checkAddress || !isAuth) {
+				return false;
+			}
 
-      return await isCommunityAdminOf(resolvedCommunity, checkAddress, signer);
-    },
-    enabled: !!resolvedCommunity && options?.enabled !== false,
-    ...defaultQueryOptions,
-  });
+			return await isCommunityAdminOf(resolvedCommunity, checkAddress, signer);
+		},
+		enabled: !!resolvedCommunity && options?.enabled !== false,
+		...defaultQueryOptions,
+	});
 
-  useEffect(() => {
-    if (options?.zustandSync?.setIsCommunityAdmin && !query.isLoading) {
-      options.zustandSync.setIsCommunityAdmin(query.data ?? false);
-    }
-  }, [query.data, query.isLoading, options?.zustandSync?.setIsCommunityAdmin]);
+	useEffect(() => {
+		if (options?.zustandSync?.setIsCommunityAdmin && !query.isLoading) {
+			options.zustandSync.setIsCommunityAdmin(query.data ?? false);
+		}
+	}, [query.data, query.isLoading, options?.zustandSync?.setIsCommunityAdmin]);
 
-  return {
-    isCommunityAdmin: query.data ?? false,
-    isLoading: query.isLoading,
-    isError: query.isError,
-    error: query.error,
-    refetch: query.refetch,
-  };
+	return {
+		isCommunityAdmin: query.data ?? false,
+		isLoading: query.isLoading,
+		isError: query.isError,
+		error: query.error,
+		refetch: query.refetch,
+	};
 };
 
 /**
@@ -165,19 +165,19 @@ export const useIsCommunityAdmin = (
  * ```
  */
 export const useGrantCommunityAdmin = (
-  communityUID?: string,
-  address?: string | Hex,
-  zustandSync?: {
-    setIsCommunityAdmin?: (isAdmin: boolean) => void;
-  },
-  community?: ICommunityResponse // Optional community object to avoid API calls
+	communityUID?: string,
+	address?: string | Hex,
+	zustandSync?: {
+		setIsCommunityAdmin?: (isAdmin: boolean) => void;
+	},
+	community?: ICommunityResponse, // Optional community object to avoid API calls
 ) => {
-  return useIsCommunityAdmin(
-    communityUID,
-    address,
-    {
-      zustandSync,
-    },
-    community
-  );
+	return useIsCommunityAdmin(
+		communityUID,
+		address,
+		{
+			zustandSync,
+		},
+		community,
+	);
 };

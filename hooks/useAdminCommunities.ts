@@ -1,63 +1,63 @@
+import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useQuery } from "@tanstack/react-query";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { useCommunitiesStore } from "@/store/communities";
-import { useAuthStore } from "@/store/auth";
 import { useEffect } from "react";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useAuthStore } from "@/store/auth";
+import { useCommunitiesStore } from "@/store/communities";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 
 const fetchAdminCommunities = async (
-  address: string
+	address: string,
 ): Promise<ICommunityResponse[]> => {
-  if (!address) return [];
+	if (!address) return [];
 
-  const response = await gapIndexerApi.adminOf(address as `0x${string}`);
-  return response?.data || [];
+	const response = await gapIndexerApi.adminOf(address as `0x${string}`);
+	return response?.data || [];
 };
 
 export const useAdminCommunities = (address?: string) => {
-  const { isAuth } = useAuthStore();
-  const { setCommunities, setIsLoading } = useCommunitiesStore();
+	const { isAuth } = useAuthStore();
+	const { setCommunities, setIsLoading } = useCommunitiesStore();
 
-  const queryResult = useQuery<ICommunityResponse[], Error>({
-    queryKey: ["admin-communities", address],
-    queryFn: () => fetchAdminCommunities(address!),
-    enabled: !!address && isAuth,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: (failureCount, error) => {
-      // Retry up to 2 times for network errors
-      return failureCount < 2;
-    },
-  });
+	const queryResult = useQuery<ICommunityResponse[], Error>({
+		queryKey: ["admin-communities", address],
+		queryFn: () => fetchAdminCommunities(address!),
+		enabled: !!address && isAuth,
+		staleTime: 5 * 60 * 1000, // 5 minutes
+		retry: (failureCount, error) => {
+			// Retry up to 2 times for network errors
+			return failureCount < 2;
+		},
+	});
 
-  const { data, isLoading, error, refetch } = queryResult;
+	const { data, isLoading, error, refetch } = queryResult;
 
-  // Sync with Zustand store
-  useEffect(() => {
-    setIsLoading(isLoading);
-  }, [isLoading, setIsLoading]);
+	// Sync with Zustand store
+	useEffect(() => {
+		setIsLoading(isLoading);
+	}, [isLoading, setIsLoading]);
 
-  useEffect(() => {
-    if (data) {
-      setCommunities(data);
-    } else if (!address || !isAuth) {
-      setCommunities([]);
-    }
-  }, [data, address, isAuth, setCommunities]);
+	useEffect(() => {
+		if (data) {
+			setCommunities(data);
+		} else if (!address || !isAuth) {
+			setCommunities([]);
+		}
+	}, [data, address, isAuth, setCommunities]);
 
-  useEffect(() => {
-    if (error) {
-      errorManager(
-        `Error fetching communities of user ${address} is admin`,
-        error,
-        { address }
-      );
-      setCommunities([]);
-    }
-  }, [error, address, setCommunities]);
+	useEffect(() => {
+		if (error) {
+			errorManager(
+				`Error fetching communities of user ${address} is admin`,
+				error,
+				{ address },
+			);
+			setCommunities([]);
+		}
+	}, [error, address, setCommunities]);
 
-  return {
-    ...queryResult,
-    refetch,
-  };
+	return {
+		...queryResult,
+		refetch,
+	};
 };

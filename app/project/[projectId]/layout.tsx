@@ -1,61 +1,61 @@
 /* eslint-disable @next/next/no-img-element */
-import { ProjectWrapper } from "@/components/Pages/Project/ProjectWrapper";
-import {
-  dehydrate,
-  HydrationBoundary,
-  QueryClient,
-} from "@tanstack/react-query";
 
+import {
+	dehydrate,
+	HydrationBoundary,
+	QueryClient,
+} from "@tanstack/react-query";
+import type { Metadata } from "next";
+import { ProjectWrapper } from "@/components/Pages/Project/ProjectWrapper";
 import { generateProjectOverviewMetadata } from "@/utilities/metadata/projectMetadata";
-import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
-import { Metadata } from "next";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
+import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
 
 type Params = Promise<{
-  projectId: string;
+	projectId: string;
 }>;
 
 export async function generateMetadata({
-  params,
+	params,
 }: {
-  params: Params;
+	params: Params;
 }): Promise<Metadata> {
-  const awaitedParams = await params;
-  const { projectId } = awaitedParams;
+	const awaitedParams = await params;
+	const { projectId } = awaitedParams;
 
-  const projectInfo = await getProjectCachedData(projectId);
+	const projectInfo = await getProjectCachedData(projectId);
 
-  return generateProjectOverviewMetadata(projectInfo, projectId);
+	return generateProjectOverviewMetadata(projectInfo, projectId);
 }
 
 export default async function RootLayout(props: {
-  children: React.ReactNode;
-  params: Promise<{ projectId: string }>;
+	children: React.ReactNode;
+	params: Promise<{ projectId: string }>;
 }) {
-  const awaitedParams = await props.params;
-  const { projectId } = awaitedParams;
+	const awaitedParams = await props.params;
+	const { projectId } = awaitedParams;
 
-  const { children } = props;
+	const { children } = props;
 
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: defaultQueryOptions,
-    },
-  });
+	const queryClient = new QueryClient({
+		defaultOptions: {
+			queries: defaultQueryOptions,
+		},
+	});
 
-  await queryClient.prefetchQuery({
-    queryKey: ["project", projectId],
-    queryFn: async () => {
-      return await getProjectCachedData(projectId);
-    },
-  });
+	await queryClient.prefetchQuery({
+		queryKey: ["project", projectId],
+		queryFn: async () => {
+			return await getProjectCachedData(projectId);
+		},
+	});
 
-  return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <div className="flex flex-col gap-0">
-        <ProjectWrapper projectId={projectId} />
-        <div className="px-4 sm:px-6 lg:px-12">{children}</div>
-      </div>
-    </HydrationBoundary>
-  );
+	return (
+		<HydrationBoundary state={dehydrate(queryClient)}>
+			<div className="flex flex-col gap-0">
+				<ProjectWrapper projectId={projectId} />
+				<div className="px-4 sm:px-6 lg:px-12">{children}</div>
+			</div>
+		</HydrationBoundary>
+	);
 }

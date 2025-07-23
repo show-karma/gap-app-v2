@@ -4,17 +4,17 @@ import dynamic from "next/dynamic";
 import { LoadingManagePrograms } from "@/components/Pages/ProgramRegistry/Loading/ManagePrograms";
 
 const ManagePrograms = dynamic(
-  () =>
-    import("@/components/Pages/ProgramRegistry/ManagePrograms").then(
-      (mod) => mod.ManagePrograms
-    ),
-  {
-    loading: () => <LoadingManagePrograms />,
-  }
+	() =>
+		import("@/components/Pages/ProgramRegistry/ManagePrograms").then(
+			(mod) => mod.ManagePrograms,
+		),
+	{
+		loading: () => <LoadingManagePrograms />,
+	},
 );
 
 const ManageProgramsWrapper = () => {
-  return <ManagePrograms />;
+	return <ManagePrograms />;
 };
 
 export default ManageProgramsWrapper;

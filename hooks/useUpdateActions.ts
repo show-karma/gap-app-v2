@@ -1,6 +1,16 @@
+import type {
+	IGrantUpdate,
+	IMilestoneResponse,
+	IProjectImpact,
+	IProjectMilestoneResponse,
+	IProjectUpdate,
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import { useAccount } from "wagmi";
 import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { queryClient } from "@/components/Utilities/WagmiProvider";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
@@ -10,321 +20,312 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { retryUntilConditionMet } from "@/utilities/retries";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { errorManager } from "@/components/Utilities/errorManager";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
-import { queryClient } from "@/components/Utilities/WagmiProvider";
-import { useParams, useRouter } from "next/navigation";
-import {
-  IGrantUpdate,
-  IMilestoneResponse,
-  IProjectImpact,
-  IProjectMilestoneResponse,
-  IProjectUpdate,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useWallet } from "./useWallet";
 
 type UpdateType =
-  | IProjectUpdate
-  | IGrantUpdate
-  | IMilestoneResponse
-  | IProjectImpact
-  | IProjectMilestoneResponse;
+	| IProjectUpdate
+	| IGrantUpdate
+	| IMilestoneResponse
+	| IProjectImpact
+	| IProjectMilestoneResponse;
 
 export const useUpdateActions = (update: UpdateType) => {
-  const [isDeletingUpdate, setIsDeletingUpdate] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const { changeStepperStep, setIsStepper } = useStepper();
-  const { gap } = useGap();
-  const { chain } = useAccount();
-  const { switchChainAsync } = useWallet();
-  const { project, isProjectOwner } = useProjectStore();
-  const refreshProject = useProjectStore((state) => state.refreshProject);
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const isOnChainAuthorized = isProjectOwner || isOwner;
-  const projectId = useParams().projectId as string;
-  const router = useRouter();
+	const [isDeletingUpdate, setIsDeletingUpdate] = useState(false);
+	const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+	const { changeStepperStep, setIsStepper } = useStepper();
+	const { gap } = useGap();
+	const { chain } = useAccount();
+	const { switchChainAsync } = useWallet();
+	const { project, isProjectOwner } = useProjectStore();
+	const refreshProject = useProjectStore((state) => state.refreshProject);
+	const isOwner = useOwnerStore((state) => state.isOwner);
+	const isOnChainAuthorized = isProjectOwner || isOwner;
+	const projectId = useParams().projectId as string;
+	const router = useRouter();
 
-  // Function to refresh data after successful deletion
-  const refreshDataAfterDeletion = async () => {
-    try {
-      // Invalidate all relevant query caches
-      await Promise.all([
-        // Milestone-related queries
-        queryClient.invalidateQueries({
-          queryKey: ["all-milestones", projectId],
-        }),
-        queryClient.invalidateQueries({
-          queryKey: ["projectMilestones", project?.uid],
-        }),
-        // Project-related queries
-        queryClient.invalidateQueries({
-          queryKey: ["project", project?.uid],
-        }),
-        queryClient.invalidateQueries({
-          queryKey: ["project", project?.details?.data?.slug],
-        }),
-        // Community feed queries (if any)
-        queryClient.invalidateQueries({
-          queryKey: ["communityFeed"],
-        }),
-        // Refresh the project data from the store
-        refreshProject(),
-      ]);
+	// Function to refresh data after successful deletion
+	const refreshDataAfterDeletion = async () => {
+		try {
+			// Invalidate all relevant query caches
+			await Promise.all([
+				// Milestone-related queries
+				queryClient.invalidateQueries({
+					queryKey: ["all-milestones", projectId],
+				}),
+				queryClient.invalidateQueries({
+					queryKey: ["projectMilestones", project?.uid],
+				}),
+				// Project-related queries
+				queryClient.invalidateQueries({
+					queryKey: ["project", project?.uid],
+				}),
+				queryClient.invalidateQueries({
+					queryKey: ["project", project?.details?.data?.slug],
+				}),
+				// Community feed queries (if any)
+				queryClient.invalidateQueries({
+					queryKey: ["communityFeed"],
+				}),
+				// Refresh the project data from the store
+				refreshProject(),
+			]);
 
-      // Force a router refresh to update components that use direct API calls
-      // This will refresh the ProjectFeed component which doesn't use React Query
-      router.refresh();
-    } catch (error) {
-      console.warn("Failed to refresh data after deletion:", error);
-    }
-  };
+			// Force a router refresh to update components that use direct API calls
+			// This will refresh the ProjectFeed component which doesn't use React Query
+			router.refresh();
+		} catch (error) {
+			console.warn("Failed to refresh data after deletion:", error);
+		}
+	};
 
-  const deleteUpdate = async () => {
-    let gapClient = gap;
-    try {
-      setIsDeletingUpdate(true);
-      if (!checkNetworkIsValid(chain?.id) || chain?.id !== update.chainID) {
-        await switchChainAsync?.({ chainId: update.chainID });
-        gapClient = getGapClient(update.chainID);
-      }
+	const deleteUpdate = async () => {
+		let gapClient = gap;
+		try {
+			setIsDeletingUpdate(true);
+			if (!checkNetworkIsValid(chain?.id) || chain?.id !== update.chainID) {
+				await switchChainAsync?.({ chainId: update.chainID });
+				gapClient = getGapClient(update.chainID);
+			}
 
-      const { walletClient, error } = await safeGetWalletClient(update.chainID);
+			const { walletClient, error } = await safeGetWalletClient(update.chainID);
 
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      const walletSigner = await walletClientToSigner(walletClient);
+			if (error || !walletClient || !gapClient) {
+				throw new Error("Failed to connect to wallet", { cause: error });
+			}
+			const walletSigner = await walletClientToSigner(walletClient);
 
-      let findUpdate: any = null;
-      let deleteMessage = "";
-      let deleteErrorMessage = "";
+			let findUpdate: any = null;
+			let deleteMessage = "";
+			let deleteErrorMessage = "";
 
-      // Handle different update types
-      switch (update.type) {
-        case "ProjectUpdate": {
-          const instanceProject = await gapClient.fetch.projectById(
-            project?.uid
-          );
-          if (!instanceProject) throw new Error("Project not found");
+			// Handle different update types
+			switch (update.type) {
+				case "ProjectUpdate": {
+					const instanceProject = await gapClient.fetch.projectById(
+						project?.uid,
+					);
+					if (!instanceProject) throw new Error("Project not found");
 
-          findUpdate = instanceProject.updates.find(
-            (upd) => upd.uid === update.uid
-          );
-          if (!findUpdate) throw new Error("Project update not found");
+					findUpdate = instanceProject.updates.find(
+						(upd) => upd.uid === update.uid,
+					);
+					if (!findUpdate) throw new Error("Project update not found");
 
-          deleteMessage = MESSAGES.PROJECT_UPDATE_FORM.DELETE.SUCCESS;
-          deleteErrorMessage = MESSAGES.PROJECT_UPDATE_FORM.DELETE.ERROR;
-          break;
-        }
+					deleteMessage = MESSAGES.PROJECT_UPDATE_FORM.DELETE.SUCCESS;
+					deleteErrorMessage = MESSAGES.PROJECT_UPDATE_FORM.DELETE.ERROR;
+					break;
+				}
 
-        case "ProjectImpact": {
-          const instanceProject = await gapClient.fetch.projectById(
-            project?.uid
-          );
-          if (!instanceProject) throw new Error("Project not found");
+				case "ProjectImpact": {
+					const instanceProject = await gapClient.fetch.projectById(
+						project?.uid,
+					);
+					if (!instanceProject) throw new Error("Project not found");
 
-          findUpdate = instanceProject.impacts?.find(
-            (impact) => impact.uid === update.uid
-          );
-          if (!findUpdate) throw new Error("Project impact not found");
+					findUpdate = instanceProject.impacts?.find(
+						(impact) => impact.uid === update.uid,
+					);
+					if (!findUpdate) throw new Error("Project impact not found");
 
-          deleteMessage = MESSAGES.PROJECT.IMPACT.REMOVE.SUCCESS;
-          deleteErrorMessage = MESSAGES.PROJECT.IMPACT.REMOVE.ERROR;
-          break;
-        }
+					deleteMessage = MESSAGES.PROJECT.IMPACT.REMOVE.SUCCESS;
+					deleteErrorMessage = MESSAGES.PROJECT.IMPACT.REMOVE.ERROR;
+					break;
+				}
 
-        case "GrantUpdate": {
-          const instanceProject = await gapClient.fetch.projectById(
-            project?.uid
-          );
-          if (!instanceProject) throw new Error("Project not found");
+				case "GrantUpdate": {
+					const instanceProject = await gapClient.fetch.projectById(
+						project?.uid,
+					);
+					if (!instanceProject) throw new Error("Project not found");
 
-          const grantInstance = instanceProject.grants.find(
-            (grant) => grant.uid.toLowerCase() === update.refUID.toLowerCase()
-          );
-          if (!grantInstance) throw new Error("Grant not found");
+					const grantInstance = instanceProject.grants.find(
+						(grant) => grant.uid.toLowerCase() === update.refUID.toLowerCase(),
+					);
+					if (!grantInstance) throw new Error("Grant not found");
 
-          findUpdate = grantInstance.updates.find(
-            (grantUpdate) =>
-              grantUpdate.uid.toLowerCase() === update.uid.toLowerCase()
-          );
-          if (!findUpdate) throw new Error("Grant update not found");
+					findUpdate = grantInstance.updates.find(
+						(grantUpdate) =>
+							grantUpdate.uid.toLowerCase() === update.uid.toLowerCase(),
+					);
+					if (!findUpdate) throw new Error("Grant update not found");
 
-          deleteMessage = MESSAGES.GRANT.GRANT_UPDATE.UNDO.SUCCESS;
-          deleteErrorMessage = MESSAGES.GRANT.GRANT_UPDATE.UNDO.ERROR;
-          break;
-        }
+					deleteMessage = MESSAGES.GRANT.GRANT_UPDATE.UNDO.SUCCESS;
+					deleteErrorMessage = MESSAGES.GRANT.GRANT_UPDATE.UNDO.ERROR;
+					break;
+				}
 
-        default:
-          throw new Error(`Unsupported update type: ${update.type}`);
-      }
+				default:
+					throw new Error(`Unsupported update type: ${update.type}`);
+			}
 
-      const checkIfAttestationExists = async (callbackFn?: () => void) => {
-        await retryUntilConditionMet(
-          async () => {
-            const fetchedProject = await refreshProject();
-            let stillExists = false;
+			const checkIfAttestationExists = async (callbackFn?: () => void) => {
+				await retryUntilConditionMet(
+					async () => {
+						const fetchedProject = await refreshProject();
+						let stillExists = false;
 
-            switch (update.type) {
-              case "ProjectUpdate":
-                stillExists = !!fetchedProject?.updates?.find(
-                  (upd) => ((upd as any)?._uid || upd.uid) === update.uid
-                );
-                break;
-              case "ProjectImpact":
-                stillExists = !!fetchedProject?.impacts?.find(
-                  (impact) => impact.uid === update.uid
-                );
-                break;
-              case "GrantUpdate":
-                const grant = fetchedProject?.grants?.find(
-                  (grant) =>
-                    grant.uid.toLowerCase() === update.refUID.toLowerCase()
-                );
-                stillExists = !!grant?.updates?.find(
-                  (grantUpdate) =>
-                    grantUpdate.uid.toLowerCase() === update.uid.toLowerCase()
-                );
-                break;
-            }
+						switch (update.type) {
+							case "ProjectUpdate":
+								stillExists = !!fetchedProject?.updates?.find(
+									(upd) => ((upd as any)?._uid || upd.uid) === update.uid,
+								);
+								break;
+							case "ProjectImpact":
+								stillExists = !!fetchedProject?.impacts?.find(
+									(impact) => impact.uid === update.uid,
+								);
+								break;
+							case "GrantUpdate": {
+								const grant = fetchedProject?.grants?.find(
+									(grant) =>
+										grant.uid.toLowerCase() === update.refUID.toLowerCase(),
+								);
+								stillExists = !!grant?.updates?.find(
+									(grantUpdate) =>
+										grantUpdate.uid.toLowerCase() === update.uid.toLowerCase(),
+								);
+								break;
+							}
+						}
 
-            return !stillExists;
-          },
-          () => {
-            callbackFn?.();
-          }
-        );
-      };
+						return !stillExists;
+					},
+					() => {
+						callbackFn?.();
+					},
+				);
+			};
 
-      if (!isOnChainAuthorized) {
-        const toastLoading = toast.loading(
-          `Deleting ${update.type.toLowerCase()}...`
-        );
-        await fetchData(
-          INDEXER.PROJECT.REVOKE_ATTESTATION(
-            findUpdate?.uid as `0x${string}`,
-            findUpdate.chainID
-          ),
-          "POST",
-          {}
-        )
-          .then(async () => {
-            await checkIfAttestationExists()
-              .then(async () => {
-                toast.success(deleteMessage, {
-                  id: toastLoading,
-                });
-                // Refresh data after successful deletion
-                await refreshDataAfterDeletion();
-              })
-              .catch(() => {
-                toast.dismiss(toastLoading);
-              });
-          })
-          .catch(() => {
-            toast.dismiss(toastLoading);
-          });
-      } else {
-        await findUpdate
-          .revoke(walletSigner as any, changeStepperStep)
-          .then(async (res: any) => {
-            const txHash = res?.tx[0]?.hash;
-            if (txHash) {
-              await fetchData(
-                INDEXER.ATTESTATION_LISTENER(txHash, findUpdate.chainID),
-                "POST",
-                {}
-              );
-            }
+			if (!isOnChainAuthorized) {
+				const toastLoading = toast.loading(
+					`Deleting ${update.type.toLowerCase()}...`,
+				);
+				await fetchData(
+					INDEXER.PROJECT.REVOKE_ATTESTATION(
+						findUpdate?.uid as `0x${string}`,
+						findUpdate.chainID,
+					),
+					"POST",
+					{},
+				)
+					.then(async () => {
+						await checkIfAttestationExists()
+							.then(async () => {
+								toast.success(deleteMessage, {
+									id: toastLoading,
+								});
+								// Refresh data after successful deletion
+								await refreshDataAfterDeletion();
+							})
+							.catch(() => {
+								toast.dismiss(toastLoading);
+							});
+					})
+					.catch(() => {
+						toast.dismiss(toastLoading);
+					});
+			} else {
+				await findUpdate
+					.revoke(walletSigner as any, changeStepperStep)
+					.then(async (res: any) => {
+						const txHash = res?.tx[0]?.hash;
+						if (txHash) {
+							await fetchData(
+								INDEXER.ATTESTATION_LISTENER(txHash, findUpdate.chainID),
+								"POST",
+								{},
+							);
+						}
 
-            await checkIfAttestationExists(() => {
-              changeStepperStep("indexed");
-            }).then(async () => {
-              toast.success(deleteMessage);
-              // Refresh data after successful deletion
-              await refreshDataAfterDeletion();
-            });
-          });
-      }
-    } catch (error: any) {
-      console.log(error);
-      const errorMessage =
-        update.type === "ProjectUpdate"
-          ? MESSAGES.PROJECT_UPDATE_FORM.DELETE.ERROR
-          : update.type === "ProjectImpact"
-          ? MESSAGES.PROJECT.IMPACT.REMOVE.ERROR
-          : MESSAGES.GRANT.GRANT_UPDATE.UNDO.ERROR;
+						await checkIfAttestationExists(() => {
+							changeStepperStep("indexed");
+						}).then(async () => {
+							toast.success(deleteMessage);
+							// Refresh data after successful deletion
+							await refreshDataAfterDeletion();
+						});
+					});
+			}
+		} catch (error: any) {
+			console.log(error);
+			const errorMessage =
+				update.type === "ProjectUpdate"
+					? MESSAGES.PROJECT_UPDATE_FORM.DELETE.ERROR
+					: update.type === "ProjectImpact"
+						? MESSAGES.PROJECT.IMPACT.REMOVE.ERROR
+						: MESSAGES.GRANT.GRANT_UPDATE.UNDO.ERROR;
 
-      toast.error(errorMessage);
-      errorManager(
-        `Error deleting ${update.type.toLowerCase()} ${
-          update.uid
-        } from project ${project?.uid}`,
-        error
-      );
-    } finally {
-      setIsDeletingUpdate(false);
-      setIsStepper(false);
-    }
-  };
+			toast.error(errorMessage);
+			errorManager(
+				`Error deleting ${update.type.toLowerCase()} ${
+					update.uid
+				} from project ${project?.uid}`,
+				error,
+			);
+		} finally {
+			setIsDeletingUpdate(false);
+			setIsStepper(false);
+		}
+	};
 
-  // Keep legacy function name for backward compatibility
-  const deleteProjectUpdate = deleteUpdate;
+	// Keep legacy function name for backward compatibility
+	const deleteProjectUpdate = deleteUpdate;
 
-  const getShareText = () => {
-    const shareDictionary = {
-      ProjectUpdate: SHARE_TEXTS.PROJECT_ACTIVITY(
-        project?.details?.data?.title as string,
-        project?.uid as string
-      ),
-      GrantUpdate: SHARE_TEXTS.GRANT_UPDATE(
-        project?.details?.data?.title as string,
-        project?.uid as string,
-        update.uid
-      ),
-      ProjectMilestone: SHARE_TEXTS.GRANT_UPDATE(
-        project?.details?.data?.title as string,
-        project?.uid as string,
-        update.uid
-      ),
-      ProjectImpact: SHARE_TEXTS.PROJECT_ACTIVITY(
-        project?.details?.data?.title as string,
-        project?.uid as string
-      ),
-      Milestone: SHARE_TEXTS.PROJECT_ACTIVITY(
-        project?.details?.data?.title as string,
-        project?.uid as string
-      ),
-    };
+	const getShareText = () => {
+		const shareDictionary = {
+			ProjectUpdate: SHARE_TEXTS.PROJECT_ACTIVITY(
+				project?.details?.data?.title as string,
+				project?.uid as string,
+			),
+			GrantUpdate: SHARE_TEXTS.GRANT_UPDATE(
+				project?.details?.data?.title as string,
+				project?.uid as string,
+				update.uid,
+			),
+			ProjectMilestone: SHARE_TEXTS.GRANT_UPDATE(
+				project?.details?.data?.title as string,
+				project?.uid as string,
+				update.uid,
+			),
+			ProjectImpact: SHARE_TEXTS.PROJECT_ACTIVITY(
+				project?.details?.data?.title as string,
+				project?.uid as string,
+			),
+			Milestone: SHARE_TEXTS.PROJECT_ACTIVITY(
+				project?.details?.data?.title as string,
+				project?.uid as string,
+			),
+		};
 
-    return shareDictionary[update.type as keyof typeof shareDictionary];
-  };
+		return shareDictionary[update.type as keyof typeof shareDictionary];
+	};
 
-  const handleShare = () => {
-    const shareText = getShareText();
-    if (shareText) {
-      window.open(shareOnX(shareText), "_blank");
-    }
-  };
+	const handleShare = () => {
+		const shareText = getShareText();
+		if (shareText) {
+			window.open(shareOnX(shareText), "_blank");
+		}
+	};
 
-  const handleEdit = () => {
-    setIsEditDialogOpen(true);
-  };
+	const handleEdit = () => {
+		setIsEditDialogOpen(true);
+	};
 
-  const closeEditDialog = () => {
-    setIsEditDialogOpen(false);
-  };
+	const closeEditDialog = () => {
+		setIsEditDialogOpen(false);
+	};
 
-  return {
-    isDeletingUpdate,
-    isEditDialogOpen,
-    deleteUpdate,
-    deleteProjectUpdate, // Keep for backward compatibility
-    handleShare,
-    handleEdit,
-    closeEditDialog,
-    canShare: !!getShareText(),
-  };
+	return {
+		isDeletingUpdate,
+		isEditDialogOpen,
+		deleteUpdate,
+		deleteProjectUpdate, // Keep for backward compatibility
+		handleShare,
+		handleEdit,
+		closeEditDialog,
+		canShare: !!getShareText(),
+	};
 };

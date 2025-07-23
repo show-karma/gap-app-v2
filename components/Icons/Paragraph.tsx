@@ -1,27 +1,27 @@
 interface Props {
-  className?: string;
+	className?: string;
 }
 export const ParagraphIcon = ({ className }: Props) => {
-  return (
-    <svg
-      version="1.0"
-      xmlns="http://www.w3.org/2000/svg"
-      width="521.000000pt"
-      height="521.000000pt"
-      viewBox="0 0 521.000000 521.000000"
-      preserveAspectRatio="xMidYMid meet"
-      className={className}
-    >
-      <metadata>
-        Created by potrace 1.14, written by Peter Selinger 2001-2017
-      </metadata>
-      <g
-        transform="translate(0.000000,521.000000) scale(0.100000,-0.100000)"
-        fill="currentColor"
-        stroke="none"
-      >
-        <path
-          d="M140 3350 l0 -1750 514 0 c317 0 517 4 521 10 3 5 12 7 19 4 22 -8
+	return (
+		<svg
+			version="1.0"
+			xmlns="http://www.w3.org/2000/svg"
+			width="521.000000pt"
+			height="521.000000pt"
+			viewBox="0 0 521.000000 521.000000"
+			preserveAspectRatio="xMidYMid meet"
+			className={className}
+		>
+			<metadata>
+				Created by potrace 1.14, written by Peter Selinger 2001-2017
+			</metadata>
+			<g
+				transform="translate(0.000000,521.000000) scale(0.100000,-0.100000)"
+				fill="currentColor"
+				stroke="none"
+			>
+				<path
+					d="M140 3350 l0 -1750 514 0 c317 0 517 4 521 10 3 5 12 7 19 4 22 -8
     316 -10 316 -2 0 4 6 5 13 2 8 -3 27 -6 43 -7 23 -2 29 -7 28 -25 0 -12 3 -22
     7 -22 4 0 4 -13 -1 -29 -4 -15 -4 -34 0 -42 5 -7 5 -20 0 -29 -5 -9 -5 -22 -1
     -28 4 -7 5 -35 1 -62 -4 -27 -3 -55 1 -62 4 -6 4 -19 -1 -28 -5 -9 -5 -22 0
@@ -59,12 +59,12 @@ export const ParagraphIcon = ({ className }: Props) => {
     -8 -7 0 -22 -8 -33 -18 -19 -16 -32 -24 -98 -61 -48 -27 -143 -61 -236 -84
     -83 -20 -109 -21 -1277 -24 l-1193 -4 0 1410 0 1411 1665 0 1665 0 0 170 0
     170 -1840 0 -1840 0 0 -1750z"
-        />
-        <path
-          d="M4180 4930 l0 -170 280 0 280 0 0 -280 0 -280 175 0 175 0 0 450 0
+				/>
+				<path
+					d="M4180 4930 l0 -170 280 0 280 0 0 -280 0 -280 175 0 175 0 0 450 0
     450 -455 0 -455 0 0 -170z"
-        />
-      </g>
-    </svg>
-  );
+				/>
+			</g>
+		</svg>
+	);
 };

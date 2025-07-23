@@ -1,28 +1,28 @@
 import { useQuery } from "@tanstack/react-query";
+import type { OSOMetricsResponse } from "@/types/oso";
 import { envVars } from "@/utilities/enviromentVars";
-import { OSOMetricsResponse } from "@/types/oso";
 
 const OSO_API_URL = "https://www.opensource.observer/api/v1/graphql";
 
 const fetchOSOMetrics = async (
-  slugs: string[]
+	slugs: string[],
 ): Promise<OSOMetricsResponse> => {
-  const headers = {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${envVars.OSO_API_KEY}`,
-  };
+	const headers = {
+		"Content-Type": "application/json",
+		Authorization: `Bearer ${envVars.OSO_API_KEY}`,
+	};
 
-  const whereCondition = {
-    projectName: {
-      _in: slugs,
-    },
-  };
+	const whereCondition = {
+		projectName: {
+			_in: slugs,
+		},
+	};
 
-  const response = await fetch(OSO_API_URL, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      query: `
+	const response = await fetch(OSO_API_URL, {
+		method: "POST",
+		headers,
+		body: JSON.stringify({
+			query: `
                query FetchOSOMetrics(
                   $where1: Oso_CodeMetricsByProjectV1BoolExp
                   $where2: Oso_OnchainMetricsByProjectV1BoolExp
@@ -78,25 +78,25 @@ const fetchOSOMetrics = async (
                   }
                 }
             `,
-      variables: {
-        where1: whereCondition,
-        where2: whereCondition,
-      },
-    }),
-  });
+			variables: {
+				where1: whereCondition,
+				where2: whereCondition,
+			},
+		}),
+	});
 
-  if (!response.ok) {
-    throw new Error("Failed to fetch OSO metrics");
-  }
+	if (!response.ok) {
+		throw new Error("Failed to fetch OSO metrics");
+	}
 
-  const data = await response.json();
-  return data.data;
+	const data = await response.json();
+	return data.data;
 };
 
 export const useOSOMetrics = (slugs: string[]) => {
-  return useQuery({
-    queryKey: ["oso-metrics", slugs],
-    queryFn: () => fetchOSOMetrics(slugs),
-    enabled: slugs.length > 0 && !!envVars.OSO_API_KEY,
-  });
+	return useQuery({
+		queryKey: ["oso-metrics", slugs],
+		queryFn: () => fetchOSOMetrics(slugs),
+		enabled: slugs.length > 0 && !!envVars.OSO_API_KEY,
+	});
 };

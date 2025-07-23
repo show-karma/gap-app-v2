@@ -2,27 +2,27 @@ import Dompurify from "dompurify";
 import MarkdownIt from "markdown-it";
 
 const markdownIt = new MarkdownIt({
-  linkify: true,
-  html: false,
+	linkify: true,
+	html: false,
 });
 
 const defaultLinkOpen =
-  markdownIt.renderer.rules.link_open ||
-  function defaultLinkOpen(tokens, idx, options, env, self) {
-    return self.renderToken(tokens, idx, options);
-  };
+	markdownIt.renderer.rules.link_open ||
+	function defaultLinkOpen(tokens, idx, options, env, self) {
+		return self.renderToken(tokens, idx, options);
+	};
 
 // Open all links in a new tab and instruct search engines not to follow them
 markdownIt.renderer.rules.link_open = function linkOpen(
-  tokens,
-  idx,
-  options,
-  env,
-  self
+	tokens,
+	idx,
+	options,
+	env,
+	self,
 ) {
-  tokens[idx].attrPush(["target", "_blank"]);
-  tokens[idx].attrPush(["rel", "nofollow noopener noreferrer"]);
-  return defaultLinkOpen(tokens, idx, options, env, self);
+	tokens[idx].attrPush(["target", "_blank"]);
+	tokens[idx].attrPush(["rel", "nofollow noopener noreferrer"]);
+	return defaultLinkOpen(tokens, idx, options, env, self);
 };
 
 /**
@@ -35,9 +35,9 @@ markdownIt.renderer.rules.link_open = function linkOpen(
  * @param markdownSourceText
  */
 export function renderToHTML(markdownSourceText: string) {
-  return Dompurify.sanitize(markdownIt.render(markdownSourceText), {
-    ADD_ATTR: ["target"],
-  });
+	return Dompurify.sanitize(markdownIt.render(markdownSourceText), {
+		ADD_ATTR: ["target"],
+	});
 }
 
 /**
@@ -48,17 +48,17 @@ export function renderToHTML(markdownSourceText: string) {
  * @param markdownSourceText
  */
 export function renderToPlainText(markdownSourceText: string) {
-  return Dompurify.sanitize(renderToHTML(markdownSourceText), {
-    USE_PROFILES: { html: false },
-  });
+	return Dompurify.sanitize(renderToHTML(markdownSourceText), {
+		USE_PROFILES: { html: false },
+	});
 }
 
 export function truncateDescription(description: string, maxLength: number) {
-  if (description.length > maxLength) {
-    return description.slice(0, maxLength) + "...";
-  } else {
-    return description;
-  }
+	if (description.length > maxLength) {
+		return description.slice(0, maxLength) + "...";
+	} else {
+		return description;
+	}
 }
 
 /**
@@ -74,69 +74,69 @@ export function truncateDescription(description: string, maxLength: number) {
  * @returns Plain text with markdown syntax removed
  */
 export function cleanMarkdownForPlainText(
-  markdownText: string,
-  maxLength?: number
+	markdownText: string,
+	maxLength?: number,
 ): string {
-  if (!markdownText) return "";
+	if (!markdownText) return "";
 
-  let text = markdownText;
+	let text = markdownText;
 
-  // Remove link syntax but keep the text: [link text](url) -> link text
-  text = text.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
+	// Remove link syntax but keep the text: [link text](url) -> link text
+	text = text.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
 
-  // Remove image syntax: ![alt text](url) -> alt text
-  text = text.replace(/!\[([^\]]+)\]\([^)]+\)/g, "$1");
+	// Remove image syntax: ![alt text](url) -> alt text
+	text = text.replace(/!\[([^\]]+)\]\([^)]+\)/g, "$1");
 
-  // Remove bold and italic syntax
-  text = text.replace(/(\*\*|__)(.*?)\1/g, "$2"); // Bold: **text** or __text__
-  text = text.replace(/(\*|_)(.*?)\1/g, "$2"); // Italic: *text* or _text_
+	// Remove bold and italic syntax
+	text = text.replace(/(\*\*|__)(.*?)\1/g, "$2"); // Bold: **text** or __text__
+	text = text.replace(/(\*|_)(.*?)\1/g, "$2"); // Italic: *text* or _text_
 
-  // Remove code blocks and inline code
-  text = text.replace(/```[\s\S]*?```/g, ""); // Code blocks: ```code```
-  text = text.replace(/`([^`]+)`/g, "$1"); // Inline code: `code`
+	// Remove code blocks and inline code
+	text = text.replace(/```[\s\S]*?```/g, ""); // Code blocks: ```code```
+	text = text.replace(/`([^`]+)`/g, "$1"); // Inline code: `code`
 
-  // Remove blockquotes
-  text = text.replace(/^>\s+/gm, "");
+	// Remove blockquotes
+	text = text.replace(/^>\s+/gm, "");
 
-  // Remove headings
-  text = text.replace(/^#{1,6}\s+/gm, "");
+	// Remove headings
+	text = text.replace(/^#{1,6}\s+/gm, "");
 
-  // Remove horizontal rules
-  text = text.replace(/^(?:[-*_]){3,}$/gm, "");
+	// Remove horizontal rules
+	text = text.replace(/^(?:[-*_]){3,}$/gm, "");
 
-  // Remove HTML tags
-  text = text.replace(/<[^>]*>/g, "");
+	// Remove HTML tags
+	text = text.replace(/<[^>]*>/g, "");
 
-  // Handle lists - replace bullet points with a space
-  text = text.replace(/^\s*[-+*]\s+/gm, "");
-  text = text.replace(/^\s*\d+\.\s+/gm, "");
+	// Handle lists - replace bullet points with a space
+	text = text.replace(/^\s*[-+*]\s+/gm, "");
+	text = text.replace(/^\s*\d+\.\s+/gm, "");
 
-  // Collapse multiple newlines and spaces
-  text = text.replace(/\n{2,}/g, " ");
-  text = text.replace(/\s{2,}/g, " ");
+	// Collapse multiple newlines and spaces
+	text = text.replace(/\n{2,}/g, " ");
+	text = text.replace(/\s{2,}/g, " ");
 
-  // Trim any whitespace
-  text = text.trim();
+	// Trim any whitespace
+	text = text.trim();
 
-  // If maxLength is provided, truncate to that length
-  if (maxLength && text.length > maxLength) {
-    // Find the last space before maxLength to avoid cutting words
-    const lastSpace = text.lastIndexOf(" ", maxLength);
-    if (lastSpace > 0 && maxLength - lastSpace < 20) {
-      // Only use lastSpace if it's within a reasonable distance from maxLength
-      text = text.substring(0, lastSpace);
-    } else {
-      // Otherwise just cut at maxLength
-      text = text.substring(0, maxLength);
-    }
+	// If maxLength is provided, truncate to that length
+	if (maxLength && text.length > maxLength) {
+		// Find the last space before maxLength to avoid cutting words
+		const lastSpace = text.lastIndexOf(" ", maxLength);
+		if (lastSpace > 0 && maxLength - lastSpace < 20) {
+			// Only use lastSpace if it's within a reasonable distance from maxLength
+			text = text.substring(0, lastSpace);
+		} else {
+			// Otherwise just cut at maxLength
+			text = text.substring(0, maxLength);
+		}
 
-    // Add ellipsis if truncated
-    if (text.length < markdownText.length) {
-      text += "...";
-    }
-  }
+		// Add ellipsis if truncated
+		if (text.length < markdownText.length) {
+			text += "...";
+		}
+	}
 
-  return text;
+	return text;
 }
 
 /**
@@ -148,10 +148,10 @@ export function cleanMarkdownForPlainText(
  * @returns Truncated and markdown-free text
  */
 export function truncateAndCleanMarkdown(
-  text: string,
-  maxLength: number
+	text: string,
+	maxLength: number,
 ): string {
-  return cleanMarkdownForPlainText(text, maxLength);
+	return cleanMarkdownForPlainText(text, maxLength);
 }
 
 export default { renderToHTML, renderToPlainText };

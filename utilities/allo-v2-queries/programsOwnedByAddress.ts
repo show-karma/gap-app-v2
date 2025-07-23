@@ -1,9 +1,9 @@
 export const getProgramsOwnedByAddress = (
-  chainIds: number[],
-  address: `0x${string}`,
-  withGrants: boolean = false
+	chainIds: number[],
+	address: `0x${string}`,
+	withGrants: boolean = false,
 ) => ({
-  query: `
+	query: `
         query Projects($filter: ProjectFilter, $orderBy: [ProjectsOrderBy!]) {
             projects(filter: $filter, orderBy: $orderBy) {
                 id
@@ -19,8 +19,8 @@ export const getProgramsOwnedByAddress = (
                 registryAddress
                 anchorAddress
                 ${
-                  withGrants
-                    ? `rounds {
+									withGrants
+										? `rounds {
                   chainId
                   applicationMetadata
                   roundMetadata
@@ -48,20 +48,20 @@ export const getProgramsOwnedByAddress = (
                   applicationsEndTime
                   adminRole
                 }`
-                    : ""
-                }
+										: ""
+								}
             }
         }
     `,
-  variables: {
-    orderBy: "CREATED_AT_BLOCK_DESC",
-    filter: {
-      createdByAddress: {
-        equalTo: address,
-      },
-      chainId: {
-        in: chainIds,
-      },
-    },
-  },
+	variables: {
+		orderBy: "CREATED_AT_BLOCK_DESC",
+		filter: {
+			createdByAddress: {
+				equalTo: address,
+			},
+			chainId: {
+				in: chainIds,
+			},
+		},
+	},
 });

@@ -1,6 +1,6 @@
 import {
-  authCookiePath,
-  authWalletTypeCookiePath,
+	authCookiePath,
+	authWalletTypeCookiePath,
 } from "@/utilities/auth-keys";
 
 // Constants for cookie keys and BroadcastChannel
@@ -9,6 +9,6 @@ export const AUTH_CHANNEL_NAME = "gap_auth_channel";
 
 // Modified to include address-specific path
 export const getAddressSpecificAuthCookie = (address: string) =>
-  `${authCookiePath}_${address.toLowerCase()}`;
+	`${authCookiePath}_${address.toLowerCase()}`;
 export const getAddressSpecificWalletTypeCookie = (address: string) =>
-  `${authWalletTypeCookiePath}_${address.toLowerCase()}`;
+	`${authWalletTypeCookiePath}_${address.toLowerCase()}`;

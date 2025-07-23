@@ -4,5 +4,5 @@ import { defaultMetadata } from "@/utilities/meta";
 export const metadata = defaultMetadata;
 
 export default function Page() {
-  return <CommunityStats />;
+	return <CommunityStats />;
 }

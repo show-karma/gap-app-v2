@@ -9,5 +9,5 @@
 // export const GET = handler;
 // export const POST = handler;
 export const GET = () => {
-  return new Response("");
+	return new Response("");
 };

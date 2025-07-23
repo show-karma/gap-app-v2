@@ -1,5 +1,5 @@
 export interface DisbursementRecipient {
-  address: string;
-  amount: string;
-  error?: string;
-} 
+	address: string;
+	amount: string;
+	error?: string;
+}
