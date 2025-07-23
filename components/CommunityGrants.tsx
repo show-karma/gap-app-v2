@@ -586,7 +586,7 @@ export const CommunityGrants = ({
 
                   const columnWidth = Math.floor(width / columnCounter);
                   const gutterSize = 20;
-                  const height = Math.ceil(grants.length / columnCounter) * 260;
+                  const height = Math.ceil(grants.length / columnCounter) * 360;
 
                   return (
                     <Grid
@@ -594,7 +594,7 @@ export const CommunityGrants = ({
                       height={height + 60}
                       width={width}
                       rowCount={Math.ceil(grants.length / columnCounter)}
-                      rowHeight={260}
+                      rowHeight={360}
                       columnWidth={columnWidth}
                       columnCount={columnCounter}
                       cellRenderer={({ columnIndex, key, rowIndex, style }) => {
@@ -606,18 +606,17 @@ export const CommunityGrants = ({
                             style={{
                               ...style,
                               left:
-                                columnIndex === 0
-                                  ? +(style.left || 0)
-                                  : +(style.left || 0) + gutterSize,
+                                +(style.left || 0) +
+                                (columnIndex > 0 ? gutterSize : 0),
                               width:
-                                columnIndex === 0
-                                  ? +(style.width || 0)
-                                  : +(style.width || 0) - gutterSize,
+                                +(style.width || 0) -
+                                (columnIndex > 0 ? gutterSize : 0),
                               top:
-                                rowIndex === 0
-                                  ? +(style.top || 0)
-                                  : +(style.top || 0) + gutterSize,
-                              height: +(style.height || 0) - gutterSize,
+                                +(style.top || 0) +
+                                (rowIndex > 0 ? gutterSize : 0),
+                              height:
+                                +(style.height || 0) -
+                                (rowIndex > 0 ? gutterSize : 0),
                             }}
                           >
                             {grant && (
