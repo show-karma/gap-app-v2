@@ -12,7 +12,7 @@ import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import { useParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import pluralize from "pluralize";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { AutoSizer, Grid } from "react-virtualized";
 import { Hex } from "viem";
@@ -228,12 +228,27 @@ export const CommunityGrants = ({
     changeCategoriesQuery(newValue);
   };
 
-  const loadMore = async () => {
+  const loadMore = useCallback(() => {
     if (!loading) {
-      const newPage = currentPage + 1;
-      setCurrentPage(newPage);
+      setCurrentPage((prev) => prev + 1);
     }
-  };
+  }, [loading]);
+
+  useEffect(() => {
+    if (loading || !haveMore) {
+      return;
+    }
+
+    const handleScroll = () => {
+      if (document.documentElement.scrollHeight <= window.innerHeight) {
+        loadMore();
+      }
+    };
+
+    const timeoutId = setTimeout(handleScroll, 200);
+
+    return () => clearTimeout(timeoutId);
+  }, [grants, haveMore, loadMore, loading]);
 
   const resetTrackIds = () => {
     changeSelectedTrackIdsQuery(null);
