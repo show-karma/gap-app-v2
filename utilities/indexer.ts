@@ -183,8 +183,6 @@ export const INDEXER = {
       }${grantTitle ? `&grantTitle=${grantTitle}` : ""}${
         selectedTrackIds ? `&selectedTrackIds=${selectedTrackIds}` : ""
       }`,
-    FEED: (communityIdOrSlug: string) =>
-      `/communities/${communityIdOrSlug}/feed`,
     STATS: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/stats`,
     PAGE_HEADER_STATS: (communityIdOrSlug: string) =>
