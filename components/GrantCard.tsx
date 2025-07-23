@@ -75,7 +75,7 @@ const GrantCardContent = ({ grant, index }: GrantCardProps) => {
   const hasTrackIds = selectedTrackIds && selectedTrackIds.length > 0;
 
   return (
-    <div className="flex flex-col items-start justify-between h-full" id="grant-card">
+    <div className="flex flex-col items-start justify-between w-full h-full" id="grant-card">
       <LoadingIndicator />
       <div
         className={`w-full flex flex-col gap-1 transition-all duration-300 ${
