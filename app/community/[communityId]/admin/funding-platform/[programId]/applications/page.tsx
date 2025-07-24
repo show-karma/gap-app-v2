@@ -1,6 +1,6 @@
 "use client";
-import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect, useMemo } from "react";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { useOwnerStore } from "@/store";
 import { useStaff } from "@/hooks/useStaff";
@@ -9,6 +9,7 @@ import {
   ApplicationDetailSidesheet,
 } from "@/components/FundingPlatform";
 import { IFundingApplication } from "@/types/funding-platform";
+import { IApplicationFilters } from "@/services/fundingPlatformService";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/Utilities/Button";
 import { ArrowLeftIcon, CogIcon } from "@heroicons/react/24/solid";
@@ -19,6 +20,7 @@ import { Cog6ToothIcon } from "@heroicons/react/24/outline";
 
 export default function ApplicationsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { communityId, programId: combinedProgramId } = useParams() as {
     communityId: string;
     programId: string;
@@ -27,6 +29,28 @@ export default function ApplicationsPage() {
   // Extract programId and chainId from the combined format (e.g., "777_11155111")
   const [programId, chainId] = combinedProgramId.split("_");
   const parsedChainId = parseInt(chainId, 10);
+
+  // Parse initial filters from URL
+  const initialFilters = useMemo((): IApplicationFilters => {
+    const filters: IApplicationFilters = {};
+    
+    const search = searchParams.get('search');
+    if (search) filters.search = search;
+    
+    const status = searchParams.get('status');
+    if (status) filters.status = status as any;
+    
+    const dateFrom = searchParams.get('dateFrom');
+    if (dateFrom) filters.dateFrom = dateFrom;
+    
+    const dateTo = searchParams.get('dateTo');
+    if (dateTo) filters.dateTo = dateTo;
+    
+    const page = searchParams.get('page');
+    if (page) filters.page = parseInt(page, 10);
+    
+    return filters;
+  }, [searchParams]);
 
   // State for application detail sidesheet
   const [selectedApplication, setSelectedApplication] =
@@ -136,6 +160,7 @@ export default function ApplicationsPage() {
           chainId={parsedChainId}
           showStatusActions={true}
           onApplicationSelect={handleApplicationSelect}
+          initialFilters={initialFilters}
         />
       </div>
 

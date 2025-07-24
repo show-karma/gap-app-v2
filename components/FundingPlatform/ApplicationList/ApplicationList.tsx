@@ -24,11 +24,19 @@ interface IApplicationListComponentProps extends IApplicationListProps {
 }
 
 const statusColors = {
-  submitted: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
-  under_review:
+  pending: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
+  revision_requested:
     "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
   approved: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
   rejected: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
+  withdrawn: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300",
+};
+
+const formatStatus = (status: string): string => {
+  return status
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 };
 
 /**
@@ -71,17 +79,13 @@ const formatDate = (
 
 const ApplicationList: FC<IApplicationListComponentProps> = ({
   programId,
-  chainId,
+  chainID,
   applications,
   isLoading = false,
   onApplicationSelect,
   onStatusChange,
   showStatusActions = false,
 }) => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<"date" | "status" | "rating">("date");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
 
@@ -89,60 +93,8 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
   const filteredAndSortedApplications = useMemo(() => {
     let filtered = applications;
 
-    // Apply search filter
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (app) =>
-          app.referenceNumber
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          app.applicantAddress
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          Object.values(app.applicationData).some((value) =>
-            String(value).toLowerCase().includes(searchTerm.toLowerCase())
-          )
-      );
-    }
-
-    // Apply status filter
-    if (statusFilter !== "all") {
-      filtered = filtered.filter((app) => app.status === statusFilter);
-    }
-
-    // Apply sorting
-    filtered.sort((a, b) => {
-      let comparison = 0;
-
-      switch (sortBy) {
-        case "date":
-          const aDate = new Date(a.submittedAt);
-          const bDate = new Date(b.submittedAt);
-          comparison =
-            (isValid(aDate) ? aDate.getTime() : 0) -
-            (isValid(bDate) ? bDate.getTime() : 0);
-          break;
-        case "status":
-          comparison = a.status.localeCompare(b.status);
-          break;
-        case "rating":
-          const aRating =
-            a.aiEvaluation?.systemEvaluation?.rating ||
-            a.aiEvaluation?.detailedEvaluation?.rating ||
-            0;
-          const bRating =
-            b.aiEvaluation?.systemEvaluation?.rating ||
-            b.aiEvaluation?.detailedEvaluation?.rating ||
-            0;
-          comparison = aRating - bRating;
-          break;
-      }
-
-      return sortOrder === "asc" ? comparison : -comparison;
-    });
-
     return filtered;
-  }, [applications, searchTerm, statusFilter, sortBy, sortOrder]);
+  }, [applications]);
 
   // Pagination
   const totalPages = Math.ceil(filteredAndSortedApplications.length / pageSize);
@@ -172,7 +124,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
           "bg-gray-100 text-gray-800"
       )}
     >
-      {status.replace("_", " ")}
+      {formatStatus(status)}
     </span>
   );
 
@@ -204,7 +156,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
   return (
     <div className="flex flex-col w-full space-y-6 px-4 py-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+      {/* <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
         <div>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
             Funding Applications
@@ -216,10 +168,10 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
             {filteredAndSortedApplications.length} application(s) found
           </p>
         </div>
-      </div>
+      </div> */}
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      {/* <div className="flex flex-col sm:flex-row gap-4">
         <div className="flex-1">
           <input
             type="text"
@@ -236,10 +188,11 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
           className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-gray-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100"
         >
           <option value="all">All Statuses</option>
-          <option value="submitted">Submitted</option>
-          <option value="under_review">Under Review</option>
+          <option value="pending">Pending</option>
+          <option value="revision_requested">Revision Requested</option>
           <option value="approved">Approved</option>
           <option value="rejected">Rejected</option>
+          <option value="withdrawn">Withdrawn</option>
         </select>
 
         <select
@@ -258,7 +211,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
           <option value="rating-desc">Highest Rating</option>
           <option value="rating-asc">Lowest Rating</option>
         </select>
-      </div>
+      </div> */}
 
       {/* Applications List */}
       {paginatedApplications.length === 0 ? (
@@ -289,14 +242,20 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                       application.aiEvaluation?.systemEvaluation?.rating ||
                         application.aiEvaluation?.detailedEvaluation?.rating
                     )}
+                    {/* Show revision indicator */}
+                    {application.status === "revision_requested" && (
+                      <span className="text-xs text-yellow-600 dark:text-yellow-400">
+                        ⚠️ Revision needed
+                      </span>
+                    )}
                   </div>
 
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    From: {application.applicantAddress}
+                    From: {application.applicantEmail}
                   </p>
 
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Submitted: {formatDate(application.submittedAt)}
+                    Submitted: {formatDate(application.createdAt)}
                   </p>
 
                   {(application.aiEvaluation?.systemEvaluation?.reasoning ||
@@ -313,17 +272,17 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                 {/* Actions */}
                 {showStatusActions && onStatusChange && (
                   <div className="flex flex-wrap gap-2">
-                    {application.status === "submitted" && (
+                    {application.status === "pending" && (
                       <>
                         <Button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleStatusChange(application.id, "under_review");
+                            handleStatusChange(application.id, "revision_requested");
                           }}
                           variant="secondary"
                           className="w-fit px-3 py-1 border bg-transparent border-gray-200 font-medium dark:border-gray-700 flex flex-row gap-2"
                         >
-                          Review
+                          Request Revision
                         </Button>
                         <Button
                           onClick={(e) => {
@@ -350,7 +309,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                       </>
                     )}
 
-                    {application.status === "under_review" && (
+                    {application.status === "revision_requested" && (
                       <>
                         <Button
                           onClick={(e) => {

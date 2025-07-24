@@ -3,6 +3,13 @@ import {
   IFormSchema,
   IFundingApplication,
   IFundingProgramConfig,
+  IApplicationSubmitRequest,
+  IApplicationUpdateRequest,
+  IApplicationStatusUpdateRequest,
+  IPaginatedApplicationsResponse,
+  IApplicationStatistics,
+  ExportFormat,
+  FundingApplicationStatusV2,
 } from "@/types/funding-platform";
 
 // Base API configuration
@@ -39,55 +46,14 @@ apiClient.interceptors.response.use(
   }
 );
 
-/**
- * Map backend status values to frontend expected values
- */
-function mapApplicationStatus(backendStatus: string): string {
-  const statusMap: Record<string, string> = {
-    pending: "submitted",
-    under_review: "under_review",
-    approved: "approved",
-    rejected: "rejected",
-  };
-  return statusMap[backendStatus] || backendStatus;
-}
-
-/**
- * Map backend application object to frontend expected structure
- */
-function mapApplication(app: any): any {
-  return {
-    ...app,
-    chainId: app.chainID, // Map chainID to chainId
-    applicantAddress: app.applicantEmail, // Map applicantEmail to applicantAddress
-    submittedAt: app.createdAt, // Map createdAt to submittedAt
-    status: mapApplicationStatus(app.status), // Map status values
-  };
-}
-
 export interface IApplicationFilters {
-  status?: string;
-  dateFrom?: string;
-  dateTo?: string;
+  status?: FundingApplicationStatusV2 | string; // Allow string for backward compatibility
   search?: string;
   page?: number;
   limit?: number;
-}
-
-export interface IApplicationsResponse {
-  applications: IFundingApplication[];
-  total: number;
-  page: number;
-  totalPages: number;
-}
-
-export interface IApplicationStatistics {
-  total: number;
-  submitted: number;
-  under_review: number;
-  approved: number;
-  rejected: number;
-  averageRating?: number;
+  // Backward compatibility
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 export type FundingProgram = {
@@ -136,25 +102,70 @@ export type FundingProgram = {
     status: string;
     communityRef?: string[];
   };
-  configuration: IFundingProgramConfig;
-  stats: {
+  applicationConfig: IFundingProgramConfig;
+  stats?: {
     totalApplications: number;
     pendingApplications: number;
     approvedApplications: number;
     rejectedApplications: number;
+    underReviewApplications?: number; // For revision_requested status
   };
 };
 
-// Funding Programs API
+// Funding Programs API (V2)
 export const fundingProgramsAPI = {
+
   /**
    * Get all grant programs for a community
    */
   async getProgramsByCommunity(communityId: string): Promise<FundingProgram[]> {
-    const response = await apiClient.get(
-      `/grant-programs/communities/${communityId}/grant-programs`
+    // First get the configurations
+    const configs = await apiClient.get<FundingProgram[]>(
+      `/v2/funding-program-configs/community/${communityId}`
     );
-    return response.data;
+    
+    // Transform to FundingProgram format for backward compatibility
+    const programs = await Promise.all(
+      configs.data.map(async (config) => {
+        // Check if stats already exist from backend
+        if (config.stats) {
+          // Stats already provided by backend, no need to fetch separately
+          return config;
+        }
+        
+        // Fallback: Get statistics for each program if not provided by backend
+        let stats = {
+          totalApplications: 0,
+          pendingApplications: 0,
+          approvedApplications: 0,
+          rejectedApplications: 0,
+          underReviewApplications: 0,
+        };
+        
+        try {
+          const statsResponse = await fundingApplicationsAPI.getApplicationStatistics(
+            config.programId,
+            config.chainID
+          );
+          stats = {
+            totalApplications: statsResponse.totalApplications,
+            pendingApplications: statsResponse.pendingApplications,
+            approvedApplications: statsResponse.approvedApplications,
+            rejectedApplications: statsResponse.rejectedApplications,
+            underReviewApplications: statsResponse.revisionRequestedApplications || 0,
+          };
+        } catch (error) {
+          console.warn(`Failed to fetch stats for program ${config.programId}:`, error);
+        }
+        
+        return {
+          ...config,
+          stats,
+        };
+      })
+    );
+    
+    return programs;
   },
 
   /**
@@ -163,79 +174,86 @@ export const fundingProgramsAPI = {
   async getProgramConfiguration(
     programId: string,
     chainId: number
-  ): Promise<IFundingProgramConfig> {
+  ): Promise<IFundingProgramConfig | null> {
     const response = await apiClient.get(
-      `/grant-programs/${programId}/${chainId}/configuration`
+      `/v2/funding-program-configs/${programId}/${chainId}`
     );
-    const data = response.data;
-
-    // Map backend field names to frontend expected names
-    return {
-      ...data,
-      enabled: data.isEnabled, // Map isEnabled to enabled
-      chainId: data.chainID || chainId, // Map chainID to chainId
-    };
+    return response.data?.applicationConfig;
   },
 
   /**
-   * Update program configuration
+   * Get all program configurations with optional community filter
+   */
+  async getAllProgramConfigs(community?: string): Promise<IFundingProgramConfig[]> {
+    const params = community ? `?community=${community}` : '';
+    const response = await apiClient.get(`/v2/funding-program-configs${params}`);
+    return response.data;
+  },
+
+  /**
+   * Get only enabled programs
+   */
+  async getEnabledPrograms(): Promise<IFundingProgramConfig[]> {
+    const response = await apiClient.get('/v2/funding-program-configs/enabled');
+    return response.data;
+  },
+
+  /**
+   * Update program configuration (uses POST for new configs, PUT for updates)
+   */
+  async createProgramConfiguration(
+    programId: string,
+    chainId: number,
+    config: Partial<IFundingProgramConfig | null>,
+  ): Promise<IFundingProgramConfig> {
+      // If config exists, use POST to update
+      const response = await apiClient.post(
+        `/v2/funding-program-configs/${programId}/${chainId}`,
+        config
+      );
+      return response.data;
+  },
+
+  /**
+   * Update program configuration (uses POST for new configs, PUT for updates)
    */
   async updateProgramConfiguration(
     programId: string,
     chainId: number,
-    config: Partial<IFundingProgramConfig>
+    config: Partial<IFundingProgramConfig | null>,
   ): Promise<IFundingProgramConfig> {
-    // Map frontend field names to backend expected names
-    const backendConfig = {
-      ...config,
-      isEnabled: config.isEnabled, // Map enabled to isEnabled
-      chainID: config.chainId || chainId, // Map chainId to chainID
-    };
-
-    // Remove frontend-specific fields that backend doesn't expect
-    delete backendConfig.isEnabled;
-    delete backendConfig.chainId;
-
-    const response = await apiClient.put(
-      `/grant-programs/${programId}/${chainId}/configuration`,
-      backendConfig
-    );
-    const data = response.data;
-
-    // Map backend field names to frontend expected names
-    return {
-      ...data,
-      enabled: data.isEnabled, // Map isEnabled to enabled
-      chainId: data.chainID || chainId, // Map chainID to chainId
-    };
+      // If config exists, use PUT to update
+      const response = await apiClient.put(
+        `/v2/funding-program-configs/${programId}/${chainId}`,
+        config
+      );
+      return response.data;
   },
 
   /**
-   * Update form schema for a program (React Hook Form)
+   * Update form schema for a program
    */
   async updateFormSchema(
     programId: string,
     chainId: number,
-    formSchema: any
+    formSchema: IFormSchema
   ): Promise<IFundingProgramConfig> {
-    // First get existing configuration
-    const existingConfig = await this.getProgramConfiguration(
-      programId,
-      chainId
-    );
+    try {
+      const existingConfig = await this.getProgramConfiguration(programId, chainId);
+      const updatedConfig = {
+        ...existingConfig,
+        formSchema: formSchema,
+      };
 
-    // Update with new schema and mark as React Hook Form type
-    const updatedConfig = {
-      ...existingConfig,
-      formSchema: formSchema,
-      schemaType: "react-hook-form",
-    };
-
-    const response = await apiClient.put(
-      `/grant-programs/${programId}/${chainId}/configuration`,
-      updatedConfig
-    );
-    return response.data;
+      // Use updateProgramConfiguration which handles POST/PUT logic
+      return this.updateProgramConfiguration(programId, chainId, updatedConfig);
+    } catch (error: any) {
+      // If config doesn't exist, create new one with formSchema
+      if (error.response?.status === 404 || !error.response) {
+        return this.updateProgramConfiguration(programId, chainId, { formSchema });
+      }
+      throw error;
+    }
   },
 
   /**
@@ -246,108 +264,104 @@ export const fundingProgramsAPI = {
     chainId: number,
     enabled: boolean
   ): Promise<IFundingProgramConfig> {
-    const response = await apiClient.put(
-      `/grant-programs/${programId}/${chainId}/toggle-status`,
-      { isEnabled: enabled }
-    );
-    const data = response.data;
-
-    // Map backend field names to frontend expected names
-    return {
-      ...data,
-      enabled: data.isEnabled, // Map isEnabled to enabled
-      chainId: data.chainID || chainId, // Map chainID to chainId
-    };
+    try {
+      const existingConfig = await this.getProgramConfiguration(programId, chainId);
+      return this.updateProgramConfiguration(programId, chainId, {
+        ...existingConfig,
+        isEnabled: enabled
+      });
+    } catch (error: any) {
+      // If config doesn't exist, create new one with enabled status
+      if (error.response?.status === 404 || !error.response) {
+        return this.updateProgramConfiguration(programId, chainId, { isEnabled: enabled });
+      }
+      throw error;
+    }
   },
-
+  
   /**
-   * Get program statistics
+   * Get program statistics (backward compatibility)
    */
   async getProgramStats(programId: string, chainId: number): Promise<any> {
-    const response = await apiClient.get(
-      `/grant-programs/${programId}/${chainId}/stats`
-    );
-    return response.data;
-  },
-
-  /**
-   * Get all enabled programs (public endpoint)
-   */
-  async getEnabledPrograms(): Promise<any[]> {
-    const response = await apiClient.get("/grant-programs/enabled");
-    return response.data;
+    try {
+      const stats = await fundingApplicationsAPI.getApplicationStatistics(programId, chainId);
+      return stats;
+    } catch (error) {
+      console.warn(`Failed to fetch stats for program ${programId}:`, error);
+      return {
+        totalApplications: 0,
+        pendingApplications: 0,
+        approvedApplications: 0,
+        rejectedApplications: 0,
+      };
+    }
   },
 };
 
-// Funding Applications API
+// Funding Applications API (V2)
 export const fundingApplicationsAPI = {
   /**
    * Submit a new funding application
    */
   async submitApplication(
-    programId: string,
-    chainId: number,
-    applicationData: Record<string, any>
+    request: IApplicationSubmitRequest
   ): Promise<IFundingApplication> {
-    // Extract email from form data - there should always be an email field in the form
-    let applicantEmail = "";
-
-    // Look for email fields in the form data
-    const emailFields = Object.keys(applicationData).filter(
-      (key) =>
-        key.toLowerCase().includes("email") ||
-        (typeof applicationData[key] === "string" &&
-          applicationData[key].includes("@"))
-    );
-
-    if (emailFields.length > 0) {
-      applicantEmail = applicationData[emailFields[0]];
-    } else {
-      throw new Error("Email field is required in the application form");
-    }
-
     const response = await apiClient.post(
-      `/grant-programs/${programId}/${chainId}/applications`,
-      {
-        applicantEmail,
-        applicationData,
-      }
+      `/v2/funding-applications/${request.programId}/${request.chainID}`,
+      request
     );
+    return response.data;
+  },
 
-    return mapApplication(response.data);
+  /**
+   * Update an existing application (for users)
+   */
+  async updateApplication(
+    applicationId: string,
+    request: IApplicationUpdateRequest
+  ): Promise<IFundingApplication> {
+    const response = await apiClient.put(
+      `/v2/funding-applications/${applicationId}`,
+      request
+    );
+    return response.data;
+  },
+
+  /**
+   * Update application status (for admins)
+   */
+  async updateApplicationStatus(
+    applicationId: string,
+    request: IApplicationStatusUpdateRequest
+  ): Promise<IFundingApplication> {
+    const response = await apiClient.put(
+      `/v2/funding-applications/${applicationId}/status`,
+      request
+    );
+    return response.data;
   },
 
   /**
    * Get applications for a program with filtering and pagination
    */
-  async getApplications(
+  async getApplicationsByProgram(
     programId: string,
     chainId: number,
     filters: IApplicationFilters = {}
-  ): Promise<IApplicationsResponse> {
+  ): Promise<IPaginatedApplicationsResponse> {
     const params = new URLSearchParams();
 
-    if (filters.status) params.append("status", filters.status);
-    if (filters.dateFrom) params.append("dateFrom", filters.dateFrom);
-    if (filters.dateTo) params.append("dateTo", filters.dateTo);
-    if (filters.search) params.append("search", filters.search);
-    if (filters.page) params.append("page", filters.page.toString());
-    if (filters.limit) params.append("limit", filters.limit.toString());
+    if (filters.status) params.append('status', filters.status);
+    if (filters.search) params.append('search', filters.search);
+    if (filters.page) params.append('page', filters.page.toString());
+    if (filters.limit) params.append('limit', filters.limit.toString());
+    if (filters.dateFrom) params.append('dateFrom', filters.dateFrom);
+    if (filters.dateTo) params.append('dateTo', filters.dateTo);
 
     const response = await apiClient.get(
-      `/grant-programs/${programId}/${chainId}/applications?${params}`
+      `/v2/funding-applications/program/${programId}/${chainId}?${params}`
     );
-    const data = response.data;
-
-    // Map backend response structure to frontend expected structure
-    const mappedApplications = (data.applications || []).map(mapApplication);
-
-    return {
-      applications: mappedApplications,
-      total: data.pagination?.total || 0,
-      page: data.pagination?.page || 1,
-      totalPages: data.pagination?.totalPages || 1,
-    };
+    return response.data;
   },
 
   /**
@@ -355,29 +369,40 @@ export const fundingApplicationsAPI = {
    */
   async getApplication(applicationId: string): Promise<IFundingApplication> {
     const response = await apiClient.get(
-      `/grant-programs/applications/${applicationId}`
+      `/v2/funding-applications/${applicationId}`
     );
-
-    return mapApplication(response.data);
+    return response.data;
   },
 
   /**
-   * Update application status
+   * Get application by reference number
    */
-  async updateApplicationStatus(
-    applicationId: string,
-    status: string,
-    note?: string
-  ): Promise<IFundingApplication> {
-    const response = await apiClient.put(
-      `/grant-programs/applications/${applicationId}/status`,
-      {
-        status,
-        note,
-      }
+  async getApplicationByReference(referenceNumber: string): Promise<IFundingApplication> {
+    const response = await apiClient.get(
+      `/v2/funding-applications/reference/${referenceNumber}`
     );
+    return response.data;
+  },
 
-    return mapApplication(response.data);
+  /**
+   * Get application by email and program
+   */
+  async getApplicationByEmail(
+    programId: string,
+    chainId: number,
+    email: string
+  ): Promise<IFundingApplication | null> {
+    try {
+      const response = await apiClient.get(
+        `/v2/funding-applications/program/${programId}/${chainId}/by-email?email=${encodeURIComponent(email)}`
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        return null;
+      }
+      throw error;
+    }
   },
 
   /**
@@ -388,7 +413,7 @@ export const fundingApplicationsAPI = {
     chainId: number
   ): Promise<IApplicationStatistics> {
     const response = await apiClient.get(
-      `/grant-programs/${programId}/${chainId}/applications/statistics`
+      `/v2/funding-applications/program/${programId}/${chainId}/statistics`
     );
     return response.data;
   },
@@ -399,19 +424,47 @@ export const fundingApplicationsAPI = {
   async exportApplications(
     programId: string,
     chainId: number,
-    format: "json" | "csv" = "json",
+    format: ExportFormat = 'json',
     filters: IApplicationFilters = {}
   ): Promise<any> {
     const params = new URLSearchParams();
-    params.append("format", format);
+    params.append('format', format);
 
-    if (filters.status) params.append("status", filters.status);
-    if (filters.dateFrom) params.append("dateFrom", filters.dateFrom);
-    if (filters.dateTo) params.append("dateTo", filters.dateTo);
-    if (filters.search) params.append("search", filters.search);
+    if (filters.status) params.append('status', filters.status);
+    if (filters.search) params.append('search', filters.search);
+    if (filters.dateFrom) params.append('dateFrom', filters.dateFrom);
+    if (filters.dateTo) params.append('dateTo', filters.dateTo);
 
     const response = await apiClient.get(
-      `/grant-programs/${programId}/${chainId}/applications/export?${params}`
+      `/v2/funding-applications/program/${programId}/${chainId}/export?${params}`,
+      {
+        responseType: format === 'csv' ? 'blob' : 'json'
+      }
+    );
+    return response.data;
+  },
+
+  /**
+   * Real-time AI evaluation of partial application data
+   */
+  async evaluateRealTime(
+    programId: string,
+    chainId: number,
+    applicationData: Record<string, any>
+  ): Promise<{
+    success: boolean;
+    data: {
+      rating: number;
+      feedback: string;
+      suggestions: string[];
+      isComplete: boolean;
+      evaluatedAt: string;
+      model: string;
+    };
+  }> {
+    const response = await apiClient.post(
+      `/v2/funding-applications/${programId}/${chainId}/evaluate-realtime`,
+      { applicationData }
     );
     return response.data;
   },

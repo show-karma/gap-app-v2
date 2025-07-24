@@ -11,6 +11,8 @@ import { MESSAGES } from "@/utilities/messages";
 import { FormSchema } from "@/types/question-builder";
 import { useQuestionBuilderSchema } from "@/hooks/useQuestionBuilder";
 import { useEffect } from "react";
+import { IFundingProgramConfig } from "@/types/funding-platform";
+import { useProgramConfig } from "@/hooks/useFundingPlatform";
 
 export default function QuestionBuilderPage() {
   const router = useRouter();
@@ -38,8 +40,11 @@ export default function QuestionBuilderPage() {
     isUpdating,
   } = useQuestionBuilderSchema(programId, parsedChainId);
 
+  const {config: existingConfig} = useProgramConfig(programId, parsedChainId);
+
   const handleSchemaChange = (schema: FormSchema) => {
-    updateSchema(schema);
+    console.log("existingConfig", existingConfig);
+    updateSchema({schema, existingConfig: existingConfig || null });
   };
 
   const handleBackClick = () => {

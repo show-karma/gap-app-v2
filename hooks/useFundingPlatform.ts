@@ -1,7 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fundingPlatformService, IApplicationFilters } from '@/services/fundingPlatformService';
-import { IFormSchema, IFundingApplication, IFundingProgramConfig } from '@/types/funding-platform';
+import { 
+  IFormSchema, 
+  IFundingApplication, 
+  IFundingProgramConfig,
+  IApplicationSubmitRequest,
+  IApplicationUpdateRequest,
+  IApplicationStatusUpdateRequest,
+  FundingApplicationStatusV2,
+  ExportFormat
+} from '@/types/funding-platform';
 import toast from 'react-hot-toast';
 
 // Query keys for caching
@@ -12,8 +21,10 @@ const QUERY_KEYS = {
   applications: (programId: string, chainId: number, filters: IApplicationFilters) => 
     ['applications', programId, chainId, filters],
   application: (applicationId: string) => ['application', applicationId],
+  applicationByReference: (referenceNumber: string) => ['application-by-reference', referenceNumber],
+  applicationByEmail: (programId: string, chainId: number, email: string) => 
+    ['application-by-email', programId, chainId, email],
   applicationStats: (programId: string, chainId: number) => ['application-stats', programId, chainId],
-  enabledPrograms: ['enabled-programs'],
 };
 
 /**
@@ -28,19 +39,28 @@ export const useFundingPrograms = (communityId: string) => {
     enabled: !!communityId,
   });
 
-  const enabledProgramsQuery = useQuery({
-    queryKey: QUERY_KEYS.enabledPrograms,
-    queryFn: () => fundingPlatformService.programs.getEnabledPrograms(),
+
+  const createProgramConfigurationMutation = useMutation({
+    mutationFn: ({programId, chainId, config}: {programId: string, chainId: number, config: Omit<IFundingProgramConfig, 'id' | 'createdAt' | 'updatedAt'>}) =>
+      fundingPlatformService.programs.createProgramConfiguration(programId, chainId, config),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.programs(communityId) });
+      toast.success('Program created successfully');
+    },
+    onError: (error) => {
+      console.error('Failed to create program:', error);
+      toast.error('Failed to create program');
+    },
   });
 
   return {
     programs: programsQuery.data || [],
-    enabledPrograms: enabledProgramsQuery.data || [],
-    isLoading: programsQuery.isLoading || enabledProgramsQuery.isLoading,
-    error: programsQuery.error || enabledProgramsQuery.error,
+    isLoading: programsQuery.isLoading,
+    error: programsQuery.error,
+    createProgramConfig: createProgramConfigurationMutation.mutate,
+    isCreating: createProgramConfigurationMutation.isPending,
     refetch: () => {
       programsQuery.refetch();
-      enabledProgramsQuery.refetch();
     },
   };
 };
@@ -64,7 +84,7 @@ export const useProgramConfig = (programId: string, chainId: number) => {
   });
 
   const updateConfigMutation = useMutation({
-    mutationFn: (config: Partial<IFundingProgramConfig>) =>
+    mutationFn: (config: Partial<IFundingProgramConfig | null>) =>
       fundingPlatformService.programs.updateProgramConfiguration(programId, chainId, config),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.programConfig(programId, chainId) });
@@ -94,7 +114,6 @@ export const useProgramConfig = (programId: string, chainId: number) => {
       fundingPlatformService.programs.toggleProgramStatus(programId, chainId, enabled),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.programConfig(programId, chainId) });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.enabledPrograms });
       toast.success('Program status updated successfully');
     },
     onError: (error) => {
@@ -131,7 +150,7 @@ export const useFundingApplications = (
 
   const applicationsQuery = useQuery({
     queryKey: QUERY_KEYS.applications(programId, chainId, filters),
-    queryFn: () => fundingPlatformService.applications.getApplications(programId, chainId, filters),
+    queryFn: () => fundingPlatformService.applications.getApplicationsByProgram(programId, chainId, filters),
     enabled: !!programId && !!chainId,
   });
 
@@ -142,8 +161,28 @@ export const useFundingApplications = (
   });
 
   const submitApplicationMutation = useMutation({
-    mutationFn: (applicationData: Record<string, any>) =>
-      fundingPlatformService.applications.submitApplication(programId, chainId, applicationData),
+    mutationFn: (applicationData: Record<string, any>) => {
+      // Extract email from application data
+      let applicantEmail = '';
+      const emailFields = Object.keys(applicationData).filter(
+        (key) =>
+          key.toLowerCase().includes('email') ||
+          (typeof applicationData[key] === 'string' &&
+            applicationData[key].includes('@'))
+      );
+      if (emailFields.length > 0) {
+        applicantEmail = applicationData[emailFields[0]];
+      } else {
+        throw new Error('Email field is required in the application form');
+      }
+      
+      return fundingPlatformService.applications.submitApplication({
+        programId,
+        chainID: chainId,
+        applicantEmail,
+        applicationData,
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.applications(programId, chainId, {}) });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.applicationStats(programId, chainId) });
@@ -157,7 +196,10 @@ export const useFundingApplications = (
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ applicationId, status, note }: { applicationId: string; status: string; note?: string }) =>
-      fundingPlatformService.applications.updateApplicationStatus(applicationId, status, note),
+      fundingPlatformService.applications.updateApplicationStatus(applicationId, {
+        status: status as FundingApplicationStatusV2,
+        reason: note || '',
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.applications(programId, chainId, {}) });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.applicationStats(programId, chainId) });
@@ -201,9 +243,9 @@ export const useFundingApplications = (
 
   return {
     applications: applicationsQuery.data?.applications || [],
-    total: applicationsQuery.data?.total || 0,
-    page: applicationsQuery.data?.page || 1,
-    totalPages: applicationsQuery.data?.totalPages || 1,
+    total: applicationsQuery.data?.pagination?.total || 0,
+    page: applicationsQuery.data?.pagination?.page || 1,
+    totalPages: applicationsQuery.data?.pagination?.totalPages || 1,
     stats: statsQuery.data,
     isLoading: applicationsQuery.isLoading || statsQuery.isLoading,
     error: applicationsQuery.error || statsQuery.error,
@@ -233,7 +275,10 @@ export const useFundingApplication = (applicationId: string) => {
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ status, note }: { status: string; note?: string }) =>
-      fundingPlatformService.applications.updateApplicationStatus(applicationId, status, note),
+      fundingPlatformService.applications.updateApplicationStatus(applicationId, {
+        status: status as FundingApplicationStatusV2,
+        reason: note || '',
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.application(applicationId) });
       toast.success('Application status updated successfully');
@@ -280,5 +325,257 @@ export const useFormSchemaManager = (programId: string, chainId: number) => {
     isDirty,
     lastSaved,
     isSaving: isUpdating,
+  };
+};
+
+/**
+ * Hook for V2 application submission with better error handling
+ */
+export const useApplicationSubmissionV2 = (programId: string, chainId: number) => {
+  const queryClient = useQueryClient();
+
+  // Check if user already has an application
+  const checkExistingApplication = useCallback(async (email: string) => {
+    try {
+      const existing = await fundingPlatformService.applications.getApplicationByEmail(
+        programId,
+        chainId,
+        email
+      );
+      return existing;
+    } catch (error) {
+      console.error('Error checking existing application:', error);
+      return null;
+    }
+  }, [programId, chainId]);
+
+  const submitMutation = useMutation({
+    mutationFn: async (request: IApplicationSubmitRequest) => {
+      // Check for existing application first
+      const existing = await checkExistingApplication(request.applicantEmail);
+      if (existing) {
+        throw new Error('You have already submitted an application for this program');
+      }
+      
+      return fundingPlatformService.applications.submitApplication(request);
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ 
+        queryKey: QUERY_KEYS.applications(programId, chainId, {}) 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: QUERY_KEYS.applicationStats(programId, chainId) 
+      });
+      toast.success(`Application submitted successfully! Reference: ${data.referenceNumber}`);
+    },
+    onError: (error: any) => {
+      console.error('Failed to submit application:', error);
+      const message = error.response?.data?.message || error.message || 'Failed to submit application';
+      toast.error(message);
+    },
+  });
+
+  return {
+    submitApplication: submitMutation.mutate,
+    isSubmitting: submitMutation.isPending,
+    error: submitMutation.error,
+    checkExistingApplication,
+  };
+};
+
+/**
+ * Hook for application updates (for users updating their applications)
+ */
+export const useApplicationUpdateV2 = () => {
+  const queryClient = useQueryClient();
+
+  const updateMutation = useMutation({
+    mutationFn: ({ applicationId, ...request }: { applicationId: string } & IApplicationUpdateRequest) =>
+      fundingPlatformService.applications.updateApplication(applicationId, request),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ 
+        queryKey: QUERY_KEYS.application(variables.applicationId) 
+      });
+      
+      // Show appropriate message based on status change
+      if (data.status === 'pending' && data.statusHistory?.some(h => h.status === 'revision_requested')) {
+        toast.success('Application resubmitted for review');
+      } else {
+        toast.success('Application updated successfully');
+      }
+    },
+    onError: (error: any) => {
+      console.error('Failed to update application:', error);
+      const message = error.response?.data?.message || 'Failed to update application';
+      toast.error(message);
+    },
+  });
+
+  return {
+    updateApplication: updateMutation.mutate,
+    isUpdating: updateMutation.isPending,
+    error: updateMutation.error,
+  };
+};
+
+/**
+ * Hook for admin status updates with V2 reason support
+ */
+export const useApplicationStatusV2 = (applicationId?: string) => {
+  const queryClient = useQueryClient();
+
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ applicationId: appId, request }: { 
+      applicationId: string; 
+      request: IApplicationStatusUpdateRequest 
+    }) =>
+      fundingPlatformService.applications.updateApplicationStatus(
+        appId || applicationId!, 
+        request
+      ),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ 
+        queryKey: QUERY_KEYS.application(variables.applicationId) 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['applications'] // Invalidate all application lists
+      });
+      
+      toast.success(`Application ${variables.request.status.replace('_', ' ')}`);
+    },
+    onError: (error: any) => {
+      console.error('Failed to update application status:', error);
+      toast.error('Failed to update application status');
+    },
+  });
+
+  return {
+    updateStatus: (appId: string, status: FundingApplicationStatusV2, reason: string) => 
+      updateStatusMutation.mutate({ 
+        applicationId: appId, 
+        request: { status, reason } 
+      }),
+    isUpdating: updateStatusMutation.isPending,
+    error: updateStatusMutation.error,
+  };
+};
+
+/**
+ * Hook for searching applications by reference number
+ */
+export const useApplicationByReference = (referenceNumber: string) => {
+  const applicationQuery = useQuery({
+    queryKey: QUERY_KEYS.applicationByReference(referenceNumber),
+    queryFn: () => fundingPlatformService.applications.getApplicationByReference(referenceNumber),
+    enabled: !!referenceNumber && referenceNumber.length > 0,
+    retry: false,
+  });
+
+  return {
+    application: applicationQuery.data,
+    isLoading: applicationQuery.isLoading,
+    error: applicationQuery.error,
+    isNotFound: applicationQuery.error && (applicationQuery.error as any)?.response?.status === 404,
+  };
+};
+
+/**
+ * Hook for exporting applications with V2 format support
+ */
+export const useApplicationExport = (programId: string, chainId: number) => {
+  const [isExporting, setIsExporting] = useState(false);
+
+  const exportApplications = useCallback(async (
+    format: ExportFormat = 'json',
+    filters: IApplicationFilters = {}
+  ) => {
+    setIsExporting(true);
+    try {
+      const data = await fundingPlatformService.applications.exportApplications(
+        programId,
+        chainId,
+        format,
+        filters
+      );
+
+      // Handle blob response for CSV
+      let blob: Blob;
+      if (format === 'csv' && data instanceof Blob) {
+        blob = data;
+      } else if (format === 'csv') {
+        blob = new Blob([data], { type: 'text/csv' });
+      } else {
+        blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      }
+
+      // Download file
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `applications-${programId}-${new Date().toISOString().split('T')[0]}.${format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success(`Applications exported as ${format.toUpperCase()}`);
+    } catch (error) {
+      console.error('Failed to export applications:', error);
+      toast.error('Failed to export applications');
+    } finally {
+      setIsExporting(false);
+    }
+  }, [programId, chainId]);
+
+  return {
+    exportApplications,
+    isExporting,
+  };
+};
+
+/**
+ * Hook for real-time AI evaluation of application data
+ */
+export const useApplicationRealTimeEvaluation = (programId: string, chainId: number) => {
+  const [isEvaluating, setIsEvaluating] = useState(false);
+  const [evaluationResult, setEvaluationResult] = useState<{
+    rating: number;
+    feedback: string;
+    suggestions: string[];
+    isComplete: boolean;
+    evaluatedAt: string;
+    model: string;
+  } | null>(null);
+
+  const evaluateApplication = useCallback(async (applicationData: Record<string, any>) => {
+    setIsEvaluating(true);
+    setEvaluationResult(null);
+    
+    try {
+      const result = await fundingPlatformService.applications.evaluateRealTime(
+        programId,
+        chainId,
+        applicationData
+      );
+      
+      if (result.success) {
+        setEvaluationResult(result.data);
+        return result.data;
+      } else {
+        throw new Error('Evaluation failed');
+      }
+    } catch (error) {
+      console.error('Failed to evaluate application:', error);
+      toast.error('Failed to evaluate application');
+      throw error;
+    } finally {
+      setIsEvaluating(false);
+    }
+  }, [programId, chainId]);
+
+  return {
+    evaluateApplication,
+    isEvaluating,
+    evaluationResult,
   };
 }; 

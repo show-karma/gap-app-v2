@@ -112,6 +112,7 @@ export default function FundingPlatformAdminPage() {
     approved: number;
     rejected: number;
     pending: number;
+    underReview: number;
   } = useMemo(() => {
     if (!programs || programs.length === 0) {
       // Fallback values when no programs exist
@@ -121,20 +122,22 @@ export default function FundingPlatformAdminPage() {
         approved: 0,
         rejected: 0,
         pending: 0,
+        underReview: 0,
       };
     }
 
     const stats = programs.reduce(
       (acc, program) => {
         // Use actual API response data, with fallbacks only for missing fields
-        const programStats = program.stats || {};
+        const programStats = program.stats || undefined;
         return {
           totalPrograms: acc.totalPrograms + 1,
           totalApplications:
-            acc.totalApplications + (programStats.totalApplications || 0),
-          approved: acc.approved + (programStats.approvedApplications || 0),
-          rejected: acc.rejected + (programStats.rejectedApplications || 0),
-          pending: acc.pending + (programStats.pendingApplications || 0),
+            acc.totalApplications + (programStats?.totalApplications || 0),
+          approved: acc.approved + (programStats?.approvedApplications || 0),
+          rejected: acc.rejected + (programStats?.rejectedApplications || 0),
+          pending: acc.pending + (programStats?.pendingApplications || 0),
+          underReview: acc.underReview + (programStats?.underReviewApplications || 0),
         };
       },
       {
@@ -143,6 +146,7 @@ export default function FundingPlatformAdminPage() {
         approved: 0,
         rejected: 0,
         pending: 0,
+        underReview: 0,
       }
     );
 
@@ -166,7 +170,7 @@ export default function FundingPlatformAdminPage() {
       // Enabled/Disabled filter
       let matchesEnabled = true;
       if (enabledFilter !== "all") {
-        const isEnabled = program.configuration?.isEnabled || false;
+        const isEnabled = program.applicationConfig?.isEnabled || false;
         matchesEnabled = enabledFilter === "enabled" ? isEnabled : !isEnabled;
       }
 
@@ -266,6 +270,15 @@ export default function FundingPlatformAdminPage() {
         <ClockIcon className="h-5 w-5 text-orange-700 dark:text-orange-100" />
       ),
     },
+    {
+      title: "Under Review",
+      value: formatCurrency(statistics.underReview),
+      color: "text-indigo-600",
+      bgColor: "bg-indigo-50 dark:bg-indigo-900",
+      icon: (
+        <MagnifyingGlassIcon className="h-5 w-5 text-indigo-700 dark:text-indigo-100" />
+      ),
+    },
   ];
 
   const cardStats = (program: any) => [
@@ -304,6 +317,7 @@ export default function FundingPlatformAdminPage() {
     const approvedApplications = program.stats?.approvedApplications || 0;
     const rejectedApplications = program.stats?.rejectedApplications || 0;
     const pendingApplications = program.stats?.pendingApplications || 0;
+    const underReviewApplications = program.stats?.underReviewApplications || 0;
 
     return [
       {
@@ -324,12 +338,19 @@ export default function FundingPlatformAdminPage() {
         color: "text-orange-600",
         bgColor: "bg-orange-500",
       },
+      {
+        title: "Under Review",
+        value: underReviewApplications,
+        color: "text-indigo-600",
+        bgColor: "bg-indigo-500",
+      },
     ];
   };
+
   return (
     <div className="px-4 sm:px-6 lg:px-12 py-5">
       {/* Statistics Bar */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {stats.map((stat) => (
           <FundingPlatformStatsCard
             key={stat.title}
@@ -435,63 +456,89 @@ export default function FundingPlatformAdminPage() {
 
                 {/* Program Enable/Disable Toggle */}
                 <div className="flex items-center justify-start mb-3 flex-row gap-3 flex-wrap">
-                  <button
+                  <div
                     className={cn(
-                      "flex items-center space-x-2 text-sm text-zinc-900 px-2 py-1 rounded-full cursor-pointer",
-                      program.configuration?.isEnabled
-                        ? "bg-green-100 dark:bg-green-900"
-                        : "bg-gray-100 dark:bg-zinc-700"
+                      "relative group",
+                      (!program.applicationConfig || Object.keys(program.applicationConfig).length === 1) ? "cursor-not-allowed" : "cursor-pointer"
                     )}
-                    onClick={() =>
-                      handleToggleProgram(
-                        program.programId,
-                        program.chainID,
-                        program.configuration?.isEnabled || false
-                      )
-                    }
-                    disabled={togglingPrograms.has(
-                      `${program.programId}_${program.chainID}`
-                    )}
+                    title={(!program.applicationConfig || Object.keys(program.applicationConfig).length === 1) ? "Program doesn't have configured form" : undefined}
                   >
-                    <div
+                    <button
                       className={cn(
-                        "relative inline-flex h-6 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
-                        program.configuration?.isEnabled
-                          ? "bg-green-600 dark:bg-green-600"
-                          : "bg-gray-200 dark:bg-gray-400"
+                        "flex items-center space-x-2 text-sm text-zinc-900 px-2 py-1 rounded-full",
+                        program.applicationConfig?.isEnabled
+                          ? "bg-green-100 dark:bg-green-900"
+                          : "bg-gray-100 dark:bg-zinc-700",
+                        (!program.applicationConfig || Object.keys(program.applicationConfig).length === 1)
+                          ? "cursor-not-allowed opacity-50"
+                          : "cursor-pointer"
                       )}
+                      onClick={() => {
+                        if (program.applicationConfig) {
+                          handleToggleProgram(
+                            program.programId,
+                            program.chainID,
+                            program.applicationConfig?.isEnabled || false
+                          )
+                        }
+                      }}
+                      disabled={
+                        (!program.applicationConfig || Object.keys(program.applicationConfig).length === 1) ||
+                        togglingPrograms.has(
+                          `${program.programId}_${program.chainID}`
+                        )
+                      }
                     >
+                      <div
+                        className={cn(
+                          "relative inline-flex h-6 w-12 items-center rounded-full transition-colors",
+                          program.applicationConfig?.isEnabled
+                            ? "bg-green-600 dark:bg-green-600"
+                            : "bg-gray-200 dark:bg-gray-400",
+                            (!program.applicationConfig || Object.keys(program.applicationConfig).length === 1) && "bg-gray-300 dark:bg-gray-600"
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "inline-block h-5 w-5 transform rounded-full bg-white transition-transform",
+                            program.applicationConfig?.isEnabled
+                              ? "translate-x-6"
+                              : "translate-x-1"
+                          )}
+                        />
+                      </div>
                       <span
                         className={cn(
-                          "inline-block h-5 w-5 transform rounded-full bg-white transition-transform",
-                          program.configuration?.isEnabled
-                            ? "translate-x-6"
-                            : "translate-x-1"
+                          "text-sm font-medium",
+                          program.applicationConfig?.isEnabled
+                            ? "text-green-700 dark:text-green-400"
+                            : "text-gray-500 dark:text-gray-400"
                         )}
-                      />
-                    </div>
-                    <span
-                      className={cn(
-                        "text-sm font-medium",
-                        program.configuration?.isEnabled
-                          ? "text-green-700 dark:text-green-400"
-                          : "text-gray-500 dark:text-gray-400"
-                      )}
-                    >
-                      {togglingPrograms.has(
-                        `${program.programId}_${program.chainID}`
-                      )
-                        ? "Updating..."
-                        : program.configuration?.isEnabled
-                        ? "Enabled"
-                        : "Disabled"}
-                    </span>
-                  </button>
+                      >
+                        {togglingPrograms.has(
+                          `${program.programId}_${program.chainID}`
+                        )
+                          ? "Updating..."
+                          : program.applicationConfig?.isEnabled
+                          ? "Enabled"
+                          : "Disabled"}
+                      </span>
+                    </button>
+                    {/* Tooltip for disabled state */}
+                    {(!program.applicationConfig || Object.keys(program.applicationConfig).length === 1) && (
+                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                        Program doesn't have configured form
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                          <div className="border-4 border-transparent border-t-gray-900"></div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                   <span className="text-sm text-zinc-900 bg-gray-100 dark:bg-zinc-900 dark:text-zinc-100 px-2 py-1 rounded-full">
                     ID {program.programId}
                   </span>
                   <span className="text-sm bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 px-2 py-1 rounded-full">
-                    {program.metadata?.type}
+                    {program.metadata?.type || 'A'}
                   </span>
                 </div>
                 {/* Program Header */}
@@ -500,7 +547,7 @@ export default function FundingPlatformAdminPage() {
                     {program.name || program.metadata?.title}
                   </h3>
 
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 overflow-hidden text-ellipsis line-clamp-2">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 overflow-hidden text-ellipsis line-clamp-2 h-[46px]">
                     {program.metadata?.description}
                   </p>
                   <div className="flex flex-row gap-2 items-center text-xs text-gray-500 dark:text-gray-400 bg-orange-100 dark:bg-orange-900/20 p-2 rounded-md">
@@ -587,7 +634,7 @@ export default function FundingPlatformAdminPage() {
                     >
                       <Button
                         variant="secondary"
-                        className="w-full flex items-center justify-center text-xs border border-gray-200 dark:border-gray-700"
+                        className="w-full hover:shadow flex items-center justify-center text-xs border border-gray-200 dark:border-gray-700 bg-white dark:bg-zinc-900 dark:text-zinc-100"
                       >
                         <Cog6ToothIcon className="w-4 h-4 mr-2" />
                         Configure Form
@@ -603,7 +650,7 @@ export default function FundingPlatformAdminPage() {
                     >
                       <Button
                         variant="secondary"
-                        className="w-full flex items-center justify-center text-xs border border-gray-200 dark:border-gray-700"
+                        className="w-full hover:shadow flex items-center justify-center text-xs border border-gray-200 dark:border-gray-700  bg-white dark:bg-zinc-900 dark:text-zinc-100"
                       >
                         <EyeIcon className="w-4 h-4 mr-2" />
                         View Applications
@@ -622,7 +669,7 @@ export default function FundingPlatformAdminPage() {
                     >
                       <Button
                         variant="primary"
-                        className="w-full flex items-center justify-center text-sm bg-green-600 text-white hover:bg-green-700"
+                        className="w-full hover:shadow flex items-center justify-center text-sm bg-green-600 text-white hover:bg-green-700 dark:bg-green-900 dark:text-white dark:hover:bg-green-700"
                       >
                         <svg
                           className="w-4 h-4 mr-2"
@@ -643,7 +690,7 @@ export default function FundingPlatformAdminPage() {
                   </div>
                 </div>
                 {/* Pending Applications Review */}
-                {program.stats?.pendingApplications > 0 && (
+                {program?.stats?.pendingApplications && program.stats.pendingApplications > 0 ? (
                   <div className=" bg-orange-50 dark:bg-orange-900/20 border-none">
                     <Link
                       href={PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(
@@ -663,7 +710,7 @@ export default function FundingPlatformAdminPage() {
                       </button>
                     </Link>
                   </div>
-                )}
+                ) : null}
               </div>
             ))}
           </div>

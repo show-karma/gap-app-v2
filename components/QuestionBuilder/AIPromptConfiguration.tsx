@@ -48,7 +48,7 @@ export function AIPromptConfiguration({
         const updatedSchema: FormSchema = {
           ...schema,
           aiConfig: {
-            systemPrompt: data.systemPrompt,
+            systemPrompt: data.systemPrompt || '',
             detailedPrompt: data.detailedPrompt || '',
             aiModel: data.aiModel || 'gpt-4',
             enableRealTimeEvaluation: data.enableRealTimeEvaluation || false,

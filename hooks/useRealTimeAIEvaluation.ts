@@ -73,7 +73,7 @@ export function useRealTimeAIEvaluation({
         cancelTokenRef.current = axios.CancelToken.source();
 
         const response = await apiClient.post<RealTimeEvaluationResponse>(
-          `/grant-programs/${programId}/${chainId}/evaluate-realtime`,
+          `/v2/funding-applications/${programId}/${chainId}/evaluate-realtime`,
           { applicationData },
           { cancelToken: cancelTokenRef.current.token }
         );

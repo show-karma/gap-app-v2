@@ -13,6 +13,7 @@ import {
   CpuChipIcon,
   ChevronDownIcon,
   ChevronRightIcon,
+  ExclamationTriangleIcon,
 } from "@heroicons/react/24/solid";
 
 interface QuestionBuilderProps {
@@ -72,7 +73,7 @@ export function QuestionBuilder({
       id: `field_${Date.now()}`,
       type: fieldType,
       label: `New ${fieldType} field`,
-      required: false,
+      required: fieldType === "email" ? true : false, // Email fields are required by default
       options: ["select", "radio", "checkbox"].includes(fieldType)
         ? ["Option 1", "Option 2"]
         : undefined,
@@ -138,7 +139,20 @@ export function QuestionBuilder({
     setSchema((prev) => ({ ...prev, description }));
   };
 
+  const hasEmailField = () => {
+    if (!schema.fields) return false;
+    return schema.fields.some(
+      (field) =>
+        field.type === "email" ||
+        field.label.toLowerCase().includes("email")
+    );
+  };
+
   const handleSave = () => {
+    if (!hasEmailField()) {
+      alert("Please add at least one email field to the form. This is required for application tracking.");
+      return;
+    }
     onSave?.(schema);
   };
 
@@ -214,8 +228,16 @@ export function QuestionBuilder({
 
             <Button
               onClick={handleSave}
-              className="bg-blue-600 hover:bg-blue-700 py-2"
+              className={`py-2 ${
+                !hasEmailField()
+                  ? "bg-yellow-600 hover:bg-yellow-700"
+                  : "bg-blue-600 hover:bg-blue-700"
+              }`}
+              title={!hasEmailField() ? "Add an email field before saving" : undefined}
             >
+              {!hasEmailField() && (
+                <ExclamationTriangleIcon className="w-4 h-4 mr-2" />
+              )}
               Save Form
             </Button>
           </div>
@@ -234,6 +256,22 @@ export function QuestionBuilder({
             {/* Form Builder */}
             <div className="lg:col-span-2 overflow-y-auto">
               <div className="space-y-4">
+                {/* Email Field Warning */}
+                {!hasEmailField() && (
+                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 flex items-start space-x-3">
+                    <ExclamationTriangleIcon className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                        Email Field Required
+                      </h4>
+                      <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                        Your form must include at least one email field for application tracking. 
+                        Add a field with type "Email" or label containing "email".
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
                 {!schema.fields || schema.fields.length === 0 ? (
                   <div className="bg-white dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
                     <div className="text-gray-400 mb-4">

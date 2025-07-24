@@ -1,5 +1,5 @@
 "use client";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useProgramConfig } from "@/hooks/useFundingPlatform";
 import ApplicationSubmissionWithAI from "@/components/FundingPlatform/ApplicationView/ApplicationSubmissionWithAI";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -7,12 +7,16 @@ import { Button } from "@/components/Utilities/Button";
 import {
   ArrowLeftIcon,
   ExclamationTriangleIcon,
+  ClockIcon,
 } from "@heroicons/react/24/solid";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
+import { fundingPlatformService } from "@/services/fundingPlatformService";
+import { IFundingApplication } from "@/types/funding-platform";
 
 export default function FundingApplicationPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { communityId, programId: combinedProgramId } = useParams() as {
     communityId: string;
     programId: string;
@@ -22,16 +26,57 @@ export default function FundingApplicationPage() {
   const [programId, chainId] = combinedProgramId.split("_");
   const parsedChainId = parseInt(chainId, 10);
 
+  // Check if this is a revision flow
+  const revisionEmail = searchParams.get('revisionEmail');
+  const revisionRef = searchParams.get('ref');
+
   const [applicationSubmitted, setApplicationSubmitted] = useState(false);
   const [submittedApplicationId, setSubmittedApplicationId] = useState<
     string | null
   >(null);
+  const [existingApplication, setExistingApplication] = useState<IFundingApplication | null>(null);
+  const [isCheckingExisting, setIsCheckingExisting] = useState(false);
 
   const {
     config,
     isLoading: isLoadingConfig,
     error: configError,
   } = useProgramConfig(programId, parsedChainId);
+
+  // Check for existing application if revision email/ref is provided
+  useEffect(() => {
+    const checkExistingApplication = async () => {
+      if (!revisionEmail && !revisionRef) return;
+      
+      setIsCheckingExisting(true);
+      try {
+        let application = null;
+        
+        if (revisionEmail) {
+          application = await fundingPlatformService.applications.getApplicationByEmail(
+            programId,
+            parsedChainId,
+            revisionEmail
+          );
+        } else if (revisionRef) {
+          application = await fundingPlatformService.applications.getApplicationByReference(revisionRef);
+        }
+        
+        if (application && application.status === 'revision_requested') {
+          setExistingApplication(application);
+        } else if (application) {
+          toast.error('This application is not eligible for revision.');
+          router.push(`/community/${communityId}`);
+        }
+      } catch (error) {
+        console.error('Error checking existing application:', error);
+      } finally {
+        setIsCheckingExisting(false);
+      }
+    };
+    
+    checkExistingApplication();
+  }, [revisionEmail, revisionRef, programId, parsedChainId, communityId, router]);
 
   const handleSubmissionSuccess = (applicationId: string) => {
     setSubmittedApplicationId(applicationId);
@@ -51,14 +96,29 @@ export default function FundingApplicationPage() {
   ) => {
     try {
       // Use the proper API service to submit application
-      const { fundingApplicationsAPI } = await import(
+      const fundingPlatformService = await import(
         "@/services/fundingPlatformService"
       );
-      const result = await fundingApplicationsAPI.submitApplication(
-        programId,
-        parsedChainId,
-        applicationData
+      // Extract email from application data
+      let applicantEmail = '';
+      const emailFields = Object.keys(applicationData).filter(
+        (key) =>
+          key.toLowerCase().includes('email') ||
+          (typeof applicationData[key] === 'string' &&
+            applicationData[key].includes('@'))
       );
+      if (emailFields.length > 0) {
+        applicantEmail = applicationData[emailFields[0]];
+      } else {
+        throw new Error('Email field is required in the application form');
+      }
+      
+      const result = await fundingPlatformService.default.applications.submitApplication({
+        programId,
+        chainID: parsedChainId,
+        applicantEmail,
+        applicationData
+      });
       handleSubmissionSuccess(
         result.id || result.referenceNumber || "APP-" + Date.now()
       );
@@ -69,13 +129,13 @@ export default function FundingApplicationPage() {
     }
   };
 
-  if (isLoadingConfig) {
+  if (isLoadingConfig || isCheckingExisting) {
     return (
       <div className="flex w-full items-center justify-center min-h-screen">
         <div className="text-center">
           <Spinner />
           <p className="mt-4 text-gray-600 dark:text-gray-400">
-            Loading funding program...
+            {isCheckingExisting ? 'Checking existing application...' : 'Loading funding program...'}
           </p>
         </div>
       </div>
@@ -227,12 +287,49 @@ export default function FundingApplicationPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 py-8">
+        {existingApplication && (
+          <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="flex">
+              <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600 mr-3 flex-shrink-0" />
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-yellow-800">Revision Requested</h3>
+                <div className="mt-2 text-sm text-yellow-700">
+                  <p>Your previous application needs revision. Please review the feedback and update your application.</p>
+                  {existingApplication.statusHistory && existingApplication.statusHistory.length > 0 && (() => {
+                    const revisionEntry = existingApplication.statusHistory
+                      .filter(h => h.status === 'revision_requested')
+                      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
+                    return revisionEntry?.reason ? (
+                      <div className="mt-3 bg-yellow-100 rounded p-3">
+                        <p className="font-medium mb-1">Revision reason:</p>
+                        <p>{revisionEntry.reason}</p>
+                      </div>
+                    ) : null;
+                  })()}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <ApplicationSubmissionWithAI
           programId={programId}
           chainId={parsedChainId}
-          formSchema={config.formSchema}
+          formSchema={{
+            ...config.formSchema,
+            id: config.formSchema.id || `form-${programId}`,
+            title: existingApplication ? "Update Your Application" : (config.formSchema.title || "Application Form"),
+            settings: config.formSchema.settings || {
+              submitButtonText: existingApplication ? "Update Application" : "Submit Application",
+              confirmationMessage: existingApplication 
+                ? "Your application has been updated and resubmitted for review."
+                : "Your application has been submitted successfully"
+            }
+          } as any}
+          existingApplication={existingApplication}
           onSubmit={handleApplicationSubmit}
           onCancel={handleCancel}
+          isRevision={!!existingApplication}
         />
       </div>
     </div>

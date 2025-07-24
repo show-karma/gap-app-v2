@@ -45,8 +45,26 @@ export function ResponsiveApplicationForm({
     setIsSubmitting(true);
     try {
       // Use the proper API service to submit application
-      const { fundingApplicationsAPI } = await import('@/services/fundingPlatformService');
-      const result = await fundingApplicationsAPI.submitApplication(programId, chainId, data);
+      const fundingPlatformService = await import('@/services/fundingPlatformService');
+      // Extract email from form data
+      let applicantEmail = '';
+      const emailFields = Object.keys(data).filter(
+        (key) =>
+          key.toLowerCase().includes('email') ||
+          (typeof data[key] === 'string' && data[key].includes('@'))
+      );
+      if (emailFields.length > 0) {
+        applicantEmail = data[emailFields[0]];
+      } else {
+        throw new Error('Email field is required in the application form');
+      }
+      
+      const result = await fundingPlatformService.default.applications.submitApplication({
+        programId,
+        chainID: chainId,
+        applicantEmail,
+        applicationData: data
+      });
       onSubmissionSuccess(result.id || result.referenceNumber || 'APP-' + Date.now());
     } catch (error) {
       console.error('Error submitting application:', error);

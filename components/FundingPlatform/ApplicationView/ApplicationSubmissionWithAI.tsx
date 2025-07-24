@@ -5,7 +5,7 @@ import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/Utilities/Button';
-import { IFormSchema } from '@/types/funding-platform';
+import { IFormSchema, IFundingApplication } from '@/types/funding-platform';
 import { cn } from '@/utilities/tailwind';
 import { useAccount } from 'wagmi';
 import toast from 'react-hot-toast';
@@ -13,6 +13,7 @@ import { AIEvaluationDisplay } from '@/components/FundingPlatform/AIEvaluationDi
 import { useRealTimeAIEvaluation } from '@/hooks/useRealTimeAIEvaluation';
 import { FormSchema } from '@/types/question-builder';
 import { LoadingOverlay } from '@/components/Utilities/LoadingOverlay';
+import { useApplicationSubmissionV2, useApplicationUpdateV2 } from '@/hooks/useFundingPlatform';
 
 interface IApplicationSubmissionWithAIProps {
   programId: string;
@@ -21,6 +22,8 @@ interface IApplicationSubmissionWithAIProps {
   onSubmit?: (applicationData: Record<string, any>) => Promise<void>;
   onCancel?: () => void;
   isLoading?: boolean;
+  existingApplication?: IFundingApplication | null;
+  isRevision?: boolean;
 }
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
@@ -33,12 +36,18 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
   onSubmit,
   onCancel,
   isLoading = false,
+  existingApplication,
+  isRevision = false,
 }) => {
   const { address } = useAccount();
   const [submitting, setSubmitting] = useState(false);
   
   // Ref to track if we're already evaluating to prevent multiple simultaneous calls
   const isEvaluatingRef = useRef(false);
+  
+  // Use V2 submission or update hook based on revision state
+  const { submitApplication, isSubmitting } = useApplicationSubmissionV2(programId, chainId);
+  const { updateApplication, isUpdating } = useApplicationUpdateV2();
 
   // Real-time AI evaluation hook
   const {
@@ -116,6 +125,23 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
 
   const validationSchema = generateValidationSchema(formSchema);
   type FormData = z.infer<typeof validationSchema>;
+  
+  // Generate default values from existing application if it's a revision
+  const getDefaultValues = useCallback(() => {
+    if (!existingApplication || !isRevision) return {};
+    
+    const defaultValues: Record<string, any> = {};
+    
+    // Map application data back to field IDs
+    formSchema.fields.forEach(field => {
+      const existingValue = existingApplication.applicationData[field.label];
+      if (existingValue !== undefined) {
+        defaultValues[field.id] = existingValue;
+      }
+    });
+    
+    return defaultValues;
+  }, [existingApplication, isRevision, formSchema.fields]);
 
   const {
     register,
@@ -126,6 +152,7 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
   } = useForm<FormData>({
     resolver: zodResolver(validationSchema),
     mode: 'onChange',
+    defaultValues: getDefaultValues(),
   });
 
   // Store refs to avoid useCallback recreation
@@ -211,35 +238,68 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
       return;
     }
 
-    setSubmitting(true);
-    try {
-      // Convert field IDs back to labels for submission
-      const submissionData: Record<string, any> = {};
-      formSchema.fields.forEach(field => {
-        submissionData[field.label] = data[field.id];
-      });
-
-      await onSubmit?.(submissionData);
-      toast.success('Application submitted successfully!');
-      reset();
-      clearEvaluation();
-    } catch (error: any) {
-      console.error('Error submitting application:', error);
+    // Convert field IDs back to labels for submission
+    const submissionData: Record<string, any> = {};
+    let applicantEmail = '';
+    
+    formSchema.fields.forEach(field => {
+      submissionData[field.label] = data[field.id];
       
-      // Extract error message from the response
-      let errorMessage = 'Failed to submit application. Please try again.';
-      
-      if (error?.response?.data?.message) {
-        // If it's an API error with a specific message
-        errorMessage = error.response.data.message;
-      } else if (error?.message) {
-        // If it's a general error with a message
-        errorMessage = error.message;
+      // Extract email for V2 submission
+      if (field.type === 'email' || field.label.toLowerCase().includes('email')) {
+        applicantEmail = data[field.id] as string;
       }
+    });
+    
+    // If no email field found, check the data for any email-like value
+    if (!applicantEmail) {
+      const emailValue = Object.values(data).find(value => 
+        typeof value === 'string' && value.includes('@')
+      );
+      if (emailValue) {
+        applicantEmail = emailValue as string;
+      }
+    } else {
       
-      toast.error(errorMessage);
-    } finally {
-      setSubmitting(false);
+    }
+    
+    if (!applicantEmail) {
+      toast.error('An email address is required for submission');
+      return;
+    }
+
+    // Handle revision update vs new submission
+    if (isRevision && existingApplication) {
+      // Use update hook for revisions
+      updateApplication({
+        applicationId: existingApplication.id,
+        applicationData: submissionData
+      });
+    } else {
+      // Use custom onSubmit if provided, otherwise use V2 submission
+      if (onSubmit) {
+        setSubmitting(true);
+        try {
+          await onSubmit(submissionData);
+          reset();
+          clearEvaluation();
+        } catch (error) {
+          // Error handling is done in the parent component
+          throw error;
+        } finally {
+          setSubmitting(false);
+        }
+      } else {
+        // Use V2 submission directly
+        submitApplication({
+          programId,
+          chainID: chainId,
+          applicantEmail,
+          applicationData: submissionData
+        });
+        reset();
+        clearEvaluation();
+      }
     }
   };
 
@@ -526,12 +586,12 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
               )}
               <Button
                 type="submit"
-                isLoading={submitting || isLoading}
-                disabled={!isValid || submitting || isLoading}
+                isLoading={submitting || isLoading || isSubmitting || isUpdating}
+                disabled={!isValid || submitting || isLoading || isSubmitting || isUpdating}
                 variant="primary"
                 className="px-6 py-2"
               >
-                Submit Application
+                {isRevision ? 'Update Application' : 'Submit Application'}
               </Button>
             </div>
           </form>

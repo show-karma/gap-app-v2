@@ -1,8 +1,9 @@
 "use client";
 
-import { FC, useState, useCallback } from "react";
+import { FC, useState, useCallback, useEffect } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import ApplicationList from "./ApplicationList";
-import { useFundingApplications } from "@/hooks/useFundingPlatform";
+import { useFundingApplications, useApplicationExport } from "@/hooks/useFundingPlatform";
 import { IApplicationFilters } from "@/services/fundingPlatformService";
 import { IFundingApplication } from "@/types/funding-platform";
 import { Button } from "@/components/Utilities/Button";
@@ -24,6 +25,9 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
   showStatusActions = false,
   initialFilters = {},
 }) => {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [filters, setFilters] = useState<IApplicationFilters>(initialFilters);
 
   const {
@@ -35,10 +39,27 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
     isLoading,
     error,
     updateApplicationStatus,
-    exportApplications,
     isUpdatingStatus,
     refetch,
   } = useFundingApplications(programId, chainId, filters);
+  
+  const { exportApplications, isExporting } = useApplicationExport(programId, chainId);
+
+  // Sync filters with URL
+  useEffect(() => {
+    const params = new URLSearchParams();
+    
+    if (filters.search) params.set('search', filters.search);
+    if (filters.status) params.set('status', filters.status);
+    if (filters.dateFrom) params.set('dateFrom', filters.dateFrom);
+    if (filters.dateTo) params.set('dateTo', filters.dateTo);
+    if (filters.page && filters.page > 1) params.set('page', filters.page.toString());
+    
+    const queryString = params.toString();
+    const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
+    
+    router.push(newUrl, { scroll: false });
+  }, [filters, pathname, router]);
 
   const handleStatusChange = useCallback(
     async (applicationId: string, status: string, note?: string) => {
@@ -55,9 +76,9 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
 
   const handleExport = useCallback(
     (format: "json" | "csv" = "json") => {
-      exportApplications(format);
+      exportApplications(format, filters);
     },
-    [exportApplications]
+    [exportApplications, filters]
   );
 
   const handleFilterChange = useCallback((newFilters: IApplicationFilters) => {
@@ -90,23 +111,23 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
   const statsMap = [
     {
       title: "Total Applications",
-      value: stats?.total,
+      value: stats?.totalApplications || 0,
     },
     {
-      title: "Submitted",
-      value: stats?.submitted,
+      title: "Pending",
+      value: stats?.pendingApplications || 0,
     },
     {
-      title: "Under Review",
-      value: stats?.under_review,
+      title: "Revision Requested",
+      value: stats?.revisionRequestedApplications || 0,
     },
     {
       title: "Approved",
-      value: stats?.approved,
+      value: stats?.approvedApplications || 0,
     },
     {
       title: "Rejected",
-      value: stats?.rejected,
+      value: stats?.rejectedApplications || 0,
     },
   ];
 
@@ -157,10 +178,11 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
               className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100"
             >
               <option value="">All Statuses</option>
-              <option value="submitted">Submitted</option>
-              <option value="under_review">Under Review</option>
+              <option value="pending">Pending</option>
+              <option value="revision_requested">Revision Requested</option>
               <option value="approved">Approved</option>
               <option value="rejected">Rejected</option>
+              <option value="withdrawn">Withdrawn</option>
             </select>
           </div>
 
@@ -189,9 +211,18 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
           </div>
         </div>
 
-        <div className="flex justify-end mt-4 space-x-2">
+        <div className="flex justify-between mt-4 space-x-2">
+        <div className="flex flex-row gap-4 items-center">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            {applications.length} application(s) found
+          </p>
+        </div>
+        <div className="flex justify-end space-x-2">
           <Button
-            onClick={() => setFilters({})}
+            onClick={() => {
+              setFilters({});
+              router.push(pathname, { scroll: false });
+            }}
             variant="secondary"
             className="w-fit px-3 py-1 border bg-transparent text-zinc-500 font-medium border-zinc-200 dark:border-zinc-700 flex flex-row gap-2"
           >
@@ -202,27 +233,30 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
           <Button
             onClick={() => handleExport("csv")}
             variant="secondary"
+            disabled={isExporting}
             className="w-fit px-3 py-1 border bg-transparent text-zinc-500 font-medium border-zinc-200 dark:border-zinc-700 flex flex-row gap-2"
           >
             <ArrowDownTrayIcon className="w-5 h-5" />
-            Export CSV
+            {isExporting ? 'Exporting...' : 'Export CSV'}
           </Button>
 
           <Button
             onClick={() => handleExport("json")}
             variant="secondary"
+            disabled={isExporting}
             className="w-fit px-3 py-1 border bg-transparent text-zinc-500 font-medium border-zinc-200 dark:border-zinc-700 flex flex-row gap-2"
           >
             <ArrowDownTrayIcon className="w-5 h-5" />
-            Export JSON
+            {isExporting ? 'Exporting...' : 'Export JSON'}
           </Button>
+        </div>
         </div>
       </div>
 
       {/* Application List */}
       <ApplicationList
         programId={programId}
-        chainId={chainId}
+        chainID={chainId}
         applications={applications}
         isLoading={isLoading}
         onApplicationSelect={onApplicationSelect}

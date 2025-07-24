@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fundingPlatformService } from '@/services/fundingPlatformService';
 import { FormSchema } from '@/types/question-builder';
 import toast from 'react-hot-toast';
+import { IFundingProgramConfig } from '@/types/funding-platform';
 
 // Query keys for caching
 const QUERY_KEYS = {
@@ -21,9 +22,8 @@ export const useQuestionBuilderSchema = (programId: string, chainId: number) => 
       try {
         const config = await fundingPlatformService.programs.getProgramConfiguration(programId, chainId);
         
-        // Check if this is a React Hook Form schema
-        if (config.schemaType === 'react-hook-form' || 
-            (config.formSchema && !config.schemaType)) { // Backward compatibility
+        // Return the form schema
+        if (config?.formSchema) {
           return config.formSchema as FormSchema;
         }
         
@@ -41,9 +41,7 @@ export const useQuestionBuilderSchema = (programId: string, chainId: number) => 
   });
 
   const updateSchemaMutation = useMutation({
-    mutationFn: async (schema: FormSchema) => {
-      // First get existing configuration
-      const existingConfig = await fundingPlatformService.programs.getProgramConfiguration(programId, chainId);
+    mutationFn: async ({schema, existingConfig}: {schema: FormSchema, existingConfig?: IFundingProgramConfig | null}) => {
       
       // Update with new question schema and mark schema type
       const updatedConfig = {
@@ -51,6 +49,10 @@ export const useQuestionBuilderSchema = (programId: string, chainId: number) => 
         formSchema: schema,
         schemaType: 'react-hook-form' as const
       };
+
+      if (!existingConfig) {
+        return fundingPlatformService.programs.createProgramConfiguration(programId, chainId, updatedConfig);
+      }
       
       return fundingPlatformService.programs.updateProgramConfiguration(programId, chainId, updatedConfig);
     },

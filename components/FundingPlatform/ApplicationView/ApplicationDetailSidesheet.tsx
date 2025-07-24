@@ -1,12 +1,13 @@
 'use client';
 
-import { FC, Fragment } from 'react';
+import { FC, Fragment, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { XMarkIcon, CheckCircleIcon, ExclamationTriangleIcon, ClockIcon } from '@heroicons/react/24/outline';
 import { IFundingApplication } from '@/types/funding-platform';
 import { Button } from '@/components/Utilities/Button';
 import { cn } from '@/utilities/tailwind';
 import { format, isValid, parseISO } from 'date-fns';
+import StatusHistoryTimeline from './StatusHistoryTimeline';
 
 interface ApplicationDetailSidesheetProps {
   application: IFundingApplication | null;
@@ -17,17 +18,26 @@ interface ApplicationDetailSidesheetProps {
 }
 
 const statusColors = {
-  submitted: 'bg-blue-100 text-blue-800 border-blue-200',
-  under_review: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+  pending: 'bg-blue-100 text-blue-800 border-blue-200',
+  revision_requested: 'bg-yellow-100 text-yellow-800 border-yellow-200',
   approved: 'bg-green-100 text-green-800 border-green-200',
   rejected: 'bg-red-100 text-red-800 border-red-200',
+  withdrawn: 'bg-gray-100 text-gray-800 border-gray-200',
 };
 
 const statusIcons = {
-  submitted: ClockIcon,
-  under_review: ExclamationTriangleIcon,
+  pending: ClockIcon,
+  revision_requested: ExclamationTriangleIcon,
   approved: CheckCircleIcon,
   rejected: XMarkIcon,
+  withdrawn: XMarkIcon,
+};
+
+const formatStatus = (status: string): string => {
+  return status
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 };
 
 /**
@@ -61,14 +71,47 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
   onStatusChange,
   showStatusActions = false,
 }) => {
+  const [showReasonModal, setShowReasonModal] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<string>('');
+  const [statusReason, setStatusReason] = useState('');
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
   if (!application) return null;
 
   const StatusIcon = statusIcons[application.status as keyof typeof statusIcons] || ClockIcon;
 
   const handleStatusChange = async (newStatus: string) => {
-    if (onStatusChange) {
-      await onStatusChange(application.id, newStatus);
+    if (newStatus === 'revision_requested' || newStatus === 'rejected') {
+      setPendingStatus(newStatus);
+      setShowReasonModal(true);
+    } else {
+      if (onStatusChange) {
+        setIsUpdatingStatus(true);
+        await onStatusChange(application.id, newStatus);
+        setIsUpdatingStatus(false);
+      }
     }
+  };
+
+  const handleConfirmStatusChange = async () => {
+    if (onStatusChange && pendingStatus) {
+      setIsUpdatingStatus(true);
+      await onStatusChange(application.id, pendingStatus, statusReason);
+      setIsUpdatingStatus(false);
+      setShowReasonModal(false);
+      setStatusReason('');
+      setPendingStatus('');
+    }
+  };
+
+  const getCurrentRevisionReason = () => {
+    if (application.status === 'revision_requested' && application.statusHistory) {
+      const revisionEntry = application.statusHistory
+        .filter(h => h.status === 'revision_requested')
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
+      return revisionEntry?.reason;
+    }
+    return null;
   };
 
   const renderApplicationData = () => {
@@ -236,7 +279,8 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
   };
 
   return (
-    <Transition.Root show={isOpen} as={Fragment}>
+    <>
+      <Transition.Root show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-50" onClose={onClose}>
         <Transition.Child
           as={Fragment}
@@ -304,7 +348,7 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                             statusColors[application.status as keyof typeof statusColors] || 'bg-gray-100 text-gray-800 border-gray-200'
                           )}>
                             <StatusIcon className="w-4 h-4" />
-                            <span>{application.status.replace('_', ' ')}</span>
+                            <span>{formatStatus(application.status)}</span>
                           </div>
                         </div>
                       </div>
@@ -319,11 +363,11 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                           <dl className="space-y-3">
                             <div>
                               <dt className="text-sm font-medium text-gray-500">Applicant Email</dt>
-                              <dd className="mt-1 text-sm text-gray-900">{application.applicantAddress}</dd>
+                              <dd className="mt-1 text-sm text-gray-900">{application.applicantEmail}</dd>
                             </div>
                             <div>
                               <dt className="text-sm font-medium text-gray-500">Submitted</dt>
-                              <dd className="mt-1 text-sm text-gray-900">{formatDate(application.submittedAt)}</dd>
+                              <dd className="mt-1 text-sm text-gray-900">{formatDate(application.createdAt)}</dd>
                             </div>
                             <div>
                               <dt className="text-sm font-medium text-gray-500">Reference Number</dt>
@@ -344,21 +388,22 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                           {renderAIEvaluation()}
                         </div>
 
+                        {/* Current Revision Reason */}
+                        {getCurrentRevisionReason() && (
+                          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                            <h3 className="text-sm font-medium text-yellow-900 mb-2">Revision Requested</h3>
+                            <p className="text-sm text-yellow-800">{getCurrentRevisionReason()}</p>
+                          </div>
+                        )}
+
                         {/* Status History */}
                         {application.statusHistory && application.statusHistory.length > 0 && (
                           <div>
                             <h3 className="text-lg font-medium text-gray-900 mb-4">Status History</h3>
-                            <div className="space-y-2">
-                              {application.statusHistory.map((history, index) => (
-                                <div key={index} className="flex items-center space-x-3 text-sm">
-                                  <span className="text-gray-500">{formatDate(history.timestamp)}</span>
-                                  <span className="text-gray-700">{history.status}</span>
-                                  {history.note && (
-                                    <span className="text-gray-500">- {history.note}</span>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
+                            <StatusHistoryTimeline 
+                              history={application.statusHistory} 
+                              currentStatus={application.status}
+                            />
                           </div>
                         )}
                       </div>
@@ -367,46 +412,63 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                     {/* Actions */}
                     {showStatusActions && onStatusChange && (
                       <div className="border-t border-gray-200 bg-gray-50 px-4 py-4 sm:px-6">
-                        <div className="flex space-x-3">
-                          {application.status === 'submitted' && (
-                            <>
+                        <div className="flex flex-col space-y-2">
+                          {/* Show available actions based on current status */}
+                          {application.status === 'pending' && (
+                            <div className="flex space-x-3">
                               <Button
-                                onClick={() => handleStatusChange('under_review')}
+                                onClick={() => handleStatusChange('revision_requested')}
                                 variant="secondary"
                                 className="flex-1"
+                                disabled={isUpdatingStatus}
                               >
-                                Move to Review
+                                Request Revision
                               </Button>
                               <Button
                                 onClick={() => handleStatusChange('approved')}
                                 className="flex-1 bg-green-600 hover:bg-green-700"
+                                disabled={isUpdatingStatus}
                               >
                                 Approve
                               </Button>
                               <Button
                                 onClick={() => handleStatusChange('rejected')}
                                 className="flex-1 bg-red-600 hover:bg-red-700"
+                                disabled={isUpdatingStatus}
                               >
                                 Reject
                               </Button>
-                            </>
+                            </div>
                           )}
                           
-                          {application.status === 'under_review' && (
+                          {application.status === 'revision_requested' && (
                             <>
-                              <Button
-                                onClick={() => handleStatusChange('approved')}
-                                className="flex-1 bg-green-600 hover:bg-green-700"
-                              >
-                                Approve
-                              </Button>
-                              <Button
-                                onClick={() => handleStatusChange('rejected')}
-                                className="flex-1 bg-red-600 hover:bg-red-700"
-                              >
-                                Reject
-                              </Button>
+                              <p className="text-xs text-gray-500 mb-2">
+                                The applicant can update their submission. You can approve or reject once they resubmit.
+                              </p>
+                              <div className="flex space-x-3">
+                                <Button
+                                  onClick={() => handleStatusChange('approved')}
+                                  className="flex-1 bg-green-600 hover:bg-green-700"
+                                  disabled={isUpdatingStatus}
+                                >
+                                  Approve
+                                </Button>
+                                <Button
+                                  onClick={() => handleStatusChange('rejected')}
+                                  className="flex-1 bg-red-600 hover:bg-red-700"
+                                  disabled={isUpdatingStatus}
+                                >
+                                  Reject
+                                </Button>
+                              </div>
                             </>
+                          )}
+
+                          {(application.status === 'approved' || application.status === 'rejected' || application.status === 'withdrawn') && (
+                            <p className="text-sm text-gray-500 text-center py-2">
+                              This application is in a final state and cannot be modified.
+                            </p>
                           )}
                         </div>
                       </div>
@@ -419,6 +481,87 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
         </div>
       </Dialog>
     </Transition.Root>
+
+    {/* Reason Modal */}
+    <Transition.Root show={showReasonModal} as={Fragment}>
+      <Dialog as="div" className="relative z-50" onClose={() => setShowReasonModal(false)}>
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-300"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+        </Transition.Child>
+
+        <div className="fixed inset-0 z-10 overflow-y-auto">
+          <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+              enterTo="opacity-100 translate-y-0 sm:scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+              leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            >
+              <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+                <div>
+                  <div className="mt-3 text-center sm:mt-5">
+                    <Dialog.Title as="h3" className="text-base font-semibold leading-6 text-gray-900">
+                      {pendingStatus === 'revision_requested' ? 'Request Revision' : 'Reject Application'}
+                    </Dialog.Title>
+                    <div className="mt-4">
+                      <p className="text-sm text-gray-500 mb-4">
+                        Please provide a reason for this status change. This will be visible to the applicant.
+                      </p>
+                      <textarea
+                        rows={4}
+                        className="block w-full rounded-md border-0 py-2 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
+                        placeholder={pendingStatus === 'revision_requested' 
+                          ? 'Please explain what needs to be revised...'
+                          : 'Please explain why the application is being rejected...'
+                        }
+                        value={statusReason}
+                        onChange={(e) => setStatusReason(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
+                  <Button
+                    onClick={handleConfirmStatusChange}
+                    disabled={!statusReason.trim() || isUpdatingStatus}
+                    className={cn(
+                      'inline-flex w-full justify-center sm:col-start-2',
+                      pendingStatus === 'rejected' && 'bg-red-600 hover:bg-red-700'
+                    )}
+                  >
+                    {isUpdatingStatus ? 'Updating...' : 'Confirm'}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setShowReasonModal(false);
+                      setStatusReason('');
+                      setPendingStatus('');
+                    }}
+                    disabled={isUpdatingStatus}
+                    className="mt-3 inline-flex w-full justify-center sm:col-start-1 sm:mt-0"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </Dialog.Panel>
+            </Transition.Child>
+          </div>
+        </div>
+      </Dialog>
+    </Transition.Root>
+    </>
   );
 };
 
