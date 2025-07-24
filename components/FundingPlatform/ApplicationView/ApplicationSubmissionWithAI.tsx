@@ -206,7 +206,7 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
         }
         
         if (hasContent) {
-          evaluationData[field.label] = processedValue;
+          evaluationData[field.id] = processedValue;
         }
       }
     });
@@ -607,10 +607,10 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
       <div className="lg:col-span-1">
         <div className="sticky top-6 relative">
           {/* Loading Overlay for AI evaluation */}
-          <LoadingOverlay 
+          {/* <LoadingOverlay 
             isLoading={isEvaluating} 
             message="Evaluating with AI..." 
-          />
+          /> */}
           
           <AIEvaluationDisplay
             evaluation={evaluation}
@@ -621,7 +621,7 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
           {evaluationError && (
             <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
               <p className="text-sm text-red-700 dark:text-red-300">
-                AI evaluation temporarily unavailable: {evaluationError}
+                AI Evaluation: {evaluationError}
               </p>
             </div>
           )}

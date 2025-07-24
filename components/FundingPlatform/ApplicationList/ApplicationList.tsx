@@ -242,12 +242,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                       application.aiEvaluation?.systemEvaluation?.rating ||
                         application.aiEvaluation?.detailedEvaluation?.rating
                     )}
-                    {/* Show revision indicator */}
-                    {application.status === "revision_requested" && (
-                      <span className="text-xs text-yellow-600 dark:text-yellow-400">
-                        ⚠️ Revision needed
-                      </span>
-                    )}
+                    
                   </div>
 
                   <p className="text-sm text-gray-600 dark:text-gray-400">

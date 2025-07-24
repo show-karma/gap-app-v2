@@ -43,7 +43,6 @@ export default function QuestionBuilderPage() {
   const {config: existingConfig} = useProgramConfig(programId, parsedChainId);
 
   const handleSchemaChange = (schema: FormSchema) => {
-    console.log("existingConfig", existingConfig);
     updateSchema({schema, existingConfig: existingConfig || null });
   };
 

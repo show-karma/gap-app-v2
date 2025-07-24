@@ -60,10 +60,18 @@ export interface IFundingProgramConfig {
   systemPrompt?: string;
   detailedPrompt?: string;
   aiModel?: string;
+  enableRealTimeEvaluation?: boolean;
   evaluationConfig?: Record<string, any>;
   isEnabled: boolean;
   createdAt: string | Date;
   updatedAt: string | Date;
+}
+
+export interface IAIConfig {
+  systemPrompt?: string;
+  detailedPrompt?: string;
+  aiModel?: string;
+  enableRealTimeEvaluation?: boolean;
 }
 
 // V2 Funding Application
