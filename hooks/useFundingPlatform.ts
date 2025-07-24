@@ -68,18 +68,34 @@ export const useFundingPrograms = (communityId: string) => {
 /**
  * Hook for managing a specific program configuration
  */
+export const useProgramStats = (programId: string, chainId: number) => {
+
+  const statsQuery = useQuery({
+    queryKey: QUERY_KEYS.programStats(programId, chainId),
+    queryFn: () => fundingPlatformService.programs.getProgramStats(programId, chainId),
+    enabled: !!programId && !!chainId,
+  });
+
+  return {
+    stats: statsQuery.data,
+    isLoading: statsQuery.isLoading,
+    error: statsQuery.error,
+    refetch: () => {
+      statsQuery.refetch();
+    },
+  };
+};
+
+
+/**
+ * Hook for managing a specific program configuration
+ */
 export const useProgramConfig = (programId: string, chainId: number) => {
   const queryClient = useQueryClient();
 
   const configQuery = useQuery({
     queryKey: QUERY_KEYS.programConfig(programId, chainId),
     queryFn: () => fundingPlatformService.programs.getProgramConfiguration(programId, chainId),
-    enabled: !!programId && !!chainId,
-  });
-
-  const statsQuery = useQuery({
-    queryKey: QUERY_KEYS.programStats(programId, chainId),
-    queryFn: () => fundingPlatformService.programs.getProgramStats(programId, chainId),
     enabled: !!programId && !!chainId,
   });
 
@@ -124,16 +140,15 @@ export const useProgramConfig = (programId: string, chainId: number) => {
 
   return {
     config: configQuery.data,
-    stats: statsQuery.data,
-    isLoading: configQuery.isLoading || statsQuery.isLoading,
-    error: configQuery.error || statsQuery.error,
+    isLoading: configQuery.isLoading,
+    error: configQuery.error,
     updateConfig: updateConfigMutation.mutate,
     updateFormSchema: updateFormSchemaMutation.mutate,
     toggleStatus: toggleStatusMutation.mutate,
     isUpdating: updateConfigMutation.isPending || updateFormSchemaMutation.isPending || toggleStatusMutation.isPending,
     refetch: () => {
       configQuery.refetch();
-      statsQuery.refetch();
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.programStats(programId, chainId) });
     },
   };
 };

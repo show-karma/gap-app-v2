@@ -112,7 +112,7 @@ export default function FundingPlatformAdminPage() {
     approved: number;
     rejected: number;
     pending: number;
-    underReview: number;
+    revisionRequested: number;
   } = useMemo(() => {
     if (!programs || programs.length === 0) {
       // Fallback values when no programs exist
@@ -122,14 +122,14 @@ export default function FundingPlatformAdminPage() {
         approved: 0,
         rejected: 0,
         pending: 0,
-        underReview: 0,
+        revisionRequested: 0,
       };
     }
 
     const stats = programs.reduce(
       (acc, program) => {
         // Use actual API response data, with fallbacks only for missing fields
-        const programStats = program.stats || undefined;
+        const programStats = program.metrics || undefined;
         return {
           totalPrograms: acc.totalPrograms + 1,
           totalApplications:
@@ -137,7 +137,7 @@ export default function FundingPlatformAdminPage() {
           approved: acc.approved + (programStats?.approvedApplications || 0),
           rejected: acc.rejected + (programStats?.rejectedApplications || 0),
           pending: acc.pending + (programStats?.pendingApplications || 0),
-          underReview: acc.underReview + (programStats?.underReviewApplications || 0),
+          revisionRequested: acc.revisionRequested + (programStats?.revisionRequestedApplications || 0),
         };
       },
       {
@@ -146,12 +146,13 @@ export default function FundingPlatformAdminPage() {
         approved: 0,
         rejected: 0,
         pending: 0,
-        underReview: 0,
+        revisionRequested: 0,
       }
     );
 
     return stats;
   }, [programs]);
+
 
   // Filter programs based on search term and enabled status
   const filteredPrograms = useMemo(() => {
@@ -271,8 +272,8 @@ export default function FundingPlatformAdminPage() {
       ),
     },
     {
-      title: "Under Review",
-      value: formatCurrency(statistics.underReview),
+      title: "Revision Requested",
+      value: formatCurrency(statistics.revisionRequested),
       color: "text-indigo-600",
       bgColor: "bg-indigo-50 dark:bg-indigo-900",
       icon: (
@@ -295,8 +296,8 @@ export default function FundingPlatformAdminPage() {
     {
       title: "Applicants",
       value: formatCurrency(
-        program.stats?.total ||
-          program.stats?.applicationCount ||
+        program.metrics?.total ||
+          program.metrics?.applicationCount ||
           program.grantPlatform?.stats?.total ||
           0
       ),
@@ -305,8 +306,8 @@ export default function FundingPlatformAdminPage() {
   ];
 
   const applicationProgressPct = (program: FundingProgram) => {
-    const totalApplications = program.stats?.totalApplications || 0;
-    const approvedApplications = program.stats?.approvedApplications || 0;
+    const totalApplications = program.metrics?.totalApplications || 0;
+    const approvedApplications = program.metrics?.approvedApplications || 0;
 
     return (
       Number(((approvedApplications / totalApplications) * 100).toFixed(2)) || 0
@@ -314,10 +315,10 @@ export default function FundingPlatformAdminPage() {
   };
 
   const applicationProgress = (program: FundingProgram) => {
-    const approvedApplications = program.stats?.approvedApplications || 0;
-    const rejectedApplications = program.stats?.rejectedApplications || 0;
-    const pendingApplications = program.stats?.pendingApplications || 0;
-    const underReviewApplications = program.stats?.underReviewApplications || 0;
+    const approvedApplications = program.metrics?.approvedApplications || 0;
+    const rejectedApplications = program.metrics?.rejectedApplications || 0;
+    const pendingApplications = program.metrics?.pendingApplications || 0;
+    const revisionRequestedApplications = program.metrics?.revisionRequestedApplications || 0;
 
     return [
       {
@@ -339,8 +340,8 @@ export default function FundingPlatformAdminPage() {
         bgColor: "bg-orange-500",
       },
       {
-        title: "Under Review",
-        value: underReviewApplications,
+        title: "Revision Requested",
+        value: revisionRequestedApplications,
         color: "text-indigo-600",
         bgColor: "bg-indigo-500",
       },
@@ -690,7 +691,7 @@ export default function FundingPlatformAdminPage() {
                   </div>
                 </div>
                 {/* Pending Applications Review */}
-                {program?.stats?.pendingApplications && program.stats.pendingApplications > 0 ? (
+                {program?.metrics?.pendingApplications && program.metrics.pendingApplications > 0 ? (
                   <div className=" bg-orange-50 dark:bg-orange-900/20 border-none">
                     <Link
                       href={PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(
@@ -700,10 +701,10 @@ export default function FundingPlatformAdminPage() {
                     >
                       <button className="rounded-lg px-2 py-2 w-full border-none text-left flex items-center justify-between text-orange-700 dark:text-orange-300 text-sm hover:text-orange-800 dark:hover:text-orange-200">
                         <span>
-                          Review {program.stats?.pendingApplications}{" "}
+                          Review {program.metrics?.pendingApplications}{" "}
                           {pluralize(
                             "pending application",
-                            program.stats?.pendingApplications
+                            program.metrics?.pendingApplications
                           )}
                         </span>
                         <ChevronRightIcon className="w-5 h-5" />

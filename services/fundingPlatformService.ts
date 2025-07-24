@@ -103,12 +103,12 @@ export type FundingProgram = {
     communityRef?: string[];
   };
   applicationConfig: IFundingProgramConfig;
-  stats?: {
+  metrics?: {
     totalApplications: number;
     pendingApplications: number;
     approvedApplications: number;
     rejectedApplications: number;
-    underReviewApplications?: number; // For revision_requested status
+    revisionRequestedApplications?: number;
   };
 };
 
@@ -128,39 +128,40 @@ export const fundingProgramsAPI = {
     const programs = await Promise.all(
       configs.data.map(async (config) => {
         // Check if stats already exist from backend
-        if (config.stats) {
+        if (config.metrics) {
           // Stats already provided by backend, no need to fetch separately
           return config;
         }
         
-        // Fallback: Get statistics for each program if not provided by backend
-        let stats = {
-          totalApplications: 0,
-          pendingApplications: 0,
-          approvedApplications: 0,
-          rejectedApplications: 0,
-          underReviewApplications: 0,
-        };
+        // // Fallback: Get statistics for each program if not provided by backend
+        // let stats = {
+        //   totalApplications: 0,
+        //   pendingApplications: 0,
+        //   approvedApplications: 0,
+        //   rejectedApplications: 0,
+        //   revisionRequestedApplications: 0,
+        // };
         
-        try {
-          const statsResponse = await fundingApplicationsAPI.getApplicationStatistics(
-            config.programId,
-            config.chainID
-          );
-          stats = {
-            totalApplications: statsResponse.totalApplications,
-            pendingApplications: statsResponse.pendingApplications,
-            approvedApplications: statsResponse.approvedApplications,
-            rejectedApplications: statsResponse.rejectedApplications,
-            underReviewApplications: statsResponse.revisionRequestedApplications || 0,
-          };
-        } catch (error) {
-          console.warn(`Failed to fetch stats for program ${config.programId}:`, error);
-        }
+        // try {
+        //   const statsResponse = await fundingApplicationsAPI.getApplicationStatistics(
+        //     config.programId,
+        //     config.chainID
+        //   );
+        //   console.log("statsResponse", statsResponse);
+        //   stats = {
+        //     totalApplications: statsResponse.totalApplications,
+        //     pendingApplications: statsResponse.pendingApplications,
+        //     approvedApplications: statsResponse.approvedApplications,
+        //     rejectedApplications: statsResponse.rejectedApplications,
+        //     revisionRequestedApplications: statsResponse.revisionRequestedApplications || 0,
+        //   };
+        // } catch (error) {
+        //   console.warn(`Failed to fetch stats for program ${config.programId}:`, error);
+        // }
         
         return {
           ...config,
-          stats,
+          // stats,
         };
       })
     );
@@ -282,7 +283,7 @@ export const fundingProgramsAPI = {
   /**
    * Get program statistics (backward compatibility)
    */
-  async getProgramStats(programId: string, chainId: number): Promise<any> {
+  async getProgramStats(programId: string, chainId: number): Promise<IApplicationStatistics> {
     try {
       const stats = await fundingApplicationsAPI.getApplicationStatistics(programId, chainId);
       return stats;
@@ -293,6 +294,7 @@ export const fundingProgramsAPI = {
         pendingApplications: 0,
         approvedApplications: 0,
         rejectedApplications: 0,
+        revisionRequestedApplications: 0,
       };
     }
   },
@@ -415,6 +417,7 @@ export const fundingApplicationsAPI = {
     const response = await apiClient.get(
       `/v2/funding-applications/program/${programId}/${chainId}/statistics`
     );
+
     return response.data;
   },
 
