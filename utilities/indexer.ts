@@ -118,6 +118,41 @@ export const INDEXER = {
   COMMUNITY: {
     GET: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}`,
     CATEGORIES: (idOrSlug: string) => `/communities/${idOrSlug}/categories`,
+    V2: {
+      GET: (slug: string) => `/v2/communities/${slug}`,
+      STATS: (slug: string) => `/v2/communities/${slug}/stats`,
+      PROJECTS: (
+        slug: string,
+        {
+          page,
+          limit,
+          sortBy,
+          categories,
+          status,
+          selectedProgramId,
+          selectedTrackIds,
+        }: {
+          page?: number;
+          limit?: number;
+          sortBy?: string;
+          categories?: string;
+          status?: string;
+          selectedProgramId?: string;
+          selectedTrackIds?: string[];
+        } = {}
+      ) => {
+        const params = new URLSearchParams();
+        if (page !== undefined) params.set("page", page.toString());
+        if (limit !== undefined) params.set("limit", limit.toString());
+        if (sortBy) params.set("sortBy", sortBy);
+        if (categories) params.set("categories", categories);
+        if (status) params.set("status", status);
+        if (selectedProgramId) params.set("selectedProgramId", selectedProgramId);
+        if (selectedTrackIds?.length) params.set("selectedTrackIds", selectedTrackIds.join(","));
+        const queryString = params.toString();
+        return `/v2/communities/${slug}/projects${queryString ? `?${queryString}` : ""}`;
+      },
+    },
     SUBSCRIBE: {
       BULK: `/bulk-subscription/subscribe`,
     },

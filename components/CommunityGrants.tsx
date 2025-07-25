@@ -1,10 +1,11 @@
 "use client";
-/* eslint-disable @next/next/no-img-element */
 import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { useCommunityStore } from "@/store/community";
 import { SortByOptions, StatusOptions, MaturityStageOptions } from "@/types";
 import { zeroUID } from "@/utilities/commons";
-import { getGrants } from "@/utilities/sdk/communities/getGrants";
+import { getCommunityProjectsV2 } from "@/utilities/queries/getCommunityDataV2";
+import { CommunityStatsV2, ProjectV2, CommunityProjectsV2Response } from "@/types/community";
+import { projectV2ToGrant } from "@/utilities/adapters/projectV2ToGrant";
 import { cn } from "@/utilities/tailwind";
 import { Listbox, Transition } from "@headlessui/react";
 import { CheckIcon } from "@heroicons/react/20/solid";
@@ -12,7 +13,7 @@ import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import { useParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import pluralize from "pluralize";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState, useCallback } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { AutoSizer, Grid } from "react-virtualized";
 import { Hex } from "viem";
@@ -21,10 +22,8 @@ import { ProgramFilter } from "./Pages/Communities/Impact/ProgramFilter";
 import { TrackFilter } from "./Pages/Communities/Impact/TrackFilter";
 import { CardListSkeleton } from "./Pages/Communities/Loading";
 import { errorManager } from "./Utilities/errorManager";
-import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { ProgramBanner } from "./ProgramBanner";
 
-// Helper function to map maturity stage to status format
 const getStatusFromMaturityStage = (
   stage: MaturityStageOptions
 ): StatusOptions | undefined => {
@@ -32,7 +31,6 @@ const getStatusFromMaturityStage = (
   return `maturity-stage-${stage}` as StatusOptions;
 };
 
-// Map frontend sort options to API sort values
 const mapSortToApiValue = (sortOption: SortByOptions): string => {
   const sortMappings: Record<SortByOptions, string> = {
     recent: "recent",
@@ -65,6 +63,8 @@ interface CommunityGrantsProps {
   defaultSortBy: SortByOptions;
   defaultSelectedMaturityStage: MaturityStageOptions;
   communityUid: string;
+  communityStats: CommunityStatsV2;
+  initialProjects: CommunityProjectsV2Response;
 }
 
 export const CommunityGrants = ({
@@ -73,11 +73,13 @@ export const CommunityGrants = ({
   defaultSortBy,
   defaultSelectedMaturityStage,
   communityUid,
+  communityStats,
+  initialProjects,
 }: CommunityGrantsProps) => {
   const params = useParams();
   const communityId = params.communityId as string;
 
-  const [currentPage, setCurrentPage] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const [selectedCategories, changeCategoriesQuery] = useQueryState(
     "categories",
@@ -115,7 +117,6 @@ export const CommunityGrants = ({
     parse: (value) => value || null,
   });
 
-  // Add state for selected track IDs
   const [selectedTrackIds, changeSelectedTrackIdsQuery] = useQueryState<
     string[] | null
   >("trackIds", {
@@ -124,15 +125,19 @@ export const CommunityGrants = ({
     parse: (value) => (value ? value.split(",") : null),
   });
 
-  const [loading, setLoading] = useState<boolean>(true); // Loading state of the API call
-  const [grants, setGrants] = useState<IGrantResponse[]>([]); // Data returned from the API
-  const itemsPerPage = 12; // Set the total number of items you want returned from the API
+  const [loading, setLoading] = useState<boolean>(false);
+  const [projects, setProjects] = useState<ProjectV2[]>(initialProjects.payload);
+  const itemsPerPage = 12;
   const { totalGrants, setTotalGrants } = useCommunityStore();
-  const [haveMore, setHaveMore] = useState(true); // Boolean to check if there are more grants to load
+  const [haveMore, setHaveMore] = useState(initialProjects.pagination.hasNextPage);
   const [paginationInfo, setPaginationInfo] = useState<{
     grantsNo?: number;
     projectsNo?: number;
-  } | null>(null);
+  }>({
+    grantsNo: communityStats.totalGrants,
+    projectsNo: communityStats.totalProjects,
+  });
+
   const selectedCategoriesIds = useMemo(
     () => selectedCategories.join("_"),
     [selectedCategories]
@@ -141,41 +146,31 @@ export const CommunityGrants = ({
   useEffect(() => {
     if (!communityId || communityId === zeroUID) return;
 
-    const fetchNewGrants = async () => {
+    const fetchNewProjects = async () => {
+      if (loading) return; // Prevent multiple simultaneous calls
+      
       setLoading(true);
       try {
-        const {
-          grants: fetchedGrants,
-          pageInfo,
-          uniqueProjectCount,
-        } = await getGrants(
-          communityId as Hex,
-          {
-            sortBy: mapSortToApiValue(selectedSort) as SortByOptions,
-            status: getStatusFromMaturityStage(selectedMaturityStage),
-            categories: selectedCategoriesIds.split("_"),
-            selectedProgramId: selectedProgramId || undefined,
-            selectedTrackIds: selectedTrackIds || undefined,
-          },
-          {
-            page: currentPage,
-            pageLimit: itemsPerPage,
-          }
-        );
-        setPaginationInfo({
-          grantsNo: pageInfo.totalItems,
-          projectsNo: uniqueProjectCount,
+        const response = await getCommunityProjectsV2(communityId, {
+          page: currentPage,
+          limit: itemsPerPage,
+          sortBy: mapSortToApiValue(selectedSort),
+          status: getStatusFromMaturityStage(selectedMaturityStage),
+          categories: selectedCategoriesIds.split("_").filter(Boolean).join(","),
+          selectedProgramId: selectedProgramId || undefined,
+          selectedTrackIds: selectedTrackIds || undefined,
         });
-        if (fetchedGrants && fetchedGrants.length) {
-          setHaveMore(fetchedGrants.length === itemsPerPage);
-          setGrants((prev) =>
-            currentPage === 0 ? fetchedGrants : [...prev, ...fetchedGrants]
+
+        if (response.payload && response.payload.length) {
+          setHaveMore(response.pagination.hasNextPage);
+          setProjects((prev) =>
+            currentPage === 1 ? response.payload : [...prev, ...response.payload]
           );
-          setTotalGrants(pageInfo?.totalItems || totalGrants);
+          setTotalGrants(response.pagination.totalCount);
         } else {
-          if (currentPage === 0) {
-            setHaveMore(false);
-            setGrants([]);
+          setHaveMore(false);
+          if (currentPage === 1) {
+            setProjects([]);
             setTotalGrants(0);
             setPaginationInfo({
               grantsNo: 0,
@@ -185,7 +180,7 @@ export const CommunityGrants = ({
         }
       } catch (error: any) {
         console.log("error", error);
-        errorManager("Error while fetching community grants", error, {
+        errorManager("Error while fetching community projects", error, {
           sortBy: selectedSort,
           status: getStatusFromMaturityStage(selectedMaturityStage),
           categories: selectedCategoriesIds.split("_"),
@@ -194,12 +189,13 @@ export const CommunityGrants = ({
           page: currentPage,
           pageLimit: itemsPerPage,
         });
-        setGrants([]);
+        setProjects([]);
       } finally {
         setLoading(false);
       }
     };
-    fetchNewGrants();
+
+    fetchNewProjects();
   }, [
     communityId,
     selectedSort,
@@ -208,32 +204,40 @@ export const CommunityGrants = ({
     selectedTrackIds,
     selectedMaturityStage,
     currentPage,
-    setTotalGrants,
-    totalGrants,
   ]);
 
+  // Separate effect to handle initial projects
+  useEffect(() => {
+    if (currentPage === 1 && projects.length === 0 && initialProjects.payload.length > 0) {
+      setProjects(initialProjects.payload);
+      setHaveMore(initialProjects.pagination.hasNextPage);
+      setTotalGrants(initialProjects.pagination.totalCount);
+    }
+  }, [initialProjects, projects.length, currentPage]);
+
   const changeSort = async (newValue: SortByOptions) => {
-    setCurrentPage(0);
-    setGrants([]);
+    setCurrentPage(1);
+    setProjects([]);
     changeSortQuery(newValue);
   };
+  
   const changeMaturityStage = async (newValue: MaturityStageOptions) => {
-    setCurrentPage(0);
-    setGrants([]);
+    setCurrentPage(1);
+    setProjects([]);
     changeMaturityStageQuery(newValue);
   };
+  
   const changeCategories = async (newValue: string[]) => {
-    setCurrentPage(0);
-    setGrants([]);
+    setCurrentPage(1);
+    setProjects([]);
     changeCategoriesQuery(newValue);
   };
 
-  const loadMore = async () => {
-    if (!loading) {
-      const newPage = currentPage + 1;
-      setCurrentPage(newPage);
+  const loadMore = useCallback(() => {
+    if (!loading && haveMore) {
+      setCurrentPage((prev) => prev + 1);
     }
-  };
+  }, [loading, haveMore]);
 
   const resetTrackIds = () => {
     changeSelectedTrackIdsQuery(null);
@@ -247,8 +251,8 @@ export const CommunityGrants = ({
             onChange={(programId) => {
               resetTrackIds();
               changeSelectedProgramIdQuery(programId);
-              setCurrentPage(0);
-              setGrants([]);
+              setCurrentPage(1);
+              setProjects([]);
             }}
           />
 
@@ -257,18 +261,17 @@ export const CommunityGrants = ({
               <TrackFilter
                 onChange={(trackIds) => {
                   changeSelectedTrackIdsQuery(trackIds);
-                  setCurrentPage(0);
-                  setGrants([]);
+                  setCurrentPage(1);
+                  setProjects([]);
                 }}
                 communityUid={communityUid}
                 selectedTrackIds={selectedTrackIds || []}
               />
             ) : null}
-            {/* Filter by category start */}
+            
             {categoriesOptions.length ? (
               <Listbox
                 value={selectedCategories}
-                // onChange={setSelectedCategories}
                 onChange={(values) => {
                   changeCategories(values);
                 }}
@@ -358,9 +361,7 @@ export const CommunityGrants = ({
                 )}
               </Listbox>
             ) : null}
-            {/* Filter by category end */}
 
-            {/* Sort start */}
             <Listbox
               value={selectedSort}
               onChange={(value) => {
@@ -443,9 +444,7 @@ export const CommunityGrants = ({
                 </div>
               )}
             </Listbox>
-            {/* Sort end */}
 
-            {/* Maturity Stage start - Only show for celo community */}
             {communityId === "celo" && (
               <Listbox
                 value={selectedMaturityStage}
@@ -536,22 +535,15 @@ export const CommunityGrants = ({
                 )}
               </Listbox>
             )}
-            {/* Maturity Stage end */}
           </div>
         </div>
       </div>
       <ProgramBanner />
       <section className="flex flex-col gap-4 md:flex-row">
         <div className="h-full w-full mb-8">
-          {grants.length > 0 ? (
-            // <div className="grid grid-cols-4 justify-items-center gap-3 pb-20 max-2xl:grid-cols-4 max-xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1">
-            //   {grants.map((grant, index) => {
-            //     return <GrantCard key={grant.uid} grant={grant} index={index} />;
-            //   })}
-            // </div>
-
+          {projects.length > 0 ? (
             <InfiniteScroll
-              dataLength={grants.length}
+              dataLength={projects.length}
               next={loadMore}
               hasMore={haveMore}
               loader={null}
@@ -562,27 +554,27 @@ export const CommunityGrants = ({
             >
               <AutoSizer disableHeight>
                 {({ width }) => {
-                  const columnCounter = Math.floor(width / 240)
-                    ? Math.floor(width / 240) > 4
-                      ? 4
-                      : Math.floor(width / 240)
+                  const columns = Math.floor(width / 360);
+                  const columnCounter = columns
+                    ? columns > 6
+                      ? 6
+                      : columns
                     : 1;
                   const columnWidth = Math.floor(width / columnCounter);
                   const gutterSize = 20;
-                  const height = Math.ceil(grants.length / columnCounter) * 360;
+                  const height = Math.ceil(projects.length / columnCounter) * 360;
                   return (
                     <Grid
+                      key={`${width}-${columnCounter}`}
                       height={height + 120}
                       width={width}
-                      rowCount={Math.ceil(grants.length / columnCounter)}
+                      rowCount={Math.ceil(projects.length / columnCounter)}
                       rowHeight={360}
-                      columnWidth={
-                        columnWidth - 20 < 240 ? 240 : columnWidth - 5
-                      }
+                      columnWidth={columnWidth}
                       columnCount={columnCounter}
                       cellRenderer={({ columnIndex, key, rowIndex, style }) => {
-                        const grant =
-                          grants[rowIndex * columnCounter + columnIndex];
+                        const project =
+                          projects[rowIndex * columnCounter + columnIndex];
                         return (
                           <div
                             key={key}
@@ -603,7 +595,7 @@ export const CommunityGrants = ({
                               height: +(style.height || 0) - gutterSize,
                             }}
                           >
-                            {grant && (
+                            {project && (
                               <div
                                 style={{
                                   height: "100%",
@@ -611,8 +603,8 @@ export const CommunityGrants = ({
                               >
                                 <GrantCard
                                   index={rowIndex * 4 + columnIndex}
-                                  key={grant.uid}
-                                  grant={grant}
+                                  key={project.uid}
+                                  grant={projectV2ToGrant(project)}
                                 />
                               </div>
                             )}

@@ -3,8 +3,7 @@ import { communityColors } from "@/utilities/communityColors";
 import { envVars } from "@/utilities/enviromentVars";
 import { defaultMetadata } from "@/utilities/meta";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
-import { getCommunityData } from "@/utilities/queries/getCommunityData";
-import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { getCommunityDetailsV2 } from "@/utilities/queries/getCommunityDataV2";
 import { Metadata } from "next";
 import { CommunityImpactStatCards } from "@/components/Pages/Communities/Impact/StatCards";
 
@@ -18,8 +17,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { communityId } = await params;
 
-  const community = await getCommunityData(communityId);
-  const communityName = community?.details?.data?.name || communityId;
+  const community = await getCommunityDetailsV2(communityId);
+  const communityName = community?.details?.name || communityId;
 
   const dynamicMetadata = {
     title: `Karma GAP - ${communityName} community grants`,
@@ -50,12 +49,6 @@ export async function generateMetadata({
         },
       ],
     },
-    // link: [
-    //   {
-    //     rel: "icon",
-    //     href: "/favicon.ico",
-    //   },
-    // ],
   };
 }
 
@@ -71,7 +64,7 @@ export default async function Layout(props: {
     return undefined;
   }
 
-  const community = await getCommunityData(communityId);
+  const community = await getCommunityDetailsV2(communityId);
 
   return (
     <div className="flex w-full h-full max-w-full flex-col justify-start max-lg:flex-col">
@@ -82,22 +75,13 @@ export default async function Layout(props: {
               className="p-3 rounded-xl"
               style={{
                 backgroundColor:
-                  communityColors[
-                    (community as ICommunityResponse)?.uid?.toLowerCase() ||
-                      "black"
-                  ] || "#000000",
+                  communityColors[community?.uid?.toLowerCase() || "black"] || "#000000",
               }}
             >
               <div className="flex justify-center border border-white rounded-full p-2">
                 <img
-                  alt={
-                    (community as ICommunityResponse)?.details?.data.name ||
-                    "Community name"
-                  }
-                  src={
-                    (community as ICommunityResponse)?.details?.data
-                      ?.imageURL || ""
-                  }
+                  alt={community?.details?.name || "Community name"}
+                  src=""
                   className={
                     "h-14 w-14 min-w-14 min-h-14 rounded-full max-lg:h-8 max-lg:w-8 max-lg:min-h-8 max-lg:min-w-8"
                   }
@@ -106,9 +90,7 @@ export default async function Layout(props: {
             </div>
             <div className="flex flex-col gap-0">
               <p className="text-3xl font-body font-semibold text-black dark:text-white max-2xl:text-2xl max-lg:text-xl">
-                {community
-                  ? (community as ICommunityResponse)?.details?.data?.name
-                  : ""}
+                {community?.details?.name || ""}
               </p>
             </div>
           </div>
