@@ -12,7 +12,7 @@ import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import { useParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import pluralize from "pluralize";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { AutoSizer, Grid } from "react-virtualized";
 import { Hex } from "viem";
@@ -228,12 +228,27 @@ export const CommunityGrants = ({
     changeCategoriesQuery(newValue);
   };
 
-  const loadMore = async () => {
+  const loadMore = useCallback(() => {
     if (!loading) {
-      const newPage = currentPage + 1;
-      setCurrentPage(newPage);
+      setCurrentPage((prev) => prev + 1);
     }
-  };
+  }, [loading]);
+
+  useEffect(() => {
+    if (loading || !haveMore) {
+      return;
+    }
+
+    const handleScroll = () => {
+      if (document.documentElement.scrollHeight <= window.innerHeight) {
+        loadMore();
+      }
+    };
+
+    const timeoutId = setTimeout(handleScroll, 200);
+
+    return () => clearTimeout(timeoutId);
+  }, [grants, haveMore, loadMore, loading]);
 
   const resetTrackIds = () => {
     changeSelectedTrackIdsQuery(null);
@@ -562,23 +577,26 @@ export const CommunityGrants = ({
             >
               <AutoSizer disableHeight>
                 {({ width }) => {
-                  const columnCounter = Math.floor(width / 240)
-                    ? Math.floor(width / 240) > 4
-                      ? 4
-                      : Math.floor(width / 240)
+                  const columns = Math.floor(width / 360);
+                  const columnCounter = columns
+                    ? columns > 6
+                      ? 6
+                      : columns
                     : 1;
+
                   const columnWidth = Math.floor(width / columnCounter);
                   const gutterSize = 20;
-                  const height = Math.ceil(grants.length / columnCounter) * 360;
+                  const height =
+                    Math.ceil(grants.length / columnCounter) * 360;
+
                   return (
                     <Grid
-                      height={height + 120}
+                      key={`grid-${width}-${columnCounter}`} // Force re-render on width/column change
+                      height={height + 60}
                       width={width}
                       rowCount={Math.ceil(grants.length / columnCounter)}
                       rowHeight={360}
-                      columnWidth={
-                        columnWidth - 20 < 240 ? 240 : columnWidth - 5
-                      }
+                      columnWidth={columnWidth}
                       columnCount={columnCounter}
                       cellRenderer={({ columnIndex, key, rowIndex, style }) => {
                         const grant =
@@ -588,29 +606,21 @@ export const CommunityGrants = ({
                             key={key}
                             style={{
                               ...style,
-                              left:
-                                columnIndex === 0
-                                  ? +(style.left || 0)
-                                  : +(style.left || 0) + gutterSize,
-                              width:
-                                columnIndex === 0
-                                  ? +(style.width || 0)
-                                  : +(style.width || 0) - gutterSize,
-                              top:
-                                rowIndex === 0
-                                  ? +(style.top || 0)
-                                  : +(style.top || 0) + gutterSize,
-                              height: +(style.height || 0) - gutterSize,
+                              left: +(style.left || 0) + (columnIndex > 0 ? gutterSize : 0),
+                              width: +(style.width || 0) - (columnIndex > 0 ? gutterSize : 0),
+                              top: +(style.top || 0) + (rowIndex > 0 ? gutterSize : 0),
+                              height: +(style.height || 0) - (rowIndex > 0 ? gutterSize : 0),
                             }}
                           >
                             {grant && (
                               <div
                                 style={{
                                   height: "100%",
+                                  width: "100%",
                                 }}
                               >
                                 <GrantCard
-                                  index={rowIndex * 4 + columnIndex}
+                                  index={rowIndex * columnCounter + columnIndex}
                                   key={grant.uid}
                                   grant={grant}
                                 />
