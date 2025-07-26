@@ -10,6 +10,7 @@ export const PAGES = {
     IMPACT: (community: string) => `/community/${community}/impact`,
     PROJECT_DISCOVERY: (community: string) =>
       `/community/${community}/impact/project-discovery`,
+    UPDATES: (community: string) => `/community/${community}/updates`,
     RECEIVEPROJECTUPDATES: (community: string) =>
       `/community/${community}/receive-project-updates`,
   },
