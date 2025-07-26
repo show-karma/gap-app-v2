@@ -18,7 +18,8 @@
       "Bash(npm run lint:*)",
       "Bash(npm run build:*)",
       "Bash(gh pr edit:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(pnpm dev:*)"
     ],
     "deny": []
   }
