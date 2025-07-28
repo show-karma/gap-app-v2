@@ -74,15 +74,19 @@ export default function CommunityUpdatesPage() {
       }
 
       const response = await fetch(
-        `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}/communities/${communityId}/updates?${params.toString()}`
+        `${
+          envVars.NEXT_PUBLIC_GAP_INDEXER_URL
+        }/communities/${communityId}/updates?${params.toString()}`
       );
-      
+
       if (!response.ok) {
-        throw new Error(`Failed to fetch community updates: ${response.statusText}`);
+        throw new Error(
+          `Failed to fetch community updates: ${response.statusText}`
+        );
       }
-      
+
       const data = await response.json();
-      
+
       // Data now includes project and grant details, no additional fetching needed
       return data;
     },
@@ -92,35 +96,51 @@ export default function CommunityUpdatesPage() {
   // No transformation needed since we're using the raw data directly
 
   // Apply sorting to raw data for display
-  const sortedRawData = data?.data ? [...data.data].sort((a: CommunityMilestoneUpdate, b: CommunityMilestoneUpdate) => {
-    if (selectedFilter === "all") {
-      // For "all" filter: pending first (by ascending due date), then completed (by descending completion date)
-      const aCompleted = a.status === "completed";
-      const bCompleted = b.status === "completed";
-      
-      if (aCompleted !== bCompleted) {
-        return aCompleted ? 1 : -1; // Pending first
-      }
-      
-      if (!aCompleted && !bCompleted) {
-        // Both pending: sort by ascending due date
-        const aDueDate = a.details.dueDate ? new Date(a.details.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
-        const bDueDate = b.details.dueDate ? new Date(b.details.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
-        return aDueDate - bDueDate;
-      }
-      
-      // Both completed: sort by descending completion date
-      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-    } else if (selectedFilter === "pending") {
-      // Sort by earliest upcoming due date (ascending)
-      const aDueDate = a.details.dueDate ? new Date(a.details.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
-      const bDueDate = b.details.dueDate ? new Date(b.details.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
-      return aDueDate - bDueDate;
-    } else {
-      // Completed: sort by most recent completion date (descending)
-      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-    }
-  }) : [];
+  const sortedRawData = data?.data
+    ? [...data.data].sort(
+        (a: CommunityMilestoneUpdate, b: CommunityMilestoneUpdate) => {
+          if (selectedFilter === "all") {
+            // For "all" filter: pending first (by ascending due date), then completed (by descending completion date)
+            const aCompleted = a.status === "completed";
+            const bCompleted = b.status === "completed";
+
+            if (aCompleted !== bCompleted) {
+              return aCompleted ? 1 : -1; // Pending first
+            }
+
+            if (!aCompleted && !bCompleted) {
+              // Both pending: sort by ascending due date
+              const aDueDate = a.details.dueDate
+                ? new Date(a.details.dueDate).getTime()
+                : Number.MAX_SAFE_INTEGER;
+              const bDueDate = b.details.dueDate
+                ? new Date(b.details.dueDate).getTime()
+                : Number.MAX_SAFE_INTEGER;
+              return aDueDate - bDueDate;
+            }
+
+            // Both completed: sort by descending completion date
+            return (
+              new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+            );
+          } else if (selectedFilter === "pending") {
+            // Sort by earliest upcoming due date (ascending)
+            const aDueDate = a.details.dueDate
+              ? new Date(a.details.dueDate).getTime()
+              : Number.MAX_SAFE_INTEGER;
+            const bDueDate = b.details.dueDate
+              ? new Date(b.details.dueDate).getTime()
+              : Number.MAX_SAFE_INTEGER;
+            return aDueDate - bDueDate;
+          } else {
+            // Completed: sort by most recent completion date (descending)
+            return (
+              new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+            );
+          }
+        }
+      )
+    : [];
 
   // Calculate total pages
   const totalPages = data ? Math.ceil((data.total || 0) / ITEMS_PER_PAGE) : 0;
@@ -177,7 +197,11 @@ export default function CommunityUpdatesPage() {
         <div className="flex flex-row gap-4 justify-between items-center">
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-600 dark:text-gray-400">
-              {data?.total ? `${data.total} milestone updates` : isLoading ? "Loading..." : "0 milestone updates"}
+              {data?.total
+                ? `${data.total} milestone updates`
+                : isLoading
+                ? "Loading..."
+                : "0 milestone updates"}
             </span>
           </div>
 
@@ -185,7 +209,10 @@ export default function CommunityUpdatesPage() {
           <Listbox value={selectedFilter} onChange={setSelectedFilter}>
             <div className="relative">
               <Listbox.Button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-blue dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-600">
-                {filterOptions.find((opt) => opt.value === selectedFilter)?.label}
+                {
+                  filterOptions.find((opt) => opt.value === selectedFilter)
+                    ?.label
+                }
                 <ChevronDownIcon className="w-4 h-4" />
               </Listbox.Button>
               <Transition
@@ -233,7 +260,7 @@ export default function CommunityUpdatesPage() {
           </div>
         ) : sortedRawData && sortedRawData.length > 0 ? (
           <>
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 px-2">
               {sortedRawData.map((milestone) => (
                 <CommunityMilestoneCard
                   key={milestone.uid}
@@ -241,7 +268,7 @@ export default function CommunityUpdatesPage() {
                 />
               ))}
             </div>
-            
+
             {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex justify-center mt-8">

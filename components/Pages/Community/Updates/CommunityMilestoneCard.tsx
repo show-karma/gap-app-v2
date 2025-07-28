@@ -45,7 +45,8 @@ export const CommunityMilestoneCard: FC<CommunityMilestoneCardProps> = ({
   const isCompleted = milestone.status === "completed";
   const projectSlug = milestone.project.details.data.slug;
   const projectTitle = milestone.project.details.data.title;
-  const grantTitle = milestone.grant?.details?.data?.title || "Project Milestone";
+  const grantTitle =
+    milestone.grant?.details?.data?.title || "Project Milestone";
 
   return (
     <div className={cn(containerClassName, "flex flex-col w-full")}>
@@ -125,11 +126,13 @@ export const CommunityMilestoneCard: FC<CommunityMilestoneCardProps> = ({
       </div>
 
       {/* Attribution */}
-      <ActivityAttribution
-        createdAt={isCompleted ? milestone.updatedAt : milestone.createdAt}
-        attester=""
-        isCompleted={isCompleted}
-      />
+      {(isCompleted ? milestone?.updatedAt : milestone?.createdAt) ? (
+        <ActivityAttribution
+          date={isCompleted ? milestone?.updatedAt : milestone?.createdAt}
+          attester=""
+          isCompleted={isCompleted}
+        />
+      ) : null}
     </div>
   );
 };
