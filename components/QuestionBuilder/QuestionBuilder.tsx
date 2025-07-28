@@ -270,9 +270,9 @@ export function QuestionBuilder({
                         Email Field Required
                       </h4>
                       <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-                        Your form must include at least one email field for
+                        {`Your form must include at least one email field for
                         application tracking. Add a field with type "Email" or
-                        label containing "email".
+                        label containing "email".`}
                       </p>
                     </div>
                   </div>
