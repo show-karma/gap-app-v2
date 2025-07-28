@@ -106,7 +106,7 @@ export const CommunityMilestoneCard: FC<CommunityMilestoneCardProps> = ({
         {/* View Full Milestone Link */}
         {milestone.grant ? (
           <Link
-            href={`/project/${projectSlug}/grants/${milestone.grant.uid}`}
+            href={`/project/${projectSlug}/funding/${milestone.grant.uid}`}
             className="text-brand-blue hover:underline text-sm font-medium"
             target="_blank"
             rel="noopener noreferrer"
