@@ -11,6 +11,7 @@ import {
   ExportFormat,
   FundingApplicationStatusV2,
 } from "@/types/funding-platform";
+import { getCookiesFromStoredWallet } from "@/utilities/getCookiesFromStoredWallet";
 
 // Base API configuration
 const API_BASE =
@@ -26,13 +27,10 @@ const apiClient = axios.create({
 
 // Add request interceptor for authentication
 apiClient.interceptors.request.use((config) => {
-  // Add auth token if available (following existing patterns)
-  const token =
-    typeof window !== "undefined"
-      ? localStorage.getItem("gap-auth-token")
-      : null;
+  // Get auth token from cookies using address-specific key
+  const { token } = getCookiesFromStoredWallet();
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    config.headers.Authorization = token;
   }
   return config;
 });
@@ -114,7 +112,6 @@ export type FundingProgram = {
 
 // Funding Programs API (V2)
 export const fundingProgramsAPI = {
-
   /**
    * Get all grant programs for a community
    */
@@ -123,7 +120,7 @@ export const fundingProgramsAPI = {
     const configs = await apiClient.get<FundingProgram[]>(
       `/v2/funding-program-configs/community/${communityId}`
     );
-    
+
     // Transform to FundingProgram format for backward compatibility
     const programs = await Promise.all(
       configs.data.map(async (config) => {
@@ -132,7 +129,7 @@ export const fundingProgramsAPI = {
           // Stats already provided by backend, no need to fetch separately
           return config;
         }
-        
+
         // // Fallback: Get statistics for each program if not provided by backend
         // let stats = {
         //   totalApplications: 0,
@@ -141,7 +138,7 @@ export const fundingProgramsAPI = {
         //   rejectedApplications: 0,
         //   revisionRequestedApplications: 0,
         // };
-        
+
         // try {
         //   const statsResponse = await fundingApplicationsAPI.getApplicationStatistics(
         //     config.programId,
@@ -158,14 +155,14 @@ export const fundingProgramsAPI = {
         // } catch (error) {
         //   console.warn(`Failed to fetch stats for program ${config.programId}:`, error);
         // }
-        
+
         return {
           ...config,
           // stats,
         };
       })
     );
-    
+
     return programs;
   },
 
@@ -185,9 +182,13 @@ export const fundingProgramsAPI = {
   /**
    * Get all program configurations with optional community filter
    */
-  async getAllProgramConfigs(community?: string): Promise<IFundingProgramConfig[]> {
-    const params = community ? `?community=${community}` : '';
-    const response = await apiClient.get(`/v2/funding-program-configs${params}`);
+  async getAllProgramConfigs(
+    community?: string
+  ): Promise<IFundingProgramConfig[]> {
+    const params = community ? `?community=${community}` : "";
+    const response = await apiClient.get(
+      `/v2/funding-program-configs${params}`
+    );
     return response.data;
   },
 
@@ -195,7 +196,7 @@ export const fundingProgramsAPI = {
    * Get only enabled programs
    */
   async getEnabledPrograms(): Promise<IFundingProgramConfig[]> {
-    const response = await apiClient.get('/v2/funding-program-configs/enabled');
+    const response = await apiClient.get("/v2/funding-program-configs/enabled");
     return response.data;
   },
 
@@ -205,14 +206,14 @@ export const fundingProgramsAPI = {
   async createProgramConfiguration(
     programId: string,
     chainId: number,
-    config: Partial<IFundingProgramConfig | null>,
+    config: Partial<IFundingProgramConfig | null>
   ): Promise<IFundingProgramConfig> {
-      // If config exists, use POST to update
-      const response = await apiClient.post(
-        `/v2/funding-program-configs/${programId}/${chainId}`,
-        config
-      );
-      return response.data;
+    // If config exists, use POST to update
+    const response = await apiClient.post(
+      `/v2/funding-program-configs/${programId}/${chainId}`,
+      config
+    );
+    return response.data;
   },
 
   /**
@@ -221,14 +222,14 @@ export const fundingProgramsAPI = {
   async updateProgramConfiguration(
     programId: string,
     chainId: number,
-    config: Partial<IFundingProgramConfig | null>,
+    config: Partial<IFundingProgramConfig | null>
   ): Promise<IFundingProgramConfig> {
-      // If config exists, use PUT to update
-      const response = await apiClient.put(
-        `/v2/funding-program-configs/${programId}/${chainId}`,
-        config
-      );
-      return response.data;
+    // If config exists, use PUT to update
+    const response = await apiClient.put(
+      `/v2/funding-program-configs/${programId}/${chainId}`,
+      config
+    );
+    return response.data;
   },
 
   /**
@@ -240,7 +241,10 @@ export const fundingProgramsAPI = {
     formSchema: IFormSchema
   ): Promise<IFundingProgramConfig> {
     try {
-      const existingConfig = await this.getProgramConfiguration(programId, chainId);
+      const existingConfig = await this.getProgramConfiguration(
+        programId,
+        chainId
+      );
       const updatedConfig = {
         ...existingConfig,
         formSchema: formSchema,
@@ -251,7 +255,9 @@ export const fundingProgramsAPI = {
     } catch (error: any) {
       // If config doesn't exist, create new one with formSchema
       if (error.response?.status === 404 || !error.response) {
-        return this.updateProgramConfiguration(programId, chainId, { formSchema });
+        return this.updateProgramConfiguration(programId, chainId, {
+          formSchema,
+        });
       }
       throw error;
     }
@@ -266,26 +272,37 @@ export const fundingProgramsAPI = {
     enabled: boolean
   ): Promise<IFundingProgramConfig> {
     try {
-      const existingConfig = await this.getProgramConfiguration(programId, chainId);
+      const existingConfig = await this.getProgramConfiguration(
+        programId,
+        chainId
+      );
       return this.updateProgramConfiguration(programId, chainId, {
         ...existingConfig,
-        isEnabled: enabled
+        isEnabled: enabled,
       });
     } catch (error: any) {
       // If config doesn't exist, create new one with enabled status
       if (error.response?.status === 404 || !error.response) {
-        return this.updateProgramConfiguration(programId, chainId, { isEnabled: enabled });
+        return this.updateProgramConfiguration(programId, chainId, {
+          isEnabled: enabled,
+        });
       }
       throw error;
     }
   },
-  
+
   /**
    * Get program statistics (backward compatibility)
    */
-  async getProgramStats(programId: string, chainId: number): Promise<IApplicationStatistics> {
+  async getProgramStats(
+    programId: string,
+    chainId: number
+  ): Promise<IApplicationStatistics> {
     try {
-      const stats = await fundingApplicationsAPI.getApplicationStatistics(programId, chainId);
+      const stats = await fundingApplicationsAPI.getApplicationStatistics(
+        programId,
+        chainId
+      );
       return stats;
     } catch (error) {
       console.warn(`Failed to fetch stats for program ${programId}:`, error);
@@ -353,12 +370,12 @@ export const fundingApplicationsAPI = {
   ): Promise<IPaginatedApplicationsResponse> {
     const params = new URLSearchParams();
 
-    if (filters.status) params.append('status', filters.status);
-    if (filters.search) params.append('search', filters.search);
-    if (filters.page) params.append('page', filters.page.toString());
-    if (filters.limit) params.append('limit', filters.limit.toString());
-    if (filters.dateFrom) params.append('dateFrom', filters.dateFrom);
-    if (filters.dateTo) params.append('dateTo', filters.dateTo);
+    if (filters.status) params.append("status", filters.status);
+    if (filters.search) params.append("search", filters.search);
+    if (filters.page) params.append("page", filters.page.toString());
+    if (filters.limit) params.append("limit", filters.limit.toString());
+    if (filters.dateFrom) params.append("dateFrom", filters.dateFrom);
+    if (filters.dateTo) params.append("dateTo", filters.dateTo);
 
     const response = await apiClient.get(
       `/v2/funding-applications/program/${programId}/${chainId}?${params}`
@@ -379,7 +396,9 @@ export const fundingApplicationsAPI = {
   /**
    * Get application by reference number
    */
-  async getApplicationByReference(referenceNumber: string): Promise<IFundingApplication> {
+  async getApplicationByReference(
+    referenceNumber: string
+  ): Promise<IFundingApplication> {
     const response = await apiClient.get(
       `/v2/funding-applications/reference/${referenceNumber}`
     );
@@ -396,7 +415,9 @@ export const fundingApplicationsAPI = {
   ): Promise<IFundingApplication | null> {
     try {
       const response = await apiClient.get(
-        `/v2/funding-applications/program/${programId}/${chainId}/by-email?email=${encodeURIComponent(email)}`
+        `/v2/funding-applications/program/${programId}/${chainId}/by-email?email=${encodeURIComponent(
+          email
+        )}`
       );
       return response.data;
     } catch (error: any) {
@@ -427,21 +448,21 @@ export const fundingApplicationsAPI = {
   async exportApplications(
     programId: string,
     chainId: number,
-    format: ExportFormat = 'json',
+    format: ExportFormat = "json",
     filters: IApplicationFilters = {}
   ): Promise<any> {
     const params = new URLSearchParams();
-    params.append('format', format);
+    params.append("format", format);
 
-    if (filters.status) params.append('status', filters.status);
-    if (filters.search) params.append('search', filters.search);
-    if (filters.dateFrom) params.append('dateFrom', filters.dateFrom);
-    if (filters.dateTo) params.append('dateTo', filters.dateTo);
+    if (filters.status) params.append("status", filters.status);
+    if (filters.search) params.append("search", filters.search);
+    if (filters.dateFrom) params.append("dateFrom", filters.dateFrom);
+    if (filters.dateTo) params.append("dateTo", filters.dateTo);
 
     const response = await apiClient.get(
       `/v2/funding-applications/program/${programId}/${chainId}/export?${params}`,
       {
-        responseType: format === 'csv' ? 'blob' : 'json'
+        responseType: format === "csv" ? "blob" : "json",
       }
     );
     return response.data;

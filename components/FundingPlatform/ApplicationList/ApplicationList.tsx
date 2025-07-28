@@ -88,6 +88,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   // Filter and sort applications
   const filteredAndSortedApplications = useMemo(() => {
@@ -109,9 +110,12 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
   ) => {
     if (onStatusChange) {
       try {
+        setIsUpdatingStatus(true);
         await onStatusChange(applicationId, newStatus);
+        setIsUpdatingStatus(false);
       } catch (error) {
         console.error("Failed to update status:", error);
+        setIsUpdatingStatus(false);
       }
     }
   };
@@ -265,70 +269,48 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                 </div>
 
                 {/* Actions */}
-                {showStatusActions && onStatusChange && (
+                {showStatusActions && onStatusChange && application.status !== "withdrawn" && (
                   <div className="flex flex-wrap gap-2">
-                    {application.status === "pending" && (
-                      <>
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleStatusChange(application.id, "revision_requested");
-                          }}
-                          variant="secondary"
-                          className="w-fit px-3 py-1 border bg-transparent border-gray-200 font-medium dark:border-gray-700 flex flex-row gap-2"
-                        >
-                          Request Revision
-                        </Button>
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleStatusChange(application.id, "approved");
-                          }}
-                          variant="secondary"
-                          className="w-fit px-3 py-1 border bg-transparent text-green-500 font-medium border-green-200 dark:border-green-700 flex flex-row gap-2"
-                        >
-                          <CheckIcon className="w-4 h-4" />
-                          Approve
-                        </Button>
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleStatusChange(application.id, "rejected");
-                          }}
-                          variant="secondary"
-                          className="w-fit px-3 py-1 border bg-transparent text-red-500 font-medium border-red-200 dark:border-red-700 flex flex-row gap-2"
-                        >
-                          <XMarkIcon className="w-4 h-4" />
-                          Reject
-                        </Button>
-                      </>
+                    {application.status !== "revision_requested" && (
+                      <Button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStatusChange(application.id, "revision_requested");
+                        }}
+                        variant="secondary"
+                        className="w-fit px-3 py-1 border bg-transparent border-gray-200 font-medium dark:border-gray-700 flex flex-row gap-2"
+                        disabled={isUpdatingStatus}
+                      >
+                        Request Revision
+                      </Button>
                     )}
-
-                    {application.status === "revision_requested" && (
-                      <>
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleStatusChange(application.id, "approved");
-                          }}
-                          variant="secondary"
-                          className="w-fit px-3 py-1 border bg-transparent text-green-500 font-medium border-green-200 dark:border-green-700 flex flex-row gap-2"
-                        >
-                          <CheckIcon className="w-4 h-4" />
-                          Approve
-                        </Button>
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleStatusChange(application.id, "rejected");
-                          }}
-                          variant="secondary"
-                          className="w-fit px-3 py-1 border bg-transparent text-red-500 font-medium border-red-200 dark:border-red-700 flex flex-row gap-2"
-                        >
-                          <XMarkIcon className="w-4 h-4" />
-                          Reject
-                        </Button>
-                      </>
+                    {application.status !== "approved" && (
+                      <Button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStatusChange(application.id, "approved");
+                        }}
+                        variant="secondary"
+                        className="w-fit px-3 py-1 border bg-transparent text-green-500 font-medium border-green-200 dark:border-green-700 flex flex-row gap-2"
+                        disabled={isUpdatingStatus}
+                      >
+                        <CheckIcon className="w-4 h-4" />
+                        Approve
+                      </Button>
+                    )}
+                    {application.status !== "rejected" && (
+                      <Button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStatusChange(application.id, "rejected");
+                        }}
+                        variant="secondary"
+                        className="w-fit px-3 py-1 border bg-transparent text-red-500 font-medium border-red-200 dark:border-red-700 flex flex-row gap-2"
+                        disabled={isUpdatingStatus}
+                      >
+                        <XMarkIcon className="w-4 h-4" />
+                        Reject
+                      </Button>
                     )}
                   </div>
                 )}

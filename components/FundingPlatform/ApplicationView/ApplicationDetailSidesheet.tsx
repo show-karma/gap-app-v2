@@ -71,9 +71,6 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
   onStatusChange,
   showStatusActions = false,
 }) => {
-  const [showReasonModal, setShowReasonModal] = useState(false);
-  const [pendingStatus, setPendingStatus] = useState<string>('');
-  const [statusReason, setStatusReason] = useState('');
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   if (!application) return null;
@@ -81,26 +78,10 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
   const StatusIcon = statusIcons[application.status as keyof typeof statusIcons] || ClockIcon;
 
   const handleStatusChange = async (newStatus: string) => {
-    if (newStatus === 'revision_requested' || newStatus === 'rejected') {
-      setPendingStatus(newStatus);
-      setShowReasonModal(true);
-    } else {
-      if (onStatusChange) {
-        setIsUpdatingStatus(true);
-        await onStatusChange(application.id, newStatus);
-        setIsUpdatingStatus(false);
-      }
-    }
-  };
-
-  const handleConfirmStatusChange = async () => {
-    if (onStatusChange && pendingStatus) {
+    if (onStatusChange) {
       setIsUpdatingStatus(true);
-      await onStatusChange(application.id, pendingStatus, statusReason);
+      await onStatusChange(application.id, newStatus);
       setIsUpdatingStatus(false);
-      setShowReasonModal(false);
-      setStatusReason('');
-      setPendingStatus('');
     }
   };
 
@@ -413,9 +394,9 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                     {showStatusActions && onStatusChange && (
                       <div className="border-t border-gray-200 bg-gray-50 px-4 py-4 sm:px-6">
                         <div className="flex flex-col space-y-2">
-                          {/* Show available actions based on current status */}
-                          {application.status === 'pending' && (
-                            <div className="flex space-x-3">
+                          {/* Show all available actions except the current status */}
+                          <div className="flex space-x-3">
+                            {application.status !== 'revision_requested' && (
                               <Button
                                 onClick={() => handleStatusChange('revision_requested')}
                                 variant="secondary"
@@ -424,6 +405,8 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                               >
                                 Request Revision
                               </Button>
+                            )}
+                            {application.status !== 'approved' && (
                               <Button
                                 onClick={() => handleStatusChange('approved')}
                                 className="flex-1 bg-green-600 hover:bg-green-700"
@@ -431,6 +414,8 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                               >
                                 Approve
                               </Button>
+                            )}
+                            {application.status !== 'rejected' && (
                               <Button
                                 onClick={() => handleStatusChange('rejected')}
                                 className="flex-1 bg-red-600 hover:bg-red-700"
@@ -438,36 +423,18 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                               >
                                 Reject
                               </Button>
-                            </div>
-                          )}
+                            )}
+                          </div>
                           
                           {application.status === 'revision_requested' && (
-                            <>
-                              <p className="text-xs text-gray-500 mb-2">
-                                The applicant can update their submission. You can approve or reject once they resubmit.
-                              </p>
-                              <div className="flex space-x-3">
-                                <Button
-                                  onClick={() => handleStatusChange('approved')}
-                                  className="flex-1 bg-green-600 hover:bg-green-700"
-                                  disabled={isUpdatingStatus}
-                                >
-                                  Approve
-                                </Button>
-                                <Button
-                                  onClick={() => handleStatusChange('rejected')}
-                                  className="flex-1 bg-red-600 hover:bg-red-700"
-                                  disabled={isUpdatingStatus}
-                                >
-                                  Reject
-                                </Button>
-                              </div>
-                            </>
+                            <p className="text-xs text-gray-500">
+                              The applicant can update their submission.
+                            </p>
                           )}
 
-                          {(application.status === 'approved' || application.status === 'rejected' || application.status === 'withdrawn') && (
+                          {application.status === 'withdrawn' && (
                             <p className="text-sm text-gray-500 text-center py-2">
-                              This application is in a final state and cannot be modified.
+                              This application has been withdrawn by the applicant.
                             </p>
                           )}
                         </div>
@@ -477,86 +444,6 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                 </Dialog.Panel>
               </Transition.Child>
             </div>
-          </div>
-        </div>
-      </Dialog>
-    </Transition.Root>
-
-    {/* Reason Modal */}
-    <Transition.Root show={showReasonModal} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={() => setShowReasonModal(false)}>
-        <Transition.Child
-          as={Fragment}
-          enter="ease-out duration-300"
-          enterFrom="opacity-0"
-          enterTo="opacity-100"
-          leave="ease-in duration-200"
-          leaveFrom="opacity-100"
-          leaveTo="opacity-0"
-        >
-          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
-        </Transition.Child>
-
-        <div className="fixed inset-0 z-10 overflow-y-auto">
-          <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-            <Transition.Child
-              as={Fragment}
-              enter="ease-out duration-300"
-              enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-              enterTo="opacity-100 translate-y-0 sm:scale-100"
-              leave="ease-in duration-200"
-              leaveFrom="opacity-100 translate-y-0 sm:scale-100"
-              leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-            >
-              <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
-                <div>
-                  <div className="mt-3 text-center sm:mt-5">
-                    <Dialog.Title as="h3" className="text-base font-semibold leading-6 text-gray-900">
-                      {pendingStatus === 'revision_requested' ? 'Request Revision' : 'Reject Application'}
-                    </Dialog.Title>
-                    <div className="mt-4">
-                      <p className="text-sm text-gray-500 mb-4">
-                        Please provide a reason for this status change. This will be visible to the applicant.
-                      </p>
-                      <textarea
-                        rows={4}
-                        className="block w-full rounded-md border-0 py-2 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm sm:leading-6"
-                        placeholder={pendingStatus === 'revision_requested' 
-                          ? 'Please explain what needs to be revised...'
-                          : 'Please explain why the application is being rejected...'
-                        }
-                        value={statusReason}
-                        onChange={(e) => setStatusReason(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
-                  <Button
-                    onClick={handleConfirmStatusChange}
-                    disabled={!statusReason.trim() || isUpdatingStatus}
-                    className={cn(
-                      'inline-flex w-full justify-center sm:col-start-2',
-                      pendingStatus === 'rejected' && 'bg-red-600 hover:bg-red-700'
-                    )}
-                  >
-                    {isUpdatingStatus ? 'Updating...' : 'Confirm'}
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      setShowReasonModal(false);
-                      setStatusReason('');
-                      setPendingStatus('');
-                    }}
-                    disabled={isUpdatingStatus}
-                    className="mt-3 inline-flex w-full justify-center sm:col-start-1 sm:mt-0"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </Dialog.Panel>
-            </Transition.Child>
           </div>
         </div>
       </Dialog>
