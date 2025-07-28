@@ -40,10 +40,10 @@ export default function QuestionBuilderPage() {
     isUpdating,
   } = useQuestionBuilderSchema(programId, parsedChainId);
 
-  const {config: existingConfig} = useProgramConfig(programId, parsedChainId);
+  const { config: existingConfig } = useProgramConfig(programId, parsedChainId);
 
   const handleSchemaChange = (schema: FormSchema) => {
-    updateSchema({schema, existingConfig: existingConfig || null });
+    updateSchema({ schema, existingConfig: existingConfig || null });
   };
 
   const handleBackClick = () => {
@@ -68,7 +68,7 @@ export default function QuestionBuilderPage() {
 
   if (schemaError) {
     return (
-      <div className="px-4 sm:px-6 lg:px-12 py-5">
+      <div className="sm:px-3 md:px-4 px-6 py-2">
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
           <h3 className="text-lg font-semibold text-red-700 dark:text-red-300 mb-2">
             Error Loading Form Schema
@@ -102,7 +102,7 @@ export default function QuestionBuilderPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="px-4 sm:px-6 lg:px-12 py-4">
+        <div className="sm:px-3 md:px-4 px-6 py-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Button

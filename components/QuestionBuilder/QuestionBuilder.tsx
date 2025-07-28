@@ -143,14 +143,15 @@ export function QuestionBuilder({
     if (!schema.fields) return false;
     return schema.fields.some(
       (field) =>
-        field.type === "email" ||
-        field.label.toLowerCase().includes("email")
+        field.type === "email" || field.label.toLowerCase().includes("email")
     );
   };
 
   const handleSave = () => {
     if (!hasEmailField()) {
-      alert("Please add at least one email field to the form. This is required for application tracking.");
+      alert(
+        "Please add at least one email field to the form. This is required for application tracking."
+      );
       return;
     }
     onSave?.(schema);
@@ -170,7 +171,7 @@ export function QuestionBuilder({
       className={`flex flex-col h-full bg-gray-50 dark:bg-gray-900 ${className}`}
     >
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 lg:px-8 py-4">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sm:px-3 md:px-4 px-6 py-2">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-2 mb-4 sm:mb-0">
             <input
@@ -233,7 +234,11 @@ export function QuestionBuilder({
                   ? "bg-yellow-600 hover:bg-yellow-700"
                   : "bg-blue-600 hover:bg-blue-700"
               }`}
-              title={!hasEmailField() ? "Add an email field before saving" : undefined}
+              title={
+                !hasEmailField()
+                  ? "Add an email field before saving"
+                  : undefined
+              }
             >
               {!hasEmailField() && (
                 <ExclamationTriangleIcon className="w-4 h-4 mr-2" />
@@ -245,9 +250,9 @@ export function QuestionBuilder({
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden  sm:px-3 md:px-4 px-6 py-2">
         {activeTab === "build" ? (
-          <div className="h-full grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 sm:p-6 lg:p-8">
+          <div className="h-full grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Field Types Panel */}
             <div className="lg:col-span-1">
               <FieldTypeSelector onFieldAdd={handleFieldAdd} />
@@ -265,13 +270,14 @@ export function QuestionBuilder({
                         Email Field Required
                       </h4>
                       <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-                        Your form must include at least one email field for application tracking. 
-                        Add a field with type "Email" or label containing "email".
+                        Your form must include at least one email field for
+                        application tracking. Add a field with type "Email" or
+                        label containing "email".
                       </p>
                     </div>
                   </div>
                 )}
-                
+
                 {!schema.fields || schema.fields.length === 0 ? (
                   <div className="bg-white dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
                     <div className="text-gray-400 mb-4">

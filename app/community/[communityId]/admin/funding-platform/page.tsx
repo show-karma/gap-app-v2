@@ -14,8 +14,8 @@ import {
   ChevronDownIcon,
   ArrowTrendingUpIcon,
   ChevronRightIcon,
+  ArrowLeftIcon,
 } from "@heroicons/react/24/solid";
-import Link from "next/link";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -40,6 +40,7 @@ import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import { Line } from "@rc-component/progress";
 import pluralize from "pluralize";
+import Link from "next/link";
 
 export default function FundingPlatformAdminPage() {
   const { communityId } = useParams() as { communityId: string };
@@ -137,7 +138,9 @@ export default function FundingPlatformAdminPage() {
           approved: acc.approved + (programStats?.approvedApplications || 0),
           rejected: acc.rejected + (programStats?.rejectedApplications || 0),
           pending: acc.pending + (programStats?.pendingApplications || 0),
-          revisionRequested: acc.revisionRequested + (programStats?.revisionRequestedApplications || 0),
+          revisionRequested:
+            acc.revisionRequested +
+            (programStats?.revisionRequestedApplications || 0),
         };
       },
       {
@@ -152,7 +155,6 @@ export default function FundingPlatformAdminPage() {
 
     return stats;
   }, [programs]);
-
 
   // Filter programs based on search term and enabled status
   const filteredPrograms = useMemo(() => {
@@ -263,7 +265,7 @@ export default function FundingPlatformAdminPage() {
       icon: <XCircleIcon className="h-5 w-5 text-red-700 dark:text-red-100" />,
     },
     {
-      title: "Pending",
+      title: "Pending Review",
       value: formatCurrency(statistics.pending),
       color: "text-orange-600",
       bgColor: "bg-orange-50 dark:bg-orange-900",
@@ -318,7 +320,8 @@ export default function FundingPlatformAdminPage() {
     const approvedApplications = program.metrics?.approvedApplications || 0;
     const rejectedApplications = program.metrics?.rejectedApplications || 0;
     const pendingApplications = program.metrics?.pendingApplications || 0;
-    const revisionRequestedApplications = program.metrics?.revisionRequestedApplications || 0;
+    const revisionRequestedApplications =
+      program.metrics?.revisionRequestedApplications || 0;
 
     return [
       {
@@ -334,7 +337,7 @@ export default function FundingPlatformAdminPage() {
         bgColor: "bg-red-500",
       },
       {
-        title: "Pending",
+        title: "Pending Review",
         value: pendingApplications,
         color: "text-orange-600",
         bgColor: "bg-orange-500",
@@ -349,7 +352,14 @@ export default function FundingPlatformAdminPage() {
   };
 
   return (
-    <div className="px-4 sm:px-6 lg:px-12 py-5">
+    <div className="sm:px-3 md:px-4 px-6 py-2 flex flex-col gap-4">
+      <Link
+        href={`/community/${communityId}/admin`}
+        className="flex items-center border border-black dark:border-white text-black dark:text-white rounded-md py-2 px-4 w-max"
+      >
+        <ArrowLeftIcon className="w-4 h-4 mr-2" />
+        Back
+      </Link>
       {/* Statistics Bar */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {stats.map((stat) => (
@@ -460,9 +470,17 @@ export default function FundingPlatformAdminPage() {
                   <div
                     className={cn(
                       "relative group",
-                      (!program.applicationConfig || Object.keys(program.applicationConfig).length === 1) ? "cursor-not-allowed" : "cursor-pointer"
+                      !program.applicationConfig ||
+                        Object.keys(program.applicationConfig).length === 1
+                        ? "cursor-not-allowed"
+                        : "cursor-pointer"
                     )}
-                    title={(!program.applicationConfig || Object.keys(program.applicationConfig).length === 1) ? "Program doesn't have configured form" : undefined}
+                    title={
+                      !program.applicationConfig ||
+                      Object.keys(program.applicationConfig).length === 1
+                        ? "Program doesn't have configured form"
+                        : undefined
+                    }
                   >
                     <button
                       className={cn(
@@ -470,7 +488,8 @@ export default function FundingPlatformAdminPage() {
                         program.applicationConfig?.isEnabled
                           ? "bg-green-100 dark:bg-green-900"
                           : "bg-gray-100 dark:bg-zinc-700",
-                        (!program.applicationConfig || Object.keys(program.applicationConfig).length === 1)
+                        !program.applicationConfig ||
+                          Object.keys(program.applicationConfig).length === 1
                           ? "cursor-not-allowed opacity-50"
                           : "cursor-pointer"
                       )}
@@ -480,11 +499,12 @@ export default function FundingPlatformAdminPage() {
                             program.programId,
                             program.chainID,
                             program.applicationConfig?.isEnabled || false
-                          )
+                          );
                         }
                       }}
                       disabled={
-                        (!program.applicationConfig || Object.keys(program.applicationConfig).length === 1) ||
+                        !program.applicationConfig ||
+                        Object.keys(program.applicationConfig).length === 1 ||
                         togglingPrograms.has(
                           `${program.programId}_${program.chainID}`
                         )
@@ -496,7 +516,10 @@ export default function FundingPlatformAdminPage() {
                           program.applicationConfig?.isEnabled
                             ? "bg-green-600 dark:bg-green-600"
                             : "bg-gray-200 dark:bg-gray-400",
-                            (!program.applicationConfig || Object.keys(program.applicationConfig).length === 1) && "bg-gray-300 dark:bg-gray-600"
+                          (!program.applicationConfig ||
+                            Object.keys(program.applicationConfig).length ===
+                              1) &&
+                            "bg-gray-300 dark:bg-gray-600"
                         )}
                       >
                         <span
@@ -526,9 +549,10 @@ export default function FundingPlatformAdminPage() {
                       </span>
                     </button>
                     {/* Tooltip for disabled state */}
-                    {(!program.applicationConfig || Object.keys(program.applicationConfig).length === 1) && (
+                    {(!program.applicationConfig ||
+                      Object.keys(program.applicationConfig).length === 1) && (
                       <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                        Program doesn't have configured form
+                        Program doesn&apos;t have configured form
                         <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
                           <div className="border-4 border-transparent border-t-gray-900"></div>
                         </div>
@@ -539,7 +563,7 @@ export default function FundingPlatformAdminPage() {
                     ID {program.programId}
                   </span>
                   <span className="text-sm bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 px-2 py-1 rounded-full">
-                    {program.metadata?.type || 'A'}
+                    {program.metadata?.type || "A"}
                   </span>
                 </div>
                 {/* Program Header */}
@@ -691,7 +715,8 @@ export default function FundingPlatformAdminPage() {
                   </div>
                 </div>
                 {/* Pending Applications Review */}
-                {program?.metrics?.pendingApplications && program.metrics.pendingApplications > 0 ? (
+                {program?.metrics?.pendingApplications &&
+                program.metrics.pendingApplications > 0 ? (
                   <div className=" bg-orange-50 dark:bg-orange-900/20 border-none">
                     <Link
                       href={PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(
