@@ -586,8 +586,8 @@ export const CommunityGrants = ({
 
                   const columnWidth = Math.floor(width / columnCounter);
                   const gutterSize = 20;
-                  const height = Math.ceil(grants.length / columnCounter) * 360;
-
+                  const height =
+                    Math.ceil(grants.length / columnCounter) * 360;
                   return (
                     <Grid
                       key={`grid-${width}-${columnCounter}`} // Force re-render on width/column change
@@ -605,18 +605,10 @@ export const CommunityGrants = ({
                             key={key}
                             style={{
                               ...style,
-                              left:
-                                +(style.left || 0) +
-                                (columnIndex > 0 ? gutterSize : 0),
-                              width:
-                                +(style.width || 0) -
-                                (columnIndex > 0 ? gutterSize : 0),
-                              top:
-                                +(style.top || 0) +
-                                (rowIndex > 0 ? gutterSize : 0),
-                              height:
-                                +(style.height || 0) -
-                                (rowIndex > 0 ? gutterSize : 0),
+                              left: +(style.left || 0) + (columnIndex > 0 ? gutterSize : 0),
+                              width: +(style.width || 0) - (columnIndex > 0 ? gutterSize : 0),
+                              top: +(style.top || 0) + (rowIndex > 0 ? gutterSize : 0),
+                              height: +(style.height || 0) - (rowIndex > 0 ? gutterSize : 0),
                             }}
                           >
                             {grant && (
