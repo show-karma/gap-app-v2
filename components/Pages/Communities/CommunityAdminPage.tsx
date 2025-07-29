@@ -17,6 +17,7 @@ import {
   FlagIcon,
   ChartBarIcon,
   TagIcon,
+  CurrencyDollarIcon,
   BanknotesIcon,
 } from "@heroicons/react/24/outline";
 import { Skeleton } from "@/components/Utilities/Skeleton";
@@ -143,6 +144,16 @@ export const CommunityAdminPage = ({
               description="Manage tracks and assign them to programs"
               colorClass=""
               icon={<TagIcon className="w-6 h-6" />}
+            />
+
+            <AdminButton
+              href={PAGES.ADMIN.FUNDING_PLATFORM(
+                community?.details?.data?.slug || communityId
+              )}
+              label="Funding Platform"
+              description="Create forms and manage funding applications"
+              colorClass=""
+              icon={<CurrencyDollarIcon className="w-6 h-6" />}
             />
             <AdminButton
               href={PAGES.ADMIN.PAYOUTS(
