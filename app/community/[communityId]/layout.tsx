@@ -81,7 +81,7 @@ export default async function Layout(props: {
               <div className="flex justify-center border border-white rounded-full p-2">
                 <img
                   alt={community?.details?.name || "Community name"}
-                  src=""
+                  src={community?.details?.logoUrl || ""}
                   className={
                     "h-14 w-14 min-w-14 min-h-14 rounded-full max-lg:h-8 max-lg:w-8 max-lg:min-h-8 max-lg:min-w-8"
                   }

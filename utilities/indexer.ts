@@ -147,7 +147,7 @@ export const INDEXER = {
         if (sortBy) params.set("sortBy", sortBy);
         if (categories) params.set("categories", categories);
         if (status) params.set("status", status);
-        if (selectedProgramId) params.set("selectedProgramId", selectedProgramId);
+        if (selectedProgramId) params.set("programIds", selectedProgramId);
         if (selectedTrackIds?.length) params.set("selectedTrackIds", selectedTrackIds.join(","));
         const queryString = params.toString();
         return `/v2/communities/${slug}/projects${queryString ? `?${queryString}` : ""}`;

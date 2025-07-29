@@ -5,6 +5,7 @@ export interface CommunityDetailsV2 {
     name: string;
     description: string;
     slug: string;
+    logoUrl: string;
   };
   createdAt: string;
   updatedAt: string;
