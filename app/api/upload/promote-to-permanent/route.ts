@@ -49,7 +49,8 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json({
       permanentUrl,
-      permanentKey
+      permanentKey,
+      message: 'Image successfully promoted to permanent status'
     });
     
   } catch (error) {

@@ -35,9 +35,9 @@ export async function POST(request: NextRequest) {
     const fileExtension = fileName.split('.').pop();
     const uniqueFileName = `temp-logos/${timestamp}-${randomId}.${fileExtension}`;
     
-    // Set expiration to 24 hours from now
+    // Set expiration to 12 hours from now  
     const expirationDate = new Date();
-    expirationDate.setHours(expirationDate.getHours() + 24);
+    expirationDate.setHours(expirationDate.getHours() + 12);
     
     // Create presigned URL for upload
     const command = new PutObjectCommand({

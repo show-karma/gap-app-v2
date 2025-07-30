@@ -79,6 +79,7 @@ import { FarcasterIcon } from "@/components/Icons/Farcaster";
 import { DeckIcon } from "@/components/Icons/Deck";
 import { VideoIcon } from "@/components/Icons/Video";
 import { useWallet } from "@/hooks/useWallet";
+import { FileUpload } from "@/components/UI/FileUpload";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -233,6 +234,13 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     : undefined;
 
   const [contacts, setContacts] = useState<Contact[]>(previousContacts || []);
+  
+  // Add state for uploaded logo file and S3 upload
+  const [uploadedLogoFile, setUploadedLogoFile] = useState<File | null>(null);
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
+  const [isLogoUploading, setIsLogoUploading] = useState(false);
+  const [logoUploadProgress, setLogoUploadProgress] = useState(0);
+  const [tempLogoKey, setTempLogoKey] = useState<string | null>(null);
 
   // Modal state management - use edit store or local state based on mode
   const { isProjectEditModalOpen, setIsProjectEditModalOpen } =
@@ -307,6 +315,14 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         };
         reset(updateData);
         setContacts(previousContacts || []);
+        // Set preview URL for existing project logo
+        if (updateData.profilePicture) {
+          setLogoPreviewUrl(updateData.profilePicture);
+        }
+        // Reset S3 upload state for edit mode
+        setIsLogoUploading(false);
+        setLogoUploadProgress(0);
+        setTempLogoKey(null);
       } else {
         // Create mode - reset to empty form
         reset({
@@ -333,6 +349,12 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         });
         setContacts([]);
         setStep(0);
+        // Reset logo state
+        setUploadedLogoFile(null);
+        setLogoPreviewUrl(null);
+        setIsLogoUploading(false);
+        setLogoUploadProgress(0);
+        setTempLogoKey(null);
       }
     }
   }, [isOpen, projectToUpdate, previousContacts, reset]);
@@ -371,7 +393,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         !!errors?.pitchDeck ||
         !!errors?.demoVideo ||
         !!errors?.farcaster ||
-        !!errors?.profilePicture
+        !!errors?.profilePicture ||
+        isLogoUploading || // Prevent proceeding during upload
+        (!watch("profilePicture") && !logoPreviewUrl) // Check if we have either form value or preview URL
       );
     }
     if (step === 3) {
@@ -495,6 +519,37 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       if (!gapClient) return;
 
       const slug = await gapClient.generateSlug(newProjectInfo.title);
+      
+      let finalImageURL = data.profilePicture || "";
+      if (tempLogoKey) {
+        try {
+          const projectIdentifier = `${slug}-${chainSelected}`;
+          
+          const promoteResponse = await fetch('/api/upload/promote-to-permanent', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              tempKey: tempLogoKey,
+              projectId: projectIdentifier,
+            }),
+          });
+
+          if (promoteResponse.ok) {
+            const { permanentUrl } = await promoteResponse.json();
+            finalImageURL = permanentUrl;
+            console.log('Logo promoted to permanent before project creation:', permanentUrl);
+          } else {
+            console.warn('Failed to promote logo to permanent status, using temp URL');
+          }
+        } catch (error) {
+          console.warn('Error promoting logo before project creation:', error);
+          // Continue with temp URL if promotion fails
+        }
+      }
+      
+      // Update newProjectInfo with the final image URL for consistency
+      newProjectInfo.imageURL = finalImageURL;
+      
       // eslint-disable-next-line no-param-reassign
       project.details = new ProjectDetails({
         data: {
@@ -504,7 +559,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           solution: newProjectInfo.solution,
           missionSummary: newProjectInfo.missionSummary,
           locationOfImpact: newProjectInfo.locationOfImpact,
-          imageURL: data.profilePicture || "",
+          imageURL: finalImageURL,
           links: newProjectInfo.links,
           slug,
           tags: newProjectInfo.tags?.map((tag) => ({
@@ -766,6 +821,37 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           }
         }
       }
+
+      // Promote temporary logo to permanent before updating the project
+      let finalImageURL = data.profilePicture;
+      if (tempLogoKey && fetchedProject) {
+        try {
+          const projectSlug = fetchedProject.details?.slug || projectToUpdate?.details?.data?.slug;
+          const projectIdentifier = `${projectSlug}-${projectToUpdate.chainID}`;
+          
+          const promoteResponse = await fetch('/api/upload/promote-to-permanent', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              tempKey: tempLogoKey,
+              projectId: projectIdentifier,
+            }),
+          });
+
+          if (promoteResponse.ok) {
+            const { permanentUrl } = await promoteResponse.json();
+            finalImageURL = permanentUrl;
+            console.log('Logo promoted to permanent before project update:', permanentUrl);
+          } else {
+            console.warn('Failed to promote logo to permanent status, using temp URL');
+          }
+        } catch (error) {
+          console.warn('Error promoting logo before project update:', error);
+        }
+      }
+
+      // Update newProjectInfo with the final image URL
+      newProjectInfo.imageURL = finalImageURL;
 
       await updateProject(
         fetchedProject,
@@ -1181,18 +1267,69 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           </div>
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="profile-logo-input" className={labelStyle}>
-              Project Logo
+              Project Logo *
             </label>
-            <div className="flex w-full flex-row items-center gap-2 rounded-lg border border-gray-400 px-4 py-2">
-              <UserCircleIcon className="h-5 w-5" />
-              <input
-                id="profile-logo-input"
-                type="text"
-                className={socialMediaInputStyle}
-                placeholder="https://example.com/project-logo.jpg"
-                {...register("profilePicture")}
-              />
-            </div>
+            <FileUpload
+              useS3Upload={true}
+              onFileSelect={(file: File) => {
+                setUploadedLogoFile(file);
+                // Don't set profilePicture until upload is complete
+              }}
+              onS3UploadComplete={(finalUrl: string, tempKey: string) => {
+                // Set the final URL in the form after successful upload
+                setValue("profilePicture", finalUrl, { shouldValidate: true });
+                setLogoPreviewUrl(finalUrl);
+                setTempLogoKey(tempKey);
+                setIsLogoUploading(false);
+              }}
+              onS3UploadError={(error: string) => {
+                // Clear upload state on error
+                setUploadedLogoFile(null);
+                setLogoPreviewUrl(null);
+                setValue("profilePicture", "", { shouldValidate: true });
+                setIsLogoUploading(false);
+                setTempLogoKey(null);
+              }}
+              onUploadProgress={(progress: number) => {
+                setLogoUploadProgress(progress);
+                setIsLogoUploading(progress > 0 && progress < 100);
+              }}
+              acceptedFormats="image/*"
+              uploadedFile={uploadedLogoFile}
+              description="Max 5MB, Square (1:1) ratio required, JPEG/PNG/WebP"
+              className="w-full"
+            />
+            
+            {/* Upload Progress Display */}
+            {isLogoUploading && (
+              <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                <span>Uploading... {logoUploadProgress}%</span>
+              </div>
+            )}
+            
+            {logoPreviewUrl && !isLogoUploading && (
+              <div className="flex flex-col gap-2">
+                <img 
+                  src={logoPreviewUrl} 
+                  alt="Logo preview" 
+                  className="w-20 h-20 object-cover rounded-lg border border-gray-300"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUploadedLogoFile(null);
+                    setLogoPreviewUrl(null);
+                    setValue("profilePicture", "", { shouldValidate: false });
+                    setTempLogoKey(null);
+                  }}
+                  className="text-sm text-red-500 hover:text-red-700 self-start"
+                  disabled={isLogoUploading}
+                >
+                  Remove logo
+                </button>
+              </div>
+            )}
             <p className="text-red-500">{errors.profilePicture?.message}</p>
           </div>
         </div>
