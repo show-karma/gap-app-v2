@@ -41,7 +41,7 @@ export function FileUpload({
   const [validationError, setValidationError] = useState<string | null>(null);
 
   // Function to get image dimensions
-  const getImageDimensions = (file: File): Promise<ImageDimensions> => {
+  const getImageDimensions = useCallback((file: File): Promise<ImageDimensions> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
       const url = URL.createObjectURL(file);
@@ -61,10 +61,10 @@ export function FileUpload({
       
       img.src = url;
     });
-  };
+  }, []);
 
   // S3 upload function
-  const uploadToS3 = async (file: File) => {
+  const uploadToS3 = useCallback(async (file: File) => {
     try {
       setIsUploading(true);
       setUploadProgress(0);
@@ -140,50 +140,7 @@ export function FileUpload({
       setUploadProgress(0);
       onUploadProgress?.(0);
     }
-  };
-
-  // Retry upload function
-  const retryUpload = useCallback(() => {
-    if (uploadedFile && useS3Upload) {
-      uploadToS3(uploadedFile);
-    }
-  }, [uploadedFile, useS3Upload]);
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOver(false);
-  }, []);
-
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsDragOver(false);
-
-      const files = e.dataTransfer.files;
-      if (files && files[0]) {
-        handleFileSelection(files[0]);
-      }
-    },
-    [useS3Upload]
-  );
-
-  const handleFileChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const files = e.target.files;
-      if (files && files[0]) {
-        handleFileSelection(files[0]);
-      }
-    },
-    [useS3Upload]
-  );
+  }, [getImageDimensions, onUploadProgress, onS3UploadComplete, onS3UploadError]);
 
   const handleFileSelection = useCallback(
     (file: File) => {
@@ -212,7 +169,50 @@ export function FileUpload({
         uploadToS3(file);
       }
     },
-    [onFileSelect, useS3Upload]
+    [onFileSelect, useS3Upload, uploadToS3]
+  );
+
+  // Retry upload function
+  const retryUpload = useCallback(() => {
+    if (uploadedFile && useS3Upload) {
+      uploadToS3(uploadedFile);
+    }
+  }, [uploadedFile, useS3Upload, uploadToS3]);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragOver(false);
+
+      const files = e.dataTransfer.files;
+      if (files && files[0]) {
+        handleFileSelection(files[0]);
+      }
+    },
+    [handleFileSelection]
+  );
+
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = e.target.files;
+      if (files && files[0]) {
+        handleFileSelection(files[0]);
+      }
+    },
+    [handleFileSelection]
   );
 
   return (
