@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { cn } from "@/utilities/tailwind";
+import toast from "react-hot-toast";
 
 interface FileUploadProps {
   onFileSelect: (file: File) => void;
@@ -10,6 +11,16 @@ interface FileUploadProps {
   className?: string;
   uploadedFile?: File | null;
   description?: string;
+  // S3 upload props (opt-in)
+  useS3Upload?: boolean;
+  onS3UploadComplete?: (finalUrl: string, tempKey: string) => void;
+  onS3UploadError?: (error: string) => void;
+  onUploadProgress?: (progress: number) => void;
+}
+
+interface ImageDimensions {
+  width: number;
+  height: number;
 }
 
 export function FileUpload({
@@ -19,8 +30,124 @@ export function FileUpload({
   className,
   uploadedFile,
   description = "CSV format: address, amount",
+  useS3Upload = false,
+  onS3UploadComplete,
+  onS3UploadError,
+  onUploadProgress,
 }: FileUploadProps) {
   const [isDragOver, setIsDragOver] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  // Function to get image dimensions
+  const getImageDimensions = (file: File): Promise<ImageDimensions> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        resolve({
+          width: img.naturalWidth,
+          height: img.naturalHeight
+        });
+      };
+      
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error('Failed to load image'));
+      };
+      
+      img.src = url;
+    });
+  };
+
+  // S3 upload function
+  const uploadToS3 = async (file: File) => {
+    try {
+      setIsUploading(true);
+      setUploadProgress(0);
+      setValidationError(null);
+      onUploadProgress?.(0);
+
+      // Get image dimensions for validation
+      const dimensions = await getImageDimensions(file);
+      
+      // Validate square aspect ratio
+      if (dimensions.width !== dimensions.height) {
+        const error = "Image must have a square aspect ratio (1:1)";
+        setValidationError(error);
+        toast.error(error);
+        onS3UploadError?.(error);
+        return;
+      }
+
+      // Step 1: Get presigned URL
+      setUploadProgress(10);
+      onUploadProgress?.(10);
+      
+      const response = await fetch('/api/upload/presigned-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileName: file.name,
+          fileType: file.type,
+          fileSize: file.size,
+          width: dimensions.width,
+          height: dimensions.height,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to get upload URL');
+      }
+
+      const { uploadUrl, finalUrl, key } = await response.json();
+      
+      // Step 2: Upload directly to S3 with progress tracking
+      setUploadProgress(20);
+      onUploadProgress?.(20);
+
+      const uploadResponse = await fetch(uploadUrl, {
+        method: 'PUT',
+        body: file,
+        headers: {
+          'Content-Type': file.type,
+        },
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload file to S3');
+      }
+
+      // Complete upload
+      setUploadProgress(100);
+      onUploadProgress?.(100);
+      
+      toast.success('Image uploaded successfully!');
+      onS3UploadComplete?.(finalUrl, key);
+
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      const errorMessage = error.message || 'Failed to upload image';
+      setValidationError(errorMessage);
+      toast.error(errorMessage);
+      onS3UploadError?.(errorMessage);
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+      onUploadProgress?.(0);
+    }
+  };
+
+  // Retry upload function
+  const retryUpload = useCallback(() => {
+    if (uploadedFile && useS3Upload) {
+      uploadToS3(uploadedFile);
+    }
+  }, [uploadedFile, useS3Upload]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -42,20 +169,50 @@ export function FileUpload({
 
       const files = e.dataTransfer.files;
       if (files && files[0]) {
-        onFileSelect(files[0]);
+        handleFileSelection(files[0]);
       }
     },
-    [onFileSelect]
+    [useS3Upload]
   );
 
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = e.target.files;
       if (files && files[0]) {
-        onFileSelect(files[0]);
+        handleFileSelection(files[0]);
       }
     },
-    [onFileSelect]
+    [useS3Upload]
+  );
+
+  const handleFileSelection = useCallback(
+    (file: File) => {
+      setValidationError(null);
+      
+      // Basic validation
+      if (file.size > 5 * 1024 * 1024) {
+        const error = "File size must be less than 5MB";
+        setValidationError(error);
+        toast.error(error);
+        return;
+      }
+
+      if (useS3Upload && !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+        const error = "Only JPEG, PNG, and WebP images are allowed";
+        setValidationError(error);
+        toast.error(error);
+        return;
+      }
+
+      // Call the original onFileSelect
+      onFileSelect(file);
+
+      // If S3 upload is enabled, start the upload process
+      if (useS3Upload) {
+        uploadToS3(file);
+      }
+    },
+    [onFileSelect, useS3Upload]
   );
 
   return (
@@ -65,8 +222,10 @@ export function FileUpload({
           "flex justify-center rounded-xl border-2 border-dashed px-6 pb-6 pt-5 transition-all duration-200",
           isDragOver
             ? "border-indigo-400 bg-indigo-50 dark:bg-indigo-950/20 scale-105"
+            : validationError
+            ? "border-red-400 bg-red-50 dark:bg-red-950/20"
             : "border-gray-300 dark:border-zinc-700 hover:border-gray-400 dark:hover:border-zinc-600",
-          disabled && "opacity-50 pointer-events-none"
+          (disabled || isUploading) && "opacity-50 pointer-events-none"
         )}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -78,6 +237,8 @@ export function FileUpload({
               "mx-auto h-16 w-16 transition-colors",
               isDragOver
                 ? "text-indigo-500 dark:text-indigo-400"
+                : validationError
+                ? "text-red-500 dark:text-red-400"
                 : "text-gray-400 dark:text-gray-500"
             )}
             stroke="currentColor"
@@ -95,10 +256,17 @@ export function FileUpload({
           <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 justify-center">
             <label
               htmlFor="file-upload"
-              className="relative cursor-pointer rounded-md bg-white dark:bg-zinc-800 font-medium text-indigo-600 dark:text-indigo-400 focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 hover:text-indigo-500 dark:hover:text-indigo-300 transition-colors px-2 py-1"
+              className={cn(
+                "relative cursor-pointer rounded-md bg-white dark:bg-zinc-800 font-medium text-indigo-600 dark:text-indigo-400 focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 hover:text-indigo-500 dark:hover:text-indigo-300 transition-colors px-2 py-1",
+                isUploading && "cursor-not-allowed opacity-50"
+              )}
             >
               <span className="font-semibold">
-                {uploadedFile ? uploadedFile.name : "Upload a file"}
+                {isUploading
+                  ? "Uploading..."
+                  : uploadedFile
+                  ? uploadedFile.name
+                  : "Upload a file"}
               </span>
               <input
                 id="file-upload"
@@ -107,15 +275,45 @@ export function FileUpload({
                 className="sr-only"
                 accept={acceptedFormats}
                 onChange={handleFileChange}
-                disabled={disabled}
+                disabled={disabled || isUploading}
               />
             </label>
-            {!uploadedFile && <p className="pl-1">or drag and drop</p>}
+            {!uploadedFile && !isUploading && <p className="pl-1">or drag and drop</p>}
           </div>
-          {description && (
+          
+          {/* Progress Bar */}
+          {isUploading && (
+            <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700">
+              <div 
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
+          )}
+
+          {/* Description */}
+          {description && !validationError && (
             <p className="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-zinc-800 px-3 py-1 rounded-full inline-block">
               {description}
             </p>
+          )}
+
+          {/* Validation Error */}
+          {validationError && (
+            <div className="text-xs text-red-600 dark:text-red-400 space-y-2">
+              <p className="bg-red-50 dark:bg-red-950/20 px-3 py-2 rounded-lg">
+                {validationError}
+              </p>
+              {useS3Upload && (
+                <button
+                  onClick={retryUpload}
+                  className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline text-xs"
+                  disabled={isUploading}
+                >
+                  Retry upload
+                </button>
+              )}
+            </div>
           )}
         </div>
       </div>
