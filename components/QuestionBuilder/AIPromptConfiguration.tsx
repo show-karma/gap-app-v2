@@ -50,18 +50,16 @@ export function AIPromptConfiguration({
   useEffect(() => {
     const subscription = watch((data) => {
       // Only update if we have a valid system prompt (minimum requirement)
-      if (data.enableRealTimeEvaluation) {
-        const updatedSchema: FormSchema = {
-          ...schema,
-          aiConfig: {
-            // systemPrompt: data.systemPrompt || '',
-            // detailedPrompt: data.detailedPrompt || '',
-            aiModel: data.aiModel || "gpt-4",
-            enableRealTimeEvaluation: data.enableRealTimeEvaluation || false,
-          },
-        };
-        onUpdate(updatedSchema);
-      }
+      const updatedSchema: FormSchema = {
+        ...schema,
+        aiConfig: {
+          // systemPrompt: data.systemPrompt || '',
+          // detailedPrompt: data.detailedPrompt || '',
+          aiModel: data.aiModel || "gpt-4",
+          enableRealTimeEvaluation: data.enableRealTimeEvaluation || false,
+        },
+      };
+      onUpdate(updatedSchema);
     });
 
     return () => subscription.unsubscribe();
