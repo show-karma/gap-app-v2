@@ -14,6 +14,7 @@ import { Fragment } from "react";
 import { cn } from "@/utilities/tailwind";
 import Link from "next/link";
 import { CommunityMilestoneCard } from "@/components/Pages/Community/Updates/CommunityMilestoneCard";
+import { INDEXER } from "@/utilities/indexer";
 
 type FilterOption = "all" | "pending" | "completed";
 
@@ -76,7 +77,7 @@ export default function CommunityUpdatesPage() {
       const response = await fetch(
         `${
           envVars.NEXT_PUBLIC_GAP_INDEXER_URL
-        }/communities/${communityId}/updates?${params.toString()}`
+        }${INDEXER.COMMUNITY.MILESTONES(communityId)}?${params.toString()}`
       );
 
       if (!response.ok) {
@@ -96,8 +97,8 @@ export default function CommunityUpdatesPage() {
   // No transformation needed since we're using the raw data directly
 
   // Apply sorting to raw data for display
-  const sortedRawData = data?.data
-    ? [...data.data].sort(
+  const sortedRawData = data?.payload
+    ? [...data.payload].sort(
         (a: CommunityMilestoneUpdate, b: CommunityMilestoneUpdate) => {
           if (selectedFilter === "all") {
             // For "all" filter: pending first (by ascending due date), then completed (by descending completion date)
@@ -143,7 +144,7 @@ export default function CommunityUpdatesPage() {
     : [];
 
   // Calculate total pages
-  const totalPages = data ? Math.ceil((data.total || 0) / ITEMS_PER_PAGE) : 0;
+  const totalPages = data ? Math.ceil((data.payload?.total || 0) / ITEMS_PER_PAGE) : 0;
 
   // Reset page when filter changes
   useEffect(() => {
@@ -197,8 +198,8 @@ export default function CommunityUpdatesPage() {
         <div className="flex flex-row gap-4 justify-between items-center">
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-600 dark:text-gray-400">
-              {data?.total
-                ? `${data.total} milestone updates`
+              {data?.payload?.total
+                ? `${data.payload.total} milestone updates`
                 : isLoading
                 ? "Loading..."
                 : "0 milestone updates"}
