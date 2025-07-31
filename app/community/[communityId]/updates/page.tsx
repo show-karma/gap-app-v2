@@ -93,7 +93,7 @@ export default function CommunityUpdatesPage() {
     },
     enabled: !!communityId,
   });
-
+  console.log(data);
   // No transformation needed since we're using the raw data directly
 
   // Apply sorting to raw data for display
