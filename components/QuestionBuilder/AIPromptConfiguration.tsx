@@ -38,7 +38,7 @@ export function AIPromptConfiguration({
     defaultValues: {
       // systemPrompt: schema.aiConfig?.systemPrompt || '',
       // detailedPrompt: schema.aiConfig?.detailedPrompt || '',
-      aiModel: schema.aiConfig?.aiModel || "gpt-4",
+      aiModel: schema.aiConfig?.aiModel || "gpt-4o",
       enableRealTimeEvaluation:
         schema.aiConfig?.enableRealTimeEvaluation || false,
     },
@@ -55,7 +55,7 @@ export function AIPromptConfiguration({
         aiConfig: {
           // systemPrompt: data.systemPrompt || '',
           // detailedPrompt: data.detailedPrompt || '',
-          aiModel: data.aiModel || "gpt-4",
+          aiModel: data.aiModel || "gpt-4o",
           enableRealTimeEvaluation: data.enableRealTimeEvaluation || false,
         },
       };
@@ -128,7 +128,7 @@ export function AIPromptConfiguration({
             {...register("aiModel")}
             className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100"
           >
-            <option value="gpt-4">GPT-4 (Recommended)</option>
+            <option value="gpt-4o">GPT-4o (Recommended)</option>
             <option value="gpt-4-turbo">GPT-4 Turbo</option>
             <option value="gpt-3.5-turbo">
               GPT-3.5 Turbo (Faster, less accurate)
