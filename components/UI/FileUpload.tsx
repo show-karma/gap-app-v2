@@ -16,6 +16,9 @@ interface FileUploadProps {
   onS3UploadComplete?: (finalUrl: string, tempKey: string) => void;
   onS3UploadError?: (error: string) => void;
   onUploadProgress?: (progress: number) => void;
+  // Validation props
+  maxFileSize?: number; // Maximum file size in bytes
+  allowedFileTypes?: string[]; // Array of allowed MIME types
 }
 
 interface ImageDimensions {
@@ -158,16 +161,23 @@ export function FileUpload({
     (file: File) => {
       setValidationError(null);
       
-      // Basic validation
-      if (file.size > 5 * 1024 * 1024) {
-        const error = "File size must be less than 5MB";
+      // File size validation (only if maxFileSize is provided)
+      if (maxFileSize && file.size > maxFileSize) {
+        const error = `File size must be less than ${(maxFileSize / 1024 / 1024).toFixed(1)}MB`;
         setValidationError(error);
         toast.error(error);
         return;
       }
 
-      if (useS3Upload && !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-        const error = "Only JPEG, PNG, and WebP images are allowed";
+      // File type validation (only if allowedFileTypes is provided)
+      if (allowedFileTypes && !allowedFileTypes.includes(file.type)) {
+        const fileTypeNames = allowedFileTypes.map(type => {
+          if (type === 'image/jpeg') return 'JPEG';
+          if (type === 'image/png') return 'PNG';
+          if (type === 'image/webp') return 'WebP';
+          return type.split('/')[1]?.toUpperCase() || type;
+        }).join(', ');
+        const error = `Only ${fileTypeNames} files are allowed`;
         setValidationError(error);
         toast.error(error);
         return;
@@ -181,7 +191,7 @@ export function FileUpload({
         uploadToS3(file);
       }
     },
-    [onFileSelect, useS3Upload, uploadToS3]
+    [onFileSelect, useS3Upload, uploadToS3, maxFileSize, allowedFileTypes]
   );
 
   // Retry upload function

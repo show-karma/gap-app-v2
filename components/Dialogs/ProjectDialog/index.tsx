@@ -1298,6 +1298,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               uploadedFile={uploadedLogoFile}
               description="Max 5MB, Square (1:1) ratio required, JPEG/PNG/WebP"
               className="w-full"
+              maxFileSize={5 * 1024 * 1024} // 5MB in bytes
+              allowedFileTypes={['image/jpeg', 'image/png', 'image/webp']}
             />
             
             {/* Upload Progress Display */}
