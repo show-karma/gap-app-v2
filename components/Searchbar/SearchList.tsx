@@ -18,7 +18,7 @@ import { useMobileStore } from "@/store/mobile";
 
 import { groupSimilarCommunities } from "@/utilities/communityHelpers"; // You'll need to create this utility function
 import { useRouter } from "next/navigation";
-import { ImageWithFallback } from "./ImageWithFallback";
+import { ProfilePicture } from "../Utilities/ProfilePicture";
 
 interface Props {
   data: ISearchResponse; // Will be modular in the future
@@ -102,10 +102,11 @@ export const SearchList: React.FC<Props> = ({
           <div className="flex flex-row items-center justify-between w-full">
             <div className="flex flex-row items-center gap-3 flex-1">
               <div className="flex-shrink-0">
-                <ImageWithFallback
-                  src={imageURL}
+                <ProfilePicture
+                  imageURL={imageURL}
+                  name={item.uid || ""}
+                  className="w-8 h-8"
                   alt={title}
-                  className="w-8 h-8 rounded-full object-cover"
                 />
               </div>
               <b className="max-w-full text-left text-ellipsis font-bold text-black dark:text-zinc-100 line-clamp-1">
