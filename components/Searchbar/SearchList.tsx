@@ -136,16 +136,6 @@ export const SearchList: React.FC<Props> = ({
         onTouchStart={() => onInteractionStart?.()}
         onTouchEnd={() => onInteractionEnd?.()}
       >
-        {data.projects.length > 0 &&
-          data.projects.map((project) =>
-            renderItem(
-              project,
-              project.details?.data.title || "Untitled Project",
-              PAGES.PROJECT.GRANTS(project.details?.data.slug || project.uid),
-              "project"
-            )
-          )}
-
         {groupedCommunities.length > 0 &&
           groupedCommunities.map((community) =>
             renderItem(
@@ -155,6 +145,16 @@ export const SearchList: React.FC<Props> = ({
                 community.details?.data.slug || community.uid
               ),
               "community"
+            )
+          )}
+
+        {data.projects.length > 0 &&
+          data.projects.map((project) =>
+            renderItem(
+              project,
+              project.details?.data.title || "Untitled Project",
+              PAGES.PROJECT.GRANTS(project.details?.data.slug || project.uid),
+              "project"
             )
           )}
 
