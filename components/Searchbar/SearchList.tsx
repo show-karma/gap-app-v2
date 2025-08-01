@@ -2,10 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
-import Link from "next/link";
-
 import { Spinner } from "../Utilities/Spinner";
-import EthereumAddressToENSName from "../EthereumAddressToENSName";
 
 import { PAGES } from "@/utilities/pages";
 import {
@@ -19,7 +16,6 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useEffect, useState } from "react";
 import { useMobileStore } from "@/store/mobile";
 
-import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";
 import { groupSimilarCommunities } from "@/utilities/communityHelpers"; // You'll need to create this utility function
 import { useRouter } from "next/navigation";
 import { ImageWithFallback } from "./ImageWithFallback";
