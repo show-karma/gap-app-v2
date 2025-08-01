@@ -74,6 +74,10 @@ module.exports = {
           gray: "#344054",
           lightblue: "#EEF4FF",
         },
+        warning: {
+          50: "#fffbeb",
+          700: "#b45309",
+        },
         tremor: {
           brand: {
             faint: "#eff6ff", // blue-50

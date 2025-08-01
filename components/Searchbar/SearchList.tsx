@@ -2,10 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
-import Link from "next/link";
-
 import { Spinner } from "../Utilities/Spinner";
-import EthereumAddressToENSName from "../EthereumAddressToENSName";
 
 import { PAGES } from "@/utilities/pages";
 import {
@@ -19,9 +16,9 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useEffect, useState } from "react";
 import { useMobileStore } from "@/store/mobile";
 
-import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";
 import { groupSimilarCommunities } from "@/utilities/communityHelpers"; // You'll need to create this utility function
 import { useRouter } from "next/navigation";
+import { ProfilePicture } from "../Utilities/ProfilePicture";
 
 interface Props {
   data: ISearchResponse; // Will be modular in the future
@@ -88,30 +85,41 @@ export const SearchList: React.FC<Props> = ({
   const renderItem = (
     item: IProjectResponse | ICommunityResponse,
     title: string,
-    href: string
+    href: string,
+    type: "project" | "community"
   ) => {
+    const imageURL = type === "project" 
+      ? (item as IProjectResponse).details?.data?.imageURL
+      : (item as ICommunityResponse).details?.data?.imageURL;
+
     return (
       <button
         key={item.uid}
         onClick={(e) => handleItemClick(e, href)}
         className="w-full cursor-pointer select-none border-b border-slate-100 transition hover:bg-slate-200 dark:hover:bg-zinc-700"
       >
-        <div className=":last:border-b-0 cursor-pointer flex flex-col justify-start select-none border-b border-slate-100 px-4 py-2 transition hover:bg-slate-200 dark:hover:bg-zinc-700">
-          <b className="max-w-full text-left w-full text-ellipsis font-bold text-black dark:text-zinc-100">
-            {title}
-          </b>
-          <br />
-          <div className="text-gray-500 dark:text-gray-200">
-            <div className="mt-3 flex items-center">
-              <small className="mr-2">By</small>
-              <div className="flex flex-row gap-1 items-center font-medium">
-                <EthereumAddressToENSAvatar
-                  address={item.recipient}
-                  className="w-4 h-4  rounded-full border-1 border-gray-100 dark:border-zinc-900"
+        <div className="cursor-pointer flex flex-col justify-start select-none border-b border-slate-100 px-4 py-2 transition hover:bg-slate-200 dark:hover:bg-zinc-700">
+          <div className="flex flex-row items-center justify-between w-full">
+            <div className="flex flex-row items-center gap-3 flex-1">
+              <div className="flex-shrink-0">
+                <ProfilePicture
+                  imageURL={imageURL}
+                  name={item.uid || ""}
+                  className="w-8 h-8"
+                  alt={title}
                 />
-                <EthereumAddressToENSName address={item.recipient} />
               </div>
+              <b className="max-w-full text-left text-ellipsis font-bold text-black dark:text-zinc-100 line-clamp-1">
+                {title}
+              </b>
             </div>
+            {type === "community" && (
+              <div className="flex-shrink-0">
+                <span className="px-2 py-1 bg-warning-50 text-warning-700 text-xs font-medium rounded">
+                  Community
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </button>
@@ -129,15 +137,6 @@ export const SearchList: React.FC<Props> = ({
         onTouchStart={() => onInteractionStart?.()}
         onTouchEnd={() => onInteractionEnd?.()}
       >
-        {data.projects.length > 0 &&
-          data.projects.map((project) =>
-            renderItem(
-              project,
-              project.details?.data.title || "Untitled Project",
-              PAGES.PROJECT.GRANTS(project.details?.data.slug || project.uid)
-            )
-          )}
-
         {groupedCommunities.length > 0 &&
           groupedCommunities.map((community) =>
             renderItem(
@@ -145,7 +144,18 @@ export const SearchList: React.FC<Props> = ({
               community.details?.data?.name || "Untitled Community",
               PAGES.COMMUNITY.ALL_GRANTS(
                 community.details?.data.slug || community.uid
-              )
+              ),
+              "community"
+            )
+          )}
+
+        {data.projects.length > 0 &&
+          data.projects.map((project) =>
+            renderItem(
+              project,
+              project.details?.data.title || "Untitled Project",
+              PAGES.PROJECT.GRANTS(project.details?.data.slug || project.uid),
+              "project"
             )
           )}
 
