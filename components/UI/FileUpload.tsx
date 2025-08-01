@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useRef, useEffect } from "react";
 import { cn } from "@/utilities/tailwind";
 import toast from "react-hot-toast";
 
@@ -34,11 +34,23 @@ export function FileUpload({
   onS3UploadComplete,
   onS3UploadError,
   onUploadProgress,
+  maxFileSize,
+  allowedFileTypes,
 }: FileUploadProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [validationError, setValidationError] = useState<string | null>(null);
+  
+  // Add ref for file input
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Clear file input when uploadedFile becomes null
+  useEffect(() => {
+    if (!uploadedFile && fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }, [uploadedFile]);
 
   // Function to get image dimensions
   const getImageDimensions = useCallback((file: File): Promise<ImageDimensions> => {
@@ -276,6 +288,7 @@ export function FileUpload({
                 accept={acceptedFormats}
                 onChange={handleFileChange}
                 disabled={disabled || isUploading}
+                ref={fileInputRef}
               />
             </label>
             {!uploadedFile && !isUploading && <p className="pl-1">or drag and drop</p>}
