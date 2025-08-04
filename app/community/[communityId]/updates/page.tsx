@@ -152,7 +152,7 @@ export default function CommunityUpdatesPage() {
     : [];
 
   // Calculate total pages
-  const totalPages = data ? Math.ceil((data.payload?.total || 0) / ITEMS_PER_PAGE) : 0;
+  const totalPages = data ? Math.ceil((data.pagination.totalCount || 0) / ITEMS_PER_PAGE) : 0;
 
   // Function to handle filter changes and update URL
   const handleFilterChange = (newFilter: FilterOption) => {
