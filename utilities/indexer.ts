@@ -201,6 +201,8 @@ export const INDEXER = {
           `/category/${categoryId}/impact-indicators`,
       },
     },
+    MILESTONES: (communityIdOrSlug: string) =>
+      `/v2/communities/${communityIdOrSlug}/milestones`,
   },
   GRANTS: {
     GET_ZK_GROUP: (

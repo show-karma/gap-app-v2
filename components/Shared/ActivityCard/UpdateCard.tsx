@@ -213,7 +213,7 @@ export const UpdateCard: FC<UpdateCardProps> = ({
           )}
       </div>
       <ActivityAttribution
-        createdAt={update.createdAt}
+        date={update.createdAt}
         attester={update.attester}
         // startDate={(update as any).data?.startDate}
         // endDate={(update as any).data?.endDate}
