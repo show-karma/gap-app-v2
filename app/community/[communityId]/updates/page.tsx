@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ActivityList } from "@/components/Shared/ActivityList";
 import { Button } from "@/components/Utilities/Button";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
@@ -59,7 +59,15 @@ const filterOptions: { value: FilterOption; label: string }[] = [
 
 export default function CommunityUpdatesPage() {
   const { communityId } = useParams<{ communityId: string }>();
-  const [selectedFilter, setSelectedFilter] = useState<FilterOption>("all");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // Get filter from URL searchParams, default to 'all' if not present or invalid
+  const filterFromUrl = searchParams.get('filter');
+  const isValidFilter = (filter: string | null): filter is FilterOption => {
+    return filter === 'all' || filter === 'pending' || filter === 'completed';
+  };
+  const selectedFilter = isValidFilter(filterFromUrl) ? filterFromUrl : 'all';
   const [currentPage, setCurrentPage] = useState(1);
 
   // Fetch community updates from API
@@ -146,6 +154,23 @@ export default function CommunityUpdatesPage() {
   // Calculate total pages
   const totalPages = data ? Math.ceil((data.payload?.total || 0) / ITEMS_PER_PAGE) : 0;
 
+  // Function to handle filter changes and update URL
+  const handleFilterChange = (newFilter: FilterOption) => {
+    const params = new URLSearchParams(searchParams.toString());
+    
+    if (newFilter === 'all') {
+      params.delete('filter');
+    } else {
+      params.set('filter', newFilter);
+    }
+    
+    // Reset page to 1 when filter changes
+    setCurrentPage(1);
+    
+    // Update URL
+    router.push(`?${params.toString()}`);
+  };
+
   // Reset page when filter changes
   useEffect(() => {
     setCurrentPage(1);
@@ -205,7 +230,7 @@ export default function CommunityUpdatesPage() {
           </div>
 
           {/* Filter dropdown */}
-          <Listbox value={selectedFilter} onChange={setSelectedFilter}>
+          <Listbox value={selectedFilter} onChange={handleFilterChange}>
             <div className="relative">
               <Listbox.Button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-blue dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-600">
                 {
