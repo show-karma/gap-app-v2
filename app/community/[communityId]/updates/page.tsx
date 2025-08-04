@@ -15,6 +15,7 @@ import { cn } from "@/utilities/tailwind";
 import Link from "next/link";
 import { CommunityMilestoneCard } from "@/components/Pages/Community/Updates/CommunityMilestoneCard";
 import { INDEXER } from "@/utilities/indexer";
+import pluralize from "pluralize";
 
 type FilterOption = "all" | "pending" | "completed";
 
@@ -93,7 +94,6 @@ export default function CommunityUpdatesPage() {
     },
     enabled: !!communityId,
   });
-  console.log(data);
   // No transformation needed since we're using the raw data directly
 
   // Apply sorting to raw data for display
@@ -195,14 +195,12 @@ export default function CommunityUpdatesPage() {
     <div className="flex flex-col items-center justify-start">
       <div className="flex flex-col gap-6 my-10 max-lg:my-5 max-w-6xl w-full">
         {/* Header with filter */}
-        <div className="flex flex-row gap-4 justify-between items-center">
+        <div className="flex flex-row gap-4 justify-between items-center px-2">
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-600 dark:text-gray-400">
-              {data?.payload?.total
-                ? `${data.payload.total} milestone updates`
-                : isLoading
+              {isLoading
                 ? "Loading..."
-                : "0 milestone updates"}
+                : `${data.pagination.totalCount} ${pluralize('milestone update', data.pagination.totalCount)}`}
             </span>
           </div>
 
