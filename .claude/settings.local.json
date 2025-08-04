@@ -18,8 +18,14 @@
       "Bash(npm run lint:*)",
       "Bash(npm run build:*)",
       "Bash(gh pr edit:*)",
-      "Bash(npm run:*)",
-      "Bash(pnpm dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(npx tsc:*)",
+      "Bash(mv:*)",
+      "Bash(sed:*)",
+      "Bash(curl:*)",
+      "Bash(yarn add:*)",
+      "Bash(mkdir:*)",
+      "Bash(rg:*)"
     ],
     "deny": []
   }

@@ -115,10 +115,11 @@ export const INDEXER = {
     DELETE: (indicatorId: string) => `/indicators/${indicatorId}`,
     UNLINKED: () => `/indicators/unlinked`,
     BY_TIMERANGE: (projectUID: string, params: Record<string, number>) =>
-        `/projects/${projectUID}/indicator-dashboard-metrics?${Object
-          .entries(params)
-          .map(([key, value]) => `${key}=${value}`)
-          .join("&")}`,
+      `/projects/${projectUID}/indicator-dashboard-metrics?${Object.entries(
+        params
+      )
+        .map(([key, value]) => `${key}=${value}`)
+        .join("&")}`,
   },
   COMMUNITY: {
     GET: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}`,

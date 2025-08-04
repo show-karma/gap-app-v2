@@ -7,6 +7,7 @@ import { getCommunityData } from "@/utilities/queries/getCommunityData";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { Metadata } from "next";
 import { CommunityImpactStatCards } from "@/components/Pages/Communities/Impact/StatCards";
+import CommunityHeader from "@/components/Community/Header";
 
 type Params = Promise<{
   communityId: string;
@@ -73,49 +74,13 @@ export default async function Layout(props: {
 
   const community = await getCommunityData(communityId);
 
+  if (!community) {
+    return undefined;
+  }
+
   return (
     <div className="flex w-full h-full max-w-full flex-col justify-start max-lg:flex-col">
-      <div className="flex flex-col gap-4 justify-between items-start mt-4 sm:px-3 md:px-4 px-6 border-b border-gray-200 dark:border-gray-800">
-        <div className="flex flex-row gap-4 flex-wrap max-lg:flex-col justify-between items-center w-full">
-          <div className="flex h-max flex-1 flex-row items-center justify-start gap-3 ">
-            <div
-              className="p-3 rounded-xl"
-              style={{
-                backgroundColor:
-                  communityColors[
-                    (community as ICommunityResponse)?.uid?.toLowerCase() ||
-                      "black"
-                  ] || "#000000",
-              }}
-            >
-              <div className="flex justify-center border border-white rounded-full p-2">
-                <img
-                  alt={
-                    (community as ICommunityResponse)?.details?.data.name ||
-                    "Community name"
-                  }
-                  src={
-                    (community as ICommunityResponse)?.details?.data
-                      ?.imageURL || ""
-                  }
-                  className={
-                    "h-14 w-14 min-w-14 min-h-14 rounded-full max-lg:h-8 max-lg:w-8 max-lg:min-h-8 max-lg:min-w-8"
-                  }
-                />
-              </div>
-            </div>
-            <div className="flex flex-col gap-0">
-              <p className="text-3xl font-body font-semibold text-black dark:text-white max-2xl:text-2xl max-lg:text-xl">
-                {community
-                  ? (community as ICommunityResponse)?.details?.data?.name
-                  : ""}
-              </p>
-            </div>
-          </div>
-          <CommunityImpactStatCards />
-        </div>
-        <CommunityPageNavigator />
-      </div>
+      <CommunityHeader community={community} />
       {children}
     </div>
   );
