@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ActivityList } from "@/components/Shared/ActivityList";
@@ -104,36 +104,23 @@ export default function CommunityUpdatesPage() {
   });
   // No transformation needed since we're using the raw data directly
 
-  // Apply sorting to raw data for display
-  const sortedRawData = data?.payload
-    ? [...data.payload].sort(
-        (a: CommunityMilestoneUpdate, b: CommunityMilestoneUpdate) => {
-          if (selectedFilter === "all") {
-            // For "all" filter: pending first (by ascending due date), then completed (by descending completion date)
-            const aCompleted = a.status === "completed";
-            const bCompleted = b.status === "completed";
+  // Memoize sorted data to prevent unnecessary recalculations
+  const sortedRawData = useMemo(() => {
+    if (!data?.payload) return [];
+    
+    return [...data.payload].sort(
+      (a: CommunityMilestoneUpdate, b: CommunityMilestoneUpdate) => {
+        if (selectedFilter === "all") {
+          // For "all" filter: pending first (by ascending due date), then completed (by descending completion date)
+          const aCompleted = a.status === "completed";
+          const bCompleted = b.status === "completed";
 
-            if (aCompleted !== bCompleted) {
-              return aCompleted ? 1 : -1; // Pending first
-            }
+          if (aCompleted !== bCompleted) {
+            return aCompleted ? 1 : -1; // Pending first
+          }
 
-            if (!aCompleted && !bCompleted) {
-              // Both pending: sort by ascending due date
-              const aDueDate = a.details.dueDate
-                ? new Date(a.details.dueDate).getTime()
-                : Number.MAX_SAFE_INTEGER;
-              const bDueDate = b.details.dueDate
-                ? new Date(b.details.dueDate).getTime()
-                : Number.MAX_SAFE_INTEGER;
-              return aDueDate - bDueDate;
-            }
-
-            // Both completed: sort by descending completion date
-            return (
-              new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-            );
-          } else if (selectedFilter === "pending") {
-            // Sort by earliest upcoming due date (ascending)
+          if (!aCompleted && !bCompleted) {
+            // Both pending: sort by ascending due date
             const aDueDate = a.details.dueDate
               ? new Date(a.details.dueDate).getTime()
               : Number.MAX_SAFE_INTEGER;
@@ -141,21 +128,36 @@ export default function CommunityUpdatesPage() {
               ? new Date(b.details.dueDate).getTime()
               : Number.MAX_SAFE_INTEGER;
             return aDueDate - bDueDate;
-          } else {
-            // Completed: sort by most recent completion date (descending)
-            return (
-              new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-            );
           }
+
+          // Both completed: sort by descending completion date
+          return (
+            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+          );
+        } else if (selectedFilter === "pending") {
+          // Sort by earliest upcoming due date (ascending)
+          const aDueDate = a.details.dueDate
+            ? new Date(a.details.dueDate).getTime()
+            : Number.MAX_SAFE_INTEGER;
+          const bDueDate = b.details.dueDate
+            ? new Date(b.details.dueDate).getTime()
+            : Number.MAX_SAFE_INTEGER;
+          return aDueDate - bDueDate;
+        } else {
+          // Completed: sort by most recent completion date (descending)
+          return (
+            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+          );
         }
-      )
-    : [];
+      }
+    );
+  }, [data?.payload, selectedFilter]);
 
   // Calculate total pages
   const totalPages = data ? Math.ceil((data.pagination.totalCount || 0) / ITEMS_PER_PAGE) : 0;
 
-  // Function to handle filter changes and update URL
-  const handleFilterChange = (newFilter: FilterOption) => {
+  // Memoize filter change handler to prevent unnecessary recreations
+  const handleFilterChange = useCallback((newFilter: FilterOption) => {
     const params = new URLSearchParams(searchParams.toString());
     
     if (newFilter === 'all') {
@@ -169,19 +171,16 @@ export default function CommunityUpdatesPage() {
     
     // Update URL
     router.push(`?${params.toString()}`);
-  };
+  }, [searchParams, router]);
 
-  // Reset page when filter changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [selectedFilter]);
-
-  const handlePageChange = (page: number) => {
+  // Memoize page change handler
+  const handlePageChange = useCallback((page: number) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  }, []);
 
-  const renderEmptyState = () => {
+  // Memoize empty state rendering
+  const renderEmptyState = useMemo(() => {
     const message =
       selectedFilter === "all"
         ? "No milestones have been created by any projects in this community yet."
@@ -206,7 +205,7 @@ export default function CommunityUpdatesPage() {
         </div>
       </div>
     );
-  };
+  }, [selectedFilter]);
 
   if (error) {
     return (
@@ -225,7 +224,7 @@ export default function CommunityUpdatesPage() {
             <span className="text-sm text-gray-600 dark:text-gray-400">
               {isLoading
                 ? "Loading..."
-                : `${data.pagination.totalCount} ${pluralize('milestone update', data.pagination.totalCount)}`}
+                : `${data?.pagination?.totalCount || 0} ${pluralize('milestone update', data?.pagination?.totalCount || 0)}`}
             </span>
           </div>
 
@@ -305,7 +304,7 @@ export default function CommunityUpdatesPage() {
             )}
           </>
         ) : (
-          renderEmptyState()
+          renderEmptyState
         )}
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { FC } from "react";
+import { FC, memo } from "react";
 import Link from "next/link";
 import { cn } from "@/utilities/tailwind";
 import { formatDate } from "@/utilities/formatDate";
@@ -39,7 +39,7 @@ interface CommunityMilestoneCardProps {
   };
 }
 
-export const CommunityMilestoneCard: FC<CommunityMilestoneCardProps> = ({
+const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({
   milestone,
 }) => {
   const isCompleted = milestone.status === "completed";
@@ -136,3 +136,6 @@ export const CommunityMilestoneCard: FC<CommunityMilestoneCardProps> = ({
     </div>
   );
 };
+
+// Memoize the component to prevent unnecessary re-renders
+export const CommunityMilestoneCard = memo(CommunityMilestoneCardComponent);
