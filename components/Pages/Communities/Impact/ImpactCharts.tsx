@@ -31,6 +31,39 @@ export const prepareChartData = (
       };
     })
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  // If we only have one datapoint, add padding dates for better visualization
+  if (chartData.length === 1) {
+    const singlePoint = chartData[0];
+    const pointDate = new Date(singlePoint.date);
+    
+    // Add a point 30 days before with value 0
+    const beforeDate = new Date(pointDate);
+    beforeDate.setDate(beforeDate.getDate() - 30);
+    
+    // Add a point 30 days after with value 0  
+    const afterDate = new Date(pointDate);
+    afterDate.setDate(afterDate.getDate() + 30);
+    
+    const paddingPoint = {
+      [name]: 0,
+      proof: "",
+      ...(runningValues?.length ? { Cumulative: 0 } : {}),
+    };
+    
+    return [
+      {
+        date: formatDate(beforeDate, "UTC"),
+        ...paddingPoint,
+      },
+      singlePoint,
+      {
+        date: formatDate(afterDate, "UTC"),
+        ...paddingPoint,
+      },
+    ];
+  }
+  
   return chartData;
 };
 

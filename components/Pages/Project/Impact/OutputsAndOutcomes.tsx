@@ -392,7 +392,7 @@ export const OutputsAndOutcomes = () => {
                 </div>
                 <div className="flex flex-row gap-4 max-md:flex-col-reverse">
                   <div className="flex flex-1 flex-col gap-5">
-                    {item.datapoints?.length > 1 ? (
+                    {item.datapoints?.length > 0 ? (
                       <Card className="bg-white dark:bg-zinc-800 rounded">
                         <Title className="text-sm font-medium text-gray-700 dark:text-zinc-300 mb-4">
                           Historical Values
