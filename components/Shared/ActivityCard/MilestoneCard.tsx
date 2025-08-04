@@ -242,7 +242,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
           ) : null}
         </div>
         <ActivityAttribution
-          createdAt={completionDate}
+          date={completionDate}
           attester={completionAttester}
           actions={
             isAuthorized ? (
@@ -328,7 +328,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
         </div>
         {/* Bottom Attribution with Actions */}
         <ActivityAttribution
-          createdAt={createdAt}
+          date={createdAt}
           attester={attester}
           actions={
             isAuthorized ? (

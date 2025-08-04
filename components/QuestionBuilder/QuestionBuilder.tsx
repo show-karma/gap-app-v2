@@ -158,7 +158,6 @@ export function QuestionBuilder({
   };
 
   const handleFormSubmit = (data: Record<string, any>) => {
-    console.log("Form preview submission:", data);
     alert(schema.settings.confirmationMessage);
   };
 

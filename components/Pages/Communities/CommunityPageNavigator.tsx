@@ -2,6 +2,7 @@
 import { FolderIcon } from "@/components/Icons/Folder";
 import { Target2Icon } from "@/components/Icons/Target2";
 import { SparklesIcon } from "@/components/Icons/Sparkles";
+import { ClipboardDocumentListIcon } from "@heroicons/react/24/outline";
 import { getCommunityBySlug } from "@/utilities/gapIndexerApi/getCommunityBySlug";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -40,7 +41,14 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
     Icon: FolderIcon,
     isActive: (pathname: string) =>
       !pathname.includes("/impact") &&
-      !pathname.includes("/project-discovery"),
+      !pathname.includes("/project-discovery") &&
+      !pathname.includes("/updates"),
+  },
+  {
+    path: (communityId: string) => PAGES.COMMUNITY.UPDATES(communityId),
+    title: () => "Milestone Updates",
+    Icon: ClipboardDocumentListIcon,
+    isActive: (pathname: string) => pathname.includes("/updates"),
   },
   {
     path: (communityId: string) => PAGES.COMMUNITY.IMPACT(communityId),
