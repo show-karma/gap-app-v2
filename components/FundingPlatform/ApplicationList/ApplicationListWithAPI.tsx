@@ -146,7 +146,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
           {statsMap.map((item) => (
             <div
               key={item.title}
-              className="bg-white dark:bg-gray-800 p-4 rounded-lg border items-center justify-center"
+              className="bg-white dark:bg-zinc-800 p-4 rounded-lg border items-center justify-center"
             >
               <div className="text-2xl font-bold text-gray-900 dark:text-white text-center">
                 {formatCurrency(item.value || 0)}
@@ -160,7 +160,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
       )}
 
       {/* Enhanced Filters */}
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border">
+      <div className="bg-white dark:bg-zinc-800 p-4 rounded-lg border">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -231,7 +231,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
                 router.push(pathname, { scroll: false });
               }}
               variant="secondary"
-              className="w-fit px-3 py-1 border bg-transparent text-zinc-500 font-medium border-zinc-200 dark:border-zinc-700 flex flex-row gap-2"
+            className="w-fit px-3 py-1 border bg-transparent text-zinc-500 font-medium border-zinc-200 dark:border-zinc-400 dark:text-zinc-400 flex flex-row gap-2"
             >
               <FunnelIcon className="w-5 h-5" />
               Clear Filters
@@ -241,7 +241,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
               onClick={() => handleExport("csv")}
               variant="secondary"
               disabled={isExporting}
-              className="w-fit px-3 py-1 border bg-transparent text-zinc-500 font-medium border-zinc-200 dark:border-zinc-700 flex flex-row gap-2"
+              className="w-fit px-3 py-1 border bg-transparent text-zinc-500 font-medium border-zinc-200 dark:border-zinc-400 dark:text-zinc-400 flex flex-row gap-2"
             >
               <ArrowDownTrayIcon className="w-5 h-5" />
               {isExporting ? "Exporting..." : "Export CSV"}
@@ -251,7 +251,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
               onClick={() => handleExport("json")}
               variant="secondary"
               disabled={isExporting}
-              className="w-fit px-3 py-1 border bg-transparent text-zinc-500 font-medium border-zinc-200 dark:border-zinc-700 flex flex-row gap-2"
+              className="w-fit px-3 py-1 border bg-transparent text-zinc-500 font-medium border-zinc-200 dark:border-zinc-400 dark:text-zinc-400 flex flex-row gap-2"
             >
               <ArrowDownTrayIcon className="w-5 h-5" />
               {isExporting ? "Exporting..." : "Export JSON"}
@@ -284,7 +284,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
                 handleFilterChange({ page: Math.max(1, page - 1) })
               }
               disabled={page === 1}
-              className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded disabled:opacity-50"
+              className="px-3 py-1 bg-gray-200 dark:bg-zinc-700 rounded disabled:opacity-50"
             >
               Previous
             </button>
@@ -294,7 +294,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
                 handleFilterChange({ page: Math.min(totalPages, page + 1) })
               }
               disabled={page === totalPages}
-              className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded disabled:opacity-50"
+              className="px-3 py-1 bg-gray-200 dark:bg-zinc-700 rounded disabled:opacity-50"
             >
               Next
             </button>

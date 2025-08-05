@@ -158,7 +158,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
   }
 
   return (
-    <div className="flex flex-col w-full space-y-6 px-4 py-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+    <div className="flex flex-col w-full space-y-6 px-4 py-4 bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
       {/* Applications List */}
       {paginatedApplications.length === 0 ? (
         <div className="text-center py-12">
@@ -224,7 +224,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                             );
                           }}
                           variant="secondary"
-                          className="w-fit px-3 py-1 border bg-transparent border-gray-200 font-medium dark:border-gray-700 flex flex-row gap-2"
+                          className="w-fit px-3 py-1 dark:text-white border bg-transparent border-gray-200 font-medium dark:border-gray-700 flex flex-row gap-2"
                           disabled={isUpdatingStatus}
                         >
                           Request Revision
