@@ -588,7 +588,6 @@ export const CommunityGrants = ({
                   const gutterSize = 20;
                   const height =
                     Math.ceil(grants.length / columnCounter) * 360;
-
                   return (
                     <Grid
                       key={`grid-${width}-${columnCounter}`} // Force re-render on width/column change
