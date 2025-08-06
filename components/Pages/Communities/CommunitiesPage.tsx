@@ -6,6 +6,7 @@ import { AutoSizer, Grid } from "react-virtualized";
 import { chosenCommunities } from "@/utilities/chosenCommunities";
 import { CommunityCard } from "./CommunityCard";
 import { StatsCard } from "./StatsCard";
+import Image from "next/image";
 
 interface MockCommunity {
   name: string;
@@ -79,10 +80,23 @@ export const CommunitiesPage = () => {
   return (
     <div className="flex flex-col gap-8 w-full max-w-full overflow-hidden">
       {/* Page Title */}
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Communities</h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          Discover and explore the thriving communities using GAP to fund public goods and track their impact.
+      <div className="flex flex-col gap-2 items-center justify-center">
+        <div className="flex flex-row gap-2 items-center justify-center bg-primary-200 rounded-full w-fit h-[40px] px-4 mx-auto">
+          <Image
+            width={24}
+            height={24}
+            src="/icons/impact.png"
+            alt="Rocket icon"
+          />
+          <p className="text-primary-700 font-medium">
+            Join 200+ leading communities
+          </p>
+        </div>
+
+        <h1 className="text-[72px] font-bold text-black dark:text-white">Communities</h1>
+        <p className="text-black dark:text-white text-lg max-w-4xl text-center">
+          Explore the ecosystem of DAOs, protocols, and organizations building the future 
+          through transparent grant management and accountability.
         </p>
       </div>
 
