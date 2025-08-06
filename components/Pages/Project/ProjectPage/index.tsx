@@ -3,7 +3,7 @@
 
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useParams, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 
 import { PAGES } from "@/utilities/pages";
@@ -18,6 +18,7 @@ import { shortAddress } from "@/utilities/shortAddress";
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
 import { Hex } from "viem";
 import { ProjectSubscription } from "../ProjectSubscription";
+import { ProjectImpact } from "./ProjectImpact";
 import { ProjectSubTabs } from "../ProjectSubTabs";
 import { ProjectBlocks } from "./ProjectBlocks";
 
@@ -309,6 +310,8 @@ function ProjectPage() {
         <div className="flex w-full flex-col gap-2 lg:hidden">
           <Team />
         </div>
+
+        <ProjectImpact projectId={projectId} />
 
         {project ? <ProjectSubscription project={project} /> : null}
         <div className="flex flex-col gap-1">

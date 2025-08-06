@@ -36,20 +36,16 @@ export default async function Page(props: Props) {
   const defaultSelectedMaturityStage = "all" as MaturityStageOptions;
 
   return (
-    <div className="flex flex-row gap-6 w-full max-w-full sm:px-3 md:px-4 px-6 py-2">
-      <div className="flex w-full max-w-full flex-col justify-start items-center gap-6">
-        <div className="flex gap-8 flex-row max-lg:flex-col-reverse w-full">
-          <CommunityGrants
-            categoriesOptions={categoriesOptions}
-            defaultSelectedCategories={defaultSelectedCategories}
-            defaultSortBy={defaultSortBy}
-            defaultSelectedMaturityStage={defaultSelectedMaturityStage}
-            communityUid={communityDetails.uid}
-            communityStats={communityStats}
-            initialProjects={initialProjects}
-          />
-        </div>
-      </div>
+    <div className="flex flex-col w-full max-w-full sm:px-3 md:px-4 px-6 py-2">
+      <CommunityGrants
+        categoriesOptions={categoriesOptions}
+        defaultSelectedCategories={defaultSelectedCategories}
+        defaultSortBy={defaultSortBy}
+        defaultSelectedMaturityStage={defaultSelectedMaturityStage}
+        communityUid={communityDetails.uid}
+        communityStats={communityStats}
+        initialProjects={initialProjects}
+      />
     </div>
   );
 }

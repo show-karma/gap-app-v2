@@ -114,6 +114,12 @@ export const INDEXER = {
     CREATE_OR_UPDATE: () => `/indicators`,
     DELETE: (indicatorId: string) => `/indicators/${indicatorId}`,
     UNLINKED: () => `/indicators/unlinked`,
+    BY_TIMERANGE: (projectUID: string, params: Record<string, number>) =>
+      `/projects/${projectUID}/indicator-dashboard-metrics?${Object.entries(
+        params
+      )
+        .map(([key, value]) => `${key}=${value}`)
+        .join("&")}`,
   },
   COMMUNITY: {
     GET: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}`,
@@ -213,8 +219,6 @@ export const INDEXER = {
       }${grantTitle ? `&grantTitle=${grantTitle}` : ""}${
         selectedTrackIds ? `&selectedTrackIds=${selectedTrackIds}` : ""
       }`,
-    FEED: (communityIdOrSlug: string) =>
-      `/communities/${communityIdOrSlug}/feed`,
     STATS: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/stats`,
     PAGE_HEADER_STATS: (communityIdOrSlug: string) =>
@@ -232,6 +236,8 @@ export const INDEXER = {
           `/category/${categoryId}/impact-indicators`,
       },
     },
+    MILESTONES: (communityIdOrSlug: string) =>
+      `/v2/communities/${communityIdOrSlug}/milestones`,
   },
   GRANTS: {
     GET_ZK_GROUP: (

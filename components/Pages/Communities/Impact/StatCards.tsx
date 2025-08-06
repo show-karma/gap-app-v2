@@ -30,7 +30,7 @@ export const ImpactStatCards = () => {
       title: "Total Funding Allocated (with available data)",
       value:
         data?.stats.totalFundingAllocated &&
-        data?.stats.totalFundingAllocated !== "NaN"
+          data?.stats.totalFundingAllocated !== "NaN"
           ? data?.stats.totalFundingAllocated
           : "-",
       color: "#A6EF67",
@@ -70,7 +70,7 @@ export const CommunityStatCards = () => {
   const params = useParams();
   const communityId = params.communityId as string;
   const { data, isLoading } = useQuery({
-    queryKey: ["communityStatsV2", communityId],
+    queryKey: ["community-stats", communityId],
     queryFn: () => getCommunityStatsV2(communityId),
     enabled: !!communityId,
   });

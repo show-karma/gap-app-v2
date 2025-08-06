@@ -3,14 +3,14 @@ import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar"
 import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
 
 interface ActivityAttributionProps {
-  createdAt: number | string;
+  date: number | string;
   attester?: string;
   actions?: React.ReactNode;
   isCompleted?: boolean;
 }
 
 export const ActivityAttribution = ({
-  createdAt,
+  date,
   attester,
   actions,
   isCompleted = false,
@@ -33,8 +33,7 @@ export const ActivityAttribution = ({
               </p>
             )}
             <p className="text-gray-600 dark:text-zinc-300 text-sm font-medium">
-              {isCompleted ? "Completed on" : "Created on"}{" "}
-              {formatDate(createdAt)}
+              {isCompleted ? "Completed on" : "Created on"} {formatDate(date)}
             </p>
           </div>
         </div>

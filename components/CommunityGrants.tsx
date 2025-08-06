@@ -13,7 +13,7 @@ import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import { useParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import pluralize from "pluralize";
-import { Fragment, useEffect, useMemo, useState, useCallback } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { AutoSizer, Grid } from "react-virtualized";
 import { Hex } from "viem";
@@ -148,7 +148,7 @@ export const CommunityGrants = ({
 
     const fetchNewProjects = async () => {
       if (loading) return; // Prevent multiple simultaneous calls
-      
+
       setLoading(true);
       try {
         const response = await getCommunityProjectsV2(communityId, {
@@ -220,13 +220,13 @@ export const CommunityGrants = ({
     setProjects([]);
     changeSortQuery(newValue);
   };
-  
+
   const changeMaturityStage = async (newValue: MaturityStageOptions) => {
     setCurrentPage(1);
     setProjects([]);
     changeMaturityStageQuery(newValue);
   };
-  
+
   const changeCategories = async (newValue: string[]) => {
     setCurrentPage(1);
     setProjects([]);
@@ -234,10 +234,26 @@ export const CommunityGrants = ({
   };
 
   const loadMore = useCallback(() => {
-    if (!loading && haveMore) {
+    if (!loading) {
       setCurrentPage((prev) => prev + 1);
     }
-  }, [loading, haveMore]);
+  }, [loading]);
+
+  useEffect(() => {
+    if (loading || !haveMore) {
+      return;
+    }
+
+    const handleScroll = () => {
+      if (document.documentElement.scrollHeight <= window.innerHeight) {
+        loadMore();
+      }
+    };
+
+    const timeoutId = setTimeout(handleScroll, 200);
+
+    return () => clearTimeout(timeoutId);
+  }, [projects, haveMore, loadMore, loading]);
 
   const resetTrackIds = () => {
     changeSelectedTrackIdsQuery(null);
@@ -268,7 +284,7 @@ export const CommunityGrants = ({
                 selectedTrackIds={selectedTrackIds || []}
               />
             ) : null}
-            
+
             {categoriesOptions.length ? (
               <Listbox
                 value={selectedCategories}
@@ -506,7 +522,7 @@ export const CommunityGrants = ({
                                   >
                                     {
                                       maturityStages[
-                                        stageOption as MaturityStageOptions
+                                      stageOption as MaturityStageOptions
                                       ]
                                     }
                                   </span>
@@ -560,13 +576,15 @@ export const CommunityGrants = ({
                       ? 6
                       : columns
                     : 1;
+
                   const columnWidth = Math.floor(width / columnCounter);
                   const gutterSize = 20;
-                  const height = Math.ceil(projects.length / columnCounter) * 360;
+                  const height =
+                    Math.ceil(projects.length / columnCounter) * 360;
                   return (
                     <Grid
-                      key={`${width}-${columnCounter}`}
-                      height={height + 120}
+                      key={`grid-${width}-${columnCounter}`} // Force re-render on width/column change
+                      height={height + 60}
                       width={width}
                       rowCount={Math.ceil(projects.length / columnCounter)}
                       rowHeight={360}
@@ -580,29 +598,21 @@ export const CommunityGrants = ({
                             key={key}
                             style={{
                               ...style,
-                              left:
-                                columnIndex === 0
-                                  ? +(style.left || 0)
-                                  : +(style.left || 0) + gutterSize,
-                              width:
-                                columnIndex === 0
-                                  ? +(style.width || 0)
-                                  : +(style.width || 0) - gutterSize,
-                              top:
-                                rowIndex === 0
-                                  ? +(style.top || 0)
-                                  : +(style.top || 0) + gutterSize,
-                              height: +(style.height || 0) - gutterSize,
+                              left: +(style.left || 0) + (columnIndex > 0 ? gutterSize : 0),
+                              width: +(style.width || 0) - (columnIndex > 0 ? gutterSize : 0),
+                              top: +(style.top || 0) + (rowIndex > 0 ? gutterSize : 0),
+                              height: +(style.height || 0) - (rowIndex > 0 ? gutterSize : 0),
                             }}
                           >
                             {project && (
                               <div
                                 style={{
                                   height: "100%",
+                                  width: "100%",
                                 }}
                               >
                                 <GrantCard
-                                  index={rowIndex * 4 + columnIndex}
+                                  index={rowIndex * columnCounter + columnIndex}
                                   key={project.uid}
                                   grant={projectV2ToGrant(project)}
                                 />

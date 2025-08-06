@@ -75,7 +75,7 @@ const GrantCardContent = ({ grant, index }: GrantCardProps) => {
   const hasTrackIds = selectedTrackIds && selectedTrackIds.length > 0;
 
   return (
-    <div className="flex flex-col items-start justify-start">
+    <div className="flex flex-col items-start justify-between w-full h-full" id="grant-card">
       <LoadingIndicator />
       <div
         className={`w-full flex flex-col gap-1 transition-all duration-300 ${
@@ -143,50 +143,50 @@ const GrantCardContent = ({ grant, index }: GrantCardProps) => {
         </div>
       </div>
 
-      <div className="flex w-full flex-row flex-wrap justify-start gap-1">
-        <div className="flex h-max w-max items-center justify-start rounded-full bg-slate-50   dark:bg-slate-700 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">
-          <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
-            <>
-              {formatCurrency(grant.milestones?.length)}{" "}
-              {pluralize("Milestone", grant.milestones?.length)}
-            </>
-          </p>
-        </div>
-
-        {grant && (
-          <GrantPercentage
-            grant={grant}
-            className="text-center text-sm font-medium text-teal-600 dark:text-teal-100 max-2xl:text-[13px]"
-          />
-        )}
-
-        <div className="flex h-max w-max items-center justify-start rounded-full bg-slate-50 dark:bg-slate-600 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">
-          <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
-            {formatCurrency(
-              updatesLength(grant.milestones, grant.updates.length)
-            )}{" "}
-            {pluralize(
-              "Update",
-              updatesLength(grant.milestones, grant.updates.length)
-            )}
-          </p>
-        </div>
-      </div>
-
-      <div className="gap-1 flex items-center justify-start flex-row flex-wrap overflow-y-auto">
-        {grant.categories?.map((category, index) => (
-          <div
-            key={category}
-            className="flex h-max max-h-[64px] w-max items-center justify-start  rounded-2xl bg-blue-100 dark:bg-blue-900 dark:mix-blend-normal px-3 py-1 mix-blend-multiply  max-2xl:px-2"
-          >
-            <div className="h-max max-h-[64px] w-max max-w-[260px] truncate break-words text-start text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
-              {category}
-            </div>
+      <div className="w-full flex flex-col gap-2 my-2">
+        <div className="flex w-full flex-row flex-wrap justify-start gap-1">
+          <div className="flex h-max w-max items-center justify-start rounded-full bg-slate-50   dark:bg-slate-700 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">
+            <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
+              <>
+                {formatCurrency(grant.milestones?.length)}{" "}
+                {pluralize("Milestone", grant.milestones?.length)}
+              </>
+            </p>
           </div>
-        ))}
-      </div>
 
-      <div className="h-1" />
+          {grant && (
+            <GrantPercentage
+              grant={grant}
+              className="text-center text-sm font-medium text-teal-600 dark:text-teal-100 max-2xl:text-[13px]"
+            />
+          )}
+
+          <div className="flex h-max w-max items-center justify-start rounded-full bg-slate-50 dark:bg-slate-600 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">
+            <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
+              {formatCurrency(
+                updatesLength(grant.milestones, grant.updates.length)
+              )}{" "}
+              {pluralize(
+                "Update",
+                updatesLength(grant.milestones, grant.updates.length)
+              )}
+            </p>
+          </div>
+        </div>
+
+        <div className="gap-1 flex items-center justify-start flex-row flex-wrap overflow-y-auto">
+          {grant.categories?.map((category, index) => (
+            <div
+              key={category}
+              className="flex h-max max-h-[64px] w-max items-center justify-start  rounded-2xl bg-blue-100 dark:bg-blue-900 dark:mix-blend-normal px-3 py-1 mix-blend-multiply  max-2xl:px-2"
+            >
+              <div className="h-max max-h-[64px] w-max max-w-[260px] truncate break-words text-start text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
+                {category}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
@@ -200,7 +200,7 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
     <Link
       href={href}
       prefetch={false}
-      className="flex h-full w-full max-w-[320px] relative flex-col items-start justify-between gap-3 rounded-2xl border border-zinc-200 bg-white dark:bg-zinc-900 p-2 transition-all duration-300 ease-in-out hover:opacity-80"
+      className="flex h-full w-full max-w-[620px] max-sm:w-[320px] relative rounded-2xl border border-zinc-200 bg-white dark:bg-zinc-900 p-2 transition-all duration-300 ease-in-out hover:opacity-80"
     >
       <GrantCardContent grant={grant} index={index} />
     </Link>

@@ -71,21 +71,30 @@ export const chosenCommunities = () => {
       },
     },
     {
-      name: "TEC",
-      slug: "tec",
-      uid: "0x455325a0317900a8bb6ba5bf973b3ec209e03317f22985385a532bca4328a930",
-      imageURL: {
-        light: "/logos/tec.png",
-        dark: "/logos/tec.png",
-      },
-    },
-    {
       name: "Scroll",
       slug: "scroll",
       uid: "0x92c22819704c38087f22ad1d7b900bc9bedb4f4946fafaf90e047e6eb43fc0da",
       imageURL: {
         light: "/logos/karma-scroll.jpg",
         dark: "/logos/karma-scroll.jpg",
+      },
+    },
+    {
+      name: "Lisk",
+      slug: "lisk",
+      uid: "0x4346faebd4044e3c5824e97aeb76aba7ddce59abfb4dde827be54c8de391c7f8",
+      imageURL: {
+        light: "/logos/karma-lisk.png",
+        dark: "/logos/karma-lisk.png",
+      },
+    },
+    {
+      name: "TEC",
+      slug: "tec",
+      uid: "0x455325a0317900a8bb6ba5bf973b3ec209e03317f22985385a532bca4328a930",
+      imageURL: {
+        light: "/logos/tec.png",
+        dark: "/logos/tec.png",
       },
     },
     {
@@ -140,15 +149,6 @@ export const chosenCommunities = () => {
       imageURL: {
         light: "/logos/karma-sei.svg",
         dark: "/logos/karma-sei.svg",
-      },
-    },
-    {
-      name: "Greenpill",
-      slug: "greenpill-network",
-      uid: "0xca43f36c16dd11d92857e90e504db221de4a15b2fd59f08556055490c1baafaa",
-      imageURL: {
-        light: "/logos/karma-greenpill.svg",
-        dark: "/logos/karma-greenpill.svg",
       },
     },
     {

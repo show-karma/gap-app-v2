@@ -11,6 +11,7 @@ import { useAccount } from "wagmi";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getGapClient, useGap } from "@/hooks/useGap";
+import { getChainIdByName } from "@/utilities/network";
 import { useAuthStore } from "@/store/auth";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { useStepper } from "@/store/modals/txStepper";
@@ -128,7 +129,18 @@ export const ContributorProfileDialog: FC<
     if (!isGlobal && !project) return;
     try {
       setIsLoading(true);
-      const targetChainId = isGlobal ? chain?.id : project?.chainID;
+      let targetChainId = 0;
+
+      if (isGlobal) {
+        if (chain?.id) {
+          targetChainId = chain.id;
+        } else if (gap?.network) {
+          targetChainId = getChainIdByName(gap.network);
+        }
+      } else if (project?.chainID) {
+        targetChainId = project.chainID;
+      }
+
       if (!targetChainId) {
         toast.error("Chain not found");
         setIsLoading(false);

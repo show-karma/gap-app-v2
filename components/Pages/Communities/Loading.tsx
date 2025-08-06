@@ -58,8 +58,9 @@ const CardSkeleton = ({ index }: { index: number }) => {
 
 export const CardListSkeleton = () => {
   const cardArray = Array.from({ length: 16 }, (_, index) => index);
+
   return (
-    <div className="grid grid-cols-4 w-full gap-4 max-[1600px]:grid-cols-3 max-xl:grid-cols-2 max-lg:grid-cols-3 max-md:grid-cols-2 max-sm:grid-cols-1">
+    <div className="grid w-full gap-4 grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(360px,1fr))] max-[2160px]:grid-cols-[repeat(auto-fit,minmax(360px,1fr))] min-[2160px]:grid-cols-6">
       {cardArray.map((_, index) => (
         <CardSkeleton key={index} index={index} />
       ))}

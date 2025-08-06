@@ -12,7 +12,7 @@ export const getCommunityDetailsV2 = cache(
       const [data] = await fetchData(
         INDEXER.COMMUNITY.V2.GET(slug)
       );
-      
+
       if (!data || data?.uid === zeroUID || !data?.details?.name) {
         notFound();
       }

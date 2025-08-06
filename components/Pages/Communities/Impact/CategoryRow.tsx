@@ -15,6 +15,7 @@ import pluralize from "pluralize";
 import { useState } from "react";
 import { prepareChartData } from "./ImpactCharts";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
+import formatCurrency from "@/utilities/formatCurrency";
 
 export const fundedAmountFormatter = (value: string) => {
   const amount = Number(value.includes(" ") ? value.split(" ")[0] : value);
@@ -97,7 +98,7 @@ const MetricCard = ({
       index={"date"}
       categories={[item.indicatorName, "Cumulative"]}
       colors={["blue", "green"]}
-      valueFormatter={(value) => `${value}`}
+      valueFormatter={(value) => `${formatCurrency(value)}`}
       yAxisWidth={40}
       enableLegendSlider
       noDataText="Awaiting grantees to submit values"
