@@ -62,7 +62,7 @@ export const projectV2ToGrant = (project: ProjectV2): IGrantResponse => {
         text: "",
       },
     })),
-    categories: project.details.category ? [project.details.category] : [],
+    categories: project.categories || [],
     chainID: 0,
     completed: null,
     schema: "",

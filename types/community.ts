@@ -26,8 +26,8 @@ export interface ProjectV2 {
     title: string;
     description: string;
     logoUrl: string;
-    category: string;
   };
+  categories: string[];
   grantNames: string[];
   members: Array<{
     address: string;
