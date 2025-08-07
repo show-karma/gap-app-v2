@@ -1,12 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { AutoSizer, Grid } from "react-virtualized";
+import Image from "next/image";
+
 import { chosenCommunities } from "@/utilities/chosenCommunities";
+import { useOwnerStore } from "@/store";
+import { useStaff } from "@/hooks/useStaff";
 import { CommunityCard } from "./CommunityCard";
 import { StatsCard } from "./StatsCard";
-import Image from "next/image";
+import { PAGES } from "@/utilities/pages";
 
 interface MockCommunity {
   name: string;
@@ -46,6 +51,8 @@ const getResponsiveColumns = (width: number) => {
 };
 
 export const CommunitiesPage = () => {
+  const router = useRouter();
+  
   // Create mock communities - replicate first community 16 times with different stats
   const [communities] = useState<MockCommunity[]>(() => {
     const baseCommunities = chosenCommunities();
@@ -77,6 +84,15 @@ export const CommunitiesPage = () => {
     }
   };
 
+  const isOwner = useOwnerStore((state) => state.isOwner);
+  const { isStaff } = useStaff();
+
+  const hasAdminAccess = isOwner || isStaff;
+
+  const handleAddCommunity = () => {
+    router.push(PAGES.ADMIN.COMMUNITIES);
+  };
+
   return (
     <div className="flex flex-col gap-8 w-full max-w-full overflow-hidden">
       {/* Page Title */}
@@ -98,6 +114,16 @@ export const CommunitiesPage = () => {
           Explore the ecosystem of DAOs, protocols, and organizations building the future 
           through transparent grant management and accountability.
         </p>
+
+        {hasAdminAccess && (
+          <button 
+            type="button" 
+            onClick={handleAddCommunity}
+            className="bg-primary-500 text-white rounded-s px-4 py-2 mt-5 w-fit mx-auto hover:bg-primary-600 transition-colors"
+          >
+            Add your community
+          </button>
+        )}
       </div>
 
       {/* Summary Stats Row - Using same Grid system as communities */}
