@@ -10,6 +10,7 @@ import { cn } from "@/utilities/tailwind";
 import { format, isValid, parseISO } from "date-fns";
 import { ArrowDownTrayIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { CheckIcon } from "@heroicons/react/24/outline";
+import StatusChangeModal from "../ApplicationView/StatusChangeModal";
 
 interface IApplicationListComponentProps extends IApplicationListProps {
   applications: IFundingApplication[];
@@ -89,6 +90,9 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<string>("");
+  const [pendingApplicationId, setPendingApplicationId] = useState<string>("");
 
   // Filter and sort applications
   const filteredAndSortedApplications = useMemo(() => {
@@ -104,15 +108,24 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
     currentPage * pageSize
   );
 
-  const handleStatusChange = async (
+  const handleStatusChangeClick = (
     applicationId: string,
     newStatus: string
   ) => {
-    if (onStatusChange) {
+    setPendingApplicationId(applicationId);
+    setPendingStatus(newStatus);
+    setStatusModalOpen(true);
+  };
+
+  const handleStatusChangeConfirm = async (reason?: string) => {
+    if (onStatusChange && pendingApplicationId && pendingStatus) {
       try {
         setIsUpdatingStatus(true);
-        await onStatusChange(applicationId, newStatus);
+        await onStatusChange(pendingApplicationId, pendingStatus, reason);
         setIsUpdatingStatus(false);
+        setStatusModalOpen(false);
+        setPendingStatus("");
+        setPendingApplicationId("");
       } catch (error) {
         console.error("Failed to update status:", error);
         setIsUpdatingStatus(false);
@@ -125,7 +138,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
       className={cn(
         "px-2 py-1 rounded-full text-xs font-medium",
         statusColors[status as keyof typeof statusColors] ||
-          "bg-gray-100 text-gray-800"
+        "bg-gray-100 text-gray-800"
       )}
     >
       {formatStatus(status)}
@@ -139,8 +152,8 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
       rating >= 8
         ? "bg-green-100 text-green-800"
         : rating >= 6
-        ? "bg-yellow-100 text-yellow-800"
-        : "bg-red-100 text-red-800";
+          ? "bg-yellow-100 text-yellow-800"
+          : "bg-red-100 text-red-800";
 
     return (
       <span className={cn("px-2 py-1 rounded-full text-xs font-medium", color)}>
@@ -184,10 +197,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                       {application.referenceNumber}
                     </h3>
                     {getStatusBadge(application.status)}
-                    {getRatingBadge(
-                      application.aiEvaluation?.systemEvaluation?.rating ||
-                        application.aiEvaluation?.detailedEvaluation?.rating
-                    )}
+
                   </div>
 
                   <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -198,15 +208,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                     Submitted: {formatDate(application.createdAt)}
                   </p>
 
-                  {(application.aiEvaluation?.systemEvaluation?.reasoning ||
-                    application.aiEvaluation?.detailedEvaluation
-                      ?.reasoning) && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                      AI Summary:{" "}
-                      {application.aiEvaluation?.systemEvaluation?.reasoning ||
-                        application.aiEvaluation?.detailedEvaluation?.reasoning}
-                    </p>
-                  )}
+
                 </div>
 
                 {/* Actions */}
@@ -218,7 +220,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                         <Button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleStatusChange(
+                            handleStatusChangeClick(
                               application.id,
                               "revision_requested"
                             );
@@ -234,7 +236,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                         <Button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleStatusChange(application.id, "approved");
+                            handleStatusChangeClick(application.id, "approved");
                           }}
                           variant="secondary"
                           className="w-fit px-3 py-1 border bg-transparent text-green-500 font-medium border-green-200 dark:border-green-700 flex flex-row gap-2"
@@ -248,7 +250,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                         <Button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleStatusChange(application.id, "rejected");
+                            handleStatusChangeClick(application.id, "rejected");
                           }}
                           variant="secondary"
                           className="w-fit px-3 py-1 border bg-transparent text-red-500 font-medium border-red-200 dark:border-red-700 flex flex-row gap-2"
@@ -305,6 +307,19 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
           </div>
         </div>
       )}
+
+      {/* Status Change Modal */}
+      <StatusChangeModal
+        isOpen={statusModalOpen}
+        onClose={() => {
+          setStatusModalOpen(false);
+          setPendingStatus("");
+          setPendingApplicationId("");
+        }}
+        onConfirm={handleStatusChangeConfirm}
+        status={pendingStatus}
+        isSubmitting={isUpdatingStatus}
+      />
     </div>
   );
 };
