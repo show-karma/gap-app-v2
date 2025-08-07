@@ -28,6 +28,7 @@ import { Milestone } from "@show-karma/karma-gap-sdk/core/class/entities/Milesto
 import { MilestoneCompleted } from "@show-karma/karma-gap-sdk/core/class/types/attestations";
 import { UnifiedMilestone } from "@/types/roadmap";
 import { useMilestone } from "@/hooks/useMilestone";
+import { OutputsSection } from "@/components/Forms/Outputs/OutputsSection";
 
 // Create form schema with zod
 const formSchema = z.object({
@@ -56,6 +57,22 @@ const formSchema = z.object({
       }
     )
     .optional(),
+  outputs: z.array(
+    z.object({
+      outputId: z.string().min(1, "Output is required"),
+      value: z.union([z.number().min(0), z.string()]),
+      proof: z.string().optional(),
+      startDate: z.string().optional(),
+      endDate: z.string().optional(),
+    })
+  ),
+  deliverables: z.array(
+    z.object({
+      name: z.string().min(1, "Name is required"),
+      proof: z.string().min(1, "Proof is required"),
+      description: z.string().optional(),
+    })
+  ),
 });
 
 export type MilestoneCompletedFormData = z.infer<typeof formSchema>;
@@ -79,14 +96,18 @@ export const GrantMilestoneCompletionForm = ({
     formState: { errors, isSubmitting, isValid },
     setValue,
     watch,
+    control,
   } = useForm<MilestoneCompletedFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       description: "",
       proofOfWork: "",
       completionPercentage: "",
+      outputs: [],
+      deliverables: [],
     },
   });
+
 
   const onSubmit = async (data: MilestoneCompletedFormData) => {
     setIsCompleting(true);
@@ -197,6 +218,21 @@ export const GrantMilestoneCompletionForm = ({
           )}
         </div>
       </div>
+
+      {/* Outputs Section */}
+      <OutputsSection
+        register={register}
+        control={control}
+        setValue={setValue}
+        watch={watch}
+        errors={errors}
+        projectUID={milestone.uid}
+        selectedCommunities={[]}
+        selectedPrograms={[]}
+        onCreateNewIndicator={() => {}}
+        onIndicatorCreated={() => {}}
+        labelStyle="text-sm font-semibold text-zinc-800 dark:text-zinc-200"
+      />
 
       <div className="flex flex-row gap-2 justify-end">
         <Button

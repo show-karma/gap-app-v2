@@ -20,11 +20,56 @@ import { sanitizeObject } from "@/utilities/sanitize";
 import { MilestoneCompletedFormData } from "@/components/Forms/GrantMilestoneCompletion";
 import { PAGES } from "@/utilities/pages";
 import { MESSAGES } from "@/utilities/messages";
+import { sendMilestoneImpactAnswers } from "@/utilities/impact/milestoneImpactAnswers";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
 import { sanitizeInput } from "@/utilities/sanitize";
 import { useWallet } from "./useWallet";
+
+// Helper function to send outputs and deliverables data
+const sendOutputsAndDeliverables = async (
+  milestoneUID: string,
+  data: MilestoneCompletedFormData
+) => {
+  try {
+    // Send outputs (metrics) data if any
+    if (data.outputs && data.outputs.length > 0) {
+      for (const output of data.outputs) {
+        if (output.outputId && (output.value !== undefined && output.value !== "")) {
+          const datapoints = [{
+            value: output.value,
+            proof: output.proof || "",
+            startDate: output.startDate || "",
+            endDate: output.endDate || "",
+          }];
+          
+          await sendMilestoneImpactAnswers(
+            milestoneUID,
+            output.outputId,
+            datapoints,
+            () => {
+              console.log(`Successfully sent output data for indicator ${output.outputId}`);
+            },
+            (error) => {
+              console.error(`Error sending output data for indicator ${output.outputId}:`, error);
+            }
+          );
+        }
+      }
+    }
+
+    // Send deliverables data if any
+    if (data.deliverables && data.deliverables.length > 0) {
+      // For now, deliverables are just stored with the milestone completion
+      // In the future, they could be sent as separate entities to the backend
+      console.log("Deliverables included with milestone completion:", data.deliverables);
+    }
+  } catch (error) {
+    console.error("Error sending outputs and deliverables:", error);
+    // Don't throw - we don't want to fail the milestone completion if outputs fail
+  }
+};
 
 export const useMilestone = () => {
   const [isDeleting, setIsDeleting] = useState(false);
@@ -672,6 +717,7 @@ export const useMilestone = () => {
         proofOfWork: data.noProofCheckbox ? "" : data.proofOfWork,
         completionPercentage: data.completionPercentage,
         type: "completed",
+        deliverables: data.deliverables || [],
       });
 
       toast.loading(`Marking milestone as complete`, {
@@ -713,13 +759,17 @@ export const useMilestone = () => {
             async () => {
               changeStepperStep("indexed");
             }
-          ).then(() => {
+          ).then(async () => {
             toast.success(
               `Completed ${milestone.title} milestone successfully!`,
               {
                 id: `milestone-${milestone.uid}`,
               }
             );
+            
+            // Send outputs and deliverables data
+            await sendOutputsAndDeliverables(milestone.uid, data);
+            
             refetch();
             router.push(
               PAGES.PROJECT.UPDATES(
@@ -817,6 +867,7 @@ export const useMilestone = () => {
           proofOfWork: data.noProofCheckbox ? "" : data.proofOfWork,
           completionPercentage: data.completionPercentage,
           type: "completed",
+          deliverables: data.deliverables || [],
         });
 
         if (!milestonesOfChain?.length) {
@@ -878,13 +929,19 @@ export const useMilestone = () => {
               async () => {
                 changeStepperStep("indexed");
               }
-            ).then(() => {
+            ).then(async () => {
               toast.success(
                 `Completed ${milestonesOfChain.length} milestone(s) on ${chainName} successfully!`,
                 {
                   id: `chain-${chainId}`,
                 }
               );
+              
+              // Send outputs and deliverables for each milestone
+              for (const milestoneUID of milestonesOfChain) {
+                await sendOutputsAndDeliverables(milestoneUID, data);
+              }
+              
               refetch();
               router.push(
                 PAGES.PROJECT.UPDATES(
@@ -1001,6 +1058,7 @@ export const useMilestone = () => {
             proofOfWork: data.noProofCheckbox ? "" : data.proofOfWork,
             completionPercentage: data.completionPercentage,
             type: "completed",
+            deliverables: data.deliverables || [],
           });
 
           const checkIfCompletionUpdated = async (callbackFn?: () => void) => {
@@ -1131,6 +1189,7 @@ export const useMilestone = () => {
             proofOfWork: data.noProofCheckbox ? "" : data.proofOfWork,
             completionPercentage: data.completionPercentage,
             type: "completed",
+            deliverables: data.deliverables || [],
           });
 
           const originalCreatedAt = milestoneInstance.completed.createdAt;

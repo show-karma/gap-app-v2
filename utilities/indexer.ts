@@ -101,6 +101,14 @@ export const INDEXER = {
       GET: (projectUID: string) => `/projects/${projectUID}/payout-address`,
     },
   },
+  MILESTONE: {
+    IMPACT_INDICATORS: {
+      GET: (milestoneUID: string) =>
+        `/grants/milestones/${milestoneUID}/indicators/data`,
+      SEND: (milestoneUID: string) => 
+        `/grants/milestones/${milestoneUID}/indicators/data`,
+    },
+  },
   CATEGORIES: {
     CREATE: (idOrSlug: string) => `/categories/create/${idOrSlug}`,
     IMPACT_SEGMENTS: {

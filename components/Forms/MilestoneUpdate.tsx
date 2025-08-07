@@ -34,6 +34,8 @@ import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { useWallet } from "@/hooks/useWallet";
+import { OutputsSection } from "@/components/Forms/Outputs/OutputsSection";
+import { sendMilestoneImpactAnswers } from "@/utilities/impact/milestoneImpactAnswers";
 
 interface MilestoneUpdateFormProps {
   milestone: IMilestoneResponse;
@@ -67,6 +69,22 @@ const schema = z.object({
       message: "Please enter a number between 0 and 100",
     }
   ),
+  outputs: z.array(
+    z.object({
+      outputId: z.string().min(1, "Output is required"),
+      value: z.union([z.number().min(0), z.string()]),
+      proof: z.string().optional(),
+      startDate: z.string().optional(),
+      endDate: z.string().optional(),
+    })
+  ),
+  deliverables: z.array(
+    z.object({
+      name: z.string().min(1, "Name is required"),
+      proof: z.string().min(1, "Proof is required"),
+      description: z.string().optional(),
+    })
+  ),
 });
 type SchemaType = z.infer<typeof schema>;
 
@@ -98,6 +116,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
     setValue,
     handleSubmit,
     watch,
+    control,
     formState: { errors, isValid },
   } = useForm<SchemaType>({
     resolver: zodResolver(schema),
@@ -106,6 +125,8 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
     defaultValues: {
       description: previousData?.reason,
       proofOfWork: previousData?.proofOfWork,
+      outputs: [],
+      deliverables: (previousData as any)?.deliverables || [],
     },
   });
 
@@ -124,6 +145,63 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
   const project = useProjectStore((state) => state.project);
+
+  // Get grant and community information for OutputsSection
+  const grantInstance = project?.grants?.find(g => g.uid === milestone.refUID);
+  const selectedCommunities = grantInstance?.community ? [{
+    uid: grantInstance.community.uid,
+    name: grantInstance.community.details?.data?.name || '',
+    details: grantInstance.community.details
+  }] : [];
+  const selectedPrograms = grantInstance?.details?.data?.programId ? [{
+    programId: grantInstance.details.data.programId,
+    title: grantInstance.details.data.title || '',
+    chainID: grantInstance.chainID
+  }] : [];
+
+  // Helper function to send outputs and deliverables data
+  const sendOutputsAndDeliverables = async (
+    milestoneUID: string,
+    data: SchemaType
+  ) => {
+    try {
+      // Send outputs (metrics) data if any
+      if (data.outputs && data.outputs.length > 0) {
+        for (const output of data.outputs) {
+          if (output.outputId && (output.value !== undefined && output.value !== "")) {
+            const datapoints = [{
+              value: output.value,
+              proof: output.proof || "",
+              startDate: output.startDate || "",
+              endDate: output.endDate || "",
+            }];
+            
+            await sendMilestoneImpactAnswers(
+              milestoneUID,
+              output.outputId,
+              datapoints,
+              () => {
+                console.log(`Successfully sent output data for indicator ${output.outputId}`);
+              },
+              (error) => {
+                console.error(`Error sending output data for indicator ${output.outputId}:`, error);
+              }
+            );
+          }
+        }
+      }
+
+      // Send deliverables data if any
+      if (data.deliverables && data.deliverables.length > 0) {
+        // For now, deliverables are just stored with the milestone completion
+        // In the future, they could be sent as separate entities to the backend
+        console.log("Deliverables included with milestone completion:", data.deliverables);
+      }
+    } catch (error) {
+      console.error("Error sending outputs and deliverables:", error);
+      // Don't throw - we don't want to fail the milestone completion if outputs fail
+    }
+  };
 
   const completeMilestone = async (
     milestone: IMilestoneResponse,
@@ -162,6 +240,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
             proofOfWork: data.proofOfWork,
             completionPercentage: data.completionPercentage,
             type: "completed",
+            deliverables: data.deliverables || [],
           }),
           changeStepperStep
         )
@@ -196,6 +275,10 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                   retries = 0;
                   changeStepperStep("indexed");
                   toast.success(MESSAGES.MILESTONES.COMPLETE.SUCCESS);
+                  
+                  // Send outputs and deliverables data
+                  await sendOutputsAndDeliverables(milestone.uid, data);
+                  
                   afterSubmit?.();
                   openDialog();
                   cancelEditing(false);
@@ -279,6 +362,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
             proofOfWork: data.proofOfWork,
             completionPercentage: data.completionPercentage,
             type: "completed",
+            deliverables: data.deliverables || [],
           }),
           changeStepperStep
         )
@@ -314,6 +398,10 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                   retries = 0;
                   changeStepperStep("indexed");
                   toast.success(MESSAGES.MILESTONES.UPDATE_COMPLETION.SUCCESS);
+                  
+                  // Send outputs and deliverables data
+                  await sendOutputsAndDeliverables(milestone.uid, data);
+                  
                   closeShareDialog();
                   PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
                     fetchedProject?.uid as string,
@@ -446,6 +534,21 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
             </p>
           </div>
         </div>
+
+        {/* Outputs Section */}
+        <OutputsSection
+          register={register}
+          control={control}
+          setValue={setValue}
+          watch={watch}
+          errors={errors}
+          projectUID={project?.uid || ''}
+          selectedCommunities={selectedCommunities}
+          selectedPrograms={selectedPrograms}
+          onCreateNewIndicator={() => {}}
+          onIndicatorCreated={() => {}}
+          labelStyle={labelStyle}
+        />
       </div>
       <div className="mt-4 flex w-full flex-row justify-end gap-4">
         <Button
