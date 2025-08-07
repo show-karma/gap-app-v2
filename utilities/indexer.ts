@@ -122,6 +122,8 @@ export const INDEXER = {
         .join("&")}`,
   },
   COMMUNITY: {
+    LIST: ({ page, limit, includeStats }: { page: number; limit: number; includeStats: boolean }) =>
+      `/v2/communities/?page=${page}&limit=${limit}&includeStats=${includeStats}`,
     GET: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}`,
     CATEGORIES: (idOrSlug: string) => `/communities/${idOrSlug}/categories`,
     SUBSCRIBE: {
