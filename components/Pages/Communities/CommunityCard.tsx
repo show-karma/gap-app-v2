@@ -28,12 +28,17 @@ export const CommunityCard = ({ community }: CommunityCardProps) => {
     </span>
   );
 
+  // Limit categories to prevent overflow
+  const categories = community.categories ?? [];
+  const maxTags = 2;
+  const visibleTags = categories.slice(0, maxTags);
+  const remainingCount = Math.max(0, categories.length - maxTags);
+
   return (
     <div
       className="flex flex-col p-4 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 ease-in-out w-full min-w-0"
       style={{ height: '318px' }}
     >
-      {/* Community Image */}
       <div className="flex justify-center mb-3 min-h-[72px] h-18 mx-auto">
         <ProfilePicture
           imageURL={imageURL}
@@ -44,19 +49,23 @@ export const CommunityCard = ({ community }: CommunityCardProps) => {
         />
       </div>
 
-      {/* Community Name */}
       <div className="text-center mb-3 min-w-0">
         <h3 className="text-xl font-semibold text-gray-900 dark:text-white line-clamp-2 break-words">
           {name}
         </h3>
       </div>
 
-      {/* Category Tags (wrap to available width) */}
-      <div className="flex flex-wrap justify-center gap-2 mb-3 w-full">
-        {(community.categories ?? []).map((c, idx) => renderCategoryTag(c.name, idx))}
-      </div>
+      {visibleTags.length > 0 &&
+        <div className="flex flex-wrap justify-center gap-2 mb-3 w-full min-h-[28px]">
+          {visibleTags.map((c, idx) => renderCategoryTag(c.name, idx))}
+          {remainingCount > 0 && (
+            <span className="px-2 py-1 bg-neutral-200 dark:bg-neutral-700 text-neutral-500 dark:text-neutral-400 text-sm font-medium rounded-sm flex-shrink-0">
+              +{remainingCount} more
+            </span>
+          )}
+        </div>
+      }
 
-      {/* Stats */}
       <div className="flex justify-center space-x-4 mb-3 min-w-0">
         <div className="text-center min-w-0">
           <div className="text-base font-bold text-neutral-600 dark:text-neutral-400">
@@ -87,7 +96,6 @@ export const CommunityCard = ({ community }: CommunityCardProps) => {
         </div>
       </div>
 
-      {/* Go Button */}
       <div className="flex justify-end mt-auto pt-2">
         <Link
           href={PAGES.COMMUNITY.ALL_GRANTS(slug || community.uid)}

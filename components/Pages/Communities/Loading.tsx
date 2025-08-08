@@ -48,7 +48,7 @@ const CommunityCardSkeleton = () => (
     </div>
 
     {/* Category Tag Skeleton */}
-    <div className="flex justify-center mb-3">
+    <div className="flex justify-center mb-3 min-h-[28px]">
       <div className="h-6 w-20 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
     </div>
 
