@@ -47,10 +47,6 @@ export const CommunitiesPage = () => {
     return data?.pages.flatMap((page) => page.payload) || [];
   }, [data]);
 
-  const handleAddCommunity = () => {
-    router.push(PAGES.ADMIN.COMMUNITIES);
-  };
-
   const loadMore = () => {
     if (hasNextPage) {
       fetchNextPage();
@@ -98,15 +94,18 @@ export const CommunitiesPage = () => {
           through transparent grant management and accountability.
         </p>
 
-        {hasAdminAccess && (
+        <a
+          href="https://tally.so/r/wd0jeq"
+          target="_blank"
+          rel="noreferrer"
+        >
           <button 
             type="button" 
-            onClick={handleAddCommunity}
-            className="bg-primary-500 text-white rounded-sm px-4 py-2 mt-5 w-fit mx-auto hover:bg-primary-600 transition-colors"
+            className="bg-primary-500 text-white font-bold rounded-sm px-4 py-2 mt-5 w-fit mx-auto hover:bg-primary-600 transition-colors"
           >
             Add your community
           </button>
-        )}
+        </a>
       </div>
 
       {/* Summary Stats Row - Only show if stats loaded successfully */}
@@ -226,6 +225,80 @@ export const CommunitiesPage = () => {
             <p className="text-gray-500 dark:text-gray-400">No communities found.</p>
           </div>
         )}
+      </div>
+      
+      <div className="relative w-full bg-gradient-to-r from-[#D6DFFF] to-white dark:from-slate-800 dark:to-slate-700 rounded-2xl p-8 overflow-hidden mb-10">
+        <div className="absolute right-0 top-0 w-1/2 h-full pointer-events-none">
+          <div className="absolute top-20 right-20 transform rotate-[20deg]">
+            <Image
+              src="/assets/communities-banner/vector-1.png"
+              alt="Community member"
+              width={150}
+              height={150}
+              className="rounded-full object-cover"
+            />
+          </div>
+          <div className="absolute top-1 right-[220px] transform rotate-[20deg]">
+            <Image
+              src="/assets/communities-banner/mmur.jpg"
+              alt="Decorative element"
+              width={100}
+              height={100}
+              className="rounded-full object-cover"
+            />
+          </div>
+          <div className="absolute top-[200px] right-[220px] transform rotate-[20deg]">
+            <Image
+              src="/assets/communities-banner/vector-2.png"
+              alt="Decorative element"
+              width={180}
+              height={180}
+              className="rounded-full object-cover"
+            />
+          </div>
+          <div className="absolute bottom-[220px] right-2 transform rotate-[20deg]">
+            <Image
+              src="/assets/communities-banner/stock.jpg"
+              alt="Decorative element"
+              width={180}
+              height={180}
+              className="rounded-full object-cover"
+            />
+          </div>
+          <div className="absolute top-[260px] right-2 transform rotate-[20deg]">
+            <Image
+              src="/assets/communities-banner/vector-3.png"
+              alt="Decorative element"
+              width={180}
+              height={180}
+              className="rounded-full object-cover"
+            />
+          </div>
+        </div>
+
+        <div className="relative z-10 flex flex-col max-w-2xl">
+          <h2 className="text-3xl font-bold text-black dark:text-white mb-4">
+            Add Your Community
+          </h2>
+          <p className="text-lg text-black dark:text-gray-300 mb-6 leading-relaxed">
+            Join the ecosystem of Web3 organizations using Karma GAP to manage grants with 
+            complete transparency and accountability. Build trust, track impact, and grow your 
+            community.
+          </p>
+          <a
+            href="https://tally.so/r/wd0jeq"
+            target="_blank"
+            rel="noreferrer"
+            className="w-fit"
+          >
+            <button 
+              type="button" 
+              className="bg-primary-500 text-white font-bold rounded-sm px-4 py-2 mt-5 w-fit mx-auto hover:bg-primary-600 transition-colors"
+            >
+              Add Your Community
+            </button>
+          </a>
+        </div>
       </div>
     </div>
   );
