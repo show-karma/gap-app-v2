@@ -9,17 +9,10 @@ import { StatsCard } from "./StatsCard";
 import { CommunitiesSkeleton } from "./Loading";
 import { PAGES } from "@/utilities/pages";
 import { useCommunities } from "@/hooks/useCommunities";
+import { useCommunityStats } from "@/hooks/useCommunityStats";
 import { useOwnerStore } from "@/store";
 import { useStaff } from "@/hooks/useStaff";
 import Image from "next/image";
-
-// Mock summary stats
-const summaryStats = [
-  { title: "Active Communities", value: Math.floor(Math.random() * (999 - 100) + 100) },
-  { title: "Projects Funded", value: Math.floor(Math.random() * (9999 - 1000) + 1000) },
-  { title: "Grants Tracked", value: `$${(Math.floor(Math.random() * (999 - 100) + 100) / 10).toFixed(1)}M` },
-  { title: "Milestones Completed", value: Math.floor(Math.random() * (9999 - 1000) + 1000) },
-];
 
 // Responsive breakpoint function
 const getResponsiveColumns = (width: number) => {
@@ -39,10 +32,16 @@ export const CommunitiesPage = () => {
     data,
     fetchNextPage,
     hasNextPage,
-    isLoading,
-    isError,
-    error,
+    isLoading: communitiesLoading,
+    isError: communitiesError,
+    error: communitiesErrorMessage,
   } = useCommunities({ limit: 12, includeStats: true });
+
+  const {
+    data: summaryStats,
+    isLoading: statsLoading,
+    isError: statsError,
+  } = useCommunityStats();
 
   const communities = useMemo(() => {
     return data?.pages.flatMap((page) => page.payload) || [];
@@ -58,17 +57,22 @@ export const CommunitiesPage = () => {
     }
   };
 
-  if (isError) {
+  // Show skeleton if both communities and stats are loading
+  if (communitiesLoading && statsLoading) {
+    return <CommunitiesSkeleton />;
+  }
+
+  if (communitiesError) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
         <p className="text-red-500 dark:text-red-400">
-          Error loading communities: {error?.message}
+          Error loading communities: {communitiesErrorMessage?.message}
         </p>
       </div>
     );
   }
 
-  if (isLoading) {
+  if (communitiesLoading) {
     return <CommunitiesSkeleton />;
   }
 
@@ -105,57 +109,59 @@ export const CommunitiesPage = () => {
         )}
       </div>
 
-      {/* Summary Stats Row - Using same Grid system as communities */}
-      <div className="w-full overflow-hidden">
-        <AutoSizer disableHeight>
-          {({ width }) => {
-            const columns = getResponsiveColumns(width);
-            const gap = 24;
-            const actualCardWidth = Math.floor((width - (columns - 1) * gap) / columns);
-            const rowHeight = 113 + gap;
-            const rowCount = Math.ceil(summaryStats.length / columns);
-            const height = rowHeight * rowCount;
+      {/* Summary Stats Row - Only show if stats loaded successfully */}
+      {summaryStats && !statsError && (
+        <div className="w-full overflow-hidden">
+          <AutoSizer disableHeight>
+            {({ width }) => {
+              const columns = getResponsiveColumns(width);
+              const gap = 24;
+              const actualCardWidth = Math.floor((width - (columns - 1) * gap) / columns);
+              const rowHeight = 113 + gap;
+              const rowCount = Math.ceil(summaryStats.length / columns);
+              const height = rowHeight * rowCount;
 
-            return (
-              <Grid
-                key={`stats-grid-${width}-${columns}`}
-                height={height}
-                width={width}
-                rowCount={rowCount}
-                rowHeight={rowHeight}
-                columnWidth={actualCardWidth + gap}
-                columnCount={columns}
-                style={{ overflow: "visible" }}
-                cellRenderer={({ columnIndex, key, rowIndex, style }) => {
-                  const itemIndex = rowIndex * columns + columnIndex;
-                  const stat = summaryStats[itemIndex];
+              return (
+                <Grid
+                  key={`stats-grid-${width}-${columns}`}
+                  height={height}
+                  width={width}
+                  rowCount={rowCount}
+                  rowHeight={rowHeight}
+                  columnWidth={actualCardWidth + gap}
+                  columnCount={columns}
+                  style={{ overflow: "visible" }}
+                  cellRenderer={({ columnIndex, key, rowIndex, style }) => {
+                    const itemIndex = rowIndex * columns + columnIndex;
+                    const stat = summaryStats[itemIndex];
 
-                  if (!stat) return null;
+                    if (!stat) return null;
 
-                  return (
-                    <div
-                      key={key}
-                      style={{
-                        ...style,
-                        width: actualCardWidth,
-                        paddingRight: columnIndex < columns - 1 ? gap : 0,
-                        paddingBottom: gap,
-                        overflow: "visible",
-                      }}
-                    >
-                      <StatsCard title={stat.title} value={stat.value} />
-                    </div>
-                  );
-                }}
-              />
-            );
-          }}
-        </AutoSizer>
-      </div>
+                    return (
+                      <div
+                        key={key}
+                        style={{
+                          ...style,
+                          width: actualCardWidth,
+                          paddingRight: columnIndex < columns - 1 ? gap : 0,
+                          paddingBottom: gap,
+                          overflow: "visible",
+                        }}
+                      >
+                        <StatsCard title={stat.title} value={stat.value} />
+                      </div>
+                    );
+                  }}
+                />
+              );
+            }}
+          </AutoSizer>
+        </div>
+      )}
 
       {/* Communities Grid with Infinite Scroll */}
       <div className="w-full overflow-hidden">
-        {isLoading && communities.length === 0 ? (
+        {communitiesLoading && communities.length === 0 ? (
           <div className="flex items-center justify-center py-20">
             <p className="text-gray-500 dark:text-gray-400">Loading communities...</p>
           </div>
