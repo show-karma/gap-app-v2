@@ -6,6 +6,7 @@ import InfiniteScroll from "react-infinite-scroll-component";
 import { AutoSizer, Grid } from "react-virtualized";
 import { CommunityCard } from "./CommunityCard";
 import { StatsCard } from "./StatsCard";
+import { CommunitiesSkeleton } from "./Loading";
 import { PAGES } from "@/utilities/pages";
 import { useCommunities } from "@/hooks/useCommunities";
 import { useOwnerStore } from "@/store";
@@ -68,11 +69,7 @@ export const CommunitiesPage = () => {
   }
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <p className="text-gray-500 dark:text-gray-400">Loading communities...</p>
-      </div>
-    );
+    return <CommunitiesSkeleton />;
   }
 
   return (
