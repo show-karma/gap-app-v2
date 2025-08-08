@@ -154,4 +154,49 @@ export function truncateAndCleanMarkdown(
   return cleanMarkdownForPlainText(text, maxLength);
 }
 
+// Rehype rewrite utilities
+export type RehypeRewrite = (
+  node: unknown,
+  index?: number,
+  parent?: unknown
+) => void;
+
+type HastElement = {
+  type: string;
+  tagName: string;
+  properties?: Record<string, unknown>;
+};
+const isHastElement = (node: unknown): node is HastElement =>
+  !!node &&
+  typeof node === "object" &&
+  "type" in (node as object) &&
+  (node as any).type === "element" &&
+  "tagName" in (node as object) &&
+  typeof (node as any).tagName === "string";
+
+/**
+ * Creates a rehype rewrite callback that converts specified heading levels to a target level.
+ * Example: rewriteHeadingsToLevel(6) will convert h1..h5 to h6 (h6 remains unchanged).
+ */
+export function rewriteHeadingsToLevel(
+  targetLevel: number,
+  fromLevels: number[] = [1, 2, 3, 4, 5]
+): RehypeRewrite {
+  const toTag = `h${Math.min(Math.max(targetLevel, 1), 6)}`;
+  const fromTags = new Set(
+    fromLevels
+      .filter((lvl) => lvl >= 1 && lvl <= 6)
+      .map((lvl) => `h${lvl}`)
+  );
+
+  return (node: unknown) => {
+    if (isHastElement(node)) {
+      const tagName = node.tagName.toLowerCase();
+      if (fromTags.has(tagName)) {
+        node.tagName = toTag;
+      }
+    }
+  };
+}
+
 export default { renderToHTML, renderToPlainText };
