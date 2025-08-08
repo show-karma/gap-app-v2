@@ -13,6 +13,7 @@ import { ProfilePicture } from "./Utilities/ProfilePicture";
 import Link from "next/link";
 import { useLinkStatus } from "next/link";
 import { Spinner } from "./Utilities/Spinner";
+import { rewriteHeadingsToLevel } from "@/utilities/markdown";
 
 interface GrantCardProps {
   grant: IGrantResponse;
@@ -74,6 +75,8 @@ const GrantCardContent = ({ grant, index }: GrantCardProps) => {
   // Check if we have valid track IDs to display
   const hasTrackIds = selectedTrackIds && selectedTrackIds.length > 0;
 
+  const demoteAllHeadings = rewriteHeadingsToLevel(4);
+
   return (
     <div className="flex flex-col items-start justify-between w-full h-full" id="grant-card">
       <LoadingIndicator />
@@ -127,16 +130,17 @@ const GrantCardContent = ({ grant, index }: GrantCardProps) => {
             </div>
           )}
           <div className="flex flex-col gap-1 flex-1 h-[64px]">
-            <div className="text-sm text-gray-900 dark:text-gray-400 text-ellipsis line-clamp-2">
+            <div className="text-sm text-gray-900 dark:text-gray-400 text-ellipsis line-clamp-3">
               <MarkdownPreview
                 source={grant.project?.details?.data?.description?.slice(
                   0,
                   100
                 )}
-                allowElement={(element, index, parent) => {
+                allowElement={(element) => {
                   // Prevent rendering links to avoid nested <a> tags
                   return element.tagName !== "a";
                 }}
+                rehypeRewrite={(node) => demoteAllHeadings(node)}
               />
             </div>
           </div>
