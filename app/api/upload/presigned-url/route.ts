@@ -35,26 +35,10 @@ export async function POST(request: NextRequest) {
     const fileExtension = fileName.split('.').pop();
     const uniqueFileName = `temp-logos/${timestamp}-${randomId}.${fileExtension}`;
     
-    // Set expiration to 12 hours from now  
-    const expirationDate = new Date();
-    expirationDate.setHours(expirationDate.getHours() + 12);
-    
     // Create presigned URL for upload
     const command = new PutObjectCommand({
       Bucket: process.env.AWS_S3_BUCKET_NAME!,
       Key: uniqueFileName,
-      ContentType: fileType,
-      ContentLength: fileSize,
-      // Tag as temporary with expiration timestamp
-      Tagging: `status=temporary&expires=${expirationDate.getTime()}`,
-      Metadata: {
-        'uploaded-by': 'project-dialog',
-        'file-type': 'logo',
-        'expires-at': expirationDate.toISOString(),
-        'original-name': fileName,
-        'width': width.toString(),
-        'height': height.toString(),
-      }
     });
     
     const uploadUrl = await getSignedUrl(s3Client, command, { 
@@ -68,7 +52,6 @@ export async function POST(request: NextRequest) {
       uploadUrl,
       finalUrl,
       key: uniqueFileName,
-      expiresAt: expirationDate.toISOString()
     });
     
   } catch (error) {
