@@ -17,6 +17,7 @@ interface CommunityWithStats {
     totalGrants: number;
     totalMembers: number;
   };
+  categories?: { id: string; name: string }[];
   createdAt: string;
   updatedAt: string;
 }

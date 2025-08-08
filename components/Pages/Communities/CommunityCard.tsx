@@ -19,6 +19,15 @@ export const CommunityCard = ({ community }: CommunityCardProps) => {
     members: community.stats?.totalMembers || 0,
   };
 
+  const renderCategoryTag = (label: string, key?: string | number) => (
+    <span
+      key={key ?? label}
+      className="px-2 py-1 bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 text-sm font-medium rounded-sm flex-shrink-0"
+    >
+      {label}
+    </span>
+  );
+
   return (
     <div
       className="flex flex-col p-4 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 ease-in-out w-full min-w-0"
@@ -42,11 +51,9 @@ export const CommunityCard = ({ community }: CommunityCardProps) => {
         </h3>
       </div>
 
-      {/* Category Tag */}
-      <div className="flex justify-center mb-3">
-        <span className="px-2 py-1 bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 text-sm font-medium rounded-full flex-shrink-0">
-          Infrastructure
-        </span>
+      {/* Category Tags (wrap to available width) */}
+      <div className="flex flex-wrap justify-center gap-2 mb-3 w-full">
+        {(community.categories ?? []).map((c, idx) => renderCategoryTag(c.name, idx))}
       </div>
 
       {/* Stats */}
