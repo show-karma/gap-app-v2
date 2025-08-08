@@ -13,6 +13,7 @@ import { Button } from "@/components/Utilities/Button";
 import { cn } from "@/utilities/tailwind";
 import { format, isValid, parseISO } from "date-fns";
 import StatusHistoryTimeline from "./StatusHistoryTimeline";
+import StatusChangeModal from "./StatusChangeModal";
 
 interface ApplicationDetailSidesheetProps {
   application: IFundingApplication | null;
@@ -31,7 +32,7 @@ const statusColors = {
   revision_requested: "bg-yellow-100 text-yellow-800 border-yellow-200",
   approved: "bg-green-100 text-green-800 border-green-200",
   rejected: "bg-red-100 text-red-800 border-red-200",
-  withdrawn: "bg-gray-100 text-gray-800 border-gray-200",
+  withdrawn: "bg-zinc-100 text-gray-800 border-gray-200",
 };
 
 const statusIcons = {
@@ -84,17 +85,26 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
   showStatusActions = false,
 }) => {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<string>("");
 
   if (!application) return null;
 
   const StatusIcon =
     statusIcons[application.status as keyof typeof statusIcons] || ClockIcon;
 
-  const handleStatusChange = async (newStatus: string) => {
-    if (onStatusChange) {
+  const handleStatusChangeClick = (newStatus: string) => {
+    setPendingStatus(newStatus);
+    setStatusModalOpen(true);
+  };
+
+  const handleStatusChangeConfirm = async (reason?: string) => {
+    if (onStatusChange && pendingStatus) {
       setIsUpdatingStatus(true);
-      await onStatusChange(application.id, newStatus);
+      await onStatusChange(application.id, pendingStatus, reason);
       setIsUpdatingStatus(false);
+      setStatusModalOpen(false);
+      setPendingStatus("");
     }
   };
 
@@ -119,23 +129,23 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
       !application.applicationData ||
       Object.keys(application.applicationData).length === 0
     ) {
-      return <p className="text-gray-500">No application data available</p>;
+      return <p className="text-gray-500 dark:text-gray-400">No application data available</p>;
     }
 
     return (
       <div className="space-y-4">
         {Object.entries(application.applicationData).map(([key, value]) => (
-          <div key={key} className="border-b border-gray-100 pb-3">
-            <dt className="text-sm font-medium text-gray-600 mb-1">
+          <div key={key} className="border-b border-gray-100 dark:border-gray-700 pb-3">
+            <dt className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
               {key.replace(/^field_\d+/, "Field").replace(/_/g, " ")}
             </dt>
-            <dd className="text-sm text-gray-900">
+            <dd className="text-sm text-gray-900 dark:text-gray-100">
               {Array.isArray(value) ? (
                 <div className="flex flex-wrap gap-1">
                   {value.map((item, index) => (
                     <span
                       key={index}
-                      className="inline-block bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs"
+                      className="inline-block bg-zinc-100 dark:bg-zinc-700 text-gray-800 dark:text-gray-200 px-2 py-1 rounded text-xs"
                     >
                       {String(item)}
                     </span>
@@ -152,12 +162,12 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
   };
 
   const renderAIEvaluation = () => {
-    if (!application.aiEvaluation) {
+    if (!application.aiEvaluation?.evaluation) {
       return (
-        <div className="bg-gray-50 rounded-lg p-4 text-center">
-          <ClockIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-          <p className="text-gray-500 text-sm">AI evaluation pending</p>
-          <p className="text-gray-400 text-xs mt-1">
+        <div className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 text-center">
+          <ClockIcon className="w-8 h-8 text-gray-400 dark:text-gray-500 mx-auto mb-2" />
+          <p className="text-gray-500 dark:text-gray-400 text-sm">AI evaluation pending</p>
+          <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">
             The application will be automatically evaluated by AI shortly after
             submission.
           </p>
@@ -165,151 +175,246 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
       );
     }
 
-    // Handle dual evaluation format
-    const hasSystemEvaluation = application.aiEvaluation.systemEvaluation;
-    const hasDetailedEvaluation = application.aiEvaluation.detailedEvaluation;
-
-    const getRatingColor = (rating: number) => {
-      if (rating >= 8) return "text-green-600 bg-green-50 border-green-200";
-      if (rating >= 6) return "text-yellow-600 bg-yellow-50 border-yellow-200";
-      return "text-red-600 bg-red-50 border-red-200";
+    // Parse the AI evaluation data
+    const parseEvaluation = (evaluationStr: string) => {
+      try {
+        return JSON.parse(evaluationStr);
+      } catch (error) {
+        console.error("Failed to parse evaluation JSON:", error);
+        return null;
+      }
     };
 
-    const renderEvaluationCard = (
-      evaluation: any,
-      title: string,
-      description: string
-    ) => {
-      const { rating, reasoning, strengths, weaknesses, recommendations } =
-        evaluation;
+    const parsedEvaluation = parseEvaluation(application.aiEvaluation.evaluation);
 
+    if (!parsedEvaluation) {
       return (
-        <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <h4 className="font-medium text-gray-900 dark:text-white">
-              {title}
-            </h4>
-            <div
-              className={cn(
-                "px-3 py-1 rounded-lg border text-sm font-medium",
-                getRatingColor(rating)
-              )}
-            >
-              {rating}/10
-            </div>
-          </div>
-
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            {description}
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+          <p className="text-sm text-red-600 dark:text-red-400">
+            Failed to parse evaluation data. Please try again.
           </p>
-
-          {reasoning && (
-            <div>
-              <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-1">
-                Summary
-              </h5>
-              <p className="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 rounded p-2">
-                {reasoning}
-              </p>
-            </div>
-          )}
-
-          {strengths && strengths.length > 0 && (
-            <div>
-              <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-1">
-                Strengths
-              </h5>
-              <ul className="space-y-1">
-                {strengths.map((strength: string, index: number) => (
-                  <li
-                    key={index}
-                    className="text-sm text-gray-700 dark:text-gray-300 flex items-start"
-                  >
-                    <span className="text-green-500 mr-2">✓</span>
-                    {strength}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {weaknesses && weaknesses.length > 0 && (
-            <div>
-              <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-1">
-                Areas for Improvement
-              </h5>
-              <ul className="space-y-1">
-                {weaknesses.map((weakness: string, index: number) => (
-                  <li
-                    key={index}
-                    className="text-sm text-gray-700 dark:text-gray-300 flex items-start"
-                  >
-                    <span className="text-red-500 mr-2">•</span>
-                    {weakness}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {recommendations && recommendations.length > 0 && (
-            <div>
-              <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-1">
-                Recommendations
-              </h5>
-              <ul className="space-y-1">
-                {recommendations.map(
-                  (recommendation: string, index: number) => (
-                    <li
-                      key={index}
-                      className="text-sm text-gray-700 dark:text-gray-300 flex items-start"
-                    >
-                      <span className="text-blue-500 mr-2">→</span>
-                      {recommendation}
-                    </li>
-                  )
-                )}
-              </ul>
-            </div>
-          )}
         </div>
       );
+    }
+
+    const getScoreProgressColor = (score: number) => {
+      if (score >= 8) return "bg-green-500";
+      if (score >= 6) return "bg-yellow-500";
+      if (score >= 4) return "bg-blue-500";
+      return "bg-red-500";
+    };
+
+    const getStatusBadgeClasses = (status: string | undefined) => {
+      if (!status) return "bg-zinc-100 dark:bg-zinc-700 text-gray-800 dark:text-gray-200";
+
+      switch (status.toLowerCase()) {
+        case "complete":
+          return "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300";
+        case "incomplete":
+          return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300";
+        case "rejected":
+          return "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300";
+        default:
+          return "bg-zinc-100 dark:bg-zinc-700 text-gray-800 dark:text-gray-200";
+      }
+    };
+
+    const getPriorityBadgeClasses = (priority: string | undefined) => {
+      if (!priority) return "bg-zinc-100 dark:bg-zinc-700 text-gray-800 dark:text-gray-200";
+
+      switch (priority.toLowerCase()) {
+        case "high":
+          return "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300";
+        case "medium":
+          return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300";
+        case "low":
+          return "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300";
+        default:
+          return "bg-zinc-100 dark:bg-zinc-700 text-gray-800 dark:text-gray-200";
+      }
+    };
+
+    const getScoreIcon = (score: number) => {
+      if (score >= 8) return <CheckCircleIcon className="w-5 h-5 text-green-500" />;
+      if (score >= 4) return <ExclamationTriangleIcon className="w-5 h-5 text-blue-500" />;
+      return <XMarkIcon className="w-5 h-5 text-red-500" />;
     };
 
     return (
       <div className="space-y-4">
-        {/* {hasSystemEvaluation && renderEvaluationCard(
-          application.aiEvaluation.systemEvaluation,
-          'System Prompt Evaluation',
-          'Core evaluation based on program criteria'
-        )}
-        
-        {hasDetailedEvaluation && renderEvaluationCard(
-          application.aiEvaluation.detailedEvaluation,
-          'Detailed Evaluation',
-          'Comprehensive evaluation with additional criteria'
-        )} */}
+        {/* Score and Status Header */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {getScoreIcon(parsedEvaluation.final_score || 0)}
+              <span className="font-semibold text-gray-900 dark:text-white">
+                Score: {parsedEvaluation.final_score || 0}/10
+              </span>
+            </div>
+            {parsedEvaluation.evaluation_status && (
+              <span
+                className={cn(
+                  "px-2.5 py-1 rounded-full text-xs font-medium",
+                  getStatusBadgeClasses(parsedEvaluation.evaluation_status)
+                )}
+              >
+                {parsedEvaluation.evaluation_status.charAt(0).toUpperCase() +
+                  parsedEvaluation.evaluation_status.slice(1)}
+              </span>
+            )}
+          </div>
 
-        {hasSystemEvaluation && hasDetailedEvaluation && (
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-            <h5 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
-              Evaluation Summary
-            </h5>
-            <p className="text-xs text-blue-700 dark:text-blue-300">
-              System Score: {application.aiEvaluation.systemEvaluation?.rating}
-              /10 | Detailed Score:{" "}
-              {application.aiEvaluation.detailedEvaluation?.rating}/10
+          {/* Progress Bar */}
+          <div className="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-2 overflow-hidden">
+            <div
+              className={cn(
+                "h-2 rounded-full transition-all duration-300",
+                getScoreProgressColor(parsedEvaluation.final_score || 0)
+              )}
+              style={{ width: `${(parsedEvaluation.final_score || 0) * 10}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Disqualification Reason */}
+        {parsedEvaluation.disqualification_reason && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+            <h4 className="text-sm font-semibold mb-2 text-red-700 dark:text-red-300">
+              Disqualification Reason
+            </h4>
+            <p className="text-sm text-red-600 dark:text-red-400">
+              {parsedEvaluation.disqualification_reason}
             </p>
           </div>
         )}
 
-        {!hasSystemEvaluation && !hasDetailedEvaluation && (
-          <div className="bg-gray-50 rounded-lg p-4 text-center">
-            <ClockIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-gray-500 text-sm">No AI evaluation available</p>
-            <p className="text-gray-400 text-xs mt-1">
-              The application may not have been evaluated yet or evaluation data
-              is missing.
+        {/* Evaluation Summary */}
+        {parsedEvaluation.evaluation_summary && (
+          <div className="space-y-4">
+            <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+              Evaluation Summary
+            </h4>
+
+            {/* Strengths */}
+            {parsedEvaluation.evaluation_summary.strengths?.length > 0 && (
+              <div>
+                <h5 className="text-xs font-semibold text-green-600 dark:text-green-400 mb-2 uppercase tracking-wider">
+                  Strengths
+                </h5>
+                <ul className="space-y-1.5">
+                  {parsedEvaluation.evaluation_summary.strengths.map(
+                    (strength: string, index: number) => (
+                      <li key={index} className="flex items-start gap-2 text-sm">
+                        <CheckCircleIcon className="w-4 h-4 text-green-500 dark:text-green-400 mt-0.5 flex-shrink-0" />
+                        <span className="text-gray-700 dark:text-gray-300">{strength}</span>
+                      </li>
+                    )
+                  )}
+                </ul>
+              </div>
+            )}
+
+            {/* Concerns */}
+            {parsedEvaluation.evaluation_summary.concerns?.length > 0 && (
+              <div>
+                <h5 className="text-xs font-semibold text-yellow-600 dark:text-yellow-400 mb-2 uppercase tracking-wider">
+                  Concerns
+                </h5>
+                <ul className="space-y-1.5">
+                  {parsedEvaluation.evaluation_summary.concerns.map(
+                    (concern: string, index: number) => (
+                      <li key={index} className="flex items-start gap-2 text-sm">
+                        <ExclamationTriangleIcon className="w-4 h-4 text-yellow-500 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+                        <span className="text-gray-700 dark:text-gray-300">{concern}</span>
+                      </li>
+                    )
+                  )}
+                </ul>
+              </div>
+            )}
+
+            {/* Risk Factors */}
+            {parsedEvaluation.evaluation_summary.risk_factors?.length > 0 && (
+              <div>
+                <h5 className="text-xs font-semibold text-red-600 dark:text-red-400 mb-2 uppercase tracking-wider">
+                  Risk Factors
+                </h5>
+                <ul className="space-y-1.5">
+                  {parsedEvaluation.evaluation_summary.risk_factors.map(
+                    (risk: string, index: number) => (
+                      <li key={index} className="flex items-start gap-2 text-sm">
+                        <XMarkIcon className="w-4 h-4 text-red-500 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                        <span className="text-gray-700 dark:text-gray-300">{risk}</span>
+                      </li>
+                    )
+                  )}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Improvement Recommendations */}
+        {parsedEvaluation.improvement_recommendations?.length > 0 && (
+          <div>
+            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+              Improvement Recommendations
+            </h4>
+            <div className="space-y-3">
+              {parsedEvaluation.improvement_recommendations.map(
+                (rec: any, index: number) => (
+                  <div
+                    key={index}
+                    className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700"
+                  >
+                    {rec.priority && (
+                      <div className="mb-2">
+                        <span
+                          className={cn(
+                            "inline-block px-2 py-0.5 rounded-full text-xs font-medium",
+                            getPriorityBadgeClasses(rec.priority)
+                          )}
+                        >
+                          {rec.priority.toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                    <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
+                      {rec.recommendation}
+                    </p>
+                    {rec.impact && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        <strong>Impact:</strong> {rec.impact}
+                      </p>
+                    )}
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Additional Notes */}
+        {parsedEvaluation.additional_notes && (
+          <div className="bg-zinc-100 dark:bg-zinc-800 rounded-lg p-3">
+            <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+              Additional Notes
+            </h4>
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              {parsedEvaluation.additional_notes}
+            </p>
+          </div>
+        )}
+
+        {/* Metadata */}
+        {parsedEvaluation.reviewer_confidence && (
+          <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Reviewer Confidence:{" "}
+              <span className="font-medium">
+                {parsedEvaluation.reviewer_confidence.charAt(0).toUpperCase() +
+                  parsedEvaluation.reviewer_confidence.slice(1)}
+              </span>
             </p>
           </div>
         )}
@@ -330,7 +435,7 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+            <div className="fixed inset-0 bg-zinc-500 dark:bg-zinc-900 bg-opacity-75 dark:bg-opacity-75 transition-opacity" />
           </Transition.Child>
 
           <div className="fixed inset-0 overflow-hidden">
@@ -368,15 +473,15 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                       </div>
                     </Transition.Child>
 
-                    <div className="flex h-full flex-col overflow-y-scroll bg-white shadow-xl">
+                    <div className="flex h-full flex-col overflow-y-scroll bg-white dark:bg-zinc-900 shadow-xl">
                       {/* Header */}
-                      <div className="bg-gray-50 px-4 py-6 sm:px-6">
+                      <div className="bg-zinc-50 dark:bg-zinc-800 px-4 py-6 sm:px-6">
                         <div className="flex items-start justify-between space-x-3">
                           <div className="space-y-1">
-                            <Dialog.Title className="text-base font-semibold leading-6 text-gray-900">
+                            <Dialog.Title className="text-base font-semibold leading-6 text-gray-900 dark:text-white">
                               Application Details
                             </Dialog.Title>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
                               {application.referenceNumber}
                             </p>
                           </div>
@@ -386,8 +491,8 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                               className={cn(
                                 "flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium",
                                 statusColors[
-                                  application.status as keyof typeof statusColors
-                                ] || "bg-gray-100 text-gray-800 border-gray-200"
+                                application.status as keyof typeof statusColors
+                                ] || "bg-zinc-100 text-gray-800 border-gray-200"
                               )}
                             >
                               <StatusIcon className="w-4 h-4" />
@@ -402,31 +507,31 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                         <div className="space-y-8">
                           {/* Basic Information */}
                           <div>
-                            <h3 className="text-lg font-medium text-gray-900 mb-4">
+                            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
                               Basic Information
                             </h3>
                             <dl className="space-y-3">
                               <div>
-                                <dt className="text-sm font-medium text-gray-500">
+                                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
                                   Applicant Email
                                 </dt>
-                                <dd className="mt-1 text-sm text-gray-900">
+                                <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100">
                                   {application.applicantEmail}
                                 </dd>
                               </div>
                               <div>
-                                <dt className="text-sm font-medium text-gray-500">
+                                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
                                   Submitted
                                 </dt>
-                                <dd className="mt-1 text-sm text-gray-900">
+                                <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100">
                                   {formatDate(application.createdAt)}
                                 </dd>
                               </div>
                               <div>
-                                <dt className="text-sm font-medium text-gray-500">
+                                <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
                                   Reference Number
                                 </dt>
-                                <dd className="mt-1 text-sm text-gray-900 font-mono">
+                                <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100 font-mono">
                                   {application.referenceNumber}
                                 </dd>
                               </div>
@@ -435,7 +540,7 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
 
                           {/* Application Data */}
                           <div>
-                            <h3 className="text-lg font-medium text-gray-900 mb-4">
+                            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
                               Application Details
                             </h3>
                             {renderApplicationData()}
@@ -443,7 +548,7 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
 
                           {/* AI Evaluation */}
                           <div>
-                            <h3 className="text-lg font-medium text-gray-900 mb-4">
+                            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
                               AI Evaluation
                             </h3>
                             {renderAIEvaluation()}
@@ -451,11 +556,11 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
 
                           {/* Current Revision Reason */}
                           {getCurrentRevisionReason() && (
-                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                              <h3 className="text-sm font-medium text-yellow-900 mb-2">
+                            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                              <h3 className="text-sm font-medium text-yellow-900 dark:text-yellow-300 mb-2">
                                 Revision Requested
                               </h3>
-                              <p className="text-sm text-yellow-800">
+                              <p className="text-sm text-yellow-800 dark:text-yellow-400">
                                 {getCurrentRevisionReason()}
                               </p>
                             </div>
@@ -465,7 +570,7 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                           {application.statusHistory &&
                             application.statusHistory.length > 0 && (
                               <div>
-                                <h3 className="text-lg font-medium text-gray-900 mb-4">
+                                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
                                   Status History
                                 </h3>
                                 <StatusHistoryTimeline
@@ -479,14 +584,14 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
 
                       {/* Actions */}
                       {showStatusActions && onStatusChange && (
-                        <div className="border-t border-gray-200 bg-gray-50 px-4 py-4 sm:px-6">
+                        <div className="border-t border-gray-200 dark:border-gray-700 bg-zinc-50 dark:bg-zinc-800 px-4 py-4 sm:px-6">
                           <div className="flex flex-col space-y-2">
                             {/* Show all available actions except the current status */}
                             <div className="flex space-x-3">
                               {application.status !== "revision_requested" && (
                                 <Button
                                   onClick={() =>
-                                    handleStatusChange("revision_requested")
+                                    handleStatusChangeClick("revision_requested")
                                   }
                                   variant="secondary"
                                   className="flex-1"
@@ -497,7 +602,7 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                               )}
                               {application.status !== "approved" && (
                                 <Button
-                                  onClick={() => handleStatusChange("approved")}
+                                  onClick={() => handleStatusChangeClick("approved")}
                                   className="flex-1 bg-green-600 hover:bg-green-700"
                                   disabled={isUpdatingStatus}
                                 >
@@ -506,7 +611,7 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                               )}
                               {application.status !== "rejected" && (
                                 <Button
-                                  onClick={() => handleStatusChange("rejected")}
+                                  onClick={() => handleStatusChangeClick("rejected")}
                                   className="flex-1 bg-red-600 hover:bg-red-700"
                                   disabled={isUpdatingStatus}
                                 >
@@ -516,13 +621,13 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                             </div>
 
                             {application.status === "revision_requested" && (
-                              <p className="text-xs text-gray-500">
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
                                 The applicant can update their submission.
                               </p>
                             )}
 
                             {application.status === "withdrawn" && (
-                              <p className="text-sm text-gray-500 text-center py-2">
+                              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
                                 This application has been withdrawn by the
                                 applicant.
                               </p>
@@ -538,6 +643,18 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
           </div>
         </Dialog>
       </Transition.Root>
+
+      {/* Status Change Modal */}
+      <StatusChangeModal
+        isOpen={statusModalOpen}
+        onClose={() => {
+          setStatusModalOpen(false);
+          setPendingStatus("");
+        }}
+        onConfirm={handleStatusChangeConfirm}
+        status={pendingStatus}
+        isSubmitting={isUpdatingStatus}
+      />
     </>
   );
 };

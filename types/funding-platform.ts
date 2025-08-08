@@ -86,20 +86,8 @@ export interface IFundingApplication {
   referenceNumber: string; // Format: APP-XXXXX-XXXXX
   submissionIP: string; // Auto-captured from request
   aiEvaluation?: {
-    systemEvaluation?: {
-      rating: number;
-      reasoning: string;
-      strengths: string[];
-      weaknesses: string[];
-      recommendations: string[];
-    };
-    detailedEvaluation?: {
-      rating: number;
-      reasoning: string;
-      strengths: string[];
-      weaknesses: string[];
-      recommendations: string[];
-    };
+    evaluation?: string;
+    promptId?: string;
   };
   createdAt: string | Date;
   updatedAt: string | Date;
