@@ -37,13 +37,6 @@ const formSchema = z.object({
     .min(3, { message: "Description must be at least 3 characters" })
     .or(z.literal(""))
     .optional(),
-  proofOfWork: z
-    .string()
-    .refine((value) => !value || urlRegex.test(value), {
-      message: "Please enter a valid URL",
-    })
-    .optional()
-    .or(z.literal("")),
   completionPercentage: z
     .string()
     .refine(
@@ -87,7 +80,6 @@ export const GrantMilestoneCompletionForm = ({
   handleCompleting,
 }: GrantMilestoneCompletionFormProps) => {
   const [isCompleting, setIsCompleting] = useState(false);
-  const [noProofCheckbox, setNoProofCheckbox] = useState(false);
   const { completeMilestone } = useMilestone();
 
   const {
@@ -101,7 +93,6 @@ export const GrantMilestoneCompletionForm = ({
     resolver: zodResolver(formSchema),
     defaultValues: {
       description: "",
-      proofOfWork: "",
       completionPercentage: "",
       outputs: [],
       deliverables: [],
@@ -114,7 +105,7 @@ export const GrantMilestoneCompletionForm = ({
     try {
       await completeMilestone(milestone, {
         ...data,
-        noProofCheckbox,
+        noProofCheckbox: true, // Always set to true since we removed the proof section
       });
       // Close the form after successful completion
       handleCompleting(false);
@@ -143,53 +134,6 @@ export const GrantMilestoneCompletionForm = ({
         {errors.description && (
           <span className="text-red-500 text-xs">
             {errors.description.message}
-          </span>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <label className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-          Proof of Work (optional)
-        </label>
-        <p className="text-sm text-gray-500">
-          Provide a link that demonstrates your work. This could be a link to a
-          tweet announcement, a dashboard, a Google Doc, a blog post, a video,
-          or any other resource that highlights the progress or result of your
-          work
-        </p>
-        <div className="flex flex-row gap-2 items-center py-2">
-          <input
-            id="noProofCheckbox"
-            type="checkbox"
-            className="rounded-sm w-5 h-5 bg-white fill-black"
-            checked={noProofCheckbox}
-            onChange={() => {
-              setNoProofCheckbox((oldValue) => !oldValue);
-              setValue("proofOfWork", "", {
-                shouldValidate: true,
-              });
-            }}
-          />
-          <label
-            htmlFor="noProofCheckbox"
-            className="text-base text-zinc-900 dark:text-zinc-100"
-          >
-            {`I don't have any output to show for this milestone`}
-          </label>
-        </div>
-        <input
-          type="text"
-          placeholder="URL to proof of work (e.g. GitHub PR, document, etc.)"
-          className={cn(
-            "w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white",
-            noProofCheckbox ? "opacity-50" : ""
-          )}
-          disabled={noProofCheckbox}
-          {...register("proofOfWork")}
-        />
-        {errors.proofOfWork && (
-          <span className="text-red-500 text-xs">
-            {errors.proofOfWork.message}
           </span>
         )}
       </div>
@@ -250,8 +194,7 @@ export const GrantMilestoneCompletionForm = ({
           disabled={
             isSubmitting ||
             isCompleting ||
-            !isValid ||
-            (!noProofCheckbox && !watch("proofOfWork"))
+            !isValid
           }
           className="px-3 py-2 bg-brand-blue text-white"
         >

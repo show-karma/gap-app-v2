@@ -717,7 +717,7 @@ export const useMilestone = () => {
 
       const completionData = sanitizeObject({
         reason: data.description,
-        proofOfWork: data.noProofCheckbox ? "" : data.proofOfWork,
+        proofOfWork: "",
         completionPercentage: data.completionPercentage,
         type: "completed",
         deliverables: data.deliverables || [],
@@ -867,7 +867,7 @@ export const useMilestone = () => {
 
         const completionData = sanitizeObject({
           reason: data.description,
-          proofOfWork: data.noProofCheckbox ? "" : data.proofOfWork,
+          proofOfWork: "",
           completionPercentage: data.completionPercentage,
           type: "completed",
           deliverables: data.deliverables || [],
@@ -1058,7 +1058,7 @@ export const useMilestone = () => {
 
           const completionData = sanitizeObject({
             reason: data.description,
-            proofOfWork: data.noProofCheckbox ? "" : data.proofOfWork,
+            proofOfWork: "",
             completionPercentage: data.completionPercentage,
             type: "completed",
             deliverables: data.deliverables || [],
@@ -1189,7 +1189,7 @@ export const useMilestone = () => {
 
           const completionData = sanitizeObject({
             reason: data.description,
-            proofOfWork: data.noProofCheckbox ? "" : data.proofOfWork,
+            proofOfWork: "",
             completionPercentage: data.completionPercentage,
             type: "completed",
             deliverables: data.deliverables || [],
@@ -1298,7 +1298,7 @@ export const useMilestone = () => {
             .complete(
               walletSigner,
               {
-                proofOfWork: sanitizeInput(data.proofOfWork),
+                proofOfWork: "",
                 reason: sanitizeInput(data.description),
                 type: `project-milestone-completed`,
               },

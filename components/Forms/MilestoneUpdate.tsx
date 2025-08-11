@@ -53,13 +53,6 @@ const inputStyle =
 
 const schema = z.object({
   description: z.string().optional(),
-  proofOfWork: z
-    .string()
-    .refine((value) => urlRegex.test(value), {
-      message: "Please enter a valid URL",
-    })
-    .optional()
-    .or(z.literal("")),
   completionPercentage: z.string().refine(
     (value) => {
       const num = Number(value);
@@ -108,7 +101,6 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const { openShareDialog, closeShareDialog } = useShareDialogStore();
-  const [noProofCheckbox, setNoProofCheckbox] = useState(false);
   const router = useRouter();
 
   const {
@@ -124,7 +116,6 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
     mode: "onChange",
     defaultValues: {
       description: previousData?.reason,
-      proofOfWork: previousData?.proofOfWork,
       outputs: [],
       deliverables: (previousData as any)?.deliverables || [],
     },
@@ -240,7 +231,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           walletSigner,
           sanitizeObject({
             reason: data.description,
-            proofOfWork: data.proofOfWork,
+            proofOfWork: "",
             completionPercentage: data.completionPercentage,
             type: "completed",
             deliverables: data.deliverables || [],
@@ -362,7 +353,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           walletSigner,
           sanitizeObject({
             reason: data.description,
-            proofOfWork: data.proofOfWork,
+            proofOfWork: "",
             completionPercentage: data.completionPercentage,
             type: "completed",
             deliverables: data.deliverables || [],
@@ -477,46 +468,6 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
             />
           </div>
         </div>
-        <div className="flex w-full flex-col gap-2">
-          <label htmlFor="proofOfWork-input" className={labelStyle}>
-            Output of your work *
-          </label>
-          <p className="text-sm text-gray-500">
-            Provide a link that demonstrates your work. This could be a link to
-            a tweet announcement, a dashboard, a Google Doc, a blog post, a
-            video, or any other resource that highlights the progress or result
-            of your work
-          </p>
-          <div className="flex flex-row gap-2 items-center py-2">
-            <input
-              id="noProofCheckbox"
-              type="checkbox"
-              className="rounded-sm w-5 h-5 bg-white fill-black"
-              checked={noProofCheckbox}
-              onChange={() => {
-                setNoProofCheckbox((oldValue) => !oldValue);
-                setValue("proofOfWork", "", {
-                  shouldValidate: true,
-                });
-              }}
-            />
-            <label
-              htmlFor="noProofCheckbox"
-              className="text-base text-zinc-900 dark:text-zinc-100"
-            >
-              {`I don't have any output to show for this milestone`}
-            </label>
-          </div>
-          <input
-            id="proofOfWork-input"
-            placeholder="Add links to charts, videos, dashboards etc. that evaluators can verify your work"
-            type="text"
-            className={cn(inputStyle, "disabled:opacity-50")}
-            disabled={noProofCheckbox}
-            {...register("proofOfWork")}
-          />
-          <p className="text-red-500">{errors.proofOfWork?.message}</p>
-        </div>
 
         <div className="flex w-full flex-row items-center gap-4 py-2">
           <label htmlFor="completion-percentage" className={labelStyle}>
@@ -571,8 +522,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           isLoading={isSubmitLoading}
           disabled={
             isSubmitLoading ||
-            !isValid ||
-            (!noProofCheckbox && !watch("proofOfWork"))
+            !isValid
           }
           className="flex h-min w-max flex-row gap-2 items-center rounded bg-brand-blue px-4 py-2.5 hover:bg-brand-blue"
         >
