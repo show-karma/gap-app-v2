@@ -29,14 +29,6 @@ export async function POST(request: NextRequest) {
       Bucket: process.env.AWS_S3_BUCKET_NAME!,
       CopySource: `${process.env.AWS_S3_BUCKET_NAME}/${tempKey}`,
       Key: permanentKey,
-      TaggingDirective: 'REPLACE',
-      Tagging: `status=permanent&project-id=${projectId}`,
-      MetadataDirective: 'REPLACE',
-      Metadata: {
-        'project-id': projectId,
-        'file-type': 'logo',
-        'promoted-at': new Date().toISOString(),
-      }
     }));
     
     // Delete temporary object
