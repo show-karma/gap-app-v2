@@ -308,7 +308,7 @@ export const MilestoneCard = ({
                       <div key={index} className="border border-gray-200 dark:border-zinc-600 rounded-lg p-3 bg-white dark:bg-zinc-800">
                         <div className="flex flex-col gap-1">
                           <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                            {metric.indicator?.data?.title || 'Untitled Indicator'}
+                            {metric.name || metric.indicator?.data?.title || 'Untitled Indicator'}
                           </p>
                           {metric.datapoints && metric.datapoints.length > 0 && (
                             <div className="flex flex-col gap-1">
