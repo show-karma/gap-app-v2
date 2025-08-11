@@ -39,12 +39,14 @@ export function AIPromptConfiguration({
   
   // Get default langfusePromptId from program registry if not set in schema
   const defaultLangfusePromptId = schema.aiConfig?.langfusePromptId || program?.langfusePromptId || "";
+  const recommendedPrompt = "Optimism grant evaluation prompt";
 
   const {
     register,
     handleSubmit,
     watch,
     setValue,
+    getValues,
     formState: { errors, isDirty },
   } = useForm<AIConfigFormData>({
     resolver: zodResolver(aiConfigSchema),
@@ -54,9 +56,17 @@ export function AIPromptConfiguration({
       aiModel: schema.aiConfig?.aiModel || "gpt-4o",
       enableRealTimeEvaluation:
         schema.aiConfig?.enableRealTimeEvaluation || false,
-      langfusePromptId: defaultLangfusePromptId,
+      langfusePromptId: defaultLangfusePromptId || recommendedPrompt,
     },
   });
+
+  const watchedValues = watch();
+  const currentLangfusePromptId = watchedValues.langfusePromptId || "";
+  
+  // Display value shows (Recommended) for the default prompt
+  const displayValue = currentLangfusePromptId === recommendedPrompt 
+    ? `${recommendedPrompt} (Recommended)` 
+    : currentLangfusePromptId;
 
   // Update form value when program data loads and no langfusePromptId is set
   useEffect(() => {
@@ -64,8 +74,6 @@ export function AIPromptConfiguration({
       setValue("langfusePromptId", program.langfusePromptId);
     }
   }, [program?.langfusePromptId, schema.aiConfig?.langfusePromptId, setValue]);
-
-  const watchedValues = watch();
 
   // Auto-update the schema when form values change
   useEffect(() => {
@@ -170,10 +178,16 @@ export function AIPromptConfiguration({
             Langfuse Prompt Name
           </label>
           <input
-            {...register("langfusePromptId")}
             type="text"
+            value={displayValue}
+            onChange={(e) => {
+              const value = e.target.value;
+              // Remove (Recommended) suffix if user types it
+              const cleanValue = value.replace(/ \(Recommended\)$/, "");
+              setValue("langfusePromptId", cleanValue);
+            }}
             className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300"
-            placeholder="e.g., Optimism grant evaluation prompt"
+            placeholder="Optimism grant evaluation prompt (Recommended)"
           />
           {errors.langfusePromptId && (
             <p className="text-red-500 text-sm mt-1">
