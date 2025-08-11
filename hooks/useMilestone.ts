@@ -37,11 +37,14 @@ const sendOutputsAndDeliverables = async (
     if (data.outputs && data.outputs.length > 0) {
       for (const output of data.outputs) {
         if (output.outputId && (output.value !== undefined && output.value !== "")) {
+          // Default to today's date if not specified (matching project behavior)
+          const today = new Date().toISOString().split('T')[0];
+          
           const datapoints = [{
             value: output.value,
             proof: output.proof || "",
-            startDate: output.startDate || "",
-            endDate: output.endDate || "",
+            startDate: output.startDate || today,
+            endDate: output.endDate || today,
           }];
           
           await sendMilestoneImpactAnswers(
