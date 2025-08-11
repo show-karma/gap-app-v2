@@ -6,6 +6,7 @@ import { fieldTypes, FieldTypeSelector } from "./FieldTypeSelector";
 import { FieldEditor } from "./FieldEditor";
 import { FormPreview } from "./FormPreview";
 import { AIPromptConfiguration } from "./AIPromptConfiguration";
+import { SettingsConfiguration } from "./SettingsConfiguration";
 import { Button } from "@/components/Utilities/Button";
 import {
   EyeIcon,
@@ -14,6 +15,7 @@ import {
   ChevronDownIcon,
   ChevronRightIcon,
   ExclamationTriangleIcon,
+  WrenchScrewdriverIcon,
 } from "@heroicons/react/24/solid";
 
 interface QuestionBuilderProps {
@@ -36,11 +38,12 @@ export function QuestionBuilder({
       settings: {
         submitButtonText: "Submit Application",
         confirmationMessage: "Thank you for your submission!",
+        privateApplications: true, // Default to private as requested
       },
     }
   );
 
-  const [activeTab, setActiveTab] = useState<"build" | "preview" | "ai-config">(
+  const [activeTab, setActiveTab] = useState<"build" | "preview" | "settings" | "ai-config">(
     "build"
   );
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
@@ -199,8 +202,19 @@ export function QuestionBuilder({
                     : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
                 }`}
               >
-                <Cog6ToothIcon className="w-4 h-4 mr-2" />
+                <WrenchScrewdriverIcon className="w-4 h-4 mr-2" />
                 Build
+              </button>
+              <button
+                onClick={() => setActiveTab("settings")}
+                className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${
+                  activeTab === "settings"
+                    ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
+                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                }`}
+              >
+                <Cog6ToothIcon className="w-4 h-4 mr-2" />
+                Settings
               </button>
               <button
                 onClick={() => setActiveTab("ai-config")}
@@ -327,6 +341,14 @@ export function QuestionBuilder({
                                       Required
                                     </span>
                                   )}
+                                  {field.private && (
+                                    <span className="text-xs text-gray-600 bg-gray-100 dark:bg-gray-700 dark:text-gray-300 px-2 py-1 rounded flex items-center space-x-1">
+                                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                                      </svg>
+                                      <span>Private</span>
+                                    </span>
+                                  )}
                                   {field.aiEvaluation?.triggerOnChange && (
                                     <span className="text-xs text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded">
                                       AI Trigger
@@ -379,6 +401,15 @@ export function QuestionBuilder({
                   </>
                 )}
               </div>
+            </div>
+          </div>
+        ) : activeTab === "settings" ? (
+          <div className="h-full p-4 sm:p-6 lg:p-8 overflow-y-auto">
+            <div className="max-w-4xl mx-auto">
+              <SettingsConfiguration
+                schema={schema}
+                onUpdate={handleAIConfigUpdate}
+              />
             </div>
           </div>
         ) : activeTab === "ai-config" ? (

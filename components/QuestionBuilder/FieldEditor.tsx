@@ -12,6 +12,7 @@ const fieldSchema = z.object({
   label: z.string().min(1, 'Label is required'),
   placeholder: z.string().optional(),
   required: z.boolean(),
+  private: z.boolean(),
   description: z.string().optional(),
   options: z.array(z.string()).optional(),
   validation: z.object({
@@ -44,6 +45,7 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown }:
       label: field.label,
       placeholder: field.placeholder || '',
       required: field.required || false,
+      private: field.private || false,
       description: field.description || '',
       options: field.options || [],
       validation: field.validation || {},
@@ -69,6 +71,7 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown }:
           label: data.label,
           placeholder: data.placeholder || '',
           required: data.required || false,
+          private: data.private || false,
           description: data.description || '',
           options: hasOptions ? (data.options || []).filter((opt): opt is string => typeof opt === 'string' && opt.length > 0) : undefined,
           validation: data.validation || {},
@@ -172,15 +175,36 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown }:
           />
         </div>
 
-        <div className="flex items-center">
-          <input
-            {...register('required')}
-            type="checkbox"
-            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-          />
-          <label className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-            Required field
-          </label>
+        <div className="space-y-3">
+          <div className="flex items-center">
+            <input
+              {...register('required')}
+              type="checkbox"
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+              Required field
+            </label>
+          </div>
+          
+          <div className="flex items-center">
+            <input
+              {...register('private')}
+              type="checkbox"
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+              Private field
+            </label>
+            <div className="ml-2 group relative">
+              <svg className="w-4 h-4 text-gray-400 cursor-help" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+              </svg>
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                This field will be hidden from public application listings
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* AI Evaluation Configuration */}
