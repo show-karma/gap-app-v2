@@ -41,10 +41,10 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
 }) => {
   const { address } = useAccount();
   const [submitting, setSubmitting] = useState(false);
-  
+
   // Ref to track if we're already evaluating to prevent multiple simultaneous calls
   const isEvaluatingRef = useRef(false);
-  
+
   // Use V2 submission or update hook based on revision state
   const { submitApplication, isSubmitting } = useApplicationSubmissionV2(programId, chainId);
   const { updateApplication, isUpdating } = useApplicationUpdateV2();
@@ -65,10 +65,10 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
   // Generate dynamic Zod schema based on form schema
   const generateValidationSchema = useCallback((schema: FormSchema) => {
     const schemaObject: Record<string, any> = {};
-    
+
     schema.fields.forEach((field) => {
       let fieldSchema: any;
-      
+
       switch (field.type) {
         case 'email':
           fieldSchema = z.string().email('Please enter a valid email address');
@@ -94,11 +94,11 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
       // Apply validation rules (skip for checkbox arrays)
       if (field.type !== 'checkbox') {
         if (field.validation?.min) {
-          fieldSchema = fieldSchema.min(field.validation.min, 
+          fieldSchema = fieldSchema.min(field.validation.min,
             `Minimum ${field.validation.min} characters required`);
         }
         if (field.validation?.max) {
-          fieldSchema = fieldSchema.max(field.validation.max, 
+          fieldSchema = fieldSchema.max(field.validation.max,
             `Maximum ${field.validation.max} characters allowed`);
         }
 
@@ -125,13 +125,13 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
 
   const validationSchema = generateValidationSchema(formSchema);
   type FormData = z.infer<typeof validationSchema>;
-  
+
   // Generate default values from existing application if it's a revision
   const getDefaultValues = useCallback(() => {
     if (!existingApplication || !isRevision) return {};
-    
+
     const defaultValues: Record<string, any> = {};
-    
+
     // Map application data back to field IDs
     formSchema.fields.forEach(field => {
       const existingValue = existingApplication.applicationData[field.label];
@@ -139,7 +139,7 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
         defaultValues[field.id] = existingValue;
       }
     });
-    
+
     return defaultValues;
   }, [existingApplication, isRevision, formSchema.fields]);
 
@@ -159,7 +159,7 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
   const formSchemaRef = useRef(formSchema);
   const getValuesRef = useRef(getValues);
   const triggerEvaluationRef = useRef(triggerEvaluation);
-  
+
   // Update refs on each render
   formSchemaRef.current = formSchema;
   getValuesRef.current = getValues;
@@ -177,11 +177,7 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
 
     // Find the specific field that was blurred
     const blurredField = currentFormSchema.fields.find(field => field.id === fieldId);
-    
-    // Only proceed if this specific field has AI evaluation trigger enabled
-    if (!blurredField?.aiEvaluation?.triggerOnChange) {
-      return;
-    }
+
 
     // Get current form values
     const currentValues = getCurrentValues();
@@ -191,11 +187,11 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
     currentFormSchema.fields.forEach(field => {
       if (field.aiEvaluation?.includeInEvaluation !== false) {
         const value = currentValues[field.id];
-        
+
         // Handle different field types
         let hasContent = false;
         let processedValue = value;
-        
+
         if (field.type === 'checkbox') {
           // For checkboxes, check if array has items
           hasContent = Array.isArray(value) && value.length > 0;
@@ -204,7 +200,7 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
           // For other fields, check string content
           hasContent = value && value.toString().trim().length > 0;
         }
-        
+
         if (hasContent) {
           evaluationData[field.id] = processedValue;
         }
@@ -241,28 +237,28 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
     // Convert field IDs back to labels for submission
     const submissionData: Record<string, any> = {};
     let applicantEmail = '';
-    
+
     formSchema.fields.forEach(field => {
       submissionData[field.label] = data[field.id];
-      
+
       // Extract email for V2 submission
       if (field.type === 'email' || field.label.toLowerCase().includes('email')) {
         applicantEmail = data[field.id] as string;
       }
     });
-    
+
     // If no email field found, check the data for any email-like value
     if (!applicantEmail) {
-      const emailValue = Object.values(data).find(value => 
+      const emailValue = Object.values(data).find(value =>
         typeof value === 'string' && value.includes('@')
       );
       if (emailValue) {
         applicantEmail = emailValue as string;
       }
     } else {
-      
+
     }
-    
+
     if (!applicantEmail) {
       toast.error('An email address is required for submission');
       return;
@@ -308,14 +304,9 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
     const error = errors[fieldName as keyof FormData];
     const errorMessage = error?.message || error;
 
-    // Check if this field triggers AI evaluation
-    const triggersAI = field.aiEvaluation?.triggerOnChange;
 
     const fieldClassName = cn(
-      inputStyle,
-      triggersAI && formSchema.aiConfig?.enableRealTimeEvaluation 
-        ? "border-blue-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500" 
-        : ""
+      inputStyle
     );
 
     switch (field.type) {
@@ -324,11 +315,6 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
           <div key={index} className="flex w-full flex-col">
             <label htmlFor={fieldName} className={labelStyle}>
               {field.label} {field.required && <span className="text-red-500">*</span>}
-              {triggersAI && formSchema.aiConfig?.enableRealTimeEvaluation && (
-                <span className="ml-2 text-xs text-blue-500 bg-blue-50 px-2 py-1 rounded">
-                  AI Feedback
-                </span>
-              )}
             </label>
             {field.description && (
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -340,7 +326,6 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
               className={cn(fieldClassName, "min-h-[100px] resize-y")}
               placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
               {...register(fieldName as keyof FormData)}
-              onBlur={triggersAI ? () => handleFieldBlur(field.id) : undefined}
             />
             {error && (
               <p className="text-sm text-red-400 mt-1">{String(errorMessage)}</p>
@@ -353,11 +338,7 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
           <div key={index} className="flex w-full flex-col">
             <label htmlFor={fieldName} className={labelStyle}>
               {field.label} {field.required && <span className="text-red-500">*</span>}
-              {triggersAI && formSchema.aiConfig?.enableRealTimeEvaluation && (
-                <span className="ml-2 text-xs text-blue-500 bg-blue-50 px-2 py-1 rounded">
-                  AI Feedback
-                </span>
-              )}
+
             </label>
             {field.description && (
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -368,7 +349,6 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
               id={fieldName}
               className={fieldClassName}
               {...register(fieldName as keyof FormData)}
-              onBlur={triggersAI ? () => handleFieldBlur(field.id) : undefined}
             >
               <option value="">Select an option</option>
               {field.options?.map((option: string, optIndex: number) => (
@@ -388,11 +368,6 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
           <div key={index} className="flex w-full flex-col">
             <label className={labelStyle}>
               {field.label} {field.required && <span className="text-red-500">*</span>}
-              {triggersAI && formSchema.aiConfig?.enableRealTimeEvaluation && (
-                <span className="ml-2 text-xs text-blue-500 bg-blue-50 px-2 py-1 rounded">
-                  AI Feedback
-                </span>
-              )}
             </label>
             {field.description && (
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -407,7 +382,6 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
                     value={option}
                     className="mr-2 h-4 w-4 rounded border-gray-300"
                     {...register(fieldName as keyof FormData)}
-                    onBlur={triggersAI ? () => handleFieldBlur(field.id) : undefined}
                   />
                   <span className="text-sm text-gray-700 dark:text-gray-300">
                     {option}
@@ -426,11 +400,7 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
           <div key={index} className="flex w-full flex-col">
             <label className={labelStyle}>
               {field.label} {field.required && <span className="text-red-500">*</span>}
-              {triggersAI && formSchema.aiConfig?.enableRealTimeEvaluation && (
-                <span className="ml-2 text-xs text-blue-500 bg-blue-50 px-2 py-1 rounded">
-                  AI Feedback
-                </span>
-              )}
+
             </label>
             {field.description && (
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -445,7 +415,6 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
                     value={option}
                     className="mr-2 h-4 w-4 border-gray-300"
                     {...register(fieldName as keyof FormData)}
-                    onBlur={triggersAI ? () => handleFieldBlur(field.id) : undefined}
                   />
                   <span className="text-sm text-gray-700 dark:text-gray-300">
                     {option}
@@ -464,11 +433,7 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
           <div key={index} className="flex w-full flex-col">
             <label htmlFor={fieldName} className={labelStyle}>
               {field.label} {field.required && <span className="text-red-500">*</span>}
-              {triggersAI && formSchema.aiConfig?.enableRealTimeEvaluation && (
-                <span className="ml-2 text-xs text-blue-500 bg-blue-50 px-2 py-1 rounded">
-                  AI Feedback
-                </span>
-              )}
+
             </label>
             {field.description && (
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -481,7 +446,6 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
               className={fieldClassName}
               placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
               {...register(fieldName as keyof FormData)}
-              onBlur={triggersAI ? () => handleFieldBlur(field.id) : undefined}
             />
             {error && (
               <p className="text-sm text-red-400 mt-1">{String(errorMessage)}</p>
@@ -497,11 +461,7 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
           <div key={index} className="flex w-full flex-col">
             <label htmlFor={fieldName} className={labelStyle}>
               {field.label} {field.required && <span className="text-red-500">*</span>}
-              {triggersAI && formSchema.aiConfig?.enableRealTimeEvaluation && (
-                <span className="ml-2 text-xs text-blue-500 bg-blue-50 px-2 py-1 rounded">
-                  AI Feedback
-                </span>
-              )}
+
             </label>
             {field.description && (
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -514,7 +474,6 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
               className={fieldClassName}
               placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
               {...register(fieldName as keyof FormData)}
-              onBlur={triggersAI ? () => handleFieldBlur(field.id) : undefined}
             />
             {error && (
               <p className="text-sm text-red-400 mt-1">{String(errorMessage)}</p>
@@ -543,11 +502,11 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
       <div className="lg:col-span-2">
         <div className="relative flex flex-col w-full space-y-6">
           {/* Loading Overlay for form submission */}
-          <LoadingOverlay 
-            isLoading={submitting} 
-            message="Submitting application..." 
+          <LoadingOverlay
+            isLoading={submitting}
+            message="Submitting application..."
           />
-          
+
           {/* Header */}
           <div className="flex flex-col space-y-2">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -611,13 +570,13 @@ const ApplicationSubmissionWithAI: FC<IApplicationSubmissionWithAIProps> = ({
             isLoading={isEvaluating} 
             message="Evaluating with AI..." 
           /> */}
-          
+
           <AIEvaluationDisplay
             evaluation={evaluation}
             isLoading={isEvaluating}
             isEnabled={formSchema.aiConfig?.enableRealTimeEvaluation || false}
           />
-          
+
           {evaluationError && (
             <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
               <p className="text-sm text-red-700 dark:text-red-300">

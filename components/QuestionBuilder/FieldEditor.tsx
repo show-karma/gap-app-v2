@@ -22,7 +22,6 @@ const fieldSchema = z.object({
   }).optional(),
   // AI evaluation configuration
   aiEvaluation: z.object({
-    triggerOnChange: z.boolean().optional(),
     includeInEvaluation: z.boolean().optional(),
   }).optional(),
 });
@@ -48,7 +47,6 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown }:
       options: field.options || [],
       validation: field.validation || {},
       aiEvaluation: {
-        triggerOnChange: field.aiEvaluation?.triggerOnChange || false,
         includeInEvaluation: field.aiEvaluation?.includeInEvaluation ?? true,
       },
     },
@@ -56,10 +54,10 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown }:
 
   const watchedOptions = watch('options') || [];
   const hasOptions = ['select', 'radio', 'checkbox'].includes(field.type);
-  
+
   // Watch all form values and auto-update the field
   const watchedValues = watch();
-  
+
   useEffect(() => {
     const subscription = watch((data) => {
       // Only update if data is valid (has required fields)
@@ -77,7 +75,7 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown }:
         onUpdate(updatedField);
       }
     });
-    
+
     return () => subscription.unsubscribe();
   }, [watch, onUpdate, field, hasOptions]);
 
@@ -188,7 +186,7 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown }:
           <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
             AI Evaluation Settings
           </h4>
-          
+
           <div className="space-y-3">
             <div className="flex items-center">
               <input
@@ -200,19 +198,10 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown }:
                 Include this field in AI evaluation context
               </label>
             </div>
-            
-            <div className="flex items-center">
-              <input
-                {...register('aiEvaluation.triggerOnChange')}
-                type="checkbox"
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <label className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                Trigger real-time AI evaluation when this field changes
-              </label>
-            </div>
+
+
           </div>
-          
+
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
             Real-time evaluation provides instant feedback to applicants as they complete the form.
           </p>
