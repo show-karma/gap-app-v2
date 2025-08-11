@@ -20,12 +20,16 @@ interface QuestionBuilderProps {
   initialSchema?: FormSchema;
   onSave?: (schema: FormSchema) => void;
   className?: string;
+  programId?: string;
+  chainId?: number;
 }
 
 export function QuestionBuilder({
   initialSchema,
   onSave,
   className = "",
+  programId,
+  chainId,
 }: QuestionBuilderProps) {
   const [schema, setSchema] = useState<FormSchema>(
     initialSchema || {
@@ -387,6 +391,8 @@ export function QuestionBuilder({
               <AIPromptConfiguration
                 schema={schema}
                 onUpdate={handleAIConfigUpdate}
+                programId={programId}
+                chainId={chainId}
               />
             </div>
           </div>
