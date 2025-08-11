@@ -29,6 +29,7 @@ interface ApplicationDetailSidesheetProps {
 
 const statusColors = {
   pending: "bg-blue-100 text-blue-800 border-blue-200",
+  under_review: "bg-purple-100 text-purple-800 border-purple-200",
   revision_requested: "bg-yellow-100 text-yellow-800 border-yellow-200",
   approved: "bg-green-100 text-green-800 border-green-200",
   rejected: "bg-red-100 text-red-800 border-red-200",
@@ -37,6 +38,7 @@ const statusColors = {
 
 const statusIcons = {
   pending: ClockIcon,
+  under_review: ClockIcon,
   revision_requested: ExclamationTriangleIcon,
   approved: CheckCircleIcon,
   rejected: XMarkIcon,
@@ -586,9 +588,23 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                       {showStatusActions && onStatusChange && (
                         <div className="border-t border-gray-200 dark:border-gray-700 bg-zinc-50 dark:bg-zinc-800 px-4 py-4 sm:px-6">
                           <div className="flex flex-col space-y-2">
-                            {/* Show all available actions except the current status */}
-                            <div className="flex space-x-3">
-                              {application.status !== "revision_requested" && (
+                            {/* For pending status: only show Under Review button */}
+                            {application.status === "pending" && (
+                              <div className="flex space-x-3">
+                                <Button
+                                  onClick={() => handleStatusChangeClick("under_review")}
+                                  variant="primary"
+                                  className="flex-1 bg-purple-600 hover:bg-purple-700"
+                                  disabled={isUpdatingStatus}
+                                >
+                                  Start Review
+                                </Button>
+                              </div>
+                            )}
+
+                            {/* For under_review status: show all action buttons */}
+                            {application.status === "under_review" && (
+                              <div className="flex space-x-3">
                                 <Button
                                   onClick={() =>
                                     handleStatusChangeClick("revision_requested")
@@ -599,8 +615,6 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                                 >
                                   Request Revision
                                 </Button>
-                              )}
-                              {application.status !== "approved" && (
                                 <Button
                                   onClick={() => handleStatusChangeClick("approved")}
                                   className="flex-1 bg-green-600 hover:bg-green-700"
@@ -608,8 +622,6 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                                 >
                                   Approve
                                 </Button>
-                              )}
-                              {application.status !== "rejected" && (
                                 <Button
                                   onClick={() => handleStatusChangeClick("rejected")}
                                   className="flex-1 bg-red-600 hover:bg-red-700"
@@ -617,22 +629,58 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                                 >
                                   Reject
                                 </Button>
-                              )}
-                            </div>
-
-                            {application.status === "revision_requested" && (
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
-                                The applicant can update their submission.
-                              </p>
+                              </div>
                             )}
 
-                            {application.status === "withdrawn" && (
-                              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
-                                This application has been withdrawn by the
-                                applicant.
-                              </p>
+                            {/* For other statuses: show available actions except current status */}
+                            {!["pending", "under_review"].includes(application.status) && (
+                              <div className="flex space-x-3">
+                                {application.status !== "revision_requested" && (
+                                  <Button
+                                    onClick={() =>
+                                      handleStatusChangeClick("revision_requested")
+                                    }
+                                    variant="secondary"
+                                    className="flex-1"
+                                    disabled={isUpdatingStatus}
+                                  >
+                                    Request Revision
+                                  </Button>
+                                )}
+                                {application.status !== "approved" && (
+                                  <Button
+                                    onClick={() => handleStatusChangeClick("approved")}
+                                    className="flex-1 bg-green-600 hover:bg-green-700"
+                                    disabled={isUpdatingStatus}
+                                  >
+                                    Approve
+                                  </Button>
+                                )}
+                                {application.status !== "rejected" && (
+                                  <Button
+                                    onClick={() => handleStatusChangeClick("rejected")}
+                                    className="flex-1 bg-red-600 hover:bg-red-700"
+                                    disabled={isUpdatingStatus}
+                                  >
+                                    Reject
+                                  </Button>
+                                )}
+                              </div>
                             )}
                           </div>
+
+                          {application.status === "revision_requested" && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              The applicant can update their submission.
+                            </p>
+                          )}
+
+                          {application.status === "withdrawn" && (
+                            <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
+                              This application has been withdrawn by the
+                              applicant.
+                            </p>
+                          )}
                         </div>
                       )}
                     </div>
