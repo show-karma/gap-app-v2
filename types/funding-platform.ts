@@ -1,6 +1,7 @@
 // V2 Status Types
 export type FundingApplicationStatusV2 = 
   | "pending"
+  | "under_review"
   | "revision_requested" 
   | "approved"
   | "rejected"

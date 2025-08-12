@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, Fragment, useState } from "react";
+import { FC, Fragment, useState, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import {
   XMarkIcon,
@@ -14,6 +14,8 @@ import { cn } from "@/utilities/tailwind";
 import { format, isValid, parseISO } from "date-fns";
 import StatusHistoryTimeline from "./StatusHistoryTimeline";
 import StatusChangeModal from "./StatusChangeModal";
+import fundingPlatformService from "@/services/fundingPlatformService";
+import { Spinner } from "@/components/Utilities/Spinner";
 
 interface ApplicationDetailSidesheetProps {
   application: IFundingApplication | null;
@@ -29,6 +31,7 @@ interface ApplicationDetailSidesheetProps {
 
 const statusColors = {
   pending: "bg-blue-100 text-blue-800 border-blue-200",
+  under_review: "bg-purple-100 text-purple-800 border-purple-200",
   revision_requested: "bg-yellow-100 text-yellow-800 border-yellow-200",
   approved: "bg-green-100 text-green-800 border-green-200",
   rejected: "bg-red-100 text-red-800 border-red-200",
@@ -37,6 +40,7 @@ const statusColors = {
 
 const statusIcons = {
   pending: ClockIcon,
+  under_review: ClockIcon,
   revision_requested: ExclamationTriangleIcon,
   approved: CheckCircleIcon,
   rejected: XMarkIcon,
@@ -78,7 +82,7 @@ const formatDate = (
 };
 
 const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
-  application,
+  application: initialApplication,
   isOpen,
   onClose,
   onStatusChange,
@@ -87,6 +91,37 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string>("");
+  const [application, setApplication] = useState<IFundingApplication | null>(initialApplication);
+  const [isLoadingApplication, setIsLoadingApplication] = useState(false);
+
+  // Fetch fresh application data with retry logic
+  const fetchApplicationData = async (applicationId: string, expectedStatus?: string, retries = 3) => {
+    try {
+      setIsLoadingApplication(true);
+      const freshData = await fundingPlatformService.applications.getApplication(applicationId);
+
+      // If we're expecting a specific status and it doesn't match, retry
+      if (expectedStatus && freshData.status !== expectedStatus && retries > 0) {
+        setTimeout(() => {
+          fetchApplicationData(applicationId, expectedStatus, retries - 1);
+        }, 1000);
+        return;
+      }
+
+      setApplication(freshData);
+      setIsLoadingApplication(false);
+    } catch (error) {
+      console.error("Failed to fetch application data:", error);
+      setIsLoadingApplication(false);
+    }
+  };
+
+  // Update application when prop changes (new application selected)
+  useEffect(() => {
+    if (initialApplication) {
+      setApplication(initialApplication);
+    }
+  }, [initialApplication]);
 
   if (!application) return null;
 
@@ -100,11 +135,44 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
 
   const handleStatusChangeConfirm = async (reason?: string) => {
     if (onStatusChange && pendingStatus) {
-      setIsUpdatingStatus(true);
-      await onStatusChange(application.id, pendingStatus, reason);
-      setIsUpdatingStatus(false);
-      setStatusModalOpen(false);
-      setPendingStatus("");
+      try {
+        setIsUpdatingStatus(true);
+
+        // Optimistically update the status immediately for better UX
+        const newStatusEntry = {
+          status: pendingStatus as any,
+          timestamp: new Date().toISOString(),
+          reason: reason
+        };
+
+        setApplication(prev => prev ? {
+          ...prev,
+          status: pendingStatus as any,
+          statusHistory: [...(prev.statusHistory || []), newStatusEntry]
+        } : null);
+
+        await onStatusChange(application.id, pendingStatus, reason);
+
+        // Close modal
+        setStatusModalOpen(false);
+
+        // Store the expected status for verification
+        const expectedStatus = pendingStatus;
+        setPendingStatus("");
+
+        // Add a small delay then fetch with retry logic to get server-accurate data
+        setTimeout(async () => {
+          // Fetch fresh data after status update, with expected status for verification
+          await fetchApplicationData(application.id, expectedStatus);
+          setIsUpdatingStatus(false);
+        }, 1000); // 1 second initial delay
+
+      } catch (error) {
+        console.error("Failed to update status:", error);
+        setIsUpdatingStatus(false);
+        // Revert optimistic update on error
+        fetchApplicationData(application.id);
+      }
     }
   };
 
@@ -503,7 +571,17 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                       </div>
 
                       {/* Content */}
-                      <div className="flex-1 px-4 py-6 sm:px-6">
+                      <div className="flex-1 px-4 py-6 sm:px-6 relative">
+                        {/* Loading overlay */}
+                        {isLoadingApplication && (
+                          <div className="absolute inset-0 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm z-10 flex items-center justify-center">
+                            <div className="flex flex-col items-center space-y-2">
+                              <Spinner />
+                              <p className="text-sm text-gray-600 dark:text-gray-400">Refreshing data...</p>
+                            </div>
+                          </div>
+                        )}
+
                         <div className="space-y-8">
                           {/* Basic Information */}
                           <div>
@@ -586,9 +664,23 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                       {showStatusActions && onStatusChange && (
                         <div className="border-t border-gray-200 dark:border-gray-700 bg-zinc-50 dark:bg-zinc-800 px-4 py-4 sm:px-6">
                           <div className="flex flex-col space-y-2">
-                            {/* Show all available actions except the current status */}
-                            <div className="flex space-x-3">
-                              {application.status !== "revision_requested" && (
+                            {/* For pending status: only show Under Review button */}
+                            {application.status === "pending" && (
+                              <div className="flex space-x-3">
+                                <Button
+                                  onClick={() => handleStatusChangeClick("under_review")}
+                                  variant="primary"
+                                  className="flex-1 bg-purple-600 hover:bg-purple-700"
+                                  disabled={isUpdatingStatus}
+                                >
+                                  Start Review
+                                </Button>
+                              </div>
+                            )}
+
+                            {/* For under_review status: show all action buttons */}
+                            {application.status === "under_review" && (
+                              <div className="flex space-x-3">
                                 <Button
                                   onClick={() =>
                                     handleStatusChangeClick("revision_requested")
@@ -599,8 +691,6 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                                 >
                                   Request Revision
                                 </Button>
-                              )}
-                              {application.status !== "approved" && (
                                 <Button
                                   onClick={() => handleStatusChangeClick("approved")}
                                   className="flex-1 bg-green-600 hover:bg-green-700"
@@ -608,8 +698,6 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                                 >
                                   Approve
                                 </Button>
-                              )}
-                              {application.status !== "rejected" && (
                                 <Button
                                   onClick={() => handleStatusChangeClick("rejected")}
                                   className="flex-1 bg-red-600 hover:bg-red-700"
@@ -617,22 +705,58 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                                 >
                                   Reject
                                 </Button>
-                              )}
-                            </div>
-
-                            {application.status === "revision_requested" && (
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
-                                The applicant can update their submission.
-                              </p>
+                              </div>
                             )}
 
-                            {application.status === "withdrawn" && (
-                              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
-                                This application has been withdrawn by the
-                                applicant.
-                              </p>
+                            {/* For other statuses: show available actions except current status */}
+                            {!["pending", "under_review", 'approved', 'rejected'].includes(application.status) && (
+                              <div className="flex space-x-3">
+                                {!["revision_requested"].includes(application.status) && (
+                                  <Button
+                                    onClick={() =>
+                                      handleStatusChangeClick("revision_requested")
+                                    }
+                                    variant="secondary"
+                                    className="flex-1"
+                                    disabled={isUpdatingStatus}
+                                  >
+                                    Request Revision
+                                  </Button>
+                                )}
+                                {application.status !== "approved" && (
+                                  <Button
+                                    onClick={() => handleStatusChangeClick("approved")}
+                                    className="flex-1 bg-green-600 hover:bg-green-700"
+                                    disabled={isUpdatingStatus}
+                                  >
+                                    Approve
+                                  </Button>
+                                )}
+                                {application.status !== "rejected" && (
+                                  <Button
+                                    onClick={() => handleStatusChangeClick("rejected")}
+                                    className="flex-1 bg-red-600 hover:bg-red-700"
+                                    disabled={isUpdatingStatus}
+                                  >
+                                    Reject
+                                  </Button>
+                                )}
+                              </div>
                             )}
                           </div>
+
+                          {application.status === "revision_requested" && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              The applicant can update their submission.
+                            </p>
+                          )}
+
+                          {application.status === "withdrawn" && (
+                            <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
+                              This application has been withdrawn by the
+                              applicant.
+                            </p>
+                          )}
                         </div>
                       )}
                     </div>
@@ -654,6 +778,7 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
         onConfirm={handleStatusChangeConfirm}
         status={pendingStatus}
         isSubmitting={isUpdatingStatus}
+        isReasonRequired={pendingStatus === "revision_requested"}
       />
     </>
   );

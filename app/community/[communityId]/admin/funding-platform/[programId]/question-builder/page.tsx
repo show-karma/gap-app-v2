@@ -146,6 +146,8 @@ export default function QuestionBuilderPage() {
       <QuestionBuilder
         initialSchema={existingSchema || undefined}
         onSave={handleSchemaChange}
+        programId={programId}
+        chainId={parsedChainId}
       />
     </div>
   );

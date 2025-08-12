@@ -36,6 +36,7 @@ export interface FormSchema {
     detailedPrompt?: string;
     aiModel?: string;
     enableRealTimeEvaluation?: boolean;
+    langfusePromptId?: string;
   };
 }
 
