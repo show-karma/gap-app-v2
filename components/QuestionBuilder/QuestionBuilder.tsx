@@ -200,44 +200,40 @@ export function QuestionBuilder({
             <div className="flex bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
               <button
                 onClick={() => setActiveTab("build")}
-                className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${
-                  activeTab === "build"
-                    ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
-                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-                }`}
+                className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${activeTab === "build"
+                  ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
+                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                  }`}
               >
                 <WrenchScrewdriverIcon className="w-4 h-4 mr-2" />
                 Build
               </button>
               <button
                 onClick={() => setActiveTab("settings")}
-                className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${
-                  activeTab === "settings"
-                    ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
-                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-                }`}
+                className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${activeTab === "settings"
+                  ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
+                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                  }`}
               >
                 <Cog6ToothIcon className="w-4 h-4 mr-2" />
                 Settings
               </button>
               <button
                 onClick={() => setActiveTab("ai-config")}
-                className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${
-                  activeTab === "ai-config"
-                    ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
-                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-                }`}
+                className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${activeTab === "ai-config"
+                  ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
+                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                  }`}
               >
                 <CpuChipIcon className="w-4 h-4 mr-2" />
                 AI Config
               </button>
               <button
                 onClick={() => setActiveTab("preview")}
-                className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${
-                  activeTab === "preview"
-                    ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
-                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-                }`}
+                className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${activeTab === "preview"
+                  ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
+                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                  }`}
               >
                 <EyeIcon className="w-4 h-4 mr-2" />
                 Preview
@@ -246,11 +242,10 @@ export function QuestionBuilder({
 
             <Button
               onClick={handleSave}
-              className={`py-2 ${
-                !hasEmailField()
-                  ? "bg-yellow-600 hover:bg-yellow-700"
-                  : "bg-blue-600 hover:bg-blue-700"
-              }`}
+              className={`py-2 ${!hasEmailField()
+                ? "bg-yellow-600 hover:bg-yellow-700"
+                : "bg-blue-600 hover:bg-blue-700"
+                }`}
               title={
                 !hasEmailField()
                   ? "Add an email field before saving"
@@ -318,11 +313,10 @@ export function QuestionBuilder({
                           ref={(el) => {
                             fieldRefs.current[field.id] = el;
                           }}
-                          className={`border rounded-lg transition-all ${
-                            selectedFieldId === field.id
-                              ? "border-blue-500 bg-white dark:bg-gray-800 shadow-lg"
-                              : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600"
-                          }`}
+                          className={`border rounded-lg transition-all ${selectedFieldId === field.id
+                            ? "border-blue-500 bg-white dark:bg-gray-800 shadow-lg"
+                            : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600"
+                            }`}
                         >
                           <div
                             className="p-4 cursor-pointer"
@@ -353,11 +347,7 @@ export function QuestionBuilder({
                                       <span>Private</span>
                                     </span>
                                   )}
-                                  {field.aiEvaluation?.triggerOnChange && (
-                                    <span className="text-xs text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded">
-                                      AI Trigger
-                                    </span>
-                                  )}
+
                                 </div>
                                 <h4 className="font-medium text-gray-900 dark:text-white mt-1">
                                   {field.label}
