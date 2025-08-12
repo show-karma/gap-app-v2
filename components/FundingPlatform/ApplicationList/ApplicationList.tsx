@@ -277,9 +277,9 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                       )}
 
                       {/* For other statuses: show available actions except current status */}
-                      {!["pending", "under_review"].includes(application.status) && (
+                      {!["pending", "under_review", "approved", "rejected"].includes(application.status) && (
                         <>
-                          {!["revision_requested", "approved", "rejected"].includes(application.status) && (
+                          {!["revision_requested"].includes(application.status) && (
                             <Button
                               onClick={(e) => {
                                 e.stopPropagation();

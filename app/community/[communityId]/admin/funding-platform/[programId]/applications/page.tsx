@@ -1,6 +1,6 @@
 "use client";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { useOwnerStore } from "@/store";
 import { useStaff } from "@/hooks/useStaff";
@@ -12,11 +12,12 @@ import { IFundingApplication } from "@/types/funding-platform";
 import { IApplicationFilters } from "@/services/fundingPlatformService";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/Utilities/Button";
-import { ArrowLeftIcon, CogIcon } from "@heroicons/react/24/solid";
+import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { Cog6ToothIcon } from "@heroicons/react/24/outline";
+import { useFundingApplications } from "@/hooks/useFundingPlatform";
 
 export default function ApplicationsPage() {
   const router = useRouter();
@@ -62,6 +63,13 @@ export default function ApplicationsPage() {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const { isStaff } = useStaff();
 
+  // Use the funding applications hook to get the status update function
+  const { updateApplicationStatus, refetch } = useFundingApplications(
+    programId,
+    parsedChainId,
+    initialFilters
+  );
+
   const hasAccess = isCommunityAdmin || isOwner || isStaff;
 
   const handleBackClick = () => {
@@ -79,20 +87,19 @@ export default function ApplicationsPage() {
     setTimeout(() => setSelectedApplication(null), 300);
   };
 
-  const handleStatusChange = async (
-    applicationId: string,
-    status: string,
-    note?: string
-  ) => {
-    // The ApplicationListWithAPI component will handle the status update
-    // We just need to update the selected application if it's the one being changed
-    if (selectedApplication && selectedApplication.id === applicationId) {
-      setSelectedApplication({
-        ...selectedApplication,
-        status: status as any,
-      });
+  // Handle status change for both ApplicationList and ApplicationDetailSidesheet
+  const handleStatusChange = (
+    async (applicationId: string, status: string, note?: string) => {
+      try {
+        console.log("handleStatusChange", applicationId, status, note);
+        await updateApplicationStatus({ applicationId, status, note });
+        // Refetch list data
+      } catch (error) {
+        console.error("Failed to update application status:", error);
+        throw error; // Re-throw to let the modal handle the error state
+      }
     }
-  };
+  );
 
   if (isLoadingAdmin) {
     return (
@@ -161,6 +168,7 @@ export default function ApplicationsPage() {
           showStatusActions={true}
           onApplicationSelect={handleApplicationSelect}
           initialFilters={initialFilters}
+          onStatusChange={handleStatusChange}
         />
       </div>
 

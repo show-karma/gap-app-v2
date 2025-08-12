@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, Fragment, useState } from "react";
+import { FC, Fragment, useState, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import {
   XMarkIcon,
@@ -14,6 +14,8 @@ import { cn } from "@/utilities/tailwind";
 import { format, isValid, parseISO } from "date-fns";
 import StatusHistoryTimeline from "./StatusHistoryTimeline";
 import StatusChangeModal from "./StatusChangeModal";
+import fundingPlatformService from "@/services/fundingPlatformService";
+import { Spinner } from "@/components/Utilities/Spinner";
 
 interface ApplicationDetailSidesheetProps {
   application: IFundingApplication | null;
@@ -80,7 +82,7 @@ const formatDate = (
 };
 
 const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
-  application,
+  application: initialApplication,
   isOpen,
   onClose,
   onStatusChange,
@@ -89,6 +91,38 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string>("");
+  const [application, setApplication] = useState<IFundingApplication | null>(initialApplication);
+  const [isLoadingApplication, setIsLoadingApplication] = useState(false);
+
+  // Fetch fresh application data with retry logic
+  const fetchApplicationData = async (applicationId: string, expectedStatus?: string, retries = 3) => {
+    try {
+      setIsLoadingApplication(true);
+      const freshData = await fundingPlatformService.applications.getApplication(applicationId);
+
+      // If we're expecting a specific status and it doesn't match, retry
+      if (expectedStatus && freshData.status !== expectedStatus && retries > 0) {
+        console.log(`Status not yet updated, retrying... (${retries} retries left)`);
+        setTimeout(() => {
+          fetchApplicationData(applicationId, expectedStatus, retries - 1);
+        }, 1000);
+        return;
+      }
+
+      setApplication(freshData);
+      setIsLoadingApplication(false);
+    } catch (error) {
+      console.error("Failed to fetch application data:", error);
+      setIsLoadingApplication(false);
+    }
+  };
+
+  // Update application when prop changes (new application selected)
+  useEffect(() => {
+    if (initialApplication) {
+      setApplication(initialApplication);
+    }
+  }, [initialApplication]);
 
   if (!application) return null;
 
@@ -102,11 +136,44 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
 
   const handleStatusChangeConfirm = async (reason?: string) => {
     if (onStatusChange && pendingStatus) {
-      setIsUpdatingStatus(true);
-      await onStatusChange(application.id, pendingStatus, reason);
-      setIsUpdatingStatus(false);
-      setStatusModalOpen(false);
-      setPendingStatus("");
+      try {
+        setIsUpdatingStatus(true);
+
+        // Optimistically update the status immediately for better UX
+        const newStatusEntry = {
+          status: pendingStatus as any,
+          timestamp: new Date().toISOString(),
+          reason: reason
+        };
+
+        setApplication(prev => prev ? {
+          ...prev,
+          status: pendingStatus as any,
+          statusHistory: [...(prev.statusHistory || []), newStatusEntry]
+        } : null);
+
+        await onStatusChange(application.id, pendingStatus, reason);
+
+        // Close modal
+        setStatusModalOpen(false);
+
+        // Store the expected status for verification
+        const expectedStatus = pendingStatus;
+        setPendingStatus("");
+
+        // Add a small delay then fetch with retry logic to get server-accurate data
+        setTimeout(async () => {
+          // Fetch fresh data after status update, with expected status for verification
+          await fetchApplicationData(application.id, expectedStatus);
+          setIsUpdatingStatus(false);
+        }, 1000); // 1 second initial delay
+
+      } catch (error) {
+        console.error("Failed to update status:", error);
+        setIsUpdatingStatus(false);
+        // Revert optimistic update on error
+        fetchApplicationData(application.id);
+      }
     }
   };
 
@@ -505,7 +572,17 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                       </div>
 
                       {/* Content */}
-                      <div className="flex-1 px-4 py-6 sm:px-6">
+                      <div className="flex-1 px-4 py-6 sm:px-6 relative">
+                        {/* Loading overlay */}
+                        {isLoadingApplication && (
+                          <div className="absolute inset-0 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm z-10 flex items-center justify-center">
+                            <div className="flex flex-col items-center space-y-2">
+                              <Spinner />
+                              <p className="text-sm text-gray-600 dark:text-gray-400">Refreshing data...</p>
+                            </div>
+                          </div>
+                        )}
+
                         <div className="space-y-8">
                           {/* Basic Information */}
                           <div>
@@ -633,9 +710,9 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                             )}
 
                             {/* For other statuses: show available actions except current status */}
-                            {!["pending", "under_review"].includes(application.status) && (
+                            {!["pending", "under_review", 'approved', 'rejected'].includes(application.status) && (
                               <div className="flex space-x-3">
-                                {application.status !== "revision_requested" && (
+                                {!["revision_requested"].includes(application.status) && (
                                   <Button
                                     onClick={() =>
                                       handleStatusChangeClick("revision_requested")
