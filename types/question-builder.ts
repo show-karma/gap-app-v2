@@ -4,6 +4,7 @@ export interface FormField {
   label: string;
   placeholder?: string;
   required?: boolean;
+  private?: boolean; // Whether this field should be hidden from public responses
   options?: string[]; // for select, radio, checkbox
   validation?: {
     min?: number;
@@ -27,6 +28,7 @@ export interface FormSchema {
   settings: {
     submitButtonText: string;
     confirmationMessage: string;
+    privateApplications?: boolean; // Whether this program has private applications
   };
   // AI configuration for the entire form
   aiConfig?: {

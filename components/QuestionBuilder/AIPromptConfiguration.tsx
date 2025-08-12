@@ -9,6 +9,7 @@ import { FormSchema } from "@/types/question-builder";
 import { useEffect } from "react";
 import { useProgram } from "@/hooks/usePrograms";
 
+
 const aiConfigSchema = z.object({
   // systemPrompt: z.string().min(10, 'System prompt must be at least 10 characters'),
   // detailedPrompt: z.string().optional(),
