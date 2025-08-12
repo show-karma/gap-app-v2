@@ -102,7 +102,6 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
 
       // If we're expecting a specific status and it doesn't match, retry
       if (expectedStatus && freshData.status !== expectedStatus && retries > 0) {
-        console.log(`Status not yet updated, retrying... (${retries} retries left)`);
         setTimeout(() => {
           fetchApplicationData(applicationId, expectedStatus, retries - 1);
         }, 1000);
