@@ -279,7 +279,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                       {/* For other statuses: show available actions except current status */}
                       {!["pending", "under_review"].includes(application.status) && (
                         <>
-                          {application.status !== "revision_requested" && (
+                          {!["revision_requested", "approved", "rejected"].includes(application.status) && (
                             <Button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -384,6 +384,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
         onConfirm={handleStatusChangeConfirm}
         status={pendingStatus}
         isSubmitting={isUpdatingStatus}
+        isReasonRequired={pendingStatus === "revision_requested"}
       />
     </div>
   );

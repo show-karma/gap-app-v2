@@ -702,6 +702,7 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
         onConfirm={handleStatusChangeConfirm}
         status={pendingStatus}
         isSubmitting={isUpdatingStatus}
+        isReasonRequired={pendingStatus === "revision_requested"}
       />
     </>
   );
