@@ -1,6 +1,7 @@
 "use client";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useImpactMeasurement } from "@/hooks/useImpactMeasurement";
+import { useCommunityStore } from "@/store/community";
 import formatCurrency from "@/utilities/formatCurrency";
 import { getCommunityStatsV2 } from "@/utilities/queries/getCommunityDataV2";
 import { useQuery } from "@tanstack/react-query";
@@ -69,6 +70,7 @@ export const ImpactStatCards = () => {
 export const CommunityStatCards = () => {
   const params = useParams();
   const communityId = params.communityId as string;
+  const { totalGrants } = useCommunityStore();
   const { data, isLoading } = useQuery({
     queryKey: ["community-stats", communityId],
     queryFn: () => getCommunityStatsV2(communityId),
@@ -78,7 +80,7 @@ export const CommunityStatCards = () => {
   const stats = [
     {
       title: "Total Projects",
-      value: data?.totalProjects ? formatCurrency(data.totalProjects) : "-",
+      value: totalGrants ? formatCurrency(totalGrants) : "-",
       color: "#9b59b6",
     },
     {
