@@ -37,10 +37,10 @@ export function AIPromptConfiguration({
 }: AIPromptConfigurationProps) {
   // Fetch program data for default langfusePromptId
   const { data: program } = useProgram(programId || "");
-  
+
   // Get default langfusePromptId from program registry if not set in schema
   const defaultLangfusePromptId = schema.aiConfig?.langfusePromptId || program?.langfusePromptId || "";
-  const recommendedPrompt = "Optimism grant evaluation prompt";
+  const recommendedPrompt = "";
 
   const {
     register,
@@ -63,10 +63,9 @@ export function AIPromptConfiguration({
 
   const watchedValues = watch();
   const currentLangfusePromptId = watchedValues.langfusePromptId || "";
-  
-  // Display value shows (Recommended) for the default prompt
-  const displayValue = currentLangfusePromptId === recommendedPrompt 
-    ? `${recommendedPrompt} (Recommended)` 
+
+  const displayValue = currentLangfusePromptId === recommendedPrompt
+    ? recommendedPrompt
     : currentLangfusePromptId;
 
   // Update form value when program data loads and no langfusePromptId is set
@@ -183,12 +182,11 @@ export function AIPromptConfiguration({
             value={displayValue}
             onChange={(e) => {
               const value = e.target.value;
-              // Remove (Recommended) suffix if user types it
               const cleanValue = value.replace(/ \(Recommended\)$/, "");
               setValue("langfusePromptId", cleanValue);
             }}
             className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300"
-            placeholder="Optimism grant evaluation prompt (Recommended)"
+            placeholder=""
           />
           {errors.langfusePromptId && (
             <p className="text-red-500 text-sm mt-1">
@@ -196,7 +194,7 @@ export function AIPromptConfiguration({
             </p>
           )}
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-            The name of the Langfuse prompt to use for AI evaluation. If not specified, 
+            The name of the Langfuse prompt to use for AI evaluation. If not specified,
             the default prompt from the program registry will be used.
           </p>
         </div>
