@@ -35,6 +35,7 @@ import { SHARE_TEXTS } from "@/utilities/share/text";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { useWallet } from "@/hooks/useWallet";
+import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
 
 interface UpdatesProps {
   milestone: IMilestoneResponse;
@@ -198,6 +199,14 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
     (g) => g.uid.toLowerCase() === milestone.refUID.toLowerCase()
   );
 
+  // Fetch milestone impact data (outputs/metrics) if milestone is completed
+  const { data: milestoneImpactData } = useMilestoneImpactAnswers({
+    milestoneUID: milestone.completed ? milestone.uid : undefined,
+  });
+
+  // Get deliverables from milestone completion data
+  const completionDeliverables = (milestone.completed?.data as any)?.deliverables;
+
   if (
     !isEditing &&
     (milestone?.completed?.data?.reason?.length ||
@@ -316,6 +325,70 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
                 ) : null}
               </div>
             </div>
+          </div>
+        ) : null}
+
+        {/* Deliverables Section */}
+        {completionDeliverables && completionDeliverables.length > 0 ? (
+          <div className="flex flex-col gap-2 mt-4">
+            <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+              Deliverables:
+            </p>
+            {completionDeliverables.map((deliverable: any, index: number) => (
+              <div key={index} className="border border-gray-200 dark:border-zinc-700 rounded-lg p-3 bg-gray-50 dark:bg-zinc-800">
+                <div className="flex flex-col gap-1">
+                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                    {deliverable.name}
+                  </p>
+                  {deliverable.description && (
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {deliverable.description}
+                    </p>
+                  )}
+                  {deliverable.proof && (
+                    <ExternalLink
+                      href={deliverable.proof}
+                      className="text-brand-blue hover:underline text-sm break-all"
+                    >
+                      {deliverable.proof}
+                    </ExternalLink>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        {/* Metrics Section */}
+        {milestoneImpactData && milestoneImpactData.length > 0 ? (
+          <div className="flex flex-col gap-2 mt-4">
+            <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+              Metrics:
+            </p>
+            {milestoneImpactData.map((metric: any, index: number) => (
+              <div key={index} className="border border-gray-200 dark:border-zinc-700 rounded-lg p-3 bg-gray-50 dark:bg-zinc-800">
+                <div className="flex flex-col gap-1">
+                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                    {metric.name || metric.indicator?.data?.title || 'Untitled Indicator'}
+                  </p>
+                  {metric.datapoints && metric.datapoints.length > 0 && (
+                    <div className="flex flex-col gap-1">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Value: <span className="font-medium text-zinc-900 dark:text-zinc-100">{metric.datapoints[0].value}</span>
+                      </p>
+                      {metric.datapoints[0].proof && (
+                        <ExternalLink
+                          href={metric.datapoints[0].proof}
+                          className="text-brand-blue hover:underline text-sm break-all"
+                        >
+                          {metric.datapoints[0].proof}
+                        </ExternalLink>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         ) : null}
       </div>
