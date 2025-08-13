@@ -56,6 +56,7 @@ const schema = z.object({
   description: z.string().optional(),
   completionPercentage: z.string().refine(
     (value) => {
+      if (value === "") return false; // Empty string is not valid
       const num = Number(value);
       return !isNaN(num) && num >= 0 && num <= 100;
     },
@@ -109,6 +110,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
     milestoneUID: milestone.uid,
   });
 
+
   // Transform milestone impact data to form format
   const transformMilestoneImpactToOutputs = (impactData: any[]) => {
     if (!impactData || impactData.length === 0) return [];
@@ -135,6 +137,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
     mode: "onChange",
     defaultValues: {
       description: previousData?.reason,
+      completionPercentage: (previousData as any)?.completionPercentage?.toString() || '0',
       outputs: [],
       deliverables: (previousData as any)?.deliverables || [],
     },
@@ -259,7 +262,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           sanitizeObject({
             reason: data.description,
             proofOfWork: "",
-            completionPercentage: data.completionPercentage,
+            completionPercentage: Number(data.completionPercentage),
             type: "completed",
             deliverables: data.deliverables || [],
           }),
@@ -381,7 +384,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           sanitizeObject({
             reason: data.description,
             proofOfWork: "",
-            completionPercentage: data.completionPercentage,
+            completionPercentage: Number(data.completionPercentage),
             type: "completed",
             deliverables: data.deliverables || [],
           }),
