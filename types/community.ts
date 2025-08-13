@@ -28,6 +28,7 @@ export interface ProjectV2 {
     logoUrl: string;
   };
   categories: string[];
+  regions: string[];
   grantNames: string[];
   members: Array<{
     address: string;

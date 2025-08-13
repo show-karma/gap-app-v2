@@ -10,7 +10,7 @@ import { Fragment } from "react";
 interface ProgramFilterProps {
   programs: {
     programId: string;
-    grant: string;
+    title: string;
   }[];
   selectedProgramId: string | null;
   onChange: (programId: string | null) => void;
@@ -22,24 +22,31 @@ export const ProgramFilter = ({
   selectedProgramId,
   onChange,
 }: ProgramFilterProps) => {
+  // Filter and sort programs
+  const uniquePrograms = programs
+    .filter((program) => program.programId) // Filter out empty values
+    .filter((program, index, self) =>
+      index === self.findIndex((p) => p.programId === program.programId)
+    )
+    .sort((a, b) => a.title.localeCompare(b.title)); // Sort alphabetically by title
 
   return (
     <div className="relative w-64">
       <Listbox
         value={selectedProgramId}
         onChange={(value) => {
+          // Allow deselecting by clicking the same item
           if (value === selectedProgramId) {
             onChange(null);
-            return;
+          } else {
+            onChange(value);
           }
-          onChange(value);
         }}
-
       >
         <div className="relative">
           <Listbox.Button className="dark:bg-zinc-800 dark:text-white relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-600 sm:text-sm sm:leading-6">
             <span className="block truncate">
-              {selectedProgramId ? programs.find(program => program.programId === selectedProgramId)?.grant || "Filter by Grant Program" : "Filter by Grant Program"}
+              {selectedProgramId ? uniquePrograms.find(program => program.programId === selectedProgramId)?.title || "Filter by Grant Program" : "Filter by Grant Program"}
             </span>
             <span className="absolute inset-y-0 right-0 flex items-center pr-2">
 
@@ -67,7 +74,8 @@ export const ProgramFilter = ({
             leaveTo="opacity-0"
           >
             <Listbox.Options className="dark:bg-zinc-800 dark:text-white absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-              {programs.map((program) => (
+              {uniquePrograms
+                  .map((program) => (
                 <Listbox.Option
                   key={program.programId}
                   value={program.programId}
@@ -88,7 +96,7 @@ export const ProgramFilter = ({
                           "block truncate"
                         )}
                       >
-                        {program.grant}
+                        {program.title}
                       </span>
                       {selected && (
                         <span
