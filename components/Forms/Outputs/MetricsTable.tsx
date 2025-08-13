@@ -82,13 +82,12 @@ const CategorizedIndicatorDropdown = ({
     })),
   ];
 
-
   return (
-    <div className="space-y-2">
+    <div className="flex flex-col gap-2">
       <select
         value={selected}
         onChange={(e) => onSelect(e.target.value)}
-        className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
+        className="w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-gray-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
       >
         <option value="">Select</option>
         {dropdownList.map((item) => (
@@ -103,7 +102,7 @@ const CategorizedIndicatorDropdown = ({
           e.stopPropagation();
           onCreateNew();
         }}
-        className="text-sm w-full bg-zinc-700 text-white"
+        className="text-sm w-full bg-zinc-700 text-white py-1.5"
       >
         Create New Metric
       </Button>
@@ -226,7 +225,7 @@ export const MetricsTable = ({
             <tbody className="divide-y divide-gray-200 dark:divide-zinc-700">
               {outputs.map((output, index) => (
                 <tr key={index}>
-                  <td className="px-4 py-2">
+                  <td className="px-4 py-3 align-top">
                     <CategorizedIndicatorDropdown
                       indicators={categorizedIndicators}
                       onSelect={(indicatorId) => {
@@ -238,67 +237,70 @@ export const MetricsTable = ({
                       }}
                       selectedCommunities={selectedCommunities}
                     />
-                    <EmptyDiv />
                   </td>
-                  <td className="px-4 py-2">
-                    <input
-                      type="text"
-                      value={output.value === 0 ? "" : output.value}
-                      onChange={(e) => {
-                        const indicator = categorizedIndicators.find(
-                          (o) => o.id === output.outputId
-                        );
-                        const unitType = indicator?.unitOfMeasure || "int";
-
-                        // Allow decimal point and numbers
-                        const isValidInput =
-                          unitType === "float"
-                            ? /^-?\d*\.?\d*$/.test(e.target.value) // Allow decimals for float
-                            : /^-?\d*$/.test(e.target.value); // Only integers for int
-
-                        if (isValidInput) {
-                          handleOutputChange(
-                            index, 
-                            'value', 
-                            e.target.value === "" ? "" : e.target.value
+                  <td className="px-4 py-3 align-top">
+                    <div className="flex flex-col gap-2">
+                      <input
+                        type="text"
+                        value={output.value === 0 ? "" : output.value}
+                        onChange={(e) => {
+                          const indicator = categorizedIndicators.find(
+                            (o) => o.id === output.outputId
                           );
-                        }
-                      }}
-                      placeholder={`Enter ${
-                        categorizedIndicators.find(
-                          (o) => o.id === output.outputId
-                        )?.unitOfMeasure === "float"
-                          ? "decimal"
-                          : "whole"
-                      } number`}
-                      disabled={
-                        !!autosyncedIndicators.find(
-                          (indicator) =>
-                            indicator.name ===
-                            indicatorsList.find(
-                              (i) => i.indicatorId === output.outputId
-                            )?.name
-                        )
-                      }
-                      className={cn(
-                        "w-full px-3 py-1.5 bg-white disabled:opacity-50 disabled:cursor-not-allowed dark:bg-zinc-900 border rounded-md",
-                        output.outputId &&
-                          isInvalidValue(
-                            output.value,
-                            categorizedIndicators.find(
-                              (o) => o.id === output.outputId
-                            )?.unitOfMeasure || "int"
+                          const unitType = indicator?.unitOfMeasure || "int";
+
+                          // Allow decimal point and numbers
+                          const isValidInput =
+                            unitType === "float"
+                              ? /^-?\d*\.?\d*$/.test(e.target.value) // Allow decimals for float
+                              : /^-?\d*$/.test(e.target.value); // Only integers for int
+
+                          if (isValidInput) {
+                            handleOutputChange(
+                              index, 
+                              'value', 
+                              e.target.value === "" ? "" : e.target.value
+                            );
+                          }
+                        }}
+                        placeholder={`Enter ${
+                          categorizedIndicators.find(
+                            (o) => o.id === output.outputId
+                          )?.unitOfMeasure === "float"
+                            ? "decimal"
+                            : "whole"
+                        } number`}
+                        disabled={
+                          !!autosyncedIndicators.find(
+                            (indicator) =>
+                              indicator.name ===
+                              indicatorsList.find(
+                                (i) => i.indicatorId === output.outputId
+                              )?.name
                           )
-                          ? "border-red-500 dark:border-red-500"
-                          : "border-gray-300 dark:border-zinc-700"
-                      )}
-                    />
+                        }
+                        className={cn(
+                          "w-full px-3 py-1.5 bg-white disabled:opacity-50 disabled:cursor-not-allowed dark:bg-zinc-900 border rounded-md",
+                          output.outputId &&
+                            isInvalidValue(
+                              output.value,
+                              categorizedIndicators.find(
+                                (o) => o.id === output.outputId
+                              )?.unitOfMeasure || "int"
+                            )
+                            ? "border-red-500 dark:border-red-500"
+                            : "border-gray-300 dark:border-zinc-700"
+                        )}
+                      />
+                      {/* Empty div to align with the "Create New Metric" button height */}
+                      <div className="h-8"></div>
+                    </div>
                     {output.outputId &&
                     isInvalidValue(
                       output.value,
                       categorizedIndicators.find((o) => o.id === output.outputId)
                         ?.unitOfMeasure || "int"
-                    ) ? (
+                    ) && (
                       <p className="text-xs text-red-500 mt-1">
                         {typeof output.value === "string" &&
                         output.value === ""
@@ -309,42 +311,46 @@ export const MetricsTable = ({
                           ? "Please enter a whole number"
                           : "Please enter a valid decimal number"}
                       </p>
-                    ) : (
-                      <EmptyDiv />
                     )}
                   </td>
-                  <td className="px-4 py-2">
-                    <input
-                      type="text"
-                      value={output.proof || ""}
-                      onChange={(e) => {
-                        handleOutputChange(index, 'proof', e.target.value);
-                      }}
-                      placeholder="Enter proof URL"
-                      disabled={
-                        !!autosyncedIndicators.find(
-                          (indicator) =>
-                            indicator.name ===
-                            indicatorsList.find(
-                              (i) => i.indicatorId === output.outputId
-                            )?.name
-                        )
-                      }
-                      className="w-full px-3 py-1.5 bg-white disabled:opacity-50 disabled:cursor-not-allowed dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md"
-                    />
-                    <EmptyDiv />
-                  </td>
-                  <td className="px-4 py-0">
-                    <div className="flex items-center justify-center w-full h-full">
-                      <button
-                        onClick={() => handleRemoveOutput(index)}
-                        type="button"
-                        className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20"
-                      >
-                        <TrashIcon className="h-5 w-5" />
-                      </button>
+                  <td className="px-4 py-3 align-top">
+                    <div className="flex flex-col gap-2">
+                      <input
+                        type="text"
+                        value={output.proof || ""}
+                        onChange={(e) => {
+                          handleOutputChange(index, 'proof', e.target.value);
+                        }}
+                        placeholder="Enter proof URL"
+                        disabled={
+                          !!autosyncedIndicators.find(
+                            (indicator) =>
+                              indicator.name ===
+                              indicatorsList.find(
+                                (i) => i.indicatorId === output.outputId
+                              )?.name
+                          )
+                        }
+                        className="w-full px-3 py-1.5 bg-white disabled:opacity-50 disabled:cursor-not-allowed dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md"
+                      />
+                      {/* Empty div to align with the "Create New Metric" button height */}
+                      <div className="h-8"></div>
                     </div>
-                    <EmptyDiv />
+                  </td>
+                  <td className="px-4 py-3 align-top">
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center justify-center h-9">
+                        <button
+                          onClick={() => handleRemoveOutput(index)}
+                          type="button"
+                          className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20"
+                        >
+                          <TrashIcon className="h-5 w-5" />
+                        </button>
+                      </div>
+                      {/* Empty div to align with the "Create New Metric" button height */}
+                      <div className="h-8"></div>
+                    </div>
                   </td>
                 </tr>
               ))}
