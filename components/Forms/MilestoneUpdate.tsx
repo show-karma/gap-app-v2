@@ -24,7 +24,7 @@ import {
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 import { useRouter } from "next/navigation";
-import { type FC, useState } from "react";
+import { type FC, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
@@ -36,6 +36,7 @@ import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { useWallet } from "@/hooks/useWallet";
 import { OutputsSection } from "@/components/Forms/Outputs/OutputsSection";
 import { sendMilestoneImpactAnswers } from "@/utilities/impact/milestoneImpactAnswers";
+import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
 
 interface MilestoneUpdateFormProps {
   milestone: IMilestoneResponse;
@@ -103,6 +104,24 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   const { openShareDialog, closeShareDialog } = useShareDialogStore();
   const router = useRouter();
 
+  // Fetch existing milestone impact data to populate the form
+  const { data: milestoneImpactData } = useMilestoneImpactAnswers({
+    milestoneUID: milestone.uid,
+  });
+
+  // Transform milestone impact data to form format
+  const transformMilestoneImpactToOutputs = (impactData: any[]) => {
+    if (!impactData || impactData.length === 0) return [];
+    
+    return impactData.map((metric: any) => ({
+      outputId: metric.id || '',
+      value: metric.datapoints && metric.datapoints.length > 0 ? metric.datapoints[0].value : '',
+      proof: metric.datapoints && metric.datapoints.length > 0 ? metric.datapoints[0].proof || '' : '',
+      startDate: metric.datapoints && metric.datapoints.length > 0 ? metric.datapoints[0].startDate || '' : '',
+      endDate: metric.datapoints && metric.datapoints.length > 0 ? metric.datapoints[0].endDate || '' : '',
+    }));
+  };
+
   const {
     register,
     setValue,
@@ -120,6 +139,14 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
       deliverables: (previousData as any)?.deliverables || [],
     },
   });
+
+  // Update form values when milestone impact data is loaded
+  useEffect(() => {
+    if (milestoneImpactData && milestoneImpactData.length > 0) {
+      const transformedOutputs = transformMilestoneImpactToOutputs(milestoneImpactData);
+      setValue('outputs', transformedOutputs, { shouldValidate: true });
+    }
+  }, [milestoneImpactData, setValue]);
 
   const openDialog = () => {
     openShareDialog({
