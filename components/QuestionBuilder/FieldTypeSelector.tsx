@@ -62,6 +62,12 @@ export const fieldTypes = [
     icon: "📅",
     description: "Date picker",
   },
+  {
+    type: "milestone" as const,
+    label: "Milestones",
+    icon: "🎯",
+    description: "Dynamic milestone management with title, description, and due dates",
+  },
 ];
 
 export function FieldTypeSelector({ onFieldAdd }: FieldTypeSelectorProps) {

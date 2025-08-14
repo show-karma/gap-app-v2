@@ -21,6 +21,8 @@ const fieldSchema = z.object({
     max: z.number().optional(),
     pattern: z.string().optional(),
     message: z.string().optional(),
+    maxMilestones: z.number().optional(),
+    minMilestones: z.number().optional(),
   }).optional(),
   // AI evaluation configuration
   aiEvaluation: z.object({
@@ -260,6 +262,44 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown }:
                 Add Option
               </Button>
             </div>
+          </div>
+        )}
+
+        {/* Milestone-specific validation */}
+        {field.type === 'milestone' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Milestone Limits
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
+                  Minimum Milestones
+                </label>
+                <input
+                  {...register('validation.minMilestones', { valueAsNumber: true })}
+                  type="number"
+                  min="0"
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100"
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
+                  Maximum Milestones
+                </label>
+                <input
+                  {...register('validation.maxMilestones', { valueAsNumber: true })}
+                  type="number"
+                  min="1"
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100"
+                  placeholder="10"
+                />
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Set limits for how many milestones users can add. Leave empty for no limits.
+            </p>
           </div>
         )}
 

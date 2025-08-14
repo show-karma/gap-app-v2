@@ -113,6 +113,57 @@ export function FormPreview({ schema, onSubmit, className = '' }: FormPreviewPro
           </div>
         );
 
+      case 'milestone':
+        return (
+          <div className="space-y-4">
+            <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 bg-gray-50 dark:bg-gray-700">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-semibold text-gray-900 dark:text-white">Milestone 1</h4>
+                <button className="text-red-500 hover:text-red-700 text-sm">Remove</button>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
+                  <input 
+                    type="text" 
+                    className="w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm" 
+                    placeholder="Enter milestone title"
+                    disabled
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                  <textarea 
+                    className="w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm" 
+                    rows={2}
+                    placeholder="Describe what will be accomplished"
+                    disabled
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Due Date</label>
+                  <input 
+                    type="date" 
+                    className="w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm"
+                    disabled
+                  />
+                </div>
+              </div>
+            </div>
+            <button 
+              className="flex items-center justify-center w-full py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
+              disabled
+            >
+              <span className="mr-2">+</span>
+              Add Milestone
+            </button>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Preview: Users can add multiple milestones with title, description, and due date.
+              {field.validation?.maxMilestones && ` Maximum ${field.validation.maxMilestones} milestones allowed.`}
+            </p>
+          </div>
+        );
+
       default:
         return <div>Unsupported field type: {field.type}</div>;
     }

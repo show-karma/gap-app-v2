@@ -1,6 +1,6 @@
 export interface FormField {
   id: string;
-  type: 'text' | 'textarea' | 'select' | 'radio' | 'checkbox' | 'number' | 'email' | 'url' | 'date';
+  type: 'text' | 'textarea' | 'select' | 'radio' | 'checkbox' | 'number' | 'email' | 'url' | 'date' | 'milestone';
   label: string;
   placeholder?: string;
   required?: boolean;
@@ -11,6 +11,8 @@ export interface FormField {
     max?: number;
     pattern?: string;
     message?: string;
+    maxMilestones?: number;
+    minMilestones?: number;
   };
   description?: string;
   // AI evaluation configuration
