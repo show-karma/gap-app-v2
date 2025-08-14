@@ -1,11 +1,11 @@
 import { create } from "zustand";
 
 interface CommunityStore {
-  totalGrants: number;
-  setTotalGrants: (totalGrants: number) => void;
+  totalProjects: number;
+  setTotalProjects: (totalProjects: number) => void;
 }
 
 export const useCommunityStore = create<CommunityStore>((set, get) => ({
-  totalGrants: 0,
-  setTotalGrants: (totalGrants?: number) => set({ totalGrants }),
+  totalProjects: 0,
+  setTotalProjects: (totalProjects?: number) => set({ totalProjects }),
 }));
