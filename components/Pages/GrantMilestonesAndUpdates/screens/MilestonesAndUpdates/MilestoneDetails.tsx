@@ -111,6 +111,7 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
     (state) => state.isCommunityAdmin
   );
   const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
+  const isOnChainAuthorized = isProjectAdmin || isContractOwner;
   return (
     <div className="flex flex-col gap-2">
       <div className="flex w-full flex-1 flex-col rounded-lg border border-zinc-200 bg-white dark:bg-zinc-800 transition-all duration-200 ease-in-out">
@@ -137,7 +138,10 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
             </div>
             <div className="flex flex-row items-center justify-start gap-2">
               <MilestoneDateStatus milestone={milestone} />
-              {isAuthorized ? <MilestoneDelete milestone={milestone} /> : null}
+              {isOnChainAuthorized 
+                ? <MilestoneDelete milestone={milestone} /> 
+                : null
+              }
             </div>
           </div>
           <div
