@@ -9,6 +9,7 @@ import { LockClosedIcon } from '@heroicons/react/24/solid';
 
 const settingsConfigSchema = z.object({
   privateApplications: z.boolean(),
+  browseAllApplications: z.string().url().optional().or(z.literal('')),
 });
 
 type SettingsConfigFormData = z.infer<typeof settingsConfigSchema>;
@@ -19,10 +20,10 @@ interface SettingsConfigurationProps {
   className?: string;
 }
 
-export function SettingsConfiguration({ 
-  schema, 
-  onUpdate, 
-  className = '' 
+export function SettingsConfiguration({
+  schema,
+  onUpdate,
+  className = ''
 }: SettingsConfigurationProps) {
   const {
     register,
@@ -32,6 +33,7 @@ export function SettingsConfiguration({
     resolver: zodResolver(settingsConfigSchema),
     defaultValues: {
       privateApplications: schema.settings?.privateApplications ?? true,
+      browseAllApplications: schema.settings?.browseAllApplications ?? '',
     },
   });
 
@@ -45,16 +47,11 @@ export function SettingsConfiguration({
           submitButtonText: schema.settings?.submitButtonText || 'Submit Application',
           confirmationMessage: schema.settings?.confirmationMessage || 'Thank you for your submission!',
           privateApplications: data.privateApplications ?? true,
+          browseAllApplications: data.browseAllApplications || undefined,
         },
       };
-      
-      // Debug logging to verify the data structure
-      console.log('SettingsConfiguration - Updated Schema:', {
-        privateApplications: updatedSchema.settings.privateApplications,
-        fullSettings: updatedSchema.settings,
-        formData: data
-      });
-      
+
+
       onUpdate(updatedSchema);
     });
 
@@ -68,12 +65,31 @@ export function SettingsConfiguration({
     <div className={`space-y-6 ${className}`}>
       {/* Privacy Settings */}
       <div className="bg-white dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-zinc-700 p-6">
-        <div className="flex items-center space-x-3 mb-4">
-          <LockClosedIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Privacy Settings
-          </h3>
+
+        {/* Browse All Applications URL Setting */}
+        <div className="space-y-3">
+          <div className="flex flex-col space-y-2">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Browse All Applications URL
+            </label>
+            <input
+              {...register('browseAllApplications')}
+              type="url"
+              placeholder="https://example.com/applications"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm bg-white dark:bg-zinc-700 text-gray-900 dark:text-white"
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Optional: Provide a URL where users can browse all applications (e.g., a public dashboard or external page).
+            </p>
+            {errors.browseAllApplications && (
+              <p className="text-xs text-red-600 dark:text-red-400">
+                Please enter a valid URL
+              </p>
+            )}
+          </div>
         </div>
+
+        <hr className="my-4" />
 
         <div className="space-y-6">
           {/* Private Applications Setting */}
@@ -102,7 +118,7 @@ export function SettingsConfiguration({
                     <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
                   <div className="text-xs text-amber-800 dark:text-amber-300">
-                    <strong>Note:</strong> You have {privateFieldsCount} private field{privateFieldsCount !== 1 ? 's' : ''} in your form. 
+                    <strong>Note:</strong> You have {privateFieldsCount} private field{privateFieldsCount !== 1 ? 's' : ''} in your form.
                     These will be filtered from public responses even with public applications enabled.
                   </div>
                 </div>
@@ -117,13 +133,15 @@ export function SettingsConfiguration({
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                   </svg>
                   <div className="text-xs text-blue-800 dark:text-blue-300">
-                    <strong>Private mode:</strong> Public API requests will return a privacy message instead of application data. 
+                    <strong>Private mode:</strong> Public API requests will return a privacy message instead of application data.
                     Only authenticated administrators can access application details.
                   </div>
                 </div>
               </div>
             )}
           </div>
+
+
 
           {/* Privacy Summary */}
           <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
