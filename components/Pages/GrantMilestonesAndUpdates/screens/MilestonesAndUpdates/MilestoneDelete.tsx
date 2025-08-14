@@ -18,6 +18,7 @@ import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { useWallet } from "@/hooks/useWallet";
+import { useCommunityAdminStore } from "@/store/communityAdmin";
 interface MilestoneDeleteProps {
   milestone: IMilestoneResponse;
 }
@@ -92,7 +93,13 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
           "POST",
           {}
         )
-          .then(async () => {
+          .then(async (res) => {
+            if (res[1]) {
+              toast.dismiss(toastLoading);
+              toast.error(res[1]);
+              return;
+            }
+
             await checkIfAttestationExists()
               .then(() => {
                 toast.success(MESSAGES.MILESTONES.DELETE.SUCCESS, {
