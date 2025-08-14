@@ -10,6 +10,7 @@ import Image from "next/image";
 import { UnifiedMilestone } from "@/types/roadmap";
 import { ExternalLink } from "../Utilities/ExternalLink";
 import { PAGES } from "@/utilities/pages";
+import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
 
 const ProjectObjectiveCompletion = dynamic(
   () =>
@@ -68,6 +69,11 @@ export const MilestoneCard = ({
 
   const { title, description, completed, type } = milestone;
 
+  // Fetch milestone impact data (outputs/metrics) if milestone is completed
+  const { data: milestoneImpactData } = useMilestoneImpactAnswers({
+    milestoneUID: completed ? milestone.uid : undefined,
+  });
+
   // project milestone-specific properties
   const projectMilestone = milestone.source.projectMilestone;
   const attester =
@@ -90,6 +96,9 @@ export const MilestoneCard = ({
   const completionProof =
     projectMilestone?.completed?.data?.proofOfWork ||
     grantMilestone?.milestone.completed?.data?.proofOfWork;
+  const completionDeliverables =
+    (projectMilestone?.completed?.data as any)?.deliverables ||
+    (grantMilestone?.milestone.completed?.data as any)?.deliverables;
 
   // Determine border color and tag based on milestone type and status
   const getBorderColor = () => {
@@ -226,7 +235,7 @@ export const MilestoneCard = ({
         </div>
 
         {/* Completion Information */}
-        {isCompleting || completionReason || completionProof ? (
+        {isCompleting || completionReason || completionProof || (completionDeliverables && completionDeliverables.length > 0) || (milestoneImpactData && milestoneImpactData.length > 0) ? (
           <>
             {type === "project" ? (
               handleProjectMilestoneCompletion()
@@ -257,6 +266,70 @@ export const MilestoneCard = ({
                     >
                       {completionProof}
                     </a>
+                  </div>
+                ) : null}
+                {completionDeliverables && completionDeliverables.length > 0 ? (
+                  <div className="flex flex-col gap-2">
+                    <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                      Deliverables:
+                    </p>
+                    {completionDeliverables.map((deliverable: any, index: number) => (
+                      <div key={index} className="border border-gray-200 dark:border-zinc-600 rounded-lg p-3 bg-white dark:bg-zinc-800">
+                        <div className="flex flex-col gap-1">
+                          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                            {deliverable.name}
+                          </p>
+                          {deliverable.description && (
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              {deliverable.description}
+                            </p>
+                          )}
+                          {deliverable.proof && (
+                            <a
+                              href={deliverable.proof}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-brand-blue hover:underline text-sm break-all"
+                            >
+                              {deliverable.proof}
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+                {milestoneImpactData && milestoneImpactData.length > 0 ? (
+                  <div className="flex flex-col gap-2">
+                    <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                      Metrics:
+                    </p>
+                    {milestoneImpactData.map((metric: any, index: number) => (
+                      <div key={index} className="border border-gray-200 dark:border-zinc-600 rounded-lg p-3 bg-white dark:bg-zinc-800">
+                        <div className="flex flex-col gap-1">
+                          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                            {metric.name || metric.indicator?.data?.title || 'Untitled Indicator'}
+                          </p>
+                          {metric.datapoints && metric.datapoints.length > 0 && (
+                            <div className="flex flex-col gap-1">
+                              <p className="text-sm text-gray-600 dark:text-gray-400">
+                                Value: <span className="font-medium text-zinc-900 dark:text-zinc-100">{metric.datapoints[0].value}</span>
+                              </p>
+                              {metric.datapoints[0].proof && (
+                                <a
+                                  href={metric.datapoints[0].proof}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-brand-blue hover:underline text-sm break-all"
+                                >
+                                  {metric.datapoints[0].proof}
+                                </a>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 ) : null}
               </div>
