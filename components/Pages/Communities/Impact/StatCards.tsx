@@ -70,7 +70,7 @@ export const ImpactStatCards = () => {
 export const CommunityStatCards = () => {
   const params = useParams();
   const communityId = params.communityId as string;
-  const { totalGrants } = useCommunityStore();
+  const { totalProjects: filteredProjectsCount } = useCommunityStore();
   const { data, isLoading } = useQuery({
     queryKey: ["community-stats", communityId],
     queryFn: () => getCommunityStatsV2(communityId),
@@ -80,7 +80,7 @@ export const CommunityStatCards = () => {
   const stats = [
     {
       title: "Total Projects",
-      value: totalGrants ? formatCurrency(totalGrants) : "-",
+      value: filteredProjectsCount ? formatCurrency(filteredProjectsCount) : "-",
       color: "#9b59b6",
     },
     {
