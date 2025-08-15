@@ -3,6 +3,8 @@
 import { useCallback, useState, useRef, useEffect } from "react";
 import { cn } from "@/utilities/tailwind";
 import toast from "react-hot-toast";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 interface FileUploadProps {
   onFileSelect: (file: File) => void;
@@ -102,24 +104,23 @@ export function FileUpload({
       setUploadProgress(10);
       onUploadProgress?.(10);
       
-      const response = await fetch('/api/upload/presigned-url', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const [data, error] = await fetchData(
+        INDEXER.PROJECT.LOGOS.PRESIGNED_URL(),
+        'POST',
+        {
           fileName: file.name,
           fileType: file.type,
           fileSize: file.size,
           width: dimensions.width,
           height: dimensions.height,
-        }),
-      });
+        }
+      );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to get upload URL');
+      if (error) {
+        throw new Error(error || 'Failed to get upload URL');
       }
 
-      const { uploadUrl, finalUrl, key } = await response.json();
+      const { uploadUrl, finalUrl, key } = data;
       
       // Step 2: Upload directly to S3 with progress tracking
       setUploadProgress(20);

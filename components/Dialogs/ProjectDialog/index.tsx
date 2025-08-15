@@ -525,17 +525,17 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         try {
           const projectIdentifier = `${slug}-${chainSelected}`;
           
-          const promoteResponse = await fetch('/api/upload/promote-to-permanent', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
+          const [promoteData, promoteError] = await fetchData(
+            INDEXER.PROJECT.LOGOS.PROMOTE_TO_PERMANENT(),
+            'POST',
+            {
               tempKey: tempLogoKey,
               projectId: projectIdentifier,
-            }),
-          });
+            }
+          );
 
-          if (promoteResponse.ok) {
-            const { permanentUrl } = await promoteResponse.json();
+          if (!promoteError) {
+            const { permanentUrl } = promoteData;
             finalImageURL = permanentUrl;
             console.log('Logo promoted to permanent before project creation:', permanentUrl);
           } else {
@@ -829,17 +829,17 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           const projectSlug = fetchedProject.details?.slug || projectToUpdate?.details?.data?.slug;
           const projectIdentifier = `${projectSlug}-${projectToUpdate.chainID}`;
           
-          const promoteResponse = await fetch('/api/upload/promote-to-permanent', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
+          const [promoteData, promoteError] = await fetchData(
+            INDEXER.PROJECT.LOGOS.PROMOTE_TO_PERMANENT(),
+            'POST',
+            {
               tempKey: tempLogoKey,
               projectId: projectIdentifier,
-            }),
-          });
+            }
+          );
 
-          if (promoteResponse.ok) {
-            const { permanentUrl } = await promoteResponse.json();
+          if (!promoteError) {
+            const { permanentUrl } = promoteData;
             finalImageURL = permanentUrl;
             console.log('Logo promoted to permanent before project update:', permanentUrl);
           } else {
