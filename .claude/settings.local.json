@@ -25,8 +25,21 @@
       "Bash(curl:*)",
       "Bash(yarn add:*)",
       "Bash(mkdir:*)",
-      "Bash(rg:*)"
+      "Bash(rg:*)",
+      "Bash(git checkout:*)",
+      "Bash(pnpm test:*)",
+      "Bash(npx biome check:*)",
+      "Bash(npx biome format:*)",
+      "Bash(pnpm dev:*)"
     ],
-    "deny": []
+    "deny": [],
+    "defaultMode": "acceptEdits",
+    "additionalDirectories": [
+      "/Users/mmurthy/dev/dapps/karma_protocol/gap-whitelabel-app/src/types",
+      "/Users/mmurthy/dev/dapps/karma_protocol/gap-whitelabel-app/src/features/applications/components",
+      "/Users/mmurthy/dev/dapps/karma_protocol/gap-whitelabel-app/src/lib",
+      "/Users/mmurthy/dev/dapps/karma_protocol/gap-whitelabel-app/src/app/applications/[applicationId]/edit",
+      "/Users/mmurthy/dev/dapps/karma_protocol/gap-whitelabel-app"
+    ]
   }
 }
