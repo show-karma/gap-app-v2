@@ -43,6 +43,7 @@ export const CommunitySelectionScreen: React.FC = () => {
           const filteredCommunities = result.data.filter(
             (community) =>
               community.details?.data?.name?.toLowerCase().includes("celo") ||
+              community.details?.data?.name?.toLowerCase().includes("gooddollar") ||
               community.details?.data?.name?.toLowerCase().includes("divvi")
           );
           setAllCommunities(
