@@ -209,16 +209,50 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
             </dt>
             <dd className="text-sm text-gray-900 dark:text-gray-100">
               {Array.isArray(value) ? (
-                <div className="flex flex-wrap gap-1">
-                  {value.map((item, index) => (
-                    <span
-                      key={index}
-                      className="inline-block bg-zinc-100 dark:bg-zinc-700 text-gray-800 dark:text-gray-200 px-2 py-1 rounded text-xs"
-                    >
-                      {String(item)}
-                    </span>
-                  ))}
-                </div>
+                // Check if array contains milestone objects
+                value.length > 0 && typeof value[0] === "object" && "title" in value[0] ? (
+                  <div className="space-y-2">
+                    {value.map((milestone: any, index) => (
+                      <div key={index} className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                        <div className="space-y-1">
+                          <div className="flex justify-between items-start">
+                            <h5 className="font-medium text-gray-900 dark:text-gray-100">
+                              {milestone.title}
+                            </h5>
+                            {milestone.dueDate && (
+                              <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
+                                Due: {new Date(milestone.dueDate).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                          {milestone.description && (
+                            <p className="text-xs text-gray-600 dark:text-gray-400">
+                              {milestone.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  // Regular array items
+                  <div className="flex flex-wrap gap-1">
+                    {value.map((item, index) => (
+                      <span
+                        key={index}
+                        className="inline-block bg-zinc-100 dark:bg-zinc-700 text-gray-800 dark:text-gray-200 px-2 py-1 rounded text-xs"
+                      >
+                        {String(item)}
+                      </span>
+                    ))}
+                  </div>
+                )
+              ) : typeof value === "boolean" ? (
+                <span>{value ? "Yes" : "No"}</span>
+              ) : typeof value === "object" && value !== null ? (
+                <pre className="bg-zinc-50 dark:bg-zinc-800 p-2 rounded text-xs overflow-x-auto">
+                  {JSON.stringify(value, null, 2)}
+                </pre>
               ) : (
                 <span>{String(value)}</span>
               )}
