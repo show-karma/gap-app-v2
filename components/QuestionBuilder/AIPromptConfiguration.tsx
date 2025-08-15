@@ -7,12 +7,15 @@ import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
 import { FormSchema } from "@/types/question-builder";
 import { useEffect } from "react";
+import { useProgram } from "@/hooks/usePrograms";
+
 
 const aiConfigSchema = z.object({
   // systemPrompt: z.string().min(10, 'System prompt must be at least 10 characters'),
   // detailedPrompt: z.string().optional(),
   aiModel: z.string().min(1, "AI model is required"),
   enableRealTimeEvaluation: z.boolean(),
+  langfusePromptId: z.string().optional(),
 });
 
 type AIConfigFormData = z.infer<typeof aiConfigSchema>;
@@ -21,17 +24,30 @@ interface AIPromptConfigurationProps {
   schema: FormSchema;
   onUpdate: (updatedSchema: FormSchema) => void;
   className?: string;
+  programId?: string;
+  chainId?: number;
 }
 
 export function AIPromptConfiguration({
   schema,
   onUpdate,
   className = "",
+  programId,
+  chainId,
 }: AIPromptConfigurationProps) {
+  // Fetch program data for default langfusePromptId
+  const { data: program } = useProgram(programId || "");
+
+  // Get default langfusePromptId from program registry if not set in schema
+  const defaultLangfusePromptId = schema.aiConfig?.langfusePromptId || program?.langfusePromptId || "";
+  const recommendedPrompt = "";
+
   const {
     register,
     handleSubmit,
     watch,
+    setValue,
+    getValues,
     formState: { errors, isDirty },
   } = useForm<AIConfigFormData>({
     resolver: zodResolver(aiConfigSchema),
@@ -41,10 +57,23 @@ export function AIPromptConfiguration({
       aiModel: schema.aiConfig?.aiModel || "gpt-4o",
       enableRealTimeEvaluation:
         schema.aiConfig?.enableRealTimeEvaluation || false,
+      langfusePromptId: defaultLangfusePromptId || recommendedPrompt,
     },
   });
 
   const watchedValues = watch();
+  const currentLangfusePromptId = watchedValues.langfusePromptId || "";
+
+  const displayValue = currentLangfusePromptId === recommendedPrompt
+    ? recommendedPrompt
+    : currentLangfusePromptId;
+
+  // Update form value when program data loads and no langfusePromptId is set
+  useEffect(() => {
+    if (program?.langfusePromptId && !schema.aiConfig?.langfusePromptId) {
+      setValue("langfusePromptId", program.langfusePromptId);
+    }
+  }, [program?.langfusePromptId, schema.aiConfig?.langfusePromptId, setValue]);
 
   // Auto-update the schema when form values change
   useEffect(() => {
@@ -57,6 +86,7 @@ export function AIPromptConfiguration({
           // detailedPrompt: data.detailedPrompt || '',
           aiModel: data.aiModel || "gpt-4o",
           enableRealTimeEvaluation: data.enableRealTimeEvaluation || false,
+          langfusePromptId: data.langfusePromptId || "",
         },
       };
       onUpdate(updatedSchema);
@@ -142,6 +172,33 @@ export function AIPromptConfiguration({
           )}
         </div>
 
+        {/* Langfuse Prompt Name */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Langfuse Prompt Name
+          </label>
+          <input
+            type="text"
+            value={displayValue}
+            onChange={(e) => {
+              const value = e.target.value;
+              const cleanValue = value.replace(/ \(Recommended\)$/, "");
+              setValue("langfusePromptId", cleanValue);
+            }}
+            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300"
+            placeholder=""
+          />
+          {errors.langfusePromptId && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.langfusePromptId.message}
+            </p>
+          )}
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            The name of the Langfuse prompt to use for AI evaluation. If not specified,
+            the default prompt from the program registry will be used.
+          </p>
+        </div>
+
         {/* Real-time Evaluation Toggle */}
         <div className="border-t border-gray-200 dark:border-gray-600 pt-4">
           <div className="flex items-center justify-between">
@@ -185,6 +242,14 @@ export function AIPromptConfiguration({
                   {schema.aiConfig.enableRealTimeEvaluation
                     ? "Enabled"
                     : "Disabled"}
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-gray-600 dark:text-gray-400">
+                  Langfuse Prompt:
+                </dt>
+                <dd className="text-gray-900 dark:text-white font-mono text-xs">
+                  {schema.aiConfig.langfusePromptId || "Default from registry"}
                 </dd>
               </div>
               <div className="flex justify-between">

@@ -19,6 +19,7 @@ interface IApplicationListWithAPIProps {
   onApplicationSelect?: (application: IFundingApplication) => void;
   showStatusActions?: boolean;
   initialFilters?: IApplicationFilters;
+  onStatusChange?: (applicationId: string, status: string, note?: string) => Promise<void>;
 }
 
 const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
@@ -27,6 +28,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
   onApplicationSelect,
   showStatusActions = false,
   initialFilters = {},
+  onStatusChange: parentOnStatusChange,
 }) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -74,6 +76,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
         await updateApplicationStatus({ applicationId, status, note });
         // Refetch to get updated data
         refetch();
+        // Call parent's onStatusChange if provided
       } catch (error) {
         console.error("Failed to update application status:", error);
       }
@@ -231,7 +234,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
                 router.push(pathname, { scroll: false });
               }}
               variant="secondary"
-            className="w-fit px-3 py-1 border bg-transparent text-zinc-500 font-medium border-zinc-200 dark:border-zinc-400 dark:text-zinc-400 flex flex-row gap-2"
+              className="w-fit px-3 py-1 border bg-transparent text-zinc-500 font-medium border-zinc-200 dark:border-zinc-400 dark:text-zinc-400 flex flex-row gap-2"
             >
               <FunnelIcon className="w-5 h-5" />
               Clear Filters

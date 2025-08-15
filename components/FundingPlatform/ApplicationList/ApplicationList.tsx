@@ -26,6 +26,7 @@ interface IApplicationListComponentProps extends IApplicationListProps {
 
 const statusColors = {
   pending: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
+  under_review: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
   revision_requested:
     "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
   approved: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
@@ -216,49 +217,113 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                   onStatusChange &&
                   application.status !== "withdrawn" && (
                     <div className="flex flex-wrap gap-2">
-                      {application.status !== "revision_requested" && (
+                      {/* For pending status: only show Under Review button */}
+                      {application.status === "pending" && (
                         <Button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleStatusChangeClick(
-                              application.id,
-                              "revision_requested"
-                            );
+                            handleStatusChangeClick(application.id, "under_review");
                           }}
                           variant="secondary"
-                          className="w-fit px-3 py-1 dark:text-white border bg-transparent border-gray-200 font-medium dark:border-gray-700 flex flex-row gap-2"
+                          className="w-fit px-3 py-1 border bg-transparent text-purple-500 font-medium border-purple-200 dark:border-purple-700 flex flex-row gap-2"
                           disabled={isUpdatingStatus}
                         >
-                          Request Revision
+                          Start Review
                         </Button>
                       )}
-                      {application.status !== "approved" && (
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleStatusChangeClick(application.id, "approved");
-                          }}
-                          variant="secondary"
-                          className="w-fit px-3 py-1 border bg-transparent text-green-500 font-medium border-green-200 dark:border-green-700 flex flex-row gap-2"
-                          disabled={isUpdatingStatus}
-                        >
-                          <CheckIcon className="w-4 h-4" />
-                          Approve
-                        </Button>
+
+                      {/* For under_review status: show all action buttons */}
+                      {application.status === "under_review" && (
+                        <>
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleStatusChangeClick(
+                                application.id,
+                                "revision_requested"
+                              );
+                            }}
+                            variant="secondary"
+                            className="w-fit px-3 py-1 dark:text-white border bg-transparent border-gray-200 font-medium dark:border-gray-700 flex flex-row gap-2"
+                            disabled={isUpdatingStatus}
+                          >
+                            Request Revision
+                          </Button>
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleStatusChangeClick(application.id, "approved");
+                            }}
+                            variant="secondary"
+                            className="w-fit px-3 py-1 border bg-transparent text-green-500 font-medium border-green-200 dark:border-green-700 flex flex-row gap-2"
+                            disabled={isUpdatingStatus}
+                          >
+                            <CheckIcon className="w-4 h-4" />
+                            Approve
+                          </Button>
+                          <Button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleStatusChangeClick(application.id, "rejected");
+                            }}
+                            variant="secondary"
+                            className="w-fit px-3 py-1 border bg-transparent text-red-500 font-medium border-red-200 dark:border-red-700 flex flex-row gap-2"
+                            disabled={isUpdatingStatus}
+                          >
+                            <XMarkIcon className="w-4 h-4" />
+                            Reject
+                          </Button>
+                        </>
                       )}
-                      {application.status !== "rejected" && (
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleStatusChangeClick(application.id, "rejected");
-                          }}
-                          variant="secondary"
-                          className="w-fit px-3 py-1 border bg-transparent text-red-500 font-medium border-red-200 dark:border-red-700 flex flex-row gap-2"
-                          disabled={isUpdatingStatus}
-                        >
-                          <XMarkIcon className="w-4 h-4" />
-                          Reject
-                        </Button>
+
+                      {/* For other statuses: show available actions except current status */}
+                      {!["pending", "under_review", "approved", "rejected"].includes(application.status) && (
+                        <>
+                          {!["revision_requested"].includes(application.status) && (
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleStatusChangeClick(
+                                  application.id,
+                                  "revision_requested"
+                                );
+                              }}
+                              variant="secondary"
+                              className="w-fit px-3 py-1 dark:text-white border bg-transparent border-gray-200 font-medium dark:border-gray-700 flex flex-row gap-2"
+                              disabled={isUpdatingStatus}
+                            >
+                              Request Revision
+                            </Button>
+                          )}
+                          {application.status !== "approved" && (
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleStatusChangeClick(application.id, "approved");
+                              }}
+                              variant="secondary"
+                              className="w-fit px-3 py-1 border bg-transparent text-green-500 font-medium border-green-200 dark:border-green-700 flex flex-row gap-2"
+                              disabled={isUpdatingStatus}
+                            >
+                              <CheckIcon className="w-4 h-4" />
+                              Approve
+                            </Button>
+                          )}
+                          {application.status !== "rejected" && (
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleStatusChangeClick(application.id, "rejected");
+                              }}
+                              variant="secondary"
+                              className="w-fit px-3 py-1 border bg-transparent text-red-500 font-medium border-red-200 dark:border-red-700 flex flex-row gap-2"
+                              disabled={isUpdatingStatus}
+                            >
+                              <XMarkIcon className="w-4 h-4" />
+                              Reject
+                            </Button>
+                          )}
+                        </>
                       )}
                     </div>
                   )}
@@ -319,6 +384,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
         onConfirm={handleStatusChangeConfirm}
         status={pendingStatus}
         isSubmitting={isUpdatingStatus}
+        isReasonRequired={pendingStatus === "revision_requested"}
       />
     </div>
   );
