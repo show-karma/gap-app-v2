@@ -14,6 +14,7 @@ import { cn } from "@/utilities/tailwind";
 import { format, isValid, parseISO } from "date-fns";
 import StatusHistoryTimeline from "./StatusHistoryTimeline";
 import StatusChangeModal from "./StatusChangeModal";
+import CommentsTimeline from "./CommentsTimeline";
 import fundingPlatformService from "@/services/fundingPlatformService";
 import { Spinner } from "@/components/Utilities/Spinner";
 
@@ -646,14 +647,17 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
 
                           {/* Status History */}
                           {application.statusHistory &&
-                            application.statusHistory.length > 0 && (
+                            (application.statusHistory.length > 0 || application.id) && (
                               <div>
                                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                                  Status History
+                                  Comments & Activity
                                 </h3>
-                                <StatusHistoryTimeline
-                                  history={application.statusHistory}
+                                <CommentsTimeline
+                                  applicationId={application.id}
+                                  comments={[]}
+                                  statusHistory={application.statusHistory}
                                   currentStatus={application.status}
+                                  isAdmin={showStatusActions}
                                 />
                               </div>
                             )}

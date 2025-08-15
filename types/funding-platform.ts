@@ -7,6 +7,26 @@ export type FundingApplicationStatusV2 =
   | "rejected"
   | "withdrawn";
 
+// Application Comment Types
+export interface ApplicationComment {
+  id: string;
+  applicationId: string;
+  authorAddress: string;
+  authorRole: 'applicant' | 'admin' | 'reviewer';
+  authorName?: string;
+  content: string;
+  isDeleted: boolean;
+  deletedAt?: string | Date;
+  deletedBy?: string;
+  editHistory?: Array<{
+    content: string;
+    editedAt: string | Date;
+    editedBy: string;
+  }>;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+}
+
 // Form Field Types (unchanged)
 export interface IFormField {
   id: string; // Added ID field for V2
