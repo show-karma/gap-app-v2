@@ -15,7 +15,7 @@ export const useCommunityGrants = (slug: string) => {
       const [data] = await fetchData(
         `/v2/communities/${slug}/grants`
       );
-      return data as CommunityGrant[];
+      return data as CommunityGrant[] || [];
     },
     enabled: !!slug,
     retry: false,

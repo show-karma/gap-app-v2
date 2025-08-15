@@ -18,7 +18,7 @@ interface ProgramFilterProps {
 
 
 export const ProgramFilter = ({
-  programs,
+  programs = [],
   selectedProgramId,
   onChange,
 }: ProgramFilterProps) => {
@@ -75,43 +75,43 @@ export const ProgramFilter = ({
           >
             <Listbox.Options className="dark:bg-zinc-800 dark:text-white absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
               {uniquePrograms
-                  .map((program) => (
-                <Listbox.Option
-                  key={program.programId}
-                  value={program.programId}
-                  className={({ active }) =>
-                    cn(
-                      active
-                        ? "bg-gray-100 text-black dark:text-gray-300 dark:bg-zinc-900"
-                        : "text-gray-900 dark:text-gray-200",
-                      "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
-                    )
-                  }
-                >
-                  {({ selected, active }) => (
-                    <>
-                      <span
-                        className={cn(
-                          selected ? "font-semibold" : "font-normal",
-                          "block truncate"
-                        )}
-                      >
-                        {program.title}
-                      </span>
-                      {selected && (
+                .map((program) => (
+                  <Listbox.Option
+                    key={program.programId}
+                    value={program.programId}
+                    className={({ active }) =>
+                      cn(
+                        active
+                          ? "bg-gray-100 text-black dark:text-gray-300 dark:bg-zinc-900"
+                          : "text-gray-900 dark:text-gray-200",
+                        "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
+                      )
+                    }
+                  >
+                    {({ selected, active }) => (
+                      <>
                         <span
                           className={cn(
-                            "absolute inset-y-0 right-0 flex items-center pr-4",
-                            active ? "text-black" : "text-primary-600"
+                            selected ? "font-semibold" : "font-normal",
+                            "block truncate"
                           )}
                         >
-                          <CheckIcon className="h-5 w-5" aria-hidden="true" />
+                          {program.title}
                         </span>
-                      )}
-                    </>
-                  )}
-                </Listbox.Option>
-              ))}
+                        {selected && (
+                          <span
+                            className={cn(
+                              "absolute inset-y-0 right-0 flex items-center pr-4",
+                              active ? "text-black" : "text-primary-600"
+                            )}
+                          >
+                            <CheckIcon className="h-5 w-5" aria-hidden="true" />
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </Listbox.Option>
+                ))}
             </Listbox.Options>
           </Transition>
         </div>

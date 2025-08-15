@@ -77,24 +77,24 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({
           {projects.map((project) => {
             // Check for optimistic update first
             const optimisticRegion = optimisticRegions[project.uid];
-            
+
             // Get the current region from the project's regions array
             const projectRegions = project.regions || [];
             const currentRegionName = projectRegions.length > 0 ? projectRegions[0] : "";
-            
+
             // Find the region ID from the name
-            const currentRegionId = currentRegionName 
+            const currentRegionId = currentRegionName
               ? regions.find(r => r.name === currentRegionName)?.id || ""
               : "";
-            
+
             // Use optimistic update if available, otherwise use current region
             const displayRegionId = optimisticRegion !== undefined ? optimisticRegion : currentRegionId;
-            
+
             // Get the display name for current region (considering optimistic updates)
-            const displayRegionName = optimisticRegion !== undefined 
+            const displayRegionName = optimisticRegion !== undefined
               ? (regions.find(r => r.id === optimisticRegion)?.name || "None")
               : (currentRegionName || "None");
-            
+
             return (
               <tr key={project.uid} className="dark:text-zinc-300 text-gray-900 px-4 py-4">
                 <td className="px-4 py-2 font-medium h-16">
@@ -205,19 +205,20 @@ export default function EditProjectsPage() {
     limit: 12,
     selectedProgramId: selectedProgramId || undefined,
   });
-  
+
   // Fetch all grants for the filter dropdown
   const { data: grants = [] } = useCommunityGrants(
     community?.details?.data?.slug || communityId
   );
-  
+
+
   const projects = projectsData?.payload || [];
   const totalItems = projectsData?.pagination?.totalCount || 0;
-  
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
-  
+
   const handleProgramChange = (programId: string | null) => {
     setSelectedProgramId(programId || "");
     setCurrentPage(1); // Reset to first page when filter changes
@@ -228,15 +229,15 @@ export default function EditProjectsPage() {
 
   const handleRegionChange = async (uid: string, newRegion: string) => {
     // Store the previous region for rollback if needed
-    const previousRegion = optimisticRegions[uid] || 
+    const previousRegion = optimisticRegions[uid] ||
       projects?.find(p => p.uid === uid)?.regions?.[0] || "";
-    
+
     // Optimistic update - immediately update the UI
     setOptimisticRegions((prev) => ({
       ...prev,
       [uid]: newRegion,
     }));
-    
+
     // Auto-save when region is selected
     setIsSaving(true);
     try {
@@ -245,10 +246,10 @@ export default function EditProjectsPage() {
         communityUID: community?.uid,
       });
       toast.success("Region updated successfully.");
-      
+
       // Update the actual data in the background
       await refreshProjects();
-      
+
       // Clear the optimistic update since the real data is now updated
       setOptimisticRegions((prev) => {
         const newState = { ...prev };
@@ -267,13 +268,13 @@ export default function EditProjectsPage() {
         },
         { error: "Failed to update region. Please try again." }
       );
-      
+
       // Revert to previous region on error
       setOptimisticRegions((prev) => ({
         ...prev,
         [uid]: previousRegion,
       }));
-      
+
       // Clear the optimistic update after a short delay
       setTimeout(() => {
         setOptimisticRegions((prev) => {
@@ -320,11 +321,11 @@ export default function EditProjectsPage() {
             </Button>
           </Link>
           <div className="flex items-center gap-4">
-            <ProgramFilter
+            {grants.length > 0 ? <ProgramFilter
               programs={grants}
               selectedProgramId={selectedProgramId}
               onChange={handleProgramChange}
-            />
+            /> : null}
             <RegionCreationDialog
               refreshRegions={async () => {
                 refreshRegions();
