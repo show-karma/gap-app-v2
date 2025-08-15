@@ -43,12 +43,22 @@ export const useQuestionBuilderSchema = (programId: string, chainId: number) => 
   const updateSchemaMutation = useMutation({
     mutationFn: async ({schema, existingConfig}: {schema: FormSchema, existingConfig?: IFundingProgramConfig | null}) => {
       
+      // Debug logging to verify schema structure before sending
+      console.log('useQuestionBuilder - Sending Schema to Backend:', {
+        privateApplications: schema.settings?.privateApplications,
+        fullSettings: schema.settings,
+        privateFields: schema.fields?.filter(f => f.private)?.map(f => f.label),
+        schema: schema
+      });
+      
       // Update with new question schema and mark schema type
       const updatedConfig = {
         ...existingConfig,
         formSchema: schema,
         schemaType: 'react-hook-form' as const
       };
+
+      console.log('useQuestionBuilder - Full Config Being Sent:', updatedConfig);
 
       if (!existingConfig) {
         return fundingPlatformService.programs.createProgramConfiguration(programId, chainId, updatedConfig);

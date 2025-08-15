@@ -101,6 +101,14 @@ export const INDEXER = {
       GET: (projectUID: string) => `/projects/${projectUID}/payout-address`,
     },
   },
+  MILESTONE: {
+    IMPACT_INDICATORS: {
+      GET: (milestoneUID: string) =>
+        `/grants/milestones/${milestoneUID}/indicators/data`,
+      SEND: (milestoneUID: string) => 
+        `/grants/milestones/${milestoneUID}/indicators/data`,
+    },
+  },
   CATEGORIES: {
     CREATE: (idOrSlug: string) => `/categories/create/${idOrSlug}`,
     IMPACT_SEGMENTS: {
@@ -154,7 +162,7 @@ export const INDEXER = {
         if (categories) params.set("categories", categories);
         if (status) params.set("status", status);
         if (selectedProgramId) params.set("programIds", selectedProgramId);
-        if (selectedTrackIds?.length) params.set("selectedTrackIds", selectedTrackIds.join(","));
+        if (selectedTrackIds?.length) params.set("trackIds", selectedTrackIds.join(","));
         const queryString = params.toString();
         return `/v2/communities/${slug}/projects${queryString ? `?${queryString}` : ""}`;
       },

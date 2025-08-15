@@ -1,6 +1,7 @@
 // V2 Status Types
 export type FundingApplicationStatusV2 = 
   | "pending"
+  | "under_review"
   | "revision_requested" 
   | "approved"
   | "rejected"
@@ -18,7 +19,8 @@ export interface IFormField {
     | "select"
     | "checkbox"
     | "radio"
-    | "date"; // Added for question builder compatibility
+    | "date"
+    | "milestone"; // Added for milestone field support
   label: string;
   placeholder?: string;
   required?: boolean;
@@ -28,6 +30,8 @@ export interface IFormField {
     max?: number;
     pattern?: string;
     message?: string;
+    maxMilestones?: number;
+    minMilestones?: number;
   };
   description?: string; // Added for question builder
 }

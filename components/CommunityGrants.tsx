@@ -128,7 +128,7 @@ export const CommunityGrants = ({
   const [loading, setLoading] = useState<boolean>(false);
   const [projects, setProjects] = useState<ProjectV2[]>(initialProjects.payload);
   const itemsPerPage = 12;
-  const { totalGrants, setTotalGrants } = useCommunityStore();
+  const { totalProjects, setTotalProjects } = useCommunityStore();
   const [haveMore, setHaveMore] = useState(initialProjects.pagination.hasNextPage);
   const [paginationInfo, setPaginationInfo] = useState<{
     grantsNo?: number;
@@ -166,12 +166,12 @@ export const CommunityGrants = ({
           setProjects((prev) =>
             currentPage === 1 ? response.payload : [...prev, ...response.payload]
           );
-          setTotalGrants(response.pagination.totalCount);
+          setTotalProjects(response.pagination.totalCount);
         } else {
           setHaveMore(false);
           if (currentPage === 1) {
             setProjects([]);
-            setTotalGrants(0);
+            setTotalProjects(0);
             setPaginationInfo({
               grantsNo: 0,
               projectsNo: 0,
@@ -211,7 +211,7 @@ export const CommunityGrants = ({
     if (currentPage === 1 && projects.length === 0 && initialProjects.payload.length > 0) {
       setProjects(initialProjects.payload);
       setHaveMore(initialProjects.pagination.hasNextPage);
-      setTotalGrants(initialProjects.pagination.totalCount);
+      setTotalProjects(initialProjects.pagination.totalCount);
     }
   }, [initialProjects, projects.length, currentPage]);
 

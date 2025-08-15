@@ -7,7 +7,8 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import { useState, useEffect } from "react";
-import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown";
+// Temporarily comment out SearchWithValueDropdown to fix import issue
+// import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown";
 import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import type { SubmitHandler } from "react-hook-form";
 

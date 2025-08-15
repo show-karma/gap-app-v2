@@ -18,7 +18,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type { FC } from "react";
 import { useState, useEffect, useMemo } from "react";
 import type { SubmitHandler } from "react-hook-form";
-import { useForm, Controller, useFieldArray } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
@@ -27,7 +27,6 @@ import * as Tooltip from "@radix-ui/react-tooltip";
 import {
   InformationCircleIcon,
   CalendarIcon,
-  TrashIcon,
   ChartBarIcon,
   PlusIcon,
 } from "@heroicons/react/24/solid";
@@ -35,18 +34,14 @@ import { DayPicker } from "react-day-picker";
 import * as Popover from "@radix-ui/react-popover";
 import { formatDate } from "@/utilities/formatDate";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
-import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown";
 import { cn } from "@/utilities/tailwind";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { AreaChart, Card, Title } from "@tremor/react";
 import { prepareChartData } from "@/components/Pages/Communities/Impact/ImpactCharts";
-import * as Dialog from "@radix-ui/react-dialog";
-import { XMarkIcon } from "@heroicons/react/24/solid";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
 import { ImpactIndicatorWithData } from "@/types/impactMeasurement";
-import { IndicatorForm, IndicatorFormData } from "./IndicatorForm";
 import { sendImpactAnswers } from "@/utilities/impact";
-import { autosyncedIndicators } from "../Pages/Admin/IndicatorsHub";
+import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
 import Link from "next/link";
 import {
   IProjectResponse,
@@ -60,6 +55,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getIndicatorsByCommunity } from "@/utilities/queries/getIndicatorsByCommunity";
 import { useUnlinkedIndicators } from "@/hooks/useUnlinkedIndicators";
 import { useWallet } from "@/hooks/useWallet";
+import { OutputsSection, type CategorizedIndicator } from "./Outputs";
 
 interface GrantOption {
   title: string;
@@ -82,11 +78,6 @@ interface CommunityIndicator {
   communityName?: string;
 }
 
-interface CategorizedIndicator extends ImpactIndicatorWithData {
-  source: "project" | "community" | "unlinked";
-  communityName?: string;
-  communityId?: string;
-}
 
 const updateSchema = z.object({
   title: z
@@ -140,156 +131,41 @@ const GrantSearchDropdown: FC<{
   }, {} as Record<string, number>);
 
   return (
-    <SearchWithValueDropdown
-      onSelectFunction={(value) => {
-        const grant = grants.find((g) => g.value === value);
-        if (grant) {
-          onSelect(value);
-        }
-      }}
-      selected={selected}
-      list={grants.map((grant) => ({
-        value: grant.value,
-        title:
-          titleCount[grant.title] > 1
-            ? `${grant.title} (Chain ${grant.chain})`
-            : grant.title,
-      }))}
-      type="grant"
-      prefixUnselected="Select"
-      buttonClassname={cn("w-full", className)}
-      customAddButton={
-        <div className="flex w-full h-full">
-          <ExternalLink
-            href={PAGES.PROJECT.SCREENS.NEW_GRANT(
-              project?.details?.data?.slug || project?.uid || ""
-            )}
-            className="text-sm h-full w-full px-2 py-2 rounded bg-zinc-700 text-white"
-          >
-            Add Grant
-          </ExternalLink>
-        </div>
-      }
-    />
-  );
-};
-
-const CategorizedIndicatorDropdown: FC<{
-  indicators: CategorizedIndicator[];
-  onSelect: (indicatorId: string) => void;
-  selected: string;
-  onCreateNew: () => void;
-  selectedCommunities: { uid: string; name: string }[];
-}> = ({ indicators, onSelect, selected, onCreateNew, selectedCommunities }) => {
-  // Group indicators by source
-  const projectIndicators = indicators.filter(
-    (ind) => ind.source === "project"
-  );
-  const selectedCommunityIds = selectedCommunities.map((c) => c.uid);
-  const communityIndicators = indicators.filter(
-    (ind) =>
-      ind.source === "community" &&
-      ind.communityId &&
-      selectedCommunityIds.includes(ind.communityId)
-  );
-  const unlinkedIndicators = indicators.filter(
-    (ind) => ind.source === "unlinked"
-  );
-
-  // Create flat list with community indicators first, then unlinked indicators
-  const dropdownList = [
-    // Community indicators from selected communities (shown first)
-    ...communityIndicators.map((indicator) => {
-      const communityName = indicator.communityName || "Community";
-      return {
-        value: indicator.id,
-        title: `${indicator.name} [${communityName}]`,
-      };
-    }),
-    // Unlinked indicators (shown after community indicators)
-    ...unlinkedIndicators.map((indicator) => ({
-      value: indicator.id,
-      title: `${indicator.name} [Global]`,
-    })),
-  ];
-
-  return (
-    <SearchWithValueDropdown
-      onSelectFunction={(value) => {
-        onSelect(value);
-      }}
-      isMultiple={false}
-      selected={
-        selected ? [indicators.find((i) => i.id === selected)?.name || ""] : []
-      }
-      list={dropdownList}
-      type="indicator"
-      prefixUnselected="Select"
-      buttonClassname="w-full"
-      shouldSort={false}
-      customAddButton={
-        <Button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onCreateNew();
-          }}
-          className="text-sm w-full bg-zinc-700 text-white"
-        >
-          Create New Metric
-        </Button>
-      }
-    />
-  );
-};
-
-const OutputDialog: FC<{
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  selectedPrograms: { programId: string; title: string; chainID: number }[];
-  onSuccess: (indicator: ImpactIndicatorWithData) => void;
-  onError: () => void;
-}> = ({ open, onOpenChange, selectedPrograms, onSuccess, onError }) => (
-  <Dialog.Root open={open} onOpenChange={onOpenChange}>
-    <Dialog.Portal>
-      <Dialog.Overlay className="fixed z-[10] inset-0 bg-black/50 backdrop-blur-sm" />
-      <Dialog.Content
-        className="fixed z-[10] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 
-               bg-white dark:bg-zinc-800 p-6 rounded-lg shadow-lg 
-               w-full max-w-4xl max-h-[90vh] overflow-y-auto"
-        style={{
-          transform: "translate(-50%, -50%)",
+    <div className="space-y-2">
+      <select
+        value={selected[0] || ""}
+        onChange={(e) => {
+          const grant = grants.find((g) => g.value === e.target.value);
+          if (grant) {
+            onSelect(e.target.value);
+          }
         }}
+        className={cn("w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white", className)}
       >
-        <div className="flex items-center justify-between mb-4">
-          <Dialog.Title className="text-lg font-semibold">
-            Create New Metric
-          </Dialog.Title>
-          <Dialog.Close className="text-gray-400 hover:text-gray-500">
-            <XMarkIcon className="h-5 w-5" />
-          </Dialog.Close>
-        </div>
-
-        <IndicatorForm
-          preSelectedPrograms={[]} // Empty array for unlinked indicators
-          onSuccess={onSuccess}
-          onError={onError}
-        />
-      </Dialog.Content>
-    </Dialog.Portal>
-  </Dialog.Root>
-);
-
-const EmptyDiv: FC = () => <div className="h-5 w-1" />;
-
-const isInvalidValue = (value: number | string, unitOfMeasure: string) => {
-  if (value === "") return true;
-  const numValue = Number(value);
-  if (unitOfMeasure === "int") {
-    return !Number.isInteger(numValue);
-  }
-  return isNaN(numValue);
+        <option value="">Select</option>
+        {grants.map((grant) => (
+          <option key={grant.value} value={grant.value}>
+            {titleCount[grant.title] > 1
+              ? `${grant.title} (Chain ${grant.chain})`
+              : grant.title}
+          </option>
+        ))}
+      </select>
+      <div className="flex w-full h-full">
+        <ExternalLink
+          href={PAGES.PROJECT.SCREENS.NEW_GRANT(
+            project?.details?.data?.slug || project?.uid || ""
+          )}
+          className="text-sm h-full w-full px-2 py-2 rounded bg-zinc-700 text-white text-center"
+        >
+          Add Grant
+        </ExternalLink>
+      </div>
+    </div>
+  );
 };
+
+
 
 const getFormErrorMessage = (errors: any, formValues: any) => {
   const errorMessages = [];
@@ -379,11 +255,6 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [grants, setGrants] = useState<GrantOption[]>([]);
   const [outputs, setOutputs] = useState<ImpactIndicatorWithData[]>([]);
-  const [isOutputDialogOpen, setIsOutputDialogOpen] = useState(false);
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "deliverables",
-  });
   const [selectedToCreate, setSelectedToCreate] = useState<number | undefined>(
     undefined
   );
@@ -495,22 +366,6 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     return [...projectIndicators, ...communityIndicators, ...unlinkedIndicators];
   }, [indicatorsData, communityIndicatorsData, unlinkedIndicatorsData]);
 
-  // Custom handlers for deliverables
-  const handleAddDeliverable = () => {
-    append({ name: "", proof: "", description: "" });
-    // Ensure form validation is triggered after state update
-    setTimeout(() => {
-      setValue("deliverables", watch("deliverables"), { shouldValidate: true });
-    }, 0);
-  };
-
-  const handleRemoveDeliverable = (index: number) => {
-    remove(index);
-    // Ensure form validation is triggered after state update
-    setTimeout(() => {
-      setValue("deliverables", watch("deliverables"), { shouldValidate: true });
-    }, 0);
-  };
 
   // Fetch both grants and indicators data in a single effect
   useEffect(() => {
@@ -859,7 +714,6 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         program !== null && program.programId !== ""
     );
 
-  const selectedOutputs = [...(watch("outputs") || [])];
 
   const activityWithSameTitle =
     Boolean(project?.updates.find((u) => u.data.title === watch("title"))) &&
@@ -905,12 +759,8 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
       );
     }
 
-    setIsOutputDialogOpen(false);
   };
 
-  const handleOutputError = () => {
-    toast.error("Failed to create output");
-  };
 
   return (
     <form
@@ -1117,377 +967,21 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         </div>
       )}
 
-      <div className="flex items-center flex-row gap-2">
-        <h2 className={cn(labelStyle, "text-xl")}>Outputs</h2>
-        <InfoTooltip content="Outputs are the key results of the activities carried out. These outputs may evolve over time as the activity progresses, with new ones added or existing ones refined to reflect changes. Showcase outputs that are most significant and worth mentioning to demonstrate the direct tangible results of your work." />
-      </div>
-
-      <div
-        className={cn(
-          "flex w-full flex-col gap-4 p-6 bg-white dark:bg-zinc-800/50 border rounded-md",
-          "border-gray-200 dark:border-zinc-700"
-        )}
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h3 className={cn(labelStyle)}>Deliverables</h3>
-            <InfoTooltip content="Deliverables are the specific, tangible results or products achieved by the activity. What key things have been delivered as a result of your activities that you can showcase?" />
-          </div>
-          {fields.length > 0 && (
-            <Button
-              type="button"
-              onClick={handleAddDeliverable}
-              className="text-sm bg-zinc-700 text-white px-3 py-1.5"
-            >
-              Add more deliverables
-            </Button>
-          )}
-        </div>
-
-        {fields.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8">
-            <p className="text-gray-500 dark:text-zinc-400 mb-4">
-              Add your deliverables
-            </p>
-            <Button
-              type="button"
-              onClick={handleAddDeliverable}
-              className="text-sm bg-zinc-700 text-white px-3 py-1.5"
-            >
-              Add Deliverable
-            </Button>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
-              <thead>
-                <tr>
-                  <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
-                    Name
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
-                    Proof/Link
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
-                    Description/Comment
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300 w-16">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-zinc-700">
-                {fields.map((field, index) => (
-                  <tr key={field.id}>
-                    <td className="px-4 py-2">
-                      <input
-                        type="text"
-                        {...register(`deliverables.${index}.name`, {
-                          required: "Name is required",
-                        })}
-                        placeholder="Enter name"
-                        className="w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md"
-                      />
-                      {errors.deliverables?.[index]?.name ? (
-                        <p className="text-xs text-red-500 h-5">
-                          {errors.deliverables[index]?.name?.message}
-                        </p>
-                      ) : (
-                        <EmptyDiv />
-                      )}
-                    </td>
-                    <td className="px-4 py-2">
-                      <input
-                        type="text"
-                        {...register(`deliverables.${index}.proof`, {
-                          required: "Proof link is required",
-                        })}
-                        placeholder="Enter proof URL"
-                        className="w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md"
-                      />
-                      {errors.deliverables?.[index]?.proof ? (
-                        <p className="text-xs text-red-500 h-5">
-                          {errors.deliverables[index]?.proof?.message}
-                        </p>
-                      ) : (
-                        <EmptyDiv />
-                      )}
-                    </td>
-                    <td className="px-4 py-2">
-                      <input
-                        type="text"
-                        {...register(`deliverables.${index}.description`)}
-                        placeholder="Enter description"
-                        className="w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md"
-                      />
-                      <EmptyDiv />
-                    </td>
-                    <td className="px-4 py-2">
-                      <button
-                        onClick={() => handleRemoveDeliverable(index)}
-                        type="button"
-                        className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20"
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      <div
-        className={cn(
-          "flex w-full flex-col gap-4 p-6 bg-white dark:bg-zinc-800/50 border rounded-md",
-          "border-gray-200 dark:border-zinc-700"
-        )}
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h3 className={cn(labelStyle)}>Metrics</h3>
-            <InfoTooltip content="Select from your project indicators, community indicators (created by community admins), or global indicators available to all projects. You can also create new global indicators. Metrics are quantitative data points that capture the direct results of the activity." />
-          </div>
-          {selectedOutputs.length > 0 && (
-            <Button
-              type="button"
-              onClick={() => {
-                setValue(
-                  "outputs",
-                  [
-                    ...selectedOutputs,
-                    {
-                      outputId: "",
-                      value: 0,
-                      proof: "",
-                    },
-                  ],
-                  {
-                    shouldDirty: true,
-                    shouldValidate: true,
-                  }
-                );
-              }}
-              className="text-sm bg-zinc-700 text-white px-3 py-1.5"
-            >
-              Add more metrics
-            </Button>
-          )}
-        </div>
-
-        {selectedOutputs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8">
-            <p className="text-gray-500 dark:text-zinc-400 mb-4">
-              Select from your project indicators, community indicators, or global indicators to add
-              metrics
-            </p>
-            <Button
-              type="button"
-              onClick={() => {
-                setValue(
-                  "outputs",
-                  [
-                    ...selectedOutputs,
-                    {
-                      outputId: "",
-                      value: 0,
-                      proof: "",
-                    },
-                  ],
-                  {
-                    shouldDirty: true,
-                    shouldValidate: true,
-                  }
-                );
-              }}
-              className="text-sm bg-zinc-700 text-white px-3 py-1.5"
-            >
-              Add metric
-            </Button>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
-              <thead>
-                <tr>
-                  <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
-                    Output
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
-                    Value
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
-                    Proof/Link
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300 w-16">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-zinc-700">
-                {selectedOutputs.map((output, index) => (
-                  <tr key={index}>
-                    <td className="px-4 py-2">
-                      <CategorizedIndicatorDropdown
-                        indicators={categorizedIndicators}
-                        onSelect={(indicatorId) => {
-                          const newOutputs = [...selectedOutputs];
-                          newOutputs[index].outputId = indicatorId;
-                          setValue("outputs", newOutputs, {
-                            shouldValidate: true,
-                          });
-                        }}
-                        selected={output.outputId}
-                        onCreateNew={() => {
-                          setIsOutputDialogOpen(true);
-                          setSelectedToCreate(index);
-                        }}
-                        selectedCommunities={selectedCommunities}
-                      />
-                      <OutputDialog
-                        open={isOutputDialogOpen}
-                        onOpenChange={(open) => {
-                          setIsOutputDialogOpen(open);
-                          if (!open) {
-                            setSelectedToCreate(undefined);
-                          }
-                        }}
-                        selectedPrograms={selectedPrograms}
-                        onSuccess={handleOutputSuccess}
-                        onError={handleOutputError}
-                      />
-                      <EmptyDiv />
-                    </td>
-                    <td className="px-4 py-2">
-                      <input
-                        type="text"
-                        value={output.value === 0 ? "" : output.value}
-                        onChange={(e) => {
-                          const newOutputs = [...selectedOutputs];
-                          const indicator = categorizedIndicators.find(
-                            (o) => o.id === output.outputId
-                          );
-                          const unitType = indicator?.unitOfMeasure || "int";
-
-                          // Allow decimal point and numbers
-                          const isValidInput =
-                            unitType === "float"
-                              ? /^-?\d*\.?\d*$/.test(e.target.value) // Allow decimals for float
-                              : /^-?\d*$/.test(e.target.value); // Only integers for int
-
-                          if (isValidInput) {
-                            newOutputs[index] = {
-                              ...newOutputs[index],
-                              value:
-                                e.target.value === "" ? "" : e.target.value,
-                            };
-                            setValue("outputs", newOutputs, {
-                              shouldValidate: true,
-                            });
-                          }
-                        }}
-                        placeholder={`Enter ${
-                          categorizedIndicators.find(
-                            (o) => o.id === output.outputId
-                          )?.unitOfMeasure === "float"
-                            ? "decimal"
-                            : "whole"
-                        } number`}
-                        disabled={
-                          !!autosyncedIndicators.find(
-                            (indicator) =>
-                              indicator.name ===
-                              indicatorsList.find(
-                                (i) => i.indicatorId === output.outputId
-                              )?.name
-                          )
-                        }
-                        className={cn(
-                          "w-full px-3 py-1.5 bg-white disabled:opacity-50 disabled:cursor-not-allowed dark:bg-zinc-900 border rounded-md",
-                          output.outputId &&
-                            isInvalidValue(
-                              output.value,
-                              categorizedIndicators.find(
-                                (o) => o.id === output.outputId
-                              )?.unitOfMeasure || "int"
-                            )
-                            ? "border-red-500 dark:border-red-500"
-                            : "border-gray-300 dark:border-zinc-700"
-                        )}
-                      />
-                      {output.outputId &&
-                      isInvalidValue(
-                        output.value,
-                        outputs.find((o) => o.id === output.outputId)
-                          ?.unitOfMeasure || "int"
-                      ) ? (
-                        <p className="text-xs text-red-500 mt-1">
-                          {typeof output.value === "string" &&
-                          output.value === ""
-                            ? "This field is required"
-                            : categorizedIndicators.find(
-                                (o) => o.id === output.outputId
-                              )?.unitOfMeasure === "int"
-                            ? "Please enter a whole number"
-                            : "Please enter a valid decimal number"}
-                        </p>
-                      ) : (
-                        <EmptyDiv />
-                      )}
-                    </td>
-                    <td className="px-4 py-2">
-                      <input
-                        type="text"
-                        value={output.proof || ""}
-                        onChange={(e) => {
-                          const newOutputs = [...selectedOutputs];
-                          newOutputs[index].proof = e.target.value;
-                          setValue("outputs", newOutputs, {
-                            shouldValidate: true,
-                          });
-                        }}
-                        placeholder="Enter proof URL"
-                        disabled={
-                          !!autosyncedIndicators.find(
-                            (indicator) =>
-                              indicator.name ===
-                              indicatorsList.find(
-                                (i) => i.indicatorId === output.outputId
-                              )?.name
-                          )
-                        }
-                        className="w-full px-3 py-1.5 bg-white disabled:opacity-50 disabled:cursor-not-allowed dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md"
-                      />
-                      <EmptyDiv />
-                    </td>
-                    <td className="px-4 py-0">
-                      <div className="flex items-center justify-center w-full h-full">
-                        <button
-                          onClick={() => {
-                            const newOutputs = selectedOutputs.filter(
-                              (_, i) => i !== index
-                            );
-                            setValue("outputs", newOutputs, {
-                              shouldValidate: true,
-                            });
-                          }}
-                          type="button"
-                          className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20"
-                        >
-                          <TrashIcon className="h-5 w-5" />
-                        </button>
-                      </div>
-                      <EmptyDiv />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      <OutputsSection
+        register={register}
+        control={control}
+        setValue={setValue}
+        watch={watch}
+        errors={errors}
+        projectUID={project?.uid}
+        selectedCommunities={selectedCommunities}
+        selectedPrograms={selectedPrograms}
+        onCreateNewIndicator={(index) => {
+          setSelectedToCreate(index);
+        }}
+        onIndicatorCreated={handleOutputSuccess}
+        labelStyle={labelStyle}
+      />
 
       <div className="flex w-full flex-row-reverse">
         <Tooltip.Provider>

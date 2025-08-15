@@ -26,6 +26,7 @@ import { SHARE_TEXTS } from "@/utilities/share/text";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { useProjectStore } from "@/store";
 import { queryClient } from "@/components/Utilities/WagmiProvider";
+import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
 
 const ProjectObjectiveCompletion = dynamic(
   () =>
@@ -94,6 +95,11 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
   const { project } = useProjectStore();
   const { projectId } = useParams();
   const { refetch } = useAllMilestones(projectId as string);
+  
+  // Fetch milestone impact data (outputs/metrics) if milestone is completed
+  const { data: milestoneImpactData } = useMilestoneImpactAnswers({
+    milestoneUID: completed ? milestone.uid : undefined,
+  });
 
   // project milestone-specific properties
   const projectMilestone = milestone.source.projectMilestone;
@@ -126,6 +132,9 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
   const verifiedMilestones =
     projectMilestone?.verified?.length ||
     grantMilestone?.milestone.verified?.length;
+  const completionDeliverables =
+    (projectMilestone?.completed?.data as any)?.deliverables ||
+    (grantMilestone?.milestone.completed?.data as any)?.deliverables;
 
   // Function to render project milestone completion form or details
   const renderMilestoneCompletion = () => {
@@ -238,6 +247,70 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
               >
                 {completionProof}
               </a>
+            </div>
+          ) : null}
+          {completionDeliverables && completionDeliverables.length > 0 ? (
+            <div className="flex flex-col gap-2">
+              <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                Deliverables:
+              </p>
+              {completionDeliverables.map((deliverable: any, index: number) => (
+                <div key={index} className="border border-gray-200 dark:border-zinc-700 rounded-lg p-3 bg-gray-50 dark:bg-zinc-800">
+                  <div className="flex flex-col gap-1">
+                    <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                      {deliverable.name}
+                    </p>
+                    {deliverable.description && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        {deliverable.description}
+                      </p>
+                    )}
+                    {deliverable.proof && (
+                      <a
+                        href={deliverable.proof}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-brand-blue hover:underline text-sm break-all"
+                      >
+                        {deliverable.proof}
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
+          {milestoneImpactData && milestoneImpactData.length > 0 ? (
+            <div className="flex flex-col gap-2">
+              <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                Metrics:
+              </p>
+              {milestoneImpactData.map((metric: any, index: number) => (
+                <div key={index} className="border border-gray-200 dark:border-zinc-700 rounded-lg p-3 bg-gray-50 dark:bg-zinc-800">
+                  <div className="flex flex-col gap-1">
+                    <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                      {metric.name || metric.indicator?.data?.title || 'Untitled Indicator'}
+                    </p>
+                    {metric.datapoints && metric.datapoints.length > 0 && (
+                      <div className="flex flex-col gap-1">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Value: <span className="font-medium text-zinc-900 dark:text-zinc-100">{metric.datapoints[0].value}</span>
+                        </p>
+                        {metric.datapoints[0].proof && (
+                          <a
+                            href={metric.datapoints[0].proof}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-brand-blue hover:underline text-sm break-all"
+                          >
+                            {metric.datapoints[0].proof}
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           ) : null}
         </div>

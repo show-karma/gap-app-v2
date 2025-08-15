@@ -11,6 +11,7 @@ interface StatusChangeModalProps {
   onConfirm: (reason?: string) => void;
   status: string;
   isSubmitting?: boolean;
+  isReasonRequired?: boolean;
 }
 
 const statusLabels: Record<string, string> = {
@@ -33,10 +34,15 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
   onConfirm,
   status,
   isSubmitting = false,
+  isReasonRequired = false,
 }) => {
   const [reason, setReason] = useState("");
 
   const handleConfirm = () => {
+    // If reason is required but not provided, don't proceed
+    if (isReasonRequired && !reason.trim()) {
+      return;
+    }
     onConfirm(reason || undefined);
     setReason("");
   };
@@ -88,16 +94,14 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                 </div>
 
                 <div className="sm:flex sm:items-start">
-                  <div className={`mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full ${
-                    status === 'approved' ? 'bg-green-100 dark:bg-green-900' :
+                  <div className={`mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full ${status === 'approved' ? 'bg-green-100 dark:bg-green-900' :
                     status === 'rejected' ? 'bg-red-100 dark:bg-red-900' :
-                    'bg-yellow-100 dark:bg-yellow-900'
-                  } sm:mx-0 sm:h-10 sm:w-10`}>
-                    <ExclamationTriangleIcon className={`h-6 w-6 ${
-                      status === 'approved' ? 'text-green-600 dark:text-green-400' :
+                      'bg-yellow-100 dark:bg-yellow-900'
+                    } sm:mx-0 sm:h-10 sm:w-10`}>
+                    <ExclamationTriangleIcon className={`h-6 w-6 ${status === 'approved' ? 'text-green-600 dark:text-green-400' :
                       status === 'rejected' ? 'text-red-600 dark:text-red-400' :
-                      'text-yellow-600 dark:text-yellow-400'
-                    }`} aria-hidden="true" />
+                        'text-yellow-600 dark:text-yellow-400'
+                      }`} aria-hidden="true" />
                   </div>
                   <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left flex-1">
                     <Dialog.Title as="h3" className="text-base font-semibold leading-6 text-gray-900 dark:text-white">
@@ -107,10 +111,10 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                       <p className="text-sm text-gray-500 dark:text-gray-400">
                         {statusDescriptions[status] || "Change the status of this application."}
                       </p>
-                      
+
                       <div className="mt-4">
                         <label htmlFor="reason" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Reason (Optional)
+                          Reason {isReasonRequired ? <span className="text-red-500">*</span> : "(Optional)"}
                         </label>
                         <textarea
                           id="reason"
@@ -118,18 +122,18 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                           rows={4}
                           className="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2"
                           placeholder={
-                            status === 'revision_requested' 
+                            status === 'revision_requested'
                               ? "Explain what needs to be revised..."
                               : status === 'rejected'
-                              ? "Explain why the application is rejected..."
-                              : "Add any notes about this decision..."
+                                ? "Explain why the application is rejected..."
+                                : "Add any notes about this decision..."
                           }
                           value={reason}
                           onChange={(e) => setReason(e.target.value)}
                           disabled={isSubmitting}
                         />
                         <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                          {status === 'revision_requested' 
+                          {status === 'revision_requested'
                             ? "The applicant will see this message and can update their application."
                             : "This reason will be recorded in the status history."}
                         </p>
@@ -141,12 +145,11 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                 <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
                   <Button
                     onClick={handleConfirm}
-                    disabled={isSubmitting}
-                    className={`w-full sm:w-auto sm:ml-3 ${
-                      status === 'approved' ? 'bg-green-600 hover:bg-green-700' :
+                    disabled={isSubmitting || (isReasonRequired && !reason.trim())}
+                    className={`w-full sm:w-auto sm:ml-3 ${status === 'approved' ? 'bg-green-600 hover:bg-green-700' :
                       status === 'rejected' ? 'bg-red-600 hover:bg-red-700' :
-                      ''
-                    }`}
+                        ''
+                      }`}
                   >
                     {isSubmitting ? 'Processing...' : 'Confirm'}
                   </Button>
