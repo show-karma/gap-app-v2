@@ -91,6 +91,12 @@ export const INDEXER = {
       UPDATE: (projectUID: string) =>
         `/projects/${projectUID}/update/categories`,
     },
+    REGIONS: {
+      UPDATE: (projectUID: string) =>
+        `/v2/projects/${projectUID}/regions`,
+      GET: (projectUID: string) =>
+        `/projects/${projectUID}/regions`,
+    },
     IMPACT_INDICATORS: {
       GET: (projectUID: string) =>
         `/projects/${projectUID}/indicators/data/all`,
@@ -118,6 +124,12 @@ export const INDEXER = {
         `/categories/${categoryId}/impact-segments`,
     },
   },
+  REGIONS: {
+    CREATE: (communityId: string) => `/v2/communities/${communityId}/regions`,
+    UPDATE: (communityId: string, regionId: string) => `/v2/communities/${communityId}/regions/${regionId}`,
+    DELETE: (communityId: string, regionId: string) => `/v2/communities/${communityId}/regions/${regionId}`,
+    GET_BY_ID: (regionId: string) => `/v2/regions/${regionId}`,
+  },
   INDICATORS: {
     CREATE_OR_UPDATE: () => `/indicators`,
     DELETE: (indicatorId: string) => `/indicators/${indicatorId}`,
@@ -132,6 +144,7 @@ export const INDEXER = {
   COMMUNITY: {
     GET: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}`,
     CATEGORIES: (idOrSlug: string) => `/communities/${idOrSlug}/categories`,
+    REGIONS: (idOrSlug: string) => `/v2/communities/${idOrSlug}/regions`,
     V2: {
       GET: (slug: string) => `/v2/communities/${slug}`,
       STATS: (slug: string) => `/v2/communities/${slug}/stats`,

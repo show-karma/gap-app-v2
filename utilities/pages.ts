@@ -22,6 +22,8 @@ export const PAGES = {
     ROOT: (community: string) => `/community/${community}/admin`,
     EDIT_CATEGORIES: (community: string) =>
       `/community/${community}/admin/edit-categories`,
+    EDIT_PROJECTS: (community: string) =>
+      `/community/${community}/admin/edit-projects`,
     MILESTONES: (community: string) =>
       `/community/${community}/admin/milestones-report`,
     MANAGE_INDICATORS: (community: string) =>

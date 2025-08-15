@@ -19,6 +19,7 @@ import {
   TagIcon,
   CurrencyDollarIcon,
   BanknotesIcon,
+  GlobeAltIcon,
 } from "@heroicons/react/24/outline";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { cn } from "@/utilities/tailwind";
@@ -144,6 +145,16 @@ export const CommunityAdminPage = ({
               description="Manage tracks and assign them to programs"
               colorClass=""
               icon={<TagIcon className="w-6 h-6" />}
+            />
+
+            <AdminButton
+              href={PAGES.ADMIN.EDIT_PROJECTS(
+                community?.details?.data?.slug || communityId
+              )}
+              label="Projects"
+              description="Manage your projects and assign regions"
+              colorClass=""
+              icon={<GlobeAltIcon className="w-6 h-6" />}
             />
 
             <AdminButton

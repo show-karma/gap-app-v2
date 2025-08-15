@@ -6,6 +6,7 @@ import { useCategories } from "@/hooks/useCategories";
 import { useCommunityDetails } from "@/hooks/useCommunityDetails";
 import { SimplifiedGrant, useGrants } from "@/hooks/useGrants";
 import { useGrantsTable } from "@/hooks/useGrantsTable";
+import { useCommunityGrants } from "@/hooks/useCommunityGrants";
 import { useAuthStore } from "@/store/auth";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
@@ -70,6 +71,11 @@ export default function EditCategoriesPage() {
     isLoading: isLoadingGrants,
     refetch: refreshGrants,
   } = useGrants(communityId);
+
+  // Fetch all grants for the filter dropdown
+  const { data: communityGrants = [] } = useCommunityGrants(
+    community?.details?.data?.slug || communityId
+  );
 
   // Table state management
   const {
@@ -172,7 +178,7 @@ export default function EditCategoriesPage() {
           </Link>
           <div className="flex items-center gap-4">
             <ProgramFilter
-              programs={uniquePrograms}
+              programs={communityGrants}
               selectedProgramId={selectedProgramId}
               onChange={handleProgramChange}
             />

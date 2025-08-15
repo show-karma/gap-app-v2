@@ -77,7 +77,9 @@ export const SearchWithValueDropdown: FC<SearchWithValueDropdownProps> = ({
           .sort()
           .join(", ");
       }
-      return selected;
+      // For single selection, find the title from the list
+      const selectedItem = orderedList.find((item) => item.value === selected[0]);
+      return selectedItem?.title || selected[0];
     }
     return `${prefixUnselected} ${type}`;
   };

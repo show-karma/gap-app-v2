@@ -6,7 +6,8 @@ import type { Hex } from "@show-karma/karma-gap-sdk";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 export interface GrantsResponse {
-  grants: IGrantResponse[];
+  // TODO: needs to be added to the SDK
+  grants: (IGrantResponse & {regions:[]}) [];
   pageInfo: {
     page?: string;
     pageLimit?: string;
