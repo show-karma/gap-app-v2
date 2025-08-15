@@ -11,11 +11,11 @@ import {
 import { IFundingApplication } from "@/types/funding-platform";
 import { Button } from "@/components/Utilities/Button";
 import { cn } from "@/utilities/tailwind";
-import { format, isValid, parseISO } from "date-fns";
 import StatusHistoryTimeline from "./StatusHistoryTimeline";
 import StatusChangeModal from "./StatusChangeModal";
 import fundingPlatformService from "@/services/fundingPlatformService";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { formatDate } from "@/utilities/formatDate";
 
 interface ApplicationDetailSidesheetProps {
   application: IFundingApplication | null;
@@ -54,32 +54,6 @@ const formatStatus = (status: string): string => {
     .join(" ");
 };
 
-/**
- * Safely format a date string, handling invalid dates gracefully
- */
-const formatDate = (
-  dateString: string | Date | undefined | null,
-  formatString: string = "MMM dd, yyyy HH:mm"
-): string => {
-  try {
-    if (!dateString) return "No date";
-
-    let date: Date;
-    if (typeof dateString === "string") {
-      date = parseISO(dateString);
-      if (!isValid(date)) {
-        date = new Date(dateString);
-      }
-    } else {
-      date = dateString;
-    }
-
-    if (!isValid(date)) return "Invalid date";
-    return format(date, formatString);
-  } catch (error) {
-    return "Invalid date";
-  }
-};
 
 const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
   application: initialApplication,
@@ -221,7 +195,7 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                             </h5>
                             {milestone.dueDate && (
                               <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
-                                Due: {new Date(milestone.dueDate).toLocaleDateString()}
+                                Due: {formatDate(new Date(milestone.dueDate))}
                               </span>
                             )}
                           </div>
