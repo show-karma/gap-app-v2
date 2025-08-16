@@ -206,6 +206,10 @@ export const INDEXER = {
     },
     MILESTONES: (communityIdOrSlug: string) =>
       `/v2/communities/${communityIdOrSlug}/milestones`,
+    CONFIG: {
+      GET: (slug: string) => `/v2/community-configs/${slug}`,
+      UPDATE: (slug: string) => `/v2/community-configs/${slug}`,
+    },
   },
   GRANTS: {
     GET_ZK_GROUP: (
