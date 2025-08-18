@@ -469,6 +469,32 @@ export const fundingApplicationsAPI = {
   },
 
   /**
+   * Export applications data for admins (full data including private fields)
+   */
+  async exportApplicationsAdmin(
+    programId: string,
+    chainId: number,
+    format: ExportFormat = "json",
+    filters: IApplicationFilters = {}
+  ): Promise<any> {
+    const params = new URLSearchParams();
+    params.append("format", format);
+
+    if (filters.status) params.append("status", filters.status);
+    if (filters.search) params.append("search", filters.search);
+    if (filters.dateFrom) params.append("dateFrom", filters.dateFrom);
+    if (filters.dateTo) params.append("dateTo", filters.dateTo);
+
+    const response = await apiClient.get(
+      `/v2/funding-applications/admin/${programId}/${chainId}/export?${params}`,
+      {
+        responseType: format === "csv" ? "blob" : "json",
+      }
+    );
+    return response.data;
+  },
+
+  /**
    * Real-time AI evaluation of partial application data
    */
   async evaluateRealTime(

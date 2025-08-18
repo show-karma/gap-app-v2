@@ -20,6 +20,7 @@ interface IApplicationListWithAPIProps {
   showStatusActions?: boolean;
   initialFilters?: IApplicationFilters;
   onStatusChange?: (applicationId: string, status: string, note?: string) => Promise<void>;
+  isAdmin?: boolean;
 }
 
 const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
@@ -29,6 +30,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
   showStatusActions = false,
   initialFilters = {},
   onStatusChange: parentOnStatusChange,
+  isAdmin = false,
 }) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -50,7 +52,8 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
 
   const { exportApplications, isExporting } = useApplicationExport(
     programId,
-    chainId
+    chainId,
+    isAdmin
   );
 
   // Sync filters with URL
