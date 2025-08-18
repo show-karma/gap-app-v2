@@ -3,7 +3,7 @@
 import { FC, useState, useEffect, useMemo } from 'react';
 import { format, parseISO, isValid } from 'date-fns';
 import toast from 'react-hot-toast';
-import { 
+import {
   ChatBubbleLeftRightIcon,
   ClockIcon,
   CheckCircleIcon,
@@ -11,10 +11,10 @@ import {
   ExclamationTriangleIcon,
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
-import { 
-  ApplicationComment, 
+import {
+  ApplicationComment,
   IStatusHistoryEntry,
-  FundingApplicationStatusV2 
+  FundingApplicationStatusV2
 } from '@/types/funding-platform';
 import { cn } from '@/utilities/tailwind';
 import { Spinner } from '@/components/Utilities/Spinner';
@@ -93,10 +93,10 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
 
     // Add comments
     comments.forEach(comment => {
-      const timestamp = typeof comment.createdAt === 'string' 
-        ? parseISO(comment.createdAt) 
+      const timestamp = typeof comment.createdAt === 'string'
+        ? parseISO(comment.createdAt)
         : comment.createdAt as Date;
-      
+
       if (isValid(timestamp)) {
         items.push({
           type: 'comment',
@@ -111,7 +111,7 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
       const timestamp = typeof status.timestamp === 'string'
         ? parseISO(status.timestamp)
         : status.timestamp as Date;
-      
+
       if (isValid(timestamp)) {
         items.push({
           type: 'status',
@@ -247,13 +247,13 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
         </span>
       </div>
 
-      {/* Comment Input */}
-      {isAdmin && onCommentAdd && (
+      {/* Comment Input - Show for all users who have onCommentAdd handler */}
+      {onCommentAdd && (
         <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
           <CommentInput
             onSubmit={handleAddComment}
             disabled={isAddingComment}
-            placeholder="Add an internal comment for other administrators..."
+            placeholder={isAdmin ? "Add an admin comment..." : "Add a comment for this application..."}
           />
         </div>
       )}
@@ -271,10 +271,10 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
         </div>
       ) : (
         <div className="flow-root">
-          <ul role="list" className="-mb-8">
+          <ul role="list" className="">
             {timelineItems.map((item, idx) => {
               const isLast = idx === timelineItems.length - 1;
-              const isLatestStatus = item.type === 'status' && 
+              const isLatestStatus = item.type === 'status' &&
                 statusHistory.findIndex(s => s === item.data) === 0;
 
               return (

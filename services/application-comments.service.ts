@@ -1,5 +1,6 @@
 import { ApplicationComment } from '@/types/funding-platform';
 import { envVars } from '@/utilities/enviromentVars';
+import { getCookiesFromStoredWallet } from '@/utilities/getCookiesFromStoredWallet';
 
 const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
 
@@ -7,17 +8,12 @@ const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
  * Get auth headers from cookies
  */
 function getAuthHeaders(): HeadersInit {
-  // Get JWT from cookies (implementation depends on your auth setup)
-  const token = typeof window !== 'undefined' 
-    ? document.cookie
-        .split('; ')
-        .find(row => row.startsWith('karma-gap-jwt='))
-        ?.split('=')[1]
-    : '';
+  // Get JWT from cookies using address-specific key
+  const { token } = getCookiesFromStoredWallet();
 
   return {
     'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` }),
+    ...(token && { 'Authorization': token }),
   };
 }
 
@@ -25,9 +21,8 @@ export const applicationCommentsService = {
   /**
    * Get comments for an application
    */
-  async getComments(applicationId: string, isAdmin: boolean = false): Promise<ApplicationComment[]> {
-    const queryParams = isAdmin ? '?admin=true' : '';
-    const response = await fetch(`${API_URL}/v2/applications/${applicationId}/comments${queryParams}`, {
+  async getComments(applicationId: string): Promise<ApplicationComment[]> {
+    const response = await fetch(`${API_URL}/v2/applications/${applicationId}/comments`, {
       headers: getAuthHeaders(),
     });
 
@@ -45,11 +40,9 @@ export const applicationCommentsService = {
   async createComment(
     applicationId: string,
     content: string,
-    isAdmin: boolean = false,
     authorName?: string
   ): Promise<ApplicationComment> {
-    const queryParams = isAdmin ? '?admin=true' : '';
-    const response = await fetch(`${API_URL}/v2/applications/${applicationId}/comments${queryParams}`, {
+    const response = await fetch(`${API_URL}/v2/applications/${applicationId}/comments`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ content, authorName }),
@@ -86,9 +79,8 @@ export const applicationCommentsService = {
   /**
    * Delete a comment
    */
-  async deleteComment(commentId: string, isAdmin: boolean = false): Promise<void> {
-    const queryParams = isAdmin ? '?admin=true' : '';
-    const response = await fetch(`${API_URL}/v2/comments/${commentId}${queryParams}`, {
+  async deleteComment(commentId: string): Promise<void> {
+    const response = await fetch(`${API_URL}/v2/comments/${commentId}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });

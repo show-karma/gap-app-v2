@@ -33,9 +33,12 @@ const CommentItem: FC<CommentItemProps> = ({
   const [editContent, setEditContent] = useState(comment.content);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const canEdit = isAdmin && comment.authorRole === 'admin' && 
-                  !comment.isDeleted && currentUserAddress?.toLowerCase() === comment.authorAddress?.toLowerCase();
-  const canDelete = canEdit;
+  // Users can edit their own comments (if not deleted)
+  const isAuthor = currentUserAddress?.toLowerCase() === comment.authorAddress?.toLowerCase();
+  const canEdit = !comment.isDeleted && isAuthor;
+  
+  // Users can delete their own comments, admins can delete any comment
+  const canDelete = !comment.isDeleted && (isAuthor || isAdmin);
 
   const formatDate = (dateString: string | Date) => {
     try {
@@ -67,7 +70,14 @@ const CommentItem: FC<CommentItemProps> = ({
   };
 
   const handleDelete = async () => {
-    if (!onDelete || !confirm('Are you sure you want to delete this comment?')) return;
+    if (!onDelete) return;
+    
+    // Different confirmation messages for admins vs regular users
+    const confirmMessage = isAdmin && !isAuthor
+      ? 'Are you sure you want to delete this comment? This action will mark it as deleted but preserve it for audit purposes.'
+      : 'Are you sure you want to delete your comment? This action cannot be undone.';
+    
+    if (!confirm(confirmMessage)) return;
 
     setIsUpdating(true);
     try {
@@ -136,8 +146,8 @@ const CommentItem: FC<CommentItemProps> = ({
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 {formatDate(comment.createdAt)}
                 {comment.editHistory && comment.editHistory.length > 0 && (
-                  <span className="ml-2 italic">
-                    (edited {formatDate(comment.editHistory[comment.editHistory.length - 1].editedAt)})
+                  <span className="ml-2 italic text-gray-400 dark:text-gray-500">
+                    (edited)
                   </span>
                 )}
               </p>
