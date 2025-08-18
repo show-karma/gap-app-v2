@@ -174,7 +174,7 @@ export const fundingProgramsAPI = {
     chainId: number
   ): Promise<IFundingProgramConfig | null> {
     const response = await apiClient.get(
-      `/v2/funding-program-configs/${programId}/${chainId}`
+      `/v2/funding-program-configs/${programId}/${chainId.toString()}`
     );
     return response.data?.applicationConfig;
   },
@@ -210,7 +210,7 @@ export const fundingProgramsAPI = {
   ): Promise<IFundingProgramConfig> {
     // If config exists, use POST to update
     const response = await apiClient.post(
-      `/v2/funding-program-configs/${programId}/${chainId}`,
+      `/v2/funding-program-configs/${programId}/${chainId.toString()}`,
       config
     );
     return response.data;
@@ -226,7 +226,7 @@ export const fundingProgramsAPI = {
   ): Promise<IFundingProgramConfig> {
     // If config exists, use PUT to update
     const response = await apiClient.put(
-      `/v2/funding-program-configs/${programId}/${chainId}`,
+      `/v2/funding-program-configs/${programId}/${chainId.toString()}`,
       config
     );
     return response.data;
@@ -326,7 +326,7 @@ export const fundingApplicationsAPI = {
     request: IApplicationSubmitRequest
   ): Promise<IFundingApplication> {
     const response = await apiClient.post(
-      `/v2/funding-applications/${request.programId}/${request.chainID}`,
+      `/v2/funding-applications/${request.programId}/${request.chainID.toString()}`,
       request
     );
     return response.data;
@@ -378,7 +378,7 @@ export const fundingApplicationsAPI = {
     if (filters.dateTo) params.append("dateTo", filters.dateTo);
 
     const response = await apiClient.get(
-      `/v2/funding-applications/program/${programId}/${chainId}?${params}`
+      `/v2/funding-applications/program/${programId}/${chainId.toString()}?${params}`
     );
     return response.data;
   },
@@ -415,7 +415,7 @@ export const fundingApplicationsAPI = {
   ): Promise<IFundingApplication | null> {
     try {
       const response = await apiClient.get(
-        `/v2/funding-applications/program/${programId}/${chainId}/by-email?email=${encodeURIComponent(
+        `/v2/funding-applications/program/${programId}/${chainId.toString()}/by-email?email=${encodeURIComponent(
           email
         )}`
       );
@@ -436,7 +436,7 @@ export const fundingApplicationsAPI = {
     chainId: number
   ): Promise<IApplicationStatistics> {
     const response = await apiClient.get(
-      `/v2/funding-applications/program/${programId}/${chainId}/statistics`
+      `/v2/funding-applications/program/${programId}/${chainId.toString()}/statistics`
     );
 
     return response.data;
@@ -460,7 +460,33 @@ export const fundingApplicationsAPI = {
     if (filters.dateTo) params.append("dateTo", filters.dateTo);
 
     const response = await apiClient.get(
-      `/v2/funding-applications/program/${programId}/${chainId}/export?${params}`,
+      `/v2/funding-applications/program/${programId}/${chainId.toString()}/export?${params}`,
+      {
+        responseType: format === "csv" ? "blob" : "json",
+      }
+    );
+    return response.data;
+  },
+
+  /**
+   * Export applications data for admins (full data including private fields)
+   */
+  async exportApplicationsAdmin(
+    programId: string,
+    chainId: number,
+    format: ExportFormat = "json",
+    filters: IApplicationFilters = {}
+  ): Promise<any> {
+    const params = new URLSearchParams();
+    params.append("format", format);
+
+    if (filters.status) params.append("status", filters.status);
+    if (filters.search) params.append("search", filters.search);
+    if (filters.dateFrom) params.append("dateFrom", filters.dateFrom);
+    if (filters.dateTo) params.append("dateTo", filters.dateTo);
+
+    const response = await apiClient.get(
+      `/v2/funding-applications/admin/${programId}/${chainId.toString()}/export?${params}`,
       {
         responseType: format === "csv" ? "blob" : "json",
       }
@@ -487,7 +513,7 @@ export const fundingApplicationsAPI = {
     };
   }> {
     const response = await apiClient.post(
-      `/v2/funding-applications/${programId}/${chainId}/evaluate-realtime`,
+      `/v2/funding-applications/${programId}/${chainId.toString()}/evaluate-realtime`,
       { applicationData }
     );
     return response.data;
