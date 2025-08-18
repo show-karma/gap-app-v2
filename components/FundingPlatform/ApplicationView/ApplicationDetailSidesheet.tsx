@@ -16,6 +16,7 @@ import StatusChangeModal from "./StatusChangeModal";
 import fundingPlatformService from "@/services/fundingPlatformService";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { formatDate } from "@/utilities/formatDate";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 
 interface ApplicationDetailSidesheetProps {
   application: IFundingApplication | null;
@@ -200,9 +201,9 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                             )}
                           </div>
                           {milestone.description && (
-                            <p className="text-xs text-gray-600 dark:text-gray-400">
-                              {milestone.description}
-                            </p>
+                            <div className="text-xs text-gray-600 dark:text-gray-400 prose prose-xs dark:prose-invert max-w-none">
+                              <MarkdownPreview source={milestone.description} />
+                            </div>
                           )}
                         </div>
                       </div>
@@ -228,7 +229,9 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                   {JSON.stringify(value, null, 2)}
                 </pre>
               ) : (
-                <span>{String(value)}</span>
+                <div className="prose prose-sm dark:prose-invert max-w-none">
+                  <MarkdownPreview source={String(value)} />
+                </div>
               )}
             </dd>
           </div>
@@ -455,13 +458,13 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                         </span>
                       </div>
                     )}
-                    <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
-                      {rec.recommendation}
-                    </p>
+                    <div className="text-sm text-gray-700 dark:text-gray-300 mb-2 prose prose-sm dark:prose-invert max-w-none">
+                      <MarkdownPreview source={rec.recommendation} />
+                    </div>
                     {rec.impact && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        <strong>Impact:</strong> {rec.impact}
-                      </p>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 prose prose-xs dark:prose-invert max-w-none">
+                        <strong>Impact:</strong> <MarkdownPreview source={rec.impact} />
+                      </div>
                     )}
                   </div>
                 )
@@ -476,9 +479,9 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
             <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
               Additional Notes
             </h4>
-            <p className="text-sm text-gray-700 dark:text-gray-300">
-              {parsedEvaluation.additional_notes}
-            </p>
+            <div className="text-sm text-gray-700 dark:text-gray-300 prose prose-sm dark:prose-invert max-w-none">
+              <MarkdownPreview source={parsedEvaluation.additional_notes} />
+            </div>
           </div>
         )}
 
@@ -646,9 +649,9 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                               <h3 className="text-sm font-medium text-yellow-900 dark:text-yellow-300 mb-2">
                                 Revision Requested
                               </h3>
-                              <p className="text-sm text-yellow-800 dark:text-yellow-400">
-                                {getCurrentRevisionReason()}
-                              </p>
+                              <div className="text-sm text-yellow-800 dark:text-yellow-400 prose prose-sm dark:prose-invert max-w-none">
+                                <MarkdownPreview source={getCurrentRevisionReason() || ""} />
+                              </div>
                             </div>
                           )}
 
