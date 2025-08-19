@@ -14,6 +14,7 @@ import { cn } from "@/utilities/tailwind";
 import StatusHistoryTimeline from "./StatusHistoryTimeline";
 import StatusChangeModal from "./StatusChangeModal";
 import CommentsTimeline from "./CommentsTimeline";
+import GenericJSONDisplay from "./GenericJSONDisplay";
 import fundingPlatformService from "@/services/fundingPlatformService";
 import { applicationCommentsService } from "@/services/application-comments.service";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -348,6 +349,21 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
           </p>
         </div>
       );
+    }
+
+    // Check if it's a known evaluation structure or generic JSON
+    const isKnownEvaluationStructure = (data: any): boolean => {
+      return (
+        "final_score" in data ||
+        "evaluation_status" in data ||
+        "evaluation_summary" in data ||
+        "improvement_recommendations" in data
+      );
+    };
+
+    // If it's not a known structure, render as generic JSON
+    if (!isKnownEvaluationStructure(parsedEvaluation)) {
+      return <GenericJSONDisplay data={parsedEvaluation} />;
     }
 
     const getScoreProgressColor = (score: number) => {
