@@ -20,75 +20,8 @@ import { LinkIcon } from "@heroicons/react/24/solid";
 import CommunityStats from "@/components/CommunityStats";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useStaff } from "@/hooks/useStaff";
-
-interface CommunityConfig {
-  public?: boolean;
-  rank?: number;
-}
-
-const useCommunityConfig = (slug: string, enabled: boolean = true) => {
-  return useQuery<CommunityConfig | null>({
-    queryKey: ["community-config", slug],
-    queryFn: async () => {
-      const [data, error] = await fetchData(
-        INDEXER.COMMUNITY.CONFIG.GET(slug),
-        "GET",
-        {},
-        {},
-        {},
-        false
-      );
-      return error ? null : data?.config || null;
-    },
-    enabled: enabled && !!slug,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
-  });
-};
-
-const useCommunityConfigMutation = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation<void, Error, { slug: string; config: CommunityConfig }, { previousConfig: CommunityConfig | null }>({
-    mutationFn: async ({ slug, config }) => {
-      const [data, error] = await fetchData(
-        INDEXER.COMMUNITY.CONFIG.UPDATE(slug),
-        "PUT",
-        config,
-        {},
-        {},
-        true // authenticated
-      );
-      if (error) throw new Error(error);
-      return data;
-    },
-    onMutate: async ({ slug, config }) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ["community-config", slug] });
-      
-      // Snapshot the previous value
-      const previousConfig = queryClient.getQueryData<CommunityConfig | null>(["community-config", slug]);
-      
-      // Optimistically update to the new value
-      queryClient.setQueryData(["community-config", slug], config);
-      
-      // Return a context object with the snapshotted value
-      return { previousConfig: previousConfig ?? null };
-    },
-    onError: (err, { slug }, context) => {
-      // If the mutation fails, use the context returned from onMutate to roll back
-      if (context?.previousConfig) {
-        queryClient.setQueryData(["community-config", slug], context.previousConfig);
-      }
-    },
-    onSettled: (_, __, { slug }) => {
-      // Always refetch after error or success to ensure we have the latest data
-      queryClient.invalidateQueries({ queryKey: ["community-config", slug] });
-    },
-  });
-};
+import { useCommunityConfig, useCommunityConfigMutation } from "@/hooks/useCommunityConfig";
 
 export const CommunitiesToAdmin = () => {
   const [allCommunities, setAllCommunities] = useState<Community[]>([]);
@@ -96,7 +29,6 @@ export const CommunitiesToAdmin = () => {
 
   const { communities: communitiesToAdmin, isLoading } = useCommunitiesStore();
   const { gap } = useGap();
-  const updateConfigMutation = useCommunityConfigMutation();
   const { isStaff } = useStaff();
 
 
@@ -109,8 +41,6 @@ export const CommunitiesToAdmin = () => {
         (a.details?.name || a.uid).localeCompare(b.details?.name || b.uid)
       );
       setAllCommunities(result);
-
-      console.log({ result });
 
       // Fetch admins data for ALL communities that will be shown
       const adminPromises = result.map(async (community) => {
@@ -131,8 +61,6 @@ export const CommunitiesToAdmin = () => {
       });
 
       const communityAdmins = await Promise.all(adminPromises);
-
-      console.log({ communityAdmins, communitiesToAdmin });
 
       setCommunityAdmins(communityAdmins);
 
@@ -250,13 +178,6 @@ const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
   const updateConfigMutation = useCommunityConfigMutation();
   const { data: config, isLoading: configLoading } = useCommunityConfig(slug);
 
-  // Debug logging
-  console.log('CommunityRowWithConfig:', {
-    communityName: community.details?.name,
-    communityUID: community.uid,
-    matchingCommunityAdmin,
-    hasAdmins: matchingCommunityAdmin?.admins?.length > 0
-  });
 
   function shortenHex(hexString: string) {
     const firstPart = hexString.substring(0, 6);
