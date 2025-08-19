@@ -41,6 +41,7 @@ import { formatDate } from "@/utilities/formatDate";
 import { Line } from "@rc-component/progress";
 import pluralize from "pluralize";
 import Link from "next/link";
+import { envVars } from "@/utilities/enviromentVars";
 
 export default function FundingPlatformAdminPage() {
   const { communityId } = useParams() as { communityId: string };
@@ -686,7 +687,7 @@ export default function FundingPlatformAdminPage() {
                   {/* Apply Button */}
                   <div className="mb-3">
                     <Link
-                      href={`https://testapp.opgrants.io/programs/${program.programId}/${program.chainID}/apply`}
+                      href={envVars.isDev ? `https://testapp.opgrants.io/programs/${program.programId}/${program.chainID}/apply` : `https://app.opgrants.io/programs/${program.programId}/${program.chainID}/apply`}
                       className="w-full"
                       target="_blank"
                     >
