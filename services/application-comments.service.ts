@@ -57,17 +57,12 @@ export const applicationCommentsService = {
     applicationId: string,
     content: string,
     authorName?: string,
-    isAdmin?: boolean
   ): Promise<ApplicationComment> {
-    const params: any = {};
-    if (isAdmin) {
-      params.admin = 'true';
-    }
+
     
     const response = await apiClient.post(
       `/v2/applications/${applicationId}/comments`,
       { content, authorName },
-      { params }
     );
 
     return response.data.comment;

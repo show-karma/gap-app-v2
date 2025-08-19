@@ -127,27 +127,13 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
   const handleCommentDelete = useCallback(async (commentId: string) => {
     try {
       await applicationCommentsService.deleteComment(commentId);
-      // Remove from local state if hard deleted (user's own comment)
-      // Keep in state with isDeleted flag if soft deleted (admin deletion)
-      setComments(prev => {
-        const comment = prev.find(c => c.id === commentId);
-        if (comment && comment.authorAddress === currentUserAddress?.toLowerCase()) {
-          // Hard delete - remove from list
-          return prev.filter(c => c.id !== commentId);
-        } else {
-          // Soft delete - mark as deleted
-          return prev.map(c =>
-            c.id === commentId
-              ? { ...c, isDeleted: true, deletedAt: new Date() }
-              : c
-          );
-        }
-      });
+      // Refresh comments from server instead of manipulating state
+      await fetchComments();
     } catch (error) {
       console.error('Failed to delete comment:', error);
       throw error;
     }
-  }, [currentUserAddress]);
+  }, [fetchComments]);
 
   // Fetch fresh application data with retry logic
   const fetchApplicationData = async (applicationId: string, expectedStatus?: string, retries = 3) => {
