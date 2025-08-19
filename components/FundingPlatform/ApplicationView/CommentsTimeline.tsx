@@ -72,6 +72,15 @@ const statusConfig = {
     label: 'Withdrawn'
   }
 };
+const labelMap = {
+  pending: 'Pending Review',
+  under_review: 'Under Review',
+  revision_requested: 'Revision Requested',
+  approved: 'Approved',
+  rejected: 'Rejected',
+  withdrawn: 'Withdrawn'
+}
+
 
 const CommentsTimeline: FC<CommentsTimelineProps> = ({
   applicationId,
@@ -197,7 +206,7 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
                 'text-sm font-medium',
                 isCurrent ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400'
               )}>
-                Status changed to {config.label}
+                Status changed to {labelMap[status.status as keyof typeof labelMap] || config.label}
                 {isCurrent && (
                   <span className="ml-2 text-xs font-normal text-gray-500 dark:text-gray-400">
                     (Current)
