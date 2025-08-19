@@ -17,7 +17,7 @@ export const useCommunityConfig = (slug: string, enabled: boolean = true) => {
         {},
         {},
         {},
-        false
+        true
       );
       return error ? null : data?.config || null;
     },
