@@ -169,6 +169,7 @@ export default function ApplicationsPage() {
           onApplicationSelect={handleApplicationSelect}
           initialFilters={initialFilters}
           onStatusChange={handleStatusChange}
+          isAdmin={true}
         />
       </div>
 

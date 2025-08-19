@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, Fragment, useState, useEffect } from "react";
+import { FC, Fragment, useState, useEffect, useCallback } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import {
   XMarkIcon,
@@ -8,14 +8,19 @@ import {
   ExclamationTriangleIcon,
   ClockIcon,
 } from "@heroicons/react/24/outline";
-import { IFundingApplication } from "@/types/funding-platform";
+import { IFundingApplication, ApplicationComment } from "@/types/funding-platform";
 import { Button } from "@/components/Utilities/Button";
 import { cn } from "@/utilities/tailwind";
 import StatusHistoryTimeline from "./StatusHistoryTimeline";
 import StatusChangeModal from "./StatusChangeModal";
+import CommentsTimeline from "./CommentsTimeline";
 import fundingPlatformService from "@/services/fundingPlatformService";
+import { applicationCommentsService } from "@/services/application-comments.service";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { formatDate } from "@/utilities/formatDate";
+import { useAccount } from "wagmi";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { getProjectTitle } from "../helper/getProjecTitle";
 
 interface ApplicationDetailSidesheetProps {
   application: IFundingApplication | null;
@@ -68,6 +73,69 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
   const [application, setApplication] = useState<IFundingApplication | null>(initialApplication);
   const [isLoadingApplication, setIsLoadingApplication] = useState(false);
 
+  // Comments state
+  const [comments, setComments] = useState<ApplicationComment[]>([]);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
+
+  // Get current user address
+  const { address: currentUserAddress } = useAccount();
+
+  // Fetch comments for the application
+  const fetchComments = useCallback(async () => {
+    if (!application?.id) return;
+
+    setIsLoadingComments(true);
+    try {
+      const fetchedComments = await applicationCommentsService.getComments(
+        application.id
+      );
+      setComments(fetchedComments);
+    } catch (error) {
+      console.error('Failed to fetch comments:', error);
+    } finally {
+      setIsLoadingComments(false);
+    }
+  }, [application?.id]);
+
+  // Comment handlers
+  const handleCommentAdd = useCallback(async (content: string) => {
+    if (!application?.id) return;
+
+    try {
+      const newComment = await applicationCommentsService.createComment(
+        application.id,
+        content
+      );
+      setComments(prev => [...prev, newComment]);
+    } catch (error) {
+      console.error('Failed to add comment:', error);
+      throw error; // Let the CommentsTimeline component handle the error UI
+    }
+  }, [application?.id]);
+
+  const handleCommentEdit = useCallback(async (commentId: string, content: string) => {
+    try {
+      const updatedComment = await applicationCommentsService.editComment(commentId, content);
+      setComments(prev =>
+        prev.map(c => c.id === commentId ? updatedComment : c)
+      );
+    } catch (error) {
+      console.error('Failed to edit comment:', error);
+      throw error;
+    }
+  }, []);
+
+  const handleCommentDelete = useCallback(async (commentId: string) => {
+    try {
+      await applicationCommentsService.deleteComment(commentId);
+      // Refresh comments from server instead of manipulating state
+      await fetchComments();
+    } catch (error) {
+      console.error('Failed to delete comment:', error);
+      throw error;
+    }
+  }, [fetchComments]);
+
   // Fetch fresh application data with retry logic
   const fetchApplicationData = async (applicationId: string, expectedStatus?: string, retries = 3) => {
     try {
@@ -96,6 +164,13 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
       setApplication(initialApplication);
     }
   }, [initialApplication]);
+
+  // Fetch comments when application changes
+  useEffect(() => {
+    if (application?.id && isOpen) {
+      fetchComments();
+    }
+  }, [application?.id, isOpen, fetchComments]);
 
   if (!application) return null;
 
@@ -200,9 +275,9 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                             )}
                           </div>
                           {milestone.description && (
-                            <p className="text-xs text-gray-600 dark:text-gray-400">
-                              {milestone.description}
-                            </p>
+                            <div className="text-xs text-gray-600 dark:text-gray-400 prose prose-xs dark:prose-invert max-w-none">
+                              <MarkdownPreview source={milestone.description} />
+                            </div>
                           )}
                         </div>
                       </div>
@@ -228,7 +303,9 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                   {JSON.stringify(value, null, 2)}
                 </pre>
               ) : (
-                <span>{String(value)}</span>
+                <div className="prose prose-sm dark:prose-invert max-w-none">
+                  <MarkdownPreview source={String(value)} />
+                </div>
               )}
             </dd>
           </div>
@@ -455,13 +532,13 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                         </span>
                       </div>
                     )}
-                    <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
-                      {rec.recommendation}
-                    </p>
+                    <div className="text-sm text-gray-700 dark:text-gray-300 mb-2 prose prose-sm dark:prose-invert max-w-none">
+                      <MarkdownPreview source={rec.recommendation} />
+                    </div>
                     {rec.impact && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        <strong>Impact:</strong> {rec.impact}
-                      </p>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 prose prose-xs dark:prose-invert max-w-none">
+                        <strong>Impact:</strong> <MarkdownPreview source={rec.impact} />
+                      </div>
                     )}
                   </div>
                 )
@@ -476,9 +553,9 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
             <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
               Additional Notes
             </h4>
-            <p className="text-sm text-gray-700 dark:text-gray-300">
-              {parsedEvaluation.additional_notes}
-            </p>
+            <div className="text-sm text-gray-700 dark:text-gray-300 prose prose-sm dark:prose-invert max-w-none">
+              <MarkdownPreview source={parsedEvaluation.additional_notes} />
+            </div>
           </div>
         )}
 
@@ -555,11 +632,8 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                         <div className="flex items-start justify-between space-x-3">
                           <div className="space-y-1">
                             <Dialog.Title className="text-base font-semibold leading-6 text-gray-900 dark:text-white">
-                              Application Details
+                              {getProjectTitle(application)}
                             </Dialog.Title>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                              {application.referenceNumber}
-                            </p>
                           </div>
 
                           <div className="flex items-center space-x-2">
@@ -615,7 +689,7 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                               </div>
                               <div>
                                 <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                                  Reference Number
+                                  Application ID
                                 </dt>
                                 <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100 font-mono">
                                   {application.referenceNumber}
@@ -646,22 +720,30 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                               <h3 className="text-sm font-medium text-yellow-900 dark:text-yellow-300 mb-2">
                                 Revision Requested
                               </h3>
-                              <p className="text-sm text-yellow-800 dark:text-yellow-400">
-                                {getCurrentRevisionReason()}
-                              </p>
+                              <div className="text-sm text-yellow-800 dark:text-yellow-400 prose prose-sm dark:prose-invert max-w-none">
+                                <MarkdownPreview source={getCurrentRevisionReason() || ""} />
+                              </div>
                             </div>
                           )}
 
                           {/* Status History */}
                           {application.statusHistory &&
-                            application.statusHistory.length > 0 && (
+                            (application.statusHistory.length > 0 || application.id) && (
                               <div>
                                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                                  Status History
+                                  Comments & Activity
                                 </h3>
-                                <StatusHistoryTimeline
-                                  history={application.statusHistory}
+                                <CommentsTimeline
+                                  applicationId={application.id}
+                                  comments={comments}
+                                  statusHistory={application.statusHistory}
                                   currentStatus={application.status}
+                                  isAdmin={showStatusActions}
+                                  currentUserAddress={currentUserAddress}
+                                  onCommentAdd={handleCommentAdd}
+                                  onCommentEdit={handleCommentEdit}
+                                  onCommentDelete={handleCommentDelete}
+                                  isLoading={isLoadingComments}
                                 />
                               </div>
                             )}

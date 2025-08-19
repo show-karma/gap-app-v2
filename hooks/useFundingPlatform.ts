@@ -476,7 +476,7 @@ export const useApplicationStatusV2 = (applicationId?: string) => {
 };
 
 /**
- * Hook for searching applications by reference number
+ * Hook for searching applications by Application ID
  */
 export const useApplicationByReference = (referenceNumber: string) => {
   const applicationQuery = useQuery({
@@ -497,7 +497,7 @@ export const useApplicationByReference = (referenceNumber: string) => {
 /**
  * Hook for exporting applications with V2 format support
  */
-export const useApplicationExport = (programId: string, chainId: number) => {
+export const useApplicationExport = (programId: string, chainId: number, isAdmin: boolean = false) => {
   const [isExporting, setIsExporting] = useState(false);
 
   const exportApplications = useCallback(async (
@@ -506,12 +506,19 @@ export const useApplicationExport = (programId: string, chainId: number) => {
   ) => {
     setIsExporting(true);
     try {
-      const data = await fundingPlatformService.applications.exportApplications(
-        programId,
-        chainId,
-        format,
-        filters
-      );
+      const data = isAdmin 
+        ? await fundingPlatformService.applications.exportApplicationsAdmin(
+            programId,
+            chainId,
+            format,
+            filters
+          )
+        : await fundingPlatformService.applications.exportApplications(
+            programId,
+            chainId,
+            format,
+            filters
+          );
 
       // Handle blob response for CSV
       let blob: Blob;
@@ -527,7 +534,8 @@ export const useApplicationExport = (programId: string, chainId: number) => {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `applications-${programId}-${new Date().toISOString().split('T')[0]}.${format}`;
+      const filePrefix = isAdmin ? 'admin-applications' : 'applications';
+      link.download = `${filePrefix}-${programId}-${new Date().toISOString().split('T')[0]}.${format}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -540,7 +548,7 @@ export const useApplicationExport = (programId: string, chainId: number) => {
     } finally {
       setIsExporting(false);
     }
-  }, [programId, chainId]);
+  }, [programId, chainId, isAdmin]);
 
   return {
     exportApplications,
