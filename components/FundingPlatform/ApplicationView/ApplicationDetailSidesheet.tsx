@@ -20,6 +20,7 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { formatDate } from "@/utilities/formatDate";
 import { useAccount } from "wagmi";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { getProjectTitle } from "../helper/getProjecTitle";
 
 interface ApplicationDetailSidesheetProps {
   application: IFundingApplication | null;
@@ -631,11 +632,8 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                         <div className="flex items-start justify-between space-x-3">
                           <div className="space-y-1">
                             <Dialog.Title className="text-base font-semibold leading-6 text-gray-900 dark:text-white">
-                              Application Details
+                              {getProjectTitle(application)}
                             </Dialog.Title>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                              {application.referenceNumber}
-                            </p>
                           </div>
 
                           <div className="flex items-center space-x-2">
@@ -691,7 +689,7 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                               </div>
                               <div>
                                 <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                                  Reference Number
+                                  Application ID
                                 </dt>
                                 <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100 font-mono">
                                   {application.referenceNumber}

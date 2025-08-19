@@ -476,7 +476,7 @@ export const useApplicationStatusV2 = (applicationId?: string) => {
 };
 
 /**
- * Hook for searching applications by reference number
+ * Hook for searching applications by Application ID
  */
 export const useApplicationByReference = (referenceNumber: string) => {
   const applicationQuery = useQuery({

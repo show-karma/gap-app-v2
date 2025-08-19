@@ -11,6 +11,8 @@ import { format, isValid, parseISO } from "date-fns";
 import { ArrowDownTrayIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import StatusChangeModal from "../ApplicationView/StatusChangeModal";
+import { getProjectTitle } from "../helper/getProjecTitle";
+import { formatDate } from "@/utilities/formatDate";
 
 interface IApplicationListComponentProps extends IApplicationListProps {
   applications: IFundingApplication[];
@@ -41,43 +43,7 @@ const formatStatus = (status: string): string => {
     .join(" ");
 };
 
-/**
- * Safely format a date string, handling invalid dates gracefully
- */
-const formatDate = (
-  dateString: string | Date | undefined | null,
-  formatString: string = "MMM dd, yyyy HH:mm"
-): string => {
-  try {
-    // Handle null/undefined cases
-    if (!dateString) {
-      return "No date";
-    }
 
-    let date: Date;
-
-    if (typeof dateString === "string") {
-      // Try parsing as ISO string first
-      date = parseISO(dateString);
-
-      // If that fails, try regular Date constructor
-      if (!isValid(date)) {
-        date = new Date(dateString);
-      }
-    } else {
-      date = dateString;
-    }
-
-    // Check if the date is valid
-    if (!isValid(date)) {
-      return "Invalid date";
-    }
-
-    return format(date, formatString);
-  } catch (error) {
-    return "Invalid date";
-  }
-};
 
 const ApplicationList: FC<IApplicationListComponentProps> = ({
   programId,
@@ -171,6 +137,8 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
     );
   }
 
+
+
   return (
     <div className="flex flex-col w-full space-y-6 px-4 py-4 bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
       {/* Applications List */}
@@ -195,12 +163,15 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                 <div className="flex-1 space-y-2">
                   <div className="flex items-center space-x-3">
                     <h3 className="font-medium text-gray-900 dark:text-white">
-                      {application.referenceNumber}
+                      {getProjectTitle(application)}
                     </h3>
                     {getStatusBadge(application.status)}
 
                   </div>
 
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    Application ID: {application.referenceNumber}
+                  </p>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     From: {application.applicantEmail}
                   </p>
