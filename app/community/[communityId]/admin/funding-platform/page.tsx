@@ -687,7 +687,7 @@ export default function FundingPlatformAdminPage() {
                   {/* Apply Button */}
                   <div className="mb-3">
                     <Link
-                      href={envVars.isDev ? `https://testapp.opgrants.io/programs/${program.programId}/${program.chainID}/apply` : `https://app.opgrants.io/programs/${program.programId}/${program.chainID}/apply`}
+                      href={envVars.isDev ? `https://testapp.opgrants.io/programs/${program.programId}/apply` : `https://app.opgrants.io/programs/${program.programId}/apply`}
                       className="w-full"
                       target="_blank"
                     >
