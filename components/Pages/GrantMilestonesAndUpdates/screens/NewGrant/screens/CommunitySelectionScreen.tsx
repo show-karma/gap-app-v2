@@ -178,6 +178,7 @@ export const CommunitySelectionScreen: React.FC = () => {
                       "Hackathon",
                       "Divvi Builder Camp",
                       "Celo Support Streams",
+                      "GoodDollar",
                     ]
               }
             />
