@@ -23,7 +23,7 @@ const CommentInput: FC<CommentInputProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!content.trim() || isSubmitting) return;
 
     setIsSubmitting(true);
@@ -56,7 +56,7 @@ const CommentInput: FC<CommentInputProps> = ({
             rows={3}
             className={cn(
               'block w-full rounded-lg border-gray-300 dark:border-gray-600',
-              'bg-white dark:bg-gray-800',
+              'bg-zinc-50 dark:bg-zinc-800',
               'text-gray-900 dark:text-gray-100',
               'placeholder-gray-500 dark:placeholder-gray-400',
               'focus:border-blue-500 focus:ring-blue-500 dark:focus:border-blue-400 dark:focus:ring-blue-400',

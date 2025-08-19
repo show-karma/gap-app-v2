@@ -249,7 +249,7 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
 
       {/* Comment Input - Show for all users who have onCommentAdd handler */}
       {onCommentAdd && (
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+        <div className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4">
           <CommentInput
             onSubmit={handleAddComment}
             disabled={isAddingComment}
