@@ -51,6 +51,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
   applications,
   isLoading = false,
   onApplicationSelect,
+  onApplicationHover,
   onStatusChange,
   showStatusActions = false,
 }) => {
@@ -157,6 +158,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
               key={application.id}
               className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:shadow-md transition-shadow cursor-pointer"
               onClick={() => onApplicationSelect?.(application)}
+              onMouseEnter={() => onApplicationHover?.(application.id)}
             >
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
                 {/* Application Info */}

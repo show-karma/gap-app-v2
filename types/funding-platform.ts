@@ -158,6 +158,7 @@ export interface IApplicationListProps {
   programId: string;
   chainID: number;
   onApplicationSelect?: (application: IFundingApplication) => void;
+  onApplicationHover?: (applicationId: string) => void;
   statusFilter?: FundingApplicationStatusV2;
 }
 

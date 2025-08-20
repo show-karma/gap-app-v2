@@ -17,9 +17,10 @@ interface IApplicationListWithAPIProps {
   programId: string;
   chainId: number;
   onApplicationSelect?: (application: IFundingApplication) => void;
+  onApplicationHover?: (applicationId: string) => void;
   showStatusActions?: boolean;
   initialFilters?: IApplicationFilters;
-  onStatusChange?: (applicationId: string, status: string, note?: string) => Promise<void>;
+  onStatusChange?: (applicationId: string, status: string, note?: string) => Promise<any>;
   isAdmin?: boolean;
 }
 
@@ -27,6 +28,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
   programId,
   chainId,
   onApplicationSelect,
+  onApplicationHover,
   showStatusActions = false,
   initialFilters = {},
   onStatusChange: parentOnStatusChange,
@@ -58,20 +60,44 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
 
   // Sync filters with URL
   useEffect(() => {
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(searchParams.toString());
 
-    if (filters.search) params.set("search", filters.search);
-    if (filters.status) params.set("status", filters.status);
-    if (filters.dateFrom) params.set("dateFrom", filters.dateFrom);
-    if (filters.dateTo) params.set("dateTo", filters.dateTo);
-    if (filters.page && filters.page > 1)
+    // Update filter params
+    if (filters.search) {
+      params.set("search", filters.search);
+    } else {
+      params.delete("search");
+    }
+    
+    if (filters.status) {
+      params.set("status", filters.status);
+    } else {
+      params.delete("status");
+    }
+    
+    if (filters.dateFrom) {
+      params.set("dateFrom", filters.dateFrom);
+    } else {
+      params.delete("dateFrom");
+    }
+    
+    if (filters.dateTo) {
+      params.set("dateTo", filters.dateTo);
+    } else {
+      params.delete("dateTo");
+    }
+    
+    if (filters.page && filters.page > 1) {
       params.set("page", filters.page.toString());
+    } else {
+      params.delete("page");
+    }
 
     const queryString = params.toString();
     const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
 
-    router.push(newUrl, { scroll: false });
-  }, [filters, pathname, router]);
+    router.replace(newUrl, { scroll: false });
+  }, [filters, pathname, router, searchParams]);
 
   const handleStatusChange = useCallback(
     async (applicationId: string, status: string, note?: string) => {
@@ -273,6 +299,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
         applications={applications}
         isLoading={isLoading}
         onApplicationSelect={onApplicationSelect}
+        onApplicationHover={onApplicationHover}
         onStatusChange={showStatusActions ? handleStatusChange : undefined}
         showStatusActions={showStatusActions}
       />
