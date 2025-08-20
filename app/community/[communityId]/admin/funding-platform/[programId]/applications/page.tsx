@@ -70,8 +70,8 @@ export default function ApplicationsPage() {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const { isStaff } = useStaff();
 
-  // Use the funding applications hook to get the status update function and applications data
-  const { applications, updateApplicationStatus } = useFundingApplications(
+  // Use the funding applications hook to get applications data
+  const { applications } = useFundingApplications(
     programId,
     parsedChainId,
     initialFilters
@@ -88,8 +88,11 @@ export default function ApplicationsPage() {
 
   // React Query: Mutation for updating application status
   const statusMutation = useMutation({
-    mutationFn: ({ applicationId, status, note }: { applicationId: string; status: string; note?: string }) =>
-      updateApplicationStatus({ applicationId, status, note }),
+    mutationFn: ({ applicationId, status, note }: { applicationId: string; status: string; note?: string }) => 
+      fundingApplicationsAPI.updateApplicationStatus(applicationId, {
+        status: status as any,
+        reason: note || '',
+      }),
     onSuccess: () => {
       // Invalidate and refetch application data
       queryClient.invalidateQueries({ queryKey: ['funding-applications', programId, parsedChainId] });
