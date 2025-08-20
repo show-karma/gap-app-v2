@@ -68,25 +68,25 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
     } else {
       params.delete("search");
     }
-    
+
     if (filters.status) {
       params.set("status", filters.status);
     } else {
       params.delete("status");
     }
-    
+
     if (filters.dateFrom) {
       params.set("dateFrom", filters.dateFrom);
     } else {
       params.delete("dateFrom");
     }
-    
+
     if (filters.dateTo) {
       params.set("dateTo", filters.dateTo);
     } else {
       params.delete("dateTo");
     }
-    
+
     if (filters.page && filters.page > 1) {
       params.set("page", filters.page.toString());
     } else {
@@ -279,15 +279,6 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
               {isExporting ? "Exporting..." : "Export CSV"}
             </Button>
 
-            <Button
-              onClick={() => handleExport("json")}
-              variant="secondary"
-              disabled={isExporting}
-              className="w-fit px-3 py-1 border bg-transparent text-zinc-500 font-medium border-zinc-200 dark:border-zinc-400 dark:text-zinc-400 flex flex-row gap-2"
-            >
-              <ArrowDownTrayIcon className="w-5 h-5" />
-              {isExporting ? "Exporting..." : "Export JSON"}
-            </Button>
           </div>
         </div>
       </div>

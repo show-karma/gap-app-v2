@@ -62,7 +62,7 @@ export default function ApplicationsPage() {
   const [selectedApplication, setSelectedApplication] =
     useState<IFundingApplication | null>(null);
   const [isSidesheetOpen, setIsSidesheetOpen] = useState(false);
-  
+
   const queryClient = useQueryClient();
 
   const { isCommunityAdmin, isLoading: isLoadingAdmin } =
@@ -88,7 +88,7 @@ export default function ApplicationsPage() {
 
   // React Query: Mutation for updating application status
   const statusMutation = useMutation({
-    mutationFn: ({ applicationId, status, note }: { applicationId: string; status: string; note?: string }) => 
+    mutationFn: ({ applicationId, status, note }: { applicationId: string; status: string; note?: string }) =>
       fundingApplicationsAPI.updateApplicationStatus(applicationId, {
         status: status as any,
         reason: note || '',
@@ -112,7 +112,7 @@ export default function ApplicationsPage() {
     if (applicationId) {
       // Try to find in already loaded applications first
       const appFromList = applications?.find(a => a.id === applicationId);
-      
+
       if (appFromList) {
         setSelectedApplication(appFromList);
         setIsSidesheetOpen(true);
@@ -135,16 +135,16 @@ export default function ApplicationsPage() {
   const handleApplicationSelect = (application: IFundingApplication) => {
     setSelectedApplication(application);
     setIsSidesheetOpen(true);
-    
+
     // Update URL with applicationId using replace to maintain history properly
     const params = new URLSearchParams(searchParams.toString());
-    params.set("applicationId", application.id);
+    params.set("applicationId", application.referenceNumber);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-    
+
     // Cache the application data in React Query
-    queryClient.setQueryData(['funding-application', application.id], application);
+    queryClient.setQueryData(['funding-application', application.referenceNumber], application);
   };
-  
+
   // Prefetch application on hover for better UX
   const handleApplicationHover = (applicationId: string) => {
     queryClient.prefetchQuery({
@@ -156,14 +156,14 @@ export default function ApplicationsPage() {
 
   const handleCloseSidesheet = () => {
     setIsSidesheetOpen(false);
-    
+
     // Remove applicationId from URL when closing
     const params = new URLSearchParams(searchParams.toString());
     params.delete("applicationId");
     const queryString = params.toString();
     const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
     router.replace(newUrl, { scroll: false });
-    
+
     // Clear selected application after animation completes
     setTimeout(() => setSelectedApplication(null), 300);
   };

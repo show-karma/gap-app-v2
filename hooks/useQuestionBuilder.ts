@@ -23,8 +23,8 @@ export const useQuestionBuilderSchema = (programId: string, chainId: number) => 
         const config = await fundingPlatformService.programs.getProgramConfiguration(programId, chainId);
         
         // Return the form schema
-        if (config?.formSchema) {
-          return config.formSchema as FormSchema;
+        if (config?.applicationConfig?.formSchema) {
+          return config.applicationConfig.formSchema as FormSchema;
         }
         
         // Return null if no React Hook Form schema found
