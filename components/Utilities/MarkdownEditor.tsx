@@ -12,6 +12,8 @@ interface MarkdownEditorProps {
   onChange: any;
   className?: string;
   placeholderText?: string;
+  height?: number;
+  minHeight?: number;
 }
 const MDEditor = dynamic(
   () => import("@uiw/react-md-editor").then((mod) => mod.default),
@@ -23,6 +25,8 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
   onChange,
   className = "",
   placeholderText,
+  height = 300,
+  minHeight = 270,
 }) => {
   return (
     <div
@@ -37,8 +41,8 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
         )}
         value={value}
         onChange={onChange}
-        height={300}
-        minHeight={270} // for some reason this is needed to prevent the editor from being too small
+        height={height}
+        minHeight={minHeight} // for some reason this is needed to prevent the editor from being too small
         preview="edit"
         previewOptions={{
           rehypePlugins: [[rehypeSanitize]],

@@ -8,6 +8,7 @@ import { FormField } from '@/types/question-builder';
 import { Button } from '@/components/Utilities/Button';
 import { QuestionTooltip } from '@/components/Utilities/QuestionTooltip';
 import { TrashIcon, ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/solid';
+import { MarkdownEditor } from '../Utilities/MarkdownEditor';
 
 const fieldSchema = z.object({
   label: z.string().min(1, 'Label is required'),
@@ -168,12 +169,15 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown }:
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Description (Help Text)
           </label>
-          <textarea
-            {...register('description')}
-            rows={2}
+          <MarkdownEditor
+            value={field.description || ''}
+            onChange={(value: string) => setValue('description', value)}
+            placeholderText="Optional description or help text"
+            height={200}
+            minHeight={170}
             className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300"
-            placeholder="Optional description or help text"
           />
+
         </div>
 
         <div className="space-y-3">

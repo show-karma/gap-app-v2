@@ -17,6 +17,8 @@ import {
   ExclamationTriangleIcon,
   WrenchScrewdriverIcon,
 } from "@heroicons/react/24/solid";
+import { MarkdownPreview } from "../Utilities/MarkdownPreview";
+import { MarkdownEditor } from "../Utilities/MarkdownEditor";
 
 interface QuestionBuilderProps {
   initialSchema?: FormSchema;
@@ -178,7 +180,7 @@ export function QuestionBuilder({
     >
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sm:px-3 md:px-4 px-6 py-2">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between flex-wrap gap-4">
           <div className="flex flex-col gap-2 mb-4 sm:mb-0">
             <input
               type="text"
@@ -187,12 +189,13 @@ export function QuestionBuilder({
               className="text-xl font-bold bg-transparent border-none outline-none bg-zinc-100 dark:bg-zinc-800 rounded-md text-gray-900 dark:text-white placeholder-gray-400"
               placeholder="Form Title"
             />
-            <input
-              type="text"
+            <MarkdownEditor
               value={schema.description || ""}
-              onChange={(e) => handleDescriptionChange(e.target.value)}
+              onChange={(value: string) => handleDescriptionChange(value)}
               className="mt-1 text-sm bg-transparent border-none outline-none bg-zinc-100 dark:bg-zinc-800 rounded-md text-gray-600 dark:text-gray-400 placeholder-gray-500"
-              placeholder="Form Description"
+              placeholderText="Form Description"
+              height={100}
+              minHeight={100}
             />
           </div>
 
@@ -353,9 +356,13 @@ export function QuestionBuilder({
                                   {field.label}
                                 </h4>
                                 {field.description && (
-                                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                    {field.description}
-                                  </p>
+                                  <MarkdownPreview
+                                    className="text-sm text-gray-500 dark:text-gray-400 mt-1"
+                                    components={{
+                                      p: ({ children }) => <span className="text-sm text-gray-500 dark:text-gray-400 mt-1">{children}</span>,
+                                    }}
+                                    source={field.description}
+                                  />
                                 )}
                               </div>
                               <div className="ml-4">
