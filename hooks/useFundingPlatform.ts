@@ -139,7 +139,8 @@ export const useProgramConfig = (programId: string, chainId: number) => {
   });
 
   return {
-    config: configQuery.data,
+    data: configQuery.data,
+    config: configQuery.data?.applicationConfig,
     isLoading: configQuery.isLoading,
     error: configQuery.error,
     updateConfig: updateConfigMutation.mutate,
@@ -501,7 +502,7 @@ export const useApplicationExport = (programId: string, chainId: number, isAdmin
   const [isExporting, setIsExporting] = useState(false);
 
   const exportApplications = useCallback(async (
-    format: ExportFormat = 'json',
+    format: ExportFormat = 'csv',
     filters: IApplicationFilters = {}
   ) => {
     setIsExporting(true);

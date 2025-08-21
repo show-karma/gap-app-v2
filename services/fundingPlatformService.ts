@@ -101,6 +101,8 @@ export type FundingProgram = {
     communityRef?: string[];
   };
   applicationConfig: IFundingProgramConfig;
+  communitySlug?: string;
+	communityUID?: string;
   metrics?: {
     totalApplications: number;
     pendingApplications: number;
@@ -172,11 +174,11 @@ export const fundingProgramsAPI = {
   async getProgramConfiguration(
     programId: string,
     chainId: number
-  ): Promise<IFundingProgramConfig | null> {
+  ): Promise<FundingProgram | null> {
     const response = await apiClient.get(
       `/v2/funding-program-configs/${programId}/${chainId.toString()}`
     );
-    return response.data?.applicationConfig;
+    return response.data;
   },
 
   /**

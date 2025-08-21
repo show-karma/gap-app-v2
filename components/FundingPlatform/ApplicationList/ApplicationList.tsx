@@ -51,6 +51,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
   applications,
   isLoading = false,
   onApplicationSelect,
+  onApplicationHover,
   onStatusChange,
   showStatusActions = false,
 }) => {
@@ -154,9 +155,10 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
         <div className="space-y-4">
           {paginatedApplications.map((application) => (
             <div
-              key={application.id}
+              key={application.referenceNumber}
               className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:shadow-md transition-shadow cursor-pointer"
               onClick={() => onApplicationSelect?.(application)}
+              onMouseEnter={() => onApplicationHover?.(application.referenceNumber)}
             >
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
                 {/* Application Info */}
@@ -193,7 +195,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                         <Button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleStatusChangeClick(application.id, "under_review");
+                            handleStatusChangeClick(application.referenceNumber, "under_review");
                           }}
                           variant="secondary"
                           className="w-fit px-3 py-1 border bg-transparent text-purple-500 font-medium border-purple-200 dark:border-purple-700 flex flex-row gap-2"
@@ -210,7 +212,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                             onClick={(e) => {
                               e.stopPropagation();
                               handleStatusChangeClick(
-                                application.id,
+                                application.referenceNumber,
                                 "revision_requested"
                               );
                             }}
@@ -223,7 +225,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                           <Button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleStatusChangeClick(application.id, "approved");
+                              handleStatusChangeClick(application.referenceNumber, "approved");
                             }}
                             variant="secondary"
                             className="w-fit px-3 py-1 border bg-transparent text-green-500 font-medium border-green-200 dark:border-green-700 flex flex-row gap-2"
@@ -235,7 +237,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                           <Button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleStatusChangeClick(application.id, "rejected");
+                              handleStatusChangeClick(application.referenceNumber, "rejected");
                             }}
                             variant="secondary"
                             className="w-fit px-3 py-1 border bg-transparent text-red-500 font-medium border-red-200 dark:border-red-700 flex flex-row gap-2"
@@ -255,7 +257,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleStatusChangeClick(
-                                  application.id,
+                                  application.referenceNumber,
                                   "revision_requested"
                                 );
                               }}
@@ -270,7 +272,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                             <Button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleStatusChangeClick(application.id, "approved");
+                                handleStatusChangeClick(application.referenceNumber, "approved");
                               }}
                               variant="secondary"
                               className="w-fit px-3 py-1 border bg-transparent text-green-500 font-medium border-green-200 dark:border-green-700 flex flex-row gap-2"
@@ -284,7 +286,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                             <Button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleStatusChangeClick(application.id, "rejected");
+                                handleStatusChangeClick(application.referenceNumber, "rejected");
                               }}
                               variant="secondary"
                               className="w-fit px-3 py-1 border bg-transparent text-red-500 font-medium border-red-200 dark:border-red-700 flex flex-row gap-2"

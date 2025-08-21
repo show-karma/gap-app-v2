@@ -22,6 +22,9 @@ import { formatDate } from "@/utilities/formatDate";
 import { useAccount } from "wagmi";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { getProjectTitle } from "../helper/getProjecTitle";
+import { AIEvaluationDisplay } from "./AIEvaluation";
+import { useProgram } from "@/hooks/usePrograms";
+import { useProgramConfig } from "@/hooks/useFundingPlatform";
 
 interface ApplicationDetailSidesheetProps {
   application: IFundingApplication | null;
@@ -74,6 +77,8 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
   const [application, setApplication] = useState<IFundingApplication | null>(initialApplication);
   const [isLoadingApplication, setIsLoadingApplication] = useState(false);
 
+  const { data: program } = useProgramConfig(application?.programId as string, application?.chainID as number);
+
   // Comments state
   const [comments, setComments] = useState<ApplicationComment[]>([]);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
@@ -83,12 +88,12 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
 
   // Fetch comments for the application
   const fetchComments = useCallback(async () => {
-    if (!application?.id) return;
+    if (!application?.referenceNumber) return;
 
     setIsLoadingComments(true);
     try {
       const fetchedComments = await applicationCommentsService.getComments(
-        application.id
+        application.referenceNumber
       );
       setComments(fetchedComments);
     } catch (error) {
@@ -96,15 +101,15 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
     } finally {
       setIsLoadingComments(false);
     }
-  }, [application?.id]);
+  }, [application?.referenceNumber]);
 
   // Comment handlers
   const handleCommentAdd = useCallback(async (content: string) => {
-    if (!application?.id) return;
+    if (!application?.referenceNumber) return;
 
     try {
       const newComment = await applicationCommentsService.createComment(
-        application.id,
+        application.referenceNumber,
         content
       );
       setComments(prev => [...prev, newComment]);
@@ -112,7 +117,7 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
       console.error('Failed to add comment:', error);
       throw error; // Let the CommentsTimeline component handle the error UI
     }
-  }, [application?.id]);
+  }, [application?.referenceNumber]);
 
   const handleCommentEdit = useCallback(async (commentId: string, content: string) => {
     try {
@@ -168,10 +173,10 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
 
   // Fetch comments when application changes
   useEffect(() => {
-    if (application?.id && isOpen) {
+    if (application?.referenceNumber && isOpen) {
       fetchComments();
     }
-  }, [application?.id, isOpen, fetchComments]);
+  }, [application?.referenceNumber, isOpen, fetchComments]);
 
   if (!application) return null;
 
@@ -201,7 +206,7 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
           statusHistory: [...(prev.statusHistory || []), newStatusEntry]
         } : null);
 
-        await onStatusChange(application.id, pendingStatus, reason);
+        await onStatusChange(application.referenceNumber, pendingStatus, reason);
 
         // Close modal
         setStatusModalOpen(false);
@@ -213,7 +218,7 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
         // Add a small delay then fetch with retry logic to get server-accurate data
         setTimeout(async () => {
           // Fetch fresh data after status update, with expected status for verification
-          await fetchApplicationData(application.id, expectedStatus);
+          await fetchApplicationData(application.referenceNumber, expectedStatus);
           setIsUpdatingStatus(false);
         }, 1000); // 1 second initial delay
 
@@ -221,7 +226,7 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
         console.error("Failed to update status:", error);
         setIsUpdatingStatus(false);
         // Revert optimistic update on error
-        fetchApplicationData(application.id);
+        fetchApplicationData(application.referenceNumber);
       }
     }
   };
@@ -727,7 +732,15 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
                               AI Evaluation
                             </h3>
-                            {renderAIEvaluation()}
+                            {/* {renderAIEvaluation()} */}
+                            <AIEvaluationDisplay
+                              evaluation={application.aiEvaluation?.evaluation || null}
+                              isLoading={false}
+                              isEnabled={true}
+                              hasError={false}
+                              className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4"
+                              programName={program?.name || ''}
+                            />
                           </div>
 
                           {/* Current Revision Reason */}
@@ -744,13 +757,13 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
 
                           {/* Status History */}
                           {application.statusHistory &&
-                            (application.statusHistory.length > 0 || application.id) && (
+                            (application.statusHistory.length > 0 || application.referenceNumber) && (
                               <div>
                                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
                                   Comments & Activity
                                 </h3>
                                 <CommentsTimeline
-                                  applicationId={application.id}
+                                  applicationId={application.referenceNumber}
                                   comments={comments}
                                   statusHistory={application.statusHistory}
                                   currentStatus={application.status}
