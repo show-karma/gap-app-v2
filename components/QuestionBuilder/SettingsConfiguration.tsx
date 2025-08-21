@@ -6,10 +6,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { FormSchema } from '@/types/question-builder';
 import { LockClosedIcon } from '@heroicons/react/24/solid';
+import { ExternalLink } from '../Utilities/ExternalLink';
+import { LinkIcon } from '@heroicons/react/24/outline';
+import { envVars } from '@/utilities/enviromentVars';
 
 const settingsConfigSchema = z.object({
   privateApplications: z.boolean(),
-  browseAllApplications: z.string().url().optional().or(z.literal('')),
 });
 
 type SettingsConfigFormData = z.infer<typeof settingsConfigSchema>;
@@ -18,12 +20,14 @@ interface SettingsConfigurationProps {
   schema: FormSchema;
   onUpdate: (updatedSchema: FormSchema) => void;
   className?: string;
+  programId?: string;
 }
 
 export function SettingsConfiguration({
   schema,
   onUpdate,
-  className = ''
+  className = '',
+  programId
 }: SettingsConfigurationProps) {
   const {
     register,
@@ -33,7 +37,6 @@ export function SettingsConfiguration({
     resolver: zodResolver(settingsConfigSchema),
     defaultValues: {
       privateApplications: schema.settings?.privateApplications ?? true,
-      browseAllApplications: schema.settings?.browseAllApplications ?? '',
     },
   });
 
@@ -47,7 +50,6 @@ export function SettingsConfiguration({
           submitButtonText: schema.settings?.submitButtonText || 'Submit Application',
           confirmationMessage: schema.settings?.confirmationMessage || 'Thank you for your submission!',
           privateApplications: data.privateApplications ?? true,
-          browseAllApplications: data.browseAllApplications || undefined,
         },
       };
 
@@ -67,27 +69,21 @@ export function SettingsConfiguration({
       <div className="bg-white dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-zinc-700 p-6">
 
         {/* Browse All Applications URL Setting */}
-        <div className="space-y-3">
+        {watch('privateApplications') ? null : (
           <div className="flex flex-col space-y-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Browse All Applications URL
+              All Applications URL
             </label>
-            <input
-              {...register('browseAllApplications')}
-              type="url"
-              placeholder="https://example.com/applications"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm bg-white dark:bg-zinc-700 text-gray-900 dark:text-white"
-            />
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Optional: Provide a URL where users can browse all applications (e.g., a public dashboard or external page).
-            </p>
-            {errors.browseAllApplications && (
-              <p className="text-xs text-red-600 dark:text-red-400">
-                Please enter a valid URL
-              </p>
-            )}
+            <div className='flex flex-row items-center space-x-2'>
+              <ExternalLink className='underline text-blue-500'
+                href={envVars.isDev ? `https://testapp.opgrants.io/browse-applications?programId=${programId}` : `https://app.opgrants.io/browse-applications?programId=${programId}`}
+              >
+                Browse All Applications
+              </ExternalLink>
+              <LinkIcon className='w-4 h-4 text-blue-500' />
+            </div>
           </div>
-        </div>
+        )}
 
         <hr className="my-4" />
 

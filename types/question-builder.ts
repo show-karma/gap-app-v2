@@ -31,7 +31,6 @@ export interface FormSchema {
     submitButtonText: string;
     confirmationMessage: string;
     privateApplications?: boolean; // Whether this program has private applications
-    browseAllApplications?: string; // Optional URL where users can browse all applications
   };
   // AI configuration for the entire form
   aiConfig?: {

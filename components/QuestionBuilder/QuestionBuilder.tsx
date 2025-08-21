@@ -410,6 +410,7 @@ export function QuestionBuilder({
               <SettingsConfiguration
                 schema={schema}
                 onUpdate={handleAIConfigUpdate}
+                programId={programId}
               />
             </div>
           </div>
