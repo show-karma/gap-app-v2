@@ -34,6 +34,7 @@ import {
   Project,
   ProjectDetails,
   nullRef,
+  ExternalCustomLink,
 } from "@show-karma/karma-gap-sdk";
 import { useRouter } from "next/navigation";
 import {
@@ -79,6 +80,16 @@ import { FarcasterIcon } from "@/components/Icons/Farcaster";
 import { DeckIcon } from "@/components/Icons/Deck";
 import { VideoIcon } from "@/components/Icons/Video";
 import { useWallet } from "@/hooks/useWallet";
+
+type CustomLink = {
+  id: string;
+  name: string;
+  url: string;
+}
+
+function isCustomLink(link: any): link is ExternalCustomLink {
+  return typeof link.name === 'string' && typeof link.url === 'string';
+}
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -190,49 +201,62 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 }) => {
   const dataToUpdate = projectToUpdate
     ? {
-        chainID: projectToUpdate?.chainID,
-        description: projectToUpdate?.details?.data?.description || "",
-        title: projectToUpdate?.details?.data?.title || "",
-        problem: projectToUpdate?.details?.data?.problem,
-        solution: projectToUpdate?.details?.data?.solution,
-        missionSummary: projectToUpdate?.details?.data?.missionSummary,
-        locationOfImpact: projectToUpdate?.details?.data?.locationOfImpact,
-        imageURL: projectToUpdate?.details?.data?.imageURL,
-        twitter: projectToUpdate?.details?.data?.links?.find(
-          (link) => link.type === "twitter"
-        )?.url,
-        github: projectToUpdate?.details?.data?.links?.find(
-          (link) => link.type === "github"
-        )?.url,
-        discord: projectToUpdate?.details?.data?.links?.find(
-          (link) => link.type === "discord"
-        )?.url,
-        website: projectToUpdate?.details?.data?.links?.find(
-          (link) => link.type === "website"
-        )?.url,
-        linkedin: projectToUpdate?.details?.data?.links?.find(
-          (link) => link.type === "linkedin"
-        )?.url,
-        pitchDeck: projectToUpdate?.details?.data?.links?.find(
-          (link) => link.type === "pitchDeck"
-        )?.url,
-        demoVideo: projectToUpdate?.details?.data?.links?.find(
-          (link) => link.type === "demoVideo"
-        )?.url,
-        farcaster: projectToUpdate?.details?.data?.links?.find(
-          (link) => link.type === "farcaster"
-        )?.url,
-        profilePicture: projectToUpdate?.details?.data?.imageURL,
-        tags: projectToUpdate?.details?.data?.tags?.map((item) => item.name),
-        recipient: projectToUpdate?.recipient,
-        businessModel: projectToUpdate?.details?.data?.businessModel,
-        stageIn: projectToUpdate?.details?.data?.stageIn,
-        raisedMoney: projectToUpdate?.details?.data?.raisedMoney,
-        pathToTake: projectToUpdate?.details?.data?.pathToTake,
-      }
+      chainID: projectToUpdate?.chainID,
+      description: projectToUpdate?.details?.data?.description || "",
+      title: projectToUpdate?.details?.data?.title || "",
+      problem: projectToUpdate?.details?.data?.problem,
+      solution: projectToUpdate?.details?.data?.solution,
+      missionSummary: projectToUpdate?.details?.data?.missionSummary,
+      locationOfImpact: projectToUpdate?.details?.data?.locationOfImpact,
+      imageURL: projectToUpdate?.details?.data?.imageURL,
+      twitter: projectToUpdate?.details?.data?.links?.find(
+        (link) => link.type === "twitter"
+      )?.url,
+      github: projectToUpdate?.details?.data?.links?.find(
+        (link) => link.type === "github"
+      )?.url,
+      discord: projectToUpdate?.details?.data?.links?.find(
+        (link) => link.type === "discord"
+      )?.url,
+      website: projectToUpdate?.details?.data?.links?.find(
+        (link) => link.type === "website"
+      )?.url,
+      linkedin: projectToUpdate?.details?.data?.links?.find(
+        (link) => link.type === "linkedin"
+      )?.url,
+      pitchDeck: projectToUpdate?.details?.data?.links?.find(
+        (link) => link.type === "pitchDeck"
+      )?.url,
+      demoVideo: projectToUpdate?.details?.data?.links?.find(
+        (link) => link.type === "demoVideo"
+      )?.url,
+      farcaster: projectToUpdate?.details?.data?.links?.find(
+        (link) => link.type === "farcaster"
+      )?.url,
+      profilePicture: projectToUpdate?.details?.data?.imageURL,
+      tags: projectToUpdate?.details?.data?.tags?.map((item) => item.name),
+      recipient: projectToUpdate?.recipient,
+      businessModel: projectToUpdate?.details?.data?.businessModel,
+      stageIn: projectToUpdate?.details?.data?.stageIn,
+      raisedMoney: projectToUpdate?.details?.data?.raisedMoney,
+      pathToTake: projectToUpdate?.details?.data?.pathToTake,
+    }
     : undefined;
 
   const [contacts, setContacts] = useState<Contact[]>(previousContacts || []);
+  const [customLinks, setCustomLinks] = useState<CustomLink[]>(() => {
+    // Initialize custom links from project data if editing
+    if (projectToUpdate?.details?.data?.links) {
+      return projectToUpdate.details.data.links
+        .filter(isCustomLink)
+        .map((link, index) => ({
+          id: `custom-${index}`,
+          name: link.name || "",
+          url: link.url
+        }));
+    }
+    return [];
+  });
 
   // Modal state management - use edit store or local state based on mode
   const { isProjectEditModalOpen, setIsProjectEditModalOpen } =
@@ -332,6 +356,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           recipient: "",
         });
         setContacts([]);
+        setCustomLinks([]);
         setStep(0);
       }
     }
@@ -343,6 +368,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   function openModal() {
     setIsOpen(true);
   }
+
+  const validateCustomLinks = () => {
+    return customLinks.some(link => !link.name.trim() || !link.url.trim());
+  };
 
   const hasErrors = () => {
     if (step === 0) {
@@ -371,7 +400,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         !!errors?.pitchDeck ||
         !!errors?.demoVideo ||
         !!errors?.farcaster ||
-        !!errors?.profilePicture
+        !!errors?.profilePicture ||
+        validateCustomLinks()
       );
     }
     if (step === 3) {
@@ -448,7 +478,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       interface NewProjectData extends IProjectDetails {
         // tags?: Tag[];
         members?: Hex[];
-        links: ExternalLink;
+        links: Array<ExternalLink[0] | ExternalCustomLink>;
         recipient?: string;
       }
       const { chainID, ...rest } = data;
@@ -488,6 +518,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
             type: "farcaster",
             url: data.farcaster || "",
           },
+          ...(customLinks?.map(link => ({
+            type: "custom",
+            name: link.name,
+            url: link.url
+          })) || []),
         ],
         imageURL: data.profilePicture || "",
       };
@@ -653,6 +688,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       setStep(0);
       setIsStepper(false);
       setContacts([]);
+      setCustomLinks([]);
     } catch (error: any) {
       console.log({ error });
       errorManager(
@@ -722,6 +758,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         pitchDeck: data.pitchDeck,
         demoVideo: data.demoVideo,
         farcaster: data.farcaster,
+        customLinks,
       };
 
       // Handle GitHub repository update if changed
@@ -789,8 +826,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     } catch (error: any) {
       console.log(error);
       errorManager(
-        `Error updating project ${
-          projectToUpdate?.details?.data?.slug || projectToUpdate?.uid
+        `Error updating project ${projectToUpdate?.details?.data?.slug || projectToUpdate?.uid
         }`,
         error,
         { ...data, address },
@@ -802,6 +838,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     } finally {
       setIsLoading(false);
       setIsStepper(false);
+      setCustomLinks([]);
     }
   };
 
@@ -844,7 +881,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       value.length < 3 ||
       (projectToUpdate &&
         value.toLowerCase() ===
-          projectToUpdate?.details?.data?.title?.toLowerCase())
+        projectToUpdate?.details?.data?.title?.toLowerCase())
     ) {
       return;
     }
@@ -908,7 +945,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 <p className="text-red-500">
                   {errors.title?.message}{" "}
                   {errors.title?.message &&
-                  errors.title?.message.includes("similar") ? (
+                    errors.title?.message.includes("similar") ? (
                     <>
                       <span>
                         If you need help getting access to your project, message
@@ -925,7 +962,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 </p>
               )}
               {errors.title?.message &&
-              errors.title?.message.includes("similar") ? (
+                errors.title?.message.includes("similar") ? (
                 <span
                   className="text-blue-500 underline cursor-pointer"
                   style={{
@@ -1194,6 +1231,77 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               />
             </div>
             <p className="text-red-500">{errors.profilePicture?.message}</p>
+          </div>
+
+          {/* Custom Links Section */}
+          <div className="flex w-full flex-col gap-4">
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+              <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                Custom Links
+              </h4>
+              {customLinks.map((link, index) => (
+                <div key={link.id} className="flex w-full flex-col gap-2 mb-4">
+                  <div className="flex gap-3">
+                    <div className="flex-1 flex flex-col gap-1">
+                      <label className={labelStyle}>Name</label>
+                      <input
+                        type="text"
+                        value={link.name}
+                        onChange={(e) => {
+                          const updatedLinks = [...customLinks];
+                          updatedLinks[index].name = e.target.value;
+                          setCustomLinks(updatedLinks);
+                        }}
+                        className={inputStyle}
+                        placeholder="e.g., Documentation, Blog"
+                      />
+                    </div>
+                    <div className="flex-1 flex flex-col gap-1">
+                      <label className={labelStyle}>URL</label>
+                      <input
+                        type="text"
+                        value={link.url}
+                        onChange={(e) => {
+                          const updatedLinks = [...customLinks];
+                          updatedLinks[index].url = e.target.value;
+                          setCustomLinks(updatedLinks);
+                        }}
+                        className={inputStyle}
+                        placeholder="https://example.com"
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updatedLinks = customLinks.filter((_, i) => i !== index);
+                          setCustomLinks(updatedLinks);
+                        }}
+                        className="px-3 py-2 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                      >
+                        <XMarkIcon className="h-5 w-5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => {
+                  const newLink: CustomLink = {
+                    id: `custom-${Date.now()}`,
+                    name: "",
+                    url: ""
+                  };
+                  const updatedLinks = [...customLinks, newLink];
+                  setCustomLinks(updatedLinks);
+                }}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 border border-blue-300 dark:border-blue-600 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/20"
+              >
+                <PlusIcon className="h-4 w-4" />
+                Add New Link
+              </button>
+            </div>
           </div>
         </div>
       ),
