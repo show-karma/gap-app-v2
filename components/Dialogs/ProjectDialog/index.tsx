@@ -80,16 +80,7 @@ import { FarcasterIcon } from "@/components/Icons/Farcaster";
 import { DeckIcon } from "@/components/Icons/Deck";
 import { VideoIcon } from "@/components/Icons/Video";
 import { useWallet } from "@/hooks/useWallet";
-
-type CustomLink = {
-  id: string;
-  name: string;
-  url: string;
-}
-
-function isCustomLink(link: any): link is ExternalCustomLink {
-  return typeof link.name === 'string' && typeof link.url === 'string';
-}
+import { CustomLink, isCustomLink } from "@/utilities/customLink";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
