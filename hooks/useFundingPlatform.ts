@@ -229,12 +229,15 @@ export const useFundingApplications = (
 
   const exportApplications = useCallback(async (format: 'json' | 'csv' = 'json') => {
     try {
-      const data = await fundingPlatformService.applications.exportApplications(
+      const response = await fundingPlatformService.applications.exportApplications(
         programId, 
         chainId, 
         format, 
         filters
       );
+      
+      // Extract data and filename from response
+      const { data, filename } = response;
       
       // Create and download file
       const blob = new Blob([format === 'json' ? JSON.stringify(data, null, 2) : data], {
@@ -244,7 +247,10 @@ export const useFundingApplications = (
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `grant-applications-${programId}-${new Date().toISOString().split('T')[0]}.${format}`;
+      
+      // Use filename from server if available, otherwise generate one
+      link.download = filename || `applications-${programId}-${new Date().toISOString().split('T')[0]}.${format}`;
+      
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -507,7 +513,7 @@ export const useApplicationExport = (programId: string, chainId: number, isAdmin
   ) => {
     setIsExporting(true);
     try {
-      const data = isAdmin 
+      const response = isAdmin 
         ? await fundingPlatformService.applications.exportApplicationsAdmin(
             programId,
             chainId,
@@ -520,6 +526,9 @@ export const useApplicationExport = (programId: string, chainId: number, isAdmin
             format,
             filters
           );
+
+      // Extract data and filename from response
+      const { data, filename } = response;
 
       // Handle blob response for CSV
       let blob: Blob;
@@ -535,8 +544,15 @@ export const useApplicationExport = (programId: string, chainId: number, isAdmin
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      const filePrefix = isAdmin ? 'admin-applications' : 'applications';
-      link.download = `${filePrefix}-${programId}-${new Date().toISOString().split('T')[0]}.${format}`;
+      
+      // Use filename from server if available, otherwise generate one
+      if (filename) {
+        link.download = filename;
+      } else {
+        const filePrefix = isAdmin ? 'admin-applications' : 'applications';
+        link.download = `${filePrefix}-${programId}-${new Date().toISOString().split('T')[0]}.${format}`;
+      }
+      
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
