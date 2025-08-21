@@ -141,9 +141,6 @@ function GenericJSONDisplay({ data, programName }: { data: GenericJSON; programN
         return "text-default-700";
     };
 
-    // Check if program is audit grants or growth grants
-    const isAuditGrants = programName?.toLowerCase().includes("audit grants");
-    const isGrowthGrants = programName?.toLowerCase().includes("growth grants");
 
     // Check if it has a decision field for special formatting
     const hasDecision = "decision" in data;
@@ -151,7 +148,6 @@ function GenericJSONDisplay({ data, programName }: { data: GenericJSON; programN
 
     // Map decision values for audit grants
     const getDecisionDisplay = (value: string) => {
-        if (!isAuditGrants) return value.toUpperCase();
 
         const upperValue = value.toUpperCase();
         switch (upperValue) {
@@ -168,7 +164,6 @@ function GenericJSONDisplay({ data, programName }: { data: GenericJSON; programN
 
     // Get the display label for decision field
     const getDecisionLabel = () => {
-        if (isAuditGrants) return "Probability of approval";
         return "Decision";
     };
 
@@ -188,33 +183,6 @@ function GenericJSONDisplay({ data, programName }: { data: GenericJSON; programN
                     // Skip decision if already displayed
                     if (key === "decision" && hasDecision) return null;
 
-                    // Handle score field for growth grants
-                    if (isGrowthGrants && (key.toLowerCase() === "score" || key === "final_score")) {
-                        const scoreValue = typeof value === "number" ? value : parseFloat(String(value));
-                        let probabilityLevel = "Low";
-                        let probabilityColor = "text-danger-600";
-
-                        if (scoreValue > 7) {
-                            probabilityLevel = "High";
-                            probabilityColor = "text-success-600";
-                        } else if (scoreValue >= 4) {
-                            probabilityLevel = "Medium";
-                            probabilityColor = "text-warning-600";
-                        }
-
-                        return (
-                            <div key={key} className="py-2">
-                                <h5 className="text-sm font-medium text-default-600 mb-1">
-                                    Probability of approval
-                                </h5>
-                                <div className="text-sm">
-                                    <span className={`font-semibold ${probabilityColor}`}>
-                                        {probabilityLevel}
-                                    </span>
-                                </div>
-                            </div>
-                        );
-                    }
 
                     // Default rendering for other fields
                     return (
@@ -262,16 +230,6 @@ function EvaluationContent({
         return <GenericJSONDisplay data={parsedEvaluation as GenericJSON} programName={programName} />;
     }
 
-    // Check if program is growth grants for score display
-    const isGrowthGrants = programName?.toLowerCase().includes("growth grants");
-
-    const getProbabilityOfApproval = () => {
-        const score = parsedEvaluation.final_score || 0;
-        let probability = "Low";
-        if (score > 7) probability = "High";
-        else if (score >= 4) probability = "Medium";
-        return probability;
-    }
 
     return (
         <div className="space-y-4">
@@ -281,34 +239,21 @@ function EvaluationContent({
                     <div className="flex items-center gap-2">
                         {getScoreIcon(parsedEvaluation?.final_score || 0)}
                         <span className="font-medium">
-                            {isGrowthGrants ? (
-                                `Probability of approval`
-                            ) : (
-                                `Score: ${parsedEvaluation.final_score || 0}/10`
-                            )}
+                            Score: {parsedEvaluation.final_score || 0}/10
                         </span>
                     </div>
-                    {isGrowthGrants ?
-                        <span
-                            className={cn(
-                                "px-2.5 py-1 rounded-full text-xs font-medium",
-                                getStatusColor(parsedEvaluation.evaluation_status || "")
-                            )}
-                        >
-                            {getProbabilityOfApproval()}
-                        </span>
-                        : <span
-                            className={cn(
-                                "px-2.5 py-1 rounded-full text-xs font-medium",
-                                getStatusColor(parsedEvaluation.evaluation_status || "")
-                            )}
-                        >
-                            {parsedEvaluation.evaluation_status!.charAt(0).toUpperCase() +
-                                parsedEvaluation.evaluation_status?.slice(1)}
-                        </span>}
+                    <span
+                        className={cn(
+                            "px-2.5 py-1 rounded-full text-xs font-medium",
+                            getStatusColor(parsedEvaluation.evaluation_status || "")
+                        )}
+                    >
+                        {parsedEvaluation.evaluation_status!.charAt(0).toUpperCase() +
+                            parsedEvaluation.evaluation_status?.slice(1)}
+                    </span>
                 </div>
 
-                {isGrowthGrants ? null : <div className="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-2 overflow-hidden">
+                <div className="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-2 overflow-hidden">
                     <div
                         className={cn(
                             "h-2 rounded-full transition-all duration-300",
@@ -316,7 +261,7 @@ function EvaluationContent({
                         )}
                         style={{ width: `${(parsedEvaluation.final_score || 0) * 10}%` }}
                     />
-                </div>}
+                </div>
             </div>
 
             {/* Disqualification Reason */}

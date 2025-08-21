@@ -452,7 +452,7 @@ export const fundingApplicationsAPI = {
     chainId: number,
     format: ExportFormat = "json",
     filters: IApplicationFilters = {}
-  ): Promise<any> {
+  ): Promise<{ data: any; filename?: string }> {
     const params = new URLSearchParams();
     params.append("format", format);
 
@@ -467,7 +467,19 @@ export const fundingApplicationsAPI = {
         responseType: format === "csv" ? "blob" : "json",
       }
     );
-    return response.data;
+    
+    // Extract filename from Content-Disposition header if available
+    const contentDisposition = response.headers['content-disposition'];
+    let filename: string | undefined;
+    
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+      if (filenameMatch && filenameMatch[1]) {
+        filename = filenameMatch[1].replace(/['"]/g, '');
+      }
+    }
+    
+    return { data: response.data, filename };
   },
 
   /**
@@ -478,7 +490,7 @@ export const fundingApplicationsAPI = {
     chainId: number,
     format: ExportFormat = "json",
     filters: IApplicationFilters = {}
-  ): Promise<any> {
+  ): Promise<{ data: any; filename?: string }> {
     const params = new URLSearchParams();
     params.append("format", format);
 
@@ -493,7 +505,18 @@ export const fundingApplicationsAPI = {
         responseType: format === "csv" ? "blob" : "json",
       }
     );
-    return response.data;
+    
+    const contentDisposition = response.headers['content-disposition'];
+    let filename: string | undefined;
+    
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+      if (filenameMatch && filenameMatch[1]) {
+        filename = filenameMatch[1].replace(/['"]/g, '');
+      }
+    }
+    
+    return { data: response.data, filename };
   },
 
   /**
