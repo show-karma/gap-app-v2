@@ -19,6 +19,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { Cog6ToothIcon } from "@heroicons/react/24/outline";
 import { useFundingApplications } from "@/hooks/useFundingPlatform";
+import toast from "react-hot-toast";
 
 export default function ApplicationsPage() {
   const router = useRouter();
@@ -100,7 +101,8 @@ export default function ApplicationsPage() {
         queryClient.invalidateQueries({ queryKey: ['funding-application', applicationId] });
       }
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to update application status");
       console.error("Failed to update application status:", error);
     },
   });
@@ -170,7 +172,6 @@ export default function ApplicationsPage() {
 
   // Handle status change for both ApplicationList and ApplicationDetailSidesheet
   const handleStatusChange = async (applicationId: string, status: string, note?: string) => {
-    console.log("handleStatusChange", applicationId, status, note);
     return statusMutation.mutateAsync({ applicationId, status, note });
   };
 
