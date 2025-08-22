@@ -5,6 +5,7 @@ import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
 import {
   ExternalLink,
+  ExternalCustomLink,
   Project,
   TExternalLink,
 } from "@show-karma/karma-gap-sdk";
@@ -34,6 +35,11 @@ export const updateProject = async (
     pitchDeck?: string;
     demoVideo?: string;
     farcaster?: string;
+    customLinks?: Array<{
+      id: string;
+      name: string;
+      url: string;
+    }>;
   },
   signer: any,
   gap: any,
@@ -47,14 +53,24 @@ export const updateProject = async (
     if (project.details?.title?.toLowerCase() !== newProjectInfo.title?.toLowerCase()) {
       slug = await gap.generateSlug(newProjectInfo.title);
     }
-    const linkKeys = Object.keys(data);
 
-    const linksArray: ExternalLink = linkKeys.map((key) => {
-      return {
-        url: data[key as keyof typeof data] || "",
-        type: key as TExternalLink,
-      };
-    });
+    const linkKeys = Object
+      .keys(data)
+      .filter(key => key !== 'customLinks') as Array<keyof Omit<typeof data, 'customLinks'>>;
+
+    const linksArray: Array<ExternalLink[0] | ExternalCustomLink> = [
+      ...linkKeys.map((key) => {
+        return {
+          url: data[key] || "",
+          type: key as TExternalLink,
+        };
+      }),
+      ...(data.customLinks?.map(link => ({
+        type: "custom" as const,
+        name: link.name.trim(),
+        url: link.url.trim(),
+      })) || [])
+    ];
 
     project.details?.setValues({
       title: newProjectInfo.title,
