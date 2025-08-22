@@ -26,6 +26,7 @@ import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObject
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
 import { sanitizeInput } from "@/utilities/sanitize";
 import { useWallet } from "./useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 // Helper function to send outputs and deliverables data
 const sendOutputsAndDeliverables = async (
@@ -134,16 +135,17 @@ export const useMilestone = () => {
           );
 
           // Switch chain if needed
-          if (chain?.id !== chainId) {
-            await switchChainAsync?.({ chainId });
-          }
-          const gapClient = getGapClient(chainId);
+          const { success, chainId: actualChainId, gapClient } = await ensureCorrectChain({
+            targetChainId: chainId,
+            currentChainId: chain?.id,
+            switchChainAsync,
+          });
 
-          if (!gapClient) {
-            throw new Error("Failed to get GAP client");
+          if (!success || !gapClient) {
+            throw new Error("Failed to switch chain or get GAP client");
           }
 
-          const { walletClient, error } = await safeGetWalletClient(chainId);
+          const { walletClient, error } = await safeGetWalletClient(actualChainId);
           if (error || !walletClient) {
             throw new Error("Failed to connect to wallet", { cause: error });
           }
@@ -246,16 +248,20 @@ export const useMilestone = () => {
           id: `milestone-${milestone.uid}`,
         });
 
-        if (
-          !checkNetworkIsValid(chain?.id) ||
-          chain?.id !== milestone.chainID
-        ) {
-          await switchChainAsync?.({ chainId: milestone.chainID });
-          gapClient = getGapClient(milestone.chainID);
+        const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+          targetChainId: milestone.chainID,
+          currentChainId: chain?.id,
+          switchChainAsync,
+        });
+
+        if (!success) {
+          throw new Error("Failed to switch chain");
         }
 
+        gapClient = newGapClient;
+
         const { walletClient, error } = await safeGetWalletClient(
-          milestone.chainID
+          actualChainId
         );
         if (error || !walletClient || !gapClient) {
           throw new Error("Failed to connect to wallet", { cause: error });
@@ -406,16 +412,17 @@ export const useMilestone = () => {
           chains.push(chainId);
 
           // Switch chain if needed
-          if (chain?.id !== chainId) {
-            await switchChainAsync?.({ chainId });
-          }
-          const gapClient = getGapClient(chainId);
+          const { success, chainId: actualChainId, gapClient } = await ensureCorrectChain({
+            targetChainId: chainId,
+            currentChainId: chain?.id,
+            switchChainAsync,
+          });
 
-          if (!gapClient) {
-            throw new Error("Failed to get GAP client");
+          if (!success || !gapClient) {
+            throw new Error("Failed to switch chain or get GAP client");
           }
 
-          const { walletClient, error } = await safeGetWalletClient(chainId);
+          const { walletClient, error } = await safeGetWalletClient(actualChainId);
           if (error || !walletClient) {
             throw new Error("Failed to connect to wallet", { cause: error });
           }
@@ -535,16 +542,20 @@ export const useMilestone = () => {
           id: `milestone-${milestone.uid}`,
         });
 
-        if (
-          !checkNetworkIsValid(chain?.id) ||
-          chain?.id !== milestone.chainID
-        ) {
-          await switchChainAsync?.({ chainId: milestone.chainID });
-          gapClient = getGapClient(milestone.chainID);
+        const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+          targetChainId: milestone.chainID,
+          currentChainId: chain?.id,
+          switchChainAsync,
+        });
+
+        if (!success) {
+          throw new Error("Failed to switch chain");
         }
 
+        gapClient = newGapClient;
+
         const { walletClient, error } = await safeGetWalletClient(
-          milestone.chainID
+          actualChainId
         );
         if (error || !walletClient || !gapClient) {
           throw new Error("Failed to connect to wallet", { cause: error });
@@ -686,12 +697,20 @@ export const useMilestone = () => {
     let gapClient = gap;
 
     try {
-      if (!checkNetworkIsValid(chain?.id) || chain?.id !== milestone.chainID) {
-        await switchChainAsync?.({ chainId: milestone.chainID });
+      const { success, chainId: actualChainId, gapClient: updatedGapClient } = await ensureCorrectChain({
+        targetChainId: milestone.chainID,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        return;
       }
 
+      gapClient = updatedGapClient;
+
       const { walletClient, error } = await safeGetWalletClient(
-        milestone.chainID
+        actualChainId
       );
 
       if (error || !walletClient || !gapClient) {
@@ -842,16 +861,17 @@ export const useMilestone = () => {
         );
 
         // Switch chain if needed
-        if (chain?.id !== chainId) {
-          await switchChainAsync?.({ chainId });
-        }
-        const gapClient = getGapClient(chainId);
+        const { success, chainId: actualChainId, gapClient } = await ensureCorrectChain({
+          targetChainId: chainId,
+          currentChainId: chain?.id,
+          switchChainAsync,
+        });
 
-        if (!gapClient) {
-          throw new Error("Failed to get GAP client");
+        if (!success || !gapClient) {
+          throw new Error("Failed to switch chain or get GAP client");
         }
 
-        const { walletClient, error } = await safeGetWalletClient(chainId);
+        const { walletClient, error } = await safeGetWalletClient(actualChainId);
         if (error || !walletClient) {
           throw new Error("Failed to connect to wallet", { cause: error });
         }
@@ -1018,16 +1038,17 @@ export const useMilestone = () => {
           chains.push(chainId);
 
           // Switch chain if needed
-          if (chain?.id !== chainId) {
-            await switchChainAsync?.({ chainId });
-          }
-          const gapClient = getGapClient(chainId);
+          const { success, chainId: actualChainId, gapClient } = await ensureCorrectChain({
+            targetChainId: chainId,
+            currentChainId: chain?.id,
+            switchChainAsync,
+          });
 
-          if (!gapClient) {
-            throw new Error("Failed to get GAP client");
+          if (!success || !gapClient) {
+            throw new Error("Failed to switch chain or get GAP client");
           }
 
-          const { walletClient, error } = await safeGetWalletClient(chainId);
+          const { walletClient, error } = await safeGetWalletClient(actualChainId);
           if (error || !walletClient) {
             throw new Error("Failed to connect to wallet", { cause: error });
           }
@@ -1140,16 +1161,20 @@ export const useMilestone = () => {
           id: `milestone-${milestone.uid}`,
         });
 
-        if (
-          !checkNetworkIsValid(chain?.id) ||
-          chain?.id !== milestone.chainID
-        ) {
-          await switchChainAsync?.({ chainId: milestone.chainID });
-          gapClient = getGapClient(milestone.chainID);
+        const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+          targetChainId: milestone.chainID,
+          currentChainId: chain?.id,
+          switchChainAsync,
+        });
+
+        if (!success) {
+          throw new Error("Failed to switch chain");
         }
 
+        gapClient = newGapClient;
+
         const { walletClient, error } = await safeGetWalletClient(
-          milestone.chainID
+          actualChainId
         );
         if (error || !walletClient || !gapClient) {
           throw new Error("Failed to connect to wallet", { cause: error });

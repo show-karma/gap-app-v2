@@ -35,6 +35,7 @@ import { SHARE_TEXTS } from "@/utilities/share/text";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { useWallet } from "@/hooks/useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
 
 interface UpdatesProps {
@@ -60,13 +61,20 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   const undoMilestoneCompletion = async (milestone: IMilestoneResponse) => {
     let gapClient = gap;
     try {
-      if (!checkNetworkIsValid(chain?.id) || chain?.id !== milestone.chainID) {
-        await switchChainAsync?.({ chainId: milestone.chainID });
-        gapClient = getGapClient(milestone.chainID);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId: milestone.chainID,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        return;
       }
 
+      gapClient = newGapClient;
+
       const { walletClient, error } = await safeGetWalletClient(
-        milestone.chainID
+        actualChainId
       );
 
       if (error || !walletClient || !gapClient) {
@@ -231,7 +239,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
         </div>
 
         {milestone.completed?.data?.reason ||
-        milestone.completed?.data?.proofOfWork ? (
+          milestone.completed?.data?.proofOfWork ? (
           <div className="flex flex-col items-start " data-color-mode="light">
             <ReadMore
               readLessText="Read less"
@@ -258,23 +266,21 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
                     >
                       {milestone?.completed?.data.proofOfWork.includes("http")
                         ? `${milestone?.completed?.data.proofOfWork.slice(
-                            0,
-                            80
-                          )}${
-                            milestone?.completed?.data.proofOfWork.slice(0, 80)
-                              .length >= 80
-                              ? "..."
-                              : ""
-                          }`
+                          0,
+                          80
+                        )}${milestone?.completed?.data.proofOfWork.slice(0, 80)
+                          .length >= 80
+                          ? "..."
+                          : ""
+                        }`
                         : `https://${milestone?.completed?.data.proofOfWork.slice(
-                            0,
-                            80
-                          )}${
-                            milestone?.completed?.data.proofOfWork.slice(0, 80)
-                              .length >= 80
-                              ? "..."
-                              : ""
-                          }`}
+                          0,
+                          80
+                        )}${milestone?.completed?.data.proofOfWork.slice(0, 80)
+                          .length >= 80
+                          ? "..."
+                          : ""
+                        }`}
                     </ExternalLink>
                   ) : (
                     <p className="text-sm font-medium text-gray-500 dark:text-zinc-300 max-sm:text-xs">

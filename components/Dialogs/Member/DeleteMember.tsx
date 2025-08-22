@@ -17,6 +17,7 @@ import { useAccount } from "wagmi";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useWallet } from "@/hooks/useWallet";
 import { queryClient } from "@/components/Utilities/WagmiProvider";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 const DeleteDialog = dynamic(() =>
   import("@/components/DeleteDialog").then((mod) => mod.DeleteDialog)
@@ -44,14 +45,22 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({
     if (!address || !project) return;
     try {
       setIsDeleting(true);
-      if (chain?.id !== project.chainID) {
-        await switchChainAsync?.({ chainId: project.chainID });
-        gapClient = getGapClient(project.chainID);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId: project.chainID,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsDeleting(false);
+        return;
       }
+
+      gapClient = newGapClient;
       // Replace direct getWalletClient call with safeGetWalletClient
 
       const { walletClient, error } = await safeGetWalletClient(
-        project.chainID
+        actualChainId
       );
 
       if (error || !walletClient || !gapClient) {

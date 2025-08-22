@@ -1,7 +1,7 @@
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { queryClient } from "@/components/Utilities/WagmiProvider";
-import { getGapClient, useGap } from "@/hooks/useGap";
+import { useGap } from "@/hooks/useGap";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -20,6 +20,7 @@ import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 import { useWallet } from "@/hooks/useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 interface PromoteMemberDialogProps {
   memberAddress: string;
@@ -46,15 +47,19 @@ export const PromoteMemberDialog: FC<PromoteMemberDialogProps> = ({
     try {
       setIsPromoting(true);
       setIsStepper(true);
-      let gapClient = gap;
+      const { success, chainId: actualChainId, gapClient } = await ensureCorrectChain({
+        targetChainId: project.chainID,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
 
-      if (chain?.id !== project.chainID) {
-        await switchChainAsync?.({ chainId: project.chainID });
-        gapClient = getGapClient(project.chainID);
+      if (!success) {
+        setIsPromoting(false);
+        return;
       }
 
       const { walletClient, error } = await safeGetWalletClient(
-        project.chainID
+        actualChainId
       );
 
       if (error || !walletClient || !gapClient) {
