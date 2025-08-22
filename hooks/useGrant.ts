@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
 import { useGrantFormStore } from "@/components/Pages/GrantMilestonesAndUpdates/screens/NewGrant/store";
 import { useWallet } from "./useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 export function useGrant() {
   const [isLoading, setIsLoading] = useState(false);
@@ -54,11 +55,16 @@ export function useGrant() {
       setIsLoading(true);
       setIsStepper(true);
 
-      if (chain?.id !== oldGrant.chainID) {
-        await switchChainAsync?.({ chainId: oldGrant.chainID });
-        gapClient = getGapClient(communityNetworkId);
+      const { success, chainId: actualChainId, gapClient } = await ensureCorrectChain({
+        targetChainId: oldGrant.chainID,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success || !gapClient) {
+        setIsLoading(false);
+        return;
       }
-      if (!gapClient) return;
 
       const projectInstance = await getProjectById(oldGrant.refUID);
       const oldGrantInstance = projectInstance?.grants?.find(
@@ -85,7 +91,7 @@ export function useGrant() {
       oldGrantInstance.details?.setValues(grantData);
 
       const { walletClient, error } = await safeGetWalletClient(
-        oldGrant.chainID
+        actualChainId
       );
 
       if (error || !walletClient || !gapClient) {

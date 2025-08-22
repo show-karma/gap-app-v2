@@ -24,6 +24,7 @@ import toast from "react-hot-toast";
 import { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { useWallet } from "@/hooks/useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 
@@ -51,16 +52,21 @@ export const GrantCompletion: FC = () => {
   ) => {
     let gapClient = gap;
     try {
-      if (
-        !checkNetworkIsValid(chain?.id) ||
-        chain?.id !== grantToComplete.chainID
-      ) {
-        await switchChainAsync?.({ chainId: grantToComplete.chainID });
-        gapClient = getGapClient(grantToComplete.chainID);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId: grantToComplete.chainID,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsLoading(false);
+        return;
       }
 
+      gapClient = newGapClient;
+
       const { walletClient, error } = await safeGetWalletClient(
-        grantToComplete.chainID
+        actualChainId
       );
 
       if (error || !walletClient || !gapClient) {

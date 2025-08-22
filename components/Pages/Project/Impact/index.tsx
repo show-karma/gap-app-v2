@@ -33,6 +33,7 @@ import { TabTrigger } from "@/components/Utilities/Tabs";
 import { TabContent } from "@/components/Utilities/Tabs";
 import { OSOMetrics } from "./OSOMetrics";
 import { useWallet } from "@/hooks/useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 const headClasses =
   "text-black dark:text-white text-xs font-medium uppercase text-left px-6 py-3 font-body";
@@ -82,13 +83,21 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
     let gapClient = gap;
     try {
       setLoading({ ...loading, [impact.uid.toLowerCase()]: true });
-      if (chain?.id !== project.chainID) {
-        await switchChainAsync?.({ chainId: project.chainID });
-        gapClient = getGapClient(project.chainID);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId: project.chainID,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setLoading({ ...loading, [impact.uid.toLowerCase()]: false });
+        return;
       }
 
+      gapClient = newGapClient;
+
       const { walletClient, error } = await safeGetWalletClient(
-        project.chainID
+        actualChainId
       );
 
       if (error) {

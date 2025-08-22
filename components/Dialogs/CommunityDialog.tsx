@@ -17,7 +17,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { appNetwork } from "@/utilities/network";
 import { cn } from "@/utilities/tailwind";
-import { getGapClient, useGap } from "@/hooks/useGap";
+import { useGap } from "@/hooks/useGap";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import toast from "react-hot-toast";
 import { useStepper } from "@/store/modals/txStepper";
@@ -28,6 +28,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { errorManager } from "../Utilities/errorManager";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { useWallet } from "@/hooks/useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -106,10 +107,19 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
     setIsLoading(true); // Set loading state to true
 
     try {
-      if (chain?.id != selectedChain) {
-        await switchChainAsync?.({ chainId: selectedChain });
-        gapClient = getGapClient(selectedChain);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId: selectedChain,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsLoading(false);
+        return;
       }
+
+      gapClient = newGapClient;
+      
       const newCommunity = new Community({
         data: {
           community: true,
@@ -124,8 +134,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
         data.slug = await gapClient.generateSlug(data.slug as string);
       }
 
-      // Replace direct getWalletClient call with safeGetWalletClient
-      const { walletClient, error } = await safeGetWalletClient(selectedChain);
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
@@ -149,7 +158,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
             );
           }
           await fetchData(
-            INDEXER.ATTESTATION_LISTENER(newCommunity.uid, selectedChain),
+            INDEXER.ATTESTATION_LISTENER(newCommunity.uid, actualChainId),
             "POST",
             {}
           );

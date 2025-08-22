@@ -31,6 +31,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useWallet } from "@/hooks/useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 type VerifyImpactDialogProps = {
   impact: IProjectImpact;
@@ -91,16 +92,21 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
         (imp) => imp.uid === (impact.uid as string)
       );
       if (!findImpact) return;
-      if (
-        !checkNetworkIsValid(chain?.id) ||
-        chain?.id !== findImpact!.chainID
-      ) {
-        await switchChainAsync?.({ chainId: findImpact!.chainID });
-        gapClient = getGapClient(findImpact!.chainID);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId: findImpact!.chainID,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsLoading(false);
+        return;
       }
 
+      gapClient = newGapClient;
+
       const { walletClient, error } = await safeGetWalletClient(
-        findImpact!.chainID
+        actualChainId
       );
 
       if (error) {

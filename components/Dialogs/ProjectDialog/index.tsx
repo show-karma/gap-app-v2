@@ -9,10 +9,11 @@ import {
 } from "@/components/Icons";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { getGapClient, useGap } from "@/hooks/useGap";
+import { useGap } from "@/hooks/useGap";
 import { useProjectStore } from "@/store";
 import { useOwnerStore } from "@/store/owner";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import { MESSAGES } from "@/utilities/messages";
 import { Dialog, Transition } from "@headlessui/react";
 import {
@@ -190,46 +191,46 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 }) => {
   const dataToUpdate = projectToUpdate
     ? {
-        chainID: projectToUpdate?.chainID,
-        description: projectToUpdate?.details?.data?.description || "",
-        title: projectToUpdate?.details?.data?.title || "",
-        problem: projectToUpdate?.details?.data?.problem,
-        solution: projectToUpdate?.details?.data?.solution,
-        missionSummary: projectToUpdate?.details?.data?.missionSummary,
-        locationOfImpact: projectToUpdate?.details?.data?.locationOfImpact,
-        imageURL: projectToUpdate?.details?.data?.imageURL,
-        twitter: projectToUpdate?.details?.data?.links?.find(
-          (link) => link.type === "twitter"
-        )?.url,
-        github: projectToUpdate?.details?.data?.links?.find(
-          (link) => link.type === "github"
-        )?.url,
-        discord: projectToUpdate?.details?.data?.links?.find(
-          (link) => link.type === "discord"
-        )?.url,
-        website: projectToUpdate?.details?.data?.links?.find(
-          (link) => link.type === "website"
-        )?.url,
-        linkedin: projectToUpdate?.details?.data?.links?.find(
-          (link) => link.type === "linkedin"
-        )?.url,
-        pitchDeck: projectToUpdate?.details?.data?.links?.find(
-          (link) => link.type === "pitchDeck"
-        )?.url,
-        demoVideo: projectToUpdate?.details?.data?.links?.find(
-          (link) => link.type === "demoVideo"
-        )?.url,
-        farcaster: projectToUpdate?.details?.data?.links?.find(
-          (link) => link.type === "farcaster"
-        )?.url,
-        profilePicture: projectToUpdate?.details?.data?.imageURL,
-        tags: projectToUpdate?.details?.data?.tags?.map((item) => item.name),
-        recipient: projectToUpdate?.recipient,
-        businessModel: projectToUpdate?.details?.data?.businessModel,
-        stageIn: projectToUpdate?.details?.data?.stageIn,
-        raisedMoney: projectToUpdate?.details?.data?.raisedMoney,
-        pathToTake: projectToUpdate?.details?.data?.pathToTake,
-      }
+      chainID: projectToUpdate?.chainID,
+      description: projectToUpdate?.details?.data?.description || "",
+      title: projectToUpdate?.details?.data?.title || "",
+      problem: projectToUpdate?.details?.data?.problem,
+      solution: projectToUpdate?.details?.data?.solution,
+      missionSummary: projectToUpdate?.details?.data?.missionSummary,
+      locationOfImpact: projectToUpdate?.details?.data?.locationOfImpact,
+      imageURL: projectToUpdate?.details?.data?.imageURL,
+      twitter: projectToUpdate?.details?.data?.links?.find(
+        (link) => link.type === "twitter"
+      )?.url,
+      github: projectToUpdate?.details?.data?.links?.find(
+        (link) => link.type === "github"
+      )?.url,
+      discord: projectToUpdate?.details?.data?.links?.find(
+        (link) => link.type === "discord"
+      )?.url,
+      website: projectToUpdate?.details?.data?.links?.find(
+        (link) => link.type === "website"
+      )?.url,
+      linkedin: projectToUpdate?.details?.data?.links?.find(
+        (link) => link.type === "linkedin"
+      )?.url,
+      pitchDeck: projectToUpdate?.details?.data?.links?.find(
+        (link) => link.type === "pitchDeck"
+      )?.url,
+      demoVideo: projectToUpdate?.details?.data?.links?.find(
+        (link) => link.type === "demoVideo"
+      )?.url,
+      farcaster: projectToUpdate?.details?.data?.links?.find(
+        (link) => link.type === "farcaster"
+      )?.url,
+      profilePicture: projectToUpdate?.details?.data?.imageURL,
+      tags: projectToUpdate?.details?.data?.tags?.map((item) => item.name),
+      recipient: projectToUpdate?.recipient,
+      businessModel: projectToUpdate?.details?.data?.businessModel,
+      stageIn: projectToUpdate?.details?.data?.stageIn,
+      raisedMoney: projectToUpdate?.details?.data?.raisedMoney,
+      pathToTake: projectToUpdate?.details?.data?.pathToTake,
+    }
     : undefined;
 
   const [contacts, setContacts] = useState<Contact[]>(previousContacts || []);
@@ -418,7 +419,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     callback?.();
   };
 
-  const createProject = async (data: SchemaType) => {
+  const createProject = async (data: SchemaType): Promise<void> => {
     try {
       setIsLoading(true);
       if (!isConnected || !isAuth) {
@@ -429,12 +430,19 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       if (!gap) return;
 
       const chainSelected = data.chainID;
-      let gapClient = getGapClient(chainSelected);
 
-      if (chain?.id !== chainSelected) {
-        await switchChainAsync?.({ chainId: chainSelected });
-        gapClient = getGapClient(chainSelected);
+      // Ensure we're on the correct chain
+      const { success, chainId, gapClient } = await ensureCorrectChain({
+        targetChainId: chainSelected,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsLoading(false);
+        return;
       }
+
 
       const project = new Project({
         data: {
@@ -544,8 +552,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         );
       }
 
+      // Use chainId from ensureCorrectChain result to ensure we're using the correct chain
       const { walletClient, error } = await safeGetWalletClient(
-        project.chainID
+        chainId
       );
 
       if (error || !walletClient) {
@@ -561,7 +570,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
             await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, project.chainID),
+              INDEXER.ATTESTATION_LISTENER(txHash, chainId),
               "POST",
               {}
             );
@@ -673,8 +682,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     }
   };
 
-  const updateThisProject = async (data: SchemaType) => {
-    let gapClient = gap;
+  const updateThisProject = async (data: SchemaType): Promise<void> => {
     try {
       setIsLoading(true);
       if (!isConnected || !isAuth) {
@@ -683,13 +691,26 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       }
       if (!address || !projectToUpdate || !dataToUpdate) return;
       if (!gap) return;
-      if (chain?.id !== projectToUpdate.chainID) {
-        await switchChainAsync?.({ chainId: projectToUpdate.chainID });
-        gapClient = getGapClient(projectToUpdate.chainID);
+
+      const targetChainId = projectToUpdate.chainID;
+
+      // Ensure we're on the correct chain
+      const { success, chainId, gapClient } = await ensureCorrectChain({
+        targetChainId,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsLoading(false);
+        return;
       }
+
       const shouldRefresh = dataToUpdate.title === data.title;
+
+      // Use chainId from ensureCorrectChain result
       const { walletClient, error } = await safeGetWalletClient(
-        projectToUpdate.chainID
+        chainId
       );
 
       if (error || !walletClient || !gapClient) {
@@ -789,8 +810,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     } catch (error: any) {
       console.log(error);
       errorManager(
-        `Error updating project ${
-          projectToUpdate?.details?.data?.slug || projectToUpdate?.uid
+        `Error updating project ${projectToUpdate?.details?.data?.slug || projectToUpdate?.uid
         }`,
         error,
         { ...data, address },
@@ -844,7 +864,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       value.length < 3 ||
       (projectToUpdate &&
         value.toLowerCase() ===
-          projectToUpdate?.details?.data?.title?.toLowerCase())
+        projectToUpdate?.details?.data?.title?.toLowerCase())
     ) {
       return;
     }
@@ -908,7 +928,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 <p className="text-red-500">
                   {errors.title?.message}{" "}
                   {errors.title?.message &&
-                  errors.title?.message.includes("similar") ? (
+                    errors.title?.message.includes("similar") ? (
                     <>
                       <span>
                         If you need help getting access to your project, message
@@ -925,7 +945,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 </p>
               )}
               {errors.title?.message &&
-              errors.title?.message.includes("similar") ? (
+                errors.title?.message.includes("similar") ? (
                 <span
                   className="text-blue-500 underline cursor-pointer"
                   style={{

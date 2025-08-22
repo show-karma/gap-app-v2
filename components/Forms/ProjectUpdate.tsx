@@ -55,6 +55,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getIndicatorsByCommunity } from "@/utilities/queries/getIndicatorsByCommunity";
 import { useUnlinkedIndicators } from "@/hooks/useUnlinkedIndicators";
 import { useWallet } from "@/hooks/useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import { OutputsSection, type CategorizedIndicator } from "./Outputs";
 
 interface GrantOption {
@@ -510,12 +511,20 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
       const projectUid = project.uid;
       const projectSlug = project.details?.data?.slug;
 
-      if (chain?.id !== chainId) {
-        await switchChainAsync?.({ chainId });
-        gapClient = getGapClient(chainId);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId: chainId,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsLoading(false);
+        return;
       }
 
-      const { walletClient, error } = await safeGetWalletClient(chainId);
+      gapClient = newGapClient;
+
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });

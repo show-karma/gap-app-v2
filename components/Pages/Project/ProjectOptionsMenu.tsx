@@ -46,6 +46,7 @@ import { LinkOSOProfileButton } from "./LinkOSOProfileButton";
 import { LinkDivviWalletButton } from "./LinkDivviWalletButton";
 import { GithubIcon } from "@/components/Icons";
 import { useWallet } from "@/hooks/useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 const ProjectDialog = dynamic(
   () =>
@@ -139,12 +140,19 @@ export const ProjectOptionsMenu = () => {
     if (!address || !project) return;
     setIsDeleting(true);
     try {
-      if (chain?.id !== project.chainID) {
-        await switchChainAsync?.({ chainId: project.chainID });
+      const { success, chainId: actualChainId } = await ensureCorrectChain({
+        targetChainId: project.chainID,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsDeleting(false);
+        return;
       }
 
       const { walletClient, error } = await safeGetWalletClient(
-        project.chainID,
+        actualChainId,
         true,
         setIsDeleting
       );
