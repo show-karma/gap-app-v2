@@ -48,6 +48,7 @@ import { SearchDropdown } from "./SearchDropdown";
 import { StatusDropdown } from "./StatusDropdown";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { useWallet } from "@/hooks/useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 const labelStyle = "text-sm font-bold text-brand-gray dark:text-zinc-100";
 const inputStyle =
@@ -401,12 +402,19 @@ export default function AddProgram({
         return;
       }
       const chainSelected = data.networkToCreate;
-      if (chain?.id !== chainSelected) {
-        await switchChainAsync?.({ chainId: chainSelected as number });
+      const { success, chainId: actualChainId } = await ensureCorrectChain({
+        targetChainId: chainSelected as number,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsLoading(false);
+        return;
       }
 
       const { walletClient, error } = await safeGetWalletClient(
-        chainSelected as number
+        actualChainId
       );
 
       if (error || !walletClient) {

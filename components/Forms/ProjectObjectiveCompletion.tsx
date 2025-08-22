@@ -30,6 +30,7 @@ import { sanitizeInput } from "@/utilities/sanitize";
 import { useAllMilestones } from "@/hooks/useAllMilestones";
 import { PAGES } from "@/utilities/pages";
 import { useWallet } from "@/hooks/useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import { OutputsSection } from "@/components/Forms/Outputs/OutputsSection";
 
 const schema = z.object({
@@ -112,13 +113,21 @@ export const ProjectObjectiveCompletionForm = ({
     let gapClient = gap;
     setIsCompleting(true);
     try {
-      if (chain?.id !== project.chainID) {
-        await switchChainAsync?.({ chainId: project.chainID });
-        gapClient = getGapClient(project.chainID);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId: project.chainID,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsCompleting(false);
+        return;
       }
 
+      gapClient = newGapClient;
+
       const { walletClient, error } = await safeGetWalletClient(
-        project.chainID
+        actualChainId
       );
 
       if (error || !walletClient || !gapClient) {

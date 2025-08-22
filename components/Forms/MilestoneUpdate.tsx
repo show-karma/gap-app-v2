@@ -34,6 +34,7 @@ import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { useWallet } from "@/hooks/useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import { OutputsSection } from "@/components/Forms/Outputs/OutputsSection";
 import { sendMilestoneImpactAnswers } from "@/utilities/impact/milestoneImpactAnswers";
 import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
@@ -234,12 +235,21 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
     let gapClient = gap;
     setIsSubmitLoading(true);
     try {
-      if (!checkNetworkIsValid(chain?.id) || chain?.id !== milestone.chainID) {
-        await switchChainAsync?.({ chainId: milestone.chainID });
+      const { success, chainId: actualChainId, gapClient: updatedGapClient } = await ensureCorrectChain({
+        targetChainId: milestone.chainID,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsSubmitLoading(false);
+        return;
       }
 
+      gapClient = updatedGapClient;
+
       const { walletClient, error } = await safeGetWalletClient(
-        milestone.chainID
+        actualChainId
       );
 
       if (error || !walletClient || !gapClient) {
@@ -355,13 +365,21 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
     let gapClient = gap;
     setIsSubmitLoading(true);
     try {
-      if (chain?.id !== milestone.chainID) {
-        await switchChainAsync?.({ chainId: milestone.chainID });
-        gapClient = getGapClient(milestone.chainID);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId: milestone.chainID,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsSubmitLoading(false);
+        return;
       }
 
+      gapClient = newGapClient;
+
       const { walletClient, error } = await safeGetWalletClient(
-        milestone.chainID
+        actualChainId
       );
 
       if (error || !walletClient || !gapClient) {

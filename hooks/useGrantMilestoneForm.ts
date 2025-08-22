@@ -17,6 +17,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { MESSAGES } from "@/utilities/messages";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useWallet } from "./useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 export interface GrantMilestoneFormData {
   title: string;
@@ -63,12 +64,16 @@ export function useGrantMilestoneForm({
 
         const chainID = grant.chainID;
 
-        let gapClient = gap;
-
         // Switch chain if needed
-        if (!checkNetworkIsValid(chain?.id) || chain?.id !== chainID) {
-          await switchChainAsync?.({ chainId: chainID });
-          gapClient = getGapClient(chainID);
+        const { success, chainId: actualChainId, gapClient } = await ensureCorrectChain({
+          targetChainId: chainID,
+          currentChainId: chain?.id,
+          switchChainAsync,
+        });
+
+        if (!success) {
+          setIsLoading(false);
+          return;
         }
 
         // Prepare milestone data
@@ -90,7 +95,7 @@ export function useGrantMilestoneForm({
         });
 
         // Get wallet client safely
-        const { walletClient, error } = await safeGetWalletClient(chainID);
+        const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
         if (error || !walletClient || !gapClient) {
           throw new Error("Failed to connect to wallet", { cause: error });

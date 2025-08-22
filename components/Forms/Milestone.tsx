@@ -2,11 +2,10 @@
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { DatePicker } from "@/components/Utilities/DatePicker";
-import { getGapClient, useGap } from "@/hooks/useGap";
+import { useGap } from "@/hooks/useGap";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useStepper } from "@/store/modals/txStepper";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
@@ -37,6 +36,7 @@ import { z } from "zod";
 import { errorManager } from "../Utilities/errorManager";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useWallet } from "@/hooks/useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import { OutputsSection } from "@/components/Forms/Outputs/OutputsSection";
 import { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import { sendMilestoneImpactAnswers } from "@/utilities/impact/milestoneImpactAnswers";
@@ -218,10 +218,19 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
     });
 
     try {
-      if (!checkNetworkIsValid(chain?.id) || chain?.id !== chainID) {
-        await switchChainAsync?.({ chainId: chainID });
-        gapClient = getGapClient(chainID);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId: chainID,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsLoading(false);
+        return;
       }
+
+      gapClient = newGapClient;
+      
       const milestoneToAttest = new Milestone({
         refUID: uid,
         schema: gapClient.findSchema("Milestone"),
@@ -229,9 +238,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
         data: milestone,
       });
 
-      // Replace direct getWalletClient call with safeGetWalletClient
-
-      const { walletClient, error } = await safeGetWalletClient(chainID);
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
