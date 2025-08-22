@@ -23,6 +23,7 @@ import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useProjectSocials } from "@/hooks/useProjectSocials";
 import { useProjectMembers } from "@/hooks/useProjectMembers";
 import { isCustomLink } from "@/utilities/customLink";
+import { ensureProtocol } from "@/utilities/ensureProtocol";
 
 interface ProjectWrapperProps {
   projectId: string;
@@ -111,7 +112,7 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
                             {customLinks.map((link, index) => (
                               <a
                                 key={link.url || index}
-                                href={link.url}
+                                href={ensureProtocol(link.url)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="block px-4 py-2 text-sm text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors duration-150"
