@@ -67,8 +67,8 @@ export const updateProject = async (
       }),
       ...(data.customLinks?.map(link => ({
         type: "custom" as const,
-        name: link.name,
-        url: link.url,
+        name: link.name.trim(),
+        url: link.url.trim(),
       })) || [])
     ];
 

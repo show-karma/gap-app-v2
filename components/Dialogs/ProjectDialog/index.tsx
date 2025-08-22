@@ -511,8 +511,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           },
           ...(customLinks?.map(link => ({
             type: "custom",
-            name: link.name,
-            url: link.url
+            name: link.name.trim(),
+            url: link.url.trim()
           })) || []),
         ],
         imageURL: data.profilePicture || "",
