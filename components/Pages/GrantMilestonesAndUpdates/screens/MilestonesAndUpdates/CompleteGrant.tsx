@@ -24,7 +24,7 @@ import toast from "react-hot-toast";
 import { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { useWallet } from "@/hooks/useWallet";
-import { isFundingProgramGrant } from "@/constants/funding-programs";
+import { isFundingProgramGrant } from "@/utilities/funding-programs";
 import { FundingProgramFields } from "./CompletionRequirements/FundingProgramFields";
 import { TrackExplanations } from "./CompletionRequirements/TrackExplanations";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
