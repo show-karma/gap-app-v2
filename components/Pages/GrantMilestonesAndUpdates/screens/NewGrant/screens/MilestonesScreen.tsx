@@ -164,22 +164,22 @@ export const MilestonesScreen: React.FC = () => {
       grant.milestones =
         newGrantData.milestones.length > 0
           ? newGrantData.milestones.map((milestone) => {
-              const sanitizedMilestone = sanitizeObject({
-                title: milestone.title,
-                description: milestone.description,
-                endsAt: milestone.endsAt,
-                startsAt: milestone.startsAt,
-                priority: milestone.priority,
-              });
+            const sanitizedMilestone = sanitizeObject({
+              title: milestone.title,
+              description: milestone.description,
+              endsAt: milestone.endsAt,
+              startsAt: milestone.startsAt,
+              priority: milestone.priority,
+            });
 
-              return new MilestoneSDK({
-                data: sanitizedMilestone,
-                refUID: grant.uid,
-                schema: gapClient.findSchema("Milestone"),
-                recipient: grant.recipient,
-                uid: nullRef,
-              });
-            })
+            return new MilestoneSDK({
+              data: sanitizedMilestone,
+              refUID: grant.uid,
+              schema: gapClient.findSchema("Milestone"),
+              recipient: grant.recipient,
+              uid: nullRef,
+            });
+          })
           : [];
 
       // Get wallet client
@@ -255,6 +255,7 @@ export const MilestonesScreen: React.FC = () => {
                     INDEXER.PROJECTS.TRACKS(selectedProject.uid),
                     "POST",
                     {
+                      communityUID: newGrantData.community,
                       trackIds: newGrantData.selectedTrackIds,
                       programId,
                     }

@@ -31,7 +31,7 @@ export const GrantCompleteButton: FC<GrantCompleteProps> = ({
   if (grant.completed) {
     return (
       <div className="flex flex-row items-center  justify-center gap-2 rounded-md border border-emerald-600 bg-green-100 px-3.5 py-2 text-sm font-semibold text-emerald-700 hover:bg-green-100">
-        Grant marked as complete
+        Marked as complete
         <div className="h-5 w-5">
           <CheckCircleIcon className="h-5 w-5" />
         </div>

@@ -12,6 +12,7 @@ import { CancelButton } from "./buttons/CancelButton";
 import { NextButton } from "./buttons/NextButton";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import { useGrant } from "@/hooks/useGrant";
+import { isFundingProgramCommunity, FUNDING_PROGRAM_GRANT_NAMES } from "@/constants/funding-programs";
 
 export const CommunitySelectionScreen: React.FC = () => {
   const {
@@ -41,10 +42,7 @@ export const CommunitySelectionScreen: React.FC = () => {
 
         if (flowType === "program") {
           const filteredCommunities = result.data.filter(
-            (community) =>
-              community.details?.data?.name?.toLowerCase().includes("celo") ||
-              community.details?.data?.name?.toLowerCase().includes("gooddollar") ||
-              community.details?.data?.name?.toLowerCase().includes("divvi")
+            (community) => isFundingProgramCommunity(community.details?.data?.name)
           );
           setAllCommunities(
             filteredCommunities.length > 0 ? filteredCommunities : []
@@ -173,13 +171,7 @@ export const CommunitySelectionScreen: React.FC = () => {
               searchForProgram={
                 flowType === "grant"
                   ? undefined
-                  : [
-                      "Proof of",
-                      "Hackathon",
-                      "Divvi Builder Camp",
-                      "Celo Support Streams",
-                      "GoodDollar",
-                    ]
+                  : [...FUNDING_PROGRAM_GRANT_NAMES]
               }
             />
           )}
