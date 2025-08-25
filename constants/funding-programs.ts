@@ -55,8 +55,6 @@ export const isFundingProgramGrantName = (grantName?: string): boolean => {
 export const isFundingProgramGrant = (communityName?: string, grantName?: string): boolean => {
   const isCommunityFundingProgram = isFundingProgramCommunity(communityName);
   const isGrantFundingProgram = isFundingProgramGrantName(grantName);
-  console.log('isCommunityFundingProgram', isCommunityFundingProgram);
-  console.log('isGrantFundingProgram', isGrantFundingProgram);
   return isCommunityFundingProgram && isGrantFundingProgram;
 };
 
