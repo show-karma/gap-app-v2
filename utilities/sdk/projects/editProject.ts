@@ -50,7 +50,7 @@ export const updateProject = async (
   try {
     let slug =
       project.details?.slug || (await gap.generateSlug(newProjectInfo.title));
-    if (project.details?.title !== newProjectInfo.title) {
+    if (project.details?.title?.toLowerCase() !== newProjectInfo.title?.toLowerCase()) {
       slug = await gap.generateSlug(newProjectInfo.title);
     }
 
