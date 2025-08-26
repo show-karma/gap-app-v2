@@ -133,32 +133,6 @@ export const fundingProgramsAPI = {
           return config;
         }
 
-        // // Fallback: Get statistics for each program if not provided by backend
-        // let stats = {
-        //   totalApplications: 0,
-        //   pendingApplications: 0,
-        //   approvedApplications: 0,
-        //   rejectedApplications: 0,
-        //   revisionRequestedApplications: 0,
-        // };
-
-        // try {
-        //   const statsResponse = await fundingApplicationsAPI.getApplicationStatistics(
-        //     config.programId,
-        //     config.chainID
-        //   );
-        //   console.log("statsResponse", statsResponse);
-        //   stats = {
-        //     totalApplications: statsResponse.totalApplications,
-        //     pendingApplications: statsResponse.pendingApplications,
-        //     approvedApplications: statsResponse.approvedApplications,
-        //     rejectedApplications: statsResponse.rejectedApplications,
-        //     revisionRequestedApplications: statsResponse.revisionRequestedApplications || 0,
-        //   };
-        // } catch (error) {
-        //   console.warn(`Failed to fetch stats for program ${config.programId}:`, error);
-        // }
-
         return {
           ...config,
           // stats,
@@ -315,6 +289,7 @@ export const fundingProgramsAPI = {
         approvedApplications: 0,
         rejectedApplications: 0,
         revisionRequestedApplications: 0,
+        underReviewApplications: 0,
       };
     }
   },
