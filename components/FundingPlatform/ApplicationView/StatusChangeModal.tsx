@@ -95,12 +95,12 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
 
                 <div className="sm:flex sm:items-start">
                   <div className={`mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full ${status === 'approved' ? 'bg-green-100 dark:bg-green-900' :
-                      status === 'rejected' ? 'bg-red-100 dark:bg-red-900' :
-                        'bg-yellow-100 dark:bg-yellow-900'
+                    status === 'rejected' ? 'bg-red-100 dark:bg-red-900' :
+                      'bg-yellow-100 dark:bg-yellow-900'
                     } sm:mx-0 sm:h-10 sm:w-10`}>
                     <ExclamationTriangleIcon className={`h-6 w-6 ${status === 'approved' ? 'text-green-600 dark:text-green-400' :
-                        status === 'rejected' ? 'text-red-600 dark:text-red-400' :
-                          'text-yellow-600 dark:text-yellow-400'
+                      status === 'rejected' ? 'text-red-600 dark:text-red-400' :
+                        'text-yellow-600 dark:text-yellow-400'
                       }`} aria-hidden="true" />
                   </div>
                   <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left flex-1">
@@ -147,8 +147,8 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                     onClick={handleConfirm}
                     disabled={isSubmitting || (isReasonRequired && !reason.trim())}
                     className={`w-full sm:w-auto sm:ml-3 ${status === 'approved' ? 'bg-green-600 hover:bg-green-700' :
-                        status === 'rejected' ? 'bg-red-600 hover:bg-red-700' :
-                          ''
+                      status === 'rejected' ? 'bg-red-600 hover:bg-red-700' :
+                        ''
                       }`}
                   >
                     {isSubmitting ? 'Processing...' : 'Confirm'}
