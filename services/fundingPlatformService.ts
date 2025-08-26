@@ -109,6 +109,7 @@ export type FundingProgram = {
     approvedApplications: number;
     rejectedApplications: number;
     revisionRequestedApplications?: number;
+    underReviewApplications?: number;
   };
 };
 
