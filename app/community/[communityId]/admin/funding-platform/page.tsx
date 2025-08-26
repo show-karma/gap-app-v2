@@ -35,6 +35,7 @@ import {
   UsersIcon,
   XCircleIcon,
   MagnifyingGlassIcon,
+  EyeIcon as EyeIconOutline,
 } from "@heroicons/react/24/outline";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
@@ -115,6 +116,7 @@ export default function FundingPlatformAdminPage() {
     rejected: number;
     pending: number;
     revisionRequested: number;
+    underReview: number;
   } = useMemo(() => {
     if (!programs || programs.length === 0) {
       // Fallback values when no programs exist
@@ -125,6 +127,7 @@ export default function FundingPlatformAdminPage() {
         rejected: 0,
         pending: 0,
         revisionRequested: 0,
+        underReview: 0,
       };
     }
 
@@ -142,6 +145,8 @@ export default function FundingPlatformAdminPage() {
           revisionRequested:
             acc.revisionRequested +
             (programStats?.revisionRequestedApplications || 0),
+          underReview:
+            acc.underReview + (programStats?.underReviewApplications || 0),
         };
       },
       {
@@ -151,6 +156,7 @@ export default function FundingPlatformAdminPage() {
         rejected: 0,
         pending: 0,
         revisionRequested: 0,
+        underReview: 0,
       }
     );
 
@@ -275,6 +281,15 @@ export default function FundingPlatformAdminPage() {
       ),
     },
     {
+      title: "Under Review",
+      value: formatCurrency(statistics.underReview),
+      color: "text-pink-600",
+      bgColor: "bg-pink-50 dark:bg-pink-900",
+      icon: (
+        <EyeIconOutline className="h-5 w-5 text-pink-700 dark:text-pink-100" />
+      ),
+    },
+    {
       title: "Revision Requested",
       value: formatCurrency(statistics.revisionRequested),
       color: "text-indigo-600",
@@ -299,7 +314,7 @@ export default function FundingPlatformAdminPage() {
     {
       title: "Applicants",
       value: formatCurrency(
-        program.metrics?.total ||
+        program.metrics?.totalApplications ||
         program.metrics?.applicationCount ||
         program.grantPlatform?.stats?.total ||
         0
@@ -323,6 +338,7 @@ export default function FundingPlatformAdminPage() {
     const pendingApplications = program.metrics?.pendingApplications || 0;
     const revisionRequestedApplications =
       program.metrics?.revisionRequestedApplications || 0;
+    const underReviewApplications = program.metrics?.underReviewApplications || 0;
 
     return [
       {
@@ -344,6 +360,12 @@ export default function FundingPlatformAdminPage() {
         bgColor: "bg-orange-500",
       },
       {
+        title: "Under Review",
+        value: underReviewApplications,
+        color: "text-pink-600",
+        bgColor: "bg-pink-500",
+      },
+      {
         title: "Revision Requested",
         value: revisionRequestedApplications,
         color: "text-indigo-600",
@@ -362,7 +384,7 @@ export default function FundingPlatformAdminPage() {
         Back
       </Link>
       {/* Statistics Bar */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {stats.map((stat) => (
           <FundingPlatformStatsCard
             key={stat.title}

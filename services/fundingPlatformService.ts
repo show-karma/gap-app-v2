@@ -109,6 +109,7 @@ export type FundingProgram = {
     approvedApplications: number;
     rejectedApplications: number;
     revisionRequestedApplications?: number;
+    underReviewApplications?: number;
   };
 };
 
@@ -131,32 +132,6 @@ export const fundingProgramsAPI = {
           // Stats already provided by backend, no need to fetch separately
           return config;
         }
-
-        // // Fallback: Get statistics for each program if not provided by backend
-        // let stats = {
-        //   totalApplications: 0,
-        //   pendingApplications: 0,
-        //   approvedApplications: 0,
-        //   rejectedApplications: 0,
-        //   revisionRequestedApplications: 0,
-        // };
-
-        // try {
-        //   const statsResponse = await fundingApplicationsAPI.getApplicationStatistics(
-        //     config.programId,
-        //     config.chainID
-        //   );
-        //   console.log("statsResponse", statsResponse);
-        //   stats = {
-        //     totalApplications: statsResponse.totalApplications,
-        //     pendingApplications: statsResponse.pendingApplications,
-        //     approvedApplications: statsResponse.approvedApplications,
-        //     rejectedApplications: statsResponse.rejectedApplications,
-        //     revisionRequestedApplications: statsResponse.revisionRequestedApplications || 0,
-        //   };
-        // } catch (error) {
-        //   console.warn(`Failed to fetch stats for program ${config.programId}:`, error);
-        // }
 
         return {
           ...config,
@@ -314,6 +289,7 @@ export const fundingProgramsAPI = {
         approvedApplications: 0,
         rejectedApplications: 0,
         revisionRequestedApplications: 0,
+        underReviewApplications: 0,
       };
     }
   },
@@ -519,30 +495,6 @@ export const fundingApplicationsAPI = {
     return { data: response.data, filename };
   },
 
-  /**
-   * Real-time AI evaluation of partial application data
-   */
-  async evaluateRealTime(
-    programId: string,
-    chainId: number,
-    applicationData: Record<string, any>
-  ): Promise<{
-    success: boolean;
-    data: {
-      rating: number;
-      feedback: string;
-      suggestions: string[];
-      isComplete: boolean;
-      evaluatedAt: string;
-      model: string;
-    };
-  }> {
-    const response = await apiClient.post(
-      `/v2/funding-applications/${programId}/${chainId.toString()}/evaluate-realtime`,
-      { applicationData }
-    );
-    return response.data;
-  },
 };
 
 // Combined service for easy import
