@@ -193,46 +193,46 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 }) => {
   const dataToUpdate = projectToUpdate
     ? {
-      chainID: projectToUpdate?.chainID,
-      description: projectToUpdate?.details?.data?.description || "",
-      title: projectToUpdate?.details?.data?.title || "",
-      problem: projectToUpdate?.details?.data?.problem,
-      solution: projectToUpdate?.details?.data?.solution,
-      missionSummary: projectToUpdate?.details?.data?.missionSummary,
-      locationOfImpact: projectToUpdate?.details?.data?.locationOfImpact,
-      imageURL: projectToUpdate?.details?.data?.imageURL,
-      twitter: projectToUpdate?.details?.data?.links?.find(
-        (link) => link.type === "twitter"
-      )?.url,
-      github: projectToUpdate?.details?.data?.links?.find(
-        (link) => link.type === "github"
-      )?.url,
-      discord: projectToUpdate?.details?.data?.links?.find(
-        (link) => link.type === "discord"
-      )?.url,
-      website: projectToUpdate?.details?.data?.links?.find(
-        (link) => link.type === "website"
-      )?.url,
-      linkedin: projectToUpdate?.details?.data?.links?.find(
-        (link) => link.type === "linkedin"
-      )?.url,
-      pitchDeck: projectToUpdate?.details?.data?.links?.find(
-        (link) => link.type === "pitchDeck"
-      )?.url,
-      demoVideo: projectToUpdate?.details?.data?.links?.find(
-        (link) => link.type === "demoVideo"
-      )?.url,
-      farcaster: projectToUpdate?.details?.data?.links?.find(
-        (link) => link.type === "farcaster"
-      )?.url,
-      profilePicture: projectToUpdate?.details?.data?.imageURL,
-      tags: projectToUpdate?.details?.data?.tags?.map((item) => item.name),
-      recipient: projectToUpdate?.recipient,
-      businessModel: projectToUpdate?.details?.data?.businessModel,
-      stageIn: projectToUpdate?.details?.data?.stageIn,
-      raisedMoney: projectToUpdate?.details?.data?.raisedMoney,
-      pathToTake: projectToUpdate?.details?.data?.pathToTake,
-    }
+        chainID: projectToUpdate?.chainID,
+        description: projectToUpdate?.details?.data?.description || "",
+        title: projectToUpdate?.details?.data?.title || "",
+        problem: projectToUpdate?.details?.data?.problem,
+        solution: projectToUpdate?.details?.data?.solution,
+        missionSummary: projectToUpdate?.details?.data?.missionSummary,
+        locationOfImpact: projectToUpdate?.details?.data?.locationOfImpact,
+        imageURL: projectToUpdate?.details?.data?.imageURL,
+        twitter: projectToUpdate?.details?.data?.links?.find(
+          (link) => link.type === "twitter"
+        )?.url,
+        github: projectToUpdate?.details?.data?.links?.find(
+          (link) => link.type === "github"
+        )?.url,
+        discord: projectToUpdate?.details?.data?.links?.find(
+          (link) => link.type === "discord"
+        )?.url,
+        website: projectToUpdate?.details?.data?.links?.find(
+          (link) => link.type === "website"
+        )?.url,
+        linkedin: projectToUpdate?.details?.data?.links?.find(
+          (link) => link.type === "linkedin"
+        )?.url,
+        pitchDeck: projectToUpdate?.details?.data?.links?.find(
+          (link) => link.type === "pitchDeck"
+        )?.url,
+        demoVideo: projectToUpdate?.details?.data?.links?.find(
+          (link) => link.type === "demoVideo"
+        )?.url,
+        farcaster: projectToUpdate?.details?.data?.links?.find(
+          (link) => link.type === "farcaster"
+        )?.url,
+        profilePicture: projectToUpdate?.details?.data?.imageURL,
+        tags: projectToUpdate?.details?.data?.tags?.map((item) => item.name),
+        recipient: projectToUpdate?.recipient,
+        businessModel: projectToUpdate?.details?.data?.businessModel,
+        stageIn: projectToUpdate?.details?.data?.stageIn,
+        raisedMoney: projectToUpdate?.details?.data?.raisedMoney,
+        pathToTake: projectToUpdate?.details?.data?.pathToTake,
+      }
     : undefined;
 
   const [contacts, setContacts] = useState<Contact[]>(previousContacts || []);
@@ -244,7 +244,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         .map((link, index) => ({
           id: `custom-${index}`,
           name: link.name || "",
-          url: link.url
+          url: link.url,
         }));
     }
     return [];
@@ -322,7 +322,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           recipient: "",
         };
         reset(updateData);
-        setContacts(previousContacts || []);
       } else {
         // Create mode - reset to empty form
         reset({
@@ -362,7 +361,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   }
 
   const validateCustomLinks = () => {
-    return customLinks.some(link => !link.name.trim() || !link.url.trim());
+    return customLinks.some((link) => !link.name.trim() || !link.url.trim());
   };
 
   const hasErrors = () => {
@@ -464,7 +463,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         return;
       }
 
-
       const project = new Project({
         data: {
           project: true,
@@ -517,10 +515,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
             type: "farcaster",
             url: data.farcaster || "",
           },
-          ...(customLinks?.map(link => ({
+          ...(customLinks?.map((link) => ({
             type: "custom",
             name: link.name.trim(),
-            url: link.url.trim()
+            url: link.url.trim(),
           })) || []),
         ],
         imageURL: data.profilePicture || "",
@@ -579,9 +577,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       }
 
       // Use chainId from ensureCorrectChain result to ensure we're using the correct chain
-      const { walletClient, error } = await safeGetWalletClient(
-        chainId
-      );
+      const { walletClient, error } = await safeGetWalletClient(chainId);
 
       if (error || !walletClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
@@ -736,9 +732,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       const shouldRefresh = dataToUpdate.title === data.title;
 
       // Use chainId from ensureCorrectChain result
-      const { walletClient, error } = await safeGetWalletClient(
-        chainId
-      );
+      const { walletClient, error } = await safeGetWalletClient(chainId);
 
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
@@ -838,7 +832,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     } catch (error: any) {
       console.log(error);
       errorManager(
-        `Error updating project ${projectToUpdate?.details?.data?.slug || projectToUpdate?.uid
+        `Error updating project ${
+          projectToUpdate?.details?.data?.slug || projectToUpdate?.uid
         }`,
         error,
         { ...data, address },
@@ -893,7 +888,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       value.length < 3 ||
       (projectToUpdate &&
         value.toLowerCase() ===
-        projectToUpdate?.details?.data?.title?.toLowerCase())
+          projectToUpdate?.details?.data?.title?.toLowerCase())
     ) {
       return;
     }
@@ -957,7 +952,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 <p className="text-red-500">
                   {errors.title?.message}{" "}
                   {errors.title?.message &&
-                    errors.title?.message.includes("similar") ? (
+                  errors.title?.message.includes("similar") ? (
                     <>
                       <span>
                         If you need help getting access to your project, message
@@ -974,7 +969,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 </p>
               )}
               {errors.title?.message &&
-                errors.title?.message.includes("similar") ? (
+              errors.title?.message.includes("similar") ? (
                 <span
                   className="text-blue-500 underline cursor-pointer"
                   style={{
@@ -1286,7 +1281,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                       <button
                         type="button"
                         onClick={() => {
-                          const updatedLinks = customLinks.filter((_, i) => i !== index);
+                          const updatedLinks = customLinks.filter(
+                            (_, i) => i !== index
+                          );
                           setCustomLinks(updatedLinks);
                         }}
                         className="px-3 py-2 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
@@ -1303,7 +1300,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                   const newLink: CustomLink = {
                     id: `custom-${Date.now()}`,
                     name: "",
-                    url: ""
+                    url: "",
                   };
                   const updatedLinks = [...customLinks, newLink];
                   setCustomLinks(updatedLinks);
