@@ -161,6 +161,10 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
       value: stats?.revisionRequestedApplications || 0,
     },
     {
+      title: "Under Review",
+      value: stats?.underReviewApplications || 0,
+    },
+    {
       title: "Approved",
       value: stats?.approvedApplications || 0,
     },
@@ -174,7 +178,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
     <div className="w-full space-y-6">
       {/* Statistics Bar */}
       {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
           {statsMap.map((item) => (
             <div
               key={item.title}
@@ -222,6 +226,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
               <option value="approved">Approved</option>
               <option value="rejected">Rejected</option>
               <option value="withdrawn">Withdrawn</option>
+              <option value="under_review">Under Review</option>
             </select>
           </div>
 

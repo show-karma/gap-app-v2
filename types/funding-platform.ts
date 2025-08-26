@@ -125,6 +125,7 @@ export interface IApplicationStatistics {
   rejectedApplications: number;
   revisionRequestedApplications?: number;
   withdrawnApplications?: number;
+  underReviewApplications?: number;
 }
 
 // V2 API Error Response
