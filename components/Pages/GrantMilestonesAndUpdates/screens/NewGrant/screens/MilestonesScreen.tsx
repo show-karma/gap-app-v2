@@ -263,6 +263,7 @@ export const MilestonesScreen: React.FC = () => {
                     INDEXER.PROJECTS.TRACKS(selectedProject.uid),
                     "POST",
                     {
+                      communityUID: newGrantData.community,
                       trackIds: newGrantData.selectedTrackIds,
                       programId,
                     }

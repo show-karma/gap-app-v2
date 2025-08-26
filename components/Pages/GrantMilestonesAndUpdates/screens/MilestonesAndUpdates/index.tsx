@@ -16,6 +16,7 @@ import Link from "next/link";
 import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
 import { useGrantStore } from "@/store/grant";
 import dynamic from "next/dynamic";
+import { GrantCompletionCard } from "@/components/Pages/Grants/MilestonesAndUpdates";
 
 const MilestonesList = dynamic(
   () =>
@@ -100,38 +101,6 @@ export const EmptyMilestone = ({
   );
 };
 
-interface GrantCompletionCardProps {
-  completion: IGrantResponse["completed"] | undefined;
-}
-const GrantCompletionCard = ({ completion }: GrantCompletionCardProps) => {
-  if (!completion) return null;
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex w-full flex-1 flex-col rounded-lg border border-zinc-200 bg-green-100 transition-all duration-200 ease-in-out">
-        <div className="flex w-full flex-col py-4">
-          <div className="flex w-full flex-row justify-between  px-4 max-lg:mb-4 max-lg:flex-col">
-            <div className="flex flex-col gap-3">
-              <h4 className="text-base font-bold leading-normal text-gray-700">
-                {completion.data.title}
-              </h4>
-            </div>
-            <div className="flex flex-row items-center justify-center gap-4 max-lg:justify-start">
-              <p className="text-sm font-semibold text-gray-500 dark:text-gray-800">
-                Grant completed on {formatDate(completion.createdAt)}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2 px-4  pb-3 max-lg:max-w-xl max-sm:max-w-[300px]">
-            <ReadMore readLessText="Read less" readMoreText="Read full">
-              {completion.data.text}
-            </ReadMore>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 export const MilestonesAndUpdates = () => {
   const { grant } = useGrantStore();
@@ -149,9 +118,9 @@ export const MilestonesAndUpdates = () => {
   return (
     <div className="space-y-5">
       {grant?.completed &&
-      (grant?.completed.data.title ||
-        grant?.completed.data.text ||
-        grant?.completed?.data?.proofOfWork) ? (
+        (grant?.completed.data.title ||
+          grant?.completed.data.text ||
+          grant?.completed?.data?.proofOfWork) ? (
         <GrantCompletionCard completion={grant?.completed} />
       ) : null}
       {hasMilestonesOrUpdates ? (
