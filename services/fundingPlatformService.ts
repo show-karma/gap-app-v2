@@ -495,30 +495,6 @@ export const fundingApplicationsAPI = {
     return { data: response.data, filename };
   },
 
-  /**
-   * Real-time AI evaluation of partial application data
-   */
-  async evaluateRealTime(
-    programId: string,
-    chainId: number,
-    applicationData: Record<string, any>
-  ): Promise<{
-    success: boolean;
-    data: {
-      rating: number;
-      feedback: string;
-      suggestions: string[];
-      isComplete: boolean;
-      evaluatedAt: string;
-      model: string;
-    };
-  }> {
-    const response = await apiClient.post(
-      `/v2/funding-applications/${programId}/${chainId.toString()}/evaluate-realtime`,
-      { applicationData }
-    );
-    return response.data;
-  },
 };
 
 // Combined service for easy import
