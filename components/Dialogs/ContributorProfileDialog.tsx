@@ -30,6 +30,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 import { useWallet } from "@/hooks/useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 type ContributorProfileDialogProps = {};
 
@@ -146,12 +147,20 @@ export const ContributorProfileDialog: FC<
         setIsLoading(false);
         return;
       }
-      if (chain?.id !== targetChainId) {
-        await switchChainAsync?.({ chainId: targetChainId });
-        gapClient = getGapClient(targetChainId);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsLoading(false);
+        return;
       }
 
-      const { walletClient, error } = await safeGetWalletClient(targetChainId);
+      gapClient = newGapClient;
+
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });

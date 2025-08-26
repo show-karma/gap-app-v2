@@ -29,6 +29,7 @@ import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { useWallet } from "@/hooks/useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 const updateSchema = z.object({
   title: z
@@ -123,13 +124,21 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
     let gapClient = gap;
     if (!address || !project) return;
     try {
-      if (chain?.id !== grantToUpdate.chainID) {
-        await switchChainAsync?.({ chainId: grantToUpdate.chainID });
-        gapClient = getGapClient(grantToUpdate.chainID);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId: grantToUpdate.chainID,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsLoading(false);
+        return;
       }
 
+      gapClient = newGapClient;
+
       const { walletClient, error } = await safeGetWalletClient(
-        grantToUpdate.chainID
+        actualChainId
       );
 
       if (error || !walletClient || !gapClient) {

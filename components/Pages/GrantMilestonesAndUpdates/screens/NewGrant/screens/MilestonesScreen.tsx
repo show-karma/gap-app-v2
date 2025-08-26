@@ -30,6 +30,7 @@ import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { CancelButton } from "./buttons/CancelButton";
 import { NextButton } from "./buttons/NextButton";
 import { useWallet } from "@/hooks/useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 export const MilestonesScreen: React.FC = () => {
   const {
@@ -98,10 +99,17 @@ export const MilestonesScreen: React.FC = () => {
 
       // Check if we need to switch chains
       const chainId = await connector?.getChainId();
-      if (!checkNetworkIsValid(chainId) || chainId !== communityNetworkId) {
-        await switchChainAsync?.({ chainId: communityNetworkId });
-        gapClient = getGapClient(communityNetworkId);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId: communityNetworkId,
+        currentChainId: chainId,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        return;
       }
+
+      gapClient = newGapClient;
 
       // Save all milestones
       saveAllMilestones();
@@ -184,7 +192,7 @@ export const MilestonesScreen: React.FC = () => {
 
       // Get wallet client
       const { walletClient, error } = await safeGetWalletClient(
-        communityNetworkId
+        actualChainId
       );
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });

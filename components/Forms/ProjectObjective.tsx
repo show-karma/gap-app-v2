@@ -26,6 +26,7 @@ import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useAllMilestones } from "@/hooks/useAllMilestones";
 import { PAGES } from "@/utilities/pages";
 import { useWallet } from "@/hooks/useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 const objectiveSchema = z.object({
   title: z
@@ -86,10 +87,18 @@ export const ProjectObjectiveForm = ({
     let gapClient = gap;
     setIsLoading(true);
     try {
-      if (chain?.id != project?.chainID) {
-        await switchChainAsync?.({ chainId: project?.chainID as number });
-        gapClient = getGapClient(project?.chainID as number);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId: project?.chainID as number,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsLoading(false);
+        return;
       }
+
+      gapClient = newGapClient;
       const newObjective = new ProjectMilestone({
         data: sanitizeObject({
           title: data.title,
@@ -103,7 +112,7 @@ export const ProjectObjectiveForm = ({
       });
 
       const { walletClient, error } = await safeGetWalletClient(
-        project?.chainID as number
+        actualChainId
       );
 
       if (error || !walletClient || !gapClient) {
@@ -193,13 +202,21 @@ export const ProjectObjectiveForm = ({
     let gapClient = gap;
     setIsLoading(true);
     try {
-      if (chain?.id != project?.chainID) {
-        await switchChainAsync?.({ chainId: project?.chainID as number });
-        gapClient = getGapClient(project?.chainID as number);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId: project?.chainID as number,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsLoading(false);
+        return;
       }
 
+      gapClient = newGapClient;
+
       const { walletClient, error } = await safeGetWalletClient(
-        project?.chainID as number
+        actualChainId
       );
 
       if (error || !walletClient || !gapClient) {
