@@ -52,6 +52,9 @@ export interface IApplicationFilters {
   // Backward compatibility
   dateFrom?: string;
   dateTo?: string;
+  // Sorting parameters
+  sortBy?: 'createdAt' | 'updatedAt' | 'status' | 'applicantEmail' | 'referenceNumber';
+  sortOrder?: 'asc' | 'desc';
 }
 
 export type FundingProgram = {
@@ -354,6 +357,8 @@ export const fundingApplicationsAPI = {
     if (filters.limit) params.append("limit", filters.limit.toString());
     if (filters.dateFrom) params.append("dateFrom", filters.dateFrom);
     if (filters.dateTo) params.append("dateTo", filters.dateTo);
+    if (filters.sortBy) params.append("sortBy", filters.sortBy);
+    if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
 
     const response = await apiClient.get(
       `/v2/funding-applications/program/${programId}/${chainId.toString()}?${params}`
@@ -436,6 +441,8 @@ export const fundingApplicationsAPI = {
     if (filters.search) params.append("search", filters.search);
     if (filters.dateFrom) params.append("dateFrom", filters.dateFrom);
     if (filters.dateTo) params.append("dateTo", filters.dateTo);
+    if (filters.sortBy) params.append("sortBy", filters.sortBy);
+    if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
 
     const response = await apiClient.get(
       `/v2/funding-applications/program/${programId}/${chainId.toString()}/export?${params}`,
@@ -474,6 +481,8 @@ export const fundingApplicationsAPI = {
     if (filters.search) params.append("search", filters.search);
     if (filters.dateFrom) params.append("dateFrom", filters.dateFrom);
     if (filters.dateTo) params.append("dateTo", filters.dateTo);
+    if (filters.sortBy) params.append("sortBy", filters.sortBy);
+    if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
 
     const response = await apiClient.get(
       `/v2/funding-applications/admin/${programId}/${chainId.toString()}/export?${params}`,
