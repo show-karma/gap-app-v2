@@ -237,7 +237,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                                 className="px-2 py-1 text-sm dark:text-white border bg-transparent border-gray-200 font-medium dark:border-gray-700"
                                 disabled={isUpdatingStatus}
                               >
-                                Revise
+                                Request Revision
                               </Button>
                               <Button
                                 onClick={(e) => handleStatusChangeClick(application.referenceNumber, "approved", e)}
@@ -274,7 +274,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                                   className="px-2 py-1 text-sm dark:text-white border bg-transparent border-gray-200 font-medium dark:border-gray-700"
                                   disabled={isUpdatingStatus}
                                 >
-                                  Revise
+                                  Request Revision
                                 </Button>
                               )}
                               {application.status !== "approved" && (
