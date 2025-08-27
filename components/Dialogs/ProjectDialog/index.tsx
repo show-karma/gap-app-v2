@@ -75,6 +75,7 @@ import debounce from "lodash.debounce";
 import { SimilarProjectsDialog } from "../SimilarProjectsDialog";
 import { ContactInfoSection } from "./ContactInfoSection";
 import { NetworkDropdown } from "./NetworkDropdown";
+import { FaucetSection } from "./FaucetSection";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { FarcasterIcon } from "@/components/Icons/Farcaster";
@@ -1431,6 +1432,19 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 previousValue={watch("chainID")}
               />
               <p className="text-red-500">{errors.chainID?.message}</p>
+              
+              {/* Faucet Section for getting funds */}
+              {watch("chainID") && (
+                <FaucetSection
+                  chainId={watch("chainID")}
+                  projectAddress={address} // Using user's address as the project creation happens from their wallet
+                  onFundsReceived={() => {
+                    // Optionally refresh the UI or show a success message
+                    console.log("Funds received successfully");
+                  }}
+                  disabled={isLoading}
+                />
+              )}
             </div>
           ) : null}
         </div>

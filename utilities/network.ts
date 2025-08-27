@@ -8,14 +8,15 @@ import {
   sepolia,
   sei,
   lisk,
-  scroll
+  scroll,
+    celoAlfajores
 } from "viem/chains";
 import type { TNetwork } from "@show-karma/karma-gap-sdk";
 
 export const appNetwork: [Chain, ...Chain[]] =
   process.env.NEXT_PUBLIC_ENV === "production"
     ? [optimism, arbitrum, celo, sei, lisk, scroll]
-    : [optimismSepolia, baseSepolia, sepolia];
+    : [optimismSepolia, baseSepolia, sepolia, celoAlfajores];
 
 export function getExplorerUrl(chainId: number, transactionHash: string) {
   const chain = [
