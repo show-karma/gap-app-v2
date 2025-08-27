@@ -47,9 +47,7 @@ function ScoreDisplay({
                 <div className="flex items-center gap-2">
                     {getScoreIcon(score)}
                     <span className="font-medium">
-                        {isGrowthGrants
-                            ? "Probability of approval"
-                            : `Score: ${score}/10`}
+                        {`Score: ${score}/10`}
                     </span>
                 </div>
                 {isGrowthGrants && (
