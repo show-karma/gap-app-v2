@@ -12,10 +12,10 @@ import {
   FundingApplicationStatusV2,
 } from "@/types/funding-platform";
 import { getCookiesFromStoredWallet } from "@/utilities/getCookiesFromStoredWallet";
+import { getAPIUrl } from "@/lib/config";
 
 // Base API configuration
-const API_BASE =
-  process.env.NEXT_PUBLIC_GAP_INDEXER_URL || "http://localhost:4000";
+const API_BASE = getAPIUrl() ||  "http://localhost:4000"
 
 const apiClient = axios.create({
   baseURL: API_BASE,

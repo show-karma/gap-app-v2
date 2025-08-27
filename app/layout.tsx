@@ -20,6 +20,7 @@ import { Suspense } from "react";
 import { headers } from "next/headers";
 import HotjarAnalytics from "@/components/Utilities/HotjarAnalytics";
 import { ContributorProfileDialog } from "@/components/Dialogs/ContributorProfileDialog";
+import BackendSelector from "@/components/Utilities/BackendSelector";
 
 export const metadata = defaultMetadata;
 
@@ -52,6 +53,7 @@ export default async function RootLayout({
             <StepperDialog />
             <ContributorProfileDialog />
             <ProgressBarWrapper />
+            {process.env.NEXT_PUBLIC_ENV !== 'production' && <BackendSelector />}
             <div className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white">
               <div className="flex flex-col w-full h-full">
                 <div className="fixed w-full bg-white dark:bg-black z-10">
