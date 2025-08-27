@@ -3,8 +3,7 @@ import { communityColors } from "@/utilities/communityColors";
 import { envVars } from "@/utilities/enviromentVars";
 import { defaultMetadata } from "@/utilities/meta";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
-import { getCommunityData } from "@/utilities/queries/getCommunityData";
-import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { getCommunityDetailsV2 } from "@/utilities/queries/getCommunityDataV2";
 import { Metadata } from "next";
 import { CommunityImpactStatCards } from "@/components/Pages/Communities/Impact/StatCards";
 import CommunityHeader from "@/components/Community/Header";
@@ -19,8 +18,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { communityId } = await params;
 
-  const community = await getCommunityData(communityId);
-  const communityName = community?.details?.data?.name || communityId;
+  const community = await getCommunityDetailsV2(communityId);
+  const communityName = community?.details?.name || communityId;
 
   const dynamicMetadata = {
     title: `Karma GAP - ${communityName} community grants`,
@@ -51,12 +50,6 @@ export async function generateMetadata({
         },
       ],
     },
-    // link: [
-    //   {
-    //     rel: "icon",
-    //     href: "/favicon.ico",
-    //   },
-    // ],
   };
 }
 
@@ -72,7 +65,7 @@ export default async function Layout(props: {
     return undefined;
   }
 
-  const community = await getCommunityData(communityId);
+  const community = await getCommunityDetailsV2(communityId);
 
   if (!community) {
     return undefined;

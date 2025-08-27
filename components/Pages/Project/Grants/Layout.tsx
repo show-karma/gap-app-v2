@@ -111,7 +111,7 @@ export const GrantsLayout = ({
   useEffect(() => {
     if (!project || !screen) return;
 
-    if (!isAuthorized && authorizedViews.includes(screen)) {
+    if (!(isAuthorized || isCommunityAdminOfSome) && authorizedViews.includes(screen)) {
       router.replace(
         PAGES.PROJECT.GRANTS(project.details?.data.slug || project.uid || "")
       );
@@ -122,7 +122,7 @@ export const GrantsLayout = ({
     if (currentTab !== screen) {
       setCurrentTab(screen);
     }
-  }, [screen, isAuthorized, project, currentTab, router]);
+  }, [screen, isAuthorized, isCommunityAdminOfSome, project, currentTab, router]);
 
   useEffect(() => {
     if (project) {

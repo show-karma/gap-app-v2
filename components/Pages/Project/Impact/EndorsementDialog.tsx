@@ -24,6 +24,7 @@ import { FC, Fragment, useState } from "react";
 import { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { useWallet } from "@/hooks/useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 type EndorsementDialogProps = {};
 
@@ -95,13 +96,21 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
     setIsLoading(true);
     try {
       if (!project) return;
-      if (chain?.id !== project.chainID) {
-        await switchChainAsync?.({ chainId: project.chainID });
-        gapClient = getGapClient(project.chainID);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId: project.chainID,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsLoading(false);
+        return;
       }
 
+      gapClient = newGapClient;
+
       const { walletClient, error } = await safeGetWalletClient(
-        project.chainID
+        actualChainId
       );
 
       if (error || !walletClient || !gapClient || !address) {

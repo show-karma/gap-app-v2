@@ -263,6 +263,10 @@ export const MESSAGES = {
         ERROR: "There was an error undoing the approval.",
       },
     },
+    OUTPUTS: {
+      SUCCESS: "Milestone outputs sent successfully",
+      ERROR: "There was an error sending the milestone outputs.",
+    },
   },
   ADMIN: {
     NOT_AUTHORIZED: (uid: string) =>

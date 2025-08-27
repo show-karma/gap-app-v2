@@ -5,6 +5,7 @@ import { EndorsementDialog } from "@/components/Pages/Project/Impact/Endorsement
 import { ProjectNavigator } from "@/components/Pages/Project/ProjectNavigator";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
+import { Globe } from "@/components/Icons";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useIntroModalStore } from "@/store/modals/intro";
@@ -21,6 +22,8 @@ import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useProjectSocials } from "@/hooks/useProjectSocials";
 import { useProjectMembers } from "@/hooks/useProjectMembers";
+import { isCustomLink } from "@/utilities/customLink";
+import { ensureProtocol } from "@/utilities/ensureProtocol";
 
 interface ProjectWrapperProps {
   projectId: string;
@@ -46,6 +49,10 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
   // Use custom hooks for socials and members
   const socials = useProjectSocials(project?.details?.data.links);
   useProjectMembers(project);
+
+  const customLinks = React.useMemo(() => {
+    return project?.details?.data.links?.filter(isCustomLink) || [];
+  }, [project?.details?.data.links]);
 
   const { isIntroModalOpen } = useIntroModalStore();
   const { isEndorsementOpen } = useEndorsementStore();
@@ -79,7 +86,7 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
                 {project?.details?.data?.title}
               </h1>
               <div className="flex flex-row gap-10 max-lg:gap-4 flex-wrap max-lg:flex-col items-center max-lg:justify-center">
-                {socials.length > 0 && (
+                {(socials.length > 0 || customLinks.length > 0) && (
                   <div className="flex flex-row gap-4 items-center">
                     {socials
                       .filter((social) => social?.url)
@@ -95,6 +102,28 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
                           )}
                         </a>
                       ))}
+
+                    {customLinks.length > 0 && (
+                      <div className="relative group">
+                        <Globe className="h-5 w-5 text-black dark:text-white dark:fill-zinc-200 cursor-pointer" />
+
+                        <div className="absolute left-0 top-6 mt-1 w-48 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                          <div className="py-2">
+                            {customLinks.map((link, index) => (
+                              <a
+                                key={link.url || index}
+                                href={ensureProtocol(link.url)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block px-4 py-2 text-sm text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors duration-150"
+                              >
+                                {link.name}
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

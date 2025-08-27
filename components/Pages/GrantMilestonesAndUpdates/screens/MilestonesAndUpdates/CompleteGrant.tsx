@@ -19,11 +19,17 @@ import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { FC } from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { useWallet } from "@/hooks/useWallet";
+import { isFundingProgramGrant } from "@/utilities/funding-programs";
+import { FundingProgramFields } from "./CompletionRequirements/FundingProgramFields";
+import { TrackExplanations } from "./CompletionRequirements/TrackExplanations";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { useTracksForProgram } from "@/hooks/useTracks";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 
@@ -31,6 +37,24 @@ export const GrantCompletion: FC = () => {
   const { grant } = useGrantStore();
   const { project } = useProjectStore();
   const [description, setDescription] = useState("");
+  const [pitchDeckLink, setPitchDeckLink] = useState("");
+  const [demoVideoLink, setDemoVideoLink] = useState("");
+  const [trackExplanations, setTrackExplanations] = useState<
+    Array<{ trackUID: string; explanation: string }>
+  >([]);
+  const [isFundingProgram, setIsFundingProgram] = useState(false);
+
+  // Get tracks for the program to check if they exist
+  const programIdWithChain = grant?.details?.data?.programId;
+  const { data: availableTracks = [] } = useTracksForProgram(programIdWithChain || '');
+
+  // Validation states
+  const [validationErrors, setValidationErrors] = useState<{
+    pitchDeckLink?: boolean;
+    demoVideoLink?: boolean;
+    tracks?: boolean;
+    trackExplanations?: boolean;
+  }>({});
 
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -42,25 +66,76 @@ export const GrantCompletion: FC = () => {
   const { changeStepperStep, setIsStepper } = useStepper();
   const { gap } = useGap();
 
+  // Check if grant is from a funding program (by community or grant name)
+  useEffect(() => {
+    const checkFundingProgram = async () => {
+      if (grant) {
+        // First check by grant name
+        const grantName = grant?.details?.data?.title || "";
+        if (isFundingProgramGrant(undefined, grantName)) {
+          setIsFundingProgram(false);
+          return;
+        }
+
+        // Then check by community if available
+        if (grant?.community) {
+          try {
+            // Handle both string and object community
+            const communityId = typeof grant.community === 'string'
+              ? grant.community
+              : grant.community.uid;
+
+            const response = await gapIndexerApi.communityBySlug(communityId);
+            if (response.data) {
+              const communityName = response.data.details?.data?.name || "";
+              setIsFundingProgram(isFundingProgramGrant(communityName, grantName));
+            }
+          } catch (error) {
+            console.error("Error fetching community:", error);
+          }
+        }
+      }
+    };
+
+    checkFundingProgram();
+  }, [grant?.community, grant?.details?.data?.title]);
+
+  useEffect(() => {
+    if (grant?.details?.data?.selectedTrackIds) {
+      setTrackExplanations(grant.details.data.selectedTrackIds.map(trackId => ({
+        trackUID: trackId,
+        explanation: ""
+      })));
+    }
+  }, [grant?.details?.data?.selectedTrackIds]);
+
   const markGrantAsComplete = async (
     grantToComplete: IGrantResponse,
     data: {
       text?: string;
       title?: string;
+      pitchDeckLink?: string;
+      demoVideoLink?: string;
+      trackExplanations?: Array<{ trackUID: string; explanation: string }>;
     }
   ) => {
     let gapClient = gap;
     try {
-      if (
-        !checkNetworkIsValid(chain?.id) ||
-        chain?.id !== grantToComplete.chainID
-      ) {
-        await switchChainAsync?.({ chainId: grantToComplete.chainID });
-        gapClient = getGapClient(grantToComplete.chainID);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId: grantToComplete.chainID,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsLoading(false);
+        return;
       }
 
+      gapClient = newGapClient;
+
       const { walletClient, error } = await safeGetWalletClient(
-        grantToComplete.chainID
+        actualChainId
       );
 
       if (error || !walletClient || !gapClient) {
@@ -76,6 +151,11 @@ export const GrantCompletion: FC = () => {
       const sanitizedGrantComplete = sanitizeObject({
         title: data.title || "",
         text: data.text || "",
+        ...(data.pitchDeckLink && { pitchDeckLink: data.pitchDeckLink }),
+        ...(data.demoVideoLink && { demoVideoLink: data.demoVideoLink }),
+        ...(data.trackExplanations && data.trackExplanations.length > 0 && {
+          trackExplanations: data.trackExplanations
+        }),
       });
       await grantInstance
         .complete(walletSigner, sanitizedGrantComplete, changeStepperStep)
@@ -130,9 +210,66 @@ export const GrantCompletion: FC = () => {
   };
 
   const onSubmit = async () => {
+    // Clear previous validation errors
+    setValidationErrors({});
+
+    // Validation for funding programs
+    if (isFundingProgram) {
+      const errors: typeof validationErrors = {};
+      let firstErrorField: string | null = null;
+
+      if (!pitchDeckLink || !pitchDeckLink.trim()) {
+        errors.pitchDeckLink = true;
+        if (!firstErrorField) firstErrorField = 'pitch-deck-link';
+      }
+      if (!demoVideoLink || !demoVideoLink.trim()) {
+        errors.demoVideoLink = true;
+        if (!firstErrorField) firstErrorField = 'demo-video-link';
+      }
+
+      // Only validate tracks if there are tracks available for the program
+      if (availableTracks.length > 0) {
+        if (trackExplanations.length === 0) {
+          errors.tracks = true;
+          if (!firstErrorField) firstErrorField = 'track-selection';
+        }
+        // Check if all selected tracks have explanations
+        const missingExplanations = trackExplanations.some(te => !te.explanation || te.explanation.trim() === '');
+        if (missingExplanations) {
+          errors.trackExplanations = true;
+          if (!firstErrorField) firstErrorField = 'track-explanations';
+        }
+      }
+
+      // If there are errors, set them and scroll to first error
+      if (Object.keys(errors).length > 0) {
+        setValidationErrors(errors);
+
+        // Scroll to first error field
+        if (firstErrorField) {
+          setTimeout(() => {
+            const element = firstErrorField ? document.getElementById(firstErrorField) : null;
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              // Try to focus if it's an input
+              if (element instanceof HTMLInputElement) {
+                element.focus();
+              }
+            }
+          }, 100);
+        }
+        return;
+      }
+    }
+
     setIsLoading(true);
     await markGrantAsComplete(grant as IGrantResponse, {
       text: description,
+      ...(isFundingProgram && {
+        pitchDeckLink,
+        demoVideoLink,
+        trackExplanations,
+      }),
     }).finally(() => {
       setIsLoading(false);
     });
@@ -168,6 +305,47 @@ export const GrantCompletion: FC = () => {
               />
             </div>
           </div>
+
+          {isFundingProgram && (
+            <>
+              <FundingProgramFields
+                pitchDeckLink={pitchDeckLink}
+                demoVideoLink={demoVideoLink}
+                onPitchDeckChange={(value) => {
+                  setPitchDeckLink(value);
+                  // Clear error when user starts typing
+                  if (validationErrors.pitchDeckLink) {
+                    setValidationErrors(prev => ({ ...prev, pitchDeckLink: false }));
+                  }
+                }}
+                onDemoVideoChange={(value) => {
+                  setDemoVideoLink(value);
+                  // Clear error when user starts typing
+                  if (validationErrors.demoVideoLink) {
+                    setValidationErrors(prev => ({ ...prev, demoVideoLink: false }));
+                  }
+                }}
+                errors={validationErrors}
+              />
+
+              <TrackExplanations
+                programId={programIdWithChain}
+                trackExplanations={trackExplanations}
+                onTrackExplanationsChange={(explanations) => {
+                  setTrackExplanations(explanations);
+                  // Clear errors when user makes changes
+                  if (explanations.length > 0 && validationErrors.tracks) {
+                    setValidationErrors(prev => ({ ...prev, tracks: false }));
+                  }
+                  if (explanations.every(te => te.explanation.trim() !== '') && validationErrors.trackExplanations) {
+                    setValidationErrors(prev => ({ ...prev, trackExplanations: false }));
+                  }
+                }}
+                errors={validationErrors}
+              />
+            </>
+          )}
+
           <div className="flex w-full flex-row-reverse">
             <Button
               onClick={() => onSubmit()}

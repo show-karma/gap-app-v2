@@ -24,6 +24,7 @@ import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useWallet } from "@/hooks/useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -82,11 +83,18 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
 
   const onSubmit = async () => {
     setIsLoading(true); // Set loading state to true
-    if (chain?.id != chainid) {
-      await switchChainAsync?.({ chainId: chainid });
+    const { success, chainId: actualChainId } = await ensureCorrectChain({
+      targetChainId: chainid,
+      currentChainId: chain?.id,
+      switchChainAsync,
+    });
+
+    if (!success) {
+      setIsLoading(false);
+      return;
     }
 
-    const { walletClient, error } = await safeGetWalletClient(chainid);
+    const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
     if (error || !walletClient) {
       throw new Error("Failed to connect to wallet", { cause: error });

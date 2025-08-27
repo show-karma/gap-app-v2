@@ -12,6 +12,7 @@ import { CancelButton } from "./buttons/CancelButton";
 import { NextButton } from "./buttons/NextButton";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import { useGrant } from "@/hooks/useGrant";
+import { isFundingProgramCommunity, FUNDING_PROGRAM_GRANT_NAMES } from "@/utilities/funding-programs";
 
 export const CommunitySelectionScreen: React.FC = () => {
   const {
@@ -41,9 +42,7 @@ export const CommunitySelectionScreen: React.FC = () => {
 
         if (flowType === "program") {
           const filteredCommunities = result.data.filter(
-            (community) =>
-              community.details?.data?.name?.toLowerCase().includes("celo") ||
-              community.details?.data?.name?.toLowerCase().includes("divvi")
+            (community) => isFundingProgramCommunity(community.details?.data?.name)
           );
           setAllCommunities(
             filteredCommunities.length > 0 ? filteredCommunities : []
@@ -112,9 +111,8 @@ export const CommunitySelectionScreen: React.FC = () => {
         <h3 className="text-xl font-semibold mb-6 text-center">
           {isEditing
             ? "Edit grant community, program and tracks"
-            : `Select a community for your ${
-                flowType === "grant" ? "grant" : "funding program"
-              }`}
+            : `Select a community for your ${flowType === "grant" ? "grant" : "funding program"
+            }`}
         </h3>
 
         <div className="w-full my-10 flex flex-col gap-4 items-center justify-center">
@@ -131,9 +129,8 @@ export const CommunitySelectionScreen: React.FC = () => {
             }}
             previousValue={formData.community}
             communities={allCommunities}
-            triggerClassName={`w-full max-w-full ${
-              isEditing ? "opacity-70 pointer-events-none" : ""
-            }`}
+            triggerClassName={`w-full max-w-full ${isEditing ? "opacity-70 pointer-events-none" : ""
+              }`}
             RightIcon={ChevronDownIcon}
             rightIconClassName="w-4 h-4 text-black dark:text-white opacity-100"
           />
@@ -143,13 +140,13 @@ export const CommunitySelectionScreen: React.FC = () => {
               grantToEdit={
                 isEditing
                   ? ({
-                      details: {
-                        data: {
-                          programId: formData.programId || "",
-                          title: formData.title || "",
-                        },
+                    details: {
+                      data: {
+                        programId: formData.programId || "",
+                        title: formData.title || "",
                       },
-                    } as any)
+                    },
+                  } as any)
                   : undefined
               }
               communityUID={formData.community}
@@ -172,12 +169,7 @@ export const CommunitySelectionScreen: React.FC = () => {
               searchForProgram={
                 flowType === "grant"
                   ? undefined
-                  : [
-                      "Proof of",
-                      "Hackathon",
-                      "Divvi Builder Camp",
-                      "Celo Support Streams",
-                    ]
+                  : [...FUNDING_PROGRAM_GRANT_NAMES]
               }
             />
           )}

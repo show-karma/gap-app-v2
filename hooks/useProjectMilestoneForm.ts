@@ -18,6 +18,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { useWallet } from "./useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 export interface ProjectMilestoneFormData {
   title: string;
@@ -54,10 +55,18 @@ export function useProjectMilestoneForm({
     let gapClient = gap;
     setIsLoading(true);
     try {
-      if (chain?.id != project?.chainID) {
-        await switchChainAsync?.({ chainId: project?.chainID as number });
-        gapClient = getGapClient(project?.chainID as number);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId: project?.chainID as number,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsLoading(false);
+        return;
       }
+
+      gapClient = newGapClient;
 
       const newMilestone = new ProjectMilestone({
         data: sanitizeObject({
@@ -71,7 +80,7 @@ export function useProjectMilestoneForm({
       });
 
       const { walletClient, error } = await safeGetWalletClient(
-        project?.chainID as number
+        actualChainId
       );
 
       if (error || !walletClient || !gapClient) {
@@ -154,13 +163,21 @@ export function useProjectMilestoneForm({
     setIsLoading(true);
 
     try {
-      if (chain?.id != project?.chainID) {
-        await switchChainAsync?.({ chainId: project?.chainID as number });
-        gapClient = getGapClient(project?.chainID as number);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId: project?.chainID as number,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsLoading(false);
+        return;
       }
 
+      gapClient = newGapClient;
+
       const { walletClient, error } = await safeGetWalletClient(
-        project?.chainID as number
+        actualChainId
       );
 
       if (error || !walletClient || !gapClient) {

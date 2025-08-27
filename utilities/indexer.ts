@@ -91,6 +91,12 @@ export const INDEXER = {
       UPDATE: (projectUID: string) =>
         `/projects/${projectUID}/update/categories`,
     },
+    REGIONS: {
+      UPDATE: (projectUID: string) =>
+        `/v2/projects/${projectUID}/regions`,
+      GET: (projectUID: string) =>
+        `/projects/${projectUID}/regions`,
+    },
     IMPACT_INDICATORS: {
       GET: (projectUID: string) =>
         `/projects/${projectUID}/indicators/data/all`,
@@ -105,6 +111,14 @@ export const INDEXER = {
       PROMOTE_TO_PERMANENT: () => `/v2/projects/logos/promote-to-permanent`,
     },
   },
+  MILESTONE: {
+    IMPACT_INDICATORS: {
+      GET: (milestoneUID: string) =>
+        `/grants/milestones/${milestoneUID}/indicators/data`,
+      SEND: (milestoneUID: string) => 
+        `/grants/milestones/${milestoneUID}/indicators/data`,
+    },
+  },
   CATEGORIES: {
     CREATE: (idOrSlug: string) => `/categories/create/${idOrSlug}`,
     IMPACT_SEGMENTS: {
@@ -113,6 +127,12 @@ export const INDEXER = {
       DELETE: (categoryId: string) =>
         `/categories/${categoryId}/impact-segments`,
     },
+  },
+  REGIONS: {
+    CREATE: (communityId: string) => `/v2/communities/${communityId}/regions`,
+    UPDATE: (communityId: string, regionId: string) => `/v2/communities/${communityId}/regions/${regionId}`,
+    DELETE: (communityId: string, regionId: string) => `/v2/communities/${communityId}/regions/${regionId}`,
+    GET_BY_ID: (regionId: string) => `/v2/regions/${regionId}`,
   },
   INDICATORS: {
     CREATE_OR_UPDATE: () => `/indicators`,
@@ -128,6 +148,42 @@ export const INDEXER = {
   COMMUNITY: {
     GET: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}`,
     CATEGORIES: (idOrSlug: string) => `/communities/${idOrSlug}/categories`,
+    REGIONS: (idOrSlug: string) => `/v2/communities/${idOrSlug}/regions`,
+    V2: {
+      GET: (slug: string) => `/v2/communities/${slug}`,
+      STATS: (slug: string) => `/v2/communities/${slug}/stats`,
+      PROJECTS: (
+        slug: string,
+        {
+          page,
+          limit,
+          sortBy,
+          categories,
+          status,
+          selectedProgramId,
+          selectedTrackIds,
+        }: {
+          page?: number;
+          limit?: number;
+          sortBy?: string;
+          categories?: string;
+          status?: string;
+          selectedProgramId?: string;
+          selectedTrackIds?: string[];
+        } = {}
+      ) => {
+        const params = new URLSearchParams();
+        if (page !== undefined) params.set("page", page.toString());
+        if (limit !== undefined) params.set("limit", limit.toString());
+        if (sortBy) params.set("sortBy", sortBy);
+        if (categories) params.set("categories", categories);
+        if (status) params.set("status", status);
+        if (selectedProgramId) params.set("programIds", selectedProgramId);
+        if (selectedTrackIds?.length) params.set("trackIds", selectedTrackIds.join(","));
+        const queryString = params.toString();
+        return `/v2/communities/${slug}/projects${queryString ? `?${queryString}` : ""}`;
+      },
+    },
     SUBSCRIBE: {
       BULK: `/bulk-subscription/subscribe`,
     },

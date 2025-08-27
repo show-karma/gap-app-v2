@@ -24,6 +24,7 @@ import {
   IProjectUpdate,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useWallet } from "./useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 type UpdateType =
   | IProjectUpdate
@@ -81,12 +82,20 @@ export const useUpdateActions = (update: UpdateType) => {
     let gapClient = gap;
     try {
       setIsDeletingUpdate(true);
-      if (!checkNetworkIsValid(chain?.id) || chain?.id !== update.chainID) {
-        await switchChainAsync?.({ chainId: update.chainID });
-        gapClient = getGapClient(update.chainID);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId: update.chainID,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsDeletingUpdate(false);
+        return;
       }
 
-      const { walletClient, error } = await safeGetWalletClient(update.chainID);
+      gapClient = newGapClient;
+
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });

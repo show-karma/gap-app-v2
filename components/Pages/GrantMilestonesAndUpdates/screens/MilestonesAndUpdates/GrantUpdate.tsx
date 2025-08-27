@@ -29,6 +29,7 @@ import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { ShareIcon } from "@heroicons/react/24/outline";
 import { useWallet } from "@/hooks/useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 interface UpdateTagProps {
   index: number;
@@ -93,12 +94,20 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
     let gapClient = gap;
     try {
       setIsDeletingGrantUpdate(true);
-      if (!checkNetworkIsValid(chain?.id) || chain?.id !== update.chainID) {
-        await switchChainAsync?.({ chainId: update.chainID });
-        gapClient = getGapClient(update.chainID);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId: update.chainID,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsDeletingGrantUpdate(false);
+        return;
       }
 
-      const { walletClient, error } = await safeGetWalletClient(update.chainID);
+      gapClient = newGapClient;
+
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
@@ -296,37 +305,31 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
         >
           {description}
         </ReadMore>
-        {isAfterProofLaunch ? (
+        {isAfterProofLaunch && update?.data.proofOfWork ? (
           <div className="flex flex-row items-center gap-1 flex-1 max-w-full flex-wrap max-sm:mt-4">
             <p className="text-sm w-full min-w-max max-w-max font-semibold text-gray-500 dark:text-zinc-300 max-sm:text-xs">
               Proof of work:
             </p>
-            {update?.data.proofOfWork ? (
-              <ExternalLink
-                href={
-                  update?.data.proofOfWork.includes("http")
-                    ? update?.data.proofOfWork
-                    : `https://${update?.data.proofOfWork}`
-                }
-                className="flex flex-row w-max max-w-full gap-2 bg-transparent text-sm font-semibold text-blue-600 underline dark:text-blue-100 hover:bg-transparent break-all line-clamp-3"
-              >
-                {update?.data.proofOfWork.includes("http")
-                  ? `${update?.data.proofOfWork.slice(0, 80)}${
-                      update?.data.proofOfWork.slice(0, 80).length >= 80
-                        ? "..."
-                        : ""
-                    }`
-                  : `https://${update?.data.proofOfWork.slice(0, 80)}${
-                      update?.data.proofOfWork.slice(0, 80).length >= 80
-                        ? "..."
-                        : ""
-                    }`}
-              </ExternalLink>
-            ) : (
-              <p className="text-sm font-medium text-gray-500 dark:text-zinc-300 max-sm:text-xs">
-                Grantee indicated there is no proof for this milestone.
-              </p>
-            )}
+            <ExternalLink
+              href={
+                update?.data.proofOfWork.includes("http")
+                  ? update?.data.proofOfWork
+                  : `https://${update?.data.proofOfWork}`
+              }
+              className="flex flex-row w-max max-w-full gap-2 bg-transparent text-sm font-semibold text-blue-600 underline dark:text-blue-100 hover:bg-transparent break-all line-clamp-3"
+            >
+              {update?.data.proofOfWork.includes("http")
+                ? `${update?.data.proofOfWork.slice(0, 80)}${
+                    update?.data.proofOfWork.slice(0, 80).length >= 80
+                      ? "..."
+                      : ""
+                  }`
+                : `https://${update?.data.proofOfWork.slice(0, 80)}${
+                    update?.data.proofOfWork.slice(0, 80).length >= 80
+                      ? "..."
+                      : ""
+                  }`}
+            </ExternalLink>
           </div>
         ) : null}
       </div>

@@ -30,6 +30,8 @@ import { sanitizeInput } from "@/utilities/sanitize";
 import { useAllMilestones } from "@/hooks/useAllMilestones";
 import { PAGES } from "@/utilities/pages";
 import { useWallet } from "@/hooks/useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import { OutputsSection } from "@/components/Forms/Outputs/OutputsSection";
 
 const schema = z.object({
   description: z.string().optional(),
@@ -40,6 +42,22 @@ const schema = z.object({
     })
     .optional()
     .or(z.literal("")),
+  outputs: z.array(
+    z.object({
+      outputId: z.string().min(1, "Output is required"),
+      value: z.union([z.number().min(0), z.string()]),
+      proof: z.string().optional(),
+      startDate: z.string().optional(),
+      endDate: z.string().optional(),
+    })
+  ),
+  deliverables: z.array(
+    z.object({
+      name: z.string().min(1, "Name is required"),
+      proof: z.string().min(1, "Proof is required"),
+      description: z.string().optional(),
+    })
+  ),
 });
 type SchemaType = z.infer<typeof schema>;
 
@@ -70,12 +88,21 @@ export const ProjectObjectiveCompletionForm = ({
     setValue,
     handleSubmit,
     watch,
+    control,
     formState: { errors, isValid },
   } = useForm<SchemaType>({
     resolver: zodResolver(schema),
     reValidateMode: "onChange",
     mode: "onChange",
+    defaultValues: {
+      description: "",
+      proofOfWork: "",
+      outputs: [],
+      deliverables: [],
+    },
   });
+
+
   const [noProofCheckbox, setNoProofCheckbox] = useState(false);
   const router = useRouter();
 
@@ -86,13 +113,21 @@ export const ProjectObjectiveCompletionForm = ({
     let gapClient = gap;
     setIsCompleting(true);
     try {
-      if (chain?.id !== project.chainID) {
-        await switchChainAsync?.({ chainId: project.chainID });
-        gapClient = getGapClient(project.chainID);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId: project.chainID,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsCompleting(false);
+        return;
       }
 
+      gapClient = newGapClient;
+
       const { walletClient, error } = await safeGetWalletClient(
-        project.chainID
+        actualChainId
       );
 
       if (error || !walletClient || !gapClient) {
@@ -239,6 +274,22 @@ export const ProjectObjectiveCompletionForm = ({
           <p className="text-red-500">{errors.proofOfWork?.message}</p>
         </div>
       </div>
+
+      {/* Outputs Section */}
+      <OutputsSection
+        register={register}
+        control={control}
+        setValue={setValue}
+        watch={watch}
+        errors={errors}
+        projectUID={objectiveUID}
+        selectedCommunities={[]}
+        selectedPrograms={[]}
+        onCreateNewIndicator={() => {}}
+        onIndicatorCreated={() => {}}
+        labelStyle={labelStyle}
+      />
+
       <div className="flex flex-row gap-4 justify-end">
         <Button
           disabled={isCompleting}

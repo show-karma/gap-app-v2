@@ -139,7 +139,8 @@ export const useProgramConfig = (programId: string, chainId: number) => {
   });
 
   return {
-    config: configQuery.data,
+    data: configQuery.data,
+    config: configQuery.data?.applicationConfig,
     isLoading: configQuery.isLoading,
     error: configQuery.error,
     updateConfig: updateConfigMutation.mutate,
@@ -228,12 +229,15 @@ export const useFundingApplications = (
 
   const exportApplications = useCallback(async (format: 'json' | 'csv' = 'json') => {
     try {
-      const data = await fundingPlatformService.applications.exportApplications(
+      const response = await fundingPlatformService.applications.exportApplications(
         programId, 
         chainId, 
         format, 
         filters
       );
+      
+      // Extract data and filename from response
+      const { data, filename } = response;
       
       // Create and download file
       const blob = new Blob([format === 'json' ? JSON.stringify(data, null, 2) : data], {
@@ -243,7 +247,10 @@ export const useFundingApplications = (
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `grant-applications-${programId}-${new Date().toISOString().split('T')[0]}.${format}`;
+      
+      // Use filename from server if available, otherwise generate one
+      link.download = filename || `applications-${programId}-${new Date().toISOString().split('T')[0]}.${format}`;
+      
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -476,7 +483,7 @@ export const useApplicationStatusV2 = (applicationId?: string) => {
 };
 
 /**
- * Hook for searching applications by reference number
+ * Hook for searching applications by Application ID
  */
 export const useApplicationByReference = (referenceNumber: string) => {
   const applicationQuery = useQuery({
@@ -497,21 +504,31 @@ export const useApplicationByReference = (referenceNumber: string) => {
 /**
  * Hook for exporting applications with V2 format support
  */
-export const useApplicationExport = (programId: string, chainId: number) => {
+export const useApplicationExport = (programId: string, chainId: number, isAdmin: boolean = false) => {
   const [isExporting, setIsExporting] = useState(false);
 
   const exportApplications = useCallback(async (
-    format: ExportFormat = 'json',
+    format: ExportFormat = 'csv',
     filters: IApplicationFilters = {}
   ) => {
     setIsExporting(true);
     try {
-      const data = await fundingPlatformService.applications.exportApplications(
-        programId,
-        chainId,
-        format,
-        filters
-      );
+      const response = isAdmin 
+        ? await fundingPlatformService.applications.exportApplicationsAdmin(
+            programId,
+            chainId,
+            format,
+            filters
+          )
+        : await fundingPlatformService.applications.exportApplications(
+            programId,
+            chainId,
+            format,
+            filters
+          );
+
+      // Extract data and filename from response
+      const { data, filename } = response;
 
       // Handle blob response for CSV
       let blob: Blob;
@@ -527,7 +544,15 @@ export const useApplicationExport = (programId: string, chainId: number) => {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `applications-${programId}-${new Date().toISOString().split('T')[0]}.${format}`;
+      
+      // Use filename from server if available, otherwise generate one
+      if (filename) {
+        link.download = filename;
+      } else {
+        const filePrefix = isAdmin ? 'admin-applications' : 'applications';
+        link.download = `${filePrefix}-${programId}-${new Date().toISOString().split('T')[0]}.${format}`;
+      }
+      
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -540,57 +565,10 @@ export const useApplicationExport = (programId: string, chainId: number) => {
     } finally {
       setIsExporting(false);
     }
-  }, [programId, chainId]);
+  }, [programId, chainId, isAdmin]);
 
   return {
     exportApplications,
     isExporting,
   };
 };
-
-/**
- * Hook for real-time AI evaluation of application data
- */
-export const useApplicationRealTimeEvaluation = (programId: string, chainId: number) => {
-  const [isEvaluating, setIsEvaluating] = useState(false);
-  const [evaluationResult, setEvaluationResult] = useState<{
-    rating: number;
-    feedback: string;
-    suggestions: string[];
-    isComplete: boolean;
-    evaluatedAt: string;
-    model: string;
-  } | null>(null);
-
-  const evaluateApplication = useCallback(async (applicationData: Record<string, any>) => {
-    setIsEvaluating(true);
-    setEvaluationResult(null);
-    
-    try {
-      const result = await fundingPlatformService.applications.evaluateRealTime(
-        programId,
-        chainId,
-        applicationData
-      );
-      
-      if (result.success) {
-        setEvaluationResult(result.data);
-        return result.data;
-      } else {
-        throw new Error('Evaluation failed');
-      }
-    } catch (error) {
-      console.error('Failed to evaluate application:', error);
-      toast.error('Failed to evaluate application');
-      throw error;
-    } finally {
-      setIsEvaluating(false);
-    }
-  }, [programId, chainId]);
-
-  return {
-    evaluateApplication,
-    isEvaluating,
-    evaluationResult,
-  };
-}; 

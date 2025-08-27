@@ -11,6 +11,7 @@ import { useAccount } from "wagmi";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getGapClient, useGap } from "@/hooks/useGap";
+import { getChainIdByName } from "@/utilities/network";
 import { useAuthStore } from "@/store/auth";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { useStepper } from "@/store/modals/txStepper";
@@ -29,6 +30,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 import { useWallet } from "@/hooks/useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 type ContributorProfileDialogProps = {};
 
@@ -128,18 +130,37 @@ export const ContributorProfileDialog: FC<
     if (!isGlobal && !project) return;
     try {
       setIsLoading(true);
-      const targetChainId = isGlobal ? chain?.id : project?.chainID;
+      let targetChainId = 0;
+
+      if (isGlobal) {
+        if (chain?.id) {
+          targetChainId = chain.id;
+        } else if (gap?.network) {
+          targetChainId = getChainIdByName(gap.network);
+        }
+      } else if (project?.chainID) {
+        targetChainId = project.chainID;
+      }
+
       if (!targetChainId) {
         toast.error("Chain not found");
         setIsLoading(false);
         return;
       }
-      if (chain?.id !== targetChainId) {
-        await switchChainAsync?.({ chainId: targetChainId });
-        gapClient = getGapClient(targetChainId);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsLoading(false);
+        return;
       }
 
-      const { walletClient, error } = await safeGetWalletClient(targetChainId);
+      gapClient = newGapClient;
+
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });

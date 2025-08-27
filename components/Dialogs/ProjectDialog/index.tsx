@@ -9,10 +9,11 @@ import {
 } from "@/components/Icons";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { getGapClient, useGap } from "@/hooks/useGap";
+import { useGap } from "@/hooks/useGap";
 import { useProjectStore } from "@/store";
 import { useOwnerStore } from "@/store/owner";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import { MESSAGES } from "@/utilities/messages";
 import { Dialog, Transition } from "@headlessui/react";
 import {
@@ -34,6 +35,7 @@ import {
   Project,
   ProjectDetails,
   nullRef,
+  ExternalCustomLink,
 } from "@show-karma/karma-gap-sdk";
 import { useRouter } from "next/navigation";
 import {
@@ -79,7 +81,7 @@ import { FarcasterIcon } from "@/components/Icons/Farcaster";
 import { DeckIcon } from "@/components/Icons/Deck";
 import { VideoIcon } from "@/components/Icons/Video";
 import { useWallet } from "@/hooks/useWallet";
-import { FileUpload } from "@/components/UI/FileUpload";
+import { CustomLink, isCustomLink } from "@/utilities/customLink";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -191,56 +193,62 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 }) => {
   const dataToUpdate = projectToUpdate
     ? {
-        chainID: projectToUpdate?.chainID,
-        description: projectToUpdate?.details?.data?.description || "",
-        title: projectToUpdate?.details?.data?.title || "",
-        problem: projectToUpdate?.details?.data?.problem,
-        solution: projectToUpdate?.details?.data?.solution,
-        missionSummary: projectToUpdate?.details?.data?.missionSummary,
-        locationOfImpact: projectToUpdate?.details?.data?.locationOfImpact,
-        imageURL: projectToUpdate?.details?.data?.imageURL,
-        twitter: projectToUpdate?.details?.data?.links?.find(
-          (link) => link.type === "twitter"
-        )?.url,
-        github: projectToUpdate?.details?.data?.links?.find(
-          (link) => link.type === "github"
-        )?.url,
-        discord: projectToUpdate?.details?.data?.links?.find(
-          (link) => link.type === "discord"
-        )?.url,
-        website: projectToUpdate?.details?.data?.links?.find(
-          (link) => link.type === "website"
-        )?.url,
-        linkedin: projectToUpdate?.details?.data?.links?.find(
-          (link) => link.type === "linkedin"
-        )?.url,
-        pitchDeck: projectToUpdate?.details?.data?.links?.find(
-          (link) => link.type === "pitchDeck"
-        )?.url,
-        demoVideo: projectToUpdate?.details?.data?.links?.find(
-          (link) => link.type === "demoVideo"
-        )?.url,
-        farcaster: projectToUpdate?.details?.data?.links?.find(
-          (link) => link.type === "farcaster"
-        )?.url,
-        profilePicture: projectToUpdate?.details?.data?.imageURL,
-        tags: projectToUpdate?.details?.data?.tags?.map((item) => item.name),
-        recipient: projectToUpdate?.recipient,
-        businessModel: projectToUpdate?.details?.data?.businessModel,
-        stageIn: projectToUpdate?.details?.data?.stageIn,
-        raisedMoney: projectToUpdate?.details?.data?.raisedMoney,
-        pathToTake: projectToUpdate?.details?.data?.pathToTake,
-      }
+      chainID: projectToUpdate?.chainID,
+      description: projectToUpdate?.details?.data?.description || "",
+      title: projectToUpdate?.details?.data?.title || "",
+      problem: projectToUpdate?.details?.data?.problem,
+      solution: projectToUpdate?.details?.data?.solution,
+      missionSummary: projectToUpdate?.details?.data?.missionSummary,
+      locationOfImpact: projectToUpdate?.details?.data?.locationOfImpact,
+      imageURL: projectToUpdate?.details?.data?.imageURL,
+      twitter: projectToUpdate?.details?.data?.links?.find(
+        (link) => link.type === "twitter"
+      )?.url,
+      github: projectToUpdate?.details?.data?.links?.find(
+        (link) => link.type === "github"
+      )?.url,
+      discord: projectToUpdate?.details?.data?.links?.find(
+        (link) => link.type === "discord"
+      )?.url,
+      website: projectToUpdate?.details?.data?.links?.find(
+        (link) => link.type === "website"
+      )?.url,
+      linkedin: projectToUpdate?.details?.data?.links?.find(
+        (link) => link.type === "linkedin"
+      )?.url,
+      pitchDeck: projectToUpdate?.details?.data?.links?.find(
+        (link) => link.type === "pitchDeck"
+      )?.url,
+      demoVideo: projectToUpdate?.details?.data?.links?.find(
+        (link) => link.type === "demoVideo"
+      )?.url,
+      farcaster: projectToUpdate?.details?.data?.links?.find(
+        (link) => link.type === "farcaster"
+      )?.url,
+      profilePicture: projectToUpdate?.details?.data?.imageURL,
+      tags: projectToUpdate?.details?.data?.tags?.map((item) => item.name),
+      recipient: projectToUpdate?.recipient,
+      businessModel: projectToUpdate?.details?.data?.businessModel,
+      stageIn: projectToUpdate?.details?.data?.stageIn,
+      raisedMoney: projectToUpdate?.details?.data?.raisedMoney,
+      pathToTake: projectToUpdate?.details?.data?.pathToTake,
+    }
     : undefined;
 
   const [contacts, setContacts] = useState<Contact[]>(previousContacts || []);
-  
-  // Add state for uploaded logo file and S3 upload
-  const [uploadedLogoFile, setUploadedLogoFile] = useState<File | null>(null);
-  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
-  const [isLogoUploading, setIsLogoUploading] = useState(false);
-  const [logoUploadProgress, setLogoUploadProgress] = useState(0);
-  const [tempLogoKey, setTempLogoKey] = useState<string | null>(null);
+  const [customLinks, setCustomLinks] = useState<CustomLink[]>(() => {
+    // Initialize custom links from project data if editing
+    if (projectToUpdate?.details?.data?.links) {
+      return projectToUpdate.details.data.links
+        .filter(isCustomLink)
+        .map((link, index) => ({
+          id: `custom-${index}`,
+          name: link.name || "",
+          url: link.url
+        }));
+    }
+    return [];
+  });
 
   // Modal state management - use edit store or local state based on mode
   const { isProjectEditModalOpen, setIsProjectEditModalOpen } =
@@ -315,14 +323,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         };
         reset(updateData);
         setContacts(previousContacts || []);
-        // Set preview URL for existing project logo
-        if (updateData.profilePicture) {
-          setLogoPreviewUrl(updateData.profilePicture);
-        }
-        // Reset S3 upload state for edit mode
-        setIsLogoUploading(false);
-        setLogoUploadProgress(0);
-        setTempLogoKey(null);
       } else {
         // Create mode - reset to empty form
         reset({
@@ -348,13 +348,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           recipient: "",
         });
         setContacts([]);
+        setCustomLinks([]);
         setStep(0);
-        // Reset logo state
-        setUploadedLogoFile(null);
-        setLogoPreviewUrl(null);
-        setIsLogoUploading(false);
-        setLogoUploadProgress(0);
-        setTempLogoKey(null);
       }
     }
   }, [isOpen, projectToUpdate, previousContacts, reset]);
@@ -365,6 +360,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   function openModal() {
     setIsOpen(true);
   }
+
+  const validateCustomLinks = () => {
+    return customLinks.some(link => !link.name.trim() || !link.url.trim());
+  };
 
   const hasErrors = () => {
     if (step === 0) {
@@ -394,8 +393,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         !!errors?.demoVideo ||
         !!errors?.farcaster ||
         !!errors?.profilePicture ||
-        isLogoUploading || // Prevent proceeding during upload
-        (!watch("profilePicture") && !logoPreviewUrl) // Check if we have either form value or preview URL
+        validateCustomLinks()
       );
     }
     if (step === 3) {
@@ -442,7 +440,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     callback?.();
   };
 
-  const createProject = async (data: SchemaType) => {
+  const createProject = async (data: SchemaType): Promise<void> => {
     try {
       setIsLoading(true);
       if (!isConnected || !isAuth) {
@@ -453,12 +451,19 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       if (!gap) return;
 
       const chainSelected = data.chainID;
-      let gapClient = getGapClient(chainSelected);
 
-      if (chain?.id !== chainSelected) {
-        await switchChainAsync?.({ chainId: chainSelected });
-        gapClient = getGapClient(chainSelected);
+      // Ensure we're on the correct chain
+      const { success, chainId, gapClient } = await ensureCorrectChain({
+        targetChainId: chainSelected,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsLoading(false);
+        return;
       }
+
 
       const project = new Project({
         data: {
@@ -472,7 +477,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       interface NewProjectData extends IProjectDetails {
         // tags?: Tag[];
         members?: Hex[];
-        links: ExternalLink;
+        links: Array<ExternalLink[0] | ExternalCustomLink>;
         recipient?: string;
       }
       const { chainID, ...rest } = data;
@@ -512,6 +517,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
             type: "farcaster",
             url: data.farcaster || "",
           },
+          ...(customLinks?.map(link => ({
+            type: "custom",
+            name: link.name.trim(),
+            url: link.url.trim()
+          })) || []),
         ],
         imageURL: data.profilePicture || "",
       };
@@ -519,37 +529,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       if (!gapClient) return;
 
       const slug = await gapClient.generateSlug(newProjectInfo.title);
-      
-      let finalImageURL = data.profilePicture || "";
-      if (tempLogoKey) {
-        try {
-          const projectIdentifier = `${slug}-${chainSelected}`;
-          
-          const [promoteData, promoteError] = await fetchData(
-            INDEXER.PROJECT.LOGOS.PROMOTE_TO_PERMANENT(),
-            'POST',
-            {
-              tempKey: tempLogoKey,
-              projectId: projectIdentifier,
-            }
-          );
-
-          if (!promoteError) {
-            const { permanentUrl } = promoteData;
-            finalImageURL = permanentUrl;
-            console.log('Logo promoted to permanent before project creation:', permanentUrl);
-          } else {
-            console.warn('Failed to promote logo to permanent status, using temp URL');
-          }
-        } catch (error) {
-          console.warn('Error promoting logo before project creation:', error);
-          // Continue with temp URL if promotion fails
-        }
-      }
-      
-      // Update newProjectInfo with the final image URL for consistency
-      newProjectInfo.imageURL = finalImageURL;
-      
       // eslint-disable-next-line no-param-reassign
       project.details = new ProjectDetails({
         data: {
@@ -559,7 +538,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           solution: newProjectInfo.solution,
           missionSummary: newProjectInfo.missionSummary,
           locationOfImpact: newProjectInfo.locationOfImpact,
-          imageURL: finalImageURL,
+          imageURL: data.profilePicture || "",
           links: newProjectInfo.links,
           slug,
           tags: newProjectInfo.tags?.map((tag) => ({
@@ -599,8 +578,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         );
       }
 
+      // Use chainId from ensureCorrectChain result to ensure we're using the correct chain
       const { walletClient, error } = await safeGetWalletClient(
-        project.chainID
+        chainId
       );
 
       if (error || !walletClient) {
@@ -616,7 +596,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
             await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, project.chainID),
+              INDEXER.ATTESTATION_LISTENER(txHash, chainId),
               "POST",
               {}
             );
@@ -708,6 +688,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       setStep(0);
       setIsStepper(false);
       setContacts([]);
+      setCustomLinks([]);
     } catch (error: any) {
       console.log({ error });
       errorManager(
@@ -728,8 +709,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     }
   };
 
-  const updateThisProject = async (data: SchemaType) => {
-    let gapClient = gap;
+  const updateThisProject = async (data: SchemaType): Promise<void> => {
     try {
       setIsLoading(true);
       if (!isConnected || !isAuth) {
@@ -738,13 +718,26 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       }
       if (!address || !projectToUpdate || !dataToUpdate) return;
       if (!gap) return;
-      if (chain?.id !== projectToUpdate.chainID) {
-        await switchChainAsync?.({ chainId: projectToUpdate.chainID });
-        gapClient = getGapClient(projectToUpdate.chainID);
+
+      const targetChainId = projectToUpdate.chainID;
+
+      // Ensure we're on the correct chain
+      const { success, chainId, gapClient } = await ensureCorrectChain({
+        targetChainId,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsLoading(false);
+        return;
       }
+
       const shouldRefresh = dataToUpdate.title === data.title;
+
+      // Use chainId from ensureCorrectChain result
       const { walletClient, error } = await safeGetWalletClient(
-        projectToUpdate.chainID
+        chainId
       );
 
       if (error || !walletClient || !gapClient) {
@@ -777,6 +770,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         pitchDeck: data.pitchDeck,
         demoVideo: data.demoVideo,
         farcaster: data.farcaster,
+        customLinks,
       };
 
       // Handle GitHub repository update if changed
@@ -822,37 +816,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         }
       }
 
-      // Promote temporary logo to permanent before updating the project
-      let finalImageURL = data.profilePicture;
-      if (tempLogoKey && fetchedProject) {
-        try {
-          const projectSlug = fetchedProject.details?.slug || projectToUpdate?.details?.data?.slug;
-          const projectIdentifier = `${projectSlug}-${projectToUpdate.chainID}`;
-          
-          const [promoteData, promoteError] = await fetchData(
-            INDEXER.PROJECT.LOGOS.PROMOTE_TO_PERMANENT(),
-            'POST',
-            {
-              tempKey: tempLogoKey,
-              projectId: projectIdentifier,
-            }
-          );
-
-          if (!promoteError) {
-            const { permanentUrl } = promoteData;
-            finalImageURL = permanentUrl;
-            console.log('Logo promoted to permanent before project update:', permanentUrl);
-          } else {
-            console.warn('Failed to promote logo to permanent status, using temp URL');
-          }
-        } catch (error) {
-          console.warn('Error promoting logo before project update:', error);
-        }
-      }
-
-      // Update newProjectInfo with the final image URL
-      newProjectInfo.imageURL = finalImageURL;
-
       await updateProject(
         fetchedProject,
         newProjectInfo,
@@ -875,8 +838,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     } catch (error: any) {
       console.log(error);
       errorManager(
-        `Error updating project ${
-          projectToUpdate?.details?.data?.slug || projectToUpdate?.uid
+        `Error updating project ${projectToUpdate?.details?.data?.slug || projectToUpdate?.uid
         }`,
         error,
         { ...data, address },
@@ -888,6 +850,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     } finally {
       setIsLoading(false);
       setIsStepper(false);
+      setCustomLinks([]);
     }
   };
 
@@ -930,7 +893,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       value.length < 3 ||
       (projectToUpdate &&
         value.toLowerCase() ===
-          projectToUpdate?.details?.data?.title?.toLowerCase())
+        projectToUpdate?.details?.data?.title?.toLowerCase())
     ) {
       return;
     }
@@ -994,7 +957,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 <p className="text-red-500">
                   {errors.title?.message}{" "}
                   {errors.title?.message &&
-                  errors.title?.message.includes("similar") ? (
+                    errors.title?.message.includes("similar") ? (
                     <>
                       <span>
                         If you need help getting access to your project, message
@@ -1011,7 +974,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 </p>
               )}
               {errors.title?.message &&
-              errors.title?.message.includes("similar") ? (
+                errors.title?.message.includes("similar") ? (
                 <span
                   className="text-blue-500 underline cursor-pointer"
                   style={{
@@ -1267,72 +1230,90 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           </div>
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="profile-logo-input" className={labelStyle}>
-              Project Logo *
+              Project Logo
             </label>
-            <FileUpload
-              useS3Upload={true}
-              onFileSelect={(file: File) => {
-                setUploadedLogoFile(file);
-                // Don't set profilePicture until upload is complete
-              }}
-              onS3UploadComplete={(finalUrl: string, tempKey: string) => {
-                // Set the final URL in the form after successful upload
-                setValue("profilePicture", finalUrl, { shouldValidate: true });
-                setLogoPreviewUrl(finalUrl);
-                setTempLogoKey(tempKey);
-                setIsLogoUploading(false);
-              }}
-              onS3UploadError={(error: string) => {
-                // Clear upload state on error
-                setUploadedLogoFile(null);
-                setLogoPreviewUrl(null);
-                setValue("profilePicture", "", { shouldValidate: true });
-                setIsLogoUploading(false);
-                setTempLogoKey(null);
-              }}
-              onUploadProgress={(progress: number) => {
-                setLogoUploadProgress(progress);
-                setIsLogoUploading(progress > 0 && progress < 100);
-              }}
-              acceptedFormats="image/*"
-              uploadedFile={uploadedLogoFile}
-              description="Max 5MB, Square (1:1) ratio required, JPEG/PNG/WebP"
-              className="w-full"
-              maxFileSize={5 * 1024 * 1024} // 5MB in bytes
-              allowedFileTypes={['image/jpeg', 'image/png', 'image/webp']}
-            />
-            
-            {/* Upload Progress Display */}
-            {isLogoUploading && (
-              <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                <span>Uploading... {logoUploadProgress}%</span>
-              </div>
-            )}
-            
-            {logoPreviewUrl && !isLogoUploading && (
-              <div className="flex flex-col gap-2">
-                <img 
-                  src={logoPreviewUrl} 
-                  alt="Logo preview" 
-                  className="w-20 h-20 object-cover rounded-lg border border-gray-300"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    setUploadedLogoFile(null);
-                    setLogoPreviewUrl(null);
-                    setValue("profilePicture", "", { shouldValidate: false });
-                    setTempLogoKey(null);
-                  }}
-                  className="text-sm text-red-500 hover:text-red-700 self-start"
-                  disabled={isLogoUploading}
-                >
-                  Remove logo
-                </button>
-              </div>
-            )}
+            <div className="flex w-full flex-row items-center gap-2 rounded-lg border border-gray-400 px-4 py-2">
+              <UserCircleIcon className="h-5 w-5" />
+              <input
+                id="profile-logo-input"
+                type="text"
+                className={socialMediaInputStyle}
+                placeholder="https://example.com/project-logo.jpg"
+                {...register("profilePicture")}
+              />
+            </div>
             <p className="text-red-500">{errors.profilePicture?.message}</p>
+          </div>
+
+          {/* Custom Links Section */}
+          <div className="flex w-full flex-col gap-4">
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+              <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                Custom Links
+              </h4>
+              {customLinks.map((link, index) => (
+                <div key={link.id} className="flex w-full flex-col gap-2 mb-4">
+                  <div className="flex gap-3">
+                    <div className="flex-1 flex flex-col gap-1">
+                      <label className={labelStyle}>Name</label>
+                      <input
+                        type="text"
+                        value={link.name}
+                        onChange={(e) => {
+                          const updatedLinks = [...customLinks];
+                          updatedLinks[index].name = e.target.value;
+                          setCustomLinks(updatedLinks);
+                        }}
+                        className={inputStyle}
+                        placeholder="e.g., Documentation, Blog"
+                      />
+                    </div>
+                    <div className="flex-1 flex flex-col gap-1">
+                      <label className={labelStyle}>URL</label>
+                      <input
+                        type="text"
+                        value={link.url}
+                        onChange={(e) => {
+                          const updatedLinks = [...customLinks];
+                          updatedLinks[index].url = e.target.value;
+                          setCustomLinks(updatedLinks);
+                        }}
+                        className={inputStyle}
+                        placeholder="https://example.com"
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updatedLinks = customLinks.filter((_, i) => i !== index);
+                          setCustomLinks(updatedLinks);
+                        }}
+                        className="px-3 py-2 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                      >
+                        <XMarkIcon className="h-5 w-5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => {
+                  const newLink: CustomLink = {
+                    id: `custom-${Date.now()}`,
+                    name: "",
+                    url: ""
+                  };
+                  const updatedLinks = [...customLinks, newLink];
+                  setCustomLinks(updatedLinks);
+                }}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 border border-blue-300 dark:border-blue-600 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/20"
+              >
+                <PlusIcon className="h-4 w-4" />
+                Add New Link
+              </button>
+            </div>
           </div>
         </div>
       ),
