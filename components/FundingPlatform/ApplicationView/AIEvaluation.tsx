@@ -54,11 +54,11 @@ function ScoreDisplay({
                     <span
                         className={cn(
                             "px-2.5 py-1 rounded-full text-xs font-medium",
-                            score > 7 
+                            score > 7
                                 ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
                                 : score >= 4
-                                ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300"
-                                : "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
+                                    ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300"
+                                    : "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
                         )}
                     >
                         {getProbabilityLevel(score)}
@@ -320,8 +320,10 @@ function EvaluationDisplay({
     getPriorityColor: (priority: string) => string;
 }) {
     // Check if program is audit grants or growth grants
-    const isAuditGrants = programName?.toLowerCase().includes("audit grants");
-    const isGrowthGrants = programName?.toLowerCase().includes("growth grants");
+    // const isAuditGrants = programName?.toLowerCase().includes("audit grants");
+    // const isGrowthGrants = programName?.toLowerCase().includes("growth grants");
+    const isAuditGrants = false;
+    const isGrowthGrants = false;
 
     // Helper to render generic values
     const renderValue = (value: unknown, depth = 0): JSX.Element => {
