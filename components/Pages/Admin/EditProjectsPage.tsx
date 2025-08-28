@@ -98,9 +98,14 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({
             return (
               <tr key={project.uid} className="dark:text-zinc-300 text-gray-900 px-4 py-4">
                 <td className="px-4 py-2 font-medium h-16">
-                  <div className="max-w-full line-clamp-2">
+                  <Link
+                    href={PAGES.PROJECT.OVERVIEW(project.details.slug)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="max-w-full line-clamp-2 text-blue-600 dark:text-blue-400 hover:underline"
+                  >
                     {project.details.title}
-                  </div>
+                  </Link>
                 </td>
                 <td className="px-4 py-2">
                   <div className="max-w-full line-clamp-2">
