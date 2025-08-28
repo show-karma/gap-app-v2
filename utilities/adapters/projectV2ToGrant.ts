@@ -27,7 +27,7 @@ export const projectV2ToGrant = (project: ProjectV2): IGrantResponse => {
           title: project.details.title,
           description: project.details.description,
           imageURL: project.details.logoUrl,
-          slug: project.uid,
+          slug: project.details.slug,
         },
       },
     },
