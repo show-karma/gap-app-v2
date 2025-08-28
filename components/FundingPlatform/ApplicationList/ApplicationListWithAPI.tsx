@@ -12,6 +12,7 @@ import { IFundingApplication } from "@/types/funding-platform";
 import { Button } from "@/components/Utilities/Button";
 import { ArrowDownTrayIcon, FunnelIcon } from "@heroicons/react/24/outline";
 import formatCurrency from "@/utilities/formatCurrency";
+import pluralize from "pluralize";
 
 interface IApplicationListWithAPIProps {
   programId: string;
@@ -120,7 +121,8 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
       params.delete("sortBy");
     }
 
-    if (sortOrder && sortOrder !== 'desc') {
+    // Always persist sortOrder in URL if it's set
+    if (sortOrder) {
       params.set("sortOrder", sortOrder);
     } else {
       params.delete("sortOrder");
@@ -300,11 +302,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
         </div>
 
         <div className="flex justify-between mt-4 space-x-2">
-          <div className="flex flex-row gap-4 items-center">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              {applications.length} application(s) found
-            </p>
-          </div>
+          <div className="flex flex-row gap-4 items-center" />
           <div className="flex justify-end space-x-2">
             <Button
               onClick={() => {
@@ -348,35 +346,37 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
       />
 
       {/* Pagination Info */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-          <div>
-            Page {page} of {totalPages} ({total} total applications)
-          </div>
+      <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Page {page} of {totalPages} ({total} total {pluralize("application", total)})
+        </p>
 
-          <div className="flex space-x-2">
-            <button
-              onClick={() =>
-                handleFilterChange({ page: Math.max(1, page - 1) })
-              }
-              disabled={page === 1}
-              className="px-3 py-1 bg-gray-200 dark:bg-zinc-700 rounded disabled:opacity-50"
-            >
-              Previous
-            </button>
+        {totalPages > 1 && (
+          <>
+            <div className="flex space-x-2">
+              <button
+                onClick={() =>
+                  handleFilterChange({ page: Math.max(1, page - 1) })
+                }
+                disabled={page === 1}
+                className="px-3 py-1 bg-gray-200 dark:bg-zinc-700 rounded disabled:opacity-50"
+              >
+                Previous
+              </button>
 
-            <button
-              onClick={() =>
-                handleFilterChange({ page: Math.min(totalPages, page + 1) })
-              }
-              disabled={page === totalPages}
-              className="px-3 py-1 bg-gray-200 dark:bg-zinc-700 rounded disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
+              <button
+                onClick={() =>
+                  handleFilterChange({ page: Math.min(totalPages, page + 1) })
+                }
+                disabled={page === totalPages}
+                className="px-3 py-1 bg-gray-200 dark:bg-zinc-700 rounded disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };

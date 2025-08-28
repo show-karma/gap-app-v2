@@ -56,6 +56,12 @@ export default function ApplicationsPage() {
     const page = searchParams.get("page");
     if (page) filters.page = parseInt(page, 10);
 
+    const sortBy = searchParams.get("sortBy");
+    if (sortBy) filters.sortBy = sortBy as any;
+
+    const sortOrder = searchParams.get("sortOrder");
+    if (sortOrder) filters.sortOrder = sortOrder as any;
+
     return filters;
   }, [searchParams]);
 
