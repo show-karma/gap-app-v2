@@ -292,6 +292,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const { changeStepperStep, setIsStepper } = useStepper();
   const { openSimilarProjectsModal, isSimilarProjectsModalOpen } =
     useSimilarProjectsModalStore();
+  const [walletSigner, setWalletSigner] = useState<any>(null);
+  const [faucetFunded, setFaucetFunded] = useState(false);
 
   const {
     register,
@@ -309,6 +311,35 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     defaultValues: dataToUpdate,
   });
   const { errors, isValid } = formState;
+
+  // Watch the chainID value for the useEffect
+  const chainIDValue = watch("chainID");
+  
+  // Prepare wallet signer when wallet is connected and chain is selected
+  useEffect(() => {
+    const prepareSigner = async () => {
+      if (isConnected && address && chainIDValue) {
+        try {
+          // Get wallet client for the selected chain
+          const { walletClient, error } = await safeGetWalletClient(chainIDValue);
+          
+          if (!error && walletClient) {
+            const signer = await walletClientToSigner(walletClient);
+            setWalletSigner(signer);
+          } else {
+            setWalletSigner(null);
+          }
+        } catch (error) {
+          console.error("Failed to prepare wallet signer:", error);
+          setWalletSigner(null);
+        }
+      } else {
+        setWalletSigner(null);
+      }
+    };
+    
+    prepareSigner();
+  }, [isConnected, address, chainIDValue]);
 
   // Reset form when switching between create/edit modes or when modal opens
   useEffect(() => {
@@ -365,6 +396,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         setContacts([]);
         setCustomLinks([]);
         setStep(0);
+        setFaucetFunded(false);
       }
     }
   }, [isOpen, projectToUpdate, previousContacts, reset]);
@@ -1540,23 +1572,57 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                   setValue("chainID", networkId, {
                     shouldValidate: true,
                   });
+                  // Reset faucet funding status when network changes
+                  setFaucetFunded(false);
                 }}
                 networks={appNetwork}
                 previousValue={watch("chainID")}
               />
               <p className="text-red-500">{errors.chainID?.message}</p>
-
-              {/* Faucet Section for getting funds */}
-              {watch("chainID") && (
+              
+              {/* Add FaucetSection for gas funding */}
+              {watch("chainID") && walletSigner && !faucetFunded && (
                 <FaucetSection
                   chainId={watch("chainID")}
-                  projectAddress={address} // Using user's address as the project creation happens from their wallet
-                  onFundsReceived={() => {
-                    // Optionally refresh the UI or show a success message
-                    console.log("Funds received successfully");
+                  projectFormData={{
+                    title: watch("title"),
+                    description: watch("description"),
+                    problem: watch("problem"),
+                    solution: watch("solution"),
+                    missionSummary: watch("missionSummary"),
+                    locationOfImpact: watch("locationOfImpact"),
+                    profilePicture: watch("profilePicture"),
+                    twitter: watch("twitter"),
+                    github: watch("github"),
+                    discord: watch("discord"),
+                    website: watch("website"),
+                    linkedin: watch("linkedin"),
+                    pitchDeck: watch("pitchDeck"),
+                    demoVideo: watch("demoVideo"),
+                    farcaster: watch("farcaster"),
+                    recipient: watch("recipient"),
+                    businessModel: watch("businessModel"),
+                    stageIn: watch("stageIn"),
+                    raisedMoney: watch("raisedMoney"),
+                    pathToTake: watch("pathToTake"),
+                    customLinks: customLinks,
                   }}
-                  disabled={isLoading}
+                  walletSigner={walletSigner}
+                  recipient={(watch("recipient") || address) as Hex}
+                  onFundsReceived={() => {
+                    setFaucetFunded(true);
+                    toast.success("Wallet funded! You can now create your project.");
+                  }}
                 />
+              )}
+              
+              {/* Show success message if already funded */}
+              {faucetFunded && (
+                <div className="mt-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                  <p className="text-sm text-green-800 dark:text-green-200 font-medium">
+                    ✓ Wallet funded successfully
+                  </p>
+                </div>
               )}
             </div>
           ) : null}

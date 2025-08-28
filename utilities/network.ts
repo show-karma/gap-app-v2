@@ -16,7 +16,7 @@ import type { TNetwork } from "@show-karma/karma-gap-sdk";
 export const appNetwork: [Chain, ...Chain[]] =
   process.env.NEXT_PUBLIC_ENV === "production"
     ? [optimism, arbitrum, celo, sei, lisk, scroll]
-    : [optimismSepolia, baseSepolia, sepolia, celoAlfajores];
+    : [optimismSepolia, baseSepolia, sepolia];
 
 export function getExplorerUrl(chainId: number, transactionHash: string) {
   const chain = [

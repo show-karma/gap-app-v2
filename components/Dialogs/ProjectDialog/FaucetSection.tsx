@@ -4,40 +4,61 @@ import { FC, useEffect, useState } from "react";
 import { useFaucetEligibility, useFaucetClaim } from "@/hooks/useFaucet";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { formatEther } from "viem";
+import { formatEther, type Hex } from "viem";
 import { ExclamationTriangleIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { cn } from "@/utilities/tailwind";
 import type { FaucetTransaction } from "@/utilities/faucet/faucetService";
+import { buildProjectAttestationTransaction } from "@/utilities/gap/buildAttestationTransaction";
+import { getGapClient } from "@/hooks/useGap";
 
 interface FaucetSectionProps {
   chainId?: number;
-  projectAddress?: string;
+  projectFormData?: any;
+  walletSigner?: any;
+  recipient?: string;
   onFundsReceived?: () => void;
   disabled?: boolean;
 }
 
 export const FaucetSection: FC<FaucetSectionProps> = ({
   chainId,
-  projectAddress,
+  projectFormData,
+  walletSigner,
+  recipient,
   onFundsReceived,
   disabled
 }) => {
   const [showFaucet, setShowFaucet] = useState(false);
   const [transaction, setTransaction] = useState<FaucetTransaction | undefined>();
+  const [isBuilding, setIsBuilding] = useState(false);
 
-  // Create a transaction object for the project creation
+  // Build the real attestation transaction for accurate gas estimation
   useEffect(() => {
-    if (projectAddress && chainId) {
-      // This is the transaction to create a project on-chain
-      // We're estimating gas for this transaction
-      setTransaction({
-        to: projectAddress,
-        data: "0x", // Will be filled with actual project creation data
-        value: "0" // Project creation doesn't require value
-      });
-    }
-  }, [projectAddress, chainId]);
+    const buildTransaction = async () => {
+      if (projectFormData && chainId && walletSigner && recipient) {
+        setIsBuilding(true);
+        try {
+          const gapClient = getGapClient(chainId);
+          const tx = await buildProjectAttestationTransaction(
+            projectFormData,
+            walletSigner,
+            gapClient,
+            recipient as Hex
+          );
+          setTransaction(tx);
+        } catch (error) {
+          console.error("Failed to build attestation transaction:", error);
+          // Set a fallback transaction if building fails
+          setTransaction(undefined);
+        } finally {
+          setIsBuilding(false);
+        }
+      }
+    };
+    
+    buildTransaction();
+  }, [projectFormData, chainId, walletSigner, recipient]);
 
   const {
     data: eligibility,
@@ -84,8 +105,8 @@ export const FaucetSection: FC<FaucetSectionProps> = ({
     return `${seconds} second${seconds !== 1 ? 's' : ''}`;
   };
 
-  // Don't render anything if checking eligibility or not eligible
-  if (isCheckingEligibility) {
+  // Don't render anything if checking eligibility, building transaction, or not eligible
+  if (isCheckingEligibility || isBuilding) {
     return null;
   }
 
