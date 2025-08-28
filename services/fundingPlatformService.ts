@@ -53,7 +53,7 @@ export interface IApplicationFilters {
   dateFrom?: string;
   dateTo?: string;
   // Sorting parameters
-  sortBy?: 'createdAt' | 'updatedAt' | 'status' | 'applicantEmail' | 'referenceNumber';
+  sortBy?: 'createdAt' | 'updatedAt' | 'status' | 'applicantEmail' | 'referenceNumber' | 'projectTitle';
   sortOrder?: 'asc' | 'desc';
 }
 

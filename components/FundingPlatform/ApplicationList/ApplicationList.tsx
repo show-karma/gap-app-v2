@@ -143,7 +143,10 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                 />
                 <SortableTableHeader
                   label="Project Title"
-                  sortable={false}
+                  sortKey="projectTitle"
+                  currentSortKey={sortBy}
+                  currentSortDirection={sortOrder}
+                  onSort={onSortChange}
                 />
                 <SortableTableHeader
                   label="Applicant Email"
