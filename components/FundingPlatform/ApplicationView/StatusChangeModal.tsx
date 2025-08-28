@@ -37,10 +37,13 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
   isReasonRequired = false,
 }) => {
   const [reason, setReason] = useState("");
+  
+  // Make reason required for revision_requested and rejected statuses
+  const isReasonActuallyRequired = isReasonRequired || status === 'revision_requested' || status === 'rejected';
 
   const handleConfirm = () => {
     // If reason is required but not provided, don't proceed
-    if (isReasonRequired && !reason.trim()) {
+    if (isReasonActuallyRequired && !reason.trim()) {
       return;
     }
     onConfirm(reason || undefined);
@@ -114,7 +117,7 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
 
                       <div className="mt-4">
                         <label htmlFor="reason" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Reason {isReasonRequired ? <span className="text-red-500">*</span> : "(Optional)"}
+                          Reason {isReasonActuallyRequired ? <span className="text-red-500">*</span> : "(Optional)"}
                         </label>
                         <textarea
                           id="reason"
@@ -135,7 +138,9 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                         <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                           {status === 'revision_requested'
                             ? "The applicant will see this message and can update their application."
-                            : "This reason will be recorded in the status history."}
+                            : status === 'rejected' 
+                              ? "This reason will be recorded and may be shared with the applicant."
+                              : "This reason will be recorded in the status history."}
                         </p>
                       </div>
                     </div>
@@ -145,7 +150,7 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
                 <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
                   <Button
                     onClick={handleConfirm}
-                    disabled={isSubmitting || (isReasonRequired && !reason.trim())}
+                    disabled={isSubmitting || (isReasonActuallyRequired && !reason.trim())}
                     className={`w-full sm:w-auto sm:ml-3 ${status === 'approved' ? 'bg-green-600 hover:bg-green-700' :
                       status === 'rejected' ? 'bg-red-600 hover:bg-red-700' :
                         ''

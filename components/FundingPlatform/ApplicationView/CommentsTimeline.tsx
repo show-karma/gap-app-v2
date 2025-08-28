@@ -66,11 +66,6 @@ const statusConfig = {
     color: 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900',
     label: 'Rejected'
   },
-  withdrawn: {
-    icon: ArrowPathIcon,
-    color: 'text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700',
-    label: 'Withdrawn'
-  }
 };
 const labelMap = {
   pending: 'Pending Review',
@@ -78,7 +73,6 @@ const labelMap = {
   revision_requested: 'Revision Requested',
   approved: 'Approved',
   rejected: 'Rejected',
-  withdrawn: 'Withdrawn'
 }
 
 

@@ -44,7 +44,6 @@ const statusColors = {
   revision_requested: "bg-yellow-100 text-yellow-800 border-yellow-200",
   approved: "bg-green-100 text-green-800 border-green-200",
   rejected: "bg-red-100 text-red-800 border-red-200",
-  withdrawn: "bg-zinc-100 text-gray-800 border-gray-200",
 };
 
 const statusIcons = {
@@ -53,7 +52,6 @@ const statusIcons = {
   revision_requested: ExclamationTriangleIcon,
   approved: CheckCircleIcon,
   rejected: XMarkIcon,
-  withdrawn: XMarkIcon,
 };
 
 const formatStatus = (status: string): string => {
@@ -870,12 +868,6 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
                             </p>
                           )}
 
-                          {application.status === "withdrawn" && (
-                            <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
-                              This application has been withdrawn by the
-                              applicant.
-                            </p>
-                          )}
                         </div>
                       )}
                     </div>
