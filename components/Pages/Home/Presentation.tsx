@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { Button } from "@/components/Utilities/Button";
 import Link from "next/link";
 import { PAGES } from "@/utilities/pages";
+import { PlusIcon } from "@heroicons/react/24/solid";
 // import { ProjectDialog } from "@/components/Dialogs/ProjectDialog";
 
 const ReactTypedWrapper = dynamic(
@@ -41,43 +42,18 @@ export const Presentation = () => {
       <div className=" flex w-full flex-row items-end justify-center gap-1 max-lg:mt-4">
         <div className="flex w-full flex-[4]  flex-col  items-start">
           <div className="flex flex-1 flex-col gap-8 pb-8 max-2xl:gap-6">
-            <h4 className="w-max rounded-3xl bg-[#EAECF5] dark:bg-slate-800 dark:text-blue-400 px-3 py-1 text-center text-base font-semibold text-indigo-900  max-2xl:text-sm">
-              ONCHAIN PROTOCOL
-            </h4>
-
             <div className="flex flex-col gap-1 pb-8 max-2xl:pb-1">
-              <h1 className="text-6xl font-bold leading-[64px] text-gray-900 dark:text-gray-100 max-2xl:text-4xl max-2xl:leading-[36px] max-lg:text-3xl max-lg:leading-normal">
-                Visibility and <br />
-                accountability for <br className="mb-3" />
-                <ReactTypedWrapper />
-                <span className="text-6xl font-bold leading-[64px] text-gray-900 dark:text-gray-100 max-2xl:text-4xl max-2xl:leading-[36px] max-lg:text-3xl max-lg:leading-normal">
-                  <br /> projects
-                </span>
+              <h1 className="text-6xl leading-[64px] text-gray-900 dark:text-gray-100 max-2xl:text-4xl max-2xl:leading-[36px] max-lg:text-3xl max-lg:leading-normal">
+                Fund projects.<br />
+                Optimize impact.<br />
+                Grow faster.<br />
               </h1>
+              <div>
+                Ecosystems use our full stack funding platform to distribute funds, track milestones, and verify impact - turning funding into real growth.
+              </div>
             </div>
 
-            <div className="w-full max-w-full flex flex-row gap-2 flex-wrap items-center">
-              <ProjectDialog
-                buttonElement={{
-                  icon: (
-                    <img
-                      className="h-6 w-6 max-sm:h-4 max-sm:w-4 text-white"
-                      alt="Contact"
-                      src="/icons/arrow-right-2.svg"
-                    />
-                  ),
-                  iconSide: "right",
-                  text: "Add your project",
-                  styleClass:
-                    "max-sm:px-2 max-sm:py-2 flex rounded-md hover:opacity-75 border-none transition-all ease-in-out duration-300 items-center h-max w-max flex-row gap-3 bg-brand-darkblue dark:bg-gray-700 px-7 py-4 text-lg font-semibold leading-7 text-white hover:bg-brand-darkblue max-2xl:px-5 max-2xl:text-base max-lg:text-sm",
-                }}
-              />
-              <Link href={PAGES.PROJECTS_EXPLORER}>
-                <Button className="max-sm:px-2 max-sm:py-2 flex rounded-md hover:opacity-75 border-black dark:border-zinc-100 border transition-all ease-in-out duration-300 items-center h-max w-max flex-row gap-3 bg-transparent dark:bg-transparent px-7 py-4 text-lg font-semibold leading-7 text-black dark:text-zinc-100 hover:bg-transparent max-2xl:px-5 max-2xl:text-base max-lg:text-sm ">
-                  Explore projects on GAP
-                </Button>
-              </Link>
-            </div>
+
           </div>
 
           <div className="flex w-full flex-1 flex-row flex-wrap gap-6 max-md:flex-col">
@@ -108,6 +84,23 @@ export const Presentation = () => {
                   <p className="text-base font-normal">Receive rewards and funding for your work</p>
                 </li>
               </ul>
+            <div className="w-full max-w-full flex flex-row gap-2 flex-wrap items-center">
+              <ProjectDialog
+                buttonElement={{
+                  icon: (
+                    <img
+                      className="h-6 w-6 max-sm:h-4 max-sm:w-4 text-white"
+                      alt="Contact"
+                      src="/icons/arrow-right-2.svg"
+                    />
+                  ),
+                  iconSide: "right",
+                  text: "Add your project",
+                  styleClass:
+                    "max-sm:px-2 max-sm:py-2 flex rounded-md hover:opacity-75 border-none transition-all ease-in-out duration-300 items-center h-max w-max flex-row gap-3 bg-brand-darkblue dark:bg-gray-700 px-7 py-4 text-lg font-semibold leading-7 text-white hover:bg-brand-darkblue max-2xl:px-5 max-2xl:text-base max-lg:text-sm",
+                }}
+              />
+            </div>
             </div>
             <div className="flex  min-w-min max-w-[500px] flex-1 flex-col items-start gap-3 rounded-3xl text-gray-900 dark:text-gray-900 bg-[#D7F8EF] px-8 py-6 max-2xl:px-6 max-lg:min-w-full">
               <div className="flex items-center justify-center rounded-lg border border-black p-2">
@@ -140,6 +133,18 @@ export const Presentation = () => {
                   </p>
                 </li>
               </ul>
+          <a
+            href="https://tally.so/r/wd0jeq"
+            target="_blank"
+            rel="noreferrer"
+            className="flex h-[166px] w-full flex-col items-center justify-center gap-2 rounded-2xl px-4 py-6 transition-all duration-300 ease-in-out"
+          >
+            <Button className="flex flex-row items-center gap-2 dark:border-slate-600 border border-black bg-white dark:bg-zinc-700 dark:text-white rounded-md p-4 text-sm font-semibold text-black hover:bg-white max-lg:text-xs">
+              Add your Community
+              <PlusIcon className="h-5 w-5" />
+            </Button>
+          </a>
+
             </div>
             <div />
           </div>
