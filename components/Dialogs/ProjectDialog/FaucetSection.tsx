@@ -11,6 +11,9 @@ import { cn } from "@/utilities/tailwind";
 import type { FaucetTransaction } from "@/utilities/faucet/faucetService";
 import { buildProjectAttestationTransaction } from "@/utilities/gap/buildAttestationTransaction";
 import { getGapClient } from "@/hooks/useGap";
+import { useAccount } from "wagmi";
+import { useWallet } from "@/hooks/useWallet";
+import toast from "react-hot-toast";
 
 interface FaucetSectionProps {
   chainId?: number;
@@ -32,7 +35,11 @@ export const FaucetSection: FC<FaucetSectionProps> = ({
   const [showFaucet, setShowFaucet] = useState(false);
   const [transaction, setTransaction] = useState<FaucetTransaction | undefined>();
   const [isBuilding, setIsBuilding] = useState(false);
+  const { chain } = useAccount();
+  const { switchChainAsync } = useWallet();
+  const [isSwitchingChain, setIsSwitchingChain] = useState(false);
 
+  
   // Build the real attestation transaction for accurate gas estimation
   useEffect(() => {
     const buildTransaction = async () => {
@@ -84,6 +91,22 @@ export const FaucetSection: FC<FaucetSectionProps> = ({
     if (!chainId || !transaction) return;
 
     try {
+      // Check if we need to switch chains first
+      if (chain?.id !== chainId) {
+        setIsSwitchingChain(true);
+        try {
+          await switchChainAsync({ chainId });
+          // Wait a moment for the chain switch to complete
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        } catch (switchError) {
+          console.error("Failed to switch chain:", switchError);
+          toast.error("Please switch to the correct network to claim funds");
+          return;
+        } finally {
+          setIsSwitchingChain(false);
+        }
+      }
+
       const result = await claimFaucet(chainId, transaction);
       if (result && onFundsReceived) {
         onFundsReceived();
@@ -91,17 +114,6 @@ export const FaucetSection: FC<FaucetSectionProps> = ({
     } catch (error) {
       console.error("Failed to claim funds:", error);
     }
-  };
-
-  // Format the wait time for rate limiting
-  const formatWaitTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    
-    if (minutes > 0) {
-      return `${minutes} minute${minutes !== 1 ? 's' : ''} ${remainingSeconds > 0 ? `and ${remainingSeconds} second${remainingSeconds !== 1 ? 's' : ''}` : ''}`;
-    }
-    return `${seconds} second${seconds !== 1 ? 's' : ''}`;
   };
 
   // Don't render anything if checking eligibility, building transaction, or not eligible
@@ -197,24 +209,30 @@ export const FaucetSection: FC<FaucetSectionProps> = ({
               </p>
               <p className="text-sm text-blue-600 dark:text-blue-300 mt-1">
                 You need funds to create your project on-chain. Click below to receive free funds.
+                {chain?.id !== chainId && (
+                  <span className="block mt-1 text-xs text-blue-500 dark:text-blue-400">
+                    Will switch to the selected network automatically.
+                  </span>
+                )}
               </p>
-              {eligibility.totalAmount && (
-                <p className="text-xs text-blue-500 dark:text-blue-400 mt-2">
-                  Amount: {formatEther(BigInt(eligibility.totalAmount))} ETH
-                </p>
-              )}
+            
             </div>
           </div>
           
           <Button
             onClick={handleClaimFunds}
-            disabled={disabled || isClaimingFaucet}
+            disabled={disabled || isClaimingFaucet || isSwitchingChain}
             className={cn(
               "w-full",
-              isClaimingFaucet && "opacity-50 cursor-not-allowed"
+              (isClaimingFaucet || isSwitchingChain) && "opacity-50 cursor-not-allowed"
             )}
           >
-            {isClaimingFaucet ? (
+            {isSwitchingChain ? (
+              <div className="flex items-center justify-center space-x-2">
+                <Spinner className="w-4 h-4" />
+                <span>Switching Network...</span>
+              </div>
+            ) : isClaimingFaucet ? (
               <div className="flex items-center justify-center space-x-2">
                 <Spinner className="w-4 h-4" />
                 <span>Getting Funds...</span>
