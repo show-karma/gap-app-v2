@@ -18,10 +18,6 @@ import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import { MESSAGES } from "@/utilities/messages";
 import { Dialog, Transition } from "@headlessui/react";
 import {
-  ExclamationTriangleIcon,
-  UserCircleIcon,
-} from "@heroicons/react/24/outline";
-import {
   ChevronRightIcon,
   PlusIcon,
   XMarkIcon,

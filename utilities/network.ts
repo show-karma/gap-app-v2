@@ -9,7 +9,6 @@ import {
   sei,
   lisk,
   scroll,
-    celoAlfajores
 } from "viem/chains";
 import type { TNetwork } from "@show-karma/karma-gap-sdk";
 

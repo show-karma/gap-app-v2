@@ -63,7 +63,6 @@ export const FaucetSection: FC<FaucetSectionProps> = ({
   const {
     data: eligibility,
     isLoading: isCheckingEligibility,
-    error: eligibilityError
   } = useFaucetEligibility(chainId, transaction);
 
   const {
@@ -115,23 +114,23 @@ export const FaucetSection: FC<FaucetSectionProps> = ({
   }
 
   // Show rate limit message
-  if (eligibility?.reason === "Claim rate limit exceeded" && eligibility.waitTimeSeconds) {
-    return (
-      <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-        <div className="flex items-start space-x-3">
-          <ExclamationTriangleIcon className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
-          <div className="flex-1">
-            <p className="text-sm text-yellow-800 dark:text-yellow-200 font-medium">
-              Rate Limited
-            </p>
-            <p className="text-sm text-yellow-600 dark:text-yellow-300 mt-1">
-              You can request funds again in {formatWaitTime(eligibility.waitTimeSeconds)}
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // if (eligibility?.reason === "Claim rate limit exceeded" && eligibility.waitTimeSeconds) {
+  //   return (
+  //     <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+  //       <div className="flex items-start space-x-3">
+  //         <ExclamationTriangleIcon className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
+  //         <div className="flex-1">
+  //           <p className="text-sm text-yellow-800 dark:text-yellow-200 font-medium">
+  //             Rate Limited
+  //           </p>
+  //           <p className="text-sm text-yellow-600 dark:text-yellow-300 mt-1">
+  //             You can request funds again in {formatWaitTime(eligibility.waitTimeSeconds)}
+  //           </p>
+  //         </div>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   // Show success state
   if (transactionHash) {
@@ -230,28 +229,28 @@ export const FaucetSection: FC<FaucetSectionProps> = ({
   }
 
   // Show reason why not eligible (other than rate limit)
-  if (eligibility?.reason && eligibility.reason !== "Claim rate limit exceeded") {
-    return (
-      <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-900/20 rounded-lg border border-gray-200 dark:border-gray-800">
-        <div className="flex items-start space-x-3">
-          <ExclamationTriangleIcon className="w-5 h-5 text-gray-600 dark:text-gray-400 mt-0.5" />
-          <div className="flex-1">
-            <p className="text-sm text-gray-800 dark:text-gray-200 font-medium">
-              Faucet Not Available
-            </p>
-            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-              {eligibility.reason}
-            </p>
-            {eligibility.currentBalance && (
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                Your balance: {formatEther(BigInt(eligibility.currentBalance))} ETH
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // if (eligibility?.reason && eligibility.reason !== "Claim rate limit exceeded") {
+  //   return (
+  //     <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-900/20 rounded-lg border border-gray-200 dark:border-gray-800">
+  //       <div className="flex items-start space-x-3">
+  //         <ExclamationTriangleIcon className="w-5 h-5 text-gray-600 dark:text-gray-400 mt-0.5" />
+  //         <div className="flex-1">
+  //           <p className="text-sm text-gray-800 dark:text-gray-200 font-medium">
+  //             Faucet Not Available
+  //           </p>
+  //           <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+  //             {eligibility.reason}
+  //           </p>
+  //           {eligibility.currentBalance && (
+  //             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+  //               Your balance: {formatEther(BigInt(eligibility.currentBalance))} ETH
+  //             </p>
+  //           )}
+  //         </div>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return null;
 };
