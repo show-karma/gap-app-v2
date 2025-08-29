@@ -152,7 +152,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
   const clear = () => {
     reset(
       {
-        id: generateRandomString(10),
+        id: "0",
         name: "",
         email: "",
         telegram: "",
@@ -239,7 +239,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
 
   const [isDeleteLoading, setIsDeleteLoading] = useState(false);
 
-  const deleteContact = async () => {
+  const deleteContact = async (id: string) => {
     setIsDeleteLoading(true);
     try {
       await fetchData(
@@ -247,7 +247,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
           project?.details?.data?.slug || (project?.uid as string)
         ),
         "DELETE",
-        { contacts: [watch("id")] },
+        { contacts: [id] },
         {},
         {},
         true
