@@ -8,7 +8,7 @@ import {
   sepolia,
   sei,
   lisk,
-  scroll
+  scroll,
 } from "viem/chains";
 import type { TNetwork } from "@show-karma/karma-gap-sdk";
 
