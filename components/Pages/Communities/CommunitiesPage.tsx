@@ -22,12 +22,6 @@ const getResponsiveColumns = (width: number) => {
 };
 
 export const CommunitiesPage = () => {
-  const router = useRouter();
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isStaff } = useStaff();
-  
-  const hasAdminAccess = isOwner || isStaff;
-  
   const {
     data,
     fetchNextPage,
@@ -83,14 +77,14 @@ export const CommunitiesPage = () => {
             src="/icons/impact.png"
             alt="Rocket icon"
           />
-          <p className="text-primary-700 font-medium">
+          <p className="text-primary-700 text-xs sm:text-base font-medium">
             Join 200+ leading communities
           </p>
         </div>
 
-        <h1 className="text-[72px] font-bold text-black dark:text-white">Communities</h1>
-        <p className="text-black dark:text-white text-lg max-w-4xl text-center">
-          Explore the ecosystem of DAOs, protocols, and organizations building the future 
+        <h1 className="text-4xl sm:text-[72px] font-bold text-black dark:text-white">Communities</h1>
+        <p className="text-black dark:text-white text-sm sm:text-lg max-w-4xl text-center">
+          Explore the ecosystem of DAOs, protocols, and organizations building the future
           through transparent grant management and accountability.
         </p>
 
@@ -99,9 +93,9 @@ export const CommunitiesPage = () => {
           target="_blank"
           rel="noreferrer"
         >
-          <button 
-            type="button" 
-            className="bg-primary-500 text-white font-bold rounded-sm px-4 py-2 mt-5 w-fit mx-auto hover:bg-primary-600 transition-colors"
+          <button
+            type="button"
+            className="bg-primary-500 text-white text-xs sm:text-base font-bold rounded-sm px-4 py-2 mt-5 w-fit mx-auto hover:bg-primary-600 transition-colors"
           >
             Add your community
           </button>
@@ -226,63 +220,63 @@ export const CommunitiesPage = () => {
           </div>
         )}
       </div>
-      
+
       <div className="relative w-full bg-gradient-to-r from-[#D6DFFF] to-white dark:from-slate-800 dark:to-slate-700 rounded-2xl p-8 overflow-hidden mb-10">
         <div className="absolute right-0 top-0 w-1/2 h-full pointer-events-none">
-          <div className="absolute top-20 right-20 transform rotate-[20deg]">
+          <div className="absolute top-[100px] right-0 md:top-20 md:right-20 transform rotate-[20deg]">
             <Image
               src="/assets/communities-banner/vector-1.png"
               alt="Community member"
               width={150}
               height={150}
-              className="rounded-full object-cover"
+              className="rounded-full object-cover w-[80px] md:w-[150px] md:h-[150px]"
             />
           </div>
-          <div className="absolute top-1 right-[220px] transform rotate-[20deg]">
+          <div className="absolute top-1 invisible md:visible right-40 md:right-[220px] transform rotate-[20deg]">
             <Image
               src="/assets/communities-banner/mmur.jpg"
               alt="Decorative element"
               width={100}
               height={100}
-              className="rounded-full object-cover"
+              className="rounded-full object-cover w-[70px] h-[70px] md:w-[100px] md:h-[100px]"
             />
           </div>
-          <div className="absolute top-[200px] right-[220px] transform rotate-[20deg]">
+          <div className="absolute top-[10px] right-20 md:top-[200px] md:right-[220px] transform rotate-[20deg]">
             <Image
               src="/assets/communities-banner/vector-2.png"
               alt="Decorative element"
               width={180}
               height={180}
-              className="rounded-full object-cover"
+              className="rounded-full object-cover w-[100px] md:w-[180px] md:h-[180px]"
             />
           </div>
-          <div className="absolute bottom-[220px] right-2 transform rotate-[20deg]">
+          <div className="absolute invisible md:visible top-[-50px] right-1 md:top-[-100px] md:right-2 transform rotate-[20deg]">
             <Image
               src="/assets/communities-banner/stock.jpg"
               alt="Decorative element"
               width={180}
               height={180}
-              className="rounded-full object-cover"
+              className="rounded-full object-cover w-[100px] h-[100px] md:w-[180px] md:h-[180px]"
             />
           </div>
-          <div className="absolute top-[260px] right-2 transform rotate-[20deg]">
+          <div className="absolute bottom-[-10px] right-1 md:top-[260px] md:right-2 transform rotate-[20deg]">
             <Image
               src="/assets/communities-banner/vector-3.png"
               alt="Decorative element"
               width={180}
               height={180}
-              className="rounded-full object-cover"
+              className="rounded-full object-cover w-[80px] h-[80px] md:w-[180px] md:h-[180px]"
             />
           </div>
         </div>
 
-        <div className="relative z-10 flex flex-col max-w-2xl">
+        <div className="relative z-1 flex flex-col max-w-md lg:max-w-2xl">
           <h2 className="text-3xl font-bold text-black dark:text-white mb-4">
             Add Your Community
           </h2>
           <p className="text-lg text-black dark:text-gray-300 mb-6 leading-relaxed">
-            Join the ecosystem of Web3 organizations using Karma GAP to manage grants with 
-            complete transparency and accountability. Build trust, track impact, and grow your 
+            Join the ecosystem of Web3 organizations using Karma GAP to manage grants with
+            complete transparency and accountability. Build trust, track impact, and grow your
             community.
           </p>
           <a
@@ -291,8 +285,8 @@ export const CommunitiesPage = () => {
             rel="noreferrer"
             className="w-fit"
           >
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="bg-primary-500 text-white font-bold rounded-sm px-4 py-2 mt-5 w-fit mx-auto hover:bg-primary-600 transition-colors"
             >
               Add Your Community

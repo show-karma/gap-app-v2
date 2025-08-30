@@ -30,8 +30,17 @@ export const CommunityCard = ({ community }: CommunityCardProps) => {
 
   // Limit categories to prevent overflow
   const categories = community.categories ?? [];
-  const maxTags = 2;
-  const visibleTags = categories.slice(0, maxTags);
+
+  let maxTags = 2;
+  let visibleTags = categories.slice(0, maxTags);
+  const totalChars = visibleTags.join('').length;
+
+  // If total chars exceed 30, show only 1 tag to prevent wrapping
+  if (totalChars > 30 && categories.length > 0) {
+    maxTags = 1;
+    visibleTags = categories.slice(0, maxTags);
+  }
+
   const remainingCount = Math.max(0, categories.length - maxTags);
 
   return (
@@ -85,7 +94,7 @@ export const CommunityCard = ({ community }: CommunityCardProps) => {
         </div>
         <div className="text-center min-w-0">
           <div className="text-base font-bold text-neutral-600 dark:text-neutral-400">
-            {stats.members >= 1000 
+            {stats.members >= 1000
               ? `+${Math.floor(stats.members / 1000)}k`
               : `${stats.members}`
             }
@@ -99,7 +108,7 @@ export const CommunityCard = ({ community }: CommunityCardProps) => {
       <div className="flex justify-end mt-auto pt-2">
         <Link
           href={PAGES.COMMUNITY.ALL_GRANTS(slug || community.uid)}
-          className="flex items-center justify-center w-20 h-10 bg-primary-100 dark:bg-primary-900 text-primary-500 dark:text-primary-400 text-sm font-semibold rounded flex-shrink-0"
+          className="flex items-center justify-center w-full lg:w-20 h-10 bg-primary-100 dark:bg-primary-900 text-primary-500 dark:text-primary-400 text-sm font-semibold rounded flex-shrink-0"
         >
           <span>Go</span>
           <ChevronRightIcon className="h-4 w-4 ml-1" />

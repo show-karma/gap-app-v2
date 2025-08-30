@@ -11,25 +11,27 @@ export const Communities = () => {
       <div className="flex flex-col gap-2 items-center justify-center w-full">
         <div className="flex flex-row gap-2 items-center justify-center bg-primary-200 rounded-full w-fit h-[40px] px-4 mx-auto">
           <Image width={24} height={24} src="/icons/impact.png" alt="Rocket icon" />
-          <p className="text-primary-700 font-medium">Join 200+ leading communities</p>
+          <p className="text-primary-700 text-xs sm:text-base font-medium">
+            Join 200+ leading communities
+          </p>
         </div>
 
-        <h1 className="text-[72px] font-bold text-black dark:text-white max-lg:text-5xl">Communities</h1>
-        <p className="text-black dark:text-white text-lg max-w-4xl text-center">
+        <h1 className="text-4xl sm:text-[72px] font-bold text-black dark:text-white">Communities</h1>
+        <p className="text-black dark:text-white text-sm sm:text-lg max-w-4xl text-center">
           Explore the ecosystem of DAOs, protocols, and organizations building the future
           through transparent grant management and accountability.
         </p>
       </div>
 
-      <div className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      <div className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {chosenCommunities().slice(0, 10).map((community) => (
           <Link
             key={community.uid}
             href={PAGES.COMMUNITY.ALL_GRANTS(community.slug || community.uid)}
-            className="group flex h-[120px] max-w-[400px] w-full items-center justify-between overflow-hidden rounded-2xl border border-slate-300 bg-white transition-all duration-200 hover:shadow-md dark:border-zinc-700 dark:bg-zinc-900"
+            className="group flex h-[70px] sm:h-[120px] w-full items-center justify-between overflow-hidden rounded-2xl border border-slate-300 bg-white transition-all duration-200 hover:shadow-md dark:border-zinc-700 dark:bg-zinc-900"
           >
             <div className="flex flex-row items-center w-full">
-              <div className="h-[120px] w-[120px] overflow-hidden bg-[#1F2D3D] dark:bg-zinc-800">
+              <div className="h-[70px] w-[70px] sm:h-[120px] sm:w-[120px] flex-shrink-0 overflow-hidden bg-[#1F2D3D] dark:bg-zinc-800">
                 <ImageTheme
                   alt={community.name}
                   lightSrc={community.imageURL.light}
