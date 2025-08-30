@@ -20,6 +20,8 @@ import { LinkIcon } from "@heroicons/react/24/solid";
 import CommunityStats from "@/components/CommunityStats";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
+import { useStaff } from "@/hooks/useStaff";
+import { useCommunityConfig, useCommunityConfigMutation } from "@/hooks/useCommunityConfig";
 
 export const CommunitiesToAdmin = () => {
   const [allCommunities, setAllCommunities] = useState<Community[]>([]);
@@ -27,6 +29,8 @@ export const CommunitiesToAdmin = () => {
 
   const { communities: communitiesToAdmin, isLoading } = useCommunitiesStore();
   const { gap } = useGap();
+  const { isStaff } = useStaff();
+
 
   const fetchCommunities = async () => {
     try {
@@ -37,7 +41,9 @@ export const CommunitiesToAdmin = () => {
         (a.details?.name || a.uid).localeCompare(b.details?.name || b.uid)
       );
       setAllCommunities(result);
-      const fetchPromises = result.map(async (community) => {
+
+      // Fetch admins data for ALL communities that will be shown
+      const adminPromises = result.map(async (community) => {
         try {
           const [data, error] = await fetchData(
             INDEXER.COMMUNITY.ADMINS(community.uid),
@@ -47,16 +53,15 @@ export const CommunitiesToAdmin = () => {
             {},
             false
           );
-
           if (error || !data) return { id: community.uid, admins: [] };
           return data;
         } catch {
           return { id: community.uid, admins: [] };
         }
       });
-      const communityAdmins = await Promise.all(fetchPromises);
 
-      // Update the state with the fetched data
+      const communityAdmins = await Promise.all(adminPromises);
+
       setCommunityAdmins(communityAdmins);
 
       return result;
@@ -65,20 +70,12 @@ export const CommunitiesToAdmin = () => {
       errorManager(`Error fetching all communities`, error);
       setAllCommunities([]);
       return undefined;
-    } finally {
     }
   };
 
   useEffect(() => {
     fetchCommunities();
   }, []);
-
-  function shortenHex(hexString: string) {
-    const firstPart = hexString.substring(0, 6);
-    const lastPart = hexString.substring(hexString.length - 6);
-
-    return `${firstPart}...${lastPart}`;
-  }
 
   return (
     <div className="px-4 sm:px-6 lg:px-12 py-5">
@@ -116,6 +113,8 @@ export const CommunitiesToAdmin = () => {
                       <th className="min-w-[150px]">Network</th>
                       <th className="min-w-[150px]">Admins</th>
                       <th className="min-w-[100px]">Action</th>
+                      {isStaff && <th className="text-center">Public?</th>}
+                      {isStaff && <th className="text-center">Rank</th>}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-x">
@@ -130,90 +129,18 @@ export const CommunitiesToAdmin = () => {
                       const matchingCommunityAdmin = communityAdmins.find(
                         (admin: any) => admin.id === community.uid
                       );
+
+                      const slug = community.details?.slug || community.uid;
+
                       return (
-                        <React.Fragment key={community.uid}>
-                          <tr className="divide-x">
-                            <td className="min-w-[80px]">
-                              <img
-                                src={
-                                  community.details?.imageURL ||
-                                  blo(community.uid)
-                                }
-                                className="h-[64px] w-[100px] object-cover"
-                                alt={community.details?.name || community.uid}
-                              />
-                            </td>
-                            <td className="max-w-40 px-4 min-w-[150px]">
-                              {community.details?.name}
-                            </td>
-                            <td className="max-w-60 px-4 min-w-[100px]">
-                              {formatDate(community?.createdAt)}
-                            </td>
-                            <td className="max-w-80 break-all px-4 min-w-[200px]">
-                              {community.uid}
-                            </td>
-                            <td className="text-center px-4 min-w-[150px]">
-                              <Link
-                                href={PAGES.COMMUNITY.ALL_GRANTS(
-                                  community.details?.slug || community.uid
-                                )}
-                                className="flex flex-row items-center gap-1.5 text-blue-500"
-                              >
-                                Community
-                                <LinkIcon className="w-4 h-4" />
-                              </Link>
-                            </td>
-                            <td className="text-center px-4 min-w-[120px]">
-                              <Link
-                                href={PAGES.ADMIN.ROOT(
-                                  community.details?.slug || community.uid
-                                )}
-                                className="flex flex-row items-center gap-1.5 text-blue-500"
-                              >
-                                Admin
-                                <LinkIcon className="w-4 h-4" />
-                              </Link>
-                            </td>
-                            <td className="text-center px-4 min-w-[120px]">
-                              <CommunityStats communityId={community.uid} />
-                            </td>
-                            <td className="px-4 min-w-[150px]">
-                              <div className="flex flex-row gap-2 items-center">
-                                <img
-                                  src={chainImgDictionary(community.chainID)}
-                                  alt={chainNameDictionary(community.chainID)}
-                                  className="w-5 h-5"
-                                />
-                                <p>{chainNameDictionary(community.chainID)}</p>
-                              </div>
-                            </td>
-                            <td className="min-w-[150px]">
-                              {matchingCommunityAdmin &&
-                                matchingCommunityAdmin.admins.map(
-                                  (admin: any, index: any) => (
-                                    <div className="flex gap-2 p-5" key={index}>
-                                      <div key={index}>
-                                        {shortenHex(admin.user.id)}
-                                      </div>
-                                      <RemoveAdmin
-                                        UUID={community.uid}
-                                        chainid={community.chainID}
-                                        Admin={admin.user.id}
-                                        fetchAdmins={fetchCommunities}
-                                      />
-                                    </div>
-                                  )
-                                )}
-                            </td>
-                            <td className="min-w-[100px]">
-                              <AddAdmin
-                                UUID={community.uid}
-                                chainid={community.chainID}
-                                fetchAdmins={fetchCommunities}
-                              />
-                            </td>
-                          </tr>
-                        </React.Fragment>
+                        <CommunityRowWithConfig
+                          key={community.uid}
+                          community={community}
+                          slug={slug}
+                          matchingCommunityAdmin={matchingCommunityAdmin}
+                          fetchCommunities={fetchCommunities}
+                          isStaff={isStaff}
+                        />
                       );
                     })}
                   </tbody>
@@ -221,10 +148,192 @@ export const CommunitiesToAdmin = () => {
               </div>
             ) : isLoading ? (
               <Spinner />
-            ) : null}
+            ) : (
+              <div className="text-center">
+                <p>No communities to admin</p>
+              </div>
+            )}
           </div>
         </div>
       )}
     </div>
+  );
+};
+
+interface CommunityRowWithConfigProps {
+  community: Community;
+  slug: string;
+  matchingCommunityAdmin: any;
+  fetchCommunities: () => Promise<Community[] | undefined>;
+  isStaff: boolean;
+}
+
+const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
+  community,
+  slug,
+  matchingCommunityAdmin,
+  fetchCommunities,
+  isStaff
+}) => {
+  const updateConfigMutation = useCommunityConfigMutation();
+  const { data: config, isLoading: configLoading } = useCommunityConfig(slug);
+
+
+  function shortenHex(hexString: string) {
+    const firstPart = hexString.substring(0, 6);
+    const lastPart = hexString.substring(hexString.length - 6);
+
+    return `${firstPart}...${lastPart}`;
+  }
+
+  const isPublic = config?.public === true || config?.public === undefined;
+  const rank = config?.rank || 0;
+
+  const handlePublicChange = (checked: boolean) => {
+    updateConfigMutation.mutate({
+      slug,
+      config: {
+        public: checked,
+        rank: config?.rank
+      }
+    });
+  };
+
+  const handleRankChange = (newRank: number) => {
+    updateConfigMutation.mutate({
+      slug,
+      config: {
+        public: config?.public,
+        rank: newRank
+      }
+    });
+  };
+
+  return (
+    <React.Fragment>
+      <tr className="divide-x">
+        <td className="min-w-[80px]">
+          <img
+            src={community.details?.imageURL || blo(community.uid)}
+            className="h-[64px] w-[100px] object-cover"
+            alt={community.details?.name || community.uid}
+          />
+        </td>
+        <td className="max-w-40 px-4 min-w-[150px]">
+          {community.details?.name}
+        </td>
+        <td className="max-w-60 px-4 min-w-[100px]">
+          {formatDate(community?.createdAt)}
+        </td>
+        <td className="max-w-80 break-all px-4 min-w-[200px]">
+          {community.uid}
+        </td>
+        <td className="text-center px-4 min-w-[150px]">
+          <Link
+            href={PAGES.COMMUNITY.ALL_GRANTS(
+              community.details?.slug || community.uid
+            )}
+            className="flex flex-row items-center gap-1.5 text-blue-500"
+          >
+            Community
+            <LinkIcon className="w-4 h-4" />
+          </Link>
+        </td>
+        <td className="text-center px-4 min-w-[120px]">
+          <Link
+            href={PAGES.ADMIN.ROOT(
+              community.details?.slug || community.uid
+            )}
+            className="flex flex-row items-center gap-1.5 text-blue-500"
+          >
+            Admin
+            <LinkIcon className="w-4 h-4" />
+          </Link>
+        </td>
+        <td className="text-center px-4 min-w-[120px]">
+          <CommunityStats communityId={community.uid} />
+        </td>
+        <td className="px-4 min-w-[150px]">
+          <div className="flex flex-row gap-2 items-center">
+            <img
+              src={chainImgDictionary(community.chainID)}
+              alt={chainNameDictionary(community.chainID)}
+              className="w-5 h-5"
+            />
+            <p>{chainNameDictionary(community.chainID)}</p>
+          </div>
+        </td>
+        <td className="min-w-[150px]">
+          {matchingCommunityAdmin &&
+            matchingCommunityAdmin.admins &&
+            matchingCommunityAdmin.admins.length > 0 &&
+            matchingCommunityAdmin.admins.map(
+              (admin: any, index: number) => (
+                <div className="flex gap-2 p-5" key={index}>
+                  <div>
+                    {shortenHex(admin.user.id)}
+                  </div>
+                  <RemoveAdmin
+                    UUID={community.uid}
+                    chainid={community.chainID}
+                    Admin={admin.user.id}
+                    fetchAdmins={fetchCommunities}
+                  />
+                </div>
+              )
+            )}
+        </td>
+        <td className="min-w-[100px]">
+          <AddAdmin
+            UUID={community.uid}
+            chainid={community.chainID}
+            fetchAdmins={fetchCommunities}
+          />
+        </td>
+        {isStaff && (
+          <td className="px-2 text-center">
+            <div className="flex items-center justify-center gap-2">
+              {configLoading ? (
+                <div className="w-4 h-4 animate-spin border border-gray-300 rounded-full border-t-transparent" />
+              ) : (
+                <>
+                  <input
+                    type="checkbox"
+                    checked={isPublic}
+                    onChange={(e) => handlePublicChange(e.target.checked)}
+                    disabled={updateConfigMutation.isPending}
+                  />
+                  {updateConfigMutation.isPending && (
+                    <div className="w-3 h-3 animate-spin border border-blue-500 rounded-full border-t-transparent" />
+                  )}
+                </>
+              )}
+            </div>
+          </td>
+        )}
+        {isStaff && (
+          <td className="px-2 text-center">
+            <div className="flex items-center justify-center gap-2">
+              {configLoading ? (
+                <div className="w-4 h-4 animate-spin border border-gray-300 rounded-full border-t-transparent" />
+              ) : (
+                <>
+                  <input
+                    type="number"
+                    value={rank}
+                    onChange={(e) => handleRankChange(parseInt(e.target.value) || 0)}
+                    className="w-16 px-1 border border-gray-300 rounded text-center"
+                    disabled={updateConfigMutation.isPending}
+                  />
+                  {updateConfigMutation.isPending && (
+                    <div className="w-3 h-3 animate-spin border border-blue-500 rounded-full border-t-transparent" />
+                  )}
+                </>
+              )}
+            </div>
+          </td>
+        )}
+      </tr>
+    </React.Fragment>
   );
 };

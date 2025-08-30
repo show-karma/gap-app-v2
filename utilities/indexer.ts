@@ -146,6 +146,8 @@ export const INDEXER = {
         .join("&")}`,
   },
   COMMUNITY: {
+    LIST: ({ page, limit, includeStats }: { page: number; limit: number; includeStats: boolean }) =>
+      `/v2/communities/?page=${page}&limit=${limit}&includeStats=${includeStats}`,
     GET: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}`,
     CATEGORIES: (idOrSlug: string) => `/communities/${idOrSlug}/categories`,
     REGIONS: (idOrSlug: string) => `/v2/communities/${idOrSlug}/regions`,
@@ -248,6 +250,7 @@ export const INDEXER = {
       `/communities/${communityIdOrSlug}/stats`,
     PAGE_HEADER_STATS: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/page-header-stats`,
+    GLOBAL_STATS: () => `/v2/communities/stats`,
     ADMINS: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/admins`,
     BATCH_UPDATE: (idOrSlug: string) => `/communities/${idOrSlug}/batch-update`,
@@ -263,6 +266,10 @@ export const INDEXER = {
     },
     MILESTONES: (communityIdOrSlug: string) =>
       `/v2/communities/${communityIdOrSlug}/milestones`,
+    CONFIG: {
+      GET: (slug: string) => `/v2/community-configs/${slug}`,
+      UPDATE: (slug: string) => `/v2/community-configs/${slug}`,
+    },
   },
   GRANTS: {
     GET_ZK_GROUP: (

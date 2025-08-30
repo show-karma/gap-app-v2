@@ -12,6 +12,7 @@ export const pagesOnRoot = [
   "address",
   "karma-gap-patron",
   "projects",
+  "communities",
   "sitemaps",
   "sitemaps",
   "_vercel",

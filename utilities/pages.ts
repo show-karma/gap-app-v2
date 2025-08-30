@@ -2,6 +2,7 @@ export const PAGES = {
   HOME: `/`,
   NOT_FOUND: `/not-found`,
   PROJECTS_EXPLORER: `/projects`,
+  COMMUNITIES: `/communities`,
   PRIVACY_POLICY: `/privacy-policy`,
   TERMS_AND_CONDITIONS: `/terms-and-conditions`,
   COMMUNITY: {
