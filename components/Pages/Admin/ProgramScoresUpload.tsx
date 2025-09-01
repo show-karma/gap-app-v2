@@ -40,6 +40,15 @@ export function ProgramScoresUpload({ communityUID, programs, defaultChainId }: 
   const [uploadResult, setUploadResult] = useState<ProgramScoreUploadResult | null>(null);
 
   const handleFileSelect = useCallback((file: File) => {
+    // Check file size - max 10MB
+    const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+    if (file.size > maxSize) {
+      toast.error('File size exceeds 10MB limit. Please upload a smaller file.');
+      setCsvFile(null);
+      setParsedData(null);
+      return;
+    }
+
     setCsvFile(file);
     setUploadResult(null);
     
@@ -200,7 +209,7 @@ export function ProgramScoresUpload({ communityUID, programs, defaultChainId }: 
             acceptedFormats=".csv"
             uploadedFile={csvFile}
             disabled={isUploading}
-            description="CSV format: projectTitle, projectProfile, [score columns...]"
+            description="CSV format: projectTitle, projectProfile, [score columns...] (Max 10MB)"
           />
         </div>
 
