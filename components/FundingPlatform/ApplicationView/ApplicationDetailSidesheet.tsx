@@ -9,7 +9,6 @@ import {
   ClockIcon,
 } from "@heroicons/react/24/outline";
 import { IFundingApplication, ApplicationComment } from "@/types/funding-platform";
-import { Button } from "@/components/Utilities/Button";
 import { cn } from "@/utilities/tailwind";
 import StatusHistoryTimeline from "./StatusHistoryTimeline";
 import StatusChangeModal from "./StatusChangeModal";
@@ -25,6 +24,7 @@ import { getProjectTitle } from "../helper/getProjecTitle";
 import { AIEvaluationDisplay } from "./AIEvaluation";
 import { useProgram } from "@/hooks/usePrograms";
 import { useProgramConfig } from "@/hooks/useFundingPlatform";
+import { StatusActionButtons } from "./StatusActionButtons";
 
 interface ApplicationDetailSidesheetProps {
   application: IFundingApplication | null;
@@ -779,96 +779,11 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
 
                       {/* Actions */}
                       {showStatusActions && onStatusChange && (
-                        <div className="border-t border-gray-200 dark:border-gray-700 bg-zinc-50 dark:bg-zinc-800 px-4 py-4 sm:px-6">
-                          <div className="flex flex-col space-y-2">
-                            {/* For pending status: only show Under Review button */}
-                            {application.status === "pending" && (
-                              <div className="flex space-x-3">
-                                <Button
-                                  onClick={() => handleStatusChangeClick("under_review")}
-                                  variant="primary"
-                                  className="flex-1 bg-purple-600 hover:bg-purple-700"
-                                  disabled={isUpdatingStatus}
-                                >
-                                  Start Review
-                                </Button>
-                              </div>
-                            )}
-
-                            {/* For under_review status: show all action buttons */}
-                            {application.status === "under_review" && (
-                              <div className="flex space-x-3">
-                                <Button
-                                  onClick={() =>
-                                    handleStatusChangeClick("revision_requested")
-                                  }
-                                  variant="secondary"
-                                  className="flex-1"
-                                  disabled={isUpdatingStatus}
-                                >
-                                  Request Revision
-                                </Button>
-                                <Button
-                                  onClick={() => handleStatusChangeClick("approved")}
-                                  className="flex-1 bg-green-600 hover:bg-green-700"
-                                  disabled={isUpdatingStatus}
-                                >
-                                  Approve
-                                </Button>
-                                <Button
-                                  onClick={() => handleStatusChangeClick("rejected")}
-                                  className="flex-1 bg-red-600 hover:bg-red-700"
-                                  disabled={isUpdatingStatus}
-                                >
-                                  Reject
-                                </Button>
-                              </div>
-                            )}
-
-                            {/* For other statuses: show available actions except current status */}
-                            {!["pending", "under_review", 'approved', 'rejected'].includes(application.status) && (
-                              <div className="flex space-x-3">
-                                {!["revision_requested"].includes(application.status) && (
-                                  <Button
-                                    onClick={() =>
-                                      handleStatusChangeClick("revision_requested")
-                                    }
-                                    variant="secondary"
-                                    className="flex-1"
-                                    disabled={isUpdatingStatus}
-                                  >
-                                    Request Revision
-                                  </Button>
-                                )}
-                                {application.status !== "approved" && (
-                                  <Button
-                                    onClick={() => handleStatusChangeClick("approved")}
-                                    className="flex-1 bg-green-600 hover:bg-green-700"
-                                    disabled={isUpdatingStatus}
-                                  >
-                                    Approve
-                                  </Button>
-                                )}
-                                {application.status !== "rejected" && (
-                                  <Button
-                                    onClick={() => handleStatusChangeClick("rejected")}
-                                    className="flex-1 bg-red-600 hover:bg-red-700"
-                                    disabled={isUpdatingStatus}
-                                  >
-                                    Reject
-                                  </Button>
-                                )}
-                              </div>
-                            )}
-                          </div>
-
-                          {application.status === "revision_requested" && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                              The applicant can update their submission.
-                            </p>
-                          )}
-
-                        </div>
+                        <StatusActionButtons
+                          currentStatus={application.status as any}
+                          onStatusChange={handleStatusChangeClick}
+                          isUpdating={isUpdatingStatus}
+                        />
                       )}
                     </div>
                   </Dialog.Panel>
