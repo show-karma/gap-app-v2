@@ -38,6 +38,7 @@ export const PAGES = {
     COMMUNITY_STATS: `/admin/communities/stats`,
     PROJECTS: `/admin/projects`,
     PAYOUTS: (community: string) => `/community/${community}/admin/payouts`,
+    PROGRAM_SCORES: (community: string) => `/community/${community}/admin/program-scores`,
   },
   PROJECT: {
     OVERVIEW: (project: string) => `/project/${project}`,
