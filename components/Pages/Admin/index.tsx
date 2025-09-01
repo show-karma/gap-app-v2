@@ -177,6 +177,7 @@ const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
 }) => {
   const updateConfigMutation = useCommunityConfigMutation();
   const { data: config, isLoading: configLoading } = useCommunityConfig(slug);
+  const [localRank, setLocalRank] = useState<number>(0);
 
 
   function shortenHex(hexString: string) {
@@ -189,6 +190,10 @@ const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
   const isPublic = config?.public === true || config?.public === undefined;
   const rank = config?.rank || 0;
 
+  useEffect(() => {
+    setLocalRank(rank);
+  }, [rank]);
+
   const handlePublicChange = (checked: boolean) => {
     updateConfigMutation.mutate({
       slug,
@@ -199,14 +204,23 @@ const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
     });
   };
 
-  const handleRankChange = (newRank: number) => {
-    updateConfigMutation.mutate({
-      slug,
-      config: {
-        public: config?.public,
-        rank: newRank
-      }
-    });
+  const handleRankBlur = () => {
+    if (localRank !== rank) {
+      updateConfigMutation.mutate({
+        slug,
+        config: {
+          public: config?.public,
+          rank: localRank
+        }
+      });
+    }
+  };
+
+  const handleRankInputChange = (value: string) => {
+    const numValue = parseInt(value) || 0;
+    if (numValue >= 0) {
+      setLocalRank(numValue);
+    }
   };
 
   return (
@@ -320,8 +334,10 @@ const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
                 <>
                   <input
                     type="number"
-                    value={rank}
-                    onChange={(e) => handleRankChange(parseInt(e.target.value) || 0)}
+                    value={localRank}
+                    onChange={(e) => handleRankInputChange(e.target.value)}
+                    onBlur={handleRankBlur}
+                    min="0"
                     className="w-16 px-1 border border-gray-300 rounded text-center"
                     disabled={updateConfigMutation.isPending}
                   />
