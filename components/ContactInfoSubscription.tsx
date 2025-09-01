@@ -216,7 +216,6 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
           }
         });
       }
-      // const subscription = await fetchData(INDEXER.NOTIFICATIONS.UPDATE())
     } catch (error: any) {
       errorManager(
         "Error while updating contact info",
@@ -260,7 +259,6 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
           throw Error(error);
         }
       });
-      // const subscription = await fetchData(INDEXER.NOTIFICATIONS.UPDATE())
     } catch (error: any) {
       errorManager(
         "Error deleting contact info",

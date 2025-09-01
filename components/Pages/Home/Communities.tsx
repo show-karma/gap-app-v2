@@ -7,22 +7,6 @@ import { PAGES } from "@/utilities/pages";
 import { ImageTheme } from "@/components/Utilities/ImageTheme";
 
 export const Communities = () => {
-  // const { communities } = useCommunity();
-
-  // const communitiesNameToShow = [
-  //   'optimism',
-  //   'gitcoin',
-  //   'arbitrum',
-  //   'ethereum-foundation',
-  // ];
-
-  // const communitiesToShow = communities.filter((community) =>
-  //   communitiesNameToShow.includes(
-  //     community.details?.slug ||
-  //       community.details?.name.toLowerCase() ||
-  //       community.uid
-  //   )
-  // );
 
   return (
     <div className="mb-8 mt-[80px] flex h-max w-full flex-row justify-center gap-4 max-md:flex-col max-lg:flex-wrap">

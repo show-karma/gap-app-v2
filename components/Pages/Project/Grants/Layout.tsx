@@ -166,29 +166,28 @@ export const GrantsLayout = ({
     tabName: GrantScreen;
     current: boolean;
   }[] = [
-    {
-      name: "Overview",
-      tabName: "overview",
-      current: true,
-    },
-    {
-      name: "Milestones and Updates",
-      tabName: "milestones-and-updates",
-      current: false,
-    },
-    {
-      name: "Outputs",
-      tabName: "outputs",
-      current: false,
-    },
-    {
-      name: "Impact Criteria",
-      tabName: "impact-criteria",
-      current: false,
-    },
-  ];
+      {
+        name: "Overview",
+        tabName: "overview",
+        current: true,
+      },
+      {
+        name: "Milestones and Updates",
+        tabName: "milestones-and-updates",
+        current: false,
+      },
+      {
+        name: "Outputs",
+        tabName: "outputs",
+        current: false,
+      },
+      {
+        name: "Impact Criteria",
+        tabName: "impact-criteria",
+        current: false,
+      },
+    ];
 
-  // const [tabs, setTabs] = useState<Tab[]>(defaultTabs);
   const tabs: Tab[] = defaultTabs;
 
   if (loading || (!grant && project.grants?.length > 0)) {

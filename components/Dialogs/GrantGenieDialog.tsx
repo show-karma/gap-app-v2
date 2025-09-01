@@ -70,9 +70,6 @@ function GrantGenieRecommendations({ projectId }: { projectId: string }) {
               <h3 className="font-semibold">{recommendation.title}</h3>
               <p>{recommendation.description}</p>
             </div>
-            {/* <div>
-                <p>Relevance: {recommendation.score}</p>
-              </div> */}
             <div className="">
               <h4 className="font-semibold">Recommendation: </h4>
               <p>{recommendation.recommendation}</p>

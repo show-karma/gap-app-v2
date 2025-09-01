@@ -31,7 +31,6 @@ const AdminCommunityHeader = ({
             </p>
           </div>
         </div>
-        {/* <CommunityImpactStatCards /> */}
       </div>
       <CommunityPageNavigator />
     </div>

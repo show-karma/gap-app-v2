@@ -105,9 +105,8 @@ export const MilestonesList = ({
         milestone.source.grantMilestone?.milestone.data.startsAt;
       const endDate = milestone.source.grantMilestone?.milestone.data.endsAt;
 
-      const key = `${milestone.title}|${milestone.description || ""}|${
-        startDate || ""
-      }|${endDate || ""}`;
+      const key = `${milestone.title}|${milestone.description || ""}|${startDate || ""
+        }|${endDate || ""}`;
 
       if (mergedMap.has(key)) {
         // Milestone exists, add this grant to the merged list
@@ -250,13 +249,6 @@ export const MilestonesList = ({
 
   return (
     <div className="flex flex-col gap-6 w-full">
-      {/* {isAuthorized ? (
-        <SetAnObjective
-          hasObjectives={
-            (unifiedMilestones && unifiedMilestones.length > 0) || false
-          }
-        />
-      ) : null} */}
 
       <div className="flex w-full flex-col gap-6 rounded-xl max-lg:px-2 max-lg:py-4">
         <div className="flex flex-col gap-2 flex-wrap justify-start items-start mb-2">
@@ -360,9 +352,8 @@ export const MilestonesList = ({
               {showAllTypes ? "No content found!" : "No milestones found!"}
             </p>
             <p className="text-zinc-900 dark:text-zinc-300 w-full text-center">
-              {`The project owner is working on setting ${
-                showAllTypes ? "milestones and activities" : "milestones"
-              }. Check back in a few days :)`}
+              {`The project owner is working on setting ${showAllTypes ? "milestones and activities" : "milestones"
+                }. Check back in a few days :)`}
             </p>
           </div>
         ) : null}

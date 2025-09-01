@@ -320,8 +320,6 @@ function EvaluationDisplay({
     getPriorityColor: (priority: string) => string;
 }) {
     // Check if program is audit grants or growth grants
-    // const isAuditGrants = programName?.toLowerCase().includes("audit grants");
-    // const isGrowthGrants = programName?.toLowerCase().includes("growth grants");
     const isAuditGrants = false;
     const isGrowthGrants = false;
 

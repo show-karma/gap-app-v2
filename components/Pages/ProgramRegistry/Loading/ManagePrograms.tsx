@@ -69,62 +69,6 @@ export const LoadingManagePrograms = () => {
             </div>
           </div>
           <LoadingProgramTable />
-          {/* {!isLoading ? (
-                      grantPrograms?.length ? (
-                        <div className="mt-8 flow-root">
-                          <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-                            <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                              {isRegistryAdmin ? (
-                                <ManageProgramList
-                                  approveOrReject={approveOrReject}
-                                  grantPrograms={grantPrograms}
-                                  tab={tab as "pending" | "accepted" | "rejected"}
-                                  editFn={(program: GrantProgram) => {
-                                    setIsEditing(true);
-                                    setProgramToEdit(program);
-                                  }}
-                                  selectProgram={(program: GrantProgram) => {
-                                    setProgramId(program.programId || "");
-                                    setSelectedProgram(program);
-                                  }}
-                                  isAllowed={isAllowed}
-                                />
-                              ) : (
-                                <MyProgramList
-                                  grantPrograms={grantPrograms}
-                                  tab={tab as "pending" | "accepted" | "rejected"}
-                                  editFn={(program: GrantProgram) => {
-                                    setIsEditing(true);
-                                    setProgramToEdit(program);
-                                  }}
-                                  selectProgram={(program: GrantProgram) => {
-                                    setProgramId(program.programId || "");
-                                    setSelectedProgram(program);
-                                  }}
-                                  isAllowed={isAllowed}
-                                />
-                              )}
-                              <Pagination
-                                currentPage={page}
-                                setCurrentPage={setPage}
-                                postsPerPage={pageSize}
-                                totalPosts={totalPrograms}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="py-10 px-4 justify-center flex items-center">
-                          <p className="text-lg font-normal text-black dark:text-zinc-100">
-                            No grant program found
-                          </p>
-                        </div>
-                      )
-                    ) : (
-                      <div className="py-10 px-4 justify-center flex items-center">
-                        <Spinner />
-                      </div>
-                    )} */}
         </div>
       </>
     </section>

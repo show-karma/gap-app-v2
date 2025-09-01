@@ -1137,19 +1137,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
             <p className="text-red-500">{errors.locationOfImpact?.message}</p>
           </div>
 
-          {/* <div className="flex w-full flex-col gap-2">
-        <label htmlFor="tags-input" className={labelStyle}>
-        Tags (Helps users discover your project)
-        </label>
-        <input
-          id="tags-input"
-          type="text"
-          className={inputStyle}
-          placeholder="e.g. Dev Tool, Defi, NFT, Governance"
-          {...register('tags')}
-        />
-        <p className="text-red-500">{errors.tags?.message}</p>
-      </div> */}
           {isOwner && !projectToUpdate && (
             <div className="flex w-full flex-col gap-2">
               <label htmlFor="recipient-input" className={labelStyle}>
