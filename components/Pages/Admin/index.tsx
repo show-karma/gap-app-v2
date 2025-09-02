@@ -1,6 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
+import debounce from "lodash.debounce";
 import Link from "next/link";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useCommunitiesStore } from "@/store/communities";
@@ -179,7 +180,6 @@ const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
   const { data: config, isLoading: configLoading } = useCommunityConfig(slug);
   const [localRank, setLocalRank] = useState<number>(0);
 
-
   function shortenHex(hexString: string) {
     const firstPart = hexString.substring(0, 6);
     const lastPart = hexString.substring(hexString.length - 6);
@@ -204,17 +204,23 @@ const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
     });
   };
 
-  const handleRankBlur = () => {
-    if (localRank !== rank) {
-      updateConfigMutation.mutate({
-        slug,
-        config: {
-          public: config?.public,
-          rank: localRank
-        }
-      });
-    }
-  };
+  useEffect(() => {
+    const handler = debounce(() => {
+      if (localRank !== rank) {
+        updateConfigMutation.mutate({
+          slug,
+          config: {
+            public: config?.public,
+            rank: localRank
+          }
+        });
+      }
+    }, 1000);
+
+    handler();
+
+    return () => handler.cancel();
+  }, [localRank, rank, slug, config?.public, updateConfigMutation]);
 
   const handleRankInputChange = (value: string) => {
     const numValue = parseInt(value) || 0;
@@ -336,7 +342,6 @@ const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
                     type="number"
                     value={localRank}
                     onChange={(e) => handleRankInputChange(e.target.value)}
-                    onBlur={handleRankBlur}
                     min="0"
                     className="w-16 px-1 border border-gray-300 rounded text-center"
                     disabled={updateConfigMutation.isPending}
