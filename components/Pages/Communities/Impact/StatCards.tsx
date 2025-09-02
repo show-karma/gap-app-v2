@@ -1,8 +1,9 @@
 "use client";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useImpactMeasurement } from "@/hooks/useImpactMeasurement";
+import { useCommunityStore } from "@/store/community";
 import formatCurrency from "@/utilities/formatCurrency";
-import { getHeaderStats } from "@/utilities/karma/getHeaderStats";
+import { getCommunityStatsV2 } from "@/utilities/queries/getCommunityDataV2";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, usePathname } from "next/navigation";
 
@@ -30,7 +31,7 @@ export const ImpactStatCards = () => {
       title: "Total Funding Allocated (with available data)",
       value:
         data?.stats.totalFundingAllocated &&
-        data?.stats.totalFundingAllocated !== "NaN"
+          data?.stats.totalFundingAllocated !== "NaN"
           ? data?.stats.totalFundingAllocated
           : "-",
       color: "#A6EF67",
@@ -65,29 +66,31 @@ export const ImpactStatCards = () => {
     </div>
   ));
 };
+
 export const CommunityStatCards = () => {
   const params = useParams();
   const communityId = params.communityId as string;
+  const { totalProjects: filteredProjectsCount } = useCommunityStore();
   const { data, isLoading } = useQuery({
-    queryKey: ["headerStats", communityId],
-    queryFn: () => getHeaderStats(communityId),
+    queryKey: ["community-stats", communityId],
+    queryFn: () => getCommunityStatsV2(communityId),
     enabled: !!communityId,
   });
 
   const stats = [
     {
       title: "Total Projects",
-      value: data?.noOfProjects ? formatCurrency(data.noOfProjects) : "-",
+      value: filteredProjectsCount ? formatCurrency(filteredProjectsCount) : "-",
       color: "#9b59b6",
     },
     {
       title: "Total Grants",
-      value: data?.noOfGrants ? formatCurrency(data.noOfGrants) : "-",
+      value: data?.totalGrants ? formatCurrency(data.totalGrants) : "-",
       color: "#e67e22",
     },
     {
-      title: "Total Programs",
-      value: data?.noOfPrograms ? formatCurrency(data.noOfPrograms) : "-",
+      title: "Total Milestones",
+      value: data?.totalMilestones ? formatCurrency(data.totalMilestones) : "-",
       color: "#3498db",
     },
   ];
@@ -119,6 +122,7 @@ export const CommunityStatCards = () => {
     </div>
   ));
 };
+
 export const CommunityImpactStatCards = () => {
   const pathname = usePathname();
   const isImpactPage = pathname.includes("/impact");

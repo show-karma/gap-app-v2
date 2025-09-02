@@ -35,12 +35,14 @@ import {
   UsersIcon,
   XCircleIcon,
   MagnifyingGlassIcon,
+  EyeIcon as EyeIconOutline,
 } from "@heroicons/react/24/outline";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import { Line } from "@rc-component/progress";
 import pluralize from "pluralize";
 import Link from "next/link";
+import { envVars } from "@/utilities/enviromentVars";
 
 export default function FundingPlatformAdminPage() {
   const { communityId } = useParams() as { communityId: string };
@@ -114,6 +116,7 @@ export default function FundingPlatformAdminPage() {
     rejected: number;
     pending: number;
     revisionRequested: number;
+    underReview: number;
   } = useMemo(() => {
     if (!programs || programs.length === 0) {
       // Fallback values when no programs exist
@@ -124,6 +127,7 @@ export default function FundingPlatformAdminPage() {
         rejected: 0,
         pending: 0,
         revisionRequested: 0,
+        underReview: 0,
       };
     }
 
@@ -141,6 +145,8 @@ export default function FundingPlatformAdminPage() {
           revisionRequested:
             acc.revisionRequested +
             (programStats?.revisionRequestedApplications || 0),
+          underReview:
+            acc.underReview + (programStats?.underReviewApplications || 0),
         };
       },
       {
@@ -150,6 +156,7 @@ export default function FundingPlatformAdminPage() {
         rejected: 0,
         pending: 0,
         revisionRequested: 0,
+        underReview: 0,
       }
     );
 
@@ -274,6 +281,15 @@ export default function FundingPlatformAdminPage() {
       ),
     },
     {
+      title: "Under Review",
+      value: formatCurrency(statistics.underReview),
+      color: "text-pink-600",
+      bgColor: "bg-pink-50 dark:bg-pink-900",
+      icon: (
+        <EyeIconOutline className="h-5 w-5 text-pink-700 dark:text-pink-100" />
+      ),
+    },
+    {
       title: "Revision Requested",
       value: formatCurrency(statistics.revisionRequested),
       color: "text-indigo-600",
@@ -298,10 +314,10 @@ export default function FundingPlatformAdminPage() {
     {
       title: "Applicants",
       value: formatCurrency(
-        program.metrics?.total ||
-          program.metrics?.applicationCount ||
-          program.grantPlatform?.stats?.total ||
-          0
+        program.metrics?.totalApplications ||
+        program.metrics?.applicationCount ||
+        program.grantPlatform?.stats?.total ||
+        0
       ),
       icon: <UsersIcon className="w-5 h-5 text-blue-700 dark:text-blue-100" />,
     },
@@ -322,6 +338,7 @@ export default function FundingPlatformAdminPage() {
     const pendingApplications = program.metrics?.pendingApplications || 0;
     const revisionRequestedApplications =
       program.metrics?.revisionRequestedApplications || 0;
+    const underReviewApplications = program.metrics?.underReviewApplications || 0;
 
     return [
       {
@@ -343,6 +360,12 @@ export default function FundingPlatformAdminPage() {
         bgColor: "bg-orange-500",
       },
       {
+        title: "Under Review",
+        value: underReviewApplications,
+        color: "text-pink-600",
+        bgColor: "bg-pink-500",
+      },
+      {
         title: "Revision Requested",
         value: revisionRequestedApplications,
         color: "text-indigo-600",
@@ -361,7 +384,7 @@ export default function FundingPlatformAdminPage() {
         Back
       </Link>
       {/* Statistics Bar */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {stats.map((stat) => (
           <FundingPlatformStatsCard
             key={stat.title}
@@ -459,11 +482,11 @@ export default function FundingPlatformAdminPage() {
                 {togglingPrograms.has(
                   `${program.programId}_${program.chainID}`
                 ) && (
-                  <LoadingOverlay
-                    message="Updating program status..."
-                    isLoading={true}
-                  />
-                )}
+                    <LoadingOverlay
+                      message="Updating program status..."
+                      isLoading={true}
+                    />
+                  )}
 
                 {/* Program Enable/Disable Toggle */}
                 <div className="flex items-center justify-start mb-3 flex-row gap-3 flex-wrap">
@@ -477,7 +500,7 @@ export default function FundingPlatformAdminPage() {
                     )}
                     title={
                       !program.applicationConfig ||
-                      Object.keys(program.applicationConfig).length === 1
+                        Object.keys(program.applicationConfig).length === 1
                         ? "Program doesn't have configured form"
                         : undefined
                     }
@@ -518,8 +541,8 @@ export default function FundingPlatformAdminPage() {
                             : "bg-gray-200 dark:bg-gray-400",
                           (!program.applicationConfig ||
                             Object.keys(program.applicationConfig).length ===
-                              1) &&
-                            "bg-gray-300 dark:bg-gray-600"
+                            1) &&
+                          "bg-gray-300 dark:bg-gray-600"
                         )}
                       >
                         <span
@@ -544,20 +567,20 @@ export default function FundingPlatformAdminPage() {
                         )
                           ? "Updating..."
                           : program.applicationConfig?.isEnabled
-                          ? "Enabled"
-                          : "Disabled"}
+                            ? "Enabled"
+                            : "Disabled"}
                       </span>
                     </button>
                     {/* Tooltip for disabled state */}
                     {(!program.applicationConfig ||
                       Object.keys(program.applicationConfig).length === 1) && (
-                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                        Program doesn&apos;t have configured form
-                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
-                          <div className="border-4 border-transparent border-t-gray-900"></div>
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                          Program doesn&apos;t have configured form
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                            <div className="border-4 border-transparent border-t-gray-900"></div>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
                   </div>
                   <span className="text-sm text-zinc-900 bg-gray-100 dark:bg-zinc-900 dark:text-zinc-100 px-2 py-1 rounded-full">
                     ID {program.programId}
@@ -686,11 +709,9 @@ export default function FundingPlatformAdminPage() {
                   {/* Apply Button */}
                   <div className="mb-3">
                     <Link
-                      href={PAGES.COMMUNITY.FUNDING_PLATFORM_APPLY(
-                        communityId,
-                        `${program.programId}_${program.chainID}`
-                      )}
+                      href={envVars.isDev ? `https://testapp.opgrants.io/programs/${program.programId}/apply` : `https://app.opgrants.io/programs/${program.programId}/apply`}
                       className="w-full"
+                      target="_blank"
                     >
                       <Button
                         variant="primary"
@@ -716,7 +737,7 @@ export default function FundingPlatformAdminPage() {
                 </div>
                 {/* Pending Applications Review */}
                 {program?.metrics?.pendingApplications &&
-                program.metrics.pendingApplications > 0 ? (
+                  program.metrics.pendingApplications > 0 ? (
                   <div className=" bg-orange-50 dark:bg-orange-900/20 border-none">
                     <Link
                       href={PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(

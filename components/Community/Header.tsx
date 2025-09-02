@@ -1,14 +1,14 @@
 "use client";
 import { CommunityPageNavigator } from "@/components/Pages/Communities/CommunityPageNavigator";
 import { communityColors } from "@/utilities/communityColors";
-import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { CommunityImpactStatCards } from "@/components/Pages/Communities/Impact/StatCards";
 import { usePathname } from "next/navigation";
+import { CommunityDetailsV2 } from "@/types/community";
 
 const AdminCommunityHeader = ({
   community,
 }: {
-  community: ICommunityResponse;
+  community: CommunityDetailsV2;
 }) => {
   return (
     <div className="flex flex-col gap-4 justify-between items-start sm:px-3 md:px-4 px-6 py-2 border-b border-gray-200 dark:border-gray-800">
@@ -16,9 +16,9 @@ const AdminCommunityHeader = ({
         <div className="flex h-max flex-1 flex-row items-center justify-start gap-3 ">
           <div className="flex justify-center bg-black rounded-full p-2">
             <img
-              alt={(community as ICommunityResponse)?.details?.data.name}
+              alt={(community as CommunityDetailsV2)?.details?.name}
               src={
-                (community as ICommunityResponse)?.details?.data?.imageURL || ""
+                (community as CommunityDetailsV2)?.details?.logoUrl || ""
               }
               className={"h-6 w-6 min-w-6 min-h-6 rounded-full"}
             />
@@ -26,12 +26,11 @@ const AdminCommunityHeader = ({
           <div className="flex flex-col gap-0">
             <p className="text-3xl font-body font-semibold text-black dark:text-white max-2xl:text-2xl max-lg:text-xl">
               {community
-                ? (community as ICommunityResponse)?.details?.data?.name
+                ? (community as CommunityDetailsV2)?.details?.name
                 : ""}
             </p>
           </div>
         </div>
-        {/* <CommunityImpactStatCards /> */}
       </div>
       <CommunityPageNavigator />
     </div>
@@ -41,7 +40,7 @@ const AdminCommunityHeader = ({
 const NormalCommunityHeader = ({
   community,
 }: {
-  community: ICommunityResponse;
+  community: CommunityDetailsV2;
 }) => {
   return (
     <div className="flex flex-col gap-4 justify-between items-start mt-4 sm:px-3 md:px-4 px-6 border-b border-gray-200 dark:border-gray-800">
@@ -52,16 +51,16 @@ const NormalCommunityHeader = ({
             style={{
               backgroundColor:
                 communityColors[
-                  (community as ICommunityResponse)?.uid?.toLowerCase() ||
-                    "black"
+                (community as CommunityDetailsV2)?.uid?.toLowerCase() ||
+                "black"
                 ] || "#000000",
             }}
           >
             <div className="flex justify-center border border-white rounded-full p-2">
               <img
-                alt={(community as ICommunityResponse)?.details?.data.name}
+                alt={(community as CommunityDetailsV2)?.details?.name}
                 src={
-                  (community as ICommunityResponse)?.details?.data?.imageURL ||
+                  (community as CommunityDetailsV2)?.details?.logoUrl ||
                   ""
                 }
                 className={
@@ -73,7 +72,7 @@ const NormalCommunityHeader = ({
           <div className="flex flex-col gap-0">
             <p className="text-3xl font-body font-semibold text-black dark:text-white max-2xl:text-2xl max-lg:text-xl">
               {community
-                ? (community as ICommunityResponse)?.details?.data?.name
+                ? (community as CommunityDetailsV2)?.details?.name
                 : ""}
             </p>
           </div>
@@ -87,7 +86,7 @@ const NormalCommunityHeader = ({
 export default function CommunityHeader({
   community,
 }: {
-  community: ICommunityResponse;
+  community: CommunityDetailsV2;
 }) {
   const pathname = usePathname();
   const isAdminPage = pathname.includes("/admin");

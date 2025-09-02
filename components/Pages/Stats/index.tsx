@@ -21,8 +21,6 @@ import { cn } from "@/utilities/tailwind";
 import { useQueryState } from "nuqs";
 import { errorManager } from "@/components/Utilities/errorManager";
 
-// const valueFormatter = (number) =>
-//   `$ ${new Intl.NumberFormat('us').format(number).toString()}`;
 
 type DictionaryValue = {
   title: string;
@@ -63,7 +61,6 @@ const allPeriods: StatPeriod[] = ["Days", "Weeks", "Months", "Years"];
 export const Stats = () => {
   const [data, setData] = useState<StatChartData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  // const [period, setPeriod] = useState<StatPeriod>("Days");
 
   const [period, setPeriod] = useQueryState("period", {
     shallow: false,
@@ -139,7 +136,6 @@ export const Stats = () => {
                     <div className="relative flex-1 w-32">
                       <Listbox.Button className="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left  dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 text-gray-900  ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-600 sm:text-sm sm:leading-6">
                         <span className="block truncate">
-                          {/* {sortOptions[selectedSort]} */}
                           {period}
                         </span>
                         <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
@@ -214,9 +210,8 @@ export const Stats = () => {
                 <LineChart
                   divStyle="flex-3 flex w-full max-h-80"
                   key={item.name}
-                  title={`${
-                    dataNameDictionary[item.name].title
-                  } ${period.toLowerCase()}`}
+                  title={`${dataNameDictionary[item.name].title
+                    } ${period.toLowerCase()}`}
                   titleProps={{
                     className: "flex flex-row gap-2 flex-wrap items-center",
                   }}

@@ -10,7 +10,6 @@ export const LoadingCard = () => {
 
         <div className="px-5 flex flex-col gap-0">
           <div className="font-body mb-0 pb-0 text-base font-semibold text-gray-900 dark:text-gray-100">
-            {/* {card.details?.data.title || card.uid} */}
             <Skeleton className="h-4 w-full" />
           </div>
           <div className="font-body dark:text-slate-400 mt-1 mb-2 text-sm font-medium text-slate-500">
@@ -38,8 +37,6 @@ export const LoadingCard = () => {
               <div className="absolute left-[1px] top-[1px] h-1.5 w-1.5 rounded-full bg-teal-600" />
             </div>
             <span className="text-center text-sm font-medium leading-tight text-teal-600">
-              {/* {formatCurrency(active)} active{" "}
-                                  {pluralize("grants", active)} */}
               <Skeleton className="h-2 w-20" />
             </span>
           </div>

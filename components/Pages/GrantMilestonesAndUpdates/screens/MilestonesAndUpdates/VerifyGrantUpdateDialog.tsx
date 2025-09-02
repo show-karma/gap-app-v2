@@ -26,6 +26,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { ArrowRightIcon } from "@heroicons/react/24/solid";
 import { useWallet } from "@/hooks/useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 type VerifyGrantUpdateDialogProps = {
   grantUpdate: IGrantUpdate;
@@ -77,16 +78,21 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
     if (!gap) throw new Error("Please, connect a wallet");
     try {
       setIsLoading(true);
-      if (
-        !checkNetworkIsValid(chain?.id) ||
-        chain?.id !== grantUpdate.chainID
-      ) {
-        await switchChainAsync?.({ chainId: grantUpdate.chainID });
-        gapClient = getGapClient(grantUpdate.chainID);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId: grantUpdate.chainID,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsLoading(false);
+        return;
       }
 
+      gapClient = newGapClient;
+
       const { walletClient, error } = await safeGetWalletClient(
-        grantUpdate.chainID
+        actualChainId
       );
 
       if (error || !walletClient || !gapClient) {

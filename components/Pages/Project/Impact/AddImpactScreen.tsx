@@ -30,6 +30,7 @@ import { useAccount } from "wagmi";
 import { z } from "zod";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { useWallet } from "@/hooks/useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 const updateSchema = z.object({
   startedAt: z.date({
@@ -87,13 +88,21 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
     setIsLoading(true);
     let gapClient = gap;
     try {
-      if (chain?.id !== project.chainID) {
-        await switchChainAsync?.({ chainId: project.chainID });
-        gapClient = getGapClient(project.chainID);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId: project.chainID,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsLoading(false);
+        return;
       }
 
+      gapClient = newGapClient;
+
       const { walletClient, error } = await safeGetWalletClient(
-        project.chainID as number
+        actualChainId
       );
 
       if (error || !walletClient || !gapClient) {

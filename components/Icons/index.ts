@@ -1,5 +1,6 @@
 export * from "./Blog";
 export * from "./ChevronDown";
+export * from "./Globe";
 export * from "./Discord";
 export * from "./Discord2";
 export * from "./Discussion";

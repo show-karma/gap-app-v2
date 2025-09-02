@@ -4,6 +4,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
 import { useOwnerStore, useProjectStore } from "@/store";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
@@ -64,13 +65,21 @@ export const ObjectiveSimpleOptionsMenu = ({
     let gapClient = gap;
     setIsDeleting(true);
     try {
-      if (chain?.id !== project.chainID) {
-        await switchChainAsync?.({ chainId: project.chainID });
-        gapClient = getGapClient(project.chainID);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId: project.chainID,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsDeleting(false);
+        return;
       }
 
+      gapClient = newGapClient;
+
       const { walletClient, error } = await safeGetWalletClient(
-        project.chainID as number
+        actualChainId
       );
 
       if (error || !walletClient || !gapClient) {

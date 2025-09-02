@@ -111,7 +111,7 @@ export const GrantsLayout = ({
   useEffect(() => {
     if (!project || !screen) return;
 
-    if (!isAuthorized && authorizedViews.includes(screen)) {
+    if (!(isAuthorized || isCommunityAdminOfSome) && authorizedViews.includes(screen)) {
       router.replace(
         PAGES.PROJECT.GRANTS(project.details?.data.slug || project.uid || "")
       );
@@ -122,7 +122,7 @@ export const GrantsLayout = ({
     if (currentTab !== screen) {
       setCurrentTab(screen);
     }
-  }, [screen, isAuthorized, project, currentTab, router]);
+  }, [screen, isAuthorized, isCommunityAdminOfSome, project, currentTab, router]);
 
   useEffect(() => {
     if (project) {
@@ -166,29 +166,28 @@ export const GrantsLayout = ({
     tabName: GrantScreen;
     current: boolean;
   }[] = [
-    {
-      name: "Overview",
-      tabName: "overview",
-      current: true,
-    },
-    {
-      name: "Milestones and Updates",
-      tabName: "milestones-and-updates",
-      current: false,
-    },
-    {
-      name: "Outputs",
-      tabName: "outputs",
-      current: false,
-    },
-    {
-      name: "Impact Criteria",
-      tabName: "impact-criteria",
-      current: false,
-    },
-  ];
+      {
+        name: "Overview",
+        tabName: "overview",
+        current: true,
+      },
+      {
+        name: "Milestones and Updates",
+        tabName: "milestones-and-updates",
+        current: false,
+      },
+      {
+        name: "Outputs",
+        tabName: "outputs",
+        current: false,
+      },
+      {
+        name: "Impact Criteria",
+        tabName: "impact-criteria",
+        current: false,
+      },
+    ];
 
-  // const [tabs, setTabs] = useState<Tab[]>(defaultTabs);
   const tabs: Tab[] = defaultTabs;
 
   if (loading || (!grant && project.grants?.length > 0)) {

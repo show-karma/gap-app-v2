@@ -63,7 +63,6 @@ export const AllProjects = () => {
   );
 
   const { isAuth } = useAuthStore();
-  // const isLoading = true;
   const { data, isLoading } = useQuery({
     queryKey: ["all-projects", page, pageSize],
     queryFn: () =>

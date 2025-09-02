@@ -16,6 +16,7 @@ import { Button } from "@/components/Utilities/Button";
 import { PAGES } from "@/utilities/pages";
 import { TypeSelectionScreen } from "./screens/TypeSelectionScreen";
 import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
+import { useCommunitiesStore } from "@/store/communities";
 export { SearchGrantProgram } from "./SearchGrantProgram";
 
 const DetailsScreen = dynamic(
@@ -70,8 +71,9 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const selectedProject = useProjectStore((state) => state.project);
   const { isProjectAdmin } = useProjectStore();
   const { isOwner } = useOwnerStore();
-  const { isCommunityAdmin } = useCommunityAdminStore();
-  const isAuthorized = isProjectAdmin || isOwner || isCommunityAdmin;
+  const { communities } = useCommunitiesStore();
+  const isCommunityAdminOfSome = communities.length !== 0;
+  const isAuthorized = isProjectAdmin || isOwner || isCommunityAdminOfSome;
 
   const isProgramApplication = formData.description.includes(
     "I am applying to participate in the"

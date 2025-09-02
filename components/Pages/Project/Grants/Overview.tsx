@@ -136,11 +136,10 @@ export const GrantOverview = () => {
                 <a
                   href={PAGES.COMMUNITY.ALL_GRANTS(
                     grant?.community?.details?.data?.slug ||
-                      (grant?.community?.uid as Hex)
+                    (grant?.community?.uid as Hex)
                   )}
                 >
                   <div className="w-full inline-flex items-center gap-x-2 rounded-3xl bg-[#E0EAFF] dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500 px-2 py-1 text-xs font-medium text-gray-900">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={grant?.community?.details?.data?.imageURL}
                       alt=""
@@ -158,7 +157,6 @@ export const GrantOverview = () => {
                 </div>
 
                 <div className="inline-flex items-center gap-x-2 rounded-full bg-[#E0EAFF] dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500 px-2 py-1 text-xs font-medium text-gray-900">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={chainImgDictionary(
                       grant?.community?.details?.chainID as number

@@ -99,7 +99,7 @@ export const CommunitiesToAdmin = () => {
                       <th className="min-w-[80px]">Img</th>
                       <th className="min-w-[150px]">Name</th>
                       <th className="min-w-[100px]">Created</th>
-                      <th className="min-w-[200px]">UUID</th>{" "}
+                      <th className="min-w-[200px]">UUID</th>
                       {/* Set minimum width */}
                       <th className="px-4 text-center min-w-[150px]">
                         Community page

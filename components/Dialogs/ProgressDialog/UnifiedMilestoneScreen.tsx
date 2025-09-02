@@ -30,6 +30,7 @@ import { useAccount } from "wagmi";
 import { z } from "zod";
 import { MultiSelect } from "../../../components/Utilities/MultiSelect";
 import { useWallet } from "@/hooks/useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 // Helper function to wait for a specified time
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -119,10 +120,18 @@ export const UnifiedMilestoneScreen = () => {
     setIsSubmitting(true);
 
     try {
-      if (chain?.id !== project.chainID) {
-        await switchChainAsync?.({ chainId: project.chainID });
-        gapClient = getGapClient(project.chainID);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId: project.chainID,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsSubmitting(false);
+        return;
       }
+
+      gapClient = newGapClient;
 
       const newObjective = new ProjectMilestone({
         data: sanitizeObject({
@@ -136,7 +145,7 @@ export const UnifiedMilestoneScreen = () => {
       });
 
       const { walletClient, error } = await safeGetWalletClient(
-        project.chainID
+        actualChainId
       );
 
       if (error || !walletClient || !gapClient) {
@@ -253,10 +262,18 @@ export const UnifiedMilestoneScreen = () => {
         toastsToRemove.push(`chain-${chainId}`);
 
         // Switch chain if needed
-        if (chain?.id !== chainId) {
-          await switchChainAsync?.({ chainId });
-          gapClient = getGapClient(chainId);
+        const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+          targetChainId: chainId,
+          currentChainId: chain?.id,
+          switchChainAsync,
+        });
+
+        if (!success) {
+          setIsSubmitting(false);
+          continue; // Skip this chain if switch fails
         }
+
+        gapClient = newGapClient;
 
         // If there's only one grant on this chain, process it normally
         if (chainGrants.length === 1) {
@@ -284,7 +301,7 @@ export const UnifiedMilestoneScreen = () => {
             data: milestone,
           });
 
-          const { walletClient, error } = await safeGetWalletClient(chainId);
+          const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
           if (error || !walletClient || !gapClient) {
             throw new Error(`Failed to connect to wallet on ${chainName}`, {
@@ -340,7 +357,7 @@ export const UnifiedMilestoneScreen = () => {
             data: milestone,
           });
 
-          const { walletClient, error } = await safeGetWalletClient(chainId);
+          const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
           if (error || !walletClient || !gapClient) {
             throw new Error(`Failed to connect to wallet on ${chainName}`, {
@@ -385,13 +402,13 @@ export const UnifiedMilestoneScreen = () => {
             const txPromises = result.tx.map((tx: Transaction) =>
               tx.hash
                 ? fetchData(
-                    INDEXER.ATTESTATION_LISTENER(
-                      tx.hash as `0x${string}`,
-                      chainId
-                    ),
-                    "POST",
-                    {}
-                  )
+                  INDEXER.ATTESTATION_LISTENER(
+                    tx.hash as `0x${string}`,
+                    chainId
+                  ),
+                  "POST",
+                  {}
+                )
                 : Promise.resolve()
             );
             await Promise.all(txPromises);

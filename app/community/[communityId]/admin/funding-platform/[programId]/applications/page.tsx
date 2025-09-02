@@ -1,6 +1,7 @@
 "use client";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect, useMemo } from "react";
+import { useParams, useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useState, useMemo, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { useOwnerStore } from "@/store";
 import { useStaff } from "@/hooks/useStaff";
@@ -9,17 +10,20 @@ import {
   ApplicationDetailSidesheet,
 } from "@/components/FundingPlatform";
 import { IFundingApplication } from "@/types/funding-platform";
-import { IApplicationFilters } from "@/services/fundingPlatformService";
+import { IApplicationFilters, fundingApplicationsAPI } from "@/services/fundingPlatformService";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/Utilities/Button";
-import { ArrowLeftIcon, CogIcon } from "@heroicons/react/24/solid";
+import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { Cog6ToothIcon } from "@heroicons/react/24/outline";
+import { useFundingApplications } from "@/hooks/useFundingPlatform";
+import toast from "react-hot-toast";
 
 export default function ApplicationsPage() {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const { communityId, programId: combinedProgramId } = useParams() as {
     communityId: string;
@@ -29,6 +33,9 @@ export default function ApplicationsPage() {
   // Extract programId and chainId from the combined format (e.g., "777_11155111")
   const [programId, chainId] = combinedProgramId.split("_");
   const parsedChainId = parseInt(chainId, 10);
+
+  // Get applicationId from URL if present
+  const applicationId = searchParams.get("applicationId");
 
   // Parse initial filters from URL
   const initialFilters = useMemo((): IApplicationFilters => {
@@ -49,6 +56,12 @@ export default function ApplicationsPage() {
     const page = searchParams.get("page");
     if (page) filters.page = parseInt(page, 10);
 
+    const sortBy = searchParams.get("sortBy");
+    if (sortBy) filters.sortBy = sortBy as any;
+
+    const sortOrder = searchParams.get("sortOrder");
+    if (sortOrder) filters.sortOrder = sortOrder as any;
+
     return filters;
   }, [searchParams]);
 
@@ -57,12 +70,71 @@ export default function ApplicationsPage() {
     useState<IFundingApplication | null>(null);
   const [isSidesheetOpen, setIsSidesheetOpen] = useState(false);
 
+  const queryClient = useQueryClient();
+
   const { isCommunityAdmin, isLoading: isLoadingAdmin } =
     useIsCommunityAdmin(communityId);
   const isOwner = useOwnerStore((state) => state.isOwner);
   const { isStaff } = useStaff();
 
+  // Use the funding applications hook to get applications data
+  const { applications } = useFundingApplications(
+    programId,
+    parsedChainId,
+    initialFilters
+  );
+
+  // React Query: Fetch individual application when ID is in URL
+  const { data: fetchedApplication, isLoading: isLoadingApplication } = useQuery({
+    queryKey: ['funding-application', applicationId],
+    queryFn: () => fundingApplicationsAPI.getApplication(applicationId!),
+    enabled: !!applicationId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 10, // 10 minutes
+  });
+
+  // React Query: Mutation for updating application status
+  const statusMutation = useMutation({
+    mutationFn: ({ applicationId, status, note }: { applicationId: string; status: string; note?: string }) =>
+      fundingApplicationsAPI.updateApplicationStatus(applicationId, {
+        status: status as any,
+        reason: note || '',
+      }),
+    onSuccess: () => {
+      // Invalidate and refetch application data
+      queryClient.invalidateQueries({ queryKey: ['funding-applications', programId, parsedChainId] });
+      if (applicationId) {
+        queryClient.invalidateQueries({ queryKey: ['funding-application', applicationId] });
+      }
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Failed to update application status");
+      console.error("Failed to update application status:", error);
+    },
+  });
+
   const hasAccess = isCommunityAdmin || isOwner || isStaff;
+
+  // Handle direct URL access with applicationId
+  useEffect(() => {
+    if (applicationId) {
+      // Try to find in already loaded applications first
+      const appFromList = applications?.find(a => a.id === applicationId);
+
+      if (appFromList) {
+        setSelectedApplication(appFromList);
+        setIsSidesheetOpen(true);
+      } else if (fetchedApplication) {
+        // Use the fetched application from React Query
+        setSelectedApplication(fetchedApplication);
+        setIsSidesheetOpen(true);
+      }
+    } else {
+      // If applicationId is removed from URL, close the sidesheet
+      setIsSidesheetOpen(false);
+      setTimeout(() => setSelectedApplication(null), 300);
+    }
+  }, [applicationId, applications, fetchedApplication]);
 
   const handleBackClick = () => {
     router.push(PAGES.ADMIN.FUNDING_PLATFORM(communityId));
@@ -71,30 +143,45 @@ export default function ApplicationsPage() {
   const handleApplicationSelect = (application: IFundingApplication) => {
     setSelectedApplication(application);
     setIsSidesheetOpen(true);
+
+    // Update URL with applicationId using replace to maintain history properly
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("applicationId", application.referenceNumber);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+
+    // Cache the application data in React Query
+    queryClient.setQueryData(['funding-application', application.referenceNumber], application);
+  };
+
+  // Prefetch application on hover for better UX
+  const handleApplicationHover = (applicationId: string) => {
+    queryClient.prefetchQuery({
+      queryKey: ['funding-application', applicationId],
+      queryFn: () => fundingApplicationsAPI.getApplication(applicationId),
+      staleTime: 1000 * 60 * 5, // 5 minutes
+    });
   };
 
   const handleCloseSidesheet = () => {
     setIsSidesheetOpen(false);
-    // Optional: Clear selected application after animation completes
+
+    // Remove applicationId from URL when closing
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("applicationId");
+    const queryString = params.toString();
+    const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
+    router.replace(newUrl, { scroll: false });
+
+    // Clear selected application after animation completes
     setTimeout(() => setSelectedApplication(null), 300);
   };
 
-  const handleStatusChange = async (
-    applicationId: string,
-    status: string,
-    note?: string
-  ) => {
-    // The ApplicationListWithAPI component will handle the status update
-    // We just need to update the selected application if it's the one being changed
-    if (selectedApplication && selectedApplication.id === applicationId) {
-      setSelectedApplication({
-        ...selectedApplication,
-        status: status as any,
-      });
-    }
+  // Handle status change for both ApplicationList and ApplicationDetailSidesheet
+  const handleStatusChange = async (applicationId: string, status: string, note?: string) => {
+    return statusMutation.mutateAsync({ applicationId, status, note });
   };
 
-  if (isLoadingAdmin) {
+  if (isLoadingAdmin || isLoadingApplication) {
     return (
       <div className="flex w-full items-center justify-center min-h-[600px]">
         <Spinner />
@@ -160,7 +247,10 @@ export default function ApplicationsPage() {
           chainId={parsedChainId}
           showStatusActions={true}
           onApplicationSelect={handleApplicationSelect}
+          onApplicationHover={handleApplicationHover}
           initialFilters={initialFilters}
+          onStatusChange={handleStatusChange}
+          isAdmin={true}
         />
       </div>
 
@@ -172,20 +262,6 @@ export default function ApplicationsPage() {
         onStatusChange={handleStatusChange}
         showStatusActions={true}
       />
-
-      {/* Footer */}
-      <div className="bg-white dark:bg-zinc-800 border-t border-gray-200 dark:border-gray-700">
-        <div className="px-4 sm:px-6 lg:px-12 py-3">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-gray-500 dark:text-gray-400">
-            <div className="mb-2 sm:mb-0">
-              <span>Applications are automatically evaluated using AI. </span>
-              <span className="font-medium">
-                Review and update statuses as needed.
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

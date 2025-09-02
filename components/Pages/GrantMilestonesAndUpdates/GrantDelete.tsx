@@ -3,6 +3,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
 import { useOwnerStore, useProjectStore } from "@/store";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -48,12 +49,20 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
     setIsDeletingGrant(true);
     let gapClient = gap;
     try {
-      if (!checkNetworkIsValid(chain?.id) || chain?.id !== grant.chainID) {
-        await switchChainAsync?.({ chainId: grant.chainID });
-        gapClient = getGapClient(grant.chainID);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId: grant.chainID,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsDeletingGrant(false);
+        return;
       }
 
-      const { walletClient, error } = await safeGetWalletClient(grant.chainID);
+      gapClient = newGapClient;
+
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
