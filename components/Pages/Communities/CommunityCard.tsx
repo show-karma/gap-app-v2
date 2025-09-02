@@ -57,7 +57,7 @@ export const CommunityCard = ({ community }: CommunityCardProps) => {
     const isNarrowCard = cardWidth > 0 && cardWidth <= 307;
     let maxTags = isNarrowCard ? 1 : 2;
     let visibleTags = categories.slice(0, maxTags);
-    const totalChars = visibleTags.join('').length;
+    const totalChars = visibleTags.map(tag => tag.name).join('').length;
 
     // If total chars exceed 30, show only 1 tag to prevent wrapping
     if (totalChars > 30 && categories.length > 0) {
