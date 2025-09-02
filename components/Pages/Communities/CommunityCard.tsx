@@ -3,12 +3,33 @@ import { ChevronRightIcon } from "@heroicons/react/24/solid";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { PAGES } from "@/utilities/pages";
 import { CommunityWithStats } from "@/hooks/useCommunities";
+import { useRef, useEffect, useState, useMemo } from "react";
 
 interface CommunityCardProps {
   community: CommunityWithStats;
 }
 
 export const CommunityCard = ({ community }: CommunityCardProps) => {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [cardWidth, setCardWidth] = useState<number>(0);
+
+  useEffect(() => {
+    const updateWidth = () => {
+      if (cardRef.current) {
+        setCardWidth(cardRef.current.offsetWidth);
+      }
+    };
+
+    updateWidth();
+
+    const resizeObserver = new ResizeObserver(updateWidth);
+    if (cardRef.current) {
+      resizeObserver.observe(cardRef.current);
+    }
+
+    return () => resizeObserver.disconnect();
+  }, []);
+
   // Extract data from the API response structure
   const name = community.details?.name || community.uid;
   const slug = community.details?.slug;
@@ -28,23 +49,30 @@ export const CommunityCard = ({ community }: CommunityCardProps) => {
     </span>
   );
 
-  // Limit categories to prevent overflow
-  const categories = community.categories ?? [];
+  // Memoize tag calculations to prevent flickering during resize
+  const { visibleTags, remainingCount } = useMemo(() => {
+    const categories = (community.categories ?? [])
+      .sort((a, b) => a.name.length - b.name.length);
 
-  let maxTags = 2;
-  let visibleTags = categories.slice(0, maxTags);
-  const totalChars = visibleTags.join('').length;
+    const isNarrowCard = cardWidth > 0 && cardWidth <= 307;
+    let maxTags = isNarrowCard ? 1 : 2;
+    let visibleTags = categories.slice(0, maxTags);
+    const totalChars = visibleTags.join('').length;
 
-  // If total chars exceed 30, show only 1 tag to prevent wrapping
-  if (totalChars > 30 && categories.length > 0) {
-    maxTags = 1;
-    visibleTags = categories.slice(0, maxTags);
-  }
+    // If total chars exceed 30, show only 1 tag to prevent wrapping
+    if (totalChars > 30 && categories.length > 0) {
+      maxTags = 1;
+      visibleTags = categories.slice(0, maxTags);
+    }
 
-  const remainingCount = Math.max(0, categories.length - maxTags);
+    const remainingCount = Math.max(0, categories.length - maxTags);
+
+    return { visibleTags, remainingCount };
+  }, [community.categories, cardWidth]);
 
   return (
     <div
+      ref={cardRef}
       className="flex flex-col p-4 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 ease-in-out w-full min-w-0"
       style={{ height: '318px' }}
     >
@@ -64,7 +92,7 @@ export const CommunityCard = ({ community }: CommunityCardProps) => {
         </h3>
       </div>
 
-      {visibleTags.length > 0 &&
+      {visibleTags.length > 0 && (
         <div className="flex flex-wrap justify-center gap-2 mb-3 w-full min-h-[28px]">
           {visibleTags.map((c, idx) => renderCategoryTag(c.name, idx))}
           {remainingCount > 0 && (
@@ -73,7 +101,7 @@ export const CommunityCard = ({ community }: CommunityCardProps) => {
             </span>
           )}
         </div>
-      }
+      )}
 
       <div className="flex justify-center space-x-4 mb-3 min-w-0">
         <div className="text-center min-w-0">
