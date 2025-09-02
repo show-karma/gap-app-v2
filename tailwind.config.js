@@ -78,6 +78,10 @@ module.exports = {
           50: "#fffbeb",
           700: "#b45309",
         },
+        neutral: {
+          100: "#F7F9FB",
+          600: "#404968",
+        },
         tremor: {
           brand: {
             faint: "#eff6ff", // blue-50
