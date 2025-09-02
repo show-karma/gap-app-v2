@@ -26,6 +26,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { ArrowRightIcon } from "@heroicons/react/24/solid";
 import { useWallet } from "@/hooks/useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 type VerifyMilestoneUpdateDialogProps = {
   milestone: IMilestoneResponse;
@@ -76,13 +77,21 @@ export const VerifyMilestoneUpdateDialog: FC<
     if (!gap) throw new Error("Please, connect a wallet");
     try {
       setIsLoading(true);
-      if (!checkNetworkIsValid(chain?.id) || chain?.id !== milestone.chainID) {
-        await switchChainAsync?.({ chainId: milestone.chainID });
-        gapClient = getGapClient(milestone.chainID);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId: milestone.chainID,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsLoading(false);
+        return;
       }
 
+      gapClient = newGapClient;
+
       const { walletClient, error } = await safeGetWalletClient(
-        milestone.chainID
+        actualChainId
       );
 
       if (error || !walletClient || !gapClient) {

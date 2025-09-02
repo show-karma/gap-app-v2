@@ -48,6 +48,7 @@ import { SearchDropdown } from "./SearchDropdown";
 import { StatusDropdown } from "./StatusDropdown";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { useWallet } from "@/hooks/useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 const labelStyle = "text-sm font-bold text-brand-gray dark:text-zinc-100";
 const inputStyle =
@@ -248,8 +249,8 @@ export default function AddProgram({
       grantTypes: Array.isArray(programToEdit?.metadata?.grantTypes)
         ? programToEdit?.metadata?.grantTypes
         : programToEdit?.metadata?.grantTypes
-        ? [programToEdit?.metadata?.grantTypes]
-        : [],
+          ? [programToEdit?.metadata?.grantTypes]
+          : [],
       networkToCreate: programToEdit?.chainID || 0,
       grantsSite: programToEdit?.metadata?.socialLinks?.grantsSite,
       platformsUsed: programToEdit?.metadata?.platformsUsed || [],
@@ -401,12 +402,19 @@ export default function AddProgram({
         return;
       }
       const chainSelected = data.networkToCreate;
-      if (chain?.id !== chainSelected) {
-        await switchChainAsync?.({ chainId: chainSelected as number });
+      const { success, chainId: actualChainId } = await ensureCorrectChain({
+        targetChainId: chainSelected as number,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsLoading(false);
+        return;
       }
 
       const { walletClient, error } = await safeGetWalletClient(
-        chainSelected as number
+        actualChainId
       );
 
       if (error || !walletClient) {
@@ -483,7 +491,7 @@ export default function AddProgram({
             while (retries > 0) {
               await fetchData(
                 INDEXER.REGISTRY.GET_ALL +
-                  `?programId=${programToEdit?.programId}`
+                `?programId=${programToEdit?.programId}`
               )
                 .then(async ([res]) => {
                   const hasUpdated =
@@ -898,23 +906,6 @@ export default function AddProgram({
             </div>
 
             <div className="grid grid-cols-3 max-sm:grid-cols-1 w-full gap-6 border-b border-b-[#98A2B3] pb-10">
-              {/* <div className="flex w-full flex-col justify-between gap-2">
-                <label htmlFor="program-network" className={labelStyle}>
-                  Network to create program *
-                </label>
-                <NetworkDropdown
-                  onSelectFunction={(value) => {
-                    setValue("networkToCreate", value, {
-                      shouldValidate: true,
-                    });
-                  }}
-                  previousValue={watch("networkToCreate")}
-                  list={supportedChains}
-                />
-                <p className="text-base text-red-400">
-                  {errors.networkToCreate?.message}
-                </p>
-              </div> */}
               <div className="flex w-full flex-col  gap-1">
                 <label htmlFor="program-budget" className={labelStyle}>
                   Program budget

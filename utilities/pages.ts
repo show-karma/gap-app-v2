@@ -23,6 +23,8 @@ export const PAGES = {
     ROOT: (community: string) => `/community/${community}/admin`,
     EDIT_CATEGORIES: (community: string) =>
       `/community/${community}/admin/edit-categories`,
+    EDIT_PROJECTS: (community: string) =>
+      `/community/${community}/admin/edit-projects`,
     MILESTONES: (community: string) =>
       `/community/${community}/admin/milestones-report`,
     MANAGE_INDICATORS: (community: string) =>
@@ -37,6 +39,7 @@ export const PAGES = {
     COMMUNITY_STATS: `/admin/communities/stats`,
     PROJECTS: `/admin/projects`,
     PAYOUTS: (community: string) => `/community/${community}/admin/payouts`,
+    PROGRAM_SCORES: (community: string) => `/community/${community}/admin/program-scores`,
   },
   PROJECT: {
     OVERVIEW: (project: string) => `/project/${project}`,

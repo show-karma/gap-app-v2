@@ -161,9 +161,8 @@ export function SearchGrantProgram({
             grantToEdit={grantToEdit}
             selectedProgram={selectedProgram}
             prefixUnselected="Select"
-            buttonClassname={`w-full max-w-full ${
-              isEditing ? "opacity-70 pointer-events-none" : ""
-            }`}
+            buttonClassname={`w-full max-w-full ${isEditing ? "opacity-70 pointer-events-none" : ""
+              }`}
             canAdd={canAdd && !isEditing}
             canSearch={!isEditing}
           />
@@ -176,14 +175,12 @@ export function SearchGrantProgram({
                   ? `${selectedProgram.programId}_${selectedProgram.chainID}`
                   : formData.programId
               }
-              chainId={chainId}
               selectedTrackIds={formData.selectedTrackIds || []}
               onTrackSelectionChange={(trackIds) => {
                 // Allow track selection in both edit and create modes
                 updateFormData({ selectedTrackIds: trackIds });
               }}
               disabled={false} // Never disable track selection
-              showForFlowType="both" // Setting to "both" to ensure it's always visible
             />
           )}
         </>

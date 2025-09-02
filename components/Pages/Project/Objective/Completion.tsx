@@ -4,6 +4,7 @@ import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
 import { useOwnerStore, useProjectStore } from "@/store";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -68,13 +69,20 @@ export const ObjectiveCardComplete = ({
   const deleteObjectiveCompletion = async () => {
     let gapClient = gap;
     try {
-      if (!checkNetworkIsValid(chain?.id) || chain?.id !== objective.chainID) {
-        await switchChainAsync?.({ chainId: objective.chainID });
-        gapClient = getGapClient(objective.chainID);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId: objective.chainID,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        return;
       }
 
+      gapClient = newGapClient;
+
       const { walletClient, error } = await safeGetWalletClient(
-        objective.chainID
+        actualChainId
       );
 
       if (error || !walletClient || !gapClient) {
@@ -211,21 +219,19 @@ export const ObjectiveCardComplete = ({
                   className="flex flex-row w-max max-w-full gap-2 bg-transparent text-sm font-semibold text-blue-600 underline dark:text-blue-100 hover:bg-transparent break-all line-clamp-3"
                 >
                   {objective?.completed?.data.proofOfWork.includes("http")
-                    ? `${objective?.completed?.data.proofOfWork.slice(0, 80)}${
-                        objective?.completed?.data.proofOfWork.slice(0, 80)
-                          .length >= 80
-                          ? "..."
-                          : ""
-                      }`
+                    ? `${objective?.completed?.data.proofOfWork.slice(0, 80)}${objective?.completed?.data.proofOfWork.slice(0, 80)
+                      .length >= 80
+                      ? "..."
+                      : ""
+                    }`
                     : `https://${objective?.completed?.data.proofOfWork.slice(
-                        0,
-                        80
-                      )}${
-                        objective?.completed?.data.proofOfWork.slice(0, 80)
-                          .length >= 80
-                          ? "..."
-                          : ""
-                      }`}
+                      0,
+                      80
+                    )}${objective?.completed?.data.proofOfWork.slice(0, 80)
+                      .length >= 80
+                      ? "..."
+                      : ""
+                    }`}
                 </ExternalLink>
               ) : (
                 <p className="text-sm font-medium text-gray-500 dark:text-zinc-300 max-sm:text-xs">

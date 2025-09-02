@@ -2,11 +2,10 @@
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { DatePicker } from "@/components/Utilities/DatePicker";
-import { getGapClient, useGap } from "@/hooks/useGap";
+import { useGap } from "@/hooks/useGap";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useStepper } from "@/store/modals/txStepper";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
@@ -37,6 +36,10 @@ import { z } from "zod";
 import { errorManager } from "../Utilities/errorManager";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useWallet } from "@/hooks/useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import { OutputsSection } from "@/components/Forms/Outputs/OutputsSection";
+import { ImpactIndicatorWithData } from "@/types/impactMeasurement";
+import { sendMilestoneImpactAnswers } from "@/utilities/impact/milestoneImpactAnswers";
 
 const milestoneSchema = z.object({
   title: z
@@ -66,6 +69,22 @@ const milestoneSchema = z.object({
         path: ["dates", "startsAt"],
       }
     ),
+  outputs: z.array(
+    z.object({
+      outputId: z.string().min(1, "Output is required"),
+      value: z.union([z.number().min(0), z.string()]),
+      proof: z.string().optional(),
+      startDate: z.string().optional(),
+      endDate: z.string().optional(),
+    })
+  ),
+  deliverables: z.array(
+    z.object({
+      name: z.string().min(1, "Name is required"),
+      proof: z.string().min(1, "Proof is required"),
+      description: z.string().optional(),
+    })
+  ),
 });
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
@@ -73,6 +92,53 @@ const inputStyle =
   "mt-1 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100";
 
 type MilestoneType = z.infer<typeof milestoneSchema>;
+
+// Helper function to send outputs and deliverables data for milestone creation
+const sendOutputsAndDeliverables = async (
+  milestoneUID: string,
+  data: MilestoneType
+) => {
+  try {
+    // Send outputs (metrics) data if any
+    if (data.outputs && data.outputs.length > 0) {
+      for (const output of data.outputs) {
+        if (output.outputId && (output.value !== undefined && output.value !== "")) {
+          // Default to today's date if not specified (matching project behavior)
+          const today = new Date().toISOString().split('T')[0];
+          
+          const datapoints = [{
+            value: output.value,
+            proof: output.proof || "",
+            startDate: output.startDate || today,
+            endDate: output.endDate || today,
+          }];
+          
+          await sendMilestoneImpactAnswers(
+            milestoneUID,
+            output.outputId,
+            datapoints,
+            () => {
+              console.log(`Successfully sent output data for indicator ${output.outputId}`);
+            },
+            (error) => {
+              console.error(`Error sending output data for indicator ${output.outputId}:`, error);
+            }
+          );
+        }
+      }
+    }
+
+    // Send deliverables data if any
+    if (data.deliverables && data.deliverables.length > 0) {
+      // For now, deliverables are stored with the milestone creation
+      // In the future, they could be sent as separate entities to the backend
+      console.log("Deliverables included with milestone creation:", data.deliverables);
+    }
+  } catch (error) {
+    console.error("Error sending outputs and deliverables:", error);
+    // Don't throw - we don't want to fail the milestone creation if outputs fail
+  }
+};
 
 interface MilestoneFormProps {
   grant: IGrantResponse;
@@ -95,11 +161,16 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
     handleSubmit,
     setValue,
     watch,
+    control,
     formState: { errors, isSubmitting, isValid },
   } = useForm<MilestoneType>({
     resolver: zodResolver(milestoneSchema),
     reValidateMode: "onChange",
     mode: "onChange",
+    defaultValues: {
+      outputs: [],
+      deliverables: [],
+    },
   });
   const [isLoading, setIsLoading] = useState(false);
   const { gap } = useGap();
@@ -111,6 +182,19 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
   );
   const project = useProjectStore((state) => state.project);
   const projectUID = project?.uid;
+  
+  // Get grant and community information for OutputsSection
+  const grantInstance = project?.grants?.find(g => g.uid === uid);
+  const selectedCommunities = grantInstance?.community ? [{
+    uid: grantInstance.community.uid,
+    name: grantInstance.community.details?.data?.name || '',
+    details: grantInstance.community.details
+  }] : [];
+  const selectedPrograms = grantInstance?.details?.data?.programId ? [{
+    programId: grantInstance.details.data.programId,
+    title: grantInstance.details.data.title || '',
+    chainID: grantInstance.chainID
+  }] : [];
 
   const { changeStepperStep, setIsStepper } = useStepper();
 
@@ -134,10 +218,19 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
     });
 
     try {
-      if (!checkNetworkIsValid(chain?.id) || chain?.id !== chainID) {
-        await switchChainAsync?.({ chainId: chainID });
-        gapClient = getGapClient(chainID);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId: chainID,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsLoading(false);
+        return;
       }
+
+      gapClient = newGapClient;
+      
       const milestoneToAttest = new Milestone({
         refUID: uid,
         schema: gapClient.findSchema("Milestone"),
@@ -145,9 +238,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
         data: milestone,
       });
 
-      // Replace direct getWalletClient call with safeGetWalletClient
-
-      const { walletClient, error } = await safeGetWalletClient(chainID);
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
@@ -178,6 +269,10 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
                 if (milestoneExists) {
                   retries = 0;
                   changeStepperStep("indexed");
+                  
+                  // Send outputs and deliverables data after milestone creation
+                  await sendOutputsAndDeliverables(milestoneToAttest.uid, data);
+                  
                   toast.success(MESSAGES.MILESTONES.CREATE.SUCCESS);
                   router.push(
                     PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
@@ -416,6 +511,25 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
           />
         </div>
       </div>
+
+      {/* Outputs Section */}
+      <OutputsSection
+        register={register}
+        control={control}
+        setValue={setValue}
+        watch={watch}
+        errors={errors}
+        projectUID={projectUID}
+        selectedCommunities={selectedCommunities}
+        selectedPrograms={selectedPrograms}
+        onCreateNewIndicator={(index: number) => {
+          // Handle new indicator creation if needed
+        }}
+        onIndicatorCreated={(indicator: ImpactIndicatorWithData) => {
+          // Handle indicator created callback if needed
+        }}
+        labelStyle={labelStyle}
+      />
 
       <div className="flex w-full flex-row-reverse">
         <Button

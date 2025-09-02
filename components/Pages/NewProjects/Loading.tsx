@@ -82,7 +82,6 @@ export const NewProjectsLoading = () => {
           </h1>
         </div>
 
-        {/* <div className="flex gap-8 flex-row max-lg:flex-col-reverse w-full h-full"> */}
         <div className="h-full w-full my-4">
           <div className="w-full flex items-center justify-center">
             <ProjectCardListSkeleton />

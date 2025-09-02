@@ -24,7 +24,7 @@ import {
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 import { useRouter } from "next/navigation";
-import { type FC, useState } from "react";
+import { type FC, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
@@ -34,6 +34,10 @@ import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { useWallet } from "@/hooks/useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import { OutputsSection } from "@/components/Forms/Outputs/OutputsSection";
+import { sendMilestoneImpactAnswers } from "@/utilities/impact/milestoneImpactAnswers";
+import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
 
 interface MilestoneUpdateFormProps {
   milestone: IMilestoneResponse;
@@ -51,21 +55,31 @@ const inputStyle =
 
 const schema = z.object({
   description: z.string().optional(),
-  proofOfWork: z
-    .string()
-    .refine((value) => urlRegex.test(value), {
-      message: "Please enter a valid URL",
-    })
-    .optional()
-    .or(z.literal("")),
   completionPercentage: z.string().refine(
     (value) => {
+      if (value === "") return false; // Empty string is not valid
       const num = Number(value);
       return !isNaN(num) && num >= 0 && num <= 100;
     },
     {
       message: "Please enter a number between 0 and 100",
     }
+  ),
+  outputs: z.array(
+    z.object({
+      outputId: z.string().min(1, "Output is required"),
+      value: z.union([z.number().min(0), z.string()]),
+      proof: z.string().optional(),
+      startDate: z.string().optional(),
+      endDate: z.string().optional(),
+    })
+  ),
+  deliverables: z.array(
+    z.object({
+      name: z.string().min(1, "Name is required"),
+      proof: z.string().min(1, "Proof is required"),
+      description: z.string().optional(),
+    })
   ),
 });
 type SchemaType = z.infer<typeof schema>;
@@ -90,14 +104,33 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const { openShareDialog, closeShareDialog } = useShareDialogStore();
-  const [noProofCheckbox, setNoProofCheckbox] = useState(false);
   const router = useRouter();
+
+  // Fetch existing milestone impact data to populate the form
+  const { data: milestoneImpactData } = useMilestoneImpactAnswers({
+    milestoneUID: milestone.uid,
+  });
+
+
+  // Transform milestone impact data to form format
+  const transformMilestoneImpactToOutputs = (impactData: any[]) => {
+    if (!impactData || impactData.length === 0) return [];
+    
+    return impactData.map((metric: any) => ({
+      outputId: metric.id || '',
+      value: metric.datapoints && metric.datapoints.length > 0 ? metric.datapoints[0].value : '',
+      proof: metric.datapoints && metric.datapoints.length > 0 ? metric.datapoints[0].proof || '' : '',
+      startDate: metric.datapoints && metric.datapoints.length > 0 ? metric.datapoints[0].startDate || '' : '',
+      endDate: metric.datapoints && metric.datapoints.length > 0 ? metric.datapoints[0].endDate || '' : '',
+    }));
+  };
 
   const {
     register,
     setValue,
     handleSubmit,
     watch,
+    control,
     formState: { errors, isValid },
   } = useForm<SchemaType>({
     resolver: zodResolver(schema),
@@ -105,9 +138,19 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
     mode: "onChange",
     defaultValues: {
       description: previousData?.reason,
-      proofOfWork: previousData?.proofOfWork,
+      completionPercentage: (previousData as any)?.completionPercentage?.toString() || '0',
+      outputs: [],
+      deliverables: (previousData as any)?.deliverables || [],
     },
   });
+
+  // Update form values when milestone impact data is loaded
+  useEffect(() => {
+    if (milestoneImpactData && milestoneImpactData.length > 0) {
+      const transformedOutputs = transformMilestoneImpactToOutputs(milestoneImpactData);
+      setValue('outputs', transformedOutputs, { shouldValidate: true });
+    }
+  }, [milestoneImpactData, setValue]);
 
   const openDialog = () => {
     openShareDialog({
@@ -125,6 +168,66 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   const { changeStepperStep, setIsStepper } = useStepper();
   const project = useProjectStore((state) => state.project);
 
+  // Get grant and community information for OutputsSection
+  const grantInstance = project?.grants?.find(g => g.uid === milestone.refUID);
+  const selectedCommunities = grantInstance?.community ? [{
+    uid: grantInstance.community.uid,
+    name: grantInstance.community.details?.data?.name || '',
+    details: grantInstance.community.details
+  }] : [];
+  const selectedPrograms = grantInstance?.details?.data?.programId ? [{
+    programId: grantInstance.details.data.programId,
+    title: grantInstance.details.data.title || '',
+    chainID: grantInstance.chainID
+  }] : [];
+
+  // Helper function to send outputs and deliverables data
+  const sendOutputsAndDeliverables = async (
+    milestoneUID: string,
+    data: SchemaType
+  ) => {
+    try {
+      // Send outputs (metrics) data if any
+      if (data.outputs && data.outputs.length > 0) {
+        for (const output of data.outputs) {
+          if (output.outputId && (output.value !== undefined && output.value !== "")) {
+            // Default to today's date if not specified (matching project behavior)
+            const today = new Date().toISOString().split('T')[0];
+            
+            const datapoints = [{
+              value: output.value,
+              proof: output.proof || "",
+              startDate: output.startDate || today,
+              endDate: output.endDate || today,
+            }];
+            
+            await sendMilestoneImpactAnswers(
+              milestoneUID,
+              output.outputId,
+              datapoints,
+              () => {
+                console.log(`Successfully sent output data for indicator ${output.outputId}`);
+              },
+              (error) => {
+                console.error(`Error sending output data for indicator ${output.outputId}:`, error);
+              }
+            );
+          }
+        }
+      }
+
+      // Send deliverables data if any
+      if (data.deliverables && data.deliverables.length > 0) {
+        // For now, deliverables are just stored with the milestone completion
+        // In the future, they could be sent as separate entities to the backend
+        console.log("Deliverables included with milestone completion:", data.deliverables);
+      }
+    } catch (error) {
+      console.error("Error sending outputs and deliverables:", error);
+      // Don't throw - we don't want to fail the milestone completion if outputs fail
+    }
+  };
+
   const completeMilestone = async (
     milestone: IMilestoneResponse,
     data: SchemaType
@@ -132,12 +235,21 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
     let gapClient = gap;
     setIsSubmitLoading(true);
     try {
-      if (!checkNetworkIsValid(chain?.id) || chain?.id !== milestone.chainID) {
-        await switchChainAsync?.({ chainId: milestone.chainID });
+      const { success, chainId: actualChainId, gapClient: updatedGapClient } = await ensureCorrectChain({
+        targetChainId: milestone.chainID,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsSubmitLoading(false);
+        return;
       }
 
+      gapClient = updatedGapClient;
+
       const { walletClient, error } = await safeGetWalletClient(
-        milestone.chainID
+        actualChainId
       );
 
       if (error || !walletClient || !gapClient) {
@@ -159,9 +271,10 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           walletSigner,
           sanitizeObject({
             reason: data.description,
-            proofOfWork: data.proofOfWork,
-            completionPercentage: data.completionPercentage,
+            proofOfWork: "",
+            completionPercentage: Number(data.completionPercentage),
             type: "completed",
+            deliverables: data.deliverables || [],
           }),
           changeStepperStep
         )
@@ -196,6 +309,10 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                   retries = 0;
                   changeStepperStep("indexed");
                   toast.success(MESSAGES.MILESTONES.COMPLETE.SUCCESS);
+                  
+                  // Send outputs and deliverables data
+                  await sendOutputsAndDeliverables(milestone.uid, data);
+                  
                   afterSubmit?.();
                   openDialog();
                   cancelEditing(false);
@@ -248,13 +365,21 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
     let gapClient = gap;
     setIsSubmitLoading(true);
     try {
-      if (chain?.id !== milestone.chainID) {
-        await switchChainAsync?.({ chainId: milestone.chainID });
-        gapClient = getGapClient(milestone.chainID);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId: milestone.chainID,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsSubmitLoading(false);
+        return;
       }
 
+      gapClient = newGapClient;
+
       const { walletClient, error } = await safeGetWalletClient(
-        milestone.chainID
+        actualChainId
       );
 
       if (error || !walletClient || !gapClient) {
@@ -276,9 +401,10 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           walletSigner,
           sanitizeObject({
             reason: data.description,
-            proofOfWork: data.proofOfWork,
-            completionPercentage: data.completionPercentage,
+            proofOfWork: "",
+            completionPercentage: Number(data.completionPercentage),
             type: "completed",
+            deliverables: data.deliverables || [],
           }),
           changeStepperStep
         )
@@ -314,6 +440,10 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                   retries = 0;
                   changeStepperStep("indexed");
                   toast.success(MESSAGES.MILESTONES.UPDATE_COMPLETION.SUCCESS);
+                  
+                  // Send outputs and deliverables data
+                  await sendOutputsAndDeliverables(milestone.uid, data);
+                  
                   closeShareDialog();
                   PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
                     fetchedProject?.uid as string,
@@ -386,46 +516,6 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
             />
           </div>
         </div>
-        <div className="flex w-full flex-col gap-2">
-          <label htmlFor="proofOfWork-input" className={labelStyle}>
-            Output of your work *
-          </label>
-          <p className="text-sm text-gray-500">
-            Provide a link that demonstrates your work. This could be a link to
-            a tweet announcement, a dashboard, a Google Doc, a blog post, a
-            video, or any other resource that highlights the progress or result
-            of your work
-          </p>
-          <div className="flex flex-row gap-2 items-center py-2">
-            <input
-              id="noProofCheckbox"
-              type="checkbox"
-              className="rounded-sm w-5 h-5 bg-white fill-black"
-              checked={noProofCheckbox}
-              onChange={() => {
-                setNoProofCheckbox((oldValue) => !oldValue);
-                setValue("proofOfWork", "", {
-                  shouldValidate: true,
-                });
-              }}
-            />
-            <label
-              htmlFor="noProofCheckbox"
-              className="text-base text-zinc-900 dark:text-zinc-100"
-            >
-              {`I don't have any output to show for this milestone`}
-            </label>
-          </div>
-          <input
-            id="proofOfWork-input"
-            placeholder="Add links to charts, videos, dashboards etc. that evaluators can verify your work"
-            type="text"
-            className={cn(inputStyle, "disabled:opacity-50")}
-            disabled={noProofCheckbox}
-            {...register("proofOfWork")}
-          />
-          <p className="text-red-500">{errors.proofOfWork?.message}</p>
-        </div>
 
         <div className="flex w-full flex-row items-center gap-4 py-2">
           <label htmlFor="completion-percentage" className={labelStyle}>
@@ -446,6 +536,21 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
             </p>
           </div>
         </div>
+
+        {/* Outputs Section */}
+        <OutputsSection
+          register={register}
+          control={control}
+          setValue={setValue}
+          watch={watch}
+          errors={errors}
+          projectUID={project?.uid || ''}
+          selectedCommunities={selectedCommunities}
+          selectedPrograms={selectedPrograms}
+          onCreateNewIndicator={() => {}}
+          onIndicatorCreated={() => {}}
+          labelStyle={labelStyle}
+        />
       </div>
       <div className="mt-4 flex w-full flex-row justify-end gap-4">
         <Button
@@ -465,8 +570,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           isLoading={isSubmitLoading}
           disabled={
             isSubmitLoading ||
-            !isValid ||
-            (!noProofCheckbox && !watch("proofOfWork"))
+            !isValid
           }
           className="flex h-min w-max flex-row gap-2 items-center rounded bg-brand-blue px-4 py-2.5 hover:bg-brand-blue"
         >

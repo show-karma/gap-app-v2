@@ -6,6 +6,7 @@ import { fieldTypes, FieldTypeSelector } from "./FieldTypeSelector";
 import { FieldEditor } from "./FieldEditor";
 import { FormPreview } from "./FormPreview";
 import { AIPromptConfiguration } from "./AIPromptConfiguration";
+import { SettingsConfiguration } from "./SettingsConfiguration";
 import { Button } from "@/components/Utilities/Button";
 import {
   EyeIcon,
@@ -14,18 +15,25 @@ import {
   ChevronDownIcon,
   ChevronRightIcon,
   ExclamationTriangleIcon,
+  WrenchScrewdriverIcon,
 } from "@heroicons/react/24/solid";
+import { MarkdownPreview } from "../Utilities/MarkdownPreview";
+import { MarkdownEditor } from "../Utilities/MarkdownEditor";
 
 interface QuestionBuilderProps {
   initialSchema?: FormSchema;
   onSave?: (schema: FormSchema) => void;
   className?: string;
+  programId?: string;
+  chainId?: number;
 }
 
 export function QuestionBuilder({
   initialSchema,
   onSave,
   className = "",
+  programId,
+  chainId,
 }: QuestionBuilderProps) {
   const [schema, setSchema] = useState<FormSchema>(
     initialSchema || {
@@ -36,11 +44,12 @@ export function QuestionBuilder({
       settings: {
         submitButtonText: "Submit Application",
         confirmationMessage: "Thank you for your submission!",
+        privateApplications: true, // Default to private as requested
       },
     }
   );
 
-  const [activeTab, setActiveTab] = useState<"build" | "preview" | "ai-config">(
+  const [activeTab, setActiveTab] = useState<"build" | "preview" | "settings" | "ai-config">(
     "build"
   );
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
@@ -171,7 +180,7 @@ export function QuestionBuilder({
     >
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sm:px-3 md:px-4 px-6 py-2">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between flex-wrap gap-4">
           <div className="flex flex-col gap-2 mb-4 sm:mb-0">
             <input
               type="text"
@@ -180,12 +189,13 @@ export function QuestionBuilder({
               className="text-xl font-bold bg-transparent border-none outline-none bg-zinc-100 dark:bg-zinc-800 rounded-md text-gray-900 dark:text-white placeholder-gray-400"
               placeholder="Form Title"
             />
-            <input
-              type="text"
+            <MarkdownEditor
               value={schema.description || ""}
-              onChange={(e) => handleDescriptionChange(e.target.value)}
+              onChange={(value: string) => handleDescriptionChange(value)}
               className="mt-1 text-sm bg-transparent border-none outline-none bg-zinc-100 dark:bg-zinc-800 rounded-md text-gray-600 dark:text-gray-400 placeholder-gray-500"
-              placeholder="Form Description"
+              placeholderText="Form Description"
+              height={100}
+              minHeight={100}
             />
           </div>
 
@@ -193,33 +203,40 @@ export function QuestionBuilder({
             <div className="flex bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
               <button
                 onClick={() => setActiveTab("build")}
-                className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${
-                  activeTab === "build"
-                    ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
-                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-                }`}
+                className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${activeTab === "build"
+                  ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
+                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                  }`}
               >
-                <Cog6ToothIcon className="w-4 h-4 mr-2" />
+                <WrenchScrewdriverIcon className="w-4 h-4 mr-2" />
                 Build
               </button>
               <button
+                onClick={() => setActiveTab("settings")}
+                className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${activeTab === "settings"
+                  ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
+                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                  }`}
+              >
+                <Cog6ToothIcon className="w-4 h-4 mr-2" />
+                Settings
+              </button>
+              <button
                 onClick={() => setActiveTab("ai-config")}
-                className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${
-                  activeTab === "ai-config"
-                    ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
-                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-                }`}
+                className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${activeTab === "ai-config"
+                  ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
+                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                  }`}
               >
                 <CpuChipIcon className="w-4 h-4 mr-2" />
                 AI Config
               </button>
               <button
                 onClick={() => setActiveTab("preview")}
-                className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${
-                  activeTab === "preview"
-                    ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
-                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-                }`}
+                className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${activeTab === "preview"
+                  ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
+                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                  }`}
               >
                 <EyeIcon className="w-4 h-4 mr-2" />
                 Preview
@@ -228,11 +245,10 @@ export function QuestionBuilder({
 
             <Button
               onClick={handleSave}
-              className={`py-2 ${
-                !hasEmailField()
-                  ? "bg-yellow-600 hover:bg-yellow-700"
-                  : "bg-blue-600 hover:bg-blue-700"
-              }`}
+              className={`py-2 ${!hasEmailField()
+                ? "bg-yellow-600 hover:bg-yellow-700"
+                : "bg-blue-600 hover:bg-blue-700"
+                }`}
               title={
                 !hasEmailField()
                   ? "Add an email field before saving"
@@ -300,11 +316,10 @@ export function QuestionBuilder({
                           ref={(el) => {
                             fieldRefs.current[field.id] = el;
                           }}
-                          className={`border rounded-lg transition-all ${
-                            selectedFieldId === field.id
-                              ? "border-blue-500 bg-white dark:bg-gray-800 shadow-lg"
-                              : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600"
-                          }`}
+                          className={`border rounded-lg transition-all ${selectedFieldId === field.id
+                            ? "border-blue-500 bg-white dark:bg-gray-800 shadow-lg"
+                            : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600"
+                            }`}
                         >
                           <div
                             className="p-4 cursor-pointer"
@@ -327,19 +342,27 @@ export function QuestionBuilder({
                                       Required
                                     </span>
                                   )}
-                                  {field.aiEvaluation?.triggerOnChange && (
-                                    <span className="text-xs text-blue-500 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded">
-                                      AI Trigger
+                                  {field.private && (
+                                    <span className="text-xs text-gray-600 bg-gray-100 dark:bg-gray-700 dark:text-gray-300 px-2 py-1 rounded flex items-center space-x-1">
+                                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                                      </svg>
+                                      <span>Private</span>
                                     </span>
                                   )}
+
                                 </div>
                                 <h4 className="font-medium text-gray-900 dark:text-white mt-1">
                                   {field.label}
                                 </h4>
                                 {field.description && (
-                                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                    {field.description}
-                                  </p>
+                                  <MarkdownPreview
+                                    className="text-sm text-gray-500 dark:text-gray-400 mt-1"
+                                    components={{
+                                      p: ({ children }) => <span className="text-sm text-gray-500 dark:text-gray-400 mt-1">{children}</span>,
+                                    }}
+                                    source={field.description}
+                                  />
                                 )}
                               </div>
                               <div className="ml-4">
@@ -381,12 +404,24 @@ export function QuestionBuilder({
               </div>
             </div>
           </div>
+        ) : activeTab === "settings" ? (
+          <div className="h-full p-4 sm:p-6 lg:p-8 overflow-y-auto">
+            <div className="max-w-4xl mx-auto">
+              <SettingsConfiguration
+                schema={schema}
+                onUpdate={handleAIConfigUpdate}
+                programId={programId}
+              />
+            </div>
+          </div>
         ) : activeTab === "ai-config" ? (
           <div className="h-full p-4 sm:p-6 lg:p-8 overflow-y-auto">
             <div className="max-w-4xl mx-auto">
               <AIPromptConfiguration
                 schema={schema}
                 onUpdate={handleAIConfigUpdate}
+                programId={programId}
+                chainId={chainId}
               />
             </div>
           </div>

@@ -50,6 +50,7 @@ export const useGrants = (communityId: string, options?: UseGrantsOptions) => {
             project: grant.project?.details?.data?.title || "",
             description: reduceText(grant.details?.data?.description || ""),
             categories: grant.categories || [],
+            regions: grant.regions || [] ,
             uid: grant.uid,
             projectUid: grant.project?.uid || "",
             projectSlug: grant.project?.details?.data?.slug || "",

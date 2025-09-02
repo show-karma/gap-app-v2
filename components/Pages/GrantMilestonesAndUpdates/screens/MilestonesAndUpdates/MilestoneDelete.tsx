@@ -18,6 +18,8 @@ import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { useWallet } from "@/hooks/useWallet";
+import { useCommunityAdminStore } from "@/store/communityAdmin";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 interface MilestoneDeleteProps {
   milestone: IMilestoneResponse;
 }
@@ -40,14 +42,22 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
     setIsDeletingMilestone(true);
     let gapClient = gap;
     try {
-      if (!checkNetworkIsValid(chain?.id) || chain?.id !== milestone.chainID) {
-        await switchChainAsync?.({ chainId: milestone.chainID });
-        gapClient = getGapClient(milestone.chainID);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId: milestone.chainID,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsDeletingMilestone(false);
+        return;
       }
+
+      gapClient = newGapClient;
       const milestoneUID = milestone.uid;
 
       const { walletClient, error } = await safeGetWalletClient(
-        milestone.chainID
+        actualChainId
       );
 
       if (error || !walletClient || !gapClient) {
@@ -92,7 +102,13 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
           "POST",
           {}
         )
-          .then(async () => {
+          .then(async (res) => {
+            if (res[1]) {
+              toast.dismiss(toastLoading);
+              toast.error(res[1]);
+              return;
+            }
+
             await checkIfAttestationExists()
               .then(() => {
                 toast.success(MESSAGES.MILESTONES.DELETE.SUCCESS, {

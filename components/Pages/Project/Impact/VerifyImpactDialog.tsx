@@ -31,6 +31,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useWallet } from "@/hooks/useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 type VerifyImpactDialogProps = {
   impact: IProjectImpact;
@@ -70,8 +71,8 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
 
   const hasVerifiedThis = address
     ? impact?.verified?.find(
-        (v) => v.attester?.toLowerCase() === address?.toLowerCase()
-      )
+      (v) => v.attester?.toLowerCase() === address?.toLowerCase()
+    )
     : null;
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
@@ -91,16 +92,21 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
         (imp) => imp.uid === (impact.uid as string)
       );
       if (!findImpact) return;
-      if (
-        !checkNetworkIsValid(chain?.id) ||
-        chain?.id !== findImpact!.chainID
-      ) {
-        await switchChainAsync?.({ chainId: findImpact!.chainID });
-        gapClient = getGapClient(findImpact!.chainID);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId: findImpact!.chainID,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsLoading(false);
+        return;
       }
 
+      gapClient = newGapClient;
+
       const { walletClient, error } = await safeGetWalletClient(
-        findImpact!.chainID
+        actualChainId
       );
 
       if (error) {
@@ -155,19 +161,6 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
             // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
             await new Promise((resolve) => setTimeout(resolve, 1500));
           }
-          // const newVerified = new ProjectImpactStatus({
-          //   data: {
-          //     type: "project-impact-verified",
-          //     reason: data.comment,
-          //   },
-          //   schema: gapClient!.findSchema("GrantUpdateStatus"),
-          //   recipient: address,
-          //   refUID: impact.uid,
-          //   attester: address,
-          // });
-          // impact.verified = [...impact.verified, newVerified];
-          // toast.success(MESSAGES.PROJECT.IMPACT.VERIFY.SUCCESS);
-          // addVerification(newVerified);
         });
       closeModal();
     } catch (error: any) {

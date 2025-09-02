@@ -2,11 +2,14 @@
 import { CommunityGrants } from "@/components/CommunityGrants";
 import type { SortByOptions, MaturityStageOptions } from "@/types";
 import {
-  getCommunityData,
   getCommunityCategories,
 } from "@/utilities/queries/getCommunityData";
+import {
+  getCommunityDetailsV2,
+  getCommunityStatsV2,
+  getCommunityProjectsV2,
+} from "@/utilities/queries/getCommunityDataV2";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
-import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 type Props = {
   params: Promise<{
@@ -21,9 +24,11 @@ export default async function Page(props: Props) {
     return undefined;
   }
 
-  const [community, categoriesOptions] = await Promise.all([
-    getCommunityData(communityId),
+  const [communityDetails, communityStats, categoriesOptions, initialProjects] = await Promise.all([
+    getCommunityDetailsV2(communityId),
+    getCommunityStatsV2(communityId),
     getCommunityCategories(communityId),
+    getCommunityProjectsV2(communityId, { page: 1, limit: 12 }),
   ]);
 
   const defaultSortBy = "milestones" as SortByOptions;
@@ -37,7 +42,9 @@ export default async function Page(props: Props) {
         defaultSelectedCategories={defaultSelectedCategories}
         defaultSortBy={defaultSortBy}
         defaultSelectedMaturityStage={defaultSelectedMaturityStage}
-        communityUid={(community as ICommunityResponse).uid}
+        communityUid={communityDetails.uid}
+        communityStats={communityStats}
+        initialProjects={initialProjects}
       />
     </div>
   );

@@ -20,6 +20,7 @@ import { sanitizeInput } from "@/utilities/sanitize";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { errorManager } from "../Utilities/errorManager";
 import { useWallet } from "@/hooks/useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 type TransferOwnershipProps = {
   buttonElement?: {
@@ -63,12 +64,19 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
     }
     try {
       setIsLoading(true);
-      if (!checkNetworkIsValid(chain?.id) || chain?.id !== project.chainID) {
-        await switchChainAsync?.({ chainId: project.chainID });
+      const { success, chainId: actualChainId } = await ensureCorrectChain({
+        targetChainId: project.chainID,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        setIsLoading(false);
+        return;
       }
 
       const { walletClient, error } = await safeGetWalletClient(
-        project.chainID
+        actualChainId
       );
 
       if (error || !walletClient) {

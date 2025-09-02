@@ -35,6 +35,8 @@ import { SHARE_TEXTS } from "@/utilities/share/text";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { useWallet } from "@/hooks/useWallet";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
 
 interface UpdatesProps {
   milestone: IMilestoneResponse;
@@ -59,13 +61,20 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   const undoMilestoneCompletion = async (milestone: IMilestoneResponse) => {
     let gapClient = gap;
     try {
-      if (!checkNetworkIsValid(chain?.id) || chain?.id !== milestone.chainID) {
-        await switchChainAsync?.({ chainId: milestone.chainID });
-        gapClient = getGapClient(milestone.chainID);
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        targetChainId: milestone.chainID,
+        currentChainId: chain?.id,
+        switchChainAsync,
+      });
+
+      if (!success) {
+        return;
       }
 
+      gapClient = newGapClient;
+
       const { walletClient, error } = await safeGetWalletClient(
-        milestone.chainID
+        actualChainId
       );
 
       if (error || !walletClient || !gapClient) {
@@ -73,10 +82,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
       }
       if (!walletClient || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      // const instanceMilestone = new Milestone({
-      //   ...milestone,
-      //   schema: gapClient.findSchema("Milestone"),
-      // });
+
       const instanceProject = await gapClient.fetch.projectById(project?.uid);
       const findGrant = instanceProject?.grants.find(
         (item) => item.uid.toLowerCase() === milestone.refUID.toLowerCase()
@@ -198,6 +204,14 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
     (g) => g.uid.toLowerCase() === milestone.refUID.toLowerCase()
   );
 
+  // Fetch milestone impact data (outputs/metrics) if milestone is completed
+  const { data: milestoneImpactData } = useMilestoneImpactAnswers({
+    milestoneUID: milestone.completed ? milestone.uid : undefined,
+  });
+
+  // Get deliverables from milestone completion data
+  const completionDeliverables = (milestone.completed?.data as any)?.deliverables;
+
   if (
     !isEditing &&
     (milestone?.completed?.data?.reason?.length ||
@@ -222,7 +236,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
         </div>
 
         {milestone.completed?.data?.reason ||
-        milestone.completed?.data?.proofOfWork ? (
+          milestone.completed?.data?.proofOfWork ? (
           <div className="flex flex-col items-start " data-color-mode="light">
             <ReadMore
               readLessText="Read less"
@@ -233,45 +247,37 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
             </ReadMore>
 
             <div className="flex w-full flex-row items-center justify-between">
-              {isAfterProofLaunch ? (
+              {isAfterProofLaunch && milestone?.completed?.data.proofOfWork ? (
                 <div className="flex flex-row items-center gap-1 flex-1 max-w-full flex-wrap max-sm:mt-4">
                   <p className="text-sm w-full min-w-max max-w-max font-semibold text-gray-500 dark:text-zinc-300 max-sm:text-xs">
                     Proof of work:
                   </p>
-                  {milestone?.completed?.data.proofOfWork ? (
-                    <ExternalLink
-                      href={
-                        milestone?.completed?.data.proofOfWork.includes("http")
-                          ? milestone?.completed?.data.proofOfWork
-                          : `https://${milestone?.completed?.data.proofOfWork}`
-                      }
-                      className="flex flex-row w-max max-w-full break-all gap-2 bg-transparent text-sm font-semibold text-blue-600 underline dark:text-blue-100 hover:bg-transparent line-clamp-3"
-                    >
-                      {milestone?.completed?.data.proofOfWork.includes("http")
-                        ? `${milestone?.completed?.data.proofOfWork.slice(
-                            0,
-                            80
-                          )}${
-                            milestone?.completed?.data.proofOfWork.slice(0, 80)
-                              .length >= 80
-                              ? "..."
-                              : ""
-                          }`
-                        : `https://${milestone?.completed?.data.proofOfWork.slice(
-                            0,
-                            80
-                          )}${
-                            milestone?.completed?.data.proofOfWork.slice(0, 80)
-                              .length >= 80
-                              ? "..."
-                              : ""
-                          }`}
-                    </ExternalLink>
-                  ) : (
-                    <p className="text-sm font-medium text-gray-500 dark:text-zinc-300 max-sm:text-xs">
-                      Grantee indicated there is no proof for this milestone.
-                    </p>
-                  )}
+                  <ExternalLink
+                    href={
+                      milestone?.completed?.data.proofOfWork.includes("http")
+                        ? milestone?.completed?.data.proofOfWork
+                        : `https://${milestone?.completed?.data.proofOfWork}`
+                    }
+                    className="flex flex-row w-max max-w-full break-all gap-2 bg-transparent text-sm font-semibold text-blue-600 underline dark:text-blue-100 hover:bg-transparent line-clamp-3"
+                  >
+                    {milestone?.completed?.data.proofOfWork.includes("http")
+                      ? `${milestone?.completed?.data.proofOfWork.slice(
+                        0,
+                        80
+                      )}${milestone?.completed?.data.proofOfWork.slice(0, 80)
+                        .length >= 80
+                        ? "..."
+                        : ""
+                      }`
+                      : `https://${milestone?.completed?.data.proofOfWork.slice(
+                        0,
+                        80
+                      )}${milestone?.completed?.data.proofOfWork.slice(0, 80)
+                        .length >= 80
+                        ? "..."
+                        : ""
+                      }`}
+                  </ExternalLink>
                 </div>
               ) : null}
 
@@ -316,6 +322,70 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
                 ) : null}
               </div>
             </div>
+          </div>
+        ) : null}
+
+        {/* Deliverables Section */}
+        {completionDeliverables && completionDeliverables.length > 0 ? (
+          <div className="flex flex-col gap-2 mt-4">
+            <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+              Deliverables:
+            </p>
+            {completionDeliverables.map((deliverable: any, index: number) => (
+              <div key={index} className="border border-gray-200 dark:border-zinc-700 rounded-lg p-3 bg-gray-50 dark:bg-zinc-800">
+                <div className="flex flex-col gap-1">
+                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                    {deliverable.name}
+                  </p>
+                  {deliverable.description && (
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {deliverable.description}
+                    </p>
+                  )}
+                  {deliverable.proof && (
+                    <ExternalLink
+                      href={deliverable.proof}
+                      className="text-brand-blue hover:underline text-sm break-all"
+                    >
+                      {deliverable.proof}
+                    </ExternalLink>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        {/* Metrics Section */}
+        {milestoneImpactData && milestoneImpactData.length > 0 ? (
+          <div className="flex flex-col gap-2 mt-4">
+            <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+              Metrics:
+            </p>
+            {milestoneImpactData.map((metric: any, index: number) => (
+              <div key={index} className="border border-gray-200 dark:border-zinc-700 rounded-lg p-3 bg-gray-50 dark:bg-zinc-800">
+                <div className="flex flex-col gap-1">
+                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                    {metric.name || metric.indicator?.data?.title || 'Untitled Indicator'}
+                  </p>
+                  {metric.datapoints && metric.datapoints.length > 0 && (
+                    <div className="flex flex-col gap-1">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Value: <span className="font-medium text-zinc-900 dark:text-zinc-100">{metric.datapoints[0].value}</span>
+                      </p>
+                      {metric.datapoints[0].proof && (
+                        <ExternalLink
+                          href={metric.datapoints[0].proof}
+                          className="text-brand-blue hover:underline text-sm break-all"
+                        >
+                          {metric.datapoints[0].proof}
+                        </ExternalLink>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         ) : null}
       </div>

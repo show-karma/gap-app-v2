@@ -1,10 +1,30 @@
 // V2 Status Types
 export type FundingApplicationStatusV2 = 
   | "pending"
+  | "under_review"
   | "revision_requested" 
   | "approved"
-  | "rejected"
-  | "withdrawn";
+  | "rejected";
+
+// Application Comment Types
+export interface ApplicationComment {
+  id: string;
+  applicationId: string;
+  authorAddress: string;
+  authorRole: 'applicant' | 'admin' | 'reviewer';
+  authorName?: string;
+  content: string;
+  isDeleted: boolean;
+  deletedAt?: string | Date;
+  deletedBy?: string;
+  editHistory?: Array<{
+    content: string;
+    editedAt: string | Date;
+    editedBy: string;
+  }>;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+}
 
 // Form Field Types (unchanged)
 export interface IFormField {
@@ -18,7 +38,8 @@ export interface IFormField {
     | "select"
     | "checkbox"
     | "radio"
-    | "date"; // Added for question builder compatibility
+    | "date"
+    | "milestone"; // Added for milestone field support
   label: string;
   placeholder?: string;
   required?: boolean;
@@ -28,6 +49,8 @@ export interface IFormField {
     max?: number;
     pattern?: string;
     message?: string;
+    maxMilestones?: number;
+    minMilestones?: number;
   };
   description?: string; // Added for question builder
 }
@@ -86,20 +109,8 @@ export interface IFundingApplication {
   referenceNumber: string; // Format: APP-XXXXX-XXXXX
   submissionIP: string; // Auto-captured from request
   aiEvaluation?: {
-    systemEvaluation?: {
-      rating: number;
-      reasoning: string;
-      strengths: string[];
-      weaknesses: string[];
-      recommendations: string[];
-    };
-    detailedEvaluation?: {
-      rating: number;
-      reasoning: string;
-      strengths: string[];
-      weaknesses: string[];
-      recommendations: string[];
-    };
+    evaluation?: string;
+    promptId?: string;
   };
   createdAt: string | Date;
   updatedAt: string | Date;
@@ -112,7 +123,7 @@ export interface IApplicationStatistics {
   approvedApplications: number;
   rejectedApplications: number;
   revisionRequestedApplications?: number;
-  withdrawnApplications?: number;
+  underReviewApplications?: number;
 }
 
 // V2 API Error Response
@@ -146,6 +157,7 @@ export interface IApplicationListProps {
   programId: string;
   chainID: number;
   onApplicationSelect?: (application: IFundingApplication) => void;
+  onApplicationHover?: (applicationId: string) => void;
   statusFilter?: FundingApplicationStatusV2;
 }
 

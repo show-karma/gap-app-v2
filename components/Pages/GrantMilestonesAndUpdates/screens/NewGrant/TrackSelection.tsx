@@ -7,20 +7,16 @@ import { Track } from "@/services/tracks";
 
 interface TrackSelectionProps {
   programId?: string;
-  chainId: number;
   selectedTrackIds: string[];
   onTrackSelectionChange: (trackIds: string[]) => void;
   disabled?: boolean;
-  showForFlowType?: "grant" | "program" | "both";
 }
 
 export const TrackSelection: React.FC<TrackSelectionProps> = ({
   programId,
-  chainId,
   selectedTrackIds,
   onTrackSelectionChange,
   disabled = false,
-  showForFlowType = "both",
 }) => {
   const {
     data: tracks = [],
@@ -74,10 +70,10 @@ export const TrackSelection: React.FC<TrackSelectionProps> = ({
 
   return (
     <div className="mt-4">
-      <h4 className="text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">
+      <h4 className="text-sm font-semibold mb-2 text-gray-900 dark:text-gray-300">
         {disabled
-          ? "Tracks for this program"
-          : "Select tracks for this program"}
+          ? "Sponsored Tracks"
+          : "Choose the tracks"}
       </h4>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
         {tracks.map((track: Track) => (
@@ -85,7 +81,7 @@ export const TrackSelection: React.FC<TrackSelectionProps> = ({
             key={track.id}
             onClick={() => handleTrackSelection(track.id)}
             className={cn(
-              "p-3 rounded-lg border cursor-pointer flex items-center justify-between transition-all",
+              "p-3 rounded-lg border cursor-pointer flex items-center justify-between transition-all bg-white dark:bg-zinc-900",
               selectedTrackIds.includes(track.id)
                 ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-400"
                 : "border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600",
