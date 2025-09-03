@@ -821,6 +821,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         }
       );
       setIsStepper(false);
+      // Don't reset form on error - keep user's data
       openModal();
     } finally {
       setIsLoading(false);
@@ -1618,8 +1619,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 </div>
               )}
               
-              {/* Add FaucetSection for gas funding */}
-              {watch("chainID") && walletSigner && !faucetFunded && !isChangingNetwork && (
+              {/* Add FaucetSection for gas funding - keep visible even after funding */}
+              {watch("chainID") && walletSigner && !isChangingNetwork && (
                 <FaucetSection
                   chainId={watch("chainID")}
                   projectFormData={{
@@ -1647,20 +1648,26 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                   }}
                   walletSigner={walletSigner}
                   recipient={(watch("recipient") || address) as Hex}
-                  onFundsReceived={() => {
+                  onFundsReceived={async () => {
                     setFaucetFunded(true);
                     toast.success("Wallet funded! You can now create your project.");
+                    
+                    // Refresh wallet signer after funding
+                    try {
+                      await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for blockchain state
+                      const chainId = watch("chainID");
+                      if (chainId) {
+                        const { walletClient, error } = await safeGetWalletClient(chainId);
+                        if (!error && walletClient) {
+                          const signer = await walletClientToSigner(walletClient);
+                          setWalletSigner(signer);
+                        }
+                      }
+                    } catch (error) {
+                      console.error("Failed to refresh wallet signer after funding:", error);
+                    }
                   }}
                 />
-              )}
-              
-              {/* Show success message if already funded */}
-              {faucetFunded && (
-                <div className="mt-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                  <p className="text-sm text-green-800 dark:text-green-200 font-medium">
-                    ✓ Wallet funded successfully
-                  </p>
-                </div>
               )}
             </div>
           ) : null}

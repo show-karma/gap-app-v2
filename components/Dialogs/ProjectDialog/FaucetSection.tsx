@@ -4,7 +4,7 @@ import { FC, useEffect, useState } from "react";
 import { useFaucetEligibility, useFaucetClaim } from "@/hooks/useFaucet";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { formatEther, type Hex } from "viem";
+import { type Hex } from "viem";
 import { ExclamationTriangleIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { cn } from "@/utilities/tailwind";
@@ -116,9 +116,18 @@ export const FaucetSection: FC<FaucetSectionProps> = ({
     }
   };
 
-  // Don't render anything if checking eligibility, building transaction, or not eligible
+// Show loader while checking eligibility or building transaction
   if (isCheckingEligibility || isBuilding) {
-    return null;
+    return (
+      <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-900/20 rounded-lg border border-gray-200 dark:border-gray-800">
+        <div className="flex items-center space-x-3">
+          <Spinner className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            Checking eligibility for funds...
+          </p>
+        </div>
+      </div>
+    );
   }
 
   if (!showFaucet && !eligibility?.reason) {
