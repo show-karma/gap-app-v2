@@ -131,17 +131,12 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
           }
           await checkIfAttestationExists(() => {
             changeStepperStep("indexed");
+            toast.success(MESSAGES.GRANT.DELETE.SUCCESS);
           });
-          toast.success(MESSAGES.GRANT.DELETE.SUCCESS);
-          router.push(
-            PAGES.PROJECT.GRANTS(
-              project?.uid || project?.details?.data.slug || ""
-            )
-          );
         } catch (onChainError: any) {
           // Silently fallback to off-chain revoke
           setIsStepper(false); // Reset stepper since we're falling back
-          
+
           const success = await performOffChainRevoke({
             uid: grantUID as `0x${string}`,
             chainID: grantInstance.chainID,
@@ -154,7 +149,7 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
               loading: MESSAGES.GRANT.DELETE.LOADING,
             },
           });
-          
+
           if (!success) {
             // Both methods failed - throw the original error to maintain expected behavior
             throw onChainError;

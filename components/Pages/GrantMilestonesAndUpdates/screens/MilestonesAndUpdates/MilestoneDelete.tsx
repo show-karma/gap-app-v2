@@ -107,7 +107,6 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
           },
           onSuccess: () => {
             changeStepperStep("indexed");
-            toast.success(MESSAGES.MILESTONES.DELETE.SUCCESS);
           },
           toastMessages: {
             success: MESSAGES.MILESTONES.DELETE.SUCCESS,
@@ -134,7 +133,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
         } catch (onChainError: any) {
           // Silently fallback to off-chain revoke
           setIsStepper(false); // Reset stepper since we're falling back
-          
+
           const success = await performOffChainRevoke({
             uid: milestoneInstance.uid as `0x${string}`,
             chainID: milestoneInstance.chainID,
@@ -144,7 +143,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
               loading: MESSAGES.MILESTONES.DELETE.LOADING,
             },
           });
-          
+
           if (!success) {
             // Both methods failed - throw the original error to maintain expected behavior
             throw onChainError;
