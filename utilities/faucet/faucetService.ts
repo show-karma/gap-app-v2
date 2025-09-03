@@ -1,5 +1,4 @@
 import fetchData from "../fetchData";
-import {number} from "zod";
 
 // Types
 export interface FaucetEligibilityResponse {
@@ -228,7 +227,7 @@ class FaucetService {
     );
 
     if (error) {
-      throw new Error(`Failed to claim faucet: ${error}`);
+      throw new Error(`Failed to claim faucet`);
     }
 
     return data;
