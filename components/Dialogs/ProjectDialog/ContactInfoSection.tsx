@@ -319,7 +319,7 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
       if (!isEditing) {
         removeContact(
           existingContacts?.find((item) => item.id === contactId) ||
-            contactInfo!
+          contactInfo!
         );
         clear();
         toast.success("Contact info deleted successfully", {
@@ -346,11 +346,9 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
           throw Error(error);
         }
       });
-      // const subscription = await fetchData(INDEXER.NOTIFICATIONS.UPDATE())
     } catch (error: any) {
       errorManager(
-        `Error deleting contact ${contactId} from project ${
-          project?.details?.data?.slug || project?.uid
+        `Error deleting contact ${contactId} from project ${project?.details?.data?.slug || project?.uid
         }`,
         error,
         {

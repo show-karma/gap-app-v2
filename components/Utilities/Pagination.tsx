@@ -35,34 +35,6 @@ export default function Pagination({
   return (
     <>
       <div className="mt-5 md:py-5 py-2 flex items-center justify-between border-t border-gray-200 dark:border-zinc-900">
-        {/* <div className="flex-1 flex justify-between sm:hidden">
-          <button
-            onClick={() => {
-              setCurrentPage(currentPage - 1);
-            }}
-            disabled={currentPage === 1}
-            className={`border-t-2 border-transparent inline-flex items-center text-sm font-medium text-gray-500 dark:text-zinc-400 ${
-              currentPage !== 1 && "hover:bg-brand-blue hover:text-white"
-            } px-3 py-2 rounded-xl`}
-          >
-            <ArrowLeftIcon className="mr-3 h-5 w-5" aria-hidden="true" />
-            Previous
-          </button>
-          <button
-            className={`border-t-2 border-transparent inline-flex items-center text-sm font-medium text-gray-500 ${
-              currentPage !== lastPage &&
-              lastPage !== undefined &&
-              "hover:bg-brand-blue hover:text-white"
-            } px-3 py-2 rounded-xl`}
-            onClick={() => {
-              setCurrentPage(currentPage + 1);
-            }}
-            disabled={currentPage === lastPage || lastPage === undefined}
-          >
-            Next
-            <ArrowRightIcon className="ml-3 h-5 w-5" aria-hidden="true" />
-          </button>
-        </div> */}
         <div className="flex-1 flex flex-row items-center justify-between max-sm:flex-col gap-4">
           {totalPosts > 0 ? (
             <div>
@@ -96,11 +68,10 @@ export default function Pagination({
                   setCurrentPage(currentPage - 1);
                 }}
                 disabled={currentPage === 1}
-                className={`relative inline-flex items-center p-2 rounded-l-md border border-gray-300 dark:border-zinc-800 hover:bg-gray-50 text-sm font-medium duration-200 ease-in-out ${
-                  currentPage === 1
+                className={`relative inline-flex items-center p-2 rounded-l-md border border-gray-300 dark:border-zinc-800 hover:bg-gray-50 text-sm font-medium duration-200 ease-in-out ${currentPage === 1
                     ? "bg-white dark:bg-zinc-900 text-gray-300 dark:text-zinc-400"
                     : "bg-white dark:bg-zinc-900 text-gray-500 dark:text-zinc-400"
-                }`}
+                  }`}
               >
                 <span className="sr-only">Previous</span>
                 <ArrowLeftIcon className="h-5 w-5" aria-hidden="true" />
@@ -134,11 +105,10 @@ export default function Pagination({
                   setCurrentPage(currentPage + 1);
                 }}
                 disabled={currentPage === lastPage || lastPage === undefined}
-                className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-zinc-800 text-sm font-medium hover:bg-gray-50 duration-200 ease-in-out ${
-                  currentPage === lastPage || lastPage === undefined
+                className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-zinc-800 text-sm font-medium hover:bg-gray-50 duration-200 ease-in-out ${currentPage === lastPage || lastPage === undefined
                     ? "bg-white dark:bg-zinc-900 text-gray-300 dark:text-zinc-400"
                     : "bg-white dark:bg-zinc-900 text-gray-500 dark:text-zinc-400"
-                }`}
+                  }`}
               >
                 <span className="sr-only">Next</span>
                 <ArrowRightIcon className="h-5 w-5" aria-hidden="true" />

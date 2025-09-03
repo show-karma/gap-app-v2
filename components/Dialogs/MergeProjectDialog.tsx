@@ -377,7 +377,6 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
                                                 Are you sure you want to add another pointer to this project?`
                         : null}
 
-                      {/* {JSON.stringify(project?.pointers)} */}
                     </p>
                   </div>
                   {project?.symlinks?.length == 0 && (

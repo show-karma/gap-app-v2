@@ -71,8 +71,8 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
 
   const hasVerifiedThis = address
     ? impact?.verified?.find(
-        (v) => v.attester?.toLowerCase() === address?.toLowerCase()
-      )
+      (v) => v.attester?.toLowerCase() === address?.toLowerCase()
+    )
     : null;
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
@@ -161,19 +161,6 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
             // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
             await new Promise((resolve) => setTimeout(resolve, 1500));
           }
-          // const newVerified = new ProjectImpactStatus({
-          //   data: {
-          //     type: "project-impact-verified",
-          //     reason: data.comment,
-          //   },
-          //   schema: gapClient!.findSchema("GrantUpdateStatus"),
-          //   recipient: address,
-          //   refUID: impact.uid,
-          //   attester: address,
-          // });
-          // impact.verified = [...impact.verified, newVerified];
-          // toast.success(MESSAGES.PROJECT.IMPACT.VERIFY.SUCCESS);
-          // addVerification(newVerified);
         });
       closeModal();
     } catch (error: any) {

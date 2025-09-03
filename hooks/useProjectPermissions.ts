@@ -67,11 +67,16 @@ export const useProjectPermissions = () => {
 
   // Update permission states when data changes
   useEffect(() => {
+    if (!isConnected) {
+      setIsProjectOwner(false);
+      setIsProjectAdmin(false);
+      return;
+    }
     if (query.data) {
       setIsProjectOwner(query.data.isProjectOwner);
       setIsProjectAdmin(query.data.isProjectAdmin);
     }
-  }, [query.data, setIsProjectOwner, setIsProjectAdmin]);
+  }, [query.data, setIsProjectOwner, setIsProjectAdmin, isConnected]);
 
   return {
     isProjectOwner: query.data?.isProjectOwner ?? false,

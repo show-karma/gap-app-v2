@@ -26,6 +26,7 @@ export interface ProjectV2 {
     title: string;
     description: string;
     logoUrl: string;
+    slug: string;
   };
   categories: string[];
   regions: string[];

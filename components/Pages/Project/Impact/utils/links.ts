@@ -96,9 +96,6 @@ export const mapLinks = (linksToMap: string[], networkAddresses?: string[]) => {
     });
     contractUrls = contractUrls.filter(Boolean);
   }
-  // const contractUrls = linksMap
-  //   .filter((link) => link && link.includes("dune.com"))
-  //   .flatMap((link) => getContractUrl(link as string));
 
   const linksSet = new Set([...linksMap, ...contractUrls]);
 

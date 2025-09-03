@@ -4,8 +4,7 @@ export type FundingApplicationStatusV2 =
   | "under_review"
   | "revision_requested" 
   | "approved"
-  | "rejected"
-  | "withdrawn";
+  | "rejected";
 
 // Application Comment Types
 export interface ApplicationComment {
@@ -124,7 +123,6 @@ export interface IApplicationStatistics {
   approvedApplications: number;
   rejectedApplications: number;
   revisionRequestedApplications?: number;
-  withdrawnApplications?: number;
   underReviewApplications?: number;
 }
 

@@ -3,10 +3,10 @@
 import { FC } from 'react';
 import { IStatusHistoryEntry } from '@/types/funding-platform';
 import { format, parseISO, isValid } from 'date-fns';
-import { 
-  CheckCircleIcon, 
-  XCircleIcon, 
-  ExclamationTriangleIcon, 
+import {
+  CheckCircleIcon,
+  XCircleIcon,
+  ExclamationTriangleIcon,
   ClockIcon,
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
@@ -38,15 +38,11 @@ const statusConfig = {
     color: 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900',
     label: 'Rejected'
   },
-  withdrawn: {
-    icon: ArrowPathIcon,
-    color: 'text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700',
-    label: 'Withdrawn'
-  }
+
 };
 
 const StatusHistoryTimeline: FC<StatusHistoryTimelineProps> = ({ history, currentStatus }) => {
-  const sortedHistory = [...history].sort((a, b) => 
+  const sortedHistory = [...history].sort((a, b) =>
     new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   );
 
@@ -74,9 +70,9 @@ const StatusHistoryTimeline: FC<StatusHistoryTimelineProps> = ({ history, curren
             <li key={idx}>
               <div className={cn("relative", !isLast && "pb-8")}>
                 {!isLast && (
-                  <span 
-                    className="absolute left-4 top-8 -ml-px h-full w-0.5 bg-gray-200 dark:bg-gray-700" 
-                    aria-hidden="true" 
+                  <span
+                    className="absolute left-4 top-8 -ml-px h-full w-0.5 bg-gray-200 dark:bg-gray-700"
+                    aria-hidden="true"
                   />
                 )}
                 <div className="relative flex space-x-3">

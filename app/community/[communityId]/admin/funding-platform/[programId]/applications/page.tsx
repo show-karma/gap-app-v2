@@ -56,6 +56,12 @@ export default function ApplicationsPage() {
     const page = searchParams.get("page");
     if (page) filters.page = parseInt(page, 10);
 
+    const sortBy = searchParams.get("sortBy");
+    if (sortBy) filters.sortBy = sortBy as any;
+
+    const sortOrder = searchParams.get("sortOrder");
+    if (sortOrder) filters.sortOrder = sortOrder as any;
+
     return filters;
   }, [searchParams]);
 
@@ -256,20 +262,6 @@ export default function ApplicationsPage() {
         onStatusChange={handleStatusChange}
         showStatusActions={true}
       />
-
-      {/* Footer */}
-      <div className="bg-white dark:bg-zinc-800 border-t border-gray-200 dark:border-gray-700">
-        <div className="px-4 sm:px-6 lg:px-12 py-3">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-gray-500 dark:text-gray-400">
-            <div className="mb-2 sm:mb-0">
-              <span>Applications are automatically evaluated using AI. </span>
-              <span className="font-medium">
-                Review and update statuses as needed.
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

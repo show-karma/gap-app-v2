@@ -36,28 +36,6 @@ export const GrantUpdateScreen = () => {
           type={"Grants"}
           selected={selectedGrant?.uid || ""}
         />
-        {/* <select
-          value={selectedGrant?.uid}
-          className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300"
-        >
-          <option
-            value=""
-            onClick={() => setSelectedGrant(undefined)}
-            disabled
-            className="text-gray-400"
-          >
-            Select Grant
-          </option>
-          {grants.map((grant) => (
-            <option
-              key={grant.uid}
-              value={grant.uid}
-              onClick={() => setSelectedGrant(grant)}
-            >
-              {grant.details?.data.title}
-            </option>
-          ))}
-        </select> */}
       </div>
       <div className="flex flex-col gap-2">
         {selectedGrant ? (

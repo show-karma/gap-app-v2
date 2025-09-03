@@ -24,10 +24,6 @@ export function NewFeatureBanner() {
             >
               {`We're hiring!`}
             </Link>
-            {/* <p>
-                              Visibility and accountability for community funded and public
-                              goods projects.
-                          </p> */}
           </div>
         </div>
         <ExternalLink href={bannerLink}>

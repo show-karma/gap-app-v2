@@ -42,8 +42,6 @@ export const EmptyMilestone = ({
   );
 
   const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
-  // const router = useRouter();
-  // const project = useProjectStore((state) => state.project);
 
   if (!isAuthorized) {
     return (

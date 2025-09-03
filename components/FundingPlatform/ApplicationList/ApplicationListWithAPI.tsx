@@ -12,6 +12,7 @@ import { IFundingApplication } from "@/types/funding-platform";
 import { Button } from "@/components/Utilities/Button";
 import { ArrowDownTrayIcon, FunnelIcon } from "@heroicons/react/24/outline";
 import formatCurrency from "@/utilities/formatCurrency";
+import pluralize from "pluralize";
 
 interface IApplicationListWithAPIProps {
   programId: string;
@@ -37,7 +38,27 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [filters, setFilters] = useState<IApplicationFilters>(initialFilters);
+
+  // Initialize filters and sorting from URL params
+  const [filters, setFilters] = useState<IApplicationFilters>(() => {
+    const urlFilters = { ...initialFilters };
+    if (searchParams.get('search')) urlFilters.search = searchParams.get('search')!;
+    if (searchParams.get('status')) urlFilters.status = searchParams.get('status')!;
+    if (searchParams.get('dateFrom')) urlFilters.dateFrom = searchParams.get('dateFrom')!;
+    if (searchParams.get('dateTo')) urlFilters.dateTo = searchParams.get('dateTo')!;
+    if (searchParams.get('page')) urlFilters.page = parseInt(searchParams.get('page')!);
+    return urlFilters;
+  });
+
+  const [sortBy, setSortBy] = useState<IApplicationFilters['sortBy']>(() => {
+    const urlSortBy = searchParams.get('sortBy');
+    return (urlSortBy as IApplicationFilters['sortBy']) || 'status';
+  });
+
+  const [sortOrder, setSortOrder] = useState<IApplicationFilters['sortOrder']>(() => {
+    const urlSortOrder = searchParams.get('sortOrder');
+    return (urlSortOrder as IApplicationFilters['sortOrder']) || 'asc';
+  });
 
   const {
     applications,
@@ -50,7 +71,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
     updateApplicationStatus,
     isUpdatingStatus,
     refetch,
-  } = useFundingApplications(programId, chainId, filters);
+  } = useFundingApplications(programId, chainId, { ...filters, sortBy, sortOrder });
 
   const { exportApplications, isExporting } = useApplicationExport(
     programId,
@@ -58,7 +79,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
     isAdmin
   );
 
-  // Sync filters with URL
+  // Sync filters and sorting with URL
   useEffect(() => {
     const params = new URLSearchParams(searchParams.toString());
 
@@ -93,11 +114,25 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
       params.delete("page");
     }
 
+    // Add sorting params
+    if (sortBy && sortBy !== 'createdAt') {
+      params.set("sortBy", sortBy);
+    } else {
+      params.delete("sortBy");
+    }
+
+    // Always persist sortOrder in URL if it's set
+    if (sortOrder) {
+      params.set("sortOrder", sortOrder);
+    } else {
+      params.delete("sortOrder");
+    }
+
     const queryString = params.toString();
     const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
 
     router.replace(newUrl, { scroll: false });
-  }, [filters, pathname, router, searchParams]);
+  }, [filters, sortBy, sortOrder, pathname, router, searchParams]);
 
   const handleStatusChange = useCallback(
     async (applicationId: string, status: string, note?: string) => {
@@ -115,14 +150,26 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
 
   const handleExport = useCallback(
     (format: "json" | "csv" = "json") => {
-      exportApplications(format, filters);
+      exportApplications(format, { ...filters, sortBy, sortOrder });
     },
-    [exportApplications, filters]
+    [exportApplications, filters, sortBy, sortOrder]
   );
 
   const handleFilterChange = useCallback((newFilters: IApplicationFilters) => {
     setFilters((prev) => ({ ...prev, ...newFilters }));
   }, []);
+
+  const handleSortChange = useCallback((newSortBy: string) => {
+    const typedSortBy = newSortBy as IApplicationFilters['sortBy'];
+    if (sortBy === typedSortBy) {
+      // Toggle sort order if clicking the same column
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Set new sort column with default desc order
+      setSortBy(typedSortBy);
+      setSortOrder('desc');
+    }
+  }, [sortBy, sortOrder]);
 
   // Show error state
   if (error) {
@@ -222,11 +269,10 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
             >
               <option value="">All Statuses</option>
               <option value="pending">Pending</option>
+              <option value="under_review">Under Review</option>
               <option value="revision_requested">Revision Requested</option>
               <option value="approved">Approved</option>
               <option value="rejected">Rejected</option>
-              <option value="withdrawn">Withdrawn</option>
-              <option value="under_review">Under Review</option>
             </select>
           </div>
 
@@ -256,11 +302,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
         </div>
 
         <div className="flex justify-between mt-4 space-x-2">
-          <div className="flex flex-row gap-4 items-center">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              {applications.length} application(s) found
-            </p>
-          </div>
+          <div className="flex flex-row gap-4 items-center" />
           <div className="flex justify-end space-x-2">
             <Button
               onClick={() => {
@@ -298,38 +340,43 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
         onApplicationHover={onApplicationHover}
         onStatusChange={showStatusActions ? handleStatusChange : undefined}
         showStatusActions={showStatusActions}
+        sortBy={sortBy}
+        sortOrder={sortOrder}
+        onSortChange={handleSortChange}
       />
 
       {/* Pagination Info */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-          <div>
-            Page {page} of {totalPages} ({total} total applications)
-          </div>
+      <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Page {page} of {totalPages} ({total} total {pluralize("application", total)})
+        </p>
 
-          <div className="flex space-x-2">
-            <button
-              onClick={() =>
-                handleFilterChange({ page: Math.max(1, page - 1) })
-              }
-              disabled={page === 1}
-              className="px-3 py-1 bg-gray-200 dark:bg-zinc-700 rounded disabled:opacity-50"
-            >
-              Previous
-            </button>
+        {totalPages > 1 && (
+          <>
+            <div className="flex space-x-2">
+              <button
+                onClick={() =>
+                  handleFilterChange({ page: Math.max(1, page - 1) })
+                }
+                disabled={page === 1}
+                className="px-3 py-1 bg-gray-200 dark:bg-zinc-700 rounded disabled:opacity-50"
+              >
+                Previous
+              </button>
 
-            <button
-              onClick={() =>
-                handleFilterChange({ page: Math.min(totalPages, page + 1) })
-              }
-              disabled={page === totalPages}
-              className="px-3 py-1 bg-gray-200 dark:bg-zinc-700 rounded disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
+              <button
+                onClick={() =>
+                  handleFilterChange({ page: Math.min(totalPages, page + 1) })
+                }
+                disabled={page === totalPages}
+                className="px-3 py-1 bg-gray-200 dark:bg-zinc-700 rounded disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };

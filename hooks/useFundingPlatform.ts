@@ -227,41 +227,6 @@ export const useFundingApplications = (
     },
   });
 
-  const exportApplications = useCallback(async (format: 'json' | 'csv' = 'json') => {
-    try {
-      const response = await fundingPlatformService.applications.exportApplications(
-        programId, 
-        chainId, 
-        format, 
-        filters
-      );
-      
-      // Extract data and filename from response
-      const { data, filename } = response;
-      
-      // Create and download file
-      const blob = new Blob([format === 'json' ? JSON.stringify(data, null, 2) : data], {
-        type: format === 'json' ? 'application/json' : 'text/csv',
-      });
-      
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      
-      // Use filename from server if available, otherwise generate one
-      link.download = filename || `applications-${programId}-${new Date().toISOString().split('T')[0]}.${format}`;
-      
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      
-      toast.success(`Applications exported as ${format.toUpperCase()}`);
-    } catch (error) {
-      console.error('Failed to export applications:', error);
-      toast.error('Failed to export applications');
-    }
-  }, [programId, chainId, filters]);
 
   return {
     applications: applicationsQuery.data?.applications || [],
@@ -273,7 +238,6 @@ export const useFundingApplications = (
     error: applicationsQuery.error || statsQuery.error,
     submitApplication: submitApplicationMutation.mutate,
     updateApplicationStatus: updateStatusMutation.mutate,
-    exportApplications,
     isSubmitting: submitApplicationMutation.isPending,
     isUpdatingStatus: updateStatusMutation.isPending,
     refetch: () => {
@@ -455,7 +419,7 @@ export const useApplicationStatusV2 = (applicationId?: string) => {
         appId || applicationId!, 
         request
       ),
-    onSuccess: (data, variables) => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ 
         queryKey: QUERY_KEYS.application(variables.applicationId) 
       });

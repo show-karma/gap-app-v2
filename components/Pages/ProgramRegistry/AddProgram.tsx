@@ -249,8 +249,8 @@ export default function AddProgram({
       grantTypes: Array.isArray(programToEdit?.metadata?.grantTypes)
         ? programToEdit?.metadata?.grantTypes
         : programToEdit?.metadata?.grantTypes
-        ? [programToEdit?.metadata?.grantTypes]
-        : [],
+          ? [programToEdit?.metadata?.grantTypes]
+          : [],
       networkToCreate: programToEdit?.chainID || 0,
       grantsSite: programToEdit?.metadata?.socialLinks?.grantsSite,
       platformsUsed: programToEdit?.metadata?.platformsUsed || [],
@@ -491,7 +491,7 @@ export default function AddProgram({
             while (retries > 0) {
               await fetchData(
                 INDEXER.REGISTRY.GET_ALL +
-                  `?programId=${programToEdit?.programId}`
+                `?programId=${programToEdit?.programId}`
               )
                 .then(async ([res]) => {
                   const hasUpdated =
@@ -906,23 +906,6 @@ export default function AddProgram({
             </div>
 
             <div className="grid grid-cols-3 max-sm:grid-cols-1 w-full gap-6 border-b border-b-[#98A2B3] pb-10">
-              {/* <div className="flex w-full flex-col justify-between gap-2">
-                <label htmlFor="program-network" className={labelStyle}>
-                  Network to create program *
-                </label>
-                <NetworkDropdown
-                  onSelectFunction={(value) => {
-                    setValue("networkToCreate", value, {
-                      shouldValidate: true,
-                    });
-                  }}
-                  previousValue={watch("networkToCreate")}
-                  list={supportedChains}
-                />
-                <p className="text-base text-red-400">
-                  {errors.networkToCreate?.message}
-                </p>
-              </div> */}
               <div className="flex w-full flex-col  gap-1">
                 <label htmlFor="program-budget" className={labelStyle}>
                   Program budget

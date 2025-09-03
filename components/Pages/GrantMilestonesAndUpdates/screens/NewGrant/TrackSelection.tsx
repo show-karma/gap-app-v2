@@ -72,8 +72,8 @@ export const TrackSelection: React.FC<TrackSelectionProps> = ({
     <div className="mt-4">
       <h4 className="text-sm font-semibold mb-2 text-gray-900 dark:text-gray-300">
         {disabled
-          ? "Tracks for this program"
-          : "Select tracks for this program"}
+          ? "Sponsored Tracks"
+          : "Choose the tracks"}
       </h4>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
         {tracks.map((track: Track) => (
