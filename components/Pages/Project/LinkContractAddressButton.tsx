@@ -7,7 +7,6 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { Dialog, Transition } from "@headlessui/react";
 import {
-  CheckCircleIcon,
   LinkIcon,
   PlusIcon,
   TrashIcon,
@@ -235,7 +234,6 @@ export const LinkContractAddressButton: FC<
 
       if (error) {
         setError(MESSAGES.PROJECT.LINK_CONTRACT_ADDRESSES.ERROR);
-        throw new Error(MESSAGES.PROJECT.LINK_CONTRACT_ADDRESSES.ERROR);
       }
     } catch (err) {
       setError(MESSAGES.PROJECT.LINK_CONTRACT_ADDRESSES.ERROR);
@@ -393,7 +391,7 @@ export const LinkContractAddressButton: FC<
                                 </div>
                                 <Button
                                   onClick={() => handleVerifyClick(pair)}
-                                  className="text-sm text-primary-500 hover:text-primary-600 underline"
+                                  className="text-sm text-white"
                                 >
                                   Verify
                                 </Button>
