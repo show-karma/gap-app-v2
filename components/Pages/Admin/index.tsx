@@ -179,7 +179,10 @@ const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
   isCommunityAdmin
 }) => {
   const updateConfigMutation = useCommunityConfigMutation();
-  const { data: config, isLoading: configLoading } = useCommunityConfig(slug);
+  const { data: config, isLoading: configLoading } = useCommunityConfig(
+    slug,
+    isOwner
+  );
   const [localRank, setLocalRank] = useState<number>(0);
 
   function shortenHex(hexString: string) {
