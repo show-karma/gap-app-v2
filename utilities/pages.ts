@@ -2,6 +2,7 @@ export const PAGES = {
   HOME: `/`,
   NOT_FOUND: `/not-found`,
   PROJECTS_EXPLORER: `/projects`,
+  COMMUNITIES: `/communities`,
   PRIVACY_POLICY: `/privacy-policy`,
   TERMS_AND_CONDITIONS: `/terms-and-conditions`,
   COMMUNITY: {
@@ -38,6 +39,7 @@ export const PAGES = {
     COMMUNITY_STATS: `/admin/communities/stats`,
     PROJECTS: `/admin/projects`,
     PAYOUTS: (community: string) => `/community/${community}/admin/payouts`,
+    PROGRAM_SCORES: (community: string) => `/community/${community}/admin/program-scores`,
   },
   PROJECT: {
     OVERVIEW: (project: string) => `/project/${project}`,

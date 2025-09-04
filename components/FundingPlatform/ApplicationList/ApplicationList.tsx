@@ -7,13 +7,12 @@ import {
   IFundingApplication,
 } from "@/types/funding-platform";
 import { cn } from "@/utilities/tailwind";
-import { CheckIcon } from "@heroicons/react/24/outline";
-import { XMarkIcon } from "@heroicons/react/24/solid";
 import StatusChangeModal from "../ApplicationView/StatusChangeModal";
 import { getProjectTitle } from "../helper/getProjecTitle";
 import { formatDate } from "@/utilities/formatDate";
 import SortableTableHeader from "@/components/UI/SortableTableHeader";
 import { IApplicationFilters } from "@/services/fundingPlatformService";
+import { TableStatusActionButtons } from "./TableStatusActionButtons";
 
 interface IApplicationListComponentProps extends IApplicationListProps {
   applications: IFundingApplication[];
@@ -213,99 +212,12 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                   </td>
                   {showStatusActions && onStatusChange && (
                     <td className="px-4 py-4 whitespace-nowrap text-sm">
-                      {!["approved", "rejected"].includes(application.status) && (
-                        <div className="flex gap-1">
-                          {/* For pending status: only show Under Review button */}
-                          {application.status === "pending" && (
-                            <Button
-                              onClick={(e) => handleStatusChangeClick(application.referenceNumber, "under_review", e)}
-                              variant="secondary"
-                              className="px-2 py-1 text-sm border bg-transparent text-purple-600 font-medium border-purple-200 dark:border-purple-700 dark:text-purple-400"
-                              disabled={isUpdatingStatus}
-                            >
-                              Review
-                            </Button>
-                          )}
-
-                          {/* For under_review status: show all action buttons */}
-                          {application.status === "under_review" && (
-                            <>
-                              <Button
-                                onClick={(e) => handleStatusChangeClick(
-                                  application.referenceNumber,
-                                  "revision_requested",
-                                  e
-                                )}
-                                variant="secondary"
-                                className="px-2 py-1 text-sm dark:text-white border bg-transparent border-gray-200 font-medium dark:border-gray-700"
-                                disabled={isUpdatingStatus}
-                              >
-                                Request Revision
-                              </Button>
-                              <Button
-                                onClick={(e) => handleStatusChangeClick(application.referenceNumber, "approved", e)}
-                                variant="secondary"
-                                className="px-2 py-1 text-sm border bg-transparent text-green-600 font-medium border-green-200 dark:border-green-700 dark:text-green-400 flex items-center gap-1"
-                                disabled={isUpdatingStatus}
-                              >
-                                <CheckIcon className="w-3 h-3" />
-                                Approve
-                              </Button>
-                              <Button
-                                onClick={(e) => handleStatusChangeClick(application.referenceNumber, "rejected", e)}
-                                variant="secondary"
-                                className="px-2 py-1 text-sm border bg-transparent text-red-600 font-medium border-red-200 dark:border-red-700 dark:text-red-400 flex items-center gap-1"
-                                disabled={isUpdatingStatus}
-                              >
-                                <XMarkIcon className="w-3 h-3" />
-                                Reject
-                              </Button>
-                            </>
-                          )}
-
-                          {/* For other statuses: show available actions */}
-                          {!["pending", "under_review", "approved", "rejected"].includes(application.status) && (
-                            <>
-                              {!["revision_requested"].includes(application.status) && (
-                                <Button
-                                  onClick={(e) => handleStatusChangeClick(
-                                    application.referenceNumber,
-                                    "revision_requested",
-                                    e
-                                  )}
-                                  variant="secondary"
-                                  className="px-2 py-1 text-sm dark:text-white border bg-transparent border-gray-200 font-medium dark:border-gray-700"
-                                  disabled={isUpdatingStatus}
-                                >
-                                  Request Revision
-                                </Button>
-                              )}
-                              {application.status !== "approved" && (
-                                <Button
-                                  onClick={(e) => handleStatusChangeClick(application.referenceNumber, "approved", e)}
-                                  variant="secondary"
-                                  className="px-2 py-1 text-sm border bg-transparent text-green-600 font-medium border-green-200 dark:border-green-700 dark:text-green-400 flex items-center gap-1"
-                                  disabled={isUpdatingStatus}
-                                >
-                                  <CheckIcon className="w-3 h-3" />
-                                  Approve
-                                </Button>
-                              )}
-                              {application.status !== "rejected" && (
-                                <Button
-                                  onClick={(e) => handleStatusChangeClick(application.referenceNumber, "rejected", e)}
-                                  variant="secondary"
-                                  className="px-2 py-1 text-sm border bg-transparent text-red-600 font-medium border-red-200 dark:border-red-700 dark:text-red-400 flex items-center gap-1"
-                                  disabled={isUpdatingStatus}
-                                >
-                                  <XMarkIcon className="w-3 h-3" />
-                                  Reject
-                                </Button>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      )}
+                      <TableStatusActionButtons
+                        applicationId={application.referenceNumber}
+                        currentStatus={application.status as any}
+                        onStatusChange={handleStatusChangeClick}
+                        isUpdating={isUpdatingStatus}
+                      />
                     </td>
                   )}
                 </tr>

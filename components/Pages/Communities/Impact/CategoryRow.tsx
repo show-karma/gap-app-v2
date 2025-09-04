@@ -293,30 +293,6 @@ export const CategoryRow = ({
         self.findIndex((t) => t.projectUID === output.projectUID) === index
     );
 
-  // // Group Activities & Outputs by their names
-
-  // // Sort function to get the most recent datapoint timestamp
-  // const getLatestDatapointTimestamp = (item: ProgramImpactSegment) => {
-  //   if (!item.datapoints.length) return 0;
-  //   return Math.max(
-  //     ...item.datapoints.map((dp) =>
-  //       dp.outputTimestamp ? new Date(dp.outputTimestamp).getTime() : 0
-  //     )
-  //   );
-  // };
-
-  // // Sort the items in each group by their latest datapoint
-  // Object.keys(outputsById).forEach((key) => {
-  //   outputsById[key].sort(
-  //     (a, b) => getLatestDatapointTimestamp(b) - getLatestDatapointTimestamp(a)
-  //   );
-  // });
-
-  // Object.keys(outcomesById).forEach((key) => {
-  //   outcomesById[key].sort(
-  //     (a, b) => getLatestDatapointTimestamp(b) - getLatestDatapointTimestamp(a)
-  //   );
-  // });
 
   return (
     <div className="flex flex-col gap-4">
@@ -332,21 +308,6 @@ export const CategoryRow = ({
         ) : null}
       </div>
       <CategoryBlocks category={category} />
-      {/* {category.impacts.length ? (
-        <CategoryBlocks category={category} />
-      ) : (
-        <div className="flex flex-col justify-center items-center gap-8 rounded-xl px-12 py-6 min-h-[280px] border border-dashed border-gray-400 dark:border-gray-600 bg-gray-50 dark:bg-zinc-900">
-          <Image
-            src={"/icons/poker-face.png"}
-            alt="no data"
-            width={40}
-            height={40}
-          />
-          <p className="text-center text-gray-900 dark:text-zinc-100 text-base font-bold leading-normal">
-            We are waiting for project to submit values for this metric
-          </p>
-        </div>
-      )} */}
     </div>
   );
 };

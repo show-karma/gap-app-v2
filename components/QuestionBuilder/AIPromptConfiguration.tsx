@@ -110,44 +110,6 @@ export function AIPromptConfiguration({
       </div>
 
       <div className="space-y-6">
-        {/* System Prompt */}
-        {/* <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            System Prompt *
-          </label>
-          <textarea
-            {...register("systemPrompt")}
-            rows={6}
-            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300"
-            placeholder="Enter the main system prompt that defines how AI should evaluate applications..."
-          />
-          {errors.systemPrompt && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.systemPrompt.message}
-            </p>
-          )}
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-            This prompt defines the core evaluation criteria and approach. It
-            will be used for both real-time and final evaluations.
-          </p>
-        </div> */}
-
-        {/* Detailed Prompt */}
-        {/* <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Detailed Prompt (Optional)
-          </label>
-          <textarea
-            {...register("detailedPrompt")}
-            rows={4}
-            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300"
-            placeholder="Enter additional detailed instructions for more comprehensive evaluation..."
-          />
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-            Additional instructions for more comprehensive evaluation. This will
-            be used only for the final evaluation after submission.
-          </p>
-        </div> */}
 
         {/* AI Model Selection */}
         <div>

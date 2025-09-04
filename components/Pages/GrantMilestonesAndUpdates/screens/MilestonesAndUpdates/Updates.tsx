@@ -3,6 +3,7 @@ import { type FC, useEffect, useState } from "react";
 
 import { Button } from "@/components/Utilities/Button";
 import { getGapClient, useGap } from "@/hooks/useGap";
+import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useStepper } from "@/store/modals/txStepper";
@@ -57,6 +58,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   const { project, isProjectOwner } = useProjectStore();
   const { isOwner: isContractOwner } = useOwnerStore();
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
+  const { performOffChainRevoke } = useOffChainRevoke();
 
   const undoMilestoneCompletion = async (milestone: IMilestoneResponse) => {
     let gapClient = gap;
@@ -82,10 +84,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
       }
       if (!walletClient || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      // const instanceMilestone = new Milestone({
-      //   ...milestone,
-      //   schema: gapClient.findSchema("Milestone"),
-      // });
+
       const instanceProject = await gapClient.fetch.projectById(project?.uid);
       const findGrant = instanceProject?.grants.find(
         (item) => item.uid.toLowerCase() === milestone.refUID.toLowerCase()
@@ -114,50 +113,50 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
       };
 
       if (!isOnChainAuthorized) {
-        const toastLoading = toast.loading(
-          MESSAGES.MILESTONES.COMPLETE.UNDO.LOADING
-        );
-        await fetchData(
-          INDEXER.PROJECT.REVOKE_ATTESTATION(
-            milestone.completed?.uid as `0x${string}`,
-            instanceMilestone.chainID
-          ),
-          "POST",
-          {}
-        )
-          .then(async () => {
-            checkIfAttestationExists()
-              .then(() => {
-                toast.success(MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS, {
-                  id: toastLoading,
-                });
-              })
-              .catch(() => {
-                toast.dismiss(toastLoading);
-              });
-          })
-          .catch(() => {
-            toast.dismiss(toastLoading);
-          });
+        await performOffChainRevoke({
+          uid: milestone.completed?.uid as `0x${string}`,
+          chainID: instanceMilestone.chainID,
+          checkIfExists: checkIfAttestationExists,
+          toastMessages: {
+            success: MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS,
+            loading: MESSAGES.MILESTONES.COMPLETE.UNDO.LOADING,
+          },
+        });
       } else {
-        await instanceMilestone
-          .revokeCompletion(walletSigner as any, changeStepperStep)
-          .then(async (res) => {
-            changeStepperStep("indexing");
-            const txHash = res?.tx[0]?.hash;
-            if (txHash) {
-              await fetchData(
-                INDEXER.ATTESTATION_LISTENER(txHash, instanceMilestone.chainID),
-                "POST",
-                {}
-              );
-            }
-            await checkIfAttestationExists(() => {
-              changeStepperStep("indexed");
-            }).then(() => {
-              toast.success(MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS);
-            });
+        try {
+          const res = await instanceMilestone.revokeCompletion(walletSigner as any, changeStepperStep);
+          changeStepperStep("indexing");
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, instanceMilestone.chainID),
+              "POST",
+              {}
+            );
+          }
+          await checkIfAttestationExists(() => {
+            changeStepperStep("indexed");
           });
+          toast.success(MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS);
+        } catch (onChainError: any) {
+          // Silently fallback to off-chain revoke
+          setIsStepper(false); // Reset stepper since we're falling back
+          
+          const success = await performOffChainRevoke({
+            uid: milestone.completed?.uid as `0x${string}`,
+            chainID: instanceMilestone.chainID,
+            checkIfExists: checkIfAttestationExists,
+            toastMessages: {
+              success: MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS,
+              loading: MESSAGES.MILESTONES.COMPLETE.UNDO.LOADING,
+            },
+          });
+          
+          if (!success) {
+            // Both methods failed - throw the original error to maintain expected behavior
+            throw onChainError;
+          }
+        }
       }
     } catch (error: any) {
       errorManager(

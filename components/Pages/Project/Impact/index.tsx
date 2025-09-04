@@ -3,6 +3,7 @@ import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { getGapClient, useGap } from "@/hooks/useGap";
+import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -77,6 +78,7 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
   const { gap } = useGap();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const isOnChainAuthorized = isProjectOwner || isOwner;
+  const { performOffChainRevoke } = useOffChainRevoke();
 
   const revokeImpact = async (impact: IProjectImpact) => {
     if (!address || !project || !impact) return;
@@ -135,50 +137,50 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
       };
 
       if (!isOnChainAuthorized) {
-        const toastLoading = toast.loading(
-          MESSAGES.PROJECT.IMPACT.REMOVE.LOADING
-        );
-        await fetchData(
-          INDEXER.PROJECT.REVOKE_ATTESTATION(
-            instanceImpact?.uid as `0x${string}`,
-            instanceImpact.chainID
-          ),
-          "POST",
-          {}
-        )
-          .then(async () => {
-            checkIfAttestationExists()
-              .then(() => {
-                toast.success(MESSAGES.PROJECT.IMPACT.REMOVE.SUCCESS, {
-                  id: toastLoading,
-                });
-              })
-              .catch(() => {
-                toast.dismiss(toastLoading);
-              });
-          })
-          .catch(() => {
-            toast.dismiss(toastLoading);
-          });
+        await performOffChainRevoke({
+          uid: instanceImpact?.uid as `0x${string}`,
+          chainID: instanceImpact.chainID,
+          checkIfExists: checkIfAttestationExists,
+          toastMessages: {
+            success: MESSAGES.PROJECT.IMPACT.REMOVE.SUCCESS,
+            loading: MESSAGES.PROJECT.IMPACT.REMOVE.LOADING,
+          },
+        });
       } else {
-        await instanceImpact
-          .revoke(walletSigner as any, changeStepperStep)
-          .then(async (res) => {
-            const txHash = res?.tx[0]?.hash;
-            if (txHash) {
-              await fetchData(
-                INDEXER.ATTESTATION_LISTENER(txHash, instanceImpact.chainID),
-                "POST",
-                {}
-              );
-            }
+        try {
+          const res = await instanceImpact.revoke(walletSigner as any, changeStepperStep);
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, instanceImpact.chainID),
+              "POST",
+              {}
+            );
+          }
 
-            await checkIfAttestationExists(() => {
-              changeStepperStep("indexed");
-            }).then(() => {
-              toast.success(MESSAGES.PROJECT.IMPACT.REMOVE.SUCCESS);
-            });
+          await checkIfAttestationExists(() => {
+            changeStepperStep("indexed");
           });
+          toast.success(MESSAGES.PROJECT.IMPACT.REMOVE.SUCCESS);
+        } catch (onChainError: any) {
+          // Silently fallback to off-chain revoke
+          setIsStepper(false); // Reset stepper since we're falling back
+          
+          const success = await performOffChainRevoke({
+            uid: instanceImpact?.uid as `0x${string}`,
+            chainID: instanceImpact.chainID,
+            checkIfExists: checkIfAttestationExists,
+            toastMessages: {
+              success: MESSAGES.PROJECT.IMPACT.REMOVE.SUCCESS,
+              loading: MESSAGES.PROJECT.IMPACT.REMOVE.LOADING,
+            },
+          });
+          
+          if (!success) {
+            // Both methods failed - throw the original error to maintain expected behavior
+            throw onChainError;
+          }
+        }
       }
     } catch (error: any) {
       errorManager(

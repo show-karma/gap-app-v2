@@ -431,7 +431,6 @@ export default function Header() {
           </div>
 
           <div className="hidden lg:flex lg:items-center lg:justify-end lg:gap-3 xl:gap-5 2xl:gap-6 py-3">
-            {/* <div className="rounded-none h-10 w-[1px] bg-zinc-300 mx-2" /> */}
             {isReady ? (
               <>
                 <Link href={PAGES.REGISTRY.ROOT}>

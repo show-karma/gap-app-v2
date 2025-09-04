@@ -50,7 +50,6 @@ export const ProjectGrantsOverviewLoading = () => {
                   Community
                 </div>
                 <div className="inline-flex items-center gap-x-2 rounded-3xl  dark:border-gray-800 dark:text-blue-500 px-2 py-1 text-xs font-medium text-gray-900">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <Skeleton className="h-5 w-5 rounded-full" />
                   <Skeleton className="h-6 w-32" />
                 </div>

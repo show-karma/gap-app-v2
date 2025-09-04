@@ -2,6 +2,7 @@ import { DeleteDialog } from "@/components/DeleteDialog";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
+import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import { useStepper } from "@/store/modals/txStepper";
@@ -41,6 +42,7 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
   const { isOwner: isContractOwner } = useOwnerStore();
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
   const { gap } = useGap();
+  const { performOffChainRevoke } = useOffChainRevoke();
 
   const router = useRouter();
 
@@ -103,53 +105,56 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
         );
       };
       if (!isOnChainAuthorized) {
-        const toastLoading = toast.loading(MESSAGES.GRANT.DELETE.LOADING);
-        await fetchData(
-          INDEXER.PROJECT.REVOKE_ATTESTATION(
-            grantUID as `0x${string}`,
-            grantInstance.chainID
-          ),
-          "POST",
-          {}
-        )
-          .then(async () => {
-            checkIfAttestationExists()
-              .then(() => {
-                toast.success(MESSAGES.GRANT.DELETE.SUCCESS, {
-                  id: toastLoading,
-                });
-              })
-              .catch(() => {
-                toast.dismiss(toastLoading);
-              });
-          })
-          .catch(() => {
-            toast.dismiss(toastLoading);
-          });
+        await performOffChainRevoke({
+          uid: grantUID as `0x${string}`,
+          chainID: grantInstance.chainID,
+          checkIfExists: checkIfAttestationExists,
+          onSuccess: () => {
+            changeStepperStep("indexed");
+          },
+          toastMessages: {
+            success: MESSAGES.GRANT.DELETE.SUCCESS,
+            loading: MESSAGES.GRANT.DELETE.LOADING,
+          },
+        });
       } else {
-        await grantInstance
-          .revoke(walletSigner, changeStepperStep)
-          .then(async (res) => {
-            changeStepperStep("indexing");
-            const txHash = res?.tx[0]?.hash;
-            if (txHash) {
-              await fetchData(
-                INDEXER.ATTESTATION_LISTENER(txHash, grant.chainID),
-                "POST",
-                {}
-              );
-            }
-            await checkIfAttestationExists(() => {
-              changeStepperStep("indexed");
-            }).then(() => {
-              toast.success(MESSAGES.GRANT.DELETE.SUCCESS);
-              router.push(
-                PAGES.PROJECT.GRANTS(
-                  project?.uid || project?.details?.data.slug || ""
-                )
-              );
-            });
+        try {
+          const res = await grantInstance.revoke(walletSigner, changeStepperStep);
+          changeStepperStep("indexing");
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, grant.chainID),
+              "POST",
+              {}
+            );
+          }
+          await checkIfAttestationExists(() => {
+            changeStepperStep("indexed");
+            toast.success(MESSAGES.GRANT.DELETE.SUCCESS);
           });
+        } catch (onChainError: any) {
+          // Silently fallback to off-chain revoke
+          setIsStepper(false); // Reset stepper since we're falling back
+
+          const success = await performOffChainRevoke({
+            uid: grantUID as `0x${string}`,
+            chainID: grantInstance.chainID,
+            checkIfExists: checkIfAttestationExists,
+            onSuccess: () => {
+              changeStepperStep("indexed");
+            },
+            toastMessages: {
+              success: MESSAGES.GRANT.DELETE.SUCCESS,
+              loading: MESSAGES.GRANT.DELETE.LOADING,
+            },
+          });
+
+          if (!success) {
+            // Both methods failed - throw the original error to maintain expected behavior
+            throw onChainError;
+          }
+        }
       }
     } catch (error: any) {
       errorManager(

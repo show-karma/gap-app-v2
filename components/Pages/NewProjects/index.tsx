@@ -143,7 +143,7 @@ export const NewProjectsPage = () => {
                                 >
                                   {
                                     sortOptions[
-                                      sortOption as ExplorerSortByOptions
+                                    sortOption as ExplorerSortByOptions
                                     ]
                                   }
                                 </span>
@@ -175,14 +175,12 @@ export const NewProjectsPage = () => {
           </div>
         </div>
 
-        {/* <div className="flex gap-8 flex-row max-lg:flex-col-reverse w-full h-full"> */}
         <div className="h-full w-full my-4">
           {projects && projects.length > 0 ? (
             <InfiniteScroll
               dataLength={projects.length}
               next={loadMore}
               hasMore={haveMore}
-              // loader={<ProjectCardListSkeleton />}
               loader={null}
               style={{
                 width: "100%",
@@ -221,7 +219,7 @@ export const NewProjectsPage = () => {
                               left:
                                 +(style.left || 0) +
                                 (columnIndex * gutterSize) /
-                                  (columnCounter - 1),
+                                (columnCounter - 1),
                               width: +(style.width || 0) - gutterSize,
                               top:
                                 rowIndex === 0

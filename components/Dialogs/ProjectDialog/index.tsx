@@ -18,10 +18,6 @@ import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import { MESSAGES } from "@/utilities/messages";
 import { Dialog, Transition } from "@headlessui/react";
 import {
-  ExclamationTriangleIcon,
-  UserCircleIcon,
-} from "@heroicons/react/24/outline";
-import {
   ChevronRightIcon,
   PlusIcon,
   XMarkIcon,
@@ -76,6 +72,7 @@ import debounce from "lodash.debounce";
 import { SimilarProjectsDialog } from "../SimilarProjectsDialog";
 import { ContactInfoSection } from "./ContactInfoSection";
 import { NetworkDropdown } from "./NetworkDropdown";
+import { FaucetSection } from "./FaucetSection";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { FarcasterIcon } from "@/components/Icons/Farcaster";
@@ -285,12 +282,15 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
+  const [isChangingNetwork, setIsChangingNetwork] = useState(false);
   const { openConnectModal } = useConnectModal();
   const router = useRouter();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
   const { openSimilarProjectsModal, isSimilarProjectsModalOpen } =
     useSimilarProjectsModalStore();
+  const [walletSigner, setWalletSigner] = useState<any>(null);
+  const [faucetFunded, setFaucetFunded] = useState(false);
 
   const {
     register,
@@ -308,6 +308,77 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     defaultValues: dataToUpdate,
   });
   const { errors, isValid } = formState;
+
+  // Watch the chainID value for the useEffect
+  const chainIDValue = watch("chainID");
+  
+  // Handle network change and chain switching
+  const handleNetworkChange = async (networkId: number) => {
+    if (!isConnected || !address) {
+      return;
+    }
+    
+    setIsChangingNetwork(true);
+    
+    try {
+      // If we're not on the selected network, switch to it
+      if (chain?.id !== networkId) {
+        await switchChainAsync({ chainId: networkId });
+        // Wait a bit for the chain switch to complete
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+      
+      // Now get the wallet client for the new chain
+      const { walletClient, error } = await safeGetWalletClient(networkId);
+      
+      if (!error && walletClient) {
+        const signer = await walletClientToSigner(walletClient);
+        setWalletSigner(signer);
+      } else {
+        setWalletSigner(null);
+        toast.error("Failed to connect to the selected network");
+      }
+    } catch (error) {
+      console.error("Failed to switch network:", error);
+      toast.error("Failed to switch network. Please try again.");
+      setWalletSigner(null);
+      throw error; // Re-throw to let NetworkDropdown handle it
+    } finally {
+      setIsChangingNetwork(false);
+    }
+  };
+  
+  // Prepare wallet signer when wallet is connected and chain is selected
+  useEffect(() => {
+    const prepareSigner = async () => {
+      if (isConnected && address && chainIDValue) {
+        try {
+          // Check if we're on the correct chain
+          if (chain?.id === chainIDValue) {
+            // Get wallet client for the current chain
+            const { walletClient, error } = await safeGetWalletClient(chainIDValue);
+            
+            if (!error && walletClient) {
+              const signer = await walletClientToSigner(walletClient);
+              setWalletSigner(signer);
+            } else {
+              setWalletSigner(null);
+            }
+          } else {
+            // Chain mismatch, signer will be set after chain switch
+            setWalletSigner(null);
+          }
+        } catch (error) {
+          console.error("Failed to prepare wallet signer:", error);
+          setWalletSigner(null);
+        }
+      } else {
+        setWalletSigner(null);
+      }
+    };
+    
+    prepareSigner();
+  }, [isConnected, address, chainIDValue, chain?.id]);
 
   // Reset form when switching between create/edit modes or when modal opens
   useEffect(() => {
@@ -364,6 +435,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         setContacts([]);
         setCustomLinks([]);
         setStep(0);
+        setFaucetFunded(false);
       }
     }
   }, [isOpen, projectToUpdate, previousContacts, reset]);
@@ -749,6 +821,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         }
       );
       setIsStepper(false);
+      // Don't reset form on error - keep user's data
       openModal();
     } finally {
       setIsLoading(false);
@@ -1137,19 +1210,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
             <p className="text-red-500">{errors.locationOfImpact?.message}</p>
           </div>
 
-          {/* <div className="flex w-full flex-col gap-2">
-        <label htmlFor="tags-input" className={labelStyle}>
-        Tags (Helps users discover your project)
-        </label>
-        <input
-          id="tags-input"
-          type="text"
-          className={inputStyle}
-          placeholder="e.g. Dev Tool, Defi, NFT, Governance"
-          {...register('tags')}
-        />
-        <p className="text-red-500">{errors.tags?.message}</p>
-      </div> */}
           {isOwner && !projectToUpdate && (
             <div className="flex w-full flex-col gap-2">
               <label htmlFor="recipient-input" className={labelStyle}>
@@ -1539,11 +1599,76 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                   setValue("chainID", networkId, {
                     shouldValidate: true,
                   });
+                  // Reset faucet funding status when network changes
+                  setFaucetFunded(false);
                 }}
+                onNetworkChange={handleNetworkChange}
+                isChangingNetwork={isChangingNetwork}
                 networks={appNetwork}
                 previousValue={watch("chainID")}
               />
               <p className="text-red-500">{errors.chainID?.message}</p>
+              
+              {/* Show network status */}
+              {isChangingNetwork && (
+                <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <p className="text-sm text-blue-800 dark:text-blue-200 font-medium flex items-center gap-2">
+                    <span className="h-4 w-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                    Switching to selected network...
+                  </p>
+                </div>
+              )}
+              
+              {/* Add FaucetSection for gas funding - keep visible even after funding */}
+              {watch("chainID") && walletSigner && !isChangingNetwork && (
+                <FaucetSection
+                  chainId={watch("chainID")}
+                  projectFormData={{
+                    title: watch("title"),
+                    description: watch("description"),
+                    problem: watch("problem"),
+                    solution: watch("solution"),
+                    missionSummary: watch("missionSummary"),
+                    locationOfImpact: watch("locationOfImpact"),
+                    profilePicture: watch("profilePicture"),
+                    twitter: watch("twitter"),
+                    github: watch("github"),
+                    discord: watch("discord"),
+                    website: watch("website"),
+                    linkedin: watch("linkedin"),
+                    pitchDeck: watch("pitchDeck"),
+                    demoVideo: watch("demoVideo"),
+                    farcaster: watch("farcaster"),
+                    recipient: watch("recipient"),
+                    businessModel: watch("businessModel"),
+                    stageIn: watch("stageIn"),
+                    raisedMoney: watch("raisedMoney"),
+                    pathToTake: watch("pathToTake"),
+                    customLinks: customLinks,
+                  }}
+                  walletSigner={walletSigner}
+                  recipient={(watch("recipient") || address) as Hex}
+                  onFundsReceived={async () => {
+                    setFaucetFunded(true);
+                    toast.success("Wallet funded! You can now create your project.");
+                    
+                    // Refresh wallet signer after funding
+                    try {
+                      await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for blockchain state
+                      const chainId = watch("chainID");
+                      if (chainId) {
+                        const { walletClient, error } = await safeGetWalletClient(chainId);
+                        if (!error && walletClient) {
+                          const signer = await walletClientToSigner(walletClient);
+                          setWalletSigner(signer);
+                        }
+                      }
+                    } catch (error) {
+                      console.error("Failed to refresh wallet signer after funding:", error);
+                    }
+                  }}
+                />
+              )}
             </div>
           ) : null}
         </div>

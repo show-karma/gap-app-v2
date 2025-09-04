@@ -56,21 +56,6 @@ export const ProjectActivityBlock = ({
     ? filteredAnswers
     : filteredAnswers.filter((item) => item.datapoints?.length);
 
-  // const relatedGrants = useMemo(() => {
-  //   if (
-  //     !project ||
-  //     !activity?.data?.grants ||
-  //     activity?.data?.grants?.length === 0
-  //   )
-  //     return [];
-
-  //   // Find grants that match the activity's grants
-  //   return project.grants.filter((grant) =>
-  //     activity?.data?.grants?.some(
-  //       (grantId) => grantId.toLowerCase() === grant.uid.toLowerCase()
-  //     )
-  //   );
-  // }, [project, activity?.data?.grants]);
 
   if (
     !activity.data?.deliverables?.length &&
@@ -91,7 +76,7 @@ export const ProjectActivityBlock = ({
           </p>
           <div className="w-full">
             {activity.data?.deliverables &&
-            activity.data?.deliverables?.length > 0 ? (
+              activity.data?.deliverables?.length > 0 ? (
               <div className="grid grid-cols-1 gap-4">
                 {activity.data.deliverables.map((deliverable, index) => (
                   <div
@@ -165,48 +150,6 @@ export const ProjectActivityBlock = ({
             indicatorNames={indicatorNames}
           />
 
-          {/* Grants Section */}
-          {/* {relatedGrants?.length > 0 ? (
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-zinc-700">
-              <p className="text-sm font-bold text-black dark:text-zinc-100 mb-3">
-                Related Grants
-              </p>
-
-              <div className="grid grid-cols-1 gap-2">
-                {relatedGrants.map((grant) => (
-                  <div key={grant.uid} className="flex items-center gap-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4 text-green-500 dark:text-green-400"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    <ExternalLink
-                      href={PAGES.PROJECT.GRANT(
-                        project?.details?.data.slug || (project?.uid as string),
-                        grant.uid
-                      )}
-                      className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium"
-                      aria-label={`View grant: ${
-                        grant.details?.data?.title || grant.uid
-                      }`}
-                      tabIndex={0}
-                    >
-                      {grant.details?.data?.title || grant.uid}
-                    </ExternalLink>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : null} */}
         </div>
       ) : null}
     </div>

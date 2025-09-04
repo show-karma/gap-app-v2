@@ -77,7 +77,6 @@ export const ManagePrograms = () => {
     }
   );
 
-  // const [grantPrograms, setGrantPrograms] = useState<GrantProgram[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [programToEdit, setProgramToEdit] = useState<GrantProgram | null>(null);
 
@@ -196,9 +195,8 @@ export const ManagePrograms = () => {
   const getGrantPrograms = async () => {
     try {
       const baseUrl = INDEXER.REGISTRY.GET_ALL;
-      const queryParams = `?isValid=${tab}&limit=${pageSize}&offset=${
-        (page - 1) * pageSize
-      }`;
+      const queryParams = `?isValid=${tab}&limit=${pageSize}&offset=${(page - 1) * pageSize
+        }`;
       const searchParam = searchInput ? `&name=${searchInput}` : "";
       const networkParam = selectedNetworks.length
         ? `&networks=${selectedNetworks.join(",")}`
@@ -401,23 +399,6 @@ export const ManagePrograms = () => {
                     Manage Grant Programs
                   </h1>
                 </div>
-                {/* <div className="h-44 w-[1px] bg-[#98A2B3] max-md:w-full max-md:h-[1px]" />
-            <div className="flex flex-1 flex-col gap-2 items-center max-sm:items-start">
-              <div className="flex flex-1 flex-col gap-2 items-start">
-                <p className="text-brand-darkblue dark:text-white font-body font-semibold text-xl">
-                  Be the first to know a new program launches
-                </p>
-                <div className="flex flex-row gap-4 max-sm:flex-col max-sm:w-full">
-                  <input
-                    className="border rounded-lg w-full max-w-96 text-base px-3.5 py-3 border-black  max-sm:w-full dark:border-white bg-transparent dark:text-white text-black placeholder:dark:text-zinc-500 placeholder:text-zinc-800"
-                    placeholder="Enter your e-mail"
-                  />
-                  <button className="bg-[#0E101B] w-max text-base dark:bg-slate-800 max-sm:w-full text-white px-10 py-2.5 rounded-lg">
-                    Subscribe
-                  </button>
-                </div>
-              </div>
-            </div> */}
               </div>
               <div className="w-full">
                 <div className="flex flex-wrap w-max gap-2 rounded-t bg-[#F2F4F7] dark:bg-zinc-800 px-2 py-1">
@@ -511,7 +492,7 @@ export const ManagePrograms = () => {
                       }}
                       type={"Ecosystems"}
                       selected={selectedEcosystems}
-                      // imageDictionary={}
+                    // imageDictionary={}
                     />
                     <SearchDropdown
                       list={registryHelper.grantTypes}
@@ -523,7 +504,7 @@ export const ManagePrograms = () => {
                       }}
                       type={"Funding Mechanisms"}
                       selected={selectedGrantTypes}
-                      // imageDictionary={}
+                    // imageDictionary={}
                     />
                   </div>
                 </div>

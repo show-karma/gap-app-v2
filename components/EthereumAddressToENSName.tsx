@@ -11,10 +11,6 @@ const EthereumAddressToENSName: React.FC<Props> = ({
   address,
   shouldTruncate = true,
 }) => {
-  // const { data: ensName, isLoading } = useEnsName({
-  //   address: address,
-  //   cacheTime: 50000,
-  // });
   const ensNames = useENS((state) => state.ensData);
   const populateEns = useENS((state) => state.populateEns);
   const lowerCasedAddress = address.toLowerCase();
