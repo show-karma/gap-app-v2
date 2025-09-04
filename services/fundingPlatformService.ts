@@ -504,6 +504,24 @@ export const fundingApplicationsAPI = {
     return { data: response.data, filename };
   },
 
+  /**
+   * Run AI evaluation on an existing application by reference number (Admin only)
+   */
+  async runAIEvaluation(
+    referenceNumber: string
+  ): Promise<{ 
+    success: boolean; 
+    referenceNumber: string; 
+    evaluation: string; 
+    promptId: string; 
+    updatedAt: string; 
+  }> {
+    const response = await apiClient.post(
+      `/v2/funding-applications/${referenceNumber}/evaluate`
+    );
+    return response.data;
+  },
+
 };
 
 // Combined service for easy import
