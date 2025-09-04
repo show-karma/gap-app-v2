@@ -115,7 +115,7 @@ export const LinkContractAddressButton: FC<
   useEffect(() => {
     const loadAddressesWithVerification = async () => {
       if (project?.external?.network_addresses?.length) {
-        const pairs = project.external.network_addresses.map((entry) => {
+        const pairs = project.external.network_addresses.map((entry: string) => {
           const [network, address] = entry.split(":");
           return { network, address };
         });
@@ -123,7 +123,7 @@ export const LinkContractAddressButton: FC<
         // Fetch verification status for all addresses
         try {
           const verificationStatus = await getVerificationStatus(project.uid);
-          const pairsWithVerification = pairs.map(pair => ({
+          const pairsWithVerification = pairs.map((pair: NetworkAddressPair) => ({
             ...pair,
             verified: verificationStatus[pair.address.toLowerCase()]?.verified || false,
             verifiedAt: verificationStatus[pair.address.toLowerCase()]?.verifiedAt,
@@ -203,10 +203,43 @@ export const LinkContractAddressButton: FC<
   const handleSave = async (close=true) => {
     setIsLoading(true);
     setError(null);
+    
+    // Validate that all pairs have both network and address
+    const incompletePairs = networkAddressPairs.filter(
+      (pair) => (pair?.address?.trim() !== "" && pair?.network?.trim() === "") ||
+                (pair?.address?.trim() === "" && pair?.network?.trim() !== "")
+    );
+    
+    if (incompletePairs.length > 0) {
+      toast.error("Please select a network for all contract addresses");
+      setIsLoading(false);
+      return;
+    }
+    
     // Filter out pairs with empty network or address
     const validPairs = networkAddressPairs.filter(
       (pair) => pair?.network?.trim() !== "" && pair?.address?.trim() !== ""
     );
+    
+    // Check for duplicates
+    const uniquePairs = new Map();
+    const duplicates: string[] = [];
+    
+    validPairs.forEach((pair) => {
+      const key = `${pair.network}:${pair.address.toLowerCase()}`;
+      if (uniquePairs.has(key)) {
+        duplicates.push(`${pair.network}:${pair.address}`);
+      } else {
+        uniquePairs.set(key, pair);
+      }
+    });
+    
+    if (duplicates.length > 0) {
+      toast.error(`Duplicate entries found and removed`);
+      setNetworkAddressPairs(Array.from(uniquePairs.values()));
+      setIsLoading(false);
+      return;
+    }
 
     // Format pairs as network:address strings
     const formattedAddresses = validPairs.map(
@@ -302,7 +335,7 @@ export const LinkContractAddressButton: FC<
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-3xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle transition-all ease-in-out duration-300">
+                <Dialog.Panel className="w-full max-w-3xl transform overflow-visible rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle transition-all ease-in-out duration-300">
                   <Dialog.Title
                     as="h3"
                     className="text-gray-900 dark:text-zinc-100"
@@ -333,16 +366,16 @@ export const LinkContractAddressButton: FC<
                       </div>
                     )}
                   </Dialog.Title>
-                  <div className="max-h-[60vh] flex flex-col gap-4 mt-8 overflow-y-auto">
+                  <div className="max-h-[60vh] flex flex-col gap-4 mt-8 overflow-y-auto overflow-x-hidden">
                     {networkAddressPairs.map((pair, index) => (
                       <div key={index} className="flex flex-col gap-2">
-                        <div className="flex items-center space-x-2">
-                          <div className="flex items-center justify-between p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg flex-grow">
-                            <div className="flex items-center space-x-4 w-full">
+                        <div className="flex flex-col md:flex-row items-start md:items-center space-y-2 md:space-y-0 md:space-x-2">
+                          <div className="flex items-center justify-between p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg flex-grow w-full">
+                            <div className="flex flex-col md:flex-row items-start md:items-center space-y-2 md:space-y-0 md:space-x-4 w-full">
                               <span className="text-md font-bold capitalize whitespace-nowrap">
                                 Contract {index + 1}
                               </span>
-                              <div className="flex-1 flex space-x-4">
+                              <div className="flex-1 flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4 w-full">
                                 <SearchDropdown
                                   onSelectFunction={(value) =>
                                     handleNetworkChange(index, value)
@@ -351,7 +384,7 @@ export const LinkContractAddressButton: FC<
                                   list={SUPPORTED_NETWORKS}
                                   type="network"
                                   prefixUnselected="Select"
-                                  buttonClassname="flex-1"
+                                  buttonClassname="flex-1 w-full md:w-auto"
                                 />
                                 <input
                                   type="text"
@@ -359,7 +392,7 @@ export const LinkContractAddressButton: FC<
                                   onChange={(e) =>
                                     handleAddressChange(index, e.target.value)
                                   }
-                                  className="flex-1 text-sm rounded-md text-gray-600 dark:text-gray-300 bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none focus:border-blue-500"
+                                  className="flex-1 w-full md:w-auto text-sm rounded-md text-gray-600 dark:text-gray-300 bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none focus:border-blue-500"
                                   placeholder="Enter contract address"
                                 />
                               </div>
@@ -368,7 +401,7 @@ export const LinkContractAddressButton: FC<
                           {networkAddressPairs.length > 1 && (
                             <Button
                               onClick={() => handleRemovePair(index)}
-                              className="p-2 text-red-500 hover:text-red-700"
+                              className="p-2 bg-red-500 text-white hover:bg-red-600 mt-2 md:mt-0"
                               aria-label="Remove contract"
                             >
                               <TrashIcon className="h-5 w-5" />
@@ -377,7 +410,7 @@ export const LinkContractAddressButton: FC<
                         </div>
                         {/* Verification Status */}
                         {pair.address && pair.network && (
-                          <div className="flex items-center justify-end gap-2 px-4">
+                          <div className="flex flex-wrap items-center justify-end gap-2 px-4">
                             {pair.verified ? (
                               <div className="flex items-center gap-1 text-green-600 dark:text-green-400 text-sm">
                                 <ShieldCheckIcon className="h-4 w-4" />
@@ -419,7 +452,7 @@ export const LinkContractAddressButton: FC<
                       {isLoading ? "Saving..." : "Save All"}
                     </Button>
                     <Button
-                      className="text-zinc-900 text-lg bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-zinc-900 hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900"
+                      className="text-zinc-900 bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-zinc-900 hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900"
                       onClick={handleClose}
                     >
                       Close
