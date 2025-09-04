@@ -2,6 +2,7 @@
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getGapClient, useGap } from "@/hooks/useGap";
+import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useWallet } from "@/hooks/useWallet";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
@@ -83,6 +84,7 @@ export const ObjectiveOptionsMenu = ({
   const { project, isProjectOwner } = useProjectStore();
   const { isOwner: isContractOwner } = useOwnerStore();
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
+  const { performOffChainRevoke } = useOffChainRevoke();
 
   const { refetch } = useQuery<IProjectMilestoneResponse[]>({
     queryKey: ["projectMilestones"],
@@ -148,50 +150,50 @@ export const ObjectiveOptionsMenu = ({
       };
 
       if (!isOnChainAuthorized) {
-        const toastLoading = toast.loading(
-          MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.LOADING
-        );
-        await fetchData(
-          INDEXER.PROJECT.REVOKE_ATTESTATION(
-            objectiveInstance?.uid as `0x${string}`,
-            objectiveInstance.chainID
-          ),
-          "POST",
-          {}
-        )
-          .then(async () => {
-            checkIfAttestationExists()
-              .then(() => {
-                toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.SUCCESS, {
-                  id: toastLoading,
-                });
-              })
-              .catch(() => {
-                toast.dismiss(toastLoading);
-              });
-          })
-          .catch(() => {
-            toast.dismiss(toastLoading);
-          });
+        await performOffChainRevoke({
+          uid: objectiveInstance?.uid as `0x${string}`,
+          chainID: objectiveInstance.chainID,
+          checkIfExists: checkIfAttestationExists,
+          toastMessages: {
+            success: MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.SUCCESS,
+            loading: MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.LOADING,
+          },
+        });
       } else {
-        await objectiveInstance
-          .revoke(walletSigner, changeStepperStep)
-          .then(async (res) => {
-            changeStepperStep("indexing");
-            const txHash = res?.tx[0]?.hash;
-            if (txHash) {
-              await fetchData(
-                INDEXER.ATTESTATION_LISTENER(txHash, objectiveInstance.chainID),
-                "POST",
-                {}
-              );
-            }
-            await checkIfAttestationExists(() => {
-              changeStepperStep("indexed");
-            }).then(() => {
-              toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.SUCCESS);
-            });
+        try {
+          const res = await objectiveInstance.revoke(walletSigner, changeStepperStep);
+          changeStepperStep("indexing");
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, objectiveInstance.chainID),
+              "POST",
+              {}
+            );
+          }
+          await checkIfAttestationExists(() => {
+            changeStepperStep("indexed");
           });
+          toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.SUCCESS);
+        } catch (onChainError: any) {
+          // Silently fallback to off-chain revoke
+          setIsStepper(false); // Reset stepper since we're falling back
+          
+          const success = await performOffChainRevoke({
+            uid: objectiveInstance?.uid as `0x${string}`,
+            chainID: objectiveInstance.chainID,
+            checkIfExists: checkIfAttestationExists,
+            toastMessages: {
+              success: MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.SUCCESS,
+              loading: MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.LOADING,
+            },
+          });
+          
+          if (!success) {
+            // Both methods failed - throw the original error to maintain expected behavior
+            throw onChainError;
+          }
+        }
       }
     } catch (error: any) {
       errorManager(

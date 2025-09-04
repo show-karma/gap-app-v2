@@ -1,6 +1,7 @@
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getGapClient, useGap } from "@/hooks/useGap";
+import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -38,6 +39,7 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({
   const { changeStepperStep, setIsStepper } = useStepper();
   const { switchChainAsync } = useWallet();
   const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { performOffChainRevoke } = useOffChainRevoke();
 
   const deleteMember = async () => {
     // await deleteMemberFromProject(memberAddress);
@@ -73,78 +75,64 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({
         (item) => item.recipient.toLowerCase() === memberAddress.toLowerCase()
       );
       if (!member) throw new Error("Member not found");
-      await member
-        .revoke(walletSigner as any, changeStepperStep)
-        .then(async (res) => {
-          let retries = 1000;
-          changeStepperStep("indexing");
-          const txHash = res?.tx[0]?.hash;
-          if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, project.chainID),
-              "POST",
-              {}
-            );
+      // Helper function to check if member was removed
+      const checkIfMemberRemoved = async () => {
+        let retries = 1000;
+        while (retries > 0) {
+          const refreshedProject = await refreshProject();
+          const currentMember = refreshedProject?.members.find(
+            (item) =>
+              item.recipient.toLowerCase() === memberAddress.toLowerCase()
+          );
+          queryClient.invalidateQueries({
+            queryKey: ["memberRoles", project?.uid],
+          });
+          if (!currentMember) {
+            return;
           }
-          while (retries > 0) {
-            await refreshProject().then(async (refreshedProject) => {
-              const currentMember = refreshedProject?.members.find(
-                (item) =>
-                  item.recipient.toLowerCase() === memberAddress.toLowerCase()
-              );
-              if (!currentMember) {
-                retries = 0;
-                changeStepperStep("indexed");
-                toast.success("Member removed successfully");
-                closeModal();
-              }
-            });
+          retries -= 1;
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+        }
+        throw new Error("Member removal timed out");
+      };
 
-            retries -= 1;
-            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-            await new Promise((resolve) => setTimeout(resolve, 1500));
-          }
-        })
-        .catch(async (revokeError) => {
-          // Fallback: Try POST request if on-chain revoke fails
-          const toastLoading = toast.loading("Removing member...");
-          try {
-            await fetchData(
-              INDEXER.PROJECT.REVOKE_ATTESTATION(
-                member.uid as `0x${string}`,
-                member.chainID
-              ),
-              "POST",
-              {}
-            );
-
-            let retries = 1000;
-            while (retries > 0) {
-              const refreshedProject = await refreshProject();
-              const currentMember = refreshedProject?.members.find(
-                (item) =>
-                  item.recipient.toLowerCase() === memberAddress.toLowerCase()
-              );
-              queryClient.invalidateQueries({
-                queryKey: ["memberRoles", project?.uid],
-              });
-              if (!currentMember) {
-                toast.success("Member removed successfully", {
-                  id: toastLoading,
-                });
-                closeModal();
-                return;
-              }
-              retries -= 1;
-              await new Promise((resolve) => setTimeout(resolve, 1500));
-            }
-            toast.dismiss(toastLoading);
-            throw new Error("Member removal timed out");
-          } catch (fallbackError) {
-            toast.dismiss(toastLoading);
-            throw revokeError; // Re-throw original error
-          }
+      try {
+        const res = await member.revoke(walletSigner as any, changeStepperStep);
+        changeStepperStep("indexing");
+        const txHash = res?.tx[0]?.hash;
+        if (txHash) {
+          await fetchData(
+            INDEXER.ATTESTATION_LISTENER(txHash, project.chainID),
+            "POST",
+            {}
+          );
+        }
+        await checkIfMemberRemoved();
+        changeStepperStep("indexed");
+        toast.success("Member removed successfully");
+        closeModal();
+      } catch (onChainError: any) {
+        // Silently fallback to off-chain revoke
+        setIsStepper(false); // Reset stepper since we're falling back
+        
+        const success = await performOffChainRevoke({
+          uid: member.uid as `0x${string}`,
+          chainID: member.chainID,
+          checkIfExists: checkIfMemberRemoved,
+          onSuccess: () => {
+            closeModal();
+          },
+          toastMessages: {
+            success: "Member removed successfully",
+            loading: "Removing member...",
+          },
         });
+        
+        if (!success) {
+          // Both methods failed - throw the original error to maintain expected behavior
+          throw onChainError;
+        }
+      }
     } catch (error: any) {
       errorManager(
         `Error removing member ${memberAddress}`,

@@ -1,7 +1,7 @@
 "use client";
-import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { getGapClient, useGap } from "@/hooks/useGap";
+import { useGap } from "@/hooks/useGap";
+import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useWallet } from "@/hooks/useWallet";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
@@ -16,16 +16,14 @@ import { retryUntilConditionMet } from "@/utilities/retries";
 import { getProjectById } from "@/utilities/sdk";
 import { cn } from "@/utilities/tailwind";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { Menu, Transition } from "@headlessui/react";
 import { TrashIcon } from "@heroicons/react/24/outline";
-import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
 import { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useQuery } from "@tanstack/react-query";
 
 import dynamic from "next/dynamic";
-import { useParams, useRouter } from "next/navigation";
-import { Fragment, useState } from "react";
+import { useParams } from "next/navigation";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 
@@ -48,12 +46,12 @@ export const ObjectiveSimpleOptionsMenu = ({
   const { address } = useAccount();
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
-  const router = useRouter();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
   const { project, isProjectOwner } = useProjectStore();
   const { isOwner: isContractOwner } = useOwnerStore();
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
+  const { performOffChainRevoke } = useOffChainRevoke();
 
   const { refetch } = useQuery<IProjectMilestoneResponse[]>({
     queryKey: ["projectMilestones"],
@@ -119,50 +117,50 @@ export const ObjectiveSimpleOptionsMenu = ({
       };
 
       if (!isOnChainAuthorized) {
-        const toastLoading = toast.loading(
-          MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.LOADING
-        );
-        await fetchData(
-          INDEXER.PROJECT.REVOKE_ATTESTATION(
-            objectiveInstance?.uid as `0x${string}`,
-            objectiveInstance.chainID
-          ),
-          "POST",
-          {}
-        )
-          .then(async () => {
-            checkIfAttestationExists()
-              .then(() => {
-                toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.SUCCESS, {
-                  id: toastLoading,
-                });
-              })
-              .catch(() => {
-                toast.dismiss(toastLoading);
-              });
-          })
-          .catch(() => {
-            toast.dismiss(toastLoading);
-          });
+        await performOffChainRevoke({
+          uid: objectiveInstance?.uid as `0x${string}`,
+          chainID: objectiveInstance.chainID,
+          checkIfExists: checkIfAttestationExists,
+          toastMessages: {
+            success: MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.SUCCESS,
+            loading: MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.LOADING,
+          },
+        });
       } else {
-        await objectiveInstance
-          .revoke(walletSigner, changeStepperStep)
-          .then(async (res) => {
-            changeStepperStep("indexing");
-            const txHash = res?.tx[0]?.hash;
-            if (txHash) {
-              await fetchData(
-                INDEXER.ATTESTATION_LISTENER(txHash, objectiveInstance.chainID),
-                "POST",
-                {}
-              );
-            }
-            await checkIfAttestationExists(() => {
-              changeStepperStep("indexed");
-            }).then(() => {
-              toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.SUCCESS);
-            });
+        try {
+          const res = await objectiveInstance.revoke(walletSigner, changeStepperStep);
+          changeStepperStep("indexing");
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, objectiveInstance.chainID),
+              "POST",
+              {}
+            );
+          }
+          await checkIfAttestationExists(() => {
+            changeStepperStep("indexed");
           });
+          toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.SUCCESS);
+        } catch (onChainError: any) {
+          // Silently fallback to off-chain revoke
+          setIsStepper(false); // Reset stepper since we're falling back
+          
+          const success = await performOffChainRevoke({
+            uid: objectiveInstance?.uid as `0x${string}`,
+            chainID: objectiveInstance.chainID,
+            checkIfExists: checkIfAttestationExists,
+            toastMessages: {
+              success: MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.SUCCESS,
+              loading: MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.LOADING,
+            },
+          });
+          
+          if (!success) {
+            // Both methods failed - throw the original error to maintain expected behavior
+            throw onChainError;
+          }
+        }
       }
     } catch (error: any) {
       console.log(error);
@@ -198,52 +196,4 @@ export const ObjectiveSimpleOptionsMenu = ({
       }}
     />
   );
-
-  // return (
-  //   <>
-  //     <Menu as="div" className="relative inline-block text-left">
-  //       <Menu.Button className="w-max bg-transparent hover:bg-zinc-100 hover:dark:bg-zinc-800 text-black dark:text-white p-0 rounded-lg">
-  //         <EllipsisVerticalIcon
-  //           className="h-6 w-6 text-zinc-500"
-  //           aria-hidden="true"
-  //         />
-  //       </Menu.Button>
-  //       <Transition
-  //         as={Fragment}
-  //         enter="transition ease-out duration-100"
-  //         enterFrom="transform opacity-0 scale-95"
-  //         enterTo="transform opacity-100 scale-100"
-  //         leave="transition ease-in duration-75"
-  //         leaveFrom="transform opacity-100 scale-100"
-  //         leaveTo="transform opacity-0 scale-95"
-  //       >
-  //         <Menu.Items
-  //           modal
-  //           className="absolute right-0 mt-2 w-48 origin-top-right divide-y divide-gray-100 rounded-md bg-white dark:bg-zinc-800 shadow-lg ring-1 ring-black/5 focus:outline-none z-50"
-  //         >
-  //           <div className="flex flex-col gap-1 px-1 py-1">
-  //             <DeleteDialog
-  //               title="Are you sure you want to delete this milestone?"
-  //               deleteFunction={deleteFn}
-  //               isLoading={isDeleting}
-  //               buttonElement={{
-  //                 icon: (
-  //                   <TrashIcon
-  //                     className={"h-5 w-5 text-[#D92D20] dark:text-red-500"}
-  //                     aria-hidden="true"
-  //                   />
-  //                 ),
-  //                 text: "Delete",
-  //                 styleClass: cn(
-  //                   buttonClassName,
-  //                   "text-[#D92D20] dark:text-red-500"
-  //                 ),
-  //               }}
-  //             />
-  //           </div>
-  //         </Menu.Items>
-  //       </Transition>
-  //     </Menu>
-  //   </>
-  // );
 };

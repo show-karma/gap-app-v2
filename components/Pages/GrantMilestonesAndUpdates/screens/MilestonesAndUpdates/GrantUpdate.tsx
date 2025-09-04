@@ -1,5 +1,6 @@
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { getGapClient, useGap } from "@/hooks/useGap";
+import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useStepper } from "@/store/modals/txStepper";
@@ -89,6 +90,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
   const { project, isProjectOwner } = useProjectStore();
   const { isOwner: isContractOwner } = useOwnerStore();
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
+  const { performOffChainRevoke } = useOffChainRevoke();
 
   const undoGrantUpdate = async () => {
     let gapClient = gap;
@@ -145,54 +147,54 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
       };
 
       if (!isOnChainAuthorized) {
-        const toastLoading = toast.loading(
-          MESSAGES.GRANT.GRANT_UPDATE.UNDO.LOADING
-        );
-        await fetchData(
-          INDEXER.PROJECT.REVOKE_ATTESTATION(
-            grantUpdateInstance.uid as `0x${string}`,
-            grantUpdateInstance.chainID
-          ),
-          "POST",
-          {}
-        )
-          .then(async () => {
-            checkIfAttestationExists()
-              .then(() => {
-                toast.success(MESSAGES.GRANT.GRANT_UPDATE.UNDO.SUCCESS, {
-                  id: toastLoading,
-                });
-              })
-              .catch(() => {
-                toast.dismiss(toastLoading);
-              });
-          })
-          .catch(() => {
-            toast.dismiss(toastLoading);
-          });
+        await performOffChainRevoke({
+          uid: grantUpdateInstance.uid as `0x${string}`,
+          chainID: grantUpdateInstance.chainID,
+          checkIfExists: checkIfAttestationExists,
+          toastMessages: {
+            success: MESSAGES.GRANT.GRANT_UPDATE.UNDO.SUCCESS,
+            loading: MESSAGES.GRANT.GRANT_UPDATE.UNDO.LOADING,
+          },
+        });
       } else {
-        await grantUpdateInstance
-          .revoke(walletSigner as any, changeStepperStep)
-          .then(async (res) => {
-            changeStepperStep("indexing");
-            const txHash = res?.tx[0]?.hash;
-            if (txHash) {
-              await fetchData(
-                INDEXER.ATTESTATION_LISTENER(
-                  txHash,
-                  grantUpdateInstance.chainID
-                ),
-                "POST",
-                {}
-              );
-            }
+        try {
+          const res = await grantUpdateInstance.revoke(walletSigner as any, changeStepperStep);
+          changeStepperStep("indexing");
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(
+                txHash,
+                grantUpdateInstance.chainID
+              ),
+              "POST",
+              {}
+            );
+          }
 
-            await checkIfAttestationExists(() => {
-              changeStepperStep("indexed");
-            }).then(() => {
-              toast.success(MESSAGES.GRANT.GRANT_UPDATE.UNDO.SUCCESS);
-            });
+          await checkIfAttestationExists(() => {
+            changeStepperStep("indexed");
           });
+          toast.success(MESSAGES.GRANT.GRANT_UPDATE.UNDO.SUCCESS);
+        } catch (onChainError: any) {
+          // Silently fallback to off-chain revoke
+          setIsStepper(false); // Reset stepper since we're falling back
+          
+          const success = await performOffChainRevoke({
+            uid: grantUpdateInstance.uid as `0x${string}`,
+            chainID: grantUpdateInstance.chainID,
+            checkIfExists: checkIfAttestationExists,
+            toastMessages: {
+              success: MESSAGES.GRANT.GRANT_UPDATE.UNDO.SUCCESS,
+              loading: MESSAGES.GRANT.GRANT_UPDATE.UNDO.LOADING,
+            },
+          });
+          
+          if (!success) {
+            // Both methods failed - throw the original error to maintain expected behavior
+            throw onChainError;
+          }
+        }
       }
     } catch (error: any) {
       errorManager(
