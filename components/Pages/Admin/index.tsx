@@ -21,7 +21,7 @@ import { LinkIcon } from "@heroicons/react/24/solid";
 import CommunityStats from "@/components/CommunityStats";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
-import { useStaff } from "@/hooks/useStaff";
+import { useOwnerStore } from "@/store/owner";
 import { useCommunityConfig, useCommunityConfigMutation } from "@/hooks/useCommunityConfig";
 
 export const CommunitiesToAdmin = () => {
@@ -30,8 +30,7 @@ export const CommunitiesToAdmin = () => {
 
   const { communities: communitiesToAdmin, isLoading } = useCommunitiesStore();
   const { gap } = useGap();
-  const { isStaff } = useStaff();
-
+  const { isOwner } = useOwnerStore();
 
   const fetchCommunities = async () => {
     try {
@@ -114,8 +113,8 @@ export const CommunitiesToAdmin = () => {
                       <th className="min-w-[150px]">Network</th>
                       <th className="min-w-[150px]">Admins</th>
                       <th className="min-w-[100px]">Action</th>
-                      {isStaff && <th className="text-center">Public?</th>}
-                      {isStaff && <th className="text-center">Rank</th>}
+                      {isOwner && <th className="text-center">Public?</th>}
+                      {isOwner && <th className="text-center">Rank</th>}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-x">
@@ -125,7 +124,7 @@ export const CommunitiesToAdmin = () => {
                           adminOfCommunity.uid === community.uid
                       );
 
-                      if (!isCommunityAdmin) return null;
+                      if (!isCommunityAdmin && !isOwner) return null;
 
                       const matchingCommunityAdmin = communityAdmins.find(
                         (admin: any) => admin.id === community.uid
@@ -140,7 +139,8 @@ export const CommunitiesToAdmin = () => {
                           slug={slug}
                           matchingCommunityAdmin={matchingCommunityAdmin}
                           fetchCommunities={fetchCommunities}
-                          isStaff={isStaff}
+                          isOwner={isOwner}
+                          isCommunityAdmin={isCommunityAdmin}
                         />
                       );
                     })}
@@ -166,7 +166,8 @@ interface CommunityRowWithConfigProps {
   slug: string;
   matchingCommunityAdmin: any;
   fetchCommunities: () => Promise<Community[] | undefined>;
-  isStaff: boolean;
+  isOwner: boolean;
+  isCommunityAdmin: boolean;
 }
 
 const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
@@ -174,7 +175,8 @@ const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
   slug,
   matchingCommunityAdmin,
   fetchCommunities,
-  isStaff
+  isOwner,
+  isCommunityAdmin
 }) => {
   const updateConfigMutation = useCommunityConfigMutation();
   const { data: config, isLoading: configLoading } = useCommunityConfig(slug);
@@ -260,15 +262,19 @@ const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
           </Link>
         </td>
         <td className="text-center px-4 min-w-[120px]">
-          <Link
-            href={PAGES.ADMIN.ROOT(
-              community.details?.slug || community.uid
-            )}
-            className="flex flex-row items-center gap-1.5 text-blue-500"
-          >
-            Admin
-            <LinkIcon className="w-4 h-4" />
-          </Link>
+          {isCommunityAdmin ? (
+            <Link
+              href={PAGES.ADMIN.ROOT(
+                community.details?.slug || community.uid
+              )}
+              className="flex flex-row items-center gap-1.5 text-blue-500"
+            >
+              Admin
+              <LinkIcon className="w-4 h-4" />
+            </Link>
+          ) : (
+            <span className="text-gray-500">No access</span>
+          )}
         </td>
         <td className="text-center px-4 min-w-[120px]">
           <CommunityStats communityId={community.uid} />
@@ -284,7 +290,8 @@ const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
           </div>
         </td>
         <td className="min-w-[150px]">
-          {matchingCommunityAdmin &&
+          {isCommunityAdmin ? (
+            matchingCommunityAdmin &&
             matchingCommunityAdmin.admins &&
             matchingCommunityAdmin.admins.length > 0 &&
             matchingCommunityAdmin.admins.map(
@@ -301,16 +308,23 @@ const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
                   />
                 </div>
               )
-            )}
+            )
+          ) : (
+            <span className="text-gray-500 px-4">No access</span>
+          )}
         </td>
         <td className="min-w-[100px]">
-          <AddAdmin
-            UUID={community.uid}
-            chainid={community.chainID}
-            fetchAdmins={fetchCommunities}
-          />
+          {isCommunityAdmin ? (
+            <AddAdmin
+              UUID={community.uid}
+              chainid={community.chainID}
+              fetchAdmins={fetchCommunities}
+            />
+          ) : (
+            <span className="text-gray-500">No access</span>
+          )}
         </td>
-        {isStaff && (
+        {isOwner && (
           <td className="px-2 text-center">
             <div className="flex items-center justify-center gap-2">
               {configLoading ? (
@@ -331,7 +345,7 @@ const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
             </div>
           </td>
         )}
-        {isStaff && (
+        {isOwner && (
           <td className="px-2 text-center">
             <div className="flex items-center justify-center gap-2">
               {configLoading ? (
