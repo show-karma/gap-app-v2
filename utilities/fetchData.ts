@@ -40,6 +40,7 @@ export default async function fetchData(
       requestConfig.timeout = 360000;
     }
 
+    console.log(requestConfig);
     const res = await axios.request(requestConfig);
     let resData = res.data;
     let pageInfo = res.data.pageInfo || null;
