@@ -24,6 +24,7 @@ import { AIEvaluationDisplay } from "./AIEvaluation";
 import { useProgram } from "@/hooks/usePrograms";
 import { useProgramConfig, useApplicationComments } from "@/hooks/useFundingPlatform";
 import { StatusActionButtons } from "./StatusActionButtons";
+import AIEvaluationButton from "./AIEvaluationButton";
 
 interface ApplicationDetailSidesheetProps {
   application: IFundingApplication | null;
@@ -91,7 +92,7 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
   // Comment handlers
   const handleCommentAdd = useCallback(async (content: string) => {
     if (!application?.referenceNumber) return;
-    
+
     try {
       await createCommentAsync({ content });
     } catch (error) {
@@ -214,6 +215,27 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
       return revisionEntry?.reason;
     }
     return null;
+  };
+
+  const handleAIEvaluationComplete = async (evaluationResult: {
+    evaluation: string;
+    promptId: string;
+    updatedAt: string;
+  }) => {
+    // Update the local application state with the new AI evaluation
+    if (application) {
+      setApplication(prev => prev ? {
+        ...prev,
+        aiEvaluation: {
+          evaluation: evaluationResult.evaluation,
+          promptId: evaluationResult.promptId,
+        },
+        updatedAt: evaluationResult.updatedAt
+      } : null);
+
+      // Also fetch fresh data to ensure consistency
+      await fetchApplicationData(application.referenceNumber);
+    }
   };
 
   const renderApplicationData = () => {
@@ -698,9 +720,16 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
 
                           {/* AI Evaluation */}
                           <div>
-                            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                              AI Evaluation
-                            </h3>
+                            <div className="flex items-center justify-between mb-4">
+                              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                                AI Evaluation
+                              </h3>
+                              <AIEvaluationButton
+                                referenceNumber={application.referenceNumber}
+                                onEvaluationComplete={handleAIEvaluationComplete}
+                                disabled={isLoadingApplication}
+                              />
+                            </div>
                             {/* {renderAIEvaluation()} */}
                             <AIEvaluationDisplay
                               evaluation={application.aiEvaluation?.evaluation || null}
