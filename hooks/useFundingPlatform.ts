@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fundingPlatformService, IApplicationFilters } from '@/services/fundingPlatformService';
+import { fundingPlatformService, IApplicationFilters, fundingApplicationsAPI } from '@/services/fundingPlatformService';
+import { applicationCommentsService } from '@/services/application-comments.service';
 import { 
   IFormSchema, 
   IFundingApplication, 
@@ -9,9 +10,11 @@ import {
   IApplicationUpdateRequest,
   IApplicationStatusUpdateRequest,
   FundingApplicationStatusV2,
-  ExportFormat
+  ExportFormat,
+  ApplicationComment
 } from '@/types/funding-platform';
 import toast from 'react-hot-toast';
+import { errorManager } from '@/components/Utilities/errorManager';
 
 // Query keys for caching
 const QUERY_KEYS = {
@@ -20,11 +23,13 @@ const QUERY_KEYS = {
   programStats: (programId: string, chainId: number) => ['program-stats', programId, chainId],
   applications: (programId: string, chainId: number, filters: IApplicationFilters) => 
     ['applications', programId, chainId, filters],
-  application: (applicationId: string) => ['application', applicationId],
+  application: (applicationId: string) => ['funding-application', applicationId],
   applicationByReference: (referenceNumber: string) => ['application-by-reference', referenceNumber],
   applicationByEmail: (programId: string, chainId: number, email: string) => 
     ['application-by-email', programId, chainId, email],
   applicationStats: (programId: string, chainId: number) => ['application-stats', programId, chainId],
+  applicationComments: (applicationId: string, isAdmin?: boolean) => 
+    ['application-comments', applicationId, isAdmin],
 };
 
 /**
@@ -534,5 +539,175 @@ export const useApplicationExport = (programId: string, chainId: number, isAdmin
   return {
     exportApplications,
     isExporting,
+  };
+};
+
+/**
+ * Hook for fetching a single application with prefetch support
+ */
+export const useApplication = (applicationId: string | null) => {
+  const queryClient = useQueryClient();
+
+  const applicationQuery = useQuery({
+    queryKey: QUERY_KEYS.application(applicationId!),
+    queryFn: () => fundingApplicationsAPI.getApplication(applicationId!),
+    enabled: !!applicationId,
+  });
+
+  const prefetchApplication = useCallback((applicationId: string) => {
+    queryClient.prefetchQuery({
+      queryKey: QUERY_KEYS.application(applicationId),
+      queryFn: () => fundingApplicationsAPI.getApplication(applicationId),
+    });
+  }, [queryClient]);
+
+  const setApplicationData = useCallback((applicationId: string, data: IFundingApplication) => {
+    queryClient.setQueryData(QUERY_KEYS.application(applicationId), data);
+  }, [queryClient]);
+
+  return {
+    application: applicationQuery.data,
+    isLoading: applicationQuery.isLoading,
+    error: applicationQuery.error,
+    refetch: applicationQuery.refetch,
+    prefetchApplication,
+    setApplicationData,
+  };
+};
+
+/**
+ * Hook for managing application status updates
+ */
+export const useApplicationStatus = (programId?: string, chainId?: number) => {
+  const queryClient = useQueryClient();
+
+  const statusMutation = useMutation({
+    mutationFn: ({ applicationId, status, note }: { 
+      applicationId: string; 
+      status: string; 
+      note?: string 
+    }) =>
+      fundingApplicationsAPI.updateApplicationStatus(applicationId, {
+        status: status as any,
+        reason: note || '',
+      }),
+    onSuccess: (_, variables) => {
+      // Invalidate and refetch application data
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.application(variables.applicationId) });
+      
+      // Invalidate applications list if programId and chainId are provided
+      if (programId && chainId) {
+        queryClient.invalidateQueries({ 
+          queryKey: ['funding-applications', programId, chainId] 
+        });
+      }
+      
+      // Invalidate all applications lists
+      queryClient.invalidateQueries({ queryKey: ['funding-applications'] });
+      
+      toast.success('Application status updated successfully');
+    },
+    onError: (error: any) => {
+      const errorMessage = error?.response?.data?.message || 'Failed to update application status';
+      toast.error(errorMessage);
+      console.error('Failed to update application status:', error);
+    },
+  });
+
+  return {
+    updateStatus: statusMutation.mutate,
+    updateStatusAsync: statusMutation.mutateAsync,
+    isUpdating: statusMutation.isPending,
+    error: statusMutation.error,
+  };
+};
+
+/**
+ * Hook for managing application comments with React Query
+ */
+export const useApplicationComments = (applicationId: string | null, isAdmin: boolean = false) => {
+  const queryClient = useQueryClient();
+
+  // Query for fetching comments
+  const commentsQuery = useQuery({
+    queryKey: QUERY_KEYS.applicationComments(applicationId!, isAdmin),
+    queryFn: () => applicationCommentsService.getComments(applicationId!, isAdmin),
+    enabled: !!applicationId,
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    gcTime: 1000 * 60 * 5, // 5 minutes
+  });
+
+  // Mutation for creating comments
+  const createCommentMutation = useMutation({
+    mutationFn: ({ content, authorName }: { content: string; authorName?: string }) =>
+      applicationCommentsService.createComment(applicationId!, content, authorName),
+    onSuccess: () => {
+      // Invalidate and refetch comments after successful creation
+      queryClient.invalidateQueries({ 
+        queryKey: QUERY_KEYS.applicationComments(applicationId!, isAdmin) 
+      });
+      toast.success('Comment added successfully');
+    },
+    onError: (error: any) => {
+      const errorMessage = error?.response?.data?.message || 'Failed to add comment';
+      toast.error(errorMessage);
+      errorManager(errorMessage, error);
+      console.error('Failed to add comment:', error);
+    },
+  });
+
+  // Mutation for editing comments
+  const editCommentMutation = useMutation({
+    mutationFn: ({ commentId, content }: { commentId: string; content: string }) =>
+      applicationCommentsService.editComment(commentId, content),
+    onSuccess: () => {
+      // Invalidate and refetch comments after successful edit
+      queryClient.invalidateQueries({ 
+        queryKey: QUERY_KEYS.applicationComments(applicationId!, isAdmin) 
+      });
+      toast.success('Comment updated successfully');
+    },
+    onError: (error: any) => {
+      const errorMessage = error?.response?.data?.message || 'Failed to edit comment';
+      toast.error(errorMessage);
+      console.error('Failed to edit comment:', error);
+    },
+  });
+
+  // Mutation for deleting comments
+  const deleteCommentMutation = useMutation({
+    mutationFn: (commentId: string) =>
+      applicationCommentsService.deleteComment(commentId, isAdmin),
+    onSuccess: () => {
+      // Refetch comments after deletion
+      queryClient.invalidateQueries({ 
+        queryKey: QUERY_KEYS.applicationComments(applicationId!, isAdmin) 
+      });
+      toast.success('Comment deleted successfully');
+    },
+    onError: (error: any) => {
+      const errorMessage = error?.response?.data?.message || 'Failed to delete comment';
+      toast.error(errorMessage);
+      console.error('Failed to delete comment:', error);
+    },
+  });
+
+  return {
+    comments: commentsQuery.data || [],
+    isLoading: commentsQuery.isLoading,
+    error: commentsQuery.error,
+    refetch: commentsQuery.refetch,
+    
+    createComment: createCommentMutation.mutate,
+    createCommentAsync: createCommentMutation.mutateAsync,
+    isCreatingComment: createCommentMutation.isPending,
+    
+    editComment: editCommentMutation.mutate,
+    editCommentAsync: editCommentMutation.mutateAsync,
+    isEditingComment: editCommentMutation.isPending,
+    
+    deleteComment: deleteCommentMutation.mutate,
+    deleteCommentAsync: deleteCommentMutation.mutateAsync,
+    isDeletingComment: deleteCommentMutation.isPending,
   };
 };

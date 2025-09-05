@@ -1,6 +1,6 @@
 'use client';
 
-import { FC, useState } from 'react';
+import React, { FC, useState } from 'react';
 import { format, parseISO, isValid } from 'date-fns';
 import { 
   PencilIcon, 
@@ -32,6 +32,11 @@ const CommentItem: FC<CommentItemProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(comment.content);
   const [isUpdating, setIsUpdating] = useState(false);
+
+  // Update editContent when comment changes to handle optimistic updates
+  React.useEffect(() => {
+    setEditContent(comment.content);
+  }, [comment.content, comment.id]);
 
   // Users can edit their own comments (if not deleted)
   const isAuthor = currentUserAddress?.toLowerCase() === comment.authorAddress?.toLowerCase();
@@ -157,7 +162,10 @@ const CommentItem: FC<CommentItemProps> = ({
               <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 {canEdit && (
                   <button
-                    onClick={() => setIsEditing(true)}
+                    onClick={() => {
+                      setEditContent(comment.content); // Ensure we have the current content
+                      setIsEditing(true);
+                    }}
                     disabled={isUpdating}
                     className={cn(
                       'p-1 rounded text-gray-400 hover:text-gray-600',
