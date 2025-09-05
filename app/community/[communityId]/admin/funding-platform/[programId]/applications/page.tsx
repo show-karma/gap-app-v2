@@ -1,7 +1,6 @@
 "use client";
 import { useParams, useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useState, useMemo, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { useOwnerStore } from "@/store";
 import { useStaff } from "@/hooks/useStaff";
@@ -10,7 +9,7 @@ import {
   ApplicationDetailSidesheet,
 } from "@/components/FundingPlatform";
 import { IFundingApplication } from "@/types/funding-platform";
-import { IApplicationFilters, fundingApplicationsAPI } from "@/services/fundingPlatformService";
+import { IApplicationFilters } from "@/services/fundingPlatformService";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/Utilities/Button";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
@@ -18,8 +17,11 @@ import Link from "next/link";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { Cog6ToothIcon } from "@heroicons/react/24/outline";
-import { useFundingApplications } from "@/hooks/useFundingPlatform";
-import toast from "react-hot-toast";
+import { 
+  useFundingApplications, 
+  useApplication, 
+  useApplicationStatus 
+} from "@/hooks/useFundingPlatform";
 
 export default function ApplicationsPage() {
   const router = useRouter();
@@ -70,8 +72,6 @@ export default function ApplicationsPage() {
     useState<IFundingApplication | null>(null);
   const [isSidesheetOpen, setIsSidesheetOpen] = useState(false);
 
-  const queryClient = useQueryClient();
-
   const { isCommunityAdmin, isLoading: isLoadingAdmin } =
     useIsCommunityAdmin(communityId);
   const isOwner = useOwnerStore((state) => state.isOwner);
@@ -84,34 +84,16 @@ export default function ApplicationsPage() {
     initialFilters
   );
 
-  // React Query: Fetch individual application when ID is in URL
-  const { data: fetchedApplication, isLoading: isLoadingApplication } = useQuery({
-    queryKey: ['funding-application', applicationId],
-    queryFn: () => fundingApplicationsAPI.getApplication(applicationId!),
-    enabled: !!applicationId,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 10, // 10 minutes
-  });
+  // Use the custom application hook for fetching individual applications
+  const { 
+    application: fetchedApplication, 
+    isLoading: isLoadingApplication,
+    prefetchApplication,
+    setApplicationData
+  } = useApplication(applicationId);
 
-  // React Query: Mutation for updating application status
-  const statusMutation = useMutation({
-    mutationFn: ({ applicationId, status, note }: { applicationId: string; status: string; note?: string }) =>
-      fundingApplicationsAPI.updateApplicationStatus(applicationId, {
-        status: status as any,
-        reason: note || '',
-      }),
-    onSuccess: () => {
-      // Invalidate and refetch application data
-      queryClient.invalidateQueries({ queryKey: ['funding-applications', programId, parsedChainId] });
-      if (applicationId) {
-        queryClient.invalidateQueries({ queryKey: ['funding-application', applicationId] });
-      }
-    },
-    onError: (error: any) => {
-      toast.error(error?.response?.data?.message || "Failed to update application status");
-      console.error("Failed to update application status:", error);
-    },
-  });
+  // Use the custom application status hook
+  const { updateStatusAsync } = useApplicationStatus(programId, parsedChainId);
 
   const hasAccess = isCommunityAdmin || isOwner || isStaff;
 
@@ -149,17 +131,13 @@ export default function ApplicationsPage() {
     params.set("applicationId", application.referenceNumber);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
 
-    // Cache the application data in React Query
-    queryClient.setQueryData(['funding-application', application.referenceNumber], application);
+    // Cache the application data using the custom hook
+    setApplicationData(application.referenceNumber, application);
   };
 
   // Prefetch application on hover for better UX
   const handleApplicationHover = (applicationId: string) => {
-    queryClient.prefetchQuery({
-      queryKey: ['funding-application', applicationId],
-      queryFn: () => fundingApplicationsAPI.getApplication(applicationId),
-      staleTime: 1000 * 60 * 5, // 5 minutes
-    });
+    prefetchApplication(applicationId);
   };
 
   const handleCloseSidesheet = () => {
@@ -178,7 +156,7 @@ export default function ApplicationsPage() {
 
   // Handle status change for both ApplicationList and ApplicationDetailSidesheet
   const handleStatusChange = async (applicationId: string, status: string, note?: string) => {
-    return statusMutation.mutateAsync({ applicationId, status, note });
+    return updateStatusAsync({ applicationId, status, note });
   };
 
   if (isLoadingAdmin || isLoadingApplication) {
