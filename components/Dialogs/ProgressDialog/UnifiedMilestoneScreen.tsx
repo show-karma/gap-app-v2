@@ -5,7 +5,7 @@ import { DatePicker } from "@/components/Utilities/DatePicker";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useAllMilestones } from "@/hooks/useAllMilestones";
-import { getGapClient, useGap } from "@/hooks/useGap";
+import { useGap } from "@/hooks/useGap";
 import { useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
 import { useStepper } from "@/store/modals/txStepper";
@@ -90,12 +90,11 @@ export const UnifiedMilestoneScreen = () => {
     register,
     handleSubmit,
     control,
-    formState: { errors, isSubmitting: formSubmitting, isValid },
-    setValue,
+    formState: { errors, isValid },
     watch,
   } = useForm<MilestoneFormData>({
     resolver: zodResolver(milestoneSchema),
-    mode: "onBlur",
+    mode: "onChange",
     defaultValues: {
       title: "",
       description: "",
