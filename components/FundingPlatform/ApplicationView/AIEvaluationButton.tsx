@@ -43,10 +43,16 @@ const AIEvaluationButton: FC<AIEvaluationButtonProps> = ({
           updatedAt: result.updatedAt,
         });
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Failed to run AI evaluation:", error);
       
-      const errorMessage = error?.response?.data?.message || error?.message || "Failed to run AI evaluation";
+      let errorMessage = "Failed to run AI evaluation";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (error && typeof error === 'object' && 'response' in error) {
+        const responseError = error as { response?: { data?: { message?: string } } };
+        errorMessage = responseError.response?.data?.message || errorMessage;
+      }
       toast.error(errorMessage);
     } finally {
       setIsEvaluating(false);
@@ -58,6 +64,8 @@ const AIEvaluationButton: FC<AIEvaluationButtonProps> = ({
       onClick={handleRunEvaluation}
       variant="secondary"
       disabled={disabled || isEvaluating}
+      aria-label={isEvaluating ? "AI evaluation in progress" : "Run AI evaluation"}
+      aria-busy={isEvaluating}
       className={`flex items-center space-x-2 px-3 py-2 text-sm ${isEvaluating ? 'animate-pulse' : ''}`}
     >
       <SparklesIcon className={`w-4 h-4 ${isEvaluating ? 'animate-spin' : ''}`} />
