@@ -8,6 +8,7 @@ import { TrackSelection } from "./TrackSelection";
 import { useGrantFormStore } from "./store";
 import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { parseISO, isPast } from "date-fns";
 
 interface SearchGrantProgramProps {
   grantToEdit?: IGrantResponse;
@@ -59,11 +60,21 @@ export function SearchGrantProgram({
           return [];
         }
 
-        let programsList = result;
+        const filteredResult = result.filter((program: GrantProgram) => {
+          if (
+            !program.metadata?.endsAt ||
+            flowType !== 'program'
+          ) return true;
+
+          const endsAt = parseISO(program.metadata.endsAt);
+          return !isPast(endsAt);
+        });
+
+        let programsList = filteredResult;
 
         // Filter programs if searchForProgram is specified
         if (searchForProgram) {
-          programsList = result.filter((program: GrantProgram) => {
+          programsList = filteredResult.filter((program: GrantProgram) => {
             const title = program.metadata?.title?.toLowerCase() || "";
             if (Array.isArray(searchForProgram)) {
               return searchForProgram.some((term) =>
@@ -74,7 +85,7 @@ export function SearchGrantProgram({
           });
         } else {
           // Sort alphabetically
-          programsList = result.sort((a: GrantProgram, b: GrantProgram) => {
+          programsList = filteredResult.sort((a: GrantProgram, b: GrantProgram) => {
             const aTitle = a.metadata?.title || "";
             const bTitle = b.metadata?.title || "";
             if (aTitle < bTitle) return -1;

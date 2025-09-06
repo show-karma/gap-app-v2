@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { StepBlock } from "../StepBlock";
 import { useGrantFormStore } from "../store";
 import { useRouter, usePathname, useParams } from "next/navigation";
@@ -102,8 +102,21 @@ export const CommunitySelectionScreen: React.FC = () => {
     );
   };
 
-  const canProceed =
-    !!formData.community && (!!formData.programId || !!formData.title);
+  const isProjectAlreadyInProgram = useMemo(() => {
+    if (!formData.programId || !selectedProject?.grants) return false;
+    
+    const selectedProgramId = formData.programId.split("_")[0];
+    return selectedProject.grants.some(grant => {
+      const existingProgramId = grant.details?.data?.programId?.split("_")[0];
+      return existingProgramId === selectedProgramId;
+    });
+  }, [formData.programId, selectedProject?.grants]);
+
+  const canProceed = useMemo(() => {
+    return !!formData.community &&
+      (!!formData.programId || !!formData.title) &&
+      !isProjectAlreadyInProgram;
+  }, [formData.community, formData.programId, formData.title, isProjectAlreadyInProgram]);
 
   return (
     <StepBlock currentStep={2}>
@@ -172,6 +185,14 @@ export const CommunitySelectionScreen: React.FC = () => {
                   : [...FUNDING_PROGRAM_GRANT_NAMES]
               }
             />
+          )}
+
+          {isProjectAlreadyInProgram && (
+            <div className="w-full max-w-full mt-4 p-3 bg-red-50 border border-red-200 rounded-md dark:bg-red-900/20 dark:border-red-800">
+              <p className="text-red-600 dark:text-red-400 text-sm">
+                This project is already part of the selected program. Please choose a different program or create a custom grant.
+              </p>
+            </div>
           )}
         </div>
 
