@@ -69,7 +69,7 @@ const StatusActionButton: FC<StatusActionButtonProps> = ({
     <Button
       onClick={() => onStatusChange(transition.targetStatus)}
       variant={transition.variant}
-      className={`flex-1 ${transition.className || ""}`}
+      className={`flex-1 text-center items-center justify-center ${transition.className || ""}`}
       disabled={disabled}
     >
       {transition.label}
@@ -96,25 +96,23 @@ export const StatusActionButtons: FC<StatusActionButtonsProps> = ({
   }
 
   return (
-    <div className="border-t border-gray-200 dark:border-gray-700 bg-zinc-50 dark:bg-zinc-800 px-4 py-4 sm:px-6">
-      <div className="flex flex-col space-y-2">
-        <div className="flex space-x-3">
-          {availableTransitions.map((transition) => (
-            <StatusActionButton
-              key={transition.targetStatus}
-              transition={transition}
-              onStatusChange={onStatusChange}
-              disabled={isUpdating}
-            />
-          ))}
-        </div>
-
-        {currentStatus === "revision_requested" && (
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            The applicant can update their submission.
-          </p>
-        )}
+    <div className="flex flex-col space-y-2">
+      <div className="flex space-x-3">
+        {availableTransitions.map((transition) => (
+          <StatusActionButton
+            key={transition.targetStatus}
+            transition={transition}
+            onStatusChange={onStatusChange}
+            disabled={isUpdating}
+          />
+        ))}
       </div>
+
+      {currentStatus === "revision_requested" && (
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          The applicant can update their submission.
+        </p>
+      )}
     </div>
   );
 };

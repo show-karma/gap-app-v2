@@ -174,8 +174,18 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
       <div className="space-y-6">
         {/* Application Header Card */}
         <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <div className="flex items-start justify-between mb-4">
-            <div>
+          <div className="flex flex-col flex-wrap items-start justify-between mb-4 gap-1">
+            <div
+              className={cn(
+                "flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium",
+                statusColors[application.status as keyof typeof statusColors] ||
+                "bg-zinc-100 text-gray-800 border-gray-200"
+              )}
+            >
+              <StatusIcon className="w-4 h-4" />
+              <span>{formatStatus(application.status)}</span>
+            </div>
+            <div className="flex flex-col gap-1">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                 {getProjectTitle(application)}
               </h2>
@@ -183,16 +193,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
                 {application.applicantEmail}
               </p>
             </div>
-            <div
-              className={cn(
-                "flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium",
-                statusColors[application.status as keyof typeof statusColors] ||
-                  "bg-zinc-100 text-gray-800 border-gray-200"
-              )}
-            >
-              <StatusIcon className="w-4 h-4" />
-              <span>{formatStatus(application.status)}</span>
-            </div>
+
           </div>
 
           <dl className="grid grid-cols-2 gap-4">
@@ -211,14 +212,16 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
           </dl>
 
           {/* Status Actions */}
-          {showStatusActions && onStatusChange && (
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <StatusActionButtons
-                currentStatus={application.status as any}
-                onStatusChange={handleStatusChangeClick}
-                isUpdating={isUpdatingStatus}
-              />
-            </div>
+          {["approved", "rejected"].includes(application.status) ? null : (
+            showStatusActions && onStatusChange ? (
+              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <StatusActionButtons
+                  currentStatus={application.status as any}
+                  onStatusChange={handleStatusChangeClick}
+                  isUpdating={isUpdatingStatus}
+                />
+              </div>
+            ) : null
           )}
         </div>
 

@@ -64,10 +64,10 @@ export default function ApplicationDetailPage() {
   // Handle status change
   const handleStatusChange = async (status: string, note?: string) => {
     if (!application) return;
-    await updateStatusAsync({ 
-      applicationId: application.referenceNumber, 
-      status, 
-      note 
+    await updateStatusAsync({
+      applicationId: application.referenceNumber,
+      status,
+      note
     });
   };
 
@@ -134,7 +134,7 @@ export default function ApplicationDetailPage() {
       <div className="bg-white dark:bg-zinc-800 border-b border-gray-200 dark:border-gray-700">
         <div className="px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center gap-4 max-sm:gap-1 max-sm:flex-col max-sm:items-start">
               <Button
                 onClick={handleBackClick}
                 variant="secondary"
@@ -143,12 +143,12 @@ export default function ApplicationDetailPage() {
                 <ArrowLeftIcon className="w-4 h-4 mr-2" />
                 Back to Applications
               </Button>
-              <div>
+              <div className="flex flex-col gap-0">
                 <h1 className="text-xl font-bold text-gray-900 dark:text-white">
                   Application Details
                 </h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  ID: {application.referenceNumber}
+                  Application ID: {application.referenceNumber}
                 </p>
               </div>
             </div>
