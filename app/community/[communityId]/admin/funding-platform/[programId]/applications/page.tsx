@@ -1,13 +1,10 @@
 "use client";
 import { useParams, useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useState, useMemo, useEffect } from "react";
+import { useMemo } from "react";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { useOwnerStore } from "@/store";
 import { useStaff } from "@/hooks/useStaff";
-import {
-  ApplicationListWithAPI,
-  ApplicationDetailSidesheet,
-} from "@/components/FundingPlatform";
+import { ApplicationListWithAPI } from "@/components/FundingPlatform";
 import { IFundingApplication } from "@/types/funding-platform";
 import { IApplicationFilters } from "@/services/fundingPlatformService";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -35,9 +32,6 @@ export default function ApplicationsPage() {
   // Extract programId and chainId from the combined format (e.g., "777_11155111")
   const [programId, chainId] = combinedProgramId.split("_");
   const parsedChainId = parseInt(chainId, 10);
-
-  // Get applicationId from URL if present
-  const applicationId = searchParams.get("applicationId");
 
   // Parse initial filters from URL
   const initialFilters = useMemo((): IApplicationFilters => {
@@ -67,10 +61,7 @@ export default function ApplicationsPage() {
     return filters;
   }, [searchParams]);
 
-  // State for application detail sidesheet
-  const [selectedApplication, setSelectedApplication] =
-    useState<IFundingApplication | null>(null);
-  const [isSidesheetOpen, setIsSidesheetOpen] = useState(false);
+  // State no longer needed for sidesheet
 
   const { isCommunityAdmin, isLoading: isLoadingAdmin } =
     useIsCommunityAdmin(communityId);
@@ -84,55 +75,21 @@ export default function ApplicationsPage() {
     initialFilters
   );
 
-  // Use the custom application hook for fetching individual applications
-  const { 
-    application: fetchedApplication, 
-    isLoading: isLoadingApplication,
-    prefetchApplication,
-    setApplicationData
-  } = useApplication(applicationId);
+  // Prefetch hook for better UX on hover
+  const { prefetchApplication } = useApplication(null);
 
   // Use the custom application status hook
   const { updateStatusAsync } = useApplicationStatus(programId, parsedChainId);
 
   const hasAccess = isCommunityAdmin || isOwner || isStaff;
 
-  // Handle direct URL access with applicationId
-  useEffect(() => {
-    if (applicationId) {
-      // Try to find in already loaded applications first
-      const appFromList = applications?.find(a => a.id === applicationId);
-
-      if (appFromList) {
-        setSelectedApplication(appFromList);
-        setIsSidesheetOpen(true);
-      } else if (fetchedApplication) {
-        // Use the fetched application from React Query
-        setSelectedApplication(fetchedApplication);
-        setIsSidesheetOpen(true);
-      }
-    } else {
-      // If applicationId is removed from URL, close the sidesheet
-      setIsSidesheetOpen(false);
-      setTimeout(() => setSelectedApplication(null), 300);
-    }
-  }, [applicationId, applications, fetchedApplication]);
-
   const handleBackClick = () => {
     router.push(PAGES.ADMIN.FUNDING_PLATFORM(communityId));
   };
 
   const handleApplicationSelect = (application: IFundingApplication) => {
-    setSelectedApplication(application);
-    setIsSidesheetOpen(true);
-
-    // Update URL with applicationId using replace to maintain history properly
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("applicationId", application.referenceNumber);
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-
-    // Cache the application data using the custom hook
-    setApplicationData(application.referenceNumber, application);
+    // This function is now called by ApplicationList but we handle opening in new tab there
+    // Keep this for compatibility but it won't be directly used
   };
 
   // Prefetch application on hover for better UX
@@ -140,26 +97,13 @@ export default function ApplicationsPage() {
     prefetchApplication(applicationId);
   };
 
-  const handleCloseSidesheet = () => {
-    setIsSidesheetOpen(false);
-
-    // Remove applicationId from URL when closing
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete("applicationId");
-    const queryString = params.toString();
-    const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
-    router.replace(newUrl, { scroll: false });
-
-    // Clear selected application after animation completes
-    setTimeout(() => setSelectedApplication(null), 300);
-  };
 
   // Handle status change for both ApplicationList and ApplicationDetailSidesheet
   const handleStatusChange = async (applicationId: string, status: string, note?: string) => {
     return updateStatusAsync({ applicationId, status, note });
   };
 
-  if (isLoadingAdmin || isLoadingApplication) {
+  if (isLoadingAdmin) {
     return (
       <div className="flex w-full items-center justify-center min-h-[600px]">
         <Spinner />
@@ -232,14 +176,6 @@ export default function ApplicationsPage() {
         />
       </div>
 
-      {/* Application Detail Sidesheet */}
-      <ApplicationDetailSidesheet
-        application={selectedApplication}
-        isOpen={isSidesheetOpen}
-        onClose={handleCloseSidesheet}
-        onStatusChange={handleStatusChange}
-        showStatusActions={true}
-      />
     </div>
   );
 }
