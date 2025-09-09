@@ -8,14 +8,13 @@ import {
   ExclamationTriangleIcon,
   ClockIcon,
 } from "@heroicons/react/24/outline";
-import { IFundingApplication, ApplicationComment } from "@/types/funding-platform";
+import { IFundingApplication } from "@/types/funding-platform";
 import { cn } from "@/utilities/tailwind";
 import StatusHistoryTimeline from "./StatusHistoryTimeline";
 import StatusChangeModal from "./StatusChangeModal";
 import CommentsTimeline from "./CommentsTimeline";
 import GenericJSONDisplay from "./GenericJSONDisplay";
 import fundingPlatformService from "@/services/fundingPlatformService";
-import { applicationCommentsService } from "@/services/application-comments.service";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { formatDate } from "@/utilities/formatDate";
 import { useAccount } from "wagmi";
@@ -23,8 +22,9 @@ import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { getProjectTitle } from "../helper/getProjecTitle";
 import { AIEvaluationDisplay } from "./AIEvaluation";
 import { useProgram } from "@/hooks/usePrograms";
-import { useProgramConfig } from "@/hooks/useFundingPlatform";
+import { useProgramConfig, useApplicationComments } from "@/hooks/useFundingPlatform";
 import { StatusActionButtons } from "./StatusActionButtons";
+import AIEvaluationButton from "./AIEvaluationButton";
 
 interface ApplicationDetailSidesheetProps {
   application: IFundingApplication | null;
@@ -77,68 +77,47 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
 
   const { data: program } = useProgramConfig(application?.programId as string, application?.chainID as number);
 
-  // Comments state
-  const [comments, setComments] = useState<ApplicationComment[]>([]);
-  const [isLoadingComments, setIsLoadingComments] = useState(false);
-
   // Get current user address
   const { address: currentUserAddress } = useAccount();
 
-  // Fetch comments for the application
-  const fetchComments = useCallback(async () => {
-    if (!application?.referenceNumber) return;
-
-    setIsLoadingComments(true);
-    try {
-      const fetchedComments = await applicationCommentsService.getComments(
-        application.referenceNumber
-      );
-      setComments(fetchedComments);
-    } catch (error) {
-      console.error('Failed to fetch comments:', error);
-    } finally {
-      setIsLoadingComments(false);
-    }
-  }, [application?.referenceNumber]);
+  // Use the new comments hook with React Query
+  const {
+    comments,
+    isLoading: isLoadingComments,
+    createCommentAsync,
+    editCommentAsync,
+    deleteCommentAsync,
+  } = useApplicationComments(application?.referenceNumber || null, showStatusActions);
 
   // Comment handlers
   const handleCommentAdd = useCallback(async (content: string) => {
     if (!application?.referenceNumber) return;
 
     try {
-      const newComment = await applicationCommentsService.createComment(
-        application.referenceNumber,
-        content
-      );
-      setComments(prev => [...prev, newComment]);
+      await createCommentAsync({ content });
     } catch (error) {
       console.error('Failed to add comment:', error);
       throw error; // Let the CommentsTimeline component handle the error UI
     }
-  }, [application?.referenceNumber]);
+  }, [application?.referenceNumber, createCommentAsync]);
 
   const handleCommentEdit = useCallback(async (commentId: string, content: string) => {
     try {
-      const updatedComment = await applicationCommentsService.editComment(commentId, content);
-      setComments(prev =>
-        prev.map(c => c.id === commentId ? updatedComment : c)
-      );
+      await editCommentAsync({ commentId, content });
     } catch (error) {
       console.error('Failed to edit comment:', error);
       throw error;
     }
-  }, []);
+  }, [editCommentAsync]);
 
   const handleCommentDelete = useCallback(async (commentId: string) => {
     try {
-      await applicationCommentsService.deleteComment(commentId);
-      // Refresh comments from server instead of manipulating state
-      await fetchComments();
+      await deleteCommentAsync(commentId);
     } catch (error) {
       console.error('Failed to delete comment:', error);
       throw error;
     }
-  }, [fetchComments]);
+  }, [deleteCommentAsync]);
 
   // Fetch fresh application data with retry logic
   const fetchApplicationData = async (applicationId: string, expectedStatus?: string, retries = 3) => {
@@ -168,13 +147,6 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
       setApplication(initialApplication);
     }
   }, [initialApplication]);
-
-  // Fetch comments when application changes
-  useEffect(() => {
-    if (application?.referenceNumber && isOpen) {
-      fetchComments();
-    }
-  }, [application?.referenceNumber, isOpen, fetchComments]);
 
   if (!application) return null;
 
@@ -243,6 +215,27 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
       return revisionEntry?.reason;
     }
     return null;
+  };
+
+  const handleAIEvaluationComplete = async (evaluationResult: {
+    evaluation: string;
+    promptId: string;
+    updatedAt: string;
+  }) => {
+    // Update the local application state with the new AI evaluation
+    if (application) {
+      setApplication(prev => prev ? {
+        ...prev,
+        aiEvaluation: {
+          evaluation: evaluationResult.evaluation,
+          promptId: evaluationResult.promptId,
+        },
+        updatedAt: evaluationResult.updatedAt
+      } : null);
+
+      // Also fetch fresh data to ensure consistency
+      await fetchApplicationData(application.referenceNumber);
+    }
   };
 
   const renderApplicationData = () => {
@@ -727,9 +720,16 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
 
                           {/* AI Evaluation */}
                           <div>
-                            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                              AI Evaluation
-                            </h3>
+                            <div className="flex items-center justify-between mb-4">
+                              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                                AI Evaluation
+                              </h3>
+                              <AIEvaluationButton
+                                referenceNumber={application.referenceNumber}
+                                onEvaluationComplete={handleAIEvaluationComplete}
+                                disabled={isLoadingApplication}
+                              />
+                            </div>
                             {/* {renderAIEvaluation()} */}
                             <AIEvaluationDisplay
                               evaluation={application.aiEvaluation?.evaluation || null}

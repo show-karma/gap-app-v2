@@ -1,14 +1,14 @@
 'use client';
 
-import { FC, useState } from 'react';
+import React, { FC, useState } from 'react';
 import { format, parseISO, isValid } from 'date-fns';
-import { 
-  PencilIcon, 
-  TrashIcon, 
-  CheckIcon, 
+import {
+  PencilIcon,
+  TrashIcon,
+  CheckIcon,
   XMarkIcon,
   ChatBubbleLeftIcon,
-  UserCircleIcon 
+  UserCircleIcon
 } from '@heroicons/react/24/outline';
 import { ApplicationComment } from '@/types/funding-platform';
 import { cn } from '@/utilities/tailwind';
@@ -33,10 +33,15 @@ const CommentItem: FC<CommentItemProps> = ({
   const [editContent, setEditContent] = useState(comment.content);
   const [isUpdating, setIsUpdating] = useState(false);
 
+  // Update editContent when comment changes to handle optimistic updates
+  React.useEffect(() => {
+    setEditContent(comment.content);
+  }, [comment.content, comment.id]);
+
   // Users can edit their own comments (if not deleted)
   const isAuthor = currentUserAddress?.toLowerCase() === comment.authorAddress?.toLowerCase();
   const canEdit = !comment.isDeleted && isAuthor;
-  
+
   // Users can delete their own comments, admins can delete any comment
   const canDelete = !comment.isDeleted && (isAuthor || isAdmin);
 
@@ -71,12 +76,12 @@ const CommentItem: FC<CommentItemProps> = ({
 
   const handleDelete = async () => {
     if (!onDelete) return;
-    
+
     // Different confirmation messages for admins vs regular users
     const confirmMessage = isAdmin && !isAuthor
       ? 'Are you sure you want to delete this comment? This action will mark it as deleted but preserve it for audit purposes.'
       : 'Are you sure you want to delete your comment? This action cannot be undone.';
-    
+
     if (!confirm(confirmMessage)) return;
 
     setIsUpdating(true);
@@ -125,7 +130,7 @@ const CommentItem: FC<CommentItemProps> = ({
             )}
           </span>
         </div>
-        
+
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between">
             <div>
@@ -146,8 +151,9 @@ const CommentItem: FC<CommentItemProps> = ({
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 {formatDate(comment.createdAt)}
                 {comment.editHistory && comment.editHistory.length > 0 && (
-                  <span className="ml-2 italic text-gray-400 dark:text-gray-500">
-                    (edited)
+                  <span className="ml-1 italic text-gray-400 dark:text-gray-500"
+                  >
+                    (Edited at {formatDate(comment.updatedAt)})
                   </span>
                 )}
               </p>
@@ -157,7 +163,10 @@ const CommentItem: FC<CommentItemProps> = ({
               <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 {canEdit && (
                   <button
-                    onClick={() => setIsEditing(true)}
+                    onClick={() => {
+                      setEditContent(comment.content); // Ensure we have the current content
+                      setIsEditing(true);
+                    }}
                     disabled={isUpdating}
                     className={cn(
                       'p-1 rounded text-gray-400 hover:text-gray-600',

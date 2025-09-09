@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAccount } from "wagmi";
 import toast from "react-hot-toast";
 import { getGapClient, useGap } from "@/hooks/useGap";
+import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
@@ -46,6 +47,7 @@ export const useUpdateActions = (update: UpdateType) => {
   const isOnChainAuthorized = isProjectOwner || isOwner;
   const projectId = useParams().projectId as string;
   const router = useRouter();
+  const { performOffChainRevoke } = useOffChainRevoke();
 
   // Function to refresh data after successful deletion
   const refreshDataAfterDeletion = async () => {
@@ -204,54 +206,57 @@ export const useUpdateActions = (update: UpdateType) => {
       };
 
       if (!isOnChainAuthorized) {
-        const toastLoading = toast.loading(
-          `Deleting ${update.type.toLowerCase()}...`
-        );
-        await fetchData(
-          INDEXER.PROJECT.REVOKE_ATTESTATION(
-            findUpdate?.uid as `0x${string}`,
-            findUpdate.chainID
-          ),
-          "POST",
-          {}
-        )
-          .then(async () => {
-            await checkIfAttestationExists()
-              .then(async () => {
-                toast.success(deleteMessage, {
-                  id: toastLoading,
-                });
-                // Refresh data after successful deletion
-                await refreshDataAfterDeletion();
-              })
-              .catch(() => {
-                toast.dismiss(toastLoading);
-              });
-          })
-          .catch(() => {
-            toast.dismiss(toastLoading);
-          });
+        await performOffChainRevoke({
+          uid: findUpdate?.uid as `0x${string}`,
+          chainID: findUpdate.chainID,
+          checkIfExists: checkIfAttestationExists,
+          onSuccess: async () => {
+            await refreshDataAfterDeletion();
+          },
+          toastMessages: {
+            success: deleteMessage,
+            loading: `Deleting ${update.type.toLowerCase()}...`,
+          },
+        });
       } else {
-        await findUpdate
-          .revoke(walletSigner as any, changeStepperStep)
-          .then(async (res: any) => {
-            const txHash = res?.tx[0]?.hash;
-            if (txHash) {
-              await fetchData(
-                INDEXER.ATTESTATION_LISTENER(txHash, findUpdate.chainID),
-                "POST",
-                {}
-              );
-            }
+        try {
+          const res = await findUpdate.revoke(walletSigner as any, changeStepperStep);
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, findUpdate.chainID),
+              "POST",
+              {}
+            );
+          }
 
-            await checkIfAttestationExists(() => {
-              changeStepperStep("indexed");
-            }).then(async () => {
-              toast.success(deleteMessage);
-              // Refresh data after successful deletion
-              await refreshDataAfterDeletion();
-            });
+          await checkIfAttestationExists(() => {
+            changeStepperStep("indexed");
           });
+          toast.success(deleteMessage);
+          await refreshDataAfterDeletion();
+        } catch (onChainError: any) {
+          // Silently fallback to off-chain revoke
+          setIsStepper(false); // Reset stepper since we're falling back
+          
+          const success = await performOffChainRevoke({
+            uid: findUpdate?.uid as `0x${string}`,
+            chainID: findUpdate.chainID,
+            checkIfExists: checkIfAttestationExists,
+            onSuccess: async () => {
+              await refreshDataAfterDeletion();
+            },
+            toastMessages: {
+              success: deleteMessage,
+              loading: `Deleting ${update.type.toLowerCase()}...`,
+            },
+          });
+          
+          if (!success) {
+            // Both methods failed - throw the original error to maintain expected behavior
+            throw onChainError;
+          }
+        }
       }
     } catch (error: any) {
       console.log(error);

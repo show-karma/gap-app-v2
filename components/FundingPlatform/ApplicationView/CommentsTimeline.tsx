@@ -134,10 +134,8 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
     setIsAddingComment(true);
     try {
       await onCommentAdd(content);
-      toast.success('Comment added successfully');
     } catch (error) {
       console.error('Failed to add comment:', error);
-      toast.error('Failed to add comment');
     } finally {
       setIsAddingComment(false);
     }
@@ -148,10 +146,8 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
 
     try {
       await onCommentEdit(commentId, content);
-      toast.success('Comment updated successfully');
     } catch (error) {
       console.error('Failed to edit comment:', error);
-      toast.error('Failed to update comment');
     }
   };
 
@@ -280,8 +276,13 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
               const isLatestStatus = item.type === 'status' &&
                 statusHistory.findIndex(s => s === item.data) === 0;
 
+              // Use a unique key based on the actual data, not index
+              const itemKey = item.type === 'comment'
+                ? `comment-${(item.data as ApplicationComment).id}`
+                : `status-${idx}-${(item.data as any).timestamp}`;
+
               return (
-                <li key={`${item.type}-${idx}`}>
+                <li key={itemKey}>
                   <div className={cn("relative", !isLast && "pb-8")}>
                     {!isLast && (
                       <span

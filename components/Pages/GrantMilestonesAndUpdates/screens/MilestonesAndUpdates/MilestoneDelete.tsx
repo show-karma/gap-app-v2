@@ -20,6 +20,7 @@ import { retryUntilConditionMet } from "@/utilities/retries";
 import { useWallet } from "@/hooks/useWallet";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 interface MilestoneDeleteProps {
   milestone: IMilestoneResponse;
 }
@@ -37,6 +38,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
   const { project, isProjectOwner } = useProjectStore();
   const { isOwner: isContractOwner } = useOwnerStore();
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
+  const { performOffChainRevoke } = useOffChainRevoke();
 
   const deleteFn = async () => {
     setIsDeletingMilestone(true);
@@ -93,54 +95,60 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
         );
       };
       if (!isOnChainAuthorized) {
-        const toastLoading = toast.loading(MESSAGES.MILESTONES.DELETE.LOADING);
-        await fetchData(
-          INDEXER.PROJECT.REVOKE_ATTESTATION(
-            milestoneInstance?.uid as `0x${string}`,
-            milestoneInstance.chainID
-          ),
-          "POST",
-          {}
-        )
-          .then(async (res) => {
-            if (res[1]) {
-              toast.dismiss(toastLoading);
-              toast.error(res[1]);
-              return;
-            }
-
-            await checkIfAttestationExists()
-              .then(() => {
-                toast.success(MESSAGES.MILESTONES.DELETE.SUCCESS, {
-                  id: toastLoading,
-                });
-              })
-              .catch(() => {
-                toast.dismiss(toastLoading);
-              });
-          })
-          .catch(() => {
-            toast.dismiss(toastLoading);
-          });
+        await performOffChainRevoke({
+          uid: milestoneInstance.uid,
+          chainID: milestoneInstance.chainID,
+          onError: (error) => {
+            errorManager(MESSAGES.MILESTONES.DELETE.ERROR(milestone.data.title), error, {
+              milestone: milestone.uid,
+              grant: milestone.refUID,
+              address: address,
+            }, { error: MESSAGES.MILESTONES.DELETE.ERROR(milestone.data.title) });
+          },
+          onSuccess: () => {
+            changeStepperStep("indexed");
+          },
+          toastMessages: {
+            success: MESSAGES.MILESTONES.DELETE.SUCCESS,
+            loading: MESSAGES.MILESTONES.DELETE.LOADING,
+          },
+          checkIfExists: checkIfAttestationExists,
+        });
       } else {
-        await milestoneInstance
-          .revoke(walletSigner, changeStepperStep)
-          .then(async (res) => {
-            changeStepperStep("indexing");
-            const txHash = res?.tx[0]?.hash;
-            if (txHash) {
-              await fetchData(
-                INDEXER.ATTESTATION_LISTENER(txHash, milestoneInstance.chainID),
-                "POST",
-                {}
-              );
-            }
-            await checkIfAttestationExists(() => {
-              changeStepperStep("indexed");
-            }).then(() => {
-              toast.success(MESSAGES.MILESTONES.DELETE.SUCCESS);
-            });
+        try {
+          const res = await milestoneInstance.revoke(walletSigner, changeStepperStep);
+          changeStepperStep("indexing");
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, milestoneInstance.chainID),
+              "POST",
+              {}
+            );
+          }
+          await checkIfAttestationExists(() => {
+            changeStepperStep("indexed");
           });
+          toast.success(MESSAGES.MILESTONES.DELETE.SUCCESS);
+        } catch (onChainError: any) {
+          // Silently fallback to off-chain revoke
+          setIsStepper(false); // Reset stepper since we're falling back
+
+          const success = await performOffChainRevoke({
+            uid: milestoneInstance.uid as `0x${string}`,
+            chainID: milestoneInstance.chainID,
+            checkIfExists: checkIfAttestationExists,
+            toastMessages: {
+              success: MESSAGES.MILESTONES.DELETE.SUCCESS,
+              loading: MESSAGES.MILESTONES.DELETE.LOADING,
+            },
+          });
+
+          if (!success) {
+            // Both methods failed - throw the original error to maintain expected behavior
+            throw onChainError;
+          }
+        }
       }
     } catch (error: any) {
       errorManager(
