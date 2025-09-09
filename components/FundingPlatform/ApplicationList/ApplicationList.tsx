@@ -195,7 +195,15 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                 <tr
                   key={application.referenceNumber}
                   className="hover:bg-gray-50 dark:hover:bg-zinc-700 cursor-pointer transition-colors"
-                  onClick={() => onApplicationSelect?.(application)}
+                  onClick={(e) => {
+                    // Open in new tab for application details
+                    if (onApplicationSelect) {
+                      e.preventDefault();
+                      const currentPath = window.location.pathname;
+                      const newPath = `${currentPath}/${application.referenceNumber}`;
+                      window.open(newPath, '_blank');
+                    }
+                  }}
                   onMouseEnter={() => onApplicationHover?.(application.referenceNumber)}
                 >
                   <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">

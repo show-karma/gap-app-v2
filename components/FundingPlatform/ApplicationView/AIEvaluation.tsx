@@ -421,7 +421,7 @@ function EvaluationDisplay({
             )}
 
             {/* Disqualification reason */}
-            {evalData.disqualification_reason && (
+            {evalData.disqualification_reason && evalData.disqualification_reason !== "null" && (
                 <>
                     <DisqualificationReason reason={evalData.disqualification_reason} />
                     {(() => {
@@ -493,7 +493,7 @@ function EvaluationDisplay({
                             <h5 className="text-sm font-bold text-gray-600 dark:text-gray-400 capitalize mb-1">
                                 {key.replace(/_/g, " ")}
                             </h5>
-                            <div className="text-sm">{renderValue(value)}</div>
+                            <div className="text-sm">{value ? renderValue(value) : 'Not available'}</div>
                         </div>
                     );
                 })}
@@ -607,7 +607,7 @@ export function AIEvaluationDisplay({
     };
 
     return (
-        <div className={`${className} shadow-sm`}>
+        <div className={`${className}`}>
             <div className="flex flex-col gap-1 pb-4 items-start">
                 <div className="flex items-start justify-start gap-2">
                     <SunIcon className="w-5 h-5 text-primary animate-pulse" />
