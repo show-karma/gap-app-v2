@@ -21,24 +21,25 @@ const STATUS_TRANSITIONS: Record<ApplicationStatus, StatusTransition[]> = {
       targetStatus: "under_review",
       label: "Start Review",
       variant: "primary",
-      className: "bg-purple-600 hover:bg-purple-700"
+      className: "bg-primary-500 text-white hover:bg-primary-600 dark:text-white dark:bg-primary-900 dark:hover:bg-primary-800"
     }
   ],
   under_review: [
     {
       targetStatus: "revision_requested",
       label: "Request Revision",
-      variant: "secondary"
+      variant: "secondary",
+      className: 'dark:text-white dark:bg-zinc-900 dark:hover:bg-zinc-800'
     },
     {
       targetStatus: "approved",
       label: "Approve",
-      className: "bg-green-600 hover:bg-green-700"
+      className: "border border-emerald-600 text-emerald-700 bg-green-100 hover:bg-green-200 dark:text-white dark:bg-emerald-900 dark:hover:bg-emerald-800"
     },
     {
       targetStatus: "rejected",
       label: "Reject",
-      className: "bg-red-600 hover:bg-red-700"
+      className: "border border-red-600 text-red-700 bg-red-100 hover:bg-red-200 dark:text-white dark:bg-red-900 dark:hover:bg-red-800"
     }
   ],
   revision_requested: [
@@ -46,7 +47,7 @@ const STATUS_TRANSITIONS: Record<ApplicationStatus, StatusTransition[]> = {
       targetStatus: "under_review",
       label: "Review",
       variant: "primary",
-      className: "bg-purple-600 hover:bg-purple-700"
+      className: "bg-primary-500 text-white hover:bg-primary-600 dark:text-white dark:bg-primary-900 dark:hover:bg-primary-800"
     }
   ],
   approved: [],

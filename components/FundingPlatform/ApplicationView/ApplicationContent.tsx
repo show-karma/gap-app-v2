@@ -252,7 +252,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
             <AIEvaluationButton
               referenceNumber={application.referenceNumber}
               onEvaluationComplete={handleAIEvaluationComplete}
-              disabled={isUpdatingStatus}
+              disabled={isUpdatingStatus || ["approved", "rejected"].includes(application.status)}
             />
           </div>
           <AIEvaluationDisplay
