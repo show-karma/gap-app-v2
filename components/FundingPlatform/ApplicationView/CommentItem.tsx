@@ -177,7 +177,7 @@ const CommentItem: FC<CommentItemProps> = ({
                     )}
                     title="Edit comment"
                   >
-                    <PencilIcon className="h-4 w-4" />
+                    <PencilIcon className="h-5 w-5" />
                   </button>
                 )}
                 {canDelete && (
@@ -194,9 +194,9 @@ const CommentItem: FC<CommentItemProps> = ({
                     title="Delete comment"
                   >
                     {isUpdating ? (
-                      <Spinner className="h-4 w-4 border-2" />
+                      <Spinner className="h-5 w-5 border-2" />
                     ) : (
-                      <TrashIcon className="h-4 w-4" />
+                      <TrashIcon className="h-5 w-5" />
                     )}
                   </button>
                 )}
