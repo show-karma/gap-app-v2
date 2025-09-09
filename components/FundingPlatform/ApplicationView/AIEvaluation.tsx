@@ -136,7 +136,6 @@ function DecisionDisplay({
 
 // Component for disqualification reason
 function DisqualificationReason({ reason }: { reason: string }) {
-    console.log("reason", reason);
     return (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
             <h4 className="text-sm font-medium mb-2 text-red-700 dark:text-red-300">
