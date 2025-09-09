@@ -13,6 +13,7 @@ import { formatDate } from "@/utilities/formatDate";
 import SortableTableHeader from "@/components/UI/SortableTableHeader";
 import { IApplicationFilters } from "@/services/fundingPlatformService";
 import { TableStatusActionButtons } from "./TableStatusActionButtons";
+import { formatAIScore } from "../helper/getAIScore";
 
 interface IApplicationListComponentProps extends IApplicationListProps {
   applications: IFundingApplication[];
@@ -162,6 +163,13 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                   onSort={onSortChange}
                 />
                 <SortableTableHeader
+                  label="AI Score"
+                  sortKey="aiEvaluationScore"
+                  currentSortKey={sortBy}
+                  currentSortDirection={sortOrder}
+                  onSort={onSortChange}
+                />
+                <SortableTableHeader
                   label="Created Date"
                   sortKey="createdAt"
                   currentSortKey={sortBy}
@@ -203,6 +211,11 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap">
                     {getStatusBadge(application.status)}
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400 text-center">
+                    <span className="font-medium">
+                      {formatAIScore(application)}
+                    </span>
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
                     {formatDate(application.createdAt)}

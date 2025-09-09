@@ -63,44 +63,68 @@ export const GrantTitleDropdown: FC<{
   }, [open]);
 
   const addCustom = async (custom: string) => {
-    if (!custom) {
+    const trimmedCustom = custom.trim();
+
+    if (!trimmedCustom) {
       return;
     }
-    let requestProgram: GrantProgram = {
-      metadata: {
-        title: custom,
-        status: "active",
-        description: "",
-        website: "",
-        tags: [],
-      },
-      programId: custom,
-      chainID: chainId,
-      _id: { $oid: custom },
-      createdAt: new Date().getTime().toString(),
-      updatedAt: new Date().getTime().toString(),
-    };
+
     const programAlreadyExists = list.find(
-      (item) => item.metadata?.title?.toLowerCase() === custom.toLowerCase()
+      (item) => item.metadata?.title?.toLowerCase() === trimmedCustom.toLowerCase()
     );
+
+    let requestProgram: GrantProgram;
+
     if (programAlreadyExists) {
       requestProgram = programAlreadyExists;
+
+      setValue(
+        "programId",
+        !programAlreadyExists.programId
+          ? undefined
+          : `${programAlreadyExists.programId}_${programAlreadyExists.chainID}`
+      );
+
+      setValue("title", programAlreadyExists.metadata?.title, {
+        shouldValidate: true,
+      });
     } else {
-      list.push(requestProgram);
+      const timestamp = new Date().getTime().toString();
+
+      requestProgram = {
+        metadata: {
+          title: trimmedCustom,
+          status: "active",
+          description: "",
+          website: "",
+          tags: [],
+        },
+        programId: custom,
+        chainID: chainId,
+        _id: { $oid: custom },
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      };
+
+      setList(prevList => [...prevList, requestProgram]);
+
+      setValue("programId", undefined);
+      setValue("title", trimmedCustom, {
+        shouldValidate: true,
+      });
     }
 
-    setValue("programId", undefined);
-    setValue("title", custom, {
-      shouldValidate: true,
-    });
-    setAdding(false);
     setSelectedProgram(requestProgram);
+
+    setAdding(false);
+
     if (search.length) {
       setSearch("");
       setTimeout(() => {
-        setSearch(custom);
+        setSearch(trimmedCustom)
       }, 100);
     }
+
     setTitle("");
   };
 
