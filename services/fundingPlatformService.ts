@@ -37,14 +37,7 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// Add response interceptor for error handling
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error("API Error:", error.response?.data || error.message);
-    throw error;
-  }
-);
+
 
 export interface IApplicationFilters {
   status?: FundingApplicationStatusV2 | string; // Allow string for backward compatibility
@@ -127,7 +120,10 @@ export const fundingProgramsAPI = {
     // First get the configurations
     const configs = await apiClient.get<FundingProgram[]>(
       `/v2/funding-program-configs/community/${communityId}`
-    );
+    ).catch((error) => {
+      console.error("API Error:", error.response?.data || error.message);
+      throw error;
+    });
 
     // Transform to FundingProgram format for backward compatibility
     const programs = await Promise.all(
