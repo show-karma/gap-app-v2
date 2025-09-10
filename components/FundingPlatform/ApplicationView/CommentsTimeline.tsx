@@ -1,6 +1,6 @@
 'use client';
 
-import { FC, useState, useEffect, useMemo } from 'react';
+import { FC, useState, useMemo } from 'react';
 import { format, parseISO, isValid } from 'date-fns';
 import toast from 'react-hot-toast';
 import {
@@ -9,35 +9,40 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   ExclamationTriangleIcon,
-  ArrowPathIcon
+  DocumentTextIcon,
+  PencilSquareIcon
 } from '@heroicons/react/24/outline';
 import {
   ApplicationComment,
   IStatusHistoryEntry,
-  FundingApplicationStatusV2
+  FundingApplicationStatusV2,
+  IApplicationVersion
 } from '@/types/funding-platform';
 import { cn } from '@/utilities/tailwind';
 import { Spinner } from '@/components/Utilities/Spinner';
 import CommentItem from './CommentItem';
 import CommentInput from './CommentInput';
+import pluralize from 'pluralize';
 
 interface CommentsTimelineProps {
   applicationId: string;
   comments: ApplicationComment[];
   statusHistory: IStatusHistoryEntry[];
+  versionHistory?: IApplicationVersion[];
   currentStatus: FundingApplicationStatusV2;
   isAdmin: boolean;
   currentUserAddress?: string;
   onCommentAdd?: (content: string) => Promise<void>;
   onCommentEdit?: (commentId: string, content: string) => Promise<void>;
   onCommentDelete?: (commentId: string) => Promise<void>;
+  onVersionClick?: (versionId: string) => void;
   isLoading?: boolean;
 }
 
 type TimelineItem = {
-  type: 'comment' | 'status';
+  type: 'comment' | 'status' | 'version';
   timestamp: Date;
-  data: ApplicationComment | IStatusHistoryEntry;
+  data: ApplicationComment | IStatusHistoryEntry | IApplicationVersion;
 };
 
 const statusConfig = {
@@ -77,20 +82,22 @@ const labelMap = {
 
 
 const CommentsTimeline: FC<CommentsTimelineProps> = ({
-  applicationId,
+  applicationId: _applicationId, // Unused but kept for interface compatibility
   comments = [],
   statusHistory = [],
+  versionHistory = [],
   currentStatus,
   isAdmin,
   currentUserAddress,
   onCommentAdd,
   onCommentEdit,
   onCommentDelete,
+  onVersionClick,
   isLoading = false
 }) => {
   const [isAddingComment, setIsAddingComment] = useState(false);
 
-  // Combine comments and status history into a unified timeline
+  // Combine comments, status history, and version history into a unified timeline
   const timelineItems = useMemo(() => {
     const items: TimelineItem[] = [];
 
@@ -124,9 +131,24 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
       }
     });
 
+    // Add version history (including version 1 for initial submission)
+    versionHistory.forEach(version => {
+      const timestamp = typeof version.createdAt === 'string'
+        ? parseISO(version.createdAt)
+        : version.createdAt as Date;
+
+      if (isValid(timestamp)) {
+        items.push({
+          type: 'version',
+          timestamp,
+          data: version
+        });
+      }
+    });
+
     // Sort by timestamp (newest first)
     return items.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-  }, [comments, statusHistory]);
+  }, [comments, statusHistory, versionHistory]);
 
   const handleAddComment = async (content: string) => {
     if (!onCommentAdd) return;
@@ -223,6 +245,63 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
     );
   };
 
+  const renderVersionItem = (version: IApplicationVersion) => {
+    const isInitialVersion = version.versionNumber === 0;
+
+    return (
+      <div className="flex space-x-3">
+        <div className="flex-shrink-0">
+          <span className="h-8 w-8 rounded-full flex items-center justify-center bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-400">
+            {isInitialVersion ? (
+              <DocumentTextIcon className="h-5 w-5" />
+            ) : (
+              <PencilSquareIcon className="h-5 w-5" />
+            )}
+          </span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-900 dark:text-white">
+                {isInitialVersion ? 'Initial application submitted' : 'Application edited'}
+                {version.submittedBy && (
+                  <span className="ml-1 text-gray-600 dark:text-gray-400">
+                    by {version.submittedBy.slice(0, 6)}...{version.submittedBy.slice(-4)}
+                  </span>
+                )}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {formatDate(version.createdAt)} • Version {version.versionNumber}
+              </p>
+            </div>
+            {onVersionClick && (
+              <button
+                onClick={() => onVersionClick(version.id)}
+                className="ml-2 inline-flex items-center px-2.5 py-1 rounded text-xs font-medium bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors"
+              >
+                <DocumentTextIcon className="h-3 w-3 mr-1" />
+                {isInitialVersion ? 'View details' : 'View changes'}
+              </button>
+            )}
+          </div>
+          {!isInitialVersion && version.hasChanges && (
+            <div className="mt-2">
+              <p className="text-sm text-gray-600 dark:text-gray-400 italic">
+                {version.changeCount} {pluralize('field', version.changeCount)} changed
+                {version.diffFromPrevious && version.diffFromPrevious.changedFields.length > 0 && (
+                  <span className="ml-1">
+                    ({version.diffFromPrevious.changedFields.slice(0, 2).map(f => f.fieldLabel).join(', ')}
+                    {version.diffFromPrevious.changedFields.length > 2 && `, +${version.diffFromPrevious.changedFields.length - 2} more`})
+                  </span>
+                )}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -279,7 +358,9 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
               // Use a unique key based on the actual data, not index
               const itemKey = item.type === 'comment'
                 ? `comment-${(item.data as ApplicationComment).id}`
-                : `status-${idx}-${(item.data as any).timestamp}`;
+                : item.type === 'version'
+                  ? `version-${(item.data as IApplicationVersion).id}`
+                  : `status-${idx}-${(item.data as any).timestamp}`;
 
               return (
                 <li key={itemKey}>
@@ -298,6 +379,8 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
                         onEdit={onCommentEdit ? handleEditComment : undefined}
                         onDelete={onCommentDelete ? handleDeleteComment : undefined}
                       />
+                    ) : item.type === 'version' ? (
+                      renderVersionItem(item.data as IApplicationVersion)
                     ) : (
                       renderStatusItem(item.data as IStatusHistoryEntry, isLatestStatus)
                     )}

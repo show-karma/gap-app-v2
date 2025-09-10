@@ -191,6 +191,49 @@ export interface IPaginatedApplicationsResponse {
 // Export Format Types
 export type ExportFormat = "csv" | "json";
 
+// Application Version Types
+export interface IFieldChange {
+  fieldLabel: string;
+  changeType: string; // 'added' | 'modified' | 'removed'
+  oldValue: string;
+  newValue: string;
+}
+
+export interface IVersionDiff {
+  computedAt: string;
+  changedFields: IFieldChange[];
+}
+
+export interface IApplicationVersion {
+  id: string;
+  versionNumber: number;
+  submittedBy: string; // Address of the user who submitted this version
+  currentStatus: FundingApplicationStatusV2;
+  createdAt: string;
+  hasChanges: boolean;
+  changeCount: number;
+  diffFromPrevious?: IVersionDiff;
+}
+
+export interface IApplicationVersionTimeline {
+  timeline: IApplicationVersion[];
+}
+
+// Legacy version interface for backward compatibility during migration
+export interface IApplicationVersionLegacy {
+  id: string;
+  applicationId: string;
+  versionNumber: number;
+  applicationData: Record<string, any>;
+  status: FundingApplicationStatusV2;
+  statusHistory: IStatusHistoryEntry[];
+  editorAddress?: string;
+  editorName?: string;
+  editorRole?: 'applicant' | 'admin' | 'reviewer';
+  changesSummary?: string;
+  createdAt: string | Date;
+}
+
 // Internal Component Props (for gradual migration)
 export interface IApplicationListComponentProps {
   programId: string;

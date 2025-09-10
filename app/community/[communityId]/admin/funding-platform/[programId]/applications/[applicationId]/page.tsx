@@ -1,9 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect } from "react";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { useOwnerStore } from "@/store";
+import { useApplicationVersionsStore } from "@/store/applicationVersions";
 import { useStaff } from "@/hooks/useStaff";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/Utilities/Button";
@@ -15,6 +16,7 @@ import {
   useApplicationStatus,
   useProgramConfig,
   useApplicationComments,
+  useApplicationVersions,
 } from "@/hooks/useFundingPlatform";
 import { useAccount } from "wagmi";
 import ApplicationContent from "@/components/FundingPlatform/ApplicationView/ApplicationContent";
@@ -39,6 +41,9 @@ export default function ApplicationDetailPage() {
 
   // Get current user address
   const { address: currentUserAddress } = useAccount();
+  
+  // View mode state for ApplicationContent
+  const [applicationViewMode, setApplicationViewMode] = useState<"details" | "changes">("details");
 
   // Fetch application data
   const {
@@ -60,6 +65,15 @@ export default function ApplicationDetailPage() {
     editCommentAsync,
     deleteCommentAsync,
   } = useApplicationComments(applicationId, hasAccess);
+
+  // Get application identifier for fetching versions
+  const applicationIdentifier = application?.referenceNumber || application?.id || applicationId;
+
+  // Fetch versions using React Query
+  const { versions } = useApplicationVersions(applicationIdentifier);
+
+  // Get version selection from store
+  const { selectVersion } = useApplicationVersionsStore();
 
   // Handle status change
   const handleStatusChange = async (status: string, note?: string) => {
@@ -83,6 +97,21 @@ export default function ApplicationDetailPage() {
 
   const handleCommentDelete = async (commentId: string) => {
     await deleteCommentAsync(commentId);
+  };
+
+  const handleVersionClick = (versionId: string) => {
+    // Select the version to view
+    selectVersion(versionId, versions);
+    // Switch to Changes view to show the selected version
+    setApplicationViewMode("changes");
+    
+    // Scroll to the Application Details section
+    setTimeout(() => {
+      const element = document.getElementById('application-details');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100); // Small delay to ensure the view mode has changed
   };
 
   const handleBackClick = () => {
@@ -166,6 +195,8 @@ export default function ApplicationDetailPage() {
               program={program}
               showStatusActions={hasAccess}
               onStatusChange={handleStatusChange}
+              viewMode={applicationViewMode}
+              onViewModeChange={setApplicationViewMode}
             />
           </div>
 
@@ -175,12 +206,14 @@ export default function ApplicationDetailPage() {
               applicationId={application.referenceNumber}
               comments={comments}
               statusHistory={application.statusHistory}
+              versionHistory={versions}
               currentStatus={application.status}
               isAdmin={hasAccess}
               currentUserAddress={currentUserAddress}
               onCommentAdd={handleCommentAdd}
               onCommentEdit={handleCommentEdit}
               onCommentDelete={handleCommentDelete}
+              onVersionClick={handleVersionClick}
               isLoading={isLoadingComments}
             />
           </div>

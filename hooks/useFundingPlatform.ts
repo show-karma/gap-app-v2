@@ -30,6 +30,8 @@ const QUERY_KEYS = {
   applicationStats: (programId: string, chainId: number) => ['application-stats', programId, chainId],
   applicationComments: (applicationId: string, isAdmin?: boolean) => 
     ['application-comments', applicationId, isAdmin],
+  applicationVersions: (applicationIdOrReference: string) => 
+    ['application-versions', applicationIdOrReference],
 };
 
 /**
@@ -630,8 +632,8 @@ export const useApplicationComments = (applicationId: string | null, isAdmin: bo
 
   // Query for fetching comments
   const commentsQuery = useQuery({
-    queryKey: QUERY_KEYS.applicationComments(applicationId!, isAdmin),
-    queryFn: () => applicationCommentsService.getComments(applicationId!, isAdmin),
+    queryKey: QUERY_KEYS.applicationComments(applicationId!),
+    queryFn: () => applicationCommentsService.getComments(applicationId!),
     enabled: !!applicationId,
     staleTime: 1000 * 60 * 2, // 2 minutes
     gcTime: 1000 * 60 * 5, // 5 minutes
@@ -709,5 +711,71 @@ export const useApplicationComments = (applicationId: string | null, isAdmin: bo
     deleteComment: deleteCommentMutation.mutate,
     deleteCommentAsync: deleteCommentMutation.mutateAsync,
     isDeletingComment: deleteCommentMutation.isPending,
+  };
+};
+
+/**
+ * Hook for managing application versions with React Query
+ */
+export const useApplicationVersions = (applicationIdOrReference: string | null) => {
+  const queryClient = useQueryClient();
+
+  // Query for fetching application versions
+  const versionsQuery = useQuery({
+    queryKey: QUERY_KEYS.applicationVersions(applicationIdOrReference!),
+    queryFn: () => fundingApplicationsAPI.getApplicationVersions(applicationIdOrReference!),
+    enabled: !!applicationIdOrReference,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 10, // 10 minutes
+    select: (data) => {
+      // Sort versions by version number descending (newest first)
+      return data.sort((a, b) => b.versionNumber - a.versionNumber);
+    },
+  });
+
+  // Helper to get reference number
+  const getReferenceNumber = useCallback(async () => {
+    if (!applicationIdOrReference) return null;
+    
+    // If it's already a reference number, return it
+    if (applicationIdOrReference.startsWith('APP-')) {
+      return applicationIdOrReference;
+    }
+    
+    // Otherwise, fetch the application to get the reference number
+    try {
+      const application = await fundingApplicationsAPI.getApplication(applicationIdOrReference);
+      return application.referenceNumber;
+    } catch (error) {
+      console.error('Failed to get reference number:', error);
+      return null;
+    }
+  }, [applicationIdOrReference]);
+
+  // Prefetch versions
+  const prefetchVersions = useCallback((applicationIdOrReference: string) => {
+    queryClient.prefetchQuery({
+      queryKey: QUERY_KEYS.applicationVersions(applicationIdOrReference),
+      queryFn: () => fundingApplicationsAPI.getApplicationVersions(applicationIdOrReference),
+    });
+  }, [queryClient]);
+
+  // Invalidate versions cache
+  const invalidateVersions = useCallback(() => {
+    if (applicationIdOrReference) {
+      queryClient.invalidateQueries({ 
+        queryKey: QUERY_KEYS.applicationVersions(applicationIdOrReference) 
+      });
+    }
+  }, [queryClient, applicationIdOrReference]);
+
+  return {
+    versions: versionsQuery.data || [],
+    isLoading: versionsQuery.isLoading,
+    error: versionsQuery.error,
+    refetch: versionsQuery.refetch,
+    getReferenceNumber,
+    prefetchVersions,
+    invalidateVersions,
   };
 };
