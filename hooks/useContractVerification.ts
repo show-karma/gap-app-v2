@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSignMessage } from "wagmi";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -14,33 +14,115 @@ interface VerificationStatus {
   };
 }
 
-interface UseContractVerificationReturn {
-  verifyContract: (
-    projectId: string,
-    contractAddress: string,
-    chainId: number,
-    network: string
-  ) => Promise<{ success: boolean; error?: string }>;
-  getVerificationStatus: (projectId: string) => Promise<VerificationStatus>;
-  isVerifying: boolean;
-  error: string | null;
+interface ContractDeployerResponse {
+  owner: string;
+  error?: string;
 }
 
-export const useContractVerification = (): UseContractVerificationReturn => {
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+interface VerifyContractParams {
+  projectId: string;
+  contractAddress: string;
+  chainId: number;
+  network: string;
+}
+
+interface VerifyContractResponse {
+  success: boolean;
+  error?: string;
+}
+
+/**
+ * Hook to get contract deployer/owner
+ */
+export const useContractDeployer = (
+  contractAddress: string | undefined,
+  chainId: number | undefined
+) => {
+  return useQuery({
+    queryKey: ["contract", "deployer", contractAddress, chainId],
+    queryFn: async (): Promise<ContractDeployerResponse> => {
+      if (!contractAddress || !chainId) {
+        return { owner: "", error: "Missing parameters" };
+      }
+
+      const [data, error] = await fetchData(
+        INDEXER.CONTRACT_VERIFICATION.DEPLOYER(contractAddress, chainId),
+        "GET"
+      );
+
+      if (error || !data) {
+        return { 
+          owner: "", 
+          error: error?.message || "Failed to fetch contract deployer" 
+        };
+      }
+
+      return data;
+    },
+    enabled: !!contractAddress && !!chainId,
+    staleTime: 60000, // 1 minute
+    retry: 2,
+  });
+};
+
+/**
+ * Hook to get verification status for a project's contracts
+ */
+export const useContractVerificationStatus = (projectId: string | undefined) => {
+  return useQuery({
+    queryKey: ["contract", "verification-status", projectId],
+    queryFn: async (): Promise<VerificationStatus> => {
+      if (!projectId) {
+        return {};
+      }
+
+      const [data, error] = await fetchData(
+        INDEXER.CONTRACT_VERIFICATION.STATUS(projectId),
+        "GET"
+      );
+
+      if (error || !data) {
+        console.error("Failed to fetch verification status:", error);
+        return {};
+      }
+
+      // Transform the response into a lookup object
+      const statusMap: VerificationStatus = {};
+      if (data.contracts && Array.isArray(data.contracts)) {
+        data.contracts.forEach((contract: any) => {
+          // Extract just the address part if it includes network prefix
+          const addressParts = contract.address.split(":");
+          const address = addressParts.length > 1 ? addressParts[1] : contract.address;
+          
+          statusMap[address.toLowerCase()] = {
+            verified: contract.verified || false,
+            verifiedAt: contract.verifiedAt,
+            deployerAddress: contract.deployerAddress,
+          };
+        });
+      }
+
+      return statusMap;
+    },
+    enabled: !!projectId,
+    staleTime: 30000, // 30 seconds
+  });
+};
+
+/**
+ * Hook to verify contract ownership
+ */
+export const useVerifyContract = () => {
+  const queryClient = useQueryClient();
   const { signMessageAsync } = useSignMessage();
 
-  const verifyContract = useCallback(
-    async (
-      projectId: string,
-      contractAddress: string,
-      chainId: number,
-      network: string
-    ): Promise<{ success: boolean; error?: string }> => {
-      setIsVerifying(true);
-      setError(null);
-
+  return useMutation({
+    mutationFn: async ({
+      projectId,
+      contractAddress,
+      chainId,
+      network,
+    }: VerifyContractParams): Promise<VerifyContractResponse> => {
       try {
         // Create verification message
         const timestamp = Date.now();
@@ -61,7 +143,7 @@ export const useContractVerification = (): UseContractVerificationReturn => {
             contractAddress,
             chainId,
             signature,
-            message, // Send the message along with signature
+            message,
           }
         );
 
@@ -77,7 +159,6 @@ export const useContractVerification = (): UseContractVerificationReturn => {
         }
       } catch (err: any) {
         const errorMessage = err.message || "An unexpected error occurred";
-        setError(errorMessage);
         
         // Log error for debugging
         errorManager(
@@ -93,55 +174,78 @@ export const useContractVerification = (): UseContractVerificationReturn => {
         );
 
         return { success: false, error: errorMessage };
-      } finally {
-        setIsVerifying(false);
       }
     },
-    [signMessageAsync]
-  );
+    onSuccess: (data, variables) => {
+      if (data.success) {
+        // Invalidate verification status query to refetch latest data
+        queryClient.invalidateQueries({
+          queryKey: ["contract", "verification-status", variables.projectId],
+        });
+      }
+    },
+  });
+};
 
-  const getVerificationStatus = useCallback(
-    async (projectId: string): Promise<VerificationStatus> => {
-      try {
-        const [data, error] = await fetchData(
-          INDEXER.CONTRACT_VERIFICATION.STATUS(projectId),
-          "GET"
-        );
+/**
+ * Main hook for contract verification functionality
+ */
+export const useContractVerification = () => {
+  const verifyContractMutation = useVerifyContract();
 
-        if (error || !data) {
-          console.error("Failed to fetch verification status:", error);
-          return {};
-        }
+  const verifyContract = async (
+    projectId: string,
+    contractAddress: string,
+    chainId: number,
+    network: string
+  ): Promise<VerifyContractResponse> => {
+    return verifyContractMutation.mutateAsync({
+      projectId,
+      contractAddress,
+      chainId,
+      network,
+    });
+  };
 
-        // Transform the response into a lookup object
-        const statusMap: VerificationStatus = {};
-        if (data.contracts && Array.isArray(data.contracts)) {
-          data.contracts.forEach((contract: any) => {
-            // Extract just the address part if it includes network prefix
-            const addressParts = contract.address.split(":");
-            const address = addressParts.length > 1 ? addressParts[1] : contract.address;
-            
-            statusMap[address.toLowerCase()] = {
-              verified: contract.verified || false,
-              verifiedAt: contract.verifiedAt,
-              deployerAddress: contract.deployerAddress,
-            };
-          });
-        }
+  const getVerificationStatus = async (projectId: string): Promise<VerificationStatus> => {
+    try {
+      const [data, error] = await fetchData(
+        INDEXER.CONTRACT_VERIFICATION.STATUS(projectId),
+        "GET"
+      );
 
-        return statusMap;
-      } catch (err) {
-        console.error("Error fetching verification status:", err);
+      if (error || !data) {
+        console.error("Failed to fetch verification status:", error);
         return {};
       }
-    },
-    []
-  );
+
+      // Transform the response into a lookup object
+      const statusMap: VerificationStatus = {};
+      if (data.contracts && Array.isArray(data.contracts)) {
+        data.contracts.forEach((contract: any) => {
+          // Extract just the address part if it includes network prefix
+          const addressParts = contract.address.split(":");
+          const address = addressParts.length > 1 ? addressParts[1] : contract.address;
+          
+          statusMap[address.toLowerCase()] = {
+            verified: contract.verified || false,
+            verifiedAt: contract.verifiedAt,
+            deployerAddress: contract.deployerAddress,
+          };
+        });
+      }
+
+      return statusMap;
+    } catch (err) {
+      console.error("Error fetching verification status:", err);
+      return {};
+    }
+  };
 
   return {
     verifyContract,
     getVerificationStatus,
-    isVerifying,
-    error,
+    isVerifying: verifyContractMutation.isPending,
+    error: verifyContractMutation.error?.message || null,
   };
 };
