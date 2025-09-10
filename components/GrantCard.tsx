@@ -81,9 +81,8 @@ const GrantCardContent = ({ grant, index }: GrantCardProps) => {
     <div className="flex flex-col items-start justify-between w-full h-full" id="grant-card">
       <LoadingIndicator />
       <div
-        className={`w-full flex flex-col gap-1 transition-all duration-300 ${
-          pending ? "scale-95 blur-sm opacity-50" : ""
-        }`}
+        className={`w-full flex flex-col gap-1 transition-all duration-300 ${pending ? "scale-95 blur-sm opacity-50" : ""
+          }`}
       >
         <div
           className="h-[4px] w-full rounded-full mb-2.5"
@@ -112,12 +111,6 @@ const GrantCardContent = ({ grant, index }: GrantCardProps) => {
               </p>
             </div>
           </div>
-          <p
-            id="grant-title"
-            className="line-clamp-1 break-all text-sm font-semibold text-gray-500 dark:text-zinc-300 max-2xl:text-[13px]"
-          >
-            {grant.details?.data.title}
-          </p>
           <p className="mb-2 text-sm font-medium text-gray-400 dark:text-zinc-400 max-2xl:text-[13px]">
             Created on {formatDate(grant.createdAt)}
           </p>
