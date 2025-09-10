@@ -10,6 +10,8 @@ import {
   IApplicationStatistics,
   ExportFormat,
   FundingApplicationStatusV2,
+  IApplicationVersion,
+  IApplicationVersionTimeline,
 } from "@/types/funding-platform";
 import { getCookiesFromStoredWallet } from "@/utilities/getCookiesFromStoredWallet";
 
@@ -505,6 +507,42 @@ export const fundingApplicationsAPI = {
   },
 
   /**
+   * Get application versions timeline
+   * Uses the reference number to get the version history timeline
+   */
+  async getApplicationVersionsTimeline(
+    referenceNumber: string
+  ): Promise<IApplicationVersion[]> {
+    const response = await apiClient.get<IApplicationVersionTimeline>(
+      `/v2/funding-applications/${referenceNumber}/versions/timeline`
+    );
+    return response.data.timeline;
+  },
+
+  /**
+   * Get application versions by application ID (converts to reference number)
+   * This maintains backward compatibility with existing code
+   */
+  async getApplicationVersions(
+    applicationIdOrReference: string
+  ): Promise<IApplicationVersion[]> {
+    // If it looks like a reference number (APP-XXXXX-XXXXX), use it directly
+    if (applicationIdOrReference.startsWith('APP-')) {
+      return this.getApplicationVersionsTimeline(applicationIdOrReference);
+    }
+    
+    // Otherwise, fetch the application to get its reference number
+    try {
+      const application = await this.getApplication(applicationIdOrReference);
+      return this.getApplicationVersionsTimeline(application.referenceNumber);
+    } catch (error) {
+      console.error('Failed to fetch application versions:', error);
+      throw error;
+    }
+  },
+
+
+  /**
    * Run AI evaluation on an existing application by reference number (Admin only)
    */
   async runAIEvaluation(
@@ -523,6 +561,7 @@ export const fundingApplicationsAPI = {
   },
 
 };
+
 
 // Combined service for easy import
 export const fundingPlatformService = {

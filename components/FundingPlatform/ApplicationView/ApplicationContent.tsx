@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useState } from "react";
+import { FC, useState, useEffect, useMemo } from "react";
 import { IFundingApplication } from "@/types/funding-platform";
 import { cn } from "@/utilities/tailwind";
 import { formatDate } from "@/utilities/formatDate";
@@ -10,11 +10,17 @@ import { AIEvaluationDisplay } from "./AIEvaluation";
 import StatusChangeModal from "./StatusChangeModal";
 import { StatusActionButtons } from "./StatusActionButtons";
 import AIEvaluationButton from "./AIEvaluationButton";
+import ApplicationVersionSelector from "./ApplicationVersionSelector";
+import ApplicationVersionViewer from "./ApplicationVersionViewer";
+import { useApplicationVersionsStore } from "@/store/applicationVersions";
+import { useApplicationVersions } from "@/hooks/useFundingPlatform";
 import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
   ClockIcon,
   XMarkIcon,
+  DocumentTextIcon,
+  ArrowPathIcon,
 } from "@heroicons/react/24/outline";
 
 interface ApplicationContentProps {
@@ -22,6 +28,8 @@ interface ApplicationContentProps {
   program?: any;
   showStatusActions?: boolean;
   onStatusChange?: (status: string, note?: string) => Promise<void>;
+  viewMode?: "details" | "changes";
+  onViewModeChange?: (mode: "details" | "changes") => void;
 }
 
 const statusColors = {
@@ -52,10 +60,49 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
   program,
   showStatusActions = false,
   onStatusChange,
+  viewMode: controlledViewMode,
+  onViewModeChange,
 }) => {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string>("");
+  const [internalViewMode, setInternalViewMode] = useState<"details" | "changes">("details");
+
+  // Use controlled mode if provided, otherwise use internal state
+  const viewMode = controlledViewMode !== undefined ? controlledViewMode : internalViewMode;
+  const setViewMode = onViewModeChange || setInternalViewMode;
+
+  // Get UI state from Zustand store
+  const { selectedVersion } = useApplicationVersionsStore();
+
+  // Get application identifier for fetching versions
+  const applicationIdentifier = application?.referenceNumber || application?.id || null;
+
+  // Fetch versions using React Query
+  const { versions } = useApplicationVersions(applicationIdentifier);
+
+  // Auto-select the latest version when versions are loaded
+  const { selectVersion } = useApplicationVersionsStore();
+  useEffect(() => {
+    if (versions.length > 0 && !selectedVersion) {
+      selectVersion(versions[0].id, versions);
+    }
+  }, [versions, selectedVersion, selectVersion]);
+
+  // Create field labels mapping from program schema
+  const fieldLabels = useMemo(() => {
+    const labels: Record<string, string> = {};
+    if (program?.formSchema?.fields) {
+      program.formSchema.fields.forEach((field: any) => {
+        if (field.id && field.label) {
+          labels[field.id] = field.label;
+        }
+      });
+    } else {
+      console.log("No program formSchema fields found", program);
+    }
+    return labels;
+  }, [program]);
 
   const StatusIcon = statusIcons[application.status as keyof typeof statusIcons] || ClockIcon;
 
@@ -99,16 +146,20 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
   };
 
   const renderApplicationData = () => {
-    if (!application.applicationData || Object.keys(application.applicationData).length === 0) {
+    // Always display the current application data
+    const dataToRender = application.applicationData;
+
+    if (!dataToRender || Object.keys(dataToRender).length === 0) {
       return <p className="text-gray-500 dark:text-gray-400">No application data available</p>;
     }
 
+
     return (
       <div className="space-y-4">
-        {Object.entries(application.applicationData).map(([key, value]) => (
+        {Object.entries(dataToRender).map(([key, value]) => (
           <div key={key} className="border-b border-gray-100 dark:border-gray-700 pb-3">
             <dt className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
-              {key.replace(/^field_\d+/, "Field").replace(/_/g, " ")}
+              {fieldLabels[key] || key.replace(/_/g, " ")}
             </dt>
             <dd className="text-sm text-gray-900 dark:text-gray-100">
               {Array.isArray(value) ? (
@@ -237,12 +288,62 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
           </div>
         )}
 
-        {/* Application Details */}
+        {/* Application Data Section with Toggle */}
         <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-            Application Details
-          </h3>
-          {renderApplicationData()}
+          {/* Toggle Header */}
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+              Application Details
+            </h3>
+            {versions.length > 0 && (
+              <div className="flex items-center bg-gray-100 dark:bg-zinc-700 rounded-lg p-1">
+                <button
+                  onClick={() => setViewMode("details")}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
+                    viewMode === "details"
+                      ? "bg-white dark:bg-zinc-600 text-gray-900 dark:text-white shadow-sm"
+                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                  )}
+                >
+                  <DocumentTextIcon className="w-4 h-4" />
+                  Details
+                </button>
+                <button
+                  onClick={() => setViewMode("changes")}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
+                    viewMode === "changes"
+                      ? "bg-white dark:bg-zinc-600 text-gray-900 dark:text-white shadow-sm"
+                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                  )}
+                >
+                  <ArrowPathIcon className="w-4 h-4" />
+                  Changes
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Content based on view mode */}
+          {viewMode === "details" ? (
+            /* Details Mode - Show full application data */
+            <div>
+              {renderApplicationData()}
+            </div>
+          ) : (
+            /* Changes Mode - Show version selector and changed fields */
+            <div>
+              <ApplicationVersionSelector
+                applicationId={application.referenceNumber || application.id}
+              />
+              {selectedVersion && (
+                <div className="mt-6">
+                  <ApplicationVersionViewer version={selectedVersion} />
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* AI Evaluation */}
