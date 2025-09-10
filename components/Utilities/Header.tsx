@@ -6,7 +6,6 @@ import { useContractOwner } from "@/hooks/useContractOwner";
 import { useAuthStore } from "@/store/auth";
 import { useCommunitiesStore } from "@/store/communities";
 import { useMobileStore } from "@/store/mobile";
-import { useOwnerStore } from "@/store/owner";
 import { useRegistryStore } from "@/store/registry";
 import { PAGES } from "@/utilities/pages";
 import { SOCIALS } from "@/utilities/socials";
@@ -15,7 +14,7 @@ import {
   UserCircleIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { MoonIcon, SunIcon } from "@heroicons/react/24/solid";
+
 import * as Popover from "@radix-ui/react-popover";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useTheme } from "next-themes";
@@ -29,11 +28,11 @@ import { OnboardingDialog } from "../Dialogs/OnboardingDialog";
 import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";
 import { DiscordIcon, LogOutIcon, TelegramIcon, TwitterIcon } from "../Icons";
 import { Searchbar } from "../Searchbar";
-import { Button } from "./Button";
 import { ExternalLink } from "./ExternalLink";
 import { ParagraphIcon } from "../Icons/Paragraph";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { useContributorProfile } from "@/hooks/useContributorProfile";
+import ThemeButton from "./ThemeButton";
 
 const ProjectDialog = dynamic(
   () =>
@@ -238,19 +237,7 @@ export default function Header() {
 
           <div className="flex items-center md:absolute md:inset-y-0 md:right-0 lg:hidden">
             {/* Color mode toggle start */}
-            <button
-              className="relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-rose-500"
-              // onClick={() => toggleTheme()}
-              onClick={() =>
-                changeCurrentTheme(currentTheme === "light" ? "dark" : "light")
-              }
-            >
-              {currentTheme === "dark" ? (
-                <SunIcon className="h-6 w-6 text-gray-500 dark:text-zinc-200" />
-              ) : (
-                <MoonIcon className="h-6 w-6 text-gray-500 dark:text-zinc-200" />
-              )}
-            </button>
+            <ThemeButton />
             {/* Color mode toggle end */}
             {/* Mobile menu button */}
             <Popover.Root>
@@ -526,18 +513,7 @@ export default function Header() {
             ) : null}
             {/* Rainbowkit custom connect button end */}
             {/* Color mode toggle start */}
-            <button
-              className="px-3 py-2.5 rounded-md bg-white dark:bg-zinc-900 text-sm font-semibold text-gray-900 dark:text-white  ring-1 ring-inset ring-gray-300 dark:ring-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-800 focus:outline-primary-600"
-              onClick={() =>
-                changeCurrentTheme(currentTheme === "light" ? "dark" : "light")
-              }
-            >
-              {currentTheme === "dark" ? (
-                <SunIcon className="h-4 w-4 text-gray-500 dark:text-zinc-200" />
-              ) : (
-                <MoonIcon className="h-4 w-4 text-gray-500 dark:text-zinc-200" />
-              )}
-            </button>
+            <ThemeButton />
             {/* Color mode toggle end */}
             <div className="flex h-[40px] flex-row items-center gap-2 border-l border-l-[#dcdfea] pl-4">
               {socials.map((social) => {
