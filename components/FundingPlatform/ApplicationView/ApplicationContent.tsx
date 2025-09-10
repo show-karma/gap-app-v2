@@ -289,7 +289,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
         )}
 
         {/* Application Data Section with Toggle */}
-        <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div id="application-details" className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           {/* Toggle Header */}
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white">

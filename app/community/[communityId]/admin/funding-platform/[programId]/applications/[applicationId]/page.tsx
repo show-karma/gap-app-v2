@@ -104,6 +104,14 @@ export default function ApplicationDetailPage() {
     selectVersion(versionId, versions);
     // Switch to Changes view to show the selected version
     setApplicationViewMode("changes");
+    
+    // Scroll to the Application Details section
+    setTimeout(() => {
+      const element = document.getElementById('application-details');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100); // Small delay to ensure the view mode has changed
   };
 
   const handleBackClick = () => {
