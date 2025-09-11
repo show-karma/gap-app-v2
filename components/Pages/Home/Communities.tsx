@@ -19,7 +19,7 @@ export const Communities = () => {
         <h1 className="text-4xl sm:text-[72px] font-bold text-black dark:text-white">Communities on Karma</h1>
         <p className="text-black dark:text-white text-sm sm:text-lg max-w-4xl text-center">
           Explore the ecosystem of DAOs, protocols, and organizations growing their 
-          communities through transparent funding, accountability, and impact measurement
+          communities through transparent funding, accountability, and impact measurement.
         </p>
       </div>
 
