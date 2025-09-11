@@ -25,11 +25,13 @@ export function useAggregatedIndicators(
   const { communityId } = useParams();
   const searchParams = useSearchParams();
   const projectUID = searchParams.get("projectId");
+  const programId = searchParams.get("programId");
 
   const queryKey = [
     "aggregated-indicators",
     indicatorIds.join(","),
     communityId,
+    programId || "all",
     projectUID || "all",
   ];
 
@@ -44,6 +46,7 @@ export function useAggregatedIndicators(
       INDEXER.COMMUNITY.V2.INDICATORS.AGGREGATED(
         indicatorIds.join(","),
         communityDetails.uid,
+        programId || undefined,
         projectUID || undefined
       )
     );

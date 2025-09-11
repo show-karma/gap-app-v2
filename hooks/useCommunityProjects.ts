@@ -26,13 +26,14 @@ export function useCommunityProjects() {
       throw error;
     }
 
-    // Transform the API response to extract project information
-    const projects = data?.projects || [];
-    return projects.map((project: any) => ({
-      uid: project.uid,
-      title: project.details?.title || project.title || "Untitled Project",
-      slug: project.slug,
-    }));
+      // Transform the API response to extract project information
+      // The API returns projects in the 'payload' array directly
+      const projects = data?.payload || [];
+      return projects.map((project: any) => ({
+        uid: project.uid,
+        title: project.details?.title || project.title || "Untitled Project",
+        slug: project.slug,
+      }));
   };
 
   return useQuery({

@@ -156,8 +156,12 @@ export const INDEXER = {
       STATS: (slug: string) => `/v2/communities/${slug}/stats`,
       IMPACT_SEGMENTS: (communityUID: string) => `/v2/impact-segments/${communityUID}`,
       INDICATORS: {
-        AGGREGATED: (indicatorIds: string, communityUID: string, projectUID?: string) => 
-          `/v2/indicators/aggregate?indicatorIds=${indicatorIds}&communityUID=${communityUID}${projectUID ? `&projectUID=${projectUID}` : ''}`,
+        AGGREGATED: (indicatorIds: string, communityUID: string, programId?: string, projectUID?: string) => {
+          let url = `/v2/indicators/aggregate?indicatorIds=${indicatorIds}&communityUID=${communityUID}`;
+          if (programId) url += `&programId=${programId}`;
+          if (projectUID) url += `&projectUID=${projectUID}`;
+          return url;
+        },
       },
       PROJECTS: (
         slug: string,
