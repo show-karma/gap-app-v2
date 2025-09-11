@@ -66,8 +66,8 @@ export const chosenCommunities = () => {
       slug: "celopg",
       uid: "0x68689eae8f1e08b7d30be8da301289f8ab8e058a6e472a8cf09efddc8165ccc1",
       imageURL: {
-        light: "/logos/karma-celo-logo.jpeg",
-        dark: "/logos/karma-celo-logo.jpeg",
+        light: "/logos/karma-celo-pg-logo.jpeg",
+        dark: "/logos/karma-celo-pg-logo.jpeg",
       },
     },
     {
