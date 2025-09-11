@@ -7,19 +7,26 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { Dialog, Transition } from "@headlessui/react";
 import {
-  CheckCircleIcon,
   LinkIcon,
   PlusIcon,
-  TrashIcon,
+  ExclamationTriangleIcon,
+  InformationCircleIcon,
 } from "@heroicons/react/24/outline";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { FC, ReactNode } from "react";
-import { Fragment, useEffect, useState } from "react";
-import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
+import { Fragment, useEffect, useState, useMemo, useCallback } from "react";
 import toast from "react-hot-toast";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MESSAGES } from "@/utilities/messages";
 import { useAccount } from "wagmi";
+import { ContractVerificationModal } from "@/components/Dialogs/ContractVerificationModal";
+import { 
+  useContractVerification, 
+  useContractVerificationStatus,
+  useContractDeployer 
+} from "@/hooks/useContractVerification";
+import { getChainIdByName } from "@/utilities/network";
+import { ContractAddressInput } from "./ContractAddressInput";
 
 interface LinkContractAddressesButtonProps {
   buttonClassName?: string;
@@ -32,6 +39,8 @@ interface LinkContractAddressesButtonProps {
 interface NetworkAddressPair {
   network: string;
   address: string;
+  verified?: boolean;
+  verifiedAt?: string;
 }
 
 const SUPPORTED_NETWORKS = [
@@ -98,18 +107,38 @@ export const LinkContractAddressButton: FC<
   >([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [verificationModal, setVerificationModal] = useState<{
+    isOpen: boolean;
+    address: string;
+    network: string;
+    chainId: number;
+  }>({ isOpen: false, address: "", network: "", chainId: 0 });
+  const [contractValidationStatus, setContractValidationStatus] = useState<Map<number, boolean>>(new Map());
+
+  // Use React Query hook for verification status
+  const { data: verificationStatus } = useContractVerificationStatus(project?.uid);
 
   useEffect(() => {
-    if (project?.external?.network_addresses?.length) {
-      const pairs = project.external.network_addresses.map((entry) => {
-        const [network, address] = entry.split(":");
-        return { network, address };
-      });
-      setNetworkAddressPairs(pairs);
-    } else {
-      setNetworkAddressPairs([{ network: "", address: "" }]);
-    }
-  }, [project?.external?.network_addresses]);
+    const loadAddressesWithVerification = async () => {
+      if (project?.external?.network_addresses?.length) {
+        const pairs = project.external.network_addresses.map((entry: string) => {
+          const [network, address] = entry.split(":");
+          const verificationInfo = verificationStatus?.[address.toLowerCase()];
+          return { 
+            network, 
+            address,
+            verified: verificationInfo?.verified || false,
+            verifiedAt: verificationInfo?.verifiedAt,
+          };
+        });
+        setNetworkAddressPairs(pairs);
+      } else {
+        setNetworkAddressPairs([{ network: "", address: "" }]);
+      }
+    };
+    
+    loadAddressesWithVerification();
+  }, [project?.external?.network_addresses, project?.uid, verificationStatus]);
 
   useEffect(() => {
     if (buttonElement === null) {
@@ -145,13 +174,84 @@ export const LinkContractAddressButton: FC<
     setNetworkAddressPairs(newPairs);
   };
 
-  const handleSave = async () => {
+  const handleVerifyClick = async (network: string, address: string, chainId: number) => {
+    // Save the contracts first without closing the dialog
+    const saved = await handleSave(false);
+    
+    if (saved) {
+      // Then open verification modal
+      setVerificationModal({
+        isOpen: true,
+        address,
+        network,
+        chainId,
+      });
+    }
+  };
+
+  const handleVerificationSuccess = async (address: string) => {
+    // Update the local state to mark the address as verified
+    setNetworkAddressPairs(prev => 
+      prev.map(pair => 
+        pair.address === address 
+          ? { ...pair, verified: true, verifiedAt: new Date().toISOString() }
+          : pair
+      )
+    );
+    
+    // Refresh project data
+    refreshProject();
+  };
+
+  const handleDeployerStatusChange = useCallback((index: number, canSave: boolean) => {
+    setContractValidationStatus(prev => {
+      const newMap = new Map(prev);
+      newMap.set(index, canSave);
+      return newMap;
+    });
+  }, []);
+
+
+  const handleSave = async (close = true): Promise<boolean> => {
     setIsLoading(true);
     setError(null);
+    
+    // Validate that all pairs have both network and address
+    const incompletePairs = networkAddressPairs.filter(
+      (pair) => (pair?.address?.trim() !== "" && pair?.network?.trim() === "") ||
+                (pair?.address?.trim() === "" && pair?.network?.trim() !== "")
+    );
+    
+    if (incompletePairs.length > 0) {
+      toast.error("Please select a network for all contract addresses");
+      setIsLoading(false);
+      return false;
+    }
+    
     // Filter out pairs with empty network or address
     const validPairs = networkAddressPairs.filter(
       (pair) => pair?.network?.trim() !== "" && pair?.address?.trim() !== ""
     );
+    
+    // Check for duplicates
+    const uniquePairs = new Map();
+    const duplicates: string[] = [];
+    
+    validPairs.forEach((pair) => {
+      const key = `${pair.network}:${pair.address.toLowerCase()}`;
+      if (uniquePairs.has(key)) {
+        duplicates.push(`${pair.network}:${pair.address}`);
+      } else {
+        uniquePairs.set(key, pair);
+      }
+    });
+    
+    if (duplicates.length > 0) {
+      toast.error(`Duplicate entries found and removed`);
+      setNetworkAddressPairs(Array.from(uniquePairs.values()));
+      setIsLoading(false);
+      return false;
+    }
 
     // Format pairs as network:address strings
     const formattedAddresses = validPairs.map(
@@ -170,17 +270,20 @@ export const LinkContractAddressButton: FC<
       if (data) {
         setNetworkAddressPairs(validPairs);
         toast.success(MESSAGES.PROJECT.LINK_CONTRACT_ADDRESSES.SUCCESS);
-        if (buttonElement === null && onClose) {
+        if (close && buttonElement === null && onClose) {
           setIsOpen(false);
           onClose();
-          refreshProject();
         }
+        refreshProject();
+        return true;
       }
 
       if (error) {
         setError(MESSAGES.PROJECT.LINK_CONTRACT_ADDRESSES.ERROR);
-        throw new Error(MESSAGES.PROJECT.LINK_CONTRACT_ADDRESSES.ERROR);
+        return false;
       }
+
+      return false
     } catch (err) {
       setError(MESSAGES.PROJECT.LINK_CONTRACT_ADDRESSES.ERROR);
       errorManager(
@@ -194,6 +297,7 @@ export const LinkContractAddressButton: FC<
         },
         { error: MESSAGES.PROJECT.LINK_CONTRACT_ADDRESSES.ERROR }
       );
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -206,6 +310,60 @@ export const LinkContractAddressButton: FC<
       onClose();
     }
   };
+
+  // Check if any contracts need verification
+  const hasUnverifiedContracts = useMemo(() => {
+    return networkAddressPairs.some(pair => 
+      pair.address && pair.network && !pair.verified
+    );
+  }, [networkAddressPairs]);
+
+  // Check for duplicate entries
+  const duplicateIndices = useMemo(() => {
+    const seen = new Map<string, number>();
+    const duplicates = new Set<number>();
+    
+    networkAddressPairs.forEach((pair, index) => {
+      if (pair.address && pair.network) {
+        const key = `${pair.network}:${pair.address.toLowerCase()}`;
+        const firstIndex = seen.get(key);
+        if (firstIndex !== undefined) {
+          // Mark both the first occurrence and current as duplicates
+          duplicates.add(firstIndex);
+          duplicates.add(index);
+        } else {
+          seen.set(key, index);
+        }
+      }
+    });
+    
+    return duplicates;
+  }, [networkAddressPairs]);
+
+  // Check if contracts can be saved
+  const canSaveContracts = useMemo(() => {
+    // Check for duplicates
+    if (duplicateIndices.size > 0) return false;
+    
+    // Check for incomplete pairs
+    const hasIncompletePairs = networkAddressPairs.some(
+      pair => (pair?.address?.trim() !== "" && pair?.network?.trim() === "") ||
+              (pair?.address?.trim() === "" && pair?.network?.trim() !== "")
+    );
+    if (hasIncompletePairs) return false;
+    
+    // Check deployer validation for each unverified contract
+    for (let i = 0; i < networkAddressPairs.length; i++) {
+      const pair = networkAddressPairs[i];
+      if (pair?.address?.trim() !== "" && pair?.network?.trim() !== "" && !pair.verified) {
+        const canSave = contractValidationStatus.get(i);
+        // If explicitly false, user is not the deployer
+        if (canSave === false) return false;
+      }
+    }
+    
+    return true;
+  }, [networkAddressPairs, contractValidationStatus, duplicateIndices]);
 
   if (!isAuthorized) {
     return null;
@@ -248,7 +406,7 @@ export const LinkContractAddressButton: FC<
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-3xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle transition-all ease-in-out duration-300">
+                <Dialog.Panel className="w-full max-w-3xl transform overflow-visible rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle transition-all ease-in-out duration-300">
                   <Dialog.Title
                     as="h3"
                     className="text-gray-900 dark:text-zinc-100"
@@ -261,49 +419,43 @@ export const LinkContractAddressButton: FC<
                       will enable the project to retrieve its on-chain metrics
                       for impact tracking.
                     </p>
-                  </Dialog.Title>
-                  <div className="max-h-[60vh] flex flex-col gap-4 mt-8 overflow-y-auto">
-                    {networkAddressPairs.map((pair, index) => (
-                      <div key={index} className="flex items-center space-x-2">
-                        <div className="flex items-center justify-between p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg flex-grow">
-                          <div className="flex items-center space-x-4 w-full">
-                            <span className="text-md font-bold capitalize whitespace-nowrap">
-                              Contract {index + 1}
-                            </span>
-                            <div className="flex-1 flex space-x-4">
-                              <SearchDropdown
-                                onSelectFunction={(value) =>
-                                  handleNetworkChange(index, value)
-                                }
-                                selected={pair.network ? [pair.network] : []}
-                                list={SUPPORTED_NETWORKS}
-                                type="network"
-                                prefixUnselected="Select"
-                                buttonClassname="flex-1"
-                              />
-                              <input
-                                type="text"
-                                value={pair.address}
-                                onChange={(e) =>
-                                  handleAddressChange(index, e.target.value)
-                                }
-                                className="flex-1 text-sm rounded-md text-gray-600 dark:text-gray-300 bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none focus:border-blue-500"
-                                placeholder="Enter contract address"
-                              />
-                            </div>
-                          </div>
+
+
+                    {/* Info about deployer validation */}
+                    <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                      <div className="flex items-start gap-2">
+                        <InformationCircleIcon className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-sm text-blue-700 dark:text-blue-300">
+                            We automatically check if you are the deployer of each contract. 
+                            Only deployers can verify their contracts.
+                          </p>
                         </div>
-                        {networkAddressPairs.length > 1 && (
-                          <Button
-                            onClick={() => handleRemovePair(index)}
-                            className="p-2 text-red-500 hover:text-red-700"
-                            aria-label="Remove contract"
-                          >
-                            <TrashIcon className="h-5 w-5" />
-                          </Button>
-                        )}
                       </div>
+                    </div>
+                  </Dialog.Title>
+
+                  <div className="max-h-[60vh] flex flex-col gap-4 mt-8 overflow-y-auto overflow-x-hidden">
+                    {networkAddressPairs.map((pair, index) => (
+                      <ContractAddressInput
+                        key={index}
+                        index={index}
+                        network={pair.network}
+                        address={pair.address}
+                        verified={pair.verified}
+                        verifiedAt={pair.verifiedAt}
+                        supportedNetworks={SUPPORTED_NETWORKS}
+                        onNetworkChange={handleNetworkChange}
+                        onAddressChange={handleAddressChange}
+                        onRemove={handleRemovePair}
+                        onVerify={handleVerifyClick}
+                        onDeployerStatusChange={handleDeployerStatusChange}
+                        canRemove={true}
+                        projectId={project.uid}
+                        isDuplicate={duplicateIndices.has(index)}
+                      />
                     ))}
+
                     <Button
                       onClick={handleAddPair}
                       className="flex items-center justify-center text-white gap-2 border border-primary-500 bg-primary-500 hover:bg-primary-600"
@@ -311,18 +463,21 @@ export const LinkContractAddressButton: FC<
                       <PlusIcon className="h-5 w-5" />
                       Add Another Contract
                     </Button>
+
+
                     {error && <p className="text-red-500 mt-2">{error}</p>}
                   </div>
+
                   <div className="flex flex-row gap-4 mt-10 justify-end">
                     <Button
-                      onClick={handleSave}
-                      disabled={isLoading}
-                      className="bg-primary-500 text-white hover:bg-primary-600"
+                      onClick={() => handleSave()}
+                      disabled={isLoading || !canSaveContracts}
+                      className="bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isLoading ? "Saving..." : "Save All"}
                     </Button>
                     <Button
-                      className="text-zinc-900 text-lg bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-zinc-900 hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900"
+                      className="text-zinc-900 bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-zinc-900 hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900"
                       onClick={handleClose}
                     >
                       Close
@@ -334,6 +489,19 @@ export const LinkContractAddressButton: FC<
           </div>
         </Dialog>
       </Transition>
+      
+      {/* Verification Modal */}
+      {verificationModal.isOpen && (
+        <ContractVerificationModal
+          isOpen={verificationModal.isOpen}
+          onClose={() => setVerificationModal({ ...verificationModal, isOpen: false })}
+          contractAddress={verificationModal.address}
+          network={verificationModal.network}
+          chainId={verificationModal.chainId}
+          projectId={project.uid}
+          onSuccess={handleVerificationSuccess}
+        />
+      )}
     </>
   );
 };

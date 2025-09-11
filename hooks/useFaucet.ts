@@ -192,23 +192,3 @@ export const useFaucetClaim = () => {
   };
 };
 
-/**
- * Monitor a faucet request
- */
-export const useFaucetRequest = (requestId: string | null) => {
-  return useQuery({
-    queryKey: ["faucet", "request", requestId],
-    queryFn: async () => {
-      if (!requestId) return null;
-      return faucetService.getRequest(requestId);
-    },
-    enabled: !!requestId,
-    // refetchInterval: (data) => {
-    //   // Stop polling if request is completed or failed
-    //   if (data?.d === "CLAIMED" || data?.status === "FAILED") {
-    //     return false;
-    //   }
-    //   return 2000; // Poll every 2 seconds
-    // }
-  });
-};

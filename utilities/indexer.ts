@@ -298,4 +298,9 @@ export const INDEXER = {
       `/projects/${idOrSlug}/update/contact/${contactId}`,
     DELETE: (idOrSlug: string) => `/projects/${idOrSlug}/delete/contact`,
   },
+  CONTRACT_VERIFICATION: {
+    VERIFY: (projectId: string) => `/v2/projects/${projectId}/contracts/verify`,
+    STATUS: (projectId: string) => `/v2/projects/${projectId}/contracts/verification-status`,
+    DEPLOYER: (contractAddress: string, chainId: number) => `/v2/contract/${contractAddress}/chain/${chainId}/deployer`,
+  },
 };

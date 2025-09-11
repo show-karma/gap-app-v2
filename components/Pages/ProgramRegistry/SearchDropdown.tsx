@@ -95,7 +95,7 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
         })
       : parsedArray;
     setOrderedList(sortedList);
-  }, [list]);
+  }, [imageDictionary, list, shouldSort]);
 
   const addCustomNetwork = (customNetwork: string) => {
     setAdding(false);
@@ -139,7 +139,7 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
         <div className="flex flex-row gap-4 w-full justify-between">
           <div className="flex flex-row gap-4 items-center justify-start w-full">
             {leftIcon ? leftIcon : null}
-            <p className={cn("block w-full truncate", paragraphClassname)}>
+            <p className={cn("block w-full truncate capitalize", paragraphClassname)}>
               {selected.length
                 ? selected
                     .map(
@@ -159,7 +159,7 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
       <Popover.Content
         align="start"
         className={cn(
-          "mt-4 w-[var(--radix-popover-trigger-width)] z-10 bg-white border border-zinc-200 dark:border-zinc-700 rounded-md dark:text-white dark:bg-zinc-800 max-h-60 overflow-y-auto overflow-x-hidden py-2",
+          "mt-4 w-[var(--radix-popover-trigger-width)] z-[60] bg-white border border-zinc-200 dark:border-zinc-700 rounded-md dark:text-white dark:bg-zinc-800 max-h-60 overflow-y-auto overflow-x-hidden py-2",
           listClassname
         )}
       >
@@ -236,7 +236,7 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
                       </div>
                     ) : null}
                     <div className="flex flex-row gap-1  items-center justify-start  flex-1">
-                      <p className="line-clamp-2 text-sm max-w-full break-normal">
+                      <p className="line-clamp-2 text-sm max-w-full break-normal capitalize">
                         {item.value}
                       </p>
                     </div>
