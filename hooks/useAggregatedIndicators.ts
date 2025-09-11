@@ -33,6 +33,7 @@ export function useAggregatedIndicators(
     communityId,
     programId || "all",
     projectUID || "all",
+    "last-6-months", // Include date range in cache key
   ];
 
   const queryFn = async (): Promise<AggregatedIndicator[]> => {
@@ -41,13 +42,21 @@ export function useAggregatedIndicators(
     // First get the community details to obtain the UID
     const communityDetails = await getCommunityDetailsV2(communityId as string);
     
+    // Default to last 6 months for performance
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    const startDate = sixMonthsAgo.toISOString();
+    const endDate = new Date().toISOString();
+    
     // Call the new aggregated indicators endpoint
     const [data, error] = await fetchData(
       INDEXER.COMMUNITY.V2.INDICATORS.AGGREGATED(
         indicatorIds.join(","),
         communityDetails.uid,
         programId || undefined,
-        projectUID || undefined
+        projectUID || undefined,
+        startDate,
+        endDate
       )
     );
     
