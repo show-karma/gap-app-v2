@@ -1,6 +1,6 @@
 import { CategoriesOptions } from "@/components/Pages/Admin/EditCategoriesPage";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { ProgramImpactData } from "@/types/programs";
+import { ProgramImpactData, ProgramImpactDataResponse } from "@/types/programs";
 import fetchData from "../fetchData";
 import { INDEXER } from "../indexer";
 import { getCommunityDetailsV2 } from "../queries/getCommunityDataV2";
@@ -10,7 +10,7 @@ export async function getProgramsImpact(
   allCategories?: CategoriesOptions[],
   programSelected?: string | null,
   projectSelected?: string | null
-) {
+): Promise<ProgramImpactData> {
   try {
     // First get the community details to obtain the UID
     const communityDetails = await getCommunityDetailsV2(communityId);
@@ -36,22 +36,45 @@ export async function getProgramsImpact(
         };
       }
       
-      // Transform the segment into the expected ProgramImpactSegment format
+      // Transform the segment into both old and new formats for compatibility
+      const mockIndicators = segment.impactIndicatorIds?.length > 0 ? segment.impactIndicatorIds.map((indicatorId: string, index: number) => ({
+        // Mock indicator data structure for backward compatibility
+        programId: "mock-program",
+        grantUID: "mock-grant-uid",
+        grantTitle: `Grant ${index + 1}`,
+        amount: "0",
+        projectUID: "mock-project-uid", 
+        projectTitle: `Project ${index + 1}`,
+        projectSlug: "mock-project-slug",
+        impactIndicatorId: indicatorId,
+        impactSegmentId: segment.id,
+        indicatorName: `Indicator ${index + 1}`,
+        indicatorDescription: `Description for indicator ${index + 1}`,
+        indicatorUnitOfMeasure: "units",
+        impactSegmentName: segment.name,
+        impactSegmentDescription: segment.description,
+        impactSegmentType: segment.type,
+        categoryId: segment.categoryName,
+        categoryName: categoryName,
+        datapoints: [] // Empty datapoints for now
+      })) : [];
+
       acc[categoryName].impacts.push({
         categoryName: categoryName,
         impactSegmentName: segment.name,
         impactSegmentId: segment.id,
         impactSegmentDescription: segment.description,
         impactSegmentType: segment.type, // "output" or "outcome"
-        impactIndicatorIds: segment.impactIndicatorIds || []
+        impactIndicatorIds: segment.impactIndicatorIds || [], // New structure for impact page
+        indicators: mockIndicators // Old structure for backward compatibility
       });
       
       return acc;
     }, {});
 
-    const transformedData = Object.values(groupedByCategory);
+    const transformedData: ProgramImpactDataResponse[] = Object.values(groupedByCategory);
 
-    const impactData = {
+    const impactData: ProgramImpactData = {
       stats: {
         totalCategories: Object.keys(groupedByCategory).length,
         totalProjects: 0, // Can't determine from current API
@@ -63,7 +86,7 @@ export async function getProgramsImpact(
     // If allCategories is provided, ensure all categories are included
     if (allCategories?.length) {
       const existingCategoryNames = new Set(
-        impactData.data.map((item: any) => item.categoryName)
+        impactData.data.map((item) => item.categoryName)
       );
 
       // Add missing categories with empty impacts array
