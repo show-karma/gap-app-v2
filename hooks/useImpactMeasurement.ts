@@ -17,8 +17,8 @@ export function useImpactMeasurement(projectSelected?: string | null) {
     projectSelected || "all",
   ];
 
-  const queryFn = () => {
-    return getProgramsImpact(
+  const queryFn = async () => {
+    return await getProgramsImpact(
       communityId as string,
       allCategories,
       programSelected,
@@ -29,6 +29,6 @@ export function useImpactMeasurement(projectSelected?: string | null) {
   return useQuery({
     queryKey,
     queryFn,
-    enabled: !!communityId && !!allCategories,
+    enabled: !!communityId,
   });
 }

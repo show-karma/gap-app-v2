@@ -1,5 +1,5 @@
 "use client";
-import { useImpactMeasurement } from "@/hooks/useImpactMeasurement";
+import { useCommunityProjects } from "@/hooks/useCommunityProjects";
 import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useQueryState } from "nuqs";
@@ -24,31 +24,14 @@ export const ProjectFilter = ({
     parse: (value) => value || null,
   });
 
-  const { data, isLoading } = useImpactMeasurement();
+  const { data: projects, isLoading } = useCommunityProjects();
 
-  const impacts = data?.data;
+  const projectOptions = projects?.map((project) => ({
+    title: project.title,
+    value: project.uid,
+  })) || [];
 
-  const projects = impacts
-    ?.flatMap((impact) => impact.impacts)
-    .flatMap((item) => item.indicators)
-    .map((item) => ({
-      title: item.projectTitle || item.projectSlug || item.projectUID,
-      value: item.projectUID,
-    }));
-  const uniqueProjects: {
-    title: string;
-    value: string;
-  }[] = [];
-  projects?.forEach((project) => {
-    if (!uniqueProjects.some((p) => p.value === project.value)) {
-      uniqueProjects.push({
-        title: project.title,
-        value: project.value,
-      });
-    }
-  });
-
-  const selectedProject = uniqueProjects?.find(
+  const selectedProject = projectOptions.find(
     (project) => project.value === selectedProjectId
   );
 
@@ -66,7 +49,7 @@ export const ProjectFilter = ({
       </p>
 
       <SearchWithValueDropdown
-        list={uniqueProjects || []}
+        list={projectOptions}
         onSelectFunction={(value: string) =>
           changeSelectedProjectIdQuery(value)
         }
