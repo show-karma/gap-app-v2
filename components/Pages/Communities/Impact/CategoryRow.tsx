@@ -92,12 +92,7 @@ const AggregatedSegmentCard = ({
     // Reset timeframe to 1 month when filters change
     setSelectedTimeframe("1_month");
   }, [projectSelected, programSelected]);
-
-  // Performance debugging - can be removed in production
-  if (isVisible && segment.impactIndicatorIds.length > 0) {
-    console.log(`🚀 Loading segment: ${segment.impactSegmentName} (${segment.impactIndicatorIds.length} indicators)`);
-  }
-
+  
   const chartData = aggregatedIndicators ? prepareAggregatedChartData(aggregatedIndicators) : [];
   const indicatorNames = aggregatedIndicators?.map(ind => ind.name) || [];
   const colors = ["blue", "green", "yellow", "purple", "red", "pink"];

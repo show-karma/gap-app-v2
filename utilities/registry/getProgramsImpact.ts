@@ -36,37 +36,14 @@ export async function getProgramsImpact(
         };
       }
       
-      // Transform the segment into both old and new formats for compatibility
-      const mockIndicators = segment.impactIndicatorIds?.length > 0 ? segment.impactIndicatorIds.map((indicatorId: string, index: number) => ({
-        // Mock indicator data structure for backward compatibility
-        programId: "mock-program",
-        grantUID: "mock-grant-uid",
-        grantTitle: `Grant ${index + 1}`,
-        amount: "0",
-        projectUID: "mock-project-uid", 
-        projectTitle: `Project ${index + 1}`,
-        projectSlug: "mock-project-slug",
-        impactIndicatorId: indicatorId,
-        impactSegmentId: segment.id,
-        indicatorName: `Indicator ${index + 1}`,
-        indicatorDescription: `Description for indicator ${index + 1}`,
-        indicatorUnitOfMeasure: "units",
-        impactSegmentName: segment.name,
-        impactSegmentDescription: segment.description,
-        impactSegmentType: segment.type,
-        categoryId: segment.categoryName,
-        categoryName: categoryName,
-        datapoints: [] // Empty datapoints for now
-      })) : [];
-
       acc[categoryName].impacts.push({
         categoryName: categoryName,
         impactSegmentName: segment.name,
         impactSegmentId: segment.id,
         impactSegmentDescription: segment.description,
         impactSegmentType: segment.type, // "output" or "outcome"
-        impactIndicatorIds: segment.impactIndicatorIds || [], // New structure for impact page
-        indicators: mockIndicators // Old structure for backward compatibility
+        impactIndicatorIds: segment.impactIndicatorIds || [], // Current structure
+        indicators: [], // Empty array for backward compatibility
       });
       
       return acc;
