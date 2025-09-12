@@ -1,5 +1,6 @@
 "use client";
 import { getProgramsImpact } from "@/utilities/registry/getProgramsImpact";
+import { ProgramImpactData } from "@/types/programs";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useSearchParams } from "next/navigation";
 import { useCommunityCategory } from "./useCommunityCategory";
@@ -17,8 +18,8 @@ export function useImpactMeasurement(projectSelected?: string | null) {
     projectSelected || "all",
   ];
 
-  const queryFn = () => {
-    return getProgramsImpact(
+  const queryFn = async (): Promise<ProgramImpactData> => {
+    return await getProgramsImpact(
       communityId as string,
       allCategories,
       programSelected,
@@ -26,9 +27,9 @@ export function useImpactMeasurement(projectSelected?: string | null) {
     );
   };
 
-  return useQuery({
+  return useQuery<ProgramImpactData>({
     queryKey,
     queryFn,
-    enabled: !!communityId && !!allCategories,
+    enabled: !!communityId,
   });
 }

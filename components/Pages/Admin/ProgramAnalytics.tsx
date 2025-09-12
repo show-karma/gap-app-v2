@@ -16,7 +16,7 @@ const aggregateDataByCategory = (data: ProgramImpactDataResponse[]) => {
 
   data.forEach((category) => {
     category.impacts.forEach((impact) => {
-      impact.indicators.forEach((indicator) => {
+      impact.indicators?.forEach((indicator) => {
         if (!categoryGroups[category.categoryName]) {
           categoryGroups[category.categoryName] = [];
           categoryAmounts[category.categoryName] = 0;

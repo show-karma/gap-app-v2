@@ -31,7 +31,8 @@ export interface ProgramImpactSegment {
   impactSegmentId: string;
   impactSegmentDescription: string;
   impactSegmentType: "output" | "outcome";
-  indicators: ImpactIndicator[];
+  impactIndicatorIds: string[];
+  indicators?: ImpactIndicator[]; // Keep for backward compatibility
 }
 
 export interface ProgramImpactDataResponse {
