@@ -157,12 +157,17 @@ export const INDEXER = {
       IMPACT_SEGMENTS: (communityUID: string) => `/v2/impact-segments/${communityUID}`,
       INDICATORS: {
         AGGREGATED: (indicatorIds: string, communityUID: string, programId?: string, projectUID?: string, startDate?: string, endDate?: string) => {
-          let url = `/v2/indicators/aggregate?indicatorIds=${indicatorIds}&communityUID=${communityUID}`;
-          if (programId) url += `&programId=${programId}`;
-          if (projectUID) url += `&projectUID=${projectUID}`;
-          if (startDate) url += `&startDate=${startDate}`;
-          if (endDate) url += `&endDate=${endDate}`;
-          return url;
+          const params = new URLSearchParams({
+            indicatorIds,
+            communityUID,
+          });
+          
+          if (programId) params.append("programId", programId);
+          if (projectUID) params.append("projectUID", projectUID);
+          if (startDate) params.append("startDate", startDate);
+          if (endDate) params.append("endDate", endDate);
+          
+          return `/v2/indicators/aggregate?${params.toString()}`;
         },
       },
       PROJECTS: (
