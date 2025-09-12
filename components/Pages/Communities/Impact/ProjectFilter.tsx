@@ -3,7 +3,7 @@ import { useCommunityProjects } from "@/hooks/useCommunityProjects";
 import Image from "next/image";
 import { useParams, useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { SearchWithValueDropdown } from "./SearchWithValueDropdown";
 
 interface ProjectFilterProps {
@@ -30,12 +30,23 @@ export const ProjectFilter = ({
   // Filter projects by selected program
   const { data: projects, isLoading } = useCommunityProjects(programSelected);
 
-  // Reset project selection when program changes
+  // Track previous program to detect actual changes (not initial load)
+  const previousProgramRef = useRef<string | null>(null);
+  
+  // Reset project selection when program actually changes (not on initial load)
   useEffect(() => {
-    if (programSelected !== defaultProgramSelected) {
-      changeSelectedProjectIdQuery(null);
+    // On first render, store the current program and don't reset
+    if (previousProgramRef.current === null) {
+      previousProgramRef.current = programSelected;
+      return;
     }
-  }, [programSelected, defaultProgramSelected, changeSelectedProjectIdQuery]);
+    
+    // Only reset if program actually changed from a previous value
+    if (programSelected !== previousProgramRef.current) {
+      changeSelectedProjectIdQuery(null);
+      previousProgramRef.current = programSelected;
+    }
+  }, [programSelected, changeSelectedProjectIdQuery]);
 
   const projectOptions = projects?.map((project) => ({
     title: project.title,
