@@ -10,16 +10,21 @@ export interface CommunityProject {
   slug: string;
 }
 
-export function useCommunityProjects() {
+export function useCommunityProjects(programId?: string | null) {
   const { communityId } = useParams();
 
-  const queryKey = ["community-projects", communityId];
+  const queryKey = ["community-projects", communityId, programId || "all"];
 
   const queryFn = async (): Promise<CommunityProject[]> => {
     if (!communityId) return [];
     
+    const queryParams: any = { limit: 1000 };
+    if (programId) {
+      queryParams.selectedProgramId = programId;  // This maps to 'programIds' in the URL
+    }
+    
     const [data, error] = await fetchData(
-      INDEXER.COMMUNITY.V2.PROJECTS(communityId as string, { limit: 1000 })
+      INDEXER.COMMUNITY.V2.PROJECTS(communityId as string, queryParams)
     );
     
     if (error) {

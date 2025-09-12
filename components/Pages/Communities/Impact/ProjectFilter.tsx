@@ -1,8 +1,9 @@
 "use client";
 import { useCommunityProjects } from "@/hooks/useCommunityProjects";
 import Image from "next/image";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
+import { useEffect } from "react";
 import { SearchWithValueDropdown } from "./SearchWithValueDropdown";
 
 interface ProjectFilterProps {
@@ -15,6 +16,8 @@ export const ProjectFilter = ({
   defaultProgramSelected,
 }: ProjectFilterProps) => {
   const { communityId } = useParams();
+  const searchParams = useSearchParams();
+  const programSelected = searchParams.get("programId");
 
   const [selectedProjectId, changeSelectedProjectIdQuery] = useQueryState<
     string | null
@@ -24,7 +27,15 @@ export const ProjectFilter = ({
     parse: (value) => value || null,
   });
 
-  const { data: projects, isLoading } = useCommunityProjects();
+  // Filter projects by selected program
+  const { data: projects, isLoading } = useCommunityProjects(programSelected);
+
+  // Reset project selection when program changes
+  useEffect(() => {
+    if (programSelected !== defaultProgramSelected) {
+      changeSelectedProjectIdQuery(null);
+    }
+  }, [programSelected, defaultProgramSelected, changeSelectedProjectIdQuery]);
 
   const projectOptions = projects?.map((project) => ({
     title: project.title,

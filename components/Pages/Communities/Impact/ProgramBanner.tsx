@@ -1,6 +1,7 @@
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useCommunityCategory } from "@/hooks/useCommunityCategory";
 import { useImpactMeasurement } from "@/hooks/useImpactMeasurement";
+import { useCommunityProjects } from "@/hooks/useCommunityProjects";
 import { getAllProgramsOfCommunity } from "@/utilities/registry/getAllProgramsOfCommunity";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useSearchParams } from "next/navigation";
@@ -33,7 +34,15 @@ export const ProgramBanner = () => {
     (program) => program.value === selectedProgramId
   );
 
-  const totalProjects = impactData?.stats.totalProjects;
+  // Always get total projects count (without program filter)
+  const { data: allProjects, isLoading: isAllProjectsLoading } = useCommunityProjects(null);
+  
+  // Get filtered projects count when program is selected
+  const { data: filteredProjects, isLoading: isFilteredProjectsLoading } = useCommunityProjects(selectedProgramId);
+  
+  // Use filtered count if program is selected, otherwise use total count
+  const totalProjects = selectedProgramId ? filteredProjects?.length || 0 : allProjects?.length || 0;
+  const isProjectsLoading = selectedProgramId ? isFilteredProjectsLoading : isAllProjectsLoading;
   const totalCategories = impactData?.stats.totalCategories;
 
   return (
@@ -44,7 +53,7 @@ export const ProgramBanner = () => {
             ? `Program: ${selectedProgram?.title}`
             : "All Programs"}
         </p>
-        {isImpactLoading ? (
+        {isImpactLoading || isProjectsLoading ? (
           <Skeleton className="w-40 h-8" />
         ) : (
           <span className="text-gray-500 dark:text-zinc-500 text-lg font-medium">
