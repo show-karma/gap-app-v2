@@ -66,10 +66,10 @@ export const ProgramBanner = () => {
         <p className="text-black dark:text-zinc-300 text-2xl font-semibold">
           {projectSelected 
             ? (selectedProgram 
-                ? `Program: ${selectedProgram?.title} (Project Filtered)`
+                ? `${selectedProgram?.title} (Project Filtered)`
                 : "All Programs (Project Filtered)")
             : (selectedProgram
-                ? `Program: ${selectedProgram?.title}`
+                ? `${selectedProgram?.title}`
                 : "All Programs")}
         </p>
         {isImpactLoading || isProjectsLoading ? (
