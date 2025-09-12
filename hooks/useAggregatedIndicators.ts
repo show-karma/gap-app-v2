@@ -33,7 +33,7 @@ export function useAggregatedIndicators(
     communityId,
     programId || "all",
     projectUID || "all",
-    "last-3-months", // Include date range in cache key
+    "last-1-month", // Include date range in cache key
   ];
 
   const queryFn = async (): Promise<AggregatedIndicator[]> => {
@@ -42,10 +42,10 @@ export function useAggregatedIndicators(
     // First get the community details to obtain the UID
     const communityDetails = await getCommunityDetailsV2(communityId as string);
     
-    // Default to last 3 months for better performance
-    const threeMonthsAgo = new Date();
-    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-    const startDate = threeMonthsAgo.toISOString();
+    // Default to last 1 month for optimal performance
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    const startDate = oneMonthAgo.toISOString();
     const endDate = new Date().toISOString();
     
     // Call the new aggregated indicators endpoint
