@@ -13,6 +13,8 @@ import formatCurrency from "@/utilities/formatCurrency";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { SegmentSkeleton } from "./SegmentSkeleton";
+import { TimeframeSelector, TimeframeOption, timeframeOptions } from "./TimeframeSelector";
+import { useState, useEffect } from "react";
 
 export const fundedAmountFormatter = (value: string) => {
   const amount = Number(value.includes(" ") ? value.split(" ")[0] : value);
@@ -64,16 +66,32 @@ const AggregatedSegmentCard = ({
 }: {
   segment: ProgramImpactSegment;
 }) => {
+  const [selectedTimeframe, setSelectedTimeframe] = useState<TimeframeOption>("1_month");
+  
   const { isVisible, ref } = useIntersectionObserver({
     threshold: 0.1,
     rootMargin: '200px', // Start loading 200px before segment comes into view
     triggerOnce: true, // Once loaded, don't unload
   });
 
+  const selectedTimeframeConfig = timeframeOptions.find(option => option.value === selectedTimeframe);
+  const timeframeMonths = selectedTimeframeConfig?.months || 1;
+
   const { data: aggregatedIndicators, isLoading, error } = useAggregatedIndicators(
     segment.impactIndicatorIds,
-    isVisible && segment.impactIndicatorIds.length > 0
+    isVisible && segment.impactIndicatorIds.length > 0,
+    timeframeMonths
   );
+
+  // Listen for filter changes to reset timeframe
+  const searchParams = useSearchParams();
+  const projectSelected = searchParams.get("projectId");
+  const programSelected = searchParams.get("programId");
+  
+  useEffect(() => {
+    // Reset timeframe to 1 month when filters change
+    setSelectedTimeframe("1_month");
+  }, [projectSelected, programSelected]);
 
   // Performance debugging - can be removed in production
   if (isVisible && segment.impactIndicatorIds.length > 0) {
@@ -154,9 +172,15 @@ const AggregatedSegmentCard = ({
           ) : aggregatedIndicators && aggregatedIndicators.length > 0 && chartData.length > 0 ? (
             <Card className="bg-white dark:bg-zinc-700">
               <div className="mb-4">
-                <h4 className="text-lg font-semibold text-black dark:text-white mb-2">
-                  Aggregated Impact Metrics
-                </h4>
+                <div className="flex justify-between items-start mb-2">
+                  <h4 className="text-lg font-semibold text-black dark:text-white">
+                    Aggregated Impact Metrics
+                  </h4>
+                  <TimeframeSelector
+                    selectedTimeframe={selectedTimeframe}
+                    onTimeframeChange={setSelectedTimeframe}
+                  />
+                </div>
                 <div className="flex flex-wrap gap-2">
                   {aggregatedIndicators.map((indicator, index) => (
                     <span

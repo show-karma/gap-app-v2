@@ -20,7 +20,8 @@ export interface AggregatedIndicator {
 
 export function useAggregatedIndicators(
   indicatorIds: string[],
-  enabled: boolean = true
+  enabled: boolean = true,
+  timeframeMonths: number = 1
 ) {
   const { communityId } = useParams();
   const searchParams = useSearchParams();
@@ -33,7 +34,7 @@ export function useAggregatedIndicators(
     communityId,
     programId || "all",
     projectUID || "all",
-    "last-1-month", // Include date range in cache key
+    `last-${timeframeMonths}-months`, // Include date range in cache key
   ];
 
   const queryFn = async (): Promise<AggregatedIndicator[]> => {
@@ -42,10 +43,10 @@ export function useAggregatedIndicators(
     // First get the community details to obtain the UID
     const communityDetails = await getCommunityDetailsV2(communityId as string);
     
-    // Default to last 1 month for optimal performance
-    const oneMonthAgo = new Date();
-    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-    const startDate = oneMonthAgo.toISOString();
+    // Calculate date range based on selected timeframe
+    const startDateObj = new Date();
+    startDateObj.setMonth(startDateObj.getMonth() - timeframeMonths);
+    const startDate = startDateObj.toISOString();
     const endDate = new Date().toISOString();
     
     // Call the new aggregated indicators endpoint
