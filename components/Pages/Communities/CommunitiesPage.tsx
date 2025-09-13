@@ -141,7 +141,7 @@ export const CommunitiesPage = () => {
                           overflow: "visible",
                         }}
                       >
-                        <StatsCard title={stat.title} value={stat.value} />
+                        <StatsCard title={stat.title} value={stat.value} shouldRound={stat.shouldRound} />
                       </div>
                     );
                   }}

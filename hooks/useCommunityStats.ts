@@ -2,18 +2,17 @@ import { useQuery } from "@tanstack/react-query";
 import fetchData from "@/utilities/fetchData";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { INDEXER } from "@/utilities/indexer";
-import formatCurrency from "@/utilities/formatCurrency";
-
 interface CommunityStatsResponse {
   activeCommunities: number;
-  milestonesCompleted: number;
-  projectsFunded: number;
-  totalGrantsUSD: number;
+  totalProjectUpdates: number;
+  totalProjects: number;
+  totalGrants: number;
 }
 
 interface SummaryStats {
   title: string;
   value: string | number;
+  shouldRound?: boolean;
 }
 
 export const useCommunityStats = () => {
@@ -38,19 +37,23 @@ export const useCommunityStats = () => {
         return [
           { 
             title: "Active Communities", 
-            value: data.activeCommunities 
+            value: data.activeCommunities,
+            shouldRound: false // Don't round community count
           },
           { 
-            title: "Projects Funded", 
-            value: data.projectsFunded 
+            title: "Projects", 
+            value: data.totalProjects,
+            shouldRound: true
           },
           { 
             title: "Grants Tracked", 
-            value: `$${formatCurrency(data.totalGrantsUSD)}` 
+            value: data.totalGrants,
+            shouldRound: true
           },
           { 
-            title: "Milestones Completed", 
-            value: data.milestonesCompleted 
+            title: "Project Updates", 
+            value: data.totalProjectUpdates,
+            shouldRound: true
           },
         ];
       } catch (error: any) {
