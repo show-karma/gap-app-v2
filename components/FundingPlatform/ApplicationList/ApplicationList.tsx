@@ -57,19 +57,13 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
   sortOrder,
   onSortChange,
 }) => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string>("");
   const [pendingApplicationId, setPendingApplicationId] = useState<string>("");
 
-  // Pagination
-  const totalPages = Math.ceil(applications.length / pageSize);
-  const paginatedApplications = applications.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
+  // Show all applications (no internal pagination for infinite scroll)
+  const paginatedApplications = applications;
 
   const handleStatusChangeClick = (
     applicationId: string,
@@ -248,44 +242,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
         )}
       </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-600 dark:text-gray-400">
-              Showing {(currentPage - 1) * pageSize + 1} to{" "}
-              {Math.min(currentPage * pageSize, applications.length)} of{" "}
-              {applications.length} applications
-            </div>
-
-            <div className="flex space-x-2">
-              <Button
-                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-                variant="secondary"
-                className="text-xs px-3 py-1"
-              >
-                Previous
-              </Button>
-
-              <span className="flex items-center px-3 py-1 text-sm">
-                Page {currentPage} of {totalPages}
-              </span>
-
-              <Button
-                onClick={() =>
-                  setCurrentPage((prev) => Math.min(totalPages, prev + 1))
-                }
-                disabled={currentPage === totalPages}
-                variant="secondary"
-                className="text-xs px-3 py-1"
-              >
-                Next
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Pagination removed - handled by infinite scroll in parent component */}
 
       {/* Status Change Modal */}
       <StatusChangeModal
