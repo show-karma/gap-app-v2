@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { fundingPlatformService, IApplicationFilters, fundingApplicationsAPI } from '@/services/fundingPlatformService';
 import { applicationCommentsService } from '@/services/application-comments.service';
 import { 
@@ -162,19 +162,35 @@ export const useProgramConfig = (programId: string, chainId: number) => {
 };
 
 /**
- * Hook for managing grant applications
+ * Hook for managing grant applications with infinite scroll
  */
 export const useFundingApplications = (
-  programId: string, 
-  chainId: number, 
+  programId: string,
+  chainId: number,
   filters: IApplicationFilters = {}
 ) => {
   const queryClient = useQueryClient();
 
-  const applicationsQuery = useQuery({
-    queryKey: QUERY_KEYS.applications(programId, chainId, filters),
-    queryFn: () => fundingPlatformService.applications.getApplicationsByProgram(programId, chainId, filters),
+  // Set default limit to 25 if not provided, exclude page from filters for infinite scroll
+  const { page, ...filtersWithoutPage } = filters;
+  const filtersWithDefaults = {
+    limit: 25,
+    ...filtersWithoutPage
+  };
+
+  const applicationsQuery = useInfiniteQuery({
+    queryKey: QUERY_KEYS.applications(programId, chainId, filtersWithDefaults),
+    queryFn: ({ pageParam = 1 }) =>
+      fundingPlatformService.applications.getApplicationsByProgram(programId, chainId, {
+        ...filtersWithDefaults,
+        page: pageParam
+      }),
     enabled: !!programId && !!chainId,
+    getNextPageParam: (lastPage) => {
+      const { pagination } = lastPage;
+      return pagination.page < pagination.totalPages ? pagination.page + 1 : undefined;
+    },
+    initialPageParam: 1,
   });
 
   const statsQuery = useQuery({
@@ -198,7 +214,7 @@ export const useFundingApplications = (
       } else {
         throw new Error('Email field is required in the application form');
       }
-      
+
       return fundingPlatformService.applications.submitApplication({
         programId,
         chainID: chainId,
@@ -207,7 +223,7 @@ export const useFundingApplications = (
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.applications(programId, chainId, {}) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.applications(programId, chainId, { limit: 25 }) });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.applicationStats(programId, chainId) });
       toast.success('Application submitted successfully!');
     },
@@ -224,7 +240,7 @@ export const useFundingApplications = (
         reason: note || '',
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.applications(programId, chainId, {}) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.applications(programId, chainId, { limit: 25 }) });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.applicationStats(programId, chainId) });
       toast.success('Application status updated successfully');
     },
@@ -234,14 +250,20 @@ export const useFundingApplications = (
     },
   });
 
+  // Flatten the paginated data
+  const applications = applicationsQuery.data?.pages.flatMap(page => page.applications) || [];
+  const firstPage = applicationsQuery.data?.pages[0];
 
   return {
-    applications: applicationsQuery.data?.applications || [],
-    total: applicationsQuery.data?.pagination?.total || 0,
-    page: applicationsQuery.data?.pagination?.page || 1,
-    totalPages: applicationsQuery.data?.pagination?.totalPages || 1,
+    applications,
+    total: firstPage?.pagination?.total || 0,
+    page: firstPage?.pagination?.page || 1,
+    totalPages: firstPage?.pagination?.totalPages || 1,
     stats: statsQuery.data,
     isLoading: applicationsQuery.isLoading || statsQuery.isLoading,
+    isFetchingNextPage: applicationsQuery.isFetchingNextPage,
+    hasNextPage: applicationsQuery.hasNextPage,
+    fetchNextPage: applicationsQuery.fetchNextPage,
     error: applicationsQuery.error || statsQuery.error,
     submitApplication: submitApplicationMutation.mutate,
     updateApplicationStatus: updateStatusMutation.mutate,
@@ -353,8 +375,8 @@ export const useApplicationSubmissionV2 = (programId: string, chainId: number) =
       return fundingPlatformService.applications.submitApplication(request);
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ 
-        queryKey: QUERY_KEYS.applications(programId, chainId, {}) 
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.applications(programId, chainId, { limit: 25 })
       });
       queryClient.invalidateQueries({ 
         queryKey: QUERY_KEYS.applicationStats(programId, chainId) 
@@ -599,8 +621,8 @@ export const useApplicationStatus = (programId?: string, chainId?: number) => {
       
       // Invalidate applications list if programId and chainId are provided
       if (programId && chainId) {
-        queryClient.invalidateQueries({ 
-          queryKey: ['funding-applications', programId, chainId] 
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.applications(programId, chainId, { limit: 25 })
         });
       }
       
