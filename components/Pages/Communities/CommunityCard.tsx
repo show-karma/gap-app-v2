@@ -1,9 +1,9 @@
+import { useRef, useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { PAGES } from "@/utilities/pages";
 import { CommunityWithStats } from "@/hooks/useCommunities";
-import { useRef, useEffect, useState } from "react";
 
 interface CommunityCardProps {
   community: CommunityWithStats;
@@ -67,7 +67,7 @@ export const CommunityCard = ({ community }: CommunityCardProps) => {
       <div className="flex justify-center space-x-4 mb-3 min-w-0">
         <div className="text-center min-w-0">
           <div className="text-base font-bold text-neutral-600 dark:text-neutral-400">
-            {stats.projects}
+            {stats.projects.toLocaleString()}
           </div>
           <div className="text-base font-normal text-neutral-600 dark:text-neutral-400 truncate">
             Projects
@@ -75,7 +75,7 @@ export const CommunityCard = ({ community }: CommunityCardProps) => {
         </div>
         <div className="text-center min-w-0">
           <div className="text-base font-bold text-neutral-600 dark:text-neutral-400">
-            {stats.grants}
+            {stats.grants.toLocaleString()}
           </div>
           <div className="text-base font-normal text-neutral-600 dark:text-neutral-400 truncate">
             Grants
@@ -83,10 +83,7 @@ export const CommunityCard = ({ community }: CommunityCardProps) => {
         </div>
         <div className="text-center min-w-0">
           <div className="text-base font-bold text-neutral-600 dark:text-neutral-400">
-            {stats.members >= 1000
-              ? `+${Math.floor(stats.members / 1000)}k`
-              : `${stats.members}`
-            }
+            {stats.members.toLocaleString()}
           </div>
           <div className="text-base font-normal text-neutral-600 dark:text-neutral-400 truncate">
             Members
