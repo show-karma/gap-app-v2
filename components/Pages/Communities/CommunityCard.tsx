@@ -1,9 +1,9 @@
+import { useRef, useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { PAGES } from "@/utilities/pages";
 import { CommunityWithStats } from "@/hooks/useCommunities";
-import { useRef, useEffect, useState, useMemo } from "react";
 
 interface CommunityCardProps {
   community: CommunityWithStats;
@@ -40,35 +40,6 @@ export const CommunityCard = ({ community }: CommunityCardProps) => {
     members: community.stats?.totalMembers || 0,
   };
 
-  const renderCategoryTag = (label: string, key?: string | number) => (
-    <span
-      key={key ?? label}
-      className="px-2 py-1 bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 text-sm font-medium rounded-sm flex-shrink-0"
-    >
-      {label}
-    </span>
-  );
-
-  // Memoize tag calculations to prevent flickering during resize
-  const { visibleTags, remainingCount } = useMemo(() => {
-    const categories = (community.categories ?? [])
-      .sort((a, b) => a.name.length - b.name.length);
-
-    const isNarrowCard = cardWidth > 0 && cardWidth <= 307;
-    let maxTags = isNarrowCard ? 1 : 2;
-    let visibleTags = categories.slice(0, maxTags);
-    const totalChars = visibleTags.map(tag => tag.name).join('').length;
-
-    // If total chars exceed 30, show only 1 tag to prevent wrapping
-    if (totalChars > 30 && categories.length > 0) {
-      maxTags = 1;
-      visibleTags = categories.slice(0, maxTags);
-    }
-
-    const remainingCount = Math.max(0, categories.length - maxTags);
-
-    return { visibleTags, remainingCount };
-  }, [community.categories, cardWidth]);
 
   return (
     <div
@@ -92,43 +63,30 @@ export const CommunityCard = ({ community }: CommunityCardProps) => {
         </h3>
       </div>
 
-      {visibleTags.length > 0 && (
-        <div className="flex flex-wrap justify-center gap-2 mb-3 w-full min-h-[28px]">
-          {visibleTags.map((c, idx) => renderCategoryTag(c.name, idx))}
-          {remainingCount > 0 && (
-            <span className="px-2 py-1 bg-neutral-200 dark:bg-neutral-700 text-neutral-500 dark:text-neutral-400 text-sm font-medium rounded-sm flex-shrink-0">
-              +{remainingCount} more
-            </span>
-          )}
-        </div>
-      )}
 
       <div className="flex justify-center space-x-4 mb-3 min-w-0">
         <div className="text-center min-w-0">
           <div className="text-base font-bold text-neutral-600 dark:text-neutral-400">
-            {stats.grants}
+            {stats.projects.toLocaleString()}
           </div>
           <div className="text-base font-normal text-neutral-600 dark:text-neutral-400 truncate">
-            grants
+            Projects
           </div>
         </div>
         <div className="text-center min-w-0">
           <div className="text-base font-bold text-neutral-600 dark:text-neutral-400">
-            {stats.projects}
+            {stats.grants.toLocaleString()}
           </div>
           <div className="text-base font-normal text-neutral-600 dark:text-neutral-400 truncate">
-            projects
+            Grants
           </div>
         </div>
         <div className="text-center min-w-0">
           <div className="text-base font-bold text-neutral-600 dark:text-neutral-400">
-            {stats.members >= 1000
-              ? `+${Math.floor(stats.members / 1000)}k`
-              : `${stats.members}`
-            }
+            {stats.members.toLocaleString()}
           </div>
           <div className="text-base font-normal text-neutral-600 dark:text-neutral-400 truncate">
-            members
+            Members
           </div>
         </div>
       </div>
