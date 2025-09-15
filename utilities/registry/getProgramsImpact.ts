@@ -1,30 +1,64 @@
 import { CategoriesOptions } from "@/components/Pages/Admin/EditCategoriesPage";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { ProgramImpactData } from "@/types/programs";
+import { ProgramImpactData, ProgramImpactDataResponse } from "@/types/programs";
 import fetchData from "../fetchData";
 import { INDEXER } from "../indexer";
+import { getCommunityDetailsV2 } from "../queries/getCommunityDataV2";
 
 export async function getProgramsImpact(
   communityId: string,
   allCategories?: CategoriesOptions[],
   programSelected?: string | null,
   projectSelected?: string | null
-) {
+): Promise<ProgramImpactData> {
   try {
+    // First get the community details to obtain the UID
+    const communityDetails = await getCommunityDetailsV2(communityId);
+    
+    // Use the new V2 impact-segments endpoint with community UID
     const [data, error] = await fetchData(
-      `${INDEXER.COMMUNITY.PROGRAMS_IMPACT(communityId)}?${
-        programSelected
-          ? `programId=${programSelected.split("_")[0]}&programChainId=${
-              programSelected.split("_")[1]
-            }`
-          : ""
-      }${projectSelected ? `&projectUID=${projectSelected}` : ""}`
+      INDEXER.COMMUNITY.V2.IMPACT_SEGMENTS(communityDetails.uid)
     );
     if (error) {
       throw error;
     }
 
-    const impactData = data as ProgramImpactData;
+    // Transform the new API response to match the expected ProgramImpactData structure
+    const impactSegments = data || [];
+    
+    // Group impact segments by categoryName (using the actual category names from API)
+    const groupedByCategory = impactSegments.reduce((acc: any, segment: any) => {
+      const categoryName = segment.categoryName || 'Unknown Category';
+      if (!acc[categoryName]) {
+        acc[categoryName] = {
+          categoryName: categoryName,
+          impacts: []
+        };
+      }
+      
+      acc[categoryName].impacts.push({
+        categoryName: categoryName,
+        impactSegmentName: segment.name,
+        impactSegmentId: segment.id,
+        impactSegmentDescription: segment.description,
+        impactSegmentType: segment.type, // "output" or "outcome"
+        impactIndicatorIds: segment.impactIndicatorIds || [], // Current structure
+        indicators: [], // Empty array for backward compatibility
+      });
+      
+      return acc;
+    }, {});
+
+    const transformedData: ProgramImpactDataResponse[] = Object.values(groupedByCategory);
+
+    const impactData: ProgramImpactData = {
+      stats: {
+        totalCategories: Object.keys(groupedByCategory).length,
+        totalProjects: 0, // Can't determine from current API
+        totalFundingAllocated: "0", // Can't determine from current API
+      },
+      data: transformedData
+    };
 
     // If allCategories is provided, ensure all categories are included
     if (allCategories?.length) {
@@ -51,6 +85,7 @@ export async function getProgramsImpact(
       stats: impactData.stats,
     };
   } catch (error) {
+    console.error("Error fetching program impact:", error);
     errorManager("Error fetching program impact", error);
     return {
       data: [],

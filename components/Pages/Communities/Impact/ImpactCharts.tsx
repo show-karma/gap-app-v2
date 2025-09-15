@@ -6,6 +6,7 @@ import { CategoryRow } from "./CategoryRow";
 import { formatDate } from "@/utilities/formatDate";
 import pluralize from "pluralize";
 import { ProgramBanner } from "./ProgramBanner";
+import { ProgramImpactDataResponse } from "@/types/programs";
 
 export const prepareChartData = (
   values: number[],
@@ -40,7 +41,7 @@ export const CommunityImpactCharts = () => {
   const programSelected = searchParams.get("programId");
   const { data, isLoading } = useImpactMeasurement(projectSelected);
 
-  const categories = data?.data;
+  const categories = data?.data as ProgramImpactDataResponse[] | undefined;
 
   const orderedData = categories?.sort((a, b) => {
     // First, compare by whether they have impacts

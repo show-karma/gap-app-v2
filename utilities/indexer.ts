@@ -154,6 +154,22 @@ export const INDEXER = {
     V2: {
       GET: (slug: string) => `/v2/communities/${slug}`,
       STATS: (slug: string) => `/v2/communities/${slug}/stats`,
+      IMPACT_SEGMENTS: (communityUID: string) => `/v2/impact-segments/${communityUID}`,
+      INDICATORS: {
+        AGGREGATED: (indicatorIds: string, communityUID: string, programId?: string, projectUID?: string, startDate?: string, endDate?: string) => {
+          const params = new URLSearchParams({
+            indicatorIds,
+            communityUID,
+          });
+          
+          if (programId) params.append("programId", programId);
+          if (projectUID) params.append("projectUID", projectUID);
+          if (startDate) params.append("startDate", startDate);
+          if (endDate) params.append("endDate", endDate);
+          
+          return `/v2/indicators/aggregate?${params.toString()}`;
+        },
+      },
       PROJECTS: (
         slug: string,
         {
