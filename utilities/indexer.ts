@@ -25,8 +25,7 @@ export const INDEXER = {
       sortField: string,
       sortOrder: "asc" | "desc"
     ) =>
-      `/projects/list?offset=${offset}&limit=${limit}${
-        sortField ? `&sortField=${sortField}` : ""
+      `/projects/list?offset=${offset}&limit=${limit}${sortField ? `&sortField=${sortField}` : ""
       }${sortOrder ? `&sortOrder=${sortOrder}` : ""}`,
     BY_PROGRAM: (programId: string, chainId: number, communityId: string) =>
       `/projects/by-program?programId=${programId}&chainId=${chainId}&communityId=${communityId}`,
@@ -45,8 +44,7 @@ export const INDEXER = {
   },
   TRACKS: {
     ALL: (communityUID: string, includeArchived: boolean = false) =>
-      `/tracks?communityUID=${communityUID}${
-        includeArchived ? "&includeArchived=true" : ""
+      `/tracks?communityUID=${communityUID}${includeArchived ? "&includeArchived=true" : ""
       }`,
     BY_ID: (id: string) => `/tracks/${id}`,
     CREATE: () => `/tracks`,
@@ -115,7 +113,7 @@ export const INDEXER = {
     IMPACT_INDICATORS: {
       GET: (milestoneUID: string) =>
         `/grants/milestones/${milestoneUID}/indicators/data`,
-      SEND: (milestoneUID: string) => 
+      SEND: (milestoneUID: string) =>
         `/grants/milestones/${milestoneUID}/indicators/data`,
     },
   },
@@ -146,8 +144,8 @@ export const INDEXER = {
         .join("&")}`,
   },
   COMMUNITY: {
-    LIST: ({ page, limit, includeStats }: { page: number; limit: number; includeStats: boolean }) =>
-      `/v2/communities/?page=${page}&limit=${limit}&includeStats=${includeStats}`,
+    LIST: ({ page, limit, includeStats, groupSimilarCommunities }: { page: number; limit: number; includeStats: boolean, groupSimilarCommunities: boolean }) =>
+      `/v2/communities/?page=${page}&limit=${limit}&includeStats=${includeStats}&groupSimilarCommunities=${groupSimilarCommunities}`,
     GET: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}`,
     CATEGORIES: (idOrSlug: string) => `/communities/${idOrSlug}/categories`,
     REGIONS: (idOrSlug: string) => `/v2/communities/${idOrSlug}/regions`,
@@ -161,12 +159,12 @@ export const INDEXER = {
             indicatorIds,
             communityUID,
           });
-          
+
           if (programId) params.append("programId", programId);
           if (projectUID) params.append("projectUID", projectUID);
           if (startDate) params.append("startDate", startDate);
           if (endDate) params.append("endDate", endDate);
-          
+
           return `/v2/indicators/aggregate?${params.toString()}`;
         },
       },
@@ -251,16 +249,11 @@ export const INDEXER = {
         selectedTrackIds?: string[];
       }
     ) =>
-      `/communities/${communityIdOrSlug}/grants?${
-        page || page === 0 ? `&page=${page}` : ""
-      }${pageLimit ? `&pageLimit=${pageLimit}` : ""}${
-        status ? `&status=${status}` : ""
-      }${sort ? `&sort=${sort}` : ""}${
-        categories ? `&categories=${categories}` : ""
-      }${selectedProgramId ? `&selectedProgramIds=${selectedProgramId}` : ""}${
-        download ? `&download=${download}` : ""
-      }${grantTitle ? `&grantTitle=${grantTitle}` : ""}${
-        selectedTrackIds ? `&selectedTrackIds=${selectedTrackIds}` : ""
+      `/communities/${communityIdOrSlug}/grants?${page || page === 0 ? `&page=${page}` : ""
+      }${pageLimit ? `&pageLimit=${pageLimit}` : ""}${status ? `&status=${status}` : ""
+      }${sort ? `&sort=${sort}` : ""}${categories ? `&categories=${categories}` : ""
+      }${selectedProgramId ? `&selectedProgramIds=${selectedProgramId}` : ""}${download ? `&download=${download}` : ""
+      }${grantTitle ? `&grantTitle=${grantTitle}` : ""}${selectedTrackIds ? `&selectedTrackIds=${selectedTrackIds}` : ""
       }`,
     STATS: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/stats`,

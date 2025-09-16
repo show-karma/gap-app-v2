@@ -36,26 +36,28 @@ interface CommunitiesResponse {
 interface UseCommunitiesOptions {
   limit?: number;
   includeStats?: boolean;
+  groupSimilarCommunities?: boolean;
 }
 
 export const useCommunities = (options: UseCommunitiesOptions = {}) => {
-  const { limit = 12, includeStats = true } = options;
+  const { limit = 12, includeStats = true, groupSimilarCommunities = true } = options;
 
   return useInfiniteQuery<CommunitiesResponse, Error>({
-    queryKey: ["communities", { limit, includeStats }],
+    queryKey: ["communities", { limit, includeStats, groupSimilarCommunities }],
     queryFn: async ({ pageParam = 1 }) => {
       try {
         const endpoint = INDEXER.COMMUNITY.LIST({
           page: pageParam as number,
           limit,
           includeStats,
+          groupSimilarCommunities,
         });
         const [response, error] = await fetchData(endpoint, "GET", {}, {}, {}, false);
-        
+
         if (error) {
           throw new Error(error);
         }
-        
+
         if (!response) {
           return {
             payload: [],
@@ -76,8 +78,8 @@ export const useCommunities = (options: UseCommunitiesOptions = {}) => {
       }
     },
     getNextPageParam: (lastPage) => {
-      return lastPage.pagination.hasNextPage 
-        ? lastPage.pagination.page + 1 
+      return lastPage.pagination.hasNextPage
+        ? lastPage.pagination.page + 1
         : undefined;
     },
     initialPageParam: 1,
