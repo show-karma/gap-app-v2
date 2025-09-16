@@ -29,9 +29,9 @@ type IndicatorWithPrograms = Indicator & {
 
 export const autosyncedIndicators: IndicatorWithPrograms[] = [
   {
-    name: "no_of_txs",
+    name: "No. of Transactions",
     id: "",
-    description: "No. of transactions (*dune)",
+    description: "No. of transactions",
     unitOfMeasure: "int",
   },
   {
