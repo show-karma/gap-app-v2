@@ -105,12 +105,16 @@ export const CommunitySelectionScreen: React.FC = () => {
   const isProjectAlreadyInProgram = useMemo(() => {
     if (!formData.programId || !selectedProject?.grants) return false;
 
+    if (isEditing) {
+      return false;
+    }
+
     const selectedProgramId = formData.programId.split("_")[0];
     return selectedProject.grants.some(grant => {
       const existingProgramId = grant.details?.data?.programId?.split("_")[0];
       return existingProgramId === selectedProgramId;
     });
-  }, [formData.programId, selectedProject?.grants]);
+  }, [formData.programId, selectedProject?.grants, isEditing]);
 
   const canProceed = useMemo(() => {
     return !!formData.community &&
