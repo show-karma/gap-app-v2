@@ -1,7 +1,6 @@
 "use client";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuthStore } from "@/store/auth";
-import { useOnboarding } from "@/store/modals/onboarding";
 import { IExpirationStatus, ISession } from "@/types/auth";
 import { checkExpirationStatus } from "@/utilities/checkExpirationStatus";
 import fetchData from "@/utilities/fetchData";
@@ -113,7 +112,6 @@ export const useAuth = () => {
   const { setIsAuthenticating, setIsAuth, isAuthenticating, setWalletType } =
     useAuthStore();
   const { disconnectAsync } = useDisconnect();
-  const { setIsOnboarding } = useOnboarding?.();
   const router = useRouter();
   const cookies = new Cookies();
   const { mixpanel } = useMixpanel();
@@ -525,7 +523,6 @@ export const useAuth = () => {
       }
       if (!pathname.includes("funding-map")) {
         if (inviteCode) return true;
-        setIsOnboarding?.(true);
       }
       if (address) {
         mixpanel.reportEvent({
