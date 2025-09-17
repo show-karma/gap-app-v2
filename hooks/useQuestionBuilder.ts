@@ -86,3 +86,80 @@ export const useQuestionBuilderSchema = (programId: string, chainId: number) => 
     refetch: schemaQuery.refetch,
   };
 };
+
+/**
+ * Hook for managing post-approval form schemas using existing configuration endpoint
+ */
+export const usePostApprovalSchema = (programId: string, chainId: number) => {
+  const queryClient = useQueryClient();
+
+  const postApprovalSchemaQuery = useQuery({
+    queryKey: [...QUERY_KEYS.questionSchema(programId, chainId), 'post-approval'],
+    queryFn: async () => {
+      try {
+        const config = await fundingPlatformService.programs.getProgramConfiguration(programId, chainId);
+        
+        // Return the post approval form schema
+        if (config?.applicationConfig?.postApprovalFormSchema) {
+          return config.applicationConfig.postApprovalFormSchema as FormSchema;
+        }
+        
+        // Return null if no post approval form schema found
+        return null;
+      } catch (error: any) {
+        // If config doesn't exist yet, return null instead of throwing
+        if (error.response?.status === 404) {
+          return null;
+        }
+        throw error;
+      }
+    },
+    enabled: !!programId && !!chainId,
+  });
+
+  const updatePostApprovalSchemaMutation = useMutation({
+    mutationFn: async ({schema, existingConfig}: {schema: FormSchema, existingConfig?: IFundingProgramConfig | null}) => {
+      
+      // Debug logging to verify schema structure before sending
+      console.log('usePostApprovalSchema - Sending Post Approval Schema to Backend:', {
+        privateApplications: schema.settings?.privateApplications,
+        fullSettings: schema.settings,
+        privateFields: schema.fields?.filter(f => f.private)?.map(f => f.label),
+        schema: schema
+      });
+      
+      // Update with new post approval schema
+      const updatedConfig = {
+        ...existingConfig,
+        postApprovalFormSchema: schema,
+      };
+
+      console.log('usePostApprovalSchema - Full Config Being Sent:', updatedConfig);
+
+      if (!existingConfig) {
+        return fundingPlatformService.programs.createProgramConfiguration(programId, chainId, updatedConfig);
+      }
+      
+      return fundingPlatformService.programs.updateProgramConfiguration(programId, chainId, updatedConfig);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.questionSchema(programId, chainId) });
+      queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.questionSchema(programId, chainId), 'post-approval'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.programConfig(programId, chainId) });
+      toast.success('Post approval form schema saved successfully');
+    },
+    onError: (error) => {
+      console.error('Failed to save post approval schema:', error);
+      toast.error('Failed to save post approval form schema');
+    },
+  });
+
+  return {
+    schema: postApprovalSchemaQuery.data,
+    isLoading: postApprovalSchemaQuery.isLoading,
+    error: postApprovalSchemaQuery.error,
+    updateSchema: updatePostApprovalSchemaMutation.mutate,
+    isUpdating: updatePostApprovalSchemaMutation.isPending,
+    refetch: postApprovalSchemaQuery.refetch,
+  };
+};

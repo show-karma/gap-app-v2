@@ -5,6 +5,7 @@ import { FormField } from "@/types/question-builder";
 
 interface FieldTypeSelectorProps {
   onFieldAdd: (fieldType: FormField["type"]) => void;
+  isPostApprovalMode?: boolean;
 }
 
 export const fieldTypes = [
@@ -70,7 +71,7 @@ export const fieldTypes = [
   },
 ];
 
-export function FieldTypeSelector({ onFieldAdd }: FieldTypeSelectorProps) {
+export function FieldTypeSelector({ onFieldAdd, isPostApprovalMode = false }: FieldTypeSelectorProps) {
   return (
     <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
@@ -83,7 +84,7 @@ export function FieldTypeSelector({ onFieldAdd }: FieldTypeSelectorProps) {
             key={fieldType.type}
             onClick={() => onFieldAdd(fieldType.type)}
             className={`flex items-center p-3 text-left border rounded-lg transition-colors ${
-              fieldType.type === "email"
+              fieldType.type === "email" && !isPostApprovalMode
                 ? "border-yellow-400 dark:border-yellow-600 bg-yellow-50 dark:bg-yellow-900/20 hover:bg-yellow-100 dark:hover:bg-yellow-900/30"
                 : "border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
             }`}
@@ -94,7 +95,7 @@ export function FieldTypeSelector({ onFieldAdd }: FieldTypeSelectorProps) {
                 <span className="font-medium text-gray-900 dark:text-white">
                   {fieldType.label}
                 </span>
-                {fieldType.type === "email" && (
+                {fieldType.type === "email" && !isPostApprovalMode && (
                   <span className="text-xs bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 px-2 py-0.5 rounded-full">
                     Required
                   </span>
