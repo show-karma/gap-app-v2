@@ -45,6 +45,7 @@ interface MilestoneUpdateFormProps {
   previousData?: IMilestoneCompleted["data"];
   cancelEditing: (value: boolean) => void;
   afterSubmit?: () => void;
+  setIsUpdating?: (value: boolean) => void;
 }
 
 const labelStyle =
@@ -90,9 +91,9 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   previousData,
   cancelEditing,
   afterSubmit,
+  setIsUpdating: parentSetIsUpdating,
 }) => {
   const selectedProject = useProjectStore((state) => state.project);
-  const [isUpdating, setIsUpdating] = useState(false);
   const [isSubmitLoading, setIsSubmitLoading] = useState(false);
   const { chain, address } = useAccount();
   const { switchChainAsync } = useWallet();
@@ -316,7 +317,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                   afterSubmit?.();
                   openDialog();
                   cancelEditing(false);
-                  setIsUpdating(false);
+                  parentSetIsUpdating?.(false);
                   router.push(
                     PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
                       fetchedProject?.uid as string,
@@ -451,7 +452,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                     "milestones-and-updates"
                   );
                   cancelEditing(false);
-                  setIsUpdating(false);
+                  parentSetIsUpdating?.(false);
                 }
                 retries -= 1;
                 // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
@@ -559,7 +560,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           disabled={isSubmitLoading}
           onClick={() => {
             setIsSubmitLoading(false);
-            setIsUpdating(false);
+            parentSetIsUpdating?.(false);
             cancelEditing(false);
           }}
         >
