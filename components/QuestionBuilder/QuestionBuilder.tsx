@@ -58,7 +58,7 @@ export function QuestionBuilder({
     initialPostApprovalSchema || {
       id: `post_approval_form_${Date.now()}`,
       title: "Post Approval Form", 
-      description: "Please provide additional information for approved applications",
+      description: "", // Keep description empty to avoid duplication in UI
       fields: [],
       settings: {
         submitButtonText: "Submit Post Approval Information",
