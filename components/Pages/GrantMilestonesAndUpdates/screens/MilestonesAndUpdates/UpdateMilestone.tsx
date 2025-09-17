@@ -92,6 +92,7 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
       isEditing={isEditing}
       cancelEditing={cancelEditing}
       previousData={previousData}
+      setIsUpdating={setIsUpdating}
     />
   ) : (
     <NotUpdatingCase
