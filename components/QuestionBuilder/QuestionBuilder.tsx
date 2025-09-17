@@ -7,6 +7,7 @@ import { FieldEditor } from "./FieldEditor";
 import { FormPreview } from "./FormPreview";
 import { AIPromptConfiguration } from "./AIPromptConfiguration";
 import { SettingsConfiguration } from "./SettingsConfiguration";
+import { ReviewerManagementTab } from "@/components/FundingPlatform/QuestionBuilder/ReviewerManagementTab";
 import { Button } from "@/components/Utilities/Button";
 import {
   EyeIcon,
@@ -16,6 +17,7 @@ import {
   ChevronRightIcon,
   ExclamationTriangleIcon,
   WrenchScrewdriverIcon,
+  UserGroupIcon,
 } from "@heroicons/react/24/solid";
 import { MarkdownPreview } from "../Utilities/MarkdownPreview";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
@@ -26,6 +28,7 @@ interface QuestionBuilderProps {
   className?: string;
   programId?: string;
   chainId?: number;
+  communityId?: string;
 }
 
 export function QuestionBuilder({
@@ -34,6 +37,7 @@ export function QuestionBuilder({
   className = "",
   programId,
   chainId,
+  communityId,
 }: QuestionBuilderProps) {
   const [schema, setSchema] = useState<FormSchema>(
     initialSchema || {
@@ -49,7 +53,7 @@ export function QuestionBuilder({
     }
   );
 
-  const [activeTab, setActiveTab] = useState<"build" | "preview" | "settings" | "ai-config">(
+  const [activeTab, setActiveTab] = useState<"build" | "preview" | "settings" | "ai-config" | "reviewers">(
     "build"
   );
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
@@ -241,6 +245,16 @@ export function QuestionBuilder({
                 <EyeIcon className="w-4 h-4 mr-2" />
                 Preview
               </button>
+              <button
+                onClick={() => setActiveTab("reviewers")}
+                className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${activeTab === "reviewers"
+                  ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
+                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                  }`}
+              >
+                <UserGroupIcon className="w-4 h-4 mr-2" />
+                Reviewers
+              </button>
             </div>
 
             <Button
@@ -423,6 +437,24 @@ export function QuestionBuilder({
                 programId={programId}
                 chainId={chainId}
               />
+            </div>
+          </div>
+        ) : activeTab === "reviewers" ? (
+          <div className="h-full p-4 sm:p-6 lg:p-8 overflow-y-auto">
+            <div className="max-w-4xl mx-auto">
+              {programId && chainId && communityId ? (
+                <ReviewerManagementTab
+                  programId={programId}
+                  chainID={chainId}
+                  communityId={communityId}
+                />
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500 dark:text-gray-400">
+                    Program information is required to manage reviewers.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         ) : (
