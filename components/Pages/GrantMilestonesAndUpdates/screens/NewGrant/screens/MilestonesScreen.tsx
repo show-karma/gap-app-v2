@@ -276,14 +276,13 @@ export const MilestonesScreen: React.FC = () => {
                 }
               }
 
+              await refreshProject();
               router.push(
                 PAGES.PROJECT.GRANT(
                   selectedProject.details?.data.slug || selectedProject.uid,
                   grant.uid
                 )
               );
-              router.refresh();
-              await refreshProject();
             }
 
             retries -= 1;
