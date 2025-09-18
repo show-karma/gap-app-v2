@@ -192,7 +192,6 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, i
               Required field
             </label>
           </div>
-
           {/* Private Field Toggle - Hidden in post-approval mode since all fields are automatically private */}
           {!isPostApprovalMode && (
             <div className="flex items-center">
