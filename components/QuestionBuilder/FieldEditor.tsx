@@ -49,7 +49,7 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, i
       label: field.label,
       placeholder: field.placeholder || '',
       required: field.required || false,
-      private: field.private || false,
+      private: field.private || isPostApprovalMode, // Default to true for post-approval fields
       description: field.description || '',
       options: field.options || [],
       validation: field.validation || {},
@@ -74,7 +74,7 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, i
           label: data.label,
           placeholder: data.placeholder || '',
           required: data.required || false,
-          private: data.private || false,
+          private: data.private || isPostApprovalMode, // Always true for post-approval fields
           description: data.description || '',
           options: hasOptions ? (data.options || []).filter((opt): opt is string => typeof opt === 'string' && opt.length > 0) : undefined,
           validation: data.validation || {},
@@ -193,20 +193,23 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, i
             </label>
           </div>
 
-          <div className="flex items-center">
-            <input
-              {...register('private')}
-              type="checkbox"
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            />
-            <label className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-              Private field
-            </label>
-            <QuestionTooltip
-              content="This field will be hidden from public application listings"
-              className="ml-2"
-            />
-          </div>
+          {/* Private Field Toggle - Hidden in post-approval mode since all fields are automatically private */}
+          {!isPostApprovalMode && (
+            <div className="flex items-center">
+              <input
+                {...register('private')}
+                type="checkbox"
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <label className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                Private field
+              </label>
+              <QuestionTooltip
+                content="This field will be hidden from public application listings"
+                className="ml-2"
+              />
+            </div>
+          )}
         </div>
 
         {/* AI Evaluation Configuration - Hidden in post-approval mode */}
