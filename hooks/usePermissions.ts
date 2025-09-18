@@ -5,6 +5,7 @@ import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import axios from "axios";
 import { getCookiesFromStoredWallet } from "@/utilities/getCookiesFromStoredWallet";
 import { envVars } from "@/utilities/enviromentVars";
+import { FundingProgram } from "@/services/fundingPlatformService";
 
 const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
 
@@ -43,17 +44,6 @@ export interface PermissionOptions {
 }
 
 /**
- * Program information for reviewer role
- */
-export interface ReviewerProgram {
-  programId: string;
-  chainID: number;
-  name?: string;
-  assignedAt: string;
-  permissions: string[];
-}
-
-/**
  * Permission check response
  */
 interface PermissionCheckResponse {
@@ -64,9 +54,7 @@ interface PermissionCheckResponse {
 /**
  * Reviewer programs response
  */
-interface ReviewerProgramsResponse {
-  programs: ReviewerProgram[];
-}
+type ReviewerProgramsResponse = FundingProgram[]
 
 /**
  * Generic hook for checking permissions and roles
@@ -150,7 +138,7 @@ export const usePermissions = (options: PermissionOptions = {}) => {
             "/v2/funding-program-configs/my-reviewer-programs"
           );
 
-          const programs = response.data.programs || [];
+          const programs = response.data || [];
 
           return {
             hasPermission: programs.length > 0,

@@ -29,6 +29,7 @@ interface QuestionBuilderProps {
   programId?: string;
   chainId?: number;
   communityId?: string;
+  readOnly?: boolean;
 }
 
 export function QuestionBuilder({
@@ -38,6 +39,7 @@ export function QuestionBuilder({
   programId,
   chainId,
   communityId,
+  readOnly = false,
 }: QuestionBuilderProps) {
   const [schema, setSchema] = useState<FormSchema>(
     initialSchema || {
@@ -82,6 +84,8 @@ export function QuestionBuilder({
   }, [selectedFieldId]);
 
   const handleFieldAdd = (fieldType: FormField["type"]) => {
+    if (readOnly) return; // Prevent adding fields in read-only mode
+
     const newField: FormField = {
       id: `field_${Date.now()}`,
       type: fieldType,
@@ -101,6 +105,8 @@ export function QuestionBuilder({
   };
 
   const handleFieldUpdate = (updatedField: FormField) => {
+    if (readOnly) return; // Prevent updating fields in read-only mode
+
     setSchema((prev) => ({
       ...prev,
       fields: (prev.fields || []).map((field) =>
@@ -110,6 +116,8 @@ export function QuestionBuilder({
   };
 
   const handleFieldDelete = (fieldId: string) => {
+    if (readOnly) return; // Prevent deleting fields in read-only mode
+
     setSchema((prev) => ({
       ...prev,
       fields: (prev.fields || []).filter((field) => field.id !== fieldId),
@@ -124,6 +132,7 @@ export function QuestionBuilder({
   };
 
   const handleFieldMove = (fieldId: string, direction: "up" | "down") => {
+    if (readOnly) return; // Prevent moving fields in read-only mode
     if (!schema.fields) return;
 
     const currentIndex = schema.fields.findIndex(
@@ -186,21 +195,34 @@ export function QuestionBuilder({
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sm:px-3 md:px-4 px-6 py-2">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between flex-wrap gap-4">
           <div className="flex flex-col gap-2 mb-4 sm:mb-0">
-            <input
-              type="text"
-              value={schema.title}
-              onChange={(e) => handleTitleChange(e.target.value)}
-              className="text-xl font-bold bg-transparent border-none outline-none bg-zinc-100 dark:bg-zinc-800 rounded-md text-gray-900 dark:text-white placeholder-gray-400"
-              placeholder="Form Title"
-            />
-            <MarkdownEditor
-              value={schema.description || ""}
-              onChange={(value: string) => handleDescriptionChange(value)}
-              className="mt-1 text-sm bg-transparent border-none outline-none bg-zinc-100 dark:bg-zinc-800 rounded-md text-gray-600 dark:text-gray-400 placeholder-gray-500"
-              placeholderText="Form Description"
-              height={100}
-              minHeight={100}
-            />
+            {readOnly ? (
+              <>
+                <div className="text-xl font-bold text-gray-900 dark:text-white px-3 py-2">
+                  {schema.title}
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 px-3 py-1">
+                  <MarkdownPreview source={schema.description || ""} />
+                </div>
+              </>
+            ) : (
+              <>
+                <input
+                  type="text"
+                  value={schema.title}
+                  onChange={(e) => handleTitleChange(e.target.value)}
+                  className="text-xl font-bold bg-transparent border-none outline-none bg-zinc-100 dark:bg-zinc-800 rounded-md text-gray-900 dark:text-white placeholder-gray-400"
+                  placeholder="Form Title"
+                />
+                <MarkdownEditor
+                  value={schema.description || ""}
+                  onChange={(value: string) => handleDescriptionChange(value)}
+                  className="mt-1 text-sm bg-transparent border-none outline-none bg-zinc-100 dark:bg-zinc-800 rounded-md text-gray-600 dark:text-gray-400 placeholder-gray-500"
+                  placeholderText="Form Description"
+                  height={100}
+                  minHeight={100}
+                />
+              </>
+            )}
           </div>
 
           <div className="flex items-center space-x-3">
@@ -257,23 +279,25 @@ export function QuestionBuilder({
               </button>
             </div>
 
-            <Button
-              onClick={handleSave}
-              className={`py-2 ${!hasEmailField()
-                ? "bg-yellow-600 hover:bg-yellow-700"
-                : "bg-blue-600 hover:bg-blue-700"
-                }`}
-              title={
-                !hasEmailField()
-                  ? "Add an email field before saving"
-                  : undefined
-              }
-            >
-              {!hasEmailField() && (
-                <ExclamationTriangleIcon className="w-4 h-4 mr-2" />
-              )}
-              Save Form
-            </Button>
+            {!readOnly && (
+              <Button
+                onClick={handleSave}
+                className={`py-2 ${!hasEmailField()
+                  ? "bg-yellow-600 hover:bg-yellow-700"
+                  : "bg-blue-600 hover:bg-blue-700"
+                  }`}
+                title={
+                  !hasEmailField()
+                    ? "Add an email field before saving"
+                    : undefined
+                }
+              >
+                {!hasEmailField() && (
+                  <ExclamationTriangleIcon className="w-4 h-4 mr-2" />
+                )}
+                Save Form
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -281,14 +305,16 @@ export function QuestionBuilder({
       {/* Content */}
       <div className="flex-1 overflow-hidden  sm:px-3 md:px-4 px-6 py-2">
         {activeTab === "build" ? (
-          <div className="h-full grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Field Types Panel */}
-            <div className="lg:col-span-1">
-              <FieldTypeSelector onFieldAdd={handleFieldAdd} />
-            </div>
+          <div className={`h-full grid grid-cols-1 ${readOnly ? '' : 'lg:grid-cols-3'} gap-6`}>
+            {/* Field Types Panel - Hidden in read-only mode */}
+            {!readOnly && (
+              <div className="lg:col-span-1">
+                <FieldTypeSelector onFieldAdd={handleFieldAdd} />
+              </div>
+            )}
 
             {/* Form Builder */}
-            <div className="lg:col-span-2 overflow-y-auto">
+            <div className={readOnly ? '' : 'lg:col-span-2 overflow-y-auto'}>
               <div className="space-y-4">
                 {/* Email Field Warning */}
                 {!hasEmailField() && (
@@ -397,6 +423,7 @@ export function QuestionBuilder({
                                 field={field}
                                 onUpdate={handleFieldUpdate}
                                 onDelete={handleFieldDelete}
+                                readOnly={readOnly}
                                 onMoveUp={
                                   index === 0
                                     ? undefined
@@ -423,8 +450,9 @@ export function QuestionBuilder({
             <div className="max-w-4xl mx-auto">
               <SettingsConfiguration
                 schema={schema}
-                onUpdate={handleAIConfigUpdate}
+                onUpdate={readOnly ? undefined : handleAIConfigUpdate}
                 programId={programId}
+                readOnly={readOnly}
               />
             </div>
           </div>
@@ -433,9 +461,10 @@ export function QuestionBuilder({
             <div className="max-w-4xl mx-auto">
               <AIPromptConfiguration
                 schema={schema}
-                onUpdate={handleAIConfigUpdate}
+                onUpdate={readOnly ? undefined : handleAIConfigUpdate}
                 programId={programId}
                 chainId={chainId}
+                readOnly={readOnly}
               />
             </div>
           </div>
@@ -447,6 +476,7 @@ export function QuestionBuilder({
                   programId={programId}
                   chainID={chainId}
                   communityId={communityId}
+                  readOnly={readOnly}
                 />
               ) : (
                 <div className="text-center py-8">

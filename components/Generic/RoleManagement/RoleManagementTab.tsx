@@ -51,8 +51,8 @@ interface RoleManagementTabProps {
   members: RoleMember[];
   isLoading?: boolean;
   canManage?: boolean;
-  onAdd: (data: Record<string, string>) => Promise<void>;
-  onRemove: (memberId: string) => Promise<void>;
+  onAdd?: (data: Record<string, string>) => Promise<void>;
+  onRemove?: (memberId: string) => Promise<void>;
   onRefresh?: () => void;
 }
 
@@ -146,7 +146,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
 
     setIsAddingMember(true);
     try {
-      await onAdd(formData);
+      await onAdd?.(formData);
       // Only reset form if onAdd succeeds (doesn't throw)
 
       // Reset form
@@ -176,7 +176,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
 
     setRemovingMemberId(memberId);
     try {
-      await onRemove(memberId);
+      await onRemove?.(memberId);
 
       if (onRefresh) {
         onRefresh();

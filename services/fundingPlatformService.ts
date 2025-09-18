@@ -100,6 +100,8 @@ export type FundingProgram = {
   };
   applicationConfig: IFundingProgramConfig;
   communitySlug?: string;
+  communityName?: string;
+  communityImage?: string;
 	communityUID?: string;
   metrics?: {
     totalApplications: number;

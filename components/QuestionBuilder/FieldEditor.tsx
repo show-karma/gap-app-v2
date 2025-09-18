@@ -39,9 +39,10 @@ interface FieldEditorProps {
   onDelete: (fieldId: string) => void;
   onMoveUp?: (fieldId: string) => void;
   onMoveDown?: (fieldId: string) => void;
+  readOnly?: boolean;
 }
 
-export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown }: FieldEditorProps) {
+export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, readOnly = false }: FieldEditorProps) {
   const { register, watch, setValue, formState: { errors } } = useForm<FieldFormData>({
     resolver: zodResolver(fieldSchema),
     defaultValues: {

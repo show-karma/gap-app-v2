@@ -18,16 +18,18 @@ type SettingsConfigFormData = z.infer<typeof settingsConfigSchema>;
 
 interface SettingsConfigurationProps {
   schema: FormSchema;
-  onUpdate: (updatedSchema: FormSchema) => void;
+  onUpdate?: (updatedSchema: FormSchema) => void;
   className?: string;
   programId?: string;
+  readOnly?: boolean;
 }
 
 export function SettingsConfiguration({
   schema,
   onUpdate,
   className = '',
-  programId
+  programId,
+  readOnly = false
 }: SettingsConfigurationProps) {
   const {
     register,
@@ -42,6 +44,8 @@ export function SettingsConfiguration({
 
   // Watch for changes and auto-update
   useEffect(() => {
+    if (readOnly || !onUpdate) return; // Don't update in read-only mode
+
     const subscription = watch((data) => {
       const updatedSchema: FormSchema = {
         ...schema,
@@ -94,7 +98,8 @@ export function SettingsConfiguration({
               <input
                 {...register('privateApplications')}
                 type="checkbox"
-                className="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                disabled={readOnly}
+                className={`mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500 ${readOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
               />
               <div className="flex-1">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">

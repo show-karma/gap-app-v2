@@ -19,6 +19,7 @@ interface ReviewerManagementTabProps {
   programId: string;
   chainID: number;
   communityId: string;
+  readOnly?: boolean;
 }
 
 /**
@@ -28,6 +29,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
   programId,
   chainID,
   communityId,
+  readOnly = false,
 }) => {
   const queryClient = useQueryClient();
   const { isCommunityAdmin, isLoading: isLoadingAdmin } = useIsCommunityAdmin(communityId);
@@ -182,11 +184,11 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
     );
   }
 
-  if (!isCommunityAdmin) {
+  if (!isCommunityAdmin && !readOnly) {
     return (
       <div className="text-center py-12">
         <p className="text-gray-500 dark:text-gray-400">
-          You don't have permission to manage reviewers for this program.
+          You don{"'"}t have permission to manage reviewers for this program.
         </p>
       </div>
     );
@@ -197,9 +199,9 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
       config={reviewerConfig}
       members={members}
       isLoading={isLoadingReviewers}
-      canManage={isCommunityAdmin}
-      onAdd={handleAdd}
-      onRemove={handleRemove}
+      canManage={!readOnly && isCommunityAdmin}
+      onAdd={!readOnly ? handleAdd : undefined}
+      onRemove={!readOnly ? handleRemove : undefined}
       onRefresh={refetchReviewers}
     />
   );
