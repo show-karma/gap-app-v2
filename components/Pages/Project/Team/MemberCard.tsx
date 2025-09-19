@@ -4,6 +4,7 @@ import { DemoteMemberDialog } from "@/components/Dialogs/Member/DemoteMember";
 import { PromoteMemberDialog } from "@/components/Dialogs/Member/PromoteMember";
 import { GithubIcon, LinkedInIcon, Twitter2Icon } from "@/components/Icons";
 import { FarcasterIcon } from "@/components/Icons/Farcaster";
+import { formatFarcasterLink } from "@/utilities/farcaster";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
@@ -185,13 +186,7 @@ export const MemberCard = ({ member }: { member: string }) => {
             ) : null}
             {profile?.data.farcaster ? (
               <ExternalLink
-                href={
-                  profile?.data.farcaster.includes("http")
-                    ? profile?.data.farcaster
-                    : profile?.data.farcaster.includes("warpcast.com")
-                    ? `https://${profile?.data.farcaster}`
-                    : `https://warpcast.com/${profile?.data.farcaster}`
-                }
+                href={formatFarcasterLink(profile?.data.farcaster)}
                 className="w-max"
               >
                 <FarcasterIcon className={iconsClassnames.general} />
