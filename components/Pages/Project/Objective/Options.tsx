@@ -51,7 +51,7 @@ const EditIcon = () => (
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
   >
-    <g clip-path="url(#clip0_4474_13318)">
+    <g clipPath="url(#clip0_4474_13318)">
       <path
         d="M9.16699 3.33027H5.66699C4.26686 3.33027 3.5668 3.33027 3.03202 3.60275C2.56161 3.84244 2.17916 4.22489 1.93948 4.69529C1.66699 5.23007 1.66699 5.93014 1.66699 7.33027V14.3303C1.66699 15.7304 1.66699 16.4305 1.93948 16.9652C2.17916 17.4356 2.56161 17.8181 3.03202 18.0578C3.5668 18.3303 4.26686 18.3303 5.66699 18.3303H12.667C14.0671 18.3303 14.7672 18.3303 15.302 18.0578C15.7724 17.8181 16.1548 17.4356 16.3945 16.9652C16.667 16.4305 16.667 15.7304 16.667 14.3303V10.8303M6.66697 13.3303H8.06242C8.47007 13.3303 8.6739 13.3303 8.86571 13.2842C9.03577 13.2434 9.19835 13.176 9.34747 13.0847C9.51566 12.9816 9.65979 12.8375 9.94804 12.5492L17.917 4.58027C18.6073 3.88991 18.6073 2.77062 17.917 2.08027C17.2266 1.38991 16.1073 1.38991 15.417 2.08027L7.44802 10.0492C7.15977 10.3375 7.01564 10.4816 6.91257 10.6498C6.82119 10.7989 6.75385 10.9615 6.71302 11.1315C6.66697 11.3234 6.66697 11.5272 6.66697 11.9348V13.3303Z"
         stroke="currentColor"
@@ -178,7 +178,7 @@ export const ObjectiveOptionsMenu = ({
         } catch (onChainError: any) {
           // Silently fallback to off-chain revoke
           setIsStepper(false); // Reset stepper since we're falling back
-          
+
           const success = await performOffChainRevoke({
             uid: objectiveInstance?.uid as `0x${string}`,
             chainID: objectiveInstance.chainID,
@@ -188,7 +188,7 @@ export const ObjectiveOptionsMenu = ({
               loading: MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.LOADING,
             },
           });
-          
+
           if (!success) {
             // Both methods failed - throw the original error to maintain expected behavior
             throw onChainError;
