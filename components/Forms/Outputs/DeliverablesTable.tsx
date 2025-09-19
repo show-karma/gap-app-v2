@@ -44,15 +44,6 @@ export const DeliverablesTable = ({
           <h3 className={cn(labelStyle)}>Deliverables</h3>
           <InfoTooltip content="Deliverables are the specific, tangible results or products achieved by the activity. What key things have been delivered as a result of your activities that you can showcase?" />
         </div>
-        {fields.length > 0 && (
-          <Button
-            type="button"
-            onClick={onAdd}
-            className="text-sm bg-zinc-700 text-white px-3 py-1.5"
-          >
-            Add more deliverables
-          </Button>
-        )}
       </div>
 
       {fields.length === 0 ? (
@@ -63,7 +54,7 @@ export const DeliverablesTable = ({
           <Button
             type="button"
             onClick={onAdd}
-            className="text-sm bg-zinc-700 text-white px-3 py-1.5"
+            className="text-sm bg-brand-blue text-white px-3 py-1.5"
           >
             Add Deliverable
           </Button>
@@ -141,11 +132,25 @@ export const DeliverablesTable = ({
                     >
                       <TrashIcon className="h-4 w-4" />
                     </button>
+
+                    <EmptyDiv />
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+
+          {fields.length > 0 && (
+            <div className="flex w-full justify-end">
+              <Button
+                type="button"
+                onClick={onAdd}
+                className="text-sm bg-brand-blue text-white px-3 py-1.5"
+              >
+                Add more deliverables
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>

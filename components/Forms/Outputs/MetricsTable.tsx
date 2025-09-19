@@ -83,30 +83,25 @@ const CategorizedIndicatorDropdown = ({
   ];
 
   return (
-    <div className="flex flex-col gap-2">
-      <select
-        value={selected}
-        onChange={(e) => onSelect(e.target.value)}
-        className="w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-gray-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
-      >
-        <option value="">Select</option>
-        {dropdownList.map((item) => (
-          <option key={item.value} value={item.value}>
-            {item.title}
-          </option>
-        ))}
-      </select>
-      <Button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
+    <select
+      value={selected}
+      onChange={(e) => {
+        if (e.target.value === "CREATE_NEW") {
           onCreateNew();
-        }}
-        className="text-sm w-full bg-zinc-700 text-white py-1.5"
-      >
-        Create New Metric
-      </Button>
-    </div>
+        } else {
+          onSelect(e.target.value);
+        }
+      }}
+      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-gray-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
+    >
+      <option value="">Select</option>
+      <option value="CREATE_NEW" className="font-bold">+ Create New Metric</option>
+      {dropdownList.map((item) => (
+        <option key={item.value} value={item.value}>
+          {item.title}
+        </option>
+      ))}
+    </select>
   );
 };
 
@@ -178,15 +173,6 @@ export const MetricsTable = ({
           <h3 className={cn(labelStyle)}>Metrics</h3>
           <InfoTooltip content="Select from your project indicators, community indicators (created by community admins), or global indicators available to all projects. You can also create new global indicators. Metrics are quantitative data points that capture the direct results of the activity." />
         </div>
-        {outputs.length > 0 && (
-          <Button
-            type="button"
-            onClick={handleAddOutput}
-            className="text-sm bg-zinc-700 text-white px-3 py-1.5"
-          >
-            Add more metrics
-          </Button>
-        )}
       </div>
 
       {outputs.length === 0 ? (
@@ -198,7 +184,7 @@ export const MetricsTable = ({
           <Button
             type="button"
             onClick={handleAddOutput}
-            className="text-sm bg-zinc-700 text-white px-3 py-1.5"
+            className="text-sm bg-brand-blue text-white px-3 py-1.5"
           >
             Add metric
           </Button>
@@ -257,19 +243,18 @@ export const MetricsTable = ({
 
                           if (isValidInput) {
                             handleOutputChange(
-                              index, 
-                              'value', 
+                              index,
+                              'value',
                               e.target.value === "" ? "" : e.target.value
                             );
                           }
                         }}
-                        placeholder={`Enter ${
-                          categorizedIndicators.find(
-                            (o) => o.id === output.outputId
-                          )?.unitOfMeasure === "float"
-                            ? "decimal"
-                            : "whole"
-                        } number`}
+                        placeholder={`Enter ${categorizedIndicators.find(
+                          (o) => o.id === output.outputId
+                        )?.unitOfMeasure === "float"
+                          ? "decimal"
+                          : "whole"
+                          } number`}
                         disabled={
                           !!autosyncedIndicators.find(
                             (indicator) =>
@@ -296,22 +281,22 @@ export const MetricsTable = ({
                       <div className="h-8"></div>
                     </div>
                     {output.outputId &&
-                    isInvalidValue(
-                      output.value,
-                      categorizedIndicators.find((o) => o.id === output.outputId)
-                        ?.unitOfMeasure || "int"
-                    ) && (
-                      <p className="text-xs text-red-500 mt-1">
-                        {typeof output.value === "string" &&
-                        output.value === ""
-                          ? "This field is required"
-                          : categorizedIndicators.find(
+                      isInvalidValue(
+                        output.value,
+                        categorizedIndicators.find((o) => o.id === output.outputId)
+                          ?.unitOfMeasure || "int"
+                      ) && (
+                        <p className="text-xs text-red-500 mt-1">
+                          {typeof output.value === "string" &&
+                            output.value === ""
+                            ? "This field is required"
+                            : categorizedIndicators.find(
                               (o) => o.id === output.outputId
                             )?.unitOfMeasure === "int"
-                          ? "Please enter a whole number"
-                          : "Please enter a valid decimal number"}
-                      </p>
-                    )}
+                              ? "Please enter a whole number"
+                              : "Please enter a valid decimal number"}
+                        </p>
+                      )}
                   </td>
                   <td className="px-4 py-3 align-top">
                     <div className="flex flex-col gap-2">
@@ -356,9 +341,21 @@ export const MetricsTable = ({
               ))}
             </tbody>
           </table>
+
+          {outputs.length > 0 && (
+            <div className="flex w-full justify-end">
+              <Button
+                type="button"
+                onClick={handleAddOutput}
+                className="text-sm bg-brand-blue text-white px-3 py-1.5"
+              >
+                Add more metrics
+              </Button>
+            </div>
+          )}
         </div>
       )}
-      
+
       <OutputDialog
         open={isOutputDialogOpen}
         onOpenChange={(open) => {
