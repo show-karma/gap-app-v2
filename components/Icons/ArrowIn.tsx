@@ -13,7 +13,7 @@ export const ArrowInIcon = ({ className }: Props) => (
     xmlns="http://www.w3.org/2000/svg"
     className={className}
   >
-    <g clip-path="url(#clip0_5872_24712)">
+    <g clipPath="url(#clip0_5872_24712)">
       <path
         d="M9.375 15.625L9.37422 10.6258L4.375 10.625"
         stroke="currentColor"
