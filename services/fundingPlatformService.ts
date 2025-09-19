@@ -14,10 +14,11 @@ import {
   IApplicationVersionTimeline,
 } from "@/types/funding-platform";
 import { getCookiesFromStoredWallet } from "@/utilities/getCookiesFromStoredWallet";
+import { envVars } from "@/utilities/enviromentVars";
 
 // Base API configuration
 const API_BASE =
-  process.env.NEXT_PUBLIC_GAP_INDEXER_URL || "http://localhost:4000";
+  envVars.NEXT_PUBLIC_GAP_INDEXER_URL || "http://localhost:4000";
 
 const apiClient = axios.create({
   baseURL: API_BASE,
@@ -100,6 +101,8 @@ export type FundingProgram = {
   };
   applicationConfig: IFundingProgramConfig;
   communitySlug?: string;
+  communityName?: string;
+  communityImage?: string;
 	communityUID?: string;
   metrics?: {
     totalApplications: number;

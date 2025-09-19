@@ -667,8 +667,8 @@ export const useApplicationComments = (applicationId: string | null, isAdmin: bo
       applicationCommentsService.createComment(applicationId!, content, authorName),
     onSuccess: () => {
       // Invalidate and refetch comments after successful creation
-      queryClient.invalidateQueries({ 
-        queryKey: QUERY_KEYS.applicationComments(applicationId!, isAdmin) 
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.applicationComments(applicationId!)
       });
       toast.success('Comment added successfully');
     },
@@ -687,7 +687,7 @@ export const useApplicationComments = (applicationId: string | null, isAdmin: bo
     onSuccess: () => {
       // Invalidate and refetch comments after successful edit
       queryClient.invalidateQueries({ 
-        queryKey: QUERY_KEYS.applicationComments(applicationId!, isAdmin) 
+        queryKey: QUERY_KEYS.applicationComments(applicationId!) 
       });
       toast.success('Comment updated successfully');
     },
@@ -701,11 +701,11 @@ export const useApplicationComments = (applicationId: string | null, isAdmin: bo
   // Mutation for deleting comments
   const deleteCommentMutation = useMutation({
     mutationFn: (commentId: string) =>
-      applicationCommentsService.deleteComment(commentId, isAdmin),
+      applicationCommentsService.deleteComment(commentId),
     onSuccess: () => {
       // Refetch comments after deletion
       queryClient.invalidateQueries({ 
-        queryKey: QUERY_KEYS.applicationComments(applicationId!, isAdmin) 
+        queryKey: QUERY_KEYS.applicationComments(applicationId!) 
       });
       toast.success('Comment deleted successfully');
     },

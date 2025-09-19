@@ -33,6 +33,7 @@ import { ParagraphIcon } from "../Icons/Paragraph";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { useContributorProfile } from "@/hooks/useContributorProfile";
 import ThemeButton from "./ThemeButton";
+import { useReviewerPrograms } from "@/hooks/usePermissions";
 
 const ProjectDialog = dynamic(
   () =>
@@ -202,6 +203,10 @@ export default function Header() {
   const isRegistryAllowed =
     address && (isRegistryAdmin || isPoolManager) && isAuth;
 
+  // Check if user has reviewer role
+  const { programs: reviewerPrograms } = useReviewerPrograms();
+  const hasReviewerRole = reviewerPrograms && reviewerPrograms.length > 0;
+
   return (
     <>
       <header className="px-4 sm:px-6 lg:px-12  border-b border-b-[#DFE1E6]">
@@ -331,6 +336,13 @@ export default function Header() {
                                     </button>
                                   </Link>
                                 ) : null}
+                                {hasReviewerRole && isConnected && isAuth ? (
+                                  <Link href={PAGES.MY_REVIEWS}>
+                                    <button className="rounded-md w-full bg-white dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
+                                      Review
+                                    </button>
+                                  </Link>
+                                ) : null}
 
                                 {isConnected && isAuth && <ProjectDialog />}
                               </>
@@ -437,6 +449,11 @@ export default function Header() {
                     {isCommunityAdmin && isConnected && isAuth ? (
                       <Link href={PAGES.ADMIN.LIST}>
                         <button className={buttonStyle}>Admin</button>
+                      </Link>
+                    ) : null}
+                    {hasReviewerRole && isConnected && isAuth ? (
+                      <Link href={PAGES.MY_REVIEWS}>
+                        <button className={buttonStyle}>Review</button>
                       </Link>
                     ) : null}
                     {isConnected && isAuth && (
