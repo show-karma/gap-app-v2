@@ -8,6 +8,7 @@ import {
 } from "@/components/Icons";
 import { FarcasterIcon } from "@/components/Icons/Farcaster";
 import type { IProjectDetails } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { formatFarcasterLink } from "@/utilities/farcaster";
 
 interface SocialLink {
   name: string;
@@ -31,7 +32,11 @@ export const useProjectSocials = (
       { name: "Discord", prefix: "discord.gg/", icon: DiscordIcon },
       { name: "Website", prefix: "https://", icon: WebsiteIcon },
       { name: "LinkedIn", prefix: "linkedin.com/", icon: LinkedInIcon },
-      { name: "Farcaster", prefix: "warpcast.com/", icon: FarcasterIcon },
+      {
+        name: "Farcaster",
+        prefix: ["warpcast.com/", "farcaster.xyz/"],
+        icon: FarcasterIcon
+      },
     ];
 
     const hasHttpOrWWW = (link?: string) => {
@@ -92,6 +97,14 @@ export const useProjectSocials = (
                 icon,
               };
             }
+          }
+
+          if (name === "Farcaster") {
+            return {
+              name,
+              url: formatFarcasterLink(socialLink),
+              icon,
+            };
           }
 
           return {
