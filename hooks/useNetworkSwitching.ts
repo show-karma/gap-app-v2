@@ -140,14 +140,10 @@ export function useNetworkSwitching() {
 
     if (!switchSuccessful) {
       try {
-        // Method 3: Use switchChain (returns promise in some implementations)
+        // Method 3: Use switchChain (fallback method)
         if (switchChain) {
           console.log("Attempting switch via switchChain");
-          const result = switchChain({ chainId: targetChainId });
-          // If it returns a promise, wait for it
-          if (result && typeof result.then === "function") {
-            await result;
-          }
+          switchChain({ chainId: targetChainId });
           switchSuccessful = true;
         }
       } catch (error) {

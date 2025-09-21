@@ -6,7 +6,7 @@ import { WalletClient } from "viem";
 export async function getWalletClientWithFallback(
   primaryWalletClient: WalletClient | null | undefined,
   expectedChainId: number,
-  refetchWalletClient?: () => Promise<{ data: WalletClient | null }>
+  refetchWalletClient?: () => Promise<{ data: WalletClient | null | undefined }>
 ): Promise<WalletClient | null> {
   console.log(`🔄 Getting wallet client for chain ${expectedChainId}...`);
 
@@ -94,7 +94,7 @@ export async function executeWithWalletClientFallback<T>(
   execution: (walletClient: WalletClient) => Promise<T>,
   primaryWalletClient: WalletClient | null | undefined,
   expectedChainId: number,
-  refetchWalletClient?: () => Promise<{ data: WalletClient | null }>
+  refetchWalletClient?: () => Promise<{ data: WalletClient | null | undefined }>
 ): Promise<T> {
   const walletClient = await getWalletClientWithFallback(
     primaryWalletClient,

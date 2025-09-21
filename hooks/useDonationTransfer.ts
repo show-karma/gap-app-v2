@@ -272,7 +272,10 @@ export function useDonationTransfer() {
                 const fallbackClient = await getWalletClientWithFallback(
                   walletClient,
                   chainId,
-                  refetchWalletClient
+                  async () => {
+                    const result = await refetchWalletClient();
+                    return { data: result.data };
+                  }
                 );
 
                 if (!fallbackClient) {
@@ -316,7 +319,10 @@ export function useDonationTransfer() {
           let currentWalletClient = await getWalletClientWithFallback(
             walletClient,
             chainId,
-            refetchWalletClient
+            async () => {
+              const result = await refetchWalletClient();
+              return { data: result.data };
+            }
           );
 
           if (!currentWalletClient) {
@@ -333,7 +339,8 @@ export function useDonationTransfer() {
             console.log(`🔄 Attempting to get fresh wallet client for chain ${chainId}...`);
             await new Promise(resolve => setTimeout(resolve, 2000));
 
-            const { data: freshClient } = await refetchWalletClient();
+            const result = await refetchWalletClient();
+            const freshClient = result.data;
             if (freshClient) {
               await validateChainSync(freshClient, chainId, "batch donations");
               currentWalletClient = freshClient;
