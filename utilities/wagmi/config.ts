@@ -9,6 +9,9 @@ import {
   sepolia,
   lisk,
   scroll,
+  mainnet,
+  base,
+  polygon,
 } from "@wagmi/core/chains";
 import {
   coinbaseWallet,
@@ -49,11 +52,14 @@ export const config = createConfig({
   chains: appNetwork,
   connectors,
   transports: {
+    [mainnet.id]: http(envVars.RPC.MAINNET),
     [optimism.id]: http(envVars.RPC.OPTIMISM),
     [arbitrum.id]: http(envVars.RPC.ARBITRUM),
+    [base.id]: http(envVars.RPC.BASE),
+    [celo.id]: http(envVars.RPC.CELO),
+    [polygon.id]: http(envVars.RPC.POLYGON),
     [baseSepolia.id]: http(envVars.RPC.BASE_SEPOLIA),
     [optimismSepolia.id]: http(envVars.RPC.OPT_SEPOLIA),
-    [celo.id]: http(envVars.RPC.CELO),
     [sei.id]: http(envVars.RPC.SEI),
     [sepolia.id]: http(envVars.RPC.SEPOLIA),
     [lisk.id]: http(envVars.RPC.LISK),

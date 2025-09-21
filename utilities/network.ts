@@ -9,19 +9,52 @@ import {
   sei,
   lisk,
   scroll,
+  mainnet,
+  base,
+  polygon,
 } from "viem/chains";
 import type { TNetwork } from "@show-karma/karma-gap-sdk";
 
-export const appNetwork: [Chain, ...Chain[]] =
-  process.env.NEXT_PUBLIC_ENV === "production"
-    ? [optimism, arbitrum, celo, sei, lisk, scroll]
-    : [optimismSepolia, baseSepolia, sepolia];
+const includeTestNetworks = process.env.NEXT_PUBLIC_ENV !== "production";
+
+const productionNetworks: Chain[] = [
+  mainnet,
+  optimism,
+  arbitrum,
+  base,
+  celo,
+  polygon,
+  sei,
+  lisk,
+  scroll,
+];
+
+const nonProductionNetworks: Chain[] = [
+  mainnet,
+  optimism,
+  arbitrum,
+  base,
+  celo,
+  polygon,
+  optimismSepolia,
+  baseSepolia,
+  sepolia,
+];
+
+const configuredNetworks = includeTestNetworks
+  ? nonProductionNetworks
+  : productionNetworks;
+
+export const appNetwork = configuredNetworks as [Chain, ...Chain[]];
 
 export function getExplorerUrl(chainId: number, transactionHash: string) {
   const chain = [
+    mainnet,
     optimism,
     arbitrum,
+    base,
     celo,
+    polygon,
     sei,
     optimismSepolia,
     baseSepolia,
@@ -39,45 +72,40 @@ export function getExplorerUrl(chainId: number, transactionHash: string) {
 export function getChainIdByName(name: string) {
   switch (name.toLowerCase()) {
     case "mainnet":
+    case "ethereum":
       return 1;
     case "OP Mainnet":
-      return 10;
     case "optimism":
       return 10;
     case "arbitrum":
-      return 42161;
     case "arbitrum-one":
-      return 42161;
     case "ArbitrumOne":
       return 42161;
+    case "base":
+      return 8453;
+    case "celo":
+      return 42220;
+    case "polygon":
+    case "matic":
+      return 137;
     case "sei":
-      return 1329;
     case "Seitrace":
       return 1329;
     case "optimismGoerli":
-      return 420;
     case "Optimism Goerli":
-      return 420;
     case "optimism-goerli":
       return 420;
     case "Optimism Sepolia":
-      return 11155420;
     case "optimism-sepolia":
-      return 11155420;
     case "optimismSepolia":
       return 11155420;
     case "sepolia":
-      return 11155111;
     case "Sepolia":
       return 11155111;
     case "base-sepolia":
-      return 84532;
     case "base sepolia":
-      return 84532;
     case "basesepolia":
       return 84532;
-    case "celo":
-      return 42220;
     case "lisk":
       return 1135;
     case "scroll":
@@ -89,22 +117,26 @@ export function getChainIdByName(name: string) {
 
 export function getChainNameById(id: number): TNetwork {
   switch (id) {
-    // case 1:
-    //   return 'mainnet';
+    case 1:
+      return "mainnet" as TNetwork;
     case 10:
       return "optimism";
-    case 1329:
-      return "sei";
     case 42161:
       return "arbitrum";
+    case 8453:
+      return "base" as TNetwork;
+    case 42220:
+      return "celo";
+    case 137:
+      return "polygon" as TNetwork;
+    case 1329:
+      return "sei";
     case 11155420:
       return "optimism-sepolia";
     case 11155111:
       return "sepolia";
     case 84532:
       return "base-sepolia";
-    case 42220:
-      return "celo";
     case 1135:
       return "lisk";
     case 534352:

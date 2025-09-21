@@ -30,7 +30,8 @@
       "Bash(pnpm test:*)",
       "Bash(npx biome check:*)",
       "Bash(npx biome format:*)",
-      "Bash(pnpm dev:*)"
+      "Bash(pnpm dev:*)",
+      "Bash(pnpm lint:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",
