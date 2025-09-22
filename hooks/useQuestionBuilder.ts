@@ -37,17 +37,18 @@ function createFormSchemaHook(
       queryKey,
       queryFn: async () => {
         try {
-          const config = await fundingPlatformService.programs.getProgramConfiguration(programId, chainId);
+          const result = await fundingPlatformService.programs.getProgramConfiguration(programId, chainId);
 
-          // Return the form schema based on type
-          if (isPostApproval && config?.applicationConfig?.postApprovalFormSchema) {
-            return config.applicationConfig.postApprovalFormSchema as FormSchema;
-          } else if (!isPostApproval && config?.applicationConfig?.formSchema) {
-            return config.applicationConfig.formSchema as FormSchema;
+          // The service returns FundingProgram type, config is in applicationConfig
+          const config = result?.applicationConfig;
+
+          if (!config) {
+            return null;
           }
 
-          // Return null if no schema found
-          return null;
+          // Return the form schema based on type (schemas are directly on IFundingProgramConfig)
+          const schema = config[schemaField];
+          return schema ? (schema as FormSchema) : null;
         } catch (error: any) {
           // If config doesn't exist yet, return null instead of throwing
           if (error.response?.status === 404) {
@@ -62,23 +63,23 @@ function createFormSchemaHook(
     const updateSchemaMutation = useMutation({
       mutationFn: async ({schema, existingConfig}: {schema: FormSchema, existingConfig?: IFundingProgramConfig | null}) => {
 
-        // Build the updated configuration based on type
-        let updatedConfig: Partial<IFundingProgramConfig>;
-        if (isPostApproval) {
-          updatedConfig = {
-            ...existingConfig,
-            postApprovalFormSchema: schema as any,
+        if (!existingConfig) {
+          // Create minimal valid configuration for new configs
+          // The backend should handle setting defaults for other required fields
+          const newConfig: Partial<IFundingProgramConfig> = {
+            programId,
+            chainID: chainId,
+            [schemaField]: schema,
+            isEnabled: true,
           };
-        } else {
-          updatedConfig = {
-            ...existingConfig,
-            formSchema: schema as any,
-          };
+          return fundingPlatformService.programs.createProgramConfiguration(programId, chainId, newConfig);
         }
 
-        if (!existingConfig) {
-          return fundingPlatformService.programs.createProgramConfiguration(programId, chainId, updatedConfig);
-        }
+        // For existing configs, preserve all fields and only update the relevant schema
+        const updatedConfig: IFundingProgramConfig = {
+          ...existingConfig,
+          [schemaField]: schema,
+        };
 
         return fundingPlatformService.programs.updateProgramConfiguration(programId, chainId, updatedConfig);
       },
