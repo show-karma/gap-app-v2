@@ -4,14 +4,13 @@ import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { useOwnerStore } from "@/store";
 import { useStaff } from "@/hooks/useStaff";
 import { QuestionBuilder } from "@/components/QuestionBuilder";
+import FormBuilderErrorBoundary from "@/components/ErrorBoundary/FormBuilderErrorBoundary";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/Utilities/Button";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import { MESSAGES } from "@/utilities/messages";
 import { FormSchema } from "@/types/question-builder";
-import { useQuestionBuilderSchema } from "@/hooks/useQuestionBuilder";
-import { useEffect } from "react";
-import { IFundingProgramConfig } from "@/types/funding-platform";
+import { useQuestionBuilderSchema, usePostApprovalSchema } from "@/hooks/useQuestionBuilder";
 import { useProgramConfig } from "@/hooks/useFundingPlatform";
 
 export default function QuestionBuilderPage() {
@@ -40,17 +39,29 @@ export default function QuestionBuilderPage() {
     isUpdating,
   } = useQuestionBuilderSchema(programId, parsedChainId);
 
+  const {
+    schema: existingPostApprovalSchema,
+    isLoading: isLoadingPostApprovalSchema,
+    error: postApprovalSchemaError,
+    updateSchema: updatePostApprovalSchema,
+    isUpdating: isUpdatingPostApproval,
+  } = usePostApprovalSchema(programId, parsedChainId);
+
   const { config: existingConfig } = useProgramConfig(programId, parsedChainId);
 
   const handleSchemaChange = (schema: FormSchema) => {
     updateSchema({ schema, existingConfig: existingConfig || null });
   };
 
+  const handlePostApprovalSchemaChange = (schema: FormSchema) => {
+    updatePostApprovalSchema({ schema, existingConfig: existingConfig || null });
+  };
+
   const handleBackClick = () => {
     router.push(`/community/${communityId}/admin/funding-platform`);
   };
 
-  if (isLoadingAdmin || isLoadingSchema) {
+  if (isLoadingAdmin || isLoadingSchema || isLoadingPostApprovalSchema) {
     return (
       <div className="flex w-full items-center justify-center min-h-[600px]">
         <Spinner />
@@ -66,7 +77,7 @@ export default function QuestionBuilderPage() {
     );
   }
 
-  if (schemaError) {
+  if (schemaError || postApprovalSchemaError) {
     return (
       <div className="sm:px-3 md:px-4 px-6 py-2">
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
@@ -125,7 +136,7 @@ export default function QuestionBuilderPage() {
             </div>
 
             <div className="flex items-center space-x-3">
-              {isUpdating && (
+              {(isUpdating || isUpdatingPostApproval) && (
                 <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                   <Spinner />
                   <span className="ml-2">Saving...</span>
@@ -143,12 +154,16 @@ export default function QuestionBuilderPage() {
       </div>
 
       {/* Question Builder */}
-      <QuestionBuilder
-        initialSchema={existingSchema || undefined}
-        onSave={handleSchemaChange}
-        programId={programId}
-        chainId={parsedChainId}
-      />
+      <FormBuilderErrorBoundary>
+        <QuestionBuilder
+          initialSchema={existingSchema || undefined}
+          onSave={handleSchemaChange}
+          programId={programId}
+          chainId={parsedChainId}
+          initialPostApprovalSchema={existingPostApprovalSchema || undefined}
+          onSavePostApproval={handlePostApprovalSchemaChange}
+        />
+      </FormBuilderErrorBoundary>
     </div>
   );
 }
