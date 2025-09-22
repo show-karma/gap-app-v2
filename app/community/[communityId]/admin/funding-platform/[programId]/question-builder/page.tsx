@@ -4,14 +4,13 @@ import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { useOwnerStore } from "@/store";
 import { useStaff } from "@/hooks/useStaff";
 import { QuestionBuilder } from "@/components/QuestionBuilder";
+import FormBuilderErrorBoundary from "@/components/ErrorBoundary/FormBuilderErrorBoundary";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/Utilities/Button";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import { MESSAGES } from "@/utilities/messages";
 import { FormSchema } from "@/types/question-builder";
 import { useQuestionBuilderSchema, usePostApprovalSchema } from "@/hooks/useQuestionBuilder";
-import { useEffect } from "react";
-import { IFundingProgramConfig } from "@/types/funding-platform";
 import { useProgramConfig } from "@/hooks/useFundingPlatform";
 
 export default function QuestionBuilderPage() {
@@ -155,14 +154,16 @@ export default function QuestionBuilderPage() {
       </div>
 
       {/* Question Builder */}
-      <QuestionBuilder
-        initialSchema={existingSchema || undefined}
-        onSave={handleSchemaChange}
-        programId={programId}
-        chainId={parsedChainId}
-        initialPostApprovalSchema={existingPostApprovalSchema || undefined}
-        onSavePostApproval={handlePostApprovalSchemaChange}
-      />
+      <FormBuilderErrorBoundary>
+        <QuestionBuilder
+          initialSchema={existingSchema || undefined}
+          onSave={handleSchemaChange}
+          programId={programId}
+          chainId={parsedChainId}
+          initialPostApprovalSchema={existingPostApprovalSchema || undefined}
+          onSavePostApproval={handlePostApprovalSchemaChange}
+        />
+      </FormBuilderErrorBoundary>
     </div>
   );
 }

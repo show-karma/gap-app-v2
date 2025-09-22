@@ -57,7 +57,7 @@ export function QuestionBuilder({
   const [postApprovalSchema, setPostApprovalSchema] = useState<FormSchema>(
     initialPostApprovalSchema || {
       id: `post_approval_form_${Date.now()}`,
-      title: "Post Approval Form", 
+      title: "Post Approval Form",
       description: "", // Keep description empty to avoid duplication in UI
       fields: [],
       settings: {
@@ -94,7 +94,7 @@ export function QuestionBuilder({
     if (initialPostApprovalSchema) {
       setPostApprovalSchema({
         ...initialPostApprovalSchema,
-        fields: Array.isArray(initialPostApprovalSchema.fields) 
+        fields: Array.isArray(initialPostApprovalSchema.fields)
           ? initialPostApprovalSchema.fields.map(field => ({ ...field, private: true })) // Ensure all fields are private
           : [],
         settings: {
@@ -369,8 +369,8 @@ export function QuestionBuilder({
                         Post Approval Form
                       </h4>
                       <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                        This form will be shown to applicants after their application is approved. 
-                        Use it to collect additional information needed for the next steps. All fields are automatically set as private, and email fields are not required since we already have the applicant's information.
+                        This form will be shown to applicants after their application is approved.
+                        {`Use it to collect additional information needed for the next steps. All fields are automatically set as private, and email fields are not required since we already have the applicant's information.`}
                       </p>
                     </div>
                   </div>
