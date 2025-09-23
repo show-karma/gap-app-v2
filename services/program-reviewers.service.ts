@@ -32,7 +32,32 @@ apiClient.interceptors.response.use(
 );
 
 /**
- * Reviewer information
+ * User profile information
+ */
+export interface UserProfile {
+  id: string;
+  publicAddress: string;
+  name: string;
+  email: string;
+  telegram?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Reviewer information from API
+ */
+export interface ProgramReviewerResponse {
+  publicAddress: string;
+  programId: string;
+  chainID: number;
+  userProfile: UserProfile;
+  assignedAt: string;
+  assignedBy?: string;
+}
+
+/**
+ * Reviewer information for UI
  */
 export interface ProgramReviewer {
   publicAddress: string;
@@ -61,11 +86,29 @@ export const programReviewersService = {
    * Get all reviewers for a program
    */
   async getReviewers(programId: string, chainID: number): Promise<ProgramReviewer[]> {
-    const response = await apiClient.get<{ reviewers: ProgramReviewer[] }>(
-      `/v2/funding-program-configs/${programId}/${chainID}/reviewers`
-    );
+    try {
+      const response = await apiClient.get<{ reviewers: ProgramReviewerResponse[] }>(
+        `/v2/funding-program-configs/${programId}/${chainID}/reviewers`
+      );
 
-    return response.data.reviewers || [];
+      // Map the API response to the expected format
+      return (response.data.reviewers || []).map(reviewer => ({
+        publicAddress: reviewer.publicAddress,
+        name: reviewer.userProfile?.name || '',
+        email: reviewer.userProfile?.email || '',
+        telegram: reviewer.userProfile?.telegram || '',
+        assignedAt: reviewer.assignedAt,
+        assignedBy: reviewer.assignedBy
+      }));
+    } catch (error: any) {
+      // Handle "No reviewers found" as an empty list, not an error
+      if (error?.response?.data?.error === "Program Reviewer Not Found" ||
+          error?.response?.data?.message?.includes("No reviewers found")) {
+        return [];
+      }
+      // Re-throw other errors
+      throw error;
+    }
   },
 
   /**
@@ -76,12 +119,35 @@ export const programReviewersService = {
     chainID: number,
     reviewerData: AddReviewerRequest
   ): Promise<ProgramReviewer> {
-    const response = await apiClient.post<{ reviewer: ProgramReviewer }>(
+    const response = await apiClient.post<{ reviewer?: ProgramReviewerResponse }>(
       `/v2/funding-program-configs/${programId}/${chainID}/reviewers`,
       reviewerData
     );
 
-    return response.data.reviewer;
+    // Map the API response to the expected format
+    const reviewer = response.data?.reviewer;
+
+    // Handle case where reviewer might be undefined or API returns success without data
+    if (!reviewer) {
+      // Return the input data as the reviewer was likely added successfully
+      return {
+        publicAddress: reviewerData.publicAddress,
+        name: reviewerData.name,
+        email: reviewerData.email,
+        telegram: reviewerData.telegram,
+        assignedAt: new Date().toISOString(),
+        assignedBy: undefined
+      };
+    }
+
+    return {
+      publicAddress: reviewer.publicAddress,
+      name: reviewer.userProfile?.name || reviewerData.name,
+      email: reviewer.userProfile?.email || reviewerData.email,
+      telegram: reviewer.userProfile?.telegram || reviewerData.telegram,
+      assignedAt: reviewer.assignedAt,
+      assignedBy: reviewer.assignedBy
+    };
   },
 
   /**

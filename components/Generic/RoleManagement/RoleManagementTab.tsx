@@ -2,9 +2,12 @@
 
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/Utilities/Button";
-import { XMarkIcon, PlusIcon, UserIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon, PlusIcon, UserIcon, DocumentDuplicateIcon, CheckIcon } from "@heroicons/react/24/outline";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { cn } from "@/utilities/tailwind";
+import { TelegramIcon } from "@/components/Icons";
+import { formatDate } from "@/utilities/formatDate";
+
 
 /**
  * Field configuration for role management
@@ -73,6 +76,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [showAddForm, setShowAddForm] = useState(false);
+  const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
 
   // Initialize form data with empty values
   useEffect(() => {
@@ -200,6 +204,16 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
     return value;
   };
 
+  const handleCopyAddress = async (address: string) => {
+    try {
+      await navigator.clipboard.writeText(address);
+      setCopiedAddress(address);
+      setTimeout(() => setCopiedAddress(null), 2000);
+    } catch (error) {
+      console.error("Failed to copy address:", error);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -321,7 +335,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
         aria-label={`${config.roleDisplayName} members list`}
       >
         {members.length === 0 ? (
-          <div className="text-center py-12">
+          <div className="text-center py-12  bg-white dark:bg-gray-800">
             <UserIcon className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
               No {config.roleDisplayName.toLowerCase()}s
@@ -333,7 +347,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
         ) : (
           <ul className="divide-y divide-gray-200 dark:divide-gray-700">
             {members.map((member) => (
-              <li key={member.id} className="px-6 py-4">
+              <li key={member.id} className="px-6 py-4 bg-white dark:bg-gray-800">
                 <div className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center space-x-3">
@@ -344,26 +358,55 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-col space-y-1">
-                          {config.fields.map((field) => {
-                            const value = getMemberDisplayValue(member, field.name);
-                            if (!value) return null;
+                          {/* Display all information clearly */}
 
-                            return (
-                              <div key={field.name} className="flex items-center space-x-2">
-                                <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                                  {field.label}:
+                          {/* Name - Primary display */}
+                          {member.name && (
+                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                              {member.name}
+                            </div>
+                          )}
+
+                          {/* Email and Telegram on same line */}
+                          {(member.email || member.telegram) && (
+                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                              {member.email && <span>{member.email}</span>}
+                              {member.email && member.telegram && (
+                                <span className="mx-2 text-gray-400 dark:text-gray-500">|</span>
+                              )}
+                              {member.telegram && (
+                                <span className="flex items-center space-x-1">
+                                  <TelegramIcon className="h-4 w-4" />
+                                  <span>{member.telegram?.[0] === '@' ? '' : '@'}{member.telegram}</span>
                                 </span>
-                                <span className="text-sm text-gray-900 dark:text-gray-100 truncate">
-                                  {value}
+                              )}
+                            </div>
+                          )}
+
+                          {/* Copiable address */}
+                          {(member.publicAddress || member.walletAddress) && (
+                            <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                              <button
+                                onClick={() => handleCopyAddress(member.publicAddress || member.walletAddress || '')}
+                                className="flex items-center space-x-1 hover:text-gray-700 dark:hover:text-gray-300 transition-colors group"
+                                title="Click to copy address"
+                              >
+                                <span>
+                                  {getMemberDisplayValue(member, member.publicAddress ? "publicAddress" : "walletAddress")}
                                 </span>
-                              </div>
-                            );
-                          })}
+                                {copiedAddress === (member.publicAddress || member.walletAddress) ? (
+                                  <CheckIcon className="h-3 w-3 text-green-500" />
+                                ) : (
+                                  <DocumentDuplicateIcon className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                )}
+                              </button>
+                            </div>
+                          )}
+
+                          {/* Added date */}
                           {member.assignedAt && (
-                            <div className="flex items-center space-x-2">
-                              <span className="text-xs text-gray-500 dark:text-gray-400">
-                                Added: {new Date(member.assignedAt).toLocaleDateString()}
-                              </span>
+                            <div className="text-xs text-gray-400 dark:text-gray-500">
+                              Added {formatDate(member.assignedAt)}
                             </div>
                           )}
                         </div>

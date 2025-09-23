@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   RoleManagementTab,
@@ -68,8 +68,8 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
         telegram: data.telegram,
       });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["program-reviewers", programId, chainID] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["program-reviewers", programId, chainID] });
       toast.success("Reviewer added successfully");
     },
     onError: (error: any) => {
@@ -83,8 +83,8 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
     mutationFn: async (publicAddress: string) => {
       return programReviewersService.removeReviewer(programId, chainID, publicAddress);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["program-reviewers", programId, chainID] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["program-reviewers", programId, chainID] });
       toast.success("Reviewer removed successfully");
     },
     onError: (error: any) => {

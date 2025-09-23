@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { usePermissions, useIsReviewer, useReviewerPrograms } from "../usePermissions";
 import { useAccount } from "wagmi";
 import { useAuthStore } from "@/store/auth";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import React from "react";
 
 // Mock dependencies
@@ -67,7 +67,10 @@ describe("usePermissions Hook", () => {
       },
     } as any));
 
-    mockedAxios.isAxiosError = jest.fn();
+    // Mock isAxiosError as a type predicate
+    (mockedAxios.isAxiosError as any) = jest.fn((payload: any): payload is AxiosError => {
+      return payload?.isAxiosError === true;
+    });
   });
 
   afterEach(() => {
@@ -222,7 +225,7 @@ describe("usePermissions Hook", () => {
 
       const mockGet = jest.fn().mockRejectedValue(error);
       (apiClient as any).get = mockGet;
-      mockedAxios.isAxiosError = jest.fn((payload: any): payload is any => true);
+      (mockedAxios.isAxiosError as any) = jest.fn((payload: any): payload is AxiosError => true);
 
       const { result } = renderHook(
         () => usePermissions({ programId: "test", chainID: 1, action: "read" }),
@@ -245,7 +248,7 @@ describe("usePermissions Hook", () => {
 
       const mockGet = jest.fn().mockRejectedValue(error);
       (apiClient as any).get = mockGet;
-      mockedAxios.isAxiosError = jest.fn((payload: any): payload is any => true);
+      (mockedAxios.isAxiosError as any) = jest.fn((payload: any): payload is AxiosError => true);
 
       const { result } = renderHook(
         () => usePermissions({ programId: "test", chainID: 1, action: "edit" }),
@@ -268,7 +271,7 @@ describe("usePermissions Hook", () => {
 
       const mockGet = jest.fn().mockRejectedValue(error);
       (apiClient as any).get = mockGet;
-      mockedAxios.isAxiosError = jest.fn((payload: any): payload is any => true);
+      (mockedAxios.isAxiosError as any) = jest.fn((payload: any): payload is AxiosError => true);
 
       const { result } = renderHook(
         () => usePermissions({ programId: "test", chainID: 1 }),
@@ -288,7 +291,7 @@ describe("usePermissions Hook", () => {
 
       const mockGet = jest.fn().mockRejectedValue(error);
       (apiClient as any).get = mockGet;
-      mockedAxios.isAxiosError = jest.fn((payload: any): payload is any => false);
+      (mockedAxios.isAxiosError as any) = jest.fn((payload: any): payload is AxiosError => false);
 
       const { result } = renderHook(
         () => usePermissions({ programId: "test", chainID: 1 }),
