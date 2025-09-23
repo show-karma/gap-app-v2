@@ -91,14 +91,25 @@ type ReviewerProgramsResponse = FundingProgram[]
  * ```
  */
 export const usePermissions = (options: PermissionOptions = {}) => {
-  const { address } = useAccount();
-  const { isAuth } = useAuthStore();
+  const { address: wagmiAddress } = useAccount();
+  const { isAuth, isAuthenticating, getToken } = useAuthStore();
   const { programId, chainID, action, role, enabled = true } = options;
 
   const query = useQuery({
-    queryKey: ["permissions", programId, chainID, action, role, address, isAuth],
+    queryKey: ["permissions", programId, chainID, action, role, wagmiAddress, isAuth],
     queryFn: async () => {
-      if (!isAuth || !address) {
+      // Early return if still authenticating
+      if (isAuthenticating) {
+        return {
+          hasPermission: false,
+          permissions: [],
+          programs: []
+        };
+      }
+
+      // Check auth state consistency
+      const token = getToken();
+      if (!isAuth || !wagmiAddress || !token) {
         return {
           hasPermission: false,
           permissions: [],
@@ -122,7 +133,19 @@ export const usePermissions = (options: PermissionOptions = {}) => {
             programs: []
           };
         } catch (error) {
-          console.error("Error checking permission:", error);
+          if (axios.isAxiosError(error)) {
+            if (error.response?.status === 401) {
+              console.error("Authentication error: Please reconnect your wallet");
+            } else if (error.response?.status === 403) {
+              console.error("Permission denied: You don't have access to this resource");
+            } else if (error.code === 'ECONNABORTED') {
+              console.error("Request timeout: Please check your connection and try again");
+            } else {
+              console.error(`Error checking permission (${error.response?.status || 'network error'}): ${error.message}`);
+            }
+          } else {
+            console.error("Error checking permission:", error);
+          }
           return {
             hasPermission: false,
             permissions: [],
@@ -146,7 +169,19 @@ export const usePermissions = (options: PermissionOptions = {}) => {
             programs
           };
         } catch (error) {
-          console.error("Error fetching reviewer programs:", error);
+          if (axios.isAxiosError(error)) {
+            if (error.response?.status === 401) {
+              console.error("Authentication error: Please reconnect your wallet to view reviewer programs");
+            } else if (error.response?.status === 403) {
+              console.error("Access denied: You don't have permission to view reviewer programs");
+            } else if (error.code === 'ECONNABORTED') {
+              console.error("Request timeout: Unable to fetch reviewer programs. Please try again");
+            } else {
+              console.error(`Error fetching reviewer programs (${error.response?.status || 'network error'}): ${error.message}`);
+            }
+          } else {
+            console.error("Error fetching reviewer programs:", error);
+          }
           return {
             hasPermission: false,
             permissions: [],
@@ -163,8 +198,15 @@ export const usePermissions = (options: PermissionOptions = {}) => {
       };
     },
     ...defaultQueryOptions,
-    enabled: enabled && !!isAuth && !!address,
+    enabled: enabled && !!isAuth && !!wagmiAddress && !isAuthenticating,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    retry: (failureCount, error) => {
+      // Retry only network errors, not auth issues
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        return false;
+      }
+      return failureCount < 3;
+    }
   });
 
   return {

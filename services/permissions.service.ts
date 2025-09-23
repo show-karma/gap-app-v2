@@ -151,4 +151,91 @@ export const permissionsService = {
     const resourcePermissions = permissions.permissions.find(p => p.resource === resource);
     return resourcePermissions?.actions.includes(action) ?? false;
   },
+
+  /**
+   * Batch check permissions for multiple programs
+   * Falls back to parallel individual calls if batch endpoint doesn't exist
+   */
+  async checkMultiplePermissions(
+    programIds: Array<{ programId: string; chainID: number; action?: string }>
+  ): Promise<Map<string, PermissionCheckResponse>> {
+    const results = new Map<string, PermissionCheckResponse>();
+
+    try {
+      // Try batch endpoint first
+      const response = await apiClient.post<{
+        permissions: Array<{
+          programId: string;
+          chainID: number;
+          hasPermission: boolean;
+          permissions: string[];
+        }>
+      }>("/v2/funding-program-configs/batch-check-permissions", {
+        programs: programIds
+      });
+
+      // Map results
+      response.data.permissions.forEach(item => {
+        const key = `${item.programId}-${item.chainID}`;
+        results.set(key, {
+          hasPermission: item.hasPermission,
+          permissions: item.permissions
+        });
+      });
+    } catch (error) {
+      // Fall back to parallel calls if batch endpoint doesn't exist
+      console.log("Batch endpoint not available, falling back to parallel calls");
+
+      const promises = programIds.map(async ({ programId, chainID, action }) => {
+        try {
+          const result = await this.checkPermission({ programId, chainID, action });
+          return { key: `${programId}-${chainID}`, result };
+        } catch (err) {
+          console.error(`Error checking permission for ${programId}-${chainID}:`, err);
+          return {
+            key: `${programId}-${chainID}`,
+            result: { hasPermission: false, permissions: [] }
+          };
+        }
+      });
+
+      const responses = await Promise.allSettled(promises);
+      responses.forEach(response => {
+        if (response.status === 'fulfilled' && response.value) {
+          results.set(response.value.key, response.value.result);
+        }
+      });
+    }
+
+    return results;
+  },
+
+  /**
+   * Cache for permission results to avoid duplicate calls
+   */
+  _permissionCache: new Map<string, { data: PermissionCheckResponse; timestamp: number }>(),
+
+  /**
+   * Get cached permission or fetch if not available
+   */
+  async getCachedPermission(options: PermissionCheckOptions): Promise<PermissionCheckResponse> {
+    const cacheKey = `${options.programId}-${options.chainID}-${options.action || ''}`;
+    const cached = this._permissionCache.get(cacheKey);
+
+    // Check if cache is valid (5 minutes)
+    if (cached && Date.now() - cached.timestamp < 5 * 60 * 1000) {
+      return cached.data;
+    }
+
+    // Fetch new data
+    const result = await this.checkPermission(options);
+
+    // Update cache
+    this._permissionCache.set(cacheKey, {
+      data: result,
+      timestamp: Date.now()
+    });
+
+    return result;
+  }
 };

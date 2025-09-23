@@ -104,7 +104,7 @@ export const programReviewersService = {
     programId: string,
     chainID: number,
     reviewers: AddReviewerRequest[]
-  ): Promise<ProgramReviewer[]> {
+  ): Promise<{ added: ProgramReviewer[]; errors: Array<{ reviewer: AddReviewerRequest; error: string }> }> {
     const addedReviewers: ProgramReviewer[] = [];
     const errors: Array<{ reviewer: AddReviewerRequest; error: string }> = [];
 
@@ -112,10 +112,20 @@ export const programReviewersService = {
       try {
         const added = await this.addReviewer(programId, chainID, reviewer);
         addedReviewers.push(added);
-      } catch (error: any) {
+      } catch (error) {
+        let errorMessage = "Failed to add reviewer";
+
+        if (axios.isAxiosError(error)) {
+          errorMessage = error.response?.data?.message || error.message;
+        } else if (error instanceof Error) {
+          errorMessage = error.message;
+        } else if (typeof error === 'string') {
+          errorMessage = error;
+        }
+
         errors.push({
           reviewer,
-          error: error.response?.data?.message || error.message || "Failed to add reviewer",
+          error: errorMessage,
         });
       }
     }
@@ -124,7 +134,7 @@ export const programReviewersService = {
       console.error("Errors adding reviewers:", errors);
     }
 
-    return addedReviewers;
+    return { added: addedReviewers, errors };
   },
 
   /**

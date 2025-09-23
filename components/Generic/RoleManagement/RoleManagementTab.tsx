@@ -161,7 +161,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
       if (onRefresh) {
         onRefresh();
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error adding member:", error);
       // Keep form data and stay open on error
     } finally {
@@ -181,7 +181,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
       if (onRefresh) {
         onRefresh();
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error removing member:", error);
     } finally {
       setRemovingMemberId(null);
@@ -225,8 +225,10 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
             onClick={() => setShowAddForm(!showAddForm)}
             disabled={isAddingMember}
             className="flex items-center space-x-2"
+            aria-label={`Add new ${config.roleDisplayName.toLowerCase()}`}
+            aria-expanded={showAddForm}
           >
-            <PlusIcon className="h-5 w-5" />
+            <PlusIcon className="h-5 w-5" aria-hidden="true" />
             <span>Add {config.roleDisplayName}</span>
           </Button>
         )}
@@ -255,6 +257,9 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                   onChange={(e) => handleFieldChange(field.name, e.target.value)}
                   placeholder={field.placeholder}
                   disabled={isAddingMember}
+                  aria-invalid={!!formErrors[field.name]}
+                  aria-describedby={formErrors[field.name] ? `${field.name}-error` : undefined}
+                  aria-required={field.required}
                   className={cn(
                     "block w-full rounded-md border-gray-300 dark:border-gray-600",
                     "bg-white dark:bg-gray-700",
@@ -265,7 +270,12 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                   )}
                 />
                 {formErrors[field.name] && (
-                  <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                  <p
+                    id={`${field.name}-error`}
+                    className="mt-1 text-xs text-red-600 dark:text-red-400"
+                    role="alert"
+                    aria-live="polite"
+                  >
                     {formErrors[field.name]}
                   </p>
                 )}
@@ -305,7 +315,11 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
       )}
 
       {/* Members List */}
-      <div className="bg-white dark:bg-gray-900 shadow overflow-hidden sm:rounded-md">
+      <div
+        className="bg-white dark:bg-gray-900 shadow overflow-hidden sm:rounded-md"
+        role="region"
+        aria-label={`${config.roleDisplayName} members list`}
+      >
         {members.length === 0 ? (
           <div className="text-center py-12">
             <UserIcon className="mx-auto h-12 w-12 text-gray-400" />
@@ -360,6 +374,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                     <button
                       onClick={() => handleRemove(member.id)}
                       disabled={removingMemberId === member.id}
+                      aria-label={`Remove ${config.roleDisplayName.toLowerCase()} ${member.name || member.publicAddress || member.id}`}
                       className={cn(
                         "ml-4 p-2 rounded-md",
                         "text-gray-400 hover:text-red-600 dark:text-gray-500 dark:hover:text-red-400",
@@ -369,9 +384,9 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                       )}
                     >
                       {removingMemberId === member.id ? (
-                        <Spinner className="h-5 w-5" />
+                        <Spinner className="h-5 w-5" aria-hidden="true" />
                       ) : (
-                        <XMarkIcon className="h-5 w-5" />
+                        <XMarkIcon className="h-5 w-5" aria-hidden="true" />
                       )}
                     </button>
                   )}
