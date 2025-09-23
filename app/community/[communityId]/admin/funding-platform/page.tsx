@@ -44,6 +44,15 @@ import pluralize from "pluralize";
 import Link from "next/link";
 import { envVars } from "@/utilities/enviromentVars";
 
+const getApplyUrlByCommunityId = (communityId: string, programId: string) => {
+  switch (communityId) {
+    case "optimism":
+      return envVars.isDev ? `https://testapp.opgrants.io/programs/${programId}/apply` : `https://app.opgrants.io/programs/${programId}/apply`;
+    default:
+      return envVars.isDev ? `https://testapp.karmahq.xyz/${communityId}/programs/${programId}/apply` : `https://app.karmahq.xyz/${communityId}/programs/${programId}/apply`;
+  }
+}
+
 export default function FundingPlatformAdminPage() {
   const { communityId } = useParams() as { communityId: string };
   const router = useRouter();
@@ -709,7 +718,7 @@ export default function FundingPlatformAdminPage() {
                   {/* Apply Button */}
                   <div className="mb-3">
                     <Link
-                      href={envVars.isDev ? `https://testapp.opgrants.io/programs/${program.programId}/apply` : `https://app.opgrants.io/programs/${program.programId}/apply`}
+                      href={getApplyUrlByCommunityId(communityId, program.programId)}
                       className="w-full"
                       target="_blank"
                     >
