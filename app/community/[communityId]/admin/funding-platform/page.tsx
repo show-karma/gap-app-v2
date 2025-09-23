@@ -43,13 +43,14 @@ import { Line } from "@rc-component/progress";
 import pluralize from "pluralize";
 import Link from "next/link";
 import { envVars } from "@/utilities/enviromentVars";
+import { fundingPlatformDomains } from "@/utilities/fundingPlatformDomains";
 
 const getApplyUrlByCommunityId = (communityId: string, programId: string) => {
-  switch (communityId) {
-    case "optimism":
-      return envVars.isDev ? `https://testapp.opgrants.io/programs/${programId}/apply` : `https://app.opgrants.io/programs/${programId}/apply`;
-    default:
-      return envVars.isDev ? `https://testapp.karmahq.xyz/${communityId}/programs/${programId}/apply` : `https://app.karmahq.xyz/${communityId}/programs/${programId}/apply`;
+  if (communityId in fundingPlatformDomains) {
+    const domain = fundingPlatformDomains[communityId as keyof typeof fundingPlatformDomains];
+    return envVars.isDev ? `${domain.dev}/programs/${programId}/apply` : `${domain.prod}/programs/${programId}/apply`;
+  } else {
+    return envVars.isDev ? `${fundingPlatformDomains.shared.dev}/${communityId}/programs/${programId}/apply` : `${fundingPlatformDomains.shared.prod}/${communityId}/programs/${programId}/apply`;
   }
 }
 
