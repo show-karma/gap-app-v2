@@ -9,6 +9,8 @@ import { LockClosedIcon } from '@heroicons/react/24/solid';
 import { ExternalLink } from '../Utilities/ExternalLink';
 import { LinkIcon } from '@heroicons/react/24/outline';
 import { envVars } from '@/utilities/enviromentVars';
+import { fundingPlatformDomains } from '@/utilities/fundingPlatformDomains';
+import { useParams } from 'next/navigation';
 
 const settingsConfigSchema = z.object({
   privateApplications: z.boolean(),
@@ -24,6 +26,15 @@ interface SettingsConfigurationProps {
   readOnly?: boolean;
 }
 
+const getApplyUrlByCommunityId = (communityId: string, programId: string) => {
+  if (communityId in fundingPlatformDomains) {
+    const domain = fundingPlatformDomains[communityId as keyof typeof fundingPlatformDomains];
+    return envVars.isDev ? `${domain.dev}/browse-applications?programId=${programId}` : `${domain.prod}/browse-applications?programId=${programId}`;
+  } else {
+    return envVars.isDev ? `${fundingPlatformDomains.shared.dev}/${communityId}/browse-applications?programId=${programId}` : `${fundingPlatformDomains.shared.prod}/${communityId}/browse-applications?programId=${programId}`;
+  }
+}
+
 export function SettingsConfiguration({
   schema,
   onUpdate,
@@ -31,6 +42,7 @@ export function SettingsConfiguration({
   programId,
   readOnly = false
 }: SettingsConfigurationProps) {
+  const { communityId } = useParams() as { communityId: string };
   const {
     register,
     watch,
@@ -80,7 +92,7 @@ export function SettingsConfiguration({
             </label>
             <div className='flex flex-row items-center space-x-2'>
               <ExternalLink className='underline text-blue-500'
-                href={envVars.isDev ? `https://testapp.opgrants.io/browse-applications?programId=${programId}` : `https://app.opgrants.io/browse-applications?programId=${programId}`}
+                href={getApplyUrlByCommunityId(communityId, programId as string)}
               >
                 Browse All Applications
               </ExternalLink>
