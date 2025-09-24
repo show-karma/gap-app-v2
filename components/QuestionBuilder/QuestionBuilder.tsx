@@ -27,9 +27,9 @@ interface QuestionBuilderProps {
   initialSchema?: FormSchema;
   onSave?: (schema: FormSchema) => void;
   className?: string;
-  programId?: string;
-  chainId?: number;
-  communityId?: string;
+  programId: string;
+  chainId: number;
+  communityId: string;
   readOnly?: boolean;
   initialPostApprovalSchema?: FormSchema;
   onSavePostApproval?: (schema: FormSchema) => void;
