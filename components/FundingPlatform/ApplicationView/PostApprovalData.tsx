@@ -40,7 +40,7 @@ const PostApprovalData: FC<PostApprovalDataProps> = ({
             </dt>
             <dd className="text-sm text-gray-900 dark:text-gray-100">
               {Array.isArray(value) ? (
-                value.length > 0 && typeof value[0] === "object" && "title" in value[0] ? (
+                value.length > 0 && value[0] !== null && typeof value[0] === "object" && "title" in value[0] ? (
                   <div className="space-y-2">
                     {value.map((milestone: any, index) => (
                       <div
