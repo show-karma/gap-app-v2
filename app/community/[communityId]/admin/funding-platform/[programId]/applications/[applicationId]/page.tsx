@@ -42,7 +42,7 @@ export default function ApplicationDetailPage() {
 
   // Get current user address
   const { address: currentUserAddress } = useAccount();
-  
+
   // View mode state for ApplicationContent
   const [applicationViewMode, setApplicationViewMode] = useState<"details" | "changes">("details");
 
@@ -105,7 +105,7 @@ export default function ApplicationDetailPage() {
     selectVersion(versionId, versions);
     // Switch to Changes view to show the selected version
     setApplicationViewMode("changes");
-    
+
     // Scroll to the Application Details section
     setTimeout(() => {
       const element = document.getElementById('application-details');
@@ -204,6 +204,13 @@ export default function ApplicationDetailPage() {
 
           {/* Right Column - Comments */}
           <div className="space-y-6">
+            {/* Post-Approval Data Section - After Activity Timeline */}
+            {application.postApprovalData && Object.keys(application.postApprovalData).length > 0 && (
+              <PostApprovalData
+                postApprovalData={application.postApprovalData}
+                program={program}
+              />
+            )}
             <CommentsSection
               applicationId={application.referenceNumber}
               comments={comments}
@@ -218,14 +225,6 @@ export default function ApplicationDetailPage() {
               onVersionClick={handleVersionClick}
               isLoading={isLoadingComments}
             />
-            
-            {/* Post-Approval Data Section - After Activity Timeline */}
-            {application.postApprovalData && Object.keys(application.postApprovalData).length > 0 && (
-              <PostApprovalData
-                postApprovalData={application.postApprovalData}
-                program={program}
-              />
-            )}
           </div>
         </div>
       </div>
