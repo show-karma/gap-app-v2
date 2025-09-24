@@ -17,6 +17,7 @@ import {
   ChevronRightIcon,
   ExclamationTriangleIcon,
   WrenchScrewdriverIcon,
+  CheckCircleIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/solid";
 import { MarkdownPreview } from "../Utilities/MarkdownPreview";
@@ -30,6 +31,8 @@ interface QuestionBuilderProps {
   chainId?: number;
   communityId?: string;
   readOnly?: boolean;
+  initialPostApprovalSchema?: FormSchema;
+  onSavePostApproval?: (schema: FormSchema) => void;
 }
 
 export function QuestionBuilder({
@@ -40,6 +43,8 @@ export function QuestionBuilder({
   chainId,
   communityId,
   readOnly = false,
+  initialPostApprovalSchema,
+  onSavePostApproval,
 }: QuestionBuilderProps) {
   const [schema, setSchema] = useState<FormSchema>(
     initialSchema || {
@@ -55,11 +60,30 @@ export function QuestionBuilder({
     }
   );
 
-  const [activeTab, setActiveTab] = useState<"build" | "preview" | "settings" | "ai-config" | "reviewers">(
+  const [postApprovalSchema, setPostApprovalSchema] = useState<FormSchema>(
+    initialPostApprovalSchema || {
+      id: `post_approval_form_${Date.now()}`,
+      title: "Post Approval Form",
+      description: "", // Keep description empty to avoid duplication in UI
+      fields: [],
+      settings: {
+        submitButtonText: "Submit Post Approval Information",
+        confirmationMessage: "Thank you for providing the additional information!",
+        privateApplications: true, // Post-approval forms are always private
+      },
+    }
+  );
+
+  const [activeTab, setActiveTab] = useState<"build" | "preview" | "settings" | "post-approval" | "ai-config" | "reviewers">(
     "build"
   );
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
   const fieldRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  // Helper to determine if we're working with post approval form
+  const isPostApprovalMode = activeTab === "post-approval";
+  const currentSchema = isPostApprovalMode ? postApprovalSchema : schema;
+  const setCurrentSchema = isPostApprovalMode ? setPostApprovalSchema : setSchema;
 
   // Update schema when initialSchema changes (e.g., after loading from API)
   useEffect(() => {
@@ -70,6 +94,22 @@ export function QuestionBuilder({
       });
     }
   }, [initialSchema]);
+
+  // Update post approval schema when initialPostApprovalSchema changes
+  useEffect(() => {
+    if (initialPostApprovalSchema) {
+      setPostApprovalSchema({
+        ...initialPostApprovalSchema,
+        fields: Array.isArray(initialPostApprovalSchema.fields)
+          ? initialPostApprovalSchema.fields.map(field => ({ ...field, private: true })) // Ensure all fields are private
+          : [],
+        settings: {
+          ...initialPostApprovalSchema.settings,
+          privateApplications: true, // Ensure post-approval forms are always private
+        },
+      });
+    }
+  }, [initialPostApprovalSchema]);
 
   // Scroll to the selected field editor when it opens
   useEffect(() => {
@@ -90,13 +130,14 @@ export function QuestionBuilder({
       id: `field_${Date.now()}`,
       type: fieldType,
       label: `New ${fieldType} field`,
-      required: fieldType === "email" ? true : false, // Email fields are required by default
+      required: fieldType === "email" && !isPostApprovalMode ? true : false, // Email fields are required by default only in main form
+      private: isPostApprovalMode, // All fields in post-approval mode are private by default
       options: ["select", "radio", "checkbox"].includes(fieldType)
         ? ["Option 1", "Option 2"]
         : undefined,
     };
 
-    setSchema((prev) => ({
+    setCurrentSchema((prev) => ({
       ...prev,
       fields: [...(prev.fields || []), newField],
     }));
@@ -107,7 +148,7 @@ export function QuestionBuilder({
   const handleFieldUpdate = (updatedField: FormField) => {
     if (readOnly) return; // Prevent updating fields in read-only mode
 
-    setSchema((prev) => ({
+    setCurrentSchema((prev) => ({
       ...prev,
       fields: (prev.fields || []).map((field) =>
         field.id === updatedField.id ? updatedField : field
@@ -118,7 +159,7 @@ export function QuestionBuilder({
   const handleFieldDelete = (fieldId: string) => {
     if (readOnly) return; // Prevent deleting fields in read-only mode
 
-    setSchema((prev) => ({
+    setCurrentSchema((prev) => ({
       ...prev,
       fields: (prev.fields || []).filter((field) => field.id !== fieldId),
     }));
@@ -133,58 +174,72 @@ export function QuestionBuilder({
 
   const handleFieldMove = (fieldId: string, direction: "up" | "down") => {
     if (readOnly) return; // Prevent moving fields in read-only mode
-    if (!schema.fields) return;
+    if (!currentSchema.fields) return;
 
-    const currentIndex = schema.fields.findIndex(
+    const currentIndex = currentSchema.fields.findIndex(
       (field) => field.id === fieldId
     );
     if (currentIndex === -1) return;
 
     const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
-    if (newIndex < 0 || newIndex >= schema.fields.length) return;
+    if (newIndex < 0 || newIndex >= currentSchema.fields.length) return;
 
-    const newFields = [...schema.fields];
+    const newFields = [...currentSchema.fields];
     const [movedField] = newFields.splice(currentIndex, 1);
     newFields.splice(newIndex, 0, movedField);
 
-    setSchema((prev) => ({
+    setCurrentSchema((prev) => ({
       ...prev,
       fields: newFields,
     }));
   };
 
   const handleTitleChange = (title: string) => {
-    setSchema((prev) => ({ ...prev, title }));
+    setCurrentSchema((prev) => ({ ...prev, title }));
   };
 
   const handleDescriptionChange = (description: string) => {
-    setSchema((prev) => ({ ...prev, description }));
+    setCurrentSchema((prev) => ({ ...prev, description }));
   };
 
   const hasEmailField = () => {
-    if (!schema.fields) return false;
-    return schema.fields.some(
+    if (!currentSchema.fields) return false;
+    return currentSchema.fields.some(
       (field) =>
         field.type === "email" || field.label.toLowerCase().includes("email")
     );
   };
 
+  const needsEmailValidation = () => {
+    // Only require email field for main application form, not for post approval
+    return !isPostApprovalMode && !hasEmailField();
+  };
+
   const handleSave = () => {
-    if (!hasEmailField()) {
-      alert(
-        "Please add at least one email field to the form. This is required for application tracking."
-      );
-      return;
+    if (isPostApprovalMode) {
+      // For post approval forms, email field is not required
+      onSavePostApproval?.(postApprovalSchema);
+    } else {
+      if (needsEmailValidation()) {
+        alert(
+          "Please add at least one email field to the form. This is required for application tracking."
+        );
+        return;
+      }
+      onSave?.(schema);
     }
-    onSave?.(schema);
   };
 
   const handleFormSubmit = (data: Record<string, any>) => {
-    alert(schema.settings.confirmationMessage);
+    alert(currentSchema.settings.confirmationMessage);
   };
 
   const handleAIConfigUpdate = (updatedSchema: FormSchema) => {
-    setSchema(updatedSchema);
+    if (isPostApprovalMode) {
+      setPostApprovalSchema(updatedSchema);
+    } else {
+      setSchema(updatedSchema);
+    }
   };
 
   return (
@@ -195,35 +250,37 @@ export function QuestionBuilder({
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sm:px-3 md:px-4 px-6 py-2">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between flex-wrap gap-4">
           <div className="flex flex-col gap-2 mb-4 sm:mb-0">
-            {readOnly ? (
-              <>
-                <div className="text-xl font-bold text-gray-900 dark:text-white px-3 py-2">
-                  {schema.title}
-                </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400 px-3 py-1">
-                  <MarkdownPreview source={schema.description || ""} />
-                </div>
-              </>
-            ) : (
-              <>
-                <input
-                  type="text"
-                  value={schema.title}
-                  onChange={(e) => handleTitleChange(e.target.value)}
-                  className="text-xl font-bold bg-transparent border-none outline-none bg-zinc-100 dark:bg-zinc-800 rounded-md text-gray-900 dark:text-white placeholder-gray-400"
-                  placeholder="Form Title"
-                />
-                <MarkdownEditor
-                  value={schema.description || ""}
-                  onChange={(value: string) => handleDescriptionChange(value)}
-                  className="mt-1 text-sm bg-transparent border-none outline-none bg-zinc-100 dark:bg-zinc-800 rounded-md text-gray-600 dark:text-gray-400 placeholder-gray-500"
-                  placeholderText="Form Description"
-                  height={100}
-                  minHeight={100}
-                />
-              </>
-            )}
-          </div>
+            {
+              readOnly ? (
+                <>
+                  <div className="text-xl font-bold text-gray-900 dark:text-white px-3 py-2">
+                    {schema.title}
+                  </div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400 px-3 py-1">
+                    <MarkdownPreview source={schema.description || ""} />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <input
+                    type="text"
+                    value={currentSchema.title}
+                    onChange={(e) => handleTitleChange(e.target.value)}
+                    className="text-xl font-bold bg-transparent border-none outline-none bg-zinc-100 dark:bg-zinc-800 rounded-md text-gray-900 dark:text-white placeholder-gray-400"
+                    placeholder="Form Title"
+                  />
+                  <MarkdownEditor
+                    value={currentSchema.description || ""}
+                    onChange={(value: string) => handleDescriptionChange(value)}
+                    className="mt-1 text-sm bg-transparent border-none outline-none bg-zinc-100 dark:bg-zinc-800 rounded-md text-gray-600 dark:text-gray-400 placeholder-gray-500"
+                    placeholderText="Form Description"
+                    height={100}
+                    minHeight={100}
+                  />
+                </>
+              )
+            }
+          </div >
 
           <div className="flex items-center space-x-3">
             <div className="flex bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
@@ -248,15 +305,27 @@ export function QuestionBuilder({
                 Settings
               </button>
               <button
-                onClick={() => setActiveTab("ai-config")}
-                className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${activeTab === "ai-config"
+                onClick={() => setActiveTab("post-approval")}
+                className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${activeTab === "post-approval"
                   ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
                   : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
                   }`}
               >
-                <CpuChipIcon className="w-4 h-4 mr-2" />
-                AI Config
+                <CheckCircleIcon className="w-4 h-4 mr-2" />
+                Post Approval
               </button>
+              {!isPostApprovalMode && (
+                <button
+                  onClick={() => setActiveTab("ai-config")}
+                  className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${activeTab === "ai-config"
+                    ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
+                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                    }`}
+                >
+                  <CpuChipIcon className="w-4 h-4 mr-2" />
+                  AI Config
+                </button>
+              )}
               <button
                 onClick={() => setActiveTab("preview")}
                 className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${activeTab === "preview"
@@ -279,45 +348,45 @@ export function QuestionBuilder({
               </button>
             </div>
 
-            {!readOnly && (
-              <Button
+            {
+              !readOnly && (<Button
                 onClick={handleSave}
-                className={`py-2 ${!hasEmailField()
+                className={`py-2 ${needsEmailValidation()
                   ? "bg-yellow-600 hover:bg-yellow-700"
                   : "bg-blue-600 hover:bg-blue-700"
                   }`}
                 title={
-                  !hasEmailField()
+                  needsEmailValidation()
                     ? "Add an email field before saving"
                     : undefined
                 }
               >
-                {!hasEmailField() && (
+                {needsEmailValidation() && (
                   <ExclamationTriangleIcon className="w-4 h-4 mr-2" />
                 )}
-                Save Form
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
+                {isPostApprovalMode ? "Save Post Approval Form" : "Save Form"}
+              </Button>)}
+          </div >
+        </div >
+      </div >
 
       {/* Content */}
-      <div className="flex-1 overflow-hidden  sm:px-3 md:px-4 px-6 py-2">
-        {activeTab === "build" ? (
-          <div className={`h-full grid grid-cols-1 ${readOnly ? '' : 'lg:grid-cols-3'} gap-6`}>
-            {/* Field Types Panel - Hidden in read-only mode */}
+      < div className="flex-1 overflow-hidden  sm:px-3 md:px-4 px-6 py-2" >
+        {activeTab === "build" || activeTab === "post-approval" ? (
+          <div className="h-full grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Field Types Panel */}
             {!readOnly && (
+
               <div className="lg:col-span-1">
-                <FieldTypeSelector onFieldAdd={handleFieldAdd} />
+                <FieldTypeSelector onFieldAdd={handleFieldAdd} isPostApprovalMode={isPostApprovalMode} />
               </div>
             )}
 
             {/* Form Builder */}
             <div className={readOnly ? '' : 'lg:col-span-2 overflow-y-auto'}>
               <div className="space-y-4">
-                {/* Email Field Warning */}
-                {!hasEmailField() && (
+                {/* Email Field Warning - only for main application form */}
+                {needsEmailValidation() && (
                   <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 flex items-start space-x-3">
                     <ExclamationTriangleIcon className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
                     <div className="flex-1">
@@ -333,7 +402,23 @@ export function QuestionBuilder({
                   </div>
                 )}
 
-                {!schema.fields || schema.fields.length === 0 ? (
+                {/* Post Approval Form Info */}
+                {isPostApprovalMode && (
+                  <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 flex items-start space-x-3">
+                    <CheckCircleIcon className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                        Post Approval Form
+                      </h4>
+                      <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                        This form will be shown to applicants after their application is approved.
+                        {`Use it to collect additional information needed for the next steps. All fields are automatically set as private, and email fields are not required since we already have the applicant's information.`}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {!currentSchema.fields || currentSchema.fields.length === 0 ? (
                   <div className="bg-white dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
                     <div className="text-gray-400 mb-4">
                       <Cog6ToothIcon className="w-12 h-12 mx-auto" />
@@ -350,7 +435,7 @@ export function QuestionBuilder({
                   <>
                     {/* Form Fields List */}
                     <div className="space-y-3">
-                      {schema.fields.map((field, index) => (
+                      {currentSchema.fields.map((field, index) => (
                         <div
                           key={field.id}
                           ref={(el) => {
@@ -430,10 +515,11 @@ export function QuestionBuilder({
                                     : () => handleFieldMove(field.id, "up")
                                 }
                                 onMoveDown={
-                                  index === schema.fields.length - 1
+                                  index === currentSchema.fields.length - 1
                                     ? undefined
                                     : () => handleFieldMove(field.id, "down")
                                 }
+                                isPostApprovalMode={isPostApprovalMode}
                               />
                             </div>
                           )}
@@ -449,8 +535,8 @@ export function QuestionBuilder({
           <div className="h-full p-4 sm:p-6 lg:p-8 overflow-y-auto">
             <div className="max-w-4xl mx-auto">
               <SettingsConfiguration
-                schema={schema}
                 onUpdate={readOnly ? undefined : handleAIConfigUpdate}
+                schema={currentSchema}
                 programId={programId}
                 readOnly={readOnly}
               />
@@ -460,8 +546,8 @@ export function QuestionBuilder({
           <div className="h-full p-4 sm:p-6 lg:p-8 overflow-y-auto">
             <div className="max-w-4xl mx-auto">
               <AIPromptConfiguration
-                schema={schema}
                 onUpdate={readOnly ? undefined : handleAIConfigUpdate}
+                schema={currentSchema}
                 programId={programId}
                 chainId={chainId}
                 readOnly={readOnly}
@@ -490,11 +576,11 @@ export function QuestionBuilder({
         ) : (
           <div className="h-full p-4 sm:p-6 lg:p-8 overflow-y-auto">
             <div className="max-w-2xl mx-auto">
-              <FormPreview schema={schema} onSubmit={handleFormSubmit} />
+              <FormPreview schema={currentSchema} onSubmit={handleFormSubmit} />
             </div>
           </div>
         )}
       </div>
-    </div>
+    </div >
   );
 }

@@ -80,6 +80,7 @@ export interface IFundingProgramConfig {
   programId: string;
   chainID: number; // Changed from chainId to chainID to match V2
   formSchema: IFormSchema;
+  postApprovalFormSchema?: IFormSchema; // Optional post-approval form schema
   systemPrompt?: string;
   detailedPrompt?: string;
   aiModel?: string;

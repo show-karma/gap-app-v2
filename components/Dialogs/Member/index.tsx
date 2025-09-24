@@ -11,6 +11,7 @@ import { Twitter2Icon } from "@/components/Icons/Twitter2";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { GithubIcon, LinkedInIcon } from "@/components/Icons";
 import { FarcasterIcon } from "@/components/Icons/Farcaster";
+import { formatFarcasterLink } from "@/utilities/farcaster";
 
 interface MemberDialogProps {
   profile: ContributorProfile;
@@ -136,15 +137,7 @@ export const MemberDialog: FC<MemberDialogProps> = ({
                         ) : null}
                         {profile?.data.farcaster ? (
                           <ExternalLink
-                            href={
-                              profile?.data.farcaster.includes("http")
-                                ? profile?.data.farcaster
-                                : profile?.data.farcaster.includes(
-                                    "warpcast.com"
-                                  )
-                                ? `https://${profile?.data.farcaster}`
-                                : `https://warpcast.com/${profile?.data.farcaster}`
-                            }
+                            href={formatFarcasterLink(profile?.data.farcaster)}
                             className="w-max"
                           >
                             <FarcasterIcon

@@ -39,17 +39,18 @@ interface FieldEditorProps {
   onDelete: (fieldId: string) => void;
   onMoveUp?: (fieldId: string) => void;
   onMoveDown?: (fieldId: string) => void;
+  isPostApprovalMode?: boolean;
   readOnly?: boolean;
 }
 
-export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, readOnly = false }: FieldEditorProps) {
+export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, readOnly = false, isPostApprovalMode = false }: FieldEditorProps) {
   const { register, watch, setValue, formState: { errors } } = useForm<FieldFormData>({
     resolver: zodResolver(fieldSchema),
     defaultValues: {
       label: field.label,
       placeholder: field.placeholder || '',
       required: field.required || false,
-      private: field.private || false,
+      private: field.private || isPostApprovalMode, // Default to true for post-approval fields
       description: field.description || '',
       options: field.options || [],
       validation: field.validation || {},
@@ -74,7 +75,7 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, r
           label: data.label,
           placeholder: data.placeholder || '',
           required: data.required || false,
-          private: data.private || false,
+          private: data.private || isPostApprovalMode, // Always true for post-approval fields
           description: data.description || '',
           options: hasOptions ? (data.options || []).filter((opt): opt is string => typeof opt === 'string' && opt.length > 0) : undefined,
           validation: data.validation || {},
@@ -192,48 +193,52 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, r
               Required field
             </label>
           </div>
-
-          <div className="flex items-center">
-            <input
-              {...register('private')}
-              type="checkbox"
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            />
-            <label className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-              Private field
-            </label>
-            <QuestionTooltip
-              content="This field will be hidden from public application listings"
-              className="ml-2"
-            />
-          </div>
-        </div>
-
-        {/* AI Evaluation Configuration */}
-        <div className="border-t border-gray-200 dark:border-gray-600 pt-4">
-          <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
-            AI Evaluation Settings
-          </h4>
-
-          <div className="space-y-3">
+          {/* Private Field Toggle - Hidden in post-approval mode since all fields are automatically private */}
+          {!isPostApprovalMode && (
             <div className="flex items-center">
               <input
-                {...register('aiEvaluation.includeInEvaluation')}
+                {...register('private')}
                 type="checkbox"
                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
               <label className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                Include this field in AI evaluation context
+                Private field
               </label>
+              <QuestionTooltip
+                content="This field will be hidden from public application listings"
+                className="ml-2"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* AI Evaluation Configuration - Hidden in post-approval mode */}
+        {!isPostApprovalMode && (
+          <div className="border-t border-gray-200 dark:border-gray-600 pt-4">
+            <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
+              AI Evaluation Settings
+            </h4>
+
+            <div className="space-y-3">
+              <div className="flex items-center">
+                <input
+                  {...register('aiEvaluation.includeInEvaluation')}
+                  type="checkbox"
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <label className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                  Include this field in AI evaluation context
+                </label>
+              </div>
+
+
             </div>
 
-
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              Real-time evaluation provides instant feedback to applicants as they complete the form.
+            </p>
           </div>
-
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-            Real-time evaluation provides instant feedback to applicants as they complete the form.
-          </p>
-        </div>
+        )}
 
         {hasOptions && (
           <div>

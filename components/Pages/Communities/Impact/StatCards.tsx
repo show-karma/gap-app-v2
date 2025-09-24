@@ -70,7 +70,12 @@ export const ImpactStatCards = () => {
 export const CommunityStatCards = () => {
   const params = useParams();
   const communityId = params.communityId as string;
-  const { totalProjects: filteredProjectsCount } = useCommunityStore();
+  const {
+    totalProjects: filteredProjectsCount,
+    totalGrants: filteredGrantsCount,
+    totalMilestones: filteredMilestonesCount,
+    isLoadingFilters
+  } = useCommunityStore();
   const { data, isLoading } = useQuery({
     queryKey: ["community-stats", communityId],
     queryFn: () => getCommunityStatsV2(communityId),
@@ -80,18 +85,24 @@ export const CommunityStatCards = () => {
   const stats = [
     {
       title: "Total Projects",
-      value: filteredProjectsCount ? formatCurrency(filteredProjectsCount) : "-",
+      value: filteredProjectsCount,
+      displayValue: filteredProjectsCount ? formatCurrency(filteredProjectsCount) : "-",
       color: "#9b59b6",
+      showLoading: isLoadingFilters, // Show loading when filters are being applied
     },
     {
       title: "Total Grants",
-      value: data?.totalGrants ? formatCurrency(data.totalGrants) : "-",
+      value: data?.totalGrants,
+      displayValue: data?.totalGrants ? formatCurrency(data.totalGrants) : "-",
       color: "#e67e22",
+      showLoading: isLoadingFilters, // Show loading when filters are being applied
     },
     {
       title: "Total Milestones",
-      value: data?.totalMilestones ? formatCurrency(data.totalMilestones) : "-",
+      value: data?.totalMilestones,
+      displayValue: data?.totalMilestones ? formatCurrency(data.totalMilestones) : "-",
       color: "#3498db",
+      showLoading: isLoadingFilters, // Show loading when filters are being applied
     },
   ];
   return stats.map((item) => (
@@ -111,11 +122,11 @@ export const CommunityStatCards = () => {
         <h3 className="text-slate-800 dark:text-zinc-100 text-base font-semibold font-['Inter']">
           {item.title}
         </h3>
-        {isLoading ? (
+        {isLoading || item.showLoading ? (
           <Skeleton className="w-10 h-10" />
         ) : (
           <p className="text-center text-slate-800 dark:text-zinc-100 text-2xl font-bold font-['Inter']">
-            {item.value}
+            {item.displayValue}
           </p>
         )}
       </div>
