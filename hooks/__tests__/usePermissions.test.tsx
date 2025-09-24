@@ -36,9 +36,10 @@ describe("usePermissions Hook", () => {
       },
     });
 
-    return ({ children }: { children: React.ReactNode }) => (
+    const Wrapper = ({ children }: { children: React.ReactNode }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     );
+    return Wrapper;
   };
 
   beforeEach(() => {
