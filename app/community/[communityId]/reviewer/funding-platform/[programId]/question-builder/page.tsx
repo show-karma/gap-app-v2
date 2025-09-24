@@ -5,7 +5,7 @@ import { QuestionBuilder } from "@/components/QuestionBuilder";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/Utilities/Button";
 import { ArrowLeftIcon, EyeIcon } from "@heroicons/react/24/solid";
-import { useQuestionBuilderSchema } from "@/hooks/useQuestionBuilder";
+import { usePostApprovalSchema, useQuestionBuilderSchema } from "@/hooks/useQuestionBuilder";
 import { PAGES } from "@/utilities/pages";
 
 /**
@@ -38,6 +38,12 @@ export default function ReviewerQuestionBuilderPage() {
     error: schemaError,
   } = useQuestionBuilderSchema(programId, parsedChainId);
 
+  const {
+    schema: existingPostApprovalSchema,
+    isLoading: isLoadingPostApprovalSchema,
+    error: postApprovalSchemaError,
+  } = usePostApprovalSchema(programId, parsedChainId);
+
   const handleBackClick = () => {
     router.push(PAGES.REVIEWER.DASHBOARD(communityId));
   };
@@ -46,7 +52,7 @@ export default function ReviewerQuestionBuilderPage() {
     router.push(PAGES.REVIEWER.APPLICATIONS(communityId, programId, parsedChainId));
   };
 
-  if (isLoadingPermission || isLoadingSchema) {
+  if (isLoadingPermission || isLoadingSchema || isLoadingPostApprovalSchema) {
     return (
       <div className="flex w-full items-center justify-center min-h-[600px]">
         <Spinner />
@@ -74,7 +80,7 @@ export default function ReviewerQuestionBuilderPage() {
     );
   }
 
-  if (schemaError || !existingSchema) {
+  if (schemaError || !existingSchema || postApprovalSchemaError) {
     return (
       <div className="sm:px-3 md:px-4 px-6 py-2">
         <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
@@ -166,6 +172,7 @@ export default function ReviewerQuestionBuilderPage() {
           chainId={parsedChainId}
           communityId={communityId}
           readOnly={true} // Enable read-only mode
+          initialPostApprovalSchema={existingPostApprovalSchema || undefined}
         />
       </div>
     </div>
