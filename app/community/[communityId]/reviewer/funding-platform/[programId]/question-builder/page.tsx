@@ -59,7 +59,7 @@ export default function ReviewerQuestionBuilderPage() {
       <div className="px-4 sm:px-6 lg:px-12 py-5">
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
           <p className="text-red-700 dark:text-red-300">
-            You don&apos;t have permission to view the form configuration for this program.
+            You don&apos;t have permission to view the form builder for this program.
           </p>
           <Button
             onClick={handleBackClick}
@@ -79,10 +79,10 @@ export default function ReviewerQuestionBuilderPage() {
       <div className="sm:px-3 md:px-4 px-6 py-2">
         <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
           <h3 className="text-lg font-semibold text-yellow-700 dark:text-yellow-300 mb-2">
-            No Form Configuration Available
+            No Form Builder Available
           </h3>
           <p className="text-yellow-600 dark:text-yellow-400 mb-4">
-            The form configuration for this program has not been set up yet.
+            The form builder for this program has not been set up yet.
           </p>
           <div className="flex space-x-3">
             <Button
@@ -125,7 +125,7 @@ export default function ReviewerQuestionBuilderPage() {
 
               <div>
                 <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Form Configuration
+                  Form Builder
                 </h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Program ID: {programId} | Chain ID: {parsedChainId}
