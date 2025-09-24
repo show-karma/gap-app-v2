@@ -14,6 +14,7 @@ interface MarkdownEditorProps {
   placeholderText?: string;
   height?: number;
   minHeight?: number;
+  disabled?: boolean;
 }
 const MDEditor = dynamic(
   () => import("@uiw/react-md-editor").then((mod) => mod.default),
@@ -27,6 +28,7 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
   placeholderText,
   height = 300,
   minHeight = 270,
+  disabled = false,
 }) => {
   return (
     <div
@@ -52,6 +54,7 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
           placeholder: placeholderText,
           spellCheck: true,
           style: { height: "100%", minHeight: "100%" },
+          disabled: disabled,
         }}
         highlightEnable={false}
       />

@@ -160,6 +160,7 @@ export default function QuestionBuilderPage() {
           onSave={handleSchemaChange}
           programId={programId}
           chainId={parsedChainId}
+          communityId={communityId}
           initialPostApprovalSchema={existingPostApprovalSchema || undefined}
           onSavePostApproval={handlePostApprovalSchemaChange}
         />

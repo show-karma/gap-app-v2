@@ -27,9 +27,9 @@ interface QuestionBuilderProps {
   initialSchema?: FormSchema;
   onSave?: (schema: FormSchema) => void;
   className?: string;
-  programId?: string;
-  chainId?: number;
-  communityId?: string;
+  programId: string;
+  chainId: number;
+  communityId: string;
   readOnly?: boolean;
   initialPostApprovalSchema?: FormSchema;
   onSavePostApproval?: (schema: FormSchema) => void;
@@ -242,6 +242,7 @@ export function QuestionBuilder({
     }
   };
 
+
   return (
     <div
       className={`flex flex-col h-full bg-gray-50 dark:bg-gray-900 ${className}`}
@@ -282,8 +283,8 @@ export function QuestionBuilder({
             }
           </div >
 
-          <div className="flex items-center space-x-3">
-            <div className="flex bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
+          <div className="flex items-center gap-3 flex-row flex-wrap">
+            <div className="flex flex-row flex-wrap bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
               <button
                 onClick={() => setActiveTab("build")}
                 className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${activeTab === "build"
@@ -314,18 +315,16 @@ export function QuestionBuilder({
                 <CheckCircleIcon className="w-4 h-4 mr-2" />
                 Post Approval
               </button>
-              {!isPostApprovalMode && (
-                <button
-                  onClick={() => setActiveTab("ai-config")}
-                  className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${activeTab === "ai-config"
-                    ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
-                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-                    }`}
-                >
-                  <CpuChipIcon className="w-4 h-4 mr-2" />
-                  AI Config
-                </button>
-              )}
+              <button
+                onClick={() => setActiveTab("ai-config")}
+                className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${activeTab === "ai-config"
+                  ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
+                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                  }`}
+              >
+                <CpuChipIcon className="w-4 h-4 mr-2" />
+                AI Config
+              </button>
               <button
                 onClick={() => setActiveTab("preview")}
                 className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${activeTab === "preview"
@@ -366,9 +365,9 @@ export function QuestionBuilder({
                 )}
                 {isPostApprovalMode ? "Save Post Approval Form" : "Save Form"}
               </Button>)}
-          </div >
-        </div >
-      </div >
+          </div>
+        </div>
+      </div>
 
       {/* Content */}
       < div className="flex-1 overflow-hidden  sm:px-3 md:px-4 px-6 py-2" >

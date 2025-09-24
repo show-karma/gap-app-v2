@@ -63,9 +63,6 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, r
   const watchedOptions = watch('options') || [];
   const hasOptions = ['select', 'radio', 'checkbox'].includes(field.type);
 
-  // Watch all form values and auto-update the field
-  const watchedValues = watch();
-
   useEffect(() => {
     const subscription = watch((data) => {
       // Only update if data is valid (has required fields)
@@ -115,8 +112,9 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, r
         <div className="flex items-center space-x-2">
           {onMoveUp && (
             <button
-              onClick={() => onMoveUp(field.id)}
-              className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+              onClick={() => !readOnly && onMoveUp(field.id)}
+              disabled={readOnly}
+              className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent"
               title="Move up"
             >
               <ChevronUpIcon className="w-4 h-4" />
@@ -124,16 +122,18 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, r
           )}
           {onMoveDown && (
             <button
-              onClick={() => onMoveDown(field.id)}
-              className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+              onClick={() => !readOnly && onMoveDown(field.id)}
+              disabled={readOnly}
+              className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent"
               title="Move down"
             >
               <ChevronDownIcon className="w-4 h-4" />
             </button>
           )}
           <button
-            onClick={() => onDelete(field.id)}
-            className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+            onClick={() => !readOnly && onDelete(field.id)}
+            disabled={readOnly}
+            className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent"
             title="Delete field"
           >
             <TrashIcon className="w-4 h-4" />
@@ -148,7 +148,8 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, r
           </label>
           <input
             {...register('label')}
-            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300"
+            disabled={readOnly}
+            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
             placeholder="Enter field label"
           />
           {errors.label && (
@@ -162,7 +163,8 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, r
           </label>
           <input
             {...register('placeholder')}
-            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300"
+            disabled={readOnly}
+            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
             placeholder="Enter placeholder text"
           />
         </div>
@@ -173,10 +175,11 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, r
           </label>
           <MarkdownEditor
             value={field.description || ''}
-            onChange={(value: string) => setValue('description', value)}
+            onChange={(value: string) => !readOnly && setValue('description', value)}
             placeholderText="Optional description or help text"
             height={200}
             minHeight={170}
+            disabled={readOnly}
             className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300"
           />
 
@@ -187,7 +190,8 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, r
             <input
               {...register('required')}
               type="checkbox"
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              disabled={readOnly}
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
             />
             <label className="ml-2 text-sm text-gray-700 dark:text-gray-300">
               Required field
@@ -199,7 +203,8 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, r
               <input
                 {...register('private')}
                 type="checkbox"
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                disabled={readOnly}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
               />
               <label className="ml-2 text-sm text-gray-700 dark:text-gray-300">
                 Private field
@@ -224,7 +229,8 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, r
                 <input
                   {...register('aiEvaluation.includeInEvaluation')}
                   type="checkbox"
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  disabled={readOnly}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
                 />
                 <label className="ml-2 text-sm text-gray-700 dark:text-gray-300">
                   Include this field in AI evaluation context
@@ -250,14 +256,16 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, r
                 <div key={index} className="flex items-center space-x-2">
                   <input
                     value={option}
-                    onChange={(e) => updateOption(index, e.target.value)}
-                    className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300"
+                    onChange={(e) => !readOnly && updateOption(index, e.target.value)}
+                    disabled={readOnly}
+                    className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
                     placeholder={`Option ${index + 1}`}
                   />
                   <button
                     type="button"
-                    onClick={() => removeOption(index)}
-                    className="p-2 text-red-400 hover:text-red-600"
+                    onClick={() => !readOnly && removeOption(index)}
+                    disabled={readOnly}
+                    className="p-2 text-red-400 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <TrashIcon className="w-4 h-4" />
                   </button>
@@ -265,7 +273,8 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, r
               ))}
               <Button
                 type="button"
-                onClick={addOption}
+                onClick={() => !readOnly && addOption()}
+                disabled={readOnly}
                 variant="secondary"
                 className="w-full"
               >
@@ -290,7 +299,8 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, r
                   {...register('validation.minMilestones', { valueAsNumber: true })}
                   type="number"
                   min="0"
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100"
+                  disabled={readOnly}
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
                   placeholder="0"
                 />
               </div>
@@ -302,7 +312,8 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, r
                   {...register('validation.maxMilestones', { valueAsNumber: true })}
                   type="number"
                   min="1"
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100"
+                  disabled={readOnly}
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
                   placeholder="10"
                 />
               </div>
