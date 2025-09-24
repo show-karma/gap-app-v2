@@ -194,6 +194,7 @@ export default function ApplicationDetailPage() {
               application={application}
               program={program}
               showStatusActions={hasAccess}
+              showAIEvaluationButton={hasAccess}
               onStatusChange={handleStatusChange}
               viewMode={applicationViewMode}
               onViewModeChange={setApplicationViewMode}

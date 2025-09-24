@@ -7,6 +7,7 @@ import { FieldEditor } from "./FieldEditor";
 import { FormPreview } from "./FormPreview";
 import { AIPromptConfiguration } from "./AIPromptConfiguration";
 import { SettingsConfiguration } from "./SettingsConfiguration";
+import { ReviewerManagementTab } from "@/components/FundingPlatform/QuestionBuilder/ReviewerManagementTab";
 import { Button } from "@/components/Utilities/Button";
 import {
   EyeIcon,
@@ -17,6 +18,7 @@ import {
   ExclamationTriangleIcon,
   WrenchScrewdriverIcon,
   CheckCircleIcon,
+  UserGroupIcon,
 } from "@heroicons/react/24/solid";
 import { MarkdownPreview } from "../Utilities/MarkdownPreview";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
@@ -25,8 +27,10 @@ interface QuestionBuilderProps {
   initialSchema?: FormSchema;
   onSave?: (schema: FormSchema) => void;
   className?: string;
-  programId?: string;
-  chainId?: number;
+  programId: string;
+  chainId: number;
+  communityId: string;
+  readOnly?: boolean;
   initialPostApprovalSchema?: FormSchema;
   onSavePostApproval?: (schema: FormSchema) => void;
 }
@@ -37,6 +41,8 @@ export function QuestionBuilder({
   className = "",
   programId,
   chainId,
+  communityId,
+  readOnly = false,
   initialPostApprovalSchema,
   onSavePostApproval,
 }: QuestionBuilderProps) {
@@ -68,7 +74,7 @@ export function QuestionBuilder({
     }
   );
 
-  const [activeTab, setActiveTab] = useState<"build" | "preview" | "settings" | "post-approval" | "ai-config">(
+  const [activeTab, setActiveTab] = useState<"build" | "preview" | "settings" | "post-approval" | "ai-config" | "reviewers">(
     "build"
   );
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
@@ -118,6 +124,8 @@ export function QuestionBuilder({
   }, [selectedFieldId]);
 
   const handleFieldAdd = (fieldType: FormField["type"]) => {
+    if (readOnly) return; // Prevent adding fields in read-only mode
+
     const newField: FormField = {
       id: `field_${Date.now()}`,
       type: fieldType,
@@ -138,6 +146,8 @@ export function QuestionBuilder({
   };
 
   const handleFieldUpdate = (updatedField: FormField) => {
+    if (readOnly) return; // Prevent updating fields in read-only mode
+
     setCurrentSchema((prev) => ({
       ...prev,
       fields: (prev.fields || []).map((field) =>
@@ -147,6 +157,8 @@ export function QuestionBuilder({
   };
 
   const handleFieldDelete = (fieldId: string) => {
+    if (readOnly) return; // Prevent deleting fields in read-only mode
+
     setCurrentSchema((prev) => ({
       ...prev,
       fields: (prev.fields || []).filter((field) => field.id !== fieldId),
@@ -161,6 +173,7 @@ export function QuestionBuilder({
   };
 
   const handleFieldMove = (fieldId: string, direction: "up" | "down") => {
+    if (readOnly) return; // Prevent moving fields in read-only mode
     if (!currentSchema.fields) return;
 
     const currentIndex = currentSchema.fields.findIndex(
@@ -229,6 +242,7 @@ export function QuestionBuilder({
     }
   };
 
+
   return (
     <div
       className={`flex flex-col h-full bg-gray-50 dark:bg-gray-900 ${className}`}
@@ -237,25 +251,40 @@ export function QuestionBuilder({
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sm:px-3 md:px-4 px-6 py-2">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between flex-wrap gap-4">
           <div className="flex flex-col gap-2 mb-4 sm:mb-0">
-            <input
-              type="text"
-              value={currentSchema.title}
-              onChange={(e) => handleTitleChange(e.target.value)}
-              className="text-xl font-bold bg-transparent border-none outline-none bg-zinc-100 dark:bg-zinc-800 rounded-md text-gray-900 dark:text-white placeholder-gray-400"
-              placeholder="Form Title"
-            />
-            <MarkdownEditor
-              value={currentSchema.description || ""}
-              onChange={(value: string) => handleDescriptionChange(value)}
-              className="mt-1 text-sm bg-transparent border-none outline-none bg-zinc-100 dark:bg-zinc-800 rounded-md text-gray-600 dark:text-gray-400 placeholder-gray-500"
-              placeholderText="Form Description"
-              height={100}
-              minHeight={100}
-            />
-          </div>
+            {
+              readOnly ? (
+                <>
+                  <div className="text-xl font-bold text-gray-900 dark:text-white px-3 py-2">
+                    {schema.title}
+                  </div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400 px-3 py-1">
+                    <MarkdownPreview source={schema.description || ""} />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <input
+                    type="text"
+                    value={currentSchema.title}
+                    onChange={(e) => handleTitleChange(e.target.value)}
+                    className="text-xl font-bold bg-transparent border-none outline-none bg-zinc-100 dark:bg-zinc-800 rounded-md text-gray-900 dark:text-white placeholder-gray-400"
+                    placeholder="Form Title"
+                  />
+                  <MarkdownEditor
+                    value={currentSchema.description || ""}
+                    onChange={(value: string) => handleDescriptionChange(value)}
+                    className="mt-1 text-sm bg-transparent border-none outline-none bg-zinc-100 dark:bg-zinc-800 rounded-md text-gray-600 dark:text-gray-400 placeholder-gray-500"
+                    placeholderText="Form Description"
+                    height={100}
+                    minHeight={100}
+                  />
+                </>
+              )
+            }
+          </div >
 
-          <div className="flex items-center space-x-3">
-            <div className="flex bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
+          <div className="flex items-center gap-3 flex-row flex-wrap">
+            <div className="flex flex-row flex-wrap bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
               <button
                 onClick={() => setActiveTab("build")}
                 className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${activeTab === "build"
@@ -286,18 +315,16 @@ export function QuestionBuilder({
                 <CheckCircleIcon className="w-4 h-4 mr-2" />
                 Post Approval
               </button>
-              {!isPostApprovalMode && (
-                <button
-                  onClick={() => setActiveTab("ai-config")}
-                  className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${activeTab === "ai-config"
-                    ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
-                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-                    }`}
-                >
-                  <CpuChipIcon className="w-4 h-4 mr-2" />
-                  AI Config
-                </button>
-              )}
+              <button
+                onClick={() => setActiveTab("ai-config")}
+                className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${activeTab === "ai-config"
+                  ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
+                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                  }`}
+              >
+                <CpuChipIcon className="w-4 h-4 mr-2" />
+                AI Config
+              </button>
               <button
                 onClick={() => setActiveTab("preview")}
                 className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${activeTab === "preview"
@@ -308,40 +335,54 @@ export function QuestionBuilder({
                 <EyeIcon className="w-4 h-4 mr-2" />
                 Preview
               </button>
+              <button
+                onClick={() => setActiveTab("reviewers")}
+                className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${activeTab === "reviewers"
+                  ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
+                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                  }`}
+              >
+                <UserGroupIcon className="w-4 h-4 mr-2" />
+                Reviewers
+              </button>
             </div>
 
-            <Button
-              onClick={handleSave}
-              className={`py-2 ${needsEmailValidation()
-                ? "bg-yellow-600 hover:bg-yellow-700"
-                : "bg-blue-600 hover:bg-blue-700"
-                }`}
-              title={
-                needsEmailValidation()
-                  ? "Add an email field before saving"
-                  : undefined
-              }
-            >
-              {needsEmailValidation() && (
-                <ExclamationTriangleIcon className="w-4 h-4 mr-2" />
-              )}
-              {isPostApprovalMode ? "Save Post Approval Form" : "Save Form"}
-            </Button>
+            {
+              !readOnly && (<Button
+                onClick={handleSave}
+                className={`py-2 ${needsEmailValidation()
+                  ? "bg-yellow-600 hover:bg-yellow-700"
+                  : "bg-blue-600 hover:bg-blue-700"
+                  }`}
+                title={
+                  needsEmailValidation()
+                    ? "Add an email field before saving"
+                    : undefined
+                }
+              >
+                {needsEmailValidation() && (
+                  <ExclamationTriangleIcon className="w-4 h-4 mr-2" />
+                )}
+                {isPostApprovalMode ? "Save Post Approval Form" : "Save Form"}
+              </Button>)}
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-hidden  sm:px-3 md:px-4 px-6 py-2">
+      < div className="flex-1 overflow-hidden  sm:px-3 md:px-4 px-6 py-2" >
         {activeTab === "build" || activeTab === "post-approval" ? (
           <div className="h-full grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Field Types Panel */}
-            <div className="lg:col-span-1">
-              <FieldTypeSelector onFieldAdd={handleFieldAdd} isPostApprovalMode={isPostApprovalMode} />
-            </div>
+            {!readOnly && (
+
+              <div className="lg:col-span-1">
+                <FieldTypeSelector onFieldAdd={handleFieldAdd} isPostApprovalMode={isPostApprovalMode} />
+              </div>
+            )}
 
             {/* Form Builder */}
-            <div className="lg:col-span-2 overflow-y-auto">
+            <div className={readOnly ? '' : 'lg:col-span-2 overflow-y-auto'}>
               <div className="space-y-4">
                 {/* Email Field Warning - only for main application form */}
                 {needsEmailValidation() && (
@@ -466,6 +507,7 @@ export function QuestionBuilder({
                                 field={field}
                                 onUpdate={handleFieldUpdate}
                                 onDelete={handleFieldDelete}
+                                readOnly={readOnly}
                                 onMoveUp={
                                   index === 0
                                     ? undefined
@@ -492,9 +534,10 @@ export function QuestionBuilder({
           <div className="h-full p-4 sm:p-6 lg:p-8 overflow-y-auto">
             <div className="max-w-4xl mx-auto">
               <SettingsConfiguration
+                onUpdate={readOnly ? undefined : handleAIConfigUpdate}
                 schema={currentSchema}
-                onUpdate={handleAIConfigUpdate}
                 programId={programId}
+                readOnly={readOnly}
               />
             </div>
           </div>
@@ -502,11 +545,31 @@ export function QuestionBuilder({
           <div className="h-full p-4 sm:p-6 lg:p-8 overflow-y-auto">
             <div className="max-w-4xl mx-auto">
               <AIPromptConfiguration
+                onUpdate={readOnly ? undefined : handleAIConfigUpdate}
                 schema={currentSchema}
-                onUpdate={handleAIConfigUpdate}
                 programId={programId}
                 chainId={chainId}
+                readOnly={readOnly}
               />
+            </div>
+          </div>
+        ) : activeTab === "reviewers" ? (
+          <div className="h-full p-4 sm:p-6 lg:p-8 overflow-y-auto">
+            <div className="max-w-4xl mx-auto">
+              {programId && chainId && communityId ? (
+                <ReviewerManagementTab
+                  programId={programId}
+                  chainID={chainId}
+                  communityId={communityId}
+                  readOnly={readOnly}
+                />
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500 dark:text-gray-400">
+                    Program information is required to manage reviewers.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         ) : (
@@ -517,6 +580,6 @@ export function QuestionBuilder({
           </div>
         )}
       </div>
-    </div>
+    </div >
   );
 }
