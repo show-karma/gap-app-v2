@@ -165,24 +165,13 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
 
   const handleEditComment = async (commentId: string, content: string) => {
     if (!onCommentEdit) return;
-
-    try {
-      await onCommentEdit(commentId, content);
-    } catch (error) {
-      console.error('Failed to edit comment:', error);
-    }
+    await onCommentEdit(commentId, content);
   };
 
   const handleDeleteComment = async (commentId: string) => {
     if (!onCommentDelete) return;
 
-    try {
-      await onCommentDelete(commentId);
-      toast.success('Comment deleted successfully');
-    } catch (error) {
-      console.error('Failed to delete comment:', error);
-      toast.error('Failed to delete comment');
-    }
+    await onCommentDelete(commentId);
   };
 
   const formatDate = (dateString: string | Date) => {
