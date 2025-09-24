@@ -52,9 +52,9 @@ export const ReviewerOnboarding: React.FC<ReviewerOnboardingProps> = ({
         <div className="space-y-4">
           <p className="text-gray-700 dark:text-gray-300">
             {programName ? (
-              <>You've been assigned as a reviewer for <strong>{programName}</strong>.</>
+              <>You&apos;ve been assigned as a reviewer for <strong>{programName}</strong>.</>
             ) : (
-              <>You've been assigned as a reviewer for this funding program.</>
+              <>You&apos;ve been assigned as a reviewer for this funding program.</>
             )}
           </p>
           <p className="text-gray-700 dark:text-gray-300">
@@ -89,7 +89,7 @@ export const ReviewerOnboarding: React.FC<ReviewerOnboardingProps> = ({
               <div>
                 <strong className="text-gray-900 dark:text-gray-100">View Applications</strong>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  Access all submitted applications for programs you're assigned to review
+                  Access all submitted applications for programs you&apos;re assigned to review
                 </p>
               </div>
             </li>
@@ -388,8 +388,8 @@ export const ReviewerOnboarding: React.FC<ReviewerOnboardingProps> = ({
                   index === currentStep
                     ? "bg-blue-500 text-white"
                     : completedSteps.has(step.id)
-                    ? "bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300"
-                    : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                      ? "bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300"
+                      : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
                 )}
               >
                 {index + 1}. {step.title}
