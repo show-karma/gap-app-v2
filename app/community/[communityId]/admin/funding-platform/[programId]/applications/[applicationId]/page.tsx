@@ -21,6 +21,7 @@ import {
 import { useAccount } from "wagmi";
 import ApplicationContent from "@/components/FundingPlatform/ApplicationView/ApplicationContent";
 import CommentsSection from "@/components/FundingPlatform/ApplicationView/CommentsSection";
+import PostApprovalData from "@/components/FundingPlatform/ApplicationView/PostApprovalData";
 
 export default function ApplicationDetailPage() {
   const router = useRouter();
@@ -202,7 +203,8 @@ export default function ApplicationDetailPage() {
           </div>
 
           {/* Right Column - Comments */}
-          <div>
+          <div className="space-y-6">
+
             <CommentsSection
               applicationId={application.referenceNumber}
               comments={comments}

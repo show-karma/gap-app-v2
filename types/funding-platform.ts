@@ -105,6 +105,7 @@ export interface IFundingApplication {
   chainID: number; // Changed from chainId to chainID to match V2
   applicantEmail: string; // Changed from applicantAddress to applicantEmail
   applicationData: Record<string, any>;
+  postApprovalData?: Record<string, any>; // Optional post-approval data
   status: FundingApplicationStatusV2;
   statusHistory: IStatusHistoryEntry[];
   referenceNumber: string; // Format: APP-XXXXX-XXXXX
