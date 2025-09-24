@@ -63,9 +63,6 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, r
   const watchedOptions = watch('options') || [];
   const hasOptions = ['select', 'radio', 'checkbox'].includes(field.type);
 
-  // Watch all form values and auto-update the field
-  const watchedValues = watch();
-
   useEffect(() => {
     const subscription = watch((data) => {
       // Only update if data is valid (has required fields)
