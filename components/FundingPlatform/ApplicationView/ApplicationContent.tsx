@@ -22,6 +22,7 @@ import {
   DocumentTextIcon,
   ArrowPathIcon,
 } from "@heroicons/react/24/outline";
+import PostApprovalData from "./PostApprovalData";
 
 interface ApplicationContentProps {
   application: IFundingApplication;
@@ -347,6 +348,14 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
             </div>
           )}
         </div>
+
+        {/* Post-Approval Data Section - After Activity Timeline */}
+        {application?.postApprovalData && Object.keys(application?.postApprovalData).length > 0 && (
+          <PostApprovalData
+            postApprovalData={application?.postApprovalData}
+            program={program}
+          />
+        )}
 
         {/* AI Evaluation */}
         <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">

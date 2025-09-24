@@ -204,13 +204,7 @@ export default function ApplicationDetailPage() {
 
           {/* Right Column - Comments */}
           <div className="space-y-6">
-            {/* Post-Approval Data Section - After Activity Timeline */}
-            {application.postApprovalData && Object.keys(application.postApprovalData).length > 0 && (
-              <PostApprovalData
-                postApprovalData={application.postApprovalData}
-                program={program}
-              />
-            )}
+
             <CommentsSection
               applicationId={application.referenceNumber}
               comments={comments}
