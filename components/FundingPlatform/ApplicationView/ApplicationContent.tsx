@@ -349,7 +349,6 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
           )}
         </div>
 
-        {/* Post-Approval Data Section - After Activity Timeline */}
         {application?.postApprovalData && Object.keys(application?.postApprovalData).length > 0 && (
           <PostApprovalData
             postApprovalData={application?.postApprovalData}
