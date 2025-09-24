@@ -21,6 +21,7 @@ import {
 import { useAccount } from "wagmi";
 import ApplicationContent from "@/components/FundingPlatform/ApplicationView/ApplicationContent";
 import CommentsSection from "@/components/FundingPlatform/ApplicationView/CommentsSection";
+import PostApprovalData from "@/components/FundingPlatform/ApplicationView/PostApprovalData";
 
 export default function ApplicationDetailPage() {
   const router = useRouter();
@@ -41,7 +42,7 @@ export default function ApplicationDetailPage() {
 
   // Get current user address
   const { address: currentUserAddress } = useAccount();
-  
+
   // View mode state for ApplicationContent
   const [applicationViewMode, setApplicationViewMode] = useState<"details" | "changes">("details");
 
@@ -104,7 +105,7 @@ export default function ApplicationDetailPage() {
     selectVersion(versionId, versions);
     // Switch to Changes view to show the selected version
     setApplicationViewMode("changes");
-    
+
     // Scroll to the Application Details section
     setTimeout(() => {
       const element = document.getElementById('application-details');
@@ -202,7 +203,8 @@ export default function ApplicationDetailPage() {
           </div>
 
           {/* Right Column - Comments */}
-          <div>
+          <div className="space-y-6">
+
             <CommentsSection
               applicationId={application.referenceNumber}
               comments={comments}
