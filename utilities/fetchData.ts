@@ -1,8 +1,14 @@
 import axios, { Method } from "axios";
 import { envVars } from "./enviromentVars";
 import { sanitizeObject } from "./sanitize";
-import { getCookiesFromStoredWallet } from "./getCookiesFromStoredWallet";
+import { TokenManager } from "@/utilities/auth/token-manager";
 
+/**
+ * Fetch data utility that uses Privy's TokenManager for authentication
+ *
+ * This replaces the complex cookie-based token retrieval with
+ * Privy's simplified token management.
+ */
 export default async function fetchData(
   endpoint: string,
   method: Method = "GET",
@@ -14,8 +20,6 @@ export default async function fetchData(
   baseUrl: string = envVars.NEXT_PUBLIC_GAP_INDEXER_URL
 ) {
   try {
-    const { token, walletType } = getCookiesFromStoredWallet();
-
     const sanitizedData = sanitizeObject(axiosData);
     const isIndexerUrl = baseUrl === envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
 
@@ -33,10 +37,15 @@ export default async function fetchData(
       },
     };
 
-    if (isIndexerUrl) {
-      requestConfig.headers.Authorization = isAuthorized
-        ? token || undefined
-        : undefined;
+    // Add authorization header if needed
+    if (isIndexerUrl && isAuthorized) {
+      // Get token from TokenManager (which uses Privy)
+      const token = await TokenManager.getToken();
+
+      if (token) {
+        requestConfig.headers.Authorization = `Bearer ${token}`;
+      }
+
       requestConfig.timeout = 360000;
     }
 

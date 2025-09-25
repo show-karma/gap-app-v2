@@ -15,6 +15,7 @@ import {
 } from '@/types/funding-platform';
 import toast from 'react-hot-toast';
 import { errorManager } from '@/components/Utilities/errorManager';
+import { useAuth } from './useAuth';
 
 // Query keys for caching
 const QUERY_KEYS = {
@@ -651,14 +652,15 @@ export const useApplicationStatus = (programId?: string, chainId?: number) => {
  */
 export const useApplicationComments = (applicationId: string | null, isAdmin: boolean = false) => {
   const queryClient = useQueryClient();
+  const { authenticated } = useAuth();
 
   // Query for fetching comments
   const commentsQuery = useQuery({
     queryKey: QUERY_KEYS.applicationComments(applicationId!),
     queryFn: () => applicationCommentsService.getComments(applicationId!),
-    enabled: !!applicationId,
+    enabled: !!applicationId && authenticated,
     staleTime: 1000 * 60 * 2, // 2 minutes
-    gcTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 1, // 5 minutes
   });
 
   // Mutation for creating comments
@@ -741,12 +743,13 @@ export const useApplicationComments = (applicationId: string | null, isAdmin: bo
  */
 export const useApplicationVersions = (applicationIdOrReference: string | null) => {
   const queryClient = useQueryClient();
+  const { authenticated } = useAuth();
 
   // Query for fetching application versions
   const versionsQuery = useQuery({
     queryKey: QUERY_KEYS.applicationVersions(applicationIdOrReference!),
     queryFn: () => fundingApplicationsAPI.getApplicationVersions(applicationIdOrReference!),
-    enabled: !!applicationIdOrReference,
+    enabled: !!applicationIdOrReference && authenticated,
     staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 1000 * 60 * 10, // 10 minutes
     select: (data) => {

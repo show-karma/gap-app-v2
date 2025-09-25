@@ -3,10 +3,10 @@
  * This test simulates the real-world usage of the comment service with authentication
  */
 import { applicationCommentsService } from '../application-comments.service';
-import { getCookiesFromStoredWallet } from '@/utilities/getCookiesFromStoredWallet';
+import { TokenManager } from '@/utilities/auth/token-manager';
 
 // Mock dependencies
-jest.mock('@/utilities/getCookiesFromStoredWallet');
+jest.mock('@/utilities/auth/token-manager');
 jest.mock('@/utilities/enviromentVars', () => ({
   envVars: {
     NEXT_PUBLIC_GAP_INDEXER_URL: 'http://localhost:4000'
@@ -26,11 +26,8 @@ describe('Application Comments Integration', () => {
     jest.clearAllMocks();
     global.fetch = jest.fn();
     
-    // Setup default mock for getCookiesFromStoredWallet
-    (getCookiesFromStoredWallet as jest.Mock).mockReturnValue({
-      token: mockToken,
-      walletType: 'eoa'
-    });
+    // Setup default mock for TokenManager
+    (TokenManager.getToken as jest.Mock) = jest.fn().mockResolvedValue(mockToken);
   });
 
   afterEach(() => {
@@ -180,10 +177,7 @@ describe('Application Comments Integration', () => {
 
     it('should handle authentication failure gracefully', async () => {
       // Simulate no token available
-      (getCookiesFromStoredWallet as jest.Mock).mockReturnValue({
-        token: undefined,
-        walletType: undefined
-      });
+      (TokenManager.getToken as jest.Mock).mockResolvedValue(null);
 
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: false,
@@ -217,10 +211,7 @@ describe('Application Comments Integration', () => {
       const refreshedToken = 'refreshed-token';
 
       // First call with initial token
-      (getCookiesFromStoredWallet as jest.Mock).mockReturnValueOnce({
-        token: initialToken,
-        walletType: 'eoa'
-      });
+      (TokenManager.getToken as jest.Mock).mockResolvedValueOnce(initialToken);
 
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
@@ -239,10 +230,7 @@ describe('Application Comments Integration', () => {
       );
 
       // Second call with refreshed token
-      (getCookiesFromStoredWallet as jest.Mock).mockReturnValueOnce({
-        token: refreshedToken,
-        walletType: 'eoa'
-      });
+      (TokenManager.getToken as jest.Mock).mockResolvedValueOnce(refreshedToken);
 
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,

@@ -14,7 +14,6 @@ import {
   signAndProposeDisbursement,
   isSafeDeployed,
 } from "../../utilities/safe";
-import { formatNumber } from "../Pages/Project/Impact/OSOMetrics";
 // Import our new reusable components
 import { StatusAlert } from "./components/StatusAlert";
 import { Button } from "./components/Button";
@@ -36,6 +35,16 @@ const NETWORK_OPTIONS = [
 ];
 
 const TOKEN_OPTIONS = [{ id: "usdc", name: "USDC" }];
+
+export const formatNumber = (value: number): string => {
+  if (value >= 1_000_000) {
+    return `${(value / 1_000_000).toFixed(1)}M`;
+  }
+  if (value >= 1_000) {
+    return `${(value / 1_000).toFixed(1)}K`;
+  }
+  return value.toString();
+};
 
 interface PreflightChecks {
   isCorrectNetwork: boolean | null;
@@ -205,9 +214,8 @@ export const DisbursementForm = () => {
           hasSufficientBalance: null,
           safeBalance: "0",
           isChecking: false,
-          error: `Please switch your wallet to ${
-            NETWORK_OPTIONS.find((n) => n.id === network)?.name
-          } network.`,
+          error: `Please switch your wallet to ${NETWORK_OPTIONS.find((n) => n.id === network)?.name
+            } network.`,
         });
         return;
       }
@@ -223,9 +231,8 @@ export const DisbursementForm = () => {
           hasSufficientBalance: null,
           safeBalance: "0",
           isChecking: false,
-          error: `Safe is not deployed on ${
-            NETWORK_OPTIONS.find((n) => n.id === network)?.name
-          }. Please check the address and network.`,
+          error: `Safe is not deployed on ${NETWORK_OPTIONS.find((n) => n.id === network)?.name
+            }. Please check the address and network.`,
         });
         return;
       }
@@ -366,11 +373,10 @@ export const DisbursementForm = () => {
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
           <div className="px-8 py-12 text-center">
             <div
-              className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full ${
-                transactionState.result.executed
+              className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full ${transactionState.result.executed
                   ? "bg-green-100"
                   : "bg-blue-100"
-              }`}
+                }`}
             >
               {transactionState.result.executed ? (
                 <CheckIcon className="h-8 w-8 text-green-600" />
@@ -616,24 +622,21 @@ export const DisbursementForm = () => {
                 📊 Upload CSV File
               </label>
               <div
-                className={`flex justify-center rounded-xl border-2 border-dashed px-6 pb-6 pt-5 transition-all duration-200 ${
-                  isDragOver
+                className={`flex justify-center rounded-xl border-2 border-dashed px-6 pb-6 pt-5 transition-all duration-200 ${isDragOver
                     ? "border-indigo-400 bg-indigo-50 scale-105"
                     : "border-gray-300 hover:border-gray-400"
-                } ${
-                  transactionState.isProcessing
+                  } ${transactionState.isProcessing
                     ? "opacity-50 pointer-events-none"
                     : ""
-                }`}
+                  }`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
               >
                 <div className="space-y-2 text-center">
                   <svg
-                    className={`mx-auto h-16 w-16 transition-colors ${
-                      isDragOver ? "text-indigo-500" : "text-gray-400"
-                    }`}
+                    className={`mx-auto h-16 w-16 transition-colors ${isDragOver ? "text-indigo-500" : "text-gray-400"
+                      }`}
                     stroke="currentColor"
                     fill="none"
                     viewBox="0 0 48 48"
@@ -710,20 +713,19 @@ export const DisbursementForm = () => {
                 ) : (
                   <>
                     <div
-                      className={`flex items-center p-3 rounded-lg border ${
-                        preflightChecks.isCorrectNetwork === true
+                      className={`flex items-center p-3 rounded-lg border ${preflightChecks.isCorrectNetwork === true
                           ? "bg-green-50 border-green-200 text-green-700"
                           : preflightChecks.isCorrectNetwork === false
-                          ? "bg-red-50 border-red-200 text-red-700"
-                          : "bg-gray-50 border-gray-200 text-gray-600"
-                      }`}
+                            ? "bg-red-50 border-red-200 text-red-700"
+                            : "bg-gray-50 border-gray-200 text-gray-600"
+                        }`}
                     >
                       <span className="text-lg mr-3">
                         {preflightChecks.isCorrectNetwork === true
                           ? "✅"
                           : preflightChecks.isCorrectNetwork === false
-                          ? "❌"
-                          : "⏳"}
+                            ? "❌"
+                            : "⏳"}
                       </span>
                       <div>
                         <div className="font-medium">🌐 Wallet Network</div>
@@ -731,32 +733,30 @@ export const DisbursementForm = () => {
                           {preflightChecks.isCorrectNetwork === true
                             ? "Connected to correct network"
                             : preflightChecks.isCorrectNetwork === false
-                            ? `Auto-switching to ${
-                                NETWORK_OPTIONS.find((n) => n.id === network)
-                                  ?.name
+                              ? `Auto-switching to ${NETWORK_OPTIONS.find((n) => n.id === network)
+                                ?.name
                               }...`
-                            : isSwitchingNetwork
-                            ? "Switching networks..."
-                            : "Checking network..."}
+                              : isSwitchingNetwork
+                                ? "Switching networks..."
+                                : "Checking network..."}
                         </div>
                       </div>
                     </div>
 
                     <div
-                      className={`flex items-center p-3 rounded-lg border ${
-                        preflightChecks.isDeployed === true
+                      className={`flex items-center p-3 rounded-lg border ${preflightChecks.isDeployed === true
                           ? "bg-green-50 border-green-200 text-green-700"
                           : preflightChecks.isDeployed === false
-                          ? "bg-red-50 border-red-200 text-red-700"
-                          : "bg-gray-50 border-gray-200 text-gray-600"
-                      }`}
+                            ? "bg-red-50 border-red-200 text-red-700"
+                            : "bg-gray-50 border-gray-200 text-gray-600"
+                        }`}
                     >
                       <span className="text-lg mr-3">
                         {preflightChecks.isDeployed === true
                           ? "✅"
                           : preflightChecks.isDeployed === false
-                          ? "❌"
-                          : "⏳"}
+                            ? "❌"
+                            : "⏳"}
                       </span>
                       <div>
                         <div className="font-medium">🏦 Safe Contract</div>
@@ -764,27 +764,26 @@ export const DisbursementForm = () => {
                           {preflightChecks.isDeployed === true
                             ? "Safe found on network"
                             : preflightChecks.isDeployed === false
-                            ? "Safe not found on this network"
-                            : "Checking deployment..."}
+                              ? "Safe not found on this network"
+                              : "Checking deployment..."}
                         </div>
                       </div>
                     </div>
 
                     <div
-                      className={`flex items-center p-3 rounded-lg border ${
-                        preflightChecks.isOwner === true
+                      className={`flex items-center p-3 rounded-lg border ${preflightChecks.isOwner === true
                           ? "bg-green-50 border-green-200 text-green-700"
                           : preflightChecks.isOwner === false
-                          ? "bg-red-50 border-red-200 text-red-700"
-                          : "bg-gray-50 border-gray-200 text-gray-600"
-                      }`}
+                            ? "bg-red-50 border-red-200 text-red-700"
+                            : "bg-gray-50 border-gray-200 text-gray-600"
+                        }`}
                     >
                       <span className="text-lg mr-3">
                         {preflightChecks.isOwner === true
                           ? "✅"
                           : preflightChecks.isOwner === false
-                          ? "❌"
-                          : "⏳"}
+                            ? "❌"
+                            : "⏳"}
                       </span>
                       <div>
                         <div className="font-medium">👤 Ownership</div>
@@ -792,27 +791,26 @@ export const DisbursementForm = () => {
                           {preflightChecks.isOwner === true
                             ? "Wallet is Safe owner"
                             : preflightChecks.isOwner === false
-                            ? "Wallet is not a Safe owner"
-                            : "Checking ownership..."}
+                              ? "Wallet is not a Safe owner"
+                              : "Checking ownership..."}
                         </div>
                       </div>
                     </div>
 
                     <div
-                      className={`flex items-center p-3 rounded-lg border ${
-                        preflightChecks.hasSufficientBalance === true
+                      className={`flex items-center p-3 rounded-lg border ${preflightChecks.hasSufficientBalance === true
                           ? "bg-green-50 border-green-200 text-green-700"
                           : preflightChecks.hasSufficientBalance === false
-                          ? "bg-red-50 border-red-200 text-red-700"
-                          : "bg-gray-50 border-gray-200 text-gray-600"
-                      }`}
+                            ? "bg-red-50 border-red-200 text-red-700"
+                            : "bg-gray-50 border-gray-200 text-gray-600"
+                        }`}
                     >
                       <span className="text-lg mr-3">
                         {preflightChecks.hasSufficientBalance === true
                           ? "✅"
                           : preflightChecks.hasSufficientBalance === false
-                          ? "❌"
-                          : "⏳"}
+                            ? "❌"
+                            : "⏳"}
                       </span>
                       <div>
                         <div className="font-medium">💰 Balance</div>
@@ -875,13 +873,12 @@ export const DisbursementForm = () => {
                   type="button"
                   disabled={!canDisburse}
                   onClick={handleDisbursement}
-                  className={`inline-flex items-center px-8 py-4 border border-transparent text-lg font-semibold rounded-xl shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                    !canDisburse
+                  className={`inline-flex items-center px-8 py-4 border border-transparent text-lg font-semibold rounded-xl shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${!canDisburse
                       ? "bg-gray-400 text-white cursor-not-allowed"
                       : transactionState.isProcessing
-                      ? "bg-blue-600 text-white"
-                      : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white focus:ring-indigo-500 transform hover:scale-105"
-                  }`}
+                        ? "bg-blue-600 text-white"
+                        : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white focus:ring-indigo-500 transform hover:scale-105"
+                    }`}
                 >
                   {transactionState.isProcessing ? (
                     <>

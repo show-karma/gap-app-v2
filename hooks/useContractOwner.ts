@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useOwnerStore } from "@/store/owner";
-import { useAuthStore } from "@/store/auth";
+import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getContractOwner } from "@/utilities/sdk/getContractOwner";
@@ -19,7 +19,7 @@ const fetchContractOwner = async (
 };
 
 export const useContractOwner = (address?: string, chain?: Chain) => {
-  const { isAuth } = useAuthStore();
+  const { authenticated: isAuth } = useAuth();
   const { setIsOwner, setIsOwnerLoading } = useOwnerStore();
   const signer = useSigner();
 

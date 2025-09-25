@@ -16,7 +16,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { getProjectById } from "@/utilities/sdk";
 import { cn } from "@/utilities/tailwind";
-import { config } from "@/utilities/wagmi/config";
+import { privyConfig as config } from "@/utilities/wagmi/privy-config";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { Menu, Transition } from "@headlessui/react";
 import { CheckCircleIcon, TrashIcon } from "@heroicons/react/24/outline";

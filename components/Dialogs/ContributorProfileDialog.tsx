@@ -12,15 +12,15 @@ import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { getChainIdByName } from "@/utilities/network";
-import { useAuthStore } from "@/store/auth";
+
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { cn } from "@/utilities/tailwind";
-import { config } from "@/utilities/wagmi/config";
+import { privyConfig as config } from "@/utilities/wagmi/privy-config";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useConnectModal } from "@/hooks/useConnectModal";
 import { ContributorProfile } from "@show-karma/karma-gap-sdk";
 import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -31,6 +31,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 import { useWallet } from "@/hooks/useWallet";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import { useAuth } from "@/hooks/useAuth";
 
 type ContributorProfileDialogProps = {};
 
@@ -119,7 +120,7 @@ export const ContributorProfileDialog: FC<
   const { openConnectModal } = useConnectModal();
   const [isLoading, setIsLoading] = useState(false);
   const { changeStepperStep, setIsStepper } = useStepper();
-  const { isAuth } = useAuthStore();
+  const { authenticated: isAuth } = useAuth();
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
   const isAllowed = isConnected && isAuth;
@@ -325,9 +326,8 @@ export const ContributorProfileDialog: FC<
                 >
                   {isEditing
                     ? "Edit your profile"
-                    : `Accept invite to join ${
-                        project?.details?.data.title || "this project"
-                      }`}
+                    : `Accept invite to join ${project?.details?.data.title || "this project"
+                    }`}
                 </Dialog.Title>
                 {isAllowed ? (
                   <form onSubmit={handleSubmit(onSubmit)}>

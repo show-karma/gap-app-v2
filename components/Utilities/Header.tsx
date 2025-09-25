@@ -1,9 +1,8 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { useAuth } from "@/hooks/useAuth";
 import { useAdminCommunities } from "@/hooks/useAdminCommunities";
 import { useContractOwner } from "@/hooks/useContractOwner";
-import { useAuthStore } from "@/store/auth";
+import { useAuth } from "@/hooks/useAuth";
 import { useCommunitiesStore } from "@/store/communities";
 import { useMobileStore } from "@/store/mobile";
 import { useRegistryStore } from "@/store/registry";
@@ -16,7 +15,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 import * as Popover from "@radix-ui/react-popover";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { ConnectButton } from "./ConnectButton";
 import { useTheme } from "next-themes";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -148,7 +147,7 @@ const UserMenuMobile: React.FC<{
 export default function Header() {
   const { theme: currentTheme, setTheme: changeCurrentTheme } = useTheme();
   const { isConnected, address, chain } = useAccount();
-  const { isAuth, isAuthenticating } = useAuthStore();
+  const { authenticated: isAuth, ready, authenticate } = useAuth();
   const { communities } = useCommunitiesStore();
 
   // Use React Query hooks for data fetching
@@ -181,19 +180,7 @@ export default function Header() {
     },
   ];
 
-  const [isReady, setIsReady] = useState(false);
 
-  useEffect(() => {
-    setIsReady(true);
-  }, []);
-
-  const { authenticate, disconnect, softDisconnect } = useAuth();
-
-  useEffect(() => {
-    if (isConnected && isReady && !isAuth && !isAuthenticating) {
-      authenticate();
-    }
-  }, [isConnected, isReady, isAuth, isAuthenticating]);
 
   const { isMobileMenuOpen, setIsMobileMenuOpen } = useMobileStore();
 
@@ -310,7 +297,7 @@ export default function Header() {
                             Docs
                           </button>
                         </ExternalLink>
-                        {isReady ? (
+                        {ready ? (
                           <>
                             {isFundingMap ? (
                               isRegistryAllowed ? (
@@ -352,10 +339,9 @@ export default function Header() {
                               {({
                                 account,
                                 chain,
-                                openAccountModal,
-                                openConnectModal,
                                 authenticationStatus,
                                 mounted,
+                                login,
                               }) => {
                                 // Note: If your app doesn't use authentication, you
                                 // can remove all 'authenticationStatus' checks
@@ -383,7 +369,7 @@ export default function Header() {
                                       if (!connected) {
                                         return (
                                           <button
-                                            onClick={openConnectModal}
+                                            onClick={login}
                                             type="button"
                                             className="rounded-md border max-lg:w-full max-lg:justify-center border-brand-blue dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-brand-blue  hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
                                           >
@@ -430,7 +416,7 @@ export default function Header() {
           </div>
 
           <div className="hidden lg:flex lg:items-center lg:justify-end lg:gap-3 xl:gap-5 2xl:gap-6 py-3">
-            {isReady ? (
+            {ready ? (
               <>
                 <Link href={PAGES.REGISTRY.ROOT}>
                   <button className={buttonStyle}>Get Funding</button>
@@ -471,8 +457,7 @@ export default function Header() {
                   {({
                     account,
                     chain,
-                    openAccountModal,
-                    openConnectModal,
+                    login,
                     authenticationStatus,
                     mounted,
                   }) => {
@@ -505,12 +490,12 @@ export default function Header() {
                                   if (
                                     !isAuth &&
                                     connected &&
-                                    !isAuthenticating
+                                    ready
                                   ) {
                                     authenticate();
                                     return;
                                   }
-                                  openConnectModal?.();
+                                  login?.();
                                 }}
                                 type="button"
                                 className="rounded-md border border-brand-blue dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-brand-blue hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"

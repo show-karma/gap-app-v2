@@ -7,7 +7,7 @@ import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
 import { Button } from "@/components/Utilities/Button";
 import Pagination from "@/components/Utilities/Pagination";
-import { useAuthStore } from "@/store/auth";
+import { useAuth } from "@/hooks/useAuth";
 import { useStepper } from "@/store/modals/txStepper";
 import { useRegistryStore } from "@/store/registry";
 import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
@@ -20,7 +20,7 @@ import {
   ChevronLeftIcon,
   MagnifyingGlassIcon,
 } from "@heroicons/react/24/solid";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useConnectModal } from "@/hooks/useConnectModal";
 import { useQuery } from "@tanstack/react-query";
 import debounce from "lodash.debounce";
 import Link from "next/link";
@@ -81,7 +81,7 @@ export const ManagePrograms = () => {
   const [programToEdit, setProgramToEdit] = useState<GrantProgram | null>(null);
 
   const { address, isConnected } = useAccount();
-  const { isAuth } = useAuthStore();
+  const { authenticated: isAuth } = useAuth();
 
   const signer = useSigner();
 

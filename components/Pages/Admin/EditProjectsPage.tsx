@@ -6,7 +6,7 @@ import { useCommunityDetails } from "@/hooks/useCommunityDetails";
 import { useCommunityProjectsV2 } from "@/hooks/useCommunityProjectsV2";
 import { useCommunityGrants } from "@/hooks/useCommunityGrants";
 import { ProjectV2 } from "@/types/community";
-import { useAuthStore } from "@/store/auth";
+import { useAuth } from "@/hooks/useAuth";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { defaultMetadata } from "@/utilities/meta";
@@ -164,7 +164,7 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({
 export default function EditProjectsPage() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
-  const { isAuth } = useAuthStore();
+  const { authenticated: isAuth } = useAuth();
   const params = useParams();
   const communityId = params.communityId as string;
   const [selectedRegions, setSelectedRegions] = useState<

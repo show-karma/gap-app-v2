@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useProjectStore, useOwnerStore } from "@/store";
-import { useAuthStore } from "@/store/auth";
+import { useAuth } from "@/hooks/useAuth";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getRPCClient } from "@/utilities/rpcClient";
 import type { Project } from "@show-karma/karma-gap-sdk/core/class/entities/Project";
@@ -17,7 +17,7 @@ interface ProjectPermissionsResult {
 
 export const useProjectPermissions = () => {
   const { address, isConnected } = useAccount();
-  const { isAuth } = useAuthStore();
+  const { authenticated: isAuth } = useAuth();
   const { project } = useProjectStore();
   const projectId = project?.details?.data.slug || project?.uid;
   const { project: projectInstance } = useProjectInstance(projectId);

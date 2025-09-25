@@ -6,7 +6,7 @@ import { useAccount } from "wagmi";
 import type { Hex } from "viem";
 import { useEffect, useState } from "react";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { useAuthStore } from "@/store/auth";
+import { useAuth } from "@/hooks/useAuth";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 
 /**
@@ -54,7 +54,7 @@ export const useIsCommunityAdmin = (
 ) => {
   const { address: accountAddress } = useAccount();
   const signer = useSigner();
-  const { isAuth } = useAuthStore();
+  const { authenticated: isAuth } = useAuth();
   const [resolvedCommunity, setResolvedCommunity] =
     useState<ICommunityResponse | null>(null);
 

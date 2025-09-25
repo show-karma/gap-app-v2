@@ -18,7 +18,7 @@ import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useStepper } from "@/store/modals/txStepper";
 import toast from "react-hot-toast";
-import { config } from "@/utilities/wagmi/config";
+import { privyConfig as config } from "@/utilities/wagmi/privy-config";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 

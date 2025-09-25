@@ -15,7 +15,7 @@ import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
-import { queryClient } from "@/components/Utilities/WagmiProvider";
+import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
 import { useParams, useRouter } from "next/navigation";
 import {
   IGrantUpdate,
