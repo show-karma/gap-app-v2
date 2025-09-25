@@ -22,6 +22,46 @@ import { useImpactAnswers } from "@/hooks/useImpactAnswers";
 import { GroupedLinks } from "./GroupedLinks";
 import formatCurrency from "@/utilities/formatCurrency";
 
+// Function to determine indicator sorting priority
+const getIndicatorSortPriority = (indicatorName: string): number => {
+  const name = indicatorName.toLowerCase();
+
+  // Priority 0: GitHub indicators (highest priority - appear first)
+  if (name.includes('github') || name.includes('git')) {
+    return 0;
+  }
+
+  // Priority 1: Blockchain/On-chain indicators
+  if (
+    name.includes('unique users') ||
+    name.includes('unique user') ||
+    name.includes('no. of transactions') ||
+    name.includes('transaction') ||
+    name.includes('chain')
+  ) {
+    return 1;
+  }
+
+  // Priority 2: All other indicators (lowest priority - appear last)
+  return 2;
+};
+
+// Function to sort indicators by priority (GitHub, On-chain, Other)
+const sortIndicatorsByPriority = (indicators: any[]) => {
+  return indicators.sort((a, b) => {
+    const aPriority = getIndicatorSortPriority(a.name);
+    const bPriority = getIndicatorSortPriority(b.name);
+
+    // First sort by priority (GitHub first)
+    if (aPriority !== bPriority) {
+      return aPriority - bPriority;
+    }
+
+    // Within same priority, sort alphabetically by name
+    return a.name.localeCompare(b.name);
+  });
+};
+
 // Helper function to handle comma-separated URLs
 const parseProofUrls = (proof: string): string[] => {
   if (!proof) return [];
@@ -102,10 +142,10 @@ export const OutputsAndOutcomes = () => {
         prev.map((f) =>
           f.id === id
             ? {
-                ...f,
-                isSaving: false,
-                isEdited: false,
-              }
+              ...f,
+              isSaving: false,
+              isEdited: false,
+            }
             : f
         )
       );
@@ -116,10 +156,10 @@ export const OutputsAndOutcomes = () => {
         prev.map((f) =>
           f.id === id
             ? {
-                ...f,
-                isSaving: false,
-                isEdited: true,
-              }
+              ...f,
+              isSaving: false,
+              isEdited: true,
+            }
             : f
         )
       );
@@ -136,17 +176,17 @@ export const OutputsAndOutcomes = () => {
       prev.map((f) =>
         f.id === id
           ? {
-              ...f,
-              isEdited: true,
-              datapoints: f.datapoints.map((datapoint, i) => {
-                if (i !== index) return datapoint;
+            ...f,
+            isEdited: true,
+            datapoints: f.datapoints.map((datapoint, i) => {
+              if (i !== index) return datapoint;
 
-                return {
-                  ...datapoint,
-                  [field]: value,
-                };
-              }),
-            }
+              return {
+                ...datapoint,
+                [field]: value,
+              };
+            }),
+          }
           : f
       )
     );
@@ -211,6 +251,9 @@ export const OutputsAndOutcomes = () => {
       autosyncedIndicators.find((autosynced) => item.id === autosynced.id)
   );
 
+  // Sort filtered outputs by priority
+  const sortedOutputs = sortIndicatorsByPriority(filteredOutputs);
+
   const handleAddEntry = (id: string) => {
     const output = impactAnswers.find((o) => o.id === id);
     output?.datapoints.push({
@@ -224,17 +267,17 @@ export const OutputsAndOutcomes = () => {
       prev.map((f) =>
         f.id === id
           ? {
-              ...f,
-              datapoints: [
-                ...f.datapoints,
-                {
-                  value: 0,
-                  proof: "",
-                  startDate: new Date().toISOString(),
-                  endDate: new Date().toISOString(),
-                },
-              ],
-            }
+            ...f,
+            datapoints: [
+              ...f.datapoints,
+              {
+                value: 0,
+                proof: "",
+                startDate: new Date().toISOString(),
+                endDate: new Date().toISOString(),
+              },
+            ],
+          }
           : f
       )
     );
@@ -248,10 +291,10 @@ export const OutputsAndOutcomes = () => {
       prev.map((f) =>
         f.id === id
           ? {
-              ...f,
-              datapoints: [...f.datapoints].filter((_, i) => i !== index),
-              isEdited: true,
-            }
+            ...f,
+            datapoints: [...f.datapoints].filter((_, i) => i !== index),
+            isEdited: true,
+          }
           : f
       )
     );
@@ -332,7 +375,7 @@ export const OutputsAndOutcomes = () => {
     <div className="w-full max-w-[100rem]">
       {filteredOutputs.length > 0 ? (
         <div className="flex flex-col gap-8">
-          {filteredOutputs.map((item) => {
+          {sortedOutputs.map((item) => {
             const form = forms.find((f) => f.id === item.id);
             const lastUpdated = filteredOutputs
               .find((subItem) => item.id === subItem.id)
@@ -401,17 +444,17 @@ export const OutputsAndOutcomes = () => {
                           <AreaChart
                             className="h-48 mt-4"
                             data={prepareChartData(
-                              item.datapoints.map((datapoint) =>
+                              item.datapoints.map((datapoint: any) =>
                                 Number(datapoint.value)
                               ),
                               item.datapoints.map(
-                                (datapoint) =>
+                                (datapoint: any) =>
                                   datapoint.endDate || new Date().toISOString()
                               ),
                               item.name,
                               undefined,
                               item.datapoints.map(
-                                (datapoint) => datapoint.proof
+                                (datapoint: any) => datapoint.proof
                               )
                             )}
                             index="date"
@@ -441,7 +484,7 @@ export const OutputsAndOutcomes = () => {
 
                               // Find the exact datapoint that matches this date and value
                               const exactDatapoint = item.datapoints.find(
-                                (dp) => {
+                                (dp: any) => {
                                   const dpDate = formatDate(
                                     new Date(
                                       dp.endDate || new Date().toISOString()
@@ -451,7 +494,7 @@ export const OutputsAndOutcomes = () => {
                                   return (
                                     dpDate === v.date &&
                                     Number(dp.value) ===
-                                      Number(v[selectedItem.name])
+                                    Number(v[selectedItem.name])
                                   );
                                 }
                               );
@@ -511,7 +554,7 @@ export const OutputsAndOutcomes = () => {
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-gray-200 dark:divide-zinc-700">
-                                {item.datapoints.map((datapoint, index) => (
+                                {item.datapoints.map((datapoint: any, index: number) => (
                                   <tr key={index}>
                                     <td className="px-4 py-2">
                                       {!autosyncedIndicators.find(
@@ -551,12 +594,12 @@ export const OutputsAndOutcomes = () => {
                                             </span>
                                           </div>
                                           {form?.datapoints?.[index]?.value &&
-                                          isInvalidValue(
-                                            Number(
-                                              form?.datapoints?.[index]?.value
-                                            ),
-                                            form?.unitOfMeasure || "int"
-                                          ) ? (
+                                            isInvalidValue(
+                                              Number(
+                                                form?.datapoints?.[index]?.value
+                                              ),
+                                              form?.unitOfMeasure || "int"
+                                            ) ? (
                                             <span className="text-xs text-red-500">
                                               {form?.unitOfMeasure === "int"
                                                 ? "Please enter an integer number"
@@ -605,13 +648,13 @@ export const OutputsAndOutcomes = () => {
                                         <span className="text-gray-900 dark:text-zinc-100">
                                           {form?.datapoints?.[index]?.startDate
                                             ? formatDate(
-                                                new Date(
-                                                  form.datapoints?.[
-                                                    index
-                                                  ].startDate
-                                                ),
-                                                "UTC"
-                                              )
+                                              new Date(
+                                                form.datapoints?.[
+                                                  index
+                                                ].startDate
+                                              ),
+                                              "UTC"
+                                            )
                                             : "-"}
                                         </span>
                                       )}
@@ -645,39 +688,39 @@ export const OutputsAndOutcomes = () => {
                                               item.id,
                                               form?.datapoints?.[index]
                                                 ?.endDate ||
-                                                form?.datapoints?.[index]
-                                                  ?.outputTimestamp ||
-                                                ""
+                                              form?.datapoints?.[index]
+                                                ?.outputTimestamp ||
+                                              ""
                                             ) ||
-                                              (hasInvalidDatesSameRow(
-                                                item.id,
-                                                form?.datapoints?.[index]
-                                                  ?.startDate,
-                                                form?.datapoints?.[index]
-                                                  ?.endDate
-                                              ) &&
-                                                "border-2 border-red-500")
+                                            (hasInvalidDatesSameRow(
+                                              item.id,
+                                              form?.datapoints?.[index]
+                                                ?.startDate,
+                                              form?.datapoints?.[index]
+                                                ?.endDate
+                                            ) &&
+                                              "border-2 border-red-500")
                                           )}
                                         />
                                       ) : (
                                         <span className="text-gray-900 dark:text-zinc-100">
                                           {form?.datapoints?.[index]?.endDate
                                             ? formatDate(
-                                                new Date(
-                                                  form.datapoints?.[
-                                                    index
-                                                  ].endDate
-                                                ),
-                                                "UTC"
-                                              )
+                                              new Date(
+                                                form.datapoints?.[
+                                                  index
+                                                ].endDate
+                                              ),
+                                              "UTC"
+                                            )
                                             : datapoint.outputTimestamp
-                                            ? formatDate(
+                                              ? formatDate(
                                                 new Date(
                                                   datapoint.outputTimestamp
                                                 ),
                                                 "UTC"
                                               )
-                                            : "-"}
+                                              : "-"}
                                         </span>
                                       )}
                                     </td>
@@ -876,7 +919,7 @@ export const OutputsAndOutcomes = () => {
                             >
                               View Proof{" "}
                               {parseProofUrls(selectedPoint.data.proof).length >
-                              1
+                                1
                                 ? `#${index + 1}`
                                 : ""}
                             </a>

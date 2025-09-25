@@ -15,22 +15,20 @@ interface Props {
   params: Promise<{ communityId: string }>;
 }
 
-const getGrantPrograms = async (communityId: string): Promise<string[]> => {
+const getGrantPrograms = async (
+  communityId: string
+): Promise<GrantProgram[]> => {
   try {
     const [result, error] = await fetchData(
       INDEXER.COMMUNITY.PROGRAMS(communityId)
     );
     if (error) {
-      console.log(
-        "Error with fetching grant programs for community",
-        communityId,
+      errorManager(
+        `Error with fetching grant programs for community ${communityId}`,
         error
       );
     }
-    const programTitles = result.map(
-      (program: GrantProgram) => program.metadata?.title
-    );
-    return programTitles;
+    return result as GrantProgram[];
   } catch (error: any) {
     errorManager(
       `Error while fetching grant programs of community ${communityId}`,
@@ -50,6 +48,6 @@ export default async function Page(props: Props) {
   const grantPrograms = await getGrantPrograms(communityId);
 
   return (
-    <ReportMilestonePage community={community} grantTitles={grantPrograms} />
+    <ReportMilestonePage community={community} grantPrograms={grantPrograms} />
   );
 }

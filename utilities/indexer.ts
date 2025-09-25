@@ -236,7 +236,6 @@ export const INDEXER = {
         sort,
         categories,
         selectedProgramId,
-        grantTitle,
         download,
         selectedTrackIds,
       }: {
@@ -246,7 +245,6 @@ export const INDEXER = {
         sort?: string;
         categories?: string;
         selectedProgramId?: string;
-        grantTitle?: string;
         download?: boolean;
         selectedTrackIds?: string[];
       }
@@ -259,9 +257,7 @@ export const INDEXER = {
         categories ? `&categories=${categories}` : ""
       }${selectedProgramId ? `&selectedProgramIds=${selectedProgramId}` : ""}${
         download ? `&download=${download}` : ""
-      }${grantTitle ? `&grantTitle=${grantTitle}` : ""}${
-        selectedTrackIds ? `&selectedTrackIds=${selectedTrackIds}` : ""
-      }`,
+      }${selectedTrackIds ? `&selectedTrackIds=${selectedTrackIds}` : ""}`,
     STATS: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/stats`,
     PAGE_HEADER_STATS: (communityIdOrSlug: string) =>
