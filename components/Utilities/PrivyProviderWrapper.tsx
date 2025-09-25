@@ -43,7 +43,7 @@ export default function PrivyProviderWrapper({
           landingHeader: "Connect to Karma GAP",
           showWalletLoginFirst: false,
         },
-        loginMethods: ["email", "wallet", "google", "farcaster"],
+        loginMethods: ["wallet"],
         defaultChain: defaultChain,
         supportedChains: appNetwork,
         walletConnectCloudProjectId:

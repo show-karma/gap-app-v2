@@ -10,7 +10,7 @@ import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 
 import { errorManager } from "@/components/Utilities/errorManager";
-import { getGapClient, useGap } from "@/hooks/useGap";
+import { useGap } from "@/hooks/useGap";
 import { getChainIdByName } from "@/utilities/network";
 
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
@@ -18,7 +18,6 @@ import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { cn } from "@/utilities/tailwind";
-import { privyConfig as config } from "@/utilities/wagmi/privy-config";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useConnectModal } from "@/hooks/useConnectModal";
 import { ContributorProfile } from "@show-karma/karma-gap-sdk";
@@ -101,7 +100,8 @@ export const ContributorProfileDialog: FC<
       project?.recipient?.toLowerCase() === address?.toLowerCase()
   );
   const isEditing = isProjectMember || isGlobal;
-  const inviteCodeParam = useSearchParams().get("invite-code");
+  const searchParams = useSearchParams();
+  const inviteCodeParam = searchParams?.get("invite-code");
   const { gap } = useGap();
   const { switchChainAsync } = useWallet();
   const {

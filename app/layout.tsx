@@ -47,7 +47,9 @@ export default function RootLayout({
           <PrivyProviderWrapper>
             <Toaster />
             <StepperDialog />
-            <ContributorProfileDialog />
+            <Suspense fallback={null}>
+              <ContributorProfileDialog />
+            </Suspense>
             <ProgressBarWrapper />
             <div className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white">
               <div className="flex flex-col w-full h-full">
