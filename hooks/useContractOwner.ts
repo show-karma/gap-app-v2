@@ -41,7 +41,6 @@ export const useContractOwner = (address?: string, chain?: Chain) => {
     setIsOwnerLoading(isLoading);
   }, [isLoading, setIsOwnerLoading]);
 
-  console.log('isAuth', isAuth);
 
   useEffect(() => {
     if (!isAuth) {
