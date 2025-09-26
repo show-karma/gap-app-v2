@@ -4,18 +4,25 @@ global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
 jest.setTimeout(30000);
 
-jest.mock("@rainbow-me/rainbowkit", () => ({
-  wallet: {
-    metaMask: () => {},
-    rainbow: () => {},
-    coinbase: () => {},
-    walletConnect: () => {},
-    ledger: () => {},
-    brave: () => {},
-    trust: () => {},
-  },
-  connectorsForWallets: () => {},
-  useConnectModal: () => ({
-    openConnectModal: () => {},
+// Mock Privy instead of RainbowKit
+jest.mock("@privy-io/react-auth", () => ({
+  usePrivy: () => ({
+    ready: true,
+    authenticated: false,
+    login: jest.fn(),
+    logout: jest.fn(),
+    user: null,
+    getAccessToken: jest.fn(),
   }),
+  useWallets: () => ({
+    wallets: [],
+    ready: true,
+  }),
+  useLogin: () => ({
+    login: jest.fn(),
+  }),
+  useLogout: () => ({
+    logout: jest.fn(),
+  }),
+  PrivyProvider: ({ children }) => children,
 }));

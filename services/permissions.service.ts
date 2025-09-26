@@ -1,26 +1,12 @@
 import axios from "axios";
-import { getCookiesFromStoredWallet } from "@/utilities/getCookiesFromStoredWallet";
+import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
+import { FundingProgram } from "./fundingPlatformService";
 
 const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
 
 // Create axios instance with authentication
-const apiClient = axios.create({
-  baseURL: API_URL,
-  timeout: 30000,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
-// Add request interceptor for authentication
-apiClient.interceptors.request.use((config) => {
-  const { token } = getCookiesFromStoredWallet();
-  if (token) {
-    config.headers.Authorization = token;
-  }
-  return config;
-});
+const apiClient = createAuthenticatedApiClient(API_URL, 30000);
 
 // Add response interceptor for error handling
 apiClient.interceptors.response.use(
@@ -74,7 +60,8 @@ export interface ReviewerProgram {
 /**
  * Service for handling permission checks and role management
  */
-export const permissionsService = {
+export class PermissionsService {
+  constructor() {}
   /**
    * Check if a user has permission for a specific action
    */
@@ -95,7 +82,7 @@ export const permissionsService = {
     );
 
     return response.data;
-  },
+  }
 
   /**
    * Get user's permissions for a resource
@@ -111,18 +98,18 @@ export const permissionsService = {
     );
 
     return response.data;
-  },
+  }
 
   /**
    * Get programs where the user is a reviewer
    */
-  async getReviewerPrograms(): Promise<{ programs: ReviewerProgram[] }> {
-    const response = await apiClient.get<{ programs: ReviewerProgram[] }>(
+  async getReviewerPrograms(): Promise<FundingProgram[]> {
+    const response = await apiClient.get<FundingProgram[]>(
       "/v2/funding-program-configs/my-reviewer-programs"
     );
 
     return response.data;
-  },
+  }
 
   /**
    * Check if user has a specific role
@@ -130,7 +117,7 @@ export const permissionsService = {
   async hasRole(role: string, resource?: string): Promise<boolean> {
     if (role === "reviewer" && !resource) {
       // Check if user has any reviewer programs
-      const { programs } = await this.getReviewerPrograms();
+      const programs = await this.getReviewerPrograms();
       return programs.length > 0;
     }
 
@@ -141,7 +128,7 @@ export const permissionsService = {
     }
 
     return false;
-  },
+  }
 
   /**
    * Check if user can perform an action on a resource
@@ -150,7 +137,7 @@ export const permissionsService = {
     const permissions = await this.getUserPermissions(resource);
     const resourcePermissions = permissions.permissions.find(p => p.resource === resource);
     return resourcePermissions?.actions.includes(action) ?? false;
-  },
+  }
 
   /**
    * Batch check permissions for multiple programs
@@ -208,34 +195,6 @@ export const permissionsService = {
     }
 
     return results;
-  },
-
-  /**
-   * Cache for permission results to avoid duplicate calls
-   */
-  _permissionCache: new Map<string, { data: PermissionCheckResponse; timestamp: number }>(),
-
-  /**
-   * Get cached permission or fetch if not available
-   */
-  async getCachedPermission(options: PermissionCheckOptions): Promise<PermissionCheckResponse> {
-    const cacheKey = `${options.programId}-${options.chainID}-${options.action || ''}`;
-    const cached = this._permissionCache.get(cacheKey);
-
-    // Check if cache is valid (5 minutes)
-    if (cached && Date.now() - cached.timestamp < 5 * 60 * 1000) {
-      return cached.data;
-    }
-
-    // Fetch new data
-    const result = await this.checkPermission(options);
-
-    // Update cache
-    this._permissionCache.set(cacheKey, {
-      data: result,
-      timestamp: Date.now()
-    });
-
-    return result;
   }
+
 };

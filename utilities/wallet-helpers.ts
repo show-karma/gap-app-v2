@@ -1,5 +1,5 @@
 import { getWalletClient } from "@wagmi/core";
-import { config } from "./wagmi/config";
+import { privyConfig as config } from "./wagmi/privy-config";
 import { errorManager } from "@/components/Utilities/errorManager";
 
 /**

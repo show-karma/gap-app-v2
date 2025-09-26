@@ -6,7 +6,7 @@ import { z } from "zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
-import { useAuthStore } from "@/store/auth";
+import { useAuth } from "@/hooks/useAuth";
 
 import { useAccount } from "wagmi";
 import { getWalletClient } from "@wagmi/core";
@@ -15,11 +15,10 @@ import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { MESSAGES } from "@/utilities/messages";
 import { getGapClient, useGap } from "@/hooks/useGap";
 
-import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useStepper } from "@/store/modals/txStepper";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { Hex } from "viem";
-import { config } from "@/utilities/wagmi/config";
+import { privyConfig as config } from "@/utilities/wagmi/privy-config";
 import { getProjectById } from "@/utilities/sdk";
 import {
   IProjectImpact,
@@ -179,15 +178,14 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
       setIsStepper(false);
     }
   };
-  const isAuthorized = useAuthStore((state) => state.isAuth);
+  const { authenticated: isAuth, login } = useAuth();
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const verifyPermission = () => {
-    if (!isAuthorized || !isConnected) return false;
+    if (!isAuth) return false;
     return isContractOwner || !isProjectAdmin;
   };
   const ableToVerify = verifyPermission();
-  const { openConnectModal } = useConnectModal();
 
   if (hasVerifiedThis || !ableToVerify) return null;
 
@@ -195,8 +193,8 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
     <>
       <Button
         onClick={() => {
-          if (!isAuthorized || !isConnected) {
-            openConnectModal?.();
+          if (!isAuth) {
+            login?.();
           } else {
             openModal();
           }

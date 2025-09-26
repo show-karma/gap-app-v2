@@ -1,6 +1,6 @@
 "use client";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { useAuthStore } from "@/store/auth";
+import { useAuth } from "@/hooks/useAuth";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -87,7 +87,7 @@ export const CommunityAdminPage = ({
   community: ICommunityResponse;
 }) => {
   const { address, isConnected } = useAccount();
-  const { isAuth } = useAuthStore();
+  const { authenticated: isAuth } = useAuth();
 
   const signer = useSigner();
 
@@ -176,7 +176,7 @@ export const CommunityAdminPage = ({
               colorClass=""
               icon={<BanknotesIcon className="w-6 h-6" />}
             />
-            
+
             <AdminButton
               href={PAGES.ADMIN.PROGRAM_SCORES(
                 community?.details?.data?.slug || communityId

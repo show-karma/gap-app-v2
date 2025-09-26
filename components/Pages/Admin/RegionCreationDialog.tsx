@@ -9,11 +9,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
 import fetchData from "@/utilities/fetchData";
 import { useParams } from "next/navigation";
-import { useAuthStore } from "@/store/auth";
 import { useAuth } from "@/hooks/useAuth";
 import { INDEXER } from "@/utilities/indexer";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { MESSAGES } from "@/utilities/messages";
 import { useAccount } from "wagmi";
 import { useCommunityDetails } from "@/hooks/useCommunityDetails";
 
@@ -37,7 +35,7 @@ export const RegionCreationDialog: FC<RegionCreationDialogProps> = ({
   const { address } = useAccount();
   const params = useParams();
   const communityId = params.communityId as string;
-  
+
   const { data: community } = useCommunityDetails(communityId);
 
   const {
@@ -55,12 +53,12 @@ export const RegionCreationDialog: FC<RegionCreationDialogProps> = ({
     setIsOpen(false);
     reset();
   }
-  
+
   function openModal() {
     setIsOpen(true);
   }
 
-  const { isAuth } = useAuthStore();
+  const { authenticated: isAuth } = useAuth();
   const { authenticate } = useAuth();
 
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
@@ -69,12 +67,12 @@ export const RegionCreationDialog: FC<RegionCreationDialogProps> = ({
       if (!isAuth) {
         await authenticate();
       }
-      
+
       const communityUID = community?.uid || communityId;
       if (!communityUID) {
         throw new Error("Community ID is not available");
       }
-      
+
       const [request, error] = await fetchData(
         INDEXER.REGIONS.CREATE(communityUID),
         "POST",
@@ -85,10 +83,10 @@ export const RegionCreationDialog: FC<RegionCreationDialogProps> = ({
         {},
         true
       );
-      
+
       if (error)
         throw new Error("An error occurred while creating the region");
-      
+
       toast.success("Region created successfully");
       refreshRegions();
       closeModal();

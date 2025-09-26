@@ -1,8 +1,8 @@
 import { applicationCommentsService } from '../application-comments.service';
-import { getCookiesFromStoredWallet } from '@/utilities/getCookiesFromStoredWallet';
+import { TokenManager } from '@/utilities/auth/token-manager';
 
 // Mock the dependencies
-jest.mock('@/utilities/getCookiesFromStoredWallet');
+jest.mock('@/utilities/auth/token-manager');
 jest.mock('@/utilities/enviromentVars', () => ({
   envVars: {
     NEXT_PUBLIC_GAP_INDEXER_URL: 'http://localhost:4000'
@@ -30,11 +30,8 @@ describe('applicationCommentsService', () => {
         isDeleted: false
       };
 
-      // Mock getCookiesFromStoredWallet to return a token
-      (getCookiesFromStoredWallet as jest.Mock).mockReturnValue({
-        token: mockToken,
-        walletType: 'eoa'
-      });
+      // Mock TokenManager to return a token
+      (TokenManager.getToken as jest.Mock) = jest.fn().mockResolvedValue(mockToken);
 
       // Mock successful fetch response
       (global.fetch as jest.Mock).mockResolvedValueOnce({
@@ -67,11 +64,8 @@ describe('applicationCommentsService', () => {
     });
 
     it('should not include Authorization header when no token is available', async () => {
-      // Mock getCookiesFromStoredWallet to return no token
-      (getCookiesFromStoredWallet as jest.Mock).mockReturnValue({
-        token: undefined,
-        walletType: undefined
-      });
+      // Mock TokenManager to return no token
+      (TokenManager.getToken as jest.Mock) = jest.fn().mockResolvedValue(null);
 
       // Mock successful fetch response
       (global.fetch as jest.Mock).mockResolvedValueOnce({
@@ -100,11 +94,8 @@ describe('applicationCommentsService', () => {
     it('should include JWT token for all service methods', async () => {
       const mockToken = 'test-jwt-token';
       
-      // Mock getCookiesFromStoredWallet to return a token
-      (getCookiesFromStoredWallet as jest.Mock).mockReturnValue({
-        token: mockToken,
-        walletType: 'eoa'
-      });
+      // Mock TokenManager to return a token
+      (TokenManager.getToken as jest.Mock) = jest.fn().mockResolvedValue(mockToken);
 
       // Mock successful fetch responses
       (global.fetch as jest.Mock).mockResolvedValue({

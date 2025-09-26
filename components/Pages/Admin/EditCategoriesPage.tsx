@@ -7,7 +7,7 @@ import { useCommunityDetails } from "@/hooks/useCommunityDetails";
 import { SimplifiedGrant, useGrants } from "@/hooks/useGrants";
 import { useGrantsTable } from "@/hooks/useGrantsTable";
 import { useCommunityGrants } from "@/hooks/useCommunityGrants";
-import { useAuthStore } from "@/store/auth";
+import { useAuth } from "@/hooks/useAuth";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -35,7 +35,7 @@ export interface CategoriesOptions {
 export default function EditCategoriesPage() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
-  const { isAuth } = useAuthStore();
+  const { authenticated: isAuth } = useAuth();
   const params = useParams();
   const communityId = params.communityId as string;
   const [selectedCategories, setSelectedCategories] = useState<

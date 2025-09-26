@@ -17,7 +17,7 @@ import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useWallet } from "@/hooks/useWallet";
-import { queryClient } from "@/components/Utilities/WagmiProvider";
+import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 const DeleteDialog = dynamic(() =>

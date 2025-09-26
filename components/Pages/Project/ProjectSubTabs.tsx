@@ -3,16 +3,16 @@ import { EndorsementList } from "../ProgramRegistry/EndorsementList";
 import { useMemo } from "react";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useAccount } from "wagmi";
-import { useAuthStore } from "@/store/auth";
+import { useAuth } from "@/hooks/useAuth";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { useProjectStore } from "@/store";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useConnectModal } from "@/hooks/useConnectModal";
 
 export const ProjectSubTabs = () => {
   const project = useProjectStore((state) => state.project);
   const { setIsEndorsementOpen: setIsOpen } = useEndorsementStore();
   const { address, isConnected } = useAccount();
-  const { isAuth } = useAuthStore();
+  const { authenticated: isAuth } = useAuth();
   const { openConnectModal } = useConnectModal();
 
   const userHasEndorsed = useMemo(() => {

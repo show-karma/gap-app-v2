@@ -101,8 +101,6 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
           labels[field.id] = field.label;
         }
       });
-    } else {
-      console.log("No program formSchema fields found", program);
     }
     return labels;
   }, [program]);

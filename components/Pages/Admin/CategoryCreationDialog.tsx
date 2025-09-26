@@ -9,7 +9,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
 import fetchData from "@/utilities/fetchData";
 import { useParams } from "next/navigation";
-import { useAuthStore } from "@/store/auth";
 import { useAuth } from "@/hooks/useAuth";
 import { INDEXER } from "@/utilities/indexer";
 
@@ -55,7 +54,7 @@ export const CategoryCreationDialog: FC<CategoryCreationDialogProps> = ({
     setIsOpen(true);
   }
 
-  const { isAuth } = useAuthStore();
+  const { authenticated: isAuth } = useAuth();
   const { authenticate } = useAuth();
 
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {

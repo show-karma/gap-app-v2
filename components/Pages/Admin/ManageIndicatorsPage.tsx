@@ -25,7 +25,7 @@ import { Disclosure } from "@headlessui/react";
 import { IndicatorsHub } from "@/components/Pages/Admin/IndicatorsHub";
 import { ManageCategoriesOutputs } from "@/components/Pages/Admin/ManageCategoriesOutputs";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { useAuthStore } from "@/store/auth";
+import { useAuth } from "@/hooks/useAuth";
 import { Category, ImpactSegment } from "@/types/impactMeasurement";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
@@ -41,7 +41,7 @@ export const metadata = defaultMetadata;
 export default function ManageIndicatorsPage() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
-  const { isAuth } = useAuthStore();
+  const { authenticated: isAuth } = useAuth();
   const params = useParams();
   const communityId = params.communityId as string;
   // Call API
@@ -206,12 +206,11 @@ export default function ManageIndicatorsPage() {
                         setSelectedCategory(category);
                         setViewMode("category");
                       }}
-                      className={`text-left p-3 rounded-md transition-all ${
-                        selectedCategory?.id === category.id &&
+                      className={`text-left p-3 rounded-md transition-all ${selectedCategory?.id === category.id &&
                         viewMode === "category"
-                          ? "bg-blue-100 dark:bg-blue-900"
-                          : "hover:bg-gray-100 dark:hover:bg-zinc-800"
-                      }`}
+                        ? "bg-blue-100 dark:bg-blue-900"
+                        : "hover:bg-gray-100 dark:hover:bg-zinc-800"
+                        }`}
                     >
                       {category.name}
                     </button>
@@ -243,12 +242,11 @@ export default function ManageIndicatorsPage() {
                                 setSelectedCategory(category);
                                 setViewMode("category");
                               }}
-                              className={`text-left p-3 transition-all ${
-                                selectedCategory?.id === category.id &&
+                              className={`text-left p-3 transition-all ${selectedCategory?.id === category.id &&
                                 viewMode === "category"
-                                  ? "bg-blue-100 dark:bg-blue-900 font-medium"
-                                  : "hover:bg-gray-100 dark:hover:bg-zinc-800"
-                              }`}
+                                ? "bg-blue-100 dark:bg-blue-900 font-medium"
+                                : "hover:bg-gray-100 dark:hover:bg-zinc-800"
+                                }`}
                             >
                               {category.name}
                             </button>

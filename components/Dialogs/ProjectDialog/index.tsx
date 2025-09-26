@@ -24,7 +24,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useConnectModal } from "@/hooks/useConnectModal";
 import {
   ExternalLink,
   type IProjectDetails,
@@ -52,7 +52,7 @@ import { z } from "zod";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink as ExternalLinkComponent } from "@/components/Utilities/ExternalLink";
 import { Skeleton } from "@/components/Utilities/Skeleton";
-import { useAuthStore } from "@/store/auth";
+import { useAuth } from "@/hooks/useAuth";
 import { useProjectEditModalStore } from "@/store/modals/projectEdit";
 import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
 import { useStepper } from "@/store/modals/txStepper";
@@ -278,7 +278,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const [step, setStep] = useState(0);
   const isOwner = useOwnerStore((state) => state.isOwner);
   const { isConnected, address } = useAccount();
-  const { isAuth } = useAuthStore();
+  const { authenticated: isAuth } = useAuth();
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
@@ -311,15 +311,15 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
   // Watch the chainID value for the useEffect
   const chainIDValue = watch("chainID");
-  
+
   // Handle network change and chain switching
   const handleNetworkChange = async (networkId: number) => {
     if (!isConnected || !address) {
       return;
     }
-    
+
     setIsChangingNetwork(true);
-    
+
     try {
       // If we're not on the selected network, switch to it
       if (chain?.id !== networkId) {
@@ -327,10 +327,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         // Wait a bit for the chain switch to complete
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
-      
+
       // Now get the wallet client for the new chain
       const { walletClient, error } = await safeGetWalletClient(networkId);
-      
+
       if (!error && walletClient) {
         const signer = await walletClientToSigner(walletClient);
         setWalletSigner(signer);
@@ -347,7 +347,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       setIsChangingNetwork(false);
     }
   };
-  
+
   // Prepare wallet signer when wallet is connected and chain is selected
   useEffect(() => {
     const prepareSigner = async () => {
@@ -357,7 +357,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           if (chain?.id === chainIDValue) {
             // Get wallet client for the current chain
             const { walletClient, error } = await safeGetWalletClient(chainIDValue);
-            
+
             if (!error && walletClient) {
               const signer = await walletClientToSigner(walletClient);
               setWalletSigner(signer);
@@ -376,7 +376,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         setWalletSigner(null);
       }
     };
-    
+
     prepareSigner();
   }, [isConnected, address, chainIDValue, chain?.id]);
 
@@ -1608,7 +1608,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 previousValue={watch("chainID")}
               />
               <p className="text-red-500">{errors.chainID?.message}</p>
-              
+
               {/* Show network status */}
               {isChangingNetwork && (
                 <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
@@ -1618,7 +1618,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                   </p>
                 </div>
               )}
-              
+
               {/* Add FaucetSection for gas funding - keep visible even after funding */}
               {watch("chainID") && walletSigner && !isChangingNetwork && (
                 <FaucetSection
@@ -1651,7 +1651,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                   onFundsReceived={async () => {
                     setFaucetFunded(true);
                     toast.success("Wallet funded! You can now create your project.");
-                    
+
                     // Refresh wallet signer after funding
                     try {
                       await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for blockchain state

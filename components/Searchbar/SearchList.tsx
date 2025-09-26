@@ -11,8 +11,8 @@ import {
   ISearchResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useAccount } from "wagmi";
-import { useAuthStore } from "@/store/auth";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useAuth } from "@/hooks/useAuth";
+import { useConnectModal } from "@/hooks/useConnectModal";
 import { useEffect, useState } from "react";
 import { useMobileStore } from "@/store/mobile";
 
@@ -38,7 +38,7 @@ export const SearchList: React.FC<Props> = ({
   onInteractionEnd,
 }) => {
   const { isConnected } = useAccount();
-  const { isAuth } = useAuthStore();
+  const { authenticated: isAuth } = useAuth();
   const { openConnectModal } = useConnectModal();
   const [shouldOpen, setShouldOpen] = useState(false);
   const router = useRouter();
@@ -88,7 +88,7 @@ export const SearchList: React.FC<Props> = ({
     href: string,
     type: "project" | "community"
   ) => {
-    const imageURL = type === "project" 
+    const imageURL = type === "project"
       ? (item as IProjectResponse).details?.data?.imageURL
       : (item as ICommunityResponse).details?.data?.imageURL;
 

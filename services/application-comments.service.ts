@@ -1,28 +1,12 @@
 import axios from 'axios';
 import { ApplicationComment } from '@/types/funding-platform';
 import { envVars } from '@/utilities/enviromentVars';
-import { getCookiesFromStoredWallet } from '@/utilities/getCookiesFromStoredWallet';
+import { createAuthenticatedApiClient } from '@/utilities/auth/api-client';
 
 const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
 
 // Create axios instance with authentication
-const apiClient = axios.create({
-  baseURL: API_URL,
-  timeout: 30000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Add request interceptor for authentication
-apiClient.interceptors.request.use((config) => {
-  // Get auth token from cookies using address-specific key
-  const { token } = getCookiesFromStoredWallet();
-  if (token) {
-    config.headers.Authorization = token;
-  }
-  return config;
-});
+const apiClient = createAuthenticatedApiClient(API_URL, 30000);
 
 // Add response interceptor for error handling
 apiClient.interceptors.response.use(
@@ -44,7 +28,7 @@ export const applicationCommentsService = {
     }
     
     const response = await apiClient.get(`/v2/applications/${applicationId}/comments`, {
-      params
+      ...params
     });
 
     return response.data.comments;

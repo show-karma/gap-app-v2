@@ -28,10 +28,10 @@ jest.mock("react-hot-toast", () => ({
   Toaster: () => <div data-testid="toaster" />,
 }));
 
-jest.mock("@/components/Utilities/WagmiProvider", () => ({
+jest.mock("@/components/Utilities/PrivyProviderWrapper", () => ({
   __esModule: true,
   default: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="wagmi-provider">{children}</div>
+    <div data-testid="privy-provider">{children}</div>
   ),
 }));
 

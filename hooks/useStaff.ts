@@ -2,14 +2,16 @@ import fetchData from "@/utilities/fetchData";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { useQuery } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
+import { useAuth } from "./useAuth";
 
 export const useStaff = () => {
   const { address } = useAccount();
+  const { authenticated: isAuth } = useAuth();
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["staffAuthorization", address],
+    queryKey: ["staffAuthorization", address, isAuth],
     queryFn: async () => {
-      if (!address) return { authorized: false };
+      if (!address || !isAuth) return { authorized: false };
 
       const [data, error] = await fetchData("/auth/staff/authorized");
 
@@ -19,7 +21,7 @@ export const useStaff = () => {
 
       return data;
     },
-    enabled: !!address,
+    enabled: !!address && isAuth,
     ...defaultQueryOptions,
   });
 

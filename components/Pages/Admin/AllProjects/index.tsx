@@ -16,7 +16,7 @@ import { useState } from "react";
 import { ProjectDescriptionDialog } from "./Dialog";
 import { ProjectContacts } from "./Contacts";
 import { AllProjectsLoadingTable } from "./Loading";
-import { useAuthStore } from "@/store/auth";
+import { useAuth } from "@/hooks/useAuth";
 import { PAGES } from "@/utilities/pages";
 import Link from "next/link";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -62,7 +62,7 @@ export const AllProjects = () => {
     undefined
   );
 
-  const { isAuth } = useAuthStore();
+  const { authenticated: isAuth } = useAuth();
   const { data, isLoading } = useQuery({
     queryKey: ["all-projects", page, pageSize],
     queryFn: () =>

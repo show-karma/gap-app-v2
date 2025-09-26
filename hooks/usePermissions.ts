@@ -1,31 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
-import { useAuthStore } from "@/store/auth";
+import { useAuth } from "@/hooks/useAuth";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import axios from "axios";
-import { getCookiesFromStoredWallet } from "@/utilities/getCookiesFromStoredWallet";
-import { envVars } from "@/utilities/enviromentVars";
 import { FundingProgram } from "@/services/fundingPlatformService";
+import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
+import { PermissionsService } from "@/services/permissions.service";
 
-const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
+const apiClient = createAuthenticatedApiClient();
 
-// Create axios instance with authentication
-const apiClient = axios.create({
-  baseURL: API_URL,
-  timeout: 30000,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
-// Add request interceptor for authentication
-apiClient.interceptors.request.use((config) => {
-  const { token } = getCookiesFromStoredWallet();
-  if (token) {
-    config.headers.Authorization = token;
-  }
-  return config;
-});
 
 /**
  * Options for configuring the usePermissions hook
@@ -92,14 +75,14 @@ type ReviewerProgramsResponse = FundingProgram[]
  */
 export const usePermissions = (options: PermissionOptions = {}) => {
   const { address: wagmiAddress } = useAccount();
-  const { isAuth, isAuthenticating, getToken } = useAuthStore();
+  const { authenticated: isAuth, getAccessToken: getToken, ready } = useAuth()
   const { programId, chainID, action, role, enabled = true } = options;
+
 
   const query = useQuery({
     queryKey: ["permissions", programId, chainID, action, role, wagmiAddress, isAuth],
     queryFn: async () => {
-      // Early return if still authenticating
-      if (isAuthenticating) {
+      if (!isAuth || !wagmiAddress || !ready) {
         return {
           hasPermission: false,
           permissions: [],
@@ -107,15 +90,7 @@ export const usePermissions = (options: PermissionOptions = {}) => {
         };
       }
 
-      // Check auth state consistency
-      const token = getToken();
-      if (!isAuth || !wagmiAddress || !token) {
-        return {
-          hasPermission: false,
-          permissions: [],
-          programs: []
-        };
-      }
+      const permissionsService = new PermissionsService();
 
       // Check specific program permission
       if (programId && chainID) {
@@ -123,13 +98,11 @@ export const usePermissions = (options: PermissionOptions = {}) => {
           const params = new URLSearchParams();
           if (action) params.append("action", action);
 
-          const response = await apiClient.get<PermissionCheckResponse>(
-            `/v2/funding-program-configs/${programId}/${chainID}/check-permission?${params.toString()}`
-          );
+          const response = await permissionsService.checkPermission({ programId, chainID, action });
 
           return {
-            hasPermission: response.data.hasPermission,
-            permissions: response.data.permissions || [],
+            hasPermission: response.hasPermission,
+            permissions: response.permissions || [],
             programs: []
           };
         } catch (error) {
@@ -157,11 +130,7 @@ export const usePermissions = (options: PermissionOptions = {}) => {
       // Get user's reviewer programs
       if (role === "reviewer") {
         try {
-          const response = await apiClient.get<ReviewerProgramsResponse>(
-            "/v2/funding-program-configs/my-reviewer-programs"
-          );
-
-          const programs = response.data || [];
+          const programs = await permissionsService.getReviewerPrograms() || [];
 
           return {
             hasPermission: programs.length > 0,
@@ -198,8 +167,8 @@ export const usePermissions = (options: PermissionOptions = {}) => {
       };
     },
     ...defaultQueryOptions,
-    enabled: enabled && !!isAuth && !!wagmiAddress && !isAuthenticating,
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    enabled: enabled && !!isAuth && !!wagmiAddress,
+    staleTime: 1 * 60 * 1000, // Cache for 5 minutes
     retry: (failureCount, error) => {
       // Retry only network errors, not auth issues
       if (axios.isAxiosError(error) && error.response?.status === 401) {

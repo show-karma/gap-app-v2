@@ -1,26 +1,11 @@
 import axios from "axios";
-import { getCookiesFromStoredWallet } from "@/utilities/getCookiesFromStoredWallet";
+import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
 
 const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
 
 // Create axios instance with authentication
-const apiClient = axios.create({
-  baseURL: API_URL,
-  timeout: 30000,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
-// Add request interceptor for authentication
-apiClient.interceptors.request.use((config) => {
-  const { token } = getCookiesFromStoredWallet();
-  if (token) {
-    config.headers.Authorization = token;
-  }
-  return config;
-});
+const apiClient = createAuthenticatedApiClient(API_URL, 30000);
 
 // Add response interceptor for error handling
 apiClient.interceptors.response.use(

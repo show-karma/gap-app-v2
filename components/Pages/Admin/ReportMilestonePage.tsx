@@ -5,7 +5,7 @@ import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import TablePagination from "@/components/Utilities/TablePagination";
 import { useOwnerStore } from "@/store";
-import { useAuthStore } from "@/store/auth";
+import { useAuth } from "@/hooks/useAuth";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -90,8 +90,7 @@ const fetchReports = async (
   const [data]: any = await fetchData(
     `${INDEXER.COMMUNITY.REPORT.GET(
       communityId as string
-    )}?limit=${pageLimit}&page=${page}&sort=${sortBy}&sortOrder=${sortOrder}${
-      queryProgramIds ? `&programIds=${encodedProgramIds}` : ""
+    )}?limit=${pageLimit}&page=${page}&sort=${sortBy}&sortOrder=${sortOrder}${queryProgramIds ? `&programIds=${encodedProgramIds}` : ""
     }`
   );
   return data || [];
@@ -113,7 +112,7 @@ export const ReportMilestonePage = ({
   const params = useParams();
   const communityId = params.communityId as string;
   const { address, isConnected } = useAccount();
-  const { isAuth } = useAuthStore();
+  const { authenticated: isAuth } = useAuth();
   const { isCommunityAdmin: isAdmin } = useIsCommunityAdmin(
     community?.uid,
     address
@@ -303,11 +302,10 @@ export const ReportMilestonePage = ({
                   />
                   <StatCard
                     title="% of project who added Milestones"
-                    value={`${
-                      data?.stats?.percentageProjectsWithMilestones?.toFixed(
-                        2
-                      ) || 0
-                    }%`}
+                    value={`${data?.stats?.percentageProjectsWithMilestones?.toFixed(
+                      2
+                    ) || 0
+                      }%`}
                   />
                   <StatCard
                     title="Total Milestones"
@@ -323,16 +321,14 @@ export const ReportMilestonePage = ({
                   />
                   <StatCard
                     title="Milestones Completion %"
-                    value={`${
-                      data?.stats?.percentageCompletedMilestones?.toFixed(2) ||
+                    value={`${data?.stats?.percentageCompletedMilestones?.toFixed(2) ||
                       0
-                    }%`}
+                      }%`}
                   />
                   <StatCard
                     title="Milestones Pending %"
-                    value={`${
-                      data?.stats?.percentagePendingMilestones?.toFixed(2) || 0
-                    }%`}
+                    value={`${data?.stats?.percentagePendingMilestones?.toFixed(2) || 0
+                      }%`}
                   />
                 </>
               )}
@@ -448,94 +444,94 @@ export const ReportMilestonePage = ({
               <tbody className="px-4 divide-y divide-gray-200 dark:divide-zinc-800">
                 {isLoading
                   ? skeletonArray.map((index) => {
-                      return (
-                        <tr key={index}>
-                          <td className="px-4 py-2 font-medium h-16">
-                            <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4" />
-                          </td>
-                          <td className="px-4 py-2">
-                            <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4" />
-                          </td>
-                          <td className="px-4 py-2">
-                            {" "}
-                            <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4 w-14" />
-                          </td>
-                          <td className="px-4 py-2">
-                            <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4 w-14" />
-                          </td>
-                          <td className="px-4 py-2">
-                            <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4 w-14" />
-                          </td>
-                        </tr>
-                      );
-                    })
+                    return (
+                      <tr key={index}>
+                        <td className="px-4 py-2 font-medium h-16">
+                          <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4" />
+                        </td>
+                        <td className="px-4 py-2">
+                          <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4" />
+                        </td>
+                        <td className="px-4 py-2">
+                          {" "}
+                          <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4 w-14" />
+                        </td>
+                        <td className="px-4 py-2">
+                          <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4 w-14" />
+                        </td>
+                        <td className="px-4 py-2">
+                          <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4 w-14" />
+                        </td>
+                      </tr>
+                    );
+                  })
                   : reports?.map((report, index) => {
-                      return (
-                        <tr
-                          key={index}
-                          className="dark:text-zinc-300 text-gray-900 px-4 py-4"
-                        >
-                          <td className="px-4 py-2 font-medium h-16 max-w-[220px]">
-                            <ExternalLink
-                              href={PAGES.PROJECT.GRANT(
-                                report.projectSlug,
-                                report.grantUid
-                              )}
-                              className="max-w-max w-full line-clamp-2 underline"
-                            >
-                              {report.grantTitle}
-                            </ExternalLink>
-                          </td>
-                          <td className="px-4 py-2 max-w-[220px]">
-                            <ExternalLink
-                              href={PAGES.PROJECT.OVERVIEW(report.projectSlug)}
-                              className="max-w-full line-clamp-2 underline w-max"
-                            >
-                              {report.projectTitle}
-                            </ExternalLink>
-                          </td>
-                          <td className="px-4 py-2 max-w-[220px]">
-                            <Link
-                              href={`${PAGES.PROJECT.GRANT(
-                                report.projectUid,
-                                report.grantUid
-                              )}/milestones-and-updates#all`}
-                              className="text-blue-600 hover:text-blue-800 underline"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              {report.totalMilestones}
-                            </Link>
-                          </td>
-                          <td className="px-4 py-2 max-w-[220px]">
-                            <Link
-                              href={`${PAGES.PROJECT.GRANT(
-                                report.projectUid,
-                                report.grantUid
-                              )}/milestones-and-updates#pending`}
-                              className="text-blue-600 hover:text-blue-800 underline"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              {report.pendingMilestones}
-                            </Link>
-                          </td>
-                          <td className="px-4 py-2 max-w-[220px]">
-                            <Link
-                              href={`${PAGES.PROJECT.GRANT(
-                                report.projectSlug,
-                                report.grantUid
-                              )}/milestones-and-updates#completed`}
-                              className="text-blue-600 hover:text-blue-800 underline"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              {report.completedMilestones}
-                            </Link>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                    return (
+                      <tr
+                        key={index}
+                        className="dark:text-zinc-300 text-gray-900 px-4 py-4"
+                      >
+                        <td className="px-4 py-2 font-medium h-16 max-w-[220px]">
+                          <ExternalLink
+                            href={PAGES.PROJECT.GRANT(
+                              report.projectSlug,
+                              report.grantUid
+                            )}
+                            className="max-w-max w-full line-clamp-2 underline"
+                          >
+                            {report.grantTitle}
+                          </ExternalLink>
+                        </td>
+                        <td className="px-4 py-2 max-w-[220px]">
+                          <ExternalLink
+                            href={PAGES.PROJECT.OVERVIEW(report.projectSlug)}
+                            className="max-w-full line-clamp-2 underline w-max"
+                          >
+                            {report.projectTitle}
+                          </ExternalLink>
+                        </td>
+                        <td className="px-4 py-2 max-w-[220px]">
+                          <Link
+                            href={`${PAGES.PROJECT.GRANT(
+                              report.projectUid,
+                              report.grantUid
+                            )}/milestones-and-updates#all`}
+                            className="text-blue-600 hover:text-blue-800 underline"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {report.totalMilestones}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-2 max-w-[220px]">
+                          <Link
+                            href={`${PAGES.PROJECT.GRANT(
+                              report.projectUid,
+                              report.grantUid
+                            )}/milestones-and-updates#pending`}
+                            className="text-blue-600 hover:text-blue-800 underline"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {report.pendingMilestones}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-2 max-w-[220px]">
+                          <Link
+                            href={`${PAGES.PROJECT.GRANT(
+                              report.projectSlug,
+                              report.grantUid
+                            )}/milestones-and-updates#completed`}
+                            className="text-blue-600 hover:text-blue-800 underline"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {report.completedMilestones}
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
             <div className="dark:bg-zinc-900 flex flex-col pb-4 items-end">

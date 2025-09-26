@@ -5,7 +5,7 @@ import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import Pagination from "@/components/Utilities/Pagination";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { useMixpanel } from "@/hooks/useMixpanel";
-import { useAuthStore } from "@/store/auth";
+import { useAuth } from "@/hooks/useAuth";
 import { useOnboarding } from "@/store/modals/onboarding";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
@@ -75,7 +75,7 @@ const OnboardingButton = () => {
 
 export default function MyProjects() {
   const { isConnected, address } = useAccount();
-  const { isAuth } = useAuthStore();
+  const { authenticated: isAuth } = useAuth();
   const { theme: currentTheme } = useTheme();
   const itemsPerPage = 12;
   const [page, setPage] = useState<number>(1);

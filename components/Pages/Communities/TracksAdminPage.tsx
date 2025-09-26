@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, Fragment } from "react";
-import { useAuthStore } from "@/store/auth";
+import { useAuth } from "@/hooks/useAuth";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
@@ -47,7 +47,7 @@ export const TracksAdminPage = ({
   community: ICommunityResponse;
 }) => {
   const { address, isConnected } = useAccount();
-  const { isAuth } = useAuthStore();
+  const { authenticated: isAuth } = useAuth();
   const router = useRouter();
 
   const [selectedProgram, setSelectedProgram] = useState<string>("");

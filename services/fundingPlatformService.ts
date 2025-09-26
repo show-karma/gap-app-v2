@@ -13,30 +13,14 @@ import {
   IApplicationVersion,
   IApplicationVersionTimeline,
 } from "@/types/funding-platform";
-import { getCookiesFromStoredWallet } from "@/utilities/getCookiesFromStoredWallet";
+import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
 
 // Base API configuration
 const API_BASE =
   envVars.NEXT_PUBLIC_GAP_INDEXER_URL || "http://localhost:4000";
 
-const apiClient = axios.create({
-  baseURL: API_BASE,
-  timeout: 30000,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
-// Add request interceptor for authentication
-apiClient.interceptors.request.use((config) => {
-  // Get auth token from cookies using address-specific key
-  const { token } = getCookiesFromStoredWallet();
-  if (token) {
-    config.headers.Authorization = token;
-  }
-  return config;
-});
+const apiClient = createAuthenticatedApiClient(API_BASE, 30000);
 
 
 

@@ -8,10 +8,10 @@ import { ArrowRightIcon } from "@heroicons/react/24/solid";
 import { useMemo } from "react";
 import Link from "next/link";
 import { useAccount } from "wagmi";
-import { useAuthStore } from "@/store/auth";
 import Image from "next/image";
 import { FundingProgram } from "@/services/fundingPlatformService";
 import { PAGES } from "@/utilities/pages";
+import { useAuth } from "@/hooks/useAuth";
 
 /**
  * My Review page
@@ -21,7 +21,7 @@ import { PAGES } from "@/utilities/pages";
 export default function MyReviewPage() {
   const router = useRouter();
   const { address } = useAccount();
-  const { isAuth } = useAuthStore();
+  const { authenticated: isAuth } = useAuth();
 
   // Get all programs where user is a reviewer
   const { programs: reviewerPrograms, isLoading } = useReviewerPrograms();
