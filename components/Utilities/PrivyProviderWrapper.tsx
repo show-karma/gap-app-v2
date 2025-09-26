@@ -46,6 +46,11 @@ export default function PrivyProviderWrapper({
         loginMethods: ["wallet"],
         defaultChain: defaultChain,
         supportedChains: appNetwork,
+        externalWallets: {
+          walletConnect: {
+            enabled: true,
+          },
+        },
         walletConnectCloudProjectId:
           envVars.PROJECT_ID || undefined,
       }}
