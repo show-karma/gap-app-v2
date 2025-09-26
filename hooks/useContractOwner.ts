@@ -41,13 +41,17 @@ export const useContractOwner = (address?: string, chain?: Chain) => {
     setIsOwnerLoading(isLoading);
   }, [isLoading, setIsOwnerLoading]);
 
+  console.log('isAuth', isAuth);
+
   useEffect(() => {
+    if (!isAuth) {
+      setIsOwner(false);
+      return;
+    }
     if (typeof data === "boolean") {
       setIsOwner(data);
-    } else if (!signer || !address || !isAuth) {
-      setIsOwner(false);
-    }
-  }, [data, signer, address, isAuth, setIsOwner]);
+    } 
+  }, [data, isAuth, setIsOwner]);
 
   useEffect(() => {
     if (error) {

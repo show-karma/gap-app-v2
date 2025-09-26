@@ -50,11 +50,11 @@ const UserMenu: React.FC<{
 }> = ({ account }) => {
   const { disconnect } = useAuth();
   const { openModal } = useContributorProfileModalStore();
-  const { profile } = useContributorProfile(account.address as `0x${string}`);
+  const { profile } = useContributorProfile(account?.address as `0x${string}`);
 
   const firstName = profile?.data?.name?.split(" ")[0] || "";
 
-  const displayName = firstName || profile?.data?.name || account.displayName;
+  const displayName = firstName || profile?.data?.name || account?.displayName;
 
   return (
     <Popover.Root>
@@ -62,7 +62,7 @@ const UserMenu: React.FC<{
         <div className="flex cursor-pointer w-max items-center flex-row gap-2 rounded-full bg-gray-500 p-0 pl-3 text-sm font-semibold text-white hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
           <span className="truncate max-w-36 w-full">{displayName}</span>
           <EthereumAddressToENSAvatar
-            address={account.address}
+            address={account?.address}
             className="h-10 w-10 min-h-10 min-w-10 max-h-10 max-w-10 rounded-full"
           />
         </div>
@@ -99,7 +99,7 @@ const UserMenuMobile: React.FC<{
 }> = ({ account }) => {
   const { disconnect } = useAuth();
   const { openModal } = useContributorProfileModalStore();
-  const { profile } = useContributorProfile(account.address as `0x${string}`);
+  const { profile } = useContributorProfile(account?.address as `0x${string}`);
 
   const firstName = profile?.data?.name?.split(" ")[0] || "";
 
@@ -112,7 +112,7 @@ const UserMenuMobile: React.FC<{
           {displayName}
 
           <EthereumAddressToENSAvatar
-            address={account.address}
+            address={account?.address}
             className="h-10 w-10 min-h-10 min-w-10 max-h-10 max-w-10 rounded-full"
           />
         </div>
@@ -349,7 +349,7 @@ export default function Header() {
                                   <div
                                   >
                                     {(() => {
-                                      if (!isAuth) {
+                                      if (!isAuth || !account) {
                                         return (
                                           <button
                                             onClick={login}
@@ -450,7 +450,7 @@ export default function Header() {
                     return (
                       <div>
                         {(() => {
-                          if (!isAuth) {
+                          if (!isAuth || !account) {
                             return (
                               <button
                                 onClick={() => {
