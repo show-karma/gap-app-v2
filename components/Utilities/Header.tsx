@@ -147,7 +147,7 @@ const UserMenuMobile: React.FC<{
 export default function Header() {
   const { theme: currentTheme, setTheme: changeCurrentTheme } = useTheme();
   const { isConnected, address, chain } = useAccount();
-  const { authenticated: isAuth, ready, authenticate } = useAuth();
+  const { authenticated: isAuth, ready } = useAuth();
   const { communities } = useCommunitiesStore();
 
   // Use React Query hooks for data fetching
@@ -343,30 +343,13 @@ export default function Header() {
                                 mounted,
                                 login,
                               }) => {
-                                // Note: If your app doesn't use authentication, you
-                                // can remove all 'authenticationStatus' checks
-                                const ready =
-                                  mounted && authenticationStatus !== "loading";
-                                const connected =
-                                  ready &&
-                                  account &&
-                                  chain &&
-                                  (!authenticationStatus ||
-                                    authenticationStatus === "authenticated");
+                                if (!ready) return null;
 
                                 return (
                                   <div
-                                    {...(!ready && {
-                                      "aria-hidden": true,
-                                      style: {
-                                        opacity: 0,
-                                        pointerEvents: "none",
-                                        userSelect: "none",
-                                      },
-                                    })}
                                   >
                                     {(() => {
-                                      if (!connected) {
+                                      if (!isAuth) {
                                         return (
                                           <button
                                             onClick={login}
@@ -461,40 +444,16 @@ export default function Header() {
                     authenticationStatus,
                     mounted,
                   }) => {
-                    // Note: If your app doesn't use authentication, you
-                    // can remove all 'authenticationStatus' checks
-                    const ready = mounted && authenticationStatus !== "loading";
-                    const connected =
-                      ready &&
-                      account &&
-                      chain &&
-                      (!authenticationStatus ||
-                        authenticationStatus === "authenticated");
+
+                    if (!ready) return null;
 
                     return (
-                      <div
-                        {...(!ready && {
-                          "aria-hidden": true,
-                          style: {
-                            opacity: 0,
-                            pointerEvents: "none",
-                            userSelect: "none",
-                          },
-                        })}
-                      >
+                      <div>
                         {(() => {
-                          if (!connected || !isAuth) {
+                          if (!isAuth) {
                             return (
                               <button
                                 onClick={() => {
-                                  if (
-                                    !isAuth &&
-                                    connected &&
-                                    ready
-                                  ) {
-                                    authenticate();
-                                    return;
-                                  }
                                   login?.();
                                 }}
                                 type="button"
