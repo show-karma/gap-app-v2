@@ -38,11 +38,13 @@ export const useAdminCommunities = (address?: string) => {
   }, [isLoading, setIsLoading]);
 
   useEffect(() => {
+    if (!address || !isAuth) {
+      setCommunities([]);
+      return;
+    }
     if (data) {
       setCommunities(data);
-    } else if (!address || !isAuth) {
-      setCommunities([]);
-    }
+    } 
   }, [data, address, isAuth, setCommunities]);
 
   useEffect(() => {
