@@ -38,7 +38,7 @@ export default function PrivyProviderWrapper({
       config={{
         appearance: {
           theme: "light",
-          accentColor: "#E40536", // Red accent color as requested
+          accentColor: "#4C6FFF", // Red accent color as requested
           logo: "https://gap.karmahq.xyz/logo/karma-gap-logo.png",
           landingHeader: "Connect to Karma GAP",
           showWalletLoginFirst: false,
