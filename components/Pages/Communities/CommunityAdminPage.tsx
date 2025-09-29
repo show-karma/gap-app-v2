@@ -71,7 +71,7 @@ const AdminButton = ({
 
 const LoadingSkeleton = () => (
   <div className="flex flex-row flex-wrap gap-8">
-    {[1, 2, 3].map((i) => (
+    {[1, 2, 3, 4, 5, 6, 7].map((i) => (
       <div key={i} className="w-[300px]">
         <Skeleton className="h-32 w-full rounded-lg" />
       </div>

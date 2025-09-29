@@ -19,9 +19,27 @@ import {
   WrenchScrewdriverIcon,
   CheckCircleIcon,
   UserGroupIcon,
+  Bars3Icon,
 } from "@heroicons/react/24/solid";
 import { MarkdownPreview } from "../Utilities/MarkdownPreview";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface QuestionBuilderProps {
   initialSchema?: FormSchema;
@@ -193,6 +211,38 @@ export function QuestionBuilder({
       fields: newFields,
     }));
   };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id || readOnly) return;
+
+    const oldIndex = currentSchema.fields.findIndex(
+      (field) => field.id === active.id
+    );
+    const newIndex = currentSchema.fields.findIndex(
+      (field) => field.id === over.id
+    );
+
+    if (oldIndex !== -1 && newIndex !== -1) {
+      const newFields = arrayMove(currentSchema.fields, oldIndex, newIndex);
+      setCurrentSchema((prev) => ({
+        ...prev,
+        fields: newFields,
+      }));
+    }
+  };
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const handleTitleChange = (title: string) => {
     setCurrentSchema((prev) => ({ ...prev, title }));
@@ -432,99 +482,36 @@ export function QuestionBuilder({
                   </div>
                 ) : (
                   <>
-                    {/* Form Fields List */}
-                    <div className="space-y-3">
-                      {currentSchema.fields.map((field, index) => (
-                        <div
-                          key={field.id}
-                          ref={(el) => {
-                            fieldRefs.current[field.id] = el;
-                          }}
-                          className={`border rounded-lg transition-all ${selectedFieldId === field.id
-                            ? "border-blue-500 bg-white dark:bg-gray-800 shadow-lg"
-                            : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600"
-                            }`}
-                        >
-                          <div
-                            className="p-4 cursor-pointer"
-                            onClick={() =>
-                              setSelectedFieldId(
-                                selectedFieldId === field.id ? null : field.id
-                              )
-                            }
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center space-x-2">
-                                  <span className="text-xs font-medium px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded">
-                                    {fieldTypes.find(
-                                      (item) => item.type === field.type
-                                    )?.label || field.type}
-                                  </span>
-                                  {field.required && (
-                                    <span className="text-xs text-red-500">
-                                      Required
-                                    </span>
-                                  )}
-                                  {field.private && (
-                                    <span className="text-xs text-gray-600 bg-gray-100 dark:bg-gray-700 dark:text-gray-300 px-2 py-1 rounded flex items-center space-x-1">
-                                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                                      </svg>
-                                      <span>Private</span>
-                                    </span>
-                                  )}
-
-                                </div>
-                                <h4 className="font-medium text-gray-900 dark:text-white mt-1">
-                                  {field.label}
-                                </h4>
-                                {field.description && (
-                                  <MarkdownPreview
-                                    className="text-sm text-gray-500 dark:text-gray-400 mt-1"
-                                    components={{
-                                      p: ({ children }) => <span className="text-sm text-gray-500 dark:text-gray-400 mt-1">{children}</span>,
-                                    }}
-                                    source={field.description}
-                                  />
-                                )}
-                              </div>
-                              <div className="ml-4">
-                                {selectedFieldId === field.id ? (
-                                  <ChevronDownIcon className="w-5 h-5 text-gray-400" />
-                                ) : (
-                                  <ChevronRightIcon className="w-5 h-5 text-gray-400" />
-                                )}
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Field Editor - appears inside the same block when expanded */}
-                          {selectedFieldId === field.id && (
-                            <div className="border-t border-gray-200 dark:border-gray-700">
-                              <FieldEditor
-                                key={selectedFieldId}
-                                field={field}
-                                onUpdate={handleFieldUpdate}
-                                onDelete={handleFieldDelete}
-                                readOnly={readOnly}
-                                onMoveUp={
-                                  index === 0
-                                    ? undefined
-                                    : () => handleFieldMove(field.id, "up")
-                                }
-                                onMoveDown={
-                                  index === currentSchema.fields.length - 1
-                                    ? undefined
-                                    : () => handleFieldMove(field.id, "down")
-                                }
-                                isPostApprovalMode={isPostApprovalMode}
-                              />
-                            </div>
-                          )}
+                    {/* Form Fields List with Drag and Drop */}
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={handleDragEnd}
+                    >
+                      <SortableContext
+                        items={currentSchema.fields.map((field) => field.id)}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        <div className="space-y-3">
+                          {currentSchema.fields.map((field, index) => (
+                            <SortableFieldItem
+                              key={field.id}
+                              field={field}
+                              index={index}
+                              selectedFieldId={selectedFieldId}
+                              setSelectedFieldId={setSelectedFieldId}
+                              handleFieldUpdate={handleFieldUpdate}
+                              handleFieldDelete={handleFieldDelete}
+                              handleFieldMove={handleFieldMove}
+                              readOnly={readOnly}
+                              isPostApprovalMode={isPostApprovalMode}
+                              totalFields={currentSchema.fields.length}
+                              fieldRefs={fieldRefs}
+                            />
+                          ))}
                         </div>
-                      ))}
-                    </div>
+                      </SortableContext>
+                    </DndContext>
                   </>
                 )}
               </div>
@@ -581,5 +568,163 @@ export function QuestionBuilder({
         )}
       </div>
     </div >
+  );
+}
+
+interface SortableFieldItemProps {
+  field: FormField;
+  index: number;
+  selectedFieldId: string | null;
+  setSelectedFieldId: (id: string | null) => void;
+  handleFieldUpdate: (field: FormField) => void;
+  handleFieldDelete: (fieldId: string) => void;
+  handleFieldMove: (fieldId: string, direction: "up" | "down") => void;
+  readOnly: boolean;
+  isPostApprovalMode: boolean;
+  totalFields: number;
+  fieldRefs: React.MutableRefObject<{ [key: string]: HTMLDivElement | null }>;
+}
+
+function SortableFieldItem({
+  field,
+  index,
+  selectedFieldId,
+  setSelectedFieldId,
+  handleFieldUpdate,
+  handleFieldDelete,
+  handleFieldMove,
+  readOnly,
+  isPostApprovalMode,
+  totalFields,
+  fieldRefs,
+}: SortableFieldItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: field.id, disabled: readOnly });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={(el) => {
+        setNodeRef(el);
+        fieldRefs.current[field.id] = el;
+      }}
+      style={style}
+      className={`border rounded-lg transition-all ${
+        selectedFieldId === field.id
+          ? "border-blue-500 bg-white dark:bg-gray-800 shadow-lg"
+          : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600"
+      } ${isDragging ? "z-50" : ""}`}
+    >
+      <div className="p-4">
+        <div className="flex items-center justify-between">
+          {/* Drag Handle */}
+          {!readOnly && (
+            <button
+              {...attributes}
+              {...listeners}
+              className="cursor-grab active:cursor-grabbing p-2 -ml-2 mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              aria-label="Drag to reorder"
+            >
+              <Bars3Icon className="w-5 h-5" />
+            </button>
+          )}
+
+          <div
+            className="flex-1 cursor-pointer"
+            onClick={() =>
+              setSelectedFieldId(selectedFieldId === field.id ? null : field.id)
+            }
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs font-medium px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded">
+                    {fieldTypes.find((item) => item.type === field.type)
+                      ?.label || field.type}
+                  </span>
+                  {field.required && (
+                    <span className="text-xs text-red-500">Required</span>
+                  )}
+                  {field.private && (
+                    <span className="text-xs text-gray-600 bg-gray-100 dark:bg-gray-700 dark:text-gray-300 px-2 py-1 rounded flex items-center space-x-1">
+                      <svg
+                        className="w-3 h-3"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      <span>Private</span>
+                    </span>
+                  )}
+                </div>
+                <h4 className="font-medium text-gray-900 dark:text-white mt-1">
+                  {field.label}
+                </h4>
+                {field.description && (
+                  <MarkdownPreview
+                    className="text-sm text-gray-500 dark:text-gray-400 mt-1"
+                    components={{
+                      p: ({ children }) => (
+                        <span className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                          {children}
+                        </span>
+                      ),
+                    }}
+                    source={field.description}
+                  />
+                )}
+              </div>
+              <div className="ml-4">
+                {selectedFieldId === field.id ? (
+                  <ChevronDownIcon className="w-5 h-5 text-gray-400" />
+                ) : (
+                  <ChevronRightIcon className="w-5 h-5 text-gray-400" />
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Field Editor - appears inside the same block when expanded */}
+        {selectedFieldId === field.id && (
+          <div className="border-t border-gray-200 dark:border-gray-700 mt-4">
+            <FieldEditor
+              key={selectedFieldId}
+              field={field}
+              onUpdate={handleFieldUpdate}
+              onDelete={handleFieldDelete}
+              readOnly={readOnly}
+              onMoveUp={
+                index === 0
+                  ? undefined
+                  : (fieldId: string) => handleFieldMove(fieldId, "up")
+              }
+              onMoveDown={
+                index === totalFields - 1
+                  ? undefined
+                  : (fieldId: string) => handleFieldMove(fieldId, "down")
+              }
+              isPostApprovalMode={isPostApprovalMode}
+            />
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
