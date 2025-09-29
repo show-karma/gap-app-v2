@@ -9,6 +9,7 @@ import {
   Project,
   TExternalLink,
 } from "@show-karma/karma-gap-sdk";
+import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
 
 export const updateProject = async (
   project: Project,
@@ -118,6 +119,17 @@ export const updateProject = async (
           if (fetchedProject.details?.uid !== projectBefore.details?.uid) {
             retries = 0;
             changeStepperStep("indexed");
+
+            // Invalidate React Query cache to force refresh of project data
+            await Promise.all([
+              queryClient.invalidateQueries({
+                queryKey: ["project", project.uid],
+              }),
+              queryClient.invalidateQueries({
+                queryKey: ["project", project.details?.slug],
+              }),
+            ]);
+
             closeModal();
             return;
           }
