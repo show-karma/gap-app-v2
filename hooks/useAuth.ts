@@ -1,10 +1,12 @@
 "use client";
 
 import { usePrivy, useWallets } from "@privy-io/react-auth";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import { Hex } from "viem";
 import { useAccount } from "wagmi";
+import { watchAccount } from '@wagmi/core';
+import { privyConfig } from "@/utilities/wagmi/privy-config";
 
 /**
  * Authentication hook that wraps Privy's built-in authentication
@@ -26,13 +28,13 @@ export const useAuth = () => {
     getAccessToken,
   } = usePrivy();
 
-  const { wallets } = useWallets();
 
   const { isConnected } = useAccount()
 
-  // Get primary wallet (first connected wallet)
+  const { wallets } = useWallets();
   const primaryWallet = wallets[0];
   const address = primaryWallet?.address as Hex | undefined;
+
 
   // Initialize TokenManager with Privy
   useEffect(() => {
@@ -69,7 +71,34 @@ export const useAuth = () => {
       clearInterval(intervalId);
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, [ready, authenticated, logout])
+  }, [ready, authenticated, logout]);
+
+  // Handle wallet switching: logout if switched to non-linked wallet
+  // Using wagmi's watchAccount as recommended by Privy docs
+  useEffect(() => {
+    if (!ready || !authenticated) return;
+
+    // Watch for account changes in the EOA wallet
+    const unwatch = watchAccount(privyConfig, {
+      onChange(account) {
+        // Get the new address from the wallet
+        const newAddress = account.address?.toLowerCase();
+
+        if (!newAddress) return;
+
+        // Get all linked wallet addresses from Privy
+        const linkedAddresses = wallets.map(w => w.address.toLowerCase());
+
+        // If the new address is NOT in the linked wallets, log out
+        if (!linkedAddresses.includes(newAddress)) {
+          logout();
+        }
+      }
+    });
+
+    // Cleanup watcher on unmount
+    return () => unwatch();
+  }, [ready, authenticated, wallets, logout]);
 
 
   return {
