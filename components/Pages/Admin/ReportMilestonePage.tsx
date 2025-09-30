@@ -274,6 +274,7 @@ export const ReportMilestonePage = ({
                   prefixUnselected="All"
                   type={"Grant Programs"}
                   selected={selectedProgramLabels}
+                  showCount={true}
                 />
               </div>
             </div>
