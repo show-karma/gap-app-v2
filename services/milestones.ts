@@ -1,5 +1,5 @@
 import { INDEXER } from "@/utilities/indexer";
-import { envVars } from "@/utilities/enviromentVars";
+import fetchData from "@/utilities/fetchData";
 
 export interface MilestoneCompletion {
   id: string;
@@ -136,40 +136,50 @@ export async function fetchProjectGrantMilestones(
   projectUid: string,
   programId: string
 ): Promise<ProjectGrantMilestonesResponse> {
-  const url = `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${INDEXER.V2.PROJECTS.GRANT_MILESTONES(projectUid, programId)}`;
+  const endpoint = INDEXER.V2.PROJECTS.GRANT_MILESTONES(projectUid, programId);
+  const [data, error] = await fetchData(endpoint, "GET");
 
-  const response = await fetch(url, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch milestones: ${response.statusText}`);
+  if (error || !data) {
+    throw new Error(`Failed to fetch milestones: ${error || "No data returned"}`);
   }
 
-  return response.json();
+  return data;
 }
 
 export async function updateMilestoneCompletion(
   completionId: string,
   completionText: string
 ): Promise<MilestoneCompletion> {
-  const url = `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}/v2/milestone-completions/${completionId}`;
+  const [data, error] = await fetchData(
+    `/v2/milestone-completions/${completionId}`,
+    "PUT",
+    { completionText }
+  );
 
-  const response = await fetch(url, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ completionText }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to update completion: ${response.statusText}`);
+  if (error || !data) {
+    throw new Error(`Failed to update completion: ${error || "No data returned"}`);
   }
 
-  const data = await response.json();
   return data.completion || data;
+}
+
+export async function updateMilestoneVerification(
+  referenceNumber: string,
+  milestoneFieldLabel: string,
+  milestoneTitle: string,
+  verificationComment?: string
+): Promise<void> {
+  const [data, error] = await fetchData(
+    `/v2/funding-applications/${referenceNumber}/milestone-completions/verify`,
+    "POST",
+    {
+      milestoneFieldLabel,
+      milestoneTitle,
+      verificationComment: verificationComment || "",
+    }
+  );
+
+  if (error) {
+    throw new Error(`Failed to verify milestone: ${error}`);
+  }
 }

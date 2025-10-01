@@ -33,8 +33,6 @@ export function CommentsAndActivity({
   const [comments, setComments] = useState<ApplicationComment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [newComment, setNewComment] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const loadComments = async () => {
@@ -66,25 +64,6 @@ export function CommentsAndActivity({
     ).getTime();
     return dateA - dateB; // Chronological order (oldest first)
   });
-
-  const handleSubmit = async () => {
-    if (!newComment.trim() || isSubmitting) return;
-
-    setIsSubmitting(true);
-    try {
-      // TODO: Implement API call to add comment
-      // Note: This would require authentication setup
-      console.log("Adding comment:", newComment);
-      setNewComment("");
-      // Refetch comments after adding
-      const fetchedComments = await fetchApplicationComments(referenceNumber);
-      setComments(fetchedComments);
-    } catch (error) {
-      console.error("Failed to add comment:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const refetch = async () => {
     setError(null);
@@ -147,51 +126,38 @@ export function CommentsAndActivity({
 
       {/* Timeline */}
       <div className="p-6">
-        <div className="space-y-4 max-h-[500px] overflow-y-auto">
+        <div className="max-h-[500px] overflow-y-auto">
           {timelineItems.length === 0 ? (
             <div className="text-center py-8 text-gray-400 dark:text-gray-500">
               <ChatBubbleLeftIcon className="w-12 h-12 mx-auto mb-2 opacity-50" />
               <p className="text-lg font-medium">No activity yet</p>
-              <p className="text-sm">Be the first to add a comment</p>
+              <p className="text-sm">No comments or status changes to display</p>
             </div>
           ) : (
-            timelineItems.map((item, index) => {
-              if (item.type === "comment") {
-                return (
-                  <CommentItem
-                    key={item.id}
-                    comment={item}
-                    currentUserAddress={currentUserAddress}
-                  />
-                );
-              } else {
-                return (
-                  <StatusItem key={`status-${index}`} statusItem={item} />
-                );
-              }
-            })
-          )}
-        </div>
+            <div className="relative">
+              {/* Vertical line connecting all items */}
+              <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-zinc-700" />
 
-        {/* Comment Input */}
-        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-zinc-700">
-          <textarea
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder="Add a comment..."
-            disabled={isSubmitting}
-            rows={3}
-            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-800 text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed"
-          />
-          <div className="flex justify-end mt-2">
-            <Button
-              onClick={handleSubmit}
-              disabled={!newComment.trim() || isSubmitting}
-              className="px-4 py-2 text-sm"
-            >
-              {isSubmitting ? "Sending..." : "Send"}
-            </Button>
-          </div>
+              {timelineItems.map((item, index) => (
+                <div key={item.type === "comment" ? item.id : `status-${index}`} className="relative pb-8 last:pb-0">
+                  {/* Timeline dot */}
+                  <div className="absolute left-4 -translate-x-1/2 w-3 h-3 rounded-full bg-blue-500 dark:bg-blue-400 border-2 border-white dark:border-zinc-900" />
+
+                  {/* Content with left padding to account for timeline */}
+                  <div className="ml-10">
+                    {item.type === "comment" ? (
+                      <CommentItem
+                        comment={item}
+                        currentUserAddress={currentUserAddress}
+                      />
+                    ) : (
+                      <StatusItem statusItem={item} />
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
