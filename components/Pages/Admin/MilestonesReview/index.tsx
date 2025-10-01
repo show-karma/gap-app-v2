@@ -125,7 +125,6 @@ export function MilestonesReviewPage({
         (m) => m.uid.toLowerCase() === milestone.onChainMilestoneUID.toLowerCase()
       );
 
-      console.log(milestoneInstance);
       if (!milestoneInstance) {
         throw new Error("Milestone not found");
       }
