@@ -540,19 +540,21 @@ export const ReportMilestonePage = ({
                           </Link>
                         </td>
                         <td className="px-4 py-2">
-                          <Link
-                            href={PAGES.ADMIN.PROJECT_MILESTONES(
-                              communityId,
-                              report.projectUid,
-                              report.programId || ""
-                            )}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <Button className="py-2 px-4 text-sm">
-                              Review
-                            </Button>
-                          </Link>
+                          {report.programId && (
+                            <Link
+                              href={PAGES.ADMIN.PROJECT_MILESTONES(
+                                communityId,
+                                report.projectUid,
+                                report.programId
+                              )}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <Button className="py-2 px-4 text-sm">
+                                Review
+                              </Button>
+                            </Link>
+                          )}
                         </td>
                       </tr>
                     );

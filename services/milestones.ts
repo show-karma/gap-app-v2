@@ -128,7 +128,7 @@ export interface FundingApplication {
 export interface ProjectGrantMilestonesResponse {
   project: Project;
   grant: Grant;
-  fundingApplication: FundingApplication;
+  fundingApplication: FundingApplication | null;
   mappedMilestones: MappedMilestone[];
 }
 

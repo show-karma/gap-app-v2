@@ -274,25 +274,31 @@ export function MilestonesReviewPage({
         );
       }
 
-      try {
-        await updateMilestoneVerification(
-          data.fundingApplication.referenceNumber,
-          milestone.milestoneFieldLabel,
-          milestone.milestoneTitle,
-          verificationComment
-        );
+      // Step 3: Update database (only if funding application exists)
+      if (data.fundingApplication) {
+        try {
+          await updateMilestoneVerification(
+            data.fundingApplication.referenceNumber,
+            milestone.milestoneFieldLabel,
+            milestone.milestoneTitle,
+            verificationComment
+          );
 
-        toast.success("Milestone verified successfully!");
-
-        // Reload data to show updated verification
-        const refreshedData = await fetchProjectGrantMilestones(projectId, programId);
-        setData(refreshedData);
-        setVerifyingMilestoneId(null);
-        setVerificationComment("");
-      } catch (apiError) {
-        console.error("Failed to update verification in database:", apiError);
-        toast.error("Verification successful on-chain but failed to update database");
+          toast.success("Milestone verified successfully!");
+        } catch (apiError) {
+          console.error("Failed to update verification in database:", apiError);
+          toast.error("Verification successful on-chain but failed to update database");
+        }
+      } else {
+        // No funding application - verification only on-chain
+        toast.success("Milestone verified successfully on-chain!");
       }
+
+      // Reload data to show updated verification
+      const refreshedData = await fetchProjectGrantMilestones(projectId, programId);
+      setData(refreshedData);
+      setVerifyingMilestoneId(null);
+      setVerificationComment("");
     } catch (error: any) {
       console.error("Error verifying milestone:", error);
 
@@ -514,12 +520,14 @@ export function MilestonesReviewPage({
         </div>
 
         {/* Sidebar - Comments & Activity */}
-        <div className="lg:col-span-1">
-          <CommentsAndActivity
-            referenceNumber={fundingApplication.referenceNumber}
-            statusHistory={fundingApplication.statusHistory}
-          />
-        </div>
+        {fundingApplication && (
+          <div className="lg:col-span-1">
+            <CommentsAndActivity
+              referenceNumber={fundingApplication.referenceNumber}
+              statusHistory={fundingApplication.statusHistory}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
