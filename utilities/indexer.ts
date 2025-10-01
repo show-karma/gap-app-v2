@@ -32,6 +32,16 @@ export const INDEXER = {
       `/projects/by-program?programId=${programId}&chainId=${chainId}&communityId=${communityId}`,
     TRACKS: (projectId: string) => `/tracks/projects/${projectId}/tracks`,
   },
+  V2: {
+    PROJECTS: {
+      GRANT_MILESTONES: (projectUid: string, programId: string) =>
+        `/v2/projects/${projectUid}/grants/${programId}/milestones`,
+    },
+    APPLICATIONS: {
+      COMMENTS: (referenceNumber: string) =>
+        `/v2/applications/${referenceNumber}/comments`,
+    },
+  },
   PROGRAMS: {
     TRACKS: (programId: string) => `/tracks/programs/${programId}/tracks`,
     TRACKS_ASSIGN: (programId: string) =>

@@ -440,6 +440,12 @@ export const ReportMilestonePage = ({
                       )}
                     </button>
                   </th>
+                  <th
+                    scope="col"
+                    className="h-12 px-4 text-left align-middle font-medium"
+                  >
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="px-4 divide-y divide-gray-200 dark:divide-zinc-800">
@@ -462,6 +468,9 @@ export const ReportMilestonePage = ({
                         </td>
                         <td className="px-4 py-2">
                           <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4 w-14" />
+                        </td>
+                        <td className="px-4 py-2">
+                          <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4 w-20" />
                         </td>
                       </tr>
                     );
@@ -528,6 +537,21 @@ export const ReportMilestonePage = ({
                             rel="noopener noreferrer"
                           >
                             {report.completedMilestones}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-2">
+                          <Link
+                            href={PAGES.ADMIN.PROJECT_MILESTONES(
+                              communityId,
+                              report.projectUid,
+                              report.programId || ""
+                            )}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Button className="py-2 px-4 text-sm">
+                              Review
+                            </Button>
                           </Link>
                         </td>
                       </tr>
