@@ -124,9 +124,15 @@ export function MilestonesReviewPage({
       const milestoneInstance = grantInstance.milestones?.find(
         (m) => m.uid.toLowerCase() === milestone.onChainMilestoneUID.toLowerCase()
       );
+
+      console.log(milestoneInstance);
       if (!milestoneInstance) {
         throw new Error("Milestone not found");
       }
+
+      // Track success of each step to ensure we only update DB if both succeed
+      let completionConfirmed = false;
+      let verificationConfirmed = false;
 
       // Step 1: Complete milestone if not already completed
       if (!milestoneInstance.completed) {
@@ -175,6 +181,7 @@ export function MilestonesReviewPage({
 
                 if (updatedMilestone?.completed) {
                   isCompleted = true;
+                  completionConfirmed = true; // Mark completion as confirmed on-chain
                   changeStepperStep("indexed");
                   toast.success("Milestone completed successfully!", {
                     id: `milestone-${milestone.onChainMilestoneUID}`,
@@ -195,6 +202,9 @@ export function MilestonesReviewPage({
             toast.remove(`milestone-${milestone.onChainMilestoneUID}`);
             throw error;
           });
+      } else {
+        // Milestone is already completed on-chain
+        completionConfirmed = true;
       }
 
       // Step 2: Verify milestone on-chain
@@ -242,6 +252,7 @@ export function MilestonesReviewPage({
 
               if (alreadyVerified) {
                 isVerified = true;
+                verificationConfirmed = true; // Mark verification as confirmed on-chain
                 changeStepperStep("indexed");
               }
             } catch (pollError) {
@@ -257,6 +268,13 @@ export function MilestonesReviewPage({
         });
 
       // Step 3: Call backend API to update milestone_completions table
+      // ONLY if both on-chain operations were confirmed successful
+      if (!completionConfirmed || !verificationConfirmed) {
+        throw new Error(
+          `Cannot update database: ${!completionConfirmed ? "Completion" : "Verification"} was not confirmed on-chain`
+        );
+      }
+
       try {
         await updateMilestoneVerification(
           data.fundingApplication.referenceNumber,
