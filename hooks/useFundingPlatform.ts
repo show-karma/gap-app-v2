@@ -572,11 +572,12 @@ export const useApplicationExport = (programId: string, chainId: number, isAdmin
  */
 export const useApplication = (applicationId: string | null) => {
   const queryClient = useQueryClient();
+  const { authenticated } = useAuth();
 
   const applicationQuery = useQuery({
     queryKey: QUERY_KEYS.application(applicationId!),
     queryFn: () => fundingApplicationsAPI.getApplication(applicationId!),
-    enabled: !!applicationId,
+    enabled: !!applicationId && authenticated,
   });
 
   const prefetchApplication = useCallback((applicationId: string) => {

@@ -39,6 +39,7 @@ interface SearchDropdownProps {
   rightIcon?: React.ReactNode;
   customAddButton?: React.ReactNode;
   placeholderText?: string;
+  showCount?: boolean;
 }
 export const SearchDropdown: FC<SearchDropdownProps> = ({
   onSelectFunction,
@@ -59,6 +60,7 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
   rightIcon = <ChevronDown className="h-5 w-5 text-black dark:text-white" />,
   customAddButton,
   placeholderText = `Search ${type}...`,
+  showCount = false,
 }) => {
   const [open, setOpen] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -141,15 +143,17 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
             {leftIcon ? leftIcon : null}
             <p className={cn("block w-full truncate", paragraphClassname)}>
               {selected.length
-                ? selected
-                    .map(
-                      (item) =>
-                        orderedList.find(
-                          (orderedItem) => orderedItem.value === item
-                        )?.value
-                    )
-                    .sort()
-                    .join(", ")
+                ? showCount
+                  ? `${selected.length} ${type} selected`
+                  : selected
+                      .map(
+                        (item) =>
+                          orderedList.find(
+                            (orderedItem) => orderedItem.value === item
+                          )?.value
+                      )
+                      .sort()
+                      .join(", ")
                 : `${prefixUnselected} ${type}`}
             </p>
             <span>{rightIcon ? rightIcon : null}</span>
