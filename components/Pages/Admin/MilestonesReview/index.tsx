@@ -276,18 +276,34 @@ export function MilestonesReviewPage({
 
       // Step 3: Update database (only if funding application exists)
       if (data.fundingApplication) {
-        try {
-          await updateMilestoneVerification(
-            data.fundingApplication.referenceNumber,
-            milestone.milestoneFieldLabel,
-            milestone.milestoneTitle,
-            verificationComment
-          );
+        // Retry logic with exponential backoff for database update
+        const maxRetries = 3;
+        let attempt = 0;
+        let dbUpdateSuccess = false;
 
-          toast.success("Milestone verified successfully!");
-        } catch (apiError) {
-          console.error("Failed to update verification in database:", apiError);
-          toast.error("Verification successful on-chain but failed to update database");
+        while (attempt < maxRetries && !dbUpdateSuccess) {
+          try {
+            await updateMilestoneVerification(
+              data.fundingApplication.referenceNumber,
+              milestone.milestoneFieldLabel,
+              milestone.milestoneTitle,
+              verificationComment
+            );
+            dbUpdateSuccess = true;
+            toast.success("Milestone verified successfully!");
+          } catch (apiError) {
+            attempt += 1;
+            console.error(`Failed to update verification in database (attempt ${attempt}/${maxRetries}):`, apiError);
+
+            if (attempt < maxRetries) {
+              // Exponential backoff: 1s, 2s, 4s
+              const delay = Math.pow(2, attempt - 1) * 1000;
+              await new Promise((resolve) => setTimeout(resolve, delay));
+            } else {
+              // Final attempt failed
+              toast.error("Verification successful on-chain but failed to update database after 3 attempts");
+            }
+          }
         }
       } else {
         // No funding application - verification only on-chain
