@@ -2,7 +2,7 @@
 import { FolderIcon } from "@/components/Icons/Folder";
 import { Target2Icon } from "@/components/Icons/Target2";
 import { SparklesIcon } from "@/components/Icons/Sparkles";
-import { ClipboardDocumentListIcon } from "@heroicons/react/24/outline";
+import { BanknotesIcon, ClipboardDocumentListIcon } from "@heroicons/react/24/outline";
 import { getCommunityBySlug } from "@/utilities/gapIndexerApi/getCommunityBySlug";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -55,6 +55,13 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
     title: () => "Learn about their impact",
     Icon: Target2Icon,
     isActive: (pathname: string) => pathname.includes("/impact"),
+    showNewTag: false,
+  },
+  {
+    path: (communityId: string) => PAGES.COMMUNITY.IMPACT(communityId),
+    title: () => "Donate to projects",
+    Icon: BanknotesIcon,
+    isActive: (pathname: string) => pathname.includes("/donate"),
     showNewTag: true,
   },
   // {

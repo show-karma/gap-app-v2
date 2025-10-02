@@ -211,11 +211,24 @@ export async function executeApprovals(
 
 /**
  * Get the maximum safe approval amount (use max uint256 for unlimited approval)
+ *
+ * SECURITY NOTE - Unlimited Approvals (MAX_UINT256):
+ * - This implementation uses unlimited approvals for better UX (one-time approval)
+ * - This is an acceptable security tradeoff because:
+ *   1. We're approving to Uniswap's Permit2 contract (audited, battle-tested)
+ *   2. Permit2 requires explicit per-transaction signatures, preventing unauthorized transfers
+ *   3. Even with unlimited approval, funds can only be transferred via signed permits
+ *   4. This is the same pattern used by Uniswap, 1inch, and other major DeFi protocols
+ *
+ * Alternative: Set useExactAmount=true to approve only the required amount (worse UX, requires approval for each transaction)
  */
 export const MAX_UINT256 = 2n ** 256n - 1n;
 
 /**
  * Helper to determine approval amount strategy
+ * @param requiredAmount - The minimum amount needed for the transaction
+ * @param useExactAmount - If true, approves exact amount; if false, approves MAX_UINT256 for better UX
+ * @returns The approval amount to use
  */
 export function getApprovalAmount(requiredAmount: bigint, useExactAmount = false): bigint {
   return useExactAmount ? requiredAmount : MAX_UINT256;

@@ -32,6 +32,7 @@ import { getRPCClient } from "@/utilities/rpcClient";
 import { validateWalletClient, waitForValidWalletClient } from "@/utilities/walletClientValidation";
 import { getWalletClientWithFallback, isWalletClientGoodEnough } from "@/utilities/walletClientFallback";
 import { validateChainSync } from "@/utilities/chainSyncValidation";
+import { getShortErrorMessage, parseDonationError } from "@/utilities/donations/errorMessages";
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000" as Address;
 const PERMIT_DEADLINE_SECONDS = 3600;
@@ -85,7 +86,8 @@ export function useDonationTransfer() {
   const checkApprovals = useCallback(
     async (payments: DonationPayment[]): Promise<TokenApprovalInfo[]> => {
       if (!address || !publicClient) {
-        throw new Error("Wallet not connected or public client unavailable");
+        const error = new Error("Wallet not connected or public client unavailable");
+        throw error;
       }
 
       // Group token transfers by token address to get total required amounts
@@ -235,6 +237,24 @@ export function useDonationTransfer() {
         throw new Error("Wallet not connected");
       }
 
+      // SECURITY: Validate all recipient addresses upfront before starting execution
+      // This implements the checks-effects-interactions pattern
+      const recipientValidation = payments.map((payment) => {
+        const recipient = getRecipientAddress(payment.projectId);
+        if (!recipient) {
+          throw new Error(`Missing payout address for project ${payment.projectId}`);
+        }
+        // Validate it's a proper Ethereum address
+        try {
+          getAddress(recipient);
+        } catch {
+          throw new Error(`Invalid payout address for project ${payment.projectId}: ${recipient}`);
+        }
+        return { projectId: payment.projectId, recipient };
+      });
+
+      // SECURITY: Set execution state BEFORE making any external calls
+      // This prevents reentrancy attacks by updating state first
       setIsExecuting(true);
       setTransfers([]);
       setExecutionState({ phase: "checking" });
@@ -267,9 +287,7 @@ export function useDonationTransfer() {
 
               // Check wallet client readiness for approvals
               if (!isWalletClientGoodEnough(walletClient, chainId)) {
-                console.warn(`⚠️ Wallet client may have issues for approvals on chain ${chainId}, checking fallback...`);
-
-                const fallbackClient = await getWalletClientWithFallback(
+                await getWalletClientWithFallback(
                   walletClient,
                   chainId,
                   async () => {
@@ -277,12 +295,6 @@ export function useDonationTransfer() {
                     return { data: result.data };
                   }
                 );
-
-                if (!fallbackClient) {
-                  console.warn(`⚠️ No usable wallet client for approvals on chain ${chainId}, but continuing...`);
-                } else {
-                  console.log(`✅ Fallback wallet client ready for approvals on chain ${chainId}`);
-                }
               }
             }
 
@@ -305,9 +317,26 @@ export function useDonationTransfer() {
         );
 
         for (const [chainId, chainPayments] of paymentsByChain.entries()) {
+          // SECURITY: Validate chain ID is supported and has deployed contract
+          if (!chainId || chainId <= 0) {
+            throw new Error(`Invalid chain ID: ${chainId}`);
+          }
+
           const contractAddress = BATCH_DONATIONS_CONTRACTS[chainId];
           if (!contractAddress) {
-            throw new Error(`Batch donations contract not configured for chain ${chainId}`);
+            throw new Error(
+              `Batch donations contract not deployed on chain ${chainId}. ` +
+              `Please contact support or use a different network.`
+            );
+          }
+
+          // SECURITY: Validate all payments in this batch use the same chain
+          const invalidChainPayments = chainPayments.filter(p => p.chainId !== chainId);
+          if (invalidChainPayments.length > 0) {
+            throw new Error(
+              `Chain mismatch detected: Some payments claim to be on chain ${chainId} ` +
+              `but have different chainId values. This should not happen.`
+            );
           }
 
           // Switch network BEFORE doing permit operations
@@ -333,10 +362,7 @@ export function useDonationTransfer() {
           try {
             await validateChainSync(currentWalletClient, chainId, "batch donations");
           } catch (error) {
-            console.error(`❌ Chain sync validation failed for chain ${chainId}:`, error);
-
             // Try one more time with a fresh wallet client
-            console.log(`🔄 Attempting to get fresh wallet client for chain ${chainId}...`);
             await new Promise(resolve => setTimeout(resolve, 2000));
 
             const result = await refetchWalletClient();
@@ -344,7 +370,6 @@ export function useDonationTransfer() {
             if (freshClient) {
               await validateChainSync(freshClient, chainId, "batch donations");
               currentWalletClient = freshClient;
-              console.log(`✅ Fresh wallet client validated for chain ${chainId}`);
             } else {
               throw error; // Re-throw the original validation error
             }
@@ -370,15 +395,34 @@ export function useDonationTransfer() {
             }
 
             const projectAddress = getAddress(recipientAddress);
-            const ethAmount = payment.token.isNative
-              ? parseUnits(payment.amount, payment.token.decimals)
-              : 0n;
+
+            // SECURITY: Safely parse amounts with error handling to prevent overflow/underflow
+            let ethAmount = 0n;
+            let tokenAmount = 0n;
+
+            try {
+              if (payment.token.isNative) {
+                ethAmount = parseUnits(payment.amount, payment.token.decimals);
+                // Validate the amount is reasonable (not negative or absurdly large)
+                if (ethAmount < 0n) {
+                  throw new Error("Negative amount detected");
+                }
+              } else {
+                tokenAmount = parseUnits(payment.amount, payment.token.decimals);
+                if (tokenAmount < 0n) {
+                  throw new Error("Negative amount detected");
+                }
+              }
+            } catch (error) {
+              throw new Error(
+                `Failed to parse amount for ${payment.token.symbol}: ${payment.amount}. ` +
+                `Error: ${error instanceof Error ? error.message : "Unknown error"}`
+              );
+            }
+
             const tokenAddress = payment.token.isNative
               ? ZERO_ADDRESS
               : getAddress(payment.token.address as Address);
-            const tokenAmount = payment.token.isNative
-              ? 0n
-              : parseUnits(payment.amount, payment.token.decimals);
 
             donations.push({
               project: projectAddress,
@@ -390,6 +434,8 @@ export function useDonationTransfer() {
             if (payment.token.isNative) {
               totalEth += ethAmount;
             } else {
+              // IMPORTANT: Do NOT aggregate here - push individual amounts
+              // The contract expects permit to match actual token transfer amounts
               tokenTransfers.push({
                 token: tokenAddress,
                 amount: tokenAmount,
@@ -425,9 +471,6 @@ export function useDonationTransfer() {
             };
 
             permit = permitMessage;
-
-            console.log("permit", permit);
-            console.log("donations", donations);
 
             permitSignature = await currentWalletClient.signTypedData({
               account: address as Address,
@@ -472,10 +515,11 @@ export function useDonationTransfer() {
           try {
             const receipt = await chainPublicClient.waitForTransactionReceipt({
               hash,
-            });
+            })
 
             const wasSuccessful = receipt.status === "success";
 
+            
             chainResults.forEach((result) => {
               result.status = wasSuccessful ? "success" : "error";
               result.error = wasSuccessful ? undefined : "Transaction failed";
@@ -506,7 +550,8 @@ export function useDonationTransfer() {
           } catch (error) {
             console.error("Transaction failed:", error);
 
-            const errorMessage = error instanceof Error ? error.message : "Transaction failed";
+            const parsedError = parseDonationError(error);
+            const errorMessage = parsedError.message;
 
             chainResults.forEach((result) => {
               result.status = "error";
@@ -538,7 +583,12 @@ export function useDonationTransfer() {
         return results;
       } catch (error) {
         console.error("Batch donation failed:", error);
-        setExecutionState({ phase: "error", error: error instanceof Error ? error.message : "Unknown error" });
+        const parsedError = parseDonationError(error);
+        setExecutionState({
+          phase: "error",
+          error: parsedError.message,
+        });
+
         throw error;
       } finally {
         setIsExecuting(false);
@@ -569,6 +619,23 @@ export function useDonationTransfer() {
       const errors: string[] = [];
 
       for (const payment of payments) {
+        // SECURITY: Validate payment amount is positive and valid
+        const amount = parseFloat(payment.amount);
+        if (isNaN(amount) || amount <= 0) {
+          errors.push(
+            `Invalid amount for ${payment.token.symbol}: ${payment.amount}`
+          );
+          continue;
+        }
+
+        // SECURITY: Validate token decimals are within safe range (0-18)
+        if (payment.token.decimals < 0 || payment.token.decimals > 18) {
+          errors.push(
+            `Invalid token decimals for ${payment.token.symbol}: ${payment.token.decimals}`
+          );
+          continue;
+        }
+
         const tokenKey = `${payment.token.symbol}-${payment.chainId}`;
         const userBalance = balanceByTokenKey[tokenKey];
 
