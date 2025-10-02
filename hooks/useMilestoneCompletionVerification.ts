@@ -10,7 +10,7 @@ import { sanitizeObject } from "@/utilities/sanitize";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { updateMilestoneVerification, type MappedMilestone, type ProjectGrantMilestonesResponse } from "@/services/milestones";
+import { updateMilestoneVerification, type MappedGrantMilestone, type ProjectGrantMilestonesResponse } from "@/services/milestones";
 
 interface UseMilestoneCompletionVerificationParams {
   projectId: string;
@@ -32,7 +32,7 @@ export const useMilestoneCompletionVerification = ({
   const { changeStepperStep, setIsStepper } = useStepper();
 
   const verifyMilestone = async (
-    milestone: MappedMilestone,
+    milestone: MappedGrantMilestone,
     data: ProjectGrantMilestonesResponse,
     verificationComment: string
   ) => {

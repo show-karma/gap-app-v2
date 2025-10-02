@@ -5,7 +5,7 @@ import { PAGES } from "@/utilities/pages";
 import { ChevronLeftIcon, CheckCircleIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
 import { useState } from "react";
-import type { MappedMilestone } from "@/services/milestones";
+import type { MappedGrantMilestone } from "@/services/milestones";
 import { useProjectGrantMilestones } from "@/hooks/useProjectGrantMilestones";
 import { useMilestoneCompletionVerification } from "@/hooks/useMilestoneCompletionVerification";
 import { CommentsAndActivity } from "./CommentsAndActivity";
@@ -48,7 +48,7 @@ export function MilestonesReviewPage({
     setVerificationComment("");
   };
 
-  const handleSubmitVerification = async (milestone: MappedMilestone) => {
+  const handleSubmitVerification = async (milestone: MappedGrantMilestone) => {
     if (!data) return;
     await verifyMilestone(milestone, data, verificationComment);
   };
@@ -97,10 +97,10 @@ export function MilestonesReviewPage({
       {/* Page Title */}
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold text-black dark:text-white">
-          {project.details.title}
+          {project.details?.data?.title || "Project"}
         </h1>
         <p className="text-gray-600 dark:text-gray-400">
-          Grant: {grant.details.title || `Program ${grant.programId}`}
+          Grant: {grant.details?.data?.title || `Program ${grant.data?.communityUID}`}
         </p>
         <p className="text-sm text-gray-500 dark:text-gray-500">
           Review project milestones from both on-chain and database sources
