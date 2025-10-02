@@ -1,5 +1,10 @@
 import { INDEXER } from "@/utilities/indexer";
 import fetchData from "@/utilities/fetchData";
+import { envVars } from "@/utilities/enviromentVars";
+import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
+
+const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
+const apiClient = createAuthenticatedApiClient(API_URL, 30000);
 
 export interface MilestoneCompletion {
   id: string;
@@ -150,17 +155,11 @@ export async function updateMilestoneCompletion(
   completionId: string,
   completionText: string
 ): Promise<MilestoneCompletion> {
-  const [data, error] = await fetchData(
+  const response = await apiClient.put<{ completion: MilestoneCompletion }>(
     `/v2/milestone-completions/${completionId}`,
-    "PUT",
     { completionText }
   );
-
-  if (error || !data) {
-    throw new Error(`Failed to update completion: ${error || "No data returned"}`);
-  }
-
-  return data.completion || data;
+  return response.data.completion;
 }
 
 export async function updateMilestoneVerification(
@@ -169,17 +168,12 @@ export async function updateMilestoneVerification(
   milestoneTitle: string,
   verificationComment?: string
 ): Promise<void> {
-  const [data, error] = await fetchData(
+  await apiClient.post(
     `/v2/funding-applications/${referenceNumber}/milestone-completions/verify`,
-    "POST",
     {
       milestoneFieldLabel,
       milestoneTitle,
       verificationComment: verificationComment || "",
     }
   );
-
-  if (error) {
-    throw new Error(`Failed to verify milestone: ${error}`);
-  }
 }

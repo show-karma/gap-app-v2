@@ -1,5 +1,9 @@
 import { INDEXER } from "@/utilities/indexer";
 import { envVars } from "@/utilities/enviromentVars";
+import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
+
+const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
+const apiClient = createAuthenticatedApiClient(API_URL, 30000);
 
 export interface ApplicationComment {
   id: string;
@@ -21,85 +25,34 @@ export interface CommentsResponse {
 export async function fetchApplicationComments(
   referenceNumber: string
 ): Promise<ApplicationComment[]> {
-  try {
-    const url = `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${INDEXER.V2.APPLICATIONS.COMMENTS(referenceNumber)}`;
-
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      // If the endpoint doesn't exist or fails, return empty array
-      console.warn(`Failed to fetch comments: ${response.statusText}`);
-      return [];
-    }
-
-    const data: CommentsResponse = await response.json();
-    return data.comments || [];
-  } catch (error) {
-    console.error("Error fetching comments:", error);
-    return [];
-  }
+  const response = await apiClient.get<CommentsResponse>(
+    INDEXER.V2.APPLICATIONS.COMMENTS(referenceNumber)
+  );
+  return response.data.comments || [];
 }
 
 export async function createComment(
   referenceNumber: string,
   content: string
 ): Promise<ApplicationComment> {
-  const url = `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${INDEXER.V2.APPLICATIONS.COMMENTS(referenceNumber)}`;
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ content }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to create comment: ${response.statusText}`);
-  }
-
-  const data: { comment: ApplicationComment } = await response.json();
-  return data.comment;
+  const response = await apiClient.post<{ comment: ApplicationComment }>(
+    INDEXER.V2.APPLICATIONS.COMMENTS(referenceNumber),
+    { content }
+  );
+  return response.data.comment;
 }
 
 export async function editComment(
   commentId: string,
   content: string
 ): Promise<ApplicationComment> {
-  const url = `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}/v2/comments/${commentId}`;
-
-  const response = await fetch(url, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ content }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to edit comment: ${response.statusText}`);
-  }
-
-  const data: { comment: ApplicationComment } = await response.json();
-  return data.comment;
+  const response = await apiClient.put<{ comment: ApplicationComment }>(
+    `/v2/comments/${commentId}`,
+    { content }
+  );
+  return response.data.comment;
 }
 
 export async function deleteComment(commentId: string): Promise<void> {
-  const url = `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}/v2/comments/${commentId}`;
-
-  const response = await fetch(url, {
-    method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to delete comment: ${response.statusText}`);
-  }
+  await apiClient.delete(`/v2/comments/${commentId}`);
 }
