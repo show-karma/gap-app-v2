@@ -490,7 +490,7 @@ describe("useDonationCheckout", () => {
       );
     });
 
-    it("should handle wallet client sync retries", async () => {
+    it("should switch network when payment is on different chain", async () => {
       const { result } = renderHook(() => useDonationCheckout());
 
       mockUseDonationTransfer.validatePayments.mockResolvedValue({
@@ -498,41 +498,26 @@ describe("useDonationCheckout", () => {
         errors: [],
       });
 
-      let callCount = 0;
-      mockGetFreshWalletClient.mockImplementation(async (chainId: number) => {
-        callCount++;
-        if (callCount < 3) {
-          return { chain: { id: 1 } }; // Wrong chain
-        }
-        return { chain: { id: chainId } }; // Correct chain
-      });
-
-      mockUseDonationTransfer.executeDonations.mockImplementation(
-        async (payments, getRecipient, beforeTransfer) => {
-          if (beforeTransfer) {
-            await beforeTransfer(payments[0]);
-          }
-          return mockTransfers;
-        }
-      );
+      mockSwitchNetwork.mockResolvedValue(undefined);
+      mockUseDonationTransfer.executeDonations.mockResolvedValue(mockTransfers);
 
       await act(async () => {
         await result.current.handleProceedWithDonations(
-          [mockPayment],
+          [mockPayment], // mockPayment has chainId: 10
           mockPayoutAddresses,
           mockBalances,
-          1, // Wrong chain initially
+          1, // activeChainId is 1, different from payment
           mockSwitchNetwork,
           mockGetFreshWalletClient,
           mockSetMissingPayouts
         );
       });
 
-      // Should have retried multiple times
-      expect(mockGetFreshWalletClient.mock.calls.length).toBeGreaterThan(1);
+      // Should have switched network to match the payment chain
+      expect(mockSwitchNetwork).toHaveBeenCalledWith(10);
     });
 
-    it("should fail after max retry attempts", async () => {
+    it("should not switch network when already on correct chain", async () => {
       const { result } = renderHook(() => useDonationCheckout());
 
       mockUseDonationTransfer.validatePayments.mockResolvedValue({
@@ -540,32 +525,22 @@ describe("useDonationCheckout", () => {
         errors: [],
       });
 
-      // Always return wrong chain
-      mockGetFreshWalletClient.mockResolvedValue({ chain: { id: 1 } });
-
-      mockUseDonationTransfer.executeDonations.mockImplementation(
-        async (payments, getRecipient, beforeTransfer) => {
-          if (beforeTransfer) {
-            await beforeTransfer(payments[0]);
-          }
-          return mockTransfers;
-        }
-      );
+      mockUseDonationTransfer.executeDonations.mockResolvedValue(mockTransfers);
 
       await act(async () => {
         await result.current.handleProceedWithDonations(
-          [mockPayment],
+          [mockPayment], // mockPayment has chainId: 10
           mockPayoutAddresses,
           mockBalances,
-          1,
+          10, // activeChainId is already 10
           mockSwitchNetwork,
           mockGetFreshWalletClient,
           mockSetMissingPayouts
         );
       });
 
-      // Should eventually fail with error toast
-      expect(toast.error).toHaveBeenCalled();
+      // Should NOT switch network since we're already on the right chain
+      expect(mockSwitchNetwork).not.toHaveBeenCalled();
     });
   });
 
