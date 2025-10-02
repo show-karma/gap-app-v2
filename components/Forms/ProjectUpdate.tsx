@@ -9,8 +9,6 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
-import { sanitizeObject } from "@/utilities/sanitize";
-import { config } from "@/utilities/wagmi/config";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IProjectUpdate, ProjectUpdate } from "@show-karma/karma-gap-sdk";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
@@ -25,27 +23,18 @@ import { z } from "zod";
 import { errorManager } from "../Utilities/errorManager";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import {
-  InformationCircleIcon,
-  CalendarIcon,
-  ChartBarIcon,
-  PlusIcon,
+  CheckIcon,
+  ChevronDownIcon,
 } from "@heroicons/react/24/solid";
-import { DayPicker } from "react-day-picker";
 import * as Popover from "@radix-ui/react-popover";
 import { formatDate } from "@/utilities/formatDate";
-import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
 import { cn } from "@/utilities/tailwind";
-import { chainNameDictionary } from "@/utilities/chainNameDictionary";
-import { AreaChart, Card, Title } from "@tremor/react";
-import { prepareChartData } from "@/components/Pages/Communities/Impact/ImpactCharts";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
 import { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import { sendImpactAnswers } from "@/utilities/impact";
 import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
-import Link from "next/link";
 import {
   IProjectResponse,
-  ICommunityResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { ExternalLink } from "../Utilities/ExternalLink";
 import { DatePicker } from "@/components/Utilities/DatePicker";
@@ -125,39 +114,79 @@ const GrantSearchDropdown: FC<{
   className?: string;
   project?: IProjectResponse;
 }> = ({ grants, onSelect, selected, className, project }) => {
+  const [open, setOpen] = useState(false);
+
   // Create a map to track duplicate titles
   const titleCount = grants.reduce((acc, grant) => {
     acc[grant.title] = (acc[grant.title] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
+  const renderSelected = () => {
+    if (selected.length === 0) {
+      return "Select grants...";
+    }
+    if (selected.length === 1) {
+      const grant = grants.find(g => g.value === selected[0]);
+      if (!grant) return "Select grants...";
+      return grant.title;
+    }
+    return `${selected.length} grants selected`;
+  };
+
   return (
-    <div className="space-y-2">
-      <select
-        value={selected[0] || ""}
-        onChange={(e) => {
-          const grant = grants.find((g) => g.value === e.target.value);
-          if (grant) {
-            onSelect(e.target.value);
-          }
-        }}
-        className={cn("w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white", className)}
-      >
-        <option value="">Select</option>
-        {grants.map((grant) => (
-          <option key={grant.value} value={grant.value}>
-            {titleCount[grant.title] > 1
-              ? `${grant.title} (Chain ${grant.chain})`
-              : grant.title}
-          </option>
-        ))}
-      </select>
+    <div className="space-y-3">
+      {/* Multiselect dropdown */}
+      <Popover.Root open={open} onOpenChange={setOpen}>
+        <Popover.Trigger
+          className={cn(
+            "w-full justify-between flex flex-row cursor-default rounded-lg border border-gray-200 bg-white dark:bg-zinc-800 dark:border-zinc-700 px-4 py-3 text-left text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600",
+            className
+          )}
+        >
+          <div className="flex flex-row gap-4 w-full items-center justify-between">
+            <p className="block w-max truncate">{renderSelected()}</p>
+            <ChevronDownIcon className="h-4 w-5 text-gray-400 dark:text-gray-300" />
+          </div>
+        </Popover.Trigger>
+
+        <Popover.Portal>
+          <Popover.Content
+            className="z-[9999] bg-white border border-gray-200 dark:border-zinc-700 rounded-lg dark:text-white dark:bg-zinc-800 max-h-60 overflow-y-auto shadow-lg"
+            sideOffset={5}
+            align="start"
+            side="bottom"
+            avoidCollisions={true}
+            style={{ width: 'var(--radix-popover-trigger-width)' }}
+          >
+            <div className="py-1">
+              {grants.map((grant) => (
+                <div
+                  key={grant.value}
+                  onClick={() => onSelect(grant.value)}
+                  className="w-full cursor-pointer flex flex-row items-center justify-between py-3 px-4 hover:bg-gray-100 dark:hover:bg-zinc-700"
+                >
+                  <div className="flex flex-col flex-1">
+                    <p className="text-base font-medium text-gray-900 dark:text-white">
+                      {grant.title}
+                    </p>
+                  </div>
+                  {selected.includes(grant.value) && (
+                    <CheckIcon className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0 ml-2" />
+                  )}
+                </div>
+              ))}
+            </div>
+          </Popover.Content>
+        </Popover.Portal>
+      </Popover.Root>
+
       <div className="flex w-full h-full">
         <ExternalLink
           href={PAGES.PROJECT.SCREENS.NEW_GRANT(
             project?.details?.data?.slug || project?.uid || ""
           )}
-          className="text-sm h-full w-full px-2 py-2 rounded bg-zinc-700 text-white text-center"
+          className="text-sm h-full w-full px-2 py-2 rounded bg-zinc-700 text-white text-center hover:bg-zinc-600 transition-colors"
         >
           Add Grant
         </ExternalLink>
@@ -581,7 +610,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                   endDate: indicator.endDate || new Date().toISOString(),
                 },
               ],
-              () => {}
+              () => { }
             );
           })
         );
@@ -955,24 +984,6 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
             project={project}
           />
 
-          {/* Community Pills Display */}
-          {selectedCommunities.length > 0 && (
-            <div className="flex flex-col gap-2">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Communities involved:
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {selectedCommunities.map((community) => (
-                  <div
-                    key={community.uid}
-                    className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
-                  >
-                    {community.name}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       )}
 

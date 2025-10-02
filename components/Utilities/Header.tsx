@@ -1,9 +1,8 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { useAuth } from "@/hooks/useAuth";
 import { useAdminCommunities } from "@/hooks/useAdminCommunities";
 import { useContractOwner } from "@/hooks/useContractOwner";
-import { useAuthStore } from "@/store/auth";
+import { useAuth } from "@/hooks/useAuth";
 import { useCommunitiesStore } from "@/store/communities";
 import { useMobileStore } from "@/store/mobile";
 import { useRegistryStore } from "@/store/registry";
@@ -16,7 +15,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 import * as Popover from "@radix-ui/react-popover";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { ConnectButton } from "./ConnectButton";
 import { useTheme } from "next-themes";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -33,6 +32,7 @@ import { ParagraphIcon } from "../Icons/Paragraph";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { useContributorProfile } from "@/hooks/useContributorProfile";
 import ThemeButton from "./ThemeButton";
+import { useReviewerPrograms } from "@/hooks/usePermissions";
 
 const ProjectDialog = dynamic(
   () =>
@@ -50,11 +50,11 @@ const UserMenu: React.FC<{
 }> = ({ account }) => {
   const { disconnect } = useAuth();
   const { openModal } = useContributorProfileModalStore();
-  const { profile } = useContributorProfile(account.address as `0x${string}`);
+  const { profile } = useContributorProfile(account?.address as `0x${string}`);
 
   const firstName = profile?.data?.name?.split(" ")[0] || "";
 
-  const displayName = firstName || profile?.data?.name || account.displayName;
+  const displayName = firstName || profile?.data?.name || account?.displayName;
 
   return (
     <Popover.Root>
@@ -62,7 +62,7 @@ const UserMenu: React.FC<{
         <div className="flex cursor-pointer w-max items-center flex-row gap-2 rounded-full bg-gray-500 p-0 pl-3 text-sm font-semibold text-white hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
           <span className="truncate max-w-36 w-full">{displayName}</span>
           <EthereumAddressToENSAvatar
-            address={account.address}
+            address={account?.address}
             className="h-10 w-10 min-h-10 min-w-10 max-h-10 max-w-10 rounded-full"
           />
         </div>
@@ -99,7 +99,7 @@ const UserMenuMobile: React.FC<{
 }> = ({ account }) => {
   const { disconnect } = useAuth();
   const { openModal } = useContributorProfileModalStore();
-  const { profile } = useContributorProfile(account.address as `0x${string}`);
+  const { profile } = useContributorProfile(account?.address as `0x${string}`);
 
   const firstName = profile?.data?.name?.split(" ")[0] || "";
 
@@ -112,7 +112,7 @@ const UserMenuMobile: React.FC<{
           {displayName}
 
           <EthereumAddressToENSAvatar
-            address={account.address}
+            address={account?.address}
             className="h-10 w-10 min-h-10 min-w-10 max-h-10 max-w-10 rounded-full"
           />
         </div>
@@ -147,7 +147,7 @@ const UserMenuMobile: React.FC<{
 export default function Header() {
   const { theme: currentTheme, setTheme: changeCurrentTheme } = useTheme();
   const { isConnected, address, chain } = useAccount();
-  const { isAuth, isAuthenticating } = useAuthStore();
+  const { authenticated: isAuth } = useAuth();
   const { communities } = useCommunitiesStore();
 
   // Use React Query hooks for data fetching
@@ -180,19 +180,7 @@ export default function Header() {
     },
   ];
 
-  const [isReady, setIsReady] = useState(false);
 
-  useEffect(() => {
-    setIsReady(true);
-  }, []);
-
-  const { authenticate, disconnect, softDisconnect } = useAuth();
-
-  useEffect(() => {
-    if (isConnected && isReady && !isAuth && !isAuthenticating) {
-      authenticate();
-    }
-  }, [isConnected, isReady, isAuth, isAuthenticating]);
 
   const { isMobileMenuOpen, setIsMobileMenuOpen } = useMobileStore();
 
@@ -201,6 +189,10 @@ export default function Header() {
   const { isPoolManager, isRegistryAdmin } = useRegistryStore();
   const isRegistryAllowed =
     address && (isRegistryAdmin || isPoolManager) && isAuth;
+
+  // Check if user has reviewer role
+  const { programs: reviewerPrograms } = useReviewerPrograms();
+  const hasReviewerRole = reviewerPrograms && reviewerPrograms.length > 0;
 
   return (
     <>
@@ -305,93 +297,74 @@ export default function Header() {
                             Docs
                           </button>
                         </ExternalLink>
-                        {isReady ? (
-                          <>
-                            {isFundingMap ? (
-                              isRegistryAllowed ? (
-                                <Link href={PAGES.REGISTRY.MANAGE_PROGRAMS}>
-                                  <button className="rounded-md bg-white w-full dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
-                                    Manage Programs
+                        <div className="flex flex-col gap-4">
+                          {isFundingMap ? (
+                            isRegistryAllowed ? (
+                              <Link href={PAGES.REGISTRY.MANAGE_PROGRAMS}>
+                                <button className="rounded-md bg-white w-full dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
+                                  Manage Programs
+                                </button>
+                              </Link>
+                            ) : null
+                          ) : isAuth ? (
+                            <div className="flex flex-col gap-4">
+                              <Link href={PAGES.MY_PROJECTS}>
+                                <button className="rounded-md bg-white w-full dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
+                                  My Projects
+                                </button>
+                              </Link>
+                              {isCommunityAdmin ? (
+                                <Link href={PAGES.ADMIN.LIST}>
+                                  <button className="rounded-md w-full bg-white dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
+                                    Admin
                                   </button>
                                 </Link>
-                              ) : null
-                            ) : (
-                              <>
-                                {isConnected && isAuth && (
-                                  <Link href={PAGES.MY_PROJECTS}>
-                                    <button className="rounded-md bg-white w-full dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
-                                      My Projects
-                                    </button>
-                                  </Link>
-                                )}
-                                {isCommunityAdmin && isConnected && isAuth ? (
-                                  <Link href={PAGES.ADMIN.LIST}>
-                                    <button className="rounded-md w-full bg-white dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
-                                      Admin
-                                    </button>
-                                  </Link>
-                                ) : null}
+                              ) : null}
+                              {hasReviewerRole ? (
+                                <Link href={PAGES.MY_REVIEWS}>
+                                  <button className="rounded-md w-full bg-white dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
+                                    Review
+                                  </button>
+                                </Link>
+                              ) : null}
 
-                                {isConnected && isAuth && <ProjectDialog />}
-                              </>
-                            )}
 
-                            <ConnectButton.Custom>
-                              {({
-                                account,
-                                chain,
-                                openAccountModal,
-                                openConnectModal,
-                                authenticationStatus,
-                                mounted,
-                              }) => {
-                                // Note: If your app doesn't use authentication, you
-                                // can remove all 'authenticationStatus' checks
-                                const ready =
-                                  mounted && authenticationStatus !== "loading";
-                                const connected =
-                                  ready &&
-                                  account &&
-                                  chain &&
-                                  (!authenticationStatus ||
-                                    authenticationStatus === "authenticated");
+                              <ProjectDialog />
+                            </div>
+                          ) : null}
 
-                                return (
-                                  <div
-                                    {...(!ready && {
-                                      "aria-hidden": true,
-                                      style: {
-                                        opacity: 0,
-                                        pointerEvents: "none",
-                                        userSelect: "none",
-                                      },
-                                    })}
-                                  >
-                                    {(() => {
-                                      if (!connected) {
-                                        return (
-                                          <button
-                                            onClick={openConnectModal}
-                                            type="button"
-                                            className="rounded-md border max-lg:w-full max-lg:justify-center border-brand-blue dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-brand-blue  hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-                                          >
-                                            Login / Register
-                                          </button>
-                                        );
-                                      }
+                          <ConnectButton.Custom>
+                            {({
+                              account,
+                              login,
+                            }) => {
 
+                              return (
+                                <div>
+                                  {(() => {
+                                    if (!isAuth || !account) {
                                       return (
-                                        <UserMenuMobile
-                                          account={account as any}
-                                        />
+                                        <button
+                                          onClick={login}
+                                          type="button"
+                                          className="rounded-md border max-lg:w-full max-lg:justify-center border-brand-blue dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-brand-blue  hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                                        >
+                                          Login / Register
+                                        </button>
                                       );
-                                    })()}
-                                  </div>
-                                );
-                              }}
-                            </ConnectButton.Custom>
-                          </>
-                        ) : null}
+                                    }
+
+                                    return (
+                                      <UserMenuMobile
+                                        account={account as any}
+                                      />
+                                    );
+                                  })()}
+                                </div>
+                              );
+                            }}
+                          </ConnectButton.Custom>
+                        </div>
                       </div>
                       <div className="w-full flex flex-col  border-t border-t-[#dcdfea] mt-4 pt-4  items-center justify-center">
                         <div className="flex h-[40px] flex-row items-center justify-center gap-2">
@@ -418,100 +391,68 @@ export default function Header() {
           </div>
 
           <div className="hidden lg:flex lg:items-center lg:justify-end lg:gap-3 xl:gap-5 2xl:gap-6 py-3">
-            {isReady ? (
-              <>
-                <Link href={PAGES.REGISTRY.ROOT}>
-                  <button className={buttonStyle}>Get Funding</button>
-                </Link>
-                <ExternalLink href={"https://docs.gap.karmahq.xyz/"}>
-                  <button className={buttonStyle}>Docs</button>
-                </ExternalLink>
-                {isFundingMap ? (
-                  isRegistryAllowed ? (
-                    <Link href={PAGES.REGISTRY.MANAGE_PROGRAMS}>
-                      <button className={buttonStyle}>Manage Programs</button>
+            <div className="flex flex-row gap-4">
+              <Link href={PAGES.REGISTRY.ROOT}>
+                <button className={buttonStyle}>Get Funding</button>
+              </Link>
+              <ExternalLink href={"https://docs.gap.karmahq.xyz/"}>
+                <button className={buttonStyle}>Docs</button>
+              </ExternalLink>
+              {isFundingMap ? (
+                isRegistryAllowed ? (
+                  <Link href={PAGES.REGISTRY.MANAGE_PROGRAMS}>
+                    <button className={buttonStyle}>Manage Programs</button>
+                  </Link>
+                ) : null
+              ) : isAuth ? (
+                <div className="flex flex-row gap-4">
+                  {isCommunityAdmin ? (
+                    <Link href={PAGES.ADMIN.LIST}>
+                      <button className={buttonStyle}>Admin</button>
                     </Link>
-                  ) : null
-                ) : (
-                  <>
-                    {isCommunityAdmin && isConnected && isAuth ? (
-                      <Link href={PAGES.ADMIN.LIST}>
-                        <button className={buttonStyle}>Admin</button>
-                      </Link>
-                    ) : null}
-                    {isConnected && isAuth && (
-                      <Link href={PAGES.MY_PROJECTS}>
-                        <button className={buttonStyle}>My Projects</button>
-                      </Link>
-                    )}
+                  ) : null}
+                  {hasReviewerRole ? (
+                    <Link href={PAGES.MY_REVIEWS}>
+                      <button className={buttonStyle}>Review</button>
+                    </Link>
+                  ) : null}
+                  <Link href={PAGES.MY_PROJECTS}>
+                    <button className={buttonStyle}>My Projects</button>
+                  </Link>
+                  <ProjectDialog />
+                </div>
+              ) : null}
 
-                    {/* Rainbowkit custom connect button start */}
-                    {isConnected && isAuth && <ProjectDialog />}
-                  </>
-                )}
+              <ConnectButton.Custom>
+                {({
+                  account,
+                  login
+                }) => {
 
-                <ConnectButton.Custom>
-                  {({
-                    account,
-                    chain,
-                    openAccountModal,
-                    openConnectModal,
-                    authenticationStatus,
-                    mounted,
-                  }) => {
-                    // Note: If your app doesn't use authentication, you
-                    // can remove all 'authenticationStatus' checks
-                    const ready = mounted && authenticationStatus !== "loading";
-                    const connected =
-                      ready &&
-                      account &&
-                      chain &&
-                      (!authenticationStatus ||
-                        authenticationStatus === "authenticated");
+                  return (
+                    <div>
+                      {(() => {
+                        if (!isAuth || !account) {
+                          return (
+                            <button
+                              onClick={() => {
+                                login?.();
+                              }}
+                              type="button"
+                              className="rounded-md border border-brand-blue dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-brand-blue hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                            >
+                              Login / Register
+                            </button>
+                          );
+                        }
 
-                    return (
-                      <div
-                        {...(!ready && {
-                          "aria-hidden": true,
-                          style: {
-                            opacity: 0,
-                            pointerEvents: "none",
-                            userSelect: "none",
-                          },
-                        })}
-                      >
-                        {(() => {
-                          if (!connected || !isAuth) {
-                            return (
-                              <button
-                                onClick={() => {
-                                  if (
-                                    !isAuth &&
-                                    connected &&
-                                    !isAuthenticating
-                                  ) {
-                                    authenticate();
-                                    return;
-                                  }
-                                  openConnectModal?.();
-                                }}
-                                type="button"
-                                className="rounded-md border border-brand-blue dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-brand-blue hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-                              >
-                                Login / Register
-                              </button>
-                            );
-                          }
-
-                          return <UserMenu account={account as any} />;
-                        })()}
-                      </div>
-                    );
-                  }}
-                </ConnectButton.Custom>
-              </>
-            ) : null}
-            {/* Rainbowkit custom connect button end */}
+                        return <UserMenu account={account as any} />;
+                      })()}
+                    </div>
+                  );
+                }}
+              </ConnectButton.Custom>
+            </div>
             {/* Color mode toggle start */}
             <ThemeButton />
             {/* Color mode toggle end */}

@@ -43,6 +43,16 @@ import { Line } from "@rc-component/progress";
 import pluralize from "pluralize";
 import Link from "next/link";
 import { envVars } from "@/utilities/enviromentVars";
+import { fundingPlatformDomains } from "@/utilities/fundingPlatformDomains";
+
+const getApplyUrlByCommunityId = (communityId: string, programId: string) => {
+  if (communityId in fundingPlatformDomains) {
+    const domain = fundingPlatformDomains[communityId as keyof typeof fundingPlatformDomains];
+    return envVars.isDev ? `${domain.dev}/programs/${programId}/apply` : `${domain.prod}/programs/${programId}/apply`;
+  } else {
+    return envVars.isDev ? `${fundingPlatformDomains.shared.dev}/${communityId}/programs/${programId}/apply` : `${fundingPlatformDomains.shared.prod}/${communityId}/programs/${programId}/apply`;
+  }
+}
 
 export default function FundingPlatformAdminPage() {
   const { communityId } = useParams() as { communityId: string };
@@ -709,7 +719,7 @@ export default function FundingPlatformAdminPage() {
                   {/* Apply Button */}
                   <div className="mb-3">
                     <Link
-                      href={envVars.isDev ? `https://testapp.opgrants.io/programs/${program.programId}/apply` : `https://app.opgrants.io/programs/${program.programId}/apply`}
+                      href={getApplyUrlByCommunityId(communityId, program.programId)}
                       className="w-full"
                       target="_blank"
                     >

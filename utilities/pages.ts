@@ -21,6 +21,16 @@ export const PAGES = {
       `/community/${community}/funding-platform/${programId}/apply`,
   },
   MY_PROJECTS: `/my-projects`,
+  MY_REVIEWS: `/my-reviews`,
+  REVIEWER: {
+    DASHBOARD: (community: string) => `/community/${community}/reviewer/funding-platform`,
+    APPLICATIONS: (community: string, programId: string, chainId: number) =>
+      `/community/${community}/reviewer/funding-platform/${programId}_${chainId}/applications`,
+    APPLICATION_DETAIL: (community: string, programId: string, chainId: number, applicationId: string) =>
+      `/community/${community}/reviewer/funding-platform/${programId}_${chainId}/applications/${applicationId}`,
+    QUESTION_BUILDER: (community: string, programId: string, chainId: number) =>
+      `/community/${community}/reviewer/funding-platform/${programId}_${chainId}/question-builder`,
+  },
   ADMIN: {
     LIST: `/admin`,
     ROOT: (community: string) => `/community/${community}/admin`,

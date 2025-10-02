@@ -5,7 +5,7 @@ import { envVars } from "@/utilities/enviromentVars";
 interface DownloadReportOptions {
   communityId: string;
   sortBy?: string;
-  selectedGrantTitles?: string[];
+  selectedProgramIds?: string[];
   page?: number;
   pageLimit?: number;
   status?: string;
@@ -21,11 +21,15 @@ export const downloadCommunityReport = (
   const {
     communityId,
     sortBy = "totalMilestones",
-    selectedGrantTitles = [],
+    selectedProgramIds = [],
     page = 0,
     pageLimit = 9999999,
     status = "all",
   } = options;
+
+  const programFilter = selectedProgramIds
+    .filter((value) => Boolean(value))
+    .join(",");
 
   try {
     const path = INDEXER.COMMUNITY.GRANTS(communityId, {
@@ -33,10 +37,7 @@ export const downloadCommunityReport = (
       pageLimit,
       sort: sortBy,
       status,
-      grantTitle:
-        selectedGrantTitles.length > 0
-          ? encodeURIComponent(selectedGrantTitles.join(","))
-          : undefined,
+      selectedProgramId: programFilter || undefined,
       download: true,
     });
 

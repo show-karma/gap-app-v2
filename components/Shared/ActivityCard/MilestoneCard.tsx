@@ -25,7 +25,7 @@ import {
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { useProjectStore } from "@/store";
-import { queryClient } from "@/components/Utilities/WagmiProvider";
+import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
 import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
 
 const ProjectObjectiveCompletion = dynamic(

@@ -1,6 +1,6 @@
 "use client";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { useAuthStore } from "@/store/auth";
+import { useAuth } from "@/hooks/useAuth";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -71,7 +71,7 @@ const AdminButton = ({
 
 const LoadingSkeleton = () => (
   <div className="flex flex-row flex-wrap gap-8">
-    {[1, 2, 3].map((i) => (
+    {[1, 2, 3, 4, 5, 6, 7].map((i) => (
       <div key={i} className="w-[300px]">
         <Skeleton className="h-32 w-full rounded-lg" />
       </div>
@@ -87,7 +87,7 @@ export const CommunityAdminPage = ({
   community: ICommunityResponse;
 }) => {
   const { address, isConnected } = useAccount();
-  const { isAuth } = useAuthStore();
+  const { authenticated: isAuth } = useAuth();
 
   const signer = useSigner();
 
@@ -176,7 +176,7 @@ export const CommunityAdminPage = ({
               colorClass=""
               icon={<BanknotesIcon className="w-6 h-6" />}
             />
-            
+
             <AdminButton
               href={PAGES.ADMIN.PROGRAM_SCORES(
                 community?.details?.data?.slug || communityId

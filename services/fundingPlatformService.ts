@@ -13,29 +13,14 @@ import {
   IApplicationVersion,
   IApplicationVersionTimeline,
 } from "@/types/funding-platform";
-import { getCookiesFromStoredWallet } from "@/utilities/getCookiesFromStoredWallet";
+import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
+import { envVars } from "@/utilities/enviromentVars";
 
 // Base API configuration
 const API_BASE =
-  process.env.NEXT_PUBLIC_GAP_INDEXER_URL || "http://localhost:4000";
+  envVars.NEXT_PUBLIC_GAP_INDEXER_URL || "http://localhost:4000";
 
-const apiClient = axios.create({
-  baseURL: API_BASE,
-  timeout: 30000,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
-// Add request interceptor for authentication
-apiClient.interceptors.request.use((config) => {
-  // Get auth token from cookies using address-specific key
-  const { token } = getCookiesFromStoredWallet();
-  if (token) {
-    config.headers.Authorization = token;
-  }
-  return config;
-});
+const apiClient = createAuthenticatedApiClient(API_BASE, 30000);
 
 
 
@@ -100,6 +85,8 @@ export type FundingProgram = {
   };
   applicationConfig: IFundingProgramConfig;
   communitySlug?: string;
+  communityName?: string;
+  communityImage?: string;
 	communityUID?: string;
   metrics?: {
     totalApplications: number;
@@ -361,6 +348,15 @@ export const fundingApplicationsAPI = {
     const response = await apiClient.get(
       `/v2/funding-applications/program/${programId}/${chainId.toString()}?${params}`
     );
+    if(!response.data.applications) {
+      response.data.applications = [];
+      response.data.pagination = {
+        page: filters.page || 1,
+        limit: filters.limit || 25,
+        total: 0,
+        totalPages: 0,
+      };
+    }
     return response.data;
   },
 

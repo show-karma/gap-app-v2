@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { fundingPlatformService, IApplicationFilters, fundingApplicationsAPI } from '@/services/fundingPlatformService';
 import { applicationCommentsService } from '@/services/application-comments.service';
 import { 
@@ -15,6 +15,7 @@ import {
 } from '@/types/funding-platform';
 import toast from 'react-hot-toast';
 import { errorManager } from '@/components/Utilities/errorManager';
+import { useAuth } from './useAuth';
 
 // Query keys for caching
 const QUERY_KEYS = {
@@ -162,25 +163,42 @@ export const useProgramConfig = (programId: string, chainId: number) => {
 };
 
 /**
- * Hook for managing grant applications
+ * Hook for managing grant applications with infinite scroll
  */
 export const useFundingApplications = (
-  programId: string, 
-  chainId: number, 
+  programId: string,
+  chainId: number,
   filters: IApplicationFilters = {}
 ) => {
   const queryClient = useQueryClient();
 
-  const applicationsQuery = useQuery({
-    queryKey: QUERY_KEYS.applications(programId, chainId, filters),
-    queryFn: () => fundingPlatformService.applications.getApplicationsByProgram(programId, chainId, filters),
-    enabled: !!programId && !!chainId,
+  // Set default limit to 25 if not provided, exclude page from filters for infinite scroll
+  const { page, ...filtersWithoutPage } = filters;
+  const filtersWithDefaults = {
+    limit: 25,
+    ...filtersWithoutPage
+  };
+  const { authenticated } = useAuth();
+
+  const applicationsQuery = useInfiniteQuery({
+    queryKey: QUERY_KEYS.applications(programId, chainId, filtersWithDefaults),
+    queryFn: ({ pageParam = 1 }) =>
+      fundingPlatformService.applications.getApplicationsByProgram(programId, chainId, {
+        ...filtersWithDefaults,
+        page: pageParam
+      }),
+    enabled: !!programId && !!chainId && authenticated,
+    getNextPageParam: (lastPage) => {
+      const { pagination } = lastPage;
+      return pagination.page < pagination.totalPages ? pagination.page + 1 : undefined;
+    },
+    initialPageParam: 1,
   });
 
   const statsQuery = useQuery({
     queryKey: QUERY_KEYS.applicationStats(programId, chainId),
     queryFn: () => fundingPlatformService.applications.getApplicationStatistics(programId, chainId),
-    enabled: !!programId && !!chainId,
+    enabled: !!programId && !!chainId && authenticated,
   });
 
   const submitApplicationMutation = useMutation({
@@ -198,7 +216,7 @@ export const useFundingApplications = (
       } else {
         throw new Error('Email field is required in the application form');
       }
-      
+
       return fundingPlatformService.applications.submitApplication({
         programId,
         chainID: chainId,
@@ -207,7 +225,7 @@ export const useFundingApplications = (
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.applications(programId, chainId, {}) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.applications(programId, chainId, { limit: 25 }) });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.applicationStats(programId, chainId) });
       toast.success('Application submitted successfully!');
     },
@@ -224,7 +242,7 @@ export const useFundingApplications = (
         reason: note || '',
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.applications(programId, chainId, {}) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.applications(programId, chainId, { limit: 25 }) });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.applicationStats(programId, chainId) });
       toast.success('Application status updated successfully');
     },
@@ -234,14 +252,20 @@ export const useFundingApplications = (
     },
   });
 
+  // Flatten the paginated data
+  const applications = applicationsQuery.data?.pages.flatMap(page => page.applications) || [];
+  const firstPage = applicationsQuery.data?.pages[0];
 
   return {
-    applications: applicationsQuery.data?.applications || [],
-    total: applicationsQuery.data?.pagination?.total || 0,
-    page: applicationsQuery.data?.pagination?.page || 1,
-    totalPages: applicationsQuery.data?.pagination?.totalPages || 1,
+    applications,
+    total: firstPage?.pagination?.total || 0,
+    page: firstPage?.pagination?.page || 1,
+    totalPages: firstPage?.pagination?.totalPages || 1,
     stats: statsQuery.data,
     isLoading: applicationsQuery.isLoading || statsQuery.isLoading,
+    isFetchingNextPage: applicationsQuery.isFetchingNextPage,
+    hasNextPage: applicationsQuery.hasNextPage,
+    fetchNextPage: applicationsQuery.fetchNextPage,
     error: applicationsQuery.error || statsQuery.error,
     submitApplication: submitApplicationMutation.mutate,
     updateApplicationStatus: updateStatusMutation.mutate,
@@ -353,8 +377,8 @@ export const useApplicationSubmissionV2 = (programId: string, chainId: number) =
       return fundingPlatformService.applications.submitApplication(request);
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ 
-        queryKey: QUERY_KEYS.applications(programId, chainId, {}) 
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.applications(programId, chainId, { limit: 25 })
       });
       queryClient.invalidateQueries({ 
         queryKey: QUERY_KEYS.applicationStats(programId, chainId) 
@@ -549,11 +573,12 @@ export const useApplicationExport = (programId: string, chainId: number, isAdmin
  */
 export const useApplication = (applicationId: string | null) => {
   const queryClient = useQueryClient();
+  const { authenticated } = useAuth();
 
   const applicationQuery = useQuery({
     queryKey: QUERY_KEYS.application(applicationId!),
     queryFn: () => fundingApplicationsAPI.getApplication(applicationId!),
-    enabled: !!applicationId,
+    enabled: !!applicationId && authenticated,
   });
 
   const prefetchApplication = useCallback((applicationId: string) => {
@@ -599,8 +624,8 @@ export const useApplicationStatus = (programId?: string, chainId?: number) => {
       
       // Invalidate applications list if programId and chainId are provided
       if (programId && chainId) {
-        queryClient.invalidateQueries({ 
-          queryKey: ['funding-applications', programId, chainId] 
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.applications(programId, chainId, { limit: 25 })
         });
       }
       
@@ -629,14 +654,15 @@ export const useApplicationStatus = (programId?: string, chainId?: number) => {
  */
 export const useApplicationComments = (applicationId: string | null, isAdmin: boolean = false) => {
   const queryClient = useQueryClient();
+  const { authenticated } = useAuth();
 
   // Query for fetching comments
   const commentsQuery = useQuery({
     queryKey: QUERY_KEYS.applicationComments(applicationId!),
     queryFn: () => applicationCommentsService.getComments(applicationId!),
-    enabled: !!applicationId,
+    enabled: !!applicationId && authenticated,
     staleTime: 1000 * 60 * 2, // 2 minutes
-    gcTime: 1000 * 60 * 5, // 5 minutes
+    gcTime: 1000 * 60 * 1, // 5 minutes
   });
 
   // Mutation for creating comments
@@ -645,8 +671,8 @@ export const useApplicationComments = (applicationId: string | null, isAdmin: bo
       applicationCommentsService.createComment(applicationId!, content, authorName),
     onSuccess: () => {
       // Invalidate and refetch comments after successful creation
-      queryClient.invalidateQueries({ 
-        queryKey: QUERY_KEYS.applicationComments(applicationId!, isAdmin) 
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.applicationComments(applicationId!)
       });
       toast.success('Comment added successfully');
     },
@@ -665,7 +691,7 @@ export const useApplicationComments = (applicationId: string | null, isAdmin: bo
     onSuccess: () => {
       // Invalidate and refetch comments after successful edit
       queryClient.invalidateQueries({ 
-        queryKey: QUERY_KEYS.applicationComments(applicationId!, isAdmin) 
+        queryKey: QUERY_KEYS.applicationComments(applicationId!) 
       });
       toast.success('Comment updated successfully');
     },
@@ -679,11 +705,11 @@ export const useApplicationComments = (applicationId: string | null, isAdmin: bo
   // Mutation for deleting comments
   const deleteCommentMutation = useMutation({
     mutationFn: (commentId: string) =>
-      applicationCommentsService.deleteComment(commentId, isAdmin),
+      applicationCommentsService.deleteComment(commentId),
     onSuccess: () => {
       // Refetch comments after deletion
       queryClient.invalidateQueries({ 
-        queryKey: QUERY_KEYS.applicationComments(applicationId!, isAdmin) 
+        queryKey: QUERY_KEYS.applicationComments(applicationId!) 
       });
       toast.success('Comment deleted successfully');
     },
@@ -719,12 +745,13 @@ export const useApplicationComments = (applicationId: string | null, isAdmin: bo
  */
 export const useApplicationVersions = (applicationIdOrReference: string | null) => {
   const queryClient = useQueryClient();
+  const { authenticated } = useAuth();
 
   // Query for fetching application versions
   const versionsQuery = useQuery({
     queryKey: QUERY_KEYS.applicationVersions(applicationIdOrReference!),
     queryFn: () => fundingApplicationsAPI.getApplicationVersions(applicationIdOrReference!),
-    enabled: !!applicationIdOrReference,
+    enabled: !!applicationIdOrReference && authenticated,
     staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 1000 * 60 * 10, // 10 minutes
     select: (data) => {

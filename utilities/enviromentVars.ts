@@ -4,8 +4,7 @@ export const envVars = {
   isDev,
   NEXT_PUBLIC_ENV: process.env.NEXT_PUBLIC_ENV,
   NEXT_PUBLIC_KARMA_API: "https://api.karmahq.xyz/api",
-  NEXT_PUBLIC_GAP_INDEXER_URL: process.env
-    .NEXT_PUBLIC_GAP_INDEXER_URL as string,
+  NEXT_PUBLIC_GAP_INDEXER_URL: process.env.NEXT_PUBLIC_GAP_INDEXER_URL as string,
   NEXT_PUBLIC_IPFS_SPONSOR_URL: isDev
     ? `${process.env.NEXT_PUBLIC_GAP_INDEXER_URL}/ipfs`
     : "https://gapapi.karmahq.xyz/ipfs",
@@ -37,4 +36,5 @@ export const envVars = {
       ? `https://gap.karmahq.xyz`
       : "https://gapstag.karmahq.xyz",
   OSO_API_KEY: process.env.NEXT_PUBLIC_OSO_API_KEY || "",
+  PRIVY_APP_ID: process.env.NEXT_PUBLIC_PRIVY_APP_ID || "",
 };

@@ -12,7 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { isAddress } from "viem";
 import { MESSAGES } from "@/utilities/messages";
-import { useAuthStore } from "@/store/auth";
+import { useAuth } from "@/hooks/useAuth";
 import { useAccount } from "wagmi";
 import { useStepper } from "@/store/modals/txStepper";
 import { useGap } from "@/hooks/useGap";
@@ -81,7 +81,7 @@ export const DetailsScreen: React.FC = () => {
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const router = useRouter();
   const { address, isConnected, connector, chain } = useAccount();
-  const { isAuth } = useAuthStore();
+  const { authenticated: isAuth } = useAuth();
   const { gap } = useGap();
   const { updateGrant, isLoading: isUpdatingGrant } = useGrant();
   const { changeStepperStep, setIsStepper } = useStepper();

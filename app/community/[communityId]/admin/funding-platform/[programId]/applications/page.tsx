@@ -2,6 +2,7 @@
 import { useParams, useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useMemo } from "react";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { usePermissions } from "@/hooks/usePermissions";
 import { useOwnerStore } from "@/store";
 import { useStaff } from "@/hooks/useStaff";
 import { ApplicationListWithAPI } from "@/components/FundingPlatform";
@@ -14,10 +15,10 @@ import Link from "next/link";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { Cog6ToothIcon } from "@heroicons/react/24/outline";
-import { 
-  useFundingApplications, 
-  useApplication, 
-  useApplicationStatus 
+import {
+  useFundingApplications,
+  useApplication,
+  useApplicationStatus
 } from "@/hooks/useFundingPlatform";
 
 export default function ApplicationsPage() {
@@ -68,6 +69,19 @@ export default function ApplicationsPage() {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const { isStaff } = useStaff();
 
+  // Check if user is a reviewer for this program
+  const { hasPermission: canView, isLoading: isLoadingPermission } = usePermissions({
+    programId,
+    chainID: parsedChainId,
+    action: "read",
+  });
+
+  const { hasPermission: canComment } = usePermissions({
+    programId,
+    chainID: parsedChainId,
+    action: "comment",
+  });
+
   // Use the funding applications hook to get applications data
   const { applications } = useFundingApplications(
     programId,
@@ -81,7 +95,10 @@ export default function ApplicationsPage() {
   // Use the custom application status hook
   const { updateStatusAsync } = useApplicationStatus(programId, parsedChainId);
 
-  const hasAccess = isCommunityAdmin || isOwner || isStaff;
+  // Admin, owner, staff have full access; reviewers have view and comment access
+  const hasAccess = isCommunityAdmin || isOwner || isStaff || canView;
+  const isAdmin = isCommunityAdmin || isOwner || isStaff;
+  const isReviewer = canView && !isAdmin;
 
   const handleBackClick = () => {
     router.push(PAGES.ADMIN.FUNDING_PLATFORM(communityId));
@@ -103,7 +120,7 @@ export default function ApplicationsPage() {
     return updateStatusAsync({ applicationId, status, note });
   };
 
-  if (isLoadingAdmin) {
+  if (isLoadingAdmin || isLoadingPermission) {
     return (
       <div className="flex w-full items-center justify-center min-h-[600px]">
         <Spinner />
@@ -114,7 +131,11 @@ export default function ApplicationsPage() {
   if (!hasAccess) {
     return (
       <div className="px-4 sm:px-6 lg:px-12 py-5">
-        <p className="text-red-500">{MESSAGES.REVIEWS.NOT_ADMIN}</p>
+        <p className="text-red-500">
+          {isReviewer
+            ? "You don't have permission to view applications for this program."
+            : MESSAGES.REVIEWS.NOT_ADMIN}
+        </p>
       </div>
     );
   }
@@ -146,17 +167,24 @@ export default function ApplicationsPage() {
             </div>
 
             <div className="flex items-center space-x-3">
-              <Link
-                href={PAGES.ADMIN.FUNDING_PLATFORM_QUESTION_BUILDER(
-                  communityId,
-                  combinedProgramId
-                )}
-              >
-                <Button variant="primary" className="flex items-center">
-                  <Cog6ToothIcon className="w-4 h-4 mr-2" />
-                  Configure Form
-                </Button>
-              </Link>
+              {isAdmin && (
+                <Link
+                  href={PAGES.ADMIN.FUNDING_PLATFORM_QUESTION_BUILDER(
+                    communityId,
+                    combinedProgramId
+                  )}
+                >
+                  <Button variant="primary" className="flex items-center">
+                    <Cog6ToothIcon className="w-4 h-4 mr-2" />
+                    Configure Form
+                  </Button>
+                </Link>
+              )}
+              {isReviewer && (
+                <div className="text-sm text-blue-600 dark:text-blue-400 font-medium">
+                  Reviewer Mode
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -167,12 +195,12 @@ export default function ApplicationsPage() {
         <ApplicationListWithAPI
           programId={programId}
           chainId={parsedChainId}
-          showStatusActions={true}
+          showStatusActions={isAdmin}
           onApplicationSelect={handleApplicationSelect}
           onApplicationHover={handleApplicationHover}
           initialFilters={initialFilters}
           onStatusChange={handleStatusChange}
-          isAdmin={true}
+          isAdmin={isAdmin}
         />
       </div>
 

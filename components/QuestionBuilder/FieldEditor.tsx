@@ -39,16 +39,18 @@ interface FieldEditorProps {
   onDelete: (fieldId: string) => void;
   onMoveUp?: (fieldId: string) => void;
   onMoveDown?: (fieldId: string) => void;
+  isPostApprovalMode?: boolean;
+  readOnly?: boolean;
 }
 
-export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown }: FieldEditorProps) {
+export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, readOnly = false, isPostApprovalMode = false }: FieldEditorProps) {
   const { register, watch, setValue, formState: { errors } } = useForm<FieldFormData>({
     resolver: zodResolver(fieldSchema),
     defaultValues: {
       label: field.label,
       placeholder: field.placeholder || '',
       required: field.required || false,
-      private: field.private || false,
+      private: field.private || isPostApprovalMode, // Default to true for post-approval fields
       description: field.description || '',
       options: field.options || [],
       validation: field.validation || {},
@@ -61,9 +63,6 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown }:
   const watchedOptions = watch('options') || [];
   const hasOptions = ['select', 'radio', 'checkbox'].includes(field.type);
 
-  // Watch all form values and auto-update the field
-  const watchedValues = watch();
-
   useEffect(() => {
     const subscription = watch((data) => {
       // Only update if data is valid (has required fields)
@@ -73,7 +72,7 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown }:
           label: data.label,
           placeholder: data.placeholder || '',
           required: data.required || false,
-          private: data.private || false,
+          private: data.private || isPostApprovalMode, // Always true for post-approval fields
           description: data.description || '',
           options: hasOptions ? (data.options || []).filter((opt): opt is string => typeof opt === 'string' && opt.length > 0) : undefined,
           validation: data.validation || {},
@@ -113,8 +112,9 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown }:
         <div className="flex items-center space-x-2">
           {onMoveUp && (
             <button
-              onClick={() => onMoveUp(field.id)}
-              className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+              onClick={() => !readOnly && onMoveUp(field.id)}
+              disabled={readOnly}
+              className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent"
               title="Move up"
             >
               <ChevronUpIcon className="w-4 h-4" />
@@ -122,16 +122,18 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown }:
           )}
           {onMoveDown && (
             <button
-              onClick={() => onMoveDown(field.id)}
-              className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+              onClick={() => !readOnly && onMoveDown(field.id)}
+              disabled={readOnly}
+              className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent"
               title="Move down"
             >
               <ChevronDownIcon className="w-4 h-4" />
             </button>
           )}
           <button
-            onClick={() => onDelete(field.id)}
-            className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+            onClick={() => !readOnly && onDelete(field.id)}
+            disabled={readOnly}
+            className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent"
             title="Delete field"
           >
             <TrashIcon className="w-4 h-4" />
@@ -146,7 +148,8 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown }:
           </label>
           <input
             {...register('label')}
-            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300"
+            disabled={readOnly}
+            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
             placeholder="Enter field label"
           />
           {errors.label && (
@@ -160,7 +163,8 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown }:
           </label>
           <input
             {...register('placeholder')}
-            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300"
+            disabled={readOnly}
+            className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
             placeholder="Enter placeholder text"
           />
         </div>
@@ -171,10 +175,11 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown }:
           </label>
           <MarkdownEditor
             value={field.description || ''}
-            onChange={(value: string) => setValue('description', value)}
+            onChange={(value: string) => !readOnly && setValue('description', value)}
             placeholderText="Optional description or help text"
             height={200}
             minHeight={170}
+            disabled={readOnly}
             className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300"
           />
 
@@ -185,54 +190,61 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown }:
             <input
               {...register('required')}
               type="checkbox"
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              disabled={readOnly}
+              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
             />
             <label className="ml-2 text-sm text-gray-700 dark:text-gray-300">
               Required field
             </label>
           </div>
-
-          <div className="flex items-center">
-            <input
-              {...register('private')}
-              type="checkbox"
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            />
-            <label className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-              Private field
-            </label>
-            <QuestionTooltip
-              content="This field will be hidden from public application listings"
-              className="ml-2"
-            />
-          </div>
-        </div>
-
-        {/* AI Evaluation Configuration */}
-        <div className="border-t border-gray-200 dark:border-gray-600 pt-4">
-          <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
-            AI Evaluation Settings
-          </h4>
-
-          <div className="space-y-3">
+          {/* Private Field Toggle - Hidden in post-approval mode since all fields are automatically private */}
+          {!isPostApprovalMode && (
             <div className="flex items-center">
               <input
-                {...register('aiEvaluation.includeInEvaluation')}
+                {...register('private')}
                 type="checkbox"
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                disabled={readOnly}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
               />
               <label className="ml-2 text-sm text-gray-700 dark:text-gray-300">
-                Include this field in AI evaluation context
+                Private field
               </label>
+              <QuestionTooltip
+                content="This field will be hidden from public application listings"
+                className="ml-2"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* AI Evaluation Configuration - Hidden in post-approval mode */}
+        {!isPostApprovalMode && (
+          <div className="border-t border-gray-200 dark:border-gray-600 pt-4">
+            <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
+              AI Evaluation Settings
+            </h4>
+
+            <div className="space-y-3">
+              <div className="flex items-center">
+                <input
+                  {...register('aiEvaluation.includeInEvaluation')}
+                  type="checkbox"
+                  disabled={readOnly}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+                />
+                <label className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                  Include this field in AI evaluation context
+                </label>
+              </div>
+
+
             </div>
 
-
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              Real-time evaluation provides instant feedback to applicants as they complete the form.
+            </p>
           </div>
-
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-            Real-time evaluation provides instant feedback to applicants as they complete the form.
-          </p>
-        </div>
+        )}
 
         {hasOptions && (
           <div>
@@ -244,14 +256,16 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown }:
                 <div key={index} className="flex items-center space-x-2">
                   <input
                     value={option}
-                    onChange={(e) => updateOption(index, e.target.value)}
-                    className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300"
+                    onChange={(e) => !readOnly && updateOption(index, e.target.value)}
+                    disabled={readOnly}
+                    className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
                     placeholder={`Option ${index + 1}`}
                   />
                   <button
                     type="button"
-                    onClick={() => removeOption(index)}
-                    className="p-2 text-red-400 hover:text-red-600"
+                    onClick={() => !readOnly && removeOption(index)}
+                    disabled={readOnly}
+                    className="p-2 text-red-400 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <TrashIcon className="w-4 h-4" />
                   </button>
@@ -259,7 +273,8 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown }:
               ))}
               <Button
                 type="button"
-                onClick={addOption}
+                onClick={() => !readOnly && addOption()}
+                disabled={readOnly}
                 variant="secondary"
                 className="w-full"
               >
@@ -284,7 +299,8 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown }:
                   {...register('validation.minMilestones', { valueAsNumber: true })}
                   type="number"
                   min="0"
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100"
+                  disabled={readOnly}
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
                   placeholder="0"
                 />
               </div>
@@ -296,7 +312,8 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown }:
                   {...register('validation.maxMilestones', { valueAsNumber: true })}
                   type="number"
                   min="1"
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100"
+                  disabled={readOnly}
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
                   placeholder="10"
                 />
               </div>

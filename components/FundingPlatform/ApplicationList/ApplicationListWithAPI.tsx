@@ -1,7 +1,8 @@
 "use client";
 
-import { FC, useState, useCallback, useEffect } from "react";
+import { FC, useState, useCallback, useEffect, useMemo } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import InfiniteScroll from "react-infinite-scroll-component";
 import ApplicationList from "./ApplicationList";
 import {
   useFundingApplications,
@@ -39,14 +40,14 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Initialize filters and sorting from URL params
+  // Initialize filters from URL params (excluding page for infinite scroll)
   const [filters, setFilters] = useState<IApplicationFilters>(() => {
     const urlFilters = { ...initialFilters };
     if (searchParams.get('search')) urlFilters.search = searchParams.get('search')!;
     if (searchParams.get('status')) urlFilters.status = searchParams.get('status')!;
     if (searchParams.get('dateFrom')) urlFilters.dateFrom = searchParams.get('dateFrom')!;
     if (searchParams.get('dateTo')) urlFilters.dateTo = searchParams.get('dateTo')!;
-    if (searchParams.get('page')) urlFilters.page = parseInt(searchParams.get('page')!);
+    // Remove page handling for infinite scroll
     return urlFilters;
   });
 
@@ -67,11 +68,21 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
     totalPages,
     stats,
     isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
     error,
     updateApplicationStatus,
     isUpdatingStatus,
     refetch,
   } = useFundingApplications(programId, chainId, { ...filters, sortBy, sortOrder });
+
+  // Load more function for infinite scroll
+  const loadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const { exportApplications, isExporting } = useApplicationExport(
     programId,
@@ -108,11 +119,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
       params.delete("dateTo");
     }
 
-    if (filters.page && filters.page > 1) {
-      params.set("page", filters.page.toString());
-    } else {
-      params.delete("page");
-    }
+    // Remove page handling for infinite scroll
 
     // Add sorting params
     if (sortBy && sortBy !== 'createdAt') {
@@ -330,53 +337,42 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
         </div>
       </div>
 
-      {/* Application List */}
-      <ApplicationList
-        programId={programId}
-        chainID={chainId}
-        applications={applications}
-        isLoading={isLoading}
-        onApplicationSelect={onApplicationSelect}
-        onApplicationHover={onApplicationHover}
-        onStatusChange={showStatusActions ? handleStatusChange : undefined}
-        showStatusActions={showStatusActions}
-        sortBy={sortBy}
-        sortOrder={sortOrder}
-        onSortChange={handleSortChange}
-      />
-
-      {/* Pagination Info */}
-      <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Page {page} of {totalPages} ({total} total {pluralize("application", total)})
-        </p>
-
-        {totalPages > 1 && (
-          <>
-            <div className="flex space-x-2">
-              <button
-                onClick={() =>
-                  handleFilterChange({ page: Math.max(1, page - 1) })
-                }
-                disabled={page === 1}
-                className="px-3 py-1 bg-gray-200 dark:bg-zinc-700 rounded disabled:opacity-50"
-              >
-                Previous
-              </button>
-
-              <button
-                onClick={() =>
-                  handleFilterChange({ page: Math.min(totalPages, page + 1) })
-                }
-                disabled={page === totalPages}
-                className="px-3 py-1 bg-gray-200 dark:bg-zinc-700 rounded disabled:opacity-50"
-              >
-                Next
-              </button>
+      {/* Application List with Infinite Scroll */}
+      <InfiniteScroll
+        dataLength={applications.length}
+        next={loadMore}
+        hasMore={hasNextPage || false}
+        loader={
+          <div className="flex items-center justify-center py-4">
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Loading more applications...
             </div>
-          </>
-        )}
-      </div>
+          </div>
+        }
+        endMessage={
+          applications.length > 0 ? (
+            <div className="flex items-center justify-center py-4">
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                {total} total {pluralize("application", total)} loaded
+              </div>
+            </div>
+          ) : null
+        }
+      >
+        <ApplicationList
+          programId={programId}
+          chainID={chainId}
+          applications={applications}
+          isLoading={isLoading && applications.length === 0}
+          onApplicationSelect={onApplicationSelect}
+          onApplicationHover={onApplicationHover}
+          onStatusChange={showStatusActions ? handleStatusChange : undefined}
+          showStatusActions={showStatusActions}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSortChange={handleSortChange}
+        />
+      </InfiniteScroll>
     </div>
   );
 };

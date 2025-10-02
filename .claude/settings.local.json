@@ -33,7 +33,9 @@
       "Bash(pnpm dev:*)",
       "Bash(pnpm lint:*)",
       "Bash(pnpm build:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(pnpm run:*)",
+      "Bash(pnpm tsc:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",

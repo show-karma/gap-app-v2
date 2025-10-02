@@ -104,13 +104,17 @@ export const CommunitySelectionScreen: React.FC = () => {
 
   const isProjectAlreadyInProgram = useMemo(() => {
     if (!formData.programId || !selectedProject?.grants) return false;
-    
+
+    if (isEditing) {
+      return false;
+    }
+
     const selectedProgramId = formData.programId.split("_")[0];
     return selectedProject.grants.some(grant => {
       const existingProgramId = grant.details?.data?.programId?.split("_")[0];
       return existingProgramId === selectedProgramId;
     });
-  }, [formData.programId, selectedProject?.grants]);
+  }, [formData.programId, selectedProject?.grants, isEditing]);
 
   const canProceed = useMemo(() => {
     return !!formData.community &&
@@ -190,7 +194,7 @@ export const CommunitySelectionScreen: React.FC = () => {
           {isProjectAlreadyInProgram && (
             <div className="w-full max-w-full mt-4 p-3 bg-red-50 border border-red-200 rounded-md dark:bg-red-900/20 dark:border-red-800">
               <p className="text-red-600 dark:text-red-400 text-sm">
-                This project is already part of the selected program. Please choose a different program or create a custom grant.
+                This grant is already associated with your project.
               </p>
             </div>
           )}

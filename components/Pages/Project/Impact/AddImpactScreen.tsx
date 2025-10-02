@@ -11,7 +11,7 @@ import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { sanitizeObject } from "@/utilities/sanitize";
-import { config } from "@/utilities/wagmi/config";
+import { privyConfig as config } from "@/utilities/wagmi/privy-config";
 import { Popover } from "@headlessui/react";
 import { CalendarIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";

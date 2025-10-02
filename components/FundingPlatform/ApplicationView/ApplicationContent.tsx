@@ -22,11 +22,13 @@ import {
   DocumentTextIcon,
   ArrowPathIcon,
 } from "@heroicons/react/24/outline";
+import PostApprovalData from "./PostApprovalData";
 
 interface ApplicationContentProps {
   application: IFundingApplication;
   program?: any;
   showStatusActions?: boolean;
+  showAIEvaluationButton?: boolean;
   onStatusChange?: (status: string, note?: string) => Promise<void>;
   viewMode?: "details" | "changes";
   onViewModeChange?: (mode: "details" | "changes") => void;
@@ -59,6 +61,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
   application,
   program,
   showStatusActions = false,
+  showAIEvaluationButton = false,
   onStatusChange,
   viewMode: controlledViewMode,
   onViewModeChange,
@@ -98,8 +101,6 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
           labels[field.id] = field.label;
         }
       });
-    } else {
-      console.log("No program formSchema fields found", program);
     }
     return labels;
   }, [program]);
@@ -346,15 +347,24 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
           )}
         </div>
 
+        {application?.postApprovalData && Object.keys(application?.postApprovalData).length > 0 && (
+          <PostApprovalData
+            postApprovalData={application?.postApprovalData}
+            program={program}
+          />
+        )}
+
         {/* AI Evaluation */}
         <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white">AI Evaluation</h3>
-            <AIEvaluationButton
-              referenceNumber={application.referenceNumber}
-              onEvaluationComplete={handleAIEvaluationComplete}
-              disabled={isUpdatingStatus || ["approved", "rejected"].includes(application.status)}
-            />
+            {showAIEvaluationButton && (
+              <AIEvaluationButton
+                referenceNumber={application.referenceNumber}
+                onEvaluationComplete={handleAIEvaluationComplete}
+                disabled={isUpdatingStatus || ["approved", "rejected"].includes(application.status)}
+              />
+            )}
           </div>
           <AIEvaluationDisplay
             evaluation={application.aiEvaluation?.evaluation || null}

@@ -6,7 +6,7 @@ import { PAGES } from "@/utilities/pages";
 import { useProjectStore } from "@/store";
 import { Milestone } from "../Milestone";
 import { PlusIcon } from "@heroicons/react/24/outline";
-import { useAuthStore } from "@/store/auth";
+import { useAuth } from "@/hooks/useAuth";
 import { useAccount } from "wagmi";
 import { useStepper } from "@/store/modals/txStepper";
 import toast from "react-hot-toast";
@@ -52,7 +52,7 @@ export const MilestonesScreen: React.FC = () => {
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const router = useRouter();
   const { address, isConnected, connector, chain } = useAccount();
-  const { isAuth } = useAuthStore();
+  const { authenticated: isAuth } = useAuth();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
 
@@ -276,14 +276,13 @@ export const MilestonesScreen: React.FC = () => {
                 }
               }
 
+              await refreshProject();
               router.push(
                 PAGES.PROJECT.GRANT(
                   selectedProject.details?.data.slug || selectedProject.uid,
                   grant.uid
                 )
               );
-              router.refresh();
-              await refreshProject();
             }
 
             retries -= 1;
