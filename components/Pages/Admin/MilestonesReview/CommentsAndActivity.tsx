@@ -6,8 +6,8 @@ import {
   ArrowPathIcon,
   ChatBubbleLeftIcon,
 } from "@heroicons/react/24/outline";
-import { useEffect, useState } from "react";
-import { fetchApplicationComments, type ApplicationComment } from "@/services/comments";
+import { useApplicationComments } from "@/hooks/useApplicationComments";
+import type { ApplicationComment } from "@/services/comments";
 
 interface StatusHistoryItem {
   status: string;
@@ -30,26 +30,7 @@ export function CommentsAndActivity({
   statusHistory,
   currentUserAddress,
 }: CommentsAndActivityProps) {
-  const [comments, setComments] = useState<ApplicationComment[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    const loadComments = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const fetchedComments = await fetchApplicationComments(referenceNumber);
-        setComments(fetchedComments);
-      } catch (err) {
-        setError(err as Error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadComments();
-  }, [referenceNumber]);
+  const { comments, isLoading, error, refetch } = useApplicationComments(referenceNumber);
 
   // Combine comments with status history for unified timeline
   const timelineItems: TimelineItem[] = [
@@ -64,16 +45,6 @@ export function CommentsAndActivity({
     ).getTime();
     return dateA - dateB; // Chronological order (oldest first)
   });
-
-  const refetch = async () => {
-    setError(null);
-    try {
-      const fetchedComments = await fetchApplicationComments(referenceNumber);
-      setComments(fetchedComments);
-    } catch (err) {
-      setError(err as Error);
-    }
-  };
 
   if (isLoading) {
     return (
@@ -95,7 +66,7 @@ export function CommentsAndActivity({
           </div>
           <Button
             className="flex items-center gap-2 px-3 py-2 text-sm"
-            onClick={refetch}
+            onClick={() => refetch()}
           >
             <ArrowPathIcon className="w-4 h-4" />
             Retry

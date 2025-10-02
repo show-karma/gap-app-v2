@@ -4,8 +4,9 @@ import { Button } from "@/components/Utilities/Button";
 import { PAGES } from "@/utilities/pages";
 import { ChevronLeftIcon, CheckCircleIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { fetchProjectGrantMilestones, updateMilestoneVerification, type MappedMilestone, type ProjectGrantMilestonesResponse } from "@/services/milestones";
+import { useState } from "react";
+import { updateMilestoneVerification, type MappedMilestone } from "@/services/milestones";
+import { useProjectGrantMilestones } from "@/hooks/useProjectGrantMilestones";
 import { CommentsAndActivity } from "./CommentsAndActivity";
 import { useAccount } from "wagmi";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
@@ -31,9 +32,7 @@ export function MilestonesReviewPage({
   projectId,
   programId,
 }: MilestonesReviewPageProps) {
-  const [data, setData] = useState<ProjectGrantMilestonesResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const { data, isLoading, error, refetch } = useProjectGrantMilestones(projectId, programId);
   const [verifyingMilestoneId, setVerifyingMilestoneId] = useState<string | null>(null);
   const [verificationComment, setVerificationComment] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
@@ -41,23 +40,6 @@ export function MilestonesReviewPage({
   const { address, chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const { changeStepperStep, setIsStepper } = useStepper();
-
-  useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const response = await fetchProjectGrantMilestones(projectId, programId);
-        setData(response);
-      } catch (err) {
-        setError(err as Error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-  }, [projectId, programId]);
 
   const handleVerifyClick = (completionId: string) => {
     setVerifyingMilestoneId(completionId);
@@ -311,8 +293,7 @@ export function MilestonesReviewPage({
       }
 
       // Reload data to show updated verification
-      const refreshedData = await fetchProjectGrantMilestones(projectId, programId);
-      setData(refreshedData);
+      await refetch();
       setVerifyingMilestoneId(null);
       setVerificationComment("");
     } catch (error: any) {
