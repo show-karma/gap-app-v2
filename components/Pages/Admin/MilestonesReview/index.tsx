@@ -162,13 +162,11 @@ export function MilestonesReviewPage({
               );
             }
 
-            // Wait for completion to be indexed - increased retries for slower indexing
-            let retries = 40; // 40 retries * 2s = 80 seconds max
+            // Wait for completion to be indexed
+            let retries = 1000;
             let isCompleted = false;
 
             while (retries > 0 && !isCompleted) {
-              await new Promise((resolve) => setTimeout(resolve, 2000));
-
               try {
                 const updatedProject = await gapClient.fetch.projectById(data.project.uid);
                 const updatedGrant = updatedProject?.grants.find(
@@ -191,6 +189,8 @@ export function MilestonesReviewPage({
               }
 
               retries -= 1;
+              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+              await new Promise((resolve) => setTimeout(resolve, 1500));
             }
 
             if (!isCompleted) {
@@ -229,12 +229,10 @@ export function MilestonesReviewPage({
           }
 
           // Poll for verification to be indexed
-          let retries = 40; // 40 retries * 2s = 80 seconds max
+          let retries = 1000;
           let isVerified = false;
 
           while (retries > 0 && !isVerified) {
-            await new Promise((resolve) => setTimeout(resolve, 2000));
-
             try {
               // Re-fetch project to check if verification is indexed
               const updatedProject = await gapClient.fetch.projectById(data.project.uid);
@@ -259,6 +257,8 @@ export function MilestonesReviewPage({
             }
 
             retries -= 1;
+            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+            await new Promise((resolve) => setTimeout(resolve, 1500));
           }
 
           if (!isVerified) {
