@@ -48,8 +48,8 @@ export const getProjectMemberRoles = async (
       })
     );
   }
-  if (!roles[project?.recipient.toLowerCase()]) {
-    roles[project?.recipient.toLowerCase()] = "Owner";
+  if (project?.recipient && !roles[project.recipient.toLowerCase()]) {
+    roles[project.recipient.toLowerCase()] = "Owner";
   }
 
   return roles;
