@@ -2,14 +2,18 @@
 
 import { Button } from "@/components/Utilities/Button";
 import { PAGES } from "@/utilities/pages";
-import { ChevronLeftIcon, CheckCircleIcon } from "@heroicons/react/20/solid";
+import { ChevronLeftIcon, CheckCircleIcon, ExclamationTriangleIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { MappedGrantMilestone } from "@/services/milestones";
 import { useProjectGrantMilestones } from "@/hooks/useProjectGrantMilestones";
 import { useMilestoneCompletionVerification } from "@/hooks/useMilestoneCompletionVerification";
 import { CommentsAndActivity } from "./CommentsAndActivity";
 import { useAccount } from "wagmi";
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { getProjectMemberRoles } from "@/utilities/getProjectMemberRoles";
+import { Project } from "@show-karma/karma-gap-sdk/core/class/entities/Project";
+import { getGapClient } from "@/hooks/useGap";
 
 interface MilestonesReviewPageProps {
   communityId: string;
@@ -27,6 +31,48 @@ export function MilestonesReviewPage({
   const [verificationComment, setVerificationComment] = useState("");
 
   const { address } = useAccount();
+  const { isCommunityAdmin, isLoading: isLoadingCommunityAdmin } = useIsCommunityAdmin(
+    communityId
+  );
+  const [isProjectOwnerOrAdmin, setIsProjectOwnerOrAdmin] = useState(false);
+  const [isCheckingProjectRole, setIsCheckingProjectRole] = useState(true);
+
+  // Check if user is project owner/admin
+  useEffect(() => {
+    async function checkProjectRole() {
+      if (!address || !data?.project) {
+        setIsCheckingProjectRole(false);
+        return;
+      }
+
+      try {
+        const gapClient = getGapClient(data.grant.chainID);
+        const fetchedProject = await gapClient.fetch.projectById(data.project.uid);
+        if (!fetchedProject) {
+          setIsProjectOwnerOrAdmin(false);
+          setIsCheckingProjectRole(false);
+          return;
+        }
+
+        // Get roles for all members
+        const roles = await getProjectMemberRoles(
+          data.project,
+          fetchedProject as Project
+        );
+
+        // Check if current user is Owner or Admin
+        const userRole = roles[address.toLowerCase()];
+        setIsProjectOwnerOrAdmin(userRole === "Owner" || userRole === "Admin");
+      } catch (err) {
+        console.error("Error checking project role:", err);
+        setIsProjectOwnerOrAdmin(false);
+      } finally {
+        setIsCheckingProjectRole(false);
+      }
+    }
+
+    checkProjectRole();
+  }, [address, data]);
 
   const { verifyMilestone, isVerifying } = useMilestoneCompletionVerification({
     projectId,
@@ -53,13 +99,43 @@ export function MilestonesReviewPage({
     await verifyMilestone(milestone, data, verificationComment);
   };
 
-  if (isLoading) {
+  // Show loading while checking authorization
+  if (isLoading || isLoadingCommunityAdmin || isCheckingProjectRole) {
     return (
       <div className="container mx-auto mt-4 flex gap-8 flex-col w-full px-4 pb-8">
         <div className="animate-pulse space-y-4">
           <div className="h-8 bg-gray-200 dark:bg-zinc-700 rounded w-1/4"></div>
           <div className="h-4 bg-gray-200 dark:bg-zinc-700 rounded w-1/2"></div>
           <div className="h-64 bg-gray-200 dark:bg-zinc-700 rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Check authorization: user must be logged in AND (community admin OR project owner/admin)
+  const isAuthorized = address && (isCommunityAdmin || isProjectOwnerOrAdmin);
+
+  if (!isAuthorized) {
+    return (
+      <div className="container mx-auto mt-4 flex gap-8 flex-col w-full px-4 pb-8">
+        <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-6">
+          <div className="flex items-center gap-3 mb-3">
+            <ExclamationTriangleIcon className="h-6 w-6 text-red-600 dark:text-red-400" />
+            <h3 className="text-red-800 dark:text-red-200 font-semibold text-lg">
+              Unauthorized Access
+            </h3>
+          </div>
+          <p className="text-red-600 dark:text-red-400 mb-4">
+            {!address
+              ? "You must be logged in to access this page."
+              : "You do not have permission to access this page. Only community administrators and project owners/admins can review milestones."}
+          </p>
+          <Link href={PAGES.ADMIN.MILESTONES(communityId)}>
+            <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white">
+              <ChevronLeftIcon className="h-5 w-5" />
+              Back to Milestones Report
+            </Button>
+          </Link>
         </div>
       </div>
     );
