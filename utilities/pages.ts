@@ -50,6 +50,8 @@ export const PAGES = {
     PROJECTS: `/admin/projects`,
     PAYOUTS: (community: string) => `/community/${community}/admin/payouts`,
     PROGRAM_SCORES: (community: string) => `/community/${community}/admin/program-scores`,
+    PROJECT_MILESTONES: (community: string, projectId: string, programId: string) =>
+      `/community/${community}/admin/${projectId}/milestones?programIds=${programId}`,
   },
   PROJECT: {
     OVERVIEW: (project: string) => `/project/${project}`,

@@ -23,6 +23,11 @@ export const getProjectMemberRoles = async (
     const client = rpcClient[chainName as keyof typeof rpcClient];
     await Promise.all(
       project.members.map(async (member) => {
+        // Skip members without a recipient address
+        if (!member.recipient) {
+          return;
+        }
+
         const isProjectOwner = await projectInstance
           .isOwner(client as any, member.recipient)
           .catch((error) => {
@@ -43,8 +48,8 @@ export const getProjectMemberRoles = async (
       })
     );
   }
-  if (!roles[project?.recipient.toLowerCase()]) {
-    roles[project?.recipient.toLowerCase()] = "Owner";
+  if (project?.recipient && !roles[project.recipient.toLowerCase()]) {
+    roles[project.recipient.toLowerCase()] = "Owner";
   }
 
   return roles;
