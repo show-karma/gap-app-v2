@@ -1,6 +1,7 @@
 "use client";
 import { useEffect } from "react";
 import { getDetailedErrorInfo } from "@/utilities/donations/errorMessages";
+import Link from "next/link";
 
 /**
  * Next.js App Router error page for donation checkout route
@@ -97,21 +98,21 @@ export default function DonationCheckoutError({
           >
             Try Again
           </button>
-          <a
+          <Link
             href="/community"
             className="flex-1 rounded-xl border-2 border-gray-300 bg-white px-4 py-3 text-center text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-zinc-900 dark:text-gray-300 dark:hover:bg-zinc-800"
           >
             Back to Communities
-          </a>
+          </Link>
         </div>
 
         <div className="mt-4 text-center">
-          <a
+          <Link
             href="/"
             className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
           >
             Return to Home
-          </a>
+          </Link>
         </div>
       </div>
     </div>

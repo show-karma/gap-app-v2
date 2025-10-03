@@ -103,7 +103,7 @@ export function ValidationErrors({
                 {project?.title || "Project"}: Missing Payout Address
               </div>
               <div className="text-xs text-red-700 dark:text-red-300">
-                This project hasn't configured a payout address. Donation is blocked for security.
+                {`This project hasn't configured a payout address. Donation is blocked for security.`}
               </div>
               <div className="mt-2 text-xs font-medium text-blue-700 dark:text-blue-300">
                 What you can do:
@@ -156,7 +156,7 @@ export function ValidationErrors({
                   <ul className="mt-1 space-y-0.5 text-xs text-red-700 dark:text-red-300">
                     <li>• Check your wallet directly for balance</li>
                     <li>• Refresh the page to retry fetching balances</li>
-                    <li>• Ensure you're connected to the correct network</li>
+                    <li>• {`Ensure you're connected to the correct network`}</li>
                   </ul>
                 </>
               )}

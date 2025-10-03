@@ -13,22 +13,7 @@ interface CompletedDonationsProps {
 export function CompletedDonations({ session, onStartNewDonation }: CompletedDonationsProps) {
   const params = useParams();
   const communityId = params.communityId as string;
-  // Safety check
-  if (!session || !session.donations || session.donations.length === 0) {
-    return (
-      <div className="min-h-screen my-8 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600 dark:text-gray-400">No donation data available</p>
-          <button
-            onClick={onStartNewDonation}
-            className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
-          >
-            Browse Projects
-          </button>
-        </div>
-      </div>
-    );
-  }
+
 
   const successfulDonations = useMemo(
     () => session.donations.filter((d) => d.status === "success"),
@@ -60,6 +45,23 @@ export function CompletedDonations({ session, onStartNewDonation }: CompletedDon
       symbol: token.symbol,
     }));
   }, [successfulDonations]);
+
+  // Safety check
+  if (!session || !session.donations || session.donations.length === 0) {
+    return (
+      <div className="min-h-screen my-8 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600 dark:text-gray-400">No donation data available</p>
+          <button
+            onClick={onStartNewDonation}
+            className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+          >
+            Browse Projects
+          </button>
+        </div>
+      </div>
+    );
+  }
 
 
   return (
