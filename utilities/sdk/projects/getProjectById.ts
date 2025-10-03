@@ -1,7 +1,6 @@
 import { errorManager } from "@/components/Utilities/errorManager";
-import { getGapClient } from "@/hooks/useGap";
+import { getGapClient, getDefaultGapChainId } from "@/hooks/useGap";
 import { zeroUID } from "@/utilities/commons";
-import { appNetwork } from "@/utilities/network";
 import type { Project } from "@show-karma/karma-gap-sdk/core/class/entities/Project";
 import { Hex } from "viem";
 
@@ -9,7 +8,9 @@ export const getProjectById = async (
   projectId: string
 ): Promise<Project | undefined> => {
   try {
-    const gap = getGapClient(appNetwork[0].id);
+    const defaultChainId = getDefaultGapChainId();
+    if (!defaultChainId) return;
+    const gap = getGapClient(defaultChainId);
     if (!gap) return;
     const fetchedProject = await (projectId.startsWith("0x")
       ? gap.fetch.projectById(projectId as Hex)

@@ -1,3 +1,6 @@
+// Import custom donation commands
+import "./donation-commands";
+
 export const EXAMPLE = {
   COMMUNITY: "gitcoin",
   PROJECT: "kyberswap",

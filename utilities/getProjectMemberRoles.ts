@@ -1,7 +1,5 @@
-import { getGapClient } from "@/hooks/useGap";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { getChainNameById } from "./network";
-import { rpcClient } from "./rpcClient";
+import { getRPCClient } from "./rpcClient";
 import { Project } from "@show-karma/karma-gap-sdk/core/class/entities/Project";
 
 export interface Member {
@@ -18,9 +16,7 @@ export const getProjectMemberRoles = async (
 ) => {
   const roles: Record<string, Member["role"]> = {};
   if (project?.members) {
-    const gap = getGapClient(project.chainID);
-    const chainName = getChainNameById(project.chainID);
-    const client = rpcClient[chainName as keyof typeof rpcClient];
+    const client = await getRPCClient(project.chainID);
     await Promise.all(
       project.members.map(async (member) => {
         const isProjectOwner = await projectInstance
