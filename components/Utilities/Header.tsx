@@ -432,12 +432,11 @@ export default function Header() {
                   return (
                     <div>
                       {(() => {
+
                         if (!isAuth || !account) {
                           return (
                             <button
-                              onClick={() => {
-                                login?.();
-                              }}
+                              onClick={login}
                               type="button"
                               className="rounded-md border border-brand-blue dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-brand-blue hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
                             >
