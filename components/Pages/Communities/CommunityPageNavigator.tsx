@@ -42,7 +42,8 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
     isActive: (pathname: string) =>
       !pathname.includes("/impact") &&
       !pathname.includes("/project-discovery") &&
-      !pathname.includes("/updates"),
+      !pathname.includes("/updates") &&
+      !pathname.includes("/donate"),
   },
   {
     path: (communityId: string) => PAGES.COMMUNITY.UPDATES(communityId),
@@ -58,7 +59,7 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
     showNewTag: false,
   },
   {
-    path: (communityId: string) => PAGES.COMMUNITY.IMPACT(communityId),
+    path: (communityId: string) => PAGES.COMMUNITY.DONATE(communityId),
     title: () => "Donate to projects",
     Icon: BanknotesIcon,
     isActive: (pathname: string) => pathname.includes("/donate"),

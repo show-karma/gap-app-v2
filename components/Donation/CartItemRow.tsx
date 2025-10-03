@@ -102,7 +102,11 @@ export function CartItemRow({
         {/* Amount Input - 3 columns */}
         <div className="col-span-3">
           <div className="relative">
+            <label htmlFor={`amount-${item.uid}`} className="sr-only">
+              Donation amount for {item.title}
+            </label>
             <input
+              id={`amount-${item.uid}`}
               type="number"
               min="0"
               step="0.000001"
@@ -110,28 +114,43 @@ export function CartItemRow({
               onChange={(e) => onAmountChange(e.target.value)}
               placeholder="0.00"
               disabled={!selectedToken}
-              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-right text-sm font-mono font-semibold shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-right text-sm font-mono font-semibold shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              aria-label={`Donation amount for ${item.title}${
+                selectedToken ? ` in ${selectedToken.symbol}` : ""
+              }`}
+              aria-describedby={`balance-${item.uid}`}
+              aria-invalid={
+                currentAmount
+                  ? parseFloat(currentAmount) <= 0
+                  : undefined
+              }
             />
             {selectedToken && (
-              <div className="absolute inset-y-0 left-2 flex items-center">
+              <div
+                className="absolute inset-y-0 left-2 flex items-center"
+                aria-hidden="true"
+              >
                 <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
                   {selectedToken.symbol}
                 </span>
               </div>
             )}
           </div>
-          <BalanceDisplay
-            selectedToken={selectedToken}
-            balanceByTokenKey={balanceByTokenKey}
-          />
+          <div id={`balance-${item.uid}`}>
+            <BalanceDisplay
+              selectedToken={selectedToken}
+              balanceByTokenKey={balanceByTokenKey}
+            />
+          </div>
         </div>
 
         {/* Remove Button - 1 column */}
         <div className="col-span-1 flex justify-end">
           <button
             onClick={onRemove}
-            className="rounded-full border border-red-200 p-1.5 text-red-600 transition hover:bg-red-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-900/20"
-            aria-label={`Remove ${item.title} from cart`}
+            className="rounded-full border border-red-200 p-1.5 text-red-600 transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-900/20 dark:focus:ring-offset-gray-900"
+            aria-label={`Remove ${item.title} from donation cart`}
+            title={`Remove ${item.title}`}
           >
             <svg
               width="14"
@@ -140,6 +159,7 @@ export function CartItemRow({
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
+              aria-hidden="true"
             >
               <path d="M3 6h18" />
               <path d="m8 6-1 14h10L16 6" />

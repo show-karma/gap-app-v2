@@ -2,6 +2,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { SupportedToken } from "@/constants/supportedTokens";
+import { DONATION_CONSTANTS, isCartFull, isCartSizeWarning } from "@/constants/donation";
 
 export type DonationCartItem = {
   uid: string;
@@ -17,19 +18,45 @@ export type DonationPayment = {
   chainId: number;
 };
 
+export type CompletedDonation = {
+  projectId: string;
+  projectTitle: string;
+  projectSlug?: string;
+  projectImageURL?: string;
+  amount: string;
+  token: SupportedToken;
+  chainId: number;
+  transactionHash: string;
+  timestamp: number;
+  status: "success" | "failed";
+};
+
+export type DonationSession = {
+  id: string;
+  timestamp: number;
+  donations: CompletedDonation[];
+  totalProjects: number;
+};
+
 interface DonationCartState {
   items: DonationCartItem[];
   amounts: Record<string, string>; // projectId -> amount
   selectedTokens: Record<string, SupportedToken>; // projectId -> selected token
   payments: DonationPayment[]; // final payment configuration
-  add: (item: DonationCartItem) => void;
+  lastCompletedSession: DonationSession | null; // track last completed donation session
+  add: (item: DonationCartItem) => boolean; // returns false if cart is full
   remove: (uid: string) => void;
-  toggle: (item: DonationCartItem) => void;
+  toggle: (item: DonationCartItem) => boolean; // returns false if cart is full
   clear: () => void;
   setAmount: (uid: string, amount: string) => void;
   setSelectedToken: (projectId: string, token: SupportedToken) => void;
   getPaymentForProject: (projectId: string) => DonationPayment | undefined;
   updatePayments: () => void; // sync payments array with current state
+  isCartFull: () => boolean;
+  isCartWarning: () => boolean;
+  getCartSize: () => number;
+  setLastCompletedSession: (session: DonationSession) => void;
+  clearLastCompletedSession: () => void;
 }
 
 export const useDonationCart = create<DonationCartState>()(
@@ -39,12 +66,23 @@ export const useDonationCart = create<DonationCartState>()(
       amounts: {},
       selectedTokens: {},
       payments: [],
-      add: (item) =>
-        set((state) =>
-          state.items.find((i) => i.uid === item.uid)
-            ? state
-            : { items: [...state.items, item] }
-        ),
+      lastCompletedSession: null,
+      add: (item) => {
+        const state = get();
+
+        // Check if item already exists
+        if (state.items.find((i) => i.uid === item.uid)) {
+          return true; // Already in cart, success
+        }
+
+        // Check if cart is full
+        if (state.items.length >= DONATION_CONSTANTS.MAX_CART_SIZE) {
+          return false; // Cart is full, cannot add
+        }
+
+        set({ items: [...state.items, item] });
+        return true; // Successfully added
+      },
       remove: (uid) =>
         set((state) => {
           const newAmounts = { ...state.amounts };
@@ -60,11 +98,14 @@ export const useDonationCart = create<DonationCartState>()(
           };
         }),
       toggle: (item) => {
-        const exists = get().items.some((i) => i.uid === item.uid);
+        const state = get();
+        const exists = state.items.some((i) => i.uid === item.uid);
+
         if (exists) {
-          get().remove(item.uid);
+          state.remove(item.uid);
+          return true; // Successfully removed
         } else {
-          get().add(item);
+          return state.add(item); // Returns true if added, false if cart full
         }
       },
       clear: () => set({ 
@@ -86,11 +127,11 @@ export const useDonationCart = create<DonationCartState>()(
       updatePayments: () => {
         const state = get();
         const newPayments: DonationPayment[] = [];
-        
+
         state.items.forEach((item) => {
           const amount = state.amounts[item.uid];
           const token = state.selectedTokens[item.uid];
-          
+
           if (amount && token && parseFloat(amount) > 0) {
             newPayments.push({
               projectId: item.uid,
@@ -100,8 +141,26 @@ export const useDonationCart = create<DonationCartState>()(
             });
           }
         });
-        
+
         set({ payments: newPayments });
+      },
+      isCartFull: () => {
+        const state = get();
+        return isCartFull(state.items.length);
+      },
+      isCartWarning: () => {
+        const state = get();
+        return isCartSizeWarning(state.items.length);
+      },
+      getCartSize: () => {
+        const state = get();
+        return state.items.length;
+      },
+      setLastCompletedSession: (session) => {
+        set({ lastCompletedSession: session });
+      },
+      clearLastCompletedSession: () => {
+        set({ lastCompletedSession: null });
       },
     }),
     {

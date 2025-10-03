@@ -1,9 +1,14 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback } from "react";
 import { useAccount } from "wagmi";
 import toast from "react-hot-toast";
 import type { SupportedToken } from "@/constants/supportedTokens";
 import { useDonationTransfer } from "@/hooks/useDonationTransfer";
 import { getShortErrorMessage, parseDonationError } from "@/utilities/donations/errorMessages";
+import {
+  NETWORK_CONSTANTS,
+  UX_CONSTANTS,
+} from "@/constants/donation";
+import { useDonationCart } from "@/store/donationCart";
 
 interface DonationPayment {
   projectId: string;
@@ -107,7 +112,7 @@ export function useDonationCheckout() {
                 await switchToNetwork(payment.chainId);
 
                 let attempts = 0;
-                const maxAttempts = 10;
+                const maxAttempts = NETWORK_CONSTANTS.WALLET_SYNC_MAX_ATTEMPTS;
 
                 while (attempts < maxAttempts) {
                   const freshWalletClient = await getFreshWalletClient(payment.chainId);
@@ -118,7 +123,9 @@ export function useDonationCheckout() {
                   }
 
                   attempts++;
-                  await new Promise((resolve) => setTimeout(resolve, 1000));
+                  await new Promise((resolve) =>
+                    setTimeout(resolve, NETWORK_CONSTANTS.WALLET_SYNC_DELAY_MS)
+                  );
                 }
 
                 throw new Error(
@@ -136,9 +143,57 @@ export function useDonationCheckout() {
         );
 
         const hasFailures = results.some((result) => result.status === "error");
+
+        // Create completed session record with transaction details
+        const cartState = useDonationCart.getState();
+        const completedDonations = results.map((result) => {
+          // Find the matching payment by projectId
+          const payment = payments.find(p => p.projectId === result.projectId);
+          if (!payment) {
+            console.error(`No payment found for result projectId: ${result.projectId}`);
+            return null;
+          }
+
+          const cartItem = cartState.items.find(item => item.uid === payment.projectId);
+
+          return {
+            projectId: payment.projectId,
+            projectTitle: cartItem?.title || payment.projectId,
+            projectSlug: cartItem?.slug,
+            projectImageURL: cartItem?.imageURL,
+            amount: payment.amount,
+            token: payment.token,
+            chainId: payment.chainId,
+            transactionHash: result.status === "success" ? result.hash : "",
+            timestamp: Date.now(),
+            status: (result.status === "success" ? "success" : "failed") as "success" | "failed",
+          };
+        }).filter((d): d is NonNullable<typeof d> => d !== null);
+
+        // Only create session if we have completed donations
+        if (completedDonations.length > 0) {
+          const session = {
+            id: `session-${Date.now()}`,
+            timestamp: Date.now(),
+            donations: completedDonations,
+            totalProjects: payments.length,
+          };
+
+          console.log('Saving completed session:', session);
+          // Save the completed session before clearing cart
+          cartState.setLastCompletedSession(session);
+        } else {
+          console.warn('No completed donations to save in session');
+        }
+
         if (hasFailures) {
           toast.error("Some donations failed. Review the status below.");
+          // Still clear the cart even with failures, but show the results
+          cartState.clear();
         } else {
+          // Clear cart on successful donation
+          cartState.clear();
+
           const tokensNeedingApproval = approvalInfo.filter((info) => info.needsApproval);
           if (tokensNeedingApproval.length > 0) {
             toast.success("Tokens approved successfully! Batch donation submitted.");
@@ -152,7 +207,7 @@ export function useDonationCheckout() {
 
         // Show user-friendly error message
         toast.error(parsedError.message, {
-          duration: 5000,
+          duration: UX_CONSTANTS.ERROR_TOAST_DURATION_MS,
         });
       }
     },

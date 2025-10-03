@@ -1,16 +1,17 @@
 "use client";
 import { useParams } from "next/navigation";
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useMemo } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { AutoSizer, Grid } from "react-virtualized";
-import { ProjectV2, CommunityProjectsV2Response } from "@/types/community";
-import { getCommunityProjectsV2 } from "@/utilities/queries/getCommunityDataV2";
+import { CommunityProjectsV2Response } from "@/types/community";
 import { projectV2ToGrant } from "@/utilities/adapters/projectV2ToGrant";
 import { GrantCard } from "./GrantCard";
 import { CardListSkeleton } from "./Pages/Communities/Loading";
 import { useDonationCart } from "@/store";
 import Link from "next/link";
 import { PAGES } from "@/utilities/pages";
+import { DonationProgramDropdown } from "./Donation/ProgramDropdown";
+import { useCommunityProjectsPaginated } from "@/hooks/useCommunityProjectsPaginated";
 
 interface CommunityGrantsDonateProps {
   initialProjects: CommunityProjectsV2Response;
@@ -20,72 +21,52 @@ export const CommunityGrantsDonate = ({ initialProjects }: CommunityGrantsDonate
   const params = useParams();
   const communityId = params.communityId as string;
   const programId = params.programId as string;
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [projects, setProjects] = useState<ProjectV2[]>(initialProjects.payload);
-  const [haveMore, setHaveMore] = useState(initialProjects.pagination.hasNextPage);
-  const itemsPerPage = 12;
   const { items, toggle } = useDonationCart();
 
-  const loadMore = useCallback(() => {
-    if (!loading) {
-      setCurrentPage((prev) => prev + 1);
-    }
-  }, [loading]);
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+  } = useCommunityProjectsPaginated({
+    communityId,
+    programId,
+    itemsPerPage: 12,
+  });
 
-  useEffect(() => {
-    if (!communityId || !programId) return;
-
-    const fetchNewProjects = async () => {
-      if (loading) return;
-
-      setLoading(true);
-      try {
-        const response = await getCommunityProjectsV2(communityId, {
-          page: currentPage,
-          limit: itemsPerPage,
-          selectedProgramId: programId,
-        });
-
-        if (response.payload && response.payload.length) {
-          setHaveMore(response.pagination.hasNextPage);
-          setProjects((prev) =>
-            currentPage === 1 ? response.payload : [...prev, ...response.payload]
-          );
-        } else {
-          setHaveMore(false);
-          if (currentPage === 1) {
-            setProjects([]);
-          }
-        }
-      } catch (error) {
-        console.error("Error while fetching donate projects", error);
-        setProjects([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchNewProjects();
-  }, [communityId, programId, currentPage]);
-
-  useEffect(() => {
-    if (currentPage === 1 && projects.length === 0 && initialProjects.payload.length > 0) {
-      setProjects(initialProjects.payload);
-      setHaveMore(initialProjects.pagination.hasNextPage);
-    }
-  }, [initialProjects, projects.length, currentPage]);
+  // Flatten all pages into a single array
+  const projects = useMemo(() => {
+    if (!data?.pages) return initialProjects.payload;
+    return data.pages.flatMap((page) => page.payload);
+  }, [data, initialProjects.payload]);
 
   return (
     <div className="flex flex-col gap-4 w-full relative">
+      {/* Header with Program Dropdown and Cart */}
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-2">
+        <DonationProgramDropdown />
+
+        {items.length > 0 && (
+          <Link
+            href={PAGES.COMMUNITY.DONATE_PROGRAM_CHECKOUT(communityId, programId)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm hover:shadow-md text-sm font-medium"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            Cart ({items.length})
+          </Link>
+        )}
+      </div>
+
       <section className="flex flex-col gap-4 md:flex-row">
         <div className="h-full w-full mb-8">
           {projects.length > 0 ? (
             <InfiniteScroll
               dataLength={projects.length}
-              next={loadMore}
-              hasMore={haveMore}
+              next={fetchNextPage}
+              hasMore={hasNextPage || false}
               loader={null}
               style={{ width: "100%", height: "100%" }}
             >
@@ -183,7 +164,7 @@ export const CommunityGrantsDonate = ({ initialProjects }: CommunityGrantsDonate
               </AutoSizer>
             </InfiniteScroll>
           ) : null}
-          {loading ? (
+          {(isLoading || isFetchingNextPage) ? (
             <div className="w-full flex items-center justify-center">
               <CardListSkeleton />
             </div>

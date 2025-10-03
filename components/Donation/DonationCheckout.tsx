@@ -19,6 +19,8 @@ import { DonationAlerts } from "./DonationAlerts";
 import { CheckoutHeader } from "./CheckoutHeader";
 import { EmptyCart } from "./EmptyCart";
 import { CartItemList } from "./CartItemList";
+import { NetworkSwitchPreview } from "./NetworkSwitchPreview";
+import { CompletedDonations } from "./CompletedDonations";
 
 export function DonationCheckout() {
   const {
@@ -31,6 +33,8 @@ export function DonationCheckout() {
     clear,
     updatePayments,
     payments,
+    lastCompletedSession,
+    clearLastCompletedSession,
   } = useDonationCart();
   const router = useRouter();
   const params = useParams();
@@ -199,12 +203,27 @@ export function DonationCheckout() {
   ]);
 
   // Early return after all hooks have been called
+  // If cart is empty, check if we have a completed session to show
   if (!items.length) {
+    console.log('Cart is empty. lastCompletedSession:', lastCompletedSession);
+
+    if (lastCompletedSession) {
+      console.log('Rendering CompletedDonations with session:', lastCompletedSession);
+      return (
+        <CompletedDonations
+          session={lastCompletedSession}
+          onStartNewDonation={() => {
+            clearLastCompletedSession();
+            router.back();
+          }}
+        />
+      );
+    }
     return <EmptyCart onBrowseProjects={() => router.back()} />;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-blue-950">
+    <div className="min-h-screen my-8">
       <div className="mx-auto w-full max-w-7xl px-4 pb-4 sm:px-6 lg:px-8">
         <CheckoutHeader
           communityId={communityId}
@@ -215,6 +234,12 @@ export function DonationCheckout() {
         <div className="flex flex-col gap-8 lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(380px,1fr)] lg:items-start">
           <div className="flex flex-col gap-6">
             <DonationApprovalStatus executionState={executionState} />
+
+            {/* Network Switch Preview - Shows when multiple networks are involved */}
+            <NetworkSwitchPreview
+              payments={payments}
+              currentChainId={currentChainId}
+            />
 
             <CartItemList
               items={items}

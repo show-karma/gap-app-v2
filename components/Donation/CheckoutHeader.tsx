@@ -15,29 +15,6 @@ export function CheckoutHeader({
     <div className="mb-4 -mt-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-sm">
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4" />
-              <path d="M4 6v12c0 1.1.9 2 2 2h14v-4" />
-              <path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z" />
-            </svg>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
-            <span className="capitalize">{communityId || "Community"}</span>
-            <span>•</span>
-            <span>Program Donations</span>
-            <span>•</span>
-            <span className="font-medium text-gray-900 dark:text-white">
-              {totalItems} {totalItems === 1 ? "project" : "projects"}
-            </span>
-          </div>
           <h1 className="text-lg font-bold tracking-tight text-gray-900 dark:text-white ml-2">
             Donation Checkout
           </h1>

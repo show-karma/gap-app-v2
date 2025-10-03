@@ -3,6 +3,13 @@ import { useAccount } from "wagmi";
 import { useTokenBalances, useMultiChainTokenBalances } from "@/hooks/useTokenBalances";
 import type { SupportedToken } from "@/constants/supportedTokens";
 import toast from "react-hot-toast";
+import {
+  BALANCE_CONSTANTS,
+  NETWORK_CONSTANTS,
+  isCacheValid,
+  getRetryDelay,
+} from "@/constants/donation";
+import { getTokenBalanceKey } from "@/utilities/donations/helpers";
 
 interface TokenBalance {
   token: SupportedToken;
@@ -15,10 +22,19 @@ interface BalanceError {
   canRetry: boolean;
 }
 
-const FETCH_TIMEOUT_MS = 10_000; // 10 seconds
-const SLOW_FETCH_THRESHOLD_MS = 5_000; // 5 seconds
-const MAX_RETRY_ATTEMPTS = 3;
-const RETRY_DELAYS_MS = [1_000, 2_000, 4_000]; // Exponential backoff: 1s, 2s, 4s
+interface CachedBalance {
+  balance: string;
+  timestamp: number;
+}
+
+// In-memory global cache for balance data (5 minute TTL)
+// Shared across all hook instances for better performance
+const globalBalanceCache = new Map<string, CachedBalance>();
+
+const FETCH_TIMEOUT_MS = BALANCE_CONSTANTS.FETCH_TIMEOUT_MS;
+const SLOW_FETCH_THRESHOLD_MS = BALANCE_CONSTANTS.SLOW_FETCH_WARNING_THRESHOLD_MS;
+const MAX_RETRY_ATTEMPTS = NETWORK_CONSTANTS.SWITCH_MAX_RETRIES;
+const RETRY_DELAYS_MS = NETWORK_CONSTANTS.RETRY_DELAYS_MS;
 
 export function useCrossChainBalances(
   currentChainId: number | null,
@@ -46,7 +62,14 @@ export function useCrossChainBalances(
     setBalanceCache((prev) => {
       const next = { ...prev };
       tokenBalances.forEach(({ token, formattedBalance }) => {
-        next[`${token.symbol}-${token.chainId}`] = formattedBalance;
+        const key = getTokenBalanceKey(token);
+        next[key] = formattedBalance;
+
+        // Also update the in-memory global cache
+        globalBalanceCache.set(key, {
+          balance: formattedBalance,
+          timestamp: Date.now(),
+        });
       });
       return next;
     });
@@ -76,6 +99,31 @@ export function useCrossChainBalances(
         setBalanceError(null);
         setRetryAttempt(0);
         setFailedChains([]);
+      }
+
+      // Check cache first - load cached balances progressively
+      const cachedBalances: Record<string, string> = {};
+      let hasCachedData = false;
+
+      cartChainIds.forEach((chainId) => {
+        // Check global cache for each chain's tokens
+        const allKeys = Array.from(globalBalanceCache.keys());
+        const chainTokenKeys = allKeys.filter((key) =>
+          key.endsWith(`-${chainId}`)
+        );
+
+        chainTokenKeys.forEach((key) => {
+          const cached = globalBalanceCache.get(key);
+          if (cached && isCacheValid(cached.timestamp)) {
+            cachedBalances[key] = cached.balance;
+            hasCachedData = true;
+          }
+        });
+      });
+
+      // If we have cached data, show it immediately (progressive loading)
+      if (hasCachedData) {
+        setBalanceCache((prev) => ({ ...prev, ...cachedBalances }));
       }
 
       setIsFetchingCrossChainBalances(true);
@@ -112,7 +160,14 @@ export function useCrossChainBalances(
         setBalanceCache((prev) => {
           const next = { ...prev };
           crossChainBalances.forEach(({ token, formattedBalance }) => {
-            next[`${token.symbol}-${token.chainId}`] = formattedBalance;
+            const key = getTokenBalanceKey(token);
+            next[key] = formattedBalance;
+
+            // Update in-memory global cache with fresh data
+            globalBalanceCache.set(key, {
+              balance: formattedBalance,
+              timestamp: Date.now(),
+            });
           });
           return next;
         });
@@ -175,7 +230,7 @@ export function useCrossChainBalances(
       return;
     }
 
-    const delay = RETRY_DELAYS_MS[retryAttempt] || RETRY_DELAYS_MS[RETRY_DELAYS_MS.length - 1];
+    const delay = getRetryDelay(retryAttempt);
 
     toast.loading(`Retrying in ${delay / 1000} seconds...`, { duration: delay });
 

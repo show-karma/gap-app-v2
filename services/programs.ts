@@ -10,7 +10,7 @@ export const programService = {
   ): Promise<GrantProgram[]> => {
     try {
       const [data, error] = await fetchData(
-        INDEXER.PROGRAMS.COMMUNITY(communityId)
+        INDEXER.PROGRAMS.COMMUNITY(communityId),'GET',{},{},{},false
       );
 
       if (error) {

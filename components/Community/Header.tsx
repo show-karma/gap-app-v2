@@ -45,41 +45,6 @@ const NormalCommunityHeader = ({
 }) => {
   const pathname = usePathname();
   const params = useParams();
-  const isDonatePage = pathname.includes("/donate/");
-  const communityId = (params as any)?.communityId as string | undefined;
-  const programId = (params as any)?.programId as string | undefined;
-
-  // Minimal header for donate page: logo only, no stats or tabs
-  if (isDonatePage) {
-    return (
-      <div className="flex flex-col gap-4 justify-between items-start mt-4 sm:px-3 md:px-4 px-6 border-b border-gray-200 dark:border-gray-800">
-        <div className="flex flex-row gap-4 flex-wrap max-lg:flex-col justify-between items-center w-full">
-          <div className="flex h-max flex-1 flex-row items-center justify-start gap-3 ">
-            <div
-              className="p-3 rounded-xl"
-              style={{
-                backgroundColor:
-                  communityColors[
-                    (community as CommunityDetailsV2)?.uid?.toLowerCase() ||
-                      "black"
-                  ] || "#000000",
-              }}
-            >
-              <div className="flex justify-center border border-white rounded-full p-2">
-                <img
-                  alt={(community as CommunityDetailsV2)?.details?.name}
-                  src={(community as CommunityDetailsV2)?.details?.logoUrl || ""}
-                  className={
-                    "h-14 w-14 min-w-14 min-h-14 rounded-full max-lg:h-8 max-lg:w-8 max-lg:min-h-8 max-lg:min-w-8"
-                  }
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col gap-4 justify-between items-start mt-4 sm:px-3 md:px-4 px-6 border-b border-gray-200 dark:border-gray-800">

@@ -33,6 +33,7 @@ import { validateWalletClient, waitForValidWalletClient } from "@/utilities/wall
 import { getWalletClientWithFallback, isWalletClientGoodEnough } from "@/utilities/walletClientFallback";
 import { validateChainSync } from "@/utilities/chainSyncValidation";
 import { getShortErrorMessage, parseDonationError } from "@/utilities/donations/errorMessages";
+import { TRANSACTION_CONSTANTS } from "@/constants/donation";
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000" as Address;
 const PERMIT_DEADLINE_SECONDS = 3600;
@@ -515,6 +516,7 @@ export function useDonationTransfer() {
           try {
             const receipt = await chainPublicClient.waitForTransactionReceipt({
               hash,
+              confirmations: TRANSACTION_CONSTANTS.REQUIRED_CONFIRMATIONS,
             })
 
             const wasSuccessful = receipt.status === "success";
