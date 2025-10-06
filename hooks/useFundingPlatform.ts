@@ -178,6 +178,7 @@ export const useFundingApplications = (
     limit: 25,
     ...filtersWithoutPage
   };
+  const { authenticated } = useAuth();
 
   const applicationsQuery = useInfiniteQuery({
     queryKey: QUERY_KEYS.applications(programId, chainId, filtersWithDefaults),
@@ -186,7 +187,7 @@ export const useFundingApplications = (
         ...filtersWithDefaults,
         page: pageParam
       }),
-    enabled: !!programId && !!chainId,
+    enabled: !!programId && !!chainId && authenticated,
     getNextPageParam: (lastPage) => {
       const { pagination } = lastPage;
       return pagination.page < pagination.totalPages ? pagination.page + 1 : undefined;
@@ -197,7 +198,7 @@ export const useFundingApplications = (
   const statsQuery = useQuery({
     queryKey: QUERY_KEYS.applicationStats(programId, chainId),
     queryFn: () => fundingPlatformService.applications.getApplicationStatistics(programId, chainId),
-    enabled: !!programId && !!chainId,
+    enabled: !!programId && !!chainId && authenticated,
   });
 
   const submitApplicationMutation = useMutation({
@@ -572,11 +573,12 @@ export const useApplicationExport = (programId: string, chainId: number, isAdmin
  */
 export const useApplication = (applicationId: string | null) => {
   const queryClient = useQueryClient();
+  const { authenticated } = useAuth();
 
   const applicationQuery = useQuery({
     queryKey: QUERY_KEYS.application(applicationId!),
     queryFn: () => fundingApplicationsAPI.getApplication(applicationId!),
-    enabled: !!applicationId,
+    enabled: !!applicationId && authenticated,
   });
 
   const prefetchApplication = useCallback((applicationId: string) => {
