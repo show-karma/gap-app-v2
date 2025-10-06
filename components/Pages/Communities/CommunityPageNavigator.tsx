@@ -58,13 +58,6 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
     isActive: (pathname: string) => pathname.includes("/impact"),
     showNewTag: false,
   },
-  {
-    path: (communityId: string) => PAGES.COMMUNITY.DONATE(communityId),
-    title: () => "Donate to projects",
-    Icon: BanknotesIcon,
-    isActive: (pathname: string) => pathname.includes("/donate"),
-    showNewTag: true,
-  },
   // {
   //   path: (communityId: string) => `/community/${communityId}/karma-ai`,
   //   title: () => "Ask Karma AI",

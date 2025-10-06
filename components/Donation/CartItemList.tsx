@@ -41,9 +41,9 @@ export function CartItemList({
   onRemove,
 }: CartItemListProps) {
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 divide-y divide-gray-200 dark:divide-gray-700">
       {/* Table Header */}
-      <div className="grid grid-cols-12 gap-3 items-center px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+      <div className="grid grid-cols-12 gap-3 items-center px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400">
         <div className="col-span-4">Project</div>
         <div className="col-span-4">Payment Token</div>
         <div className="col-span-3 text-right">Amount</div>

@@ -6,6 +6,7 @@ import type { SupportedToken } from "@/constants/supportedTokens";
 import { TokenSelector } from "./TokenSelector";
 import { PayoutAddressDisplay } from "./PayoutAddressDisplay";
 import { BalanceDisplay } from "./BalanceDisplay";
+import { TrashIcon } from "@heroicons/react/24/outline";
 
 interface CartItem {
   uid: string;
@@ -46,7 +47,7 @@ export function CartItemRow({
   onRemove,
 }: CartItemRowProps) {
   return (
-    <div className="group relative overflow-hidden rounded-lg border border-gray-200/60 bg-white/90 p-3 shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-blue-200 hover:shadow-md dark:border-gray-800/60 dark:bg-gray-900/90 dark:hover:border-blue-800">
+    <div className="group relative overflow-hidden bg-white/90 p-3 transition-all duration-200 hover:border-blue-200 dark:border-gray-800/60 dark:bg-transparent dark:hover:border-blue-800">
       <div className="grid grid-cols-12 gap-3 items-center">
         {/* Project Info - 4 columns */}
         <div className="col-span-4 flex items-center gap-3">
@@ -67,20 +68,9 @@ export function CartItemRow({
               rel="noopener noreferrer"
               className="group/link inline-flex items-center gap-1.5"
             >
-              <h3 className="text-sm font-semibold text-gray-900 transition group-hover/link:text-blue-600 dark:text-gray-100 dark:group-hover/link:text-blue-400 truncate">
+              <h3 className="text-sm font-semibold underline text-gray-900 transition group-hover/link:text-blue-600 dark:text-gray-100 dark:group-hover/link:text-blue-400 truncate">
                 {item.title}
               </h3>
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                className="text-gray-400 transition group-hover/link:text-blue-500 group-hover/link:translate-x-0.5 dark:text-gray-500 flex-shrink-0"
-              >
-                <path d="M7 17L17 7M17 7H7M17 7V17" />
-              </svg>
             </Link>
             <div className="flex items-center gap-1 mt-0.5">
               <PayoutAddressDisplay
@@ -115,9 +105,8 @@ export function CartItemRow({
               placeholder="0.00"
               disabled={!selectedToken}
               className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-right text-sm font-mono font-semibold shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-              aria-label={`Donation amount for ${item.title}${
-                selectedToken ? ` in ${selectedToken.symbol}` : ""
-              }`}
+              aria-label={`Donation amount for ${item.title}${selectedToken ? ` in ${selectedToken.symbol}` : ""
+                }`}
               aria-describedby={`balance-${item.uid}`}
               aria-invalid={
                 currentAmount
@@ -148,24 +137,11 @@ export function CartItemRow({
         <div className="col-span-1 flex justify-end">
           <button
             onClick={onRemove}
-            className="rounded-full border border-red-200 p-1.5 text-red-600 transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-900/20 dark:focus:ring-offset-gray-900"
+            className="text-red-500"
             aria-label={`Remove ${item.title} from donation cart`}
             title={`Remove ${item.title}`}
           >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              aria-hidden="true"
-            >
-              <path d="M3 6h18" />
-              <path d="m8 6-1 14h10L16 6" />
-              <path d="M10 11v6" />
-              <path d="M14 11v6" />
-            </svg>
+            <TrashIcon className="w-6 h-6" />
           </button>
         </div>
       </div>

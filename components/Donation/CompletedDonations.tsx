@@ -66,7 +66,7 @@ export function CompletedDonations({ session, onStartNewDonation }: CompletedDon
 
   return (
     <div className="min-h-screen my-8">
-      <div className="mx-auto w-full max-w-7xl px-4 pb-4 sm:px-6 lg:px-8">
+      <div className="w-full pb-4">
         {/* Success Header */}
         <div className="mb-8 text-center">
           <div className="mb-4 inline-flex items-center justify-center rounded-full bg-green-100 p-4 dark:bg-green-900/30">

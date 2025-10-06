@@ -48,7 +48,7 @@ export function TokenSelector({
             const balanceValue = balanceByTokenKey[key];
             const balanceDisplay = balanceValue
               ? parseFloat(balanceValue).toFixed(4)
-              : "0.0000";
+              : "0";
             const networkName = SUPPORTED_NETWORKS[token.chainId]?.chainName || token.chainName;
             return (
               <option key={key} value={key}>
@@ -57,22 +57,7 @@ export function TokenSelector({
             );
           })}
         </select>
-        <div
-          className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2"
-          aria-hidden="true"
-        >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            className="text-gray-400"
-          >
-            <path d="M6 9L12 15L18 9" />
-          </svg>
-        </div>
+
       </div>
       {selectedToken && (
         <div className="flex items-center gap-1 mt-1" id={`${selectId}-network`}>

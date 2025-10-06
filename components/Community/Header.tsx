@@ -95,10 +95,14 @@ export default function CommunityHeader({
   const pathname = usePathname();
   const isAdminPage = pathname.includes("/admin");
   const isReviewerPage = pathname.includes("/reviewer");
+  const isDonatePage = pathname.includes("/donate");
   if (isAdminPage) {
     return <AdminCommunityHeader community={community} />;
   }
   if (isReviewerPage) {
+    return null;
+  }
+  if (isDonatePage) {
     return null;
   }
   return <NormalCommunityHeader community={community} />;

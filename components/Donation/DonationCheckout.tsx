@@ -21,6 +21,7 @@ import { EmptyCart } from "./EmptyCart";
 import { CartItemList } from "./CartItemList";
 import { NetworkSwitchPreview } from "./NetworkSwitchPreview";
 import { CompletedDonations } from "./CompletedDonations";
+import { InformationCircleIcon } from "@heroicons/react/24/outline";
 
 export function DonationCheckout() {
   const {
@@ -224,15 +225,33 @@ export function DonationCheckout() {
 
   return (
     <div className="min-h-screen my-8">
-      <div className="mx-auto w-full max-w-7xl px-4 pb-4 sm:px-6 lg:px-8">
-        <CheckoutHeader
-          communityId={communityId}
-          totalItems={totalItems}
-          onClear={clear}
-        />
+      <div className="w-full pb-4">
 
         <div className="flex flex-col gap-8 lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(380px,1fr)] lg:items-start">
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-3">
+            <CheckoutHeader
+              communityId={communityId}
+              totalItems={totalItems}
+              onClear={clear}
+            />
+
+            {!canProceed ?
+              <div className="flex items-center p-3 relative bg-[#EFF4FF] dark:bg-[#101828] rounded-lg overflow-hidden">
+                <div className="flex items-start gap-3 relative flex-1 grow">
+                  <div className="relative w-6 h-6 aspect-[1]">
+                    <InformationCircleIcon className="w-6 h-6 text-primary-500" />
+                  </div>
+
+                  <div className="flex flex-col items-start justify-center relative flex-1 grow">
+                    <p className="text-sm font-semibold text-primary-500">Select tokens and amounts</p>
+                    <p className="relative self-stretch font-text-sm-regular font-[number:var(--text-sm-regular-font-weight)] text-primary-500 text-[length:var(--text-sm-regular-font-size)] tracking-[var(--text-sm-regular-letter-spacing)] leading-[var(--text-sm-regular-line-height)] [font-style:var(--text-sm-regular-font-style)]">
+                      Approve each token once per network, then confirm your batch
+                      transfer. Donations across multiple chains are handled securely.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              : null}
             <DonationApprovalStatus executionState={executionState} />
 
             {/* Network Switch Preview - Shows when multiple networks are involved */}
@@ -264,45 +283,25 @@ export function DonationCheckout() {
 
             <DonationSummary payments={payments} />
 
-            <div className="rounded-2xl border border-gray-200 bg-white/80 p-6 shadow-sm dark:border-gray-800 dark:bg-zinc-950/70 backdrop-blur-sm">
-              <div className="flex flex-col gap-4">
-                <button
-                  onClick={() => router.back()}
-                  className="inline-flex items-center gap-2 self-start rounded-full border border-gray-200/60 px-4 py-2.5 text-xs font-medium text-gray-600 transition-all duration-200 hover:bg-gray-50 hover:border-gray-300 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:border-gray-600"
-                >
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                  >
-                    <path d="m15 18-6-6 6-6" />
-                  </svg>
-                  Continue exploring
-                </button>
 
-                <DonationExecutor
-                  transfers={transfers}
-                  items={items}
-                  selectedTokens={selectedTokens}
-                  validationErrors={validationErrors}
-                  missingPayouts={missingPayouts}
-                  isExecuting={isExecuting}
-                  isSwitching={isSwitching}
-                  isFetchingPayouts={isFetchingPayouts}
-                  isFetchingCrossChainBalances={isFetchingCrossChainBalances}
-                  isConnected={isConnected}
-                  address={address}
-                  canProceed={canProceed}
-                  isCurrentNetworkSupported={isCurrentNetworkSupported}
-                  executionState={executionState}
-                  executeButtonLabel={executeButtonLabel}
-                  onExecute={onExecute}
-                />
-              </div>
-            </div>
+            {canProceed ? <DonationExecutor
+              transfers={transfers}
+              items={items}
+              selectedTokens={selectedTokens}
+              validationErrors={validationErrors}
+              missingPayouts={missingPayouts}
+              isExecuting={isExecuting}
+              isSwitching={isSwitching}
+              isFetchingPayouts={isFetchingPayouts}
+              isFetchingCrossChainBalances={isFetchingCrossChainBalances}
+              isConnected={isConnected}
+              address={address}
+              canProceed={canProceed}
+              isCurrentNetworkSupported={isCurrentNetworkSupported}
+              executionState={executionState}
+              executeButtonLabel={executeButtonLabel}
+              onExecute={onExecute}
+            /> : null}
           </aside>
         </div>
 
