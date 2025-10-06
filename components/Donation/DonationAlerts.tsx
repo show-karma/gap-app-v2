@@ -1,5 +1,8 @@
 "use client";
 
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "../Utilities/Button";
+
 interface DonationAlertsProps {
   isConnected: boolean;
   address?: string;
@@ -11,13 +14,14 @@ export function DonationAlerts({
   address,
   isCurrentNetworkSupported,
 }: DonationAlertsProps) {
+  const { login } = useAuth();
   return (
     <>
       {/* Wallet Connection Alert */}
       {(!isConnected || !address) && (
         <div className="rounded-2xl border border-orange-200/60 bg-gradient-to-r from-orange-50 to-amber-50 p-6 shadow-sm dark:border-orange-800/40 dark:from-orange-950/30 dark:to-amber-950/30">
           <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500 text-white shadow-sm">
+            <div className="flex h-10 w-10 min-h-10 min-w-10 items-center justify-center rounded-full bg-orange-500 text-white shadow-sm">
               <svg
                 width="20"
                 height="20"
@@ -36,16 +40,17 @@ export function DonationAlerts({
               <p className="mt-1 text-sm text-orange-700 dark:text-orange-200">
                 Connect your wallet to view token balances and submit donations.
               </p>
+              <Button onClick={login} className="mt-2">Connect Wallet</Button>
             </div>
           </div>
         </div>
       )}
 
       {/* Network Support Alert */}
-      {!isCurrentNetworkSupported && (
+      {!isCurrentNetworkSupported && isConnected && (
         <div className="rounded-2xl border border-yellow-200/60 bg-gradient-to-r from-yellow-50 to-amber-50 p-6 shadow-sm dark:border-yellow-800/40 dark:from-yellow-950/30 dark:to-amber-950/30">
           <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-yellow-500 text-white shadow-sm">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-500 text-white shadow-sm">
               <svg
                 width="20"
                 height="20"

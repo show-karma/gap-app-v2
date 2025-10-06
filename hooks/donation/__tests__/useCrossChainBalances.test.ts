@@ -1,19 +1,22 @@
-import { renderHook, act, waitFor } from "@testing-library/react";
+import { renderHook, waitFor } from "@testing-library/react";
 import { useCrossChainBalances } from "../useCrossChainBalances";
 import type { SupportedToken } from "@/constants/supportedTokens";
 import * as wagmi from "wagmi";
-import toast from "react-hot-toast";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import React from "react";
 
 // Mock dependencies
 jest.mock("wagmi", () => ({
   useAccount: jest.fn(),
 }));
 
-jest.mock("react-hot-toast");
+jest.mock("@/utilities/rpcClient", () => ({
+  getRPCClient: jest.fn(),
+}));
 
-jest.mock("@/hooks/useTokenBalances", () => ({
-  useTokenBalances: jest.fn(),
-  useMultiChainTokenBalances: jest.fn(),
+jest.mock("@/constants/supportedTokens", () => ({
+  ...jest.requireActual("@/constants/supportedTokens"),
+  getTokensByChain: jest.fn(),
 }));
 
 describe("useCrossChainBalances", () => {
@@ -30,7 +33,7 @@ describe("useCrossChainBalances", () => {
   };
 
   const mockToken2: SupportedToken = {
-    address: "0x0000000000000000000000000000000000000000",
+    address: "native",
     symbol: "ETH",
     name: "Ethereum",
     decimals: 18,
@@ -39,335 +42,204 @@ describe("useCrossChainBalances", () => {
     isNative: true,
   };
 
-  const mockCurrentChainBalances = [
-    { token: mockToken1, formattedBalance: "1000" },
-  ];
+  let queryClient: QueryClient;
 
-  const mockCrossChainBalances = [
-    { token: mockToken1, formattedBalance: "1000" },
-    { token: mockToken2, formattedBalance: "5" },
-  ];
+  const createWrapper = () => {
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          retry: false,
+          gcTime: 0,
+        },
+      },
+    });
+
+    return ({ children }: { children: React.ReactNode }) =>
+      React.createElement(QueryClientProvider, { client: queryClient }, children);
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.useFakeTimers();
 
     (wagmi.useAccount as jest.Mock).mockReturnValue({
       address: mockAddress,
       isConnected: true,
     });
 
-    const { useTokenBalances, useMultiChainTokenBalances } = require("@/hooks/useTokenBalances");
+    const { getRPCClient } = require("@/utilities/rpcClient");
+    const { getTokensByChain } = require("@/constants/supportedTokens");
 
-    useTokenBalances.mockReturnValue({
-      tokenBalances: mockCurrentChainBalances,
-      isLoading: false,
+    // Mock getTokensByChain
+    getTokensByChain.mockImplementation((chainId: number) => {
+      if (chainId === 10) return [mockToken1];
+      if (chainId === 8453) return [mockToken2];
+      return [];
     });
 
-    useMultiChainTokenBalances.mockReturnValue({
-      getAllTokensAcrossChains: jest.fn().mockResolvedValue(mockCrossChainBalances),
+    // Mock RPC client
+    getRPCClient.mockImplementation((chainId: number) => {
+      const mockClient = {
+        getBalance: jest.fn().mockResolvedValue(BigInt("5000000000000000000")), // 5 ETH
+        multicall: jest.fn().mockResolvedValue([
+          { status: "success", result: BigInt("1000000000") }, // 1000 USDC
+        ]),
+      };
+      return Promise.resolve(mockClient);
     });
-
-    (toast.error as jest.Mock).mockImplementation(() => {});
-    (toast.loading as jest.Mock).mockImplementation(() => {});
-  });
-
-  afterEach(() => {
-    jest.useRealTimers();
   });
 
   describe("initialization", () => {
-    it("should initialize with empty balance cache", () => {
-      const { result } = renderHook(() =>
-        useCrossChainBalances(10, [10, 8453])
-      );
-
-      expect(result.current.balanceByTokenKey).toEqual({});
-      expect(result.current.isFetchingCrossChainBalances).toBe(false);
-      expect(result.current.balanceError).toBeNull();
-    });
-  });
-
-  describe("current chain balance caching", () => {
-    it("should cache current chain balances", async () => {
-      const { result } = renderHook(() =>
-        useCrossChainBalances(10, [10, 8453])
-      );
-
-      await waitFor(() => {
-        expect(result.current.balanceByTokenKey["USDC-10"]).toBe("1000");
-      });
-    });
-
-    it("should update cache when current chain balances change", async () => {
-      const { useTokenBalances } = require("@/hooks/useTokenBalances");
-
-      const { result, rerender } = renderHook(() =>
-        useCrossChainBalances(10, [10, 8453])
-      );
-
-      await waitFor(() => {
-        expect(result.current.balanceByTokenKey["USDC-10"]).toBe("1000");
-      });
-
-      // Update balances
-      useTokenBalances.mockReturnValue({
-        tokenBalances: [
-          { token: mockToken1, formattedBalance: "2000" },
-        ],
-        isLoading: false,
-      });
-
-      rerender();
-
-      await waitFor(() => {
-        expect(result.current.balanceByTokenKey["USDC-10"]).toBe("2000");
-      });
-    });
-  });
-
-  describe("cross-chain balance fetching", () => {
-    it("should fetch cross-chain balances on mount", async () => {
-      const { useMultiChainTokenBalances } = require("@/hooks/useTokenBalances");
-      const getAllTokensAcrossChains = jest.fn().mockResolvedValue(mockCrossChainBalances);
-
-      useMultiChainTokenBalances.mockReturnValue({
-        getAllTokensAcrossChains,
-      });
-
-      const { result } = renderHook(() =>
-        useCrossChainBalances(10, [10, 8453])
-      );
-
-      expect(result.current.isFetchingCrossChainBalances).toBe(true);
-
-      await waitFor(() => {
-        expect(result.current.isFetchingCrossChainBalances).toBe(false);
-      });
-
-      expect(getAllTokensAcrossChains).toHaveBeenCalled();
-    });
-
-    it("should cache cross-chain balances", async () => {
-      const { result } = renderHook(() =>
-        useCrossChainBalances(10, [10, 8453])
-      );
-
-      await waitFor(() => {
-        expect(result.current.balanceByTokenKey["USDC-10"]).toBe("1000");
-        expect(result.current.balanceByTokenKey["ETH-8453"]).toBe("5");
-      });
-    });
-
     it("should not fetch when wallet not connected", () => {
       (wagmi.useAccount as jest.Mock).mockReturnValue({
         address: null,
         isConnected: false,
       });
 
-      const { useMultiChainTokenBalances } = require("@/hooks/useTokenBalances");
-      const getAllTokensAcrossChains = jest.fn().mockResolvedValue(mockCrossChainBalances);
+      const { result } = renderHook(
+        () => useCrossChainBalances(10, [10, 8453]),
+        { wrapper: createWrapper() }
+      );
 
-      useMultiChainTokenBalances.mockReturnValue({
-        getAllTokensAcrossChains,
-      });
-
-      renderHook(() => useCrossChainBalances(10, [10, 8453]));
-
-      expect(getAllTokensAcrossChains).not.toHaveBeenCalled();
+      expect(result.current.balanceByTokenKey).toEqual({});
+      expect(result.current.isFetchingCrossChainBalances).toBe(false);
     });
 
-    it("should not fetch when no cart chains provided", () => {
-      const { useMultiChainTokenBalances } = require("@/hooks/useTokenBalances");
-      const getAllTokensAcrossChains = jest.fn().mockResolvedValue(mockCrossChainBalances);
+    it("should not fetch when no chains provided", () => {
+      const { result } = renderHook(
+        () => useCrossChainBalances(10, []),
+        { wrapper: createWrapper() }
+      );
 
-      useMultiChainTokenBalances.mockReturnValue({
-        getAllTokensAcrossChains,
-      });
-
-      renderHook(() => useCrossChainBalances(10, []));
-
-      expect(getAllTokensAcrossChains).not.toHaveBeenCalled();
+      expect(result.current.balanceByTokenKey).toEqual({});
+      expect(result.current.isFetchingCrossChainBalances).toBe(false);
     });
   });
 
-  describe("slow fetch warning", () => {
-    it("should set isSlowFetch after 5 seconds", async () => {
-      const { useMultiChainTokenBalances } = require("@/hooks/useTokenBalances");
-      const getAllTokensAcrossChains = jest.fn().mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve(mockCrossChainBalances), 10000))
+  describe("balance fetching", () => {
+    it("should fetch balances from multiple chains", async () => {
+      const { result } = renderHook(
+        () => useCrossChainBalances(10, [10, 8453]),
+        { wrapper: createWrapper() }
       );
-
-      useMultiChainTokenBalances.mockReturnValue({
-        getAllTokensAcrossChains,
-      });
-
-      const { result } = renderHook(() =>
-        useCrossChainBalances(10, [10, 8453])
-      );
-
-      expect(result.current.isSlowFetch).toBe(false);
-
-      // Fast-forward 5 seconds
-      act(() => {
-        jest.advanceTimersByTime(5000);
-      });
 
       await waitFor(() => {
-        expect(result.current.isSlowFetch).toBe(true);
+        expect(result.current.isFetchingCrossChainBalances).toBe(false);
       });
+
+      expect(result.current.balanceByTokenKey["USDC-10"]).toBeDefined();
+      expect(result.current.balanceByTokenKey["ETH-8453"]).toBeDefined();
     });
 
-    it("should clear isSlowFetch on successful fetch", async () => {
-      const { useMultiChainTokenBalances } = require("@/hooks/useTokenBalances");
-      const getAllTokensAcrossChains = jest.fn().mockResolvedValue(mockCrossChainBalances);
+    it("should use react-query caching", async () => {
+      const { getRPCClient } = require("@/utilities/rpcClient");
 
-      useMultiChainTokenBalances.mockReturnValue({
-        getAllTokensAcrossChains,
-      });
-
-      const { result } = renderHook(() =>
-        useCrossChainBalances(10, [10, 8453])
+      const { rerender } = renderHook(
+        () => useCrossChainBalances(10, [10, 8453]),
+        { wrapper: createWrapper() }
       );
-
-      act(() => {
-        jest.advanceTimersByTime(5000);
-      });
 
       await waitFor(() => {
-        expect(result.current.isSlowFetch).toBe(false);
-      });
-    });
-  });
-
-  describe("timeout handling", () => {
-    it("should timeout after 10 seconds", async () => {
-      const { useMultiChainTokenBalances } = require("@/hooks/useTokenBalances");
-      const getAllTokensAcrossChains = jest.fn().mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve(mockCrossChainBalances), 15000))
-      );
-
-      useMultiChainTokenBalances.mockReturnValue({
-        getAllTokensAcrossChains,
+        expect(getRPCClient).toHaveBeenCalled();
       });
 
-      const { result } = renderHook(() =>
-        useCrossChainBalances(10, [10, 8453])
-      );
+      const firstCallCount = (getRPCClient as jest.Mock).mock.calls.length;
 
-      // Fast-forward 10 seconds
-      act(() => {
-        jest.advanceTimersByTime(10000);
-      });
+      // Rerender should use cache
+      rerender();
 
-      await waitFor(() => {
-        expect(result.current.balanceError).not.toBeNull();
-        expect(result.current.balanceError?.message).toContain("timed out");
-      });
+      // Should not call again due to caching
+      expect((getRPCClient as jest.Mock).mock.calls.length).toBe(firstCallCount);
     });
 
-    it("should show error toast on timeout", async () => {
-      const { useMultiChainTokenBalances } = require("@/hooks/useTokenBalances");
-      const getAllTokensAcrossChains = jest.fn().mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve(mockCrossChainBalances), 15000))
+    it("should handle native token balances", async () => {
+      const { result } = renderHook(
+        () => useCrossChainBalances(8453, [8453]),
+        { wrapper: createWrapper() }
       );
 
-      useMultiChainTokenBalances.mockReturnValue({
-        getAllTokensAcrossChains,
+      await waitFor(() => {
+        expect(result.current.isFetchingCrossChainBalances).toBe(false);
       });
 
-      renderHook(() => useCrossChainBalances(10, [10, 8453]));
+      expect(result.current.balanceByTokenKey["ETH-8453"]).toBe("5.0");
+    });
 
-      act(() => {
-        jest.advanceTimersByTime(10000);
-      });
+    it("should handle ERC20 token balances", async () => {
+      const { result } = renderHook(
+        () => useCrossChainBalances(10, [10]),
+        { wrapper: createWrapper() }
+      );
 
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(
-          expect.stringContaining("Unable to load all balances"),
-          expect.any(Object)
-        );
+        expect(result.current.isFetchingCrossChainBalances).toBe(false);
       });
+
+      expect(result.current.balanceByTokenKey["USDC-10"]).toBe("1000.0");
     });
   });
 
   describe("error handling", () => {
-    it("should handle fetch error", async () => {
-      const { useMultiChainTokenBalances } = require("@/hooks/useTokenBalances");
-      const getAllTokensAcrossChains = jest.fn().mockRejectedValue(
-        new Error("Network error")
-      );
+    it("should handle RPC errors gracefully", async () => {
+      const { getRPCClient } = require("@/utilities/rpcClient");
+      getRPCClient.mockRejectedValue(new Error("RPC error"));
 
-      useMultiChainTokenBalances.mockReturnValue({
-        getAllTokensAcrossChains,
-      });
-
-      const { result } = renderHook(() =>
-        useCrossChainBalances(10, [10, 8453])
+      const { result } = renderHook(
+        () => useCrossChainBalances(10, [10]),
+        { wrapper: createWrapper() }
       );
 
       await waitFor(() => {
         expect(result.current.balanceError).not.toBeNull();
-        expect(result.current.balanceError?.message).toContain("Network error");
       });
+
+      expect(result.current.canRetry).toBe(true);
     });
 
-    it("should track failed chains", async () => {
-      const { useMultiChainTokenBalances } = require("@/hooks/useTokenBalances");
-      const getAllTokensAcrossChains = jest.fn().mockRejectedValue(
-        new Error("Network error")
-      );
+    it("should handle multicall failures", async () => {
+      const { getRPCClient } = require("@/utilities/rpcClient");
 
-      useMultiChainTokenBalances.mockReturnValue({
-        getAllTokensAcrossChains,
+      getRPCClient.mockResolvedValue({
+        getBalance: jest.fn().mockResolvedValue(BigInt("5000000000000000000")),
+        multicall: jest.fn().mockResolvedValue([
+          { status: "failure", error: new Error("Token error") },
+        ]),
       });
 
-      const { result } = renderHook(() =>
-        useCrossChainBalances(10, [10, 8453])
+      const { result } = renderHook(
+        () => useCrossChainBalances(10, [10]),
+        { wrapper: createWrapper() }
       );
 
       await waitFor(() => {
-        expect(result.current.failedChains).toEqual([10, 8453]);
+        expect(result.current.isFetchingCrossChainBalances).toBe(false);
       });
+
+      // Should still return result with zero balance as fallback
+      expect(result.current.balanceByTokenKey["USDC-10"]).toBe("0");
     });
+  });
 
-    it("should show error toast on fetch error", async () => {
-      const { useMultiChainTokenBalances } = require("@/hooks/useTokenBalances");
-      const getAllTokensAcrossChains = jest.fn().mockRejectedValue(
-        new Error("Network error")
-      );
-
-      useMultiChainTokenBalances.mockReturnValue({
-        getAllTokensAcrossChains,
-      });
-
-      renderHook(() => useCrossChainBalances(10, [10, 8453]));
-
-      await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(
-          expect.stringContaining("Unable to load all balances"),
-          expect.any(Object)
-        );
-      });
-    });
-
-    it("should clear error on successful retry", async () => {
-      const { useMultiChainTokenBalances } = require("@/hooks/useTokenBalances");
+  describe("retry mechanism", () => {
+    it("should support manual retry", async () => {
+      const { getRPCClient } = require("@/utilities/rpcClient");
       let callCount = 0;
-      const getAllTokensAcrossChains = jest.fn().mockImplementation(() => {
+
+      getRPCClient.mockImplementation(() => {
         callCount++;
         if (callCount === 1) {
           return Promise.reject(new Error("Network error"));
         }
-        return Promise.resolve(mockCrossChainBalances);
+        return Promise.resolve({
+          getBalance: jest.fn().mockResolvedValue(BigInt("5000000000000000000")),
+          multicall: jest.fn().mockResolvedValue([
+            { status: "success", result: BigInt("1000000000") },
+          ]),
+        });
       });
 
-      useMultiChainTokenBalances.mockReturnValue({
-        getAllTokensAcrossChains,
-      });
-
-      const { result } = renderHook(() =>
-        useCrossChainBalances(10, [10, 8453])
+      const { result } = renderHook(
+        () => useCrossChainBalances(10, [10]),
+        { wrapper: createWrapper() }
       );
 
       await waitFor(() => {
@@ -375,209 +247,10 @@ describe("useCrossChainBalances", () => {
       });
 
       // Retry
-      await act(async () => {
-        await result.current.retryFetchBalances();
-      });
-
-      // Fast-forward retry delay
-      act(() => {
-        jest.advanceTimersByTime(1000);
-      });
+      result.current.retryFetchBalances();
 
       await waitFor(() => {
         expect(result.current.balanceError).toBeNull();
-      });
-    });
-  });
-
-  describe("retry mechanism", () => {
-    it("should retry with exponential backoff", async () => {
-      const { useMultiChainTokenBalances } = require("@/hooks/useTokenBalances");
-      const getAllTokensAcrossChains = jest.fn().mockRejectedValue(
-        new Error("Network error")
-      );
-
-      useMultiChainTokenBalances.mockReturnValue({
-        getAllTokensAcrossChains,
-      });
-
-      const { result } = renderHook(() =>
-        useCrossChainBalances(10, [10, 8453])
-      );
-
-      await waitFor(() => {
-        expect(result.current.balanceError).not.toBeNull();
-      });
-
-      // First retry (1 second delay)
-      act(() => {
-        result.current.retryFetchBalances();
-      });
-
-      expect(toast.loading).toHaveBeenCalledWith(
-        expect.stringContaining("1 second"),
-        expect.any(Object)
-      );
-
-      act(() => {
-        jest.advanceTimersByTime(1000);
-      });
-
-      await waitFor(() => {
-        expect(getAllTokensAcrossChains).toHaveBeenCalledTimes(2);
-      });
-    });
-
-    it("should stop retrying after max attempts", async () => {
-      const { useMultiChainTokenBalances } = require("@/hooks/useTokenBalances");
-      const getAllTokensAcrossChains = jest.fn().mockRejectedValue(
-        new Error("Network error")
-      );
-
-      useMultiChainTokenBalances.mockReturnValue({
-        getAllTokensAcrossChains,
-      });
-
-      const { result } = renderHook(() =>
-        useCrossChainBalances(10, [10, 8453])
-      );
-
-      await waitFor(() => {
-        expect(result.current.balanceError).not.toBeNull();
-      });
-
-      // Attempt multiple retries
-      for (let i = 0; i < 5; i++) {
-        await act(async () => {
-          await result.current.retryFetchBalances();
-        });
-
-        act(() => {
-          jest.advanceTimersByTime(5000);
-        });
-      }
-
-      // Should have stopped retrying
-      await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(
-          expect.stringContaining("Maximum retry attempts"),
-          expect.any(Object)
-        );
-      });
-    });
-
-    it("should not retry if not retryable", async () => {
-      const { useMultiChainTokenBalances } = require("@/hooks/useTokenBalances");
-      const getAllTokensAcrossChains = jest.fn().mockRejectedValue(
-        new Error("Network error")
-      );
-
-      useMultiChainTokenBalances.mockReturnValue({
-        getAllTokensAcrossChains,
-      });
-
-      const { result } = renderHook(() =>
-        useCrossChainBalances(10, [10, 8453])
-      );
-
-      await waitFor(() => {
-        expect(result.current.balanceError).not.toBeNull();
-      });
-
-      // Exhaust retry attempts
-      for (let i = 0; i < 3; i++) {
-        await act(async () => {
-          await result.current.retryFetchBalances();
-        });
-
-        act(() => {
-          jest.advanceTimersByTime(5000);
-        });
-      }
-
-      await waitFor(() => {
-        expect(result.current.canRetry).toBe(false);
-      });
-    });
-  });
-
-  describe("cleanup", () => {
-    it("should clear timeouts on unmount", () => {
-      const { useMultiChainTokenBalances } = require("@/hooks/useTokenBalances");
-      const getAllTokensAcrossChains = jest.fn().mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve(mockCrossChainBalances), 10000))
-      );
-
-      useMultiChainTokenBalances.mockReturnValue({
-        getAllTokensAcrossChains,
-      });
-
-      const { unmount } = renderHook(() =>
-        useCrossChainBalances(10, [10, 8453])
-      );
-
-      unmount();
-
-      // No errors should be thrown
-      act(() => {
-        jest.advanceTimersByTime(15000);
-      });
-    });
-
-    it("should abort fetch on unmount", () => {
-      const { useMultiChainTokenBalances } = require("@/hooks/useTokenBalances");
-      const getAllTokensAcrossChains = jest.fn().mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve(mockCrossChainBalances), 10000))
-      );
-
-      useMultiChainTokenBalances.mockReturnValue({
-        getAllTokensAcrossChains,
-      });
-
-      const { unmount } = renderHook(() =>
-        useCrossChainBalances(10, [10, 8453])
-      );
-
-      unmount();
-
-      // Verify cleanup occurred without errors
-      expect(() => {
-        act(() => {
-          jest.runAllTimers();
-        });
-      }).not.toThrow();
-    });
-  });
-
-  describe("successful chains tracking", () => {
-    it("should track successful chains", async () => {
-      const { result } = renderHook(() =>
-        useCrossChainBalances(10, [10, 8453])
-      );
-
-      await waitFor(() => {
-        expect(result.current.successfulChains).toContain(10);
-        expect(result.current.successfulChains).toContain(8453);
-      });
-    });
-
-    it("should not include failed chains in successful chains", async () => {
-      const { useMultiChainTokenBalances } = require("@/hooks/useTokenBalances");
-      const getAllTokensAcrossChains = jest.fn().mockResolvedValue([
-        { token: mockToken1, formattedBalance: "1000" }, // Only chain 10
-      ]);
-
-      useMultiChainTokenBalances.mockReturnValue({
-        getAllTokensAcrossChains,
-      });
-
-      const { result } = renderHook(() =>
-        useCrossChainBalances(10, [10, 8453])
-      );
-
-      await waitFor(() => {
-        expect(result.current.successfulChains).toContain(10);
-        expect(result.current.successfulChains).not.toContain(8453);
       });
     });
   });

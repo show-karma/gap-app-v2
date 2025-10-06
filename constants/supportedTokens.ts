@@ -31,53 +31,53 @@ const MAINNET_NETWORKS: Record<number, NetworkConfig> = {
     chainName: "Ethereum",
     rpcUrl: "https://eth-mainnet.g.alchemy.com/v2/your-api-key",
     blockExplorer: "https://etherscan.io",
-    nativeCurrency: { name: "Ethereum", symbol: "ETH", decimals: 18 }
+    nativeCurrency: { name: "Ethereum", symbol: "ETH", decimals: 18 },
   },
-  
+
   // Optimism
   10: {
     chainId: 10,
     chainName: "Optimism",
     rpcUrl: "https://opt-mainnet.g.alchemy.com/v2/your-api-key",
     blockExplorer: "https://optimistic.etherscan.io",
-    nativeCurrency: { name: "Ethereum", symbol: "ETH", decimals: 18 }
+    nativeCurrency: { name: "Ethereum", symbol: "ETH", decimals: 18 },
   },
-  
+
   // Arbitrum One
   42161: {
     chainId: 42161,
     chainName: "Arbitrum One",
     rpcUrl: "https://arb-mainnet.g.alchemy.com/v2/your-api-key",
     blockExplorer: "https://arbiscan.io",
-    nativeCurrency: { name: "Ethereum", symbol: "ETH", decimals: 18 }
+    nativeCurrency: { name: "Ethereum", symbol: "ETH", decimals: 18 },
   },
-  
+
   // Base
   8453: {
     chainId: 8453,
     chainName: "Base",
     rpcUrl: "https://base-mainnet.g.alchemy.com/v2/your-api-key",
     blockExplorer: "https://basescan.org",
-    nativeCurrency: { name: "Ethereum", symbol: "ETH", decimals: 18 }
+    nativeCurrency: { name: "Ethereum", symbol: "ETH", decimals: 18 },
   },
-  
+
   // Celo
   42220: {
     chainId: 42220,
     chainName: "Celo",
     rpcUrl: "https://forno.celo.org",
     blockExplorer: "https://celoscan.io",
-    nativeCurrency: { name: "Celo", symbol: "CELO", decimals: 18 }
+    nativeCurrency: { name: "Celo", symbol: "CELO", decimals: 18 },
   },
-  
+
   // Polygon
   137: {
     chainId: 137,
     chainName: "Polygon",
     rpcUrl: "https://polygon-mainnet.g.alchemy.com/v2/your-api-key",
     blockExplorer: "https://polygonscan.com",
-    nativeCurrency: { name: "Matic", symbol: "MATIC", decimals: 18 }
-  }
+    nativeCurrency: { name: "Matic", symbol: "MATIC", decimals: 18 },
+  },
 };
 
 const TEST_NETWORKS: Record<number, NetworkConfig> = {
@@ -87,7 +87,7 @@ const TEST_NETWORKS: Record<number, NetworkConfig> = {
     chainName: "Sepolia",
     rpcUrl: "https://rpc.sepolia.org",
     blockExplorer: "https://sepolia.etherscan.io",
-    nativeCurrency: { name: "Sepolia Ether", symbol: "ETH", decimals: 18 }
+    nativeCurrency: { name: "Sepolia Ether", symbol: "ETH", decimals: 18 },
   },
 
   // Optimism Sepolia
@@ -96,7 +96,11 @@ const TEST_NETWORKS: Record<number, NetworkConfig> = {
     chainName: "Optimism Sepolia",
     rpcUrl: "https://sepolia.optimism.io",
     blockExplorer: "https://sepolia-optimism.etherscan.io",
-    nativeCurrency: { name: "Optimism Sepolia Ether", symbol: "ETH", decimals: 18 }
+    nativeCurrency: {
+      name: "Optimism Sepolia Ether",
+      symbol: "ETH",
+      decimals: 18,
+    },
   },
 
   // Base Sepolia
@@ -105,13 +109,12 @@ const TEST_NETWORKS: Record<number, NetworkConfig> = {
     chainName: "Base Sepolia",
     rpcUrl: "https://base-sepolia.blockpi.network/v1/rpc/public",
     blockExplorer: "https://sepolia.basescan.org",
-    nativeCurrency: { name: "Base Sepolia Ether", symbol: "ETH", decimals: 18 }
-  }
+    nativeCurrency: { name: "Base Sepolia Ether", symbol: "ETH", decimals: 18 },
+  },
 };
 
-export const SUPPORTED_NETWORKS: Record<number, NetworkConfig> = includeTestNetworks
-  ? { ...MAINNET_NETWORKS, ...TEST_NETWORKS }
-  : MAINNET_NETWORKS;
+export const SUPPORTED_NETWORKS: Record<number, NetworkConfig> =
+  includeTestNetworks ? TEST_NETWORKS : MAINNET_NETWORKS;
 
 // Supported tokens configuration
 export const SUPPORTED_TOKENS: SupportedToken[] = [
@@ -123,7 +126,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 6,
     chainId: 1,
     chainName: "Ethereum",
-    isNative: false
+    isNative: false,
   },
   {
     symbol: "USDT",
@@ -132,7 +135,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 6,
     chainId: 10,
     chainName: "Optimism",
-    isNative: false
+    isNative: false,
   },
   {
     symbol: "USDT",
@@ -141,7 +144,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 6,
     chainId: 42161,
     chainName: "Arbitrum One",
-    isNative: false
+    isNative: false,
   },
   {
     symbol: "USDT",
@@ -150,7 +153,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 6,
     chainId: 8453,
     chainName: "Base",
-    isNative: false
+    isNative: false,
   },
   {
     symbol: "USDT",
@@ -159,7 +162,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 6,
     chainId: 42220,
     chainName: "Celo",
-    isNative: false
+    isNative: false,
   },
   {
     symbol: "USDT",
@@ -168,7 +171,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 6,
     chainId: 137,
     chainName: "Polygon",
-    isNative: false
+    isNative: false,
   },
 
   // USDC - All 6 networks
@@ -179,7 +182,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 6,
     chainId: 1,
     chainName: "Ethereum",
-    isNative: false
+    isNative: false,
   },
   {
     symbol: "USDC",
@@ -188,7 +191,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 6,
     chainId: 10,
     chainName: "Optimism",
-    isNative: false
+    isNative: false,
   },
   {
     symbol: "USDC",
@@ -197,7 +200,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 6,
     chainId: 42161,
     chainName: "Arbitrum One",
-    isNative: false
+    isNative: false,
   },
   {
     symbol: "USDC",
@@ -206,7 +209,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 6,
     chainId: 8453,
     chainName: "Base",
-    isNative: false
+    isNative: false,
   },
   {
     symbol: "USDC",
@@ -215,7 +218,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 6,
     chainId: 42220,
     chainName: "Celo",
-    isNative: false
+    isNative: false,
   },
   {
     symbol: "USDC",
@@ -224,7 +227,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 6,
     chainId: 137,
     chainName: "Polygon",
-    isNative: false
+    isNative: false,
   },
 
   // cUSD - Celo only
@@ -235,7 +238,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 18,
     chainId: 42220,
     chainName: "Celo",
-    isNative: false
+    isNative: false,
   },
 
   // USDGLO - All 6 networks (placeholder addresses - need actual deployment addresses)
@@ -246,7 +249,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 18,
     chainId: 1,
     chainName: "Ethereum",
-    isNative: false
+    isNative: false,
   },
   {
     symbol: "USDGLO",
@@ -255,7 +258,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 18,
     chainId: 10,
     chainName: "Optimism",
-    isNative: false
+    isNative: false,
   },
   {
     symbol: "USDGLO",
@@ -264,7 +267,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 18,
     chainId: 42161,
     chainName: "Arbitrum One",
-    isNative: false
+    isNative: false,
   },
   {
     symbol: "USDGLO",
@@ -273,7 +276,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 18,
     chainId: 8453,
     chainName: "Base",
-    isNative: false
+    isNative: false,
   },
   {
     symbol: "USDGLO",
@@ -282,7 +285,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 18,
     chainId: 42220,
     chainName: "Celo",
-    isNative: false
+    isNative: false,
   },
   {
     symbol: "USDGLO",
@@ -291,7 +294,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 18,
     chainId: 137,
     chainName: "Polygon",
-    isNative: false
+    isNative: false,
   },
 
   // Native tokens
@@ -303,7 +306,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 18,
     chainId: 1,
     chainName: "Ethereum",
-    isNative: true
+    isNative: true,
   },
   {
     symbol: "ETH",
@@ -312,7 +315,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 18,
     chainId: 10,
     chainName: "Optimism",
-    isNative: true
+    isNative: true,
   },
   {
     symbol: "ETH",
@@ -321,7 +324,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 18,
     chainId: 42161,
     chainName: "Arbitrum One",
-    isNative: true
+    isNative: true,
   },
   {
     symbol: "ETH",
@@ -330,7 +333,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 18,
     chainId: 8453,
     chainName: "Base",
-    isNative: true
+    isNative: true,
   },
 
   // WETH - All 6 networks
@@ -341,7 +344,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 18,
     chainId: 1,
     chainName: "Ethereum",
-    isNative: false
+    isNative: false,
   },
   {
     symbol: "WETH",
@@ -350,7 +353,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 18,
     chainId: 10,
     chainName: "Optimism",
-    isNative: false
+    isNative: false,
   },
   {
     symbol: "WETH",
@@ -359,7 +362,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 18,
     chainId: 42161,
     chainName: "Arbitrum One",
-    isNative: false
+    isNative: false,
   },
   {
     symbol: "WETH",
@@ -368,7 +371,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 18,
     chainId: 8453,
     chainName: "Base",
-    isNative: false
+    isNative: false,
   },
   {
     symbol: "WETH",
@@ -377,7 +380,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 18,
     chainId: 42220,
     chainName: "Celo",
-    isNative: false
+    isNative: false,
   },
   {
     symbol: "WETH",
@@ -386,7 +389,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 18,
     chainId: 137,
     chainName: "Polygon",
-    isNative: false
+    isNative: false,
   },
 
   // CELO - Celo native
@@ -397,7 +400,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 18,
     chainId: 42220,
     chainName: "Celo",
-    isNative: true
+    isNative: true,
   },
 
   // MATIC - Polygon native
@@ -408,7 +411,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 18,
     chainId: 137,
     chainName: "Polygon",
-    isNative: true
+    isNative: true,
   },
 
   // Network-specific tokens
@@ -420,7 +423,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 18,
     chainId: 10,
     chainName: "Optimism",
-    isNative: false
+    isNative: false,
   },
 
   // ARB - Arbitrum
@@ -431,7 +434,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 18,
     chainId: 42161,
     chainName: "Arbitrum One",
-    isNative: false
+    isNative: false,
   },
 
   // POL - Polygon (new token)
@@ -442,8 +445,8 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     decimals: 18,
     chainId: 137,
     chainName: "Polygon",
-    isNative: false
-  }
+    isNative: false,
+  },
 ];
 
 const TEST_NETWORK_TOKENS: SupportedToken[] = [
@@ -512,12 +515,15 @@ if (includeTestNetworks) {
 
 // Helper functions
 export function getTokensByChain(chainId: number): SupportedToken[] {
-  return SUPPORTED_TOKENS.filter(token => token.chainId === chainId);
+  return SUPPORTED_TOKENS.filter((token) => token.chainId === chainId);
 }
 
-export function getTokenBySymbolAndChain(symbol: string, chainId: number): SupportedToken | undefined {
-  return SUPPORTED_TOKENS.find(token => 
-    token.symbol === symbol && token.chainId === chainId
+export function getTokenBySymbolAndChain(
+  symbol: string,
+  chainId: number
+): SupportedToken | undefined {
+  return SUPPORTED_TOKENS.find(
+    (token) => token.symbol === symbol && token.chainId === chainId
   );
 }
 

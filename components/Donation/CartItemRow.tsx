@@ -66,7 +66,7 @@ export function CartItemRow({
               href={PAGES.PROJECT.OVERVIEW(item.slug || item.uid)}
               target="_blank"
               rel="noopener noreferrer"
-              className="group/link inline-flex items-center gap-1.5"
+              className="group/link flex items-center gap-1.5 min-w-0"
             >
               <h3 className="text-sm font-semibold underline text-gray-900 transition group-hover/link:text-blue-600 dark:text-gray-100 dark:group-hover/link:text-blue-400 truncate">
                 {item.title}

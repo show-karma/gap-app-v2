@@ -7,6 +7,8 @@ import { useEffect, useCallback, useMemo } from "react";
 import {
   getTokensByChain,
   type SupportedToken,
+  SUPPORTED_NETWORKS,
+  getAllSupportedChains,
 } from "@/constants/supportedTokens";
 import { DonationApprovalStatus } from "@/components/DonationApprovalStatus";
 import { DonationStepsPreview } from "@/components/DonationStepsPreview";
@@ -22,6 +24,7 @@ import { CartItemList } from "./CartItemList";
 import { NetworkSwitchPreview } from "./NetworkSwitchPreview";
 import { CompletedDonations } from "./CompletedDonations";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
+import { useAuth } from "@/hooks/useAuth";
 
 export function DonationCheckout() {
   const {
@@ -47,7 +50,8 @@ export function DonationCheckout() {
     isSwitching,
     getFreshWalletClient,
   } = useNetworkSwitching();
-  const { address, isConnected } = useAccount();
+  const { address } = useAccount();
+  const { authenticated: isConnected } = useAuth();
 
   // Get unique chain IDs from cart items
   const cartChainIds = useMemo(() => {
@@ -58,10 +62,16 @@ export function DonationCheckout() {
     return Array.from(chainIds);
   }, [selectedTokens]);
 
+  // Always fetch balances for all supported chains when authenticated
+  // This ensures users can see all available tokens even on unsupported networks
+  const chainsToFetch = useMemo(() => {
+    return isConnected ? getAllSupportedChains() : [];
+  }, [isConnected]);
+
   // Custom hooks for business logic
   const { balanceByTokenKey, isFetchingCrossChainBalances } = useCrossChainBalances(
     currentChainId,
-    cartChainIds
+    chainsToFetch
   );
 
   const {
@@ -102,32 +112,31 @@ export function DonationCheckout() {
     updatePayments();
   }, [amounts, selectedTokens, updatePayments]);
 
-  // Get tokens from current network with positive balances, or from all cart chains if current network has none
+
+  // Get tokens to show in dropdown - only show tokens with positive balances
   const allAvailableTokens = useMemo(() => {
-    const currentNetworkTokens = getTokensByChain(currentChainId);
-    const tokensWithBalance: SupportedToken[] = [];
-
-    // First, try to get tokens with balance from the current network
-    currentNetworkTokens.forEach((token) => {
-      const balanceKey = `${token.symbol}-${token.chainId}`;
-      const balance = balanceByTokenKey[balanceKey];
-      if (balance && parseFloat(balance) > 0) {
-        tokensWithBalance.push(token);
-      }
-    });
-
-    // If no tokens with balance on current network, show all tokens from cart chains
-    if (tokensWithBalance.length === 0 && cartChainIds.length > 0) {
-      cartChainIds.forEach((chainId) => {
-        const chainTokens = getTokensByChain(chainId);
-        chainTokens.forEach((token) => {
-          tokensWithBalance.push(token);
-        });
-      });
+    if (!isConnected) {
+      return [];
     }
 
+    // Show only tokens with positive balances across all chains
+    const tokensWithBalance: SupportedToken[] = [];
+    const allSupportedChainIds = getAllSupportedChains();
+
+    allSupportedChainIds.forEach((chainId) => {
+      const chainTokens = getTokensByChain(chainId);
+      chainTokens.forEach((token) => {
+        const balanceKey = `${token.symbol}-${token.chainId}`;
+        const balance = balanceByTokenKey[balanceKey];
+        // Only include tokens with positive balance
+        if (balance && parseFloat(balance) > 0) {
+          tokensWithBalance.push(token);
+        }
+      });
+    });
+
     return tokensWithBalance;
-  }, [balanceByTokenKey, currentChainId, cartChainIds]);
+  }, [balanceByTokenKey, isConnected]);
 
   const handleTokenSelect = useCallback(
     (projectId: string, token: SupportedToken) => {
@@ -166,6 +175,10 @@ export function DonationCheckout() {
     if (!canProceed) {
       return "Select tokens and amounts";
     }
+    // If on unsupported network, prompt to switch
+    if (!isCurrentNetworkSupported) {
+      return "Switch Chain";
+    }
 
     return "Review & Send Donations";
   }, [
@@ -176,6 +189,7 @@ export function DonationCheckout() {
     canProceed,
     executionState.phase,
     executionState.approvalProgress,
+    isCurrentNetworkSupported,
   ]);
 
   const onExecute = useCallback(async () => {
@@ -206,10 +220,7 @@ export function DonationCheckout() {
   // Early return after all hooks have been called
   // If cart is empty, check if we have a completed session to show
   if (!items.length) {
-    console.log('Cart is empty. lastCompletedSession:', lastCompletedSession);
-
     if (lastCompletedSession) {
-      console.log('Rendering CompletedDonations with session:', lastCompletedSession);
       return (
         <CompletedDonations
           session={lastCompletedSession}

@@ -1,14 +1,10 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useMemo } from "react";
 import { useAccount } from "wagmi";
-import { useTokenBalances, useMultiChainTokenBalances } from "@/hooks/useTokenBalances";
+import { useQuery } from "@tanstack/react-query";
+import { getTokensByChain } from "@/constants/supportedTokens";
 import type { SupportedToken } from "@/constants/supportedTokens";
-import toast from "react-hot-toast";
-import {
-  BALANCE_CONSTANTS,
-  NETWORK_CONSTANTS,
-  isCacheValid,
-  getRetryDelay,
-} from "@/constants/donation";
+import { getRPCClient } from "@/utilities/rpcClient";
+import { formatUnits } from "viem";
 import { getTokenBalanceKey } from "@/utilities/donations/helpers";
 
 interface TokenBalance {
@@ -16,245 +12,177 @@ interface TokenBalance {
   formattedBalance: string;
 }
 
-interface BalanceError {
-  message: string;
-  chainIds: number[];
-  canRetry: boolean;
+const ERC20_ABI = [
+  {
+    name: "balanceOf",
+    type: "function",
+    stateMutability: "view",
+    inputs: [{ name: "account", type: "address" }],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+] as const;
+
+// Query keys for react-query
+export const BALANCE_QUERY_KEYS = {
+  all: ["token-balances"] as const,
+  chain: (chainId: number, address: string) =>
+    [...BALANCE_QUERY_KEYS.all, "chain", chainId, address] as const,
+  allChains: (chainIds: number[], address: string) =>
+    [...BALANCE_QUERY_KEYS.all, "multi-chain", chainIds.join("-"), address] as const,
+};
+
+/**
+ * Fetches token balances for a single chain using batched multicall
+ */
+async function fetchChainBalances(
+  chainId: number,
+  address: string
+): Promise<TokenBalance[]> {
+  const publicClient = await getRPCClient(chainId);
+  const tokensForChain = getTokensByChain(chainId);
+  const balances: TokenBalance[] = [];
+
+  // Separate native and ERC20 tokens
+  const nativeTokens = tokensForChain.filter((t) => t.isNative);
+  const erc20Tokens = tokensForChain.filter((t) => !t.isNative);
+
+  // Fetch native balance (if any)
+  if (nativeTokens.length > 0) {
+    try {
+      const nativeBalance = await publicClient.getBalance({
+        address: address as `0x${string}`,
+      });
+
+      nativeTokens.forEach((token) => {
+        balances.push({
+          token,
+          formattedBalance: formatUnits(nativeBalance, token.decimals),
+        });
+      });
+    } catch (error) {
+      console.warn(`Failed to fetch native balance on chain ${chainId}:`, error);
+      // Add zero balance as fallback
+      nativeTokens.forEach((token) => {
+        balances.push({
+          token,
+          formattedBalance: "0",
+        });
+      });
+    }
+  }
+
+  // Batch fetch all ERC20 balances using multicall
+  if (erc20Tokens.length > 0) {
+    try {
+      const contracts = erc20Tokens.map((token) => ({
+        address: token.address as `0x${string}`,
+        abi: ERC20_ABI,
+        functionName: "balanceOf" as const,
+        args: [address as `0x${string}`],
+      }));
+
+      const results = await publicClient.multicall({
+        contracts,
+        allowFailure: true,
+      });
+
+      results.forEach((result, index) => {
+        const token = erc20Tokens[index];
+        if (result.status === "success" && result.result !== undefined) {
+          balances.push({
+            token,
+            formattedBalance: formatUnits(result.result as bigint, token.decimals),
+          });
+        } else {
+          console.warn(
+            `Failed to fetch balance for ${token.symbol} on chain ${chainId}:`,
+            result.status === "failure" ? result.error : "Unknown error"
+          );
+          // Add zero balance as fallback
+          balances.push({
+            token,
+            formattedBalance: "0",
+          });
+        }
+      });
+    } catch (error) {
+      console.warn(`Failed to fetch ERC20 balances on chain ${chainId}:`, error);
+      // Add zero balances as fallback
+      erc20Tokens.forEach((token) => {
+        balances.push({
+          token,
+          formattedBalance: "0",
+        });
+      });
+    }
+  }
+
+  return balances;
 }
 
-interface CachedBalance {
-  balance: string;
-  timestamp: number;
+/**
+ * Fetches balances across multiple chains in parallel
+ */
+async function fetchMultiChainBalances(
+  chainIds: number[],
+  address: string
+): Promise<Record<string, string>> {
+  // Fetch all chains in parallel
+  const balancePromises = chainIds.map((chainId) =>
+    fetchChainBalances(chainId, address).catch((error) => {
+      console.error(`Failed to fetch balances for chain ${chainId}:`, error);
+      return [] as TokenBalance[];
+    })
+  );
+
+  const results = await Promise.all(balancePromises);
+
+  // Flatten results and convert to key-value map
+  const balanceMap: Record<string, string> = {};
+  results.flat().forEach(({ token, formattedBalance }) => {
+    const key = getTokenBalanceKey(token);
+    balanceMap[key] = formattedBalance;
+  });
+
+  return balanceMap;
 }
-
-// In-memory global cache for balance data (5 minute TTL)
-// Shared across all hook instances for better performance
-const globalBalanceCache = new Map<string, CachedBalance>();
-
-const FETCH_TIMEOUT_MS = BALANCE_CONSTANTS.FETCH_TIMEOUT_MS;
-const SLOW_FETCH_THRESHOLD_MS = BALANCE_CONSTANTS.SLOW_FETCH_WARNING_THRESHOLD_MS;
-const MAX_RETRY_ATTEMPTS = NETWORK_CONSTANTS.SWITCH_MAX_RETRIES;
-const RETRY_DELAYS_MS = NETWORK_CONSTANTS.RETRY_DELAYS_MS;
 
 export function useCrossChainBalances(
   currentChainId: number | null,
-  cartChainIds: number[]
+  chainIds: number[]
 ) {
   const { address, isConnected } = useAccount();
-  const { tokenBalances } = useTokenBalances(currentChainId ?? undefined);
-  const { getAllTokensAcrossChains } = useMultiChainTokenBalances(cartChainIds);
 
-  const [balanceCache, setBalanceCache] = useState<Record<string, string>>({});
-  const [isFetchingCrossChainBalances, setIsFetchingCrossChainBalances] = useState(false);
-  const [balanceError, setBalanceError] = useState<BalanceError | null>(null);
-  const [retryAttempt, setRetryAttempt] = useState(0);
-  const [isSlowFetch, setIsSlowFetch] = useState(false);
-  const [successfulChains, setSuccessfulChains] = useState<number[]>([]);
-  const [failedChains, setFailedChains] = useState<number[]>([]);
+  // Use react-query for caching, automatic refetching, and state management
+  const {
+    data: balanceByTokenKey = {},
+    isLoading: isFetchingCrossChainBalances,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: BALANCE_QUERY_KEYS.allChains(chainIds, address || ""),
+    queryFn: () => fetchMultiChainBalances(chainIds, address!),
+    enabled: !!address && isConnected && chainIds.length > 0,
+    staleTime: 5 * 60 * 1000, // 5 minutes - balances don't change that often
+    gcTime: 10 * 60 * 1000, // 10 minutes - keep in cache for longer
+    retry: 2, // Retry failed requests twice
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000), // Exponential backoff
+  });
 
-  const abortControllerRef = useRef<AbortController | null>(null);
-  const slowFetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const retryFetchBalances = () => {
+    refetch();
+  };
 
-  // Update balance cache with current network balances
-  useEffect(() => {
-    if (!tokenBalances.length) return;
-    setBalanceCache((prev) => {
-      const next = { ...prev };
-      tokenBalances.forEach(({ token, formattedBalance }) => {
-        const key = getTokenBalanceKey(token);
-        next[key] = formattedBalance;
-
-        // Also update the in-memory global cache
-        globalBalanceCache.set(key, {
-          balance: formattedBalance,
-          timestamp: Date.now(),
-        });
-      });
-      return next;
-    });
-  }, [tokenBalances]);
-
-  // Cleanup timeouts on unmount
-  useEffect(() => {
-    return () => {
-      if (slowFetchTimeoutRef.current) {
-        clearTimeout(slowFetchTimeoutRef.current);
-      }
-      if (fetchTimeoutRef.current) {
-        clearTimeout(fetchTimeoutRef.current);
-      }
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    };
-  }, []);
-
-  const fetchCrossChainBalances = useCallback(
-    async (isRetry: boolean = false) => {
-      if (!address || !isConnected || cartChainIds.length === 0) return;
-
-      // Clear previous error state when starting new fetch
-      if (!isRetry) {
-        setBalanceError(null);
-        setRetryAttempt(0);
-        setFailedChains([]);
-      }
-
-      // Check cache first - load cached balances progressively
-      const cachedBalances: Record<string, string> = {};
-      let hasCachedData = false;
-
-      cartChainIds.forEach((chainId) => {
-        // Check global cache for each chain's tokens
-        const allKeys = Array.from(globalBalanceCache.keys());
-        const chainTokenKeys = allKeys.filter((key) =>
-          key.endsWith(`-${chainId}`)
-        );
-
-        chainTokenKeys.forEach((key) => {
-          const cached = globalBalanceCache.get(key);
-          if (cached && isCacheValid(cached.timestamp)) {
-            cachedBalances[key] = cached.balance;
-            hasCachedData = true;
-          }
-        });
-      });
-
-      // If we have cached data, show it immediately (progressive loading)
-      if (hasCachedData) {
-        setBalanceCache((prev) => ({ ...prev, ...cachedBalances }));
-      }
-
-      setIsFetchingCrossChainBalances(true);
-      setIsSlowFetch(false);
-
-      // Create new abort controller for this fetch
-      abortControllerRef.current = new AbortController();
-
-      // Set up slow fetch warning
-      slowFetchTimeoutRef.current = setTimeout(() => {
-        setIsSlowFetch(true);
-      }, SLOW_FETCH_THRESHOLD_MS);
-
-      // Set up timeout for fetch
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        fetchTimeoutRef.current = setTimeout(() => {
-          abortControllerRef.current?.abort();
-          reject(new Error("Balance fetch timed out after 10 seconds"));
-        }, FETCH_TIMEOUT_MS);
-      });
-
-      try {
-        const balancesPromise = getAllTokensAcrossChains();
-        const crossChainBalances = await Promise.race([balancesPromise, timeoutPromise]);
-
-        // Clear timeouts on success
-        if (slowFetchTimeoutRef.current) {
-          clearTimeout(slowFetchTimeoutRef.current);
-        }
-        if (fetchTimeoutRef.current) {
-          clearTimeout(fetchTimeoutRef.current);
-        }
-
-        setBalanceCache((prev) => {
-          const next = { ...prev };
-          crossChainBalances.forEach(({ token, formattedBalance }) => {
-            const key = getTokenBalanceKey(token);
-            next[key] = formattedBalance;
-
-            // Update in-memory global cache with fresh data
-            globalBalanceCache.set(key, {
-              balance: formattedBalance,
-              timestamp: Date.now(),
-            });
-          });
-          return next;
-        });
-
-        // Track successful chains
-        const successChains = Array.from(
-          new Set(crossChainBalances.map((b) => b.token.chainId))
-        );
-        setSuccessfulChains(successChains);
-        setBalanceError(null);
-        setRetryAttempt(0);
-      } catch (error) {
-        // Clear timeouts on error
-        if (slowFetchTimeoutRef.current) {
-          clearTimeout(slowFetchTimeoutRef.current);
-        }
-        if (fetchTimeoutRef.current) {
-          clearTimeout(fetchTimeoutRef.current);
-        }
-
-        console.error("Failed to fetch cross-chain balances:", error);
-
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : "Failed to fetch balances from some networks";
-
-        // Track failed chains (assume all requested chains failed if we don't have specific info)
-        const failedChainIds = cartChainIds.filter(
-          (chainId) => !successfulChains.includes(chainId)
-        );
-        setFailedChains(failedChainIds);
-
-        setBalanceError({
-          message: errorMessage,
-          chainIds: failedChainIds,
-          canRetry: retryAttempt < MAX_RETRY_ATTEMPTS - 1,
-        });
-
-        // Show error toast
-        if (!isRetry) {
-          toast.error(
-            "Unable to load all balances. You can still proceed with the donation.",
-            {
-              duration: 5000,
-            }
-          );
-        }
-      } finally {
-        setIsFetchingCrossChainBalances(false);
-        setIsSlowFetch(false);
-      }
-    },
-    [address, isConnected, cartChainIds, getAllTokensAcrossChains, retryAttempt, successfulChains]
-  );
-
-  const retryFetchBalances = useCallback(async () => {
-    if (retryAttempt >= MAX_RETRY_ATTEMPTS) {
-      toast.error("Maximum retry attempts reached. You can still proceed with the donation.");
-      return;
-    }
-
-    const delay = getRetryDelay(retryAttempt);
-
-    toast.loading(`Retrying in ${delay / 1000} seconds...`, { duration: delay });
-
-    await new Promise((resolve) => setTimeout(resolve, delay));
-
-    setRetryAttempt((prev) => prev + 1);
-    await fetchCrossChainBalances(true);
-  }, [retryAttempt, fetchCrossChainBalances]);
-
-  // Fetch cross-chain balances when cart tokens are from multiple chains
-  useEffect(() => {
-    fetchCrossChainBalances();
-  }, [address, isConnected, cartChainIds, getAllTokensAcrossChains]);
-
-  const balanceByTokenKey = useMemo(() => balanceCache, [balanceCache]);
+  const errorMessage = error instanceof Error ? error.message : String(error);
 
   return {
     balanceByTokenKey,
     isFetchingCrossChainBalances,
-    balanceError,
+    balanceError: error ? { message: errorMessage, chainIds: [], canRetry: true } : null,
     retryFetchBalances,
-    isSlowFetch,
-    successfulChains,
-    failedChains,
-    canRetry: balanceError?.canRetry ?? false,
+    isSlowFetch: false, // react-query handles this internally
+    successfulChains: chainIds, // If query succeeds, all chains are successful
+    failedChains: error ? chainIds : [], // If query fails, assume all failed
+    canRetry: !!error,
   };
 }

@@ -47,7 +47,7 @@ export function TokenSelector({
             const key = `${token.symbol}-${token.chainId}`;
             const balanceValue = balanceByTokenKey[key];
             const balanceDisplay = balanceValue
-              ? parseFloat(balanceValue).toFixed(4)
+              ? parseFloat(balanceValue).toFixed(6)
               : "0";
             const networkName = SUPPORTED_NETWORKS[token.chainId]?.chainName || token.chainName;
             return (
