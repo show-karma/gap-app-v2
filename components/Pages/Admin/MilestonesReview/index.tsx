@@ -341,10 +341,10 @@ export function MilestonesReviewPage({
                               )}
                             </div>
                           ) : (
-                            /* Show Verify Button for all non-verified milestones with off-chain completion */
-                            hasCompletion && !isVerified && milestone.fundingApplicationCompletion && (
+                            /* Show Verify Button for all non-verified milestones with completion (on-chain or off-chain) */
+                            hasCompletion && !isVerified && (
                               <div className="mb-3">
-                                {verifyingMilestoneId === milestone.fundingApplicationCompletion.id ? (
+                                {verifyingMilestoneId === milestone.uid ? (
                                   /* Verification Form */
                                   <div className="p-3 bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-md space-y-2">
                                     <p className="text-sm font-semibold text-green-900 dark:text-green-200 mb-2">
@@ -378,7 +378,7 @@ export function MilestonesReviewPage({
                                 ) : (
                                   /* Verify Button */
                                   <Button
-                                    onClick={() => handleVerifyClick(milestone.fundingApplicationCompletion!.id)}
+                                    onClick={() => handleVerifyClick(milestone.uid)}
                                     className="flex items-center gap-2 px-4 py-2 text-sm bg-green-600 hover:bg-green-700"
                                   >
                                     <CheckCircleIcon className="w-4 h-4" />
