@@ -1,17 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchProjectGrantMilestones, type ProjectGrantMilestonesResponse } from "@/services/milestones";
-
-const QUERY_KEYS = {
-  projectGrantMilestones: (projectId: string, programId: string) =>
-    ["project-grant-milestones", projectId, programId],
-};
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 /**
  * Hook for fetching project grant milestones
  */
 export const useProjectGrantMilestones = (projectId: string, programId: string) => {
   const milestonesQuery = useQuery({
-    queryKey: QUERY_KEYS.projectGrantMilestones(projectId, programId),
+    queryKey: QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES(projectId, programId),
     queryFn: () => fetchProjectGrantMilestones(projectId, programId),
     enabled: !!projectId && !!programId,
   });

@@ -1,16 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchApplicationComments, type ApplicationComment } from "@/services/comments";
-
-const QUERY_KEYS = {
-  applicationComments: (referenceNumber: string) => ["application-comments", referenceNumber],
-};
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 /**
  * Hook for fetching application comments
  */
 export const useApplicationComments = (referenceNumber: string) => {
   const commentsQuery = useQuery({
-    queryKey: QUERY_KEYS.applicationComments(referenceNumber),
+    queryKey: QUERY_KEYS.APPLICATIONS.COMMENTS(referenceNumber),
     queryFn: () => fetchApplicationComments(referenceNumber),
     enabled: !!referenceNumber,
   });
