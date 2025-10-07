@@ -48,12 +48,8 @@ class DonationErrorBoundaryClass extends Component<Props, State> {
       errorInfo,
     });
 
-    // Preserve cart state in localStorage (it's already persisted by Zustand)
-    try {
-      localStorage.getItem("donation-cart-storage");
-    } catch (e) {
-      console.error("Failed to preserve cart state:", e);
-    }
+    // Cart state is already persisted by Zustand to localStorage
+    // No additional action needed here
   }
 
   handleTryAgain = () => {

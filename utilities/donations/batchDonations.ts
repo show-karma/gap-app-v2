@@ -358,3 +358,23 @@ export const BATCH_DONATIONS_CONTRACTS: Record<number, HexAddress | null> = {
 export const getBatchDonationsContractAddress = (
   chainId: number
 ): HexAddress | null => BATCH_DONATIONS_CONTRACTS[chainId] ?? null;
+
+/**
+ * Check if batch donations are supported on a given chain
+ * @param chainId - The chain ID to check
+ * @returns true if batch donations contract is deployed on this chain
+ */
+export const isBatchDonationsSupportedOnChain = (chainId: number): boolean => {
+  const address = BATCH_DONATIONS_CONTRACTS[chainId];
+  return address !== null && address !== undefined;
+};
+
+/**
+ * Get list of chain IDs where batch donations are currently deployed
+ * @returns Array of chain IDs with deployed contracts
+ */
+export const getSupportedBatchDonationsChains = (): number[] => {
+  return Object.entries(BATCH_DONATIONS_CONTRACTS)
+    .filter(([_, address]) => address !== null)
+    .map(([chainId]) => parseInt(chainId));
+};

@@ -51,7 +51,7 @@ export function DonationCheckout() {
     getFreshWalletClient,
   } = useNetworkSwitching();
   const { address } = useAccount();
-  const { authenticated: isConnected } = useAuth();
+  const { isConnected } = useAuth();
 
   // Get unique chain IDs from cart items
   const cartChainIds = useMemo(() => {

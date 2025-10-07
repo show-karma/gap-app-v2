@@ -152,7 +152,8 @@ const GrantCardContent = ({ grant, index, hideStats, hideCategories, actionSlot 
 
       {(() => {
         const showStats = !hideStats;
-        const showCategories = !hideCategories && (grant.categories?.length || 0) > 0;
+        const hasCategories = (grant.categories?.length || 0) > 0;
+        const showCategories = !hideCategories && hasCategories;
         if (!showStats && !showCategories) return null;
         return (
           <div className="w-full flex flex-col gap-2 my-2">

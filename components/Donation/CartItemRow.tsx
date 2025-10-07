@@ -105,8 +105,11 @@ export function CartItemRow({
               placeholder="0.00"
               disabled={!selectedToken}
               className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-right text-sm font-mono font-semibold shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-              aria-label={`Donation amount for ${item.title}${selectedToken ? ` in ${selectedToken.symbol}` : ""
-                }`}
+              aria-label={
+                selectedToken
+                  ? `Donation amount for ${item.title} in ${selectedToken.symbol}`
+                  : `Donation amount for ${item.title}`
+              }
               aria-describedby={`balance-${item.uid}`}
               aria-invalid={
                 currentAmount

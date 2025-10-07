@@ -2,7 +2,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { SupportedToken } from "@/constants/supportedTokens";
-import { DONATION_CONSTANTS, isCartFull, isCartSizeWarning } from "@/constants/donation";
+import { DONATION_CONSTANTS, isCartFull as checkIsCartFull, isCartSizeWarning as checkIsCartSizeWarning } from "@/constants/donation";
 
 export type DonationCartItem = {
   uid: string;
@@ -146,11 +146,11 @@ export const useDonationCart = create<DonationCartState>()(
       },
       isCartFull: () => {
         const state = get();
-        return isCartFull(state.items.length);
+        return checkIsCartFull(state.items.length);
       },
       isCartWarning: () => {
         const state = get();
-        return isCartSizeWarning(state.items.length);
+        return checkIsCartSizeWarning(state.items.length);
       },
       getCartSize: () => {
         const state = get();

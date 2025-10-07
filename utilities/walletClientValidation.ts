@@ -83,13 +83,7 @@ export async function waitForValidWalletClient(
 
   console.error(`❌ Failed to get valid wallet client for chain ${expectedChainId} after ${maxRetries} attempts`);
 
-  // Return the wallet client even if validation failed - let the transaction attempt and fail gracefully
-  const finalWalletClient = getWalletClient();
-  if (finalWalletClient && finalWalletClient.account) {
-    console.warn(`⚠️ Returning potentially invalid wallet client as fallback`);
-    return finalWalletClient;
-  }
-
+  // Don't return invalid client - let caller handle the null case
   return null;
 }
 

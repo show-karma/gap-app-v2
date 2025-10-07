@@ -1,6 +1,7 @@
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { getRPCClient } from "./rpcClient";
 import { Project } from "@show-karma/karma-gap-sdk/core/class/entities/Project";
+import type { SignerOrProvider } from "@show-karma/karma-gap-sdk/core/types";
 
 export interface Member {
   uid: string;
@@ -17,15 +18,18 @@ export const getProjectMemberRoles = async (
   const roles: Record<string, Member["role"]> = {};
   if (project?.members) {
     const client = await getRPCClient(project.chainID);
+    // Cast to SignerOrProvider - SDK accepts viem PublicClient
+    const signer = client as unknown as SignerOrProvider;
+
     await Promise.all(
       project.members.map(async (member) => {
         const isProjectOwner = await projectInstance
-          .isOwner(client as any, member.recipient)
+          .isOwner(signer, member.recipient)
           .catch((error) => {
             return false;
           });
         const isProjectAdmin = await projectInstance
-          .isAdmin(client as any, member.recipient)
+          .isAdmin(signer, member.recipient)
           .catch((error) => {
             return false;
           });
