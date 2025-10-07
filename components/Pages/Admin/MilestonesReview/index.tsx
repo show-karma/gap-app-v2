@@ -9,6 +9,7 @@ import type { MappedGrantMilestone } from "@/services/milestones";
 import { updateMilestoneVerification } from "@/services/milestones";
 import { useProjectGrantMilestones } from "@/hooks/useProjectGrantMilestones";
 import { useMilestoneCompletionVerification } from "@/hooks/useMilestoneCompletionVerification";
+import { useApplicationByReference } from "@/hooks/useFundingPlatform";
 import toast from "react-hot-toast";
 import { CommentsAndActivity } from "./CommentsAndActivity";
 import { useAccount } from "wagmi";
@@ -38,6 +39,14 @@ export function MilestonesReviewPage({
   );
   const [isProjectOwnerOrAdmin, setIsProjectOwnerOrAdmin] = useState(false);
   const [isCheckingProjectRole, setIsCheckingProjectRole] = useState(true);
+
+  // Get reference number from first milestone with fundingApplicationCompletion
+  const referenceNumber = data?.grantMilestones.find(
+    (m) => m.fundingApplicationCompletion?.referenceNumber
+  )?.fundingApplicationCompletion?.referenceNumber;
+
+  // Fetch funding application data to get statusHistory (must be before any returns)
+  const { application: fundingApplication } = useApplicationByReference(referenceNumber || "");
 
   // Check if user is project owner/admin
   useEffect(() => {
@@ -193,11 +202,6 @@ export function MilestonesReviewPage({
   }
 
   const { project, grantMilestones } = data;
-
-  // Get reference number from first milestone with fundingApplicationCompletion
-  const referenceNumber = grantMilestones.find(
-    (m) => m.fundingApplicationCompletion?.referenceNumber
-  )?.fundingApplicationCompletion?.referenceNumber;
 
   // Get grant name from first milestone's programId
   const grantName = grantMilestones[0]?.programId
@@ -413,7 +417,11 @@ export function MilestonesReviewPage({
           <div className="lg:col-span-1">
             <CommentsAndActivity
               referenceNumber={referenceNumber}
-              statusHistory={[]}
+              statusHistory={(fundingApplication?.statusHistory || []).map(item => ({
+                status: item.status,
+                timestamp: typeof item.timestamp === 'string' ? item.timestamp : item.timestamp.toISOString(),
+                reason: item.reason
+              }))}
             />
           </div>
         )}

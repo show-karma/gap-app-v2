@@ -18,7 +18,6 @@ interface StatusHistoryItem {
 interface CommentsAndActivityProps {
   referenceNumber: string;
   statusHistory: StatusHistoryItem[];
-  currentUserAddress?: string;
 }
 
 type TimelineItem =
@@ -28,7 +27,6 @@ type TimelineItem =
 export function CommentsAndActivity({
   referenceNumber,
   statusHistory,
-  currentUserAddress,
 }: CommentsAndActivityProps) {
   const { comments, isLoading, error, refetch } = useApplicationComments(referenceNumber);
 
@@ -117,10 +115,7 @@ export function CommentsAndActivity({
                   {/* Content with left padding to account for timeline */}
                   <div className="ml-10">
                     {item.type === "comment" ? (
-                      <CommentItem
-                        comment={item}
-                        currentUserAddress={currentUserAddress}
-                      />
+                      <CommentItem comment={item} />
                     ) : (
                       <StatusItem statusItem={item} />
                     )}
@@ -137,14 +132,9 @@ export function CommentsAndActivity({
 
 function CommentItem({
   comment,
-  currentUserAddress,
 }: {
   comment: ApplicationComment;
-  currentUserAddress?: string;
 }) {
-  const isUserComment =
-    currentUserAddress &&
-    comment.authorAddress.toLowerCase() === currentUserAddress.toLowerCase();
 
   const truncateAddress = (address: string) => {
     if (!address) return "";

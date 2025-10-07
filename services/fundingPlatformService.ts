@@ -377,7 +377,7 @@ export const fundingApplicationsAPI = {
     referenceNumber: string
   ): Promise<IFundingApplication> {
     const response = await apiClient.get(
-      `/v2/funding-applications/reference/${referenceNumber}`
+      `/v2/funding-applications/${referenceNumber}`
     );
     return response.data;
   },
