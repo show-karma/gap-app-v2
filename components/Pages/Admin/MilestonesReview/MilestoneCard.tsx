@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { CheckCircleIcon } from "@heroicons/react/20/solid";
 import type { MappedGrantMilestone } from "@/services/milestones";
@@ -33,31 +33,45 @@ export function MilestoneCard({
   onSubmitVerification,
   onSyncVerification,
 }: MilestoneCardProps) {
-  // Use completionDetails if it has description, otherwise use fundingApplicationCompletion
-  const useOnChainData = milestone.completionDetails?.description;
-  const completionData = useOnChainData
-    ? milestone.completionDetails
-    : milestone.fundingApplicationCompletion;
+  // Memoized boolean checks
+  const useOnChainData = useMemo(
+    () => !!milestone.completionDetails?.description,
+    [milestone.completionDetails?.description]
+  );
 
-  const hasCompletion = completionData !== null;
-  const isVerified = milestone.verificationDetails !== null;
-  const hasOnChainCompletion = milestone.completionDetails !== null;
-  const hasFundingAppCompletion = milestone.fundingApplicationCompletion !== null;
+  const completionData = useMemo(
+    () => useOnChainData ? milestone.completionDetails : milestone.fundingApplicationCompletion,
+    [useOnChainData, milestone.completionDetails, milestone.fundingApplicationCompletion]
+  );
 
-  // Determine status based on completion data
-  let status = "Not Started";
-  let statusColor = "bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300";
+  const hasCompletion = useMemo(() => completionData !== null, [completionData]);
+  const isVerified = useMemo(() => milestone.verificationDetails !== null, [milestone.verificationDetails]);
+  const hasOnChainCompletion = useMemo(() => milestone.completionDetails !== null, [milestone.completionDetails]);
+  const hasFundingAppCompletion = useMemo(() => milestone.fundingApplicationCompletion !== null, [milestone.fundingApplicationCompletion]);
 
-  if (isVerified) {
-    status = "Verified";
-    statusColor = "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300";
-  } else if (hasOnChainCompletion) {
-    status = "Pending Verification";
-    statusColor = "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300";
-  } else if (hasFundingAppCompletion) {
-    status = "Pending Completion and Verification";
-    statusColor = "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300";
-  }
+  // Memoized status tree-decision
+  const statusInfo = useMemo(() => {
+    if (isVerified) {
+      return {
+        status: "Verified",
+        statusColor: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+      };
+    } else if (hasOnChainCompletion) {
+      return {
+        status: "Pending Verification",
+        statusColor: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
+      };
+    } else if (hasFundingAppCompletion) {
+      return {
+        status: "Pending Completion and Verification",
+        statusColor: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
+      };
+    }
+    return {
+      status: "Not Started",
+      statusColor: "bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300"
+    };
+  }, [isVerified, hasOnChainCompletion, hasFundingAppCompletion]);
 
   return (
     <div
@@ -184,8 +198,8 @@ export function MilestoneCard({
           <span className="font-medium">Due:</span>{" "}
           {new Date(milestone.dueDate).toLocaleDateString()}
         </div>
-        <span className={`text-xs px-3 py-1 rounded-full font-medium ${statusColor}`}>
-          {status}
+        <span className={`text-xs px-3 py-1 rounded-full font-medium ${statusInfo.statusColor}`}>
+          {statusInfo.status}
         </span>
       </div>
     </div>

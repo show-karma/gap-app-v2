@@ -2,9 +2,9 @@
 
 import { Button } from "@/components/Utilities/Button";
 import { PAGES } from "@/utilities/pages";
-import { ChevronLeftIcon, CheckCircleIcon, ExclamationTriangleIcon } from "@heroicons/react/20/solid";
+import { ChevronLeftIcon, ExclamationTriangleIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import type { MappedGrantMilestone } from "@/services/milestones";
 import { updateMilestoneVerification } from "@/services/milestones";
 import { useProjectGrantMilestones } from "@/hooks/useProjectGrantMilestones";
@@ -46,6 +46,13 @@ export function MilestonesReviewPage({
 
   // Fetch funding application data to get statusHistory (must be before any returns)
   const { application: fundingApplication } = useApplicationByReference(referenceNumber || "");
+
+  // Get grant name from first milestone's programId (must be before any returns)
+  const grantName = useMemo(() => {
+    return data?.grantMilestones[0]?.programId
+      ? `Program ${data.grantMilestones[0].programId.split('_')[0]}`
+      : `Program ${programId}`;
+  }, [data?.grantMilestones, programId]);
 
   const { verifyMilestone, isVerifying } = useMilestoneCompletionVerification({
     projectId,
@@ -158,11 +165,6 @@ export function MilestonesReviewPage({
   }
 
   const { project, grantMilestones } = data;
-
-  // Get grant name from first milestone's programId
-  const grantName = grantMilestones[0]?.programId
-    ? `Program ${grantMilestones[0].programId.split('_')[0]}`
-    : `Program ${programId}`;
 
   return (
     <div className="container mx-auto mt-4 flex gap-8 flex-col w-full px-4 pb-8">
