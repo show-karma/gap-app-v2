@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { Button } from "@/components/Utilities/Button";
 import {
   ExclamationCircleIcon,
@@ -7,22 +8,14 @@ import {
   ChatBubbleLeftIcon,
 } from "@heroicons/react/24/outline";
 import { useApplicationComments } from "@/hooks/useApplicationComments";
-import type { ApplicationComment } from "@/services/comments";
-
-interface StatusHistoryItem {
-  status: string;
-  timestamp: string;
-  reason?: string;
-}
+import { CommentItem } from "./CommentItem";
+import { StatusItem } from "./StatusItem";
+import type { StatusHistoryItem, TimelineItem } from "./types";
 
 interface CommentsAndActivityProps {
   referenceNumber: string;
   statusHistory: StatusHistoryItem[];
 }
-
-type TimelineItem =
-  | (ApplicationComment & { type: "comment" })
-  | (StatusHistoryItem & { type: "status" });
 
 export function CommentsAndActivity({
   referenceNumber,
@@ -31,18 +24,27 @@ export function CommentsAndActivity({
   const { comments, isLoading, error, refetch } = useApplicationComments(referenceNumber);
 
   // Combine comments with status history for unified timeline
-  const timelineItems: TimelineItem[] = [
-    ...comments.map((c) => ({ ...c, type: "comment" as const })),
-    ...statusHistory.map((s) => ({ ...s, type: "status" as const })),
-  ].sort((a, b) => {
-    const dateA = new Date(
-      "createdAt" in a ? a.createdAt : a.timestamp
-    ).getTime();
-    const dateB = new Date(
-      "createdAt" in b ? b.createdAt : b.timestamp
-    ).getTime();
-    return dateA - dateB; // Chronological order (oldest first)
-  });
+  const timelineItems: TimelineItem[] = useMemo(() => {
+    const commentItems = comments.map((c) => ({
+      ...c,
+      type: "comment" as const
+    }));
+
+    const statusItems = statusHistory.map((s) => ({
+      ...s,
+      type: "status" as const
+    }));
+
+    const combined = [...commentItems, ...statusItems];
+
+    return combined.sort((a, b) => {
+      const dateA = new Date("createdAt" in a ? a.createdAt : a.timestamp).getTime();
+      const dateB = new Date("createdAt" in b ? b.createdAt : b.timestamp).getTime();
+      return dateA - dateB;
+    });
+  }, [comments, statusHistory]);
+
+  const totalItems = useMemo(() => timelineItems.length, [timelineItems]);
 
   if (isLoading) {
     return (
@@ -73,8 +75,6 @@ export function CommentsAndActivity({
       </div>
     );
   }
-
-  const totalItems = timelineItems.length;
 
   return (
     <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm">
@@ -124,155 +124,6 @@ export function CommentsAndActivity({
               ))}
             </div>
           )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function CommentItem({
-  comment,
-}: {
-  comment: ApplicationComment;
-}) {
-
-  const truncateAddress = (address: string) => {
-    if (!address) return "";
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  return (
-    <div
-      className={`p-4 rounded-lg border ${
-        comment.isDeleted
-          ? "opacity-60 bg-gray-50 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700"
-          : comment.authorRole === "admin"
-          ? "bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800"
-          : "bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700"
-      }`}
-    >
-      <div className="flex items-start gap-3">
-        {/* Avatar */}
-        <div className="w-8 h-8 rounded-full bg-gray-300 dark:bg-zinc-600 flex items-center justify-center text-xs font-medium text-gray-700 dark:text-gray-300 flex-shrink-0">
-          {(comment.authorName || comment.authorAddress).charAt(0).toUpperCase()}
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          {/* Header */}
-          <div className="flex items-center gap-2 mb-1">
-            <span className="font-medium text-sm text-black dark:text-white">
-              {comment.authorName || truncateAddress(comment.authorAddress)}
-            </span>
-            {comment.authorRole === "admin" && (
-              <span className="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
-                Admin
-              </span>
-            )}
-            {comment.isDeleted && (
-              <span className="px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300">
-                Deleted
-              </span>
-            )}
-          </div>
-
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-            {formatDate(comment.createdAt)}
-            {comment.editHistory && comment.editHistory.length > 0 && (
-              <span className="italic ml-1">(edited)</span>
-            )}
-          </p>
-
-          <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words">
-            {comment.content}
-          </p>
-
-          {comment.isDeleted && comment.deletedAt && (
-            <p className="text-xs text-red-600 dark:text-red-400 mt-2">
-              Deleted on {formatDate(comment.deletedAt)}
-              {comment.deletedBy && ` by ${truncateAddress(comment.deletedBy)}`}
-            </p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function StatusItem({ statusItem }: { statusItem: StatusHistoryItem }) {
-  const getStatusIcon = (status: string) => {
-    // Import icons as needed
-    return null;
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "pending":
-        return "bg-yellow-50 dark:bg-yellow-900/10 border-yellow-200 dark:border-yellow-800 text-yellow-700 dark:text-yellow-300";
-      case "under_review":
-        return "bg-blue-50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300";
-      case "revision_requested":
-        return "bg-orange-50 dark:bg-orange-900/10 border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-300";
-      case "approved":
-        return "bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800 text-green-700 dark:text-green-300";
-      case "rejected":
-        return "bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300";
-      default:
-        return "bg-gray-50 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-gray-300";
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const formatStatus = (status: string) => {
-    return status
-      .split("_")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
-  };
-
-  return (
-    <div
-      className={`p-4 rounded-lg border-l-4 ${getStatusColor(statusItem.status)}`}
-    >
-      <div className="flex items-start gap-3">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-sm font-medium">{formatStatus(statusItem.status)}</span>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              Status Changed
-            </span>
-          </div>
-
-          {statusItem.reason && (
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-              {statusItem.reason}
-            </p>
-          )}
-
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            {formatDate(statusItem.timestamp)}
-          </p>
         </div>
       </div>
     </div>
