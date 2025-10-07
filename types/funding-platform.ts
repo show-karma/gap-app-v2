@@ -64,6 +64,8 @@ export interface IFormSchema {
   settings?: {
     submitButtonText?: string;
     confirmationMessage?: string;
+    applicationDeadline?: string;
+    donationRound?: boolean;
   };
 }
 
