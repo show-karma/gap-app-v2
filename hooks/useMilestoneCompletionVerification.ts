@@ -41,8 +41,8 @@ export const useMilestoneCompletionVerification = ({
       return;
     }
 
-    if (!milestone.onChainMilestoneUID) {
-      toast.error("Cannot verify milestone without on-chain UID");
+    if (!milestone.uid) {
+      toast.error("Cannot verify milestone without UID");
       return;
     }
 
@@ -54,7 +54,7 @@ export const useMilestoneCompletionVerification = ({
 
       // Switch to correct chain
       const { success, chainId: actualChainId, gapClient } = await ensureCorrectChain({
-        targetChainId: data.grant.chainID,
+        targetChainId: data.project.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
       });
@@ -81,17 +81,29 @@ export const useMilestoneCompletionVerification = ({
 
       // Find grant and milestone instances using UIDs from the data we already have
       const grantInstance = fetchedProject.grants.find(
-        (g) => g.uid.toLowerCase() === data.grant.uid.toLowerCase()
+        (g) => g.details?.programId === programId
       );
+
       if (!grantInstance) {
+        console.error("Grant not found. Expected programId:", programId);
+        console.error("Available grants:", fetchedProject.grants.map((g) => ({
+          uid: g.uid,
+          programId: g.details?.programId,
+          chainID: g.chainID
+        })));
         throw new Error("Grant not found");
       }
 
       const milestoneInstance = grantInstance.milestones?.find(
-        (m) => m.uid.toLowerCase() === milestone.onChainMilestoneUID.toLowerCase()
+        (m) => m.uid.toLowerCase() === milestone.uid.toLowerCase()
       );
 
       if (!milestoneInstance) {
+        console.error("Milestone not found. Expected UID:", milestone.uid);
+        console.error("Available milestones:", grantInstance.milestones?.map((m) => ({
+          uid: m.uid,
+          title: m.data?.title
+        })));
         throw new Error("Milestone not found");
       }
 
@@ -101,8 +113,11 @@ export const useMilestoneCompletionVerification = ({
 
       // Step 1: Complete milestone if not already completed
       if (!milestoneInstance.completed) {
+        // Use completionText from fundingApplicationCompletion if available, otherwise default message
+        const completionReason = milestone.fundingApplicationCompletion?.completionText || "Milestone marked as complete";
+
         const completionData = sanitizeObject({
-          reason: milestone.completion?.completionText || "Milestone marked as complete",
+          reason: completionReason,
           proofOfWork: "",
           completionPercentage: 100,
           type: "completed",
@@ -110,7 +125,7 @@ export const useMilestoneCompletionVerification = ({
         });
 
         toast.loading("Completing milestone...", {
-          id: `milestone-${milestone.onChainMilestoneUID}`,
+          id: `milestone-${milestone.uid}`,
         });
 
         await milestoneInstance
@@ -136,18 +151,18 @@ export const useMilestoneCompletionVerification = ({
               try {
                 const updatedProject = await gapClient.fetch.projectById(data.project.uid);
                 const updatedGrant = updatedProject?.grants.find(
-                  (g) => g.uid === data.grant.uid
+                  (g) => g.details?.programId === programId
                 );
                 const updatedMilestone = updatedGrant?.milestones.find(
-                  (m: any) => m.uid === milestone.onChainMilestoneUID
+                  (m: any) => m.uid === milestone.uid
                 );
 
                 if (updatedMilestone?.completed) {
                   isCompleted = true;
-                  completionConfirmed = true; // Mark completion as confirmed on-chain
+                  completionConfirmed = true;
                   changeStepperStep("indexed");
                   toast.success("Milestone completed successfully!", {
-                    id: `milestone-${milestone.onChainMilestoneUID}`,
+                    id: `milestone-${milestone.uid}`,
                   });
                 }
               } catch (pollError) {
@@ -155,7 +170,6 @@ export const useMilestoneCompletionVerification = ({
               }
 
               retries -= 1;
-              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
               await new Promise((resolve) => setTimeout(resolve, 1500));
             }
 
@@ -164,7 +178,7 @@ export const useMilestoneCompletionVerification = ({
             }
           })
           .catch((error) => {
-            toast.remove(`milestone-${milestone.onChainMilestoneUID}`);
+            toast.remove(`milestone-${milestone.uid}`);
             throw error;
           });
       } else {
@@ -203,10 +217,10 @@ export const useMilestoneCompletionVerification = ({
               // Re-fetch project to check if verification is indexed
               const updatedProject = await gapClient.fetch.projectById(data.project.uid);
               const updatedGrant = updatedProject?.grants.find(
-                (g) => g.uid === data.grant.uid
+                (g) => g.details?.programId === programId
               );
               const updatedMilestone = updatedGrant?.milestones.find(
-                (m: any) => m.uid === milestone.onChainMilestoneUID
+                (m: any) => m.uid === milestone.uid
               );
 
               const alreadyVerified = updatedMilestone?.verified?.find(
@@ -215,7 +229,7 @@ export const useMilestoneCompletionVerification = ({
 
               if (alreadyVerified) {
                 isVerified = true;
-                verificationConfirmed = true; // Mark verification as confirmed on-chain
+                verificationConfirmed = true;
                 changeStepperStep("indexed");
               }
             } catch (pollError) {
@@ -223,7 +237,6 @@ export const useMilestoneCompletionVerification = ({
             }
 
             retries -= 1;
-            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
             await new Promise((resolve) => setTimeout(resolve, 1500));
           }
 
@@ -240,8 +253,8 @@ export const useMilestoneCompletionVerification = ({
         );
       }
 
-      // Step 3: Update database (only if funding application exists)
-      if (data.fundingApplication) {
+      // Step 3: Update database (only if funding application completion exists)
+      if (milestone.fundingApplicationCompletion) {
         // Retry logic with exponential backoff for database update
         const maxRetries = 3;
         let attempt = 0;
@@ -250,9 +263,9 @@ export const useMilestoneCompletionVerification = ({
         while (attempt < maxRetries && !dbUpdateSuccess) {
           try {
             await updateMilestoneVerification(
-              data.fundingApplication.referenceNumber,
-              milestone.milestoneFieldLabel,
-              milestone.milestoneTitle,
+              milestone.fundingApplicationCompletion.referenceNumber,
+              milestone.fundingApplicationCompletion.milestoneFieldLabel,
+              milestone.fundingApplicationCompletion.milestoneTitle,
               verificationComment
             );
             dbUpdateSuccess = true;
@@ -285,10 +298,10 @@ export const useMilestoneCompletionVerification = ({
       if (error?.message?.includes("User rejected") || error?.code === 4001) {
         toast.error("Verification cancelled");
       } else {
+        console.log(error);
         toast.error("Failed to verify milestone");
         errorManager("Error verifying milestone", error, {
-          milestoneUID: milestone.onChainMilestoneUID,
-          grantUID: data.grant.uid,
+          milestoneUID: milestone.uid,
           address,
         });
       }

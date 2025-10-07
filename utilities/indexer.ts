@@ -34,8 +34,11 @@ export const INDEXER = {
   },
   V2: {
     PROJECTS: {
+      GET: (projectIdOrSlug: string) => `/v2/projects/${projectIdOrSlug}`,
       GRANT_MILESTONES: (projectUid: string, programId: string) =>
         `/v2/projects/${projectUid}/grants/${programId}/milestones`,
+      UPDATES: (projectIdOrSlug: string) =>
+        `/v2/projects/${projectIdOrSlug}/updates`,
     },
     APPLICATIONS: {
       COMMENTS: (referenceNumber: string) =>
