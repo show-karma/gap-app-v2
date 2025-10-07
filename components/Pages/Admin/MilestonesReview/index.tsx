@@ -12,11 +12,10 @@ import { useMilestoneCompletionVerification } from "@/hooks/useMilestoneCompleti
 import { useApplicationByReference } from "@/hooks/useFundingPlatform";
 import toast from "react-hot-toast";
 import { CommentsAndActivity } from "./CommentsAndActivity";
+import { MilestoneCard } from "./MilestoneCard";
 import { useAccount } from "wagmi";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
-import { getProjectMemberRoles } from "@/utilities/getProjectMemberRoles";
-import { Project } from "@show-karma/karma-gap-sdk/core/class/entities/Project";
-import { getGapClient } from "@/hooks/useGap";
+import { useOwnerStore } from "@/store";
 
 interface MilestonesReviewPageProps {
   communityId: string;
@@ -37,8 +36,8 @@ export function MilestonesReviewPage({
   const { isCommunityAdmin, isLoading: isLoadingCommunityAdmin } = useIsCommunityAdmin(
     communityId
   );
-  const [isProjectOwnerOrAdmin, setIsProjectOwnerOrAdmin] = useState(false);
-  const [isCheckingProjectRole, setIsCheckingProjectRole] = useState(true);
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
+  const isOwnerLoading = useOwnerStore((state) => state.isOwnerLoading);
 
   // Get reference number from first milestone with fundingApplicationCompletion
   const referenceNumber = data?.grantMilestones.find(
@@ -47,50 +46,6 @@ export function MilestonesReviewPage({
 
   // Fetch funding application data to get statusHistory (must be before any returns)
   const { application: fundingApplication } = useApplicationByReference(referenceNumber || "");
-
-  // Check if user is project owner/admin
-  useEffect(() => {
-    async function checkProjectRole() {
-      if (!address || !data?.project) {
-        setIsCheckingProjectRole(false);
-        return;
-      }
-
-      try {
-        const gapClient = getGapClient(data.project.chainID);
-        const fetchedProject = await gapClient.fetch.projectById(data.project.uid);
-        if (!fetchedProject) {
-          setIsProjectOwnerOrAdmin(false);
-          setIsCheckingProjectRole(false);
-          return;
-        }
-
-        // Convert ProjectData to IProjectResponse format for getProjectMemberRoles
-        const projectResponse = {
-          ...data.project,
-          data: data.project.details,
-          members: fetchedProject.members || [],
-        };
-
-        // Get roles for all members
-        const roles = await getProjectMemberRoles(
-          projectResponse as any,
-          fetchedProject as Project
-        );
-
-        // Check if current user is Owner or Admin
-        const userRole = roles[address.toLowerCase()];
-        setIsProjectOwnerOrAdmin(userRole === "Owner" || userRole === "Admin");
-      } catch (err) {
-        console.error("Error checking project role:", err);
-        setIsProjectOwnerOrAdmin(false);
-      } finally {
-        setIsCheckingProjectRole(false);
-      }
-    }
-
-    checkProjectRole();
-  }, [address, data]);
 
   const { verifyMilestone, isVerifying } = useMilestoneCompletionVerification({
     projectId,
@@ -145,7 +100,7 @@ export function MilestonesReviewPage({
   };
 
   // Show loading while checking authorization
-  if (isLoading || isLoadingCommunityAdmin || isCheckingProjectRole) {
+  if (isLoading || isLoadingCommunityAdmin || isOwnerLoading) {
     return (
       <div className="container mx-auto mt-4 flex gap-8 flex-col w-full px-4 pb-8">
         <div className="animate-pulse space-y-4">
@@ -157,8 +112,9 @@ export function MilestonesReviewPage({
     );
   }
 
-  // Check authorization: user must be logged in AND (community admin OR project owner/admin)
-  const isAuthorized = address && (isCommunityAdmin || isProjectOwnerOrAdmin);
+  // Check authorization: user must be logged in AND (community admin OR contract owner)
+  // Project owners alone do NOT have access unless they are also community admin or contract owner
+  const isAuthorized = address && (isCommunityAdmin || isContractOwner);
 
   if (!isAuthorized) {
     return (
@@ -173,7 +129,7 @@ export function MilestonesReviewPage({
           <p className="text-red-600 dark:text-red-400 mb-4">
             {!address
               ? "You must be logged in to access this page."
-              : "You do not have permission to access this page. Only community administrators and project owners/admins can review milestones."}
+              : "You do not have permission to access this page. Only community administrators and contract owners can review milestones."}
           </p>
           <Link href={PAGES.ADMIN.MILESTONES(communityId)}>
             <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white">
@@ -247,166 +203,22 @@ export function MilestonesReviewPage({
                   <p className="text-sm">This project does not have any milestones yet</p>
                 </div>
               ) : (
-                grantMilestones.map((milestone, index) => {
-                  // Use completionDetails if it has description, otherwise use fundingApplicationCompletion
-                  const useOnChainData = milestone.completionDetails?.description;
-                  const completionData = useOnChainData
-                    ? milestone.completionDetails
-                    : milestone.fundingApplicationCompletion;
-
-                  const hasCompletion = completionData !== null;
-                  // Use verificationDetails as source of truth for verification status
-                  const isVerified = milestone.verificationDetails !== null;
-                  const hasOnChainCompletion = milestone.completionDetails !== null;
-                  const hasFundingAppCompletion = milestone.fundingApplicationCompletion !== null;
-
-                  // Determine status based on completion data
-                  let status = "Not Started";
-                  let statusColor = "bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300";
-
-                  if (isVerified) {
-                    status = "Verified";
-                    statusColor = "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300";
-                  } else if (hasOnChainCompletion) {
-                    status = "Pending Verification";
-                    statusColor = "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300";
-                  } else if (hasFundingAppCompletion) {
-                    status = "Pending Completion and Verification";
-                    statusColor = "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300";
-                  }
-
-                  return (
-                    <div
-                      key={milestone.uid || index}
-                      className="border border-gray-200 dark:border-zinc-700 rounded-lg p-4 hover:border-blue-500 dark:hover:border-blue-400 transition-colors"
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <h3 className="text-lg font-medium text-black dark:text-white">
-                          {milestone.title}
-                        </h3>
-                      </div>
-
-                      <p className="text-gray-600 dark:text-gray-400 text-sm mb-3">
-                        {milestone.description}
-                      </p>
-
-                      {hasCompletion && (
-                        <>
-                          {/* Completion Details Box - Read Only */}
-                          <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-md">
-                            <p className="text-sm font-semibold text-blue-900 dark:text-blue-200 mb-2">
-                              Completion Details {useOnChainData ? "(On-chain)" : "(Off-chain)"}
-                            </p>
-                            <p className="text-sm text-gray-700 dark:text-gray-300">
-                              {useOnChainData
-                                ? milestone.completionDetails!.description
-                                : milestone.fundingApplicationCompletion!.completionText}
-                            </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                              Submitted: {new Date(
-                                useOnChainData
-                                  ? milestone.completionDetails!.completedAt
-                                  : milestone.fundingApplicationCompletion!.createdAt
-                              ).toLocaleDateString()}
-                            </p>
-                          </div>
-
-                          {/* Verification Section */}
-                          {isVerified && milestone.verificationDetails ? (
-                            /* Show Verification Box if already verified (from on-chain data) */
-                            <div className="mb-3">
-                              <div className="p-3 bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-md">
-                                <p className="text-sm font-semibold text-green-900 dark:text-green-200 mb-2">
-                                  Verification (On-chain)
-                                </p>
-                                <p className="text-sm text-gray-700 dark:text-gray-300">
-                                  {milestone.verificationDetails.description}
-                                </p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                                  Verified by: {milestone.verificationDetails.verifiedBy.slice(0, 6)}...{milestone.verificationDetails.verifiedBy.slice(-4)}
-                                </p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                  Verified: {new Date(milestone.verificationDetails.verifiedAt).toLocaleDateString()}
-                                </p>
-                              </div>
-                              {/* Show sync button if off-chain data is not synced */}
-                              {milestone.fundingApplicationCompletion && !milestone.fundingApplicationCompletion.isVerified && (
-                                <div className="mt-2">
-                                  <Button
-                                    onClick={() => handleSyncVerification(milestone)}
-                                    className="flex items-center gap-2 px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700"
-                                    disabled={isSyncing}
-                                    isLoading={isSyncing}
-                                  >
-                                    <CheckCircleIcon className="w-4 h-4" />
-                                    Sync Verification to Off-chain
-                                  </Button>
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            /* Show Verify Button for all non-verified milestones with completion (on-chain or off-chain) */
-                            hasCompletion && !isVerified && (
-                              <div className="mb-3">
-                                {verifyingMilestoneId === milestone.uid ? (
-                                  /* Verification Form */
-                                  <div className="p-3 bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-md space-y-2">
-                                    <p className="text-sm font-semibold text-green-900 dark:text-green-200 mb-2">
-                                      Verify Milestone Completion
-                                    </p>
-                                    <textarea
-                                      value={verificationComment}
-                                      onChange={(e) => setVerificationComment(e.target.value)}
-                                      placeholder="Add verification comment (optional)..."
-                                      rows={3}
-                                      className="w-full px-3 py-2 text-sm border border-green-300 dark:border-green-700 rounded-md bg-white dark:bg-zinc-800 text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400"
-                                    />
-                                    <div className="flex gap-2">
-                                      <Button
-                                        onClick={() => handleSubmitVerification(milestone)}
-                                        className="px-3 py-1 text-xs bg-green-600 hover:bg-green-700"
-                                        disabled={isVerifying}
-                                        isLoading={isVerifying}
-                                      >
-                                        Verify
-                                      </Button>
-                                      <Button
-                                        onClick={handleCancelVerification}
-                                        className="px-3 py-1 text-xs bg-gray-500 hover:bg-gray-600"
-                                        disabled={isVerifying}
-                                      >
-                                        Cancel
-                                      </Button>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  /* Verify Button */
-                                  <Button
-                                    onClick={() => handleVerifyClick(milestone.uid)}
-                                    className="flex items-center gap-2 px-4 py-2 text-sm bg-green-600 hover:bg-green-700"
-                                  >
-                                    <CheckCircleIcon className="w-4 h-4" />
-                                    Verify Milestone
-                                  </Button>
-                                )}
-                              </div>
-                            )
-                          )}
-                        </>
-                      )}
-
-                      <div className="flex items-center justify-between">
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
-                          <span className="font-medium">Due:</span>{" "}
-                          {new Date(milestone.dueDate).toLocaleDateString()}
-                        </div>
-                        <span className={`text-xs px-3 py-1 rounded-full font-medium ${statusColor}`}>
-                          {status}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })
+                grantMilestones.map((milestone, index) => (
+                  <MilestoneCard
+                    key={milestone.uid || index}
+                    milestone={milestone}
+                    index={index}
+                    verifyingMilestoneId={verifyingMilestoneId}
+                    verificationComment={verificationComment}
+                    isVerifying={isVerifying}
+                    isSyncing={isSyncing}
+                    onVerifyClick={handleVerifyClick}
+                    onCancelVerification={handleCancelVerification}
+                    onVerificationCommentChange={setVerificationComment}
+                    onSubmitVerification={handleSubmitVerification}
+                    onSyncVerification={handleSyncVerification}
+                  />
+                ))
               )}
             </div>
           </section>
