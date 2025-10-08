@@ -19,6 +19,7 @@ import {
   ChevronUpDownIcon,
   ChevronUpIcon,
 } from "@heroicons/react/24/solid";
+import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
@@ -206,6 +207,14 @@ export const ReportMilestonePage = ({
     setCurrentPage(1);
   };
 
+  const isFullyCompleted = (report: Report) => {
+    return (
+      report.totalMilestones > 0 &&
+      report.pendingMilestones === 0 &&
+      report.completedMilestones === report.totalMilestones
+    );
+  };
+
   function StatCard({ title, value }: { title: string; value: string }) {
     return (
       <div className="bg-white dark:bg-zinc-800 p-4 rounded-lg shadow">
@@ -342,6 +351,12 @@ export const ReportMilestonePage = ({
                 <tr className="border-b transition-colors text-gray-500 dark:text-gray-200 hover:bg-muted/50 data-[state=selected]:bg-muted">
                   <th
                     scope="col"
+                    className="h-12 px-2 w-12 text-center align-middle font-medium"
+                  >
+                    {/* Status column - no header text */}
+                  </th>
+                  <th
+                    scope="col"
                     className="h-12 px-4 text-left align-middle font-medium"
                   >
                     <button
@@ -453,6 +468,9 @@ export const ReportMilestonePage = ({
                   ? skeletonArray.map((index) => {
                     return (
                       <tr key={index}>
+                        <td className="px-2 py-2 h-16 w-12">
+                          {/* Status column skeleton */}
+                        </td>
                         <td className="px-4 py-2 font-medium h-16">
                           <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4" />
                         </td>
@@ -481,6 +499,11 @@ export const ReportMilestonePage = ({
                         key={index}
                         className="dark:text-zinc-300 text-gray-900 px-4 py-4"
                       >
+                        <td className="px-2 py-2 h-16 w-12 text-center">
+                          {isFullyCompleted(report) && (
+                            <CheckCircleIcon className="h-6 w-6 text-green-500 mx-auto" />
+                          )}
+                        </td>
                         <td className="px-4 py-2 font-medium h-16 max-w-[220px]">
                           <ExternalLink
                             href={PAGES.PROJECT.GRANT(
