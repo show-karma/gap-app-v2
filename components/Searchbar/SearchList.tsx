@@ -12,7 +12,6 @@ import {
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useAccount } from "wagmi";
 import { useAuth } from "@/hooks/useAuth";
-import { useConnectModal } from "@/hooks/useConnectModal";
 import { useEffect, useState } from "react";
 import { useMobileStore } from "@/store/mobile";
 
@@ -38,8 +37,7 @@ export const SearchList: React.FC<Props> = ({
   onInteractionEnd,
 }) => {
   const { isConnected } = useAccount();
-  const { authenticated: isAuth } = useAuth();
-  const { openConnectModal } = useConnectModal();
+  const { authenticated: isAuth, login } = useAuth();
   const [shouldOpen, setShouldOpen] = useState(false);
   const router = useRouter();
 
@@ -61,7 +59,7 @@ export const SearchList: React.FC<Props> = ({
     if (!isConnected || !isAuth) {
       closeSearchList();
       setIsMobileMenuOpen(false);
-      openConnectModal?.();
+      login?.();
       setShouldOpen(true);
       return;
     }
