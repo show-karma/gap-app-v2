@@ -658,6 +658,22 @@ export default function FundingPlatformAdminPage() {
                   </span>
                 </div>
 
+                {/* Application Status Breakdown */}
+                <div className="mb-3">
+                  <div className="grid grid-cols-5 gap-2">
+                    {applicationProgress(program).map((item) => (
+                      <div key={item.title} className="text-center">
+                        <p className={cn("text-xs font-bold", item.color)}>
+                          {item.value}
+                        </p>
+                        <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                          {item.title.split(' ')[0]}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Primary CTA - View Applications */}
                 <div className="flex items-center gap-2">
                   <Link
