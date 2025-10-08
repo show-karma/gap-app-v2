@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import { TokenManager } from "@/utilities/auth/token-manager";
 import { Hex } from "viem";
 import { useAccount } from "wagmi";
-import { watchAccount } from '@wagmi/core';
+import { watchAccount } from "@wagmi/core";
 import { privyConfig } from "@/utilities/wagmi/privy-config";
 
 /**
@@ -19,17 +19,10 @@ import { privyConfig } from "@/utilities/wagmi/privy-config";
  * - Wallet connections
  */
 export const useAuth = () => {
-  const {
-    ready,
-    authenticated,
-    user,
-    login,
-    logout,
-    getAccessToken,
-  } = usePrivy();
+  const { ready, authenticated, user, login, logout, getAccessToken } =
+    usePrivy();
 
-
-  const { isConnected } = useAccount()
+  const { isConnected } = useAccount();
 
   const { wallets } = useWallets();
   const primaryWallet = wallets[0];
@@ -52,63 +45,61 @@ export const useAuth = () => {
     }
   }, [authenticated, ready, login]);
 
+  // Cross-tab logout synchronization
+  useEffect(() => {
+    if (!ready || !authenticated) return;
 
-  // // Cross-tab logout synchronization
-  // useEffect(() => {
-  //   if (!ready || !authenticated) return;
+    const checkAuthStatus = async () => {
+      const hasToken = await TokenManager.getToken();
+      if (!hasToken && authenticated) {
+        logout?.();
+      }
+    };
 
-  //   const checkAuthStatus = async () => {
-  //     const hasToken = await TokenManager.getToken();
-  //     if (!hasToken && authenticated) {
-  //       logout?.();
-  //     }
-  //   };
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "privy:token" && !e.newValue) {
+        checkAuthStatus();
+      }
+    };
 
-  //   const handleStorageChange = (e: StorageEvent) => {
-  //     if (e.key === 'privy:token' && !e.newValue) {
-  //       checkAuthStatus();
-  //     }
-  //   };
+    checkAuthStatus();
 
-  //   checkAuthStatus();
+    const intervalId = setInterval(checkAuthStatus, 5000);
 
-  //   const intervalId = setInterval(checkAuthStatus, 5000);
+    window.addEventListener("storage", handleStorageChange);
 
-  //   window.addEventListener('storage', handleStorageChange);
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, [ready, authenticated, logout]);
 
-  //   return () => {
-  //     clearInterval(intervalId);
-  //     window.removeEventListener('storage', handleStorageChange);
-  //   };
-  // }, [ready, authenticated, logout]);
+  // Handle wallet switching: logout if switched to non-linked wallet
+  // Using wagmi's watchAccount as recommended by Privy docs
+  useEffect(() => {
+    if (!ready || !authenticated) return;
 
-  // // Handle wallet switching: logout if switched to non-linked wallet
-  // // Using wagmi's watchAccount as recommended by Privy docs
-  // useEffect(() => {
-  //   if (!ready || !authenticated) return;
+    // Watch for account changes in the EOA wallet
+    const unwatch = watchAccount(privyConfig, {
+      onChange(account) {
+        // Get the new address from the wallet
+        const newAddress = account.address?.toLowerCase();
 
-  //   // Watch for account changes in the EOA wallet
-  //   const unwatch = watchAccount(privyConfig, {
-  //     onChange(account) {
-  //       // Get the new address from the wallet
-  //       const newAddress = account.address?.toLowerCase();
+        if (!newAddress) return;
 
-  //       if (!newAddress) return;
+        // Get all linked wallet addresses from Privy
+        const linkedAddresses = wallets.map((w) => w.address.toLowerCase());
 
-  //       // Get all linked wallet addresses from Privy
-  //       const linkedAddresses = wallets.map(w => w.address.toLowerCase());
+        // If the new address is NOT in the linked wallets, log out
+        if (!linkedAddresses.includes(newAddress)) {
+          logout();
+        }
+      },
+    });
 
-  //       // If the new address is NOT in the linked wallets, log out
-  //       if (!linkedAddresses.includes(newAddress)) {
-  //         logout();
-  //       }
-  //     }
-  //   });
-
-  //   // Cleanup watcher on unmount
-  //   return () => unwatch();
-  // }, [ready, authenticated, wallets, logout]);
-
+    // Cleanup watcher on unmount
+    return () => unwatch();
+  }, [ready, authenticated, wallets, logout]);
 
   const adaptedLogin = useCallback(async () => {
     // If authenticated but wallet not connected, force logout first
@@ -124,11 +115,10 @@ export const useAuth = () => {
     return isConnected && authenticated;
   }, [isConnected, authenticated]);
 
-
   return {
     // Core authentication (Privy handles everything)
-    authenticate: adaptedLogin,  // Just use Privy's login
-    disconnect: logout,   // Just use Privy's logout
+    authenticate: adaptedLogin, // Just use Privy's login
+    disconnect: logout, // Just use Privy's logout
 
     // State from Privy
     ready,
@@ -142,6 +132,6 @@ export const useAuth = () => {
     // Privy methods
     login: adaptedLogin,
     logout,
-    getAccessToken
+    getAccessToken,
   };
 };
