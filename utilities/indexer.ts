@@ -41,6 +41,8 @@ export const INDEXER = {
         `/v2/projects/${projectIdOrSlug}/updates`,
     },
     APPLICATIONS: {
+      BY_PROJECT_UID: (projectUID: string) =>
+        `/v2/funding-applications/project/${projectUID}`,
       COMMENTS: (referenceNumber: string) =>
         `/v2/applications/${referenceNumber}/comments`,
     },

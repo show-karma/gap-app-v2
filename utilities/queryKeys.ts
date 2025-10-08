@@ -8,6 +8,8 @@ export const QUERY_KEYS = {
       ["project-grant-milestones", projectId, programId] as const,
   },
   APPLICATIONS: {
+    BY_PROJECT_UID: (projectUID: string) =>
+      ["application-by-project-uid", projectUID] as const,
     COMMENTS: (referenceNumber: string) =>
       ["application-comments", referenceNumber] as const,
   },

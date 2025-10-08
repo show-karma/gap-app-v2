@@ -9,7 +9,7 @@ import type { MappedGrantMilestone } from "@/services/milestones";
 import { updateMilestoneVerification } from "@/services/milestones";
 import { useProjectGrantMilestones } from "@/hooks/useProjectGrantMilestones";
 import { useMilestoneCompletionVerification } from "@/hooks/useMilestoneCompletionVerification";
-import { useApplicationByReference } from "@/hooks/useFundingPlatform";
+import { useFundingApplicationByProjectUID } from "@/hooks/useFundingApplicationByProjectUID";
 import toast from "react-hot-toast";
 import { CommentsAndActivity } from "./CommentsAndActivity";
 import { MilestoneCard } from "./MilestoneCard";
@@ -39,13 +39,17 @@ export function MilestonesReviewPage({
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isOwnerLoading = useOwnerStore((state) => state.isOwnerLoading);
 
-  // Get reference number from first milestone with fundingApplicationCompletion
-  const referenceNumber = data?.grantMilestones.find(
-    (m) => m.fundingApplicationCompletion?.referenceNumber
-  )?.fundingApplicationCompletion?.referenceNumber;
+  // Get the actual project UID from the data (projectId might be a slug)
+  const projectUID = data?.project?.uid;
 
-  // Fetch funding application data to get statusHistory (must be before any returns)
-  const { application: fundingApplication } = useApplicationByReference(referenceNumber || "");
+  // Fetch funding application data by project UID (must be before any returns)
+  const { application: fundingApplication } = useFundingApplicationByProjectUID(projectUID || "");
+
+  // Memoize reference number from the funding application
+  const referenceNumber = useMemo(
+    () => fundingApplication?.referenceNumber,
+    [fundingApplication?.referenceNumber]
+  );
 
   // Get grant name from first milestone's programId (must be before any returns)
   const grantName = useMemo(() => {
