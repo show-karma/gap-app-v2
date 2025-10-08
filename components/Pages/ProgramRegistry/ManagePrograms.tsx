@@ -20,7 +20,6 @@ import {
   ChevronLeftIcon,
   MagnifyingGlassIcon,
 } from "@heroicons/react/24/solid";
-import { useConnectModal } from "@/hooks/useConnectModal";
 import { useQuery } from "@tanstack/react-query";
 import debounce from "lodash.debounce";
 import Link from "next/link";
@@ -81,7 +80,7 @@ export const ManagePrograms = () => {
   const [programToEdit, setProgramToEdit] = useState<GrantProgram | null>(null);
 
   const { address, isConnected } = useAccount();
-  const { authenticated: isAuth } = useAuth();
+  const { authenticated: isAuth, login } = useAuth();
 
   const signer = useSigner();
 
@@ -316,7 +315,6 @@ export const ManagePrograms = () => {
     }
   };
 
-  const { openConnectModal } = useConnectModal();
 
   const onChangeGeneric = (
     value: string,
@@ -343,7 +341,7 @@ export const ManagePrograms = () => {
           <Button
             className="w-max"
             onClick={() => {
-              openConnectModal?.();
+              login?.();
             }}
           >
             Login

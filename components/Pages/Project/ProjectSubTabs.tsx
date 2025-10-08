@@ -6,14 +6,12 @@ import { useAccount } from "wagmi";
 import { useAuth } from "@/hooks/useAuth";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { useProjectStore } from "@/store";
-import { useConnectModal } from "@/hooks/useConnectModal";
 
 export const ProjectSubTabs = () => {
   const project = useProjectStore((state) => state.project);
   const { setIsEndorsementOpen: setIsOpen } = useEndorsementStore();
   const { address, isConnected } = useAccount();
-  const { authenticated: isAuth } = useAuth();
-  const { openConnectModal } = useConnectModal();
+  const { authenticated: isAuth, login } = useAuth();
 
   const userHasEndorsed = useMemo(() => {
     if (!address || !isConnected || !isAuth || !project?.endorsements?.length)
@@ -39,7 +37,7 @@ export const ProjectSubTabs = () => {
                       if (isConnected) {
                         setIsOpen(true);
                       } else {
-                        openConnectModal?.();
+                        login?.();
                       }
                     }}
                     className="whitespace-nowrap text-blue-600 text-sm px-4 py-2 rounded-md underline bg-transparent hover:bg-transparent transition-colors"

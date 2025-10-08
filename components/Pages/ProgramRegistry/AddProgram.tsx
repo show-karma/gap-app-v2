@@ -29,7 +29,6 @@ import { privyConfig as config } from "@/utilities/wagmi/privy-config";
 import { Popover } from "@headlessui/react";
 import { CalendarIcon, ChevronLeftIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useConnectModal } from "@/hooks/useConnectModal";
 import { AlloBase } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/Allo";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
@@ -289,10 +288,9 @@ export default function AddProgram({
   const [isLoading, setIsLoading] = useState(false);
 
   const { address, isConnected } = useAccount();
-  const { authenticated: isAuth } = useAuth();
+  const { authenticated: isAuth, login } = useAuth();
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
-  const { openConnectModal } = useConnectModal();
   const { changeStepperStep, setIsStepper } = useStepper();
 
   const { isRegistryAdmin } = useRegistryStore();
@@ -301,7 +299,7 @@ export default function AddProgram({
     setIsLoading(true);
     try {
       if (!isConnected || !isAuth) {
-        openConnectModal?.();
+        login?.();
         return;
       }
       const chainSelected = data.networkToCreate;
@@ -398,7 +396,7 @@ export default function AddProgram({
     setIsLoading(true);
     try {
       if (!isConnected || !isAuth || !address) {
-        openConnectModal?.();
+        login?.();
         return;
       }
       const chainSelected = data.networkToCreate;
