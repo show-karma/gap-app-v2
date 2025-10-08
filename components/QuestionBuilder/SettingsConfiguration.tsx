@@ -87,7 +87,7 @@ export function SettingsConfiguration({
 
   return (
     <div className={`space-y-6 ${className}`}>
-      {/* Privacy Settings */}
+
       <div className="bg-white dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-zinc-700 p-6">
 
         {/* Browse All Applications URL Setting */}
@@ -106,6 +106,48 @@ export function SettingsConfiguration({
             </div>
           </div>
         )}
+
+        <hr className="my-4" />
+
+        <div className="space-y-6 py-4">
+          {/* Application Deadline */}
+          <div className="space-y-2">
+            <label htmlFor="applicationDeadline" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Application Deadline
+            </label>
+            <input
+              {...register('applicationDeadline')}
+              type="datetime-local"
+              id="applicationDeadline"
+              disabled={readOnly}
+              className={`w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-700 dark:text-white ${readOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Set a deadline for when applications will no longer be accepted. Leave empty for no deadline.
+            </p>
+          </div>
+
+          {/* Donation Round */}
+          <div className="space-y-3">
+            <div className="flex items-start space-x-3">
+              <input
+                {...register('donationRound')}
+                type="checkbox"
+                id="donationRound"
+                disabled={readOnly}
+                className={`mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500 ${readOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
+              />
+              <div className="flex-1">
+                <label htmlFor="donationRound" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Donation Round
+                </label>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Enable this if this program is a donation round where users can contribute funds.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <hr className="my-4" />
 
@@ -195,54 +237,9 @@ export function SettingsConfiguration({
             <p><strong>Private Fields:</strong> Individual fields marked as private are filtered from public responses (configure per field in the form builder)</p>
           </div>
         </div>
+
       </div>
 
-      {/* Application Settings */}
-      <div className="bg-white dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-zinc-700 p-6">
-        <h3 className="text-base font-medium text-gray-900 dark:text-white mb-4">
-          Application Settings
-        </h3>
-
-        <div className="space-y-6">
-          {/* Application Deadline */}
-          <div className="space-y-2">
-            <label htmlFor="applicationDeadline" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Application Deadline
-            </label>
-            <input
-              {...register('applicationDeadline')}
-              type="datetime-local"
-              id="applicationDeadline"
-              disabled={readOnly}
-              className={`w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-700 dark:text-white ${readOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
-            />
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Set a deadline for when applications will no longer be accepted. Leave empty for no deadline.
-            </p>
-          </div>
-
-          {/* Donation Round */}
-          <div className="space-y-3">
-            <div className="flex items-start space-x-3">
-              <input
-                {...register('donationRound')}
-                type="checkbox"
-                id="donationRound"
-                disabled={readOnly}
-                className={`mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500 ${readOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
-              />
-              <div className="flex-1">
-                <label htmlFor="donationRound" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Donation Round
-                </label>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Enable this if this program is a donation round where users can contribute funds.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
