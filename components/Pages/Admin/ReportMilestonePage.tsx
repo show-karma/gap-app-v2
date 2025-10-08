@@ -25,7 +25,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useQueryState } from "nuqs";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 import { SearchDropdown } from "../ProgramRegistry/SearchDropdown";
 import { GrantProgram } from "../ProgramRegistry/ProgramList";
@@ -207,13 +207,13 @@ export const ReportMilestonePage = ({
     setCurrentPage(1);
   };
 
-  const isFullyCompleted = (report: Report) => {
+  const isFullyCompleted = useCallback((report: Report) => {
     return (
       report.totalMilestones > 0 &&
       report.pendingMilestones === 0 &&
       report.completedMilestones === report.totalMilestones
     );
-  };
+  }, []);
 
   function StatCard({ title, value }: { title: string; value: string }) {
     return (
