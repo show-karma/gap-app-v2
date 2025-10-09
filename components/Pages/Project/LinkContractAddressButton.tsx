@@ -1,20 +1,13 @@
 "use client";
 
 import { Dialog, Transition } from "@headlessui/react";
-import { LinkIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { LinkIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { FC, ReactNode } from "react";
-import {
-  Fragment,
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
-import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
+import { ContractAddressItem } from "@/components/Pages/Project/ContractAddressItem";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useContractAddressValidation } from "@/hooks/useContractAddressValidation";
@@ -81,102 +74,6 @@ const SUPPORTED_NETWORKS = [
   "sophon",
   "apechain",
 ];
-
-// Inline memoized component for contract address items
-interface ContractAddressItemProps {
-  pair: NetworkAddressPair;
-  index: number;
-  isInvalid: boolean;
-  invalidInfo: { projectName: string; projectSlug?: string } | undefined;
-  canRemove: boolean;
-  onNetworkChange: (index: number, value: string) => void;
-  onAddressChange: (index: number, value: string) => void;
-  onRemove: (index: number) => void;
-}
-
-const ContractAddressItem = memo<ContractAddressItemProps>(
-  ({
-    pair,
-    index,
-    isInvalid,
-    invalidInfo,
-    canRemove,
-    onNetworkChange,
-    onAddressChange,
-    onRemove,
-  }) => (
-    <div className="flex flex-col space-y-2">
-      <div className="flex items-center space-x-2">
-        <div
-          className={`flex items-center justify-between p-4 rounded-lg flex-grow ${
-            isInvalid
-              ? "bg-red-50 dark:bg-red-900/20 border-2 border-red-500"
-              : "bg-gray-100 dark:bg-zinc-700"
-          }`}
-        >
-          <div className="flex items-center space-x-4 w-full">
-            <span className="text-md font-bold capitalize whitespace-nowrap">
-              Contract {index + 1}
-            </span>
-            <div className="flex-1 flex space-x-4">
-              <SearchDropdown
-                onSelectFunction={(value) => onNetworkChange(index, value)}
-                selected={pair.network ? [pair.network] : []}
-                list={SUPPORTED_NETWORKS}
-                type="network"
-                prefixUnselected="Select"
-                buttonClassname="flex-1"
-              />
-              <input
-                type="text"
-                value={pair.address}
-                onChange={(e) => onAddressChange(index, e.target.value)}
-                className={`flex-1 text-sm rounded-md bg-transparent border-b focus:outline-none ${
-                  isInvalid
-                    ? "text-red-600 dark:text-red-400 border-red-500 focus:border-red-600"
-                    : "text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 focus:border-blue-500"
-                }`}
-                placeholder="Enter contract address"
-              />
-            </div>
-          </div>
-        </div>
-        {canRemove && (
-          <Button
-            onClick={() => onRemove(index)}
-            className="p-2 text-red-500 hover:text-red-700"
-            aria-label="Remove contract"
-          >
-            <TrashIcon className="h-5 w-5" />
-          </Button>
-        )}
-      </div>
-      {isInvalid && invalidInfo && (
-        <div className="ml-2 px-4 py-2 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 rounded">
-          <p className="text-sm text-red-700 dark:text-red-400">
-            You can&apos;t add this contract address. This contract is already
-            associated with Project{" "}
-            {invalidInfo.projectSlug ? (
-              <a
-                href={`https://gap.karmahq.xyz/project/${invalidInfo.projectSlug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-bold underline hover:text-red-800 dark:hover:text-red-300"
-              >
-                {invalidInfo.projectName}
-              </a>
-            ) : (
-              <span className="font-bold">{invalidInfo.projectName}</span>
-            )}
-            .
-          </p>
-        </div>
-      )}
-    </div>
-  ),
-);
-
-ContractAddressItem.displayName = "ContractAddressItem";
 
 export const LinkContractAddressButton: FC<
   LinkContractAddressesButtonProps
@@ -308,12 +205,18 @@ export const LinkContractAddressButton: FC<
       // Build validation results map using composite keys
       const validationResults = new Map<
         string,
-        { projectName: string; projectSlug?: string }
+        { projectName: string; projectSlug?: string; errorMessage?: string }
       >();
 
       results.forEach(({ pair, result, error }) => {
         if (error) {
           console.error("Error validating contract address:", error);
+          const contractKey = getContractKey(pair.network, pair.address);
+          const errorMessage = error?.message || String(error);
+          validationResults.set(contractKey, {
+            projectName: "Validation Failed",
+            errorMessage: errorMessage,
+          });
           return;
         }
 
@@ -461,12 +364,12 @@ export const LinkContractAddressButton: FC<
               >
                 <Dialog.Panel className="w-full max-w-3xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle transition-all ease-in-out duration-300">
                   <Dialog.Title
-                    as="h3"
+                    as="h2"
                     className="text-gray-900 dark:text-zinc-100"
                   >
-                    <h2 className="text-2xl font-bold leading-6">
+                    <div className="text-2xl font-bold leading-6">
                       Link Contract Addresses
-                    </h2>
+                    </div>
                     <p className="text-md text-gray-500 dark:text-gray-400 mt-2">
                       Add one or more contract addresses for the project. This
                       will enable the project to retrieve its on-chain metrics
@@ -484,7 +387,7 @@ export const LinkContractAddressButton: FC<
 
                       return (
                         <ContractAddressItem
-                          key={contractKey || index}
+                          key={index}
                           pair={pair}
                           index={index}
                           isInvalid={isInvalid}
@@ -493,6 +396,7 @@ export const LinkContractAddressButton: FC<
                           onNetworkChange={handleNetworkChange}
                           onAddressChange={handleAddressChange}
                           onRemove={handleRemovePair}
+                          supportedNetworks={SUPPORTED_NETWORKS}
                         />
                       );
                     })}
