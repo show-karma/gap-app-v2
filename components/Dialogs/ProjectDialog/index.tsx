@@ -24,7 +24,6 @@ import {
 } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { useConnectModal } from "@/hooks/useConnectModal";
 import {
   ExternalLink,
   type IProjectDetails,
@@ -278,12 +277,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const [step, setStep] = useState(0);
   const isOwner = useOwnerStore((state) => state.isOwner);
   const { isConnected, address } = useAccount();
-  const { authenticated: isAuth } = useAuth();
+  const { authenticated: isAuth, login } = useAuth();
   const { chain } = useAccount();
   const { switchChainAsync } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
   const [isChangingNetwork, setIsChangingNetwork] = useState(false);
-  const { openConnectModal } = useConnectModal();
   const router = useRouter();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
@@ -447,6 +445,14 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     setIsOpen(true);
   }
 
+  useMemo(() => {
+    if (isOpen && !isAuth) {
+      login?.();
+      closeModal();
+      return;
+    }
+  }, [isOpen, isAuth]);
+
   const validateCustomLinks = () => {
     return customLinks.some(link => !link.name.trim() || !link.url.trim());
   };
@@ -530,7 +536,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     try {
       setIsLoading(true);
       if (!isConnected || !isAuth) {
-        openConnectModal?.();
+        login?.();
         return;
       }
       if (!address) return;
@@ -832,7 +838,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     try {
       setIsLoading(true);
       if (!isConnected || !isAuth) {
-        openConnectModal?.();
+        login?.();
         return;
       }
       if (!address || !projectToUpdate || !dataToUpdate) return;

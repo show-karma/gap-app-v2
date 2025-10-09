@@ -19,7 +19,6 @@ import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { cn } from "@/utilities/tailwind";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useConnectModal } from "@/hooks/useConnectModal";
 import { ContributorProfile } from "@show-karma/karma-gap-sdk";
 import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -117,7 +116,7 @@ export const ContributorProfileDialog: FC<
     reValidateMode: "onChange",
     mode: "onChange",
   });
-  const { openConnectModal } = useConnectModal();
+  const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const { changeStepperStep, setIsStepper } = useStepper();
   const { authenticated: isAuth } = useAuth();
@@ -449,7 +448,7 @@ export const ContributorProfileDialog: FC<
                     <Button
                       type="button"
                       className="rounded-md text-lg"
-                      onClick={openConnectModal}
+                      onClick={login}
                     >
                       Login
                     </Button>
