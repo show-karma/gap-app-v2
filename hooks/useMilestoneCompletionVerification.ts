@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
 import { useWallet } from "@/hooks/useWallet";
 import {
   type MappedGrantMilestone,
@@ -17,7 +18,8 @@ import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { retry } from "@/utilities/retries";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
+import { retry, retryUntilConditionMet } from "@/utilities/retries";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
@@ -25,35 +27,6 @@ interface UseMilestoneCompletionVerificationParams {
   projectId: string;
   programId: string;
   onSuccess?: () => void;
-}
-
-/**
- * Polls for milestone completion or verification with retry logic
- */
-async function pollForMilestoneUpdate<T>(
-  checkFn: () => Promise<T | null>,
-  maxRetries: number = 1000,
-  retryDelay: number = 1500,
-): Promise<T> {
-  let retries = maxRetries;
-
-  while (retries > 0) {
-    try {
-      const result = await checkFn();
-      if (result) {
-        return result;
-      }
-    } catch (pollError) {
-      console.error("Error during polling:", pollError);
-    }
-
-    retries -= 1;
-    await new Promise((resolve) => setTimeout(resolve, retryDelay));
-  }
-
-  throw new Error(
-    "Polling timed out - please refresh the page to check status",
-  );
 }
 
 /**
@@ -214,38 +187,55 @@ export const useMilestoneCompletionVerification = ({
         }
       }
 
+      // Invalidate cache to ensure fresh data on next fetch
+      await queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES(
+          projectId,
+          programId,
+        ),
+      });
+
       // Poll for verification (and completion if needed)
       // This ensures BOTH attestations are fully indexed before continuing
-      await pollForMilestoneUpdate(async () => {
+      await retryUntilConditionMet(async () => {
         const updatedProject = await gapClient.fetch.projectById(
           data.project.uid,
         );
-        const updatedGrant = updatedProject?.grants.find(
+
+        if (!updatedProject) {
+          return false;
+        }
+
+        const updatedGrant = updatedProject.grants.find(
           (g) => g.details?.programId === programId,
         );
-        const updatedMilestone = updatedGrant?.milestones.find(
+
+        if (!updatedGrant) {
+          return false;
+        }
+
+        const updatedMilestone = updatedGrant.milestones?.find(
           (m: any) => m.uid === milestone.uid,
         );
 
-        const isVerified = updatedMilestone?.verified?.find(
+        if (!updatedMilestone) {
+          return false;
+        }
+
+        const isVerified = updatedMilestone.verified?.find(
           (v: any) => v.attester?.toLowerCase() === address?.toLowerCase(),
         );
 
         // If we completed it in this transaction, ensure BOTH are indexed
         if (!alreadyCompleted) {
-          const isCompleted = updatedMilestone?.completed;
+          const isCompleted = updatedMilestone.completed;
 
           // Both must be true for the polling to succeed
-          if (isCompleted && isVerified) {
-            return updatedMilestone;
-          }
-
-          // Return null to continue polling if either is missing
-          return null;
+          return !!(isCompleted && isVerified);
         }
 
         // If already completed, just check verification
-        return isVerified ? updatedMilestone : null;
+        return !!isVerified;
       });
 
       changeStepperStep("indexed");
