@@ -17,6 +17,7 @@ import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { retry } from "@/utilities/retries";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
@@ -53,36 +54,6 @@ async function pollForMilestoneUpdate<T>(
   throw new Error(
     "Polling timed out - please refresh the page to check status",
   );
-}
-
-/**
- * Retries an async operation with exponential backoff
- */
-async function retryWithExponentialBackoff<T>(
-  operation: () => Promise<T>,
-  maxRetries: number = 3,
-  onError?: (error: any, attempt: number) => void,
-): Promise<T | null> {
-  let attempt = 0;
-
-  while (attempt < maxRetries) {
-    try {
-      return await operation();
-    } catch (error) {
-      attempt += 1;
-      if (onError) {
-        onError(error, attempt);
-      }
-
-      if (attempt < maxRetries) {
-        // Exponential backoff: 1s, 2s, 4s
-        const delay = Math.pow(2, attempt - 1) * 1000;
-        await new Promise((resolve) => setTimeout(resolve, delay));
-      }
-    }
-  }
-
-  return null;
 }
 
 /**
@@ -303,28 +274,29 @@ export const useMilestoneCompletionVerification = ({
       return;
     }
 
-    const dbUpdateSuccess = await retryWithExponentialBackoff(
-      () =>
-        updateMilestoneVerification(
-          milestone.fundingApplicationCompletion!.referenceNumber,
-          milestone.fundingApplicationCompletion!.milestoneFieldLabel,
-          milestone.fundingApplicationCompletion!.milestoneTitle,
-          verificationComment,
-        ),
-      3,
-      (error, attempt) => {
-        console.error(
-          `Failed to update verification in database (attempt ${attempt}/3):`,
-          error,
-        );
-      },
-    );
+    try {
+      await retry(
+        () =>
+          updateMilestoneVerification(
+            milestone.fundingApplicationCompletion!.referenceNumber,
+            milestone.fundingApplicationCompletion!.milestoneFieldLabel,
+            milestone.fundingApplicationCompletion!.milestoneTitle,
+            verificationComment,
+          ),
+        3,
+        1000,
+        4000,
+        2,
+      );
 
-    if (dbUpdateSuccess !== null) {
       toast.success("Milestone verified successfully!");
-    } else {
+    } catch (error) {
+      console.error(
+        "Failed to update verification in database after retries:",
+        error,
+      );
       toast.error(
-        "Verification successful on-chain but failed to update database after 3 attempts",
+        "Verification successful on-chain but failed to update database",
       );
     }
   };
