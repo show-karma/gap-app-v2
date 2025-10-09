@@ -1,6 +1,5 @@
 "use client";
 import { Button } from "@/components/Utilities/Button";
-import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import TablePagination from "@/components/Utilities/TablePagination";
@@ -19,7 +18,6 @@ import {
   ChevronUpDownIcon,
   ChevronUpIcon,
 } from "@heroicons/react/24/solid";
-import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
@@ -30,7 +28,6 @@ import { useAccount } from "wagmi";
 import { SearchDropdown } from "../ProgramRegistry/SearchDropdown";
 import { GrantProgram } from "../ProgramRegistry/ProgramList";
 import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
-import { envVars } from "@/utilities/enviromentVars";
 import { downloadCommunityReport } from "@/utilities/downloadReports";
 
 interface Report {
@@ -351,12 +348,6 @@ export const ReportMilestonePage = ({
                 <tr className="border-b transition-colors text-gray-500 dark:text-gray-200 hover:bg-muted/50 data-[state=selected]:bg-muted">
                   <th
                     scope="col"
-                    className="h-12 px-2 w-12 text-center align-middle font-medium"
-                  >
-                    {/* Status column - no header text */}
-                  </th>
-                  <th
-                    scope="col"
                     className="h-12 px-4 text-left align-middle font-medium"
                   >
                     <button
@@ -468,9 +459,6 @@ export const ReportMilestonePage = ({
                   ? skeletonArray.map((index) => {
                     return (
                       <tr key={index}>
-                        <td className="px-2 py-2 h-16 w-12">
-                          {/* Status column skeleton */}
-                        </td>
                         <td className="px-4 py-2 font-medium h-16">
                           <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4" />
                         </td>
@@ -497,13 +485,11 @@ export const ReportMilestonePage = ({
                     return (
                       <tr
                         key={index}
-                        className="dark:text-zinc-300 text-gray-900 px-4 py-4"
+                        className={`
+                          dark:text-zinc-300 text-gray-900 px-4 py-4
+                          ${isFullyCompleted(report) ? 'bg-green-200 dark:bg-green-500' : ''}
+                        `}
                       >
-                        <td className="px-2 py-2 h-16 w-12 text-center">
-                          {isFullyCompleted(report) && (
-                            <CheckCircleIcon className="h-6 w-6 text-green-500 mx-auto" />
-                          )}
-                        </td>
                         <td className="px-4 py-2 font-medium h-16 max-w-[220px]">
                           <ExternalLink
                             href={PAGES.PROJECT.GRANT(
