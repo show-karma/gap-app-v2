@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 export interface ContractAddressValidationResult {
   isAvailable: boolean;
@@ -16,13 +17,6 @@ interface ValidateContractParams {
   network: string;
   excludeProjectId?: string;
 }
-
-// Query key factory for contract address validation
-export const contractValidationKeys = {
-  all: ["contract-validation"] as const,
-  validate: (params: ValidateContractParams) =>
-    ["contract-validation", params] as const,
-};
 
 /**
  * Validates a single contract address against the indexer
@@ -61,7 +55,7 @@ const validateContractAddress = async ({
 export const useContractAddressValidation = () => {
   const mutation = useMutation({
     mutationFn: validateContractAddress,
-    mutationKey: contractValidationKeys.all,
+    mutationKey: QUERY_KEYS.CONTRACTS.VALIDATION.ALL,
   });
 
   return {
