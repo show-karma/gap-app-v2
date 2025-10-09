@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useMutation } from "@tanstack/react-query";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
@@ -17,40 +17,56 @@ interface ValidateContractParams {
   excludeProjectId?: string;
 }
 
+// Query key factory for contract address validation
+export const contractValidationKeys = {
+  all: ["contract-validation"] as const,
+  validate: (params: ValidateContractParams) =>
+    ["contract-validation", params] as const,
+};
+
 /**
- * Hook that provides a function to validate contract addresses
- * Returns a callable function that checks if a contract is already in use
+ * Validates a single contract address against the indexer
  */
-export const useContractAddressValidation = () => {
-  const validateContract = useCallback(
-    async ({
-      address,
-      network,
-      excludeProjectId,
-    }: ValidateContractParams): Promise<ContractAddressValidationResult> => {
-      const params = new URLSearchParams({
-        address,
-        network,
-        ...(excludeProjectId && { excludeProjectId }),
-      });
+const validateContractAddress = async ({
+  address,
+  network,
+  excludeProjectId,
+}: ValidateContractParams): Promise<ContractAddressValidationResult> => {
+  const params = new URLSearchParams({
+    address,
+    network,
+    ...(excludeProjectId && { excludeProjectId }),
+  });
 
-      const [data, error] = await fetchData(
-        `${INDEXER.PROJECT.CONTRACTS.CHECK_ADDRESS()}?${params.toString()}`,
-        "GET",
-        {},
-        {},
-        {},
-        true // authenticated
-      );
-
-      if (error) {
-        throw new Error(error);
-      }
-
-      return data || { isAvailable: true };
-    },
-    []
+  const [data, error] = await fetchData(
+    `${INDEXER.PROJECT.CONTRACTS.CHECK_ADDRESS()}?${params.toString()}`,
+    "GET",
+    {},
+    {},
+    {},
+    true // authenticated
   );
 
-  return { validateContract };
+  if (error) {
+    throw new Error(error);
+  }
+
+  return data || { isAvailable: true };
+};
+
+/**
+ * Hook that provides a mutation function to validate contract addresses
+ * Uses react-query for proper state management and error handling
+ */
+export const useContractAddressValidation = () => {
+  const mutation = useMutation({
+    mutationFn: validateContractAddress,
+    mutationKey: contractValidationKeys.all,
+  });
+
+  return {
+    validateContract: mutation.mutateAsync,
+    isValidating: mutation.isPending,
+    error: mutation.error,
+  };
 };

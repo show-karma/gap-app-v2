@@ -7,12 +7,13 @@ import type { FC, ReactNode } from "react";
 import { Fragment, useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
-import { ContractAddressItem } from "@/components/Pages/Project/ContractAddressItem";
+import { ContractAddressItem, InvalidInfo } from "@/components/Pages/Project/ContractAddressItem";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useContractAddressValidation } from "@/hooks/useContractAddressValidation";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
+import { getContractKey } from "@/utilities/contractKey";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -25,10 +26,6 @@ interface LinkContractAddressesButtonProps {
   buttonElement?: { text: string; icon: ReactNode; styleClass: string } | null;
   onClose?: () => void;
 }
-
-// Helper function to create composite keys for validation Map
-const getContractKey = (network: string, address: string) =>
-  `${network}:${address}`;
 
 const SUPPORTED_NETWORKS = [
   "ethereum",
@@ -95,9 +92,9 @@ export const LinkContractAddressButton: FC<
   >([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [invalidContracts, setInvalidContracts] = useState<
-    Map<string, { projectName: string; projectSlug?: string }>
-  >(new Map());
+  const [invalidContracts, setInvalidContracts] = useState<Map<string, InvalidInfo>>(
+    new Map()
+  );
 
   useEffect(() => {
     if (project?.external?.network_addresses?.length) {
@@ -183,7 +180,7 @@ export const LinkContractAddressButton: FC<
   const validateAllContracts = useCallback(
     async (
       pairs: NetworkAddressPair[],
-    ): Promise<Map<string, { projectName: string; projectSlug?: string }>> => {
+    ): Promise<Map<string, InvalidInfo>> => {
       // Create validation promises for all pairs in parallel
       const validationPromises = pairs.map((pair) =>
         validateContract({
@@ -199,10 +196,7 @@ export const LinkContractAddressButton: FC<
       const results = await Promise.all(validationPromises);
 
       // Build validation results map using composite keys
-      const validationResults = new Map<
-        string,
-        { projectName: string; projectSlug?: string; errorMessage?: string }
-      >();
+      const validationResults = new Map<string, InvalidInfo>();
 
       results.forEach(({ pair, result, error }) => {
         if (error) {
@@ -373,29 +367,19 @@ export const LinkContractAddressButton: FC<
                     </p>
                   </Dialog.Title>
                   <div className="max-h-[60vh] flex flex-col gap-4 mt-8 overflow-y-auto">
-                    {networkAddressPairs.map((pair, index) => {
-                      const contractKey = getContractKey(
-                        pair.network,
-                        pair.address,
-                      );
-                      const isInvalid = invalidContracts.has(contractKey);
-                      const invalidInfo = invalidContracts.get(contractKey);
-
-                      return (
-                        <ContractAddressItem
-                          key={index}
-                          pair={pair}
-                          index={index}
-                          isInvalid={isInvalid}
-                          invalidInfo={invalidInfo}
-                          canRemove={networkAddressPairs.length > 1}
-                          onNetworkChange={handleNetworkChange}
-                          onAddressChange={handleAddressChange}
-                          onRemove={handleRemovePair}
-                          supportedNetworks={SUPPORTED_NETWORKS}
-                        />
-                      );
-                    })}
+                    {networkAddressPairs.map((pair, index) => (
+                      <ContractAddressItem
+                        key={index}
+                        pair={pair}
+                        index={index}
+                        invalidContracts={invalidContracts}
+                        canRemove={networkAddressPairs.length > 1}
+                        onNetworkChange={handleNetworkChange}
+                        onAddressChange={handleAddressChange}
+                        onRemove={handleRemovePair}
+                        supportedNetworks={SUPPORTED_NETWORKS}
+                      />
+                    ))}
                     <Button
                       onClick={handleAddPair}
                       className="flex items-center justify-center text-white gap-2 border border-primary-500 bg-primary-500 hover:bg-primary-600"

@@ -1,18 +1,22 @@
 "use client";
 
 import { TrashIcon } from "@heroicons/react/24/outline";
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
 import { Button } from "@/components/Utilities/Button";
+import { getContractKey } from "@/utilities/contractKey";
 import { NetworkAddressPair } from "./types";
+
+export interface InvalidInfo {
+  projectName: string;
+  projectSlug?: string;
+  errorMessage?: string;
+}
 
 interface ContractAddressItemProps {
   pair: NetworkAddressPair;
   index: number;
-  isInvalid: boolean;
-  invalidInfo:
-    | { projectName: string; projectSlug?: string; errorMessage?: string }
-    | undefined;
+  invalidContracts: Map<string, InvalidInfo>;
   canRemove: boolean;
   onNetworkChange: (index: number, value: string) => void;
   onAddressChange: (index: number, value: string) => void;
@@ -24,14 +28,30 @@ export const ContractAddressItem = memo<ContractAddressItemProps>(
   ({
     pair,
     index,
-    isInvalid,
-    invalidInfo,
+    invalidContracts,
     canRemove,
     onNetworkChange,
     onAddressChange,
     onRemove,
     supportedNetworks,
-  }) => (
+  }) => {
+    // Calculate validation state based on the invalidContracts Map
+    const contractKey = useMemo(
+      () => getContractKey(pair.network, pair.address),
+      [pair.network, pair.address]
+    );
+
+    const isInvalid = useMemo(
+      () => invalidContracts.has(contractKey),
+      [invalidContracts, contractKey]
+    );
+
+    const invalidInfo = useMemo(
+      () => invalidContracts.get(contractKey),
+      [invalidContracts, contractKey]
+    );
+
+    return (
     <div className="flex flex-col space-y-2">
       <div className="flex items-center space-x-2">
         <div
@@ -110,7 +130,8 @@ export const ContractAddressItem = memo<ContractAddressItemProps>(
         </div>
       )}
     </div>
-  ),
+    );
+  }
 );
 
 ContractAddressItem.displayName = "ContractAddressItem";
