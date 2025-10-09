@@ -3,22 +3,13 @@
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { FormSchema } from '@/types/question-builder';
-import { LockClosedIcon } from '@heroicons/react/24/solid';
 import { ExternalLink } from '../Utilities/ExternalLink';
 import { LinkIcon } from '@heroicons/react/24/outline';
 import { envVars } from '@/utilities/enviromentVars';
 import { fundingPlatformDomains } from '@/utilities/fundingPlatformDomains';
 import { useParams } from 'next/navigation';
-
-const settingsConfigSchema = z.object({
-  privateApplications: z.boolean(),
-  applicationDeadline: z.string().optional(),
-  donationRound: z.boolean(),
-});
-
-type SettingsConfigFormData = z.infer<typeof settingsConfigSchema>;
+import { settingsConfigSchema, type SettingsConfigFormData } from '@/schemas/settingsConfigSchema';
 
 interface SettingsConfigurationProps {
   schema: FormSchema;
