@@ -1,25 +1,23 @@
 "use client";
 
-import { Button } from "@/components/Utilities/Button";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
 import { Dialog, Transition } from "@headlessui/react";
-import {
-  CheckCircleIcon,
-  LinkIcon,
-  PlusIcon,
-  TrashIcon,
-} from "@heroicons/react/24/outline";
+import { LinkIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { FC, ReactNode } from "react";
-import { Fragment, useEffect, useState } from "react";
-import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { MESSAGES } from "@/utilities/messages";
 import { useAccount } from "wagmi";
+import { ContractAddressItem, InvalidInfo } from "@/components/Pages/Project/ContractAddressItem";
+import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { useContractAddressValidation } from "@/hooks/useContractAddressValidation";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useCommunityAdminStore } from "@/store/communityAdmin";
+import { getContractKey } from "@/utilities/contractKey";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { NetworkAddressPair } from "./types";
 
 interface LinkContractAddressesButtonProps {
   buttonClassName?: string;
@@ -27,11 +25,6 @@ interface LinkContractAddressesButtonProps {
   "data-link-contracts-button"?: string;
   buttonElement?: { text: string; icon: ReactNode; styleClass: string } | null;
   onClose?: () => void;
-}
-
-interface NetworkAddressPair {
-  network: string;
-  address: string;
 }
 
 const SUPPORTED_NETWORKS = [
@@ -87,17 +80,21 @@ export const LinkContractAddressButton: FC<
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isCommunityAdmin = useCommunityAdminStore(
-    (state) => state.isCommunityAdmin
+    (state) => state.isCommunityAdmin,
   );
   const { address } = useAccount();
   const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
   const { refreshProject } = useProjectStore();
+  const { validateContract } = useContractAddressValidation();
   const [isOpen, setIsOpen] = useState(false);
   const [networkAddressPairs, setNetworkAddressPairs] = useState<
     NetworkAddressPair[]
   >([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [invalidContracts, setInvalidContracts] = useState<Map<string, InvalidInfo>>(
+    new Map()
+  );
 
   useEffect(() => {
     if (project?.external?.network_addresses?.length) {
@@ -117,95 +114,202 @@ export const LinkContractAddressButton: FC<
     }
   }, [buttonElement]);
 
-  const handleAddPair = () => {
+  // Helper to clear validation error for a contract
+  const clearContractValidationError = useCallback(
+    (pair: NetworkAddressPair) => {
+      if (pair.network && pair.address) {
+        const contractKey = getContractKey(pair.network, pair.address);
+        setInvalidContracts((prev) => {
+          const newMap = new Map(prev);
+          newMap.delete(contractKey);
+          return newMap;
+        });
+      }
+      setError(null);
+    },
+    [],
+  );
+
+  const handleAddPair = useCallback(() => {
     setNetworkAddressPairs([
       ...networkAddressPairs,
       { network: "", address: "" },
     ]);
-  };
+  }, [networkAddressPairs]);
 
-  const handleRemovePair = (index: number) => {
-    const newPairs = networkAddressPairs.filter((_, i) => i !== index);
-    if (newPairs.length === 0) {
-      setNetworkAddressPairs([{ network: "", address: "" }]);
-    } else {
+  const handleRemovePair = useCallback(
+    (index: number) => {
+      const pairToRemove = networkAddressPairs[index];
+      const newPairs = networkAddressPairs.filter((_, i) => i !== index);
+
+      if (newPairs.length === 0) {
+        setNetworkAddressPairs([{ network: "", address: "" }]);
+      } else {
+        setNetworkAddressPairs(newPairs);
+      }
+
+      clearContractValidationError(pairToRemove);
+    },
+    [networkAddressPairs, clearContractValidationError],
+  );
+
+  const handleAddressChange = useCallback(
+    (index: number, value: string) => {
+      const oldPair = networkAddressPairs[index];
+      const newPairs = [...networkAddressPairs];
+      newPairs[index] = { ...newPairs[index], address: value };
       setNetworkAddressPairs(newPairs);
-    }
-  };
 
-  const handleAddressChange = (index: number, value: string) => {
-    const newPairs = [...networkAddressPairs];
-    newPairs[index] = { ...newPairs[index], address: value };
-    setNetworkAddressPairs(newPairs);
-  };
+      clearContractValidationError(oldPair);
+    },
+    [networkAddressPairs, clearContractValidationError],
+  );
 
-  const handleNetworkChange = (index: number, value: string) => {
-    const newPairs = [...networkAddressPairs];
-    newPairs[index] = { ...newPairs[index], network: value };
-    setNetworkAddressPairs(newPairs);
-  };
+  const handleNetworkChange = useCallback(
+    (index: number, value: string) => {
+      const oldPair = networkAddressPairs[index];
+      const newPairs = [...networkAddressPairs];
+      newPairs[index] = { ...newPairs[index], network: value };
+      setNetworkAddressPairs(newPairs);
 
-  const handleSave = async () => {
+      clearContractValidationError(oldPair);
+    },
+    [networkAddressPairs, clearContractValidationError],
+  );
+
+  const validateAllContracts = useCallback(
+    async (
+      pairs: NetworkAddressPair[],
+    ): Promise<Map<string, InvalidInfo>> => {
+      // Create validation promises for all pairs in parallel
+      const validationPromises = pairs.map((pair) =>
+        validateContract({
+          address: pair.address,
+          network: pair.network,
+          excludeProjectId: project.uid,
+        })
+          .then((result) => ({ pair, result, error: null }))
+          .catch((error) => ({ pair, result: null, error })),
+      );
+
+      // Wait for all validations to complete
+      const results = await Promise.all(validationPromises);
+
+      // Build validation results map using composite keys
+      const validationResults = new Map<string, InvalidInfo>();
+
+      results.forEach(({ pair, result, error }) => {
+        if (error) {
+          console.error("Error validating contract address:", error);
+          const contractKey = getContractKey(pair.network, pair.address);
+          const errorMessage = error?.message || String(error);
+          validationResults.set(contractKey, {
+            projectName: "Validation Failed",
+            errorMessage: errorMessage,
+          });
+          return;
+        }
+
+        if (result && !result.isAvailable && result.existingProject) {
+          const contractKey = getContractKey(pair.network, pair.address);
+          validationResults.set(contractKey, {
+            projectName: result.existingProject.name || "Unknown Project",
+            projectSlug: result.existingProject.slug,
+          });
+        }
+      });
+
+      return validationResults;
+    },
+    [validateContract, project.uid],
+  );
+
+  const saveContracts = useCallback(
+    async (pairs: NetworkAddressPair[]): Promise<boolean> => {
+      const formattedAddresses = pairs.map(
+        (pair) => `${pair.network}:${pair.address}`,
+      );
+
+      try {
+        const [data, error] = await fetchData(
+          INDEXER.PROJECT.EXTERNAL.UPDATE(project.uid),
+          "PUT",
+          {
+            target: "network_addresses",
+            ids: formattedAddresses,
+          },
+        );
+
+        if (error) {
+          setError(MESSAGES.PROJECT.LINK_CONTRACT_ADDRESSES.ERROR);
+          throw new Error(MESSAGES.PROJECT.LINK_CONTRACT_ADDRESSES.ERROR);
+        }
+
+        if (data) {
+          setNetworkAddressPairs(pairs);
+          toast.success(MESSAGES.PROJECT.LINK_CONTRACT_ADDRESSES.SUCCESS);
+          if (buttonElement === null && onClose) {
+            setIsOpen(false);
+            onClose();
+            refreshProject();
+          }
+          return true;
+        }
+
+        return false;
+      } catch (err) {
+        setError(MESSAGES.PROJECT.LINK_CONTRACT_ADDRESSES.ERROR);
+        errorManager(
+          MESSAGES.PROJECT.LINK_CONTRACT_ADDRESSES.ERROR,
+          err,
+          {
+            projectUID: project.uid,
+            target: "network_addresses",
+            ids: formattedAddresses,
+            address,
+          },
+          { error: MESSAGES.PROJECT.LINK_CONTRACT_ADDRESSES.ERROR },
+        );
+        return false;
+      }
+    },
+    [project.uid, buttonElement, onClose, refreshProject, address],
+  );
+
+  const handleSave = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    // Filter out pairs with empty network or address
-    const validPairs = networkAddressPairs.filter(
-      (pair) => pair?.network?.trim() !== "" && pair?.address?.trim() !== ""
-    );
+    setInvalidContracts(new Map());
 
-    // Format pairs as network:address strings
-    const formattedAddresses = validPairs.map(
-      (pair) => `${pair.network}:${pair.address}`
-    );
     try {
-      const [data, error] = await fetchData(
-        INDEXER.PROJECT.EXTERNAL.UPDATE(project.uid),
-        "PUT",
-        {
-          target: "network_addresses",
-          ids: formattedAddresses,
-        }
+      // Filter out empty pairs
+      const validPairs = networkAddressPairs.filter(
+        (pair) => pair?.network?.trim() !== "" && pair?.address?.trim() !== "",
       );
 
-      if (data) {
-        setNetworkAddressPairs(validPairs);
-        toast.success(MESSAGES.PROJECT.LINK_CONTRACT_ADDRESSES.SUCCESS);
-        if (buttonElement === null && onClose) {
-          setIsOpen(false);
-          onClose();
-          refreshProject();
-        }
+      // Validate all contracts
+      const invalidResults = await validateAllContracts(validPairs);
+
+      // Stop if any contracts are invalid
+      if (invalidResults.size > 0) {
+        setInvalidContracts(invalidResults);
+        return;
       }
 
-      if (error) {
-        setError(MESSAGES.PROJECT.LINK_CONTRACT_ADDRESSES.ERROR);
-        throw new Error(MESSAGES.PROJECT.LINK_CONTRACT_ADDRESSES.ERROR);
-      }
-    } catch (err) {
-      setError(MESSAGES.PROJECT.LINK_CONTRACT_ADDRESSES.ERROR);
-      errorManager(
-        MESSAGES.PROJECT.LINK_CONTRACT_ADDRESSES.ERROR,
-        err,
-        {
-          projectUID: project.uid,
-          target: "network_addresses",
-          ids: formattedAddresses,
-          address,
-        },
-        { error: MESSAGES.PROJECT.LINK_CONTRACT_ADDRESSES.ERROR }
-      );
+      // All valid - proceed with save
+      await saveContracts(validPairs);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [networkAddressPairs, validateAllContracts, saveContracts]);
 
   // Define a function to handle dialog close
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setIsOpen(false);
     if (buttonElement === null && onClose) {
       onClose();
     }
-  };
+  }, [buttonElement, onClose]);
 
   if (!isAuthorized) {
     return null;
@@ -250,12 +354,12 @@ export const LinkContractAddressButton: FC<
               >
                 <Dialog.Panel className="w-full max-w-3xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle transition-all ease-in-out duration-300">
                   <Dialog.Title
-                    as="h3"
+                    as="h2"
                     className="text-gray-900 dark:text-zinc-100"
                   >
-                    <h2 className="text-2xl font-bold leading-6">
+                    <div className="text-2xl font-bold leading-6">
                       Link Contract Addresses
-                    </h2>
+                    </div>
                     <p className="text-md text-gray-500 dark:text-gray-400 mt-2">
                       Add one or more contract addresses for the project. This
                       will enable the project to retrieve its on-chain metrics
@@ -264,45 +368,17 @@ export const LinkContractAddressButton: FC<
                   </Dialog.Title>
                   <div className="max-h-[60vh] flex flex-col gap-4 mt-8 overflow-y-auto">
                     {networkAddressPairs.map((pair, index) => (
-                      <div key={index} className="flex items-center space-x-2">
-                        <div className="flex items-center justify-between p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg flex-grow">
-                          <div className="flex items-center space-x-4 w-full">
-                            <span className="text-md font-bold capitalize whitespace-nowrap">
-                              Contract {index + 1}
-                            </span>
-                            <div className="flex-1 flex space-x-4">
-                              <SearchDropdown
-                                onSelectFunction={(value) =>
-                                  handleNetworkChange(index, value)
-                                }
-                                selected={pair.network ? [pair.network] : []}
-                                list={SUPPORTED_NETWORKS}
-                                type="network"
-                                prefixUnselected="Select"
-                                buttonClassname="flex-1"
-                              />
-                              <input
-                                type="text"
-                                value={pair.address}
-                                onChange={(e) =>
-                                  handleAddressChange(index, e.target.value)
-                                }
-                                className="flex-1 text-sm rounded-md text-gray-600 dark:text-gray-300 bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none focus:border-blue-500"
-                                placeholder="Enter contract address"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                        {networkAddressPairs.length > 1 && (
-                          <Button
-                            onClick={() => handleRemovePair(index)}
-                            className="p-2 text-red-500 hover:text-red-700"
-                            aria-label="Remove contract"
-                          >
-                            <TrashIcon className="h-5 w-5" />
-                          </Button>
-                        )}
-                      </div>
+                      <ContractAddressItem
+                        key={index}
+                        pair={pair}
+                        index={index}
+                        invalidContracts={invalidContracts}
+                        canRemove={networkAddressPairs.length > 1}
+                        onNetworkChange={handleNetworkChange}
+                        onAddressChange={handleAddressChange}
+                        onRemove={handleRemovePair}
+                        supportedNetworks={SUPPORTED_NETWORKS}
+                      />
                     ))}
                     <Button
                       onClick={handleAddPair}
