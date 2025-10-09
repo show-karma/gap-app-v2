@@ -4,17 +4,15 @@ import { TrashIcon } from "@heroicons/react/24/outline";
 import { memo } from "react";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
 import { Button } from "@/components/Utilities/Button";
-
-interface NetworkAddressPair {
-  network: string;
-  address: string;
-}
+import { NetworkAddressPair } from "./types";
 
 interface ContractAddressItemProps {
   pair: NetworkAddressPair;
   index: number;
   isInvalid: boolean;
-  invalidInfo: { projectName: string; projectSlug?: string; errorMessage?: string } | undefined;
+  invalidInfo:
+    | { projectName: string; projectSlug?: string; errorMessage?: string }
+    | undefined;
   canRemove: boolean;
   onNetworkChange: (index: number, value: string) => void;
   onAddressChange: (index: number, value: string) => void;
@@ -86,7 +84,8 @@ export const ContractAddressItem = memo<ContractAddressItemProps>(
             {invalidInfo.projectName === "Validation Failed" ? (
               <>
                 <span className="font-bold">Validation Error:</span>{" "}
-                {invalidInfo.errorMessage || "Failed to validate this contract address. Please check the network and address, then try again."}
+                {invalidInfo.errorMessage ||
+                  "Failed to validate this contract address. Please check the network and address, then try again."}
               </>
             ) : (
               <>

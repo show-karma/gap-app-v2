@@ -16,6 +16,7 @@ import { useCommunityAdminStore } from "@/store/communityAdmin";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
+import { NetworkAddressPair } from "./types";
 
 interface LinkContractAddressesButtonProps {
   buttonClassName?: string;
@@ -23,11 +24,6 @@ interface LinkContractAddressesButtonProps {
   "data-link-contracts-button"?: string;
   buttonElement?: { text: string; icon: ReactNode; styleClass: string } | null;
   onClose?: () => void;
-}
-
-interface NetworkAddressPair {
-  network: string;
-  address: string;
 }
 
 // Helper function to create composite keys for validation Map
