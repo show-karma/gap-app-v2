@@ -300,8 +300,6 @@ export const MESSAGES = {
     LINK_CONTRACT_ADDRESSES: {
       SUCCESS: "Contract addresses updated successfully",
       ERROR: "Something went wrong while updating contract addresses.",
-      DUPLICATE: (projectName: string) =>
-        `You can't add this contract address. This contract is already associated with Project ${projectName}.`,
     },
     LINK_GITHUB_REPOS: {
       SUCCESS: "GitHub repositories updated successfully",
