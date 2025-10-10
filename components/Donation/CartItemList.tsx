@@ -2,6 +2,29 @@
 import type { SupportedToken } from "@/constants/supportedTokens";
 import { CartItemRow } from "./CartItemRow";
 
+/**
+ * Get token options including the currently selected token if not in the list
+ */
+function getTokenOptionsWithSelected(
+  allAvailableTokens: SupportedToken[],
+  selectedToken?: SupportedToken
+): SupportedToken[] {
+  const base = [...allAvailableTokens];
+
+  if (
+    selectedToken &&
+    !base.some(
+      (token) =>
+        token.symbol === selectedToken.symbol &&
+        token.chainId === selectedToken.chainId
+    )
+  ) {
+    base.push(selectedToken);
+  }
+
+  return base;
+}
+
 interface CartItem {
   uid: string;
   slug?: string;
@@ -54,20 +77,7 @@ export function CartItemList({
         const selectedToken = selectedTokens[item.uid];
         const currentAmount = amounts[item.uid] || "";
         const payoutInfo = payoutStatusByProject[item.uid];
-        const tokenOptions = (() => {
-          const base = [...allAvailableTokens];
-          if (
-            selectedToken &&
-            !base.some(
-              (token) =>
-                token.symbol === selectedToken.symbol &&
-                token.chainId === selectedToken.chainId
-            )
-          ) {
-            base.push(selectedToken);
-          }
-          return base;
-        })();
+        const tokenOptions = getTokenOptionsWithSelected(allAvailableTokens, selectedToken);
 
         return (
           <CartItemRow

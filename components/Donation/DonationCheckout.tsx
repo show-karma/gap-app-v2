@@ -3,7 +3,7 @@ import { useDonationCart } from "@/store";
 import { useParams, useRouter } from "next/navigation";
 import { useNetworkSwitching } from "@/hooks/useNetworkSwitching";
 import { useAccount } from "wagmi";
-import { useEffect, useCallback, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import {
   getTokensByChain,
   type SupportedToken,
@@ -106,12 +106,6 @@ export function DonationCheckout() {
   const hasAllPayoutAddresses = missingPayouts.length === 0;
 
   const canProceed = hasAmounts && hasSelectedTokens && hasAllPayoutAddresses && !isFetchingPayouts;
-
-  // Update payments when amounts or tokens change
-  useEffect(() => {
-    updatePayments();
-  }, [amounts, selectedTokens, updatePayments]);
-
 
   // Get tokens to show in dropdown - only show tokens with positive balances
   const allAvailableTokens = useMemo(() => {

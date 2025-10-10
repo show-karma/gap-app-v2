@@ -1,5 +1,6 @@
 "use client";
 import React, { Component, ErrorInfo, ReactNode } from "react";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { useDonationCart } from "@/store/donationCart";
 import { getDetailedErrorInfo } from "@/utilities/donations/errorMessages";
 import Link from "next/link";
@@ -39,8 +40,11 @@ class DonationErrorBoundaryClass extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log error to console (prepare for Sentry integration later)
-    console.error("DonationErrorBoundary caught an error:", error, errorInfo);
+    // Use errorManager for consistent error handling
+    errorManager("DonationErrorBoundary caught an error", error, {
+      componentStack: errorInfo.componentStack,
+      errorBoundary: "donation-flow",
+    });
 
     // Store error info in state
     this.setState({

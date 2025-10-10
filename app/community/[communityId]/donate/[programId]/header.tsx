@@ -10,7 +10,13 @@ import Image from "next/image";
 import Link from "next/link";
 import pluralize from "pluralize";
 
-export const DonationHeader = ({ community, programId, program }: { community: CommunityDetailsV2, programId: string, program: GrantProgram }) => {
+interface DonationHeaderProps {
+  community: CommunityDetailsV2;
+  programId: string;
+  program: GrantProgram;
+}
+
+export const DonationHeader = ({ community, programId, program }: DonationHeaderProps) => {
     const { items, toggle } = useDonationCart();
     return (
         <div className="flex flex-row w-full max-w-full px-4 pb-4 sm:px-6 lg:px-8 py-5 border-b border-b-[#DFE1E6]">

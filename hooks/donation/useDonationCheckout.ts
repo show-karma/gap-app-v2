@@ -3,19 +3,17 @@ import { useAccount } from "wagmi";
 import toast from "react-hot-toast";
 import type { SupportedToken } from "@/constants/supportedTokens";
 import { useDonationTransfer } from "@/hooks/useDonationTransfer";
-import { getShortErrorMessage, parseDonationError } from "@/utilities/donations/errorMessages";
-import {
-  NETWORK_CONSTANTS,
-  UX_CONSTANTS,
-} from "@/constants/donation";
+import { parseDonationError } from "@/utilities/donations/errorMessages";
+import { UX_CONSTANTS } from "@/constants/donation";
 import { useDonationCart } from "@/store/donationCart";
-
-interface DonationPayment {
-  projectId: string;
-  amount: string;
-  token: SupportedToken;
-  chainId: number;
-}
+import {
+  type DonationPayment,
+  validatePayoutAddresses,
+  getTargetChainId,
+  ensureCorrectNetwork,
+  waitForWalletSync,
+  createCompletedDonations,
+} from "@/utilities/donations/donationExecution";
 
 export function useDonationCheckout() {
   const { address, isConnected } = useAccount();
@@ -61,39 +59,30 @@ export function useDonationCheckout() {
     ) => {
       setShowStepsPreview(false);
 
-      // SECURITY: Critical validation - block if any payout addresses are missing
-      // This prevents funds from being sent to undefined/invalid addresses
-      const missingAddresses = payments.filter(
-        (payment) => !payoutAddresses[payment.projectId]
+      // Validate payout addresses
+      const { valid: hasValidPayouts, missingAddresses } = validatePayoutAddresses(
+        payments,
+        payoutAddresses
       );
 
-      if (missingAddresses.length > 0) {
-        toast.error("Cannot proceed: Some projects are missing payout addresses. Donation blocked for security.");
+      if (!hasValidPayouts) {
         setMissingPayouts((prev) =>
           Array.from(new Set([...prev, ...missingAddresses.map((p) => p.projectId)]))
         );
         return;
       }
 
-      const targetChainId = payments.find((payment) => payment.chainId)?.chainId;
-      if (!targetChainId) {
-        toast.error("Unable to determine donation network.");
-        return;
-      }
+      // Ensure we're on the correct network
+      const targetChainId = getTargetChainId(payments);
+      let activeChainId = await ensureCorrectNetwork(
+        currentChainId,
+        targetChainId,
+        switchToNetwork
+      );
 
-      let activeChainId = currentChainId;
+      if (!activeChainId) return;
 
-      if (activeChainId !== targetChainId) {
-        try {
-          await switchToNetwork(targetChainId);
-          activeChainId = targetChainId;
-        } catch (error) {
-          const errorMsg = getShortErrorMessage(error);
-          toast.error(errorMsg || "Switch to the required network to continue.");
-          return;
-        }
-      }
-
+      // Validate balances
       setValidationErrors([]);
       const { valid, errors } = await validatePayments(payments, balanceByTokenKey);
       if (!valid) {
@@ -103,74 +92,34 @@ export function useDonationCheckout() {
       }
 
       try {
+        // Execute donations with network switching handler
         const results = await executeDonations(
           payments,
           (projectId) => payoutAddresses[projectId],
           async (payment) => {
-            if (payment.chainId && payment.chainId !== activeChainId) {
-              try {
-                await switchToNetwork(payment.chainId);
-
-                let attempts = 0;
-                const maxAttempts = NETWORK_CONSTANTS.WALLET_SYNC_MAX_ATTEMPTS;
-
-                while (attempts < maxAttempts) {
-                  const freshWalletClient = await getFreshWalletClient(payment.chainId);
-
-                  if (freshWalletClient && freshWalletClient.chain?.id === payment.chainId) {
-                    activeChainId = payment.chainId;
-                    return;
-                  }
-
-                  attempts++;
-                  await new Promise((resolve) =>
-                    setTimeout(resolve, NETWORK_CONSTANTS.WALLET_SYNC_DELAY_MS)
-                  );
-                }
-
-                throw new Error(
-                  `Wallet client failed to sync to chain ${payment.chainId} after ${maxAttempts} attempts. Please ensure your wallet has switched networks.`
-                );
-              } catch (error) {
-                throw new Error(
-                  `Failed to switch to required network (Chain ID: ${payment.chainId}). ${
-                    error instanceof Error ? error.message : "Please try again."
-                  }`
-                );
-              }
+            const newChainId = await waitForWalletSync(
+              payment,
+              activeChainId,
+              switchToNetwork,
+              getFreshWalletClient
+            );
+            if (newChainId) {
+              activeChainId = newChainId;
             }
           }
         );
 
         const hasFailures = results.some((result) => result.status === "error");
 
-        // Create completed session record with transaction details
+        // Create completed session record
         const cartState = useDonationCart.getState();
-        const completedDonations = results.map((result) => {
-          // Find the matching payment by projectId
-          const payment = payments.find(p => p.projectId === result.projectId);
-          if (!payment) {
-            console.error(`No payment found for result projectId: ${result.projectId}`);
-            return null;
-          }
+        const completedDonations = createCompletedDonations(
+          results,
+          payments,
+          cartState.items
+        );
 
-          const cartItem = cartState.items.find(item => item.uid === payment.projectId);
-
-          return {
-            projectId: payment.projectId,
-            projectTitle: cartItem?.title || payment.projectId,
-            projectSlug: cartItem?.slug,
-            projectImageURL: cartItem?.imageURL,
-            amount: payment.amount,
-            token: payment.token,
-            chainId: payment.chainId,
-            transactionHash: result.status === "success" ? result.hash : "",
-            timestamp: Date.now(),
-            status: (result.status === "success" ? "success" : "failed") as "success" | "failed",
-          };
-        }).filter((d): d is NonNullable<typeof d> => d !== null);
-
-        // Only create session if we have completed donations
+        // Save session if we have completed donations
         if (completedDonations.length > 0) {
           const session = {
             id: `session-${Date.now()}`,
@@ -179,19 +128,17 @@ export function useDonationCheckout() {
             totalProjects: payments.length,
           };
 
-          console.log('Saving completed session:', session);
-          // Save the completed session before clearing cart
+          console.log("Saving completed session:", session);
           cartState.setLastCompletedSession(session);
         } else {
-          console.warn('No completed donations to save in session');
+          console.warn("No completed donations to save in session");
         }
 
+        // Handle post-execution
         if (hasFailures) {
           toast.error("Some donations failed. Review the status below.");
-          // Still clear the cart even with failures, but show the results
           cartState.clear();
         } else {
-          // Clear cart on successful donation
           cartState.clear();
 
           const tokensNeedingApproval = approvalInfo.filter((info) => info.needsApproval);
@@ -205,7 +152,6 @@ export function useDonationCheckout() {
         console.error("Failed to execute donations", error);
         const parsedError = parseDonationError(error);
 
-        // Show user-friendly error message
         toast.error(parsedError.message, {
           duration: UX_CONSTANTS.ERROR_TOAST_DURATION_MS,
         });

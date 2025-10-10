@@ -114,12 +114,18 @@ export const useDonationCart = create<DonationCartState>()(
         selectedTokens: {},
         payments: []
       }),
-      setAmount: (uid, amount) =>
-        set((state) => ({ amounts: { ...state.amounts, [uid]: amount } })),
-      setSelectedToken: (projectId, token) =>
-        set((state) => ({ 
+      setAmount: (uid, amount) => {
+        set((state) => ({ amounts: { ...state.amounts, [uid]: amount } }));
+        // Auto-update payments when amount changes
+        get().updatePayments();
+      },
+      setSelectedToken: (projectId, token) => {
+        set((state) => ({
           selectedTokens: { ...state.selectedTokens, [projectId]: token }
-        })),
+        }));
+        // Auto-update payments when token changes
+        get().updatePayments();
+      },
       getPaymentForProject: (projectId) => {
         const state = get();
         return state.payments.find((p) => p.projectId === projectId);

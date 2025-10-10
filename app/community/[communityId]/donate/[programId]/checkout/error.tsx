@@ -1,6 +1,7 @@
 "use client";
 import { useEffect } from "react";
 import { getDetailedErrorInfo } from "@/utilities/donations/errorMessages";
+import { errorManager } from "@/components/Utilities/errorManager";
 import Link from "next/link";
 
 /**
@@ -14,9 +15,12 @@ export default function DonationCheckoutError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  // Log error to Sentry using errorManager
   useEffect(() => {
-    // Log error to console (prepare for Sentry integration later)
-    console.error("Donation checkout error:", error);
+    errorManager("Donation checkout error", error, {
+      digest: error.digest,
+      route: "checkout",
+    });
   }, [error]);
 
   const parsedError = getDetailedErrorInfo(error);

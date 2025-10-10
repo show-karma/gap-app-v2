@@ -2,6 +2,7 @@
 import { useAccount, useChainId, useSwitchChain, useWalletClient } from "wagmi";
 import { useCallback, useRef } from "react";
 import { SUPPORTED_NETWORKS, isChainSupported } from "@/constants/supportedTokens";
+import { retryWithBackoff, retryUntilCondition } from "@/utilities/retry";
 
 export function useNetworkSwitching() {
   const { isConnected } = useAccount();
@@ -25,34 +26,40 @@ export function useNetworkSwitching() {
   ): Promise<boolean> => {
     console.log(`🔄 Waiting for wallet client refresh to chain ${expectedChainId}...`);
 
-    for (let i = 0; i < maxRetries; i++) {
-      try {
-        // Refetch the wallet client to get the latest state
-        const { data: freshWalletClient } = await refetchWalletClient();
+    try {
+      await retryWithBackoff(
+        async () => {
+          const { data: freshWalletClient } = await refetchWalletClient();
 
-        if (freshWalletClient && freshWalletClient.chain?.id === expectedChainId) {
-          console.log(`✅ Wallet client refreshed successfully for chain ${expectedChainId}`);
-          return true;
+          if (freshWalletClient && freshWalletClient.chain?.id === expectedChainId) {
+            console.log(`✅ Wallet client refreshed successfully for chain ${expectedChainId}`);
+            return true;
+          }
+
+          // If we have a wallet client but on wrong chain, that's progress
+          if (freshWalletClient && freshWalletClient.account) {
+            console.log(`⏳ Wallet client available but on chain ${freshWalletClient.chain?.id}, expected ${expectedChainId}`);
+          } else {
+            console.log(`❌ Wallet client not available`);
+          }
+
+          throw new Error("Wallet client not ready");
+        },
+        {
+          maxRetries,
+          initialDelayMs: delayMs,
+          maxDelayMs: 3000,
+          backoffMultiplier: 0.3,
+          onRetry: (attempt, error) => {
+            console.warn(`⚠️ Wallet client refresh attempt ${attempt} failed:`, error);
+          },
         }
-
-        // If we have a wallet client but on wrong chain, that's progress
-        if (freshWalletClient && freshWalletClient.account) {
-          console.log(`⏳ Wallet client available but on chain ${freshWalletClient.chain?.id}, expected ${expectedChainId} (attempt ${i + 1}/${maxRetries})`);
-        } else {
-          console.log(`❌ Wallet client not available (attempt ${i + 1}/${maxRetries})`);
-        }
-
-        // Progressive delay - start with shorter delays, increase over time
-        const currentDelay = Math.min(delayMs * (1 + i * 0.3), 3000);
-        await new Promise(resolve => setTimeout(resolve, currentDelay));
-      } catch (error) {
-        console.warn(`⚠️ Wallet client refresh attempt ${i + 1} failed:`, error);
-        await new Promise(resolve => setTimeout(resolve, delayMs));
-      }
+      );
+      return true;
+    } catch (error) {
+      console.warn(`⚠️ Wallet client refresh incomplete after ${maxRetries} attempts - returning current state`);
+      return false;
     }
-
-    console.warn(`⚠️ Wallet client refresh incomplete after ${maxRetries} attempts - returning current state`);
-    return false;
   }, [refetchWalletClient]);
 
   /**
@@ -62,34 +69,37 @@ export function useNetworkSwitching() {
     expectedChainId: number,
     timeoutMs = 30000
   ): Promise<boolean> => {
-    const startTime = Date.now();
+    const maxRetries = Math.floor(timeoutMs / 500);
 
-    while (Date.now() - startTime < timeoutMs) {
-      // Check if the current chain ID matches
-      if (chainId === expectedChainId) {
-        return true;
-      }
-
-      // Check via direct wallet query if available
-      if (typeof window !== "undefined" && (window as any).ethereum) {
-        try {
-          const provider = (window as any).ethereum;
-          const currentChain = await provider.request({ method: "eth_chainId" });
-          const currentChainDecimal = parseInt(currentChain, 16);
-
-          if (currentChainDecimal === expectedChainId) {
-            return true;
-          }
-        } catch (error) {
-          console.warn("Failed to query chain via provider:", error);
+    return await retryUntilCondition(
+      async () => {
+        // Check if the current chain ID matches
+        if (chainId === expectedChainId) {
+          return true;
         }
+
+        // Check via direct wallet query if available
+        if (typeof window !== "undefined" && (window as any).ethereum) {
+          try {
+            const provider = (window as any).ethereum;
+            const currentChain = await provider.request({ method: "eth_chainId" });
+            const currentChainDecimal = parseInt(currentChain, 16);
+
+            if (currentChainDecimal === expectedChainId) {
+              return true;
+            }
+          } catch (error) {
+            console.warn("Failed to query chain via provider:", error);
+          }
+        }
+
+        return false;
+      },
+      {
+        maxRetries,
+        delayMs: 500,
       }
-
-      // Wait before next check
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
-
-    return false;
+    );
   }, [chainId]);
 
   const switchToNetwork = useCallback(async (targetChainId: number) => {
