@@ -10,7 +10,7 @@ export async function GET(
   context: { params: Promise<{ projectId: string }> }
 ) {
   const projectId = (await context.params).projectId;
-  let project = await getProjectCachedData(projectId, false);
+  let project = await getProjectCachedData(projectId);
   if (!project) {
     return new Response("Not found", { status: 404 });
   }

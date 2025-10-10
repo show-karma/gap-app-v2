@@ -3,19 +3,16 @@ import { notFound, redirect } from "next/navigation";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { cache } from "react";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { envVars } from "@/utilities/enviromentVars";
 import { getProjectData } from "../api/project";
 
 export const getProjectCachedData = cache(
-  async (
-    projectId: string,
-    shouldRedirect = true
-  ): Promise<IProjectResponse> => {
+  async (projectId: string): Promise<IProjectResponse> => {
     let project: IProjectResponse | undefined;
+    
     try {
       const projectData = await getProjectData(projectId, {
-        cache: "reload", // Always fetch fresh
-        next: { revalidate: 60 }, // Cache for 5 minutes
+        cache: "reload",
+        next: { revalidate: 60 },
       });
 
       project = projectData;
@@ -27,8 +24,14 @@ export const getProjectCachedData = cache(
       notFound();
     }
 
+    const isUid = /^0x[0-9a-fA-F]{64}$/.test(projectId);
+    const canonicalSlug = project?.details?.data?.slug;
+
+    if (!isUid && canonicalSlug && canonicalSlug.toLowerCase() !== projectId.toLowerCase()) {
+      redirect(`/project/${canonicalSlug}`);
+    }
+
     if (
-      shouldRedirect &&
       project?.pointers?.length &&
       project.pointers[0]?.data?.ogProjectUID &&
       project.pointers[0].data.ogProjectUID !== project.uid
