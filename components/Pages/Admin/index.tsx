@@ -1,6 +1,6 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import debounce from "lodash.debounce";
 import Link from "next/link";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -8,74 +8,25 @@ import { useCommunitiesStore } from "@/store/communities";
 import { PAGES } from "@/utilities/pages";
 import { MESSAGES } from "@/utilities/messages";
 import { Community } from "@show-karma/karma-gap-sdk";
-import { INDEXER } from "@/utilities/indexer";
-import fetchData from "@/utilities/fetchData";
-import { useGap } from "@/hooks/useGap";
-import { errorManager } from "@/components/Utilities/errorManager";
 import { AddAdmin } from "./AddAdminDialog";
 import { RemoveAdmin } from "./RemoveAdminDialog";
 import { formatDate } from "@/utilities/formatDate";
 import { blo } from "blo";
-import { CommunityDialog } from "@/components/Dialogs/CommunityDialog";
 import { LinkIcon } from "@heroicons/react/24/solid";
 import CommunityStats from "@/components/CommunityStats";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { useOwnerStore } from "@/store/owner";
 import { useCommunityConfig, useCommunityConfigMutation } from "@/hooks/useCommunityConfig";
+import { useAllCommunitiesWithAdmins, type AllCommunitiesWithAdminsData } from "@/hooks/useAllCommunitiesWithAdmins";
 
 export const CommunitiesToAdmin = () => {
-  const [allCommunities, setAllCommunities] = useState<Community[]>([]);
-  const [communityAdmins, setCommunityAdmins] = useState<any>([]);
-
   const { communities: communitiesToAdmin, isLoading } = useCommunitiesStore();
-  const { gap } = useGap();
   const { isOwner } = useOwnerStore();
+  const { data, isLoading: isLoadingCommunities, refetch } = useAllCommunitiesWithAdmins();
 
-  const fetchCommunities = async () => {
-    try {
-      if (!gap) throw new Error("Gap not initialized");
-
-      const result = await gap.fetch.communities();
-      result.sort((a, b) =>
-        (a.details?.name || a.uid).localeCompare(b.details?.name || b.uid)
-      );
-      setAllCommunities(result);
-
-      // Fetch admins data for ALL communities that will be shown
-      const adminPromises = result.map(async (community) => {
-        try {
-          const [data, error] = await fetchData(
-            INDEXER.COMMUNITY.ADMINS(community.uid),
-            "GET",
-            {},
-            {},
-            {},
-            false
-          );
-          if (error || !data) return { id: community.uid, admins: [] };
-          return data;
-        } catch {
-          return { id: community.uid, admins: [] };
-        }
-      });
-
-      const communityAdmins = await Promise.all(adminPromises);
-
-      setCommunityAdmins(communityAdmins);
-
-      return result;
-    } catch (error: any) {
-      console.log(error);
-      errorManager(`Error fetching all communities`, error);
-      setAllCommunities([]);
-      return undefined;
-    }
-  };
-
-  useEffect(() => {
-    fetchCommunities();
-  }, []);
+  const communities = data?.communities ?? [];
+  const communityAdmins = data?.communityAdmins ?? [];
 
   return (
     <div className="px-4 sm:px-6 lg:px-12 py-5">
@@ -86,11 +37,11 @@ export const CommunitiesToAdmin = () => {
           <div className="flex justify-between">
             <div className="text-2xl font-bold">
               Your Communities{" "}
-              {allCommunities.length ? `(${communitiesToAdmin.length})` : ""}
+              {communities.length ? `(${communitiesToAdmin.length})` : ""}
             </div>
           </div>
           <div className="mt-5 w-full gap-5">
-            {allCommunities.length ? (
+            {communities.length ? (
               // Wrapping the table with a scrollable container
               <div className="overflow-x-auto">
                 <table className="min-w-full border-x border-x-zinc-300 border-y border-y-zinc-300">
@@ -118,7 +69,7 @@ export const CommunitiesToAdmin = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-x">
-                    {allCommunities.map((community) => {
+                    {communities.map((community) => {
                       const isCommunityAdmin = communitiesToAdmin.some(
                         (adminOfCommunity) =>
                           adminOfCommunity.uid === community.uid
@@ -138,7 +89,7 @@ export const CommunitiesToAdmin = () => {
                           community={community}
                           slug={slug}
                           matchingCommunityAdmin={matchingCommunityAdmin}
-                          fetchCommunities={fetchCommunities}
+                          refetchCommunities={refetch}
                           isOwner={isOwner}
                           isCommunityAdmin={isCommunityAdmin}
                         />
@@ -147,7 +98,7 @@ export const CommunitiesToAdmin = () => {
                   </tbody>
                 </table>
               </div>
-            ) : isLoading ? (
+            ) : isLoading || isLoadingCommunities ? (
               <Spinner />
             ) : (
               <div className="text-center">
@@ -165,7 +116,7 @@ interface CommunityRowWithConfigProps {
   community: Community;
   slug: string;
   matchingCommunityAdmin: any;
-  fetchCommunities: () => Promise<Community[] | undefined>;
+  refetchCommunities: () => void;
   isOwner: boolean;
   isCommunityAdmin: boolean;
 }
@@ -174,7 +125,7 @@ const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
   community,
   slug,
   matchingCommunityAdmin,
-  fetchCommunities,
+  refetchCommunities,
   isOwner,
   isCommunityAdmin
 }) => {
@@ -307,7 +258,7 @@ const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
                     UUID={community.uid}
                     chainid={community.chainID}
                     Admin={admin.user.id}
-                    fetchAdmins={fetchCommunities}
+                    fetchAdmins={refetchCommunities}
                   />
                 </div>
               )
@@ -321,7 +272,7 @@ const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
             <AddAdmin
               UUID={community.uid}
               chainid={community.chainID}
-              fetchAdmins={fetchCommunities}
+              fetchAdmins={refetchCommunities}
             />
           ) : (
             <span className="text-gray-500">No access</span>

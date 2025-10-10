@@ -59,7 +59,7 @@ type AddAdminDialogProps = {
   };
   UUID: `0x${string}`;
   chainid: number;
-  fetchAdmins: () => Promise<any[] | undefined>;
+  fetchAdmins: () => void;
 };
 
 export const AddAdmin: FC<AddAdminDialogProps> = ({

@@ -17,7 +17,7 @@ const fetchAdminCommunities = async (
 
 export const useAdminCommunities = (address?: string) => {
   const { authenticated: isAuth } = useAuth();
-  const { setCommunities, setIsLoading } = useCommunitiesStore();
+  const { setCommunities, setIsLoading, communities } = useCommunitiesStore();
 
   const queryResult = useQuery<ICommunityResponse[], Error>({
     queryKey: ["admin-communities", address],
@@ -44,7 +44,7 @@ export const useAdminCommunities = (address?: string) => {
     }
     if (data) {
       setCommunities(data);
-    } 
+    }
   }, [data, address, isAuth, setCommunities]);
 
   useEffect(() => {
