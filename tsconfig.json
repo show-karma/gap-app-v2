@@ -41,6 +41,7 @@
     "./cypress.config.ts",
     "node_modules",
     "**/*.cy.ts",
-    "**/*.cy.tsx"
+    "**/*.cy.tsx",
+    "cypress/**/*"
   ]
 }

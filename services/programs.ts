@@ -31,7 +31,6 @@ export const programService = {
   getProgram: async (programId: string): Promise<GrantProgram> => {
     try {
       const [data, error] = await fetchData(INDEXER.PROGRAMS.GET(programId));
-
       if (error) {
         throw new Error(error);
       }

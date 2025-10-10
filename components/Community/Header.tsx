@@ -2,8 +2,9 @@
 import { CommunityPageNavigator } from "@/components/Pages/Communities/CommunityPageNavigator";
 import { communityColors } from "@/utilities/communityColors";
 import { CommunityImpactStatCards } from "@/components/Pages/Communities/Impact/StatCards";
-import { usePathname } from "next/navigation";
+import { usePathname, useParams } from "next/navigation";
 import { CommunityDetailsV2 } from "@/types/community";
+import Link from "next/link";
 
 const AdminCommunityHeader = ({
   community,
@@ -42,6 +43,9 @@ const NormalCommunityHeader = ({
 }: {
   community: CommunityDetailsV2;
 }) => {
+  const pathname = usePathname();
+  const params = useParams();
+
   return (
     <div className="flex flex-col gap-4 justify-between items-start mt-4 sm:px-3 md:px-4 px-6 border-b border-gray-200 dark:border-gray-800">
       <div className="flex flex-row gap-4 flex-wrap max-lg:flex-col justify-between items-center w-full">
@@ -91,10 +95,14 @@ export default function CommunityHeader({
   const pathname = usePathname();
   const isAdminPage = pathname.includes("/admin");
   const isReviewerPage = pathname.includes("/reviewer");
+  const isDonatePage = pathname.includes("/donate");
   if (isAdminPage) {
     return <AdminCommunityHeader community={community} />;
   }
   if (isReviewerPage) {
+    return null;
+  }
+  if (isDonatePage) {
     return null;
   }
   return <NormalCommunityHeader community={community} />;
