@@ -1,8 +1,10 @@
 "use client";
 
 import { GAP } from "@show-karma/karma-gap-sdk/core/class/GAP";
+import type { TNetwork } from "@show-karma/karma-gap-sdk";
+import { Networks } from "@show-karma/karma-gap-sdk/core/consts";
 import { GapIndexerClient } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/GapIndexerClient";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 
 import {
@@ -24,23 +26,45 @@ const gelatoOpts = {
 
 const gapClients: Record<number, GAP> = {};
 
+const isSupportedNetwork = (network: string): network is TNetwork =>
+  Object.prototype.hasOwnProperty.call(Networks, network);
+
+const getSupportedNetworkForChain = (chainID: number): TNetwork | null => {
+  const candidate = getChainNameById(chainID);
+  return isSupportedNetwork(candidate) ? candidate : null;
+};
+
+const findDefaultSupportedChainId = (): number | undefined => {
+  const fallbackChain = appNetwork.find((chain) =>
+    isSupportedNetwork(getChainNameById(chain.id))
+  );
+  return fallbackChain?.id;
+};
+
+export const getDefaultGapChainId = (): number | undefined =>
+  findDefaultSupportedChainId();
+
 export const getGapClient = (chainID: number): GAP => {
-  const network = getChainNameById(chainID);
-  const gapClient = gapClients[getChainIdByName(network)];
+  const network = getSupportedNetworkForChain(chainID);
+  if (!network) {
+    throw new Error(`GAP::Unsupported chain ${chainID}`);
+  }
+  const networkChainId = getChainIdByName(network);
+  const gapClient = gapClients[networkChainId];
   if (!gapClient) {
     const apiUrl = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
     const client = new GAP({
       globalSchemas: false,
       network,
       // uncomment to use the API client
-      ...(apiUrl
+      ...(apiUrl && apiUrl.trim()
         ? {
             apiClient: new GapIndexerClient(apiUrl),
           }
         : {}),
       remoteStorage: ipfsClient,
     });
-    gapClients[chainID] = client;
+    gapClients[networkChainId] = client;
     return client;
   }
   return gapClient;
@@ -49,30 +73,39 @@ export const getGapClient = (chainID: number): GAP => {
 export const useGap = () => {
   const [gap, setGapClient] = useState<GAP>();
   const { chain } = useAccount();
+  const defaultSupportedChainId = useMemo(findDefaultSupportedChainId, []);
 
-  if (!gap) {
-    const chainID =
-      appNetwork.find((c) => c.id === chain?.id)?.id || appNetwork[0].id;
-    setGapClient(getGapClient(chainID));
-  }
+  const updateGapClient = useCallback(
+    (chainId: number) => {
+      const network = getSupportedNetworkForChain(chainId);
+      if (!network) {
+        console.warn(`GAP::Unsupported chain ${chainId}. GAP client disabled.`);
+        setGapClient(undefined);
+        return;
+      }
 
-  /**
-   * Returns a GAP client
-   * @param network
-   * @param useGasless
-   * @returns
-   */
-  const updateGapClient = (chainId: number) => {
-    const gapClient = getGapClient(chainId);
-    setGapClient(gapClient);
-  };
+      const normalizedChainId = getChainIdByName(network);
+
+      try {
+        const client = getGapClient(normalizedChainId);
+        setGapClient(client);
+      } catch (error) {
+        console.error("GAP::Failed to initialize client", error);
+        setGapClient(undefined);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
-    if (chain) {
-      console.info("Updating GAP client", chain);
-      updateGapClient(chain.id);
+    const targetChainId = chain?.id ?? defaultSupportedChainId;
+    if (!targetChainId) {
+      setGapClient(undefined);
+      return;
     }
-  }, [chain]);
 
-  return useMemo(() => ({ gap, updateGapClient }), [gap, chain]);
+    updateGapClient(targetChainId);
+  }, [chain?.id, defaultSupportedChainId, updateGapClient]);
+
+  return useMemo(() => ({ gap, updateGapClient }), [gap, updateGapClient]);
 };

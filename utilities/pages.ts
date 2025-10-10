@@ -9,6 +9,9 @@ export const PAGES = {
     ALL_GRANTS: (community: string, programId?: string) =>
       `/community/${community}${programId ? `?programId=${programId}` : ""}`,
     IMPACT: (community: string) => `/community/${community}/impact`,
+    DONATE: (community: string) => `/community/${community}/donate`,
+    DONATE_PROGRAM: (community: string, programId: string) => `/community/${community}/donate/${programId}`,
+    DONATE_PROGRAM_CHECKOUT: (community: string, programId: string) => `/community/${community}/donate/${programId}/checkout`,
     PROJECT_DISCOVERY: (community: string) =>
       `/community/${community}/impact/project-discovery`,
     UPDATES: (community: string) => `/community/${community}/updates`,
