@@ -150,13 +150,7 @@ export const projectSchema = z.object({
   pitchDeck: z.string().optional(),
   demoVideo: z.string().optional(),
   farcaster: z.string().optional(),
-  profilePicture: z
-    .string({
-      required_error: "Project Logo URL is required",
-    })
-    .min(1, {
-      message: "Project Logo URL is required",
-    }),
+  profilePicture: z.string().optional(),
   businessModel: z.string().optional(),
   stageIn: z.string().optional(),
   raisedMoney: z.string().optional(),
@@ -1369,7 +1363,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           </div>
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="profile-logo-input" className={labelStyle}>
-              Project Logo
+              Project Logo (optional)
             </label>
             {logoPreviewUrl && !isLogoUploading && (
               <div className="flex flex-col gap-2">
