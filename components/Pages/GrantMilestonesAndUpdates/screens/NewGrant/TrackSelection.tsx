@@ -4,6 +4,7 @@ import { cn } from "@/utilities/tailwind/index";
 import { useTracksForProgram } from "@/hooks/useTracks";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Track } from "@/services/tracks";
+import { errorManager } from "@/components/Utilities/errorManager";
 
 interface TrackSelectionProps {
   programId?: string;
@@ -49,6 +50,13 @@ export const TrackSelection: React.FC<TrackSelectionProps> = ({
   }
 
   if (isError) {
+    // Log error to Sentry for monitoring
+    errorManager(
+      "Failed to load tracks for program",
+      error,
+      { programId }
+    );
+
     return (
       <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
         <p className="text-sm text-red-500 dark:text-red-400">
@@ -73,7 +81,7 @@ export const TrackSelection: React.FC<TrackSelectionProps> = ({
       <h4 className="text-sm font-semibold mb-2 text-gray-900 dark:text-gray-300">
         {disabled
           ? "Sponsored Tracks"
-          : "Choose the tracks"}
+          : "Choose the tracks (optional)"}
       </h4>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
         {tracks.map((track: Track) => (

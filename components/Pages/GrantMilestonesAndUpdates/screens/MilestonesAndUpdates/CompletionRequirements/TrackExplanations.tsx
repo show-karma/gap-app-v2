@@ -17,7 +17,6 @@ interface TrackExplanationsProps {
   trackExplanations: TrackExplanation[];
   onTrackExplanationsChange: (explanations: TrackExplanation[]) => void;
   errors?: {
-    tracks?: boolean;
     trackExplanations?: boolean;
   };
 }
@@ -69,17 +68,14 @@ export const TrackExplanations: React.FC<TrackExplanationsProps> = ({
 
   return (
     <div className="flex w-full flex-col gap-4">
-      {/* Track selection with validation */}
-      <div id="track-selection" className={errors.tracks ? "p-2 rounded-md border-2 border-red-500" : ""}>
+      {/* Track selection - optional */}
+      <div id="track-selection">
         <TrackSelection
           programId={programId} // Already formatted as programId_chainId
           selectedTrackIds={selectedTrackIds}
           onTrackSelectionChange={handleTrackSelectionChange}
           disabled={false}
         />
-        {errors.tracks && (
-          <p className="text-xs text-red-500 mt-2">Please select at least one track</p>
-        )}
       </div>
 
       {/* Show explanation fields for selected tracks only if tracks exist */}
@@ -89,7 +85,7 @@ export const TrackExplanations: React.FC<TrackExplanationsProps> = ({
             Explain how your project integrates with each selected track <span className="text-red-500">*</span>
           </p>
           {errors.trackExplanations && (
-            <p className="text-xs text-red-500">Please provide explanations for all selected tracks</p>
+            <p className="text-xs text-red-500">Explanations are required for all selected tracks</p>
           )}
           {selectedTrackIds.map((trackId) => {
             const explanation = getExplanation(trackId);
