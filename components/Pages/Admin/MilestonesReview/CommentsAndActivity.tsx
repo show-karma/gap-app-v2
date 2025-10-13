@@ -1,13 +1,15 @@
 "use client";
 
-import { useMemo, useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import CommentsTimeline from "@/components/FundingPlatform/ApplicationView/CommentsTimeline";
-import { useApplicationComments, useApplicationVersions } from "@/hooks/useFundingPlatform";
+import {
+  useApplicationComments,
+  useApplicationVersions,
+} from "@/hooks/useFundingPlatform";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { useOwnerStore } from "@/store";
 import type {
   FundingApplicationStatusV2,
-  ApplicationComment,
   IStatusHistoryEntry,
 } from "@/types/funding-platform";
 
@@ -54,19 +56,28 @@ export function CommentsAndActivity({
   );
 
   // Handler for adding a new comment
-  const handleCommentAdd = useCallback(async (content: string) => {
-    await createCommentAsync({ content });
-  }, [createCommentAsync]);
+  const handleCommentAdd = useCallback(
+    async (content: string) => {
+      await createCommentAsync({ content });
+    },
+    [createCommentAsync],
+  );
 
   // Handler for editing an existing comment
-  const handleCommentEdit = useCallback(async (commentId: string, content: string) => {
-    await editCommentAsync({ commentId, content });
-  }, [editCommentAsync]);
+  const handleCommentEdit = useCallback(
+    async (commentId: string, content: string) => {
+      await editCommentAsync({ commentId, content });
+    },
+    [editCommentAsync],
+  );
 
   // Handler for deleting a comment
-  const handleCommentDelete = useCallback(async (commentId: string) => {
-    await deleteCommentAsync(commentId);
-  }, [deleteCommentAsync]);
+  const handleCommentDelete = useCallback(
+    async (commentId: string) => {
+      await deleteCommentAsync(commentId);
+    },
+    [deleteCommentAsync],
+  );
 
   return (
     <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm">
