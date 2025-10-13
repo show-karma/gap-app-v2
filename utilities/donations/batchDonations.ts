@@ -451,12 +451,12 @@ export const PERMIT2_ADDRESS = "0x000000000022D473030F116dDEE9F6B43aC78BA3" as c
 type HexAddress = `0x${string}`;
 
 export const BATCH_DONATIONS_CONTRACTS: Record<number, HexAddress | null> = {
-  1: null, // Ethereum Mainnet - TODO: set deployed address
-  10: null, // Optimism Mainnet - TODO: set deployed address
-  137: null, // Polygon Mainnet - TODO: set deployed address
-  42161: null, // Arbitrum One - TODO: set deployed address
-  42220: null, // Celo Mainnet - TODO: set deployed address
-  8453: null, // Base Mainnet - TODO: set deployed address
+  1: "0x5f4A21e16b04f9944229DF6CD2724088e3457B0e", // Ethereum Mainnet
+  10: "0x5f4A21e16b04f9944229DF6CD2724088e3457B0e", // Optimism Mainnet
+  137: "0x5f4A21e16b04f9944229DF6CD2724088e3457B0e", // Polygon Mainnet
+  42161: "0x5f4A21e16b04f9944229DF6CD2724088e3457B0e", // Arbitrum One
+  42220: "0x5f4A21e16b04f9944229DF6CD2724088e3457B0e", // Celo Mainnet
+  8453: "0x5f4A21e16b04f9944229DF6CD2724088e3457B0e", // Base Mainnet
   11155111: "0x5f4A21e16b04f9944229DF6CD2724088e3457B0e", // Sepolia
   11155420: "0x5f4A21e16b04f9944229DF6CD2724088e3457B0e", // Optimism Sepolia
   84532: "0x5f4A21e16b04f9944229DF6CD2724088e3457B0e", // Base Sepolia
