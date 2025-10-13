@@ -1,27 +1,28 @@
 "use client";
 
-import { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
-import { useOwnerStore } from "@/store";
-import { useApplicationVersionsStore } from "@/store/applicationVersions";
-import { useStaff } from "@/hooks/useStaff";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { Button } from "@/components/Utilities/Button";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
-import { MESSAGES } from "@/utilities/messages";
-import { PAGES } from "@/utilities/pages";
-import {
-  useApplication,
-  useApplicationStatus,
-  useProgramConfig,
-  useApplicationComments,
-  useApplicationVersions,
-} from "@/hooks/useFundingPlatform";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 import ApplicationContent from "@/components/FundingPlatform/ApplicationView/ApplicationContent";
 import CommentsSection from "@/components/FundingPlatform/ApplicationView/CommentsSection";
 import PostApprovalData from "@/components/FundingPlatform/ApplicationView/PostApprovalData";
+import { Button } from "@/components/Utilities/Button";
+import { Spinner } from "@/components/Utilities/Spinner";
+import {
+  useApplication,
+  useApplicationComments,
+  useApplicationStatus,
+  useApplicationVersions,
+  useProgramConfig,
+} from "@/hooks/useFundingPlatform";
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useStaff } from "@/hooks/useStaff";
+import { useOwnerStore } from "@/store";
+import { useApplicationVersionsStore } from "@/store/applicationVersions";
+import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
 
 export default function ApplicationDetailPage() {
   const router = useRouter();
@@ -108,9 +109,9 @@ export default function ApplicationDetailPage() {
 
     // Scroll to the Application Details section
     setTimeout(() => {
-      const element = document.getElementById('application-details');
+      const element = document.getElementById("application-details");
       if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     }, 100); // Small delay to ensure the view mode has changed
   };
@@ -120,6 +121,25 @@ export default function ApplicationDetailPage() {
       `${PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, combinedProgramId)}`
     );
   };
+
+  // Memoized check for showing milestone review link
+  const shouldShowMilestoneLink = useMemo(() => {
+    return (
+      application?.status?.toLowerCase() === "approved" &&
+      !!application?.projectUID
+    );
+  }, [application?.status, application?.projectUID]);
+
+  // Memoized milestone review URL
+  const milestoneReviewUrl = useMemo(() => {
+    if (!shouldShowMilestoneLink || !application?.projectUID) return null;
+    return `${PAGES.ADMIN.PROJECT_MILESTONES(communityId, application.projectUID, combinedProgramId)}&from=application`;
+  }, [
+    shouldShowMilestoneLink,
+    application?.projectUID,
+    communityId,
+    combinedProgramId,
+  ]);
 
   // Check loading states
   if (isLoadingAdmin || isLoadingApplication) {
@@ -191,6 +211,28 @@ export default function ApplicationDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Column - Application Content and AI Evaluation */}
           <div className="space-y-6">
+            {/* Milestone Review Link - Only shown if application is approved and has projectUID */}
+            {shouldShowMilestoneLink && milestoneReviewUrl && (
+              <div className="bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-1">
+                    <h3 className="text-sm font-semibold text-green-900 dark:text-green-100">
+                      Review Project Milestones
+                    </h3>
+                    <p className="text-xs text-green-700 dark:text-green-300">
+                      View and verify milestone completions for this approved
+                      application
+                    </p>
+                  </div>
+                  <Link href={milestoneReviewUrl}>
+                    <Button className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white">
+                      View Milestones
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            )}
+
             <ApplicationContent
               application={application}
               program={program}
@@ -204,7 +246,6 @@ export default function ApplicationDetailPage() {
 
           {/* Right Column - Comments */}
           <div className="space-y-6">
-
             <CommentsSection
               applicationId={application.referenceNumber}
               comments={comments}
@@ -225,3 +266,4 @@ export default function ApplicationDetailPage() {
     </div>
   );
 }
+
