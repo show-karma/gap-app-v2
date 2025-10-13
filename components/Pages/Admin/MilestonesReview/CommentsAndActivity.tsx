@@ -31,9 +31,9 @@ export function CommentsAndActivity({
   const {
     comments,
     isLoading,
-    createComment,
-    editComment,
-    deleteComment,
+    createCommentAsync,
+    editCommentAsync,
+    deleteCommentAsync,
   } = useApplicationComments(referenceNumber);
   const { versions } = useApplicationVersions(referenceNumber);
   const { isCommunityAdmin } = useIsCommunityAdmin(communityId);
@@ -52,18 +52,18 @@ export function CommentsAndActivity({
 
   // Handler for adding a new comment
   const handleCommentAdd = useCallback(async (content: string) => {
-    createComment({ content });
-  }, [createComment]);
+    await createCommentAsync({ content });
+  }, [createCommentAsync]);
 
   // Handler for editing an existing comment
   const handleCommentEdit = useCallback(async (commentId: string, content: string) => {
-    editComment({ commentId, content });
-  }, [editComment]);
+    await editCommentAsync({ commentId, content });
+  }, [editCommentAsync]);
 
   // Handler for deleting a comment
   const handleCommentDelete = useCallback(async (commentId: string) => {
-    deleteComment(commentId);
-  }, [deleteComment]);
+    await deleteCommentAsync(commentId);
+  }, [deleteCommentAsync]);
 
   return (
     <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm">
