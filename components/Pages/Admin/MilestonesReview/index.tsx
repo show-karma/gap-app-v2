@@ -240,6 +240,7 @@ export function MilestonesReviewPage({
                 timestamp: typeof item.timestamp === 'string' ? item.timestamp : item.timestamp.toISOString(),
                 reason: item.reason
               }))}
+              isCommunityAdmin={isCommunityAdmin}
             />
           </div>
         )}
