@@ -76,28 +76,19 @@ export function MilestonesReviewPage({
       : `Program ${programId}`;
   }, [data?.grantMilestones, programId]);
 
-  // Memoized helper to determine the correct application page URL based on user role
-  const applicationPageUrl = useMemo(() => {
-    if (!referenceNumber || !programId) return null;
-
-    // Determine if user is admin or reviewer
-    if (isCommunityAdmin || isContractOwner) {
-      return PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, programId) + `/${referenceNumber}`;
-    } else if (isReviewer && parsedChainId) {
-      return PAGES.REVIEWER.APPLICATION_DETAIL(communityId, parsedProgramId, parsedChainId, referenceNumber);
-    }
-
-    return null;
-  }, [referenceNumber, programId, isCommunityAdmin, isContractOwner, isReviewer, communityId, parsedProgramId, parsedChainId]);
-
   // Memoized back button configuration
   const backButtonConfig = useMemo(() => {
-    // If came from application page, link back to application
-    if (referrer === "application" && applicationPageUrl) {
-      return {
-        url: applicationPageUrl,
-        label: "Back to Application",
-      };
+    // Only show back to application if came from application page
+    if (referrer === "application" && referenceNumber) {
+      const appUrl = (isCommunityAdmin || isContractOwner)
+        ? PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, programId) + `/${referenceNumber}`
+        : isReviewer && parsedChainId
+        ? PAGES.REVIEWER.APPLICATION_DETAIL(communityId, parsedProgramId, parsedChainId, referenceNumber)
+        : null;
+
+      if (appUrl) {
+        return { url: appUrl, label: "Back to Application" };
+      }
     }
 
     // Default: back to milestones report
@@ -105,12 +96,21 @@ export function MilestonesReviewPage({
       url: PAGES.ADMIN.MILESTONES(communityId),
       label: "Back to Milestones Report",
     };
-  }, [referrer, applicationPageUrl, communityId]);
+  }, [referrer, referenceNumber, isCommunityAdmin, isContractOwner, isReviewer, communityId, programId, parsedProgramId, parsedChainId]);
 
-  // Check if application is approved (for showing application link)
-  const isApplicationApproved = useMemo(() => {
-    return fundingApplication?.status?.toLowerCase() === "approved";
-  }, [fundingApplication?.status]);
+  // Memoized milestone review URL - only returns URL if application is approved
+  const milestoneReviewUrl = useMemo(() => {
+    if (fundingApplication?.status?.toLowerCase() === "approved" && referenceNumber) {
+      const appUrl = (isCommunityAdmin || isContractOwner)
+        ? PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, programId) + `/${referenceNumber}`
+        : isReviewer && parsedChainId
+        ? PAGES.REVIEWER.APPLICATION_DETAIL(communityId, parsedProgramId, parsedChainId, referenceNumber)
+        : null;
+
+      return appUrl;
+    }
+    return null;
+  }, [fundingApplication?.status, referenceNumber, isCommunityAdmin, isContractOwner, isReviewer, communityId, programId, parsedProgramId, parsedChainId]);
 
   const { verifyMilestone, isVerifying } = useMilestoneCompletionVerification({
     projectId,
@@ -249,7 +249,7 @@ export function MilestonesReviewPage({
       </div>
 
       {/* Application Link - Only shown if application is approved */}
-      {isApplicationApproved && applicationPageUrl && (
+      {milestoneReviewUrl && (
         <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div className="flex flex-col gap-1">
@@ -260,7 +260,7 @@ export function MilestonesReviewPage({
                 View the full application and review details
               </p>
             </div>
-            <Link href={applicationPageUrl}>
+            <Link href={milestoneReviewUrl}>
               <Button className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white">
                 View Application
               </Button>

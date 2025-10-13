@@ -122,24 +122,13 @@ export default function ApplicationDetailPage() {
     );
   };
 
-  // Memoized check for showing milestone review link
-  const shouldShowMilestoneLink = useMemo(() => {
-    return (
-      application?.status?.toLowerCase() === "approved" &&
-      !!application?.projectUID
-    );
-  }, [application?.status, application?.projectUID]);
-
-  // Memoized milestone review URL
+  // Memoized milestone review URL - only returns URL if approved and has projectUID
   const milestoneReviewUrl = useMemo(() => {
-    if (!shouldShowMilestoneLink || !application?.projectUID) return null;
-    return `${PAGES.ADMIN.PROJECT_MILESTONES(communityId, application.projectUID, combinedProgramId)}&from=application`;
-  }, [
-    shouldShowMilestoneLink,
-    application?.projectUID,
-    communityId,
-    combinedProgramId,
-  ]);
+    if (application?.status?.toLowerCase() === "approved" && application?.projectUID) {
+      return `${PAGES.ADMIN.PROJECT_MILESTONES(communityId, application.projectUID, combinedProgramId)}&from=application`;
+    }
+    return null;
+  }, [application?.status, application?.projectUID, communityId, combinedProgramId]);
 
   // Check loading states
   if (isLoadingAdmin || isLoadingApplication) {
@@ -212,7 +201,7 @@ export default function ApplicationDetailPage() {
           {/* Left Column - Application Content and AI Evaluation */}
           <div className="space-y-6">
             {/* Milestone Review Link - Only shown if application is approved and has projectUID */}
-            {shouldShowMilestoneLink && milestoneReviewUrl && (
+            {milestoneReviewUrl && (
               <div className="bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col gap-1">
