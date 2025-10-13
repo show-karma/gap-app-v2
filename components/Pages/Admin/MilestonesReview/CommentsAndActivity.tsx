@@ -48,7 +48,10 @@ export function CommentsAndActivity({
     }));
   }, [statusHistory]);
 
-  const isAdmin = isCommunityAdmin || isContractOwner;
+  const isAdmin = useMemo(
+    () => isCommunityAdmin || isContractOwner,
+    [isCommunityAdmin, isContractOwner],
+  );
 
   // Handler for adding a new comment
   const handleCommentAdd = useCallback(async (content: string) => {
