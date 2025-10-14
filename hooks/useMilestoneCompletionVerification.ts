@@ -98,7 +98,7 @@ export const useMilestoneCompletionVerification = ({
     gapClient: GAP,
     data: ProjectGrantMilestonesResponse,
     milestone: GrantMilestoneWithCompletion,
-  ): Promise<MilestoneInstance> => {
+  ): Promise<{ milestoneInstance: MilestoneInstance; communityUID: string }> => {
     const fetchedProject = await gapClient.fetch.projectById(data.project.uid);
     if (!fetchedProject) {
       throw new Error("Failed to fetch project data");
@@ -120,7 +120,13 @@ export const useMilestoneCompletionVerification = ({
       throw new Error("Milestone not found");
     }
 
-    return milestoneInstance as MilestoneInstance;
+    // Extract communityUID from grant data
+    const communityUID = grantInstance.data?.communityUID || "";
+
+    return {
+      milestoneInstance: milestoneInstance as MilestoneInstance,
+      communityUID,
+    };
   };
 
   const buildAttestationPayloads = async (
@@ -173,6 +179,7 @@ export const useMilestoneCompletionVerification = ({
     txHash: string | undefined,
     chainId: number,
     attestationCount: number,
+    communityUID: string,
   ) => {
     if (txHash) {
       await fetchData(
@@ -194,6 +201,10 @@ export const useMilestoneCompletionVerification = ({
         projectId,
         programId,
       ),
+    });
+
+    await queryClient.invalidateQueries({
+      queryKey: ["reportMilestones", communityUID],
     });
   };
 
@@ -243,6 +254,7 @@ export const useMilestoneCompletionVerification = ({
     milestone: GrantMilestoneWithCompletion,
     completionComment: string,
     attestationChainId: number,
+    communityUID: string,
   ): Promise<void> => {
     toast.loading("Completing milestone via backend...", {
       id: `milestone-${milestone.uid}`,
@@ -261,7 +273,7 @@ export const useMilestoneCompletionVerification = ({
       );
 
       changeStepperStep("indexing");
-      await notifyIndexerAndInvalidateCache(txHash, attestationChainId, 1);
+      await notifyIndexerAndInvalidateCache(txHash, attestationChainId, 1, communityUID);
       changeStepperStep("indexed");
 
       toast.success("Milestone completed successfully!", {
@@ -284,6 +296,7 @@ export const useMilestoneCompletionVerification = ({
       completionReason?: string;
       verificationComment: string;
     },
+    communityUID: string,
   ): Promise<boolean> => {
     const isVerificationOnly = !options.includeCompletion;
 
@@ -321,6 +334,7 @@ export const useMilestoneCompletionVerification = ({
         txHash,
         milestoneInstance.chainID,
         payloads.length,
+        communityUID,
       );
 
       // Poll for milestone status
@@ -419,8 +433,8 @@ export const useMilestoneCompletionVerification = ({
 
       const { gapClient, walletSigner } = chainSetup;
 
-      // Step 2: Fetch milestone instance
-      let milestoneInstance = await fetchMilestoneInstance(
+      // Step 2: Fetch milestone instance and communityUID
+      let { milestoneInstance, communityUID } = await fetchMilestoneInstance(
         gapClient,
         data,
         milestone,
@@ -444,14 +458,17 @@ export const useMilestoneCompletionVerification = ({
           milestone,
           completionReason ?? "",
           attestationChainId,
+          communityUID,
         );
 
         // Re-fetch milestone to get updated completion status
-        milestoneInstance = await fetchMilestoneInstance(
+        const refetchedData = await fetchMilestoneInstance(
           gapClient,
           data,
           milestone,
         );
+        milestoneInstance = refetchedData.milestoneInstance;
+        communityUID = refetchedData.communityUID;
 
         includeCompletion = false;
       }
@@ -467,6 +484,7 @@ export const useMilestoneCompletionVerification = ({
           completionReason,
           verificationComment,
         },
+        communityUID,
       );
 
       if (!onChainConfirmed) {
