@@ -44,6 +44,7 @@ export interface GrantMilestoneVerificationDetails {
 export interface GrantMilestoneWithCompletion {
   uid: string;
   programId?: string;
+  chainId: number;
   title: string;
   description: string;
   dueDate: string;
@@ -57,6 +58,7 @@ export interface GrantMilestoneWithCompletion {
 export interface MappedGrantMilestone {
   uid: string;
   programId?: string;
+  chainId: number;
   title: string;
   description: string;
   dueDate: string;
@@ -119,6 +121,7 @@ export async function fetchProjectGrantMilestones(
   const grantMilestones: MappedGrantMilestone[] = updatesResponse.grantMilestones.map(milestone => ({
     uid: milestone.uid,
     programId: milestone.programId,
+    chainId: milestone.chainId,
     title: milestone.title,
     description: milestone.description,
     dueDate: milestone.dueDate,
@@ -159,4 +162,25 @@ export async function updateMilestoneVerification(
       verificationComment: verificationComment || "",
     }
   );
+}
+
+/**
+ * Attest milestone completion as a program reviewer (backend creates on-chain attestation)
+ */
+export async function attestMilestoneCompletionAsReviewer(
+  milestoneUID: string,
+  completionComment: string,
+  programId: string,
+  chainID: number
+): Promise<{ txHash: string; attestationUID: string }> {
+  const response = await apiClient.post<{ txHash: string; attestationUID: string }>(
+    `/v2/milestones/${milestoneUID}/attest-completion`,
+    {
+      completionComment,
+      programId,
+      chainID,
+    }
+  );
+
+  return response.data;
 }

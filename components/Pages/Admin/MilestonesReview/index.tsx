@@ -136,8 +136,13 @@ export function MilestonesReviewPage({
 
   const handleSubmitVerification = useCallback(async (milestone: MappedGrantMilestone) => {
     if (!data) return;
-    await verifyMilestone(milestone, data, verificationComment);
-  }, [data, verifyMilestone, verificationComment]);
+    await verifyMilestone(
+      milestone,
+      isReviewer,
+      data,
+      verificationComment
+    );
+  }, [data, verifyMilestone, isReviewer, verificationComment]);
 
   const handleSyncVerification = useCallback(async (milestone: MappedGrantMilestone) => {
     if (!milestone.fundingApplicationCompletion || !milestone.verificationDetails) return;
