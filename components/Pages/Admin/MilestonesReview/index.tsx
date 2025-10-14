@@ -5,7 +5,7 @@ import { PAGES } from "@/utilities/pages";
 import { ChevronLeftIcon, ExclamationTriangleIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
 import { useState, useMemo, useCallback } from "react";
-import type { MappedGrantMilestone } from "@/services/milestones";
+import type { GrantMilestoneWithCompletion } from "@/services/milestones";
 import { updateMilestoneVerification } from "@/services/milestones";
 import { useProjectGrantMilestones } from "@/hooks/useProjectGrantMilestones";
 import { useMilestoneCompletionVerification } from "@/hooks/useMilestoneCompletionVerification";
@@ -134,7 +134,7 @@ export function MilestonesReviewPage({
     setVerificationComment("");
   }, []);
 
-  const handleSubmitVerification = useCallback(async (milestone: MappedGrantMilestone) => {
+  const handleSubmitVerification = useCallback(async (milestone: GrantMilestoneWithCompletion) => {
     if (!data) return;
     await verifyMilestone(
       milestone,
@@ -144,7 +144,7 @@ export function MilestonesReviewPage({
     );
   }, [data, verifyMilestone, isReviewer, verificationComment]);
 
-  const handleSyncVerification = useCallback(async (milestone: MappedGrantMilestone) => {
+  const handleSyncVerification = useCallback(async (milestone: GrantMilestoneWithCompletion) => {
     if (!milestone.fundingApplicationCompletion || !milestone.verificationDetails) return;
 
     setIsSyncing(true);

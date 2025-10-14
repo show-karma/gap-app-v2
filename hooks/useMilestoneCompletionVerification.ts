@@ -12,7 +12,7 @@ import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
 import { useWallet } from "@/hooks/useWallet";
 import {
   attestMilestoneCompletionAsReviewer,
-  type MappedGrantMilestone,
+  type GrantMilestoneWithCompletion,
   type ProjectGrantMilestonesResponse,
   updateMilestoneVerification,
 } from "@/services/milestones";
@@ -57,7 +57,7 @@ export const useMilestoneCompletionVerification = ({
   const { changeStepperStep, setIsStepper } = useStepper();
 
   const setupChainAndWallet = async (
-    milestone: MappedGrantMilestone,
+    milestone: GrantMilestoneWithCompletion,
     data: ProjectGrantMilestonesResponse,
   ): Promise<{ gapClient: GAP; walletSigner: Signer } | null> => {
     // Use chainId from milestone (now required in API response)
@@ -97,7 +97,7 @@ export const useMilestoneCompletionVerification = ({
   const fetchMilestoneInstance = async (
     gapClient: GAP,
     data: ProjectGrantMilestonesResponse,
-    milestone: MappedGrantMilestone,
+    milestone: GrantMilestoneWithCompletion,
   ): Promise<MilestoneInstance> => {
     const fetchedProject = await gapClient.fetch.projectById(data.project.uid);
     if (!fetchedProject) {
@@ -125,7 +125,7 @@ export const useMilestoneCompletionVerification = ({
 
   const buildAttestationPayloads = async (
     gapClient: GAP,
-    milestone: MappedGrantMilestone,
+    milestone: GrantMilestoneWithCompletion,
     milestoneInstance: MilestoneInstance,
     options: {
       includeCompletion: boolean;
@@ -200,7 +200,7 @@ export const useMilestoneCompletionVerification = ({
   const pollForMilestoneStatus = async (
     gapClient: GAP,
     data: ProjectGrantMilestonesResponse,
-    milestone: MappedGrantMilestone,
+    milestone: GrantMilestoneWithCompletion,
     checkCompletion: boolean,
     userAddress: string,
     compositeProgramId: string,
@@ -240,7 +240,7 @@ export const useMilestoneCompletionVerification = ({
   };
 
   const completeViaBackend = async (
-    milestone: MappedGrantMilestone,
+    milestone: GrantMilestoneWithCompletion,
     completionComment: string,
     attestationChainId: number,
   ): Promise<void> => {
@@ -275,7 +275,7 @@ export const useMilestoneCompletionVerification = ({
 
   const attestMilestonesOnChain = async (
     milestoneInstance: MilestoneInstance,
-    milestone: MappedGrantMilestone,
+    milestone: GrantMilestoneWithCompletion,
     walletSigner: Signer,
     gapClient: GAP,
     data: ProjectGrantMilestonesResponse,
@@ -355,7 +355,7 @@ export const useMilestoneCompletionVerification = ({
   };
 
   const updateDatabaseVerification = async (
-    milestone: MappedGrantMilestone,
+    milestone: GrantMilestoneWithCompletion,
     verificationComment: string,
   ) => {
     if (!milestone.fundingApplicationCompletion) {
@@ -388,7 +388,7 @@ export const useMilestoneCompletionVerification = ({
   };
 
   const verifyMilestone = async (
-    milestone: MappedGrantMilestone,
+    milestone: GrantMilestoneWithCompletion,
     isMilestoneReviewer: boolean,
     data: ProjectGrantMilestonesResponse,
     verificationComment: string,
