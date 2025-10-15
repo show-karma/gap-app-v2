@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { FormField } from '@/types/question-builder';
 import { Button } from '@/components/Utilities/Button';
 import { QuestionTooltip } from '@/components/Utilities/QuestionTooltip';
-import { TrashIcon, ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/solid';
+import { TrashIcon } from '@heroicons/react/24/solid';
 import { MarkdownEditor } from '../Utilities/MarkdownEditor';
 
 const fieldSchema = z.object({
@@ -110,26 +110,6 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, r
           Field Settings
         </h3>
         <div className="flex items-center space-x-2">
-          {onMoveUp && (
-            <button
-              onClick={() => !readOnly && onMoveUp(field.id)}
-              disabled={readOnly}
-              className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent"
-              title="Move up"
-            >
-              <ChevronUpIcon className="w-4 h-4" />
-            </button>
-          )}
-          {onMoveDown && (
-            <button
-              onClick={() => !readOnly && onMoveDown(field.id)}
-              disabled={readOnly}
-              className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-transparent"
-              title="Move down"
-            >
-              <ChevronDownIcon className="w-4 h-4" />
-            </button>
-          )}
           <button
             onClick={() => !readOnly && onDelete(field.id)}
             disabled={readOnly}

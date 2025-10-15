@@ -12,11 +12,14 @@ export const envVars = {
     ? `${process.env.NEXT_PUBLIC_GAP_INDEXER_URL}/attestations/sponsored-txn`
     : "https://gapapi.karmahq.xyz/attestations/sponsored-txn",
   RPC: {
+    MAINNET: process.env.NEXT_PUBLIC_RPC_MAINNET as string,
     OPTIMISM: process.env.NEXT_PUBLIC_RPC_OPTIMISM as string,
     ARBITRUM: process.env.NEXT_PUBLIC_RPC_ARBITRUM as string,
+    BASE: process.env.NEXT_PUBLIC_RPC_BASE as string,
+    CELO: process.env.NEXT_PUBLIC_RPC_CELO as string,
+    POLYGON: process.env.NEXT_PUBLIC_RPC_POLYGON as string,
     OPT_SEPOLIA: process.env.NEXT_PUBLIC_RPC_OPTIMISM_SEPOLIA as string,
     BASE_SEPOLIA: process.env.NEXT_PUBLIC_RPC_BASE_SEPOLIA as string,
-    CELO: process.env.NEXT_PUBLIC_RPC_CELO as string,
     SEPOLIA: process.env.NEXT_PUBLIC_RPC_SEPOLIA as string,
     SEI: process.env.NEXT_PUBLIC_RPC_SEI as string,
     LISK: process.env.NEXT_PUBLIC_RPC_LISK as string,

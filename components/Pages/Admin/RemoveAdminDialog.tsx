@@ -48,7 +48,7 @@ type RemoveAdminDialogProps = {
   UUID: `0x${string}`;
   chainid: number;
   Admin: `0x${string}`;
-  fetchAdmins: () => Promise<any[] | undefined>;
+  fetchAdmins: () => void;
 };
 
 export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({

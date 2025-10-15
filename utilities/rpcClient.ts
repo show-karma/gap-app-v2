@@ -1,4 +1,4 @@
-import { createPublicClient, http } from "viem";
+import { createPublicClient, http, type PublicClient } from "viem";
 import {
   arbitrum,
   baseSepolia,
@@ -70,11 +70,17 @@ export const rpcClient = {
   optimismSepolia: optimismSepoliaClient,
   sepolia: sepoliaClient,
   baseSepolia: baseSepoliaClient,
-
 };
 
-export const getRPCClient = async (chainId: number) => {
+export const getRPCClient = async (chainId: number): Promise<PublicClient> => {
   const chainName = getChainNameById(chainId);
-  const client = rpcClient[chainName as keyof typeof rpcClient];
-  return client;
+  const client =
+    rpcClient[chainName as keyof typeof rpcClient] ??
+    (chainName === "base-sepolia" ? baseSepoliaClient : undefined) ??
+    (chainName === "optimism-sepolia" ? optimismSepoliaClient : undefined);
+  if (!client) {
+    throw new Error(`RPC client not configured for chain ${chainId}`);
+  }
+
+  return client as unknown as PublicClient;
 };

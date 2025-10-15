@@ -324,10 +324,7 @@ export default function FundingPlatformAdminPage() {
     {
       title: "Applicants",
       value: formatCurrency(
-        program.metrics?.totalApplications ||
-        program.metrics?.applicationCount ||
-        program.grantPlatform?.stats?.total ||
-        0
+        program.metrics?.totalApplications || 0
       ),
       icon: <UsersIcon className="w-5 h-5 text-blue-700 dark:text-blue-100" />,
     },
@@ -485,8 +482,7 @@ export default function FundingPlatformAdminPage() {
             {filteredPrograms.map((program) => (
               <div
                 key={`${program.programId}_${program.chainID}`}
-                // className="bg-white dark:bg-zinc-800 dark:border-gray-700 rounded-lg overflow-hidden relative"
-                className="px-4 py-4 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-1 rounded-md border border-gray-200 bg-white dark:bg-zinc-800"
+                className="px-4 py-4 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-1 rounded-lg border border-gray-200 bg-white dark:bg-zinc-800 dark:border-gray-700 relative"
               >
                 {/* Loading Overlay */}
                 {togglingPrograms.has(
@@ -498,276 +494,226 @@ export default function FundingPlatformAdminPage() {
                     />
                   )}
 
-                {/* Program Enable/Disable Toggle */}
-                <div className="flex items-center justify-start mb-3 flex-row gap-3 flex-wrap">
-                  <div
-                    className={cn(
-                      "relative group",
-                      !program.applicationConfig ||
-                        Object.keys(program.applicationConfig).length === 1
-                        ? "cursor-not-allowed"
-                        : "cursor-pointer"
-                    )}
-                    title={
-                      !program.applicationConfig ||
-                        Object.keys(program.applicationConfig).length === 1
-                        ? "Program doesn't have configured form"
-                        : undefined
-                    }
-                  >
-                    <button
+                {/* Header with Toggle and Quick Actions */}
+                <div className="flex items-center justify-between mb-3 gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* Program Enable/Disable Toggle */}
+                    <div
                       className={cn(
-                        "flex items-center space-x-2 text-sm text-zinc-900 px-2 py-1 rounded-full",
-                        program.applicationConfig?.isEnabled
-                          ? "bg-green-100 dark:bg-green-900"
-                          : "bg-gray-100 dark:bg-zinc-700",
+                        "relative group",
                         !program.applicationConfig ||
                           Object.keys(program.applicationConfig).length === 1
-                          ? "cursor-not-allowed opacity-50"
+                          ? "cursor-not-allowed"
                           : "cursor-pointer"
                       )}
-                      onClick={() => {
-                        if (program.applicationConfig) {
-                          handleToggleProgram(
-                            program.programId,
-                            program.chainID,
-                            program.applicationConfig?.isEnabled || false
-                          );
-                        }
-                      }}
-                      disabled={
+                      title={
                         !program.applicationConfig ||
-                        Object.keys(program.applicationConfig).length === 1 ||
-                        togglingPrograms.has(
-                          `${program.programId}_${program.chainID}`
-                        )
+                          Object.keys(program.applicationConfig).length === 1
+                          ? "Program doesn't have configured form"
+                          : undefined
                       }
                     >
-                      <div
+                      <button
                         className={cn(
-                          "relative inline-flex h-6 w-12 items-center rounded-full transition-colors",
+                          "flex items-center space-x-2 text-sm text-zinc-900 px-2 py-1 rounded-full",
                           program.applicationConfig?.isEnabled
-                            ? "bg-green-600 dark:bg-green-600"
-                            : "bg-gray-200 dark:bg-gray-400",
-                          (!program.applicationConfig ||
-                            Object.keys(program.applicationConfig).length ===
-                            1) &&
-                          "bg-gray-300 dark:bg-gray-600"
+                            ? "bg-green-100 dark:bg-green-900"
+                            : "bg-gray-100 dark:bg-zinc-700",
+                          !program.applicationConfig ||
+                            Object.keys(program.applicationConfig).length === 1
+                            ? "cursor-not-allowed opacity-50"
+                            : "cursor-pointer"
                         )}
+                        onClick={() => {
+                          if (program.applicationConfig) {
+                            handleToggleProgram(
+                              program.programId,
+                              program.chainID,
+                              program.applicationConfig?.isEnabled || false
+                            );
+                          }
+                        }}
+                        disabled={
+                          !program.applicationConfig ||
+                          Object.keys(program.applicationConfig).length === 1 ||
+                          togglingPrograms.has(
+                            `${program.programId}_${program.chainID}`
+                          )
+                        }
                       >
+                        <div
+                          className={cn(
+                            "relative inline-flex h-6 w-12 items-center rounded-full transition-colors",
+                            program.applicationConfig?.isEnabled
+                              ? "bg-green-600 dark:bg-green-600"
+                              : "bg-gray-200 dark:bg-gray-400",
+                            (!program.applicationConfig ||
+                              Object.keys(program.applicationConfig).length ===
+                              1) &&
+                            "bg-gray-300 dark:bg-gray-600"
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              "inline-block h-5 w-5 transform rounded-full bg-white transition-transform",
+                              program.applicationConfig?.isEnabled
+                                ? "translate-x-6"
+                                : "translate-x-1"
+                            )}
+                          />
+                        </div>
                         <span
                           className={cn(
-                            "inline-block h-5 w-5 transform rounded-full bg-white transition-transform",
+                            "text-sm font-medium",
                             program.applicationConfig?.isEnabled
-                              ? "translate-x-6"
-                              : "translate-x-1"
+                              ? "text-green-700 dark:text-green-400"
+                              : "text-gray-500 dark:text-gray-400"
                           )}
-                        />
-                      </div>
-                      <span
-                        className={cn(
-                          "text-sm font-medium",
-                          program.applicationConfig?.isEnabled
-                            ? "text-green-700 dark:text-green-400"
-                            : "text-gray-500 dark:text-gray-400"
-                        )}
-                      >
-                        {togglingPrograms.has(
-                          `${program.programId}_${program.chainID}`
-                        )
-                          ? "Updating..."
-                          : program.applicationConfig?.isEnabled
-                            ? "Enabled"
-                            : "Disabled"}
-                      </span>
-                    </button>
-                    {/* Tooltip for disabled state */}
-                    {(!program.applicationConfig ||
-                      Object.keys(program.applicationConfig).length === 1) && (
-                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                          Program doesn&apos;t have configured form
-                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
-                            <div className="border-4 border-transparent border-t-gray-900"></div>
+                        >
+                          {togglingPrograms.has(
+                            `${program.programId}_${program.chainID}`
+                          )
+                            ? "Updating..."
+                            : program.applicationConfig?.isEnabled
+                              ? "Enabled"
+                              : "Disabled"}
+                        </span>
+                      </button>
+                      {/* Tooltip for disabled state */}
+                      {(!program.applicationConfig ||
+                        Object.keys(program.applicationConfig).length === 1) && (
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                            Program doesn&apos;t have configured form
+                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                              <div className="border-4 border-transparent border-t-gray-900"></div>
+                            </div>
                           </div>
-                        </div>
-                      )}
-                  </div>
-                  <span className="text-sm text-zinc-900 bg-gray-100 dark:bg-zinc-900 dark:text-zinc-100 px-2 py-1 rounded-full">
-                    ID {program.programId}
-                  </span>
-                  <span className="text-sm bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 px-2 py-1 rounded-full">
-                    {program.metadata?.type || "A"}
-                  </span>
-                </div>
-                {/* Program Header */}
-                <div className="">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 text-ellipsis line-clamp-2">
-                    {program.name || program.metadata?.title}
-                  </h3>
-
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 overflow-hidden text-ellipsis line-clamp-2 h-[46px]">
-                    {program.metadata?.description}
-                  </p>
-                  <div className="flex flex-row gap-2 items-center text-xs text-gray-500 dark:text-gray-400 bg-orange-100 dark:bg-orange-900/20 p-2 rounded-md">
-                    <CalendarIcon className="w-5 h-5  text-orange-700 dark:text-orange-300" />
-                    <span className="flex items-center gap-2 text-orange-700 dark:text-orange-300">
-                      Deadline:{" "}
-                      {program.metadata?.endsAt
-                        ? formatDate(program.metadata?.endsAt || "")
-                        : "N/A"}
+                        )}
+                    </div>
+                    <span className="text-xs text-zinc-600 bg-gray-100 dark:bg-zinc-900 dark:text-zinc-400 px-2 py-1 rounded-full">
+                      ID {program.programId}
+                    </span>
+                    <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 px-2 py-1 rounded-full">
+                      {program.metadata?.type || "program"}
                     </span>
                   </div>
 
-                  {/* Grant Amount and Applicants */}
-                  <div className="grid grid-cols-2 gap-4 my-4">
-                    {cardStats(program).map((item) => (
-                      <div
-                        key={item.title}
-                        className="flex flex-col justify-center items-center gap-2 bg-blue-50 dark:bg-blue-900 p-4 rounded-md"
-                      >
-                        <div className="flex flex-row gap-2 items-center">
-                          {item.icon}
-                          <p className="text-blue-600 dark:text-blue-100 text-sm">
-                            {item.title}
-                          </p>
-                        </div>
-                        <p className="text-blue-600 font-bold dark:text-blue-200 text-lg">
-                          {item.value}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Application Stats and Actions */}
-                <div className="">
-                  <div className="flex flex-row gap-4 items-center justify-between">
-                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                      Application Progress
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-300 font-medium">
-                      {applicationProgressPct(program)}% approval rate
-                    </p>
-                  </div>
-                  <div className="flex flex-col gap-1 my-3">
-                    {applicationProgress(program).map((item) => (
-                      <div
-                        key={item.title}
-                        className="flex flex-row gap-2 items-center justify-between"
-                      >
-                        <div className="flex flex-row gap-2 items-center">
-                          <div
-                            className={cn(
-                              "rounded-full w-3 h-3 min-w-3 min-h-3 max-w-3 max-h-3",
-                              item.bgColor
-                            )}
-                          />
-                          <p className={cn("text-sm", item.color)}>
-                            {item.title}
-                          </p>
-                        </div>
-                        <p className={cn("text-sm", item.color)}>
-                          {formatCurrency(item.value || 0)}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="my-4">
-                    <Line
-                      percent={applicationProgressPct(program)}
-                      strokeWidth={2}
-                      strokeColor="#27ae60"
-                    />
-                  </div>
-                </div>
-                <div className="">
-                  {/* Action Buttons */}
-                  <div className="flex space-x-2 mb-3">
+                  {/* Quick Action Icon */}
+                  <div className="flex items-center gap-1">
                     <Link
                       href={PAGES.ADMIN.FUNDING_PLATFORM_QUESTION_BUILDER(
                         communityId,
                         `${program.programId}_${program.chainID}`
                       )}
-                      className="flex-1"
+                      title="Configure Form"
                     >
-                      <Button
-                        variant="secondary"
-                        className="w-full hover:shadow flex items-center justify-center text-xs border border-gray-200 dark:border-gray-700 bg-white dark:bg-zinc-900 dark:text-zinc-100"
-                      >
-                        <Cog6ToothIcon className="w-4 h-4 mr-2" />
-                        Configure Form
-                      </Button>
-                    </Link>
-
-                    <Link
-                      href={PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(
-                        communityId,
-                        `${program.programId}_${program.chainID}`
-                      )}
-                      className="flex-1"
-                    >
-                      <Button
-                        variant="secondary"
-                        className="w-full hover:shadow flex items-center justify-center text-xs border border-gray-200 dark:border-gray-700  bg-white dark:bg-zinc-900 dark:text-zinc-100"
-                      >
-                        <EyeIcon className="w-4 h-4 mr-2" />
-                        View Applications
-                      </Button>
-                    </Link>
-                  </div>
-
-                  {/* Apply Button */}
-                  <div className="mb-3">
-                    <Link
-                      href={getApplyUrlByCommunityId(communityId, program.programId)}
-                      className="w-full"
-                      target="_blank"
-                    >
-                      <Button
-                        variant="primary"
-                        className="w-full hover:shadow flex items-center justify-center text-sm bg-green-600 text-white hover:bg-green-700 dark:bg-green-900 dark:text-white dark:hover:bg-green-700"
-                      >
-                        <svg
-                          className="w-4 h-4 mr-2"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 4v16m8-8H4"
-                          />
-                        </svg>
-                        Apply to Program
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-                {/* Pending Applications Review */}
-                {program?.metrics?.pendingApplications &&
-                  program.metrics.pendingApplications > 0 ? (
-                  <div className=" bg-orange-50 dark:bg-orange-900/20 border-none">
-                    <Link
-                      href={PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(
-                        communityId,
-                        `${program.programId}_${program.chainID}`
-                      )}
-                    >
-                      <button className="rounded-lg px-2 py-2 w-full border-none text-left flex items-center justify-between text-orange-700 dark:text-orange-300 text-sm hover:text-orange-800 dark:hover:text-orange-200">
-                        <span>
-                          Review {program.metrics?.pendingApplications}{" "}
-                          {pluralize(
-                            "pending application",
-                            program.metrics?.pendingApplications
-                          )}
-                        </span>
-                        <ChevronRightIcon className="w-5 h-5" />
+                      <button className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-md transition-colors">
+                        <Cog6ToothIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                       </button>
                     </Link>
                   </div>
-                ) : null}
+                </div>
+
+                {/* Program Title and Description */}
+                <div className="mb-3">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 text-ellipsis line-clamp-2">
+                    {program.name || program.metadata?.title}
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 overflow-hidden text-ellipsis line-clamp-2">
+                    {program.metadata?.description}
+                  </p>
+                </div>
+
+                {/* Compact Stats Row */}
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div className="bg-purple-50 dark:bg-purple-900/20 p-2 rounded-md">
+                    <div className="flex items-center gap-1 mb-1">
+                      <UsersIcon className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                      <p className="text-xs text-purple-600 dark:text-purple-400">Applicants</p>
+                    </div>
+                    <p className="text-sm font-bold text-purple-700 dark:text-purple-300">
+                      {formatCurrency(
+                        program.metrics?.totalApplications || 0
+                      )}
+                    </p>
+                  </div>
+                  <div className="bg-green-50 dark:bg-green-900/20 p-2 rounded-md">
+                    <div className="flex items-center gap-1 mb-1">
+                      <CheckCircleIcon className="w-4 h-4 text-green-600 dark:text-green-400" />
+                      <p className="text-xs text-green-600 dark:text-green-400">Approval %</p>
+                    </div>
+                    <p className="text-sm font-bold text-green-700 dark:text-green-300">
+                      {applicationProgressPct(program)}%
+                    </p>
+                  </div>
+                </div>
+
+                {/* Deadline */}
+                <div className="flex flex-row gap-2 items-center text-xs text-gray-500 dark:text-gray-400 bg-orange-50 dark:bg-orange-900/20 p-2 rounded-md mb-3">
+                  <CalendarIcon className="w-4 h-4 text-orange-700 dark:text-orange-300" />
+                  <span className="text-orange-700 dark:text-orange-300">
+                    Deadline: {program.metadata?.endsAt
+                      ? formatDate(program.metadata?.endsAt || "")
+                      : "N/A"}
+                  </span>
+                </div>
+
+                {/* Application Status Breakdown */}
+                <div className="mb-3">
+                  <div className="grid grid-cols-5 gap-2">
+                    {applicationProgress(program).map((item) => (
+                      <div key={item.title} className="text-center">
+                        <p className={cn("text-xs font-bold", item.color)}>
+                          {item.value}
+                        </p>
+                        <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                          {item.title.split(' ')[0]}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Primary CTA - View Applications */}
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(
+                      communityId,
+                      `${program.programId}_${program.chainID}`
+                    )}
+                    className="flex-1"
+                  >
+                    <Button
+                      variant="primary"
+                      className="w-full hover:shadow flex items-center justify-center text-sm bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-700 dark:text-white dark:hover:bg-blue-600"
+                    >
+                      <EyeIcon className="w-4 h-4 mr-2" />
+                      View Applications
+                    </Button>
+                  </Link>
+
+                  {/* Link to Application Icon */}
+                  <Link
+                    href={getApplyUrlByCommunityId(communityId, program.programId)}
+                    target="_blank"
+                    title="Link to application"
+                    className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-md transition-colors"
+                  >
+                    <svg
+                      className="w-5 h-5 text-gray-600 dark:text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                      />
+                    </svg>
+                  </Link>
+                </div>
               </div>
             ))}
           </div>
