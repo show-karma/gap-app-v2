@@ -50,6 +50,22 @@ const configuredNetworks = includeTestNetworks
 
 export const appNetwork = configuredNetworks as [Chain, ...Chain[]];
 
+
+/**
+ * Networks supported by GAP SDK for project creation.
+ * Filters out chains that are available for other features (e.g., donations)
+ * but cannot be used for creating projects/attestations.
+ */
+const gapUnsupportedChainIds: number[] = [
+  mainnet.id,
+  base.id,
+  polygon.id
+];
+
+export const gapSupportedNetworks = appNetwork.filter(
+  (chain) => !gapUnsupportedChainIds.includes(chain.id)
+) as [Chain, ...Chain[]];
+
 export function getExplorerUrl(chainId: number, transactionHash: string) {
   const chain = [
     mainnet,
