@@ -59,7 +59,7 @@ import type { Contact } from "@/types/project";
 import fetchData from "@/utilities/fetchData";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
-import { appNetwork } from "@/utilities/network";
+import { gapSupportedNetworks } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { getProjectById } from "@/utilities/sdk";
@@ -1604,7 +1604,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 }}
                 onNetworkChange={handleNetworkChange}
                 isChangingNetwork={isChangingNetwork}
-                networks={appNetwork}
+                networks={gapSupportedNetworks}
                 previousValue={watch("chainID")}
               />
               <p className="text-red-500">{errors.chainID?.message}</p>
