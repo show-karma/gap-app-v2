@@ -38,7 +38,8 @@ const CommentInput: FC<CommentInputProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && e.ctrlKey) {
+    // Support both Ctrl+Enter (Windows/Linux) and Cmd+Enter (macOS)
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       handleSubmit(e);
     }
   };
@@ -67,7 +68,7 @@ const CommentInput: FC<CommentInputProps> = ({
           />
           <div className="mt-2 flex items-center justify-between">
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Press Ctrl+Enter to submit
+              Press Cmd/Ctrl+Enter to submit
             </p>
             <button
               type="submit"
