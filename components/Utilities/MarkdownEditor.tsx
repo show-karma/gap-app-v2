@@ -15,6 +15,7 @@ interface MarkdownEditorProps {
   height?: number;
   minHeight?: number;
   disabled?: boolean;
+  overflow?: boolean;
 }
 const MDEditor = dynamic(
   () => import("@uiw/react-md-editor").then((mod) => mod.default),
@@ -29,6 +30,7 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
   height = 300,
   minHeight = 270,
   disabled = false,
+  overflow = false,
 }) => {
   return (
     <div
@@ -49,7 +51,7 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
         previewOptions={{
           rehypePlugins: [[rehypeSanitize]],
         }}
-        overflow={false}
+        overflow={overflow}
         textareaProps={{
           placeholder: placeholderText,
           spellCheck: true,
