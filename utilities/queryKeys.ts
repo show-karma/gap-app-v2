@@ -13,4 +13,14 @@ export const QUERY_KEYS = {
     COMMENTS: (referenceNumber: string) =>
       ["application-comments", referenceNumber] as const,
   },
+  CONTRACTS: {
+    VALIDATION: {
+      ALL: ["contract-validation"] as const,
+      VALIDATE: (params: {
+        address: string;
+        network: string;
+        excludeProjectId?: string;
+      }) => ["contract-validation", params] as const,
+    },
+  },
 };
