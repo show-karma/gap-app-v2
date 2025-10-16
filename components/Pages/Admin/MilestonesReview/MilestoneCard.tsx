@@ -3,11 +3,11 @@
 import { useMemo } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { CheckCircleIcon } from "@heroicons/react/20/solid";
-import type { MappedGrantMilestone } from "@/services/milestones";
+import type { GrantMilestoneWithCompletion } from "@/services/milestones";
 import { shortAddress } from "@/utilities/shortAddress";
 
 interface MilestoneCardProps {
-  milestone: MappedGrantMilestone;
+  milestone: GrantMilestoneWithCompletion;
   index: number;
   verifyingMilestoneId: string | null;
   verificationComment: string;
@@ -16,8 +16,8 @@ interface MilestoneCardProps {
   onVerifyClick: (uid: string) => void;
   onCancelVerification: () => void;
   onVerificationCommentChange: (comment: string) => void;
-  onSubmitVerification: (milestone: MappedGrantMilestone) => void;
-  onSyncVerification: (milestone: MappedGrantMilestone) => void;
+  onSubmitVerification: (milestone: GrantMilestoneWithCompletion) => void;
+  onSyncVerification: (milestone: GrantMilestoneWithCompletion) => void;
 }
 
 export function MilestoneCard({
