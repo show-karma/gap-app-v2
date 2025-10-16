@@ -41,19 +41,19 @@ const CommentInput: FC<CommentInputProps> = ({
   return (
     <form onSubmit={handleSubmit} className={cn('relative', className)}>
       <div className="flex flex-col space-y-3">
-        <MarkdownEditor
-          value={content}
-          onChange={setContent}
-          height={150}
-          minHeight={120}
-          disabled={disabled || isSubmitting}
-          placeholderText={placeholder}
-          className="text-sm"
-        />
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Markdown is supported. Use the toolbar above for formatting.
-          </p>
+        <div className="w-full" style={{ minHeight: '200px' }}>
+          <MarkdownEditor
+            value={content}
+            onChange={setContent}
+            height={200}
+            minHeight={undefined}
+            disabled={disabled || isSubmitting}
+            placeholderText={placeholder}
+            className="text-sm"
+            overflow={true}
+          />
+        </div>
+        <div className="flex items-center justify-end">
           <button
             type="submit"
             disabled={!content.trim() || disabled || isSubmitting}
