@@ -4,6 +4,7 @@ import { FC, useState } from 'react';
 import { PaperAirplaneIcon } from '@heroicons/react/24/outline';
 import { cn } from '@/utilities/tailwind';
 import { Spinner } from '@/components/Utilities/Spinner';
+import { MarkdownEditor } from '@/components/Utilities/MarkdownEditor';
 
 interface CommentInputProps {
   onSubmit: (content: string) => Promise<void>;
@@ -37,65 +38,47 @@ const CommentInput: FC<CommentInputProps> = ({
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    // Support both Ctrl+Enter (Windows/Linux) and Cmd+Enter (macOS)
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-      handleSubmit(e);
-    }
-  };
-
   return (
     <form onSubmit={handleSubmit} className={cn('relative', className)}>
-      <div className="flex items-start space-x-3">
-        <div className="flex-1">
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={placeholder}
-            disabled={disabled || isSubmitting}
-            rows={3}
+      <div className="flex flex-col space-y-3">
+        <MarkdownEditor
+          value={content}
+          onChange={setContent}
+          height={150}
+          minHeight={120}
+          disabled={disabled || isSubmitting}
+          placeholderText={placeholder}
+          className="text-sm"
+        />
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Markdown is supported. Use the toolbar above for formatting.
+          </p>
+          <button
+            type="submit"
+            disabled={!content.trim() || disabled || isSubmitting}
             className={cn(
-              'block w-full rounded-lg border-gray-300 dark:border-gray-600',
-              'bg-zinc-50 dark:bg-zinc-800',
-              'text-gray-900 dark:text-gray-100',
-              'placeholder-gray-500 dark:placeholder-gray-400',
-              'focus:border-blue-500 focus:ring-blue-500 dark:focus:border-blue-400 dark:focus:ring-blue-400',
+              'inline-flex items-center px-4 py-2 border border-transparent',
+              'text-sm font-medium rounded-lg shadow-sm',
+              'text-white bg-blue-600 hover:bg-blue-700',
+              'dark:bg-blue-500 dark:hover:bg-blue-600',
+              'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500',
               'disabled:opacity-50 disabled:cursor-not-allowed',
-              'resize-none transition-colors duration-200',
-              'text-sm'
+              'transition-colors duration-200'
             )}
-          />
-          <div className="mt-2 flex items-center justify-between">
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Press Cmd/Ctrl+Enter to submit
-            </p>
-            <button
-              type="submit"
-              disabled={!content.trim() || disabled || isSubmitting}
-              className={cn(
-                'inline-flex items-center px-4 py-2 border border-transparent',
-                'text-sm font-medium rounded-lg shadow-sm',
-                'text-white bg-blue-600 hover:bg-blue-700',
-                'dark:bg-blue-500 dark:hover:bg-blue-600',
-                'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500',
-                'disabled:opacity-50 disabled:cursor-not-allowed',
-                'transition-colors duration-200'
-              )}
-            >
-              {isSubmitting ? (
-                <>
-                  <Spinner className="h-4 w-4 mr-2 border-2" />
-                  <span>Sending...</span>
-                </>
-              ) : (
-                <>
-                  <PaperAirplaneIcon className="h-4 w-4 mr-2" />
-                  <span>Send</span>
-                </>
-              )}
-            </button>
-          </div>
+          >
+            {isSubmitting ? (
+              <>
+                <Spinner className="h-4 w-4 mr-2 border-2" />
+                <span>Sending...</span>
+              </>
+            ) : (
+              <>
+                <PaperAirplaneIcon className="h-4 w-4 mr-2" />
+                <span>Send</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
     </form>
