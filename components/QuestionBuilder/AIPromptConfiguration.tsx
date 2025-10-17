@@ -126,11 +126,9 @@ export function AIPromptConfiguration({
             className={`w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 ${readOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <option value="gpt-4o">GPT-4o (Recommended)</option>
-            <option value="gpt-4-turbo">GPT-4 Turbo</option>
-            <option value="gpt-3.5-turbo">
-              GPT-3.5 Turbo (Faster, less accurate)
-            </option>
-            <option value="o3-mini">O3 Mini (Latest)</option>
+            <option value="gpt-5">GPT-5 (Latest)</option>
+            <option value="gpt-5-nano">GPT-5 Nano (Fastest)</option>
+            <option value="gpt-5-mini">GPT-5 Mini (Reasoning)</option>
           </select>
           {errors.aiModel && (
             <p className="text-red-500 text-sm mt-1">
