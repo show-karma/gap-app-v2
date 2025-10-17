@@ -21,7 +21,6 @@ export function QuestionFormRenderer({
   const { register, handleSubmit, formState: { errors } } = useForm();
 
   const onFormSubmit = (data: Record<string, any>) => {
-    console.log('Question Form submitted:', data);
     onSubmit?.(data);
   };
 
