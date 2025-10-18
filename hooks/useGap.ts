@@ -1,19 +1,20 @@
 "use client";
 
-import { GAP } from "@show-karma/karma-gap-sdk/core/class/GAP";
 import type { TNetwork } from "@show-karma/karma-gap-sdk";
-import { Networks } from "@show-karma/karma-gap-sdk/core/consts";
+import { GAP } from "@show-karma/karma-gap-sdk/core/class/GAP";
 import { GapIndexerClient } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/GapIndexerClient";
+import { IpfsStorage } from "@show-karma/karma-gap-sdk/core/class/remote-storage/IpfsStorage";
+import { Networks } from "@show-karma/karma-gap-sdk/core/consts";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useAccount } from "wagmi";
-
+import { useAccount, useSwitchChain } from "wagmi";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import { envVars } from "@/utilities/enviromentVars";
 import {
   appNetwork,
+  gapSupportedNetworks,
   getChainIdByName,
   getChainNameById,
 } from "@/utilities/network";
-import { envVars } from "@/utilities/enviromentVars";
-import { IpfsStorage } from "@show-karma/karma-gap-sdk/core/class/remote-storage/IpfsStorage";
 
 const ipfsClient = new IpfsStorage({
   token: envVars.IPFS_TOKEN,
@@ -36,7 +37,7 @@ const getSupportedNetworkForChain = (chainID: number): TNetwork | null => {
 
 const findDefaultSupportedChainId = (): number | undefined => {
   const fallbackChain = appNetwork.find((chain) =>
-    isSupportedNetwork(getChainNameById(chain.id))
+    isSupportedNetwork(getChainNameById(chain.id)),
   );
   return fallbackChain?.id;
 };
@@ -72,18 +73,43 @@ export const getGapClient = (chainID: number): GAP => {
 
 export const useGap = () => {
   const [gap, setGapClient] = useState<GAP>();
+  const [isSwitching, setIsSwitching] = useState(false);
   const { chain } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
   const defaultSupportedChainId = useMemo(findDefaultSupportedChainId, []);
 
   const updateGapClient = useCallback(
-    (chainId: number) => {
+    async (chainId: number) => {
+      if (isSwitching) return;
+
       const network = getSupportedNetworkForChain(chainId);
+
       if (!network) {
-        console.warn(`GAP::Unsupported chain ${chainId}. GAP client disabled.`);
-        setGapClient(undefined);
+        // Unsupported chain - switch to first supported network
+        const firstSupportedChain = gapSupportedNetworks[0];
+        console.warn(
+          `GAP::Unsupported chain ${chainId}. Switching to ${firstSupportedChain.name}...`,
+        );
+
+        setIsSwitching(true);
+
+        const result = await ensureCorrectChain({
+          targetChainId: firstSupportedChain.id,
+          currentChainId: chainId,
+          switchChainAsync,
+        });
+
+        if (result.success && result.gapClient) {
+          setGapClient(result.gapClient);
+        } else {
+          setGapClient(undefined);
+        }
+
+        setIsSwitching(false);
         return;
       }
 
+      // Supported chain - normal flow
       const normalizedChainId = getChainIdByName(network);
 
       try {
@@ -94,7 +120,7 @@ export const useGap = () => {
         setGapClient(undefined);
       }
     },
-    []
+    [isSwitching, switchChainAsync],
   );
 
   useEffect(() => {
