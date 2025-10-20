@@ -1,50 +1,18 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { XMarkIcon, PlusIcon, UserIcon, DocumentDuplicateIcon, CheckIcon } from "@heroicons/react/24/outline";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { cn } from "@/utilities/tailwind";
 import { TelegramIcon } from "@/components/Icons";
 import { formatDate } from "@/utilities/formatDate";
-
-
-/**
- * Field configuration for role management
- */
-export interface RoleFieldConfig {
-  name: string;
-  label: string;
-  type: "text" | "email" | "wallet";
-  placeholder?: string;
-  required: boolean;
-  validation?: (value: string) => boolean | string;
-}
-
-/**
- * Configuration for role management
- */
-export interface RoleManagementConfig {
-  roleName: string;
-  roleDisplayName: string;
-  fields: RoleFieldConfig[];
-  resource: string;
-  canAddMultiple?: boolean;
-  maxMembers?: number;
-}
-
-/**
- * Role member data
- */
-export interface RoleMember {
-  id: string;
-  publicAddress?: string;
-  name?: string;
-  email?: string;
-  telegram?: string;
-  assignedAt?: string;
-  [key: string]: any; // Additional dynamic fields based on configuration
-}
+import type {
+  RoleFieldConfig,
+  RoleManagementConfig,
+  RoleMember,
+  RoleOption,
+} from "./types";
 
 /**
  * Props for RoleManagementTab component
@@ -57,6 +25,10 @@ interface RoleManagementTabProps {
   onAdd?: (data: Record<string, string>) => Promise<void>;
   onRemove?: (memberId: string) => Promise<void>;
   onRefresh?: () => void;
+  // Multi-role support (optional)
+  roleOptions?: RoleOption[];
+  selectedRole?: string;
+  onRoleChange?: (role: string) => void;
 }
 
 /**
@@ -70,6 +42,9 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
   onAdd,
   onRemove,
   onRefresh,
+  roleOptions,
+  selectedRole,
+  onRoleChange,
 }) => {
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
@@ -78,16 +53,23 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
   const [showAddForm, setShowAddForm] = useState(false);
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
 
+  // Get the active config based on selected role if roleOptions provided
+  const activeConfig = useMemo(() => {
+    return roleOptions && selectedRole
+      ? roleOptions.find(opt => opt.value === selectedRole)?.config || config
+      : config;
+  }, [roleOptions, selectedRole, config]);
+
   // Initialize form data with empty values
   useEffect(() => {
     const initialData: Record<string, string> = {};
-    config.fields.forEach(field => {
+    activeConfig.fields.forEach(field => {
       initialData[field.name] = "";
     });
     setFormData(initialData);
-  }, [config.fields]);
+  }, [activeConfig.fields]);
 
-  const validateField = (field: RoleFieldConfig, value: string): string | null => {
+  const validateField = useCallback((field: RoleFieldConfig, value: string): string | null => {
     if (field.required && !value.trim()) {
       return `${field.label} is required`;
     }
@@ -117,13 +99,13 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
     }
 
     return null;
-  };
+  }, []);
 
-  const validateForm = (): boolean => {
+  const validateForm = useCallback((): boolean => {
     const errors: Record<string, string> = {};
     let isValid = true;
 
-    config.fields.forEach(field => {
+    activeConfig.fields.forEach(field => {
       const error = validateField(field, formData[field.name] || "");
       if (error) {
         errors[field.name] = error;
@@ -133,17 +115,20 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
 
     setFormErrors(errors);
     return isValid;
-  };
+  }, [activeConfig.fields, formData, validateField]);
 
-  const handleFieldChange = (fieldName: string, value: string) => {
+  const handleFieldChange = useCallback((fieldName: string, value: string) => {
     setFormData(prev => ({ ...prev, [fieldName]: value }));
     // Clear error when user starts typing
-    if (formErrors[fieldName]) {
-      setFormErrors(prev => ({ ...prev, [fieldName]: "" }));
-    }
-  };
+    setFormErrors(prev => {
+      if (prev[fieldName]) {
+        return { ...prev, [fieldName]: "" };
+      }
+      return prev;
+    });
+  }, []);
 
-  const handleAdd = async () => {
+  const handleAdd = useCallback(async () => {
     if (!validateForm()) {
       return;
     }
@@ -155,12 +140,17 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
 
       // Reset form
       const resetData: Record<string, string> = {};
-      config.fields.forEach(field => {
+      activeConfig.fields.forEach(field => {
         resetData[field.name] = "";
       });
       setFormData(resetData);
       setFormErrors({});
       setShowAddForm(false);
+
+      // Reset role selection to first option if using multi-role
+      if (roleOptions && roleOptions.length > 0 && onRoleChange) {
+        onRoleChange(roleOptions[0].value);
+      }
 
       if (onRefresh) {
         onRefresh();
@@ -171,9 +161,18 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
     } finally {
       setIsAddingMember(false);
     }
-  };
+  }, [validateForm, onAdd, activeConfig.fields, roleOptions, onRoleChange, onRefresh, formData]);
 
-  const handleRemove = async (memberId: string) => {
+  const handleCancelAdd = useCallback(() => {
+    setShowAddForm(false);
+    setFormErrors({});
+    // Reset role selection to first option if using multi-role
+    if (roleOptions && roleOptions.length > 0 && onRoleChange) {
+      onRoleChange(roleOptions[0].value);
+    }
+  }, [roleOptions, onRoleChange]);
+
+  const handleRemove = useCallback(async (memberId: string) => {
     if (!confirm(`Are you sure you want to remove this ${config.roleDisplayName.toLowerCase()}?`)) {
       return;
     }
@@ -190,9 +189,9 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
     } finally {
       setRemovingMemberId(null);
     }
-  };
+  }, [config.roleDisplayName, onRemove, onRefresh]);
 
-  const getMemberDisplayValue = (member: RoleMember, fieldName: string): string => {
+  const getMemberDisplayValue = useCallback((member: RoleMember, fieldName: string): string => {
     const value = member[fieldName];
     if (!value) return "";
 
@@ -202,9 +201,9 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
     }
 
     return value;
-  };
+  }, []);
 
-  const handleCopyAddress = async (address: string) => {
+  const handleCopyAddress = useCallback(async (address: string) => {
     try {
       await navigator.clipboard.writeText(address);
       setCopiedAddress(address);
@@ -212,7 +211,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
     } catch (error) {
       console.error("Failed to copy address:", error);
     }
-  };
+  }, []);
 
   if (isLoading) {
     return (
@@ -228,10 +227,13 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-            {config.roleDisplayName}s
+            {roleOptions && roleOptions.length > 0 ? "Reviewers" : `${config.roleDisplayName}s`}
           </h3>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Manage {config.roleDisplayName.toLowerCase()}s for this resource
+            {roleOptions && roleOptions.length > 0
+              ? "Manage reviewers for this resource"
+              : `Manage ${config.roleDisplayName.toLowerCase()}s for this resource`
+            }
           </p>
         </div>
         {canManage && (!config.maxMembers || members.length < config.maxMembers) && (
@@ -239,11 +241,11 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
             onClick={() => setShowAddForm(!showAddForm)}
             disabled={isAddingMember}
             className="flex items-center space-x-2"
-            aria-label={`Add new ${config.roleDisplayName.toLowerCase()}`}
+            aria-label={roleOptions && roleOptions.length > 0 ? "Add new reviewer" : `Add new ${config.roleDisplayName.toLowerCase()}`}
             aria-expanded={showAddForm}
           >
             <PlusIcon className="h-5 w-5" aria-hidden="true" />
-            <span>Add {config.roleDisplayName}</span>
+            <span>{roleOptions && roleOptions.length > 0 ? "Add Reviewer" : `Add ${config.roleDisplayName}`}</span>
           </Button>
         )}
       </div>
@@ -252,10 +254,38 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
       {showAddForm && canManage && (
         <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
           <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-4">
-            Add New {config.roleDisplayName}
+            Add New {activeConfig.roleDisplayName}
           </h4>
+
+          {/* Role Selector (if multi-role support enabled) */}
+          {roleOptions && roleOptions.length > 0 && onRoleChange && selectedRole && (
+            <div className="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                Select Type
+              </label>
+              <div className="flex flex-wrap gap-4">
+                {roleOptions.map((option) => (
+                  <label key={option.value} className="flex items-center cursor-pointer">
+                    <input
+                      type="radio"
+                      name="roleType"
+                      value={option.value}
+                      checked={selectedRole === option.value}
+                      onChange={(e) => onRoleChange(e.target.value)}
+                      disabled={isAddingMember}
+                      className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500 disabled:opacity-50"
+                    />
+                    <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                      {option.label}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {config.fields.map((field) => (
+            {activeConfig.fields.map((field) => (
               <div key={field.name}>
                 <label
                   htmlFor={field.name}
@@ -316,10 +346,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
             </Button>
             <Button
               variant="secondary"
-              onClick={() => {
-                setShowAddForm(false);
-                setFormErrors({});
-              }}
+              onClick={handleCancelAdd}
               disabled={isAddingMember}
             >
               Cancel
@@ -332,16 +359,19 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
       <div
         className="bg-white dark:bg-gray-900 shadow overflow-hidden sm:rounded-md"
         role="region"
-        aria-label={`${config.roleDisplayName} members list`}
+        aria-label={roleOptions && roleOptions.length > 0 ? "Reviewers list" : `${config.roleDisplayName} members list`}
       >
         {members.length === 0 ? (
           <div className="text-center py-12  bg-white dark:bg-gray-800">
             <UserIcon className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
-              No {config.roleDisplayName.toLowerCase()}s
+              {roleOptions && roleOptions.length > 0 ? "No reviewers" : `No ${config.roleDisplayName.toLowerCase()}s`}
             </h3>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Get started by adding a {config.roleDisplayName.toLowerCase()}.
+              {roleOptions && roleOptions.length > 0
+                ? "Get started by adding a reviewer."
+                : `Get started by adding a ${config.roleDisplayName.toLowerCase()}.`
+              }
             </p>
           </div>
         ) : (
@@ -360,10 +390,22 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                         <div className="flex flex-col space-y-1">
                           {/* Display all information clearly */}
 
-                          {/* Name - Primary display */}
+                          {/* Name - Primary display with role badge */}
                           {member.name && (
-                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                              {member.name}
+                            <div className="flex items-center space-x-2">
+                              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                {member.name}
+                              </div>
+                              {(member as any).role && (
+                                <span className={cn(
+                                  "inline-flex items-center px-2 py-0.5 rounded text-xs font-medium",
+                                  (member as any).role === "program"
+                                    ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                                    : "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
+                                )}>
+                                  {(member as any).role === "program" ? "Program" : "Milestone"}
+                                </span>
+                              )}
                             </div>
                           )}
 
