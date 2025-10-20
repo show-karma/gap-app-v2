@@ -135,7 +135,7 @@ const ApplicationVersionViewer: FC<ApplicationVersionViewerProps> = ({
             )}
 
             {/* New value - current value for this version */}
-            {renderFieldValue(field.newValue || field.oldValue, "text-sm text-zinc-600 dark:text-zinc-400")}
+            {renderFieldValue(field.newValue, "text-sm text-zinc-600 dark:text-zinc-400")}
           </dd>
         </div>
       ))}
