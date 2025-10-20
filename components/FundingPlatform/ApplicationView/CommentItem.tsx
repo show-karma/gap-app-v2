@@ -13,6 +13,8 @@ import {
 import { ApplicationComment } from '@/types/funding-platform';
 import { cn } from '@/utilities/tailwind';
 import { Spinner } from '@/components/Utilities/Spinner';
+import { MarkdownPreview } from '@/components/Utilities/MarkdownPreview';
+import { MarkdownEditor } from '@/components/Utilities/MarkdownEditor';
 
 interface CommentItemProps {
   comment: ApplicationComment;
@@ -207,20 +209,14 @@ const CommentItem: FC<CommentItemProps> = ({
           <div className="mt-2">
             {isEditing ? (
               <div className="space-y-2">
-                <textarea
+                <MarkdownEditor
                   value={editContent}
-                  onChange={(e) => setEditContent(e.target.value)}
+                  onChange={setEditContent}
+                  height={200}
+                  minHeight={150}
                   disabled={isUpdating}
-                  rows={3}
-                  className={cn(
-                    'block w-full rounded-lg border-gray-300 dark:border-gray-600',
-                    'bg-white dark:bg-gray-800',
-                    'text-sm text-gray-900 dark:text-gray-100',
-                    'focus:border-blue-500 focus:ring-blue-500',
-                    'dark:focus:border-blue-400 dark:focus:ring-blue-400',
-                    'disabled:opacity-50 disabled:cursor-not-allowed',
-                    'resize-none'
-                  )}
+                  placeholderText="Edit your comment (Markdown supported)..."
+                  className="text-sm"
                 />
                 <div className="flex items-center space-x-2">
                   <button
@@ -267,13 +263,18 @@ const CommentItem: FC<CommentItemProps> = ({
                 </div>
               </div>
             ) : (
-              <p className={cn(
-                'text-sm text-gray-700 dark:text-gray-300',
-                'whitespace-pre-wrap break-words',
-                comment.isDeleted && 'line-through'
+              <div className={cn(
+                'text-sm',
+                comment.isDeleted && 'opacity-60'
               )}>
-                {comment.content}
-              </p>
+                <MarkdownPreview
+                  source={comment.content}
+                  className={cn(
+                    'text-sm',
+                    comment.isDeleted && 'line-through'
+                  )}
+                />
+              </div>
             )}
           </div>
 

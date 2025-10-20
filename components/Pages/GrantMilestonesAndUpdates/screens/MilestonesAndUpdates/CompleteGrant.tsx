@@ -52,7 +52,6 @@ export const GrantCompletion: FC = () => {
   const [validationErrors, setValidationErrors] = useState<{
     pitchDeckLink?: boolean;
     demoVideoLink?: boolean;
-    tracks?: boolean;
     trackExplanations?: boolean;
   }>({});
 
@@ -91,7 +90,16 @@ export const GrantCompletion: FC = () => {
               setIsFundingProgram(isFundingProgramGrant(communityName, grantName));
             }
           } catch (error) {
-            console.error("Error fetching community:", error);
+            errorManager(
+              "Error fetching community information for funding program check",
+              error,
+              {
+                grantUID: grant?.uid,
+                communityId: typeof grant.community === 'string' ? grant.community : grant.community.uid,
+              }
+            );
+            // Safe fallback: Check only by grant name if community fetch fails
+            setIsFundingProgram(isFundingProgramGrant(undefined, grantName));
           }
         }
       }
@@ -120,34 +128,83 @@ export const GrantCompletion: FC = () => {
     }
   ) => {
     let gapClient = gap;
+    let actualChainId: number;
+
+    // Step 1: Ensure correct chain
     try {
-      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+      const { success, chainId, gapClient: newGapClient } = await ensureCorrectChain({
         targetChainId: grantToComplete.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
       });
 
       if (!success) {
+        toast.error("Please switch to the correct network and try again");
         setIsLoading(false);
         return;
       }
 
+      actualChainId = chainId;
       gapClient = newGapClient;
+    } catch (error) {
+      errorManager("Failed to switch to correct chain", error, {
+        targetChainId: grantToComplete.chainID,
+        currentChainId: chain?.id,
+      });
+      toast.error("Failed to switch networks. Please switch manually in your wallet.");
+      setIsLoading(false);
+      return;
+    }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        actualChainId
-      );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+    // Step 2: Connect wallet
+    let walletClient;
+    try {
+      const result = await safeGetWalletClient(actualChainId);
+      if (result.error || !result.walletClient || !gapClient) {
+        throw new Error("Failed to connect to wallet", { cause: result.error });
       }
+      walletClient = result.walletClient;
+    } catch (error) {
+      errorManager("Wallet connection failed", error, { chainId: actualChainId });
+      toast.error("Failed to connect wallet. Please check that your wallet is unlocked.");
+      setIsLoading(false);
+      return;
+    }
+
+    // Step 3: Execute transaction
+    try {
       const walletSigner = await walletClientToSigner(walletClient);
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);
-      if (!fetchedProject) return;
+      if (!fetchedProject) {
+        const errorMsg = "Failed to fetch project data. The project may have been deleted or you may not have permission to access it.";
+        errorManager(
+          "Project not found when completing grant",
+          new Error(errorMsg),
+          { projectUID: project?.uid, grantUID: grantToComplete.uid, address }
+        );
+        toast.error(errorMsg);
+        setIsLoading(false);
+        return;
+      }
       const grantInstance = fetchedProject.grants.find(
         (g) => g.uid.toLowerCase() === grantToComplete.uid.toLowerCase()
       );
-      if (!grantInstance) return;
+      if (!grantInstance) {
+        const errorMsg = "Grant not found in project. Please refresh the page and try again.";
+        errorManager(
+          "Grant instance not found in fetched project",
+          new Error(errorMsg),
+          {
+            projectUID: project?.uid,
+            grantUID: grantToComplete.uid,
+            availableGrants: fetchedProject.grants.map(g => g.uid),
+            address
+          }
+        );
+        toast.error(errorMsg);
+        setIsLoading(false);
+        return;
+      }
       const sanitizedGrantComplete = sanitizeObject({
         title: data.title || "",
         text: data.text || "",
@@ -160,7 +217,8 @@ export const GrantCompletion: FC = () => {
       await grantInstance
         .complete(walletSigner, sanitizedGrantComplete, changeStepperStep)
         .then(async (res) => {
-          let retries = 1000;
+          const maxRetries = 40; // 60 seconds total (40 * 1.5s)
+          let retries = maxRetries;
           changeStepperStep("indexing");
           let fetchedProject = null;
           const txHash = res?.tx[0]?.hash;
@@ -174,12 +232,17 @@ export const GrantCompletion: FC = () => {
           while (retries > 0) {
             fetchedProject = await gapClient!.fetch
               .projectById(project?.uid as Hex)
-              .catch(() => null);
+              .catch((err) => {
+                errorManager("Error polling for grant completion", err, {
+                  grantUID: grantToComplete.uid,
+                  retriesRemaining: retries
+                });
+                return null;
+              });
             const grant = fetchedProject?.grants?.find(
               (g) => g.uid === grantToComplete.uid
             );
             if (grant && grant.completed) {
-              retries = 0;
               changeStepperStep("indexed");
               toast.success(MESSAGES.GRANT.MARK_AS_COMPLETE.SUCCESS);
               await refreshProject().then(() => {
@@ -191,11 +254,23 @@ export const GrantCompletion: FC = () => {
                 );
                 router.refresh();
               });
+              return; // Exit function on success
+            }
+
+            retries -= 1;
+            if (retries > 0) {
+              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+              await new Promise((resolve) => setTimeout(resolve, 1500));
             }
           }
-          retries -= 1;
-          // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-          await new Promise((resolve) => setTimeout(resolve, 1500));
+
+          // If we get here, polling timed out
+          errorManager(
+            "Grant completion indexing timed out",
+            new Error(`Grant not indexed after ${maxRetries} attempts`),
+            { grantUID: grantToComplete.uid, txHash }
+          );
+          toast.error("Grant completion is taking longer than expected. Please refresh the page in a moment to see if it completed.");
         });
     } catch (error: any) {
       errorManager(
@@ -227,12 +302,8 @@ export const GrantCompletion: FC = () => {
         if (!firstErrorField) firstErrorField = 'demo-video-link';
       }
 
-      // Only validate tracks if there are tracks available for the program
-      if (availableTracks.length > 0) {
-        if (trackExplanations.length === 0) {
-          errors.tracks = true;
-          if (!firstErrorField) firstErrorField = 'track-selection';
-        }
+      // Only validate track explanations if tracks were selected
+      if (trackExplanations.length > 0) {
         // Check if all selected tracks have explanations
         const missingExplanations = trackExplanations.some(te => !te.explanation || te.explanation.trim() === '');
         if (missingExplanations) {
@@ -333,10 +404,7 @@ export const GrantCompletion: FC = () => {
                 trackExplanations={trackExplanations}
                 onTrackExplanationsChange={(explanations) => {
                   setTrackExplanations(explanations);
-                  // Clear errors when user makes changes
-                  if (explanations.length > 0 && validationErrors.tracks) {
-                    setValidationErrors(prev => ({ ...prev, tracks: false }));
-                  }
+                  // Clear error when all explanations are provided
                   if (explanations.every(te => te.explanation.trim() !== '') && validationErrors.trackExplanations) {
                     setValidationErrors(prev => ({ ...prev, trackExplanations: false }));
                   }
