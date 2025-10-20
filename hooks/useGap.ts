@@ -6,8 +6,7 @@ import { GapIndexerClient } from "@show-karma/karma-gap-sdk/core/class/karma-ind
 import { IpfsStorage } from "@show-karma/karma-gap-sdk/core/class/remote-storage/IpfsStorage";
 import { Networks } from "@show-karma/karma-gap-sdk/core/consts";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useAccount, useSwitchChain } from "wagmi";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import { useAccount } from "wagmi";
 import { envVars } from "@/utilities/enviromentVars";
 import {
   appNetwork,
@@ -73,14 +72,14 @@ export const getGapClient = (chainID: number): GAP => {
 
 export const useGap = () => {
   const [gap, setGapClient] = useState<GAP>();
-  const [isSwitching, setIsSwitching] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const { chain } = useAccount();
-  const { switchChainAsync } = useSwitchChain();
   const defaultSupportedChainId = useMemo(findDefaultSupportedChainId, []);
 
   const updateGapClient = useCallback(
     async (chainId: number) => {
-      if (isSwitching) return;
+      if (isUpdating) return;
+      setIsUpdating(true);
 
       const network = getSupportedNetworkForChain(chainId);
 
@@ -91,21 +90,7 @@ export const useGap = () => {
           `GAP::Unsupported chain ${chainId}. Switching to ${firstSupportedChain.name}...`,
         );
 
-        setIsSwitching(true);
-
-        const result = await ensureCorrectChain({
-          targetChainId: firstSupportedChain.id,
-          currentChainId: chainId,
-          switchChainAsync,
-        });
-
-        if (result.success && result.gapClient) {
-          setGapClient(result.gapClient);
-        } else {
-          setGapClient(undefined);
-        }
-
-        setIsSwitching(false);
+        setGapClient(getGapClient(firstSupportedChain.id));
         return;
       }
 
@@ -118,9 +103,11 @@ export const useGap = () => {
       } catch (error) {
         console.error("GAP::Failed to initialize client", error);
         setGapClient(undefined);
+      } finally {
+        setIsUpdating(false);
       }
     },
-    [isSwitching, switchChainAsync],
+    [isUpdating],
   );
 
   useEffect(() => {
