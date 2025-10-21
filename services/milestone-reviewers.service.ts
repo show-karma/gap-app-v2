@@ -11,9 +11,12 @@ const apiClient = createAuthenticatedApiClient(API_URL, 30000);
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.error("Milestone Reviewers API Error:", error.response?.data || error.message);
+    console.error(
+      "Milestone Reviewers API Error:",
+      error.response?.data || error.message,
+    );
     throw error;
-  }
+  },
 );
 
 /**
@@ -70,25 +73,30 @@ export const milestoneReviewersService = {
   /**
    * Get all milestone reviewers for a program
    */
-  async getReviewers(programId: string, chainID: number): Promise<MilestoneReviewer[]> {
+  async getReviewers(
+    programId: string,
+    chainID: number,
+  ): Promise<MilestoneReviewer[]> {
     try {
-      const response = await apiClient.get<{ reviewers: MilestoneReviewerResponse[] }>(
-        `/v2/programs/${programId}/${chainID}/milestone-reviewers`
+      const response = await apiClient.get<MilestoneReviewerResponse[]>(
+        `/v2/programs/${programId}/${chainID}/milestone-reviewers`,
       );
 
       // Map the API response to the expected format
-      return (response.data.reviewers || []).map(reviewer => ({
+      return (response.data || []).map((reviewer) => ({
         publicAddress: reviewer.publicAddress,
-        name: reviewer.userProfile?.name || '',
-        email: reviewer.userProfile?.email || '',
-        telegram: reviewer.userProfile?.telegram || '',
+        name: reviewer.userProfile?.name || "",
+        email: reviewer.userProfile?.email || "",
+        telegram: reviewer.userProfile?.telegram || "",
         assignedAt: reviewer.assignedAt,
-        assignedBy: reviewer.assignedBy
+        assignedBy: reviewer.assignedBy,
       }));
     } catch (error: any) {
       // Handle "No reviewers found" as an empty list, not an error
-      if (error?.response?.data?.error === "Milestone Reviewer Not Found" ||
-          error?.response?.data?.message?.includes("No reviewers found")) {
+      if (
+        error?.response?.data?.error === "Milestone Reviewer Not Found" ||
+        error?.response?.data?.message?.includes("No reviewers found")
+      ) {
         return [];
       }
       // Re-throw other errors
@@ -102,11 +110,13 @@ export const milestoneReviewersService = {
   async addReviewer(
     programId: string,
     chainID: number,
-    reviewerData: AddMilestoneReviewerRequest
+    reviewerData: AddMilestoneReviewerRequest,
   ): Promise<MilestoneReviewer> {
-    const response = await apiClient.post<{ reviewer?: MilestoneReviewerResponse }>(
+    const response = await apiClient.post<{
+      reviewer?: MilestoneReviewerResponse;
+    }>(
       `/v2/programs/${programId}/${chainID}/milestone-reviewers`,
-      reviewerData
+      reviewerData,
     );
 
     // Map the API response to the expected format
@@ -121,7 +131,7 @@ export const milestoneReviewersService = {
         email: reviewerData.email,
         telegram: reviewerData.telegram,
         assignedAt: new Date().toISOString(),
-        assignedBy: undefined
+        assignedBy: undefined,
       };
     }
 
@@ -131,7 +141,7 @@ export const milestoneReviewersService = {
       email: reviewer.userProfile?.email || reviewerData.email,
       telegram: reviewer.userProfile?.telegram || reviewerData.telegram,
       assignedAt: reviewer.assignedAt,
-      assignedBy: reviewer.assignedBy
+      assignedBy: reviewer.assignedBy,
     };
   },
 
@@ -141,10 +151,10 @@ export const milestoneReviewersService = {
   async removeReviewer(
     programId: string,
     chainID: number,
-    publicAddress: string
+    publicAddress: string,
   ): Promise<void> {
     await apiClient.delete(
-      `/v2/programs/${programId}/${chainID}/milestone-reviewers/${publicAddress}`
+      `/v2/programs/${programId}/${chainID}/milestone-reviewers/${publicAddress}`,
     );
   },
 
@@ -154,10 +164,16 @@ export const milestoneReviewersService = {
   async addMultipleReviewers(
     programId: string,
     chainID: number,
-    reviewers: AddMilestoneReviewerRequest[]
-  ): Promise<{ added: MilestoneReviewer[]; errors: Array<{ reviewer: AddMilestoneReviewerRequest; error: string }> }> {
+    reviewers: AddMilestoneReviewerRequest[],
+  ): Promise<{
+    added: MilestoneReviewer[];
+    errors: Array<{ reviewer: AddMilestoneReviewerRequest; error: string }>;
+  }> {
     const addedReviewers: MilestoneReviewer[] = [];
-    const errors: Array<{ reviewer: AddMilestoneReviewerRequest; error: string }> = [];
+    const errors: Array<{
+      reviewer: AddMilestoneReviewerRequest;
+      error: string;
+    }> = [];
 
     for (const reviewer of reviewers) {
       try {
@@ -170,7 +186,7 @@ export const milestoneReviewersService = {
           errorMessage = error.response?.data?.message || error.message;
         } else if (error instanceof Error) {
           errorMessage = error.message;
-        } else if (typeof error === 'string') {
+        } else if (typeof error === "string") {
           errorMessage = error;
         }
 
@@ -218,7 +234,10 @@ export const milestoneReviewersService = {
   /**
    * Validate milestone reviewer data before submission
    */
-  validateReviewerData(data: AddMilestoneReviewerRequest): { valid: boolean; errors: string[] } {
+  validateReviewerData(data: AddMilestoneReviewerRequest): {
+    valid: boolean;
+    errors: string[];
+  } {
     const errors: string[] = [];
 
     if (!data.publicAddress) {
