@@ -80,7 +80,7 @@ export function CommentsAndActivity({
   );
 
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm">
+    <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm px-4 py-4 border border-gray-200 dark:border-gray-700">
       <CommentsTimeline
         applicationId={referenceNumber}
         comments={comments}
