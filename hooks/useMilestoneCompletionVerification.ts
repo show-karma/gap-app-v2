@@ -2,7 +2,6 @@ import type { GAP } from "@show-karma/karma-gap-sdk";
 import { GapContract } from "@show-karma/karma-gap-sdk/core/class/contract/GapContract";
 import { MilestoneCompleted } from "@show-karma/karma-gap-sdk/core/class/types/attestations";
 import type { Signer } from "ethers";
-import { resolve } from "path";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import type { Hex } from "viem";
@@ -98,7 +97,10 @@ export const useMilestoneCompletionVerification = ({
     gapClient: GAP,
     data: ProjectGrantMilestonesResponse,
     milestone: GrantMilestoneWithCompletion,
-  ): Promise<{ milestoneInstance: MilestoneInstance; communityUID: string }> => {
+  ): Promise<{
+    milestoneInstance: MilestoneInstance;
+    communityUID: string;
+  }> => {
     const fetchedProject = await gapClient.fetch.projectById(data.project.uid);
     if (!fetchedProject) {
       throw new Error("Failed to fetch project data");
@@ -256,7 +258,7 @@ export const useMilestoneCompletionVerification = ({
     attestationChainId: number,
     communityUID: string,
   ): Promise<void> => {
-    toast.loading("Completing milestone via backend...", {
+    toast.loading("Completing milestone...", {
       id: `milestone-${milestone.uid}`,
     });
 
@@ -273,7 +275,12 @@ export const useMilestoneCompletionVerification = ({
       );
 
       changeStepperStep("indexing");
-      await notifyIndexerAndInvalidateCache(txHash, attestationChainId, 1, communityUID);
+      await notifyIndexerAndInvalidateCache(
+        txHash,
+        attestationChainId,
+        1,
+        communityUID,
+      );
       changeStepperStep("indexed");
 
       toast.success("Milestone completed successfully!", {
