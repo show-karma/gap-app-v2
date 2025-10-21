@@ -46,6 +46,18 @@ export const INDEXER = {
       COMMENTS: (referenceNumber: string) =>
         `/v2/applications/${referenceNumber}/comments`,
     },
+    TENANT_CONFIG: {
+      GET_BY_COMMUNITY: (communityUID: string) =>
+        `/v2/tenant-config/community/${communityUID}`,
+      GET_ACTIVE_BY_COMMUNITY: (communityUID: string) =>
+        `/v2/tenant-config/community/${communityUID}/active`,
+      GET_BY_ID: (tenantId: string) => `/v2/tenant-config/${tenantId}`,
+      CREATE: () => `/v2/tenant-config`,
+      UPDATE: (slug: string) => `/v2/tenant-config/${slug}`,
+      DELETE: (slug: string) => `/v2/tenant-config/${slug}`,
+      ACTIVATE: (slug: string) => `/v2/tenant-config/${slug}/activate`,
+      DEACTIVATE: (slug: string) => `/v2/tenant-config/${slug}/deactivate`,
+    },
   },
   PROGRAMS: {
     TRACKS: (programId: string) => `/tracks/programs/${programId}/tracks`,
