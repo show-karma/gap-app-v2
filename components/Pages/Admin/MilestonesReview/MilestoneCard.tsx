@@ -3,11 +3,12 @@
 import { useMemo } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { CheckCircleIcon } from "@heroicons/react/20/solid";
-import type { MappedGrantMilestone } from "@/services/milestones";
+import type { GrantMilestoneWithCompletion } from "@/services/milestones";
 import { shortAddress } from "@/utilities/shortAddress";
+import { formatDate } from "@/utilities/formatDate";
 
 interface MilestoneCardProps {
-  milestone: MappedGrantMilestone;
+  milestone: GrantMilestoneWithCompletion;
   index: number;
   verifyingMilestoneId: string | null;
   verificationComment: string;
@@ -16,8 +17,8 @@ interface MilestoneCardProps {
   onVerifyClick: (uid: string) => void;
   onCancelVerification: () => void;
   onVerificationCommentChange: (comment: string) => void;
-  onSubmitVerification: (milestone: MappedGrantMilestone) => void;
-  onSyncVerification: (milestone: MappedGrantMilestone) => void;
+  onSubmitVerification: (milestone: GrantMilestoneWithCompletion) => void;
+  onSyncVerification: (milestone: GrantMilestoneWithCompletion) => void;
 }
 
 export function MilestoneCard({
@@ -101,11 +102,11 @@ export function MilestoneCard({
                 : milestone.fundingApplicationCompletion!.completionText}
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-              Submitted: {new Date(
+              Submitted: {formatDate(
                 useOnChainData
                   ? milestone.completionDetails!.completedAt
                   : milestone.fundingApplicationCompletion!.createdAt
-              ).toLocaleDateString()}
+              )}
             </p>
           </div>
 
@@ -124,7 +125,7 @@ export function MilestoneCard({
                   Verified by: {shortAddress(milestone.verificationDetails.verifiedBy)}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Verified: {new Date(milestone.verificationDetails.verifiedAt).toLocaleDateString()}
+                  Verified: {formatDate(milestone.verificationDetails.verifiedAt)}
                 </p>
               </div>
               {/* Show sync button if off-chain data is not synced */}
@@ -196,7 +197,7 @@ export function MilestoneCard({
       <div className="flex items-center justify-between">
         <div className="text-sm text-gray-500 dark:text-gray-400">
           <span className="font-medium">Due:</span>{" "}
-          {new Date(milestone.dueDate).toLocaleDateString()}
+          {formatDate(milestone.dueDate)}
         </div>
         <span className={`text-xs px-3 py-1 rounded-full font-medium ${statusInfo.statusColor}`}>
           {statusInfo.status}

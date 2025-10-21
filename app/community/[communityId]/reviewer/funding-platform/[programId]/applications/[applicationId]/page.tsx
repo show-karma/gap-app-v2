@@ -1,23 +1,23 @@
 "use client";
 
-import { useState } from "react";
-import { useParams } from "next/navigation";
-import { usePermissions } from "@/hooks/usePermissions";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { Button } from "@/components/Utilities/Button";
 import { ArrowLeftIcon, EyeIcon } from "@heroicons/react/24/solid";
-import {
-  useApplication,
-  useApplicationStatus,
-  useProgramConfig,
-  useApplicationComments,
-  useApplicationVersions,
-} from "@/hooks/useFundingPlatform";
-import { useApplicationVersionsStore } from "@/store/applicationVersions";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 import ApplicationContent from "@/components/FundingPlatform/ApplicationView/ApplicationContent";
 import CommentsSection from "@/components/FundingPlatform/ApplicationView/CommentsSection";
-import Link from "next/link";
+import { Button } from "@/components/Utilities/Button";
+import { Spinner } from "@/components/Utilities/Spinner";
+import {
+  useApplication,
+  useApplicationComments,
+  useApplicationStatus,
+  useApplicationVersions,
+  useProgramConfig,
+} from "@/hooks/useFundingPlatform";
+import { usePermissions } from "@/hooks/usePermissions";
+import { useApplicationVersionsStore } from "@/store/applicationVersions";
 import { PAGES } from "@/utilities/pages";
 
 /**
@@ -108,14 +108,20 @@ export default function ReviewerApplicationDetailPage() {
 
     // Scroll to the Application Details section
     setTimeout(() => {
-      const element = document.getElementById('application-details');
+      const element = document.getElementById("application-details");
       if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     }, 100);
   };
 
-
+  // Memoized milestone review URL - only returns URL if approved and has projectUID
+  const milestoneReviewUrl = useMemo(() => {
+    if (application?.status?.toLowerCase() === "approved" && application?.projectUID) {
+      return `${PAGES.ADMIN.PROJECT_MILESTONES(communityId, application.projectUID, combinedProgramId)}&from=application`;
+    }
+    return null;
+  }, [application?.status, application?.projectUID, communityId, combinedProgramId]);
 
   // Check loading states
   if (isLoadingPermission || isLoadingApplication) {
@@ -199,12 +205,33 @@ export default function ReviewerApplicationDetailPage() {
         </div>
       </div>
 
-
       {/* Two Column Layout - Same as Admin */}
       <div className="px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Column - Application Content (Read-only for reviewers) */}
           <div className="space-y-6">
+            {/* Milestone Review Link - Only shown if application is approved and has projectUID */}
+            {milestoneReviewUrl && (
+              <div className="bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-1">
+                    <h3 className="text-sm font-semibold text-green-900 dark:text-green-100">
+                      Review Project Milestones
+                    </h3>
+                    <p className="text-xs text-green-700 dark:text-green-300">
+                      View and verify milestone completions for this approved
+                      application
+                    </p>
+                  </div>
+                  <Link href={milestoneReviewUrl}>
+                    <Button className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white">
+                      View Milestones
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            )}
+
             <ApplicationContent
               application={application}
               program={program}
@@ -238,3 +265,4 @@ export default function ReviewerApplicationDetailPage() {
     </div>
   );
 }
+

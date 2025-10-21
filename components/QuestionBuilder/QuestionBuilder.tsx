@@ -1,16 +1,17 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import toast from "react-hot-toast";
 import { FormField, FormSchema } from "@/types/question-builder";
 import { fieldTypes, FieldTypeSelector } from "./FieldTypeSelector";
 import { FieldEditor } from "./FieldEditor";
-import { FormPreview } from "./FormPreview";
 import { AIPromptConfiguration } from "./AIPromptConfiguration";
 import { SettingsConfiguration } from "./SettingsConfiguration";
 import { ReviewerManagementTab } from "@/components/FundingPlatform/QuestionBuilder/ReviewerManagementTab";
 import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
 import {
-  EyeIcon,
   Cog6ToothIcon,
   CpuChipIcon,
   ChevronDownIcon,
@@ -41,6 +42,33 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
+const TAB_KEYS = ["build", "settings", "post-approval", "ai-config", "reviewers"] as const;
+type TabKey = (typeof TAB_KEYS)[number];
+const DEFAULT_TAB: TabKey = "build";
+
+const isTabKey = (value: string | null): value is TabKey =>
+  !!value && TAB_KEYS.includes(value as TabKey);
+
+const getValidTab = (value: string | null): TabKey =>
+  isTabKey(value) ? value : DEFAULT_TAB;
+
+// Tab configuration for rendering buttons
+const TAB_CONFIG = [
+  { key: "build" as TabKey, icon: WrenchScrewdriverIcon, label: "Build" },
+  { key: "settings" as TabKey, icon: Cog6ToothIcon, label: "Settings" },
+  { key: "post-approval" as TabKey, icon: CheckCircleIcon, label: "Post Approval" },
+  { key: "ai-config" as TabKey, icon: CpuChipIcon, label: "AI Config" },
+  { key: "reviewers" as TabKey, icon: UserGroupIcon, label: "Reviewers" },
+] as const;
+
+// Helper to get tab button class names
+const getTabButtonClassName = (isActive: boolean): string => {
+  const base = "flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors";
+  return isActive
+    ? `${base} bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm`
+    : `${base} text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white`;
+};
+
 interface QuestionBuilderProps {
   initialSchema?: FormSchema;
   onSave?: (schema: FormSchema) => void;
@@ -64,6 +92,10 @@ export function QuestionBuilder({
   initialPostApprovalSchema,
   onSavePostApproval,
 }: QuestionBuilderProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const [schema, setSchema] = useState<FormSchema>(
     initialSchema || {
       id: `form_${Date.now()}`,
@@ -92,8 +124,8 @@ export function QuestionBuilder({
     }
   );
 
-  const [activeTab, setActiveTab] = useState<"build" | "preview" | "settings" | "post-approval" | "ai-config" | "reviewers">(
-    "build"
+  const [activeTab, setActiveTab] = useState<TabKey>(() =>
+    getValidTab(searchParams.get("tab"))
   );
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
   const fieldRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
@@ -102,6 +134,70 @@ export function QuestionBuilder({
   const isPostApprovalMode = activeTab === "post-approval";
   const currentSchema = isPostApprovalMode ? postApprovalSchema : schema;
   const setCurrentSchema = isPostApprovalMode ? setPostApprovalSchema : setSchema;
+
+  // Sync URL tab parameter with local state and clean up invalid tabs
+  useEffect(() => {
+    try {
+      const tabParam = searchParams.get("tab");
+      const nextTab = getValidTab(tabParam);
+
+      // Update active tab state if needed
+      setActiveTab((prev) => (prev === nextTab ? prev : nextTab));
+
+      // Clean up invalid tab parameters from URL
+      if (tabParam && !isTabKey(tabParam)) {
+        const params = new URLSearchParams(searchParams.toString());
+        params.delete("tab");
+        const url = params.toString() ? `${pathname}?${params}` : pathname;
+        router.replace(url);
+      }
+    } catch (error) {
+      errorManager(
+        "Failed to synchronize tab state with URL",
+        error,
+        { pathname, currentTab: activeTab }
+      );
+      // Fallback to default tab on error
+      setActiveTab(DEFAULT_TAB);
+    }
+  }, [pathname, router, searchParams, activeTab]);
+
+  const updateTabInUrl = (tab: TabKey) => {
+    try {
+      const params = new URLSearchParams(searchParams.toString());
+
+      if (tab === DEFAULT_TAB) {
+        params.delete("tab");
+      } else {
+        params.set("tab", tab);
+      }
+
+      const url = params.toString() ? `${pathname}?${params}` : pathname;
+      router.replace(url);
+    } catch (error) {
+      errorManager(
+        `Failed to update URL for tab: ${tab}`,
+        error,
+        { tab, pathname }
+      );
+      toast.error("Navigation updated locally. The URL may not reflect your current view.");
+    }
+  };
+
+  const handleTabChange = (tab: TabKey) => {
+    if (tab === activeTab) return;
+
+    // Update state first (immediate UI feedback)
+    setActiveTab(tab);
+
+    // Only update URL if it needs to change
+    const currentTabParam = searchParams.get("tab");
+    const needsUrlUpdate = (tab !== DEFAULT_TAB || currentTabParam !== null) && currentTabParam !== tab;
+
+    if (needsUrlUpdate) {
+      updateTabInUrl(tab);
+    }
+  };
 
   // Update schema when initialSchema changes (e.g., after loading from API)
   useEffect(() => {
@@ -213,23 +309,32 @@ export function QuestionBuilder({
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
+    try {
+      const { active, over } = event;
 
-    if (!over || active.id === over.id || readOnly) return;
+      if (!over || active.id === over.id || readOnly) return;
 
-    const oldIndex = currentSchema.fields.findIndex(
-      (field) => field.id === active.id
-    );
-    const newIndex = currentSchema.fields.findIndex(
-      (field) => field.id === over.id
-    );
+      const oldIndex = currentSchema.fields.findIndex(
+        (field) => field.id === active.id
+      );
+      const newIndex = currentSchema.fields.findIndex(
+        (field) => field.id === over.id
+      );
 
-    if (oldIndex !== -1 && newIndex !== -1) {
-      const newFields = arrayMove(currentSchema.fields, oldIndex, newIndex);
-      setCurrentSchema((prev) => ({
-        ...prev,
-        fields: newFields,
-      }));
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const newFields = arrayMove(currentSchema.fields, oldIndex, newIndex);
+        setCurrentSchema((prev) => ({
+          ...prev,
+          fields: newFields,
+        }));
+      }
+    } catch (error) {
+      errorManager(
+        "Failed to reorder form fields",
+        error,
+        { activeId: event.active.id, overId: event.over?.id }
+      );
+      toast.error("Failed to reorder fields. Please try again.");
     }
   };
 
@@ -265,23 +370,34 @@ export function QuestionBuilder({
     return !isPostApprovalMode && !hasEmailField();
   };
 
-  const handleSave = () => {
-    if (isPostApprovalMode) {
-      // For post approval forms, email field is not required
-      onSavePostApproval?.(postApprovalSchema);
-    } else {
-      if (needsEmailValidation()) {
-        alert(
-          "Please add at least one email field to the form. This is required for application tracking."
-        );
-        return;
+  const handleSave = async () => {
+    try {
+      if (isPostApprovalMode) {
+        // For post approval forms, email field is not required
+        await onSavePostApproval?.(postApprovalSchema);
+        toast.success("Post approval form saved successfully!");
+      } else {
+        if (needsEmailValidation()) {
+          toast.error(
+            "Please add at least one email field to the form. This is required for application tracking."
+          );
+          return;
+        }
+        await onSave?.(schema);
+        toast.success("Form saved successfully!");
       }
-      onSave?.(schema);
+    } catch (error) {
+      errorManager(
+        "Failed to save form schema",
+        error,
+        {
+          isPostApprovalMode,
+          formId: isPostApprovalMode ? postApprovalSchema.id : schema.id,
+          fieldsCount: isPostApprovalMode ? postApprovalSchema.fields.length : schema.fields.length
+        }
+      );
+      toast.error("Failed to save form. Please try again.");
     }
-  };
-
-  const handleFormSubmit = (data: Record<string, any>) => {
-    alert(currentSchema.settings.confirmationMessage);
   };
 
   const handleAIConfigUpdate = (updatedSchema: FormSchema) => {
@@ -335,66 +451,16 @@ export function QuestionBuilder({
 
           <div className="flex items-center gap-3 flex-row flex-wrap">
             <div className="flex flex-row flex-wrap bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
-              <button
-                onClick={() => setActiveTab("build")}
-                className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${activeTab === "build"
-                  ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
-                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-                  }`}
-              >
-                <WrenchScrewdriverIcon className="w-4 h-4 mr-2" />
-                Build
-              </button>
-              <button
-                onClick={() => setActiveTab("settings")}
-                className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${activeTab === "settings"
-                  ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
-                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-                  }`}
-              >
-                <Cog6ToothIcon className="w-4 h-4 mr-2" />
-                Settings
-              </button>
-              <button
-                onClick={() => setActiveTab("post-approval")}
-                className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${activeTab === "post-approval"
-                  ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
-                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-                  }`}
-              >
-                <CheckCircleIcon className="w-4 h-4 mr-2" />
-                Post Approval
-              </button>
-              <button
-                onClick={() => setActiveTab("ai-config")}
-                className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${activeTab === "ai-config"
-                  ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
-                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-                  }`}
-              >
-                <CpuChipIcon className="w-4 h-4 mr-2" />
-                AI Config
-              </button>
-              <button
-                onClick={() => setActiveTab("preview")}
-                className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${activeTab === "preview"
-                  ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
-                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-                  }`}
-              >
-                <EyeIcon className="w-4 h-4 mr-2" />
-                Preview
-              </button>
-              <button
-                onClick={() => setActiveTab("reviewers")}
-                className={`flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors ${activeTab === "reviewers"
-                  ? "bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm"
-                  : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-                  }`}
-              >
-                <UserGroupIcon className="w-4 h-4 mr-2" />
-                Reviewers
-              </button>
+              {TAB_CONFIG.map(({ key, icon: Icon, label }) => (
+                <button
+                  key={key}
+                  onClick={() => handleTabChange(key)}
+                  className={getTabButtonClassName(activeTab === key)}
+                >
+                  <Icon className="w-4 h-4 mr-2" />
+                  {label}
+                </button>
+              ))}
             </div>
 
             {
@@ -559,13 +625,7 @@ export function QuestionBuilder({
               )}
             </div>
           </div>
-        ) : (
-          <div className="h-full p-4 sm:p-6 lg:p-8 overflow-y-auto">
-            <div className="max-w-2xl mx-auto">
-              <FormPreview schema={currentSchema} onSubmit={handleFormSubmit} />
-            </div>
-          </div>
-        )}
+        ) : null}
       </div>
     </div >
   );

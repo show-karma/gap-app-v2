@@ -4,8 +4,8 @@ import { Button } from "@/components/Utilities/Button";
 import { PAGES } from "@/utilities/pages";
 import { ChevronLeftIcon, ExclamationTriangleIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
-import { useState, useMemo } from "react";
-import type { MappedGrantMilestone } from "@/services/milestones";
+import { useState, useMemo, useCallback } from "react";
+import type { GrantMilestoneWithCompletion } from "@/services/milestones";
 import { updateMilestoneVerification } from "@/services/milestones";
 import { useProjectGrantMilestones } from "@/hooks/useProjectGrantMilestones";
 import { useMilestoneCompletionVerification } from "@/hooks/useMilestoneCompletionVerification";
@@ -15,18 +15,21 @@ import { CommentsAndActivity } from "./CommentsAndActivity";
 import { MilestoneCard } from "./MilestoneCard";
 import { useAccount } from "wagmi";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useIsReviewer } from "@/hooks/usePermissions";
 import { useOwnerStore } from "@/store";
 
 interface MilestonesReviewPageProps {
   communityId: string;
   projectId: string;
   programId: string;
+  referrer?: string;
 }
 
 export function MilestonesReviewPage({
   communityId,
   projectId,
   programId,
+  referrer,
 }: MilestonesReviewPageProps) {
   const { data, isLoading, error, refetch } = useProjectGrantMilestones(projectId, programId);
   const [verifyingMilestoneId, setVerifyingMilestoneId] = useState<string | null>(null);
@@ -38,6 +41,21 @@ export function MilestonesReviewPage({
   );
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isOwnerLoading = useOwnerStore((state) => state.isOwnerLoading);
+
+  // Extract programId and chainId from combined format (e.g., "959_42161")
+  const { parsedProgramId, parsedChainId } = useMemo(() => {
+    const [id, chain] = programId.split("_");
+    return {
+      parsedProgramId: id,
+      parsedChainId: chain ? parseInt(chain, 10) : undefined,
+    };
+  }, [programId]);
+
+  // Check if user is a reviewer for this program
+  const { isReviewer, isLoading: isLoadingReviewer } = useIsReviewer(
+    parsedProgramId,
+    parsedChainId
+  );
 
   // Get the actual project UID from the data (projectId might be a slug)
   const projectUID = data?.project?.uid;
@@ -58,6 +76,42 @@ export function MilestonesReviewPage({
       : `Program ${programId}`;
   }, [data?.grantMilestones, programId]);
 
+  // Memoized back button configuration
+  const backButtonConfig = useMemo(() => {
+    // Only show back to application if came from application page
+    if (referrer === "application" && referenceNumber) {
+      const appUrl = (isCommunityAdmin || isContractOwner)
+        ? PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, programId) + `/${referenceNumber}`
+        : isReviewer && parsedChainId
+        ? PAGES.REVIEWER.APPLICATION_DETAIL(communityId, parsedProgramId, parsedChainId, referenceNumber)
+        : null;
+
+      if (appUrl) {
+        return { url: appUrl, label: "Back to Application" };
+      }
+    }
+
+    // Default: back to milestones report
+    return {
+      url: PAGES.ADMIN.MILESTONES(communityId),
+      label: "Back to Milestones Report",
+    };
+  }, [referrer, referenceNumber, isCommunityAdmin, isContractOwner, isReviewer, communityId, programId, parsedProgramId, parsedChainId]);
+
+  // Memoized milestone review URL - only returns URL if application is approved
+  const milestoneReviewUrl = useMemo(() => {
+    if (fundingApplication?.status?.toLowerCase() === "approved" && referenceNumber) {
+      const appUrl = (isCommunityAdmin || isContractOwner)
+        ? PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, programId) + `/${referenceNumber}`
+        : isReviewer && parsedChainId
+        ? PAGES.REVIEWER.APPLICATION_DETAIL(communityId, parsedProgramId, parsedChainId, referenceNumber)
+        : null;
+
+      return appUrl;
+    }
+    return null;
+  }, [fundingApplication?.status, referenceNumber, isCommunityAdmin, isContractOwner, isReviewer, communityId, programId, parsedProgramId, parsedChainId]);
+
   const { verifyMilestone, isVerifying } = useMilestoneCompletionVerification({
     projectId,
     programId,
@@ -70,22 +124,27 @@ export function MilestonesReviewPage({
 
   const [isSyncing, setIsSyncing] = useState(false);
 
-  const handleVerifyClick = (completionId: string) => {
+  const handleVerifyClick = useCallback((completionId: string) => {
     setVerifyingMilestoneId(completionId);
     setVerificationComment("");
-  };
+  }, []);
 
-  const handleCancelVerification = () => {
+  const handleCancelVerification = useCallback(() => {
     setVerifyingMilestoneId(null);
     setVerificationComment("");
-  };
+  }, []);
 
-  const handleSubmitVerification = async (milestone: MappedGrantMilestone) => {
+  const handleSubmitVerification = useCallback(async (milestone: GrantMilestoneWithCompletion) => {
     if (!data) return;
-    await verifyMilestone(milestone, data, verificationComment);
-  };
+    await verifyMilestone(
+      milestone,
+      isReviewer,
+      data,
+      verificationComment
+    );
+  }, [data, verifyMilestone, isReviewer, verificationComment]);
 
-  const handleSyncVerification = async (milestone: MappedGrantMilestone) => {
+  const handleSyncVerification = useCallback(async (milestone: GrantMilestoneWithCompletion) => {
     if (!milestone.fundingApplicationCompletion || !milestone.verificationDetails) return;
 
     setIsSyncing(true);
@@ -108,10 +167,10 @@ export function MilestonesReviewPage({
     } finally {
       setIsSyncing(false);
     }
-  };
+  }, [refetch]);
 
   // Show loading while checking authorization
-  if (isLoading || isLoadingCommunityAdmin || isOwnerLoading) {
+  if (isLoading || isLoadingCommunityAdmin || isOwnerLoading || isLoadingReviewer) {
     return (
       <div className="container mx-auto mt-4 flex gap-8 flex-col w-full px-4 pb-8">
         <div className="animate-pulse space-y-4">
@@ -123,9 +182,8 @@ export function MilestonesReviewPage({
     );
   }
 
-  // Check authorization: user must be logged in AND (community admin OR contract owner)
-  // Project owners alone do NOT have access unless they are also community admin or contract owner
-  const isAuthorized = address && (isCommunityAdmin || isContractOwner);
+  // Check authorization: user must be logged in AND (community admin OR contract owner OR program reviewer)
+  const isAuthorized = address && (isCommunityAdmin || isContractOwner || isReviewer);
 
   if (!isAuthorized) {
     return (
@@ -140,7 +198,7 @@ export function MilestonesReviewPage({
           <p className="text-red-600 dark:text-red-400 mb-4">
             {!address
               ? "You must be logged in to access this page."
-              : "You do not have permission to access this page. Only community administrators and contract owners can review milestones."}
+              : "You do not have permission to access this page. Only community administrators, contract owners, and program reviewers can review milestones."}
           </p>
           <Link href={PAGES.ADMIN.MILESTONES(communityId)}>
             <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white">
@@ -174,10 +232,10 @@ export function MilestonesReviewPage({
     <div className="container mx-auto mt-4 flex gap-8 flex-col w-full px-4 pb-8">
       {/* Header with Back Button */}
       <div className="w-full flex flex-row items-center justify-between">
-        <Link href={PAGES.ADMIN.MILESTONES(communityId)}>
+        <Link href={backButtonConfig.url}>
           <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-transparent text-black dark:text-white dark:bg-transparent hover:bg-transparent rounded-md transition-all ease-in-out duration-200">
             <ChevronLeftIcon className="h-5 w-5" />
-            Back to Milestones Report
+            {backButtonConfig.label}
           </Button>
         </Link>
       </div>
@@ -194,6 +252,27 @@ export function MilestonesReviewPage({
           Review project milestones from both on-chain and off-chain sources
         </p>
       </div>
+
+      {/* Application Link - Only shown if application is approved */}
+      {milestoneReviewUrl && (
+        <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-1">
+              <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+                Application Details
+              </h3>
+              <p className="text-xs text-blue-700 dark:text-blue-300">
+                View the full application and review details
+              </p>
+            </div>
+            <Link href={milestoneReviewUrl}>
+              <Button className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white">
+                View Application
+              </Button>
+            </Link>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content - Milestones */}

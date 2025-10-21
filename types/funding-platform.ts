@@ -112,6 +112,7 @@ export interface IFundingApplication {
   statusHistory: IStatusHistoryEntry[];
   referenceNumber: string; // Format: APP-XXXXX-XXXXX
   submissionIP: string; // Auto-captured from request
+  projectUID?: string; // Optional project UID when application is approved
   aiEvaluation?: {
     evaluation?: string;
     promptId?: string;
