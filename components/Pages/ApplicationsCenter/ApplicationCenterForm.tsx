@@ -620,7 +620,7 @@ export const ApplicationCenterForm = ({
             placeholder="Optimism Grants"
           />
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            The application center will use your community's slug as its unique identifier.
+            The application center will use your community&apos;s slug as its unique identifier.
           </p>
         </div>
       </Section>
