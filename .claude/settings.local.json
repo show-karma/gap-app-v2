@@ -35,7 +35,9 @@
       "Bash(pnpm build:*)",
       "Bash(node:*)",
       "Bash(pnpm run:*)",
-      "Bash(pnpm tsc:*)"
+      "Bash(pnpm tsc:*)",
+      "Bash(git log:*)",
+      "Bash(npx next lint:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",
