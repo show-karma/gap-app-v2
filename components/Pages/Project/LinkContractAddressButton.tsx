@@ -1,8 +1,7 @@
 "use client";
 
 import { LinkIcon } from "@heroicons/react/24/outline";
-import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import type { FC, ReactNode } from "react";
+import type { FC } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { useContractAddressPairs } from "@/hooks/useContractAddressPairs";
@@ -10,57 +9,10 @@ import { useContractAddressSave } from "@/hooks/useContractAddressSave";
 import { useContractAddressValidation } from "@/hooks/useContractAddressValidation";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
+import { SUPPORTED_CONTRACT_NETWORKS } from "@/constants/contract-networks";
 import { ContractAddressDialog } from "./ContractAddressDialog";
 import { ContractAddressList } from "./ContractAddressList";
-
-interface LinkContractAddressesButtonProps {
-  buttonClassName?: string;
-  project: IProjectResponse & { external: Record<string, string[]> };
-  "data-link-contracts-button"?: string;
-  buttonElement?: { text: string; icon: ReactNode; styleClass: string } | null;
-  onClose?: () => void;
-}
-
-const SUPPORTED_NETWORKS = [
-  "ethereum",
-  "arbitrum",
-  "starknet",
-  "optimism",
-  "polygon",
-  "bnb",
-  "avalanche_c",
-  "base",
-  "fantom",
-  "zksync",
-  "scroll",
-  "gnosis",
-  "linea",
-  "zora",
-  "blast",
-  "celo",
-  "tron",
-  "mantle",
-  "sei",
-  "sepolia",
-  "ronin",
-  "sonic",
-  "viction",
-  "flare",
-  "kaia",
-  "zkevm",
-  "mode",
-  "berachain",
-  "abstract",
-  "bob",
-  "degen",
-  "worldchain",
-  "nova",
-  "ink",
-  "b3",
-  "unichain",
-  "sophon",
-  "apechain",
-];
+import type { LinkContractAddressesButtonProps } from "./types";
 
 export const LinkContractAddressButton: FC<
   LinkContractAddressesButtonProps
@@ -172,7 +124,7 @@ export const LinkContractAddressButton: FC<
           onAddressChange={handleAddressChange}
           onRemove={handleRemovePair}
           onAdd={handleAddPair}
-          supportedNetworks={SUPPORTED_NETWORKS}
+          supportedNetworks={SUPPORTED_CONTRACT_NETWORKS}
           error={error}
         />
         <div className="flex flex-row gap-4 mt-10 justify-end">

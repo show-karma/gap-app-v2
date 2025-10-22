@@ -2,9 +2,9 @@
 
 import { PlusIcon } from "@heroicons/react/24/outline";
 import type { FC } from "react";
-import { ContractAddressItem, InvalidInfo } from "@/components/Pages/Project/ContractAddressItem";
+import { ContractAddressItem } from "@/components/Pages/Project/ContractAddressItem";
 import { Button } from "@/components/Utilities/Button";
-import { NetworkAddressPair } from "./types";
+import type { NetworkAddressPair, InvalidInfo } from "./types";
 
 interface ContractAddressListProps {
   pairs: NetworkAddressPair[];
@@ -13,7 +13,7 @@ interface ContractAddressListProps {
   onAddressChange: (index: number, value: string) => void;
   onRemove: (index: number) => void;
   onAdd: () => void;
-  supportedNetworks: string[];
+  supportedNetworks: readonly string[];
   error?: string | null;
 }
 

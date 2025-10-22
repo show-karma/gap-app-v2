@@ -6,24 +6,9 @@ import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdow
 import { Button } from "@/components/Utilities/Button";
 import { getContractKey } from "@/utilities/contractKey";
 import { getBaseUrl } from "@/utilities/getBaseUrl";
-import { NetworkAddressPair } from "./types";
+import type { ContractAddressItemProps, InvalidInfo } from "./types";
 
-export interface InvalidInfo {
-  projectName: string;
-  projectSlug?: string;
-  errorMessage?: string;
-}
-
-interface ContractAddressItemProps {
-  pair: NetworkAddressPair;
-  index: number;
-  invalidContracts: Map<string, InvalidInfo>;
-  canRemove: boolean;
-  onNetworkChange: (index: number, value: string) => void;
-  onAddressChange: (index: number, value: string) => void;
-  onRemove: (index: number) => void;
-  supportedNetworks: string[];
-}
+export type { InvalidInfo };
 
 export const ContractAddressItem = memo<ContractAddressItemProps>(
   ({
@@ -73,7 +58,7 @@ export const ContractAddressItem = memo<ContractAddressItemProps>(
               <SearchDropdown
                 onSelectFunction={(value) => onNetworkChange(index, value)}
                 selected={pair.network ? [pair.network] : []}
-                list={supportedNetworks}
+                list={[...supportedNetworks]}
                 type="network"
                 prefixUnselected="Select"
                 buttonClassname="flex-1"
