@@ -40,7 +40,15 @@ export const getCommunityStatsV2 = cache(
         totalProjects: 0,
         totalGrants: 0,
         totalMilestones: 0,
-        totalUpdates: 0,
+        projectUpdates: 0,
+        projectUpdatesBreakdown: {
+          projectMilestones: 0,
+          projectCompletedMilestones: 0,
+          projectUpdates: 0,
+          grantMilestones: 0,
+          grantCompletedMilestones: 0,
+          grantUpdates: 0,
+        },
         totalTransactions: 0,
         averageCompletion: 0,
       };
@@ -50,7 +58,15 @@ export const getCommunityStatsV2 = cache(
         totalProjects: 0,
         totalGrants: 0,
         totalMilestones: 0,
-        totalUpdates: 0,
+        projectUpdates: 0,
+        projectUpdatesBreakdown: {
+          projectMilestones: 0,
+          projectCompletedMilestones: 0,
+          projectUpdates: 0,
+          grantMilestones: 0,
+          grantCompletedMilestones: 0,
+          grantUpdates: 0,
+        },
         totalTransactions: 0,
         averageCompletion: 0,
       };
