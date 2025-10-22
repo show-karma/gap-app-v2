@@ -158,12 +158,12 @@ export function QuestionBuilder({
       errorManager(
         "Failed to synchronize tab state with URL",
         error,
-        { pathname, currentTab: activeTab }
+        { pathname }
       );
       // Fallback to default tab on error
       setActiveTab(DEFAULT_TAB);
     }
-  }, [pathname, router, searchParams, activeTab]);
+  }, [pathname, router, searchParams]);
 
   const updateTabInUrl = (tab: TabKey) => {
     try {
