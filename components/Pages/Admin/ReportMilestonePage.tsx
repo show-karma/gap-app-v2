@@ -21,6 +21,7 @@ import { Skeleton } from "@/components/Utilities/Skeleton";
 import TablePagination from "@/components/Utilities/TablePagination";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useReviewerPrograms } from "@/hooks/usePermissions";
 import { useOwnerStore } from "@/store";
 import { downloadCommunityReport } from "@/utilities/downloadReports";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
@@ -123,7 +124,31 @@ export const ReportMilestonePage = ({
     address,
   );
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isAuthorized = isConnected && isAuth && (isAdmin || isContractOwner);
+
+  // Get milestone reviewer programs for access control
+  const { programs: reviewerPrograms } = useReviewerPrograms();
+
+  // Build set of allowed program IDs for milestone reviewers
+  const allowedProgramIds = useMemo(() => {
+    // Admins and contract owners can see all programs
+    if (isAdmin || isContractOwner) {
+      return null; // null means no filtering
+    }
+
+    // Build set of programs where user is a milestone reviewer
+    const allowedSet = new Set<string>();
+    reviewerPrograms?.forEach((program) => {
+      // Filter to programs in this community that user is milestone reviewer for
+      const programCommunityId = program.communitySlug || program.communityUID;
+      if (programCommunityId === communityId && program.isMilestoneReviewer) {
+        allowedSet.add(`${program.programId}_${program.chainID}`);
+      }
+    });
+
+    return allowedSet.size > 0 ? allowedSet : null;
+  }, [isAdmin, isContractOwner, reviewerPrograms, communityId]);
+
+  const isAuthorized = isConnected && isAuth && (isAdmin || isContractOwner || (allowedProgramIds && allowedProgramIds.size > 0));
 
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState("totalMilestones");
@@ -138,7 +163,7 @@ export const ReportMilestonePage = ({
   );
 
   const programOptions = useMemo(() => {
-    return grantPrograms
+    const allPrograms = grantPrograms
       .filter((program) => program.programId && program.chainID !== undefined)
       .map((program) => {
         const value = `${program.programId}_${program.chainID}`;
@@ -146,7 +171,14 @@ export const ReportMilestonePage = ({
         const label = title ? `${title} (${value})` : value;
         return { value, label };
       });
-  }, [grantPrograms]);
+
+    // Filter programs based on milestone reviewer permissions
+    if (allowedProgramIds) {
+      return allPrograms.filter((option) => allowedProgramIds.has(option.value));
+    }
+
+    return allPrograms;
+  }, [grantPrograms, allowedProgramIds]);
 
   const valueToLabelMap = useMemo(() => {
     return new Map(programOptions.map(({ value, label }) => [value, label]));

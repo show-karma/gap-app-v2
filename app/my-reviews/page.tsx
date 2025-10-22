@@ -30,7 +30,11 @@ export default function MyReviewPage() {
   const communitiesWithPrograms = useMemo(() => {
     if (!reviewerPrograms || reviewerPrograms.length === 0) return [];
 
-    const communityMap = new Map<string, FundingProgram & { programCount: number, totalApplications: number }>();
+    const communityMap = new Map<string, FundingProgram & {
+      programCount: number,
+      totalApplications: number,
+      milestoneReviewerPrograms: Array<{programId: string, chainID: number}>
+    }>();
 
     reviewerPrograms.forEach((program) => {
       const communityId: string = program?.communitySlug || program.communityUID || '';
@@ -44,6 +48,7 @@ export default function MyReviewPage() {
           communityImage: communityLogo,
           programCount: 0,
           totalApplications: 0,
+          milestoneReviewerPrograms: [],
           ...program
         });
       }
@@ -51,6 +56,14 @@ export default function MyReviewPage() {
       const community = communityMap.get(communityId)!;
       community.programCount += 1;
       community.totalApplications += program.metrics?.totalApplications || 0;
+
+      // Track which programs user is a milestone reviewer for
+      if (program.isMilestoneReviewer) {
+        community.milestoneReviewerPrograms.push({
+          programId: program.programId,
+          chainID: program.chainID
+        });
+      }
     });
 
     return Array.from(communityMap.values()).sort((a, b) =>
@@ -191,19 +204,38 @@ export default function MyReviewPage() {
                   </div>
                 </div>
 
-                {/* Action Button */}
-                <Link
-                  href={PAGES.REVIEWER.DASHBOARD(community.communitySlug || community.communityUID || '')}
-                  className="block"
-                >
-                  <Button
-                    variant="primary"
-                    className="w-full flex items-center justify-center group"
+                {/* Action Buttons */}
+                <div className="space-y-2">
+                  <Link
+                    href={PAGES.REVIEWER.DASHBOARD(community.communitySlug || community.communityUID || '')}
+                    className="block"
                   >
-                    <span>View Programs</span>
-                    <ArrowRightIcon className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                  </Button>
-                </Link>
+                    <Button
+                      variant="primary"
+                      className="w-full flex items-center justify-center group"
+                    >
+                      <span>View Programs</span>
+                      <ArrowRightIcon className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                    </Button>
+                  </Link>
+
+                  {/* Show View Milestones button if user is milestone reviewer for any program in this community */}
+                  {community.milestoneReviewerPrograms && community.milestoneReviewerPrograms.length > 0 && (
+                    <Link
+                      href={`${PAGES.ADMIN.MILESTONES(community.communitySlug || community.communityUID || '')}?programIds=${community.milestoneReviewerPrograms.map(p => `${p.programId}_${p.chainID}`).join(',')}`}
+                      className="block"
+                    >
+                      <Button
+                        variant="secondary"
+                        className="w-full flex items-center justify-center group"
+                      >
+                        <EyeIcon className="w-4 h-4 mr-2" />
+                        <span>View Milestones</span>
+                        <ArrowRightIcon className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                      </Button>
+                    </Link>
+                  )}
+                </div>
               </div>
             </div>
           ))}

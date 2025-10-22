@@ -96,6 +96,8 @@ export type FundingProgram = {
     revisionRequestedApplications?: number;
     underReviewApplications?: number;
   };
+  isProgramReviewer?: boolean;
+  isMilestoneReviewer?: boolean;
 };
 
 // Funding Programs API (V2)
