@@ -1,5 +1,6 @@
 "use client";
 import { Skeleton } from "@/components/Utilities/Skeleton";
+import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
 import { useImpactMeasurement } from "@/hooks/useImpactMeasurement";
 import { useCommunityStore } from "@/store/community";
 import formatCurrency from "@/utilities/formatCurrency";
@@ -88,21 +89,54 @@ export const CommunityStatCards = () => {
       value: filteredProjectsCount,
       displayValue: filteredProjectsCount ? formatCurrency(filteredProjectsCount) : "-",
       color: "#9b59b6",
-      showLoading: isLoadingFilters, // Show loading when filters are being applied
+      showLoading: isLoadingFilters,
+      tooltip: null,
     },
     {
       title: "Total Grants",
       value: data?.totalGrants,
       displayValue: data?.totalGrants ? formatCurrency(data.totalGrants) : "-",
       color: "#e67e22",
-      showLoading: isLoadingFilters, // Show loading when filters are being applied
+      showLoading: isLoadingFilters,
+      tooltip: null,
     },
     {
-      title: "Total Milestones",
-      value: data?.totalMilestones,
-      displayValue: data?.totalMilestones ? formatCurrency(data.totalMilestones) : "-",
+      title: "Project Updates",
+      value: data?.projectUpdates,
+      displayValue: data?.projectUpdates ? formatCurrency(data.projectUpdates) : "-",
       color: "#3498db",
-      showLoading: isLoadingFilters, // Show loading when filters are being applied
+      showLoading: isLoadingFilters,
+      tooltip: data?.projectUpdatesBreakdown ? (
+        <div className="flex flex-col gap-1.5 p-1">
+          <div className="font-semibold text-xs mb-1 border-b border-gray-200 dark:border-zinc-700 pb-1">
+            Project Updates Breakdown
+          </div>
+          <div className="flex justify-between gap-3 text-xs">
+            <span className="text-gray-600 dark:text-gray-400">Project Milestones:</span>
+            <span className="font-medium">{formatCurrency(data.projectUpdatesBreakdown.projectMilestones)}</span>
+          </div>
+          <div className="flex justify-between gap-3 text-xs">
+            <span className="text-gray-600 dark:text-gray-400">Project Milestone Completions:</span>
+            <span className="font-medium">{formatCurrency(data.projectUpdatesBreakdown.projectCompletedMilestones)}</span>
+          </div>
+          <div className="flex justify-between gap-3 text-xs">
+            <span className="text-gray-600 dark:text-gray-400">Project Updates:</span>
+            <span className="font-medium">{formatCurrency(data.projectUpdatesBreakdown.projectUpdates)}</span>
+          </div>
+          <div className="flex justify-between gap-3 text-xs">
+            <span className="text-gray-600 dark:text-gray-400">Grant Milestones:</span>
+            <span className="font-medium">{formatCurrency(data.projectUpdatesBreakdown.grantMilestones)}</span>
+          </div>
+          <div className="flex justify-between gap-3 text-xs">
+            <span className="text-gray-600 dark:text-gray-400">Grant Milestone Completions:</span>
+            <span className="font-medium">{formatCurrency(data.projectUpdatesBreakdown.grantCompletedMilestones)}</span>
+          </div>
+          <div className="flex justify-between gap-3 text-xs">
+            <span className="text-gray-600 dark:text-gray-400">Grant Updates:</span>
+            <span className="font-medium">{formatCurrency(data.projectUpdatesBreakdown.grantUpdates)}</span>
+          </div>
+        </div>
+      ) : null,
     },
   ];
   return stats.map((item) => (
@@ -118,10 +152,20 @@ export const CommunityStatCards = () => {
           }}
         />
       </div>
-      <div className="h-full flex flex-col items-start justify-end py-2">
-        <h3 className="text-slate-800 dark:text-zinc-100 text-base font-semibold font-['Inter']">
-          {item.title}
-        </h3>
+      <div className="h-full flex flex-col items-start justify-end py-2 pr-2">
+        <div className="flex items-center gap-1">
+          <h3 className="text-slate-800 dark:text-zinc-100 text-base font-semibold font-['Inter']">
+            {item.title}
+          </h3>
+          {item.tooltip && (
+            <InfoTooltip 
+              content={item.tooltip}
+              side="top"
+              align="start"
+              contentClassName="max-w-sm"
+            />
+          )}
+        </div>
         {isLoading || item.showLoading ? (
           <Skeleton className="w-10 h-10" />
         ) : (
