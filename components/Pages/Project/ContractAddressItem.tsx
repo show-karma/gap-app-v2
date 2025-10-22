@@ -5,6 +5,7 @@ import { memo, useMemo } from "react";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
 import { Button } from "@/components/Utilities/Button";
 import { getContractKey } from "@/utilities/contractKey";
+import { getBaseUrl } from "@/utilities/getBaseUrl";
 import { NetworkAddressPair } from "./types";
 
 export interface InvalidInfo {
@@ -113,7 +114,7 @@ export const ContractAddressItem = memo<ContractAddressItemProps>(
                 already associated with Project{" "}
                 {invalidInfo.projectSlug ? (
                   <a
-                    href={`https://gap.karmahq.xyz/project/${invalidInfo.projectSlug}`}
+                    href={`${getBaseUrl()}/project/${invalidInfo.projectSlug}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="font-bold underline hover:text-red-800 dark:hover:text-red-300"
