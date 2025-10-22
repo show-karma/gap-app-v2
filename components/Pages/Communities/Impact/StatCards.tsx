@@ -112,27 +112,27 @@ export const CommunityStatCards = () => {
             Project Updates Breakdown
           </div>
           <div className="flex justify-between gap-3 text-xs">
-            <span className="text-gray-600 dark:text-gray-400">Project Milestones:</span>
+            <span className="text-gray-600 dark:text-gray-400">Project Milestones</span>
             <span className="font-medium">{formatCurrency(data.projectUpdatesBreakdown.projectMilestones)}</span>
           </div>
           <div className="flex justify-between gap-3 text-xs">
-            <span className="text-gray-600 dark:text-gray-400">Project Milestone Completions:</span>
+            <span className="text-gray-600 dark:text-gray-400">Project Milestone Completions</span>
             <span className="font-medium">{formatCurrency(data.projectUpdatesBreakdown.projectCompletedMilestones)}</span>
           </div>
           <div className="flex justify-between gap-3 text-xs">
-            <span className="text-gray-600 dark:text-gray-400">Project Updates:</span>
+            <span className="text-gray-600 dark:text-gray-400">Project Updates</span>
             <span className="font-medium">{formatCurrency(data.projectUpdatesBreakdown.projectUpdates)}</span>
           </div>
           <div className="flex justify-between gap-3 text-xs">
-            <span className="text-gray-600 dark:text-gray-400">Grant Milestones:</span>
+            <span className="text-gray-600 dark:text-gray-400">Grant Milestones</span>
             <span className="font-medium">{formatCurrency(data.projectUpdatesBreakdown.grantMilestones)}</span>
           </div>
           <div className="flex justify-between gap-3 text-xs">
-            <span className="text-gray-600 dark:text-gray-400">Grant Milestone Completions:</span>
+            <span className="text-gray-600 dark:text-gray-400">Grant Milestone Completions</span>
             <span className="font-medium">{formatCurrency(data.projectUpdatesBreakdown.grantCompletedMilestones)}</span>
           </div>
           <div className="flex justify-between gap-3 text-xs">
-            <span className="text-gray-600 dark:text-gray-400">Grant Updates:</span>
+            <span className="text-gray-600 dark:text-gray-400">Grant Updates</span>
             <span className="font-medium">{formatCurrency(data.projectUpdatesBreakdown.grantUpdates)}</span>
           </div>
         </div>
