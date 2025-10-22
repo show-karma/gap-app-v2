@@ -74,7 +74,7 @@ export const INDEXER = {
       UPDATE: (projectUID: string) => `/projects/${projectUID}/external/update`,
     },
     CONTRACTS: {
-      CHECK_ADDRESS: () => `/v2/projects/contracts/check-address`,
+      CHECK_ADDRESS: () => `/v2/projects/contracts/address-availability`,
     },
     SUBSCRIBE: (projectId: Hex) => `/projects/${projectId}/subscribe`,
     GET: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}`,

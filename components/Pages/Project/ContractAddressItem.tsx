@@ -36,6 +36,9 @@ export const ContractAddressItem = memo<ContractAddressItemProps>(
     onRemove,
     supportedNetworks,
   }) => {
+    // Calculate base URL once
+    const baseUrl = useMemo(() => getBaseUrl(), []);
+
     // Calculate validation state based on the invalidContracts Map
     const contractKey = useMemo(
       () => getContractKey(pair.network, pair.address),
@@ -114,7 +117,7 @@ export const ContractAddressItem = memo<ContractAddressItemProps>(
                 already associated with Project{" "}
                 {invalidInfo.projectSlug ? (
                   <a
-                    href={`${getBaseUrl()}/project/${invalidInfo.projectSlug}`}
+                    href={`${baseUrl}/project/${invalidInfo.projectSlug}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="font-bold underline hover:text-red-800 dark:hover:text-red-300"

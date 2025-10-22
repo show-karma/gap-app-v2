@@ -1,9 +1,11 @@
-import { envVars } from "./enviromentVars";
-
 /**
  * Returns the base URL for the application based on the current environment
- * @returns The base URL (e.g., "https://gap.karmahq.xyz" for production, "https://gapstag.karmahq.xyz" for staging)
+ * - Development/Staging: "https://gapstag.karmahq.xyz"
+ * - Production: "https://gap.karmahq.xyz"
  */
 export const getBaseUrl = (): string => {
-  return envVars.VERCEL_URL;
+  const isDev = process.env.NODE_ENV === "development" ||
+                process.env.NEXT_PUBLIC_ENV !== "production";
+
+  return isDev ? "https://gapstag.karmahq.xyz" : "https://gap.karmahq.xyz";
 };
