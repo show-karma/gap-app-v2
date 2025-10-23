@@ -2,6 +2,8 @@
 
 import { FC, useState, useCallback, useEffect, useMemo } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
+// eslint-disable-next-line import/no-extraneous-dependencies
+import debounce from "lodash.debounce";
 import InfiniteScroll from "react-infinite-scroll-component";
 import ApplicationList from "./ApplicationList";
 import {
@@ -51,6 +53,9 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
     return urlFilters;
   });
 
+  // Local state for search input (immediate UI updates)
+  const [searchInput, setSearchInput] = useState(filters.search || "");
+
   const [sortBy, setSortBy] = useState<IApplicationFilters['sortBy']>(() => {
     const urlSortBy = searchParams.get('sortBy');
     return (urlSortBy as IApplicationFilters['sortBy']) || 'status';
@@ -60,6 +65,15 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
     const urlSortOrder = searchParams.get('sortOrder');
     return (urlSortOrder as IApplicationFilters['sortOrder']) || 'asc';
   });
+
+  // Debounced search function (waits 500ms after user stops typing)
+  const debouncedSearch = useMemo(
+    () =>
+      debounce((searchValue: string) => {
+        setFilters((prev) => ({ ...prev, search: searchValue || undefined }));
+      }, 500),
+    []
+  );
 
   const {
     applications,
@@ -166,6 +180,21 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
     setFilters((prev) => ({ ...prev, ...newFilters }));
   }, []);
 
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      setSearchInput(value); // Update UI immediately
+      debouncedSearch(value); // Update filters after 500ms
+    },
+    [debouncedSearch]
+  );
+
+  // Cleanup debounced function on unmount
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
+
   const handleSortChange = useCallback((newSortBy: string) => {
     const typedSortBy = newSortBy as IApplicationFilters['sortBy'];
     if (sortBy === typedSortBy) {
@@ -258,9 +287,9 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
             </label>
             <input
               type="text"
-              placeholder="Search applications..."
-              value={filters.search || ""}
-              onChange={(e) => handleFilterChange({ search: e.target.value })}
+              placeholder="Search by email, reference, or project title..."
+              value={searchInput}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300"
             />
           </div>
@@ -314,6 +343,8 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
             <Button
               onClick={() => {
                 setFilters({});
+                setSearchInput("");
+                debouncedSearch.cancel(); // Cancel any pending debounced search
                 router.push(pathname, { scroll: false });
               }}
               variant="secondary"
