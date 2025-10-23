@@ -1,6 +1,5 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useCallback, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { RoleManagementTab } from "@/components/Generic/RoleManagement/RoleManagementTab";
@@ -12,8 +11,13 @@ import type {
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
-import { programReviewersService } from "@/services/program-reviewers.service";
-import { parseReviewerMemberId } from "@/utilities/validators";
+import { useProgramReviewers } from "@/hooks/useProgramReviewers";
+import {
+  parseReviewerMemberId,
+  validateEmail,
+  validateTelegram,
+  validateWalletAddress,
+} from "@/utilities/validators";
 
 /**
  * Props for ReviewerManagementTab
@@ -46,23 +50,18 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
   communityId,
   readOnly = false,
 }) => {
-  const queryClient = useQueryClient();
   const { isCommunityAdmin, isLoading: isLoadingAdmin } =
     useIsCommunityAdmin(communityId);
   const [selectedRole, setSelectedRole] = useState<ReviewerRole>("program");
 
-  // Fetch program reviewers
+  // Fetch program reviewers with mutations
   const {
     data: programReviewers = [],
     isLoading: isLoadingProgramReviewers,
     refetch: refetchProgramReviewers,
-  } = useQuery({
-    queryKey: ["program-reviewers", programId, chainID],
-    queryFn: async () => {
-      return programReviewersService.getReviewers(programId, chainID);
-    },
-    enabled: !!programId && !!chainID,
-  });
+    addReviewer: addProgramReviewer,
+    removeReviewer: removeProgramReviewer,
+  } = useProgramReviewers(programId, chainID);
 
   // Fetch milestone reviewers with mutations
   const {
@@ -72,62 +71,6 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
     addReviewer: addMilestoneReviewer,
     removeReviewer: removeMilestoneReviewer,
   } = useMilestoneReviewers(programId, chainID);
-
-  // Add program reviewer mutation
-  const addProgramReviewerMutation = useMutation({
-    mutationFn: async (data: Record<string, string>) => {
-      const validation = programReviewersService.validateReviewerData({
-        publicAddress: data.publicAddress,
-        name: data.name,
-        email: data.email,
-        telegram: data.telegram,
-      });
-
-      if (!validation.valid) {
-        throw new Error(validation.errors.join(", "));
-      }
-
-      return programReviewersService.addReviewer(programId, chainID, {
-        publicAddress: data.publicAddress,
-        name: data.name,
-        email: data.email,
-        telegram: data.telegram,
-      });
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ["program-reviewers", programId, chainID],
-      });
-      toast.success("Program reviewer added successfully");
-    },
-    onError: (error) => {
-      console.error("Error adding program reviewer:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to add program reviewer";
-      toast.error(errorMessage);
-    },
-  });
-
-  // Remove program reviewer mutation
-  const removeProgramReviewerMutation = useMutation({
-    mutationFn: async (publicAddress: string) => {
-      return programReviewersService.removeReviewer(
-        programId,
-        chainID,
-        publicAddress,
-      );
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: ["program-reviewers", programId, chainID],
-      });
-      toast.success("Program reviewer removed successfully");
-    },
-    onError: (error) => {
-      console.error("Error removing program reviewer:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to remove program reviewer";
-      toast.error(errorMessage);
-    },
-  });
 
   // Common field configuration for both roles
   const commonFields: RoleManagementConfig["fields"] = useMemo(
@@ -139,7 +82,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
         placeholder: "0x...",
         required: true,
         validation: (value: string) => {
-          if (!programReviewersService.validateWalletAddress(value)) {
+          if (!validateWalletAddress(value)) {
             return "Please enter a valid Ethereum wallet address";
           }
           return true;
@@ -168,7 +111,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
           if (!value) {
             return "Email is required";
           }
-          if (!programReviewersService.validateEmail(value)) {
+          if (!validateEmail(value)) {
             return "Please enter a valid email address";
           }
           return true;
@@ -181,7 +124,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
         placeholder: "@username",
         required: false,
         validation: (value: string) => {
-          if (value && !programReviewersService.validateTelegram(value)) {
+          if (value && !validateTelegram(value)) {
             return "Please enter a valid Telegram username (5-32 characters)";
           }
           return true;
@@ -264,12 +207,12 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
   const handleAdd = useCallback(
     async (data: Record<string, string>) => {
       if (selectedRole === "program") {
-        await addProgramReviewerMutation.mutateAsync(data);
+        await addProgramReviewer(data);
       } else {
         await addMilestoneReviewer(data);
       }
     },
-    [selectedRole, addProgramReviewerMutation, addMilestoneReviewer],
+    [selectedRole, addProgramReviewer, addMilestoneReviewer],
   );
 
   const handleRemove = useCallback(
@@ -292,7 +235,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
 
       try {
         if (parsed.role === "program") {
-          await removeProgramReviewerMutation.mutateAsync(parsed.publicAddress);
+          await removeProgramReviewer(parsed.publicAddress);
         } else if (parsed.role === "milestone") {
           await removeMilestoneReviewer(parsed.publicAddress);
         } else {
@@ -304,7 +247,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
         console.error("Error in handleRemove:", error);
       }
     },
-    [removeProgramReviewerMutation, removeMilestoneReviewer],
+    [removeProgramReviewer, removeMilestoneReviewer],
   );
 
   const handleRefresh = useCallback(() => {

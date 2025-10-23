@@ -1,29 +1,29 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { toast } from "react-hot-toast";
-import { milestoneReviewersService } from "@/services/milestone-reviewers.service";
+import { programReviewersService } from "@/services/program-reviewers.service";
 import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 /**
- * Comprehensive hook for managing milestone reviewers
+ * Comprehensive hook for managing program reviewers
  * Includes query and mutations for add/remove operations
  */
-export function useMilestoneReviewers(programId: string, chainID: number) {
+export function useProgramReviewers(programId: string, chainID: number) {
   const queryClient = useQueryClient();
 
-  // Query for fetching milestone reviewers
+  // Query for fetching program reviewers
   const query = useQuery({
-    queryKey: QUERY_KEYS.REVIEWERS.MILESTONE(programId, chainID),
+    queryKey: QUERY_KEYS.REVIEWERS.PROGRAM(programId, chainID),
     queryFn: async () => {
-      return milestoneReviewersService.getReviewers(programId, chainID);
+      return programReviewersService.getReviewers(programId, chainID);
     },
     enabled: !!programId && !!chainID,
   });
 
-  // Mutation for adding a milestone reviewer
+  // Mutation for adding a program reviewer
   const addMutation = useMutation({
     mutationFn: async (data: Record<string, string>) => {
-      const validation = milestoneReviewersService.validateReviewerData({
+      const validation = programReviewersService.validateReviewerData({
         publicAddress: data.publicAddress,
         name: data.name,
         email: data.email,
@@ -34,7 +34,7 @@ export function useMilestoneReviewers(programId: string, chainID: number) {
         throw new Error(validation.errors.join(", "));
       }
 
-      return milestoneReviewersService.addReviewer(programId, chainID, {
+      return programReviewersService.addReviewer(programId, chainID, {
         publicAddress: data.publicAddress,
         name: data.name,
         email: data.email,
@@ -43,21 +43,21 @@ export function useMilestoneReviewers(programId: string, chainID: number) {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.REVIEWERS.MILESTONE(programId, chainID),
+        queryKey: QUERY_KEYS.REVIEWERS.PROGRAM(programId, chainID),
       });
-      toast.success("Milestone reviewer added successfully");
+      toast.success("Program reviewer added successfully");
     },
     onError: (error) => {
-      console.error("Error adding milestone reviewer:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to add milestone reviewer";
+      console.error("Error adding program reviewer:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to add program reviewer";
       toast.error(errorMessage);
     },
   });
 
-  // Mutation for removing a milestone reviewer
+  // Mutation for removing a program reviewer
   const removeMutation = useMutation({
     mutationFn: async (publicAddress: string) => {
-      return milestoneReviewersService.removeReviewer(
+      return programReviewersService.removeReviewer(
         programId,
         chainID,
         publicAddress,
@@ -65,13 +65,13 @@ export function useMilestoneReviewers(programId: string, chainID: number) {
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.REVIEWERS.MILESTONE(programId, chainID),
+        queryKey: QUERY_KEYS.REVIEWERS.PROGRAM(programId, chainID),
       });
-      toast.success("Milestone reviewer removed successfully");
+      toast.success("Program reviewer removed successfully");
     },
     onError: (error) => {
-      console.error("Error removing milestone reviewer:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to remove milestone reviewer";
+      console.error("Error removing program reviewer:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to remove program reviewer";
       toast.error(errorMessage);
     },
   });
