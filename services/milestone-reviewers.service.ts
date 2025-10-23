@@ -1,6 +1,12 @@
 import axios from "axios";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
+import {
+  validateWalletAddress,
+  validateEmail,
+  validateTelegram,
+  validateReviewerData as validateReviewerDataUtil,
+} from "@/utilities/validators";
 
 const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
 
@@ -91,13 +97,16 @@ export const milestoneReviewersService = {
         assignedAt: reviewer.assignedAt,
         assignedBy: reviewer.assignedBy,
       }));
-    } catch (error: any) {
+    } catch (error) {
       // Handle "No reviewers found" as an empty list, not an error
-      if (
-        error?.response?.data?.error === "Milestone Reviewer Not Found" ||
-        error?.response?.data?.message?.includes("No reviewers found")
-      ) {
-        return [];
+      if (error && typeof error === "object" && "response" in error) {
+        const apiError = error as { response?: { data?: { error?: string; message?: string } } };
+        if (
+          apiError.response?.data?.error === "Milestone Reviewer Not Found" ||
+          apiError.response?.data?.message?.includes("No reviewers found")
+        ) {
+          return [];
+        }
       }
       // Re-throw other errors
       throw error;
@@ -206,63 +215,36 @@ export const milestoneReviewersService = {
 
   /**
    * Validate wallet address format
+   * @deprecated Use validateWalletAddress from @/utilities/validators instead
    */
   validateWalletAddress(address: string): boolean {
-    // Check if it's a valid Ethereum address
-    const ethAddressRegex = /^0x[a-fA-F0-9]{40}$/;
-    return ethAddressRegex.test(address);
+    return validateWalletAddress(address);
   },
 
   /**
    * Validate email format
+   * @deprecated Use validateEmail from @/utilities/validators instead
    */
   validateEmail(email: string): boolean {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+    return validateEmail(email);
   },
 
   /**
    * Validate telegram handle format
+   * @deprecated Use validateTelegram from @/utilities/validators instead
    */
   validateTelegram(telegram: string): boolean {
-    // Telegram usernames are 5-32 characters, alphanumeric and underscores
-    // Can optionally start with @
-    const telegramRegex = /^@?[a-zA-Z0-9_]{5,32}$/;
-    return telegramRegex.test(telegram);
+    return validateTelegram(telegram);
   },
 
   /**
    * Validate milestone reviewer data before submission
+   * Uses shared validation utilities for consistency
    */
   validateReviewerData(data: AddMilestoneReviewerRequest): {
     valid: boolean;
     errors: string[];
   } {
-    const errors: string[] = [];
-
-    if (!data.publicAddress) {
-      errors.push("Wallet address is required");
-    } else if (!this.validateWalletAddress(data.publicAddress)) {
-      errors.push("Invalid wallet address format");
-    }
-
-    if (!data.name) {
-      errors.push("Name is required");
-    }
-
-    if (!data.email) {
-      errors.push("Email is required");
-    } else if (!this.validateEmail(data.email)) {
-      errors.push("Invalid email format");
-    }
-
-    if (data.telegram && !this.validateTelegram(data.telegram)) {
-      errors.push("Invalid Telegram handle format");
-    }
-
-    return {
-      valid: errors.length === 0,
-      errors,
-    };
+    return validateReviewerDataUtil(data);
   },
 };

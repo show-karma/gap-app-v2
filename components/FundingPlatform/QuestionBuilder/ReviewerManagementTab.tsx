@@ -13,6 +13,7 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
 import { programReviewersService } from "@/services/program-reviewers.service";
+import { parseReviewerMemberId } from "@/utilities/validators";
 
 /**
  * Props for ReviewerManagementTab
@@ -99,9 +100,10 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
       });
       toast.success("Program reviewer added successfully");
     },
-    onError: (error: any) => {
+    onError: (error) => {
       console.error("Error adding program reviewer:", error);
-      toast.error(error.message || "Failed to add program reviewer");
+      const errorMessage = error instanceof Error ? error.message : "Failed to add program reviewer";
+      toast.error(errorMessage);
     },
   });
 
@@ -120,9 +122,10 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
       });
       toast.success("Program reviewer removed successfully");
     },
-    onError: (error: any) => {
+    onError: (error) => {
       console.error("Error removing program reviewer:", error);
-      toast.error(error.message || "Failed to remove program reviewer");
+      const errorMessage = error instanceof Error ? error.message : "Failed to remove program reviewer";
+      toast.error(errorMessage);
     },
   });
 
@@ -271,13 +274,34 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
 
   const handleRemove = useCallback(
     async (memberId: string) => {
-      // Extract role and address from memberId
-      const [role, publicAddress] = memberId.split("-", 2);
+      // Parse and validate member ID using robust parser
+      const parsed = parseReviewerMemberId(memberId);
 
-      if (role === "program") {
-        await removeProgramReviewerMutation.mutateAsync(publicAddress);
-      } else {
-        await removeMilestoneReviewer(publicAddress);
+      if (!parsed.valid) {
+        console.error("Invalid member ID:", parsed.error);
+        toast.error(parsed.error || "Invalid reviewer ID format");
+        return;
+      }
+
+      // Type guard ensures we have the required properties
+      if (!parsed.role || !parsed.publicAddress) {
+        console.error("Missing role or publicAddress in parsed member ID");
+        toast.error("Failed to remove reviewer: Invalid ID");
+        return;
+      }
+
+      try {
+        if (parsed.role === "program") {
+          await removeProgramReviewerMutation.mutateAsync(parsed.publicAddress);
+        } else if (parsed.role === "milestone") {
+          await removeMilestoneReviewer(parsed.publicAddress);
+        } else {
+          toast.error(`Unknown reviewer role: ${parsed.role}`);
+        }
+      } catch (error) {
+        // Error handling is already done in the mutations, but we catch here
+        // to prevent unhandled promise rejections
+        console.error("Error in handleRemove:", error);
       }
     },
     [removeProgramReviewerMutation, removeMilestoneReviewer],
@@ -288,8 +312,10 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
     refetchMilestoneReviewers();
   }, [refetchProgramReviewers, refetchMilestoneReviewers]);
 
-  const isLoadingReviewers =
-    isLoadingProgramReviewers || isLoadingMilestoneReviewers;
+  const isLoadingReviewers = useMemo(
+    () => isLoadingProgramReviewers || isLoadingMilestoneReviewers,
+    [isLoadingProgramReviewers, isLoadingMilestoneReviewers]
+  );
 
   if (isLoadingAdmin) {
     return (

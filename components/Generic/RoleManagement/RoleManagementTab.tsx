@@ -13,6 +13,7 @@ import type {
   RoleMember,
   RoleOption,
 } from "./types";
+import { getMemberRole, getRoleLabel, getRoleShortLabel } from "./helpers";
 
 /**
  * Props for RoleManagementTab component
@@ -157,7 +158,27 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
       }
     } catch (error) {
       console.error("Error adding member:", error);
-      // Keep form data and stay open on error
+
+      // Provide more specific error messages based on error type
+      let errorMessage = "Failed to add member. Please try again.";
+
+      if (error && typeof error === "object" && "response" in error) {
+        const apiError = error as { response?: { status?: number; data?: { message?: string } } };
+        if (apiError.response?.status === 401 || apiError.response?.status === 403) {
+          errorMessage = "You don't have permission to add members.";
+        } else if (apiError.response?.status === 409) {
+          errorMessage = "This member already exists.";
+        } else if (apiError.response?.status === 400) {
+          errorMessage = apiError.response?.data?.message || "Invalid member data.";
+        }
+      } else if (error instanceof Error && error.message) {
+        errorMessage = error.message;
+      }
+
+      // Display error to user via console (parent component should handle toast)
+      console.error("Add member error:", errorMessage);
+
+      // Keep form data and stay open on error so user can retry
     } finally {
       setIsAddingMember(false);
     }
@@ -173,7 +194,19 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
   }, [roleOptions, onRoleChange]);
 
   const handleRemove = useCallback(async (memberId: string) => {
-    if (!confirm(`Are you sure you want to remove this ${config.roleDisplayName.toLowerCase()}?`)) {
+    // Find member and extract role information for better UX in confirmation dialog
+    const member = members.find(m => m.id === memberId);
+    const memberName = member?.name || "this member";
+    const memberRole = getMemberRole(member);
+
+    // Build confirmation message with role badge if available
+    let confirmMessage = `Are you sure you want to remove ${memberName}`;
+    if (memberRole) {
+      confirmMessage += ` (${getRoleLabel(memberRole)})`;
+    }
+    confirmMessage += "?";
+
+    if (!confirm(confirmMessage)) {
       return;
     }
 
@@ -186,10 +219,27 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
       }
     } catch (error) {
       console.error("Error removing member:", error);
+
+      // Provide more specific error messages
+      let errorMessage = "Failed to remove member. Please try again.";
+
+      if (error && typeof error === "object" && "response" in error) {
+        const apiError = error as { response?: { status?: number; data?: { message?: string } } };
+        if (apiError.response?.status === 401 || apiError.response?.status === 403) {
+          errorMessage = "You don't have permission to remove members.";
+        } else if (apiError.response?.status === 404) {
+          errorMessage = "Member not found. It may have already been removed.";
+        }
+      } else if (error instanceof Error && error.message) {
+        errorMessage = error.message;
+      }
+
+      // Log detailed error (parent component should handle toast)
+      console.error("Remove member error:", errorMessage);
     } finally {
       setRemovingMemberId(null);
     }
-  }, [config.roleDisplayName, onRemove, onRefresh]);
+  }, [config.roleDisplayName, onRemove, onRefresh, members]);
 
   const getMemberDisplayValue = useCallback((member: RoleMember, fieldName: string): string => {
     const value = member[fieldName];
@@ -396,14 +446,14 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                               <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                                 {member.name}
                               </div>
-                              {(member as any).role && (
+                              {getMemberRole(member) && (
                                 <span className={cn(
                                   "inline-flex items-center px-2 py-0.5 rounded text-xs font-medium",
-                                  (member as any).role === "program"
+                                  getMemberRole(member) === "program"
                                     ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
                                     : "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
                                 )}>
-                                  {(member as any).role === "program" ? "Program" : "Milestone"}
+                                  {getRoleShortLabel(getMemberRole(member))}
                                 </span>
                               )}
                             </div>

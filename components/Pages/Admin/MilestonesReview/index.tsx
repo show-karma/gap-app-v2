@@ -15,7 +15,7 @@ import { CommentsAndActivity } from "./CommentsAndActivity";
 import { MilestoneCard } from "./MilestoneCard";
 import { useAccount } from "wagmi";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
-import { useIsReviewer } from "@/hooks/usePermissions";
+import { useIsReviewer, useReviewerPrograms } from "@/hooks/usePermissions";
 import { useOwnerStore } from "@/store";
 
 interface MilestonesReviewPageProps {
@@ -56,6 +56,17 @@ export function MilestonesReviewPage({
     parsedProgramId,
     parsedChainId
   );
+
+  // Check if user is a milestone reviewer for this program
+  const { programs: reviewerPrograms } = useReviewerPrograms();
+  const isMilestoneReviewer = useMemo(() => {
+    return reviewerPrograms?.some(
+      (program) =>
+        program.programId === parsedProgramId &&
+        program.chainID === parsedChainId &&
+        program.isMilestoneReviewer === true
+    );
+  }, [reviewerPrograms, parsedProgramId, parsedChainId]);
 
   // Get the actual project UID from the data (projectId might be a slug)
   const projectUID = data?.project?.uid;
@@ -136,13 +147,14 @@ export function MilestonesReviewPage({
 
   const handleSubmitVerification = useCallback(async (milestone: GrantMilestoneWithCompletion) => {
     if (!data) return;
+    // Pass isMilestoneReviewer flag instead of generic isReviewer
     await verifyMilestone(
       milestone,
-      isReviewer,
+      isMilestoneReviewer || false,
       data,
       verificationComment
     );
-  }, [data, verifyMilestone, isReviewer, verificationComment]);
+  }, [data, verifyMilestone, isMilestoneReviewer, verificationComment]);
 
   const handleSyncVerification = useCallback(async (milestone: GrantMilestoneWithCompletion) => {
     if (!milestone.fundingApplicationCompletion || !milestone.verificationDetails) return;
@@ -228,6 +240,13 @@ export function MilestonesReviewPage({
 
   const { project, grantMilestones } = data;
 
+  // Determine if user can verify milestones
+  // Only milestone reviewers, admins, and contract owners can verify/complete/sync
+  const canVerifyMilestones = useMemo(
+    () => isCommunityAdmin || isContractOwner || (isMilestoneReviewer || false),
+    [isCommunityAdmin, isContractOwner, isMilestoneReviewer]
+  );
+
   return (
     <div className="container mx-auto mt-4 flex gap-8 flex-col w-full px-4 pb-8">
       {/* Header with Back Button */}
@@ -297,6 +316,7 @@ export function MilestonesReviewPage({
                     verificationComment={verificationComment}
                     isVerifying={isVerifying}
                     isSyncing={isSyncing}
+                    canVerifyMilestones={canVerifyMilestones}
                     onVerifyClick={handleVerifyClick}
                     onCancelVerification={handleCancelVerification}
                     onVerificationCommentChange={setVerificationComment}

@@ -23,6 +23,11 @@ export interface RoleManagementConfig {
 }
 
 /**
+ * Reviewer role type
+ */
+export type ReviewerRole = "program" | "milestone";
+
+/**
  * Role member data
  */
 export interface RoleMember {
@@ -32,7 +37,8 @@ export interface RoleMember {
   email?: string;
   telegram?: string;
   assignedAt?: string;
-  [key: string]: any; // Additional dynamic fields based on configuration
+  role?: ReviewerRole; // Optional role field for multi-role support
+  [key: string]: string | undefined; // Additional dynamic fields based on configuration
 }
 
 /**
