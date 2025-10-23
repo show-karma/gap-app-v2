@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/Utilities/Button";
 import { PAGES } from "@/utilities/pages";
-import { ChevronLeftIcon, ExclamationTriangleIcon } from "@heroicons/react/20/solid";
+import { ArrowLeftIcon, ChevronLeftIcon, ExclamationTriangleIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
 import { useState, useMemo, useCallback } from "react";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
@@ -101,8 +101,8 @@ export function MilestonesReviewPage({
       const appUrl = (isCommunityAdmin || isContractOwner)
         ? PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, programId) + `/${referenceNumber}`
         : isReviewer && parsedChainId
-        ? PAGES.REVIEWER.APPLICATION_DETAIL(communityId, parsedProgramId, parsedChainId, referenceNumber)
-        : null;
+          ? PAGES.REVIEWER.APPLICATION_DETAIL(communityId, parsedProgramId, parsedChainId, referenceNumber)
+          : null;
 
       if (appUrl) {
         return { url: appUrl, label: "Back to Application" };
@@ -122,8 +122,8 @@ export function MilestonesReviewPage({
       const appUrl = (isCommunityAdmin || isContractOwner)
         ? PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, programId) + `/${referenceNumber}`
         : isReviewer && parsedChainId
-        ? PAGES.REVIEWER.APPLICATION_DETAIL(communityId, parsedProgramId, parsedChainId, referenceNumber)
-        : null;
+          ? PAGES.REVIEWER.APPLICATION_DETAIL(communityId, parsedProgramId, parsedChainId, referenceNumber)
+          : null;
 
       return appUrl;
     }
@@ -191,11 +191,13 @@ export function MilestonesReviewPage({
   // Show loading while checking authorization
   if (isLoading || isLoadingCommunityAdmin || isOwnerLoading || isLoadingReviewer) {
     return (
-      <div className="container mx-auto mt-4 flex gap-8 flex-col w-full px-4 pb-8">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 dark:bg-zinc-700 rounded w-1/4"></div>
-          <div className="h-4 bg-gray-200 dark:bg-zinc-700 rounded w-1/2"></div>
-          <div className="h-64 bg-gray-200 dark:bg-zinc-700 rounded"></div>
+      <div className="min-h-screen bg-gray-50 dark:bg-zinc-900">
+        <div className="px-4 sm:px-6 lg:px-8 py-6">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 bg-gray-200 dark:bg-zinc-700 rounded w-1/4"></div>
+            <div className="h-4 bg-gray-200 dark:bg-zinc-700 rounded w-1/2"></div>
+            <div className="h-64 bg-gray-200 dark:bg-zinc-700 rounded"></div>
+          </div>
         </div>
       </div>
     );
@@ -206,25 +208,27 @@ export function MilestonesReviewPage({
 
   if (!isAuthorized) {
     return (
-      <div className="container mx-auto mt-4 flex gap-8 flex-col w-full px-4 pb-8">
-        <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-6">
-          <div className="flex items-center gap-3 mb-3">
-            <ExclamationTriangleIcon className="h-6 w-6 text-red-600 dark:text-red-400" />
-            <h3 className="text-red-800 dark:text-red-200 font-semibold text-lg">
-              Unauthorized Access
-            </h3>
+      <div className="min-h-screen bg-gray-50 dark:bg-zinc-900">
+        <div className="px-4 sm:px-6 lg:px-8 py-6">
+          <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-6">
+            <div className="flex items-center gap-3 mb-3">
+              <ExclamationTriangleIcon className="h-6 w-6 text-red-600 dark:text-red-400" />
+              <h3 className="text-red-800 dark:text-red-200 font-semibold text-lg">
+                Unauthorized Access
+              </h3>
+            </div>
+            <p className="text-red-600 dark:text-red-400 mb-4">
+              {!address
+                ? "You must be logged in to access this page."
+                : "You do not have permission to access this page. Only community administrators, contract owners, and program reviewers can review milestones."}
+            </p>
+            <Link href={PAGES.ADMIN.MILESTONES(communityId)}>
+              <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white">
+                <ChevronLeftIcon className="h-5 w-5" />
+                Back to Milestones Report
+              </Button>
+            </Link>
           </div>
-          <p className="text-red-600 dark:text-red-400 mb-4">
-            {!address
-              ? "You must be logged in to access this page."
-              : "You do not have permission to access this page. Only community administrators, contract owners, and program reviewers can review milestones."}
-          </p>
-          <Link href={PAGES.ADMIN.MILESTONES(communityId)}>
-            <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white">
-              <ChevronLeftIcon className="h-5 w-5" />
-              Back to Milestones Report
-            </Button>
-          </Link>
         </div>
       </div>
     );
@@ -232,14 +236,16 @@ export function MilestonesReviewPage({
 
   if (error || !data) {
     return (
-      <div className="container mx-auto mt-4 flex gap-8 flex-col w-full px-4 pb-8">
-        <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-4">
-          <h3 className="text-red-800 dark:text-red-200 font-semibold mb-2">
-            Error Loading Milestones
-          </h3>
-          <p className="text-red-600 dark:text-red-400">
-            {error?.message || "Failed to load milestone data"}
-          </p>
+      <div className="min-h-screen bg-gray-50 dark:bg-zinc-900">
+        <div className="px-4 sm:px-6 lg:px-8 py-6">
+          <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-4">
+            <h3 className="text-red-800 dark:text-red-200 font-semibold mb-2">
+              Error Loading Milestones
+            </h3>
+            <p className="text-red-600 dark:text-red-400">
+              {error?.message || "Failed to load milestone data"}
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -248,102 +254,107 @@ export function MilestonesReviewPage({
   const { project, grantMilestones } = data;
 
   return (
-    <div className="container mx-auto mt-4 flex gap-8 flex-col w-full px-4 pb-8">
-      {/* Header with Back Button */}
-      <div className="w-full flex flex-row items-center justify-between">
-        <Link href={backButtonConfig.url}>
-          <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-transparent text-black dark:text-white dark:bg-transparent hover:bg-transparent rounded-md transition-all ease-in-out duration-200">
-            <ChevronLeftIcon className="h-5 w-5" />
-            {backButtonConfig.label}
-          </Button>
-        </Link>
-      </div>
-
-      {/* Page Title */}
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold text-black dark:text-white">
-          {project.details.title}
-        </h1>
-        <p className="text-gray-600 dark:text-gray-400">
-          {grantName}
-        </p>
-        <p className="text-sm text-gray-500 dark:text-gray-500">
-          Review project milestones from both on-chain and off-chain sources
-        </p>
-      </div>
-
-      {/* Application Link - Only shown if application is approved */}
-      {milestoneReviewUrl && (
-        <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex flex-col gap-1">
-              <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100">
-                Application Details
-              </h3>
-              <p className="text-xs text-blue-700 dark:text-blue-300">
-                View the full application and review details
-              </p>
-            </div>
-            <Link href={milestoneReviewUrl}>
-              <Button className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white">
-                View Application
+    <div className="min-h-screen bg-gray-50 dark:bg-zinc-900">
+      {/* Header Section */}
+      <div className="bg-white dark:bg-zinc-800 border-b border-gray-200 dark:border-gray-700">
+        <div className="px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center gap-4 max-sm:gap-1 max-sm:flex-col max-sm:items-start">
+            <Link href={backButtonConfig.url}>
+              <Button
+                variant="secondary"
+                className="flex items-center"
+              >
+                <ArrowLeftIcon className="w-4 h-4 mr-2" />
+                {backButtonConfig.label}
               </Button>
             </Link>
+            <div className="flex flex-col gap-1">
+              <h1 className="text-2xl font-bold text-black dark:text-white">
+                {project.details.title}
+              </h1>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {grantName} - Review project milestones
+              </p>
+            </div>
           </div>
         </div>
-      )}
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Content - Milestones */}
-        <div className="lg:col-span-2 flex flex-col gap-6">
-          <section className="bg-white dark:bg-zinc-900 rounded-lg p-6 shadow-sm">
-            <h2 className="text-xl font-semibold mb-4 text-black dark:text-white">
-              Project Milestones
-            </h2>
-            <div className="space-y-4">
-              {grantMilestones.length === 0 ? (
-                <div className="text-center py-8 text-gray-400 dark:text-gray-500">
-                  <p className="text-lg font-medium">No milestones found</p>
-                  <p className="text-sm">This project does not have any milestones yet</p>
-                </div>
-              ) : (
-                grantMilestones.map((milestone, index) => (
-                  <MilestoneCard
-                    key={milestone.uid || index}
-                    milestone={milestone}
-                    index={index}
-                    verifyingMilestoneId={verifyingMilestoneId}
-                    verificationComment={verificationComment}
-                    isVerifying={isVerifying}
-                    isSyncing={isSyncing}
-                    canVerifyMilestones={canVerifyMilestones}
-                    onVerifyClick={handleVerifyClick}
-                    onCancelVerification={handleCancelVerification}
-                    onVerificationCommentChange={setVerificationComment}
-                    onSubmitVerification={handleSubmitVerification}
-                    onSyncVerification={handleSyncVerification}
-                  />
-                ))
-              )}
+      {/* Content Area */}
+      <div className="px-4 sm:px-6 lg:px-8 py-6">
+        {/* Application Link - Only shown if application is approved */}
+        {milestoneReviewUrl && (
+          <div className="mb-6 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-1">
+                <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+                  Application Details
+                </h3>
+                <p className="text-xs text-blue-700 dark:text-blue-300">
+                  View the full application and review details
+                </p>
+              </div>
+              <Link href={milestoneReviewUrl}>
+                <Button className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white">
+                  View Application
+                </Button>
+              </Link>
             </div>
-          </section>
-        </div>
-
-        {/* Sidebar - Comments & Activity */}
-        {referenceNumber && (
-          <div className="lg:col-span-1">
-            <CommentsAndActivity
-              referenceNumber={referenceNumber}
-              statusHistory={(fundingApplication?.statusHistory || []).map(item => ({
-                status: item.status,
-                timestamp: typeof item.timestamp === 'string' ? item.timestamp : item.timestamp.toISOString(),
-                reason: item.reason
-              }))}
-              communityId={communityId}
-              currentUserAddress={address}
-            />
           </div>
         )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 ">
+          {/* Main Content - Milestones */}
+          <div className="lg:col-span-2 flex flex-col gap-6 ">
+            <section className="bg-white dark:bg-zinc-900 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-semibold mb-4 text-black dark:text-white">
+                Project Milestones
+              </h2>
+              <div className="space-y-4">
+                {grantMilestones.length === 0 ? (
+                  <div className="text-center py-8 text-gray-400 dark:text-gray-500">
+                    <p className="text-lg font-medium">No milestones found</p>
+                    <p className="text-sm">This project does not have any milestones yet</p>
+                  </div>
+                ) : (
+                  grantMilestones.map((milestone, index) => (
+                    <MilestoneCard
+                      key={milestone.uid || index}
+                      milestone={milestone}
+                      index={index}
+                      verifyingMilestoneId={verifyingMilestoneId}
+                      verificationComment={verificationComment}
+                      isVerifying={isVerifying}
+                      isSyncing={isSyncing}
+                      canVerifyMilestones={canVerifyMilestones}
+                      onVerifyClick={handleVerifyClick}
+                      onCancelVerification={handleCancelVerification}
+                      onVerificationCommentChange={setVerificationComment}
+                      onSubmitVerification={handleSubmitVerification}
+                      onSyncVerification={handleSyncVerification}
+                    />
+                  ))
+                )}
+              </div>
+            </section>
+          </div>
+
+          {/* Sidebar - Comments & Activity */}
+          {referenceNumber && (
+            <div className="lg:col-span-2">
+              <CommentsAndActivity
+                referenceNumber={referenceNumber}
+                statusHistory={(fundingApplication?.statusHistory || []).map(item => ({
+                  status: item.status,
+                  timestamp: typeof item.timestamp === 'string' ? item.timestamp : item.timestamp.toISOString(),
+                  reason: item.reason
+                }))}
+                communityId={communityId}
+                currentUserAddress={address}
+              />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
