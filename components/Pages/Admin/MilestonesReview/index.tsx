@@ -68,6 +68,13 @@ export function MilestonesReviewPage({
     );
   }, [reviewerPrograms, parsedProgramId, parsedChainId]);
 
+  // Determine if user can verify milestones (must be before early returns)
+  // Only milestone reviewers, admins, and contract owners can verify/complete/sync
+  const canVerifyMilestones = useMemo(
+    () => isCommunityAdmin || isContractOwner || (isMilestoneReviewer || false),
+    [isCommunityAdmin, isContractOwner, isMilestoneReviewer]
+  );
+
   // Get the actual project UID from the data (projectId might be a slug)
   const projectUID = data?.project?.uid;
 
@@ -239,13 +246,6 @@ export function MilestonesReviewPage({
   }
 
   const { project, grantMilestones } = data;
-
-  // Determine if user can verify milestones
-  // Only milestone reviewers, admins, and contract owners can verify/complete/sync
-  const canVerifyMilestones = useMemo(
-    () => isCommunityAdmin || isContractOwner || (isMilestoneReviewer || false),
-    [isCommunityAdmin, isContractOwner, isMilestoneReviewer]
-  );
 
   return (
     <div className="container mx-auto mt-4 flex gap-8 flex-col w-full px-4 pb-8">
