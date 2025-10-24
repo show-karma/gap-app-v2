@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { fundingPlatformService, IApplicationFilters, fundingApplicationsAPI } from '@/services/fundingPlatformService';
 import { applicationCommentsService } from '@/services/application-comments.service';
+import { deleteApplication } from '@/services/funding-applications';
 import { 
   IFormSchema, 
   IFundingApplication, 
@@ -804,5 +805,70 @@ export const useApplicationVersions = (applicationIdOrReference: string | null) 
     getReferenceNumber,
     prefetchVersions,
     invalidateVersions,
+  };
+};
+
+/**
+ * Hook for deleting an application (Admin only)
+ */
+export const useDeleteApplication = () => {
+  const queryClient = useQueryClient();
+
+  const deleteMutation = useMutation({
+    mutationFn: (referenceNumber: string) =>
+      deleteApplication(referenceNumber),
+    onSuccess: (_data, referenceNumber) => {
+      // Invalidate all application-related queries
+      queryClient.invalidateQueries({
+        queryKey: ['funding-application']
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['applications']
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['application-stats']
+      });
+      toast.success('Application deleted successfully');
+    },
+    onError: (error: any, referenceNumber: string) => {
+      // Determine specific error message based on status code
+      let userMessage: string;
+      const statusCode = error?.response?.status;
+
+      if (statusCode === 401 || statusCode === 403) {
+        userMessage = 'You do not have permission to delete this application. Only community admins can delete applications.';
+      } else if (statusCode === 404) {
+        userMessage = 'Application not found. It may have already been deleted.';
+      } else if (statusCode === 500 || (statusCode && statusCode >= 500)) {
+        userMessage = 'Server error occurred while deleting the application. Please try again or contact support.';
+      } else if (!statusCode || error?.code === 'ERR_NETWORK') {
+        userMessage = 'Network error. Please check your connection and try again.';
+      } else {
+        // Fallback for other errors
+        userMessage = error?.response?.data?.message || 'Failed to delete application. Please try again.';
+      }
+
+      // Use errorManager for comprehensive error handling with Sentry
+      errorManager(
+        'Failed to delete application',
+        error,
+        {
+          referenceNumber,
+          statusCode,
+          operation: 'delete-application',
+          errorResponse: error?.response?.data
+        },
+        {
+          error: userMessage
+        }
+      );
+    },
+  });
+
+  return {
+    deleteApplication: deleteMutation.mutate,
+    deleteApplicationAsync: deleteMutation.mutateAsync,
+    isDeleting: deleteMutation.isPending,
+    error: deleteMutation.error,
   };
 };

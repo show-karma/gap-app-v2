@@ -45,6 +45,8 @@ export const INDEXER = {
         `/v2/funding-applications/project/${projectUID}`,
       COMMENTS: (referenceNumber: string) =>
         `/v2/applications/${referenceNumber}/comments`,
+      DELETE: (referenceNumber: string) =>
+        `/v2/funding-applications/${referenceNumber}`,
     },
   },
   PROGRAMS: {
