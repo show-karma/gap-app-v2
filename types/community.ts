@@ -11,11 +11,21 @@ export interface CommunityDetailsV2 {
   updatedAt: string;
 }
 
+export interface ProjectUpdatesBreakdown {
+  projectMilestones: number;
+  projectCompletedMilestones: number;
+  projectUpdates: number;
+  grantMilestones: number;
+  grantCompletedMilestones: number;
+  grantUpdates: number;
+}
+
 export interface CommunityStatsV2 {
   totalProjects: number;
   totalGrants: number;
   totalMilestones: number;
-  totalUpdates: number;
+  projectUpdates: number;
+  projectUpdatesBreakdown: ProjectUpdatesBreakdown;
   totalTransactions: number;
   averageCompletion: number;
 }

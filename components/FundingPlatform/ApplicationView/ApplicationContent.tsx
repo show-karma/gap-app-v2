@@ -289,6 +289,14 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
           </div>
         )}
 
+
+        {application?.postApprovalData && Object.keys(application?.postApprovalData).length > 0 && (
+          <PostApprovalData
+            postApprovalData={application?.postApprovalData}
+            program={program}
+          />
+        )}
+
         {/* Application Data Section with Toggle */}
         <div id="application-details" className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           {/* Toggle Header */}
@@ -326,6 +334,8 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
             )}
           </div>
 
+
+
           {/* Content based on view mode */}
           {viewMode === "details" ? (
             /* Details Mode - Show full application data */
@@ -347,12 +357,6 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
           )}
         </div>
 
-        {application?.postApprovalData && Object.keys(application?.postApprovalData).length > 0 && (
-          <PostApprovalData
-            postApprovalData={application?.postApprovalData}
-            program={program}
-          />
-        )}
 
         {/* AI Evaluation */}
         <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">

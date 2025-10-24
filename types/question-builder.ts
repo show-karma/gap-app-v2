@@ -42,6 +42,8 @@ export interface FormSchema {
     enableRealTimeEvaluation?: boolean;
     langfusePromptId?: string;
   };
+  // Email addresses that should receive post-approval notifications (only for post-approval forms)
+  emailNotifications?: string[];
 }
 
 export interface FormSubmission {
