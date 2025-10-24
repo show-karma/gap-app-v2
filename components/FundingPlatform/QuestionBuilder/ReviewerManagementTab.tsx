@@ -1,16 +1,23 @@
 "use client";
 
-import React from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  RoleManagementTab,
+import React, { useCallback, useMemo, useState } from "react";
+import { toast } from "react-hot-toast";
+import { RoleManagementTab } from "@/components/Generic/RoleManagement/RoleManagementTab";
+import type {
   RoleManagementConfig,
   RoleMember,
-} from "@/components/Generic/RoleManagement/RoleManagementTab";
-import { programReviewersService } from "@/services/program-reviewers.service";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+  RoleOption,
+} from "@/components/Generic/RoleManagement/types";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { toast } from "react-hot-toast";
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
+import { useProgramReviewers } from "@/hooks/useProgramReviewers";
+import {
+  parseReviewerMemberId,
+  validateEmail,
+  validateTelegram,
+  validateWalletAddress,
+} from "@/utilities/validators";
 
 /**
  * Props for ReviewerManagementTab
@@ -23,6 +30,18 @@ interface ReviewerManagementTabProps {
 }
 
 /**
+ * Reviewer role type
+ */
+type ReviewerRole = "program" | "milestone";
+
+/**
+ * Extended role member with role type
+ */
+interface ReviewerMemberWithRole extends RoleMember {
+  role: ReviewerRole;
+}
+
+/**
  * Reviewer management tab specifically for funding platform
  */
 export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
@@ -31,81 +50,39 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
   communityId,
   readOnly = false,
 }) => {
-  const queryClient = useQueryClient();
-  const { isCommunityAdmin, isLoading: isLoadingAdmin } = useIsCommunityAdmin(communityId);
+  const { isCommunityAdmin, isLoading: isLoadingAdmin } =
+    useIsCommunityAdmin(communityId);
+  const [selectedRole, setSelectedRole] = useState<ReviewerRole>("program");
 
-  // Fetch reviewers
+  // Fetch program reviewers with mutations
   const {
-    data: reviewers = [],
-    isLoading: isLoadingReviewers,
-    refetch: refetchReviewers,
-  } = useQuery({
-    queryKey: ["program-reviewers", programId, chainID],
-    queryFn: async () => {
-      return programReviewersService.getReviewers(programId, chainID);
-    },
-    enabled: !!programId && !!chainID,
-  });
+    data: programReviewers = [],
+    isLoading: isLoadingProgramReviewers,
+    refetch: refetchProgramReviewers,
+    addReviewer: addProgramReviewer,
+    removeReviewer: removeProgramReviewer,
+  } = useProgramReviewers(programId, chainID);
 
-  // Add reviewer mutation
-  const addReviewerMutation = useMutation({
-    mutationFn: async (data: Record<string, string>) => {
-      const validation = programReviewersService.validateReviewerData({
-        publicAddress: data.publicAddress,
-        name: data.name,
-        email: data.email,
-        telegram: data.telegram,
-      });
+  // Fetch milestone reviewers with mutations
+  const {
+    data: milestoneReviewers = [],
+    isLoading: isLoadingMilestoneReviewers,
+    refetch: refetchMilestoneReviewers,
+    addReviewer: addMilestoneReviewer,
+    removeReviewer: removeMilestoneReviewer,
+  } = useMilestoneReviewers(programId, chainID);
 
-      if (!validation.valid) {
-        throw new Error(validation.errors.join(", "));
-      }
-
-      return programReviewersService.addReviewer(programId, chainID, {
-        publicAddress: data.publicAddress,
-        name: data.name,
-        email: data.email,
-        telegram: data.telegram,
-      });
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["program-reviewers", programId, chainID] });
-      toast.success("Reviewer added successfully");
-    },
-    onError: (error: any) => {
-      console.error("Error adding reviewer:", error);
-      toast.error(error.message || "Failed to add reviewer");
-    },
-  });
-
-  // Remove reviewer mutation
-  const removeReviewerMutation = useMutation({
-    mutationFn: async (publicAddress: string) => {
-      return programReviewersService.removeReviewer(programId, chainID, publicAddress);
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["program-reviewers", programId, chainID] });
-      toast.success("Reviewer removed successfully");
-    },
-    onError: (error: any) => {
-      console.error("Error removing reviewer:", error);
-      toast.error(error.message || "Failed to remove reviewer");
-    },
-  });
-
-  // Configuration for reviewer role
-  const reviewerConfig: RoleManagementConfig = {
-    roleName: "reviewer",
-    roleDisplayName: "Reviewer",
-    fields: [
+  // Common field configuration for both roles
+  const commonFields: RoleManagementConfig["fields"] = useMemo(
+    () => [
       {
         name: "publicAddress",
         label: "Wallet Address",
-        type: "wallet",
+        type: "wallet" as const,
         placeholder: "0x...",
         required: true,
         validation: (value: string) => {
-          if (!programReviewersService.validateWalletAddress(value)) {
+          if (!validateWalletAddress(value)) {
             return "Please enter a valid Ethereum wallet address";
           }
           return true;
@@ -114,7 +91,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
       {
         name: "name",
         label: "Name",
-        type: "text",
+        type: "text" as const,
         placeholder: "John Doe",
         required: true,
         validation: (value: string) => {
@@ -127,14 +104,14 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
       {
         name: "email",
         label: "Email",
-        type: "email",
+        type: "email" as const,
         placeholder: "reviewer@example.com",
         required: true,
         validation: (value: string) => {
           if (!value) {
             return "Email is required";
           }
-          if (!programReviewersService.validateEmail(value)) {
+          if (!validateEmail(value)) {
             return "Please enter a valid email address";
           }
           return true;
@@ -143,38 +120,145 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
       {
         name: "telegram",
         label: "Telegram",
-        type: "text",
+        type: "text" as const,
         placeholder: "@username",
         required: false,
         validation: (value: string) => {
-          if (value && !programReviewersService.validateTelegram(value)) {
+          if (value && !validateTelegram(value)) {
             return "Please enter a valid Telegram username (5-32 characters)";
           }
           return true;
         },
       },
     ],
-    resource: `program_${programId}_${chainID}`,
-    canAddMultiple: true,
-  };
+    [],
+  );
 
-  // Convert reviewers to RoleMember format
-  const members: RoleMember[] = reviewers.map((reviewer) => ({
-    id: reviewer.publicAddress,
-    publicAddress: reviewer.publicAddress,
-    name: reviewer.name,
-    email: reviewer.email,
-    telegram: reviewer.telegram || "",
-    assignedAt: reviewer.assignedAt,
-  }));
+  // Configuration for program reviewer role
+  const programReviewerConfig: RoleManagementConfig = useMemo(
+    () => ({
+      roleName: "program-reviewer",
+      roleDisplayName: "Program Reviewer",
+      fields: commonFields,
+      resource: `program_${programId}_${chainID}`,
+      canAddMultiple: true,
+    }),
+    [commonFields, programId, chainID],
+  );
 
-  const handleAdd = async (data: Record<string, string>) => {
-    await addReviewerMutation.mutateAsync(data);
-  };
+  // Configuration for milestone reviewer role
+  const milestoneReviewerConfig: RoleManagementConfig = useMemo(
+    () => ({
+      roleName: "milestone-reviewer",
+      roleDisplayName: "Milestone Reviewer",
+      fields: commonFields,
+      resource: `program_${programId}_${chainID}`,
+      canAddMultiple: true,
+    }),
+    [commonFields, programId, chainID],
+  );
 
-  const handleRemove = async (memberId: string) => {
-    await removeReviewerMutation.mutateAsync(memberId);
-  };
+  // Role options for the role selector
+  const roleOptions: RoleOption[] = useMemo(
+    () => [
+      {
+        value: "program",
+        label: "Program Reviewer",
+        config: programReviewerConfig,
+      },
+      {
+        value: "milestone",
+        label: "Milestone Reviewer",
+        config: milestoneReviewerConfig,
+      },
+    ],
+    [programReviewerConfig, milestoneReviewerConfig],
+  );
+
+  // Merge reviewers from both types with role information
+  const members: ReviewerMemberWithRole[] = useMemo(() => {
+    const programMembers: ReviewerMemberWithRole[] = programReviewers.map(
+      (reviewer) => ({
+        id: `program-${reviewer.publicAddress}`,
+        publicAddress: reviewer.publicAddress,
+        name: reviewer.name,
+        email: reviewer.email,
+        telegram: reviewer.telegram || "",
+        assignedAt: reviewer.assignedAt,
+        role: "program" as ReviewerRole,
+      }),
+    );
+
+    const milestoneMembers: ReviewerMemberWithRole[] = milestoneReviewers.map(
+      (reviewer) => ({
+        id: `milestone-${reviewer.publicAddress}`,
+        publicAddress: reviewer.publicAddress,
+        name: reviewer.name,
+        email: reviewer.email,
+        telegram: reviewer.telegram || "",
+        assignedAt: reviewer.assignedAt,
+        role: "milestone" as ReviewerRole,
+      }),
+    );
+
+    return [...programMembers, ...milestoneMembers];
+  }, [programReviewers, milestoneReviewers]);
+
+  const handleAdd = useCallback(
+    async (data: Record<string, string>) => {
+      if (selectedRole === "program") {
+        await addProgramReviewer(data);
+      } else {
+        await addMilestoneReviewer(data);
+      }
+    },
+    [selectedRole, addProgramReviewer, addMilestoneReviewer],
+  );
+
+  const handleRemove = useCallback(
+    async (memberId: string) => {
+      // Parse and validate member ID using robust parser
+      const parsed = parseReviewerMemberId(memberId);
+
+      if (!parsed.valid) {
+        console.error("Invalid member ID:", parsed.error);
+        toast.error(parsed.error || "Invalid reviewer ID format");
+        return;
+      }
+
+      // Type guard ensures we have the required properties
+      if (!parsed.role || !parsed.publicAddress) {
+        console.error("Missing role or publicAddress in parsed member ID");
+        toast.error("Failed to remove reviewer: Invalid ID");
+        return;
+      }
+
+      try {
+        if (parsed.role === "program") {
+          await removeProgramReviewer(parsed.publicAddress);
+        } else if (parsed.role === "milestone") {
+          await removeMilestoneReviewer(parsed.publicAddress);
+        } else {
+          toast.error(`Unknown reviewer role: ${parsed.role}`);
+        }
+      } catch (error) {
+        // Error handling is already done in the mutations, but we catch here
+        // to prevent unhandled promise rejections
+        console.error("Error in handleRemove:", error);
+      }
+    },
+    [removeProgramReviewer, removeMilestoneReviewer],
+  );
+
+  const handleRefresh = useCallback(() => {
+    refetchProgramReviewers();
+    refetchMilestoneReviewers();
+  }, [refetchProgramReviewers, refetchMilestoneReviewers]);
+
+  const isLoadingReviewers = useMemo(
+    () => isLoadingProgramReviewers || isLoadingMilestoneReviewers,
+    [isLoadingProgramReviewers, isLoadingMilestoneReviewers]
+  );
 
   if (isLoadingAdmin) {
     return (
@@ -196,13 +280,16 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
 
   return (
     <RoleManagementTab
-      config={reviewerConfig}
+      config={programReviewerConfig}
       members={members}
       isLoading={isLoadingReviewers}
       canManage={!readOnly && isCommunityAdmin}
       onAdd={!readOnly ? handleAdd : undefined}
       onRemove={!readOnly ? handleRemove : undefined}
-      onRefresh={refetchReviewers}
+      onRefresh={handleRefresh}
+      roleOptions={roleOptions}
+      selectedRole={selectedRole}
+      onRoleChange={(role) => setSelectedRole(role as ReviewerRole)}
     />
   );
 };

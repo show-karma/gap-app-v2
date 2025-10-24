@@ -11,7 +11,8 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useQueryState } from "nuqs";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
@@ -21,6 +22,7 @@ import { Skeleton } from "@/components/Utilities/Skeleton";
 import TablePagination from "@/components/Utilities/TablePagination";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useReviewerPrograms } from "@/hooks/usePermissions";
 import { useOwnerStore } from "@/store";
 import { downloadCommunityReport } from "@/utilities/downloadReports";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
@@ -29,6 +31,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { defaultMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
+import { validateProgramIdentifiers } from "@/utilities/validators";
 
 interface Report {
   _id: {
@@ -123,7 +126,31 @@ export const ReportMilestonePage = ({
     address,
   );
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isAuthorized = isConnected && isAuth && (isAdmin || isContractOwner);
+
+  // Get milestone reviewer programs for access control
+  const { programs: reviewerPrograms } = useReviewerPrograms();
+
+  // Build set of allowed program IDs for milestone reviewers
+  const allowedProgramIds = useMemo(() => {
+    // Admins and contract owners can see all programs
+    if (isAdmin || isContractOwner) {
+      return null; // null means no filtering
+    }
+
+    // Build set of programs where user is a milestone reviewer
+    const allowedSet = new Set<string>();
+    reviewerPrograms?.forEach((program) => {
+      // Filter to programs in this community that user is milestone reviewer for
+      const programCommunityId = program.communitySlug || program.communityUID;
+      if (programCommunityId === communityId && program.isMilestoneReviewer) {
+        allowedSet.add(`${program.programId}_${program.chainID}`);
+      }
+    });
+
+    return allowedSet.size > 0 ? allowedSet : null;
+  }, [isAdmin, isContractOwner, reviewerPrograms, communityId]);
+
+  const isAuthorized = isConnected && isAuth && (isAdmin || isContractOwner || (allowedProgramIds && allowedProgramIds.size > 0));
 
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState("totalMilestones");
@@ -138,7 +165,7 @@ export const ReportMilestonePage = ({
   );
 
   const programOptions = useMemo(() => {
-    return grantPrograms
+    const allPrograms = grantPrograms
       .filter((program) => program.programId && program.chainID !== undefined)
       .map((program) => {
         const value = `${program.programId}_${program.chainID}`;
@@ -146,7 +173,14 @@ export const ReportMilestonePage = ({
         const label = title ? `${title} (${value})` : value;
         return { value, label };
       });
-  }, [grantPrograms]);
+
+    // Filter programs based on milestone reviewer permissions
+    if (allowedProgramIds) {
+      return allPrograms.filter((option) => allowedProgramIds.has(option.value));
+    }
+
+    return allPrograms;
+  }, [grantPrograms, allowedProgramIds]);
 
   const valueToLabelMap = useMemo(() => {
     return new Map(programOptions.map(({ value, label }) => [value, label]));
@@ -156,10 +190,43 @@ export const ReportMilestonePage = ({
     return new Map(programOptions.map(({ value, label }) => [label, value]));
   }, [programOptions]);
 
-  const normalizedProgramIds = useMemo(
-    () => selectedProgramIds ?? [],
-    [selectedProgramIds],
-  );
+  // Validate and sanitize program IDs from query parameters
+  const normalizedProgramIds = useMemo(() => {
+    const ids = selectedProgramIds ?? [];
+
+    if (ids.length === 0) {
+      return [];
+    }
+
+    // Validate all program IDs
+    const validation = validateProgramIdentifiers(ids);
+
+    // Log errors if any invalid IDs found
+    if (validation.errors.length > 0) {
+      console.error("Invalid program IDs detected:", validation.errors);
+      // Show a warning to the user about invalid IDs
+      validation.errors.forEach(({ id, error }) => {
+        console.warn(`Invalid program ID '${id}': ${error}`);
+      });
+    }
+
+    // Only return valid IDs (reconstruct from validated components)
+    return validation.validIds.map(({ programId, chainID }) => `${programId}_${chainID}`);
+  }, [selectedProgramIds]);
+
+  // Show warning when invalid program IDs are detected
+  useEffect(() => {
+    const ids = selectedProgramIds ?? [];
+    if (ids.length > 0) {
+      const validation = validateProgramIdentifiers(ids);
+      if (validation.errors.length > 0) {
+        toast.error(
+          `Invalid program IDs detected and filtered out. Please check the URL.`,
+          { duration: 5000 }
+        );
+      }
+    }
+  }, [selectedProgramIds]);
 
   const selectedProgramLabels = useMemo(() => {
     return normalizedProgramIds.map((id) => valueToLabelMap.get(id) ?? id);
