@@ -150,7 +150,7 @@ export const ReportMilestonePage = ({
     return allowedSet.size > 0 ? allowedSet : null;
   }, [isAdmin, isContractOwner, reviewerPrograms, communityId]);
 
-  const isAuthorized = isConnected && isAuth && (isAdmin || isContractOwner || (allowedProgramIds && allowedProgramIds.size > 0));
+  const isAuthorized = Boolean(isConnected && isAuth && (isAdmin || isContractOwner || (allowedProgramIds && allowedProgramIds.size > 0)));
 
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState("totalMilestones");
