@@ -199,4 +199,5 @@ export function rewriteHeadingsToLevel(
   };
 }
 
-export default { renderToHTML, renderToPlainText };
+const markdownUtils = { renderToHTML, renderToPlainText };
+export default markdownUtils;
