@@ -19,4 +19,14 @@ export const QUERY_KEYS = {
     MILESTONE: (programId: string, chainID: number) =>
       ["milestone-reviewers", programId, chainID] as const,
   },
+  CONTRACTS: {
+    VALIDATION: {
+      ALL: ["contract-validation"] as const,
+      VALIDATE: (params: {
+        address: string;
+        network: string;
+        excludeProjectId?: string;
+      }) => ["contract-validation", params] as const,
+    },
+  },
 };
