@@ -1,0 +1,46 @@
+/**
+ * List of supported blockchain networks for contract address linking
+ * These networks are available in the contract address dropdown
+ */
+export const SUPPORTED_CONTRACT_NETWORKS = [
+  "ethereum",
+  "arbitrum",
+  "starknet",
+  "optimism",
+  "polygon",
+  "bnb",
+  "avalanche_c",
+  "base",
+  "fantom",
+  "zksync",
+  "scroll",
+  "gnosis",
+  "linea",
+  "zora",
+  "blast",
+  "celo",
+  "tron",
+  "mantle",
+  "sei",
+  "sepolia",
+  "ronin",
+  "sonic",
+  "viction",
+  "flare",
+  "kaia",
+  "zkevm",
+  "mode",
+  "berachain",
+  "abstract",
+  "bob",
+  "degen",
+  "worldchain",
+  "nova",
+  "ink",
+  "b3",
+  "unichain",
+  "sophon",
+  "apechain",
+] as const;
+
+export type SupportedContractNetwork = typeof SUPPORTED_CONTRACT_NETWORKS[number];

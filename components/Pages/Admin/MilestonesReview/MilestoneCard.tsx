@@ -14,6 +14,7 @@ interface MilestoneCardProps {
   verificationComment: string;
   isVerifying: boolean;
   isSyncing: boolean;
+  canVerifyMilestones: boolean;
   onVerifyClick: (uid: string) => void;
   onCancelVerification: () => void;
   onVerificationCommentChange: (comment: string) => void;
@@ -28,6 +29,7 @@ export function MilestoneCard({
   verificationComment,
   isVerifying,
   isSyncing,
+  canVerifyMilestones,
   onVerifyClick,
   onCancelVerification,
   onVerificationCommentChange,
@@ -129,7 +131,8 @@ export function MilestoneCard({
                 </p>
               </div>
               {/* Show sync button if off-chain data is not synced */}
-              {milestone.fundingApplicationCompletion && !milestone.fundingApplicationCompletion.isVerified && (
+              {/* Only milestone reviewers, admins, and contract owners can sync */}
+              {canVerifyMilestones && milestone.fundingApplicationCompletion && !milestone.fundingApplicationCompletion.isVerified && (
                 <div className="mt-2">
                   <Button
                     onClick={() => onSyncVerification(milestone)}
@@ -145,7 +148,8 @@ export function MilestoneCard({
             </div>
           ) : (
             /* Show Verify Button for all non-verified milestones with completion (on-chain or off-chain) */
-            hasCompletion && !isVerified && (
+            /* Only milestone reviewers, admins, and contract owners can verify */
+            canVerifyMilestones && hasCompletion && !isVerified && (
               <div className="mb-3">
                 {verifyingMilestoneId === milestone.uid ? (
                   /* Verification Form */
