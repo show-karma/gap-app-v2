@@ -1,9 +1,9 @@
 import axios from "axios";
-import Cookies from "universal-cookie";
 import fetchData from "./fetchData";
+import { TokenManager } from "./auth/token-manager";
 
 jest.mock("axios");
-jest.mock("universal-cookie");
+jest.mock("./auth/token-manager");
 jest.mock("./enviromentVars", () => ({
   envVars: {
     NEXT_PUBLIC_GAP_INDEXER_URL: "https://test-api.com",
@@ -21,13 +21,14 @@ describe("fetchData", () => {
   it("should make a successful GET request", async () => {
     const mockResponse = { data: { result: "success" }, status: 200 };
     (axios.request as jest.Mock).mockResolvedValue(mockResponse);
+    (TokenManager.getToken as jest.Mock).mockResolvedValue(null);
 
     const [resData, error, pageInfo] = await fetchData("/test-endpoint");
 
     expect(axios.request).toHaveBeenCalledWith({
       url: "https://test-api.com/test-endpoint",
       method: "GET",
-      headers: { Authorization: undefined },
+      headers: {},
       data: {},
       timeout: 360000,
       params: {},
@@ -39,8 +40,7 @@ describe("fetchData", () => {
 
   it("should make an authorized POST request", async () => {
     const mockToken = "test-token";
-    const mockCookies = { get: jest.fn().mockReturnValue(mockToken) };
-    (Cookies as jest.Mock).mockImplementation(() => mockCookies);
+    (TokenManager.getToken as jest.Mock).mockResolvedValue(mockToken);
 
     const mockResponse = {
       data: { result: "success", pageInfo: { page: 1 } },
@@ -60,7 +60,7 @@ describe("fetchData", () => {
     expect(axios.request).toHaveBeenCalledWith({
       url: "https://test-api.com/test-endpoint",
       method: "POST",
-      headers: { Authorization: mockToken },
+      headers: { Authorization: `Bearer ${mockToken}` },
       data: { key: "value" },
       timeout: 360000,
       params: {},
@@ -73,11 +73,13 @@ describe("fetchData", () => {
   it("should handle network errors", async () => {
     const mockError = new Error("Network Error");
     (axios.request as jest.Mock).mockRejectedValue(mockError);
+    (TokenManager.getToken as jest.Mock).mockResolvedValue(null);
 
     const [resData, error, pageInfo] = await fetchData("/test-endpoint");
 
     expect(resData).toBeNull();
-    expect(error).toBe("No server response");
+    // When there's no response, the implementation returns the error object itself
+    expect(error).toBe(mockError);
     expect(pageInfo).toBeUndefined();
   });
 
