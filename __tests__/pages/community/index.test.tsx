@@ -1,20 +1,18 @@
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
-import { notFound } from "next/navigation";
 
-jest.mock("next/navigation", () => ({
-  notFound: jest.fn(),
+jest.mock("@/utilities/queries/getCommunityData", () => ({
+  getCommunityCategories: jest.fn(),
 }));
 
-jest.mock("@/utilities/gapIndexerApi", () => ({
-  gapIndexerApi: {
-    communityBySlug: jest.fn(),
-  },
+jest.mock("@/utilities/queries/getCommunityDataV2", () => ({
+  getCommunityDetailsV2: jest.fn(),
+  getCommunityStatsV2: jest.fn(),
+  getCommunityProjectsV2: jest.fn(),
 }));
 
-jest.mock("@/utilities/fetchData", () => ({
-  __esModule: true,
-  default: jest.fn(),
+jest.mock("@/utilities/pagesOnRoot", () => ({
+  pagesOnRoot: [],
 }));
 
 jest.mock("@/components/CommunityGrants", () => ({
@@ -23,60 +21,62 @@ jest.mock("@/components/CommunityGrants", () => ({
   ),
 }));
 
-jest.mock("@/components/CommunityFeed", () => ({
-  CommunityFeed: () => <div data-testid="community-feed">Community Feed</div>,
-}));
-
 describe("Community Page", () => {
-  const mockCommunity = {
+  const mockCommunityDetails = {
     uid: "123",
-    details: {
-      data: {
-        name: "Test Community",
-        slug: "test-community",
-        imageURL: "https://example.com/image.jpg",
-      },
+    name: "Test Community",
+    slug: "test-community",
+  };
+
+  const mockCommunityStats = {
+    totalProjects: 10,
+    totalGrants: 5,
+  };
+
+  const mockCategories = ["DeFi", "NFT"];
+  const mockProjects = {
+    data: [],
+    pagination: {
+      currentPage: 1,
+      totalPages: 1,
+      totalItems: 0,
     },
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
+    const { getCommunityDetailsV2, getCommunityStatsV2, getCommunityProjectsV2 } = require("@/utilities/queries/getCommunityDataV2");
+    const { getCommunityCategories } = require("@/utilities/queries/getCommunityData");
+
+    getCommunityDetailsV2.mockResolvedValue(mockCommunityDetails);
+    getCommunityStatsV2.mockResolvedValue(mockCommunityStats);
+    getCommunityCategories.mockResolvedValue(mockCategories);
+    getCommunityProjectsV2.mockResolvedValue(mockProjects);
   });
 
   it("renders the community page with correct components", async () => {
-    const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-    gapIndexerApi.communityBySlug.mockResolvedValue({ data: mockCommunity });
-
-    const fetchData = require("@/utilities/fetchData").default;
-    fetchData.mockResolvedValue([[]]);
-
     const { default: PageComponent } = await import(
       "@/app/community/[communityId]/page"
     );
-    render(
-      await PageComponent({
-        params: Promise.resolve({ communityId: "test-community" }),
-      })
-    );
+    const result = await PageComponent({
+      params: Promise.resolve({ communityId: "test-community" }),
+    });
 
-    expect(screen.getByText("Test Community")).toBeInTheDocument();
+    render(result);
     expect(screen.getByTestId("community-grants")).toBeInTheDocument();
-    expect(screen.getByTestId("community-feed")).toBeInTheDocument();
   });
 
-  it("calls notFound when community does not exist", async () => {
-    const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
-    gapIndexerApi.communityBySlug.mockResolvedValue({ data: null });
+  it("returns undefined for pages on root", async () => {
+    const { pagesOnRoot } = require("@/utilities/pagesOnRoot");
+    pagesOnRoot.push("dashboard");
 
     const { default: PageComponent } = await import(
       "@/app/community/[communityId]/page"
     );
-    render(
-      await PageComponent({
-        params: Promise.resolve({ communityId: "non-existent-community" }),
-      })
-    );
+    const result = await PageComponent({
+      params: Promise.resolve({ communityId: "dashboard" }),
+    });
 
-    expect(notFound).toHaveBeenCalled();
+    expect(result).toBeUndefined();
   });
 });

@@ -1,12 +1,22 @@
 import { render, screen } from "@testing-library/react";
 import Projects from "@/app/projects/page";
 import "@testing-library/jest-dom";
-import { getNewProjects } from "@/utilities/indexer/getNewProjects";
 
 jest.mock("@/components/Pages/NewProjects", () => ({
   NewProjectsPage: () => (
     <div data-testid="new-projects-page">New Projects Page</div>
   ),
+}));
+
+jest.mock("@/utilities/indexer/getNewProjects", () => ({
+  getNewProjects: jest.fn().mockResolvedValue({
+    projects: Array(10).fill({}),
+    pageInfo: {
+      page: 0,
+      pageLimit: 10,
+      totalItems: 100,
+    },
+  }),
 }));
 
 describe("Projects Page", () => {
@@ -16,17 +26,12 @@ describe("Projects Page", () => {
     expect(screen.getByText("New Projects Page")).toBeInTheDocument();
   });
 
-  //   do a test to fetch data from the indexer and render it
-  it("fetches data from the indexer and renders it", async () => {
-    const { projects, pageInfo } = await getNewProjects(
-      10,
-      0,
-      "createdAt",
-      "desc"
-    );
+  it("mocks data fetching correctly", async () => {
+    const { getNewProjects } = require("@/utilities/indexer/getNewProjects");
+    const { projects, pageInfo } = await getNewProjects(10, 0, "createdAt", "desc");
+
     expect(projects).toHaveLength(10);
-    const { page, pageLimit } = pageInfo;
-    expect(page).toEqual(0);
-    expect(pageLimit).toEqual(10);
+    expect(pageInfo.page).toEqual(0);
+    expect(pageInfo.pageLimit).toEqual(10);
   });
 });

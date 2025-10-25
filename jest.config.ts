@@ -11,18 +11,20 @@ const config: Config = {
   clearMocks: true,
 
   // Indicates whether the coverage information should be collected while executing the test
-  collectCoverage: true,
+  // DISABLED by default - use --coverage flag to enable
+  collectCoverage: false,
 
   // The directory where Jest should output its coverage files
   coverageDirectory: "coverage",
 
   // Indicates which provider should be used to instrument code for coverage
   coverageProvider: "v8",
-  collectCoverageFrom: ["components/**/*.{ts,tsx}"],
+
   moduleDirectories: ["node_modules", "<rootDir>"],
+
   // The test environment that will be used for testing
-  // testEnvironment: "jsdom",
   testEnvironment: "jest-environment-jsdom",
+
   moduleNameMapper: {
     "^@/app/(.*)$": "<rootDir>/app/$1",
     "^@/components/(.*)$": "<rootDir>/components/$1",
@@ -32,15 +34,21 @@ const config: Config = {
     "^@/store/(.*)$": "<rootDir>/store/$1",
     "^@/types/(.*)$": "<rootDir>/types/$1",
     "^@/utilities/(.*)$": "<rootDir>/utilities/$1",
+    "^@/constants/(.*)$": "<rootDir>/constants/$1",
+    "^@/services/(.*)$": "<rootDir>/services/$1",
   },
+
+  // Transform ESM modules that need to be compiled for Jest
   transformIgnorePatterns: [
-    "/node_modules/",
-    "!node_modules/",
-    "/node_modules/(?!@show-karma/karma-gap-sdk)",
+    "/node_modules/(?!(@show-karma|wagmi|@wagmi|viem|@privy-io)/)",
   ],
+
   globalSetup: "./tests/global.js",
   setupFilesAfterEnv: ["./tests/setup.js"],
   testMatch: ["**/?(*.)+(spec|test).[jt]s?(x)"],
+
+  // Reduce memory usage
+  maxWorkers: "50%",
 };
 
 const createJestConfig = nextJest({

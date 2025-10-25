@@ -576,7 +576,7 @@ describe("useDonationCart", () => {
       expect(payment).toBeUndefined();
     });
 
-    it("should return undefined if payments not updated", () => {
+    it("should auto-update payments when amount and token are set", () => {
       const { result } = renderHook(() => useDonationCart());
 
       act(() => {
@@ -587,7 +587,11 @@ describe("useDonationCart", () => {
 
       const payment = result.current.getPaymentForProject(mockItem.uid);
 
-      expect(payment).toBeUndefined();
+      // Payments are auto-updated when setAmount or setSelectedToken is called
+      expect(payment).toBeDefined();
+      expect(payment?.projectId).toEqual(mockItem.uid);
+      expect(payment?.amount).toEqual("100");
+      expect(payment?.token).toEqual(mockToken);
     });
   });
 
