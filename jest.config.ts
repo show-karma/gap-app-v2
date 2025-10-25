@@ -49,6 +49,16 @@ const config: Config = {
 
   // Reduce memory usage
   maxWorkers: "50%",
+
+  // Coverage thresholds (commented out - uncomment to enforce)
+  // coverageThreshold: {
+  //   global: {
+  //     branches: 50,
+  //     functions: 50,
+  //     lines: 50,
+  //     statements: 50,
+  //   },
+  // },
 };
 
 const createJestConfig = nextJest({
