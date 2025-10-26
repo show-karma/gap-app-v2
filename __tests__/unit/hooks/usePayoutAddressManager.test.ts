@@ -1,5 +1,5 @@
 import { renderHook, waitFor } from "@testing-library/react";
-import { usePayoutAddressManager } from "../usePayoutAddressManager";
+import { usePayoutAddressManager } from "@/hooks/donation/usePayoutAddressManager";
 import toast from "react-hot-toast";
 import { isAddress } from "viem";
 

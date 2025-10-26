@@ -1,9 +1,9 @@
-import { getNewProjects } from "./getNewProjects";
-import fetchData from "../fetchData";
+import { getNewProjects } from "@/utilities/indexer/getNewProjects";
+import fetchData from "@/utilities/fetchData";
 import { errorManager } from "@/components/Utilities/errorManager";
 import "@testing-library/jest-dom";
 
-jest.mock("../fetchData");
+jest.mock("@/utilities/fetchData");
 jest.mock("@/components/Utilities/errorManager");
 
 describe("getNewProjects", () => {

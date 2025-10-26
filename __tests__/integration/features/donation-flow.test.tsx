@@ -40,7 +40,7 @@ import {
   setupLocalStorageMock,
   setupMockPublicClient,
   setupMockWalletClient,
-} from "./test-utils";
+} from "../test-utils";
 
 // Mock dependencies
 jest.mock("wagmi", () => ({

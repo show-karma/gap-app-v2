@@ -1,4 +1,4 @@
-import { applicationCommentsService } from '../application-comments.service';
+import { applicationCommentsService } from '@/services/application-comments.service';
 import { TokenManager } from '@/utilities/auth/token-manager';
 
 // Mock the dependencies

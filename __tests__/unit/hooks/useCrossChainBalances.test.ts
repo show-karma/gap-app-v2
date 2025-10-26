@@ -1,5 +1,5 @@
 import { renderHook, waitFor } from "@testing-library/react";
-import { useCrossChainBalances } from "../useCrossChainBalances";
+import { useCrossChainBalances } from "@/hooks/donation/useCrossChainBalances";
 import type { SupportedToken } from "@/constants/supportedTokens";
 import * as wagmi from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";

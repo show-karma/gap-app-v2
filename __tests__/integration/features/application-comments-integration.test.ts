@@ -2,7 +2,7 @@
  * Integration test to verify JWT authentication in comment functionality
  * This test simulates the real-world usage of the comment service with authentication
  */
-import { applicationCommentsService } from '../application-comments.service';
+import { applicationCommentsService } from '@/services/application-comments.service';
 import { TokenManager } from '@/utilities/auth/token-manager';
 
 // Mock dependencies

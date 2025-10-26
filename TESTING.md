@@ -5,6 +5,7 @@ This document provides guidelines and best practices for writing and running tes
 ## Table of Contents
 
 - [Quick Start](#quick-start)
+- [Test Organization](#test-organization)
 - [Running Tests](#running-tests)
 - [Writing Tests](#writing-tests)
 - [Test Utilities](#test-utilities)
@@ -20,7 +21,7 @@ This document provides guidelines and best practices for writing and running tes
 # Install dependencies
 pnpm install
 
-# Run all tests
+# Run all tests (~20 seconds)
 pnpm test
 
 # Run tests in watch mode
@@ -29,11 +30,17 @@ pnpm test:watch
 # Run tests with coverage
 pnpm test:coverage
 
-# Run only unit tests (hooks, stores, utilities, services)
+# Run only unit tests (~2-3 seconds) ⚡
 pnpm test:unit
 
-# Run only integration tests
+# Run only integration tests (~15-18 seconds)
 pnpm test:integration
+
+# Run only page tests
+pnpm test:pages
+
+# Run unit tests with minimal resources (fastest)
+pnpm test:fast
 
 # Debug tests (sequential, detect open handles, log heap usage)
 pnpm test:debug
@@ -41,18 +48,77 @@ pnpm test:debug
 
 ---
 
+## Test Organization
+
+Tests are organized into two main categories:
+
+### Unit Tests (`__tests__/unit/`)
+
+Fast, isolated tests for individual components of the application:
+
+```
+__tests__/unit/
+├── hooks/          # React hook tests (4 files)
+├── stores/         # State management tests (1 file)
+├── utilities/      # Utility function tests (4 files)
+└── services/       # Service layer tests (1 file)
+```
+
+**Characteristics:**
+- ⚡ Fast execution (2-3 seconds for all unit tests)
+- 🔒 Fully isolated (no dependencies between tests)
+- 🎯 Test one thing at a time
+- ✅ Run frequently during development
+
+### Integration Tests (`__tests__/integration/`)
+
+Tests that verify multiple components working together:
+
+```
+__tests__/integration/
+├── pages/          # Full page rendering tests (9 files)
+├── components/     # Complex component tests (2 files)
+└── features/       # Feature workflow tests (2 files)
+```
+
+**Characteristics:**
+- 🐢 Slower execution (15-18 seconds)
+- 🔗 Test multiple components together
+- 🎭 Verify realistic user scenarios
+- ✅ Run before commits/PRs
+
+---
+
 ## Running Tests
 
 ### Available Scripts
 
-| Script | Description | Use Case |
-|--------|-------------|----------|
-| `pnpm test` | Run all tests with optimized settings | CI/CD, full test suite |
-| `pnpm test:watch` | Run tests in watch mode | Development |
-| `pnpm test:coverage` | Run tests with coverage report | Quality checks |
-| `pnpm test:unit` | Run only unit tests | Fast feedback loop |
-| `pnpm test:integration` | Run only integration tests | E2E verification |
-| `pnpm test:debug` | Run with debugging flags | Troubleshooting |
+| Script | Description | Time | Use Case |
+|--------|-------------|------|----------|
+| `pnpm test` | Run all tests (unit + integration) | ~20s | CI/CD, pre-commit |
+| `pnpm test:unit` | Run only unit tests | ~2-3s | During development ⚡ |
+| `pnpm test:integration` | Run only integration tests | ~15-18s | Before commits |
+| `pnpm test:pages` | Run only page tests | ~10-12s | UI changes |
+| `pnpm test:fast` | Unit tests with minimal resources | ~2s | Quick validation |
+| `pnpm test:watch` | Run tests in watch mode | - | Active development |
+| `pnpm test:coverage` | Run with coverage report | ~25s | Quality checks |
+| `pnpm test:debug` | Debug mode with detailed logging | - | Troubleshooting |
+
+### Recommended Workflow
+
+```bash
+# During active development (after each change)
+pnpm test:fast           # 2 seconds - instant feedback
+
+# Before committing (verify nothing broke)
+pnpm test:unit           # 3 seconds - all unit tests
+
+# Before pushing (full verification)
+pnpm test                # 20 seconds - everything
+
+# When debugging test failures
+pnpm test:debug          # Detailed output
+```
 
 ### Test Configuration
 
@@ -72,16 +138,34 @@ All test scripts include `NODE_OPTIONS=--max-old-space-size=4096` to prevent out
 
 ## Writing Tests
 
-### Test File Naming
+### Test File Naming and Location
 
-- Unit tests: `<filename>.test.ts` or `<filename>.test.tsx`
-- Integration tests: `<feature>.integration.test.ts`
-- Test files should be colocated with the code they test:
-  - `hooks/__tests__/`
-  - `store/__tests__/`
-  - `utilities/__tests__/`
-  - `services/__tests__/`
-  - `__tests__/` (for pages and components)
+All test files use the `.test.ts` or `.test.tsx` extension.
+
+**Unit Tests** go in `__tests__/unit/`:
+- `__tests__/unit/hooks/` - Hook tests
+- `__tests__/unit/stores/` - State management tests
+- `__tests__/unit/utilities/` - Utility function tests
+- `__tests__/unit/services/` - Service layer tests
+
+**Integration Tests** go in `__tests__/integration/`:
+- `__tests__/integration/pages/` - Full page rendering tests
+- `__tests__/integration/components/` - Complex component tests
+- `__tests__/integration/features/` - Feature workflow tests
+
+### When to Write Unit vs Integration Tests
+
+**Write a Unit Test when:**
+- Testing a single function, hook, or class
+- No external dependencies (or all dependencies mocked)
+- Should execute in milliseconds
+- Example: Testing `useDonationCart` hook logic
+
+**Write an Integration Test when:**
+- Testing multiple components working together
+- Testing full page rendering
+- Testing complete user workflows
+- Example: Testing donation checkout flow from cart to confirmation
 
 ### Basic Test Structure
 

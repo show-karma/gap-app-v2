@@ -1,5 +1,5 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
-import { useDonationCart, DonationCartItem, DonationPayment } from "../donationCart";
+import { useDonationCart, DonationCartItem, DonationPayment } from "@/store/donationCart";
 import { SupportedToken } from "@/constants/supportedTokens";
 
 // Mock the zustand persist middleware

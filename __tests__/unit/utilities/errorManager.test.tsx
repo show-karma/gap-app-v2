@@ -1,4 +1,4 @@
-import { errorManager } from "./errorManager";
+import { errorManager } from "@/components/Utilities/errorManager";
 import * as Sentry from "@sentry/nextjs";
 
 jest.mock("@sentry/nextjs");

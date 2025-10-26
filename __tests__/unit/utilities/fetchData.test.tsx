@@ -1,15 +1,15 @@
 import axios from "axios";
-import fetchData from "./fetchData";
-import { TokenManager } from "./auth/token-manager";
+import fetchData from "@/utilities/fetchData";
+import { TokenManager } from "@/utilities/auth/token-manager";
 
 jest.mock("axios");
-jest.mock("./auth/token-manager");
-jest.mock("./enviromentVars", () => ({
+jest.mock("@/utilities/auth/token-manager");
+jest.mock("@/utilities/enviromentVars", () => ({
   envVars: {
     NEXT_PUBLIC_GAP_INDEXER_URL: "https://test-api.com",
   },
 }));
-jest.mock("./sanitize", () => ({
+jest.mock("@/utilities/sanitize", () => ({
   sanitizeObject: jest.fn((data) => data),
 }));
 
