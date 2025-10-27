@@ -2,7 +2,7 @@
 
 import { LinkIcon } from "@heroicons/react/24/outline";
 import type { FC } from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { useContractAddressPairs } from "@/hooks/useContractAddressPairs";
 import { useContractAddressSave } from "@/hooks/useContractAddressSave";
@@ -10,6 +10,7 @@ import { useContractAddressValidation } from "@/hooks/useContractAddressValidati
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { SUPPORTED_CONTRACT_NETWORKS } from "@/constants/contract-networks";
+import { validateNetworkAddressPair } from "@/schemas/contractAddress";
 import { ContractAddressDialog } from "./ContractAddressDialog";
 import { ContractAddressList } from "./ContractAddressList";
 import type { LinkContractAddressesButtonProps } from "./types";
@@ -95,6 +96,36 @@ export const LinkContractAddressButton: FC<
     }
   }, [buttonElement, onClose]);
 
+  // Check if there are any validation errors or incomplete pairs
+  const hasValidationErrors = useMemo(() => {
+    // Check if there are any pairs with invalid formats
+    const hasFormatErrors = pairs.some((pair) => {
+      // Skip empty pairs (they will be filtered out on save)
+      if (!pair.address.trim() && !pair.network.trim()) {
+        return false;
+      }
+
+      // Check if either field is missing
+      if (!pair.network.trim() || !pair.address.trim()) {
+        return true;
+      }
+
+      // Validate the format
+      const validation = validateNetworkAddressPair(pair.network, pair.address);
+      return !validation.isValid;
+    });
+
+    // Check if there are backend validation errors
+    const hasBackendErrors = invalidContracts.size > 0;
+
+    // Check if all pairs are empty (at least one valid pair required)
+    const allPairsEmpty = pairs.every(
+      (pair) => !pair.address.trim() && !pair.network.trim()
+    );
+
+    return hasFormatErrors || hasBackendErrors || allPairsEmpty;
+  }, [pairs, invalidContracts]);
+
   if (!isAuthorized) {
     return null;
   }
@@ -130,7 +161,7 @@ export const LinkContractAddressButton: FC<
         <div className="flex flex-row gap-4 mt-10 justify-end">
           <Button
             onClick={handleSave}
-            disabled={isLoading}
+            disabled={isLoading || hasValidationErrors}
             className="bg-primary-500 text-white hover:bg-primary-600"
           >
             {isLoading ? "Saving..." : "Save All"}
