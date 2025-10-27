@@ -21,3 +21,21 @@ export async function fetchApplicationByProjectUID(
     throw error;
   }
 }
+
+export async function deleteApplication(
+  referenceNumber: string
+): Promise<void> {
+  try {
+    await apiClient.delete(INDEXER.V2.APPLICATIONS.DELETE(referenceNumber));
+  } catch (error: any) {
+    // Log error with context before re-throwing for hook to handle
+    console.error('Service layer: Failed to delete application', {
+      referenceNumber,
+      status: error?.response?.status,
+      statusText: error?.response?.statusText,
+      errorMessage: error?.response?.data?.message || error?.message,
+      timestamp: new Date().toISOString()
+    });
+    throw error;
+  }
+}
