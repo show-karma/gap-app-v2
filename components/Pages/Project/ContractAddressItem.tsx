@@ -60,8 +60,10 @@ export const ContractAddressItem = memo<ContractAddressItemProps>(
     }, [pair.address]);
 
     // Combined validation state (format error or backend validation error)
-    const hasError = isInvalid || formatError !== null;
-    const errorMessage = formatError || (invalidInfo?.errorMessage || invalidInfo?.projectName);
+    const hasError = useMemo(
+      () => isInvalid || formatError !== null,
+      [isInvalid, formatError]
+    );
 
     return (
       <div className="flex flex-col space-y-2">
