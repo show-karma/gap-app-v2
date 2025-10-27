@@ -42,7 +42,7 @@ export default function PrivyProviderWrapper({
           logo: "https://gap.karmahq.xyz/logo/karma-gap-logo.png",
           landingHeader: "Connect to Karma GAP",
           showWalletLoginFirst: false,
-          walletList: ['detected_wallets', 'metamask', 'wallet_connect_qr', 'rabby_wallet', 'wallet_connect']
+          walletList: ['detected_wallets', 'metamask', 'wallet_connect_qr', 'rainbow', 'rabby_wallet', 'wallet_connect']
         },
         loginMethods: ["wallet"],
         defaultChain: defaultChain,
