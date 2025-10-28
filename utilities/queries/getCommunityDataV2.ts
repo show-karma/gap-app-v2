@@ -1,5 +1,4 @@
 import { cache } from "react";
-import { notFound } from "next/navigation";
 import { CommunityDetailsV2, CommunityStatsV2, CommunityProjectsV2Response } from "@/types/community";
 import { SortByOptions, StatusOptions } from "@/types/filters";
 import fetchData from "@/utilities/fetchData";
@@ -7,20 +6,20 @@ import { zeroUID } from "@/utilities/commons";
 import { INDEXER } from "@/utilities/indexer";
 
 export const getCommunityDetailsV2 = cache(
-  async (slug: string): Promise<CommunityDetailsV2> => {
+  async (slug: string): Promise<CommunityDetailsV2 | null> => {
     try {
       const [data] = await fetchData(
         INDEXER.COMMUNITY.V2.GET(slug)
       );
 
       if (!data || data?.uid === zeroUID || !data?.details?.name) {
-        notFound();
+        return null;
       }
-      
+
       return data as CommunityDetailsV2;
     } catch (error) {
       console.log("Not found community", slug, error);
-      notFound();
+      return null;
     }
   }
 );
