@@ -5,13 +5,11 @@ import { ReadMore } from "@/utilities/ReadMore";
 import { cn } from "@/utilities/tailwind";
 import { ActivityStatusHeader } from "@/components/Shared/ActivityCard/ActivityStatusHeader";
 import { ActivityAttribution } from "@/components/Shared/ActivityCard/ActivityAttribution";
+import { containerClassName } from "@/components/Shared/ActivityCard";
 import type {
   MilestoneDeliverable,
   MilestoneIndicator,
 } from "@/types/community-updates";
-
-const containerClassName =
-  "border bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-400 rounded-xl gap-0 flex flex-col items-start justify-start";
 
 interface MilestoneCompletionInfoProps {
   completionReason?: string;

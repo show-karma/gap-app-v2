@@ -9,8 +9,8 @@ import { Listbox, Transition } from "@headlessui/react";
 import { cn } from "@/utilities/tailwind";
 import { CommunityMilestoneCard } from "@/components/Pages/Community/Updates/CommunityMilestoneCard";
 import pluralize from "pluralize";
-import type { CommunityMilestoneUpdate } from "@/types/community-updates";
 import { useCommunityProjectUpdates } from "@/hooks/useCommunityProjectUpdates";
+import { sortCommunityMilestones } from "@/utilities/sorting/communityMilestoneSort";
 
 type FilterOption = "all" | "pending" | "completed";
 
@@ -45,51 +45,8 @@ export default function CommunityUpdatesPage() {
   // Memoize sorted data to prevent unnecessary recalculations
   const sortedRawData = useMemo(() => {
     if (!data?.payload) return [];
-    
-    return [...data.payload].sort(
-      (a: CommunityMilestoneUpdate, b: CommunityMilestoneUpdate) => {
-        if (selectedFilter === "all") {
-          // For "all" filter: pending first (by ascending due date), then completed (by descending completion date)
-          const aCompleted = a.status === "completed";
-          const bCompleted = b.status === "completed";
-
-          if (aCompleted !== bCompleted) {
-            return aCompleted ? 1 : -1; // Pending first
-          }
-
-          if (!aCompleted && !bCompleted) {
-            // Both pending: sort by ascending due date
-            const aDueDate = a.details.dueDate
-              ? new Date(a.details.dueDate).getTime()
-              : Number.MAX_SAFE_INTEGER;
-            const bDueDate = b.details.dueDate
-              ? new Date(b.details.dueDate).getTime()
-              : Number.MAX_SAFE_INTEGER;
-            return aDueDate - bDueDate;
-          }
-
-          // Both completed: sort by descending completion date
-          return (
-            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-          );
-        } else if (selectedFilter === "pending") {
-          // Sort by earliest upcoming due date (ascending)
-          const aDueDate = a.details.dueDate
-            ? new Date(a.details.dueDate).getTime()
-            : Number.MAX_SAFE_INTEGER;
-          const bDueDate = b.details.dueDate
-            ? new Date(b.details.dueDate).getTime()
-            : Number.MAX_SAFE_INTEGER;
-          return aDueDate - bDueDate;
-        } else {
-          // Completed: sort by most recent completion date (descending)
-          return (
-            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-          );
-        }
-      }
-    );
-  }, [data?.payload, selectedFilter]);
+    return sortCommunityMilestones(data.payload, selectedFilter, communityId);
+  }, [data?.payload, selectedFilter, communityId]);
 
   // Calculate total pages
   const totalPages = data ? Math.ceil((data.pagination.totalCount || 0) / ITEMS_PER_PAGE) : 0;
