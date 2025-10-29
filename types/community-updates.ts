@@ -1,14 +1,3 @@
-export interface MilestoneDeliverable {
-  name: string;
-  description: string;
-  proof: string;
-}
-
-export interface MilestoneIndicator {
-  indicatorId: string;
-  name: string;
-}
-
 export interface MilestoneDetails {
   title: string;
   description: string;
