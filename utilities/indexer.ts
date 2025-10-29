@@ -296,8 +296,8 @@ export const INDEXER = {
           `/category/${categoryId}/impact-indicators`,
       },
     },
-    MILESTONES: (communityIdOrSlug: string) =>
-      `/v2/communities/${communityIdOrSlug}/milestones`,
+    PROJECT_UPDATES: (communityIdOrSlug: string) =>
+      `/v2/communities/${communityIdOrSlug}/project-updates`,
     CONFIG: {
       GET: (slug: string) => `/v2/community-configs/${slug}`,
       UPDATE: (slug: string) => `/v2/community-configs/${slug}`,

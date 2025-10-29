@@ -1,53 +1,18 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useMemo, useCallback, Fragment } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { ActivityList } from "@/components/Shared/ActivityList";
-import { Button } from "@/components/Utilities/Button";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
-import { envVars } from "@/utilities/enviromentVars";
 import { SimplePagination } from "@/components/Pages/Community/Updates/SimplePagination";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Listbox, Transition } from "@headlessui/react";
-import { Fragment } from "react";
 import { cn } from "@/utilities/tailwind";
-import Link from "next/link";
 import { CommunityMilestoneCard } from "@/components/Pages/Community/Updates/CommunityMilestoneCard";
-import { INDEXER } from "@/utilities/indexer";
 import pluralize from "pluralize";
+import type { CommunityMilestoneUpdate } from "@/types/community-updates";
+import { useCommunityProjectUpdates } from "@/hooks/useCommunityProjectUpdates";
 
 type FilterOption = "all" | "pending" | "completed";
-
-interface CommunityMilestoneUpdate {
-  uid: string;
-  communityUID: string;
-  status: "pending" | "completed";
-  details: {
-    title: string;
-    description: string;
-    dueDate: string | null;
-  };
-  project: {
-    uid: string;
-    details: {
-      data: {
-        title: string;
-        slug: string;
-      };
-    };
-  };
-  grant?: {
-    uid: string;
-    details: {
-      data: {
-        title: string;
-      };
-    };
-  };
-  createdAt: string;
-  updatedAt: string;
-}
 
 const ITEMS_PER_PAGE = 25;
 
@@ -70,39 +35,12 @@ export default function CommunityUpdatesPage() {
   const selectedFilter = isValidFilter(filterFromUrl) ? filterFromUrl : 'all';
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Fetch community updates from API
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["communityUpdates", communityId, selectedFilter, currentPage],
-    queryFn: async () => {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        limit: ITEMS_PER_PAGE.toString(),
-      });
-
-      if (selectedFilter !== "all") {
-        params.append("status", selectedFilter);
-      }
-
-      const response = await fetch(
-        `${
-          envVars.NEXT_PUBLIC_GAP_INDEXER_URL
-        }${INDEXER.COMMUNITY.MILESTONES(communityId)}?${params.toString()}`
-      );
-
-      if (!response.ok) {
-        throw new Error(
-          `Failed to fetch community updates: ${response.statusText}`
-        );
-      }
-
-      const data = await response.json();
-
-      // Data now includes project and grant details, no additional fetching needed
-      return data;
-    },
-    enabled: !!communityId,
+  // Fetch community updates from API using custom hook
+  const { data, isLoading, error } = useCommunityProjectUpdates(communityId, {
+    page: currentPage,
+    limit: ITEMS_PER_PAGE,
+    status: selectedFilter,
   });
-  // No transformation needed since we're using the raw data directly
 
   // Memoize sorted data to prevent unnecessary recalculations
   const sortedRawData = useMemo(() => {

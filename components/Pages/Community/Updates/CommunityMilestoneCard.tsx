@@ -1,4 +1,4 @@
-import { FC, memo } from "react";
+import { FC, memo, useMemo } from "react";
 import Link from "next/link";
 import { cn } from "@/utilities/tailwind";
 import { formatDate } from "@/utilities/formatDate";
@@ -6,37 +6,11 @@ import { ReadMore } from "@/utilities/ReadMore";
 import { CheckCircleIcon, ClockIcon } from "@heroicons/react/24/outline";
 import { ActivityAttribution } from "@/components/Shared/ActivityCard/ActivityAttribution";
 import { containerClassName } from "@/components/Shared/ActivityCard";
+import { MilestoneCompletionInfo } from "./MilestoneCompletionInfo";
+import type { CommunityMilestoneUpdate } from "@/types/community-updates";
 
 interface CommunityMilestoneCardProps {
-  milestone: {
-    uid: string;
-    communityUID: string;
-    status: "pending" | "completed";
-    details: {
-      title: string;
-      description: string;
-      dueDate: string | null;
-    };
-    project: {
-      uid: string;
-      details: {
-        data: {
-          title: string;
-          slug: string;
-        };
-      };
-    };
-    grant?: {
-      uid: string;
-      details: {
-        data: {
-          title: string;
-        };
-      };
-    };
-    createdAt: string;
-    updatedAt: string;
-  };
+  milestone: CommunityMilestoneUpdate;
 }
 
 const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({
@@ -48,8 +22,21 @@ const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({
   const grantTitle =
     milestone.grant?.details?.data?.title || "Project Milestone";
 
+  const hasCompletionData = useMemo(
+    () =>
+      milestone.details.completionReason ||
+      milestone.details.deliverables?.length ||
+      milestone.details.indicators?.length,
+    [
+      milestone.details.completionReason,
+      milestone.details.deliverables,
+      milestone.details.indicators,
+    ]
+  );
+
   return (
-    <div className={cn(containerClassName, "flex flex-col w-full")}>
+    <div className="flex flex-col w-full gap-2.5 md:gap-5">
+      <div className={cn(containerClassName, "flex flex-col w-full")}>
       <div className="flex flex-col gap-3 w-full px-5 py-4">
         {/* Project and Grant Info */}
         <div className="flex flex-col gap-1 text-sm">
@@ -125,14 +112,26 @@ const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({
         )}
       </div>
 
-      {/* Attribution */}
-      {(isCompleted ? milestone?.updatedAt : milestone?.createdAt) ? (
-        <ActivityAttribution
-          date={isCompleted ? milestone?.updatedAt : milestone?.createdAt}
-          attester=""
-          isCompleted={isCompleted}
-        />
-      ) : null}
+        {/* Attribution */}
+        {(isCompleted ? milestone?.updatedAt : milestone?.createdAt) ? (
+          <ActivityAttribution
+            date={isCompleted ? milestone?.updatedAt : milestone?.createdAt}
+            attester=""
+            isCompleted={isCompleted}
+          />
+        ) : null}
+      </div>
+
+      {isCompleted && hasCompletionData && (
+        <div className="flex flex-col w-full pl-8 md:pl-[120px]">
+          <MilestoneCompletionInfo
+            completionReason={milestone.details.completionReason}
+            deliverables={milestone.details.deliverables}
+            indicators={milestone.details.indicators}
+            completionDate={milestone.details.completionDate}
+          />
+        </div>
+      )}
     </div>
   );
 };
