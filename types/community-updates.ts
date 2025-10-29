@@ -15,8 +15,7 @@ export interface MilestoneDetails {
   dueDate: string | null;
   completionDate?: string;
   completionReason?: string;
-  deliverables?: MilestoneDeliverable[];
-  indicators?: MilestoneIndicator[];
+  completedBy?: string;
 }
 
 export interface ProjectInfo {
