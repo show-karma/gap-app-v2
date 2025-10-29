@@ -29,4 +29,12 @@ export const QUERY_KEYS = {
       }) => ["contract-validation", params] as const,
     },
   },
+  GRANTS: {
+    DUPLICATE_CHECK: (params: {
+      projectUid?: string;
+      programId?: string;
+      community: string;
+      title: string;
+    }) => ["duplicate-grant-check", params] as const,
+  },
 };

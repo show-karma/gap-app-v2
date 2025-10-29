@@ -35,8 +35,14 @@ export const CommunitySelectionScreen: React.FC = () => {
     checkForDuplicateGrantInProject,
     isCheckingGrantDuplicate,
     isGrantDuplicateInProject,
-    resetGrantDuplicateCheck,
-  } = useDuplicateGrantCheck();
+  } = useDuplicateGrantCheck(
+    {
+      programId: formData.programId,
+      community: formData.community,
+      title: formData.title,
+    },
+    { enabled: false } // Only run manually via refetch
+  );
   const [allCommunities, setAllCommunities] = useState<ICommunityResponse[]>(
     []
   );
@@ -66,10 +72,8 @@ export const CommunitySelectionScreen: React.FC = () => {
     fetchCommunities();
   }, [flowType]);
 
-  // Reset duplicate error when user changes program, community, or title selection
-  useEffect(() => {
-    resetGrantDuplicateCheck();
-  }, [formData.programId, formData.community, formData.title, resetGrantDuplicateCheck]);
+  // Note: React Query automatically handles cache invalidation when params change
+  // No need for manual reset
 
   const setCommunityValue = (value: string, networkId: number) => {
     setCommunityNetworkId(networkId);
@@ -79,11 +83,7 @@ export const CommunitySelectionScreen: React.FC = () => {
   const handleNext = async () => {
     // Check for duplicate grant in project before proceeding
     if (!isEditing) {
-      const duplicate = await checkForDuplicateGrantInProject({
-        programId: formData.programId,
-        community: formData.community,
-        title: formData.title,
-      });
+      const { data: duplicate } = await checkForDuplicateGrantInProject();
 
       if (duplicate) {
         // Duplicate grant detected in fresh project data, don't proceed

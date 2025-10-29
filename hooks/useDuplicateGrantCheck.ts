@@ -1,6 +1,7 @@
-import { useState, useCallback } from "react";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { useQuery } from "@tanstack/react-query";
 import { useProjectStore } from "@/store";
+import { checkForDuplicateGrant } from "@/services/duplicateGrantCheck";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 interface DuplicateCheckParams {
   programId?: string;
@@ -8,72 +9,49 @@ interface DuplicateCheckParams {
   title: string;
 }
 
-export const useDuplicateGrantCheck = () => {
-  const [isCheckingGrantDuplicate, setIsCheckingGrantDuplicate] = useState(false);
-  const [isGrantDuplicateInProject, setIsGrantDuplicateInProject] = useState(false);
+interface UseDuplicateGrantCheckOptions {
+  enabled?: boolean;
+}
+
+export const useDuplicateGrantCheck = (
+  params: DuplicateCheckParams,
+  options: UseDuplicateGrantCheckOptions = {}
+) => {
   const selectedProject = useProjectStore((state) => state.project);
+  const { enabled = true } = options;
 
-  const checkForDuplicateGrantInProject = useCallback(
-    async (params: DuplicateCheckParams): Promise<boolean> => {
-      try {
-        setIsCheckingGrantDuplicate(true);
-        setIsGrantDuplicateInProject(false);
+  const queryKey = QUERY_KEYS.GRANTS.DUPLICATE_CHECK({
+    projectUid: selectedProject?.uid,
+    programId: params.programId,
+    community: params.community,
+    title: params.title,
+  });
 
-        // Fetch fresh project data without updating store
-        const freshProject = selectedProject?.uid
-          ? await gapIndexerApi
-              .projectBySlug(selectedProject.uid)
-              .then((res) => res.data)
-          : undefined;
-
-        if (!freshProject?.grants) {
-          return false;
-        }
-
-        // Check for duplicate based on grant type
-        const duplicate = freshProject.grants.some((grant) => {
-          if (params.programId) {
-            // For program grants: match by programId (base part before underscore)
-            const existingProgramId = grant.details?.data?.programId;
-            if (!existingProgramId) return false;
-
-            const selectedProgramId = params.programId.split("_")[0];
-            const existingProgramIdBase = existingProgramId.split("_")[0];
-
-            return existingProgramIdBase === selectedProgramId;
-          } else {
-            // For regular grants: match by community AND title
-            const existingCommunity = grant.data?.communityUID;
-            const existingTitle = grant.details?.data?.title;
-
-            return (
-              existingCommunity === params.community &&
-              existingTitle?.toLowerCase().trim() ===
-                params.title?.toLowerCase().trim()
-            );
-          }
-        });
-
-        setIsGrantDuplicateInProject(duplicate);
-        return duplicate;
-      } catch (error) {
-        console.error("Error checking for duplicate grant:", error);
-        return false;
-      } finally {
-        setIsCheckingGrantDuplicate(false);
-      }
-    },
-    [selectedProject?.uid]
-  );
-
-  const resetGrantDuplicateCheck = useCallback(() => {
-    setIsGrantDuplicateInProject(false);
-  }, []);
+  const {
+    data: isGrantDuplicateInProject = false,
+    isLoading: isCheckingGrantDuplicate,
+    refetch: checkForDuplicateGrantInProject,
+  } = useQuery({
+    queryKey,
+    queryFn: () =>
+      checkForDuplicateGrant({
+        projectUid: selectedProject?.uid,
+        programId: params.programId,
+        community: params.community,
+        title: params.title,
+      }),
+    enabled:
+      enabled &&
+      !!selectedProject?.uid &&
+      !!params.community &&
+      (!!params.programId || !!params.title),
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 0, // Don't cache results
+  });
 
   return {
     checkForDuplicateGrantInProject,
     isCheckingGrantDuplicate,
     isGrantDuplicateInProject,
-    resetGrantDuplicateCheck,
   };
 };
