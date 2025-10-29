@@ -4,7 +4,7 @@ import { FC } from "react";
 import { Button } from "@/components/Utilities/Button";
 
 // Define the possible application statuses
-type ApplicationStatus = "pending" | "under_review" | "revision_requested" | "approved" | "rejected";
+type ApplicationStatus = "pending" | "under_review" | "revision_requested" | "approved" | "rejected" | "resubmitted";
 
 // Define status transition configuration
 interface StatusTransition {
@@ -17,6 +17,14 @@ interface StatusTransition {
 // Configuration for allowed status transitions
 const STATUS_TRANSITIONS: Record<ApplicationStatus, StatusTransition[]> = {
   pending: [
+    {
+      targetStatus: "under_review",
+      label: "Start Review",
+      variant: "primary",
+      className: "bg-primary-500 text-white hover:bg-primary-600 dark:text-white dark:bg-primary-900 dark:hover:bg-primary-800"
+    }
+  ],
+  resubmitted: [
     {
       targetStatus: "under_review",
       label: "Start Review",
