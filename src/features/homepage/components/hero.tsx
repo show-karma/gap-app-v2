@@ -7,6 +7,7 @@ import Link from "next/link";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { homepageTheme } from "@/src/helper/theme";
+import { CreateProjectButton } from "./create-project-button";
 
 const users = ['/images/homepage/user1.jpg', '/images/homepage/user2.png', '/images/homepage/user3.png']
 
@@ -28,8 +29,7 @@ export function Hero() {
                     >Where builders get funded and ecosystems grow</h1>
                     <p className="text-muted-foreground text-sm sm:text-base font-medium">Ecosystems use Karma to fund projects transparently. Builders use it to share progress, earn reputation, and get discovered for more opportunities.</p>
                     <div className="flex flex-col md:flex-row gap-3 md:gap-4">
-                        {/* TODO: Add interactions to the buttons */}
-                        <Button className="px-6 py-2.5 text-sm font-medium w-max">Create project</Button>
+                        <CreateProjectButton />
                         <Button variant='outline' className="px-6 py-2.5 text-sm font-medium border border-border-3">Run a funding program</Button>
                     </div>
                     <div className="flex flex-row items-center justify-start gap-10 md:gap-4 mt-6">
