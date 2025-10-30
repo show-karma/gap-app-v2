@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { InfiniteSlider } from "./infinite-slider";
+import { InfiniteMovingCards } from "@/src/components/ui/infinite-moving-cards";
 import { chosenCommunities } from "@/utilities/chosenCommunities";
 import { ArrowRightIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
@@ -72,7 +72,14 @@ export function Hero() {
 
             {/* Infinite sliding pills section */}
             <div className="w-full mt-10 -mx-8">
-                <InfiniteSlider items={items} duration={120} />
+                <InfiniteMovingCards
+                    items={items}
+                    variant="pill"
+                    direction="left"
+                    speed="slow"
+                    pauseOnHover
+                    className="w-full"
+                />
             </div>
 
             <div className="w-full flex flex-row items-center justify-center">

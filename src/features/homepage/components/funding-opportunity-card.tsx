@@ -9,6 +9,9 @@ import type { FundingProgram } from "@/services/fundingPlatformService";
 import { PAGES } from "@/utilities/pages";
 import { Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { chosenCommunities } from "@/utilities/chosenCommunities";
+import { blo } from "blo";
+import { useTheme } from "next-themes";
 
 interface FundingOpportunityCardProps {
   program: FundingProgram;
@@ -47,15 +50,40 @@ function getProgramStatus(program: FundingProgram): {
   return { label: "Open for Applications", variant: "default", endsSoon: false };
 }
 
+function getCommunityImage(program: FundingProgram, theme: string | undefined): string | null {
+  // First check if communityImage is already provided
+  if (program.communityImage) {
+    return program.communityImage;
+  }
+
+  // Try to find in chosenCommunities by slug or uid
+  const communities = chosenCommunities();
+  const community = communities.find(
+    (c) => c.slug === program.communitySlug || c.uid === program.communityUID
+  );
+
+  if (community) {
+    return theme === "dark" ? community.imageURL.dark : community.imageURL.light;
+  }
+
+  // If communityUID exists, generate blockie
+  if (program.communityUID) {
+    return blo(program.communityUID as `0x${string}`);
+  }
+
+  return null;
+}
+
 export function FundingOpportunityCard({ 
   program, 
   isFeatured = false 
 }: FundingOpportunityCardProps) {
+  const { theme } = useTheme();
   const status = getProgramStatus(program);
   const title = program.metadata?.title || program.name;
   const budget = program.metadata?.programBudget;
   const communityName = program.communityName || program.communitySlug || "Unknown";
-  const communityImage = program.communityImage || program.metadata?.logoImg;
+  const communityImage = getCommunityImage(program, theme) || program.metadata?.logoImg;
   const applyUrl = program.communitySlug 
     ? PAGES.COMMUNITY.FUNDING_PLATFORM_APPLY(program.communitySlug, program.programId)
     : "#";
@@ -141,7 +169,7 @@ export function FundingOpportunityCard({
           <Badge 
             variant={status.variant === "default" ? "default" : "secondary"}
             className={cn(
-              status.variant === "default" && "bg-teal-100 text-teal-800 border-teal-200"
+              status.variant === "default" && "bg-teal-100 text-teal-700 border-teal-200 hover:bg-teal-100 hover:text-teal-700 hover:border-teal-200 text-xs font-normal leading-[1.5] tracking-[0.015em] text-center align-middle"
             )}
           >
             {status.label}
@@ -153,29 +181,36 @@ export function FundingOpportunityCard({
         </div>
 
         {/* Title */}
-        <h3 className="text-xl font-bold text-foreground mb-4 flex-1">
+        <h3 className="text-xl font-semibold leading-[1.2] tracking-[-0.02em] text-foreground mb-4 flex-1">
           {title}
         </h3>
 
         {/* Bottom section */}
         <div className="flex items-center justify-between mt-auto">
           <div className="flex items-center gap-2">
-            {communityImage && (
+            {communityImage ? (
               <Image
                 src={communityImage}
                 alt={communityName}
-                width={20}
-                height={20}
-                className="rounded-full"
+                width={24}
+                height={24}
+                className="rounded-full w-6 h-6"
               />
-            )}
-            <span className="text-sm text-foreground">{communityName}</span>
+            ) : program.communityUID ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={blo(program.communityUID as `0x${string}`)}
+                alt={communityName}
+                className="rounded-full w-6 h-6"
+              />
+            ) : null}
+            <span className="text-xs font-medium leading-[1.5] tracking-[0.015em] text-foreground">{communityName}</span>
           </div>
           <Button 
             variant="outline" 
             size="sm"
             asChild
-            className="border-border"
+            className="border-border text-sm font-medium leading-[1.5] tracking-[0.005em] text-center align-middle text-foreground"
           >
             <Link href={applyUrl}>Apply now</Link>
           </Button>
