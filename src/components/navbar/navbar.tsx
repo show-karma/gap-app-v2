@@ -42,6 +42,10 @@ import { useContributorProfile } from "@/hooks/useContributorProfile";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import { PAGES } from "@/utilities/pages";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { useCommunitiesStore } from "@/store/communities";
+import { useAdminCommunities } from "@/hooks/useAdminCommunities";
+import { useReviewerPrograms } from "@/hooks/usePermissions";
+import { useAccount } from "wagmi";
 
 
 // Social media links with proper icons
@@ -102,6 +106,14 @@ export function Navbar() {
     const firstName = profile?.data?.name?.split(" ")[0] || "";
 
     const displayName = firstName || profile?.data?.name || account?.displayName;
+
+    // Check admin and reviewer permissions
+    const { communities } = useCommunitiesStore();
+    useAdminCommunities(address);
+    const { programs: reviewerPrograms } = useReviewerPrograms();
+
+    const isCommunityAdmin = communities.length !== 0;
+    const hasReviewerRole = reviewerPrograms && reviewerPrograms.length > 0;
     return (
         <nav
             className={cn(
@@ -133,11 +145,27 @@ export function Navbar() {
             {/* Desktop Navigation */}
             <div className="hidden lg:flex items-center gap-2 flex-1 lg:justify-between">
                 {isLoggedIn ?
-                    <Link href={PAGES.MY_PROJECTS}>
-                        <Button variant="outline" className="bg-background rounded-lg shadow-sm border px-3 py-1 text-sm font-medium text-foreground hover:text-muted-foreground transition-colors border-border">
-                            My projects
-                        </Button>
-                    </Link>
+                    <div className="flex flex-row items-center gap-2">
+                        <Link href={PAGES.MY_PROJECTS}>
+                            <Button variant="outline" className="bg-background rounded-lg shadow-sm border px-3 py-1 text-sm font-medium text-foreground hover:text-muted-foreground transition-colors border-border">
+                                My projects
+                            </Button>
+                        </Link>
+                        {hasReviewerRole && (
+                            <Link href={PAGES.MY_REVIEWS}>
+                                <Button variant="outline" className="bg-background rounded-lg shadow-sm border px-3 py-1 text-sm font-medium text-foreground hover:text-muted-foreground transition-colors border-border">
+                                    Review
+                                </Button>
+                            </Link>
+                        )}
+                        {isCommunityAdmin && (
+                            <Link href={PAGES.ADMIN.LIST}>
+                                <Button variant="outline" className="bg-background rounded-lg shadow-sm border px-3 py-1 text-sm font-medium text-foreground hover:text-muted-foreground transition-colors border-border">
+                                    Admin
+                                </Button>
+                            </Link>
+                        )}
+                    </div>
 
                     : <Menubar className="border-0 bg-transparent shadow-none p-0 h-auto space-x-1">
                         {/* For Builders Dropdown */}
@@ -286,19 +314,6 @@ export function Navbar() {
                                                 </span>
                                             </MenubarItem>
                                         </div>
-                                        <hr className="h-[1px] border-border" />
-                                        <div className="flex flex-col items-start justify-start gap-3 w-full">
-                                            <MenubarItem className="py-0 w-full">
-                                                <Link href={PAGES.MY_REVIEWS} className={cn(menuStyles.itemText, 'w-full')}>
-                                                    Review
-                                                </Link>
-                                            </MenubarItem>
-                                            <MenubarItem className="py-0 w-full">
-                                                <Link href={PAGES.ADMIN.LIST} className={cn(menuStyles.itemText, 'w-full')}>
-                                                    Admin
-                                                </Link>
-                                            </MenubarItem>
-                                        </div>
                                         <hr className="h-[1px] w-full border-border" />
                                         <div className="flex flex-col items-start justify-start gap-2 px-2">
                                             <MenuSection title="Follow" variant="desktop" />
@@ -364,9 +379,9 @@ export function Navbar() {
                                 <NavbarSearch />
                             </div>
 
-                            {/* My Projects Button - Only when logged in */}
+                            {/* My Projects, Review, and Admin Buttons - Only when logged in */}
                             {isLoggedIn && (
-                                <div className="border-b border-border pb-4">
+                                <div className="border-b border-border pb-4 flex flex-col gap-2">
                                     <Link
                                         href={PAGES.MY_PROJECTS}
                                         className="w-full"
@@ -376,6 +391,28 @@ export function Navbar() {
                                             My projects
                                         </Button>
                                     </Link>
+                                    {hasReviewerRole && (
+                                        <Link
+                                            href={PAGES.MY_REVIEWS}
+                                            className="w-full"
+                                            onClick={() => setMobileMenuOpen(false)}
+                                        >
+                                            <Button variant="outline" className="w-full bg-background rounded-lg shadow-sm border px-3 py-2 text-sm font-medium text-foreground hover:text-muted-foreground transition-colors border-border">
+                                                Review
+                                            </Button>
+                                        </Link>
+                                    )}
+                                    {isCommunityAdmin && (
+                                        <Link
+                                            href={PAGES.ADMIN.LIST}
+                                            className="w-full"
+                                            onClick={() => setMobileMenuOpen(false)}
+                                        >
+                                            <Button variant="outline" className="w-full bg-background rounded-lg shadow-sm border px-3 py-2 text-sm font-medium text-foreground hover:text-muted-foreground transition-colors border-border">
+                                                Admin
+                                            </Button>
+                                        </Link>
+                                    )}
                                 </div>
                             )}
 
