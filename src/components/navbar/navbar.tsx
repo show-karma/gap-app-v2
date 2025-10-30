@@ -283,9 +283,8 @@ export function Navbar() {
                             </ExternalLink>
                             <Menubar className="border-0 bg-transparent shadow-none p-0 h-auto">
                                 <MenubarMenu>
-                                    <MenubarTrigger className="cursor-pointer p-0 bg-secondary rounded-full data-[state=open]:opacity-90">
+                                    <MenubarTrigger className="cursor-pointer p-0 rounded-full data-[state=open]:opacity-90">
                                         <div className="flex items-center gap-0 p-0">
-                                            <span className="truncate max-w-36 w-full text-foreground px-3 py-1.5 font-medium text-sm">{displayName}</span>
                                             <EthereumAddressToENSAvatar
                                                 address={account?.address}
                                                 className="h-8 w-8 min-h-8 min-w-8 max-h-8 max-w-8 rounded-full"
