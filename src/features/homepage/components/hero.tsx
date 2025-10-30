@@ -11,7 +11,7 @@ import { CreateProjectButton } from "./create-project-button";
 
 const users = ['/images/homepage/user1.jpg', '/images/homepage/user2.png', '/images/homepage/user3.png']
 
-const items = chosenCommunities().map((community) => ({
+const items = chosenCommunities(true).map((community) => ({
     text: community.name,
     image: community.imageURL,
 }))
