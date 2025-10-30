@@ -7,6 +7,7 @@ module.exports = {
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/**/*.{js,ts,jsx,tsx,mdx}",
     "./node_modules/@tremor/**/*.{js,ts,jsx,tsx}",
   ],
   container: {
@@ -15,6 +16,7 @@ module.exports = {
     screens: {
       xs: "425px",
       "2xl": "1400px",
+	  'normal': "1440px",
     },
   },
   theme: {
@@ -84,7 +86,8 @@ module.exports = {
   				black: '#18181B'
   			},
 			general: {
-				primary: '#171717'
+				primary: '#171717',
+				'muted-foreground': '#737373',
 			},
   			warning: {
   				'50': '#fffbeb',
@@ -196,6 +199,18 @@ module.exports = {
   },
   safelist: [
     {
+      pattern: /^(text-general-.+)$/,
+      variants: ["hover", "focus", "dark"],
+    },
+    {
+      pattern: /^(bg-general-.+)$/,
+      variants: ["hover", "focus", "dark"],
+    },
+    {
+      pattern: /^(border-general-.+)$/,
+      variants: ["hover", "focus", "dark"],
+    },
+    {
       pattern:
         /^(bg-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(?:50|100|200|300|400|500|600|700|800|900|950))$/,
       variants: ["hover", "ui-selected"],
@@ -227,6 +242,6 @@ module.exports = {
     require("@tailwindcss/typography"),
     require("postcss-nesting"),
     require("@tailwindcss/forms"),
-      require("tailwindcss-animate")
+    require("tailwindcss-animate")
 ],
 };

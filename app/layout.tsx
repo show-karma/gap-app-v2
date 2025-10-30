@@ -18,7 +18,7 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 import { Suspense } from "react";
 import HotjarAnalytics from "@/components/Utilities/HotjarAnalytics";
 import { ContributorProfileDialog } from "@/components/Dialogs/ContributorProfileDialog";
-import { Navbar } from "@/src/components/navbar";
+import { Navbar } from "@/src/components/navbar/navbar";
 
 export const metadata = defaultMetadata;
 
@@ -54,7 +54,7 @@ export default function RootLayout({
             <ProgressBarWrapper />
             <div className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white">
               <div className="flex flex-col w-full h-full">
-                <div className="fixed w-full bg-white dark:bg-black z-10">
+                <div className="fixed items-center flex justify-center w-full bg-white dark:bg-black z-10">
                   <Navbar />
                 </div>
                 <div className="h-[80px]" />
