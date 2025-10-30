@@ -3,6 +3,7 @@ import { Hero } from "@/src/features/homepage/components/hero";
 import { LiveFundingOpportunities } from "@/src/features/homepage/components/live-funding-opportunities";
 import { PlatformFeatures } from "@/src/features/homepage/components/platform-features";
 import { HowItWorks } from "@/src/features/homepage/components/how-it-works";
+import { WhereBuildersGrow } from "@/src/features/homepage/components/where-builders-grow";
 import { JoinCommunity } from "@/src/features/homepage/components/join-community";
 import { FAQ } from "@/src/features/homepage/components/faq";
 
@@ -18,6 +19,7 @@ export default function Index() {
                 <HowItWorks />
                 <JoinCommunity />
                 <FAQ />
+                <WhereBuildersGrow />
             </div>
         </main>
     );

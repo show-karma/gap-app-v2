@@ -36,13 +36,7 @@ function StepCard({ text, size, showIcon = true }: StepCardProps) {
                         </div>
                     </div>
                 )}
-                <p
-                    className="text-xl font-semibold text-foreground leading-[1.2]"
-                    style={{
-                        fontFamily: 'Inter',
-                        letterSpacing: '-0.02em'
-                    }}
-                >
+                <p className="text-xl font-semibold text-foreground leading-[1.2] tracking-[-0.02em]">
                     {text}
                 </p>
             </CardContent>
@@ -57,13 +51,7 @@ interface OutcomeCardProps {
 function OutcomeCard({ text }: OutcomeCardProps) {
     return (
         <div className="border border-border rounded-lg shadow-sm bg-background p-6 flex flex-col gap-4 w-full">
-            <p
-                className="text-xl font-semibold text-foreground leading-[1.2]"
-                style={{
-                    fontFamily: 'Inter',
-                    letterSpacing: '-0.02em'
-                }}
-            >
+            <p className="text-xl font-semibold text-foreground leading-[1.2] tracking-[-0.02em]">
                 {text}
             </p>
         </div>

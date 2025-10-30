@@ -44,10 +44,7 @@ export function JoinCommunity() {
                 <h2 className="text-[36px] font-semibold text-foreground text-center">
                     Join our community
                 </h2>
-                <p
-                    className="text-[20px] font-normal text-muted-foreground text-center"
-                    style={{ fontFamily: "Inter" }}
-                >
+                <p className="text-xl font-normal text-muted-foreground text-center">
                     Celebrate your milestones and wins with the Karma community.
                 </p>
                 <div className="flex flex-row items-center gap-4">

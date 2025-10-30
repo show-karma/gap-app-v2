@@ -2,7 +2,6 @@
 
 import { cn } from "@/utilities/tailwind";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/solid";
-import Image from "next/image";
 import Link from "next/link";
 import { homepageTheme } from "../../helper/theme";
 import { Button } from "@/components/ui/button";
@@ -25,7 +24,7 @@ import { useState } from "react";
 import { TwitterIcon, DiscordIcon, TelegramIcon } from "@/components/Icons";
 import { FarcasterIcon } from "@/components/Icons/Farcaster";
 import { SOCIALS } from "@/utilities/socials";
-import { ChevronDown, ChevronRight, CircleHelp, CircleUser, LogOutIcon, PhoneCall, ToggleLeft, ToggleRight } from "lucide-react";
+import { ChevronDown, ChevronRight, CircleHelp, CircleUser, LogOutIcon, PhoneCall, ToggleLeft, ToggleRight, Wallet } from "lucide-react";
 import { ParagraphIcon } from "@/components/Icons/Paragraph";
 import {
     ForBuildersContent,
@@ -45,7 +44,7 @@ import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useCommunitiesStore } from "@/store/communities";
 import { useAdminCommunities } from "@/hooks/useAdminCommunities";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
-import { useAccount } from "wagmi";
+import { Logo } from "../shared/logo";
 
 
 // Social media links with proper icons
@@ -117,444 +116,135 @@ export function Navbar() {
     return (
         <nav
             className={cn(
-                homepageTheme.padding,
-                "flex justify-between bg-background w-full flex-row py-5 gap-8 max-w-[1920px] min-w-min items-center border-b border-border z-10 fixed top-0 left-0 right-0"
+                "flex bg-background w-full items-center justify-center flex-row gap-8 max-w-full min-w-min border-b border-border z-50 fixed top-0 left-0 right-0"
             )}
         >
-            {/* Logo */}
-            <Link className="flex-shrink-0 max-w-[96px] max-h-[40px]" href="/">
-                <Image
-                    className="block w-full h-auto dark:hidden"
-                    src="/logo/karma-logo-light.svg"
-                    alt="Gap"
-                    width={96}
-                    height={32}
-                    priority={true}
-                    quality={100}
-                />
-                <Image
-                    className="hidden w-full h-auto dark:block"
-                    src="/logo/karma-logo-dark.svg"
-                    alt="Gap"
-                    width={96}
-                    height={32}
-                    priority={true}
-                />
-            </Link>
+            <div className={cn(
+                homepageTheme.padding,
+                "flex justify-between w-full flex-row gap-8 py-5 max-w-[1920px] min-w-min items-center"
+            )}>
+                {/* Logo */}
+                <Logo />
 
-            {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center gap-2 flex-1 lg:justify-between">
-                {isLoggedIn ?
-                    <div className="flex flex-row items-center gap-2">
-                        <Link href={PAGES.MY_PROJECTS}>
-                            <Button variant="outline" className="bg-background rounded-lg shadow-sm border px-3 py-1 text-sm font-medium text-foreground hover:text-muted-foreground transition-colors border-border">
-                                My projects
-                            </Button>
-                        </Link>
-                        {hasReviewerRole && (
-                            <Link href={PAGES.MY_REVIEWS}>
+                {/* Desktop Navigation */}
+                <div className="hidden lg:flex items-center gap-2 flex-1 lg:justify-between">
+                    {isLoggedIn ?
+                        <div className="flex flex-row items-center gap-2">
+                            <Link href={PAGES.MY_PROJECTS}>
                                 <Button variant="outline" className="bg-background rounded-lg shadow-sm border px-3 py-1 text-sm font-medium text-foreground hover:text-muted-foreground transition-colors border-border">
-                                    Review
+                                    My projects
                                 </Button>
                             </Link>
-                        )}
-                        {isCommunityAdmin && (
-                            <Link href={PAGES.ADMIN.LIST}>
-                                <Button variant="outline" className="bg-background rounded-lg shadow-sm border px-3 py-1 text-sm font-medium text-foreground hover:text-muted-foreground transition-colors border-border">
-                                    Admin
-                                </Button>
-                            </Link>
-                        )}
-                    </div>
+                            {hasReviewerRole && (
+                                <Link href={PAGES.MY_REVIEWS}>
+                                    <Button variant="outline" className="bg-background rounded-lg shadow-sm border px-3 py-1 text-sm font-medium text-foreground hover:text-muted-foreground transition-colors border-border">
+                                        Review
+                                    </Button>
+                                </Link>
+                            )}
+                            {isCommunityAdmin && (
+                                <Link href={PAGES.ADMIN.LIST}>
+                                    <Button variant="outline" className="bg-background rounded-lg shadow-sm border px-3 py-1 text-sm font-medium text-foreground hover:text-muted-foreground transition-colors border-border">
+                                        Admin
+                                    </Button>
+                                </Link>
+                            )}
+                        </div>
 
-                    : <Menubar className="border-0 bg-transparent shadow-none p-0 h-auto space-x-1">
-                        {/* For Builders Dropdown */}
-                        <MenubarMenu>
-                            <MenubarTrigger className={menuStyles.button}>
-                                For Builders
-                                <ChevronDown className="w-4 h-4" />
-                            </MenubarTrigger>
-                            <MenubarContent className="min-w-[500px] p-4">
-                                <ForBuildersContent variant="desktop" />
-                            </MenubarContent>
-                        </MenubarMenu>
-
-                        {/* For Funders Dropdown */}
-                        <MenubarMenu>
-                            <MenubarTrigger className={menuStyles.button}>
-                                For Funders
-                                <ChevronDown className="w-4 h-4" />
-                            </MenubarTrigger>
-                            <MenubarContent className="min-w-[500px] p-4">
-                                <ForFundersContent variant="desktop" />
-                            </MenubarContent>
-                        </MenubarMenu>
-                    </Menubar>}
-
-
-                <div className="flex flex-row items-center gap-4">
-                    {/* Search */}
-                    <NavbarSearch />
-                    <Menubar className="border-0 bg-transparent shadow-none p-0 h-auto space-x-1">
-                        {/* Explore Dropdown */}
-                        <MenubarMenu>
-                            <MenubarTrigger className={menuStyles.button}>
-                                Explore
-                                <ChevronDown className="w-4 h-4" />
-                            </MenubarTrigger>
-                            <MenubarContent>
-                                <ExploreContent variant="desktop" />
-                            </MenubarContent>
-                        </MenubarMenu>
-
-                    </Menubar>
-                </div>
-                {!isLoggedIn ? (
-                    <div className="flex flex-row items-center gap-4">
-                        <Menubar className="border-0 bg-transparent shadow-none p-0 h-auto space-x-1">
-                            {/* Resources Dropdown */}
+                        : <Menubar className="border-0 bg-transparent shadow-none p-0 h-auto space-x-1">
+                            {/* For Builders Dropdown */}
                             <MenubarMenu>
                                 <MenubarTrigger className={menuStyles.button}>
-                                    Resources
+                                    For Builders
+                                    <ChevronDown className="w-4 h-4" />
+                                </MenubarTrigger>
+                                <MenubarContent className="min-w-[500px] p-4">
+                                    <ForBuildersContent variant="desktop" />
+                                </MenubarContent>
+                            </MenubarMenu>
+
+                            {/* For Funders Dropdown */}
+                            <MenubarMenu>
+                                <MenubarTrigger className={menuStyles.button}>
+                                    For Funders
+                                    <ChevronDown className="w-4 h-4" />
+                                </MenubarTrigger>
+                                <MenubarContent className="min-w-[500px] p-4">
+                                    <ForFundersContent variant="desktop" />
+                                </MenubarContent>
+                            </MenubarMenu>
+                        </Menubar>}
+
+
+                    <div className="flex flex-row items-center gap-4">
+                        {/* Search */}
+                        <NavbarSearch />
+                        <Menubar className="border-0 bg-transparent shadow-none p-0 h-auto space-x-1">
+                            {/* Explore Dropdown */}
+                            <MenubarMenu>
+                                <MenubarTrigger className={menuStyles.button}>
+                                    Explore
                                     <ChevronDown className="w-4 h-4" />
                                 </MenubarTrigger>
                                 <MenubarContent>
-                                    <div className="flex flex-col gap-4 px-2 py-2">
-                                        <ResourcesContent variant="desktop" />
-                                        <hr className="h-[1px] w-full border-border" />
-                                        <div className="flex flex-col items-start justify-start gap-2">
-                                            <MenuSection title="Follow" variant="desktop" />
-                                            <div className="flex flex-row items-center w-full justify-between gap-2">
-                                                {socialMediaLinks.map((social) => {
-                                                    const IconComponent = social.icon;
-                                                    return (
-                                                        <Link
-                                                            key={social.name}
-                                                            href={social.href}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className={cn(menuStyles.itemText, "flex items-center justify-center rounded-full transition-colors")}
-                                                            aria-label={social.name}
-                                                        >
-                                                            <IconComponent className="w-6 h-6" />
-                                                        </Link>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <ExploreContent variant="desktop" />
                                 </MenubarContent>
                             </MenubarMenu>
-                        </Menubar>
 
-                        {/* Auth Buttons - Always visible between Resources and Social/Avatar */}
-                        {!isLoggedIn && (
-                            <div className="flex items-center gap-3">
-                                <Button
-                                    variant="outline"
-                                    className="bg-secondary border-none rounded px-3 py-1 text-sm font-medium text-secondary-foreground hover:text-muted-foreground transition-colors"
-                                    onClick={login}
-                                >
-                                    Sign in
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="border-border text-foreground hover:bg-accent shadow-sm"
-                                    asChild
-                                >
-                                    <Link href="https://cal.com/karmahq" target="_blank">
-                                        <PhoneCall className="w-4 h-4" />
-                                        Contact sales
-                                    </Link>
-                                </Button>
-                            </div>
-                        )}
+                        </Menubar>
                     </div>
-                ) : null}
-                {/* Right Side - Social Media & User Profile (Only when logged in) */}
-                {isLoggedIn && (
-                    <div className="hidden lg:flex items-center gap-3">
-                        <div className="flex flex-row items-center gap-2">
-                            <ExternalLink href={SOCIALS.DOCS}>
-                                <Button variant="outline" className="cursor-pointer px-3 py-0 h-8 bg-secondary rounded-xl border-none">
-                                    <CircleHelp className="w-4 h-4" />
-                                </Button>
-                            </ExternalLink>
-                            <Menubar className="border-0 bg-transparent shadow-none p-0 h-auto">
+                    {!isLoggedIn ? (
+                        <div className="flex flex-row items-center gap-4">
+                            <Menubar className="border-0 bg-transparent shadow-none p-0 h-auto space-x-1">
+                                {/* Resources Dropdown */}
                                 <MenubarMenu>
-                                    <MenubarTrigger className="cursor-pointer p-0 rounded-full data-[state=open]:opacity-90">
-                                        <div className="flex items-center gap-0 p-0">
-                                            <EthereumAddressToENSAvatar
-                                                address={account?.address}
-                                                className="h-8 w-8 min-h-8 min-w-8 max-h-8 max-w-8 rounded-full"
-                                            />
-                                        </div>
+                                    <MenubarTrigger className={menuStyles.button}>
+                                        Resources
+                                        <ChevronDown className="w-4 h-4" />
                                     </MenubarTrigger>
-                                    <MenubarContent align="end" className="flex flex-col gap-4 py-3">
-                                        <div className="flex flex-col items-start justify-start gap-2">
-                                            <MenubarItem className="w-full" onClick={() => openProfileModal()}>
-                                                <div className="flex items-center w-full flex-row gap-2 justify-between">
-                                                    <div className="flex items-center flex-row gap-2">
-                                                        <CircleUser className={menuStyles.itemIcon} />
-                                                        <span className={menuStyles.itemText}>
-                                                            My profile
-                                                        </span>
-                                                    </div>
-                                                    <ChevronRight className={menuStyles.itemIcon} />
+                                    <MenubarContent>
+                                        <div className="flex flex-col gap-4 px-2 py-2">
+                                            <ResourcesContent variant="desktop" />
+                                            <hr className="h-[1px] w-full border-border" />
+                                            <div className="flex flex-col items-start justify-start gap-2">
+                                                <MenuSection title="Follow" variant="desktop" />
+                                                <div className="flex flex-row items-center w-full justify-between gap-2">
+                                                    {socialMediaLinks.map((social) => {
+                                                        const IconComponent = social.icon;
+                                                        return (
+                                                            <Link
+                                                                key={social.name}
+                                                                href={social.href}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className={cn(menuStyles.itemText, "flex items-center justify-center rounded-full transition-colors")}
+                                                                aria-label={social.name}
+                                                            >
+                                                                <IconComponent className="w-6 h-6" />
+                                                            </Link>
+                                                        );
+                                                    })}
                                                 </div>
-                                            </MenubarItem>
-                                            <MenubarItem onClick={toggleTheme} className="w-full">
-                                                <span className="flex items-center gap-2 w-full">
-                                                    {currentTheme === "light" ? <ToggleLeft className={menuStyles.itemIcon} /> : <ToggleRight className={menuStyles.itemIcon} />}
-                                                    <span className={menuStyles.itemText}>
-                                                        {currentTheme === "light" ? "Dark mode" : "Light mode"}
-                                                    </span>
-                                                </span>
-                                            </MenubarItem>
-                                        </div>
-                                        <hr className="h-[1px] w-full border-border" />
-                                        <div className="flex flex-col items-start justify-start gap-2 px-2">
-                                            <MenuSection title="Follow" variant="desktop" />
-                                            <div className="flex flex-row items-center w-full justify-between gap-2">
-                                                {socialMediaLinks.map((social) => {
-                                                    const IconComponent = social.icon;
-                                                    return (
-                                                        <Link
-                                                            key={social.name}
-                                                            href={social.href}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className={cn(menuStyles.itemText, "flex items-center justify-center rounded-full transition-colors")}
-                                                            aria-label={social.name}
-                                                        >
-                                                            <IconComponent className="w-6 h-6" />
-                                                        </Link>
-                                                    );
-                                                })}
                                             </div>
                                         </div>
-                                        <hr className="h-[1px] w-full border-border" />
-                                        <MenubarItem onClick={logout}>
-                                            <div className="flex items-center gap-2">
-                                                <LogOutIcon className={menuStyles.itemIcon} />
-                                                <span className={menuStyles.itemText}>
-                                                    Log out
-                                                </span>
-                                            </div>
-                                        </MenubarItem>
                                     </MenubarContent>
                                 </MenubarMenu>
                             </Menubar>
-                        </div>
 
-                    </div>)}
-            </div>
-
-
-            {/* Mobile Menu Button */}
-            <div className="lg:hidden">
-                <Drawer open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-                    <DrawerTrigger asChild>
-                        <button
-                            className="p-2 text-muted-foreground"
-                            aria-label="Open menu"
-                        >
-                            <Bars3Icon className="w-6 h-6" />
-                        </button>
-                    </DrawerTrigger>
-                    <DrawerContent>
-                        <DrawerHeader className="flex items-center justify-between border-b border-border">
-                            <DrawerTitle>Menu</DrawerTitle>
-                            <DrawerClose asChild>
-                                <button className="p-2" aria-label="Close menu">
-                                    <XMarkIcon className="w-5 h-5" />
-                                </button>
-                            </DrawerClose>
-                        </DrawerHeader>
-                        <div className="flex flex-col p-4 gap-2 max-h-[70vh] overflow-y-auto">
-                            {/* Mobile Search */}
-                            <div className="mb-4">
-                                <NavbarSearch />
-                            </div>
-
-                            {/* My Projects, Review, and Admin Buttons - Only when logged in */}
-                            {isLoggedIn && (
-                                <div className="border-b border-border pb-4 flex flex-col gap-2">
-                                    <Link
-                                        href={PAGES.MY_PROJECTS}
-                                        className="w-full"
-                                        onClick={() => setMobileMenuOpen(false)}
-                                    >
-                                        <Button variant="outline" className="w-full bg-background rounded-lg shadow-sm border px-3 py-2 text-sm font-medium text-foreground hover:text-muted-foreground transition-colors border-border">
-                                            My projects
-                                        </Button>
-                                    </Link>
-                                    {hasReviewerRole && (
-                                        <Link
-                                            href={PAGES.MY_REVIEWS}
-                                            className="w-full"
-                                            onClick={() => setMobileMenuOpen(false)}
-                                        >
-                                            <Button variant="outline" className="w-full bg-background rounded-lg shadow-sm border px-3 py-2 text-sm font-medium text-foreground hover:text-muted-foreground transition-colors border-border">
-                                                Review
-                                            </Button>
-                                        </Link>
-                                    )}
-                                    {isCommunityAdmin && (
-                                        <Link
-                                            href={PAGES.ADMIN.LIST}
-                                            className="w-full"
-                                            onClick={() => setMobileMenuOpen(false)}
-                                        >
-                                            <Button variant="outline" className="w-full bg-background rounded-lg shadow-sm border px-3 py-2 text-sm font-medium text-foreground hover:text-muted-foreground transition-colors border-border">
-                                                Admin
-                                            </Button>
-                                        </Link>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* For Builders Section - Only when NOT logged in */}
+                            {/* Auth Buttons - Always visible between Resources and Social/Avatar */}
                             {!isLoggedIn && (
-                                <div className="border-b border-border pb-4">
-                                    <MenuSection title="For Builders" variant="mobile" />
-                                    <ForBuildersContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
-                                </div>
-                            )}
-
-                            {/* For Funders Section - Only when NOT logged in */}
-                            {!isLoggedIn && (
-                                <div className="border-b border-border pb-4">
-                                    <MenuSection title="For Funders" variant="mobile" />
-                                    <ForFundersContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
-                                </div>
-                            )}
-
-                            {/* Explore Section */}
-                            <div className="border-b border-border pb-4">
-                                <MenuSection title="Explore" variant="mobile" className="mb-4" />
-                                <ExploreContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
-                            </div>
-
-                            {/* Resources Section - Only when NOT logged in */}
-                            {!isLoggedIn && (
-                                <div className="border-b border-border pb-4">
-                                    <MenuSection title="Resources" variant="mobile" />
-                                    <ResourcesContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
-                                    <div className="mt-4 pt-4 border-t border-border">
-                                        <MenuSection title="Follow" variant="mobile" className="mb-4" />
-                                        <div className="flex items-center gap-2">
-                                            {socialMediaLinks.map((social) => {
-                                                const IconComponent = social.icon;
-                                                return (
-                                                    <Link
-                                                        key={social.name}
-                                                        href={social.href}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="w-10 h-10 flex items-center justify-center rounded-full transition-colors"
-                                                        aria-label={social.name}
-                                                    >
-                                                        <IconComponent className="w-8 h-8 text-muted-foreground" />
-                                                    </Link>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Mobile Auth */}
-                            {isLoggedIn ? (
-                                <div className="pt-2">
-                                    <button
-                                        className="w-full flex items-center justify-between py-3 rounded-md hover:bg-accent text-left"
-                                        onClick={() => {
-                                            openProfileModal();
-                                            setMobileMenuOpen(false);
-                                        }}
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <EthereumAddressToENSAvatar
-                                                address={account?.address}
-                                                className="h-6 w-6 min-h-6 min-w-6 max-h-6 max-w-6 rounded-full"
-                                            />
-                                            <span className={menuStyles.itemText}>My profile</span>
-                                        </div>
-                                        <ChevronRight className={menuStyles.itemIcon} />
-                                    </button>
-                                    <button
-                                        className="w-full flex items-center gap-3 py-3 rounded-md hover:bg-accent text-left"
-                                        onClick={toggleTheme}
-                                    >
-                                        {currentTheme === "light" ? (
-                                            <ToggleLeft className={menuStyles.itemIcon} />
-                                        ) : (
-                                            <ToggleRight className={menuStyles.itemIcon} />
-                                        )}
-                                        <span className={menuStyles.itemText}>
-                                            {currentTheme === "light" ? "Dark mode" : "Light mode"}
-                                        </span>
-                                    </button>
-                                    <Link
-                                        href={SOCIALS.DOCS}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="w-full flex items-center gap-3 py-3 rounded-md hover:bg-accent text-left"
-                                        onClick={() => setMobileMenuOpen(false)}
-                                    >
-                                        <CircleHelp className={menuStyles.itemIcon} />
-                                        <span className={menuStyles.itemText}>Help & Docs</span>
-                                    </Link>
-                                    <button
-                                        className="w-full flex items-center gap-3 rounded-md hover:bg-accent text-left mt-4"
-                                        onClick={() => {
-                                            logout();
-                                            setMobileMenuOpen(false);
-                                        }}
-                                    >
-                                        <LogOutIcon className={menuStyles.itemIcon} />
-                                        <span className={menuStyles.itemText}>Log out</span>
-                                    </button>
-                                    <div className="mt-4 pt-4 border-t border-border flex flex-col items-center">
-                                        <MenuSection title="Follow" variant="mobile" className="mb-4" />
-                                        <div className="flex items-center gap-2">
-                                            {socialMediaLinks.map((social) => {
-                                                const IconComponent = social.icon;
-                                                return (
-                                                    <Link
-                                                        key={social.name}
-                                                        href={social.href}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="w-10 h-10 flex items-center justify-center rounded-full transition-colors"
-                                                        aria-label={social.name}
-                                                    >
-                                                        <IconComponent className="w-8 h-8 text-muted-foreground" />
-                                                    </Link>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="pt-2 flex flex-col gap-2">
+                                <div className="flex items-center gap-3">
                                     <Button
                                         variant="outline"
-                                        className="w-full bg-secondary border-none rounded px-3 py-2 text-sm font-medium text-secondary-foreground hover:text-muted-foreground transition-colors"
-                                        size="lg"
-                                        onClick={() => {
-                                            login();
-                                            setMobileMenuOpen(false);
-                                        }}
+                                        className="bg-secondary border-none rounded px-3 py-1 text-sm font-medium text-secondary-foreground hover:text-muted-foreground transition-colors"
+                                        onClick={login}
                                     >
                                         Sign in
                                     </Button>
                                     <Button
                                         variant="outline"
-                                        size="lg"
-                                        className="w-full border-border text-foreground hover:bg-accent shadow-sm"
+                                        size="sm"
+                                        className="border-border text-foreground hover:bg-accent shadow-sm"
                                         asChild
                                     >
                                         <Link href="https://cal.com/karmahq" target="_blank">
@@ -565,8 +255,315 @@ export function Navbar() {
                                 </div>
                             )}
                         </div>
-                    </DrawerContent>
-                </Drawer>
+                    ) : null}
+                    {/* Right Side - Social Media & User Profile (Only when logged in) */}
+                    {isLoggedIn && (
+                        <div className="hidden lg:flex items-center gap-3">
+                            <div className="flex flex-row items-center gap-2">
+                                <ExternalLink href={SOCIALS.DOCS}>
+                                    <Button variant="outline" className="cursor-pointer px-3 py-0 h-8 bg-secondary rounded-xl border-none">
+                                        <CircleHelp className="w-4 h-4" />
+                                    </Button>
+                                </ExternalLink>
+                                <Menubar className="border-0 bg-transparent shadow-none p-0 h-auto">
+                                    <MenubarMenu>
+                                        <MenubarTrigger className="cursor-pointer p-0 rounded-full data-[state=open]:opacity-90">
+                                            <div className="flex items-center gap-0 p-0">
+                                                <EthereumAddressToENSAvatar
+                                                    address={account?.address}
+                                                    className="h-8 w-8 min-h-8 min-w-8 max-h-8 max-w-8 rounded-full"
+                                                />
+                                            </div>
+                                        </MenubarTrigger>
+                                        <MenubarContent align="end" className="flex flex-col gap-4 py-3">
+                                            <div className="flex flex-col items-start justify-start gap-2">
+                                                <MenubarItem className="w-full">
+                                                    <div className="flex flex-row items-center gap-2">
+                                                        <Wallet className={menuStyles.itemIcon} />
+                                                        {address ? <span className={menuStyles.itemText}>{formatAddress(address)}</span> : <span className={menuStyles.itemText}>No wallet connected</span>}
+                                                    </div>
+                                                </MenubarItem>
+                                                <MenubarItem className="w-full" onClick={() => openProfileModal()}>
+                                                    <div className="flex items-center w-full flex-row gap-2 justify-between">
+                                                        <div className="flex items-center flex-row gap-2">
+                                                            <CircleUser className={menuStyles.itemIcon} />
+                                                            <span className={menuStyles.itemText}>
+                                                                My profile
+                                                            </span>
+                                                        </div>
+                                                        <ChevronRight className={menuStyles.itemIcon} />
+                                                    </div>
+                                                </MenubarItem>
+                                                <MenubarItem onClick={toggleTheme} className="w-full">
+                                                    <span className="flex items-center gap-2 w-full">
+                                                        {currentTheme === "light" ? <ToggleLeft className={menuStyles.itemIcon} /> : <ToggleRight className={menuStyles.itemIcon} />}
+                                                        <span className={menuStyles.itemText}>
+                                                            {currentTheme === "light" ? "Dark mode" : "Light mode"}
+                                                        </span>
+                                                    </span>
+                                                </MenubarItem>
+                                            </div>
+                                            <hr className="h-[1px] w-full border-border" />
+                                            <div className="flex flex-col items-start justify-start gap-2 px-2">
+                                                <MenuSection title="Follow" variant="desktop" />
+                                                <div className="flex flex-row items-center w-full justify-between gap-2">
+                                                    {socialMediaLinks.map((social) => {
+                                                        const IconComponent = social.icon;
+                                                        return (
+                                                            <Link
+                                                                key={social.name}
+                                                                href={social.href}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className={cn(menuStyles.itemText, "flex items-center justify-center rounded-full transition-colors")}
+                                                                aria-label={social.name}
+                                                            >
+                                                                <IconComponent className="w-6 h-6" />
+                                                            </Link>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                            <hr className="h-[1px] w-full border-border" />
+                                            <MenubarItem onClick={logout}>
+                                                <div className="flex items-center gap-2">
+                                                    <LogOutIcon className={menuStyles.itemIcon} />
+                                                    <span className={menuStyles.itemText}>
+                                                        Log out
+                                                    </span>
+                                                </div>
+                                            </MenubarItem>
+                                        </MenubarContent>
+                                    </MenubarMenu>
+                                </Menubar>
+                            </div>
+
+                        </div>)}
+                </div>
+
+
+                {/* Mobile Menu Button */}
+                <div className="lg:hidden">
+                    <Drawer open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                        <DrawerTrigger asChild>
+                            <button
+                                className="p-2 text-muted-foreground"
+                                aria-label="Open menu"
+                            >
+                                <Bars3Icon className="w-6 h-6" />
+                            </button>
+                        </DrawerTrigger>
+                        <DrawerContent>
+                            <DrawerHeader className="flex items-center justify-between border-b border-border">
+                                <DrawerTitle>Menu</DrawerTitle>
+                                <DrawerClose asChild>
+                                    <button className="p-2" aria-label="Close menu">
+                                        <XMarkIcon className="w-5 h-5" />
+                                    </button>
+                                </DrawerClose>
+                            </DrawerHeader>
+                            <div className="flex flex-col p-4 gap-2 max-h-[70vh] overflow-y-auto">
+                                {/* Mobile Search */}
+                                <div className="mb-4">
+                                    <NavbarSearch />
+                                </div>
+
+                                {isLoggedIn && (
+                                    <div className="border-b border-border pb-4 flex flex-col gap-2">
+                                        <div className="flex flex-row items-center gap-2">
+                                            <EthereumAddressToENSAvatar
+                                                address={account?.address}
+                                                className="h-8 w-8 min-h-8 min-w-8 max-h-8 max-w-8 rounded-full"
+                                            />
+                                            <span className={menuStyles.itemText}>{displayName}</span>
+                                        </div>
+                                        <Link
+                                            href={PAGES.MY_PROJECTS}
+                                            className="w-full"
+                                            onClick={() => setMobileMenuOpen(false)}
+                                        >
+                                            <Button variant="outline" className="w-full bg-background rounded-lg shadow-sm border px-3 py-2 text-sm font-medium text-foreground hover:text-muted-foreground transition-colors border-border">
+                                                My projects
+                                            </Button>
+                                        </Link>
+                                        {hasReviewerRole && (
+                                            <Link
+                                                href={PAGES.MY_REVIEWS}
+                                                className="w-full"
+                                                onClick={() => setMobileMenuOpen(false)}
+                                            >
+                                                <Button variant="outline" className="w-full bg-background rounded-lg shadow-sm border px-3 py-2 text-sm font-medium text-foreground hover:text-muted-foreground transition-colors border-border">
+                                                    Review
+                                                </Button>
+                                            </Link>
+                                        )}
+                                        {isCommunityAdmin && (
+                                            <Link
+                                                href={PAGES.ADMIN.LIST}
+                                                className="w-full"
+                                                onClick={() => setMobileMenuOpen(false)}
+                                            >
+                                                <Button variant="outline" className="w-full bg-background rounded-lg shadow-sm border px-3 py-2 text-sm font-medium text-foreground hover:text-muted-foreground transition-colors border-border">
+                                                    Admin
+                                                </Button>
+                                            </Link>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* For Builders Section - Only when NOT logged in */}
+                                {!isLoggedIn && (
+                                    <div className="border-b border-border pb-4">
+                                        <MenuSection title="For Builders" variant="mobile" />
+                                        <ForBuildersContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
+                                    </div>
+                                )}
+
+                                {/* For Funders Section - Only when NOT logged in */}
+                                {!isLoggedIn && (
+                                    <div className="border-b border-border pb-4">
+                                        <MenuSection title="For Funders" variant="mobile" />
+                                        <ForFundersContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
+                                    </div>
+                                )}
+
+                                {/* Explore Section */}
+                                <div className="border-b border-border pb-4">
+                                    <MenuSection title="Explore" variant="mobile" className="mb-4" />
+                                    <ExploreContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
+                                </div>
+
+                                {/* Resources Section - Only when NOT logged in */}
+                                {!isLoggedIn && (
+                                    <div className="border-b border-border pb-4">
+                                        <MenuSection title="Resources" variant="mobile" />
+                                        <ResourcesContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
+                                        <div className="mt-4 pt-4 border-t border-border">
+                                            <MenuSection title="Follow" variant="mobile" className="mb-4" />
+                                            <div className="flex items-center gap-2">
+                                                {socialMediaLinks.map((social) => {
+                                                    const IconComponent = social.icon;
+                                                    return (
+                                                        <Link
+                                                            key={social.name}
+                                                            href={social.href}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="w-10 h-10 flex items-center justify-center rounded-full transition-colors"
+                                                            aria-label={social.name}
+                                                        >
+                                                            <IconComponent className="w-8 h-8 text-muted-foreground" />
+                                                        </Link>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Mobile Auth */}
+                                {isLoggedIn ? (
+                                    <div className="pt-2">
+                                        <button
+                                            className="w-full flex items-center justify-between py-3 rounded-md hover:bg-accent text-left"
+                                            onClick={() => {
+                                                openProfileModal();
+                                                setMobileMenuOpen(false);
+                                            }}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <EthereumAddressToENSAvatar
+                                                    address={account?.address}
+                                                    className="h-6 w-6 min-h-6 min-w-6 max-h-6 max-w-6 rounded-full"
+                                                />
+                                                <span className={menuStyles.itemText}>My profile</span>
+                                            </div>
+                                            <ChevronRight className={menuStyles.itemIcon} />
+                                        </button>
+                                        <button
+                                            className="w-full flex items-center gap-3 py-3 rounded-md hover:bg-accent text-left"
+                                            onClick={toggleTheme}
+                                        >
+                                            {currentTheme === "light" ? (
+                                                <ToggleLeft className={menuStyles.itemIcon} />
+                                            ) : (
+                                                <ToggleRight className={menuStyles.itemIcon} />
+                                            )}
+                                            <span className={menuStyles.itemText}>
+                                                {currentTheme === "light" ? "Dark mode" : "Light mode"}
+                                            </span>
+                                        </button>
+                                        <Link
+                                            href={SOCIALS.DOCS}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="w-full flex items-center gap-3 py-3 rounded-md hover:bg-accent text-left"
+                                            onClick={() => setMobileMenuOpen(false)}
+                                        >
+                                            <CircleHelp className={menuStyles.itemIcon} />
+                                            <span className={menuStyles.itemText}>Help & Docs</span>
+                                        </Link>
+                                        <button
+                                            className="w-full flex items-center gap-3 rounded-md hover:bg-accent text-left mt-4"
+                                            onClick={() => {
+                                                logout();
+                                                setMobileMenuOpen(false);
+                                            }}
+                                        >
+                                            <LogOutIcon className={menuStyles.itemIcon} />
+                                            <span className={menuStyles.itemText}>Log out</span>
+                                        </button>
+                                        <div className="mt-4 pt-4 border-t border-border flex flex-col items-center">
+                                            <MenuSection title="Follow" variant="mobile" className="mb-4" />
+                                            <div className="flex items-center gap-2">
+                                                {socialMediaLinks.map((social) => {
+                                                    const IconComponent = social.icon;
+                                                    return (
+                                                        <Link
+                                                            key={social.name}
+                                                            href={social.href}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="w-10 h-10 flex items-center justify-center rounded-full transition-colors"
+                                                            aria-label={social.name}
+                                                        >
+                                                            <IconComponent className="w-8 h-8 text-muted-foreground" />
+                                                        </Link>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="pt-2 flex flex-col gap-2">
+                                        <Button
+                                            variant="outline"
+                                            className="w-full bg-secondary border-none rounded px-3 py-2 text-sm font-medium text-secondary-foreground hover:text-muted-foreground transition-colors"
+                                            size="lg"
+                                            onClick={() => {
+                                                login();
+                                                setMobileMenuOpen(false);
+                                            }}
+                                        >
+                                            Sign in
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="lg"
+                                            className="w-full border-border text-foreground hover:bg-accent shadow-sm"
+                                            asChild
+                                        >
+                                            <Link href="https://cal.com/karmahq" target="_blank">
+                                                <PhoneCall className="w-4 h-4" />
+                                                Contact sales
+                                            </Link>
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+                        </DrawerContent>
+                    </Drawer>
+                </div>
             </div>
         </nav>
     );

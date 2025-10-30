@@ -226,7 +226,7 @@ export function PlatformFeatures() {
         <Badge className="rounded-full bg-secondary px-2 py-1 text-xs font-medium text-accent-foreground">
           Our Platform
         </Badge>
-        <h2 className="text-[36px] font-semibold text-foreground leading-tight max-w-4xl" style={{ fontFamily: 'Inter' }}>
+        <h2 className="text-[36px] font-semibold text-foreground leading-tight max-w-4xl">
           Karma connects builders <br /><span>to funding opportunities</span>
         </h2>
         <p className="text-base md:text-lg text-muted-foreground max-w-3xl">

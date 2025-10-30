@@ -21,12 +21,9 @@ export function Hero() {
         <section className={cn(homepageTheme.padding, "flex flex-col items-start justify-start gap-12 flex-1 border-b border-border")}>
             <div className="flex flex-row items-center justify-between gap-10 w-full">
                 <div className="flex flex-col items-start justify-center gap-4 max-w-full lg:max-w-lg 2xl:max-w-2xl">
-                    <h1 className="text-foreground text-[40px] lg:text-5xl font-semibold leading-tight"
-                        style={{
-                            lineHeight: '100%',
-                            letterSpacing: '-2%',
-                        }}
-                    >Where builders get funded and ecosystems grow</h1>
+                    <h1 className="text-foreground text-[40px] lg:text-5xl font-semibold leading-none tracking-[-0.02em]">
+                        Where builders get funded and ecosystems grow
+                    </h1>
                     <p className="text-muted-foreground text-sm sm:text-base font-medium">Ecosystems use Karma to fund projects transparently. Builders use it to share progress, earn reputation, and get discovered for more opportunities.</p>
                     <div className="flex flex-col md:flex-row gap-3 md:gap-4">
                         <CreateProjectButton />
@@ -34,14 +31,28 @@ export function Hero() {
                     </div>
                     <div className="flex flex-row items-center justify-start gap-10 md:gap-4 mt-6">
                         <div className="flex flex-row items-center justify-start gap-2">
-                            {users.map((user, index) => (
-                                <Image key={user} src={user} alt="User" width={30} height={30} className="rounded-full w-7 h-7 bg-background border border-border"
-                                    style={{
-                                        marginRight: users.length - 1 === index ? '0' : '-20px',
-                                        zIndex: users.length + index + 1,
-                                    }}
-                                />
-                            ))}
+                            {users.map((user, index) => {
+                                const zIndexClasses = {
+                                    0: "z-[4]",
+                                    1: "z-[5]",
+                                    2: "z-[6]",
+                                } as Record<number, string>;
+
+                                return (
+                                    <Image
+                                        key={user}
+                                        src={user}
+                                        alt="User"
+                                        width={30}
+                                        height={30}
+                                        className={cn(
+                                            "rounded-full w-7 h-7 bg-background border border-border",
+                                            index !== users.length - 1 && "-mr-5",
+                                            zIndexClasses[index]
+                                        )}
+                                    />
+                                );
+                            })}
                         </div>
                         <div className='flex flex-row items-center flex-wrap justify-start gap-1 md:gap-3'>
                             <p className="text-foreground text-sm font-medium">4k+ projects raised funding on Karma </p>

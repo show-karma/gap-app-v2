@@ -51,16 +51,10 @@ export function FAQ() {
     return (
         <section className={cn(homepageTheme.padding, "py-12 border-b border-border")}>
             <div className="flex flex-col items-center gap-6 mb-12 max-w-4xl mx-auto">
-                <h2
-                    className="text-[36px] font-semibold text-foreground text-center leading-[44px] tracking-[-0.02em]"
-                    style={{ fontFamily: "Inter" }}
-                >
+                <h2 className="text-[36px] font-semibold text-foreground text-center leading-[44px] tracking-[-0.02em]">
                     Frequently asked questions
                 </h2>
-                <p
-                    className="text-[20px] font-normal text-muted-foreground text-center leading-[30px] tracking-[0%]"
-                    style={{ fontFamily: "Inter" }}
-                >
+                <p className="text-xl font-normal text-muted-foreground text-center leading-[30px] tracking-normal">
                     Everything you need to know about the product and billing.
                 </p>
             </div>
@@ -79,10 +73,7 @@ export function FAQ() {
                             className="border-b border-muted-foreground last:border-b-0"
                         >
                             <AccordionTrigger className="group hover:no-underline py-4 [&>svg]:hidden">
-                                <span
-                                    className="text-[18px] font-semibold text-foreground leading-[28px] tracking-[0%] pr-4 text-left flex-1"
-                                    style={{ fontFamily: "Inter" }}
-                                >
+                                <span className="text-lg font-semibold text-foreground leading-[28px] tracking-normal pr-4 text-left flex-1">
                                     {item.question}
                                 </span>
                                 <div className="flex-shrink-0 relative w-6 h-6 ml-2">
@@ -91,10 +82,7 @@ export function FAQ() {
                                 </div>
                             </AccordionTrigger>
                             <AccordionContent className="pb-4 pt-0">
-                                <p
-                                    className="text-[16px] font-normal text-muted-foreground leading-[24px] tracking-[0%]"
-                                    style={{ fontFamily: "Inter" }}
-                                >
+                                <p className="text-base font-normal text-muted-foreground leading-6 tracking-normal">
                                     {item.answer}
                                 </p>
                             </AccordionContent>
@@ -104,7 +92,7 @@ export function FAQ() {
             </div>
 
             <div className="max-w-4xl mx-auto">
-                <div className="bg-secondary rounded-2xl p-8 flex flex-col items-center gap-8" style={{ minHeight: "286px" }}>
+                <div className="bg-secondary rounded-2xl p-8 flex flex-col items-center gap-8 min-h-[286px]">
                     <div className="flex items-end gap-0">
                         <div className="relative w-12 h-12 rounded-full border-[1.5px] border-background bg-emerald-300 -mr-4 z-0 overflow-hidden">
                             <Image
@@ -136,16 +124,10 @@ export function FAQ() {
                     </div>
 
                     <div className="flex flex-col items-center gap-2">
-                        <h3
-                            className="text-[20px] font-medium text-foreground text-center leading-[30px] tracking-[0%]"
-                            style={{ fontFamily: "Inter" }}
-                        >
+                        <h3 className="text-xl font-medium text-foreground text-center leading-[30px] tracking-normal">
                             Still have questions?
                         </h3>
-                        <p
-                            className="text-[18px] font-normal text-muted-foreground text-center leading-[28px] tracking-[0%]"
-                            style={{ fontFamily: "Inter" }}
-                        >
+                        <p className="text-lg font-normal text-muted-foreground text-center leading-7 tracking-normal">
                             Can't find the answer you're looking for? Please chat to our friendly team.
                         </p>
                     </div>
