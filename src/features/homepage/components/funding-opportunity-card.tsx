@@ -33,7 +33,7 @@ function getProgramStatus(program: FundingProgram): {
 } {
   const endsAt = program.metadata?.endsAt;
   const isEnabled = program.applicationConfig?.isEnabled;
-  
+
   if (!isEnabled) {
     return { label: "Closed", variant: "secondary", endsSoon: false };
   }
@@ -57,7 +57,7 @@ function getCommunityImage(program: FundingProgram, theme: string | undefined): 
   }
 
   // Try to find in chosenCommunities by slug or uid
-  const communities = chosenCommunities();
+  const communities = chosenCommunities(true);
   const community = communities.find(
     (c) => c.slug === program.communitySlug || c.uid === program.communityUID
   );
@@ -74,9 +74,9 @@ function getCommunityImage(program: FundingProgram, theme: string | undefined): 
   return null;
 }
 
-export function FundingOpportunityCard({ 
-  program, 
-  isFeatured = false 
+export function FundingOpportunityCard({
+  program,
+  isFeatured = false
 }: FundingOpportunityCardProps) {
   const { theme } = useTheme();
   const status = getProgramStatus(program);
@@ -84,7 +84,7 @@ export function FundingOpportunityCard({
   const budget = program.metadata?.programBudget;
   const communityName = program.communityName || program.communitySlug || "Unknown";
   const communityImage = getCommunityImage(program, theme) || program.metadata?.logoImg;
-  const applyUrl = program.communitySlug 
+  const applyUrl = program.communitySlug
     ? PAGES.COMMUNITY.FUNDING_PLATFORM_APPLY(program.communitySlug, program.programId)
     : "#";
 
@@ -92,7 +92,7 @@ export function FundingOpportunityCard({
     // Mobile featured card with gradient background
     return (
       <Card className="relative overflow-hidden border-0">
-        <div 
+        <div
           className="absolute inset-0 bg-gradient-to-b from-blue-900 via-purple-900 to-blue-800"
           style={{
             backgroundImage: "linear-gradient(to bottom, rgba(30, 58, 138, 0.9), rgba(88, 28, 135, 0.9), rgba(30, 64, 175, 0.9))"
@@ -101,8 +101,8 @@ export function FundingOpportunityCard({
         <CardContent className="relative p-6 md:p-8 min-h-[400px] flex flex-col justify-between">
           {/* Top section */}
           <div className="flex items-start justify-between mb-4">
-            <Badge 
-              variant="secondary" 
+            <Badge
+              variant="secondary"
               className="bg-green-100 text-green-800 border-green-200 flex items-center gap-1.5"
             >
               <span className="w-1.5 h-1.5 rounded-full bg-green-600" />
@@ -166,7 +166,7 @@ export function FundingOpportunityCard({
       <CardContent className="p-6 flex flex-col h-full">
         {/* Top section */}
         <div className="flex items-start justify-between mb-4">
-          <Badge 
+          <Badge
             variant={status.variant === "default" ? "default" : "secondary"}
             className={cn(
               status.variant === "default" && "bg-teal-100 text-teal-700 border-teal-200 hover:bg-teal-100 hover:text-teal-700 hover:border-teal-200 text-xs font-normal leading-[1.5] tracking-[0.015em] text-center align-middle"
@@ -206,8 +206,8 @@ export function FundingOpportunityCard({
             ) : null}
             <span className="text-xs font-medium leading-[1.5] tracking-[0.015em] text-foreground">{communityName}</span>
           </div>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="sm"
             asChild
             className="border-border text-sm font-medium leading-[1.5] tracking-[0.005em] text-center align-middle text-foreground"
