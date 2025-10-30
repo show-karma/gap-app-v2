@@ -1703,8 +1703,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         </button>
       ) : null}
 
-      <Transition appear show={isOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-[100]" onClose={closeModal}>
+      {isOpen && (
+        <Transition appear show={true} as={Fragment}>
+          <Dialog as="div" className="relative z-[100]" onClose={closeModal}>
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -1900,6 +1901,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           </div>
         </Dialog>
       </Transition>
+      )}
     </>
   );
 };
