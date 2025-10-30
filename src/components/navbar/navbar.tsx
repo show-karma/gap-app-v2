@@ -248,7 +248,7 @@ export function Navbar() {
                     {isLoggedIn && (
                         <div className="flex flex-row items-center gap-2">
                             <Link href={SOCIALS.DOCS}>
-                                <Button variant="outline" className="cursor-pointer px-3 py-1 bg-secondary rounded-full border-none">
+                                <Button variant="outline" className="cursor-pointer px-3 py-1 bg-secondary rounded-xl border-none">
                                     <CircleHelp className="w-4 h-4" />
                                 </Button>
                             </Link>
