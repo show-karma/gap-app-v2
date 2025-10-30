@@ -46,7 +46,7 @@ function FundingOpportunityCardSkeleton() {
 
 export function LiveFundingOpportunitiesSkeleton() {
     return (
-        <section className={cn(homepageTheme.padding, "py-12 border-b border-border")}>
+        <section className={cn(homepageTheme.padding, "py-16 w-full")}>
             {/* Header */}
             <div className="flex items-center justify-between mb-8">
                 <h2 className="text-base font-medium leading-6 text-center text-muted-foreground">

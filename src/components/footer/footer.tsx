@@ -53,7 +53,7 @@ export function Footer() {
     const currentYear = new Date().getFullYear();
 
     return (
-        <footer className={cn("w-full bg-background flex flex-row items-center justify-center")}>
+        <footer className={cn("w-full bg-background flex flex-col items-center justify-center")}>
             <div className={cn(homepageTheme.padding, "w-full max-w-[1920px] flex flex-col")}>
                 {/* Main Footer Content */}
                 <div className="w-full py-12">
@@ -110,10 +110,13 @@ export function Footer() {
                         </div>
                     </div>
                 </div>
+            </div>
+            <hr className="w-full h-[1px] bg-border" />
+            <div className={cn(homepageTheme.padding, "w-full pt-0 pb-4 max-w-[1920px] flex flex-col")}>
 
                 {/* Bottom Section - Copyright and Legal Links */}
-                <div className="w-full border-t border-border py-6">
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="w-full py-6">
+                    <div className="flex flex-col gap-4 sm:flex-row md:flex-row-reverse sm:items-center sm:justify-between">
                         {/* Legal Links */}
                         <div className="flex flex-wrap gap-x-6 gap-y-2">
                             {legalLinks.map((link) => {

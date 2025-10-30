@@ -1,14 +1,7 @@
-"use client";
-
 import { cn } from "@/utilities/tailwind";
 import { homepageTheme } from "@/src/helper/theme";
-import {
-    Accordion,
-    AccordionContent,
-    AccordionItem,
-    AccordionTrigger,
-} from "@/components/ui/accordion";
-import { MinusCircle, PlusCircle, MessageCircleMore } from "lucide-react";
+import { FAQAccordion } from "./faq-accordion";
+import { MessageCircleMore } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { SOCIALS } from "@/utilities/socials";
@@ -49,7 +42,7 @@ const faqItems = [
 
 export function FAQ() {
     return (
-        <section className={cn(homepageTheme.padding, "py-12 border-b border-border")}>
+        <section className={cn(homepageTheme.padding, "py-16 w-full")}>
             <div className="flex flex-col items-center gap-6 mb-12 max-w-4xl mx-auto">
                 <h2 className="text-[36px] font-semibold text-foreground text-center leading-[44px] tracking-[-0.02em]">
                     Frequently asked questions
@@ -60,35 +53,7 @@ export function FAQ() {
             </div>
 
             <div className="max-w-4xl mx-auto mb-12">
-                <Accordion
-                    type="single"
-                    defaultValue="free-trial"
-                    collapsible
-                    className="w-full"
-                >
-                    {faqItems.map((item) => (
-                        <AccordionItem
-                            key={item.id}
-                            value={item.id}
-                            className="border-b border-muted-foreground last:border-b-0"
-                        >
-                            <AccordionTrigger className="group hover:no-underline py-4 [&>svg]:hidden">
-                                <span className="text-lg font-semibold text-foreground leading-[28px] tracking-normal pr-4 text-left flex-1">
-                                    {item.question}
-                                </span>
-                                <div className="flex-shrink-0 relative w-6 h-6 ml-2">
-                                    <PlusCircle className="w-6 h-6 text-muted-foreground absolute inset-0 group-data-[state=open]:hidden" />
-                                    <MinusCircle className="w-6 h-6 text-muted-foreground absolute inset-0 hidden group-data-[state=open]:block" />
-                                </div>
-                            </AccordionTrigger>
-                            <AccordionContent className="pb-4 pt-0">
-                                <p className="text-base font-normal text-muted-foreground leading-6 tracking-normal">
-                                    {item.answer}
-                                </p>
-                            </AccordionContent>
-                        </AccordionItem>
-                    ))}
-                </Accordion>
+                <FAQAccordion items={faqItems} />
             </div>
 
             <div className="max-w-4xl mx-auto">
@@ -132,7 +97,7 @@ export function FAQ() {
                         </p>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center md:flex-row flex-col gap-4">
                         <ExternalLink href={SOCIALS.TELEGRAM}>
                             <Button
                                 variant="default"

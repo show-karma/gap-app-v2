@@ -18,7 +18,7 @@ const items = chosenCommunities().map((community) => ({
 
 export function Hero() {
     return (
-        <section className={cn(homepageTheme.padding, "flex flex-col items-start justify-start gap-12 flex-1 border-b border-border")}>
+        <section className={cn(homepageTheme.padding, "flex flex-col items-start justify-start gap-12 flex-1 w-full")}>
             <div className="flex flex-row items-center justify-between gap-10 w-full">
                 <div className="flex flex-col items-start justify-center gap-4 max-w-full lg:max-w-lg 2xl:max-w-2xl">
                     <h1 className="text-foreground text-[40px] lg:text-5xl font-semibold leading-none tracking-[-0.02em]">

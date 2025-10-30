@@ -11,18 +11,30 @@ import { FAQ } from "@/src/features/homepage/components/faq";
 
 export const metadata = defaultMetadata;
 
+const HorizontalLine = () => {
+    return (
+        <hr className="w-full h-[1px] bg-border max-w-[75%]" />
+    );
+}
+
 export default function Index() {
     return (
         <main className="flex w-full flex-col flex-1 items-center bg-background">
-            <div className="flex w-full max-w-[1920px] flex-1 flex-col gap-2">
+            <div className="flex w-full max-w-[1920px] justify-center items-center flex-1 flex-col gap-2">
                 <Hero />
+                <HorizontalLine />
                 <Suspense fallback={<LiveFundingOpportunitiesSkeleton />}>
                     <LiveFundingOpportunities />
                 </Suspense>
+                <HorizontalLine />
                 <PlatformFeatures />
+                <HorizontalLine />
                 <HowItWorks />
+                <HorizontalLine />
                 <JoinCommunity />
+                <HorizontalLine />
                 <FAQ />
+                <HorizontalLine />
                 <WhereBuildersGrow />
             </div>
         </main>

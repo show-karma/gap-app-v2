@@ -1,5 +1,3 @@
-"use client";
-
 import { CheckCircle } from "lucide-react";
 import { cn } from "@/utilities/tailwind";
 import { homepageTheme } from "@/src/helper/theme";
@@ -73,7 +71,7 @@ export function HowItWorks() {
     ];
 
     return (
-        <section className={cn(homepageTheme.padding, "py-12 border-b border-border")}>
+        <section className={cn(homepageTheme.padding, "py-16 w-full")}>
             {/* Header */}
             <div className="flex flex-col items-start gap-4 mb-12">
                 <Badge className="rounded-full bg-secondary px-2 py-1 text-xs font-medium text-accent-foreground">

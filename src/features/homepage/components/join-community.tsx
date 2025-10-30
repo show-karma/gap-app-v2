@@ -39,7 +39,7 @@ const testimonials = [
 
 export function JoinCommunity() {
     return (
-        <section className={cn(homepageTheme.padding, "py-12 border-b border-border")}>
+        <section className={cn(homepageTheme.padding, "py-16 w-full")}>
             <div className="flex flex-col items-center gap-6 mb-12">
                 <h2 className="text-[36px] font-semibold text-foreground text-center">
                     Join our community
