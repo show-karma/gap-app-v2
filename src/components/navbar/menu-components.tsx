@@ -65,7 +65,7 @@ export function MenuItem({
 
     return (
         <Link href={href} {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}>
-            <MenubarItem className="flex flex-col items-start rounded-md cursor-pointer p-1">
+            <MenubarItem className="flex flex-col items-start rounded-md cursor-pointer">
                 {content}
             </MenubarItem>
         </Link>
@@ -114,7 +114,7 @@ export function SimpleMenuItem({
 
     return (
         <Link href={href} {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}>
-            <MenubarItem className="p-0 cursor-pointer">
+            <MenubarItem>
                 {content}
             </MenubarItem>
         </Link>
@@ -262,7 +262,7 @@ export function ExploreContent({ variant = 'desktop', onClose }: ExploreContentP
     }
 
     return (
-        <div className="flex flex-col gap-4 px-4 py-2">
+        <div className="flex flex-col gap-4 px-2 py-2">
             <div className="flex flex-col gap-2">
                 <MenuSection title="Projects" variant="desktop" />
                 {exploreItems.projects.map((item) => (

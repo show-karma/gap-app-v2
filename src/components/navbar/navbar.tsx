@@ -41,6 +41,7 @@ import { useContributorProfileModalStore } from "@/store/modals/contributorProfi
 import { useContributorProfile } from "@/hooks/useContributorProfile";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import { PAGES } from "@/utilities/pages";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
 
 
 // Social media links with proper icons
@@ -68,7 +69,7 @@ const socialMediaLinks = [
 ];
 
 const menuStyles = {
-    button: 'font-medium text-muted-foreground flex flex-row gap-1 px-1',
+    button: 'font-medium text-muted-foreground flex flex-row gap-1',
     item: '',
     itemIcon: 'text-muted-foreground w-4 h-4',
     itemText: 'text-foreground text-sm font-medium',
@@ -190,7 +191,7 @@ export function Navbar() {
                                     <ChevronDown className="w-4 h-4" />
                                 </MenubarTrigger>
                                 <MenubarContent>
-                                    <div className="flex flex-col gap-4 px-4 py-2">
+                                    <div className="flex flex-col gap-4 px-2 py-2">
                                         <ResourcesContent variant="desktop" />
                                         <hr className="h-[1px] w-full border-border" />
                                         <div className="flex flex-col items-start justify-start gap-2">
@@ -244,14 +245,14 @@ export function Navbar() {
                     </div>
                 ) : null}
                 {/* Right Side - Social Media & User Profile (Only when logged in) */}
-                <div className="hidden lg:flex items-center gap-3">
-                    {isLoggedIn && (
+                {isLoggedIn && (
+                    <div className="hidden lg:flex items-center gap-3">
                         <div className="flex flex-row items-center gap-2">
-                            <Link href={SOCIALS.DOCS}>
-                                <Button variant="outline" className="cursor-pointer px-3 py-1 bg-secondary rounded-xl border-none">
+                            <ExternalLink href={SOCIALS.DOCS}>
+                                <Button variant="outline" className="cursor-pointer px-3 py-0 h-8 bg-secondary rounded-xl border-none">
                                     <CircleHelp className="w-4 h-4" />
                                 </Button>
-                            </Link>
+                            </ExternalLink>
                             <Menubar className="border-0 bg-transparent shadow-none p-0 h-auto">
                                 <MenubarMenu>
                                     <MenubarTrigger className="cursor-pointer p-0 bg-secondary rounded-full data-[state=open]:opacity-90">
@@ -263,9 +264,9 @@ export function Navbar() {
                                             />
                                         </div>
                                     </MenubarTrigger>
-                                    <MenubarContent align="end" className="flex flex-col gap-4 px-4 py-4">
-                                        <div className="flex flex-col items-start justify-start gap-2 p-0">
-                                            <MenubarItem className="p-0 w-full" onClick={() => openProfileModal()}>
+                                    <MenubarContent align="end" className="flex flex-col gap-4 py-3">
+                                        <div className="flex flex-col items-start justify-start gap-2">
+                                            <MenubarItem className="w-full" onClick={() => openProfileModal()}>
                                                 <div className="flex items-center w-full flex-row gap-2 justify-between">
                                                     <div className="flex items-center flex-row gap-2">
                                                         <CircleUser className={menuStyles.itemIcon} />
@@ -276,8 +277,8 @@ export function Navbar() {
                                                     <ChevronRight className={menuStyles.itemIcon} />
                                                 </div>
                                             </MenubarItem>
-                                            <MenubarItem onClick={toggleTheme} className="p-0">
-                                                <span className="flex items-center gap-2">
+                                            <MenubarItem onClick={toggleTheme} className="w-full">
+                                                <span className="flex items-center gap-2 w-full">
                                                     {currentTheme === "light" ? <ToggleLeft className={menuStyles.itemIcon} /> : <ToggleRight className={menuStyles.itemIcon} />}
                                                     <span className={menuStyles.itemText}>
                                                         {currentTheme === "light" ? "Dark mode" : "Light mode"}
@@ -285,8 +286,21 @@ export function Navbar() {
                                                 </span>
                                             </MenubarItem>
                                         </div>
+                                        <hr className="h-[1px] border-border" />
+                                        <div className="flex flex-col items-start justify-start gap-3 w-full">
+                                            <MenubarItem className="py-0 w-full">
+                                                <Link href={PAGES.MY_REVIEWS} className={cn(menuStyles.itemText, 'w-full')}>
+                                                    Review
+                                                </Link>
+                                            </MenubarItem>
+                                            <MenubarItem className="py-0 w-full">
+                                                <Link href={PAGES.ADMIN.LIST} className={cn(menuStyles.itemText, 'w-full')}>
+                                                    Admin
+                                                </Link>
+                                            </MenubarItem>
+                                        </div>
                                         <hr className="h-[1px] w-full border-border" />
-                                        <div className="flex flex-col items-start justify-start gap-2 px-0 p-0">
+                                        <div className="flex flex-col items-start justify-start gap-2 px-2">
                                             <MenuSection title="Follow" variant="desktop" />
                                             <div className="flex flex-row items-center w-full justify-between gap-2">
                                                 {socialMediaLinks.map((social) => {
@@ -307,7 +321,7 @@ export function Navbar() {
                                             </div>
                                         </div>
                                         <hr className="h-[1px] w-full border-border" />
-                                        <MenubarItem onClick={logout} className="p-0">
+                                        <MenubarItem onClick={logout}>
                                             <div className="flex items-center gap-2">
                                                 <LogOutIcon className={menuStyles.itemIcon} />
                                                 <span className={menuStyles.itemText}>
@@ -319,8 +333,8 @@ export function Navbar() {
                                 </MenubarMenu>
                             </Menubar>
                         </div>
-                    )}
-                </div>
+
+                    </div>)}
             </div>
 
 
@@ -419,7 +433,7 @@ export function Navbar() {
                             {isLoggedIn ? (
                                 <div className="pt-2">
                                     <button
-                                        className="w-full flex items-center justify-between p-3 rounded-md hover:bg-accent text-left"
+                                        className="w-full flex items-center justify-between py-3 rounded-md hover:bg-accent text-left"
                                         onClick={() => {
                                             openProfileModal();
                                             setMobileMenuOpen(false);
@@ -435,7 +449,7 @@ export function Navbar() {
                                         <ChevronRight className={menuStyles.itemIcon} />
                                     </button>
                                     <button
-                                        className="w-full flex items-center gap-3 p-3 rounded-md hover:bg-accent text-left"
+                                        className="w-full flex items-center gap-3 py-3 rounded-md hover:bg-accent text-left"
                                         onClick={toggleTheme}
                                     >
                                         {currentTheme === "light" ? (
@@ -451,14 +465,14 @@ export function Navbar() {
                                         href={SOCIALS.DOCS}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="w-full flex items-center gap-3 p-3 rounded-md hover:bg-accent text-left"
+                                        className="w-full flex items-center gap-3 py-3 rounded-md hover:bg-accent text-left"
                                         onClick={() => setMobileMenuOpen(false)}
                                     >
                                         <CircleHelp className={menuStyles.itemIcon} />
                                         <span className={menuStyles.itemText}>Help & Docs</span>
                                     </Link>
                                     <button
-                                        className="w-full flex items-center gap-3 p-3 rounded-md hover:bg-accent text-left mt-4"
+                                        className="w-full flex items-center gap-3 rounded-md hover:bg-accent text-left mt-4"
                                         onClick={() => {
                                             logout();
                                             setMobileMenuOpen(false);
