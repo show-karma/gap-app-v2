@@ -22,7 +22,7 @@ function StepCard({ text, size, showIcon = true }: StepCardProps) {
 
     return (
         <Card className={cn(
-            "border shadow-sm bg-background relative z-10 w-full lg:w-[218px]",
+            "border shadow-sm bg-background relative z-[2] w-full lg:w-[218px]",
             heightClasses[size]
         )}>
             <CardContent className={cn(

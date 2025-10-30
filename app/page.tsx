@@ -3,6 +3,8 @@ import { Hero } from "@/src/features/homepage/components/hero";
 import { LiveFundingOpportunities } from "@/src/features/homepage/components/live-funding-opportunities";
 import { PlatformFeatures } from "@/src/features/homepage/components/platform-features";
 import { HowItWorks } from "@/src/features/homepage/components/how-it-works";
+import { JoinCommunity } from "@/src/features/homepage/components/join-community";
+import { FAQ } from "@/src/features/homepage/components/faq";
 
 export const metadata = defaultMetadata;
 
@@ -14,6 +16,8 @@ export default function Index() {
                 <LiveFundingOpportunities />
                 <PlatformFeatures />
                 <HowItWorks />
+                <JoinCommunity />
+                <FAQ />
             </div>
         </main>
     );

@@ -73,10 +73,34 @@ module.exports = {
   				'100%': {
   					transform: 'translateX(-50%)'
   				}
+  			},
+  			scroll: {
+  				to: {
+  					transform: 'translate(calc(-50% - 0.5rem))'
+  				}
+  			},
+  			'accordion-down': {
+  				from: {
+  					height: '0'
+  				},
+  				to: {
+  					height: 'var(--radix-accordion-content-height)'
+  				}
+  			},
+  			'accordion-up': {
+  				from: {
+  					height: 'var(--radix-accordion-content-height)'
+  				},
+  				to: {
+  					height: '0'
+  				}
   			}
   		},
   		animation: {
-  			marquee: 'marquee 30s linear infinite'
+  			marquee: 'marquee 30s linear infinite',
+  			scroll: 'scroll var(--animation-duration, 40s) var(--animation-direction, forwards) linear infinite',
+  			'accordion-down': 'accordion-down 0.2s ease-out',
+  			'accordion-up': 'accordion-up 0.2s ease-out'
   		},
   		colors: {
   			brand: {
@@ -135,7 +159,7 @@ module.exports = {
   				'800': 'hsl(var(--c-primary-800))',
   				'900': 'hsl(var(--c-primary-900))',
   				DEFAULT: 'hsl(var(--primary))',
-  				foreground: 'hsl(var(--primary-foreground))',
+  				foreground: 'hsl(var(--primary-foreground))'
   			},
   			boxShadow: {
   				'tremor-input': '0 1px 2px 0 rgb(0 0 0 / 0.05)',
@@ -173,11 +197,11 @@ module.exports = {
   				foreground: 'hsl(var(--muted-foreground))'
   			},
   			accent: {
+  				'0': 'hsl(var(--accent-0))',
+  				'2': 'hsl(var(--accent-2))',
+  				'3': 'hsl(var(--accent-3))',
   				DEFAULT: 'hsl(var(--accent))',
-  				foreground: 'hsl(var(--accent-foreground))',
-  				0: 'hsl(var(--accent-0))',
-  				2: 'hsl(var(--accent-2))',
-  				3: 'hsl(var(--accent-3))'
+  				foreground: 'hsl(var(--accent-foreground))'
   			},
   			destructive: {
   				DEFAULT: 'hsl(var(--destructive))',
@@ -186,12 +210,12 @@ module.exports = {
   				subtle: 'hsl(var(--destructive-subtle))'
   			},
   			border: {
-  				DEFAULT: 'hsl(var(--border))',
-  				0: 'hsl(var(--border-0))',
-  				1: 'hsl(var(--border-1))',
-  				3: 'hsl(var(--border-3))',
-  				4: 'hsl(var(--border-4))',
-  				5: 'hsl(var(--border-5))'
+  				'0': 'hsl(var(--border-0))',
+  				'1': 'hsl(var(--border-1))',
+  				'3': 'hsl(var(--border-3))',
+  				'4': 'hsl(var(--border-4))',
+  				'5': 'hsl(var(--border-5))',
+  				DEFAULT: 'hsl(var(--border))'
   			},
   			input: 'hsl(var(--input))',
   			ring: 'hsl(var(--ring))',

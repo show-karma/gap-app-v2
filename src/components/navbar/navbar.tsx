@@ -118,7 +118,7 @@ export function Navbar() {
         <nav
             className={cn(
                 homepageTheme.padding,
-                "flex justify-between bg-background w-full flex-row py-5 gap-8 max-w-[1920px] min-w-min items-center border-b border-border"
+                "flex justify-between bg-background w-full flex-row py-5 gap-8 max-w-[1920px] min-w-min items-center border-b border-border z-10 fixed top-0 left-0 right-0"
             )}
         >
             {/* Logo */}
