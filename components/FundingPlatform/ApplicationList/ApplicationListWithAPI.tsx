@@ -305,6 +305,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
             >
               <option value="">All Statuses</option>
               <option value="pending">Pending</option>
+              <option value="resubmitted">Resubmitted</option>
               <option value="under_review">Under Review</option>
               <option value="revision_requested">Revision Requested</option>
               <option value="approved">Approved</option>
