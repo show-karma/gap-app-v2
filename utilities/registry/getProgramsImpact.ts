@@ -14,7 +14,18 @@ export async function getProgramsImpact(
   try {
     // First get the community details to obtain the UID
     const communityDetails = await getCommunityDetailsV2(communityId);
-    
+
+    if (!communityDetails) {
+      return {
+        data: [],
+        stats: {
+          totalCategories: 0,
+          totalProjects: 0,
+          totalFundingAllocated: "0",
+        },
+      };
+    }
+
     // Use the new V2 impact-segments endpoint with community UID
     const [data, error] = await fetchData(
       INDEXER.COMMUNITY.V2.IMPACT_SEGMENTS(communityDetails.uid)

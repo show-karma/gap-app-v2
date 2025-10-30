@@ -225,8 +225,8 @@ export default function ApplicationDetailPage() {
                 </p>
               </div>
             </div>
-            {/* Delete button - Only show for community admins and non-approved applications */}
-            {isCommunityAdmin && application.status?.toLowerCase() !== 'approved' && (
+            {/* Delete button - Only show for community admins */}
+            {isCommunityAdmin && (
               <Button
                 onClick={handleDeleteClick}
                 disabled={isDeleting}
