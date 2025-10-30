@@ -27,6 +27,11 @@ export async function generateMetadata({
     description: `View the list of grants issued by ${communityName} and the grantee updates.`,
   };
 
+  if (!community) {
+    dynamicMetadata.title = `Launch ${communityName} community!`,
+    dynamicMetadata.description = `Looks like no one’s started this community. Create it now to launch programs, fund projects, and track progress, all in one place.`;
+  }
+
   return {
     title: dynamicMetadata.title || defaultMetadata.title,
     description: dynamicMetadata.description || defaultMetadata.description,
