@@ -23,7 +23,7 @@ export function InfiniteSlider({ items, duration = 80, className }: InfiniteSlid
   const renderPill = (item: { text: string; image: { light: string; dark: string } }, index: number) => (
     <div
       key={index}
-      className="flex items-center gap-2 px-2.5 py-2 mx-2 rounded-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 whitespace-nowrap text-sm font-medium text-zinc-700 dark:text-zinc-300"
+      className="flex items-center gap-2 px-2.5 py-2 mx-2 rounded-full bg-background border border-border whitespace-nowrap text-sm font-medium text-muted-foreground"
     >
       <Image
         src={item.image.light}
@@ -45,18 +45,11 @@ export function InfiniteSlider({ items, duration = 80, className }: InfiniteSlid
 
   return (
     <div className={cn("w-full overflow-hidden py-4 relative", className)}>
-      {/* Left gradient fade - Light mode */}
+      {/* Left gradient fade */}
       <div
-        className="absolute left-0 top-0 bottom-0 w-6 lg:w-32 z-10 pointer-events-none block dark:hidden"
+        className="absolute left-0 top-0 bottom-0 w-6 lg:w-32 z-10 pointer-events-none"
         style={{
-          background: 'linear-gradient(to right, white 0%, transparent 100%)'
-        }}
-      />
-      {/* Left gradient fade - Dark mode */}
-      <div
-        className="absolute left-0 top-0 bottom-0 w-6 lg:w-32 z-10 pointer-events-none hidden dark:block"
-        style={{
-          background: 'linear-gradient(to right, rgb(24, 24, 27) 0%, transparent 100%)'
+          background: 'linear-gradient(to right, hsl(var(--background)) 0%, transparent 100%)'
         }}
       />
 
@@ -74,18 +67,11 @@ export function InfiniteSlider({ items, duration = 80, className }: InfiniteSlid
         {extendedItems.map((item, index) => renderPill(item, `second-${index}` as any))}
       </div>
 
-      {/* Right gradient fade - Light mode */}
+      {/* Right gradient fade */}
       <div
-        className="absolute right-0 top-0 bottom-0 w-6 lg:w-32 z-10 pointer-events-none block dark:hidden"
+        className="absolute right-0 top-0 bottom-0 w-6 lg:w-32 z-10 pointer-events-none"
         style={{
-          background: 'linear-gradient(to left, white 0%, transparent 100%)'
-        }}
-      />
-      {/* Right gradient fade - Dark mode */}
-      <div
-        className="absolute right-0 top-0 bottom-0 w-6 lg:w-32 z-10 pointer-events-none hidden dark:block"
-        style={{
-          background: 'linear-gradient(to left, rgb(24, 24, 27) 0%, transparent 100%)'
+          background: 'linear-gradient(to left, hsl(var(--background)) 0%, transparent 100%)'
         }}
       />
     </div>

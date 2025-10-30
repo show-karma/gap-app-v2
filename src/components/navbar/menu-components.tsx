@@ -11,9 +11,9 @@ import {
 } from "./menu-items";
 
 const menuStyles = {
-    itemIcon: 'text-general-muted-foreground dark:text-zinc-200 w-4 h-4',
-    itemText: 'text-black dark:text-white text-sm font-medium',
-    itemDescription: 'text-general-muted-foreground dark:text-zinc-200 text-sm font-normal',
+    itemIcon: 'text-muted-foreground w-4 h-4',
+    itemText: 'text-foreground text-sm font-medium',
+    itemDescription: 'text-muted-foreground text-sm font-normal',
 };
 
 interface MenuItemProps {
@@ -54,7 +54,7 @@ export function MenuItem({
         return (
             <Link
                 href={href}
-                className="flex flex-col px-0 py-3 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className="flex flex-col px-0 py-3 rounded-md hover:bg-accent"
                 onClick={onClick}
                 {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
             >
@@ -103,7 +103,7 @@ export function SimpleMenuItem({
         return (
             <Link
                 href={href}
-                className="flex items-center gap-2 px-0 py-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className="flex items-center gap-2 px-0 py-1 rounded-md hover:bg-accent"
                 onClick={onClick}
                 {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
             >
@@ -211,7 +211,7 @@ export function ForFundersContent({ variant = 'desktop', onClose }: ForFundersCo
         <div className="flex flex-row justify-between items-center gap-4">
             <div className="flex flex-col gap-2">
                 <MenuItem {...forFundersItems.main} variant="desktop" />
-                <hr className="my-4 border-zinc-200 dark:border-zinc-700" />
+                <hr className="my-4 border-border" />
                 <div className="flex flex-col gap-2">
                     {forFundersItems.secondary.map((item) => (
                         <MenuItem key={item.href} {...item} variant="desktop" />
@@ -269,7 +269,7 @@ export function ExploreContent({ variant = 'desktop', onClose }: ExploreContentP
                     <SimpleMenuItem key={item.title} {...item} variant="desktop" />
                 ))}
             </div>
-            <hr className="h-[1px] w-full border-zinc-200 dark:border-zinc-700" />
+            <hr className="h-[1px] w-full border-border" />
             <div className="flex flex-col gap-2">
                 <MenuSection title="Communities" variant="desktop" />
                 {exploreItems.communities.map((item) => (
@@ -295,7 +295,7 @@ export function ResourcesContent({ variant = 'desktop', onClose }: ResourcesCont
                         key={item.href}
                         href={item.href}
                         target="_blank"
-                        className="flex items-center justify-between px-0 py-3 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                        className="flex items-center justify-between px-0 py-3 rounded-md hover:bg-accent"
                         onClick={onClose}
                     >
                         <div className="flex items-center gap-2">

@@ -76,13 +76,13 @@ export function NavbarSearch() {
     const totalResults = results.projects.length + groupedCommunities.length;
 
     return (
-        <div className="relative" ref={searchRef}>
-            <div className="relative flex items-center gap-2 px-3 py-2 text-sm border border-zinc-200 dark:border-zinc-700 rounded-md min-w-[200px] bg-white dark:bg-zinc-900">
-                <MagnifyingGlassIcon className="w-4 h-4 text-zinc-500 dark:text-zinc-400 flex-shrink-0" />
+        <div className="relative max-w-full lg:max-w-[200px]" ref={searchRef}>
+            <div className="relative flex items-center gap-2 px-3 py-2 text-sm border border-border rounded-md min-w-[100px] bg-background">
+                <MagnifyingGlassIcon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                 <input
                     type="text"
-                    placeholder="Search projects, communities..."
-                    className="w-full text-sm bg-transparent text-zinc-900 dark:text-white placeholder:text-zinc-500 dark:placeholder:text-zinc-400 border-none outline-none focus:ring-0 p-0"
+                    placeholder="Search"
+                    className="w-full flex-1 text-sm bg-transparent text-foreground placeholder:text-muted-foreground border-none outline-none focus:ring-0 p-0"
                     value={searchValue}
                     onChange={(e) => handleInputChange(e.target.value)}
                     onFocus={() => {
@@ -94,19 +94,19 @@ export function NavbarSearch() {
                 <Loader2 className={cn(
                     "w-4 h-4 flex-shrink-0 transition-opacity",
                     isLoading
-                        ? "opacity-100 animate-spin text-zinc-500 dark:text-zinc-400"
+                        ? "opacity-100 animate-spin text-muted-foreground"
                         : "opacity-0"
                 )} />
             </div>
 
             {isSearchListOpen && (
-                <div className="absolute top-full left-0 mt-2 w-[400px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg z-50 overflow-hidden">
+                <div className="absolute top-full left-0 mt-2 w-[400px] bg-background border border-border rounded-lg shadow-lg z-50 overflow-hidden">
                     {isLoading ? (
                         <div className="flex items-center justify-center py-6">
-                            <Loader2 className="w-6 h-6 text-zinc-500 dark:text-zinc-400 animate-spin" />
+                            <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
                         </div>
                     ) : totalResults === 0 && searchValue.length >= 3 ? (
-                        <div className="py-6 text-center text-sm text-zinc-500 dark:text-zinc-400">
+                        <div className="py-6 text-center text-sm text-muted-foreground">
                             No results found.
                         </div>
                     ) : (
@@ -122,7 +122,7 @@ export function NavbarSearch() {
                                             key={community.uid}
                                             href={PAGES.COMMUNITY.ALL_GRANTS(slug)}
                                             onClick={handleSelectItem}
-                                            className="flex items-center gap-2 mx-3 px-3 py-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                                            className="flex items-center gap-2 mx-3 px-3 py-2 rounded-md hover:bg-accent transition-colors"
                                         >
                                             <ProfilePicture
                                                 imageURL={imageURL}
@@ -130,7 +130,7 @@ export function NavbarSearch() {
                                                 className="w-8 h-8 flex-shrink-0"
                                                 alt={name}
                                             />
-                                            <span className="font-medium text-zinc-900 dark:text-white truncate block" style={{ maxWidth: '200px' }}>
+                                            <span className="font-medium text-foreground truncate block" style={{ maxWidth: '200px' }}>
                                                 {name}
                                             </span>
                                             <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200 text-xs font-medium rounded flex-shrink-0 whitespace-nowrap ml-auto">
@@ -149,7 +149,7 @@ export function NavbarSearch() {
                                             key={project.uid}
                                             href={PAGES.PROJECT.GRANTS(slug)}
                                             onClick={handleSelectItem}
-                                            className="flex items-center gap-2 mx-3 px-3 py-2 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                                            className="flex items-center gap-2 mx-3 px-3 py-2 rounded-md hover:bg-accent transition-colors"
                                         >
                                             <ProfilePicture
                                                 imageURL={imageURL}
@@ -157,7 +157,7 @@ export function NavbarSearch() {
                                                 className="w-8 h-8 flex-shrink-0"
                                                 alt={title}
                                             />
-                                            <span className="font-medium text-zinc-900 dark:text-white truncate block" style={{ maxWidth: '280px' }}>
+                                            <span className="font-medium text-foreground truncate block" style={{ maxWidth: '280px' }}>
                                                 {title}
                                             </span>
                                         </Link>

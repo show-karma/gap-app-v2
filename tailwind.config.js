@@ -1,8 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 const defaultTheme = require("tailwindcss/defaultTheme");
 
+
 module.exports = {
-  darkMode: ["class", "class"],
+  darkMode: ["class"],
   content: [
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
@@ -85,10 +86,6 @@ module.exports = {
   				lightblue: '#EEF4FF',
   				black: '#18181B'
   			},
-			general: {
-				primary: '#171717',
-				'muted-foreground': '#737373',
-			},
   			warning: {
   				'50': '#fffbeb',
   				'700': '#b45309'
@@ -127,18 +124,18 @@ module.exports = {
   				}
   			},
   			primary: {
-  				'50': 'customColors("--c-primary-50")',
-  				'100': 'customColors("--c-primary-100")',
-  				'200': 'customColors("--c-primary-200")',
-  				'300': 'customColors("--c-primary-300")',
-  				'400': 'customColors("--c-primary-400")',
-  				'500': 'customColors("--c-primary-500")',
-  				'600': 'customColors("--c-primary-600")',
-  				'700': 'customColors("--c-primary-700")',
-  				'800': 'customColors("--c-primary-800")',
-  				'900': 'customColors("--c-primary-900")',
+  				'50': 'hsl(var(--c-primary-50))',
+  				'100': 'hsl(var(--c-primary-100))',
+  				'200': 'hsl(var(--c-primary-200))',
+  				'300': 'hsl(var(--c-primary-300))',
+  				'400': 'hsl(var(--c-primary-400))',
+  				'500': 'hsl(var(--c-primary-500))',
+  				'600': 'hsl(var(--c-primary-600))',
+  				'700': 'hsl(var(--c-primary-700))',
+  				'800': 'hsl(var(--c-primary-800))',
+  				'900': 'hsl(var(--c-primary-900))',
   				DEFAULT: 'hsl(var(--primary))',
-  				foreground: 'hsl(var(--primary-foreground))'
+  				foreground: 'hsl(var(--primary-foreground))',
   			},
   			boxShadow: {
   				'tremor-input': '0 1px 2px 0 rgb(0 0 0 / 0.05)',
@@ -154,7 +151,10 @@ module.exports = {
   				'tremor-full': '9999px'
   			},
   			background: 'hsl(var(--background))',
-  			foreground: 'hsl(var(--foreground))',
+  			foreground: {
+  				DEFAULT: 'hsl(var(--foreground))',
+  				alt: 'hsl(var(--foreground-alt))'
+  			},
   			card: {
   				DEFAULT: 'hsl(var(--card))',
   				foreground: 'hsl(var(--card-foreground))'
@@ -165,7 +165,8 @@ module.exports = {
   			},
   			secondary: {
   				DEFAULT: 'hsl(var(--secondary))',
-  				foreground: 'hsl(var(--secondary-foreground))'
+  				foreground: 'hsl(var(--secondary-foreground))',
+  				hover: 'hsl(var(--secondary-hover))'
   			},
   			muted: {
   				DEFAULT: 'hsl(var(--muted))',
@@ -173,15 +174,41 @@ module.exports = {
   			},
   			accent: {
   				DEFAULT: 'hsl(var(--accent))',
-  				foreground: 'hsl(var(--accent-foreground))'
+  				foreground: 'hsl(var(--accent-foreground))',
+  				0: 'hsl(var(--accent-0))',
+  				2: 'hsl(var(--accent-2))',
+  				3: 'hsl(var(--accent-3))'
   			},
   			destructive: {
   				DEFAULT: 'hsl(var(--destructive))',
-  				foreground: 'hsl(var(--destructive-foreground))'
+  				foreground: 'hsl(var(--destructive-foreground))',
+  				border: 'hsl(var(--destructive-border))',
+  				subtle: 'hsl(var(--destructive-subtle))'
   			},
-  			border: 'hsl(var(--border))',
+  			border: {
+  				DEFAULT: 'hsl(var(--border))',
+  				0: 'hsl(var(--border-0))',
+  				1: 'hsl(var(--border-1))',
+  				3: 'hsl(var(--border-3))',
+  				4: 'hsl(var(--border-4))',
+  				5: 'hsl(var(--border-5))'
+  			},
   			input: 'hsl(var(--input))',
   			ring: 'hsl(var(--ring))',
+  			ghost: {
+  				DEFAULT: 'hsl(var(--ghost))',
+  				foreground: 'hsl(var(--ghost-foreground))',
+  				hover: 'hsl(var(--ghost-hover))'
+  			},
+  			outline: {
+  				DEFAULT: 'hsl(var(--outline))',
+  				hover: 'hsl(var(--outline-hover))',
+  				active: 'hsl(var(--outline-active))'
+  			},
+  			mid: {
+  				DEFAULT: 'hsl(var(--mid))',
+  				alt: 'hsl(var(--mid-alt))'
+  			},
   			chart: {
   				'1': 'hsl(var(--chart-1))',
   				'2': 'hsl(var(--chart-2))',
@@ -198,18 +225,6 @@ module.exports = {
   	}
   },
   safelist: [
-    {
-      pattern: /^(text-general-.+)$/,
-      variants: ["hover", "focus", "dark"],
-    },
-    {
-      pattern: /^(bg-general-.+)$/,
-      variants: ["hover", "focus", "dark"],
-    },
-    {
-      pattern: /^(border-general-.+)$/,
-      variants: ["hover", "focus", "dark"],
-    },
     {
       pattern:
         /^(bg-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(?:50|100|200|300|400|500|600|700|800|900|950))$/,
