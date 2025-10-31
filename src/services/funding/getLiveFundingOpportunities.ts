@@ -3,8 +3,8 @@ import { transformLiveFundingOpportunities } from "@/utilities/funding-programs"
 import type { FundingProgram } from "@/services/fundingPlatformService";
 
 /**
- * Server-side function to fetch live funding opportunities
- * Uses the service layer method with shared transformation utility
+ * Application service to fetch live funding opportunities
+ * Orchestrates data fetching and transformation for domain operations
  */
 export async function getLiveFundingOpportunities(): Promise<FundingProgram[]> {
   try {

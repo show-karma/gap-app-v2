@@ -1,5 +1,5 @@
 import { FundingOpportunityCard } from "./funding-opportunity-card";
-import { getLiveFundingOpportunities } from "./getLiveFundingOpportunities";
+import { getLiveFundingOpportunities } from "@/src/services/funding/getLiveFundingOpportunities";
 import { LiveFundingOpportunitiesCarousel } from "./live-funding-opportunities-carousel";
 import { ArrowRightIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
