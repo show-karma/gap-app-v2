@@ -1,6 +1,7 @@
 import { Hero } from "@/src/features/funders/components/hero";
 import { NumbersSection } from "@/src/features/funders/components/numbers-section";
 import { PlatformSection } from "@/src/features/funders/components/platform-section";
+import { CaseStudiesSection } from "@/src/features/funders/components/case-studies-section";
 
 export default function FundersPage() {
     return (
@@ -9,6 +10,7 @@ export default function FundersPage() {
                 <Hero />
                 <NumbersSection />
                 <PlatformSection />
+                <CaseStudiesSection />
             </div>
         </main>
     );

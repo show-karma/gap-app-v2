@@ -38,7 +38,7 @@ export function NumbersSection() {
             "py-24"
         )}>
             <div className={cn(
-                "flex flex-col lg:flex-row gap-8 lg:gap-16 items-start w-full"
+                "flex flex-col xl:flex-row gap-8 lg:gap-16 items-start w-full"
             )}>
                 {/* Left Column - Text Content */}
                 <div className={cn(
