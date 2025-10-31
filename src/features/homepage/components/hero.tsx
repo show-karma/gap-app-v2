@@ -14,6 +14,7 @@ const users = ['/images/homepage/user1.jpg', '/images/homepage/user2.png', '/ima
 const items = chosenCommunities(true).map((community) => ({
     text: community.name,
     image: community.imageURL,
+    href: PAGES.COMMUNITY.ALL_GRANTS(community.slug),
 }))
 
 export function Hero() {
@@ -73,7 +74,7 @@ export function Hero() {
             </div>
 
             {/* Infinite sliding pills section */}
-            <div className="w-full mt-10 -mx-8">
+            <div className="w-full mt-6 -mx-8">
                 <InfiniteMovingCards
                     items={items}
                     variant="pill"
@@ -84,7 +85,7 @@ export function Hero() {
                 />
             </div>
 
-            <div className="w-full flex flex-row items-center justify-center">
+            <div className="w-full flex flex-row items-center justify-center mt-4">
                 <div className="flex flex-row items-center justify-center gap-8">
                     <p className="text-muted-foreground text-base font-medium">Communities on Karma</p>
                     <Link href={PAGES.COMMUNITIES} className="px-2 flex flex-row items-center gap-2 text-foreground text-sm font-semibold border-none shadow-none">

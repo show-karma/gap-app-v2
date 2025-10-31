@@ -53,7 +53,7 @@ export function JoinCommunity() {
                 </div>
             </div>
 
-            <div className="flex flex-col gap-8 w-full">
+            <div className="flex flex-col gap-4 w-full">
                 <InfiniteMovingCards
                     items={testimonials}
                     direction="left"

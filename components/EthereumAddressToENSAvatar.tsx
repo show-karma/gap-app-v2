@@ -6,7 +6,7 @@ import { blo } from "blo";
 import React, { useEffect } from "react";
 
 interface Props {
-  address: any;
+  address?: string | `0x${string}`;
   className?: string;
 }
 
@@ -14,23 +14,27 @@ const EthereumAddressToENSAvatar: React.FC<Props> = ({
   address,
   className,
 }) => {
+  if (!address || !address.startsWith("0x")) return null;
+
   const ensAvatars = useENS((state) => state.ensData);
   const populateEns = useENS((state) => state.populateEns);
   const lowerCasedAddress = address?.toLowerCase();
 
   useEffect(() => {
-    if (!ensAvatars[lowerCasedAddress]) {
+    if (!ensAvatars[lowerCasedAddress as `0x${string}`]) {
       populateEns([lowerCasedAddress]);
     }
   }, [lowerCasedAddress, ensAvatars, populateEns]);
+
+  const avatar = ensAvatars[lowerCasedAddress as `0x${string}`]?.avatar;
 
   return (
     <div>
       <img
         src={
-          !ensAvatars[lowerCasedAddress]?.avatar
-            ? blo(lowerCasedAddress)
-            : (ensAvatars[lowerCasedAddress].avatar as string)
+          !avatar
+            ? blo(lowerCasedAddress as `0x${string}`)
+            : avatar
         }
         className={cn(
           "h-6 w-6 min-h-6 min-w-6 items-center rounded-full border-1 border-gray-100 dark:border-zinc-900",

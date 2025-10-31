@@ -60,7 +60,7 @@ export function HowItWorks() {
     const steps = [
         { text: "Create project", size: 1 as const },
         { text: "Apply and get funded", size: 2 as const },
-        { text: "Add milestones, shared updates and metrics", size: 3 as const },
+        { text: "Add milestones, share updates and metrics", size: 3 as const },
     ];
 
     const outcomes = [
@@ -93,7 +93,7 @@ export function HowItWorks() {
                 <div className="absolute left-1/2 lg:left-0 top-0 lg:top-1/2 -translate-x-1/2 lg:translate-x-0 lg:-translate-y-1/2 w-px lg:w-[calc(100%-2rem)] h-full lg:h-px bg-border z-0" />
 
                 {/* Step Cards */}
-                <div className="flex flex-col lg:flex-row lg:justify-between items-center gap-4 lg:gap-4 flex-1 w-full lg:w-auto relative z-10">
+                <div className="flex flex-col lg:flex-row lg:justify-between items-center gap-4 lg:gap-2 flex-1 w-full lg:w-auto relative z-10">
                     {steps.map((step, index) => (
                         <StepCard key={index} text={step.text} size={step.size} />
                     ))}

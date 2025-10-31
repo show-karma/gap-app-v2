@@ -30,7 +30,7 @@ export function FAQAccordion({ items }: FAQAccordionProps) {
                 <AccordionItem
                     key={item.id}
                     value={item.id}
-                    className="border-b border-muted-foreground last:border-b-0"
+                    className="border-b border-border last:border-b-0"
                 >
                     <AccordionTrigger className="group hover:no-underline py-4 [&>svg]:hidden">
                         <span className="text-lg font-semibold text-foreground leading-[28px] tracking-normal pr-4 text-left flex-1">

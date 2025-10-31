@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 type TestimonialItem = {
   quote: string;
@@ -17,6 +18,7 @@ type PillItem = {
     light: string;
     dark: string;
   };
+  href?: string;
 };
 
 type InfiniteMovingCardsProps = {
@@ -105,11 +107,8 @@ export const InfiniteMovingCards = ({
         {items.map((item, idx) => {
           if (variant === "pill") {
             const pillItem = item as PillItem;
-            return (
-              <li
-                key={`pill-${idx}`}
-                className="flex items-center gap-2 px-2.5 py-2 mx-2 rounded-full bg-background border border-border whitespace-nowrap text-sm font-medium text-muted-foreground shrink-0"
-              >
+            const content = (
+              <>
                 <Image
                   src={pillItem.image.light}
                   alt={pillItem.text}
@@ -125,6 +124,26 @@ export const InfiniteMovingCards = ({
                   className="hidden dark:block rounded-full w-6 h-6 object-cover"
                 />
                 <span>{pillItem.text}</span>
+              </>
+            );
+
+            return (
+              <li
+                key={`pill-${idx}`}
+                className="shrink-0"
+              >
+                {pillItem.href ? (
+                  <Link
+                    href={pillItem.href}
+                    className="flex items-center gap-2 px-2.5 py-2 mx-2 rounded-full bg-background border border-border whitespace-nowrap text-sm font-medium text-muted-foreground hover:bg-accent transition-colors"
+                  >
+                    {content}
+                  </Link>
+                ) : (
+                  <div className="flex items-center gap-2 px-2.5 py-2 mx-2 rounded-full bg-background border border-border whitespace-nowrap text-sm font-medium text-muted-foreground">
+                    {content}
+                  </div>
+                )}
               </li>
             );
           }
