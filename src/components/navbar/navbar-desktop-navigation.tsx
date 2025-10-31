@@ -30,6 +30,7 @@ import { useReviewerPrograms } from "@/hooks/usePermissions";
 import { NavbarAuthButtons } from "./navbar-auth-buttons";
 import { NavbarUserMenu } from "./navbar-user-menu";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { Logo } from "../shared/logo";
 
 const menuStyles = {
     button: 'font-medium text-muted-foreground flex flex-row gap-1 bg-transparent hover:bg-transparent hover:text-muted-foreground data-[state=open]:bg-transparent data-[state=open]:text-muted-foreground shadow-none h-auto',
@@ -70,57 +71,60 @@ export function NavbarDesktopNavigation() {
 
     return (
         <div className="hidden lg:flex items-center flex-1 lg:justify-between">
-            {isLoggedIn ? (
-                <div className="flex flex-row items-center gap-2">
-                    <Link href={PAGES.MY_PROJECTS}>
-                        <Button variant="outline" className="bg-background rounded-lg shadow-sm border px-3 py-1 text-sm font-medium text-foreground hover:text-muted-foreground transition-colors border-border">
-                            My projects
-                        </Button>
-                    </Link>
-                    {hasReviewerRole && (
-                        <Link href={PAGES.MY_REVIEWS}>
+            <div className="flex flex-row items-center gap-8">
+                <Logo />
+                {isLoggedIn ? (
+                    <div className="flex flex-row items-center gap-2">
+                        <Link href={PAGES.MY_PROJECTS}>
                             <Button variant="outline" className="bg-background rounded-lg shadow-sm border px-3 py-1 text-sm font-medium text-foreground hover:text-muted-foreground transition-colors border-border">
-                                Review
+                                My projects
                             </Button>
                         </Link>
-                    )}
-                    {isCommunityAdmin && (
-                        <Link href={PAGES.ADMIN.LIST}>
-                            <Button variant="outline" className="bg-background rounded-lg shadow-sm border px-3 py-1 text-sm font-medium text-foreground hover:text-muted-foreground transition-colors border-border">
-                                Admin
-                            </Button>
-                        </Link>
-                    )}
-                </div>
-            ) : (
-                <NavigationMenu>
-                    <NavigationMenuList>
-                        {/* For Builders Dropdown */}
-                        <NavigationMenuItem>
-                            <NavigationMenuTrigger className={cn(menuStyles.button, "h-auto py-2")}>
-                                For Builders
-                            </NavigationMenuTrigger>
-                            <NavigationMenuContent>
-                                <div className="min-w-[500px] p-4">
-                                    <ForBuildersContent variant="desktop" />
-                                </div>
-                            </NavigationMenuContent>
-                        </NavigationMenuItem>
+                        {hasReviewerRole && (
+                            <Link href={PAGES.MY_REVIEWS}>
+                                <Button variant="outline" className="bg-background rounded-lg shadow-sm border px-3 py-1 text-sm font-medium text-foreground hover:text-muted-foreground transition-colors border-border">
+                                    Review
+                                </Button>
+                            </Link>
+                        )}
+                        {isCommunityAdmin && (
+                            <Link href={PAGES.ADMIN.LIST}>
+                                <Button variant="outline" className="bg-background rounded-lg shadow-sm border px-3 py-1 text-sm font-medium text-foreground hover:text-muted-foreground transition-colors border-border">
+                                    Admin
+                                </Button>
+                            </Link>
+                        )}
+                    </div>
+                ) : (
+                    <NavigationMenu>
+                        <NavigationMenuList>
+                            {/* For Builders Dropdown */}
+                            <NavigationMenuItem>
+                                <NavigationMenuTrigger className={cn(menuStyles.button, "h-auto py-2")}>
+                                    For Builders
+                                </NavigationMenuTrigger>
+                                <NavigationMenuContent>
+                                    <div className="min-w-[500px] p-4">
+                                        <ForBuildersContent variant="desktop" />
+                                    </div>
+                                </NavigationMenuContent>
+                            </NavigationMenuItem>
 
-                        {/* For Funders Dropdown */}
-                        <NavigationMenuItem>
-                            <NavigationMenuTrigger className={cn(menuStyles.button, "h-auto py-2")}>
-                                For Funders
-                            </NavigationMenuTrigger>
-                            <NavigationMenuContent>
-                                <div className="min-w-[500px] p-4">
-                                    <ForFundersContent variant="desktop" />
-                                </div>
-                            </NavigationMenuContent>
-                        </NavigationMenuItem>
-                    </NavigationMenuList>
-                </NavigationMenu>
-            )}
+                            {/* For Funders Dropdown */}
+                            <NavigationMenuItem>
+                                <NavigationMenuTrigger className={cn(menuStyles.button, "h-auto py-2")}>
+                                    For Funders
+                                </NavigationMenuTrigger>
+                                <NavigationMenuContent>
+                                    <div className="min-w-[500px] p-4">
+                                        <ForFundersContent variant="desktop" />
+                                    </div>
+                                </NavigationMenuContent>
+                            </NavigationMenuItem>
+                        </NavigationMenuList>
+                    </NavigationMenu>
+                )}
+            </div>
 
             <div className="flex flex-row items-center gap-4">
                 {/* Search */}

@@ -34,6 +34,7 @@ import { useCommunitiesStore } from "@/store/communities";
 import { useAdminCommunities } from "@/hooks/useAdminCommunities";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { Logo } from "../shared/logo";
 
 const menuStyles = {
     itemText: 'text-foreground text-sm font-medium',
@@ -96,7 +97,8 @@ export function NavbarMobileMenu() {
     const hasReviewerRole = reviewerPrograms && reviewerPrograms.length > 0;
 
     return (
-        <div className="lg:hidden">
+        <div className="lg:hidden flex flex-row items-center gap-4 w-full justify-between">
+            <Logo />
             <Drawer open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <DrawerTrigger asChild>
                     <button
