@@ -21,6 +21,7 @@ import {
   BanknotesIcon,
   GlobeAltIcon,
   ArrowTrendingUpIcon,
+  ClipboardDocumentListIcon,
 } from "@heroicons/react/24/outline";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { cn } from "@/utilities/tailwind";
@@ -185,6 +186,16 @@ export const CommunityAdminPage = ({
               description="Upload CSV scores for program participants"
               colorClass=""
               icon={<ArrowTrendingUpIcon className="w-6 h-6" />}
+            />
+
+            <AdminButton
+              href={PAGES.ADMIN.APPLICATIONS_CENTER(
+                community?.details?.data?.slug || communityId
+              )}
+              label="Applications Center"
+              description="Spin up a new application center"
+              colorClass=""
+              icon={<ClipboardDocumentListIcon className="w-6 h-6" />}
             />
           </div>
         ) : (
