@@ -8,12 +8,13 @@ import { HowItWorks } from "@/src/features/homepage/components/how-it-works";
 import { WhereBuildersGrow } from "@/src/features/homepage/components/where-builders-grow";
 import { JoinCommunity } from "@/src/features/homepage/components/join-community";
 import { FAQ } from "@/src/features/homepage/components/faq";
+import { cn } from "@/utilities/tailwind";
 
 export const metadata = defaultMetadata;
 
-const HorizontalLine = () => {
+const HorizontalLine = ({ className }: { className?: string }) => {
     return (
-        <hr className="w-full h-[1px] bg-border max-w-[75%]" />
+        <hr className={cn("w-full h-[1px] bg-border max-w-[75%]", className)} />
     );
 }
 
@@ -22,7 +23,7 @@ export default function Index() {
         <main className="flex w-full flex-col flex-1 items-center bg-background">
             <div className="flex w-full max-w-[1920px] justify-center items-center flex-1 flex-col gap-2">
                 <Hero />
-                <HorizontalLine />
+                <HorizontalLine className='max-w-full' />
                 <Suspense fallback={<LiveFundingOpportunitiesSkeleton />}>
                     <LiveFundingOpportunities />
                 </Suspense>

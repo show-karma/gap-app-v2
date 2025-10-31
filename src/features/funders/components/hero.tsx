@@ -18,7 +18,7 @@ export function Hero() {
     return (
         <section className={cn(
             homepageTheme.padding,
-            "flex flex-col items-center md:items-center gap-6 md:gap-8 lg:gap-10 w-full",
+            "flex flex-col items-center md:items-center gap-6 md:gap-8 lg:gap-10 w-full pt-16 md:pt-24",
         )}>
             {/* Free Guide Banner Section */}
             <div className="w-full hidden md:flex justify-start md:justify-center">

@@ -35,7 +35,7 @@ export function NumbersSection() {
     return (
         <section className={cn(
             homepageTheme.padding,
-            "py-24"
+            ""
         )}>
             <div className={cn(
                 "flex flex-col xl:flex-row gap-8 lg:gap-16 items-start w-full"
