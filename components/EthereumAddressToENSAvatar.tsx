@@ -14,17 +14,17 @@ const EthereumAddressToENSAvatar: React.FC<Props> = ({
   address,
   className,
 }) => {
-  if (!address || !address.startsWith("0x")) return null;
-
   const ensAvatars = useENS((state) => state.ensData);
   const populateEns = useENS((state) => state.populateEns);
-  const lowerCasedAddress = address?.toLowerCase();
+  const lowerCasedAddress = address ? address?.toLowerCase() : undefined;
 
   useEffect(() => {
-    if (!ensAvatars[lowerCasedAddress as `0x${string}`]) {
+    if (address && address.startsWith("0x") && lowerCasedAddress && !ensAvatars[lowerCasedAddress as `0x${string}`]) {
       populateEns([lowerCasedAddress]);
     }
-  }, [lowerCasedAddress, ensAvatars, populateEns]);
+  }, [address, lowerCasedAddress, ensAvatars, populateEns]);
+
+  if (!address || !address.startsWith("0x")) return null;
 
   const avatar = ensAvatars[lowerCasedAddress as `0x${string}`]?.avatar;
 
