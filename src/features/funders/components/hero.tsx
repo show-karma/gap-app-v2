@@ -6,6 +6,7 @@ import { chosenCommunities } from "@/utilities/chosenCommunities";
 import { InfiniteMovingCards } from "@/src/components/ui/infinite-moving-cards";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
+import { homepageTheme } from "@/src/helper/theme";
 
 export function Hero() {
     const communityItems = chosenCommunities(true).map((community) => ({
@@ -16,8 +17,8 @@ export function Hero() {
 
     return (
         <section className={cn(
-            "flex flex-col items-center md:items-center gap-6 md:gap-8 lg:gap-10",
-            "w-full px-4 py-8 md:py-12 lg:py-16 xl:py-20"
+            homepageTheme.padding,
+            "flex flex-col items-center md:items-center gap-6 md:gap-8 lg:gap-10 w-full",
         )}>
             {/* Free Guide Banner Section */}
             <div className="w-full hidden md:flex justify-start md:justify-center">
