@@ -4,6 +4,7 @@ import Image from "next/image";
 import { cn } from "@/utilities/tailwind";
 import { homepageTheme } from "@/src/helper/theme";
 import { SquareCheckBig } from "lucide-react";
+import { ThemeImage } from "@/src/components/ui/theme-image";
 
 interface FeatureCardProps {
   title: string;
@@ -67,7 +68,7 @@ function FeatureCard({ title, description, image, checklist, size = "default", i
             {image && (
               <div className="flex items-center justify-center flex-shrink-0 lg:w-1/2 lg:h-full h-[200px] overflow-hidden">
                 <div className="relative w-full h-full">
-                  <Image
+                  <ThemeImage
                     src={image}
                     alt={title}
                     fill
@@ -103,7 +104,7 @@ function FeatureCard({ title, description, image, checklist, size = "default", i
                       )}
                       style={imageStyle}
                     >
-                      <Image
+                      <ThemeImage
                         src={image}
                         alt={title}
                         fill={!imageStyle}
@@ -129,7 +130,7 @@ function FeatureCard({ title, description, image, checklist, size = "default", i
                       )}
                       style={imageStyle}
                     >
-                      <Image
+                      <ThemeImage
                         src={image}
                         alt={title}
                         fill={!imageStyle}

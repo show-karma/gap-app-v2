@@ -8,6 +8,7 @@ import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { homepageTheme } from "@/src/helper/theme";
 import { CreateProjectButton } from "./create-project-button";
+import { ThemeImage } from "@/src/components/ui/theme-image";
 
 const users = ['/images/homepage/user1.jpg', '/images/homepage/user2.png', '/images/homepage/user3.png']
 
@@ -63,12 +64,11 @@ export function Hero() {
                         </div>
                     </div>
                 </div>
-                <Image
+                <ThemeImage
                     src="/images/homepage/builder-hero.png"
                     alt="Builder Hero"
                     width={420}
                     height={420}
-                    layout="responsive"
                     className="hidden md:flex w-full h-full max-w-[420px] max-h-[420px] object-contain"
                 />
             </div>

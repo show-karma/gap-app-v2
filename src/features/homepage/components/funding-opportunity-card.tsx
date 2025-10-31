@@ -93,18 +93,18 @@ export function FundingOpportunityCard({
 
   if (isFeatured) {
     // Mobile featured card with gradient background
-    const CardWrapper = programDetailUrl ? ExternalLink : 'div';
-    const cardProps = programDetailUrl ? { href: programDetailUrl, className: "cursor-pointer" } : {};
+    const handleCardClick = programDetailUrl ? () => {
+      window.open(programDetailUrl, '_blank', 'noopener,noreferrer');
+    } : undefined;
 
     return (
-      <Card className="relative overflow-hidden border-0">
+      <Card className={cn("relative overflow-hidden border-0", programDetailUrl && "cursor-pointer")} onClick={handleCardClick}>
         <div
           className="absolute inset-0 bg-gradient-to-b from-blue-900 via-purple-900 to-blue-800"
           style={{
             backgroundImage: "linear-gradient(to bottom, rgba(30, 58, 138, 0.9), rgba(88, 28, 135, 0.9), rgba(30, 64, 175, 0.9))"
           }}
         />
-        <CardWrapper {...cardProps}>
         <CardContent className="relative p-6 md:p-8 min-h-[400px] flex flex-col justify-between">
           {/* Top section */}
           <div className="flex items-start justify-between mb-4">
@@ -179,18 +179,17 @@ export function FundingOpportunityCard({
             </div>
           </div>
         </CardContent>
-        </CardWrapper>
       </Card>
     );
   }
 
   // Desktop card (3-card layout)
-  const CardWrapper = programDetailUrl ? ExternalLink : 'div';
-  const cardProps = programDetailUrl ? { href: programDetailUrl, className: "cursor-pointer" } : {};
+  const handleCardClick = programDetailUrl ? () => {
+    window.open(programDetailUrl, '_blank', 'noopener,noreferrer');
+  } : undefined;
 
   return (
-    <Card className="h-full flex flex-col">
-      <CardWrapper {...cardProps}>
+    <Card className={cn("h-full flex flex-col", programDetailUrl && "cursor-pointer")} onClick={handleCardClick}>
       <CardContent className="p-6 flex flex-col h-full">
         {/* Top section */}
         <div className="flex items-start justify-between mb-4">
@@ -260,7 +259,6 @@ export function FundingOpportunityCard({
             )}
         </div>
       </CardContent>
-      </CardWrapper>
     </Card>
   );
 }
