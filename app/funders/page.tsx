@@ -4,7 +4,9 @@ import { PlatformSection } from "@/src/features/funders/components/platform-sect
 import { HowItWorksSection } from "@/src/features/funders/components/how-it-works-section";
 import { CaseStudiesSection } from "@/src/features/funders/components/case-studies-section";
 import { OfferingSection } from "@/src/features/funders/components/offering-section";
+import { FAQSection } from "@/src/features/funders/components/faq-section";
 import { cn } from "@/utilities/tailwind";
+import { HandleTheVisionSection } from "@/src/features/funders/components/handle-the-vision-section";
 
 const HorizontalLine = ({ className }: { className?: string }) => {
     return (
@@ -28,6 +30,9 @@ export default function FundersPage() {
                 <HowItWorksSection />
                 <HorizontalLine />
                 <OfferingSection />
+                <HorizontalLine />
+                <FAQSection />
+                <HandleTheVisionSection />
             </div>
         </main>
     );

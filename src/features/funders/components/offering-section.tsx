@@ -91,7 +91,7 @@ export function OfferingSection() {
                             </div>
 
                             {/* Inner Card */}
-                            <div className="bg-background rounded-2xl p-8 flex flex-col justify-between flex-1 h-full gap-10 max-h-[500px] min-h-max lg:min-h-[500px]">
+                            <div className="bg-background rounded-2xl p-8 flex flex-col justify-between flex-1 h-full gap-10 xl:max-h-[500px] min-h-max lg:min-h-[500px]">
                                 {/* Title and Subtitle */}
                                 <div className="flex flex-col gap-2">
                                     <h3 className="text-foreground font-semibold text-2xl leading-[120%] tracking-[-0.02em]">
@@ -119,7 +119,7 @@ export function OfferingSection() {
                         // Standard Cards
                         <div
                             key={tier.name}
-                            className="rounded-2xl border border-border p-8 flex flex-col h-full max-h-[480px] justify-between gap-16"
+                            className="rounded-2xl border border-border p-8 flex flex-col h-full xl:max-h-[480px] justify-between gap-16"
                         >
                             {/* Title and Subtitle */}
                             <div className="flex flex-col gap-2">
