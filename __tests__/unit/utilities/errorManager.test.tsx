@@ -1,4 +1,4 @@
-import { errorManager } from "./errorManager";
+import { errorManager } from "@/components/Utilities/errorManager";
 import * as Sentry from "@sentry/nextjs";
 
 jest.mock("@sentry/nextjs");
@@ -28,6 +28,7 @@ describe("errorManager", () => {
     expect(Sentry.captureException).toHaveBeenCalledWith(error, {
       extra: {
         errorMessage,
+        errorInstance: "Some error occurred",
         additionalInfo: "Some extra info",
       },
     });
@@ -44,6 +45,7 @@ describe("errorManager", () => {
     expect(Sentry.captureException).toHaveBeenCalledWith(error, {
       extra: {
         errorMessage,
+        errorInstance: { code: "ERROR_CODE", message: "Original error message" },
       },
     });
   });

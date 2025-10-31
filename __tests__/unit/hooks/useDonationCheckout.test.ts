@@ -1,5 +1,5 @@
 import { renderHook, act } from "@testing-library/react";
-import { useDonationCheckout } from "../useDonationCheckout";
+import { useDonationCheckout } from "@/hooks/donation/useDonationCheckout";
 import type { SupportedToken } from "@/constants/supportedTokens";
 import * as wagmi from "wagmi";
 import toast from "react-hot-toast";

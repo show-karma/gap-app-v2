@@ -39,8 +39,17 @@ jest.mock("@/components/Dialogs/StepperDialog", () => ({
   StepperDialog: () => <div data-testid="stepper-dialog" />,
 }));
 
+jest.mock("@/components/Dialogs/ContributorProfileDialog", () => ({
+  ContributorProfileDialog: () => <div data-testid="contributor-profile-dialog" />,
+}));
+
 jest.mock("@/components/ProgressBarWrapper", () => ({
   ProgressBarWrapper: () => <div data-testid="progress-bar-wrapper" />,
+}));
+
+jest.mock("@/components/Utilities/HotjarAnalytics", () => ({
+  __esModule: true,
+  default: () => <div data-testid="hotjar-analytics" />,
 }));
 
 jest.mock("next-themes", () => ({
@@ -60,7 +69,7 @@ describe("RootLayout", () => {
     expect(screen.getByTestId("progress-bar-wrapper")).toBeInTheDocument();
     expect(screen.getByTestId("header")).toBeInTheDocument();
     expect(screen.getByTestId("footer")).toBeInTheDocument();
-    expect(screen.getByTestId("wagmi-provider")).toBeInTheDocument();
+    expect(screen.getByTestId("privy-provider")).toBeInTheDocument();
     expect(screen.getByTestId("theme-provider")).toBeInTheDocument();
   });
 

@@ -1,5 +1,5 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
-import { useDonationTransfer } from "../useDonationTransfer";
+import { useDonationTransfer } from "@/hooks/useDonationTransfer";
 import type { DonationPayment } from "@/store/donationCart";
 import type { SupportedToken } from "@/constants/supportedTokens";
 import * as wagmi from "wagmi";

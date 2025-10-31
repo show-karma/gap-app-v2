@@ -2,7 +2,7 @@ import {
   parseDonationError,
   getShortErrorMessage,
   DonationErrorCode,
-} from "../errorMessages";
+} from "@/utilities/donations/errorMessages";
 
 describe("parseDonationError", () => {
   describe("USER_REJECTED errors", () => {
