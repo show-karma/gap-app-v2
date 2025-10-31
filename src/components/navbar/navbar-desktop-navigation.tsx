@@ -28,6 +28,7 @@ import { useAdminCommunities } from "@/hooks/useAdminCommunities";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
 import { NavbarAuthButtons } from "./navbar-auth-buttons";
 import { NavbarUserMenu } from "./navbar-user-menu";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
 
 const menuStyles = {
     button: 'font-medium text-muted-foreground flex flex-row gap-1',
@@ -152,16 +153,14 @@ export function NavbarDesktopNavigation() {
                                             {socialMediaLinks.map((social) => {
                                                 const IconComponent = social.icon;
                                                 return (
-                                                    <Link
+                                                    <ExternalLink
                                                         key={social.name}
                                                         href={social.href}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
                                                         className={cn(menuStyles.itemText, "flex items-center justify-center rounded-full transition-colors")}
                                                         aria-label={social.name}
                                                     >
                                                         <IconComponent className="w-6 h-6" />
-                                                    </Link>
+                                                    </ExternalLink>
                                                 );
                                             })}
                                         </div>

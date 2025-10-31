@@ -1,14 +1,16 @@
 import Link from "next/link";
 import Image from "next/image";
-import { MenubarItem } from "@/components/ui/menubar";
 import { cn } from "@/utilities/tailwind";
-import { LucideIcon, ArrowUpRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import {
     forBuildersItems,
     forFundersItems,
     exploreItems,
     resourcesItems
 } from "./menu-items";
+import { MenuItemClient } from "./menu-item-client";
+import { SimpleMenuItemClient } from "./simple-menu-item-client";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
 
 const menuStyles = {
     itemIcon: 'text-muted-foreground w-4 h-4',
@@ -16,110 +18,11 @@ const menuStyles = {
     itemDescription: 'text-muted-foreground text-sm font-normal',
 };
 
-interface MenuItemProps {
-    href: string;
-    icon: LucideIcon;
-    title: string;
-    description?: string;
-    external?: boolean;
-    showArrow?: boolean;
-    onClick?: () => void;
-    variant?: 'desktop' | 'mobile';
-}
+// Re-export MenuItemClient as MenuItem for backward compatibility
+export const MenuItem = MenuItemClient;
 
-export function MenuItem({
-    href,
-    icon: Icon,
-    title,
-    description,
-    external,
-    showArrow,
-    onClick,
-    variant = 'desktop'
-}: MenuItemProps) {
-    const content = (
-        <>
-            <div className="flex items-center gap-2 mb-1">
-                <Icon className={menuStyles.itemIcon} />
-                <span className={menuStyles.itemText}>{title}</span>
-                {showArrow && <ArrowUpRight className={cn(menuStyles.itemIcon, 'ml-auto')} />}
-            </div>
-            {description && (
-                <p className={menuStyles.itemDescription}>{description}</p>
-            )}
-        </>
-    );
-
-    if (variant === 'mobile') {
-        return (
-            <Link
-                href={href}
-                className="flex flex-col px-0 py-3 rounded-md hover:bg-accent"
-                onClick={onClick}
-                {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-            >
-                {content}
-            </Link>
-        );
-    }
-
-    return (
-        <Link href={href} {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}>
-            <MenubarItem className="flex flex-col items-start rounded-md cursor-pointer">
-                {content}
-            </MenubarItem>
-        </Link>
-    );
-}
-
-interface SimpleMenuItemProps {
-    href: string;
-    icon: LucideIcon;
-    title: string;
-    external?: boolean;
-    showArrow?: boolean;
-    onClick?: () => void;
-    variant?: 'desktop' | 'mobile';
-}
-
-export function SimpleMenuItem({
-    href,
-    icon: Icon,
-    title,
-    external,
-    showArrow,
-    onClick,
-    variant = 'desktop'
-}: SimpleMenuItemProps) {
-    const content = (
-        <div className="flex items-center flex-row gap-2">
-            <Icon className={menuStyles.itemIcon} />
-            <span className={menuStyles.itemText}>{title}</span>
-            {showArrow && <ArrowUpRight className={cn(menuStyles.itemIcon, 'ml-auto')} />}
-        </div>
-    );
-
-    if (variant === 'mobile') {
-        return (
-            <Link
-                href={href}
-                className="flex items-center gap-2 px-0 py-1 rounded-md hover:bg-accent"
-                onClick={onClick}
-                {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-            >
-                {content}
-            </Link>
-        );
-    }
-
-    return (
-        <Link href={href} {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}>
-            <MenubarItem>
-                {content}
-            </MenubarItem>
-        </Link>
-    );
-}
+// Re-export SimpleMenuItemClient as SimpleMenuItem for backward compatibility
+export const SimpleMenuItem = SimpleMenuItemClient;
 
 interface MenuSectionProps {
     title: string;
@@ -291,10 +194,9 @@ export function ResourcesContent({ variant = 'desktop', onClose }: ResourcesCont
         return (
             <>
                 {resourcesItems.map((item) => (
-                    <Link
+                    <ExternalLink
                         key={item.href}
                         href={item.href}
-                        target="_blank"
                         className="flex items-center justify-between px-0 py-3 rounded-md hover:bg-accent"
                         onClick={onClose}
                     >
@@ -303,7 +205,7 @@ export function ResourcesContent({ variant = 'desktop', onClose }: ResourcesCont
                             <span className={menuStyles.itemText}>{item.title}</span>
                         </div>
                         <ArrowUpRight className={menuStyles.itemIcon} />
-                    </Link>
+                    </ExternalLink>
                 ))}
             </>
         );

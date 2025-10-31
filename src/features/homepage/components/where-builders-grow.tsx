@@ -2,6 +2,8 @@ import { cn } from "@/utilities/tailwind";
 import { homepageTheme } from "@/src/helper/theme";
 import { CreateProjectButton } from "./create-project-button";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { PAGES } from "@/utilities/pages";
 
 export function WhereBuildersGrow() {
     return (
@@ -18,8 +20,9 @@ export function WhereBuildersGrow() {
                     <Button
                         variant="outline"
                         className="px-6 py-2.5 text-sm font-medium border border-border"
+                        asChild
                     >
-                        Grow your ecosystem
+                        <Link href={PAGES.FUNDER}>Grow your ecosystem</Link>
                     </Button>
                 </div>
             </div>

@@ -132,16 +132,14 @@ export function NavbarUserMenu() {
                                     {socialMediaLinks.map((social) => {
                                         const IconComponent = social.icon;
                                         return (
-                                            <Link
+                                            <ExternalLink
                                                 key={social.name}
                                                 href={social.href}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
                                                 className={cn(menuStyles.itemText, "flex items-center justify-center rounded-full transition-colors")}
                                                 aria-label={social.name}
                                             >
                                                 <IconComponent className="w-6 h-6" />
-                                            </Link>
+                                            </ExternalLink>
                                         );
                                     })}
                                 </div>

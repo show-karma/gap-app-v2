@@ -33,6 +33,7 @@ import { PAGES } from "@/utilities/pages";
 import { useCommunitiesStore } from "@/store/communities";
 import { useAdminCommunities } from "@/hooks/useAdminCommunities";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
 
 const menuStyles = {
     itemText: 'text-foreground text-sm font-medium',
@@ -196,16 +197,14 @@ export function NavbarMobileMenu() {
                                         {socialMediaLinks.map((social) => {
                                             const IconComponent = social.icon;
                                             return (
-                                                <Link
+                                                <ExternalLink
                                                     key={social.name}
                                                     href={social.href}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
                                                     className="w-10 h-10 flex items-center justify-center rounded-full transition-colors"
                                                     aria-label={social.name}
                                                 >
                                                     <IconComponent className="w-8 h-8 text-muted-foreground" />
-                                                </Link>
+                                                </ExternalLink>
                                             );
                                         })}
                                     </div>
@@ -245,16 +244,14 @@ export function NavbarMobileMenu() {
                                         {currentTheme === "light" ? "Dark mode" : "Light mode"}
                                     </span>
                                 </button>
-                                <Link
+                                <ExternalLink
                                     href={SOCIALS.DOCS}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
                                     className="w-full flex items-center gap-3 py-3 rounded-md hover:bg-accent text-left"
                                     onClick={() => setMobileMenuOpen(false)}
                                 >
                                     <CircleHelp className={menuStyles.itemIcon} />
                                     <span className={menuStyles.itemText}>Help & Docs</span>
-                                </Link>
+                                </ExternalLink>
                                 <button
                                     className="w-full flex items-center gap-3 rounded-md hover:bg-accent text-left mt-4"
                                     onClick={() => {
@@ -271,16 +268,14 @@ export function NavbarMobileMenu() {
                                         {socialMediaLinks.map((social) => {
                                             const IconComponent = social.icon;
                                             return (
-                                                <Link
+                                                <ExternalLink
                                                     key={social.name}
                                                     href={social.href}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
                                                     className="w-10 h-10 flex items-center justify-center rounded-full transition-colors"
                                                     aria-label={social.name}
                                                 >
                                                     <IconComponent className="w-8 h-8 text-muted-foreground" />
-                                                </Link>
+                                                </ExternalLink>
                                             );
                                         })}
                                     </div>
@@ -305,10 +300,10 @@ export function NavbarMobileMenu() {
                                     className="w-full border-border text-foreground hover:bg-accent shadow-sm"
                                     asChild
                                 >
-                                    <Link href="https://cal.com/karmahq" target="_blank">
+                                    <ExternalLink href={SOCIALS.PARTNER_FORM}>
                                         <PhoneCall className="w-4 h-4" />
                                         Contact sales
-                                    </Link>
+                                    </ExternalLink>
                                 </Button>
                             </div>
                         )}

@@ -5,6 +5,8 @@ import { PhoneCall } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { NavbarAuthButtonsSkeleton } from "./navbar-user-skeleton";
+import { SOCIALS } from "@/utilities/socials";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
 
 export function NavbarAuthButtons() {
     const { authenticate: login, ready } = useAuth();
@@ -28,10 +30,10 @@ export function NavbarAuthButtons() {
                 className="border-border text-foreground hover:bg-accent shadow-sm"
                 asChild
             >
-                <Link href="https://cal.com/karmahq" target="_blank">
+                <ExternalLink href={SOCIALS.PARTNER_FORM}>
                     <PhoneCall className="w-4 h-4" />
                     Contact sales
-                </Link>
+                </ExternalLink>
             </Button>
         </div>
     );

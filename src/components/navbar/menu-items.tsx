@@ -21,31 +21,34 @@ export const forBuildersItems = [
         href: PAGES.MY_PROJECTS,
         icon: UserPlus,
         title: "Create project",
-        description: "Get started and create your project"
+        description: "Get started and create your project",
+        openModal: true
     },
     {
-        href: "/grants",
+        href: PAGES.HOME,
         icon: BanknoteArrowDown,
         title: "Find funding",
-        description: "Explore live funding opportunities"
+        description: "Explore live funding opportunities",
+        anchor: "live-funding-opportunities"
     }
 ];
 
 export const forFundersItems = {
     main: {
-        href: "/grants",
+        href: PAGES.REGISTRY.ROOT,
         icon: GoalIcon,
         title: "Launch a program",
         description: "Start funding impact in 30 days"
     },
     secondary: [
         {
-            href: "/founders#case-studies",
+            href: PAGES.FOUNDERS,
             icon: GalleryThumbnails,
-            title: "Case studies"
+            title: "Case studies",
+            anchor: "case-studies"
         },
         {
-            href: "https://cal.com/karmahq",
+            href: SOCIALS.PARTNER_FORM,
             icon: PhoneCall,
             title: "Schedule demo",
             external: true
@@ -61,14 +64,14 @@ export const exploreItems = {
             title: "All projects"
         },
         {
-            href: PAGES.PROJECTS_EXPLORER,
+            href: `${PAGES.PROJECTS_EXPLORER}?sortBy=noOfGrants&sortOrder=desc`,
             icon: Flame,
-            title: "Trending"
+            title: "Most Grants"
         },
         {
-            href: PAGES.PROJECTS_EXPLORER,
+            href: `${PAGES.PROJECTS_EXPLORER}?sortBy=noOfGrantMilestones&sortOrder=desc`,
             icon: BellDot,
-            title: "Most active"
+            title: "Most Active"
         }
     ],
     communities: [
@@ -78,16 +81,16 @@ export const exploreItems = {
             title: "All communities"
         },
         {
-            href: "/grants",
+            href: PAGES.REGISTRY.ROOT,
             icon: Radio,
-            title: "Active grants"
+            title: "Latest opportunities"
         }
     ]
 };
 
 export const resourcesItems = [
     {
-        href: "/docs",
+        href: SOCIALS.DOCS,
         icon: LifeBuoy,
         title: "Docs",
         external: true,

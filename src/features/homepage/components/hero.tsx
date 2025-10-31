@@ -27,7 +27,9 @@ export function Hero() {
                     <p className="text-muted-foreground text-sm sm:text-base font-medium">Ecosystems use Karma to fund projects transparently. Builders use it to share progress, earn reputation, and get discovered for more opportunities.</p>
                     <div className="flex flex-col md:flex-row gap-3 md:gap-4">
                         <CreateProjectButton />
-                        <Button variant='outline' className="px-6 py-2.5 text-sm font-medium border border-border-3">Run a funding program</Button>
+                        <Button variant='outline' className="px-6 py-2.5 text-sm font-medium border border-border-3" asChild>
+                            <Link href={PAGES.FUNDER}>Run a funding program</Link>
+                        </Button>
                     </div>
                     <div className="flex flex-row items-center justify-start gap-10 md:gap-4 mt-6">
                         <div className="flex flex-row items-center justify-start gap-2">
