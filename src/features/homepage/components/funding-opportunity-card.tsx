@@ -105,9 +105,9 @@ export function FundingOpportunityCard({
           }}
         />
         <CardWrapper {...cardProps}>
-          <CardContent className="relative p-6 md:p-8 min-h-[400px] flex flex-col justify-between">
-            {/* Top section */}
-            <div className="flex items-start justify-between mb-4">
+        <CardContent className="relative p-6 md:p-8 min-h-[400px] flex flex-col justify-between">
+          {/* Top section */}
+          <div className="flex items-start justify-between mb-4">
               {applyUrl ? (
                 <ExternalLink
                   href={applyUrl}
@@ -123,62 +123,62 @@ export function FundingOpportunityCard({
                   </Badge>
                 </ExternalLink>
               ) : (
-                <Badge
-                  variant="secondary"
-                  className="bg-green-100 text-green-800 border-green-200 flex items-center gap-1.5"
-                >
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-600" />
-                  Apply now
-                </Badge>
+            <Badge
+              variant="secondary"
+              className="bg-green-100 text-green-800 border-green-200 flex items-center gap-1.5"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-green-600" />
+              Apply now
+            </Badge>
               )}
-              {status.endsSoon && (
-                <div className="flex items-center gap-1.5 text-white text-sm font-medium">
-                  <Clock className="w-4 h-4" />
-                  {status.label}
-                </div>
-              )}
-            </div>
+            {status.endsSoon && (
+              <div className="flex items-center gap-1.5 text-white text-sm font-medium">
+                <Clock className="w-4 h-4" />
+                {status.label}
+              </div>
+            )}
+          </div>
 
-            {/* Title section */}
-            <div className="flex-1 flex flex-col justify-center mb-6">
-              <div className="relative">
-                {/* Layered text effect */}
-                <div className="absolute inset-0 opacity-20">
-                  <h3 className="text-5xl md:text-6xl font-bold text-white leading-none">
-                    {title.split(" ")[0]}
-                  </h3>
-                </div>
-                <h3 className="text-4xl md:text-5xl font-bold text-white leading-tight relative z-10">
-                  {title}
+          {/* Title section */}
+          <div className="flex-1 flex flex-col justify-center mb-6">
+            <div className="relative">
+              {/* Layered text effect */}
+              <div className="absolute inset-0 opacity-20">
+                <h3 className="text-5xl md:text-6xl font-bold text-white leading-none">
+                  {title.split(" ")[0]}
                 </h3>
               </div>
-              {program.metadata?.description && (
-                <p className="text-white/80 text-sm mt-2">
-                  {program.metadata.description.substring(0, 100)}...
-                </p>
-              )}
+              <h3 className="text-4xl md:text-5xl font-bold text-white leading-tight relative z-10">
+                {title}
+              </h3>
             </div>
+            {program.metadata?.description && (
+              <p className="text-white/80 text-sm mt-2">
+                {program.metadata.description.substring(0, 100)}...
+              </p>
+            )}
+          </div>
 
-            {/* Bottom section */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {communityImage && (
-                  <Image
-                    src={communityImage}
-                    alt={communityName}
-                    width={24}
-                    height={24}
-                    className="rounded-full"
-                  />
-                )}
-                <span className="text-white text-sm font-medium">{communityName.toUpperCase()}</span>
-              </div>
-              <div className="text-right">
-                <div className="text-white text-lg font-bold">{formatCurrency(budget)}</div>
-                <div className="text-white/70 text-xs">Available</div>
-              </div>
+          {/* Bottom section */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {communityImage && (
+                <Image
+                  src={communityImage}
+                  alt={communityName}
+                  width={24}
+                  height={24}
+                  className="rounded-full"
+                />
+              )}
+              <span className="text-white text-sm font-medium">{communityName.toUpperCase()}</span>
             </div>
-          </CardContent>
+            <div className="text-right">
+              <div className="text-white text-lg font-bold">{formatCurrency(budget)}</div>
+              <div className="text-white/70 text-xs">Available</div>
+            </div>
+          </div>
+        </CardContent>
         </CardWrapper>
       </Card>
     );
@@ -191,49 +191,49 @@ export function FundingOpportunityCard({
   return (
     <Card className="h-full flex flex-col">
       <CardWrapper {...cardProps}>
-        <CardContent className="p-6 flex flex-col h-full">
-          {/* Top section */}
-          <div className="flex items-start justify-between mb-4">
-            <Badge
-              variant={status.variant === "default" ? "default" : "secondary"}
-              className={cn(
-                status.variant === "default" && "bg-teal-100 text-teal-700 border-teal-200 hover:bg-teal-100 hover:text-teal-700 hover:border-teal-200 text-xs font-normal leading-[1.5] tracking-[0.015em] text-center align-middle"
-              )}
-            >
-              {status.label}
-            </Badge>
-            <div className="text-right">
-              <div className="text-lg font-bold text-foreground">{formatCurrency(budget)}</div>
-              <div className="text-xs text-muted-foreground">Available</div>
-            </div>
+      <CardContent className="p-6 flex flex-col h-full">
+        {/* Top section */}
+        <div className="flex items-start justify-between mb-4">
+          <Badge
+            variant={status.variant === "default" ? "default" : "secondary"}
+            className={cn(
+              status.variant === "default" && "bg-teal-100 text-teal-700 border-teal-200 hover:bg-teal-100 hover:text-teal-700 hover:border-teal-200 text-xs font-normal leading-[1.5] tracking-[0.015em] text-center align-middle"
+            )}
+          >
+            {status.label}
+          </Badge>
+          <div className="text-right">
+            <div className="text-lg font-bold text-foreground">{formatCurrency(budget)}</div>
+            <div className="text-xs text-muted-foreground">Available</div>
           </div>
+        </div>
 
-          {/* Title */}
-          <h3 className="text-xl font-semibold leading-[1.2] tracking-[-0.02em] text-foreground mb-4 flex-1">
-            {title}
-          </h3>
+        {/* Title */}
+        <h3 className="text-xl font-semibold leading-[1.2] tracking-[-0.02em] text-foreground mb-4 flex-1">
+          {title}
+        </h3>
 
-          {/* Bottom section */}
-          <div className="flex items-center justify-between mt-auto">
-            <div className="flex items-center gap-2">
-              {communityImage ? (
-                <Image
-                  src={communityImage}
-                  alt={communityName}
-                  width={24}
-                  height={24}
-                  className="rounded-full w-6 h-6"
-                />
-              ) : program.communityUID ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={blo(program.communityUID as `0x${string}`)}
-                  alt={communityName}
-                  className="rounded-full w-6 h-6"
-                />
-              ) : null}
-              <span className="text-xs font-medium leading-[1.5] tracking-[0.015em] text-foreground">{communityName}</span>
-            </div>
+        {/* Bottom section */}
+        <div className="flex items-center justify-between mt-auto">
+          <div className="flex items-center gap-2">
+            {communityImage ? (
+              <Image
+                src={communityImage}
+                alt={communityName}
+                width={24}
+                height={24}
+                className="rounded-full w-6 h-6"
+              />
+            ) : program.communityUID ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={blo(program.communityUID as `0x${string}`)}
+                alt={communityName}
+                className="rounded-full w-6 h-6"
+              />
+            ) : null}
+            <span className="text-xs font-medium leading-[1.5] tracking-[0.015em] text-foreground">{communityName}</span>
+          </div>
             {applyUrl ? (
               <ExternalLink
                 href={applyUrl}
@@ -249,17 +249,17 @@ export function FundingOpportunityCard({
                 </Button>
               </ExternalLink>
             ) : (
-              <Button
-                variant="outline"
-                size="sm"
+          <Button
+            variant="outline"
+            size="sm"
                 disabled
-                className="border-border text-sm font-medium leading-[1.5] tracking-[0.005em] text-center align-middle text-foreground"
-              >
+            className="border-border text-sm font-medium leading-[1.5] tracking-[0.005em] text-center align-middle text-foreground"
+          >
                 Apply now
-              </Button>
+          </Button>
             )}
-          </div>
-        </CardContent>
+        </div>
+      </CardContent>
       </CardWrapper>
     </Card>
   );

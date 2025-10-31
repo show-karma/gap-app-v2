@@ -68,7 +68,7 @@ export function ForBuildersContent({ variant = 'desktop', onClose }: ForBuilders
 
     return (
         <div className="flex flex-row justify-between items-center gap-4">
-            <div className="flex flex-col gap-2 items-start justify-start">
+            <div className="flex flex-col items-start justify-start">
                 {forBuildersItems.map((item) => (
                     <MenuItem key={item.href} {...item} variant="desktop" />
                 ))}
@@ -112,10 +112,10 @@ export function ForFundersContent({ variant = 'desktop', onClose }: ForFundersCo
 
     return (
         <div className="flex flex-row justify-between items-center gap-4">
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col">
                 <MenuItem {...forFundersItems.main} variant="desktop" />
                 <hr className="my-4 border-border" />
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col">
                     {forFundersItems.secondary.map((item) => (
                         <MenuItem key={item.href} {...item} variant="desktop" />
                     ))}
@@ -165,15 +165,15 @@ export function ExploreContent({ variant = 'desktop', onClose }: ExploreContentP
     }
 
     return (
-        <div className="flex flex-col gap-4 px-2 py-2">
-            <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-4 px-4 py-4 w-max">
+            <div className="flex flex-col w-full">
                 <MenuSection title="Projects" variant="desktop" />
                 {exploreItems.projects.map((item) => (
                     <SimpleMenuItem key={item.title} {...item} variant="desktop" />
                 ))}
             </div>
             <hr className="h-[1px] w-full border-border" />
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col w-full">
                 <MenuSection title="Communities" variant="desktop" />
                 {exploreItems.communities.map((item) => (
                     <SimpleMenuItem key={item.href} {...item} variant="desktop" />
@@ -212,7 +212,7 @@ export function ResourcesContent({ variant = 'desktop', onClose }: ResourcesCont
     }
 
     return (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col">
             {resourcesItems.map((item) => (
                 <SimpleMenuItem
                     key={item.href}

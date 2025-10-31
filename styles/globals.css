@@ -25,11 +25,6 @@ body * {
 * {
   @apply font-body;
 }
-p,
-label,
-option {
-  @apply font-body;
-}
 
 .line-clamp-1 {
   display: -webkit-box;
@@ -309,7 +304,7 @@ option {
     --popover-foreground: 0 0% 98%;
     --primary: 160 84% 71%;
     --primary-foreground: 0 0% 4%;
-    --secondary: 0 0% 15%;
+    --secondary: 0 0% 9%;
     --secondary-foreground: 0 0% 96%;
     --muted: 0 0% 9%;
     --muted-foreground: 0 0% 64%;
@@ -317,7 +312,7 @@ option {
     --accent-foreground: 0 0% 96%;
     --destructive: 357 41% 44%;
     --destructive-foreground: 357 41% 44%;
-    --border: 0 0% 26%;
+    --border: 0 0% 16%;
     --input: 0 0% 100% / 0.05;
     --ring: 0 0% 98%;
     
@@ -364,5 +359,9 @@ option {
   }
   body {
     @apply bg-background text-foreground;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  h2 {
+    @apply tracking-tight;
   }
 }

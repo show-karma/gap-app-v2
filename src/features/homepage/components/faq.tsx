@@ -44,7 +44,7 @@ export function FAQ() {
     return (
         <section className={cn(homepageTheme.padding, "py-16 w-full")}>
             <div className="flex flex-col items-center gap-6 mb-12 max-w-4xl mx-auto">
-                <h2 className="text-[36px] font-semibold text-foreground text-center leading-[44px] tracking-[-0.02em]">
+                <h2 className="text-[36px] font-semibold text-foreground text-center leading-[44px] tracking-tight">
                     Frequently asked questions
                 </h2>
                 <p className="text-xl font-normal text-muted-foreground text-center leading-[30px] tracking-normal">

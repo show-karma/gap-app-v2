@@ -74,14 +74,14 @@ export function HowItWorks() {
         <section className={cn(homepageTheme.padding, "py-16 w-full")}>
             {/* Header */}
             <div className="flex flex-col items-start gap-4 mb-12">
-                <Badge className="rounded-full bg-secondary px-2 py-1 text-xs font-medium text-accent-foreground">
+                <Badge variant="secondary">
                     How It Works
                 </Badge>
                 <div className="flex flex-col gap-1">
-                    <h2 className="text-4xl font-semibold text-foreground leading-tight">
+                    <h2 className="text-4xl font-semibold text-foreground leading-tight tracking-tight">
                         One profile.
                     </h2>
-                    <h2 className="text-4xl font-semibold text-muted-foreground leading-tight">
+                    <h2 className="text-4xl font-semibold text-muted-foreground leading-tight tracking-tight">
                         Unlimited possibilities.
                     </h2>
                 </div>

@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MenubarItem } from "@/components/ui/menubar";
 import { cn } from "@/utilities/tailwind";
 import { LucideIcon, ArrowUpRight } from "lucide-react";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -120,12 +119,12 @@ export function MenuItemClient({
         }
 
         return (
-            <MenubarItem
-                className="flex flex-col items-start rounded-md cursor-pointer"
+            <div
+                className="flex flex-col items-start rounded-md cursor-pointer px-2 py-1.5 hover:bg-accent"
                 onClick={handleClick}
             >
                 {content}
-            </MenubarItem>
+            </div>
         );
     }
 
@@ -157,10 +156,11 @@ export function MenuItemClient({
             <ExternalLink
                 href={anchor ? `${href}#${anchor}` : href}
                 onClick={handleClick}
+                className="block"
             >
-                <MenubarItem className="flex flex-col items-start rounded-md cursor-pointer">
+                <div className="flex flex-col items-start rounded-md cursor-pointer px-2 py-1.5 hover:bg-accent">
                     {content}
-                </MenubarItem>
+                </div>
             </ExternalLink>
         );
     }
@@ -169,10 +169,11 @@ export function MenuItemClient({
         <Link
             href={anchor ? `${href}#${anchor}` : href}
             onClick={handleClick}
+            className="block"
         >
-            <MenubarItem className="flex flex-col items-start rounded-md cursor-pointer">
+            <div className="flex flex-col items-start rounded-md cursor-pointer px-2 py-1.5 hover:bg-accent">
                 {content}
-            </MenubarItem>
+            </div>
         </Link>
     );
 }

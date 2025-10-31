@@ -46,7 +46,6 @@ const socialMediaLinks = [
 const legalLinks = [
     { label: "Terms", href: PAGES.TERMS_AND_CONDITIONS },
     { label: "Privacy", href: PAGES.PRIVACY_POLICY },
-    { label: "Cookies", href: "#" }, // Placeholder - update when cookies page exists
 ];
 
 export function Footer() {

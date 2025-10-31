@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { MenubarItem } from "@/components/ui/menubar";
 import { cn } from "@/utilities/tailwind";
 import { LucideIcon, ArrowUpRight } from "lucide-react";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -63,19 +62,19 @@ export function SimpleMenuItemClient({
 
     if (external) {
         return (
-            <ExternalLink href={href} onClick={onClick}>
-                <MenubarItem>
+            <ExternalLink href={href} onClick={onClick} className="block">
+                <div className="flex items-center flex-row gap-2 px-2 py-1.5 rounded-md hover:bg-accent">
                     {content}
-                </MenubarItem>
+                </div>
             </ExternalLink>
         );
     }
 
     return (
-        <Link href={href} onClick={onClick}>
-            <MenubarItem>
+        <Link href={href} onClick={onClick} className="block">
+            <div className="flex items-center flex-row gap-2 px-2 py-1.5 rounded-md hover:bg-accent">
                 {content}
-            </MenubarItem>
+            </div>
         </Link>
     );
 }

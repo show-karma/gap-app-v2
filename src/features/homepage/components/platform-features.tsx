@@ -221,10 +221,10 @@ export function PlatformFeatures() {
     <section className={cn(homepageTheme.padding, "py-16 w-full")}>
       {/* Header */}
       <div className="flex flex-col items-start gap-4 mb-12">
-        <Badge className="rounded-full bg-secondary px-2 py-1 text-xs font-medium text-accent-foreground">
+        <Badge variant="secondary">
           Our Platform
         </Badge>
-        <h2 className="text-[36px] font-semibold text-foreground leading-tight max-w-4xl">
+        <h2 className="text-[36px] font-semibold text-foreground leading-tight tracking-tight max-w-4xl">
           Karma connects builders <br /><span>to funding opportunities</span>
         </h2>
         <p className="text-base md:text-lg text-muted-foreground max-w-3xl">
