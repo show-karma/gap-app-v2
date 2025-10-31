@@ -22,7 +22,7 @@ export function WhereBuildersGrow() {
                         className="px-6 py-2.5 text-sm font-medium border border-border"
                         asChild
                     >
-                        <Link href={PAGES.FUNDER}>Grow your ecosystem</Link>
+                        <Link href={PAGES.FUNDERS}>Grow your ecosystem</Link>
                     </Button>
                 </div>
             </div>

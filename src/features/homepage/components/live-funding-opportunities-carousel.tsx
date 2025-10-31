@@ -97,7 +97,7 @@ export function LiveFundingOpportunitiesCarousel({ programs }: LiveFundingOpport
 
                 {/* Run a funding program button */}
                 <Button variant="outline" className="border-border text-sm font-medium leading-[1.5] tracking-[0.005em] text-center align-middle text-foreground" asChild>
-                    <Link href={PAGES.FUNDER}>
+                    <Link href={PAGES.FUNDERS}>
                         Run a funding program
                     </Link>
                 </Button>

@@ -42,7 +42,7 @@ export const forFundersItems = {
     },
     secondary: [
         {
-            href: PAGES.FOUNDERS,
+            href: PAGES.FUNDERS,
             icon: GalleryThumbnails,
             title: "Case studies",
             anchor: "case-studies"

@@ -86,8 +86,7 @@ export const PAGES = {
   },
   STATS: `/stats`,
   SUMUP_CONFIG: `/admin/sumup`,
-  FOUNDERS: `/founders`,
-  FUNDER: `/funder`,
+  FUNDERS: `/funders`,
   FUNDING_APP: process.env.NODE_ENV === "production" 
     ? "https://app.karmahq.xyz" 
     : "https://testapp.karmahq.xyz",

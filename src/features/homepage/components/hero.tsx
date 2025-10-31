@@ -30,7 +30,7 @@ export function Hero() {
                     <div className="flex flex-col md:flex-row gap-3 md:gap-4">
                         <CreateProjectButton />
                         <Button variant='outline' className="px-6 py-2.5 text-sm font-medium border border-border-3" asChild>
-                            <Link href={PAGES.FUNDER}>Run a funding program</Link>
+                            <Link href={PAGES.FUNDERS}>Run a funding program</Link>
                         </Button>
                     </div>
                     <div className="flex flex-row items-center justify-start gap-10 md:gap-4 mt-6">
