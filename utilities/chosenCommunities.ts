@@ -1,7 +1,7 @@
 import { envVars } from "./enviromentVars";
 
-export const chosenCommunities = () => {
-  if (envVars.NEXT_PUBLIC_ENV === "staging") {
+export const chosenCommunities = (forceProduction: boolean = false) => {
+  if (envVars.NEXT_PUBLIC_ENV === "staging" && !forceProduction) {
     return [
       {
         name: "Gitcoin",

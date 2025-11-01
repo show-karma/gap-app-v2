@@ -86,4 +86,14 @@ export const PAGES = {
   },
   STATS: `/stats`,
   SUMUP_CONFIG: `/admin/sumup`,
+  FUNDERS: `/funders`,
+  FUNDING_APP: process.env.NODE_ENV === "production" 
+    ? "https://app.karmahq.xyz" 
+    : "https://testapp.karmahq.xyz",
+  EXTERNAL_PROGRAM: {
+    DETAIL: (communitySlug: string, programId: string) =>
+      `${PAGES.FUNDING_APP}/${communitySlug}/programs/${programId}`,
+    APPLY: (communitySlug: string, programId: string) =>
+      `${PAGES.FUNDING_APP}/${communitySlug}/programs/${programId}/apply`,
+  },
 };

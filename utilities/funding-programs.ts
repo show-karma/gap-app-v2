@@ -1,3 +1,5 @@
+import type { FundingProgram } from "@/services/fundingPlatformService";
+
 /**
  * Constants for funding program detection across the application
  */
@@ -72,3 +74,32 @@ export const getFundingProgramDisplayName = (communityName: string): string => {
   
   return communityName;
 };
+
+/**
+ * Transform and filter enabled funding programs
+ * Shared utility for both client and server-side usage
+ */
+export function transformLiveFundingOpportunities(programs: any[]): FundingProgram[] {
+  // Transform to FundingProgram[] - backend returns full program objects
+  const transformedPrograms = programs.map((program: any): FundingProgram => {
+    return program as FundingProgram;
+  });
+
+  // Filter to only include programs with valid metadata/title
+  const validPrograms = transformedPrograms.filter(
+    (program) =>
+      (program.metadata?.title || program.name) && program.applicationConfig?.isEnabled
+  );
+
+  // Sort by startsAt date (most recent first)
+  const sortedPrograms = validPrograms.sort((a, b) => {
+    const aStartsAt = a.metadata?.startsAt;
+    const bStartsAt = b.metadata?.startsAt;
+    if (!aStartsAt && !bStartsAt) return 0;
+    if (!aStartsAt) return 1;
+    if (!bStartsAt) return -1;
+    return new Date(bStartsAt).getTime() - new Date(aStartsAt).getTime();
+  });
+
+  return sortedPrograms;
+}
