@@ -257,7 +257,9 @@ export function CaseStudiesSection() {
         <section className={cn(
             homepageTheme.padding,
             "flex flex-col items-start w-full gap-16"
-        )}>
+        )}
+            id="case-studies"
+        >
             {/* Header */}
             <div className="flex flex-col items-start gap-4 w-full">
                 {/* Case Studies Pill */}
