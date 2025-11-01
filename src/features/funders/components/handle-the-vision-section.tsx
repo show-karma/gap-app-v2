@@ -2,7 +2,7 @@ import { cn } from "@/utilities/tailwind";
 import { homepageTheme } from "@/src/helper/theme";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { PAGES } from "@/utilities/pages";
+import { SOCIALS } from "@/utilities/socials";
 
 export function HandleTheVisionSection() {
     return (
@@ -18,7 +18,7 @@ export function HandleTheVisionSection() {
                     <Button
                         asChild
                     >
-                        <Link href={PAGES.FUNDERS}>Schedule Demo</Link>
+                        <Link href={SOCIALS.PARTNER_FORM} target="_blank" rel="noopener noreferrer">Schedule Demo</Link>
                     </Button>
                 </div>
             </div>

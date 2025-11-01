@@ -39,7 +39,7 @@ const faqItems = [
 export function FAQSection() {
     return (
         <section className={cn(homepageTheme.padding, "py-16 w-full")}>
-            <div className="flex flex-col items-center gap-4 md:gap-6 max-w-4xl mx-auto px-4">
+            <div className="flex flex-col items-center gap-8 md:gap-16 max-w-4xl mx-auto px-4">
                 <h2 className="text-2xl md:text-[36px] font-semibold text-foreground text-center leading-[32px] md:leading-[44px] tracking-tight">
                     Frequently asked questions
                 </h2>

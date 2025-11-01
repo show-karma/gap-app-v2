@@ -125,7 +125,7 @@ export function PlatformSection() {
                                 src={card.image}
                                 alt={card.title}
                                 fill
-                                className="object-contain md:object-cover"
+                                className="object-contain"
                             />
                         </div>
                     </div>
