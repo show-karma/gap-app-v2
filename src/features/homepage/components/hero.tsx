@@ -69,7 +69,7 @@ export function Hero() {
                     alt="Builder Hero"
                     width={420}
                     height={420}
-                    className="hidden md:flex w-full h-full max-w-[420px] max-h-[420px] object-contain"
+                    className="hidden md:flex w-full h-full max-w-[420px] max-h-[420px] object-contain rounded-3xl"
                 />
             </div>
 
