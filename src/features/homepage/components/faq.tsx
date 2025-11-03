@@ -70,7 +70,7 @@ export function FAQ() {
                     Frequently asked questions
                 </h2>
                 <p className="text-xl font-normal text-muted-foreground text-center leading-[30px] tracking-normal">
-                    Everything you need to know about the product and billing.
+                    Everything you need to know about the product.
                 </p>
             </div>
 
