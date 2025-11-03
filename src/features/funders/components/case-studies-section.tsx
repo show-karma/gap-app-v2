@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { homepageTheme } from "@/src/helper/theme";
 import { cn } from "@/utilities/tailwind";
 import Image from "next/image";
-import Link from "next/link";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { chosenCommunities } from "@/utilities/chosenCommunities";
 
 interface MetricCard {
@@ -19,6 +19,7 @@ interface TestimonialCard {
     author: string;
     authorRole: string;
     communitySlug: string;
+    link?: string;
 }
 
 interface CaseStudyCard {
@@ -54,10 +55,10 @@ const caseStudyCards: CaseStudyCardType[] = [
     },
     {
         type: "case-study",
-        headline: "Optimism saved $10m across 3 grants rounds",
+        headline: "Optimism saved hundreds of hours on application evaluation",
         description: "Leverage AI to evaluate grant applications at scale.",
         communitySlug: "optimism",
-        link: "#"
+        link: "https://paragraph.com/@karmahq/optimism-grants-partners-with-karma-for-season-8"
     },
     {
         type: "metric",
@@ -67,10 +68,11 @@ const caseStudyCards: CaseStudyCardType[] = [
     },
     {
         type: "testimonial",
-        text: "Karma enabled us to do xyz which lead to xyz which lead to xyz which lead to xyz which lead to xyz which lead to xyz which lead to",
-        author: "John Doe",
-        authorRole: "Founder, Acme Inc.",
-        communitySlug: "celo"
+        text: "Over the past 10 months, Celo has leveraged Karma’s platform to track 400+ projects, 850+ grants and 3600+ milestones, moving from fragmented tracking to a unified onchain project registry and funding funnel to simplify impact measurement and grow their ecosystem.",
+        author: "",
+        authorRole: "",
+        communitySlug: "celo",
+        link: "https://paragraph.com/@karmahq/scaling-ecosystem-success-celo-case-study"
     }
 ];
 
@@ -166,25 +168,45 @@ function TestimonialCardComponent({ card }: { card: TestimonialCard }) {
                 </div>
             </div>
 
-            {/* Community */}
-            {community && imageUrl && (
-                <div className="flex items-center gap-2">
-                    <div className="relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
-                        <Image
-                            src={imageUrl}
-                            alt={community.name}
-                            fill
-                            className="object-cover"
-                        />
+            {/* Bottom Section: Community and Button */}
+            <div className="flex items-center justify-between gap-4">
+                {/* Community */}
+                {community && imageUrl ? (
+                    <div className="flex items-center gap-2">
+                        <div className="relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
+                            <Image
+                                src={imageUrl}
+                                alt={community.name}
+                                fill
+                                className="object-cover"
+                            />
+                        </div>
+                        <span className={cn(
+                            "text-foreground font-bold text-sm",
+                            "leading-5 tracking-[0%]"
+                        )}>
+                            {community.name}
+                        </span>
                     </div>
-                    <span className={cn(
-                        "text-foreground font-bold text-sm",
-                        "leading-5 tracking-[0%]"
-                    )}>
-                        {community.name}
-                    </span>
-                </div>
-            )}
+                ) : (
+                    <div />
+                )}
+
+                {/* Read Case Study Button */}
+                {card.link && (
+                    <ExternalLink href={card.link}>
+                        <Button
+                            variant="outline"
+                            className={cn(
+                                "border-border text-foreground",
+                                "rounded-md font-medium"
+                            )}
+                        >
+                            Read Case Study
+                        </Button>
+                    </ExternalLink>
+                )}
+            </div>
         </div>
     );
 }
@@ -235,18 +257,17 @@ function CaseStudyCardComponent({ card }: { card: CaseStudyCard }) {
 
             {/* Button */}
             <div className="mt-auto">
-                <Button
-                    variant="outline"
-                    asChild
-                    className={cn(
-                        "border-border text-foreground",
-                        "rounded-md font-medium"
-                    )}
-                >
-                    <Link href={card.link}>
+                <ExternalLink href={card.link}>
+                    <Button
+                        variant="outline"
+                        className={cn(
+                            "border-border text-foreground",
+                            "rounded-md font-medium"
+                        )}
+                    >
                         Read Case Study
-                    </Link>
-                </Button>
+                    </Button>
+                </ExternalLink>
             </div>
         </div>
     );
