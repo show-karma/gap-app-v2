@@ -35,17 +35,17 @@ export async function GET(
     {
       title: pluralize("Grant", project?.grants.length || 0),
       value: project?.grants.length || 0,
-      icon: "https://gap.karmahq.xyz/icons/funding-lg.png",
+      icon: "https://karmahq.xyz/icons/funding-lg.png",
     },
     {
       title: `${pluralize("Milestone", milestonesCompleted || 0)} completed`,
       value: milestonesCompleted || 0,
-      icon: "https://gap.karmahq.xyz/icons/impact.png",
+      icon: "https://karmahq.xyz/icons/impact.png",
     },
     {
       title: pluralize("Endorsement", project?.endorsements.length || 0),
       value: project?.endorsements.length || 0,
-      icon: "https://gap.karmahq.xyz/icons/endorsements-lg.png",
+      icon: "https://karmahq.xyz/icons/endorsements-lg.png",
     },
   ];
 
@@ -65,13 +65,13 @@ export async function GET(
         <div
           tw="bg-white w-full h-full flex flex-row justify-between items-center pr-[42px] pl-[68px]"
           style={{
-            backgroundImage: `url(https://gap.karmahq.xyz/assets/previews/background.png)`,
+            backgroundImage: `url(https://karmahq.xyz/assets/previews/background.png)`,
           }}
         >
           <div tw="flex flex-col items-start justify-center mt-8 w-[520px]">
             <img
               alt="Karma GAP Logo"
-              src="https://gap.karmahq.xyz/assets/previews/karma-gap-logo-glow.png"
+              src="https://karmahq.xyz/assets/previews/karma-gap-logo-glow.png"
               style={{
                 width: 292,
                 height: 50,

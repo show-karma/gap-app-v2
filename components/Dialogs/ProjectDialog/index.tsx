@@ -1291,7 +1291,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 id="website-input"
                 type="text"
                 className={socialMediaInputStyle}
-                placeholder="https://gap.karmahq.xyz"
+                placeholder="https://karmahq.xyz"
                 {...register("website")}
               />
             </div>

@@ -292,7 +292,7 @@ export default function Header() {
                             Get Funding
                           </button>
                         </Link>
-                        <ExternalLink href={"https://docs.gap.karmahq.xyz/"}>
+                        <ExternalLink href={"https://docs.karmahq.xyz/"}>
                           <button className="rounded-md bg-white w-full dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
                             Docs
                           </button>
@@ -395,7 +395,7 @@ export default function Header() {
               <Link href={PAGES.REGISTRY.ROOT}>
                 <button className={buttonStyle}>Get Funding</button>
               </Link>
-              <ExternalLink href={"https://docs.gap.karmahq.xyz/"}>
+              <ExternalLink href={"https://docs.karmahq.xyz/"}>
                 <button className={buttonStyle}>Docs</button>
               </ExternalLink>
               {isFundingMap ? (
