@@ -21,27 +21,7 @@ export function Hero() {
             "flex flex-col items-center md:items-center gap-6 md:gap-8 lg:gap-10 w-full pt-16 md:pt-24",
         )}>
             {/* Free Guide Banner Section */}
-            <div className="w-full hidden md:flex justify-start md:justify-center">
-                <div className="flex flex-row items-center gap-3 bg-secondary rounded-2xl py-1 pl-1 pr-2.5 flex-wrap md:flex-nowrap">
-                    {/* Free Guide Pill */}
-                    <span className="bg-background border border-border text-foreground font-medium text-sm leading-5 py-0.5 px-2.5 rounded-full whitespace-nowrap flex-shrink-0">
-                        Free Guide
-                    </span>
-
-                    {/* Download Text with Arrow */}
-                    <Link
-                        href="#"
-                        className={cn(
-                            "flex flex-row items-center gap-3 text-foreground font-medium text-sm leading-5",
-                            "hover:opacity-80 transition-opacity",
-                            "flex-shrink min-w-0"
-                        )}
-                    >
-                        <span className="whitespace-normal sm:whitespace-nowrap">Download our &quot;Grants 101&quot; Handbook</span>
-                        <ArrowRight className="w-4 h-4 flex-shrink-0" />
-                    </Link>
-                </div>
-            </div>
+            <div className="w-full hidden md:flex justify-start md:justify-center" />
 
             {/* Main Heading Section */}
             <h1 className={cn(
@@ -49,7 +29,7 @@ export function Hero() {
                 "leading-none tracking-[-0.02em]",
                 "text-left md:text-center max-w-[768px] w-full md:mx-auto"
             )}>
-                Everything you need to run a world-class funding program
+                Grow your ecosystem with a world-class funding platform
             </h1>
 
             {/* Description Section */}
