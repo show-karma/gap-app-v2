@@ -59,7 +59,7 @@ export function Hero() {
                             })}
                         </div>
                         <div className='flex flex-row items-center flex-wrap justify-start gap-1 md:gap-3'>
-                            <p className="text-foreground text-sm font-medium">4k+ projects raised funding on Karma </p>
+                            <p className="text-foreground text-sm font-medium">4k+ projects active on Karma</p>
                             <Link href={PAGES.PROJECTS_EXPLORER} className="text-muted-foreground flex flex-row items-center gap-2 text-sm font-semibold underline border-none shadow-none">Explore Projects</Link>
                         </div>
                     </div>

@@ -90,7 +90,7 @@ export function LiveFundingOpportunitiesCarousel({ programs }: LiveFundingOpport
                             <ArrowRightIcon className="w-4 h-4 text-foreground" />
                         </button>
                         <span className="text-sm font-medium leading-[1.5] tracking-[0.005em] text-muted-foreground">
-                            {programs.length} {pluralize("Round", programs.length)}
+                            {programs.length} {pluralize("funding program", programs.length)}
                         </span>
                     </div>
                 </div>

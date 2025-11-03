@@ -35,10 +35,10 @@ export const forBuildersItems = [
 
 export const forFundersItems = {
     main: {
-        href: PAGES.REGISTRY.ROOT,
+        href: PAGES.FUNDERS,
         icon: GoalIcon,
         title: "Launch a program",
-        description: "Start funding impact in 30 days"
+        description: "Setup and start funding in 2 days"
     },
     secondary: [
         {
