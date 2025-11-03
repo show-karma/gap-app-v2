@@ -53,9 +53,14 @@ The more complete your profile, the easier it is for funders and collaborators t
         answer: "Your project’s profile and verified impact remain **permanently available onchain**. This means your history travels with you, helping you qualify faster for future funding, collaborations, or opportunities across other ecosystems using Karma.",
     },
     {
+        id: "metrics-display",
+        question: "How do I make my metrics show up on my profile impact page?",
+        answer: "Once you create your profile, you can link your github and onchain contracts. We will automatically fetch and display those metrics. You can also input your metrics manually.",
+    },
+    {
         id: "gas-fees",
         question: "Do I need to pay gas fees to update my project or post progress?",
-        answer: `**Yes, for now.** Since all project data is stored on-chain, you’ll need to pay a small gas fee when updating your project or posting progress.
+        answer: `**Yes, for now.** Since all project data is stored onchain, you’ll need to pay a small gas fee when updating your project or posting progress.
 <br />
 <br />
 We’re actively working on **gasless transactions**, so soon you’ll be able to update your project **without paying gas or holding crypto** in your wallet.`,

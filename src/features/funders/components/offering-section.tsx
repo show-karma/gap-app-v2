@@ -13,7 +13,7 @@ const pricingTiers = [
         description: "Start your accountability journey with limited distribution capabilities",
         features: [
             "Track up to 100 projects & 25 grants",
-            "Milestone tracking with on-chain attestations",
+            "Milestone tracking with onchain attestations",
             "Full API access + 3 integrations (GitHub, Dune, CSV)",
             "Email support (48hr response)",
         ],

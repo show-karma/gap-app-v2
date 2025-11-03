@@ -6,6 +6,7 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { MinusCircle, PlusCircle } from "lucide-react";
 
 interface FAQItem {
@@ -42,9 +43,7 @@ export function FAQAccordion({ items }: FAQAccordionProps) {
                         </div>
                     </AccordionTrigger>
                     <AccordionContent className="pb-4 pt-0">
-                        <p className="text-base font-normal text-muted-foreground leading-6 tracking-normal">
-                            {item.answer}
-                        </p>
+                        <MarkdownPreview source={item.answer} className="text-base font-normal text-muted-foreground leading-6 tracking-normal" />
                     </AccordionContent>
                 </AccordionItem>
             ))}
