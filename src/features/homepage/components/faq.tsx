@@ -9,34 +9,56 @@ import { ExternalLink } from "@/components/Utilities/ExternalLink";
 
 const faqItems = [
     {
-        id: "free-trial",
-        question: "Is there a free trial available?",
-        answer: "Yes, you can try us for free for 30 days. If you want, we'll provide you with a free, personalized 30-minute onboarding call to get you up and running as soon as possible.",
+        id: "what-is-karma",
+        question: "What is Karma and how can it help my project?",
+        answer: "Karma is a modular funding and impact platform that helps you **showcase your work, attract funding, and build your onchain reputation**. You can share progress, complete milestones, and receive endorsements that boost your credibility across ecosystems.",
     },
     {
-        id: "change-plan",
-        question: "Can I change my plan later?",
-        answer: "Yes, you can upgrade or downgrade your plan at any time. Changes will be reflected in your next billing cycle.",
+        id: "program-requirement",
+        question: "Do I need to be part of a specific program or community to use Karma?",
+        answer: "No, you can create your project profile anytime. Think of your project profile as a resume. If your project is part of a grant program, hackathon, or ecosystem that partners with Karma, it will appear automatically. If not, you can easily add your grant by following the steps in our [guide](https://docs.gap.karmahq.xyz/how-to-guides/for-builders/add-grant-to-project).",
     },
     {
-        id: "cancellation",
-        question: "What is your cancellation policy?",
-        answer: "You can cancel your subscription at any time. Your access will continue until the end of your current billing period.",
+        id: "project-profile-info",
+        question: "What kind of information should I include in my project profile?",
+        answer: `Your profile is your public, onchain portfolio. Include:
+
+- A clear description of your project and goals
+
+- Milestones or deliverables you plan to achieve
+
+- Updates on your progress (with links, screenshots, or metrics)
+
+- Any impact results or endorsements you receive
+
+The more complete your profile, the easier it is for funders and collaborators to discover and trust your work.`,
     },
     {
-        id: "invoice-info",
-        question: "Can other info be added to an invoice?",
-        answer: "Yes, you can add custom fields, notes, and additional information to your invoices through the invoice settings.",
+        id: "track-verify-progress",
+        question: "How does Karma track and verify project progress?",
+        answer: "Karma lets you post **updates, complete milestones, and attach evidence** (documents, links, metrics, attestations). These are reviewed or automatically verified depending on your program setup. Verified milestones strengthen your project’s credibility and onchain impact record.",
     },
     {
-        id: "billing",
-        question: "How does billing work?",
-        answer: "Billing is processed automatically on a monthly or annual basis, depending on your selected plan. You'll receive an email notification before each charge.",
+        id: "receive-funding",
+        question: "Can I receive funding or donations directly through Karma?",
+        answer: `**Yes.** You can log in and enable donations to accept **fiat or crypto** across multiple networks.
+        <br />
+        <br />
+        Karma also functions as a **funding platform**. If your project is part of a program hosted on Karma, you can receive **direct payments** from that program or community.
+        `,
     },
     {
-        id: "change-email",
-        question: "How do I change my account email?",
-        answer: "You can update your email address in your account settings. You'll need to verify the new email address before the change takes effect.",
+        id: "data-reputation",
+        question: "What happens to my data and reputation after my program ends?",
+        answer: "Your project’s profile and verified impact remain **permanently available onchain**. This means your history travels with you, helping you qualify faster for future funding, collaborations, or opportunities across other ecosystems using Karma.",
+    },
+    {
+        id: "gas-fees",
+        question: "Do I need to pay gas fees to update my project or post progress?",
+        answer: `**Yes, for now.** Since all project data is stored on-chain, you’ll need to pay a small gas fee when updating your project or posting progress.
+<br />
+<br />
+We’re actively working on **gasless transactions**, so soon you’ll be able to update your project **without paying gas or holding crypto** in your wallet.`,
     },
 ];
 
