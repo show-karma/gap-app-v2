@@ -45,9 +45,6 @@ export const linkFormatter = (link: string) => {
 };
 
 export const linkName = (link: string) => {
-  if (link.includes("dune.com")) {
-    return "Dune Query";
-  }
   if (link.includes("github.com")) {
     return "Github Repo";
   }
@@ -73,19 +70,44 @@ export const linkName = (link: string) => {
   return link;
 };
 
+// Helper function to check if a URL is an Etherscan API v2 link
+const isEtherscanApiLink = (url: string): boolean => {
+  try {
+    // Check for the specific Etherscan v2 API URL
+    return url.includes('api.etherscan.io/v2/api');
+  } catch {
+    return false;
+  }
+};
+
+// Helper function to check if a URL is a Dune link (legacy)
+const isDuneLink = (url: string): boolean => {
+  try {
+    return url.includes('dune.com');
+  } catch {
+    return false;
+  }
+};
+
 export const mapLinks = (linksToMap: string[], networkAddresses?: string[]) => {
+  // Check if there's an Etherscan API link or legacy Dune link in the proofs
+  const hasEtherscanApiLink = linksToMap.some((link) => isEtherscanApiLink(link));
+  const hasDuneLink = linksToMap.some((link) => isDuneLink(link));
+
+  // Filter out Etherscan API links and Dune links from the displayed links
   const linksMap = linksToMap
     .map((datapoint) =>
       urlRegex.test(datapoint) ? linkFormatter(datapoint) : null
     )
-    .filter(Boolean);
+    .filter(Boolean)
+    .filter((link) => 
+      !isEtherscanApiLink(link as string) && 
+      !isDuneLink(link as string)
+    ); // Don't show API links or Dune links
 
-  // // Get contract URLs for any Dune links
+  // Get contract URLs from network addresses when Etherscan API link or Dune link is present
   let contractUrls: string[] = [];
-  const hasDuneQuery = linksMap.some(
-    (link) => link && link.includes("dune.com")
-  );
-  if (networkAddresses && hasDuneQuery) {
+  if (networkAddresses && (hasEtherscanApiLink || hasDuneLink)) {
     contractUrls = networkAddresses.map((address) => {
       const addressParts = address.split(":");
       const chain = addressParts[0];
