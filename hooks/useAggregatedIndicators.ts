@@ -39,16 +39,20 @@ export function useAggregatedIndicators(
 
   const queryFn = async (): Promise<AggregatedIndicator[]> => {
     if (!indicatorIds.length) return [];
-    
+
     // First get the community details to obtain the UID
     const communityDetails = await getCommunityDetailsV2(communityId as string);
-    
+
+    if (!communityDetails) {
+      return [];
+    }
+
     // Calculate date range based on selected timeframe
     const startDateObj = new Date();
     startDateObj.setMonth(startDateObj.getMonth() - timeframeMonths);
     const startDate = startDateObj.toISOString();
     const endDate = new Date().toISOString();
-    
+
     // Call the new aggregated indicators endpoint
     const [data, error] = await fetchData(
       INDEXER.COMMUNITY.V2.INDICATORS.AGGREGATED(
@@ -60,7 +64,7 @@ export function useAggregatedIndicators(
         endDate
       )
     );
-    
+
     if (error) {
       throw error;
     }

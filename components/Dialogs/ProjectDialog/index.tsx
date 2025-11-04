@@ -248,13 +248,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const [logoUploadProgress, setLogoUploadProgress] = useState(0);
   const [tempLogoKey, setTempLogoKey] = useState<string | null>(null);
 
-  // Initialize logo preview when editing existing project
-  useEffect(() => {
-    if (projectToUpdate?.details?.data?.imageURL) {
-      setLogoPreviewUrl(projectToUpdate.details.data.imageURL);
-    }
-  }, [projectToUpdate]);
-
   // Modal state management - use edit store or local state based on mode
   const { isProjectEditModalOpen, setIsProjectEditModalOpen } =
     useProjectEditModalStore();
@@ -400,6 +393,16 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           recipient: "",
         };
         reset(updateData);
+        // Reset logo state to project's existing logo
+        if (projectToUpdate.details?.data?.imageURL) {
+          setLogoPreviewUrl(projectToUpdate.details.data.imageURL);
+        } else {
+          setLogoPreviewUrl(null);
+        }
+        setUploadedLogoFile(null);
+        setIsLogoUploading(false);
+        setLogoUploadProgress(0);
+        setTempLogoKey(null);
       } else {
         // Create mode - reset to empty form
         reset({
@@ -428,6 +431,12 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         setCustomLinks([]);
         setStep(0);
         setFaucetFunded(false);
+        // Clear all logo state in create mode
+        setUploadedLogoFile(null);
+        setLogoPreviewUrl(null);
+        setIsLogoUploading(false);
+        setLogoUploadProgress(0);
+        setTempLogoKey(null);
       }
     }
   }, [isOpen, projectToUpdate, previousContacts, reset]);
@@ -1689,8 +1698,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         </Button>
       ) : null}
 
-      <Transition appear show={isOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-[100]" onClose={closeModal}>
+      {isOpen && (
+        <Transition appear show={true} as={Fragment}>
+          <Dialog as="div" className="relative z-[100]" onClose={closeModal}>
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -1883,6 +1893,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           </div>
         </Dialog>
       </Transition>
+      )}
     </>
   );
 };
