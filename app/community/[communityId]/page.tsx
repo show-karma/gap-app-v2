@@ -31,6 +31,11 @@ export default async function Page(props: Props) {
     getCommunityProjectsV2(communityId, { page: 1, limit: 12 }),
   ]);
 
+  // Layout handles notFound, but TypeScript needs this check
+  if (!communityDetails) {
+    return null;
+  }
+
   const defaultSortBy = "milestones" as SortByOptions;
   const defaultSelectedCategories: string[] = [];
   const defaultSelectedMaturityStage = "all" as MaturityStageOptions;
