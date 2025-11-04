@@ -18,7 +18,7 @@ export default function TermsAndConditions() {
           Welcome to Karma GAP (“we”, “our”, or “us”), a product operated by
           Karma. By accessing or using{" "}
           <a className={styles.a} href={PAGES.HOME}>
-            gap.karmahq.xyz
+            karmahq.xyz
           </a>{" "}
           or any related services (collectively, the “Platform”), you agree to
           be bound by these Terms of Use. If you do not agree to these terms,

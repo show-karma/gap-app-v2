@@ -1,7 +1,7 @@
 import { envVars } from "./enviromentVars";
 
-export const chosenCommunities = () => {
-  if (envVars.NEXT_PUBLIC_ENV === "staging") {
+export const chosenCommunities = (forceProduction: boolean = false) => {
+  if (envVars.NEXT_PUBLIC_ENV === "staging" && !forceProduction) {
     return [
       {
         name: "Gitcoin",
@@ -41,6 +41,24 @@ export const chosenCommunities = () => {
       imageURL: {
         light: "/logos/karma-celo-logo.jpeg",
         dark: "/logos/karma-celo-logo.jpeg",
+      },
+    },
+    {
+      name: "Polygon",
+      slug: "polygon",
+      uid: "0x955a36b1484633f35b5ade4432f07d9ffd993588e9e34cadefe7bf1588f086ac",
+      imageURL: {
+        light: "/logos/karma-polygon.png",
+        dark: "/logos/karma-polygon.png",
+      },
+    },
+    {
+      name: "Filecoin",
+      slug: "filecoin",
+      uid: "0xeaede947ce5a87ac8be8c49e50ee523b17004ace706aea78b22c4c08d205c1a2",
+      imageURL: {
+        light: "/logos/karma-filecoin.svg",
+        dark: "/logos/karma-filecoin.svg",
       },
     },
     {
@@ -89,39 +107,12 @@ export const chosenCommunities = () => {
       },
     },
     {
-      name: "TEC",
-      slug: "tec",
-      uid: "0x455325a0317900a8bb6ba5bf973b3ec209e03317f22985385a532bca4328a930",
-      imageURL: {
-        light: "/logos/tec.png",
-        dark: "/logos/tec.png",
-      },
-    },
-    {
       name: "Public Nouns",
       slug: "public-nouns",
       uid: "0x10ce7f1a39dd325b0177ad6db8e625a943577843f5b038f0bbf1efd54454702e",
       imageURL: {
         light: "/logos/karma-public-nouns.jpeg",
         dark: "/logos/karma-public-nouns.jpeg",
-      },
-    },
-    {
-      name: "Climate Co. Network",
-      slug: "climate-coordination-network",
-      uid: "0x5657dbe027418111401a194dab2226fa06a647f42f7da340b869c4906f556b09",
-      imageURL: {
-        light: "/logos/karma-climate-coordination-network.jpg",
-        dark: "/logos/karma-climate-coordination-network.jpg",
-      },
-    },
-    {
-      name: "Refi DAO",
-      slug: "refidao",
-      uid: "0x8ec765bdf1c23d2b16288858b1928e08dff2e868fa1674ade3ecb6af2aaf95b6",
-      imageURL: {
-        light: "/logos/karma-refidao-logo.jpeg",
-        dark: "/logos/karma-refidao-logo.jpeg",
       },
     },
     {
@@ -140,15 +131,6 @@ export const chosenCommunities = () => {
       imageURL: {
         light: "/logos/karma-regen-coordination.png",
         dark: "/logos/karma-regen-coordination.png",
-      },
-    },
-    {
-      name: "Sei",
-      slug: "sei",
-      uid: "0x0b3a59024f775a765553d48814cd513ca2a0a5b3f9853787fcdf41e3b9b1ab75",
-      imageURL: {
-        light: "/logos/karma-sei.svg",
-        dark: "/logos/karma-sei.svg",
       },
     },
     {

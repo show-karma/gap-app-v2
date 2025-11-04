@@ -19,6 +19,7 @@ import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { useOwnerStore } from "@/store/owner";
 import { useCommunityConfig, useCommunityConfigMutation } from "@/hooks/useCommunityConfig";
 import { useAllCommunitiesWithAdmins, type AllCommunitiesWithAdminsData } from "@/hooks/useAllCommunitiesWithAdmins";
+import { layoutTheme } from "@/src/helper/theme";
 
 export const CommunitiesToAdmin = () => {
   const { communities: communitiesToAdmin, isLoading } = useCommunitiesStore();
@@ -29,7 +30,7 @@ export const CommunitiesToAdmin = () => {
   const communityAdmins = data?.communityAdmins ?? [];
 
   return (
-    <div className="px-4 sm:px-6 lg:px-12 py-5">
+    <div className={layoutTheme.padding}>
       {communitiesToAdmin.length === 0 ? (
         <p>{MESSAGES.ADMIN.NO_COMMUNITIES}</p>
       ) : (

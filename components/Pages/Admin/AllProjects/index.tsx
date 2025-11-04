@@ -20,6 +20,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { PAGES } from "@/utilities/pages";
 import Link from "next/link";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { layoutTheme } from "@/src/helper/theme";
 
 const getAllProjects = async (
   offset: number,
@@ -75,7 +76,7 @@ export const AllProjects = () => {
   const projects = data?.data || [];
 
   return (
-    <div className="px-4 sm:px-6 lg:px-12 py-5">
+    <div className={layoutTheme.padding}>
       {isOwner ? (
         <div className="flex flex-col gap-2">
           <div className="flex justify-between">

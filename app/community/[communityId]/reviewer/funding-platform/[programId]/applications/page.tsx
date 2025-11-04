@@ -14,6 +14,7 @@ import {
   useApplicationStatus
 } from "@/hooks/useFundingPlatform";
 import { PAGES } from "@/utilities/pages";
+import { layoutTheme } from "@/src/helper/theme";
 
 /**
  * Reviewer Applications Page
@@ -109,7 +110,7 @@ export default function ReviewerApplicationsPage() {
 
   if (!canView) {
     return (
-      <div className="px-4 sm:px-6 lg:px-12 py-5">
+      <div className={layoutTheme.padding}>
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
           <p className="text-red-700 dark:text-red-300">
             You don&apos;t have permission to view applications for this program.
@@ -128,7 +129,7 @@ export default function ReviewerApplicationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-zinc-900">
+    <div className="min-h-screen">
       {/* Header with Reviewer Badge */}
       <div className="bg-white dark:bg-zinc-800 border-b border-gray-200 dark:border-gray-700">
         <div className="sm:px-3 md:px-4 px-6 py-2">

@@ -7,7 +7,6 @@ import {
   TwitterIcon,
   WebsiteIcon,
 } from "@/components/Icons";
-import { Button } from "@/components/Utilities/Button";
 import { FileUpload } from "@/components/UI/FileUpload";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useGap } from "@/hooks/useGap";
@@ -79,6 +78,7 @@ import { DeckIcon } from "@/components/Icons/Deck";
 import { VideoIcon } from "@/components/Icons/Video";
 import { useWallet } from "@/hooks/useWallet";
 import { CustomLink, isCustomLink } from "@/utilities/customLink";
+import { Button } from "@/components/ui/button";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -1300,7 +1300,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 id="website-input"
                 type="text"
                 className={socialMediaInputStyle}
-                placeholder="https://gap.karmahq.xyz"
+                placeholder="https://karmahq.xyz"
                 {...register("website")}
               />
             </div>
@@ -1688,19 +1688,14 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   return (
     <>
       {buttonElement ? (
-        <button
-          type="button"
+        <Button
           onClick={openModal}
-          className={cn(
-            "flex justify-center min-w-max items-center gap-x-1 rounded-md bg-brand-blue border-2 border-brand-blue px-3 py-2 text-sm font-semibold text-white dark:text-zinc-100  hover:opacity-75 dark:hover:bg-primary-900",
-            buttonElement.styleClass
-          )}
           id="new-project-button"
         >
           {buttonElement.iconSide === "left" && buttonElement.icon}
           {buttonElement.text}
           {buttonElement.iconSide === "right" && buttonElement.icon}
-        </button>
+        </Button>
       ) : null}
 
       {isOpen && (
@@ -1823,7 +1818,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                             <Tooltip.Trigger asChild>
                               <div className="flex w-max h-max">
                                 <Button
-                                  type="button"
                                   className="flex disabled:opacity-50 flex-row dark:bg-zinc-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                                   onClick={() => {
                                     const nextStep = () =>
@@ -1835,7 +1829,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                                     checkFormAndTriggerErrors(nextStep);
                                   }}
                                   disabled={hasErrors() || isLoading}
-                                  isLoading={isLoading}
                                 >
                                   Next
                                   <ChevronRightIcon className="w-4 h-4" />
@@ -1867,7 +1860,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                                   type={"submit"}
                                   className="flex disabled:opacity-50 flex-row dark:bg-zinc-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                                   disabled={hasErrors() || isLoading}
-                                  isLoading={isLoading}
                                 >
                                   {projectToUpdate
                                     ? "Update project"

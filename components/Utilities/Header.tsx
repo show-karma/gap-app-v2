@@ -33,6 +33,8 @@ import { useContributorProfileModalStore } from "@/store/modals/contributorProfi
 import { useContributorProfile } from "@/hooks/useContributorProfile";
 import ThemeButton from "./ThemeButton";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
+import { cn } from "@/utilities/tailwind";
+import { layoutTheme } from "@/src/helper/theme";
 
 const ProjectDialog = dynamic(
   () =>
@@ -196,7 +198,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="px-4 sm:px-6 lg:px-12  border-b border-b-[#DFE1E6]">
+      <header className={cn(layoutTheme.padding, "border-b border-b-[#DFE1E6]")}>
         <div className="relative flex lg:gap-8 justify-between items-center flex-row">
           <div className="flex flex-row gap-16 items-center justify-between">
             <div className="flex py-4 lg:inset-y-0 lg:left-0 lg:static">
@@ -292,7 +294,7 @@ export default function Header() {
                             Get Funding
                           </button>
                         </Link>
-                        <ExternalLink href={"https://docs.gap.karmahq.xyz/"}>
+                        <ExternalLink href={"https://docs.karmahq.xyz/"}>
                           <button className="rounded-md bg-white w-full dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
                             Docs
                           </button>
@@ -395,7 +397,7 @@ export default function Header() {
               <Link href={PAGES.REGISTRY.ROOT}>
                 <button className={buttonStyle}>Get Funding</button>
               </Link>
-              <ExternalLink href={"https://docs.gap.karmahq.xyz/"}>
+              <ExternalLink href={"https://docs.karmahq.xyz/"}>
                 <button className={buttonStyle}>Docs</button>
               </ExternalLink>
               {isFundingMap ? (
@@ -472,7 +474,7 @@ export default function Header() {
             </div>
           </div>
         </div>
-      </header>
+      </header >
       <OnboardingDialog />
     </>
   );

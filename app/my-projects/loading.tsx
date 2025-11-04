@@ -1,10 +1,11 @@
 import { LoadingCard } from "@/components/Pages/MyProjects/LoadingCard";
+import { layoutTheme } from "@/src/helper/theme";
 
 export default function Loading() {
   const loadingArray = Array.from({ length: 12 }, (_, index) => index);
 
   return (
-    <div className="px-4 sm:px-6 lg:px-12 py-5">
+    <div className={layoutTheme.padding}>
       <div className="mt-5 w-full gap-5">
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-4 justify-start">

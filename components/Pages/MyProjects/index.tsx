@@ -21,6 +21,7 @@ import pluralize from "pluralize";
 import { useState } from "react";
 import { useAccount } from "wagmi";
 import { LoadingCard } from "./LoadingCard";
+import { layoutTheme } from "@/src/helper/theme";
 
 const ProjectDialog = dynamic(
   () =>
@@ -98,7 +99,7 @@ export default function MyProjects() {
   const loadingArray = Array.from({ length: 12 }, (_, index) => index);
 
   return (
-    <div className="px-4 sm:px-6 lg:px-12 py-5">
+    <div className={layoutTheme.padding}>
       <div className="mt-5 w-full gap-5">
         {isConnected && isAuth ? (
           <div className="flex flex-col gap-4">

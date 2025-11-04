@@ -102,7 +102,7 @@ export const UpdatesPage: FC = () => {
     <div className="flex flex-col items-center justify-start">
       <div
         id="updates-tab"
-        className="flex flex-col gap-6 my-10 max-lg:my-5 max-w-6xl w-full"
+        className="flex flex-col gap-6 my-10 max-lg:my-5 max-w-full w-full"
       >
         <div className="flex flex-row gap-4 justify-between">
           <p className="font-bold text-black dark:text-zinc-200 text-xl">

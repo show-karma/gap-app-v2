@@ -12,6 +12,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { FormSchema } from "@/types/question-builder";
 import { useQuestionBuilderSchema, usePostApprovalSchema } from "@/hooks/useQuestionBuilder";
 import { useProgramConfig } from "@/hooks/useFundingPlatform";
+import { layoutTheme } from "@/src/helper/theme";
 
 export default function QuestionBuilderPage() {
   const router = useRouter();
@@ -71,7 +72,7 @@ export default function QuestionBuilderPage() {
 
   if (!hasAccess) {
     return (
-      <div className="px-4 sm:px-6 lg:px-12 py-5">
+      <div className={layoutTheme.padding}>
         <p className="text-red-500">{MESSAGES.REVIEWS.NOT_ADMIN}</p>
       </div>
     );
@@ -110,7 +111,7 @@ export default function QuestionBuilderPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen">
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="sm:px-3 md:px-4 px-6 py-2">

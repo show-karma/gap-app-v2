@@ -10,6 +10,7 @@ import { generateProjectOverviewMetadata } from "@/utilities/metadata/projectMet
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
 import { Metadata } from "next";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
+import { layoutTheme } from "@/src/helper/theme";
 
 type Params = Promise<{
   projectId: string;
@@ -54,7 +55,7 @@ export default async function RootLayout(props: {
     <HydrationBoundary state={dehydrate(queryClient)}>
       <div className="flex flex-col gap-0">
         <ProjectWrapper projectId={projectId} />
-        <div className="px-4 sm:px-6 lg:px-12">{children}</div>
+        <div className={layoutTheme.padding}>{children}</div>
       </div>
     </HydrationBoundary>
   );

@@ -177,7 +177,7 @@ export default function ManageIndicatorsPage() {
         </div>
       ) : isAdmin ? (
         <div className="flex w-full flex-1 flex-col items-center gap-8">
-          <div className="w-full flex flex-row items-center justify-between max-w-7xl">
+          <div className="w-full flex flex-row items-center justify-between max-w-full">
             <Link
               href={PAGES.ADMIN.ROOT(
                 community?.details?.data?.slug || (community?.uid as string)
@@ -190,7 +190,7 @@ export default function ManageIndicatorsPage() {
             </Link>
           </div>
 
-          <div className="flex flex-row w-full max-md:flex-col gap-8 max-md:gap-4 max-w-7xl">
+          <div className="flex flex-row w-full max-md:flex-col gap-8 max-md:gap-4 max-w-full">
             {/* Left Column - Navigation (1/5 width) - Desktop and Mobile */}
             <div className="w-1/5 max-md:w-full flex flex-col gap-6">
               {/* Desktop Categories */}

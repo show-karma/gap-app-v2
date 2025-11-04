@@ -23,7 +23,7 @@ export default function PrivacyPolicy() {
             Policy explains how we collect, use, and protect your personal
             information when you use Karma GAP, available at{" "}
             <a className={styles.a} href={PAGES.HOME}>
-              gap.karmahq.xyz
+              karmahq.xyz
             </a>{" "}
             (the “Platform”). By using the Platform, you consent to the
             practices described in this policy.

@@ -20,6 +20,7 @@ import {
   useApplication,
   useApplicationStatus
 } from "@/hooks/useFundingPlatform";
+import { layoutTheme } from "@/src/helper/theme";
 
 export default function ApplicationsPage() {
   const router = useRouter();
@@ -130,7 +131,7 @@ export default function ApplicationsPage() {
 
   if (!hasAccess) {
     return (
-      <div className="px-4 sm:px-6 lg:px-12 py-5">
+      <div className={layoutTheme.padding}>
         <p className="text-red-500">
           {isReviewer
             ? "You don't have permission to view applications for this program."
@@ -141,7 +142,7 @@ export default function ApplicationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-zinc-900">
+    <div className="min-h-screen">
       {/* Header */}
       <div className="bg-white dark:bg-zinc-800 border-b border-gray-200 dark:border-gray-700">
         <div className="sm:px-3 md:px-4 px-6 py-2">

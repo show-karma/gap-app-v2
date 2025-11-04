@@ -3,9 +3,15 @@ import { NextResponse } from "next/server";
 import { chosenCommunities } from "./utilities/chosenCommunities";
 import type { Community } from "@show-karma/karma-gap-sdk";
 import { envVars } from "./utilities/enviromentVars";
+import { shouldRedirectToGov, redirectToGov } from "./utilities/redirectHelpers";
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
+
+  // Redirect frontend-nextjs routes to gov.karmahq.xyz
+  if (shouldRedirectToGov(path)) {
+    return redirectToGov(request);
+  }
   const communityMatch = path.match(/^\/([^\/]+)(?:\/.*)?$/);
 
   if (communityMatch) {
