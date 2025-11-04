@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { homepageTheme } from "@/src/helper/theme";
+import { layoutTheme } from "@/src/helper/theme";
 import { cn } from "@/utilities/tailwind";
 import { Mail, Zap, BarChart2 } from "lucide-react";
 import Link from "next/link";
@@ -40,7 +40,7 @@ const steps: StepCard[] = [
 export function HowItWorksSection() {
     return (
         <section className={cn(
-            homepageTheme.padding,
+            layoutTheme.padding,
             "flex flex-col items-start w-full gap-16"
         )}>
             {/* Header */}

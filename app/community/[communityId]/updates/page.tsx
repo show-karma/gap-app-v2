@@ -61,7 +61,7 @@ export default function CommunityUpdatesPage() {
   const { communityId } = useParams<{ communityId: string }>();
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   // Get filter from URL searchParams, default to 'all' if not present or invalid
   const filterFromUrl = searchParams.get('filter');
   const isValidFilter = (filter: string | null): filter is FilterOption => {
@@ -84,8 +84,7 @@ export default function CommunityUpdatesPage() {
       }
 
       const response = await fetch(
-        `${
-          envVars.NEXT_PUBLIC_GAP_INDEXER_URL
+        `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL
         }${INDEXER.COMMUNITY.MILESTONES(communityId)}?${params.toString()}`
       );
 
@@ -107,7 +106,7 @@ export default function CommunityUpdatesPage() {
   // Memoize sorted data to prevent unnecessary recalculations
   const sortedRawData = useMemo(() => {
     if (!data?.payload) return [];
-    
+
     return [...data.payload].sort(
       (a: CommunityMilestoneUpdate, b: CommunityMilestoneUpdate) => {
         if (selectedFilter === "all") {
@@ -159,16 +158,16 @@ export default function CommunityUpdatesPage() {
   // Memoize filter change handler to prevent unnecessary recreations
   const handleFilterChange = useCallback((newFilter: FilterOption) => {
     const params = new URLSearchParams(searchParams.toString());
-    
+
     if (newFilter === 'all') {
       params.delete('filter');
     } else {
       params.set('filter', newFilter);
     }
-    
+
     // Reset page to 1 when filter changes
     setCurrentPage(1);
-    
+
     // Update URL
     router.push(`?${params.toString()}`);
   }, [searchParams, router]);
@@ -217,7 +216,7 @@ export default function CommunityUpdatesPage() {
 
   return (
     <div className="flex flex-col items-center justify-start">
-      <div className="flex flex-col gap-6 my-10 max-lg:my-5 max-w-6xl w-full">
+      <div className="flex flex-col gap-6 my-10 max-lg:my-5 max-w-full w-full">
         {/* Header with filter */}
         <div className="flex flex-row gap-4 justify-between items-center px-2">
           <div className="flex items-center gap-2">

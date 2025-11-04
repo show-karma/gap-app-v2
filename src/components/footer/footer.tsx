@@ -10,7 +10,7 @@ import { PAGES } from "@/utilities/pages";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { karmaLinks } from "@/utilities/karma/karma";
 import { cn } from "@/utilities/tailwind";
-import { homepageTheme } from "@/src/helper/theme";
+import { layoutTheme } from "@/src/helper/theme";
 
 const navigationLinks = [
     { label: "For Builders", href: PAGES.HOME },
@@ -53,7 +53,7 @@ export function Footer() {
 
     return (
         <footer className={cn("w-full bg-background flex flex-col items-center justify-center")}>
-            <div className={cn(homepageTheme.padding, "w-full max-w-[1920px] flex flex-col")}>
+            <div className={cn(layoutTheme.padding, "w-full max-w-[1920px] flex flex-col")}>
                 {/* Main Footer Content */}
                 <div className="w-full py-12">
                     <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between lg:gap-12">
@@ -111,7 +111,7 @@ export function Footer() {
                 </div>
             </div>
             <hr className="w-full h-[1px] bg-border" />
-            <div className={cn(homepageTheme.padding, "w-full pt-0 pb-4 max-w-[1920px] flex flex-col")}>
+            <div className={cn(layoutTheme.padding, "w-full pt-0 pb-4 max-w-[1920px] flex flex-col")}>
 
                 {/* Bottom Section - Copyright and Legal Links */}
                 <div className="w-full py-6">

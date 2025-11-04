@@ -1,5 +1,5 @@
 import { cn } from "@/utilities/tailwind";
-import { homepageTheme } from "../../helper/theme";
+import { layoutTheme } from "../../helper/theme";
 import { Logo } from "../shared/logo";
 import { NavbarDesktopNavigation } from "./navbar-desktop-navigation";
 import { NavbarMobileMenu } from "./navbar-mobile-menu";
@@ -12,7 +12,7 @@ export function Navbar() {
             )}
         >
             <div className={cn(
-                homepageTheme.padding,
+                layoutTheme.padding,
                 "flex justify-between w-full flex-row gap-8 py-5 max-w-[1920px] min-w-min items-center"
             )}>
 

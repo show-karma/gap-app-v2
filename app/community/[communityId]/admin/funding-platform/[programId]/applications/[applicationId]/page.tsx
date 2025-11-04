@@ -25,6 +25,7 @@ import { useOwnerStore } from "@/store";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
+import { layoutTheme } from "@/src/helper/theme";
 
 export default function ApplicationDetailPage() {
   const router = useRouter();
@@ -176,7 +177,7 @@ export default function ApplicationDetailPage() {
   // Check access
   if (!hasAccess) {
     return (
-      <div className="px-4 sm:px-6 lg:px-12 py-5">
+      <div className={layoutTheme.padding}>
         <p className="text-red-500">{MESSAGES.REVIEWS.NOT_ADMIN}</p>
       </div>
     );
@@ -185,8 +186,8 @@ export default function ApplicationDetailPage() {
   // Check if application exists
   if (!application) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-zinc-900">
-        <div className="px-4 sm:px-6 lg:px-12 py-5">
+      <div className="min-h-screen">
+        <div className={layoutTheme.padding}>
           <Button
             onClick={handleBackClick}
             variant="secondary"
@@ -202,7 +203,7 @@ export default function ApplicationDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-zinc-900">
+    <div className="min-h-screen">
       {/* Header */}
       <div className="bg-white dark:bg-zinc-800 border-b border-gray-200 dark:border-gray-700">
         <div className="px-4 sm:px-6 lg:px-8 py-4">

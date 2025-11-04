@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import { cn } from "@/utilities/tailwind";
-import { homepageTheme } from "@/src/helper/theme";
+import { layoutTheme } from "@/src/helper/theme";
 import { SquareCheckBig } from "lucide-react";
 import { ThemeImage } from "@/src/components/ui/theme-image";
 
@@ -219,7 +219,7 @@ const features = [
 
 export function PlatformFeatures() {
   return (
-    <section className={cn(homepageTheme.padding, "py-16 w-full")}>
+    <section className={cn(layoutTheme.padding, "py-16 w-full")}>
       {/* Header */}
       <div className="flex flex-col items-start gap-4 mb-12">
         <Badge variant="secondary">

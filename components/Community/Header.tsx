@@ -5,6 +5,8 @@ import { CommunityImpactStatCards } from "@/components/Pages/Communities/Impact/
 import { usePathname, useParams } from "next/navigation";
 import { CommunityDetailsV2 } from "@/types/community";
 import Link from "next/link";
+import { cn } from "@/utilities/tailwind";
+import { layoutTheme } from "@/src/helper/theme";
 
 const AdminCommunityHeader = ({
   community,
@@ -12,7 +14,7 @@ const AdminCommunityHeader = ({
   community: CommunityDetailsV2;
 }) => {
   return (
-    <div className="flex flex-col gap-4 justify-between items-start sm:px-3 md:px-4 px-6 py-2 border-b border-gray-200 dark:border-gray-800">
+    <div className={cn(layoutTheme.padding, "flex flex-col gap-4 justify-between items-start sm:px-3 md:px-4 px-6 py-2 border-b border-gray-200 dark:border-gray-800")}>
       <div className="flex flex-row gap-4 flex-wrap max-lg:flex-col justify-between items-center w-full">
         <div className="flex h-max flex-1 flex-row items-center justify-start gap-3 ">
           <div className="flex justify-center bg-black rounded-full p-2">
@@ -47,7 +49,7 @@ const NormalCommunityHeader = ({
   const params = useParams();
 
   return (
-    <div className="flex flex-col gap-4 justify-between items-start mt-4 sm:px-3 md:px-4 px-6 border-b border-gray-200 dark:border-gray-800">
+    <div className={cn(layoutTheme.padding, "py-0 flex flex-col gap-4 justify-between items-start mt-4 sm:px-3 md:px-4 px-6 border-b border-gray-200 dark:border-gray-800")}>
       <div className="flex flex-row gap-4 flex-wrap max-lg:flex-col justify-between items-center w-full">
         <div className="flex h-max flex-1 flex-row items-center justify-start gap-3 ">
           <div

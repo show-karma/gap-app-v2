@@ -1,5 +1,5 @@
 import { cn } from "@/utilities/tailwind";
-import { homepageTheme } from "@/src/helper/theme";
+import { layoutTheme } from "@/src/helper/theme";
 import { CreateProfileButton } from "./create-profile-button";
 import { JoinDiscordButton } from "./join-discord-button";
 import { InfiniteMovingCards } from "@/src/components/ui/infinite-moving-cards";
@@ -39,7 +39,7 @@ const testimonials = [
 
 export function JoinCommunity() {
     return (
-        <section className={cn(homepageTheme.padding, "py-16 w-full")}>
+        <section className={cn(layoutTheme.padding, "py-16 w-full")}>
             <div className="flex flex-col items-center gap-6 mb-12">
                 <h2 className="text-[36px] font-semibold text-foreground text-center tracking-tight">
                     Join our community

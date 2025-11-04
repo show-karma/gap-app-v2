@@ -7,7 +7,7 @@ import Image from "next/image";
 import type { FundingProgram } from "@/services/fundingPlatformService";
 import { PAGES } from "@/utilities/pages";
 import { Clock } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/utilities/tailwind";
 import { chosenCommunities } from "@/utilities/chosenCommunities";
 import { blo } from "blo";
 import { useTheme } from "next-themes";
@@ -108,29 +108,29 @@ export function FundingOpportunityCard({
         <CardContent className="relative p-6 md:p-8 min-h-[400px] flex flex-col justify-between">
           {/* Top section */}
           <div className="flex items-start justify-between mb-4">
-              {applyUrl ? (
-                <ExternalLink
-                  href={applyUrl}
-                  onClick={(e) => e.stopPropagation()}
-                  className="inline-block"
+            {applyUrl ? (
+              <ExternalLink
+                href={applyUrl}
+                onClick={(e) => e.stopPropagation()}
+                className="inline-block"
+              >
+                <Badge
+                  variant="secondary"
+                  className="bg-green-100 text-green-800 border-green-200 flex items-center gap-1.5 cursor-pointer hover:bg-green-200 transition-colors"
                 >
-                  <Badge
-                    variant="secondary"
-                    className="bg-green-100 text-green-800 border-green-200 flex items-center gap-1.5 cursor-pointer hover:bg-green-200 transition-colors"
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-600" />
-                    Apply now
-                  </Badge>
-                </ExternalLink>
-              ) : (
-            <Badge
-              variant="secondary"
-              className="bg-green-100 text-green-800 border-green-200 flex items-center gap-1.5"
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-green-600" />
-              Apply now
-            </Badge>
-              )}
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-600" />
+                  Apply now
+                </Badge>
+              </ExternalLink>
+            ) : (
+              <Badge
+                variant="secondary"
+                className="bg-green-100 text-green-800 border-green-200 flex items-center gap-1.5"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-green-600" />
+                Apply now
+              </Badge>
+            )}
             {status.endsSoon && (
               <div className="flex items-center gap-1.5 text-white text-sm font-medium">
                 <Clock className="w-4 h-4" />
@@ -233,30 +233,30 @@ export function FundingOpportunityCard({
             ) : null}
             <span className="text-xs font-medium leading-[1.5] tracking-[0.015em] text-foreground">{communityName}</span>
           </div>
-            {applyUrl ? (
-              <ExternalLink
-                href={applyUrl}
-                onClick={(e) => e.stopPropagation()}
-                className="inline-block"
+          {applyUrl ? (
+            <ExternalLink
+              href={applyUrl}
+              onClick={(e) => e.stopPropagation()}
+              className="inline-block"
+            >
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-border text-sm font-medium leading-[1.5] tracking-[0.005em] text-center align-middle text-foreground"
               >
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-border text-sm font-medium leading-[1.5] tracking-[0.005em] text-center align-middle text-foreground"
-                >
-                  Apply now
-                </Button>
-              </ExternalLink>
-            ) : (
-          <Button
-            variant="outline"
-            size="sm"
-                disabled
-            className="border-border text-sm font-medium leading-[1.5] tracking-[0.005em] text-center align-middle text-foreground"
-          >
                 Apply now
-          </Button>
-            )}
+              </Button>
+            </ExternalLink>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled
+              className="border-border text-sm font-medium leading-[1.5] tracking-[0.005em] text-center align-middle text-foreground"
+            >
+              Apply now
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { homepageTheme } from "@/src/helper/theme";
+import { layoutTheme } from "@/src/helper/theme";
 import { cn } from "@/utilities/tailwind";
 import { ThemeImage } from "@/src/components/ui/theme-image";
 
@@ -40,7 +40,7 @@ const platformCards: PlatformCard[] = [
 export function PlatformSection() {
     return (
         <section className={cn(
-            homepageTheme.padding,
+            layoutTheme.padding,
             "flex flex-col items-start w-full gap-16"
         )}>
             <div className="flex flex-col items-start gap-4 w-full max-w-[768px]">

@@ -3,7 +3,7 @@
 import { SquareCheckBig } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/utilities/tailwind";
-import { homepageTheme } from "@/src/helper/theme";
+import { layoutTheme } from "@/src/helper/theme";
 import Link from "next/link";
 import { SOCIALS } from "@/utilities/socials";
 
@@ -48,7 +48,7 @@ export function OfferingSection() {
     return (
         <section
             className={cn(
-                homepageTheme.padding,
+                layoutTheme.padding,
                 "flex flex-col items-start w-full gap-16"
             )}
         >

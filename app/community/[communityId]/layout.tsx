@@ -7,6 +7,8 @@ import { getCommunityDetailsV2 } from "@/utilities/queries/getCommunityDataV2";
 import { Metadata } from "next";
 import { CommunityImpactStatCards } from "@/components/Pages/Communities/Impact/StatCards";
 import CommunityHeader from "@/components/Community/Header";
+import { layoutTheme } from "@/src/helper/theme";
+import { cn } from "@/utilities/tailwind";
 
 type Params = Promise<{
   communityId: string;
@@ -74,7 +76,9 @@ export default async function Layout(props: {
   return (
     <div className="flex w-full h-full max-w-full flex-col justify-start max-lg:flex-col">
       <CommunityHeader community={community} />
-      {children}
+      <div className={cn(layoutTheme.padding, "w-full max-w-full")}>
+        {children}
+      </div>
     </div>
   );
 }

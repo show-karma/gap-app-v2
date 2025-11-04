@@ -76,9 +76,8 @@ const DropdownMenu = ({
       >
         <span>{selectedOption?.label || "Select option"}</span>
         <ChevronDownIcon
-          className={`ml-2 h-4 w-4 transition-transform ${
-            isOpen ? "rotate-180" : ""
-          }`}
+          className={`ml-2 h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""
+            }`}
         />
       </button>
 
@@ -92,11 +91,10 @@ const DropdownMenu = ({
                   onChange(option.value);
                   setIsOpen(false);
                 }}
-                className={`block w-full text-left px-4 py-2 text-sm ${
-                  value === option.value
-                    ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
-                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700"
-                }`}
+                className={`block w-full text-left px-4 py-2 text-sm ${value === option.value
+                  ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
+                  : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700"
+                  }`}
               >
                 {option.label}
               </button>
@@ -325,16 +323,16 @@ export const CategoryView = ({
             {viewType === "output"
               ? "activities"
               : viewType === "outcome"
-              ? "outcomes"
-              : "items"}{" "}
+                ? "outcomes"
+                : "items"}{" "}
             found
           </h3>
           <p className="text-gray-500 dark:text-gray-400 mb-4">
             {viewType === "all"
               ? "This category doesn&#39;t have any activities or outcomes yet."
               : viewType === "output"
-              ? "This category doesn&#39;t have any activities yet."
-              : "This category doesn&#39;t have any outcomes yet."}
+                ? "This category doesn&#39;t have any activities yet."
+                : "This category doesn&#39;t have any outcomes yet."}
           </p>
           <Button
             className="flex items-center gap-1 text-white"
@@ -346,8 +344,8 @@ export const CategoryView = ({
             {viewType === "outcome"
               ? "Outcome"
               : viewType === "output"
-              ? "Activity"
-              : "Activity / Outcome"}
+                ? "Activity"
+                : "Activity / Outcome"}
             <PlusIcon className="h-4 w-4" />
           </Button>
         </div>
@@ -382,9 +380,8 @@ export const CategoryView = ({
                         <Menu.Item>
                           {({ active }) => (
                             <button
-                              className={`${
-                                active ? "bg-gray-100 dark:bg-zinc-700" : ""
-                              } w-full px-4 py-2 text-left flex items-center text-sm`}
+                              className={`${active ? "bg-gray-100 dark:bg-zinc-700" : ""
+                                } w-full px-4 py-2 text-left flex items-center text-sm`}
                               onClick={() => {
                                 setEditingSegment(segment);
                                 setIsModalOpen(true);
@@ -409,11 +406,10 @@ export const CategoryView = ({
                               buttonElement={{
                                 icon: <TrashIcon className="h-4 w-4 mr-2" />,
                                 text: "Delete",
-                                styleClass: `${
-                                  active
-                                    ? "bg-gray-100 dark:bg-zinc-700"
-                                    : "bg-transparent"
-                                } hover:bg-gray-100 dark:hover:bg-zinc-700 font-normal w-full px-4 py-2 text-left flex items-center text-sm text-red-500`,
+                                styleClass: `${active
+                                  ? "bg-gray-100 dark:bg-zinc-700"
+                                  : "bg-transparent"
+                                  } hover:bg-gray-100 dark:hover:bg-zinc-700 font-normal w-full px-4 py-2 text-left flex items-center text-sm text-red-500`,
                               }}
                             />
                           )}
@@ -440,14 +436,12 @@ export const CategoryView = ({
 
               <div className="flex flex-wrap items-center gap-3 flex-row max-lg:items-start max-lg:flex-col">
                 <span
-                  className={`px-3 py-1.5 gap-2 flex flex-row rounded-full text-gray-900 text-sm ${
-                    segment.type === "outcome" ? "bg-[#DAF8D9]" : "bg-[#E0EAFF]"
-                  }`}
+                  className={`px-3 py-1.5 gap-2 flex flex-row rounded-full text-gray-900 text-sm ${segment.type === "outcome" ? "bg-[#DAF8D9]" : "bg-[#E0EAFF]"
+                    }`}
                 >
                   <Image
-                    src={`/icons/${
-                      segment.type === "output" ? "activity" : "outcome"
-                    }.svg`}
+                    src={`/icons/${segment.type === "output" ? "activity" : "outcome"
+                      }.svg`}
                     width={20}
                     height={20}
                     alt={segment.type}
@@ -456,14 +450,14 @@ export const CategoryView = ({
                 </span>
 
                 <div className="flex items-center flex-row gap-2 max-lg:flex-col max-lg:items-start">
-                  <span className="text-gray-900 text-base font-semibold">
+                  <span className="text-foreground text-base font-semibold">
                     Indicators ({segment.impact_indicators?.length || ""})
                   </span>
                   <div className="flex gap-1 flex-wrap flex-row">
                     {segment.impact_indicators?.map((indicator, index) => (
                       <span
                         key={indicator.id}
-                        className="text-gray-900 dark:text-white text-sm font-normal"
+                        className="text-foreground text-sm font-normal"
                       >
                         <u>{indicator.name}</u>{" "}
                         {(segment.impact_indicators?.length || 0) - 1 !== index
