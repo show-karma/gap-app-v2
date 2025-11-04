@@ -9,6 +9,7 @@ import Link from "next/link";
 import { groupSimilarCommunities } from "@/utilities/communityHelpers";
 import { PAGES } from "@/utilities/pages";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
+import { errorManager } from "@/components/Utilities/errorManager";
 
 export function NavbarSearch() {
     const [results, setResults] = useState<ISearchResponse>({
@@ -51,7 +52,7 @@ export function NavbarSearch() {
             const result = await gapIndexerApi.search(value);
             setResults(result.data);
         } catch (error) {
-            console.error("Search error:", error);
+            errorManager(`Error searching: ${error}`, error);
             setResults({ communities: [], projects: [] });
         } finally {
             setIsLoading(false);

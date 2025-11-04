@@ -1,6 +1,7 @@
 import { fundingProgramsAPI } from "@/services/fundingPlatformService";
 import { transformLiveFundingOpportunities } from "@/utilities/funding-programs";
 import type { FundingProgram } from "@/services/fundingPlatformService";
+import { errorManager } from "@/components/Utilities/errorManager";
 
 /**
  * Application service to fetch live funding opportunities
@@ -11,7 +12,7 @@ export async function getLiveFundingOpportunities(): Promise<FundingProgram[]> {
     const programs = await fundingProgramsAPI.getEnabledProgramsServer();
     return transformLiveFundingOpportunities(programs);
   } catch (error) {
-    console.error("Error fetching live funding opportunities:", error);
+    errorManager(`Error fetching live funding opportunities: ${error}`, error);
     return [];
   }
 }
