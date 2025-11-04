@@ -225,7 +225,7 @@ describe("redirectHelpers", () => {
             pathname: "/dao/optimism",
             search: "",
           },
-          url: "http://gapstag.karmahq.xyz/dao/optimism",
+          url: "http://staging.karmahq.xyz/dao/optimism",
         } as unknown as NextRequest;
 
         const response = redirectToGov(mockRequest);
@@ -242,7 +242,7 @@ describe("redirectHelpers", () => {
             pathname: "/dao/optimism",
             search: "?tab=delegates&page=2",
           },
-          url: "http://gapstag.karmahq.xyz/dao/optimism?tab=delegates&page=2",
+          url: "http://staging.karmahq.xyz/dao/optimism?tab=delegates&page=2",
         } as unknown as NextRequest;
 
         const response = redirectToGov(mockRequest);

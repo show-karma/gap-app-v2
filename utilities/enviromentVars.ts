@@ -34,7 +34,7 @@ export const envVars = {
   VERCEL_URL:
     process.env.NEXT_PUBLIC_ENV === "production"
       ? `https://karmahq.xyz`
-      : "https://gapstag.karmahq.xyz",
+      : "https://staging.karmahq.xyz",
   OSO_API_KEY: process.env.NEXT_PUBLIC_OSO_API_KEY || "",
   PRIVY_APP_ID: process.env.NEXT_PUBLIC_PRIVY_APP_ID || "",
 };
