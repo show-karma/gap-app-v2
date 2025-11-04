@@ -174,41 +174,89 @@ describe("redirectHelpers", () => {
   });
 
   describe("redirectToGov", () => {
-    it("should create redirect to gov.karmahq.xyz with same pathname", () => {
-      const mockRequest = {
-        nextUrl: {
-          pathname: "/dao/optimism",
-          search: "",
-        },
-        url: "http://karmahq.xyz/dao/optimism",
-      } as unknown as NextRequest;
+    describe("production environment", () => {
+      beforeEach(() => {
+        process.env.NEXT_PUBLIC_ENV = "production";
+      });
 
-      const response = redirectToGov(mockRequest);
+      it("should create redirect to gov.karmahq.xyz with same pathname", () => {
+        const mockRequest = {
+          nextUrl: {
+            pathname: "/dao/optimism",
+            search: "",
+          },
+          url: "http://karmahq.xyz/dao/optimism",
+        } as unknown as NextRequest;
 
-      expect(response.status).toBe(308); // Permanent Redirect
-      expect(response.headers.get("location")).toBe(
-        "http://gov.karmahq.xyz/dao/optimism"
-      );
+        const response = redirectToGov(mockRequest);
+
+        expect(response.status).toBe(308); // Permanent Redirect
+        expect(response.headers.get("location")).toBe(
+          "http://gov.karmahq.xyz/dao/optimism"
+        );
+      });
+
+      it("should preserve query parameters", () => {
+        const mockRequest = {
+          nextUrl: {
+            pathname: "/dao/optimism",
+            search: "?tab=delegates&page=2",
+          },
+          url: "http://karmahq.xyz/dao/optimism?tab=delegates&page=2",
+        } as unknown as NextRequest;
+
+        const response = redirectToGov(mockRequest);
+
+        expect(response.status).toBe(308);
+        expect(response.headers.get("location")).toBe(
+          "http://gov.karmahq.xyz/dao/optimism?tab=delegates&page=2"
+        );
+      });
     });
 
-    it("should preserve query parameters", () => {
-      const mockRequest = {
-        nextUrl: {
-          pathname: "/dao/optimism",
-          search: "?tab=delegates&page=2",
-        },
-        url: "http://karmahq.xyz/dao/optimism?tab=delegates&page=2",
-      } as unknown as NextRequest;
+    describe("staging environment", () => {
+      beforeEach(() => {
+        process.env.NEXT_PUBLIC_ENV = "staging";
+      });
 
-      const response = redirectToGov(mockRequest);
+      it("should create redirect to govstag.karmahq.xyz with same pathname", () => {
+        const mockRequest = {
+          nextUrl: {
+            pathname: "/dao/optimism",
+            search: "",
+          },
+          url: "http://gapstag.karmahq.xyz/dao/optimism",
+        } as unknown as NextRequest;
 
-      expect(response.status).toBe(308);
-      expect(response.headers.get("location")).toBe(
-        "http://gov.karmahq.xyz/dao/optimism?tab=delegates&page=2"
-      );
+        const response = redirectToGov(mockRequest);
+
+        expect(response.status).toBe(308); // Permanent Redirect
+        expect(response.headers.get("location")).toBe(
+          "http://govstag.karmahq.xyz/dao/optimism"
+        );
+      });
+
+      it("should preserve query parameters in staging", () => {
+        const mockRequest = {
+          nextUrl: {
+            pathname: "/dao/optimism",
+            search: "?tab=delegates&page=2",
+          },
+          url: "http://gapstag.karmahq.xyz/dao/optimism?tab=delegates&page=2",
+        } as unknown as NextRequest;
+
+        const response = redirectToGov(mockRequest);
+
+        expect(response.status).toBe(308);
+        expect(response.headers.get("location")).toBe(
+          "http://govstag.karmahq.xyz/dao/optimism?tab=delegates&page=2"
+        );
+      });
     });
 
     it("should preserve hash fragments", () => {
+      process.env.NEXT_PUBLIC_ENV = "production";
+
       const mockRequest = {
         nextUrl: {
           pathname: "/profile/0x123",
@@ -224,6 +272,8 @@ describe("redirectHelpers", () => {
     });
 
     it("should use 308 Permanent Redirect status code", () => {
+      process.env.NEXT_PUBLIC_ENV = "production";
+
       const mockRequest = {
         nextUrl: {
           pathname: "/actions",

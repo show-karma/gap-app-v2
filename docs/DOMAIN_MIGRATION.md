@@ -11,8 +11,13 @@ This document describes the domain migration strategy implemented to transition 
 
 ## Target State (After Migration)
 
+**Production:**
 - `karmahq.xyz` → `gap-app-v2` project (main domain for GAP)
 - `gov.karmahq.xyz` → `frontend-nextjs` project (governance subdomain)
+
+**Staging:**
+- `gapstag.karmahq.xyz` → `gap-app-v2` project (staging for GAP)
+- `govstag.karmahq.xyz` → `frontend-nextjs` project (governance staging)
 
 ## Implementation Details
 
@@ -26,11 +31,15 @@ The redirect implementation is organized across three files:
 
 ### Redirect Logic
 
-The redirect logic is implemented in the middleware and utilities. When a request comes to `karmahq.xyz`, the middleware:
+The redirect logic is implemented in the middleware and utilities. When a request comes to the main domain, the middleware:
 
 1. Checks if the path matches any route from the old frontend-nextjs application
-2. If matched, issues a 308 Permanent Redirect to `gov.karmahq.xyz` with the same path
+2. If matched, issues a 308 Permanent Redirect to the governance subdomain with the same path
 3. If not matched, allows gap-app-v2 to handle the request normally
+
+**Environment-Aware Redirects:**
+- **Production**: `karmahq.xyz/dao/optimism` → `gov.karmahq.xyz/dao/optimism`
+- **Staging**: `gapstag.karmahq.xyz/dao/optimism` → `govstag.karmahq.xyz/dao/optimism`
 
 ### Routes Redirected to gov.karmahq.xyz
 
@@ -145,6 +154,11 @@ export const FRONTEND_NEXTJS_ROUTES = [
 **Redirect Helpers** (`utilities/redirectHelpers.ts`):
 
 ```typescript
+function getGovSubdomain(): string {
+  const isProduction = process.env.NEXT_PUBLIC_ENV === "production";
+  return isProduction ? "gov.karmahq.xyz" : "govstag.karmahq.xyz";
+}
+
 export function shouldRedirectToGov(path: string): boolean {
   // Check exact matches
   if (FRONTEND_NEXTJS_ROUTES.includes(path as any)) {
@@ -162,7 +176,7 @@ export function shouldRedirectToGov(path: string): boolean {
 
 export function redirectToGov(request: NextRequest): NextResponse {
   const govUrl = new URL(request.nextUrl.pathname, request.url);
-  govUrl.hostname = "gov.karmahq.xyz";
+  govUrl.hostname = getGovSubdomain(); // Environment-aware!
   govUrl.search = request.nextUrl.search; // Preserve query params
   return NextResponse.redirect(govUrl, 308); // 308 = Permanent Redirect
 }
@@ -185,31 +199,54 @@ Query parameters are preserved during the redirect:
 
 When deploying this migration:
 
-1. **DNS Configuration**
-   - [ ] Update `karmahq.xyz` DNS to point to gap-app-v2 deployment
-   - [ ] Create `gov.karmahq.xyz` DNS entry pointing to frontend-nextjs deployment
+1. **DNS Configuration (Production)**
+   - [ ] Update `karmahq.xyz` DNS to point to gap-app-v2 production deployment
+   - [ ] Create `gov.karmahq.xyz` DNS entry pointing to frontend-nextjs production deployment
    - [ ] Verify SSL certificates for both domains
 
-2. **Application Configuration**
+2. **DNS Configuration (Staging)**
+   - [ ] Update `gapstag.karmahq.xyz` DNS to point to gap-app-v2 staging deployment
+   - [ ] Create `govstag.karmahq.xyz` DNS entry pointing to frontend-nextjs staging deployment
+   - [ ] Verify SSL certificates for both staging domains
+
+3. **Application Configuration (Production)**
    - [ ] Update frontend-nextjs environment variables to use `gov.karmahq.xyz`
    - [ ] Update gap-app-v2 environment variables to use `karmahq.xyz`
+   - [ ] Set `NEXT_PUBLIC_ENV=production` in gap-app-v2
    - [ ] Update any hardcoded domain references in both applications
    - [ ] Update API endpoint configurations
 
-3. **Testing**
-   - [ ] Test all redirect paths work correctly
+4. **Application Configuration (Staging)**
+   - [ ] Update frontend-nextjs environment variables to use `govstag.karmahq.xyz`
+   - [ ] Update gap-app-v2 environment variables to use `gapstag.karmahq.xyz`
+   - [ ] Set `NEXT_PUBLIC_ENV=staging` in gap-app-v2
+   - [ ] Update any hardcoded domain references in both applications
+   - [ ] Update API endpoint configurations
+
+5. **Testing (Staging First)**
+   - [ ] Test all redirect paths work correctly on staging
+   - [ ] Verify staging redirects to `govstag.karmahq.xyz`
+   - [ ] Verify query parameters are preserved
+   - [ ] Test gap-app-v2 routes work normally on `gapstag.karmahq.xyz`
+   - [ ] Verify no redirect loops
+   - [ ] Test mobile and desktop views
+
+6. **Testing (Production)**
+   - [ ] Test all redirect paths work correctly on production
+   - [ ] Verify production redirects to `gov.karmahq.xyz`
    - [ ] Verify query parameters are preserved
    - [ ] Test gap-app-v2 routes work normally on `karmahq.xyz`
    - [ ] Verify no redirect loops
    - [ ] Test mobile and desktop views
 
-4. **Monitoring**
+7. **Monitoring**
    - [ ] Monitor 4xx and 5xx error rates after deployment
    - [ ] Track redirect performance metrics
    - [ ] Monitor user feedback channels
    - [ ] Set up alerts for increased error rates
+   - [ ] Monitor both staging and production environments
 
-5. **SEO Considerations**
+8. **SEO Considerations**
    - [ ] Submit updated sitemap to search engines
    - [ ] Update Google Search Console properties
    - [ ] Monitor search rankings during transition period
