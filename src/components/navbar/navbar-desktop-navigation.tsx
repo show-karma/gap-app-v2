@@ -33,7 +33,7 @@ import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Logo } from "../shared/logo";
 
 const menuStyles = {
-    button: 'font-medium text-muted-foreground flex flex-row gap-1 bg-transparent hover:bg-transparent hover:text-muted-foreground data-[state=open]:bg-transparent data-[state=open]:text-muted-foreground shadow-none h-auto',
+    button: 'px-1 font-medium text-muted-foreground flex flex-row gap-1 bg-transparent hover:bg-transparent hover:text-muted-foreground data-[state=open]:bg-transparent data-[state=open]:text-muted-foreground shadow-none h-auto',
     itemText: 'text-foreground text-sm font-medium',
 };
 
@@ -70,8 +70,8 @@ export function NavbarDesktopNavigation() {
     const hasReviewerRole = reviewerPrograms && reviewerPrograms.length > 0;
 
     return (
-        <div className="hidden lg:flex items-center flex-1 lg:justify-between">
-            <div className="flex flex-row items-center gap-8">
+        <div className="hidden xl:flex items-center flex-1 lg:justify-between gap-8">
+            <div className="flex flex-row items-center gap-2 flex-shrink-0">
                 <Logo />
                 {isLoggedIn ? (
                     <div className="flex flex-row items-center gap-2">
@@ -126,7 +126,7 @@ export function NavbarDesktopNavigation() {
                 )}
             </div>
 
-            <div className="flex flex-row items-center gap-4">
+            <div className="flex flex-row items-center gap-4 flex-1 min-w-0">
                 {/* Search */}
                 <NavbarSearch />
                 <NavigationMenu>

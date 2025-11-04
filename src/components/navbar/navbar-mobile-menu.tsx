@@ -97,7 +97,7 @@ export function NavbarMobileMenu() {
     const hasReviewerRole = reviewerPrograms && reviewerPrograms.length > 0;
 
     return (
-        <div className="lg:hidden flex flex-row items-center gap-4 w-full justify-between">
+        <div className="xl:hidden flex flex-row items-center gap-4 w-full justify-between">
             <Logo />
             <Drawer open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <DrawerTrigger asChild>

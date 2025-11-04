@@ -27,7 +27,9 @@ interface CaseStudyCard {
     headline: string;
     description: string;
     communitySlug: string;
-    link: string;
+    link?: string;
+    author?: string;
+    authorRole?: string;
 }
 
 type CaseStudyCardType = MetricCard | TestimonialCard | CaseStudyCard;
@@ -35,23 +37,24 @@ type CaseStudyCardType = MetricCard | TestimonialCard | CaseStudyCard;
 const caseStudyCards: CaseStudyCardType[] = [
     {
         type: "metric",
-        metric: "25hrs",
-        description: "saved in grants setup",
-        communitySlug: "celo"
+        metric: "700",
+        description: "Times AI evaluation utilized by applicants in last 30 days",
+        communitySlug: ""
     },
     {
         type: "testimonial",
-        text: "Karma enabled us to do xyz which lead to xyz which lead to xyz which lead to xyz which lead to xyz which lead to xyz which lead to",
-        author: "John Doe",
-        authorRole: "Founder, Acme Inc.",
-        communitySlug: "scroll"
+        text: "Karma isn’t just software, they’re a true partner. Their AI-driven evaluations cut review time dramatically. Their platform fits our needs perfectly and their team ships features at lightning speed.",
+        author: "Gonna",
+        authorRole: "Optimism Grants Council Lead",
+        communitySlug: "optimism"
     },
     {
         type: "case-study",
-        headline: "Celo allocated $10m across their ecosystem",
-        description: "Leverage AI to evaluate grant applications at scale.",
-        communitySlug: "octant",
-        link: "#"
+        headline: "",
+        description: "Karma has been a valuable partner in helping us grow and support the Celo developer community. Their tools made it easy to recognize contributor impact and run more transparent, data-driven DevRel programs. The team has also been great to work with  – responsive, thoughtful, and always looking for ways to improve.",
+        communitySlug: "celo",
+        author: "Sophia Dew",
+        authorRole: "Celo Devrel Lead",
     },
     {
         type: "case-study",
@@ -62,9 +65,9 @@ const caseStudyCards: CaseStudyCardType[] = [
     },
     {
         type: "metric",
-        metric: "32%",
+        metric: "35%",
         description: "reduced admin burden",
-        communitySlug: "arbitrum"
+        communitySlug: "scroll"
     },
     {
         type: "testimonial",
@@ -92,7 +95,7 @@ function MetricCardComponent({ card }: { card: MetricCard }) {
     return (
         <div className={cn(
             "flex flex-col justify-between",
-            "h-[317px] w-full",
+            "min-h-[317px] h-full w-full",
             "rounded-2xl border border-border bg-background p-5 shadow-sm"
         )}>
             {/* Metric Content */}
@@ -104,7 +107,7 @@ function MetricCardComponent({ card }: { card: MetricCard }) {
                     {card.metric}
                 </div>
                 <div className={cn(
-                    "text-foreground font-normal text-base",
+                    "text-foreground font-normal text-sm",
                     "leading-[150%] tracking-[0%]"
                 )}>
                     {card.description}
@@ -141,18 +144,18 @@ function TestimonialCardComponent({ card }: { card: TestimonialCard }) {
     return (
         <div className={cn(
             "flex flex-col justify-between",
-            "h-[317px] w-full",
+            "min-h-[317px] h-full w-full",
             "rounded-2xl border border-border bg-background p-5 shadow-sm"
         )}>
             {/* Testimonial Content */}
             <div className="flex flex-col gap-2">
                 <p className={cn(
-                    "text-foreground font-normal text-base",
+                    "text-foreground font-normal text-sm",
                     "leading-[150%] tracking-[0%]"
                 )}>
                     {card.text}
                 </p>
-                <div className="flex flex-col gap-0">
+                <div className="flex flex-col gap-0 mb-2">
                     <span className={cn(
                         "text-muted-foreground font-semibold text-sm",
                         "leading-5 tracking-[0%]"
@@ -169,7 +172,7 @@ function TestimonialCardComponent({ card }: { card: TestimonialCard }) {
             </div>
 
             {/* Bottom Section: Community and Button */}
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
                 {/* Community */}
                 {community && imageUrl ? (
                     <div className="flex items-center gap-2">
@@ -218,12 +221,51 @@ function CaseStudyCardComponent({ card }: { card: CaseStudyCard }) {
     return (
         <div className={cn(
             "flex flex-col justify-between",
-            "h-[317px] w-full",
-            "rounded-2xl border border-border bg-background p-8 shadow-sm"
+            "min-h-[317px] h-full w-full",
+            "rounded-2xl border border-border bg-background p-5 shadow-sm"
         )}>
             {/* Case Study Content */}
             <div className="flex flex-col gap-3">
-                {community && imageUrl && (
+                {card.headline && (
+                    <h3 className={cn(
+                        "text-foreground font-semibold",
+                        "text-[20px] leading-[120%] tracking-[-0.02em]"
+                    )}>
+                        {card.headline}
+                    </h3>
+                )}
+                <p className={cn(
+                    "text-foreground font-normal text-sm",
+                    "leading-[150%] tracking-[0%]"
+                )}>
+                    {card.description}
+                </p>
+                {(card.author || card.authorRole) && (
+                    <div className="flex flex-col gap-0">
+                        {card.author && (
+                            <span className={cn(
+                                "text-muted-foreground font-semibold text-sm",
+                                "leading-5 tracking-[0%]"
+                            )}>
+                                {card.author}
+                            </span>
+                        )}
+                        {card.authorRole && (
+                            <span className={cn(
+                                "text-muted-foreground font-medium text-sm",
+                                "leading-5 tracking-[0%]"
+                            )}>
+                                {card.authorRole}
+                            </span>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            {/* Bottom Section: Community and Button */}
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+                {/* Community */}
+                {community && imageUrl ? (
                     <div className="flex items-center gap-2">
                         <div className="relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
                             <Image
@@ -240,24 +282,12 @@ function CaseStudyCardComponent({ card }: { card: CaseStudyCard }) {
                             {community.name}
                         </span>
                     </div>
+                ) : (
+                    <div />
                 )}
-                <h3 className={cn(
-                    "text-foreground font-semibold",
-                    "text-[20px] leading-[120%] tracking-[-0.02em]"
-                )}>
-                    {card.headline}
-                </h3>
-                <p className={cn(
-                    "text-muted-foreground font-medium text-sm",
-                    "leading-5 tracking-[0%]"
-                )}>
-                    {card.description}
-                </p>
-            </div>
 
-            {/* Button */}
-            <div className="mt-auto">
-                <ExternalLink href={card.link}>
+                {/* Read Case Study Button */}
+                {card.link ? <ExternalLink href={card.link}>
                     <Button
                         variant="outline"
                         className={cn(
@@ -267,7 +297,7 @@ function CaseStudyCardComponent({ card }: { card: CaseStudyCard }) {
                     >
                         Read Case Study
                     </Button>
-                </ExternalLink>
+                </ExternalLink> : null}
             </div>
         </div>
     );
@@ -311,7 +341,8 @@ export function CaseStudiesSection() {
             {/* Cards Grid */}
             <div className={cn(
                 "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 w-full",
-                "max-w-[1920px]"
+                "max-w-[1920px]",
+                "items-stretch"
             )}>
                 {/* Card 1: Narrow (Row 1, Col 1) */}
                 <div className="md:col-span-1">
