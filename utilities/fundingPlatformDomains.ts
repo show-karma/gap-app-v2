@@ -12,8 +12,8 @@ export const fundingPlatformDomains = {
     prod: "https://founders.polygon.technology",
   },
   scroll: {
-    dev: "https://grantsapp.scroll.io1",
-    prod: "https://grantsapp.scroll.io1",
+    dev: "https://grantsapp.scroll.io",
+    prod: "https://grantsapp.scroll.io",
   },
   shared: {
     dev: "https://testapp.karmahq.xyz",
