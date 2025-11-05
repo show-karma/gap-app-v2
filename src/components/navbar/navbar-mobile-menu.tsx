@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { PhoneCall, ChevronRight, CircleHelp, LogOutIcon, ToggleLeft, ToggleRight, FolderKanban, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { PhoneCall, ChevronRight, CircleHelp, LogOutIcon, ToggleLeft, ToggleRight, FolderKanban, ShieldCheck, CheckCircle2, Settings } from "lucide-react";
 import { SOCIALS } from "@/utilities/socials";
 import { TwitterIcon, DiscordIcon, TelegramIcon } from "@/components/Icons";
 import { ParagraphIcon } from "@/components/Icons/Paragraph";
@@ -33,6 +33,7 @@ import { useCommunitiesStore } from "@/store/communities";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
 import { useStaff } from "@/hooks/useStaff";
 import { useOwnerStore } from "@/store";
+import { useRegistryStore } from "@/store/registry";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Logo } from "../shared/logo";
 
@@ -89,10 +90,12 @@ export function NavbarMobileMenu() {
     const { programs: reviewerPrograms } = useReviewerPrograms();
     const { isStaff } = useStaff();
     const isOwner = useOwnerStore((state) => state.isOwner);
+    const { isPoolManager, isRegistryAdmin } = useRegistryStore();
 
     const isCommunityAdmin = communities.length !== 0;
     const hasReviewerRole = reviewerPrograms && reviewerPrograms.length > 0;
     const hasAdminAccess = isStaff || isOwner || isCommunityAdmin;
+    const isRegistryAllowed = (isRegistryAdmin || isPoolManager) && isLoggedIn;
 
     return (
         <div className="xl:hidden flex flex-row items-center gap-4 w-full justify-between">
@@ -225,6 +228,16 @@ export function NavbarMobileMenu() {
                                     >
                                         <ShieldCheck className={menuStyles.itemIcon} />
                                         <span className={menuStyles.itemText}>Admin</span>
+                                    </Link>
+                                )}
+                                {isRegistryAllowed && (
+                                    <Link
+                                        href={PAGES.REGISTRY.MANAGE_PROGRAMS}
+                                        className="w-full flex items-center gap-3 py-3 rounded-md hover:bg-accent text-left"
+                                        onClick={() => setMobileMenuOpen(false)}
+                                    >
+                                        <Settings className={menuStyles.itemIcon} />
+                                        <span className={menuStyles.itemText}>Manage Programs</span>
                                     </Link>
                                 )}
                                 <ExternalLink

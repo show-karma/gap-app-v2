@@ -8,7 +8,7 @@ import {
     MenubarMenu,
     MenubarTrigger,
 } from "@/components/ui/menubar";
-import { ChevronRight, CircleHelp, CircleUser, LogOutIcon, PhoneCall, ToggleLeft, ToggleRight, Wallet, FolderKanban, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { ChevronRight, CircleHelp, CircleUser, LogOutIcon, PhoneCall, ToggleLeft, ToggleRight, Wallet, FolderKanban, ShieldCheck, CheckCircle2, Settings } from "lucide-react";
 import { SOCIALS } from "@/utilities/socials";
 import { TwitterIcon, DiscordIcon, TelegramIcon } from "@/components/Icons";
 import { ParagraphIcon } from "@/components/Icons/Paragraph";
@@ -27,6 +27,7 @@ import { useCommunitiesStore } from "@/store/communities";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
 import { useStaff } from "@/hooks/useStaff";
 import { useOwnerStore } from "@/store";
+import { useRegistryStore } from "@/store/registry";
 
 const menuStyles = {
     itemIcon: 'text-muted-foreground w-4 h-4',
@@ -80,10 +81,12 @@ export function NavbarUserMenu() {
     const { programs: reviewerPrograms } = useReviewerPrograms();
     const { isStaff } = useStaff();
     const isOwner = useOwnerStore((state) => state.isOwner);
+    const { isPoolManager, isRegistryAdmin } = useRegistryStore();
 
     const isCommunityAdmin = communities.length !== 0;
     const hasReviewerRole = reviewerPrograms && reviewerPrograms.length > 0;
     const hasAdminAccess = isStaff || isOwner || isCommunityAdmin;
+    const isRegistryAllowed = (isRegistryAdmin || isPoolManager) && isLoggedIn;
 
     if (!ready) {
         return <NavbarUserSkeleton />;
@@ -160,6 +163,14 @@ export function NavbarUserMenu() {
                                         <Link href={PAGES.ADMIN.LIST} className="flex items-center gap-2 w-full">
                                             <ShieldCheck className={menuStyles.itemIcon} />
                                             <span className={menuStyles.itemText}>Admin</span>
+                                        </Link>
+                                    </MenubarItem>
+                                )}
+                                {isRegistryAllowed && (
+                                    <MenubarItem asChild className="w-full">
+                                        <Link href={PAGES.REGISTRY.MANAGE_PROGRAMS} className="flex items-center gap-2 w-full">
+                                            <Settings className={menuStyles.itemIcon} />
+                                            <span className={menuStyles.itemText}>Manage Programs</span>
                                         </Link>
                                     </MenubarItem>
                                 )}
