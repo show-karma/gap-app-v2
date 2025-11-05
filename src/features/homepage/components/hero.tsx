@@ -6,7 +6,7 @@ import { ArrowRightIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
-import { layoutTheme } from "@/src/helper/theme";
+import { marketingLayoutTheme } from "@/src/helper/theme";
 import { CreateProjectButton } from "./create-project-button";
 import { ThemeImage } from "@/src/components/ui/theme-image";
 
@@ -20,7 +20,7 @@ const items = chosenCommunities(true).map((community) => ({
 
 export function Hero() {
     return (
-        <section className={cn(layoutTheme.padding, "flex flex-col items-start justify-start gap-12 flex-1 w-full")}>
+        <section className={cn(marketingLayoutTheme.padding, "flex flex-col items-start justify-start gap-12 flex-1 w-full")}>
             <div className="flex flex-row items-center justify-between gap-10 w-full max-md:flex-wrap max-md:gap-0">
                 <div className="flex flex-col items-start justify-center gap-4 max-w-full lg:max-w-lg 2xl:max-w-2xl">
                     <h1 className="text-foreground text-[40px] lg:text-5xl font-semibold leading-none tracking-[-0.02em]">
