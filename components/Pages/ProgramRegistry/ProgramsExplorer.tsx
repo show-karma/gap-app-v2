@@ -8,11 +8,8 @@ import {
 } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
 import Pagination from "@/components/Utilities/Pagination";
-import { useRegistryStore } from "@/store/registry";
-import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { checkIsPoolManager } from "@/utilities/registry/checkIsPoolManager";
 import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
 import { CheckIcon } from "@heroicons/react/24/solid";
 import { useQuery } from "@tanstack/react-query";
@@ -20,7 +17,6 @@ import debounce from "lodash.debounce";
 import { useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import React, { Dispatch, useEffect, useState } from "react";
-import { useAccount } from "wagmi";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { LoadingProgramTable } from "./Loading/Programs";
@@ -133,33 +129,7 @@ export const ProgramsExplorer = () => {
 
   const pageSize = 10;
 
-  const { address, isConnected } = useAccount();
 
-  const { chain } = useAccount();
-  const { setIsRegistryAdmin, setIsPoolManager } = useRegistryStore();
-  useEffect(() => {
-    if (!address || !isConnected) {
-      setIsRegistryAdmin(false);
-      return;
-    }
-    const getMemberOf = async () => {
-      try {
-        const call = await isMemberOfProfile(address);
-        setIsRegistryAdmin(call);
-        if (!call) {
-          const isManager = await checkIsPoolManager(address);
-          setIsPoolManager(isManager);
-        }
-      } catch (error: any) {
-        errorManager(
-          `Error while checking if ${address} is a registry admin or pool manager`,
-          error
-        );
-        console.log(error);
-      }
-    };
-    getMemberOf();
-  }, [address, isConnected, chain]);
 
   const { data, isLoading } = useQuery({
     queryKey: [
