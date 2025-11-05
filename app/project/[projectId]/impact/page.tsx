@@ -9,6 +9,7 @@ import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-ind
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Hex } from "viem";
+import { PROJECT_NAME } from "@/constants/brand";
 
 type Params = Promise<{
   projectId: string;
@@ -31,7 +32,7 @@ export async function generateMetadata({
   }
 
   return {
-    title: `Impact of ${projectInfo.details?.data?.title} | Karma GAP`,
+    title: `Impact of ${projectInfo.details?.data?.title} | ${PROJECT_NAME}`,
     description:
       cleanMarkdownForPlainText(
         projectInfo.details?.data?.description || "",
@@ -44,13 +45,13 @@ export async function generateMetadata({
       images: [
         {
           url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
-          alt: `Impact of ${projectInfo.details?.data?.title} | Karma GAP`,
+          alt: `Impact of ${projectInfo.details?.data?.title} | ${PROJECT_NAME}`,
         },
       ],
     },
     openGraph: {
       url: defaultMetadata.openGraph.url,
-      title: `Impact of ${projectInfo.details?.data?.title} | Karma GAP`,
+      title: `Impact of ${projectInfo.details?.data?.title} | ${PROJECT_NAME}`,
       description: cleanMarkdownForPlainText(
         projectInfo.details?.data?.description || "",
         80
@@ -58,7 +59,7 @@ export async function generateMetadata({
       images: [
         {
           url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
-          alt: `Impact of ${projectInfo.details?.data?.title} | Karma GAP`,
+          alt: `Impact of ${projectInfo.details?.data?.title} | ${PROJECT_NAME}`,
         },
       ],
     },

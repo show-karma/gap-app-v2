@@ -7,6 +7,7 @@ import { FileUpload } from "@/components/UI/FileUpload";
 import toast from "react-hot-toast";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
 import { cn } from "@/utilities/tailwind";
+import { PROJECT_NAME } from "@/constants/brand";
 
 export interface CsvPayoutData {
   projectSlug: string;
@@ -100,8 +101,8 @@ export function PayoutsCsvUpload({
 
             // Find columns with flexible naming
             const projectColIndex = findColumn(headers, [
-              "KarmaGAP Profile",
-              "KarmaGAP",
+              `${PROJECT_NAME.replace(/\s+/g, "")} Profile`,
+              PROJECT_NAME.replace(/\s+/g, ""),
               "Profile",
               "Project",
               "Project URL",

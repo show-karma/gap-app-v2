@@ -21,6 +21,7 @@ import pluralize from "pluralize";
 import { ShareIcon } from "@heroicons/react/24/outline";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
+import { PROJECT_NAME } from "@/constants/brand";
 
 const sanitizeMarkdown = (text: string) => {
   return (
@@ -287,7 +288,7 @@ function SuggestionsBlock({
             src="/logo/logo-dark.png"
             width={32}
             height={32}
-            alt="Karma GAP Logo"
+            alt={`${PROJECT_NAME} Logo`}
           />
           <span className="text-lg font-semibold text-gray-900 dark:text-white">
             {selectedProgram.name}
@@ -896,7 +897,7 @@ function ChatScreen({
                   src="/logo/logo-dark.png"
                   width={40}
                   height={40}
-                  alt="Karma Gap Logo"
+                  alt={`${PROJECT_NAME} Logo`}
                   quality={75}
                 />
                 <div className="flex flex-col gap-0">

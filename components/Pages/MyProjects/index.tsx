@@ -22,6 +22,7 @@ import { useState } from "react";
 import { useAccount } from "wagmi";
 import { LoadingCard } from "./LoadingCard";
 import { layoutTheme } from "@/src/helper/theme";
+import { PROJECT_NAME } from "@/constants/brand";
 
 const ProjectDialog = dynamic(
   () =>
@@ -69,7 +70,7 @@ const OnboardingButton = () => {
       }}
       className="w-max h-max bg-transparent dark:bg-transparent hover:bg-transparent text-black border border-black"
     >
-      GAP Platform Walkthrough
+      {PROJECT_NAME} Platform Walkthrough
     </Button>
   );
 };

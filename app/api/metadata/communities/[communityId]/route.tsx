@@ -5,6 +5,7 @@ import { getGrants, getProjectById } from "@/utilities/sdk";
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
 import pluralize from "pluralize";
+import { PROJECT_NAME } from "@/constants/brand";
 // App router includes @vercel/og.
 // No need to install it.
 
@@ -92,7 +93,7 @@ export async function GET(
             </p>
             <div tw="flex flex-row items-center justify-end w-full">
               <img
-                alt="Karma GAP Logo"
+                alt={`${PROJECT_NAME} Logo`}
                 src="https://karmahq.xyz/assets/previews/karma-gap-logo-glow.png"
                 style={{
                   width: 292,
