@@ -31,6 +31,8 @@ import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar"
 import { PAGES } from "@/utilities/pages";
 import { useCommunitiesStore } from "@/store/communities";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
+import { useStaff } from "@/hooks/useStaff";
+import { useOwnerStore } from "@/store";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Logo } from "../shared/logo";
 
@@ -85,9 +87,12 @@ export function NavbarMobileMenu() {
     // Check admin and reviewer permissions
     const { communities } = useCommunitiesStore();
     const { programs: reviewerPrograms } = useReviewerPrograms();
+    const { isStaff } = useStaff();
+    const isOwner = useOwnerStore((state) => state.isOwner);
 
     const isCommunityAdmin = communities.length !== 0;
     const hasReviewerRole = reviewerPrograms && reviewerPrograms.length > 0;
+    const hasAdminAccess = isStaff || isOwner || isCommunityAdmin;
 
     return (
         <div className="xl:hidden flex flex-row items-center gap-4 w-full justify-between">
@@ -212,7 +217,7 @@ export function NavbarMobileMenu() {
                                         <span className={menuStyles.itemText}>Review</span>
                                     </Link>
                                 )}
-                                {isCommunityAdmin && (
+                                {hasAdminAccess && (
                                     <Link
                                         href={PAGES.ADMIN.LIST}
                                         className="w-full flex items-center gap-3 py-3 rounded-md hover:bg-accent text-left"
