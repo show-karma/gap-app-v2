@@ -8,6 +8,7 @@ export interface VerificationMessage {
   message: string;
   nonce: string;
   expiresAt: string;
+  deployerAddress: string; // Full unmasked address for comparison
 }
 
 export interface VerificationResult {
@@ -101,34 +102,15 @@ export const useContractVerification = () => {
         deployerInfo,
       }));
 
-      // Step 2: Check if wallet matches deployer
+      // Step 2: Generate verification message (includes full deployer address)
       setState((prev) => ({
         ...prev,
-        step: VerificationStep.CHECKING_WALLET,
+        step: VerificationStep.GENERATING_MESSAGE,
       }));
 
       if (!userAddress) {
         throw new Error("Please connect your wallet");
       }
-
-      const needsSwitch =
-        userAddress.toLowerCase() !== deployerInfo.deployerAddress.toLowerCase();
-
-      if (needsSwitch) {
-        setState((prev) => ({
-          ...prev,
-          needsWalletSwitch: true,
-          error: `Please switch to the deployer wallet: ${deployerInfo.deployerAddress}`,
-        }));
-        return null;
-      }
-
-      // Step 3: Generate verification message
-      setState((prev) => ({
-        ...prev,
-        step: VerificationStep.GENERATING_MESSAGE,
-        needsWalletSwitch: false,
-      }));
 
       const messageUrl = INDEXER.PROJECT.CONTRACTS.VERIFY_MESSAGE();
       const [messageResponse, messageError] = await fetchData(messageUrl, "POST", {
@@ -148,11 +130,35 @@ export const useContractVerification = () => {
         message: messageResponse.message,
         nonce: messageResponse.nonce,
         expiresAt: messageResponse.expiresAt,
+        deployerAddress: messageResponse.deployerAddress, // Full address for comparison
       };
 
       setState((prev) => ({
         ...prev,
         verificationMessage,
+      }));
+
+      // Step 3: Check if wallet matches deployer (using full address from message)
+      setState((prev) => ({
+        ...prev,
+        step: VerificationStep.CHECKING_WALLET,
+      }));
+
+      const needsSwitch =
+        userAddress.toLowerCase() !== verificationMessage.deployerAddress.toLowerCase();
+
+      if (needsSwitch) {
+        setState((prev) => ({
+          ...prev,
+          needsWalletSwitch: true,
+          error: `Please switch to the deployer wallet: ${verificationMessage.deployerAddress}`,
+        }));
+        return null;
+      }
+
+      setState((prev) => ({
+        ...prev,
+        needsWalletSwitch: false,
       }));
 
       // Step 4: Request signature from user
