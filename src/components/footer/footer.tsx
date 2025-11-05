@@ -18,6 +18,7 @@ const navigationLinks = [
     { label: "Blog", href: SOCIALS.PARAGRAPH },
     { label: "Guide", href: SOCIALS.DOCS },
     { label: "SDK Docs", href: karmaLinks.githubSDK },
+    { label: "Governance", href: karmaLinks.website },
 ];
 
 const socialMediaLinks = [
