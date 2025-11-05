@@ -16,7 +16,7 @@ export default function TermsAndConditions() {
         <h1 className={styles.h1}>Terms and Conditions</h1>
         <i className={styles.i}>Effective Date: Jan 1, 2025</i>
         <p className={styles.p}>
-          Welcome to {PROJECT_NAME} ("we", "our", or "us"), a product operated by
+          Welcome to {PROJECT_NAME} (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;), a product operated by
           Karma. By accessing or using{" "}
           <a className={styles.a} href={PAGES.HOME}>
             karmahq.xyz
@@ -52,7 +52,7 @@ export default function TermsAndConditions() {
         </p>
         <h2 className={styles.h2}>3. No Guarantees or Warranties</h2>
         <p className={styles.p}>
-          {PROJECT_NAME} is provided "as is" and "as available." We make no
+          {PROJECT_NAME} is provided &quot;as is&quot; and &quot;as available.&quot; We make no
           representations or warranties of any kind regarding the accuracy,
           completeness, reliability, or usefulness of any information presented
           on the Platform, including user-generated content or project data.
