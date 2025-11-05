@@ -24,7 +24,6 @@ import { NavbarUserSkeleton } from "./navbar-user-skeleton";
 import Link from "next/link";
 import { PAGES } from "@/utilities/pages";
 import { useCommunitiesStore } from "@/store/communities";
-import { useAdminCommunities } from "@/hooks/useAdminCommunities";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
 
 const menuStyles = {
@@ -73,11 +72,9 @@ export function NavbarUserMenu() {
             displayName: formatAddress(address),
         }
         : undefined;
-    const { profile } = useContributorProfile(account?.address as `0x${string}`);
 
     // Check admin and reviewer permissions
     const { communities } = useCommunitiesStore();
-    useAdminCommunities(address);
     const { programs: reviewerPrograms } = useReviewerPrograms();
 
     const isCommunityAdmin = communities.length !== 0;

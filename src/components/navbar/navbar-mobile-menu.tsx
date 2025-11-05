@@ -27,11 +27,9 @@ import { NavbarSearch } from "./navbar-search";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "next-themes";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
-import { useContributorProfile } from "@/hooks/useContributorProfile";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import { PAGES } from "@/utilities/pages";
 import { useCommunitiesStore } from "@/store/communities";
-import { useAdminCommunities } from "@/hooks/useAdminCommunities";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Logo } from "../shared/logo";
@@ -83,14 +81,9 @@ export function NavbarMobileMenu() {
             displayName: formatAddress(address),
         }
         : undefined;
-    const { profile } = useContributorProfile(account?.address as `0x${string}`);
-
-    const firstName = profile?.data?.name?.split(" ")[0] || "";
-    const displayName = firstName || profile?.data?.name || account?.displayName;
 
     // Check admin and reviewer permissions
     const { communities } = useCommunitiesStore();
-    useAdminCommunities(address);
     const { programs: reviewerPrograms } = useReviewerPrograms();
 
     const isCommunityAdmin = communities.length !== 0;

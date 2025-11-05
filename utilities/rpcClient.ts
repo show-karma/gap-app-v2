@@ -72,6 +72,37 @@ export const rpcClient = {
   baseSepolia: baseSepoliaClient,
 };
 
+export const getRPCUrlByChainId = (chainId: number): string | undefined => {
+  switch (chainId) {
+    case 1:
+      return envVars.RPC.MAINNET;
+    case 10:
+      return envVars.RPC.OPTIMISM;
+    case 42161:
+      return envVars.RPC.ARBITRUM;
+    case 8453:
+      return envVars.RPC.BASE;
+    case 42220:
+      return envVars.RPC.CELO;
+    case 137:
+      return envVars.RPC.POLYGON;
+    case 11155420:
+      return envVars.RPC.OPT_SEPOLIA;
+    case 11155111:
+      return envVars.RPC.SEPOLIA;
+    case 84532:
+      return envVars.RPC.BASE_SEPOLIA;
+    case 1329:
+      return envVars.RPC.SEI;
+    case 1135:
+      return envVars.RPC.LISK;
+    case 534352:
+      return envVars.RPC.SCROLL;
+    default:
+      return undefined;
+  }
+};
+
 export const getRPCClient = async (chainId: number): Promise<PublicClient> => {
   const chainName = getChainNameById(chainId);
   const client =
