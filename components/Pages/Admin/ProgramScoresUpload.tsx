@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import Papa from "papaparse";
-import { FileUpload } from "@/components/UI/FileUpload";
+import { FileUpload } from "@/components/Utilities/FileUpload";
 import { Button } from "@/components/ui/button";
 import { programScoresService, ProgramScoreUploadRequest, ProgramScoreUploadResult } from "@/services/programScoresService";
 import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";

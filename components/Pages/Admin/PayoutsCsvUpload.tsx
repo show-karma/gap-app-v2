@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import Papa from "papaparse";
 import { isAddress } from "viem";
-import { FileUpload } from "@/components/UI/FileUpload";
+import { FileUpload } from "@/components/Utilities/FileUpload";
 import toast from "react-hot-toast";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
 import { cn } from "@/utilities/tailwind";
@@ -376,50 +376,50 @@ export function PayoutsCsvUpload({
 
                   {(parseResults.errors.length > 0 ||
                     (unmatchedProjects && unmatchedProjects.length > 0)) && (
-                    <div className="mt-3 space-y-3">
-                      {parseResults.errors.length > 0 && (
-                        <div className="max-h-32 overflow-y-auto">
-                          <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Errors:
-                          </p>
-                          <div className="text-xs text-red-600 dark:text-red-400 space-y-1">
-                            {parseResults.errors
-                              .slice(0, 5)
-                              .map((error, index) => (
-                                <p key={index}>{error}</p>
-                              ))}
-                            {parseResults.errors.length > 5 && (
-                              <p className="text-gray-500 dark:text-gray-400">
-                                ... and {parseResults.errors.length - 5} more
-                                errors
-                              </p>
-                            )}
+                      <div className="mt-3 space-y-3">
+                        {parseResults.errors.length > 0 && (
+                          <div className="max-h-32 overflow-y-auto">
+                            <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                              Errors:
+                            </p>
+                            <div className="text-xs text-red-600 dark:text-red-400 space-y-1">
+                              {parseResults.errors
+                                .slice(0, 5)
+                                .map((error, index) => (
+                                  <p key={index}>{error}</p>
+                                ))}
+                              {parseResults.errors.length > 5 && (
+                                <p className="text-gray-500 dark:text-gray-400">
+                                  ... and {parseResults.errors.length - 5} more
+                                  errors
+                                </p>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
 
-                      {unmatchedProjects && unmatchedProjects.length > 0 && (
-                        <div className="max-h-32 overflow-y-auto">
-                          <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Unmatched project slugs:
-                          </p>
-                          <div className="text-xs text-orange-600 dark:text-orange-400 space-y-1">
-                            {unmatchedProjects
-                              .slice(0, 5)
-                              .map((slug, index) => (
-                                <p key={index}>• {slug}</p>
-                              ))}
-                            {unmatchedProjects.length > 5 && (
-                              <p className="text-gray-500 dark:text-gray-400">
-                                ... and {unmatchedProjects.length - 5} more
-                                unmatched
-                              </p>
-                            )}
+                        {unmatchedProjects && unmatchedProjects.length > 0 && (
+                          <div className="max-h-32 overflow-y-auto">
+                            <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                              Unmatched project slugs:
+                            </p>
+                            <div className="text-xs text-orange-600 dark:text-orange-400 space-y-1">
+                              {unmatchedProjects
+                                .slice(0, 5)
+                                .map((slug, index) => (
+                                  <p key={index}>• {slug}</p>
+                                ))}
+                              {unmatchedProjects.length > 5 && (
+                                <p className="text-gray-500 dark:text-gray-400">
+                                  ... and {unmatchedProjects.length - 5} more
+                                  unmatched
+                                </p>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                        )}
+                      </div>
+                    )}
                 </div>
               )}
             </div>

@@ -21,7 +21,7 @@ export default function TermsAndConditions() {
           <a className={styles.a} href={PAGES.HOME}>
             karmahq.xyz
           </a>{" "}
-          or any related services (collectively, the “Platform”), you agree to
+          or any related services (collectively, the &ldquo;Platform&rdquo;), you agree to
           be bound by these Terms of Use. If you do not agree to these terms,
           please do not use the Platform.
         </p>

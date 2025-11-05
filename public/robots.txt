@@ -3,9 +3,9 @@ User-agent: *
 Allow: /
 
 # Host
-Host: https://gap.karmahq.xyz
+Host: https://karmahq.xyz
 
 # Sitemaps
-Sitemap: https://gap.karmahq.xyz/sitemap.xml
-Sitemap: https://gap.karmahq.xyz/sitemaps/projects/sitemap.xml
-Sitemap: https://gap.karmahq.xyz/sitemaps/communities/sitemap.xml
+Sitemap: https://karmahq.xyz/sitemap.xml
+Sitemap: https://karmahq.xyz/sitemaps/projects/sitemap.xml
+Sitemap: https://karmahq.xyz/sitemaps/communities/sitemap.xml
