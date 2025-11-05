@@ -6,33 +6,50 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { getContractOwner } from "@/utilities/sdk/getContractOwner";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { Chain } from "viem";
+import { useAccount, useChainId } from "wagmi";
+import { gapSupportedNetworks } from "@/utilities/network";
+import { JsonRpcProvider } from "ethers";
+import { getRPCUrlByChainId } from "@/utilities/rpcClient";
 
 const fetchContractOwner = async (
-  signer: any,
-  chain: Chain,
   address: string
 ): Promise<boolean> => {
-  if (!signer || !chain || !address) return false;
+  if (!address) return false;
+  const chain = gapSupportedNetworks[0];
+  const rpcUrl = getRPCUrlByChainId(chain.id);
+  
+  if (!rpcUrl) {
+    throw new Error(`RPC URL not configured for chain ${chain.id}`);
+  }
 
-  const owner = await getContractOwner(signer, chain);
+  const provider = new JsonRpcProvider(rpcUrl, {
+    chainId: chain.id,
+    name: chain.name,
+  });
+
+  const owner = await getContractOwner(provider, chain);
   return owner?.toLowerCase() === address?.toLowerCase();
 };
 
-export const useContractOwner = (address?: string, chain?: Chain) => {
-  const { authenticated: isAuth } = useAuth();
+export const useContractOwner = (chainOverride?: Chain) => {
+  const { authenticated: isAuth, address } = useAuth();
   const { setIsOwner, setIsOwnerLoading } = useOwnerStore();
   const signer = useSigner();
+  const chain = chainOverride || gapSupportedNetworks[0];
 
   const queryResult = useQuery<boolean, Error>({
     queryKey: ["contract-owner", address, chain?.id],
-    queryFn: () => fetchContractOwner(signer, chain!, address!),
-    enabled: !!signer && !!address && !!chain && isAuth,
+    queryFn: () => fetchContractOwner(address!).catch(() => {
+      return false;
+    }),
+    enabled: !!address && isAuth,
     staleTime: 10 * 60 * 1000, // 10 minutes - contract owner changes rarely
     retry: (failureCount, error) => {
       // Retry up to 2 times for network errors
       return failureCount < 2;
     },
   });
+
 
   const { data, isLoading, error, refetch } = queryResult;
 
