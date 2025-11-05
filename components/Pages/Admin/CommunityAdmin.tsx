@@ -9,6 +9,8 @@ import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useGap } from "@/hooks/useGap";
 import { useStaff } from "@/hooks/useStaff";
 import { useOwnerStore } from "@/store";
+import { useCommunitiesStore } from "@/store/communities";
+import { useAdminCommunities } from "@/hooks/useAdminCommunities";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import fetchData from "@/utilities/fetchData";
@@ -20,7 +22,7 @@ import { LinkIcon } from "@heroicons/react/24/solid";
 import { Community } from "@show-karma/karma-gap-sdk";
 import { blo } from "blo";
 import Link from "next/link";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { isAddress } from "viem";
 import { useAccount } from "wagmi";
@@ -48,10 +50,15 @@ export default function CommunitiesToAdminPage() {
   const [communityAdmins, setCommunityAdmins] = useState<CommunityAdmin[]>([]);
 
   const { gap } = useGap();
+  const { address } = useAccount();
   const isOwner = useOwnerStore((state) => state.isOwner);
   const { isStaff } = useStaff();
+  const { communities: userAdminCommunities, isLoading: isLoadingUserCommunities } = useCommunitiesStore();
 
-  const hasAccess = isOwner || isStaff;
+
+  const isStaffOrOwner = isOwner || isStaff;
+  const hasAdminCommunities = userAdminCommunities.length > 0;
+  const hasAccess = isStaffOrOwner || hasAdminCommunities;
 
   const fetchCommunitiesData =
     useCallback(async (): Promise<CommunitiesData> => {
@@ -90,12 +97,28 @@ export default function CommunitiesToAdminPage() {
   const { isLoading, refetch } = useQuery({
     queryKey: ["communities", "admins"],
     queryFn: fetchCommunitiesData,
+    enabled: !!gap && hasAccess,
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
     retry: 1,
   });
+
+  // Filter communities based on user role
+  const displayedCommunities = useMemo(() => {
+    if (isStaffOrOwner) {
+      // Staff/Owner sees all communities
+      return allCommunities;
+    } else if (hasAdminCommunities) {
+      // Regular admin sees only their communities
+      const userAdminUids = new Set(userAdminCommunities.map(c => c.uid));
+      return allCommunities.filter(c => userAdminUids.has(c.uid));
+    }
+    return [];
+  }, [allCommunities, isStaffOrOwner, hasAdminCommunities, userAdminCommunities]);
+
+  const isLoadingData = isLoading || (!isStaffOrOwner && isLoadingUserCommunities);
 
   const handleRefetch = useCallback(async () => {
     try {
@@ -189,7 +212,7 @@ export default function CommunitiesToAdminPage() {
 
   return (
     <div className={layoutTheme.padding}>
-      {isLoading ? (
+      {isLoadingData ? (
         <div className="flex flex-col gap-6">
           <div className="flex justify-between items-center">
             <Skeleton className="h-8 w-48" />
@@ -203,21 +226,30 @@ export default function CommunitiesToAdminPage() {
         <div className="flex flex-col gap-6">
           <div className="flex justify-between items-center">
             <div className="text-2xl font-bold">
-              All Communities{" "}
-              {allCommunities.length ? `(${allCommunities.length})` : ""}
+              {isStaffOrOwner ? "All Communities" : "Your Communities"}{" "}
+              {displayedCommunities.length ? `(${displayedCommunities.length})` : ""}
             </div>
-            <CommunityDialog refreshCommunities={handleRefetch} />
+            {isStaffOrOwner && (
+              <CommunityDialog refreshCommunities={handleRefetch} />
+            )}
           </div>
           <div className="mt-5 w-full">
-            {allCommunities.length ? (
+            {displayedCommunities.length ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                {allCommunities.map((community) => {
+                {displayedCommunities.map((community) => {
                   const matchingCommunityAdmin = communityAdmins.find(
                     (admin) => admin.id === community.uid
                   );
                   // TypeScript workaround for the 0x string format
                   const communityId =
                     community.uid as unknown as `0x${string}`;
+
+                  // Check if user is admin of this specific community
+                  const isAdminOfThisCommunity = userAdminCommunities.some(
+                    (userCommunity) => userCommunity.uid === community.uid
+                  );
+
+                  const canManageAdmins = isStaffOrOwner || isAdminOfThisCommunity;
 
                   return (
                     <div
@@ -304,15 +336,17 @@ export default function CommunitiesToAdminPage() {
                           <p className="text-xs text-gray-500 dark:text-gray-400">
                             Admins
                           </p>
-                          <AddAdmin
-                            UUID={communityId}
-                            chainid={community.chainID}
-                            fetchAdmins={handleRefetch}
-                          />
+                          {canManageAdmins && (
+                            <AddAdmin
+                              UUID={communityId}
+                              chainid={community.chainID}
+                              fetchAdmins={handleRefetch}
+                            />
+                          )}
                         </div>
                         <div className="space-y-2">
                           {matchingCommunityAdmin &&
-                          matchingCommunityAdmin.admins.length > 0 ? (
+                            matchingCommunityAdmin.admins.length > 0 ? (
                             matchingCommunityAdmin.admins.map(
                               (admin, index) => (
                                 <div
@@ -322,12 +356,14 @@ export default function CommunitiesToAdminPage() {
                                   <span className="text-xs font-mono text-gray-700 dark:text-gray-300">
                                     {shortenHex(admin.user.id)}
                                   </span>
-                                  <RemoveAdmin
-                                    UUID={communityId}
-                                    chainid={community.chainID}
-                                    Admin={formatAdminAddress(admin.user.id)}
-                                    fetchAdmins={handleRefetch}
-                                  />
+                                  {canManageAdmins && (
+                                    <RemoveAdmin
+                                      UUID={communityId}
+                                      chainid={community.chainID}
+                                      Admin={formatAdminAddress(admin.user.id)}
+                                      fetchAdmins={handleRefetch}
+                                    />
+                                  )}
                                 </div>
                               )
                             )
@@ -342,13 +378,23 @@ export default function CommunitiesToAdminPage() {
                   );
                 })}
               </div>
-            ) : isLoading ? (
-              <Spinner />
-            ) : null}
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-gray-500 dark:text-gray-400">
+                  {isStaffOrOwner
+                    ? "No communities found"
+                    : MESSAGES.ADMIN.NO_COMMUNITIES}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       ) : (
-        <p>{MESSAGES.REVIEWS.NOT_ADMIN}</p>
+        <div className="text-center py-12">
+          <p className="text-gray-500 dark:text-gray-400">
+            {MESSAGES.REVIEWS.NOT_ADMIN}
+          </p>
+        </div>
       )}
     </div>
   );

@@ -25,6 +25,8 @@ import Link from "next/link";
 import { PAGES } from "@/utilities/pages";
 import { useCommunitiesStore } from "@/store/communities";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
+import { useStaff } from "@/hooks/useStaff";
+import { useOwnerStore } from "@/store";
 
 const menuStyles = {
     itemIcon: 'text-muted-foreground w-4 h-4',
@@ -76,9 +78,12 @@ export function NavbarUserMenu() {
     // Check admin and reviewer permissions
     const { communities } = useCommunitiesStore();
     const { programs: reviewerPrograms } = useReviewerPrograms();
+    const { isStaff } = useStaff();
+    const isOwner = useOwnerStore((state) => state.isOwner);
 
     const isCommunityAdmin = communities.length !== 0;
     const hasReviewerRole = reviewerPrograms && reviewerPrograms.length > 0;
+    const hasAdminAccess = isStaff || isOwner || isCommunityAdmin;
 
     if (!ready) {
         return <NavbarUserSkeleton />;
@@ -150,7 +155,7 @@ export function NavbarUserMenu() {
                                         </Link>
                                     </MenubarItem>
                                 )}
-                                {isCommunityAdmin && (
+                                {hasAdminAccess && (
                                     <MenubarItem asChild className="w-full">
                                         <Link href={PAGES.ADMIN.LIST} className="flex items-center gap-2 w-full">
                                             <ShieldCheck className={menuStyles.itemIcon} />
