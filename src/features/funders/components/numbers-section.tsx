@@ -20,7 +20,7 @@ const statistics: Statistic[] = [
         description: "Builders using Karma to share progress, milestones, and impact"
     },
     {
-        number: "6k",
+        number: "50k",
         title: "Onchain attestations",
         description: "Verified milestones, endorsements, and evaluations across programs"
     },

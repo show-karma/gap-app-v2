@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { PhoneCall, ChevronRight, CircleHelp, LogOutIcon, ToggleLeft, ToggleRight } from "lucide-react";
+import { PhoneCall, ChevronRight, CircleHelp, LogOutIcon, ToggleLeft, ToggleRight, FolderKanban, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { SOCIALS } from "@/utilities/socials";
 import { TwitterIcon, DiscordIcon, TelegramIcon } from "@/components/Icons";
 import { ParagraphIcon } from "@/components/Icons/Paragraph";
@@ -123,64 +123,18 @@ export function NavbarMobileMenu() {
                             <NavbarSearch />
                         </div>
 
-                        {isLoggedIn && (
-                            <div className="border-b border-border pb-4 flex flex-col gap-2">
-                                <div className="flex flex-row items-center gap-2">
-                                    <EthereumAddressToENSAvatar
-                                        address={account?.address}
-                                        className="h-8 w-8 min-h-8 min-w-8 max-h-8 max-w-8 rounded-full"
-                                    />
-                                    <span className={menuStyles.itemText}>{displayName}</span>
-                                </div>
-                                <Link
-                                    href={PAGES.MY_PROJECTS}
-                                    className="w-full"
-                                    onClick={() => setMobileMenuOpen(false)}
-                                >
-                                    <Button variant="outline" className="w-full bg-background rounded-lg shadow-sm border px-3 py-2 text-sm font-medium text-foreground hover:text-muted-foreground transition-colors border-border">
-                                        My projects
-                                    </Button>
-                                </Link>
-                                {hasReviewerRole && (
-                                    <Link
-                                        href={PAGES.MY_REVIEWS}
-                                        className="w-full"
-                                        onClick={() => setMobileMenuOpen(false)}
-                                    >
-                                        <Button variant="outline" className="w-full bg-background rounded-lg shadow-sm border px-3 py-2 text-sm font-medium text-foreground hover:text-muted-foreground transition-colors border-border">
-                                            Review
-                                        </Button>
-                                    </Link>
-                                )}
-                                {isCommunityAdmin && (
-                                    <Link
-                                        href={PAGES.ADMIN.LIST}
-                                        className="w-full"
-                                        onClick={() => setMobileMenuOpen(false)}
-                                    >
-                                        <Button variant="outline" className="w-full bg-background rounded-lg shadow-sm border px-3 py-2 text-sm font-medium text-foreground hover:text-muted-foreground transition-colors border-border">
-                                            Admin
-                                        </Button>
-                                    </Link>
-                                )}
-                            </div>
-                        )}
 
-                        {/* For Builders Section - Only when NOT logged in */}
-                        {!isLoggedIn && (
-                            <div className="border-b border-border pb-4">
-                                <MenuSection title="For Builders" variant="mobile" />
-                                <ForBuildersContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
-                            </div>
-                        )}
+                        {/* For Builders Section */}
+                        <div className="border-b border-border pb-4">
+                            <MenuSection title="For Builders" variant="mobile" />
+                            <ForBuildersContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
+                        </div>
 
-                        {/* For Funders Section - Only when NOT logged in */}
-                        {!isLoggedIn && (
-                            <div className="border-b border-border pb-4">
-                                <MenuSection title="For Funders" variant="mobile" />
-                                <ForFundersContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
-                            </div>
-                        )}
+                        {/* For Funders Section */}
+                        <div className="border-b border-border pb-4">
+                            <MenuSection title="For Funders" variant="mobile" />
+                            <ForFundersContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
+                        </div>
 
                         {/* Explore Section */}
                         <div className="border-b border-border pb-4">
@@ -246,6 +200,35 @@ export function NavbarMobileMenu() {
                                         {currentTheme === "light" ? "Dark mode" : "Light mode"}
                                     </span>
                                 </button>
+                                <hr className="h-[1px] w-full border-border" />
+                                <Link
+                                    href={PAGES.MY_PROJECTS}
+                                    className="w-full flex items-center gap-3 py-3 rounded-md hover:bg-accent text-left"
+                                    onClick={() => setMobileMenuOpen(false)}
+                                >
+                                    <FolderKanban className={menuStyles.itemIcon} />
+                                    <span className={menuStyles.itemText}>My projects</span>
+                                </Link>
+                                {hasReviewerRole && (
+                                    <Link
+                                        href={PAGES.MY_REVIEWS}
+                                        className="w-full flex items-center gap-3 py-3 rounded-md hover:bg-accent text-left"
+                                        onClick={() => setMobileMenuOpen(false)}
+                                    >
+                                        <CheckCircle2 className={menuStyles.itemIcon} />
+                                        <span className={menuStyles.itemText}>Review</span>
+                                    </Link>
+                                )}
+                                {isCommunityAdmin && (
+                                    <Link
+                                        href={PAGES.ADMIN.LIST}
+                                        className="w-full flex items-center gap-3 py-3 rounded-md hover:bg-accent text-left"
+                                        onClick={() => setMobileMenuOpen(false)}
+                                    >
+                                        <ShieldCheck className={menuStyles.itemIcon} />
+                                        <span className={menuStyles.itemText}>Admin</span>
+                                    </Link>
+                                )}
                                 <ExternalLink
                                     href={SOCIALS.DOCS}
                                     className="w-full flex items-center gap-3 py-3 rounded-md hover:bg-accent text-left"

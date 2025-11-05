@@ -1,7 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import {
     NavigationMenu,
     NavigationMenuContent,
@@ -22,11 +20,7 @@ import { SOCIALS } from "@/utilities/socials";
 import { TwitterIcon, DiscordIcon, TelegramIcon } from "@/components/Icons";
 import { ParagraphIcon } from "@/components/Icons/Paragraph";
 import { cn } from "@/utilities/tailwind";
-import { PAGES } from "@/utilities/pages";
 import { useAuth } from "@/hooks/useAuth";
-import { useCommunitiesStore } from "@/store/communities";
-import { useAdminCommunities } from "@/hooks/useAdminCommunities";
-import { useReviewerPrograms } from "@/hooks/usePermissions";
 import { NavbarAuthButtons } from "./navbar-auth-buttons";
 import { NavbarUserMenu } from "./navbar-user-menu";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -61,69 +55,39 @@ const socialMediaLinks = [
 ];
 
 export function NavbarDesktopNavigation() {
-    const { authenticated: isLoggedIn, address } = useAuth();
-    const { communities } = useCommunitiesStore();
-    useAdminCommunities(address);
-    const { programs: reviewerPrograms } = useReviewerPrograms();
-
-    const isCommunityAdmin = communities.length !== 0;
-    const hasReviewerRole = reviewerPrograms && reviewerPrograms.length > 0;
+    const { authenticated: isLoggedIn } = useAuth();
 
     return (
         <div className="hidden xl:flex items-center flex-1 lg:justify-between gap-8">
             <div className="flex flex-row items-center gap-2 flex-shrink-0">
                 <Logo />
-                {isLoggedIn ? (
-                    <div className="flex flex-row items-center gap-2">
-                        <Link href={PAGES.MY_PROJECTS}>
-                            <Button variant="outline" className="bg-background rounded-lg shadow-sm border px-3 py-1 text-sm font-medium text-foreground hover:text-muted-foreground transition-colors border-border">
-                                My projects
-                            </Button>
-                        </Link>
-                        {hasReviewerRole && (
-                            <Link href={PAGES.MY_REVIEWS}>
-                                <Button variant="outline" className="bg-background rounded-lg shadow-sm border px-3 py-1 text-sm font-medium text-foreground hover:text-muted-foreground transition-colors border-border">
-                                    Review
-                                </Button>
-                            </Link>
-                        )}
-                        {isCommunityAdmin && (
-                            <Link href={PAGES.ADMIN.LIST}>
-                                <Button variant="outline" className="bg-background rounded-lg shadow-sm border px-3 py-1 text-sm font-medium text-foreground hover:text-muted-foreground transition-colors border-border">
-                                    Admin
-                                </Button>
-                            </Link>
-                        )}
-                    </div>
-                ) : (
-                    <NavigationMenu>
-                        <NavigationMenuList>
-                            {/* For Builders Dropdown */}
-                            <NavigationMenuItem>
-                                <NavigationMenuTrigger className={cn(menuStyles.button, "h-auto py-2")}>
-                                    For Builders
-                                </NavigationMenuTrigger>
-                                <NavigationMenuContent>
-                                    <div className="min-w-[500px] p-4">
-                                        <ForBuildersContent variant="desktop" />
-                                    </div>
-                                </NavigationMenuContent>
-                            </NavigationMenuItem>
+                <NavigationMenu>
+                    <NavigationMenuList>
+                        {/* For Builders Dropdown */}
+                        <NavigationMenuItem>
+                            <NavigationMenuTrigger className={cn(menuStyles.button, "h-auto py-2")}>
+                                For Builders
+                            </NavigationMenuTrigger>
+                            <NavigationMenuContent>
+                                <div className="min-w-[500px] p-4">
+                                    <ForBuildersContent variant="desktop" />
+                                </div>
+                            </NavigationMenuContent>
+                        </NavigationMenuItem>
 
-                            {/* For Funders Dropdown */}
-                            <NavigationMenuItem>
-                                <NavigationMenuTrigger className={cn(menuStyles.button, "h-auto py-2")}>
-                                    For Funders
-                                </NavigationMenuTrigger>
-                                <NavigationMenuContent>
-                                    <div className="min-w-[500px] p-4">
-                                        <ForFundersContent variant="desktop" />
-                                    </div>
-                                </NavigationMenuContent>
-                            </NavigationMenuItem>
-                        </NavigationMenuList>
-                    </NavigationMenu>
-                )}
+                        {/* For Funders Dropdown */}
+                        <NavigationMenuItem>
+                            <NavigationMenuTrigger className={cn(menuStyles.button, "h-auto py-2")}>
+                                For Funders
+                            </NavigationMenuTrigger>
+                            <NavigationMenuContent>
+                                <div className="min-w-[500px] p-4">
+                                    <ForFundersContent variant="desktop" />
+                                </div>
+                            </NavigationMenuContent>
+                        </NavigationMenuItem>
+                    </NavigationMenuList>
+                </NavigationMenu>
             </div>
 
             <div className="flex flex-row items-center gap-4 flex-1 min-w-0">

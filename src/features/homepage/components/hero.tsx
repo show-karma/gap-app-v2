@@ -21,7 +21,7 @@ const items = chosenCommunities(true).map((community) => ({
 export function Hero() {
     return (
         <section className={cn(layoutTheme.padding, "flex flex-col items-start justify-start gap-12 flex-1 w-full")}>
-            <div className="flex flex-row items-center justify-between gap-10 w-full">
+            <div className="flex flex-row items-center justify-between gap-10 w-full max-md:flex-wrap max-md:gap-0">
                 <div className="flex flex-col items-start justify-center gap-4 max-w-full lg:max-w-lg 2xl:max-w-2xl">
                     <h1 className="text-foreground text-[40px] lg:text-5xl font-semibold leading-none tracking-[-0.02em]">
                         Where builders get funded and ecosystems grow
@@ -74,7 +74,7 @@ export function Hero() {
             </div>
 
             {/* Infinite sliding pills section */}
-            <div className="w-full mt-6 -mx-8">
+            <div className="w-full max-md:-my-4">
                 <InfiniteMovingCards
                     items={items}
                     variant="pill"

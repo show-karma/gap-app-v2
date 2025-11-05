@@ -79,7 +79,7 @@ export function NavbarSearch() {
                 <MagnifyingGlassIcon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                 <input
                     type="text"
-                    placeholder="Search"
+                    placeholder="Search Project/Community"
                     className="w-full flex-1 text-sm bg-transparent text-foreground placeholder:text-muted-foreground border-none outline-none focus:ring-0 p-0 min-w-0"
                     value={searchValue}
                     onChange={(e) => handleInputChange(e.target.value)}

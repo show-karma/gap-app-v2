@@ -8,7 +8,7 @@ import {
     MenubarMenu,
     MenubarTrigger,
 } from "@/components/ui/menubar";
-import { ChevronRight, CircleHelp, CircleUser, LogOutIcon, PhoneCall, ToggleLeft, ToggleRight, Wallet } from "lucide-react";
+import { ChevronRight, CircleHelp, CircleUser, LogOutIcon, PhoneCall, ToggleLeft, ToggleRight, Wallet, FolderKanban, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { SOCIALS } from "@/utilities/socials";
 import { TwitterIcon, DiscordIcon, TelegramIcon } from "@/components/Icons";
 import { ParagraphIcon } from "@/components/Icons/Paragraph";
@@ -19,9 +19,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "next-themes";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { useContributorProfile } from "@/hooks/useContributorProfile";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { NavbarUserSkeleton } from "./navbar-user-skeleton";
+import Link from "next/link";
+import { PAGES } from "@/utilities/pages";
+import { useCommunitiesStore } from "@/store/communities";
+import { useAdminCommunities } from "@/hooks/useAdminCommunities";
+import { useReviewerPrograms } from "@/hooks/usePermissions";
 
 const menuStyles = {
     itemIcon: 'text-muted-foreground w-4 h-4',
@@ -70,6 +74,14 @@ export function NavbarUserMenu() {
         }
         : undefined;
     const { profile } = useContributorProfile(account?.address as `0x${string}`);
+
+    // Check admin and reviewer permissions
+    const { communities } = useCommunitiesStore();
+    useAdminCommunities(address);
+    const { programs: reviewerPrograms } = useReviewerPrograms();
+
+    const isCommunityAdmin = communities.length !== 0;
+    const hasReviewerRole = reviewerPrograms && reviewerPrograms.length > 0;
 
     if (!ready) {
         return <NavbarUserSkeleton />;
@@ -124,6 +136,31 @@ export function NavbarUserMenu() {
                                         </span>
                                     </span>
                                 </MenubarItem>
+                            </div>
+                            <hr className="h-[1px] w-full border-border" />
+                            <div className="flex flex-col items-start justify-start gap-2">
+                                <MenubarItem asChild className="w-full">
+                                    <Link href={PAGES.MY_PROJECTS} className="flex items-center gap-2 w-full">
+                                        <FolderKanban className={menuStyles.itemIcon} />
+                                        <span className={menuStyles.itemText}>My projects</span>
+                                    </Link>
+                                </MenubarItem>
+                                {hasReviewerRole && (
+                                    <MenubarItem asChild className="w-full">
+                                        <Link href={PAGES.MY_REVIEWS} className="flex items-center gap-2 w-full">
+                                            <CheckCircle2 className={menuStyles.itemIcon} />
+                                            <span className={menuStyles.itemText}>Review</span>
+                                        </Link>
+                                    </MenubarItem>
+                                )}
+                                {isCommunityAdmin && (
+                                    <MenubarItem asChild className="w-full">
+                                        <Link href={PAGES.ADMIN.LIST} className="flex items-center gap-2 w-full">
+                                            <ShieldCheck className={menuStyles.itemIcon} />
+                                            <span className={menuStyles.itemText}>Admin</span>
+                                        </Link>
+                                    </MenubarItem>
+                                )}
                             </div>
                             <hr className="h-[1px] w-full border-border" />
                             <div className="flex flex-col items-start justify-start gap-2 px-2">
