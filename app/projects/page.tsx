@@ -6,7 +6,7 @@ import { PROJECT_NAME } from "@/constants/brand";
 export const metadata = customMetadata({
   title: `Explore projects utilizing ${PROJECT_NAME}`,
   description:
-    "Thousands of projects utilize GAP to track their grants, share project progress and build reputation. Explore projects making a difference.",
+    `Thousands of projects utilize ${PROJECT_NAME} to track their grants, share project progress and build reputation. Explore projects making a difference.`,
 });
 
 export default function Projects() {
