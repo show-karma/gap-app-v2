@@ -41,7 +41,7 @@ const WelcomeStep = () => {
             Welcome to {PROJECT_NAME}!
           </h1>
           <p className="text-base font-normal text-black dark:text-zinc-400">
-            {`We're thrilled to have you join our community of builders. This is a 30 second walkthrough to help you utilize GAP effectively.`}
+            {`We're thrilled to have you join our community of builders. This is a 30 second walkthrough to help you utilize ${PROJECT_NAME} effectively.`}
           </p>
         </div>
 

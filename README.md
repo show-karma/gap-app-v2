@@ -1,1 +1,1 @@
-## Getting Started with GAP frontend
+## Getting Started with Karma frontend
