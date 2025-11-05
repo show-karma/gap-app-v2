@@ -1,12 +1,11 @@
-import { CommunityPageNavigator } from "@/components/Pages/Communities/CommunityPageNavigator";
-import { communityColors } from "@/utilities/communityColors";
 import { envVars } from "@/utilities/enviromentVars";
 import { defaultMetadata } from "@/utilities/meta";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
 import { getCommunityDetailsV2 } from "@/utilities/queries/getCommunityDataV2";
 import { Metadata } from "next";
-import { CommunityImpactStatCards } from "@/components/Pages/Communities/Impact/StatCards";
 import CommunityHeader from "@/components/Community/Header";
+import { layoutTheme } from "@/src/helper/theme";
+import { cn } from "@/utilities/tailwind";
 import { CommunityNotFound } from "@/components/Pages/Communities/CommunityNotFound";
 
 type Params = Promise<{
@@ -29,7 +28,7 @@ export async function generateMetadata({
 
   if (!community) {
     dynamicMetadata.title = `Launch ${communityName} community!`,
-    dynamicMetadata.description = `Looks like no one’s started this community. Create it now to launch programs, fund projects, and track progress, all in one place.`;
+      dynamicMetadata.description = `Looks like no one’s started this community. Create it now to launch programs, fund projects, and track progress, all in one place.`;
   }
 
   return {
@@ -80,7 +79,9 @@ export default async function Layout(props: {
   return (
     <div className="flex w-full h-full max-w-full flex-col justify-start max-lg:flex-col">
       <CommunityHeader community={community} />
-      {children}
+      <div className={cn(layoutTheme.padding, "w-full max-w-full")}>
+        {children}
+      </div>
     </div>
   );
 }

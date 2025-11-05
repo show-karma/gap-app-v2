@@ -25,6 +25,8 @@ import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { LoadingProgramTable } from "./Loading/Programs";
 import { ProgramHeader } from "./ProgramHeader";
+import { cn } from "@/utilities/tailwind";
+import { layoutTheme } from "@/src/helper/theme";
 
 const statuses = ["Active", "Inactive"];
 
@@ -238,7 +240,7 @@ export const ProgramsExplorer = () => {
           }}
         />
       ) : null}
-      <section className="my-8 flex w-full max-w-full flex-col justify-between items-center gap-6 px-6 pb-7 max-2xl:px-4 max-md:px-4 max-md:pt-0 max-md:my-4">
+      <section className={cn(layoutTheme.padding, "flex w-full max-w-full flex-col justify-between items-center gap-6 pb-7 max-md:pt-0")}>
         <ProgramHeader />
 
         <div className="flex flex-row items-center justify-end max-sm:justify-start gap-2.5  flex-wrap w-full">

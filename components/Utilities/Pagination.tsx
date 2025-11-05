@@ -26,9 +26,9 @@ export default function Pagination({
 
   function handlePageChange(page: number | string) {
     if (page === currentPage) {
-      return `z-10 bg-primary-600 border-brand-blue text-white relative inline-flex items-center px-4 py-2 max-sm:px-3 max-sm:py-1 border text-sm font-medium`;
+      return `z-10 bg-background border-brand-blue text-primary relative inline-flex items-center px-4 py-2 max-sm:px-3 max-sm:py-1 border text-sm font-medium`;
     } else {
-      return "bg-white dark:bg-zinc-900 border-gray-300 dark:border-zinc-800 text-gray-500 dark:text-zinc-400 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 max-sm:px-3 max-sm:py-1 border text-sm font-medium duration-200 ease-in-out";
+      return "bg-background border-gray-300 dark:border-zinc-800 text-primary hover:bg-gray-50 relative inline-flex items-center px-4 py-2 max-sm:px-3 max-sm:py-1 border text-sm font-medium duration-200 ease-in-out";
     }
   }
 
@@ -69,8 +69,8 @@ export default function Pagination({
                 }}
                 disabled={currentPage === 1}
                 className={`relative inline-flex items-center p-2 rounded-l-md border border-gray-300 dark:border-zinc-800 hover:bg-gray-50 text-sm font-medium duration-200 ease-in-out ${currentPage === 1
-                    ? "bg-white dark:bg-zinc-900 text-gray-300 dark:text-zinc-400"
-                    : "bg-white dark:bg-zinc-900 text-gray-500 dark:text-zinc-400"
+                  ? "bg-white dark:bg-zinc-900 text-gray-300 dark:text-zinc-400"
+                  : "bg-white dark:bg-zinc-900 text-gray-500 dark:text-zinc-400"
                   }`}
               >
                 <span className="sr-only">Previous</span>
@@ -106,8 +106,8 @@ export default function Pagination({
                 }}
                 disabled={currentPage === lastPage || lastPage === undefined}
                 className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-zinc-800 text-sm font-medium hover:bg-gray-50 duration-200 ease-in-out ${currentPage === lastPage || lastPage === undefined
-                    ? "bg-white dark:bg-zinc-900 text-gray-300 dark:text-zinc-400"
-                    : "bg-white dark:bg-zinc-900 text-gray-500 dark:text-zinc-400"
+                  ? "bg-white dark:bg-zinc-900 text-gray-300 dark:text-zinc-400"
+                  : "bg-white dark:bg-zinc-900 text-gray-500 dark:text-zinc-400"
                   }`}
               >
                 <span className="sr-only">Next</span>

@@ -26,6 +26,7 @@ import { useAccount } from "wagmi";
 import { z } from "zod";
 
 import { errorManager } from "@/components/Utilities/errorManager";
+import { layoutTheme } from "@/src/helper/theme";
 
 interface CommunityAdmin {
   id: string;
@@ -129,7 +130,7 @@ export default function CommunitiesToAdminPage() {
   }
 
   return (
-    <div className="px-4 sm:px-6 lg:px-12 py-5">
+    <div className={layoutTheme.padding}>
       {isLoading ? (
         <Spinner />
       ) : hasAccess ? (

@@ -9,6 +9,7 @@ import React from "react";
 import { blo } from "blo";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { layoutTheme } from "@/src/helper/theme";
 
 interface CommunityStatsData {
   projects: number;
@@ -90,19 +91,19 @@ export default function CommunityStats() {
           membersAdded: stats?.MemberOf || 0,
           totalAttestations:
             (stats?.projects || 0) +
-              (stats?.grants || 0) +
-              (stats?.GrantUpdates || 0) +
-              (stats?.GrantCompleted || 0) +
-              (stats?.ProjectImpacts || 0) +
-              (stats?.MemberOf || 0) +
-              (stats?.ProjectEndorsements || 0) +
-              (stats?.Milestones || 0) +
-              (stats?.MilestoneCompleted || 0) +
-              (stats?.MilestoneVerified || 0) +
-              (stats?.ProjectImpactVerifieds || 0) +
-              (stats?.GrantUpdateStatuses || 0) +
-              (stats?.GrantEdits || 0) +
-              (stats?.ProjectEdits || 0) || 0,
+            (stats?.grants || 0) +
+            (stats?.GrantUpdates || 0) +
+            (stats?.GrantCompleted || 0) +
+            (stats?.ProjectImpacts || 0) +
+            (stats?.MemberOf || 0) +
+            (stats?.ProjectEndorsements || 0) +
+            (stats?.Milestones || 0) +
+            (stats?.MilestoneCompleted || 0) +
+            (stats?.MilestoneVerified || 0) +
+            (stats?.ProjectImpactVerifieds || 0) +
+            (stats?.GrantUpdateStatuses || 0) +
+            (stats?.GrantEdits || 0) +
+            (stats?.ProjectEdits || 0) || 0,
         };
       });
       setCommunityStats(statsMap);
@@ -120,7 +121,7 @@ export default function CommunityStats() {
   }, []);
 
   return (
-    <div className="px-4 sm:px-6 lg:px-12 py-5">
+    <div className={layoutTheme.padding}>
       {isOwner ? (
         <div className="flex flex-col gap-2">
           <div className="flex justify-between">

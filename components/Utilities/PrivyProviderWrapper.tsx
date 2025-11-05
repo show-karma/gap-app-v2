@@ -38,8 +38,8 @@ export default function PrivyProviderWrapper({
       config={{
         appearance: {
           theme: "light",
-          accentColor: "#4C6FFF", // Red accent color as requested
-          logo: "https://gap.karmahq.xyz/logo/karma-gap-logo.png",
+          accentColor: "#1de9b6",
+          logo: "https://karmahq.xyz/logo/karma-logo-light.svg",
           landingHeader: "Connect to Karma GAP",
           showWalletLoginFirst: false,
           walletList: ['detected_wallets', 'metamask', 'wallet_connect_qr', 'rainbow', 'rabby_wallet', 'wallet_connect']
