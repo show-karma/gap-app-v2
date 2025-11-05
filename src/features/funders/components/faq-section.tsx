@@ -1,6 +1,6 @@
 import { cn } from "@/utilities/tailwind";
 import { layoutTheme } from "@/src/helper/theme";
-import { FAQAccordion } from "./faq-accordion";
+import { FAQAccordion } from "@/src/components/shared/faq-accordion";
 
 
 const faqItems = [
