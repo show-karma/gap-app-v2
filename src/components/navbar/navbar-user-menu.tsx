@@ -87,7 +87,6 @@ export function NavbarUserMenu() {
     const hasReviewerRole = reviewerPrograms && reviewerPrograms.length > 0;
     const hasAdminAccess = isStaff || isOwner || isCommunityAdmin;
     const isRegistryAllowed = (isRegistryAdmin || isPoolManager) && isLoggedIn;
-    console.log(isRegistryAdmin, isPoolManager)
 
     if (!ready) {
         return <NavbarUserSkeleton />;
