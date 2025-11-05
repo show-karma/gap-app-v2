@@ -4,6 +4,7 @@ import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
 import pluralize from "pluralize";
+import { PROJECT_NAME } from "@/constants/brand";
 
 export async function GET(
   request: NextRequest,
@@ -70,7 +71,7 @@ export async function GET(
         >
           <div tw="flex flex-col items-start justify-center mt-8 w-[520px]">
             <img
-              alt="Karma GAP Logo"
+              alt={`${PROJECT_NAME} Logo`}
               src="https://karmahq.xyz/assets/previews/karma-gap-logo-glow.png"
               style={{
                 width: 292,

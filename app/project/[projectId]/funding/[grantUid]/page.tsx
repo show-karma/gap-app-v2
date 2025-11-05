@@ -10,6 +10,7 @@ import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { PROJECT_NAME } from "@/constants/brand";
 
 type Params = Promise<{
   projectId: string;
@@ -51,7 +52,7 @@ export async function generateMetadata({
         }
       > = {
         overview: {
-          title: `${grantInfo?.details?.data?.title} Grant Overview | ${projectInfo?.details?.data?.title} | Karma GAP`,
+          title: `${grantInfo?.details?.data?.title} Grant Overview | ${projectInfo?.details?.data?.title} | ${PROJECT_NAME}`,
           description:
             `${cleanMarkdownForPlainText(
               grantInfo?.details?.data?.description || "",
@@ -69,7 +70,7 @@ export async function generateMetadata({
   } else {
     metadata = {
       ...metadata,
-      title: `${projectInfo?.details?.data?.title} | Karma GAP`,
+      title: `${projectInfo?.details?.data?.title} | ${PROJECT_NAME}`,
       description: cleanMarkdownForPlainText(
         projectInfo?.details?.data?.description || "",
         80

@@ -7,6 +7,7 @@ import CommunityHeader from "@/components/Community/Header";
 import { layoutTheme } from "@/src/helper/theme";
 import { cn } from "@/utilities/tailwind";
 import { CommunityNotFound } from "@/components/Pages/Communities/CommunityNotFound";
+import { PROJECT_NAME } from "@/constants/brand";
 
 type Params = Promise<{
   communityId: string;
@@ -22,7 +23,7 @@ export async function generateMetadata({
   const communityName = community?.details?.name || communityId;
 
   const dynamicMetadata = {
-    title: `Karma GAP - ${communityName} community grants`,
+    title: `${PROJECT_NAME} - ${communityName} community grants`,
     description: `View the list of grants issued by ${communityName} and the grantee updates.`,
   };
 

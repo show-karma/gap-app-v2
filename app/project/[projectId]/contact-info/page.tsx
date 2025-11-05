@@ -10,6 +10,7 @@ import ContactInfoPage from "@/components/Pages/Project/ContactInfoPage";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { envVars } from "@/utilities/enviromentVars";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
+import { PROJECT_NAME } from "@/constants/brand";
 
 type Params = Promise<{
   projectId: string;
@@ -35,7 +36,7 @@ export async function generateMetadata({
   }
 
   return {
-    title: `${projectInfo.details?.data.title} | Karma GAP`,
+    title: `${projectInfo.details?.data.title} | ${PROJECT_NAME}`,
     description:
       cleanMarkdownForPlainText(
         projectInfo.details?.data.description || "",
@@ -48,13 +49,13 @@ export async function generateMetadata({
       images: [
         {
           url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
-          alt: `${projectInfo.details?.data.title} | Karma GAP`,
+          alt: `${projectInfo.details?.data.title} | ${PROJECT_NAME}`,
         },
       ],
     },
     openGraph: {
       url: defaultMetadata.openGraph.url,
-      title: `${projectInfo.details?.data.title} | Karma GAP`,
+      title: `${projectInfo.details?.data.title} | ${PROJECT_NAME}`,
       description:
         cleanMarkdownForPlainText(
           projectInfo.details?.data.description || "",
@@ -64,7 +65,7 @@ export async function generateMetadata({
       images: [
         {
           url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
-          alt: `${projectInfo.details?.data.title} | Karma GAP`,
+          alt: `${projectInfo.details?.data.title} | ${PROJECT_NAME}`,
         },
       ],
     },

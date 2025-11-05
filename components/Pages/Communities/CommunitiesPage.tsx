@@ -13,6 +13,7 @@ import { useCommunityStats } from "@/hooks/useCommunityStats";
 import { useOwnerStore } from "@/store";
 import { useStaff } from "@/hooks/useStaff";
 import Image from "next/image";
+import { PROJECT_NAME } from "@/constants/brand";
 
 // Responsive breakpoint function
 const getResponsiveColumns = (width: number) => {
@@ -275,7 +276,7 @@ export const CommunitiesPage = () => {
             Add Your Community
           </h2>
           <p className="text-lg text-black dark:text-gray-300 mb-6 leading-relaxed">
-            Join the ecosystem of Web3 organizations using Karma GAP to manage grants with
+            Join the ecosystem of Web3 organizations using {PROJECT_NAME} to manage grants with
             complete transparency and accountability. Build trust, track impact, and grow your
             community.
           </p>

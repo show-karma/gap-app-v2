@@ -1,13 +1,15 @@
+import { PROJECT_NAME } from "@/constants/brand";
+
 export const ogMeta = {
   url: "https://karmahq.xyz/",
-  siteName: "Karma GAP - Grantee Accountability Protocol",
+  siteName: `${PROJECT_NAME} - Grantee Accountability Protocol`,
   type: "website",
   images: ["https://karmahq.xyz/assets/previews/homepage.png"],
 };
 
 export const twitterMeta = {
   card: "summary_large_image",
-  title: "Karma GAP - Grantee Accountability Protocol",
+  title: `${PROJECT_NAME} - Grantee Accountability Protocol`,
   description:
     "GAP is a protocol to help community get visibility into grantee progress and grantees to build reputation.",
   creator: "@karmahq_",
@@ -17,7 +19,7 @@ export const twitterMeta = {
 };
 
 export const defaultMetadata = {
-  title: "Karma GAP - Grantee Accountability Protocol",
+  title: `${PROJECT_NAME} - Grantee Accountability Protocol`,
   description:
     "GAP is a protocol to help community get visibility into grantee progress and grantees to build reputation.",
   icons: ["/favicon.ico"],
@@ -30,7 +32,7 @@ export const defaultMetadata = {
 };
 
 export const customMetadata = ({
-  title = "Karma GAP - Grantee Accountability Protocol",
+  title = `${PROJECT_NAME} - Grantee Accountability Protocol`,
   description = "GAP is a protocol to help community get visibility into grantee progress and grantees to build reputation.",
 }) => {
   return {
