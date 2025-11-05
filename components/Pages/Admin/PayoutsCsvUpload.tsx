@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import Papa from "papaparse";
 import { isAddress } from "viem";
-import { FileUpload } from "@/components/UI/FileUpload";
+import { FileUpload } from "@/components/ui/FileUpload";
 import toast from "react-hot-toast";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
 import { cn } from "@/utilities/tailwind";

@@ -10,7 +10,7 @@ import { cn } from "@/utilities/tailwind";
 import StatusChangeModal from "../ApplicationView/StatusChangeModal";
 import { getProjectTitle } from "../helper/getProjecTitle";
 import { formatDate } from "@/utilities/formatDate";
-import SortableTableHeader from "@/components/UI/SortableTableHeader";
+import SortableTableHeader from "@/components/ui/SortableTableHeader";
 import { IApplicationFilters } from "@/services/fundingPlatformService";
 import { TableStatusActionButtons } from "./TableStatusActionButtons";
 import { formatAIScore } from "../helper/getAIScore";

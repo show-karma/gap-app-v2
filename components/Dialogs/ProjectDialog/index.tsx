@@ -7,7 +7,7 @@ import {
   TwitterIcon,
   WebsiteIcon,
 } from "@/components/Icons";
-import { FileUpload } from "@/components/UI/FileUpload";
+import { FileUpload } from "@/components/ui/FileUpload";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useGap } from "@/hooks/useGap";
 import { useProjectStore } from "@/store";
