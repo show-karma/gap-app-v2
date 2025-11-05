@@ -8,7 +8,14 @@ import { layoutTheme } from "@/src/helper/theme";
 import { cn } from "@/utilities/tailwind";
 
 export async function LiveFundingOpportunities() {
-    const programs = await getLiveFundingOpportunities();
+    let programs;
+    try {
+        programs = await getLiveFundingOpportunities();
+    } catch (error) {
+        // Error already logged via errorManager in getLiveFundingOpportunities
+        // Return null for graceful degradation on homepage
+        return null;
+    }
 
     if (programs.length === 0) {
         return null;

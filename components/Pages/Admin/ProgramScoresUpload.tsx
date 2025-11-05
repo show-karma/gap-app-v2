@@ -9,6 +9,7 @@ import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import toast from "react-hot-toast";
 import { cn } from "@/utilities/tailwind";
 import { ChevronDownIcon, ChevronUpIcon, CheckCircleIcon, ExclamationCircleIcon } from "@heroicons/react/24/outline";
+import { errorManager } from "@/components/Utilities/errorManager";
 
 interface ProgramScoresUploadProps {
   communityUID: string;
@@ -132,7 +133,17 @@ export function ProgramScoresUpload({ communityUID, programs, defaultChainId }: 
       setIsPreviewExpanded(false);
 
     } catch (error) {
-      console.error("Upload error:", error);
+      errorManager(
+        `Error uploading program scores: ${error}`,
+        error,
+        {
+          context: "ProgramScoresUpload",
+          communityUID,
+          programId: selectedProgram.programId,
+          chainId: selectedProgram.chainID || chainId,
+        },
+        { error: "Failed to upload program scores" }
+      );
       toast.error(error instanceof Error ? error.message : "Failed to upload program scores");
     } finally {
       setIsUploading(false);

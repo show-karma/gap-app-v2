@@ -12,8 +12,14 @@ export async function getLiveFundingOpportunities(): Promise<FundingProgram[]> {
     const programs = await fundingProgramsAPI.getEnabledProgramsServer();
     return transformLiveFundingOpportunities(programs);
   } catch (error) {
-    errorManager(`Error fetching live funding opportunities: ${error}`, error);
-    return [];
+    errorManager(
+      `Error fetching live funding opportunities: ${error}`,
+      error,
+      { context: "getLiveFundingOpportunities" },
+      { error: "Failed to load funding opportunities" }
+    );
+    // Re-throw to propagate error to UI/error boundary instead of silent failure
+    throw error;
   }
 }
 
