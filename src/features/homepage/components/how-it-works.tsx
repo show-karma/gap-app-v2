@@ -1,6 +1,6 @@
 import { CheckCircle } from "lucide-react";
 import { cn } from "@/utilities/tailwind";
-import { layoutTheme } from "@/src/helper/theme";
+import { marketingLayoutTheme } from "@/src/helper/theme";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -71,7 +71,7 @@ export function HowItWorks() {
     ];
 
     return (
-        <section className={cn(layoutTheme.padding, "py-16 w-full")}>
+        <section className={cn(marketingLayoutTheme.padding, "py-16 w-full")}>
             {/* Header */}
             <div className="flex flex-col items-start gap-4 mb-12">
                 <Badge variant="secondary">

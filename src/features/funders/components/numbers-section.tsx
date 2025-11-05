@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { layoutTheme } from "@/src/helper/theme";
+import { marketingLayoutTheme } from "@/src/helper/theme";
 import { cn } from "@/utilities/tailwind";
 
 interface Statistic {
@@ -34,7 +34,7 @@ const statistics: Statistic[] = [
 export function NumbersSection() {
     return (
         <section className={cn(
-            layoutTheme.padding,
+            marketingLayoutTheme.padding,
             ""
         )}>
             <div className={cn(

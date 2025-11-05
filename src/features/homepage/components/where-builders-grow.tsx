@@ -1,5 +1,5 @@
 import { cn } from "@/utilities/tailwind";
-import { layoutTheme } from "@/src/helper/theme";
+import { marketingLayoutTheme } from "@/src/helper/theme";
 import { CreateProjectButton } from "./create-project-button";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -7,7 +7,7 @@ import { PAGES } from "@/utilities/pages";
 
 export function WhereBuildersGrow() {
     return (
-        <section className={cn(layoutTheme.padding, "py-24")}>
+        <section className={cn(marketingLayoutTheme.padding, "py-24")}>
             <div className="flex flex-col items-center gap-6">
                 <h2 className="text-5xl font-semibold text-foreground text-center leading-none tracking-tight">
                     Where builders grow
