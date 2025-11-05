@@ -11,12 +11,34 @@ import {
     Radio,
     LifeBuoy,
     ScrollText,
-    ArrowUpRight
+    ArrowUpRight,
+    LucideIcon
 } from "lucide-react";
 import { PAGES } from "@/utilities/pages";
 import { SOCIALS } from "@/utilities/socials";
 
-export const forBuildersItems = [
+export interface MenuItem {
+    href: string;
+    icon: LucideIcon;
+    title: string;
+    description?: string;
+    external?: boolean;
+    showArrow?: boolean;
+    openModal?: boolean;
+    anchor?: string;
+}
+
+export interface ForFundersItems {
+    main: MenuItem;
+    secondary: MenuItem[];
+}
+
+export interface ExploreItems {
+    projects: MenuItem[];
+    communities: MenuItem[];
+}
+
+export const forBuildersItems: MenuItem[] = [
     {
         href: PAGES.MY_PROJECTS,
         icon: UserPlus,
@@ -33,7 +55,7 @@ export const forBuildersItems = [
     }
 ];
 
-export const forFundersItems = {
+export const forFundersItems: ForFundersItems = {
     main: {
         href: PAGES.FUNDERS,
         icon: GoalIcon,
@@ -56,7 +78,7 @@ export const forFundersItems = {
     ]
 };
 
-export const exploreItems = {
+export const exploreItems: ExploreItems = {
     projects: [
         {
             href: PAGES.PROJECTS_EXPLORER,
@@ -88,7 +110,7 @@ export const exploreItems = {
     ]
 };
 
-export const resourcesItems = [
+export const resourcesItems: MenuItem[] = [
     {
         href: SOCIALS.DOCS,
         icon: LifeBuoy,

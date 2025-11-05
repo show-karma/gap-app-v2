@@ -25,9 +25,14 @@ const WelcomeStep = () => {
       />
       <div className="flex flex-col gap-6">
         <img
-          alt="Karma GAP"
-          className="h-8 w-52"
-          src="/logo/karma-gap-logo2.png"
+          alt="Karma"
+          className="h-8 w-52 dark:hidden block"
+          src="/logo/karma-logo-light.svg"
+        />
+        <img
+          alt="Karma"
+          className="h-8 w-52 hidden dark:block"
+          src="/logo/karma-logo-dark.svg"
         />
         <div className="flex flex-col gap-0">
           <h1 className="text-3xl font-bold max-sm:text-2xl">

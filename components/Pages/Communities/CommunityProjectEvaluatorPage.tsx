@@ -144,7 +144,7 @@ function MessageSkeleton() {
       <div className="flex flex-row justify-between w-full mt-2 gap-4">
         <div className="flex flex-row justify-center items-center gap-3">
           <Image
-            src="/logo/karma-gap-logo.png"
+            src="/logo/logo-dark.png"
             width={20}
             height={20}
             alt="Karma AI Logo"
@@ -232,8 +232,7 @@ function SuggestionsBlock({
     const newSearchParams = new URLSearchParams(searchParams);
     newSearchParams.delete("programId");
     router.push(
-      `${window.location.pathname}${
-        newSearchParams.toString() ? `?${newSearchParams.toString()}` : ""
+      `${window.location.pathname}${newSearchParams.toString() ? `?${newSearchParams.toString()}` : ""
       }`
     );
 
@@ -245,7 +244,7 @@ function SuggestionsBlock({
 
     const fakeEvent = {
       target: { value: suggestion },
-      preventDefault: () => {},
+      preventDefault: () => { },
     };
     handleInputChange(fakeEvent as any);
     setTimeout(() => {
@@ -285,7 +284,7 @@ function SuggestionsBlock({
       <div className="flex items-center justify-between py-4 px-6 border-b border-gray-200 dark:border-zinc-600">
         <div className="flex items-center gap-4">
           <Image
-            src="/logo/karma-gap-logo.png"
+            src="/logo/logo-dark.png"
             width={32}
             height={32}
             alt="Karma GAP Logo"
@@ -380,9 +379,8 @@ const ChatMessage = React.memo(
   }: ChatMessageProps) => {
     return (
       <div
-        className={`flex flex-col w-full ${
-          m.role === "assistant" ? "items-start" : "items-end"
-        }`}
+        className={`flex flex-col w-full ${m.role === "assistant" ? "items-start" : "items-end"
+          }`}
       >
         <div
           className={cn(
@@ -392,11 +390,10 @@ const ChatMessage = React.memo(
         >
           <div className="w-max max-w-full flex-col flex">
             <div
-              className={` p-3  rounded-xl ${
-                m.role === "assistant"
-                  ? "bg-[#EEF4FF] text-gray-900 "
-                  : "bg-indigo-500 text-white"
-              }`}
+              className={` p-3  rounded-xl ${m.role === "assistant"
+                ? "bg-[#EEF4FF] text-gray-900 "
+                : "bg-indigo-500 text-white"
+                }`}
               style={{
                 borderBottomLeftRadius: m.role === "assistant" ? "0px" : "8px",
                 borderBottomRightRadius: m.role === "assistant" ? "8px" : "0px",
@@ -423,7 +420,7 @@ const ChatMessage = React.memo(
                   {isLastAssistantMessage && (
                     <>
                       <Image
-                        src="/logo/karma-gap-logo.png"
+                        src="/logo/logo-dark.png"
                         width={20}
                         height={20}
                         alt="Karma AI Logo"
@@ -628,11 +625,10 @@ function ChatWithKarmaCoPilot({
           isLoadingChat={isLoadingChat}
           isLoadingProjects={isLoadingProjects}
           placeholder="Ask anything about the participating projects"
-          className={`${hasMessages ? "" : "max-w-3xl"} ${
-            projects.length > 0
-              ? ""
-              : " opacity-50 cursor-not-allowed pointer-events-none"
-          }`}
+          className={`${hasMessages ? "" : "max-w-3xl"} ${projects.length > 0
+            ? ""
+            : " opacity-50 cursor-not-allowed pointer-events-none"
+            }`}
         />
       </div>
     </div>
@@ -709,21 +705,21 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
           <div className="flex items-center justify-start gap-4 mt-2 flex-wrap">
             {Array.from(new Set(project?.project_categories || [])).length >
               0 && (
-              <div className="flex flex-wrap gap-2">
-                {Array.from(new Set(project?.project_categories || [])).map(
-                  (category, i) => (
-                    <div
-                      key={i}
-                      className="flex h-max items-center justify-start rounded-full bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2"
-                    >
-                      <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
-                        {category}
-                      </p>
-                    </div>
-                  )
-                )}
-              </div>
-            )}
+                <div className="flex flex-wrap gap-2">
+                  {Array.from(new Set(project?.project_categories || [])).map(
+                    (category, i) => (
+                      <div
+                        key={i}
+                        className="flex h-max items-center justify-start rounded-full bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2"
+                      >
+                        <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
+                          {category}
+                        </p>
+                      </div>
+                    )
+                  )}
+                </div>
+              )}
 
             {project.updates.length > 0 && (
               <div className="flex h-max items-center justify-start rounded-full bg-teal-50 dark:bg-teal-700 text-teal-600 dark:text-teal-200 px-3 py-1 max-2xl:px-2">
@@ -897,7 +893,7 @@ function ChatScreen({
             <div className="flex flex-row gap-4 items-center justify-between w-full px-3 py-4 border-b border-gray-200 dark:border-zinc-600">
               <div className="flex flex-row gap-3 items-center">
                 <Image
-                  src="/logo/karma-gap-logo.png"
+                  src="/logo/logo-dark.png"
                   width={40}
                   height={40}
                   alt="Karma Gap Logo"
@@ -910,10 +906,10 @@ function ChatScreen({
                   <p className="text-gray-600 dark:text-zinc-400 text-sm font-normal">
                     {messages.length > 0 && messages[0].timestamp
                       ? `Started ${formatDate(
-                          messages[0].timestamp,
-                          "local",
-                          "DDD, MMM DD"
-                        )}`
+                        messages[0].timestamp,
+                        "local",
+                        "DDD, MMM DD"
+                      )}`
                       : "No messages yet"}
                   </p>
                 </div>
@@ -1045,7 +1041,7 @@ export const CommunityProjectEvaluatorPage = () => {
             <div className="flex flex-col items-center justify-center flex-1 h-full ">
               <div className="flex flex-col items-center justify-center gap-2">
                 <Image
-                  src="/logo/karma-gap-logo.png"
+                  src="/logo/logo-dark.png"
                   width={80}
                   height={80}
                   alt="Karma AI Logo"
@@ -1095,7 +1091,7 @@ export const CommunityProjectEvaluatorPage = () => {
                       placeholderText="Search and select a program"
                       leftIcon={
                         <Image
-                          src="/logo/karma-gap-logo-purple.svg"
+                          src="/logo/karma-logo.svg"
                           width={24}
                           height={24}
                           alt="Karma AI Logo"
