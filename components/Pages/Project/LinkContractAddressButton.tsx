@@ -15,6 +15,7 @@ import { ContractAddressDialog } from "./ContractAddressDialog";
 import { ContractAddressList } from "./ContractAddressList";
 import { ContractVerificationDialog } from "./ContractVerificationDialog";
 import type { LinkContractAddressesButtonProps } from "./types";
+import { useQueryClient } from "@tanstack/react-query";
 
 export const LinkContractAddressButton: FC<
   LinkContractAddressesButtonProps
@@ -110,10 +111,13 @@ export const LinkContractAddressButton: FC<
     [pairs]
   );
 
+  const queryClient = useQueryClient();
+
   const handleVerificationSuccess = useCallback(() => {
-    // Refresh project data to get updated verification status
-    window.location.reload();
-  }, []);
+    // Invalidate and refetch project data to show updated verification status
+    queryClient.invalidateQueries({ queryKey: ["project-instance", project.uid] });
+    queryClient.invalidateQueries({ queryKey: ["project-instance", project.details?.data?.slug] });
+  }, [queryClient, project.uid, project.details?.data?.slug]);
 
   // Define a function to handle dialog close
   const handleClose = useCallback(() => {
