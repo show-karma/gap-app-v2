@@ -16,6 +16,7 @@ import { PAGES } from "@/utilities/pages";
 import pluralize from "pluralize";
 import { useEffect, useState } from "react";
 import type { FundingProgram } from "@/services/fundingPlatformService";
+import { FolderOpen } from "lucide-react";
 
 interface LiveFundingOpportunitiesCarouselProps {
     programs: FundingProgram[];
@@ -41,6 +42,28 @@ export function LiveFundingOpportunitiesCarousel({ programs }: LiveFundingOpport
             setCurrent(api.selectedScrollSnap() + 1);
         });
     }, [api]);
+
+    // Empty state when there are no programs
+    if (programs.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center py-12 px-6 text-center border border-dashed border-border rounded-lg bg-muted/30">
+                <div className="mb-4 p-3 rounded-full bg-muted">
+                    <FolderOpen className="w-6 h-6 text-muted-foreground" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2 text-foreground">
+                    No Funding Programs Available
+                </h3>
+                <p className="text-sm text-muted-foreground mb-6 max-w-md">
+                    There are currently no live funding opportunities. Check back later or run your own funding program.
+                </p>
+                <Button variant="outline" className="border-border text-sm font-medium leading-[1.5] tracking-[0.005em] text-center align-middle text-foreground" asChild>
+                    <Link href={PAGES.FUNDERS}>
+                        Run a funding program
+                    </Link>
+                </Button>
+            </div>
+        );
+    }
 
     return (
         <>

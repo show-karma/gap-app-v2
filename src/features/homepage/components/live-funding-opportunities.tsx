@@ -8,18 +8,7 @@ import { layoutTheme } from "@/src/helper/theme";
 import { cn } from "@/utilities/tailwind";
 
 export async function LiveFundingOpportunities() {
-    let programs;
-    try {
-        programs = await getLiveFundingOpportunities();
-    } catch (error) {
-        // Error already logged via errorManager in getLiveFundingOpportunities
-        // Return null for graceful degradation on homepage
-        return null;
-    }
-
-    if (programs.length === 0) {
-        return null;
-    }
+    const programs = await getLiveFundingOpportunities();
 
     return (
         <section id="live-funding-opportunities" className={cn(layoutTheme.padding, "py-16 w-full")}>
