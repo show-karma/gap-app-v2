@@ -77,6 +77,10 @@ export const INDEXER = {
     },
     CONTRACTS: {
       CHECK_ADDRESS: () => `/v2/projects/contracts/address-availability`,
+      DEPLOYER: (network: string, contractAddress: string) =>
+        `/v2/projects/contracts/deployer?network=${encodeURIComponent(network)}&contractAddress=${encodeURIComponent(contractAddress)}`,
+      VERIFY_MESSAGE: () => `/v2/projects/contracts/verify-message`,
+      VERIFY_SIGNATURE: () => `/v2/projects/contracts/verify-signature`,
     },
     SUBSCRIBE: (projectId: Hex) => `/projects/${projectId}/subscribe`,
     GET: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}`,

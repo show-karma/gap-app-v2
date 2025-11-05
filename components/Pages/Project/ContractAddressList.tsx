@@ -13,6 +13,7 @@ interface ContractAddressListProps {
   onAddressChange: (index: number, value: string) => void;
   onRemove: (index: number) => void;
   onAdd: () => void;
+  onVerify?: (index: number) => void;
   supportedNetworks: readonly string[];
   error?: string | null;
 }
@@ -24,6 +25,7 @@ export const ContractAddressList: FC<ContractAddressListProps> = ({
   onAddressChange,
   onRemove,
   onAdd,
+  onVerify,
   supportedNetworks,
   error,
 }) => {
@@ -39,6 +41,7 @@ export const ContractAddressList: FC<ContractAddressListProps> = ({
           onNetworkChange={onNetworkChange}
           onAddressChange={onAddressChange}
           onRemove={onRemove}
+          onVerify={onVerify}
           supportedNetworks={supportedNetworks}
         />
       ))}

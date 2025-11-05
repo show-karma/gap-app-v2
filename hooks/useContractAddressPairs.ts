@@ -13,21 +13,47 @@ export const useContractAddressPairs = ({ project }: UseContractAddressPairsProp
 
   // Initialize pairs from project data
   useEffect(() => {
-    if (project?.external?.network_addresses?.length) {
-      const pairs = project.external.network_addresses.map((entry) => {
-        const [network, address] = entry.split(":");
-        return { network, address };
+    const networkAddresses = project?.external?.network_addresses || [];
+    const networkAddressesVerified = (project?.external as any)?.network_addresses_verified || [];
+
+    if (networkAddresses.length > 0 || networkAddressesVerified.length > 0) {
+      // Create a map of verified contracts for quick lookup
+      const verifiedMap = new Map<string, { verified: boolean; verifiedAt?: string; verifiedBy?: string }>();
+
+      networkAddressesVerified.forEach((verifiedEntry: any) => {
+        const key = `${verifiedEntry.network}:${verifiedEntry.address}`.toLowerCase();
+        verifiedMap.set(key, {
+          verified: verifiedEntry.verified || false,
+          verifiedAt: verifiedEntry.verifiedAt,
+          verifiedBy: verifiedEntry.verifiedBy
+        });
       });
+
+      // Process network_addresses and merge with verification data
+      const pairs = networkAddresses.map((entry: string) => {
+        const [network, address] = entry.split(":");
+        const key = `${network}:${address}`.toLowerCase();
+        const verificationInfo = verifiedMap.get(key);
+
+        return {
+          network,
+          address,
+          verified: verificationInfo?.verified || false,
+          verifiedAt: verificationInfo?.verifiedAt,
+          verifiedBy: verificationInfo?.verifiedBy
+        };
+      });
+
       setNetworkAddressPairs(pairs);
     } else {
-      setNetworkAddressPairs([{ network: "", address: "" }]);
+      setNetworkAddressPairs([{ network: "", address: "", verified: false }]);
     }
-  }, [project?.external?.network_addresses]);
+  }, [project?.external?.network_addresses, (project?.external as any)?.network_addresses_verified]);
 
   const addPair = useCallback(() => {
     setNetworkAddressPairs((prev) => [
       ...prev,
-      { network: "", address: "" },
+      { network: "", address: "", verified: false },
     ]);
   }, []);
 
@@ -36,7 +62,7 @@ export const useContractAddressPairs = ({ project }: UseContractAddressPairsProp
       const newPairs = prev.filter((_, i) => i !== index);
 
       if (newPairs.length === 0) {
-        return [{ network: "", address: "" }];
+        return [{ network: "", address: "", verified: false }];
       }
 
       return newPairs;

@@ -1,6 +1,6 @@
 "use client";
 
-import { LinkIcon } from "@heroicons/react/24/outline";
+import { LinkIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import type { FC } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
@@ -13,6 +13,7 @@ import { SUPPORTED_CONTRACT_NETWORKS } from "@/constants/contract-networks";
 import { validateNetworkAddressPair } from "@/schemas/contractAddress";
 import { ContractAddressDialog } from "./ContractAddressDialog";
 import { ContractAddressList } from "./ContractAddressList";
+import { ContractVerificationDialog } from "./ContractVerificationDialog";
 import type { LinkContractAddressesButtonProps } from "./types";
 
 export const LinkContractAddressButton: FC<
@@ -31,6 +32,12 @@ export const LinkContractAddressButton: FC<
   );
   const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
   const [isOpen, setIsOpen] = useState(false);
+  const [verificationDialogOpen, setVerificationDialogOpen] = useState(false);
+  const [contractToVerify, setContractToVerify] = useState<{
+    index: number;
+    network: string;
+    address: string;
+  } | null>(null);
 
   // Custom hooks for state and logic management
   const { pairs, addPair, removePair, updateAddress, updateNetwork } = useContractAddressPairs({ project });
@@ -88,6 +95,26 @@ export const LinkContractAddressButton: FC<
     await save(pairs);
   }, [pairs, save]);
 
+  const handleVerify = useCallback(
+    (index: number) => {
+      const pair = pairs[index];
+      if (pair && pair.network && pair.address) {
+        setContractToVerify({
+          index,
+          network: pair.network,
+          address: pair.address,
+        });
+        setVerificationDialogOpen(true);
+      }
+    },
+    [pairs]
+  );
+
+  const handleVerificationSuccess = useCallback(() => {
+    // Refresh project data to get updated verification status
+    window.location.reload();
+  }, []);
+
   // Define a function to handle dialog close
   const handleClose = useCallback(() => {
     setIsOpen(false);
@@ -126,6 +153,16 @@ export const LinkContractAddressButton: FC<
     return hasFormatErrors || hasBackendErrors || allPairsEmpty;
   }, [pairs, invalidContracts]);
 
+  // Count unverified contracts
+  const unverifiedCount = useMemo(() => {
+    return pairs.filter(
+      (pair) =>
+        pair.address.trim() &&
+        pair.network.trim() &&
+        !pair.verified
+    ).length;
+  }, [pairs]);
+
   if (!isAuthorized) {
     return null;
   }
@@ -135,11 +172,17 @@ export const LinkContractAddressButton: FC<
       {buttonElement !== null && (
         <Button
           onClick={() => setIsOpen(true)}
-          className={buttonClassName}
+          className={`${buttonClassName} relative`}
           data-link-contracts-button={dataAttr}
         >
           <LinkIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
           Link Contracts
+          {unverifiedCount > 0 && (
+            <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+              <ExclamationTriangleIcon className="h-3 w-3" />
+              {unverifiedCount} Unverified
+            </span>
+          )}
         </Button>
       )}
       <ContractAddressDialog
@@ -155,6 +198,7 @@ export const LinkContractAddressButton: FC<
           onAddressChange={handleAddressChange}
           onRemove={handleRemovePair}
           onAdd={handleAddPair}
+          onVerify={handleVerify}
           supportedNetworks={SUPPORTED_CONTRACT_NETWORKS}
           error={error}
         />
@@ -174,6 +218,19 @@ export const LinkContractAddressButton: FC<
           </Button>
         </div>
       </ContractAddressDialog>
+      {contractToVerify && (
+        <ContractVerificationDialog
+          isOpen={verificationDialogOpen}
+          onClose={() => {
+            setVerificationDialogOpen(false);
+            setContractToVerify(null);
+          }}
+          network={contractToVerify.network}
+          contractAddress={contractToVerify.address}
+          projectUid={project.uid}
+          onSuccess={handleVerificationSuccess}
+        />
+      )}
     </>
   );
 };

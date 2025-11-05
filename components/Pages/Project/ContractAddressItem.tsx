@@ -1,6 +1,6 @@
 "use client";
 
-import { TrashIcon } from "@heroicons/react/24/outline";
+import { TrashIcon, CheckBadgeIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { memo, useMemo, useState, useEffect } from "react";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
 import { Button } from "@/components/Utilities/Button";
@@ -20,6 +20,7 @@ export const ContractAddressItem = memo<ContractAddressItemProps>(
     onNetworkChange,
     onAddressChange,
     onRemove,
+    onVerify,
     supportedNetworks,
   }) => {
     // Local state for real-time format validation
@@ -98,6 +99,31 @@ export const ContractAddressItem = memo<ContractAddressItemProps>(
                   placeholder="Enter contract address (0x...)"
                 />
               </div>
+              {pair.address && pair.network && (
+                <div className="flex items-center space-x-2 ml-2">
+                  {pair.verified ? (
+                    <div className="flex items-center space-x-1 text-green-600 dark:text-green-400" title={`Verified on ${pair.verifiedAt ? new Date(pair.verifiedAt).toLocaleDateString() : 'N/A'}`}>
+                      <CheckBadgeIcon className="h-5 w-5" />
+                      <span className="text-xs font-medium">Verified</span>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center space-x-1 text-yellow-600 dark:text-yellow-400">
+                        <ExclamationTriangleIcon className="h-5 w-5" />
+                        <span className="text-xs font-medium">Unverified</span>
+                      </div>
+                      {onVerify && (
+                        <button
+                          onClick={() => onVerify(index)}
+                          className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                        >
+                          Verify
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           </div>
           {canRemove && (
