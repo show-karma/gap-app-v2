@@ -2,45 +2,98 @@ import { render, screen } from "@testing-library/react";
 import Index from "@/app/page";
 import "@testing-library/jest-dom";
 
-jest.mock("@/components/Pages/Home/Presentation", () => ({
-  Presentation: () => <div data-testid="presentation" />,
+jest.mock("@/src/features/homepage/components/hero", () => ({
+  Hero: () => <div data-testid="hero" />,
 }));
 
-jest.mock("@/components/Pages/Home/Communities", () => ({
-  Communities: () => <div data-testid="communities" />,
+jest.mock("@/src/features/homepage/components/live-funding-opportunities", () => ({
+  LiveFundingOpportunities: () => <div data-testid="live-funding-opportunities" />,
 }));
 
-jest.mock("@/components/Pages/Home/WhatIsSolving", () => ({
-  WhatIsSolving: () => <div data-testid="what-is-solving" />,
+jest.mock("@/src/features/homepage/components/live-funding-opportunities-skeleton", () => ({
+  LiveFundingOpportunitiesSkeleton: () => <div data-testid="live-funding-opportunities-skeleton" />,
 }));
 
-jest.mock("@/components/Pages/Home/NewFeatureBanner", () => ({
-  NewFeatureBanner: () => <div data-testid="new-feature-banner" />,
+jest.mock("@/src/features/homepage/components/platform-features", () => ({
+  PlatformFeatures: () => <div data-testid="platform-features" />,
+}));
+
+jest.mock("@/src/features/homepage/components/how-it-works", () => ({
+  HowItWorks: () => <div data-testid="how-it-works" />,
+}));
+
+jest.mock("@/src/features/homepage/components/where-builders-grow", () => ({
+  WhereBuildersGrow: () => <div data-testid="where-builders-grow" />,
+}));
+
+jest.mock("@/src/features/homepage/components/join-community", () => ({
+  JoinCommunity: () => <div data-testid="join-community" />,
+}));
+
+jest.mock("@/src/features/homepage/components/faq", () => ({
+  FAQ: () => <div data-testid="faq" />,
 }));
 
 describe("Homepage", () => {
   it("renders all main components correctly", () => {
     render(<Index />);
 
-    expect(screen.getByTestId("presentation")).toBeInTheDocument();
-    expect(screen.getByTestId("communities")).toBeInTheDocument();
-    expect(screen.getByTestId("what-is-solving")).toBeInTheDocument();
+    expect(screen.getByTestId("hero")).toBeInTheDocument();
+    expect(screen.getByTestId("live-funding-opportunities")).toBeInTheDocument();
+    expect(screen.getByTestId("platform-features")).toBeInTheDocument();
+    expect(screen.getByTestId("how-it-works")).toBeInTheDocument();
+    expect(screen.getByTestId("join-community")).toBeInTheDocument();
+    expect(screen.getByTestId("faq")).toBeInTheDocument();
+    expect(screen.getByTestId("where-builders-grow")).toBeInTheDocument();
   });
 
-  it("has the correct structure", () => {
+  it("has the correct structure with main element", () => {
     render(<Index />);
 
     const mainContainer = screen.getByRole("main");
-    expect(mainContainer).toHaveClass(
-      "flex w-full flex-col items-center bg-white dark:bg-black"
-    );
+    expect(mainContainer).toBeInTheDocument();
+    expect(mainContainer).toHaveClass("flex", "w-full", "flex-col", "flex-1", "items-center", "bg-background");
+  });
 
+  it("renders sections in the correct order", () => {
+    render(<Index />);
+
+    const main = screen.getByRole("main");
+    const sections = [
+      "hero",
+      "live-funding-opportunities",
+      "platform-features",
+      "how-it-works",
+      "join-community",
+      "faq",
+      "where-builders-grow",
+    ];
+
+    sections.forEach((testId) => {
+      const element = screen.getByTestId(testId);
+      expect(main).toContainElement(element);
+    });
+  });
+
+  it("contains horizontal dividers between sections", () => {
+    const { container } = render(<Index />);
+
+    // Check for hr elements (horizontal lines between sections)
+    const horizontalLines = container.querySelectorAll("hr");
+    expect(horizontalLines.length).toBeGreaterThan(0);
+
+    // Verify they have the correct styling
+    horizontalLines.forEach((hr) => {
+      expect(hr).toHaveClass("w-full", "h-[1px]", "bg-border");
+    });
+  });
+
+  it("has responsive container with max-width", () => {
+    render(<Index />);
+
+    const mainContainer = screen.getByRole("main");
     const innerContainer = mainContainer.firstChild as HTMLElement;
-    expect(innerContainer).toHaveClass(
-      "flex w-full max-w-[1920px] flex-col gap-2 px-16 py-1 pt-4 max-lg:px-8 max-md:px-4"
-    );
 
-    const componentsContainer = innerContainer?.firstChild as HTMLElement;
-    expect(componentsContainer).toHaveClass("flex flex-col gap-16 py-4");
+    expect(innerContainer).toHaveClass("flex", "w-full", "max-w-[1920px]");
   });
 });

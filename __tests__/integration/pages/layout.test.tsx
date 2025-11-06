@@ -41,6 +41,14 @@ jest.mock("@/components/Dialogs/ContributorProfileDialog", () => ({
   ContributorProfileDialog: () => <div data-testid="contributor-profile-dialog" />,
 }));
 
+jest.mock("@/components/Dialogs/OnboardingDialog", () => ({
+  OnboardingDialog: () => <div data-testid="onboarding-dialog" />,
+}));
+
+jest.mock("@/components/Utilities/PermissionsProvider", () => ({
+  PermissionsProvider: () => <div data-testid="permissions-provider" />,
+}));
+
 jest.mock("@/components/ProgressBarWrapper", () => ({
   ProgressBarWrapper: () => <div data-testid="progress-bar-wrapper" />,
 }));
@@ -64,6 +72,9 @@ describe("RootLayout", () => {
     expect(screen.getByTestId("analytics")).toBeInTheDocument();
     expect(screen.getByTestId("toaster")).toBeInTheDocument();
     expect(screen.getByTestId("stepper-dialog")).toBeInTheDocument();
+    expect(screen.getByTestId("contributor-profile-dialog")).toBeInTheDocument();
+    expect(screen.getByTestId("onboarding-dialog")).toBeInTheDocument();
+    expect(screen.getByTestId("permissions-provider")).toBeInTheDocument();
     expect(screen.getByTestId("progress-bar-wrapper")).toBeInTheDocument();
     expect(screen.getByTestId("header")).toBeInTheDocument();
     expect(screen.getByTestId("footer")).toBeInTheDocument();

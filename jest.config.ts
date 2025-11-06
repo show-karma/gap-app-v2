@@ -41,7 +41,7 @@ const config: Config = {
 
   // Transform ESM modules that need to be compiled for Jest
   transformIgnorePatterns: [
-    "/node_modules/(?!(@show-karma|wagmi|@wagmi|viem|@privy-io|rehype-sanitize|hast-util-sanitize|msw|rehype-external-links)/)",
+    "/node_modules/(?!(@show-karma|wagmi|@wagmi/core|@wagmi/connectors|viem|@privy-io|rehype-sanitize|hast-util-sanitize|msw|rehype-external-links)/)",
   ],
 
   globalSetup: "./tests/global.js",

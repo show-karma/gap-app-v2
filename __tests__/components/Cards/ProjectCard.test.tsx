@@ -471,7 +471,8 @@ describe('ProjectCard', () => {
       const { formatDate } = require('@/utilities/formatDate');
       render(<ProjectCard project={mockProject} index={0} />);
 
-      expect(formatDate).toHaveBeenCalledWith(1704067200000);
+      // The component converts string timestamp to number
+      expect(formatDate).toHaveBeenCalledWith(Number(mockProject.createdAt));
     });
 
     it('should use correct PAGES utility for href', () => {
