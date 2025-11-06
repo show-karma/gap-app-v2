@@ -844,8 +844,18 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         login?.();
         return;
       }
-      if (!address || !projectToUpdate || !dataToUpdate) return;
-      if (!gap) return;
+      if (!address) {
+        throw new Error('Address not found');
+      };
+      if (!projectToUpdate) {
+        throw new Error('Project to update not found');
+      };
+      if (!dataToUpdate) {
+        throw new Error('Data to update not found');
+      };
+      if (!gap) {
+        throw new Error("Gap client not found");
+      };
 
       const targetChainId = projectToUpdate.chainID;
 
@@ -1689,6 +1699,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     <>
       {buttonElement ? (
         <Button
+          type="button"
           onClick={openModal}
           id="new-project-button"
         >
@@ -1789,9 +1800,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                       {/* Screens end */}
 
                       <div className="mt-4 flex flex-row justify-end gap-4">
-                        <button
+                        <Button
                           type="button"
-                          className="flex items-center flex-row gap-2 dark:border-white dark:text-zinc-100 justify-center rounded-md border bg-transparent border-gray-200 px-4 py-2 text-md font-medium text-black hover:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                          variant={"outline"}
+                          className="border-border"
                           onClick={() => {
                             if (step === 0) {
                               closeModal();
@@ -1811,13 +1823,14 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                               Back
                             </>
                           )}
-                        </button>
+                        </Button>
                         {step < categories.length - 1 && (
                           <Tooltip.Provider>
                             <Tooltip.Root delayDuration={0}>
                               <Tooltip.Trigger asChild>
                                 <div className="flex w-max h-max">
                                   <Button
+                                    type="button"
                                     className="flex disabled:opacity-50 flex-row dark:bg-zinc-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                                     onClick={() => {
                                       const nextStep = () =>
