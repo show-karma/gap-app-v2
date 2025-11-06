@@ -7,6 +7,8 @@ import { useProjectStore } from "@/store";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
+import { validateNetworkAddressPair } from "@/schemas/contractAddress";
+import { getContractKey } from "@/utilities/contractKey";
 import { useContractAddressValidation } from "./useContractAddressValidation";
 
 interface UseContractAddressSaveProps {
@@ -88,10 +90,31 @@ export const useContractAddressSave = ({
             pair?.network?.trim() !== "" && pair?.address?.trim() !== "",
         );
 
-        // Validate all contracts
+        // First, validate address format with zod
+        const formatValidationErrors = new Map<string, { projectName: string; errorMessage: string }>();
+
+        validPairs.forEach((pair) => {
+          const validation = validateNetworkAddressPair(pair.network, pair.address);
+          if (!validation.isValid && validation.errors) {
+            const contractKey = getContractKey(pair.network, pair.address);
+            const errorMessage = validation.errors.address || validation.errors.network || "Invalid format";
+            formatValidationErrors.set(contractKey, {
+              projectName: "Validation Failed",
+              errorMessage,
+            });
+          }
+        });
+
+        // Stop if any addresses have invalid format
+        if (formatValidationErrors.size > 0) {
+          setInvalidContracts(formatValidationErrors);
+          return;
+        }
+
+        // Then validate against backend (check for duplicates)
         const invalidResults = await validateAll(validPairs);
 
-        // Stop if any contracts are invalid
+        // Stop if any contracts are already in use
         if (invalidResults.size > 0) {
           return;
         }

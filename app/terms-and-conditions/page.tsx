@@ -1,4 +1,5 @@
 import { PAGES } from "@/utilities/pages";
+import { PROJECT_NAME } from "@/constants/brand";
 
 const styles = {
   h1: "text-2xl font-bold text-start text-black dark:text-white",
@@ -15,19 +16,19 @@ export default function TermsAndConditions() {
         <h1 className={styles.h1}>Terms and Conditions</h1>
         <i className={styles.i}>Effective Date: Jan 1, 2025</i>
         <p className={styles.p}>
-          Welcome to Karma GAP (“we”, “our”, or “us”), a product operated by
+          Welcome to {PROJECT_NAME} (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;), a product operated by
           Karma. By accessing or using{" "}
           <a className={styles.a} href={PAGES.HOME}>
-            gap.karmahq.xyz
+            karmahq.xyz
           </a>{" "}
-          or any related services (collectively, the “Platform”), you agree to
+          or any related services (collectively, the &ldquo;Platform&rdquo;), you agree to
           be bound by these Terms of Use. If you do not agree to these terms,
           please do not use the Platform.
         </p>
 
         <h2 className={styles.h2}>1. Use of the Platform</h2>
         <p className={styles.p}>
-          Karma GAP provides infrastructure for projects, grantees, evaluators,
+          {PROJECT_NAME} provides infrastructure for projects, grantees, evaluators,
           and funding communities to share updates, track milestones, and
           document impact. You may use the Platform only for lawful purposes and
           in accordance with these Terms.
@@ -51,7 +52,7 @@ export default function TermsAndConditions() {
         </p>
         <h2 className={styles.h2}>3. No Guarantees or Warranties</h2>
         <p className={styles.p}>
-          Karma GAP is provided “as is” and “as available.” We make no
+          {PROJECT_NAME} is provided &quot;as is&quot; and &quot;as available.&quot; We make no
           representations or warranties of any kind regarding the accuracy,
           completeness, reliability, or usefulness of any information presented
           on the Platform, including user-generated content or project data.

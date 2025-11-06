@@ -7,6 +7,7 @@ import { defaultMetadata } from "@/utilities/meta";
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { PROJECT_NAME } from "@/constants/brand";
 
 type Params = Promise<{
   projectId: string;
@@ -38,7 +39,7 @@ export async function generateMetadata({
       .catch(() => notFound());
     if (grantInfo) {
       const pageMetadata = {
-        title: `Impact Criteria for ${grantInfo?.details?.data?.title} Grant | ${projectInfo?.details?.data?.title} | Karma GAP`,
+        title: `Impact Criteria for ${grantInfo?.details?.data?.title} Grant | ${projectInfo?.details?.data?.title} | ${PROJECT_NAME}`,
         description: `Impact criteria defined by ${projectInfo?.details?.data?.title} for ${grantInfo?.details?.data?.title} grant.`,
       };
 
@@ -51,7 +52,7 @@ export async function generateMetadata({
   } else {
     metadata = {
       ...metadata,
-      title: `${projectInfo?.details?.data?.title} | Karma GAP`,
+      title: `${projectInfo?.details?.data?.title} | ${PROJECT_NAME}`,
       description:
         cleanMarkdownForPlainText(
           projectInfo?.details?.data?.description || "",

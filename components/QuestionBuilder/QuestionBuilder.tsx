@@ -427,7 +427,7 @@ export function QuestionBuilder({
       }
 
       const currentEmails = currentSchema.emailNotifications || [];
-      
+
       if (currentEmails.includes(trimmedEmail)) {
         toast.error("This email is already in the list.");
         return;
@@ -468,10 +468,10 @@ export function QuestionBuilder({
 
   return (
     <div
-      className={`flex flex-col h-full bg-gray-50 dark:bg-gray-900 ${className}`}
+      className={`flex flex-col h-full${className}`}
     >
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sm:px-3 md:px-4 px-6 py-2">
+      <div className="border-b border-gray-200 dark:border-gray-700 sm:px-3 md:px-4 px-6 py-2">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between flex-wrap gap-4">
           <div className="flex flex-col gap-2 mb-4 sm:mb-0">
             {
@@ -634,128 +634,128 @@ export function QuestionBuilder({
                           ))}
                         </div>
                       </SortableContext>
-                     </DndContext>
-                   </>
-                 )}
+                    </DndContext>
+                  </>
+                )}
 
-                 {/* Post Approval Email Notification Section - Only show in post-approval mode */}
-                 {isPostApprovalMode && (
-                   <div className="mt-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-                     <div className="flex items-start justify-between mb-4">
-                       <div>
-                         <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                           Post Approval Email Notifications
-                         </h3>
-                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                           Add email addresses that should receive notifications when post-approval forms are submitted.
-                         </p>
-                       </div>
-                     </div>
+                {/* Post Approval Email Notification Section - Only show in post-approval mode */}
+                {isPostApprovalMode && (
+                  <div className="mt-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                          Post Approval Email Notifications
+                        </h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                          Add email addresses that should receive notifications when post-approval forms are submitted.
+                        </p>
+                      </div>
+                    </div>
 
-                     {/* Email List */}
-                     {currentSchema.emailNotifications && currentSchema.emailNotifications.length > 0 && (
-                       <div className="space-y-2 mb-4">
-                         {currentSchema.emailNotifications.map((email, index) => (
-                           <div
-                             key={index}
-                             className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 px-4 py-3 rounded-lg group hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                           >
-                             <div className="flex items-center gap-3">
-                               <div className="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                                 <svg
-                                   className="w-4 h-4 text-blue-600 dark:text-blue-400"
-                                   fill="none"
-                                   stroke="currentColor"
-                                   viewBox="0 0 24 24"
-                                 >
-                                   <path
-                                     strokeLinecap="round"
-                                     strokeLinejoin="round"
-                                     strokeWidth={2}
-                                     d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                                   />
-                                 </svg>
-                               </div>
-                               <span className="text-sm font-medium text-gray-900 dark:text-white">
-                                 {email}
-                               </span>
-                             </div>
-                             {!readOnly && (
-                               <button
-                                 type="button"
-                                 onClick={() => handleRemoveEmail(index)}
-                                 className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors opacity-0 group-hover:opacity-100"
-                                 aria-label={`Remove ${email}`}
-                               >
-                                 <XMarkIcon className="w-5 h-5" />
-                               </button>
-                             )}
-                           </div>
-                         ))}
-                       </div>
-                     )}
+                    {/* Email List */}
+                    {currentSchema.emailNotifications && currentSchema.emailNotifications.length > 0 && (
+                      <div className="space-y-2 mb-4">
+                        {currentSchema.emailNotifications.map((email, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 px-4 py-3 rounded-lg group hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                                <svg
+                                  className="w-4 h-4 text-blue-600 dark:text-blue-400"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                                  />
+                                </svg>
+                              </div>
+                              <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                {email}
+                              </span>
+                            </div>
+                            {!readOnly && (
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveEmail(index)}
+                                className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors opacity-0 group-hover:opacity-100"
+                                aria-label={`Remove ${email}`}
+                              >
+                                <XMarkIcon className="w-5 h-5" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
-                     {/* Empty state */}
-                     {(!currentSchema.emailNotifications || currentSchema.emailNotifications.length === 0) && (
-                       <div className="text-center py-8 mb-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
-                         <svg
-                           className="mx-auto h-12 w-12 text-gray-400"
-                           fill="none"
-                           stroke="currentColor"
-                           viewBox="0 0 24 24"
-                         >
-                           <path
-                             strokeLinecap="round"
-                             strokeLinejoin="round"
-                             strokeWidth={2}
-                             d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                           />
-                         </svg>
-                         <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                           No email addresses added yet
-                         </p>
-                       </div>
-                     )}
+                    {/* Empty state */}
+                    {(!currentSchema.emailNotifications || currentSchema.emailNotifications.length === 0) && (
+                      <div className="text-center py-8 mb-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
+                        <svg
+                          className="mx-auto h-12 w-12 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                          />
+                        </svg>
+                        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                          No email addresses added yet
+                        </p>
+                      </div>
+                    )}
 
-                     {/* Add Email Input */}
-                     {!readOnly && (
-                       <div className="space-y-2">
-                         <label
-                           htmlFor="email-input"
-                           className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                         >
-                           Add Email Address
-                         </label>
-                         <div className="flex gap-2">
-                           <input
-                             id="email-input"
-                             type="email"
-                             value={newEmail}
-                             onChange={(e) => setNewEmail(e.target.value)}
-                             onKeyDown={handleEmailKeyDown}
-                             className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400 dark:placeholder-gray-500"
-                             placeholder="Enter email address (e.g., admin@example.com)"
-                           />
-                           <Button
-                             type="button"
-                             onClick={handleAddEmail}
-                             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2"
-                           >
-                             <PlusIcon className="w-5 h-5" />
-                             Add
-                           </Button>
-                         </div>
-                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                           Press Enter or click Add to include the email address
-                         </p>
-                       </div>
-                     )}
-                   </div>
-                 )}
-               </div>
-             </div>
-           </div>
-         ) : activeTab === "settings" ? (
+                    {/* Add Email Input */}
+                    {!readOnly && (
+                      <div className="space-y-2">
+                        <label
+                          htmlFor="email-input"
+                          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        >
+                          Add Email Address
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            id="email-input"
+                            type="email"
+                            value={newEmail}
+                            onChange={(e) => setNewEmail(e.target.value)}
+                            onKeyDown={handleEmailKeyDown}
+                            className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400 dark:placeholder-gray-500"
+                            placeholder="Enter email address (e.g., admin@example.com)"
+                          />
+                          <Button
+                            type="button"
+                            onClick={handleAddEmail}
+                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2"
+                          >
+                            <PlusIcon className="w-5 h-5" />
+                            Add
+                          </Button>
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          Press Enter or click Add to include the email address
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : activeTab === "settings" ? (
           <div className="h-full p-4 sm:p-6 lg:p-8 overflow-y-auto">
             <div className="max-w-4xl mx-auto">
               <SettingsConfiguration
@@ -852,11 +852,10 @@ function SortableFieldItem({
         fieldRefs.current[field.id] = el;
       }}
       style={style}
-      className={`border rounded-lg transition-all ${
-        selectedFieldId === field.id
-          ? "border-blue-500 bg-white dark:bg-gray-800 shadow-lg"
-          : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600"
-      } ${isDragging ? "z-50" : ""}`}
+      className={`border rounded-lg transition-all ${selectedFieldId === field.id
+        ? "border-blue-500 bg-white dark:bg-gray-800 shadow-lg"
+        : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600"
+        } ${isDragging ? "z-50" : ""}`}
     >
       <div className="p-4">
         <div className="flex items-center justify-between">

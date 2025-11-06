@@ -18,6 +18,7 @@ import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { cn } from "@/utilities/tailwind";
+import { PROJECT_NAME } from "@/constants/brand";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ContributorProfile } from "@show-karma/karma-gap-sdk";
 import { useSearchParams } from "next/navigation";
@@ -294,7 +295,7 @@ export const ContributorProfileDialog: FC<
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-10" onClose={closeModal}>
+      <Dialog as="div" className="relative z-[100]" onClose={closeModal}>
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -443,7 +444,7 @@ export const ContributorProfileDialog: FC<
                     <p className="text-base text-zinc-900 dark:text-zinc-100 text-left w-full">
                       {isEditing
                         ? "Login with your wallet to edit your profile."
-                        : `The owner of the project ${project?.details?.data.title} has requested you to join their team on Karma GAP.  Login with your wallet to complete your profile and join the team.`}
+                        : `The owner of the project ${project?.details?.data.title} has requested you to join their team on ${PROJECT_NAME}.  Login with your wallet to complete your profile and join the team.`}
                     </p>
                     <Button
                       type="button"

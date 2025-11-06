@@ -31,12 +31,17 @@ export default async function Page(props: Props) {
     getCommunityProjectsV2(communityId, { page: 1, limit: 12 }),
   ]);
 
+  // Layout handles notFound, but TypeScript needs this check
+  if (!communityDetails) {
+    return null;
+  }
+
   const defaultSortBy = "milestones" as SortByOptions;
   const defaultSelectedCategories: string[] = [];
   const defaultSelectedMaturityStage = "all" as MaturityStageOptions;
 
   return (
-    <div className="flex flex-col w-full max-w-full sm:px-3 md:px-4 px-6 py-2">
+    <div className="-my-4 flex flex-col w-full max-w-full py-2">
       <CommunityGrants
         categoriesOptions={categoriesOptions}
         defaultSelectedCategories={defaultSelectedCategories}

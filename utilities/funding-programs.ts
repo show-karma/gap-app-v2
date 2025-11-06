@@ -1,3 +1,6 @@
+import type { FundingProgram } from "@/services/fundingPlatformService";
+import { errorManager } from "@/components/Utilities/errorManager";
+
 /**
  * Constants for funding program detection across the application
  */
@@ -72,3 +75,60 @@ export const getFundingProgramDisplayName = (communityName: string): string => {
   
   return communityName;
 };
+
+/**
+ * Transform and filter enabled funding programs
+ * Shared utility for both client and server-side usage
+ */
+export function transformLiveFundingOpportunities(programs: any[]): FundingProgram[] {
+  try {
+    if (!Array.isArray(programs)) {
+      throw new Error("Expected programs to be an array");
+    }
+
+    // Transform to FundingProgram[] - backend returns full program objects
+    const transformedPrograms = programs.map((program: any, index: number): FundingProgram => {
+      if (!program || typeof program !== "object") {
+        throw new Error(`Invalid program data at index ${index}: expected object, got ${typeof program}`);
+      }
+      return program as FundingProgram;
+    });
+
+    // Filter to only include programs with valid metadata/title
+    const validPrograms = transformedPrograms.filter(
+      (program) =>
+        (program.metadata?.title || program.name) && program.applicationConfig?.isEnabled
+    );
+
+    // Sort by startsAt date (most recent first)
+    const sortedPrograms = validPrograms.sort((a, b) => {
+      const aStartsAt = a.metadata?.startsAt;
+      const bStartsAt = b.metadata?.startsAt;
+      if (!aStartsAt && !bStartsAt) return 0;
+      if (!aStartsAt) return 1;
+      if (!bStartsAt) return -1;
+      
+      try {
+        return new Date(bStartsAt).getTime() - new Date(aStartsAt).getTime();
+      } catch (dateError) {
+        // Invalid date format - log but don't fail completely
+        errorManager(
+          `Invalid date format in funding program: ${dateError}`,
+          dateError,
+          { programA: a.metadata?.title || a.name, programB: b.metadata?.title || b.name }
+        );
+        return 0;
+      }
+    });
+
+    return sortedPrograms;
+  } catch (error) {
+    errorManager(
+      `Error transforming funding opportunities: ${error}`,
+      error,
+      { context: "transformLiveFundingOpportunities", programsCount: programs?.length }
+    );
+    // Re-throw to propagate error instead of returning empty array silently
+    throw error;
+  }
+}

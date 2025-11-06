@@ -3,6 +3,7 @@ import { IProjectResponse, IGrantResponse } from '@show-karma/karma-gap-sdk/core
 import { defaultMetadata } from '../meta';
 import { envVars } from '../enviromentVars';
 import { cleanMarkdownForPlainText } from '../markdown';
+import { PROJECT_NAME } from '@/constants/brand';
 
 // Base project metadata generator
 export const generateProjectMetadata = (
@@ -16,8 +17,8 @@ export const generateProjectMetadata = (
 ): Metadata => {
   const title = options.title || 
     (options.pageName ? 
-      `${project.details?.data?.title} ${options.pageName} | Karma GAP` : 
-      `${project.details?.data?.title} | Karma GAP`
+      `${project.details?.data?.title} ${options.pageName} | ${PROJECT_NAME}` : 
+      `${project.details?.data?.title} | ${PROJECT_NAME}`
     );
   
   const description = options.description || 
@@ -57,7 +58,7 @@ export const generateProjectMetadata = (
 export const generateProjectOverviewMetadata = (project: IProjectResponse, projectId: string): Metadata => {
   return generateProjectMetadata(project, {
     projectId,
-    title: `${project.details?.data?.title} | Karma GAP`,
+    title: `${project.details?.data?.title} | ${PROJECT_NAME}`,
     description: cleanMarkdownForPlainText(project.details?.data?.description || '', 80),
   });
 };
@@ -73,8 +74,8 @@ export const generateProjectTeamMetadata = (project: IProjectResponse, projectId
 export const generateProjectImpactMetadata = (project: IProjectResponse, projectId: string): Metadata => {
   return generateProjectMetadata(project, {
     projectId,
-    title: `Impact of ${project.details?.data?.title} | Karma GAP`,
-    description: `Explore the impact and outcomes of ${project.details?.data?.title} on Karma GAP.`,
+    title: `Impact of ${project.details?.data?.title} | ${PROJECT_NAME}`,
+    description: `Explore the impact and outcomes of ${project.details?.data?.title} on ${PROJECT_NAME}.`,
   });
 };
 
@@ -89,16 +90,16 @@ export const generateProjectContactMetadata = (project: IProjectResponse, projec
 export const generateProjectUpdatesMetadata = (project: IProjectResponse, projectId: string): Metadata => {
   return generateProjectMetadata(project, {
     projectId,
-    title: `${project.details?.data?.title} Updates | Karma GAP`,
-    description: `Explore the updates of ${project.details?.data?.title} on Karma GAP.`,
+    title: `${project.details?.data?.title} Updates | ${PROJECT_NAME}`,
+    description: `Explore the updates of ${project.details?.data?.title} on ${PROJECT_NAME}.`,
   });
 };
 
 export const generateProjectFundingMetadata = (project: IProjectResponse, projectId: string): Metadata => {
   return generateProjectMetadata(project, {
     projectId,
-    title: `${project.details?.data?.title} Grants | Karma GAP`,
-    description: `View funding and grants for ${project.details?.data?.title} on Karma GAP.`,
+    title: `${project.details?.data?.title} Grants | ${PROJECT_NAME}`,
+    description: `View funding and grants for ${project.details?.data?.title} on ${PROJECT_NAME}.`,
   });
 };
 
@@ -110,7 +111,7 @@ export const generateGrantOverviewMetadata = (
 ): Metadata => {
   return generateProjectMetadata(project, {
     projectId,
-    title: `${grant.details?.data?.title} Grant Overview | ${project.details?.data?.title} | Karma GAP`,
+    title: `${grant.details?.data?.title} Grant Overview | ${project.details?.data?.title} | ${PROJECT_NAME}`,
     description: cleanMarkdownForPlainText(grant.details?.data?.description || '', 160),
   });
 };
@@ -122,7 +123,7 @@ export const generateGrantMilestonesMetadata = (
 ): Metadata => {
   return generateProjectMetadata(project, {
     projectId,
-    title: `${project.details?.data?.title} - Milestones and Updates for ${grant.details?.data?.title} | Karma GAP`,
+    title: `${project.details?.data?.title} - Milestones and Updates for ${grant.details?.data?.title} | ${PROJECT_NAME}`,
     description: `View all milestones and updates by ${project.details?.data?.title} for ${grant.details?.data?.title} grant.`,
   });
 };
@@ -134,7 +135,7 @@ export const generateGrantImpactCriteriaMetadata = (
 ): Metadata => {
   return generateProjectMetadata(project, {
     projectId,
-    title: `Impact Criteria for ${grant.details?.data?.title} Grant | ${project.details?.data?.title} | Karma GAP`,
+    title: `Impact Criteria for ${grant.details?.data?.title} Grant | ${project.details?.data?.title} | ${PROJECT_NAME}`,
     description: `Impact criteria defined by ${project.details?.data?.title} for ${grant.details?.data?.title} grant.`,
   });
 };
@@ -151,7 +152,7 @@ export const createMetadataFromContext = (
 ): Metadata => {
   if (!project) {
     return {
-      title: 'Project Not Found | Karma GAP',
+      title: `Project Not Found | ${PROJECT_NAME}`,
       description: 'The requested project could not be found.',
       icons: defaultMetadata.icons,
     };
@@ -191,7 +192,7 @@ export const createGrantMetadataFromContext = (
 ): Metadata => {
   if (!project) {
     return {
-      title: 'Project Not Found | Karma GAP',
+      title: `Project Not Found | ${PROJECT_NAME}`,
       description: 'The requested project could not be found.',
       icons: defaultMetadata.icons,
     };

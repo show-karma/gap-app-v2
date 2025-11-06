@@ -7,8 +7,7 @@ import {
   TwitterIcon,
   WebsiteIcon,
 } from "@/components/Icons";
-import { Button } from "@/components/Utilities/Button";
-import { FileUpload } from "@/components/UI/FileUpload";
+import { FileUpload } from "@/components/Utilities/FileUpload";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useGap } from "@/hooks/useGap";
 import { useProjectStore } from "@/store";
@@ -79,6 +78,7 @@ import { DeckIcon } from "@/components/Icons/Deck";
 import { VideoIcon } from "@/components/Icons/Video";
 import { useWallet } from "@/hooks/useWallet";
 import { CustomLink, isCustomLink } from "@/utilities/customLink";
+import { Button } from "@/components/ui/button";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -248,13 +248,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const [logoUploadProgress, setLogoUploadProgress] = useState(0);
   const [tempLogoKey, setTempLogoKey] = useState<string | null>(null);
 
-  // Initialize logo preview when editing existing project
-  useEffect(() => {
-    if (projectToUpdate?.details?.data?.imageURL) {
-      setLogoPreviewUrl(projectToUpdate.details.data.imageURL);
-    }
-  }, [projectToUpdate]);
-
   // Modal state management - use edit store or local state based on mode
   const { isProjectEditModalOpen, setIsProjectEditModalOpen } =
     useProjectEditModalStore();
@@ -400,6 +393,16 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           recipient: "",
         };
         reset(updateData);
+        // Reset logo state to project's existing logo
+        if (projectToUpdate.details?.data?.imageURL) {
+          setLogoPreviewUrl(projectToUpdate.details.data.imageURL);
+        } else {
+          setLogoPreviewUrl(null);
+        }
+        setUploadedLogoFile(null);
+        setIsLogoUploading(false);
+        setLogoUploadProgress(0);
+        setTempLogoKey(null);
       } else {
         // Create mode - reset to empty form
         reset({
@@ -428,6 +431,12 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         setCustomLinks([]);
         setStep(0);
         setFaucetFunded(false);
+        // Clear all logo state in create mode
+        setUploadedLogoFile(null);
+        setLogoPreviewUrl(null);
+        setIsLogoUploading(false);
+        setLogoUploadProgress(0);
+        setTempLogoKey(null);
       }
     }
   }, [isOpen, projectToUpdate, previousContacts, reset]);
@@ -835,8 +844,18 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         login?.();
         return;
       }
-      if (!address || !projectToUpdate || !dataToUpdate) return;
-      if (!gap) return;
+      if (!address) {
+        throw new Error('Address not found');
+      };
+      if (!projectToUpdate) {
+        throw new Error('Project to update not found');
+      };
+      if (!dataToUpdate) {
+        throw new Error('Data to update not found');
+      };
+      if (!gap) {
+        throw new Error("Gap client not found");
+      };
 
       const targetChainId = projectToUpdate.chainID;
 
@@ -1291,7 +1310,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 id="website-input"
                 type="text"
                 className={socialMediaInputStyle}
-                placeholder="https://gap.karmahq.xyz"
+                placeholder="https://karmahq.xyz"
                 {...register("website")}
               />
             </div>
@@ -1679,218 +1698,215 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   return (
     <>
       {buttonElement ? (
-        <button
+        <Button
           type="button"
           onClick={openModal}
-          className={cn(
-            "flex justify-center min-w-max items-center gap-x-1 rounded-md bg-brand-blue border-2 border-brand-blue px-3 py-2 text-sm font-semibold text-white dark:text-zinc-100  hover:opacity-75 dark:hover:bg-primary-900",
-            buttonElement.styleClass
-          )}
           id="new-project-button"
         >
           {buttonElement.iconSide === "left" && buttonElement.icon}
           {buttonElement.text}
           {buttonElement.iconSide === "right" && buttonElement.icon}
-        </button>
+        </Button>
       ) : null}
 
-      <Transition appear show={isOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-[100]" onClose={closeModal}>
-          <Transition.Child
-            as={Fragment}
-            enter="ease-out duration-300"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
-          >
-            <div className="fixed inset-0 bg-black/25" />
-          </Transition.Child>
+      {isOpen && (
+        <Transition appear show={true} as={Fragment}>
+          <Dialog as="div" className="relative z-[100]" onClose={closeModal}>
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0"
+              enterTo="opacity-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100"
+              leaveTo="opacity-0"
+            >
+              <div className="fixed inset-0 bg-black/25" />
+            </Transition.Child>
 
-          <div className="fixed inset-0 overflow-y-auto">
-            <div className="flex min-h-full items-center justify-center p-4 text-center">
-              <Transition.Child
-                as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="opacity-0 scale-95"
-                enterTo="opacity-100 scale-100"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100 scale-100"
-                leaveTo="opacity-0 scale-95"
-              >
-                <Dialog.Panel className="w-max max-w-max transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle  transition-all">
-                  <Dialog.Title
-                    as="h3"
-                    className="text-xl font-bold leading-6 text-gray-900 dark:text-zinc-100"
-                  >
-                    {projectToUpdate ? "Edit project" : "Create a new project!"}
-                  </Dialog.Title>
-                  <button
-                    type="button"
-                    className="top-6 absolute right-6 hover:opacity-75 transition-all ease-in-out duration-200 dark:text-zinc-100"
-                    onClick={closeModal}
-                  >
-                    <XMarkIcon className="w-5 h-5" />
-                  </button>
-                  {!projectToUpdate && (
-                    <div className="mt-2  max-w-3xl">
-                      <p className="text-sm text-gray-600 dark:text-zinc-300">
-                        We&apos;ll start by outlining some basics about your
-                        project. Don&apos;t worry about grants right now, you
-                        can add that from your Project Page once it&apos;s been
-                        created.
-                      </p>
-                    </div>
-                  )}
+            <div className="fixed inset-0 overflow-y-auto">
+              <div className="flex min-h-full items-center justify-center p-4 text-center">
+                <Transition.Child
+                  as={Fragment}
+                  enter="ease-out duration-300"
+                  enterFrom="opacity-0 scale-95"
+                  enterTo="opacity-100 scale-100"
+                  leave="ease-in duration-200"
+                  leaveFrom="opacity-100 scale-100"
+                  leaveTo="opacity-0 scale-95"
+                >
+                  <Dialog.Panel className="w-max max-w-max transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle  transition-all">
+                    <Dialog.Title
+                      as="h3"
+                      className="text-xl font-bold leading-6 text-gray-900 dark:text-zinc-100"
+                    >
+                      {projectToUpdate ? "Edit project" : "Create a new project!"}
+                    </Dialog.Title>
+                    <button
+                      type="button"
+                      className="top-6 absolute right-6 hover:opacity-75 transition-all ease-in-out duration-200 dark:text-zinc-100"
+                      onClick={closeModal}
+                    >
+                      <XMarkIcon className="w-5 h-5" />
+                    </button>
+                    {!projectToUpdate && (
+                      <div className="mt-2  max-w-3xl">
+                        <p className="text-sm text-gray-600 dark:text-zinc-300">
+                          We&apos;ll start by outlining some basics about your
+                          project. Don&apos;t worry about grants right now, you
+                          can add that from your Project Page once it&apos;s been
+                          created.
+                        </p>
+                      </div>
+                    )}
 
-                  {/* Screens start */}
-                  <form onSubmit={handleSubmit(onSubmit)}>
-                    <div className="w-full px-2 py-4 sm:px-0 max-w-3xl">
-                      <div>
-                        <div className="flex space-x-1 rounded-xl p-1 gap-2">
-                          {categories.map((category, index) => (
-                            <button
-                              type="button"
-                              key={category.title}
-                              className={cn(
-                                "w-full pt-2.5 text-sm font-medium leading-5 items-start flex flex-col justify-start text-left duration-200 ease-in-out transition-all focus:outline-none focus-visible:outline-none focus-within:outline-none active:outline-none",
-                                index <= step
-                                  ? "text-blue-700 dark:text-blue-400 border-t-4 border-t-brand-blue"
-                                  : "text-zinc-600 dark:text-blue-100 border-t-4 border-t-zinc-400 hover:opacity-70"
-                              )}
-                              // onClick={() => setStep(index)}
-                              disabled={
-                                projectToUpdate &&
-                                index === categories.length - 1
-                              }
-                            >
-                              <h5>{category.title}</h5>
-                              <p className="text-zinc-600 dark:text-blue-100">
-                                {category.desc}
-                              </p>
-                            </button>
-                          ))}
-                        </div>
-                        <div
-                          className={cn(
-                            "rounded-xl bg-transparent py-4 px-1 text-black dark:text-white"
-                          )}
-                        >
-                          {categories[step].fields}
+                    {/* Screens start */}
+                    <form onSubmit={handleSubmit(onSubmit)}>
+                      <div className="w-full px-2 py-4 sm:px-0 max-w-3xl">
+                        <div>
+                          <div className="flex space-x-1 rounded-xl p-1 gap-2">
+                            {categories.map((category, index) => (
+                              <button
+                                type="button"
+                                key={category.title}
+                                className={cn(
+                                  "w-full pt-2.5 text-sm font-medium leading-5 items-start flex flex-col justify-start text-left duration-200 ease-in-out transition-all focus:outline-none focus-visible:outline-none focus-within:outline-none active:outline-none",
+                                  index <= step
+                                    ? "text-blue-700 dark:text-blue-400 border-t-4 border-t-brand-blue"
+                                    : "text-zinc-600 dark:text-blue-100 border-t-4 border-t-zinc-400 hover:opacity-70"
+                                )}
+                                // onClick={() => setStep(index)}
+                                disabled={
+                                  projectToUpdate &&
+                                  index === categories.length - 1
+                                }
+                              >
+                                <h5>{category.title}</h5>
+                                <p className="text-zinc-600 dark:text-blue-100">
+                                  {category.desc}
+                                </p>
+                              </button>
+                            ))}
+                          </div>
+                          <div
+                            className={cn(
+                              "rounded-xl bg-transparent py-4 px-1 text-black dark:text-white"
+                            )}
+                          >
+                            {categories[step].fields}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    {/* Screens end */}
+                      {/* Screens end */}
 
-                    <div className="mt-4 flex flex-row justify-end gap-4">
-                      <button
-                        type="button"
-                        className="flex items-center flex-row gap-2 dark:border-white dark:text-zinc-100 justify-center rounded-md border bg-transparent border-gray-200 px-4 py-2 text-md font-medium text-black hover:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                        onClick={() => {
-                          if (step === 0) {
-                            closeModal();
-                          } else {
-                            setStep((oldStep) =>
-                              oldStep > 0 ? oldStep - 1 : oldStep
-                            );
-                          }
-                        }}
-                        disabled={isLoading}
-                      >
-                        {step === 0 ? (
-                          "Cancel"
-                        ) : (
-                          <>
-                            <ChevronRightIcon className="w-4 h-4 transform rotate-180" />
-                            Back
-                          </>
-                        )}
-                      </button>
-                      {step < categories.length - 1 && (
-                        <Tooltip.Provider>
-                          <Tooltip.Root delayDuration={0}>
-                            <Tooltip.Trigger asChild>
-                              <div className="flex w-max h-max">
-                                <Button
-                                  type="button"
-                                  className="flex disabled:opacity-50 flex-row dark:bg-zinc-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                                  onClick={() => {
-                                    const nextStep = () =>
-                                      setStep((oldStep) =>
-                                        oldStep >= categories.length - 1
-                                          ? oldStep
-                                          : oldStep + 1
-                                      );
-                                    checkFormAndTriggerErrors(nextStep);
-                                  }}
-                                  disabled={hasErrors() || isLoading}
-                                  isLoading={isLoading}
-                                >
-                                  Next
-                                  <ChevronRightIcon className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </Tooltip.Trigger>
-                            <Tooltip.Portal>
-                              {hasErrors() || isLoading ? (
-                                <Tooltip.Content
-                                  className="TooltipContent bg-brand-darkblue rounded-lg text-white p-3 z-[1000]"
-                                  sideOffset={5}
-                                  side="bottom"
-                                >
-                                  {tooltipText()}
-                                  <Tooltip.Arrow className="TooltipArrow" />
-                                </Tooltip.Content>
-                              ) : null}
-                            </Tooltip.Portal>
-                          </Tooltip.Root>
-                        </Tooltip.Provider>
-                      )}
-
-                      {step === categories.length - 1 && (
-                        <Tooltip.Provider>
-                          <Tooltip.Root delayDuration={0}>
-                            <Tooltip.Trigger asChild>
-                              <div className="flex w-max h-max">
-                                <Button
-                                  type={"submit"}
-                                  className="flex disabled:opacity-50 flex-row dark:bg-zinc-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                                  disabled={hasErrors() || isLoading}
-                                  isLoading={isLoading}
-                                >
-                                  {projectToUpdate
-                                    ? "Update project"
-                                    : "Create project"}
-                                  {!projectToUpdate ? (
+                      <div className="mt-4 flex flex-row justify-end gap-4">
+                        <Button
+                          type="button"
+                          variant={"outline"}
+                          className="border-border"
+                          onClick={() => {
+                            if (step === 0) {
+                              closeModal();
+                            } else {
+                              setStep((oldStep) =>
+                                oldStep > 0 ? oldStep - 1 : oldStep
+                              );
+                            }
+                          }}
+                          disabled={isLoading}
+                        >
+                          {step === 0 ? (
+                            "Cancel"
+                          ) : (
+                            <>
+                              <ChevronRightIcon className="w-4 h-4 transform rotate-180" />
+                              Back
+                            </>
+                          )}
+                        </Button>
+                        {step < categories.length - 1 && (
+                          <Tooltip.Provider>
+                            <Tooltip.Root delayDuration={0}>
+                              <Tooltip.Trigger asChild>
+                                <div className="flex w-max h-max">
+                                  <Button
+                                    type="button"
+                                    className="flex disabled:opacity-50 flex-row dark:bg-zinc-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                                    onClick={() => {
+                                      const nextStep = () =>
+                                        setStep((oldStep) =>
+                                          oldStep >= categories.length - 1
+                                            ? oldStep
+                                            : oldStep + 1
+                                        );
+                                      checkFormAndTriggerErrors(nextStep);
+                                    }}
+                                    disabled={hasErrors() || isLoading}
+                                  >
+                                    Next
                                     <ChevronRightIcon className="w-4 h-4" />
-                                  ) : null}
-                                </Button>
-                              </div>
-                            </Tooltip.Trigger>
-                            <Tooltip.Portal>
-                              {hasErrors() || isLoading ? (
-                                <Tooltip.Content
-                                  className="TooltipContent bg-brand-darkblue rounded-lg text-white p-3 z-[1000]"
-                                  sideOffset={5}
-                                  side="bottom"
-                                >
-                                  {tooltipText()}
-                                  <Tooltip.Arrow className="TooltipArrow" />
-                                </Tooltip.Content>
-                              ) : null}
-                            </Tooltip.Portal>
-                          </Tooltip.Root>
-                        </Tooltip.Provider>
-                      )}
-                    </div>
-                  </form>
-                </Dialog.Panel>
-              </Transition.Child>
+                                  </Button>
+                                </div>
+                              </Tooltip.Trigger>
+                              <Tooltip.Portal>
+                                {hasErrors() || isLoading ? (
+                                  <Tooltip.Content
+                                    className="TooltipContent bg-brand-darkblue rounded-lg text-white p-3 z-[1000]"
+                                    sideOffset={5}
+                                    side="bottom"
+                                  >
+                                    {tooltipText()}
+                                    <Tooltip.Arrow className="TooltipArrow" />
+                                  </Tooltip.Content>
+                                ) : null}
+                              </Tooltip.Portal>
+                            </Tooltip.Root>
+                          </Tooltip.Provider>
+                        )}
+
+                        {step === categories.length - 1 && (
+                          <Tooltip.Provider>
+                            <Tooltip.Root delayDuration={0}>
+                              <Tooltip.Trigger asChild>
+                                <div className="flex w-max h-max">
+                                  <Button
+                                    type={"submit"}
+                                    className="flex disabled:opacity-50 flex-row dark:bg-zinc-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                                    disabled={hasErrors() || isLoading}
+                                  >
+                                    {projectToUpdate
+                                      ? "Update project"
+                                      : "Create project"}
+                                    {!projectToUpdate ? (
+                                      <ChevronRightIcon className="w-4 h-4" />
+                                    ) : null}
+                                  </Button>
+                                </div>
+                              </Tooltip.Trigger>
+                              <Tooltip.Portal>
+                                {hasErrors() || isLoading ? (
+                                  <Tooltip.Content
+                                    className="TooltipContent bg-brand-darkblue rounded-lg text-white p-3 z-[1000]"
+                                    sideOffset={5}
+                                    side="bottom"
+                                  >
+                                    {tooltipText()}
+                                    <Tooltip.Arrow className="TooltipArrow" />
+                                  </Tooltip.Content>
+                                ) : null}
+                              </Tooltip.Portal>
+                            </Tooltip.Root>
+                          </Tooltip.Provider>
+                        )}
+                      </div>
+                    </form>
+                  </Dialog.Panel>
+                </Transition.Child>
+              </div>
             </div>
-          </div>
-        </Dialog>
-      </Transition>
+          </Dialog>
+        </Transition>
+      )}
     </>
   );
 };

@@ -4,6 +4,7 @@ import { getAllMilestones } from "@/utilities/gapIndexerApi/getAllMilestones";
 import { defaultMetadata } from "@/utilities/meta";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
+import { PROJECT_NAME } from "@/constants/brand";
 import {
   dehydrate,
   HydrationBoundary,
@@ -33,8 +34,8 @@ export async function generateMetadata({
 
   metadata = {
     ...metadata,
-    title: `${projectInfo?.details?.data?.title} Updates | Karma GAP`,
-    description: `Explore the updates of ${projectInfo?.details?.data?.title} on Karma GAP.`,
+    title: `${projectInfo?.details?.data?.title} Updates | ${PROJECT_NAME}`,
+    description: `Explore the updates of ${projectInfo?.details?.data?.title} on ${PROJECT_NAME}.`,
   };
 
   return {

@@ -12,6 +12,7 @@ import Image from "next/image";
 import { FundingProgram } from "@/services/fundingPlatformService";
 import { PAGES } from "@/utilities/pages";
 import { useAuth } from "@/hooks/useAuth";
+import { layoutTheme } from "@/src/helper/theme";
 
 /**
  * My Review page
@@ -33,7 +34,7 @@ export default function MyReviewPage() {
     const communityMap = new Map<string, FundingProgram & {
       programCount: number,
       totalApplications: number,
-      milestoneReviewerPrograms: Array<{programId: string, chainID: number}>
+      milestoneReviewerPrograms: Array<{ programId: string, chainID: number }>
     }>();
 
     reviewerPrograms.forEach((program) => {
@@ -74,8 +75,8 @@ export default function MyReviewPage() {
   // Check if user is authenticated
   if (!address || !isAuth) {
     return (
-      <div className="px-4 sm:px-6 lg:px-12 py-8">
-        <div className="max-w-4xl mx-auto">
+      <div className={layoutTheme.padding}>
+        < div className="max-w-4xl mx-auto" >
           <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6 text-center">
             <h3 className="text-lg font-medium text-yellow-800 dark:text-yellow-200 mb-2">
               Authentication Required
@@ -84,8 +85,8 @@ export default function MyReviewPage() {
               Please connect your wallet to view your reviewer dashboard.
             </p>
           </div>
-        </div>
-      </div>
+        </div >
+      </div >
     );
   }
 
@@ -99,8 +100,8 @@ export default function MyReviewPage() {
 
   if (!communitiesWithPrograms || communitiesWithPrograms.length === 0) {
     return (
-      <div className="px-4 sm:px-6 lg:px-12 py-8">
-        <div className="max-w-4xl mx-auto">
+      <div className={layoutTheme.padding}>
+        < div className="max-w-4xl mx-auto" >
           <div className="text-center py-12">
             <div className="bg-gray-50 dark:bg-zinc-800 rounded-lg p-8">
               <DocumentTextIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -115,26 +116,26 @@ export default function MyReviewPage() {
               </p>
             </div>
           </div>
-        </div>
-      </div>
+        </div >
+      </div >
     );
   }
 
   return (
-    <div className="px-4 sm:px-6 lg:px-12 py-8">
-      <div className="max-w-6xl mx-auto">
+    <div className={layoutTheme.padding}>
+      < div className="max-w-full mx-auto" >
         {/* Page Header */}
-        <div className="mb-8">
+        < div className="mb-8" >
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             My Reviews
           </h1>
           <p className="mt-2 text-gray-600 dark:text-gray-400">
             Manage and review funding applications across different communities
           </p>
-        </div>
+        </div >
 
         {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        < div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8" >
           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
             <div className="flex items-center space-x-2">
               <BuildingOfficeIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
@@ -153,94 +154,96 @@ export default function MyReviewPage() {
               {reviewerPrograms?.length || 0}
             </p>
           </div>
-        </div>
+        </div >
 
         {/* Communities Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {communitiesWithPrograms.map((community) => (
-            <div
-              key={community.communityUID}
-              className="bg-white dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-zinc-700 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-1"
-            >
-              <div className="p-6">
-                {/* Community Header */}
-                <div className="flex items-center space-x-3 mb-4">
-                  {community.communityImage ? (
-                    <Image
-                      src={community.communityImage}
-                      alt={(community.communityName || community.communitySlug || community.communityUID || '')}
-                      width={48}
-                      height={48}
-                      className="rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-zinc-700 flex items-center justify-center">
-                      <BuildingOfficeIcon className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+        < div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" >
+          {
+            communitiesWithPrograms.map((community) => (
+              <div
+                key={community.communityUID}
+                className="bg-white dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-zinc-700 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-1"
+              >
+                <div className="p-6">
+                  {/* Community Header */}
+                  <div className="flex items-center space-x-3 mb-4">
+                    {community.communityImage ? (
+                      <Image
+                        src={community.communityImage}
+                        alt={(community.communityName || community.communitySlug || community.communityUID || '')}
+                        width={48}
+                        height={48}
+                        className="rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-gray-200 dark:bg-zinc-700 flex items-center justify-center">
+                        <BuildingOfficeIcon className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+                      </div>
+                    )}
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {community.communityName || community.communitySlug || community.communityUID}
+                      </h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Community
+                      </p>
                     </div>
-                  )}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {community.communityName || community.communitySlug || community.communityUID}
-                    </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Community
-                    </p>
                   </div>
-                </div>
 
-                {/* Stats */}
-                <div className="space-y-2 mb-4">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600 dark:text-gray-400">Programs</span>
-                    <span className="font-medium text-gray-900 dark:text-white">
-                      {community.programCount}
-                    </span>
+                  {/* Stats */}
+                  <div className="space-y-2 mb-4">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600 dark:text-gray-400">Programs</span>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {community.programCount}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600 dark:text-gray-400">Applications</span>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {community.totalApplications}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600 dark:text-gray-400">Applications</span>
-                    <span className="font-medium text-gray-900 dark:text-white">
-                      {community.totalApplications}
-                    </span>
-                  </div>
-                </div>
 
-                {/* Action Buttons */}
-                <div className="space-y-2">
-                  <Link
-                    href={PAGES.REVIEWER.DASHBOARD(community.communitySlug || community.communityUID || '')}
-                    className="block"
-                  >
-                    <Button
-                      variant="primary"
-                      className="w-full flex items-center justify-center group"
-                    >
-                      <span>View Programs</span>
-                      <ArrowRightIcon className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                    </Button>
-                  </Link>
-
-                  {/* Show View Milestones button if user is milestone reviewer for any program in this community */}
-                  {community.milestoneReviewerPrograms && community.milestoneReviewerPrograms.length > 0 && (
+                  {/* Action Buttons */}
+                  <div className="space-y-2">
                     <Link
-                      href={`${PAGES.ADMIN.MILESTONES(community.communitySlug || community.communityUID || '')}?programIds=${community.milestoneReviewerPrograms.map(p => `${p.programId}_${p.chainID}`).join(',')}`}
+                      href={PAGES.REVIEWER.DASHBOARD(community.communitySlug || community.communityUID || '')}
                       className="block"
                     >
                       <Button
-                        variant="secondary"
+                        variant="primary"
                         className="w-full flex items-center justify-center group"
                       >
-                        <EyeIcon className="w-4 h-4 mr-2" />
-                        <span>View Milestones</span>
+                        <span>View Programs</span>
                         <ArrowRightIcon className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                       </Button>
                     </Link>
-                  )}
+
+                    {/* Show View Milestones button if user is milestone reviewer for any program in this community */}
+                    {community.milestoneReviewerPrograms && community.milestoneReviewerPrograms.length > 0 && (
+                      <Link
+                        href={`${PAGES.ADMIN.MILESTONES(community.communitySlug || community.communityUID || '')}?programIds=${community.milestoneReviewerPrograms.map(p => `${p.programId}_${p.chainID}`).join(',')}`}
+                        className="block"
+                      >
+                        <Button
+                          variant="secondary"
+                          className="w-full flex items-center justify-center group"
+                        >
+                          <EyeIcon className="w-4 h-4 mr-2" />
+                          <span>View Milestones</span>
+                          <ArrowRightIcon className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
+            ))
+          }
+        </div >
+      </div >
+    </div >
   );
 }

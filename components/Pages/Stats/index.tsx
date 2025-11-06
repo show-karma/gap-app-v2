@@ -20,6 +20,7 @@ import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import { useQueryState } from "nuqs";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { PROJECT_NAME } from "@/constants/brand";
 
 
 type DictionaryValue = {
@@ -103,7 +104,7 @@ export const Stats = () => {
       setData(stats);
     } catch (error: any) {
       console.log(error);
-      errorManager("Error fetching GAP stats", error);
+      errorManager(`Error fetching ${PROJECT_NAME} stats`, error);
     } finally {
       setIsLoading(false);
     }

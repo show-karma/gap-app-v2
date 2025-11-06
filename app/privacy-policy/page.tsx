@@ -1,4 +1,5 @@
 import { PAGES } from "@/utilities/pages";
+import { PROJECT_NAME } from "@/constants/brand";
 
 const styles = {
   h1: "text-2xl font-bold text-start text-black dark:text-white",
@@ -21,9 +22,9 @@ export default function PrivacyPolicy() {
           <p className={styles.p}>
             Karma (“we”, “us”, or “our”) respects your privacy. This Privacy
             Policy explains how we collect, use, and protect your personal
-            information when you use Karma GAP, available at{" "}
+            information when you use {PROJECT_NAME}, available at{" "}
             <a className={styles.a} href={PAGES.HOME}>
-              gap.karmahq.xyz
+              karmahq.xyz
             </a>{" "}
             (the “Platform”). By using the Platform, you consent to the
             practices described in this policy.

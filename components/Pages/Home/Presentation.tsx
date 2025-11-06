@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { Button } from "@/components/Utilities/Button";
 import Link from "next/link";
 import { PAGES } from "@/utilities/pages";
+import { PROJECT_NAME } from "@/constants/brand";
 // import { ProjectDialog } from "@/components/Dialogs/ProjectDialog";
 
 const ReactTypedWrapper = dynamic(
@@ -74,7 +75,7 @@ export const Presentation = () => {
               />
               <Link href={PAGES.PROJECTS_EXPLORER}>
                 <Button className="max-sm:px-2 max-sm:py-2 flex rounded-md hover:opacity-75 border-black dark:border-zinc-100 border transition-all ease-in-out duration-300 items-center h-max w-max flex-row gap-3 bg-transparent dark:bg-transparent px-7 py-4 text-lg font-semibold leading-7 text-black dark:text-zinc-100 hover:bg-transparent max-2xl:px-5 max-2xl:text-base max-lg:text-sm ">
-                  Explore projects on GAP
+                  Explore projects on {PROJECT_NAME}
                 </Button>
               </Link>
             </div>

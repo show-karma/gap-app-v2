@@ -13,6 +13,7 @@ import { NextButton } from "./buttons/NextButton";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import { useGrant } from "@/hooks/useGrant";
 import { isFundingProgramCommunity, FUNDING_PROGRAM_GRANT_NAMES } from "@/utilities/funding-programs";
+import { useDuplicateGrantCheck } from "@/hooks/useDuplicateGrantCheck";
 
 export const CommunitySelectionScreen: React.FC = () => {
   const {
@@ -30,6 +31,18 @@ export const CommunitySelectionScreen: React.FC = () => {
   const grantUid = params.grantUid as string;
   const isEditing = pathname.includes("/edit");
   const { updateGrant } = useGrant();
+  const {
+    checkForDuplicateGrantInProject,
+    isCheckingGrantDuplicate,
+    isGrantDuplicateInProject,
+  } = useDuplicateGrantCheck(
+    {
+      programId: formData.programId,
+      community: formData.community,
+      title: formData.title,
+    },
+    { enabled: false } // Only run manually via refetch
+  );
   const [allCommunities, setAllCommunities] = useState<ICommunityResponse[]>(
     []
   );
@@ -59,12 +72,25 @@ export const CommunitySelectionScreen: React.FC = () => {
     fetchCommunities();
   }, [flowType]);
 
+  // Note: React Query automatically handles cache invalidation when params change
+  // No need for manual reset
+
   const setCommunityValue = (value: string, networkId: number) => {
     setCommunityNetworkId(networkId);
     updateFormData({ community: value });
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
+    // Check for duplicate grant in project before proceeding
+    if (!isEditing) {
+      const { data: duplicate } = await checkForDuplicateGrantInProject();
+
+      if (duplicate) {
+        // Duplicate grant detected in fresh project data, don't proceed
+        return;
+      }
+    }
+
     if (isEditing && flowType === "program") {
       const grantToUpdate = selectedProject?.grants?.find(
         (g) => g.uid.toLowerCase() === grantUid?.toLowerCase()
@@ -103,24 +129,54 @@ export const CommunitySelectionScreen: React.FC = () => {
   };
 
   const isProjectAlreadyInProgram = useMemo(() => {
-    if (!formData.programId || !selectedProject?.grants) return false;
+    if (!selectedProject?.grants || isEditing) return false;
 
-    if (isEditing) {
+    return selectedProject.grants.some((grant) => {
+      if (formData.programId) {
+        // For program grants: match by programId (base part before underscore)
+        const existingProgramId = grant.details?.data?.programId;
+        if (!existingProgramId) return false;
+
+        const selectedProgramId = formData.programId.split("_")[0];
+        const existingProgramIdBase = existingProgramId.split("_")[0];
+
+        return existingProgramIdBase === selectedProgramId;
+      } else if (formData.title) {
+        // For regular grants: match by community AND title
+        const existingCommunity = grant.data?.communityUID;
+        const existingTitle = grant.details?.data?.title;
+
+        return (
+          existingCommunity === formData.community &&
+          existingTitle?.toLowerCase().trim() ===
+            formData.title?.toLowerCase().trim()
+        );
+      }
+
       return false;
-    }
-
-    const selectedProgramId = formData.programId.split("_")[0];
-    return selectedProject.grants.some(grant => {
-      const existingProgramId = grant.details?.data?.programId?.split("_")[0];
-      return existingProgramId === selectedProgramId;
     });
-  }, [formData.programId, selectedProject?.grants, isEditing]);
+  }, [
+    formData.programId,
+    formData.community,
+    formData.title,
+    selectedProject?.grants,
+    isEditing,
+  ]);
 
   const canProceed = useMemo(() => {
-    return !!formData.community &&
+    return (
+      !!formData.community &&
       (!!formData.programId || !!formData.title) &&
-      !isProjectAlreadyInProgram;
-  }, [formData.community, formData.programId, formData.title, isProjectAlreadyInProgram]);
+      !isProjectAlreadyInProgram &&
+      !isGrantDuplicateInProject
+    );
+  }, [
+    formData.community,
+    formData.programId,
+    formData.title,
+    isProjectAlreadyInProgram,
+    isGrantDuplicateInProject,
+  ]);
 
   return (
     <StepBlock currentStep={2}>
@@ -191,7 +247,7 @@ export const CommunitySelectionScreen: React.FC = () => {
             />
           )}
 
-          {isProjectAlreadyInProgram && (
+          {(isProjectAlreadyInProgram || isGrantDuplicateInProject) && (
             <div className="w-full max-w-full mt-4 p-3 bg-red-50 border border-red-200 rounded-md dark:bg-red-900/20 dark:border-red-800">
               <p className="text-red-600 dark:text-red-400 text-sm">
                 This grant is already associated with your project.
@@ -217,6 +273,7 @@ export const CommunitySelectionScreen: React.FC = () => {
               text={flowType === "program" && isEditing ? "Update" : "Next"}
               onClick={handleNext}
               disabled={!canProceed}
+              isLoading={isCheckingGrantDuplicate}
             />
           </div>
         </div>

@@ -1,3 +1,4 @@
+'use client'
 /* eslint-disable @next/next/no-img-element */
 import { FC, Fragment, useEffect, useMemo } from "react";
 import { Dialog, Transition } from "@headlessui/react";
@@ -11,6 +12,7 @@ import {
 import { useMixpanel } from "@/hooks/useMixpanel";
 import { useAccount } from "wagmi";
 import { Hex } from "viem";
+import { PROJECT_NAME } from "@/constants/brand";
 
 const WelcomeStep = () => {
   const { address } = useAccount();
@@ -25,16 +27,21 @@ const WelcomeStep = () => {
       />
       <div className="flex flex-col gap-6">
         <img
-          alt="Karma GAP"
-          className="h-8 w-52"
-          src="/logo/karma-gap-logo2.png"
+          alt="Karma"
+          className="h-8 w-52 dark:hidden block"
+          src="/logo/karma-logo-light.svg"
+        />
+        <img
+          alt="Karma"
+          className="h-8 w-52 hidden dark:block"
+          src="/logo/karma-logo-dark.svg"
         />
         <div className="flex flex-col gap-0">
           <h1 className="text-3xl font-bold max-sm:text-2xl">
-            Welcome to Karma GAP!
+            Welcome to {PROJECT_NAME}!
           </h1>
           <p className="text-base font-normal text-black dark:text-zinc-400">
-            {`We're thrilled to have you join our community of builders. This is a 30 second walkthrough to help you utilize GAP effectively.`}
+            {`We're thrilled to have you join our community of builders. This is a 30 second walkthrough to help you utilize ${PROJECT_NAME} effectively.`}
           </p>
         </div>
 
@@ -191,7 +198,7 @@ const StructureStep = () => {
     <div className="flex flex-col">
       <div className="flex flex-col gap-6 items-center justify-center pt-6">
         <h3 className="text-black font-bold text-xl dark:text-white">
-          Components of the Karma GAP Platform
+          Components of the {PROJECT_NAME} Platform
         </h3>
         <img
           src="/images/karma-gap-onboarding-structure.png"

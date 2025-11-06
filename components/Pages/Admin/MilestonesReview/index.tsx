@@ -191,7 +191,7 @@ export function MilestonesReviewPage({
   // Show loading while checking authorization
   if (isLoading || isLoadingCommunityAdmin || isOwnerLoading || isLoadingReviewer) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-zinc-900">
+      <div className="min-h-screen">
         <div className="px-4 sm:px-6 lg:px-8 py-6">
           <div className="animate-pulse space-y-4">
             <div className="h-8 bg-gray-200 dark:bg-zinc-700 rounded w-1/4"></div>
@@ -208,7 +208,7 @@ export function MilestonesReviewPage({
 
   if (!isAuthorized) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-zinc-900">
+      <div className="min-h-screen">
         <div className="px-4 sm:px-6 lg:px-8 py-6">
           <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-6">
             <div className="flex items-center gap-3 mb-3">
@@ -236,7 +236,7 @@ export function MilestonesReviewPage({
 
   if (error || !data) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-zinc-900">
+      <div className="min-h-screen">
         <div className="px-4 sm:px-6 lg:px-8 py-6">
           <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg p-4">
             <h3 className="text-red-800 dark:text-red-200 font-semibold mb-2">
@@ -254,7 +254,7 @@ export function MilestonesReviewPage({
   const { project, grantMilestones } = data;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-zinc-900">
+    <div className="min-h-screen">
       {/* Header Section */}
       <div className="bg-white dark:bg-zinc-800 border-b border-gray-200 dark:border-gray-700">
         <div className="px-4 sm:px-6 lg:px-8 py-4">
