@@ -5,31 +5,42 @@ import { cn } from "@/utilities/tailwind";
 import Image from "next/image";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { chosenCommunities } from "@/utilities/chosenCommunities";
+import { useState } from "react";
 
+/**
+ * Metric card displaying a key statistic with optional community logos.
+ */
 interface MetricCard {
-    type: "metric";
-    metric: string;
-    description: string;
-    communitySlug: string;
+    readonly type: "metric";
+    readonly metric: string;
+    readonly description: string;
+    readonly communitySlugs: readonly string[];
 }
 
+/**
+ * Testimonial card featuring a quote from a community leader with optional avatar.
+ */
 interface TestimonialCard {
-    type: "testimonial";
-    text: string;
-    author: string;
-    authorRole: string;
-    communitySlug: string;
-    link?: string;
+    readonly type: "testimonial";
+    readonly text: string;
+    readonly author: string;
+    readonly authorRole: string;
+    readonly communitySlug: string;
+    readonly link?: string;
+    readonly avatar?: string;
 }
 
+/**
+ * Case study card highlighting a specific customer success story.
+ */
 interface CaseStudyCard {
-    type: "case-study";
-    headline: string;
-    description: string;
-    communitySlug: string;
-    link?: string;
-    author?: string;
-    authorRole?: string;
+    readonly type: "case-study";
+    readonly headline: string;
+    readonly description: string;
+    readonly communitySlug: string;
+    readonly link?: string;
+    readonly author?: string;
+    readonly authorRole?: string;
 }
 
 type CaseStudyCardType = MetricCard | TestimonialCard | CaseStudyCard;
@@ -38,23 +49,24 @@ const caseStudyCards: CaseStudyCardType[] = [
     {
         type: "metric",
         metric: "700",
-        description: "Times AI evaluation utilized by applicants in last 30 days",
-        communitySlug: ""
+        description: "AI evaluations shared in the last 30 days",
+        communitySlugs: ["optimism", "celo", "scroll"]
     },
     {
         type: "testimonial",
-        text: "Karma isn’t just software, they’re a true partner. Their AI-driven evaluations cut review time dramatically. Their platform fits our needs perfectly and their team ships features at lightning speed.",
+        text: "Karma isn't just software, they're a true partner. Their AI-driven evaluations cut review time dramatically. Their platform fits our needs perfectly and their team ships features at lightning speed.",
         author: "Gonna",
         authorRole: "Optimism Grants Council Lead",
-        communitySlug: "optimism"
+        communitySlug: "optimism",
+        avatar: "/images/homepage/gonna.png"
     },
     {
-        type: "case-study",
-        headline: "",
-        description: "Karma has been a valuable partner in helping us grow and support the Celo developer community. Their tools made it easy to recognize contributor impact and run more transparent, data-driven DevRel programs. The team has also been great to work with  – responsive, thoughtful, and always looking for ways to improve.",
-        communitySlug: "celo",
+        type: "testimonial",
+        text: "Karma has been a valuable partner in helping us grow and support the Celo developer community. Their tools made it easy to recognize contributor impact and run more transparent, data-driven DevRel programs. The team has also been great to work with – responsive, thoughtful, and always looking for ways to improve.",
         author: "Sophia Dew",
         authorRole: "Celo Devrel Lead",
+        communitySlug: "celo",
+        avatar: "/images/homepage/sophia-dew.png"
     },
     {
         type: "case-study",
@@ -64,21 +76,19 @@ const caseStudyCards: CaseStudyCardType[] = [
         link: "https://paragraph.com/@karmahq/optimism-grants-partners-with-karma-for-season-8"
     },
     {
-        type: "metric",
-        metric: "35%",
-        description: "reduced admin burden",
-        communitySlug: "scroll"
-    },
-    {
-        type: "testimonial",
-        text: "Over the past 10 months, Celo has leveraged Karma’s platform to track 400+ projects, 850+ grants and 3600+ milestones, moving from fragmented tracking to a unified onchain project registry and funding funnel to simplify impact measurement and grow their ecosystem.",
-        author: "",
-        authorRole: "",
+        type: "case-study",
+        headline: "3,600+ Milestones completed by Celo grant recipients in 10 months",
+        description: "Over the past 10 months, Celo has leveraged Karma's platform to track 400+ projects, 850+ grants and 3600+ milestones, moving from fragmented tracking to a unified onchain project registry and funding funnel to simplify impact measurement and grow their ecosystem.",
         communitySlug: "celo",
         link: "https://paragraph.com/@karmahq/scaling-ecosystem-success-celo-case-study"
     }
 ];
 
+/**
+ * Retrieves the light theme image URL for a community by its slug.
+ * @param communitySlug - The unique identifier for the community
+ * @returns The light theme image URL if found, null otherwise
+ */
 function getCommunityImage(communitySlug: string): string | null {
     const communities = chosenCommunities(true);
     const community = communities.find((c) => c.slug === communitySlug);
@@ -88,9 +98,23 @@ function getCommunityImage(communitySlug: string): string | null {
     return null;
 }
 
+/**
+ * Renders a metric card displaying a key statistic with optional community logos.
+ * Supports showing multiple communities via the communitySlugs array.
+ */
 function MetricCardComponent({ card }: { card: MetricCard }) {
-    const community = chosenCommunities(true).find((c) => c.slug === card.communitySlug);
-    const imageUrl = getCommunityImage(card.communitySlug);
+    const communities = card.communitySlugs
+        .map(slug => {
+            const community = chosenCommunities(true).find((c) => c.slug === slug);
+            const imageUrl = getCommunityImage(slug);
+
+            if (!community || !imageUrl) {
+                return null;
+            }
+
+            return { community, imageUrl } as const;
+        })
+        .filter((item): item is { community: NonNullable<ReturnType<typeof chosenCommunities>[number]>; imageUrl: string } => item !== null);
 
     return (
         <div className={cn(
@@ -98,7 +122,6 @@ function MetricCardComponent({ card }: { card: MetricCard }) {
             "min-h-[317px] h-full w-full",
             "rounded-2xl border border-border bg-background p-5 shadow-sm"
         )}>
-            {/* Metric Content */}
             <div className="flex flex-col gap-0">
                 <div className={cn(
                     "text-foreground font-semibold",
@@ -114,107 +137,136 @@ function MetricCardComponent({ card }: { card: MetricCard }) {
                 </div>
             </div>
 
-            {/* Community */}
-            {community && imageUrl && (
+            {communities.length > 0 && (
                 <div className="flex items-center gap-2">
-                    <div className="relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
-                        <Image
-                            src={imageUrl}
-                            alt={community.name}
-                            fill
-                            className="object-cover"
-                        />
-                    </div>
-                    <span className={cn(
-                        "text-foreground font-bold text-sm",
-                        "leading-5 tracking-[0%]"
-                    )}>
-                        {community.name}
-                    </span>
+                    {communities.map(({ community, imageUrl }, index) => (
+                        <CommunityImage key={index} src={imageUrl} alt={community.name} />
+                    ))}
                 </div>
             )}
         </div>
     );
 }
 
-function TestimonialCardComponent({ card }: { card: TestimonialCard }) {
-    const community = chosenCommunities(true).find((c) => c.slug === card.communitySlug);
-    const imageUrl = getCommunityImage(card.communitySlug);
+/**
+ * Component for rendering a customer avatar with error fallback.
+ */
+function CustomerAvatar({ src, alt }: { src: string; alt: string }) {
+    const [error, setError] = useState(false);
 
+    if (error) {
+        return (
+            <div className="relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
+                <span className="text-xs text-muted-foreground">
+                    {alt.charAt(0).toUpperCase()}
+                </span>
+            </div>
+        );
+    }
+
+    return (
+        <div className="relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
+            <Image
+                src={src}
+                alt={alt}
+                fill
+                className="object-cover"
+                onError={() => setError(true)}
+            />
+        </div>
+    );
+}
+
+/**
+ * Component for rendering a community logo with error fallback.
+ */
+function CommunityImage({ src, alt }: { src: string; alt: string }) {
+    const [error, setError] = useState(false);
+
+    if (error) {
+        return (
+            <div className="relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
+                <span className="text-[10px] text-muted-foreground font-semibold">
+                    {alt.slice(0, 2).toUpperCase()}
+                </span>
+            </div>
+        );
+    }
+
+    return (
+        <div className="relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
+            <Image
+                src={src}
+                alt={alt}
+                fill
+                className="object-cover"
+                onError={() => setError(true)}
+            />
+        </div>
+    );
+}
+
+/**
+ * Renders a testimonial card with quote styling and author information.
+ * Displays a large quote mark, testimonial text, and optional author avatar.
+ */
+function TestimonialCardComponent({ card }: { card: TestimonialCard }) {
     return (
         <div className={cn(
             "flex flex-col justify-between",
             "min-h-[317px] h-full w-full",
-            "rounded-2xl border border-border bg-background p-5 shadow-sm"
+            "p-5"
         )}>
-            {/* Testimonial Content */}
-            <div className="flex flex-col gap-2">
-                <p className={cn(
-                    "text-foreground font-normal text-sm",
-                    "leading-[150%] tracking-[0%]"
-                )}>
-                    {card.text}
-                </p>
-                <div className="flex flex-col gap-0 mb-2">
+            <div className="flex flex-col justify-between h-full max-md:gap-2 gap-8">
+                <div className="flex flex-col gap-8">
                     <span className={cn(
-                        "text-muted-foreground font-semibold text-sm",
-                        "leading-5 tracking-[0%]"
+                        "text-foreground",
+                        "font-semibold text-[40px] leading-[44px] tracking-[-0.02em]"
                     )}>
-                        {card.author}
+                        "
                     </span>
-                    <span className={cn(
-                        "text-muted-foreground font-medium text-sm",
-                        "leading-5 tracking-[0%]"
+                    <p className={cn(
+                        "text-foreground font-normal text-sm",
+                        "leading-[150%] tracking-[0%]"
                     )}>
-                        {card.authorRole}
-                    </span>
+                        {card.text}
+                    </p>
                 </div>
-            </div>
-
-            {/* Bottom Section: Community and Button */}
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-                {/* Community */}
-                {community && imageUrl ? (
-                    <div className="flex items-center gap-2">
-                        <div className="relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
-                            <Image
-                                src={imageUrl}
-                                alt={community.name}
-                                fill
-                                className="object-cover"
-                            />
-                        </div>
-                        <span className={cn(
-                            "text-foreground font-bold text-sm",
-                            "leading-5 tracking-[0%]"
-                        )}>
-                            {community.name}
-                        </span>
-                    </div>
-                ) : (
-                    <div />
-                )}
-
-                {/* Read Case Study Button */}
-                {card.link && (
-                    <ExternalLink href={card.link}>
-                        <Button
-                            variant="outline"
-                            className={cn(
-                                "border-border text-foreground",
-                                "rounded-md font-medium"
+                {(card.author || card.authorRole) && (
+                    <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                            {card.avatar && (
+                                <CustomerAvatar src={card.avatar} alt={card.author} />
                             )}
-                        >
-                            Read Case Study
-                        </Button>
-                    </ExternalLink>
+                            {card.author && (
+                                <span className={cn(
+                                    "text-foreground font-bold text-sm",
+                                    "leading-5 tracking-[0%]"
+                                )}>
+                                    {card.author}
+                                </span>
+                            )}
+                        </div>
+                        {card.authorRole && (
+                            <span className={cn(
+                                "text-muted-foreground font-medium text-sm",
+                                "leading-5 tracking-[0%]"
+                            )}>
+                                {card.authorRole}
+                            </span>
+                        )}
+                    </div>
                 )}
             </div>
         </div>
     );
 }
 
-function CaseStudyCardComponent({ card }: { card: CaseStudyCard }) {
+/**
+ * Renders a case study card highlighting a customer success story.
+ * Displays headline, description, optional author attribution, community badge, and external link.
+ */
+function CaseStudyCardComponent({ card, hasShadowMd }: { card: CaseStudyCard; hasShadowMd?: boolean }) {
     const community = chosenCommunities(true).find((c) => c.slug === card.communitySlug);
     const imageUrl = getCommunityImage(card.communitySlug);
 
@@ -222,9 +274,9 @@ function CaseStudyCardComponent({ card }: { card: CaseStudyCard }) {
         <div className={cn(
             "flex flex-col justify-between",
             "min-h-[317px] h-full w-full",
-            "rounded-2xl border border-border bg-background p-5 shadow-sm"
+            "rounded-2xl border border-border bg-background p-5",
+            hasShadowMd ? "shadow-md" : "shadow-sm"
         )}>
-            {/* Case Study Content */}
             <div className="flex flex-col gap-3">
                 {card.headline && (
                     <h3 className={cn(
@@ -262,19 +314,10 @@ function CaseStudyCardComponent({ card }: { card: CaseStudyCard }) {
                 )}
             </div>
 
-            {/* Bottom Section: Community and Button */}
             <div className="flex items-center justify-between gap-4 flex-wrap">
-                {/* Community */}
                 {community && imageUrl ? (
                     <div className="flex items-center gap-2">
-                        <div className="relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
-                            <Image
-                                src={imageUrl}
-                                alt={community.name}
-                                fill
-                                className="object-cover"
-                            />
-                        </div>
+                        <CommunityImage src={imageUrl} alt={community.name} />
                         <span className={cn(
                             "text-foreground font-bold text-sm",
                             "leading-5 tracking-[0%]"
@@ -286,7 +329,6 @@ function CaseStudyCardComponent({ card }: { card: CaseStudyCard }) {
                     <div />
                 )}
 
-                {/* Read Case Study Button */}
                 {card.link ? <ExternalLink href={card.link}>
                     <Button
                         variant="outline"
@@ -303,6 +345,10 @@ function CaseStudyCardComponent({ card }: { card: CaseStudyCard }) {
     );
 }
 
+/**
+ * Main case studies section component displaying customer success stories, metrics, and testimonials.
+ * Features a responsive grid layout with varied card types.
+ */
 export function CaseStudiesSection() {
     return (
         <section className={cn(
@@ -311,9 +357,7 @@ export function CaseStudiesSection() {
         )}
             id="case-studies"
         >
-            {/* Header */}
             <div className="flex flex-col items-start gap-4 w-full">
-                {/* Case Studies Pill */}
                 <Badge
                     variant="secondary"
                     className={cn(
@@ -326,7 +370,6 @@ export function CaseStudiesSection() {
                     Case Studies
                 </Badge>
 
-                {/* Main Heading */}
                 <h2 className={cn(
                     "font-semibold",
                     "text-[32px] leading-[36px] tracking-[-0.02em]",
@@ -338,40 +381,29 @@ export function CaseStudiesSection() {
                 </h2>
             </div>
 
-            {/* Cards Grid */}
             <div className={cn(
-                "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 w-full",
+                "grid grid-cols-1 md:grid-cols-6 gap-4 w-full",
                 "max-w-[1920px]",
                 "items-stretch"
             )}>
-                {/* Card 1: Narrow (Row 1, Col 1) */}
-                <div className="md:col-span-1">
+                <div className="md:col-span-2">
                     <MetricCardComponent card={caseStudyCards[0] as MetricCard} />
                 </div>
 
-                {/* Card 2: Narrow (Row 1, Col 2) */}
-                <div className="md:col-span-1">
+                <div className="md:col-span-2">
                     <TestimonialCardComponent card={caseStudyCards[1] as TestimonialCard} />
                 </div>
 
-                {/* Card 3: Wide (Row 1, Col 3-4, spans 2 columns) */}
                 <div className="md:col-span-2">
-                    <CaseStudyCardComponent card={caseStudyCards[2] as CaseStudyCard} />
+                    <CaseStudyCardComponent card={caseStudyCards[4] as CaseStudyCard} hasShadowMd={true} />
                 </div>
 
-                {/* Card 4: Wide (Row 2, Col 1-2, spans 2 columns) */}
-                <div className="md:col-span-2">
-                    <CaseStudyCardComponent card={caseStudyCards[3] as CaseStudyCard} />
+                <div className="md:col-span-3">
+                    <CaseStudyCardComponent card={caseStudyCards[3] as CaseStudyCard} hasShadowMd={true} />
                 </div>
 
-                {/* Card 5: Narrow (Row 2, Col 3) */}
-                <div className="md:col-span-1">
-                    <MetricCardComponent card={caseStudyCards[4] as MetricCard} />
-                </div>
-
-                {/* Card 6: Narrow (Row 2, Col 4) */}
-                <div className="md:col-span-1">
-                    <TestimonialCardComponent card={caseStudyCards[5] as TestimonialCard} />
+                <div className="md:col-span-3">
+                    <TestimonialCardComponent card={caseStudyCards[2] as TestimonialCard} />
                 </div>
             </div>
         </section>
