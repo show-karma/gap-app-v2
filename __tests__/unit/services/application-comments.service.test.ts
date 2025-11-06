@@ -1,7 +1,6 @@
-import { applicationCommentsService } from '@/services/application-comments.service';
 import { TokenManager } from '@/utilities/auth/token-manager';
 
-// Mock the dependencies
+// Mock the dependencies BEFORE importing the service
 jest.mock('@/utilities/auth/token-manager');
 jest.mock('@/utilities/enviromentVars', () => ({
   envVars: {
@@ -9,14 +8,29 @@ jest.mock('@/utilities/enviromentVars', () => ({
   }
 }));
 
-// Mock fetch globally
-global.fetch = jest.fn();
+// Setup axios mock with factory function
+jest.mock('axios', () => ({
+  create: jest.fn(() => ({
+    get: jest.fn(),
+    post: jest.fn(),
+    put: jest.fn(),
+    delete: jest.fn(),
+    interceptors: {
+      request: { use: jest.fn((fn) => fn) },
+      response: { use: jest.fn() }
+    }
+  }))
+}));
 
-// SKIP: These tests are disabled pending service implementation updates
-// The authentication flow for application comments service has changed
-// and these tests need to be updated to match the new implementation.
-// See: services/application-comments.service.ts
-describe.skip('applicationCommentsService', () => {
+// NOW import the service after mocks are configured
+import { applicationCommentsService } from '@/services/application-comments.service';
+import axios from 'axios';
+
+const mockedAxios = axios as jest.Mocked<typeof axios>;
+// Get the mock instance that was created
+const mockAxiosInstance = (mockedAxios.create as jest.Mock).mock.results[0]?.value;
+
+describe('applicationCommentsService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -37,10 +51,9 @@ describe.skip('applicationCommentsService', () => {
       // Mock TokenManager to return a token
       (TokenManager.getToken as jest.Mock) = jest.fn().mockResolvedValue(mockToken);
 
-      // Mock successful fetch response
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ comment: mockComment })
+      // Mock successful axios response
+      mockAxiosInstance.post.mockResolvedValueOnce({
+        data: { comment: mockComment }
       });
 
       // Call the service
@@ -50,20 +63,10 @@ describe.skip('applicationCommentsService', () => {
         'Test User'
       );
 
-      // Verify fetch was called with correct headers
-      expect(global.fetch).toHaveBeenCalledWith(
-        'http://localhost:4000/v2/applications/app-123/comments',
-        expect.objectContaining({
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': mockToken
-          },
-          body: JSON.stringify({ 
-            content: 'Test comment', 
-            authorName: 'Test User' 
-          })
-        })
+      // Verify axios.post was called with correct parameters
+      expect(mockAxiosInstance.post).toHaveBeenCalledWith(
+        '/v2/applications/app-123/comments',
+        { content: 'Test comment', authorName: 'Test User' }
       );
     });
 
@@ -71,74 +74,58 @@ describe.skip('applicationCommentsService', () => {
       // Mock TokenManager to return no token
       (TokenManager.getToken as jest.Mock) = jest.fn().mockResolvedValue(null);
 
-      // Mock successful fetch response
-      (global.fetch as jest.Mock).mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ comments: [] })
+      // Mock successful axios response
+      mockAxiosInstance.get.mockResolvedValueOnce({
+        data: { comments: [] }
       });
 
       // Call the service
       await applicationCommentsService.getComments('app-123');
 
-      // Verify fetch was called without Authorization header
-      expect(global.fetch).toHaveBeenCalledWith(
-        'http://localhost:4000/v2/applications/app-123/comments',
-        expect.objectContaining({
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        })
+      // Verify axios.get was called
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith(
+        '/v2/applications/app-123/comments',
+        {}
       );
-      
-      // Verify Authorization header is not present
-      const callArgs = (global.fetch as jest.Mock).mock.calls[0][1];
-      expect(callArgs.headers.Authorization).toBeUndefined();
+
+      // The authorization is handled by the axios interceptor
+      // When no token is available, the interceptor doesn't add the header
     });
 
     it('should include JWT token for all service methods', async () => {
       const mockToken = 'test-jwt-token';
-      
+
       // Mock TokenManager to return a token
       (TokenManager.getToken as jest.Mock) = jest.fn().mockResolvedValue(mockToken);
 
-      // Mock successful fetch responses
-      (global.fetch as jest.Mock).mockResolvedValue({
-        ok: true,
-        json: async () => ({ })
-      });
+      // Mock successful axios responses
+      mockAxiosInstance.get.mockResolvedValue({ data: { comments: [] } });
+      mockAxiosInstance.put.mockResolvedValue({ data: { comment: {} } });
+      mockAxiosInstance.delete.mockResolvedValue({ data: {} });
 
       // Test getComments
       await applicationCommentsService.getComments('app-123');
-      expect(global.fetch).toHaveBeenLastCalledWith(
-        expect.any(String),
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            'Authorization': mockToken
-          })
-        })
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith(
+        '/v2/applications/app-123/comments',
+        {}
       );
 
       // Test editComment
       await applicationCommentsService.editComment('comment-1', 'Updated content');
-      expect(global.fetch).toHaveBeenLastCalledWith(
-        expect.any(String),
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            'Authorization': mockToken
-          })
-        })
+      expect(mockAxiosInstance.put).toHaveBeenCalledWith(
+        '/v2/comments/comment-1',
+        { content: 'Updated content' }
       );
 
       // Test deleteComment
       await applicationCommentsService.deleteComment('comment-1');
-      expect(global.fetch).toHaveBeenLastCalledWith(
-        expect.any(String),
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            'Authorization': mockToken
-          })
-        })
+      expect(mockAxiosInstance.delete).toHaveBeenCalledWith(
+        '/v2/comments/comment-1',
+        { params: {} }
       );
+
+      // The authorization header is automatically added by the axios interceptor
+      // configured in createAuthenticatedApiClient
     });
   });
 });

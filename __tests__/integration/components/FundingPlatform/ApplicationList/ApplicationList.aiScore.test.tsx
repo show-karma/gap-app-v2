@@ -57,11 +57,7 @@ const createMockApplication = (overrides?: Partial<IFundingApplication>): IFundi
   ...overrides
 });
 
-// SKIP: These tests are disabled pending component implementation updates
-// The ApplicationList component's AI Score column rendering has changed
-// and these tests need to be updated to match the current implementation.
-// The component may not be rendering the AI Score column as expected by these tests.
-describe.skip('ApplicationList - AI Score Column', () => {
+describe('ApplicationList - AI Score Column', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -140,7 +136,7 @@ describe.skip('ApplicationList - AI Score Column', () => {
         createMockApplication({ referenceNumber: 'APP-002' }),
         createMockApplication({ referenceNumber: 'APP-003' })
       ];
-      
+
       render(
         <ApplicationList
           programId="test-program"
@@ -157,9 +153,10 @@ describe.skip('ApplicationList - AI Score Column', () => {
       expect(mockFormatAIScore).toHaveBeenCalledWith(applications[1]);
       expect(mockFormatAIScore).toHaveBeenCalledWith(applications[2]);
 
-      // Check the displayed values
-      const scoreCells = screen.getAllByTestId(/^score-cell-/);
-      expect(scoreCells).toHaveLength(3);
+      // The AI scores are rendered in the table cells
+      // We can check that the formatted scores are in the document
+      expect(screen.getByText('4.5')).toBeInTheDocument();
+      expect(screen.getByText('0')).toBeInTheDocument();
     });
 
     it('should apply correct CSS classes to AI score cells', () => {
@@ -272,18 +269,22 @@ describe.skip('ApplicationList - AI Score Column', () => {
   });
 
   describe('Integration with Application Selection', () => {
-    it('should call onApplicationSelect when row with AI score is clicked', () => {
-      const mockOnApplicationSelect = jest.fn();
+    it('should open new tab when row with AI score is clicked', () => {
+      // Mock window.open
+      const mockWindowOpen = jest.fn();
+      const originalOpen = window.open;
+      window.open = mockWindowOpen;
+
       mockFormatAIScore.mockReturnValue('4.5');
-      
+
       const applications = [createMockApplication()];
-      
+
       const { container } = render(
         <ApplicationList
           programId="test-program"
           chainID={11155111}
           applications={applications}
-          onApplicationSelect={mockOnApplicationSelect}
+          onApplicationSelect={jest.fn()}
           sortBy="status"
           sortOrder="asc"
         />
@@ -291,16 +292,20 @@ describe.skip('ApplicationList - AI Score Column', () => {
 
       const row = container.querySelector('tbody tr');
       fireEvent.click(row!);
-      
-      expect(mockOnApplicationSelect).toHaveBeenCalledWith(applications[0]);
+
+      // Component now opens in new tab instead of calling onApplicationSelect
+      expect(mockWindowOpen).toHaveBeenCalled();
+
+      // Restore original
+      window.open = originalOpen;
     });
 
     it('should call onApplicationHover when row with AI score is hovered', () => {
       const mockOnApplicationHover = jest.fn();
       mockFormatAIScore.mockReturnValue('4.5');
-      
+
       const applications = [createMockApplication()];
-      
+
       const { container } = render(
         <ApplicationList
           programId="test-program"
@@ -314,7 +319,7 @@ describe.skip('ApplicationList - AI Score Column', () => {
 
       const row = container.querySelector('tbody tr');
       fireEvent.mouseEnter(row!);
-      
+
       expect(mockOnApplicationHover).toHaveBeenCalledWith(applications[0].referenceNumber);
     });
   });
@@ -336,7 +341,7 @@ describe.skip('ApplicationList - AI Score Column', () => {
       expect(screen.getByText('Loading applications...')).toBeInTheDocument();
     });
 
-    it('should show AI Score header even when no applications', () => {
+    it('should not render AI Score header when no applications', () => {
       render(
         <ApplicationList
           programId="test-program"
@@ -348,7 +353,8 @@ describe.skip('ApplicationList - AI Score Column', () => {
         />
       );
 
-      expect(screen.getByText('AI Score')).toBeInTheDocument();
+      // When there are no applications, the table (including headers) is not rendered
+      expect(screen.queryByText('AI Score')).not.toBeInTheDocument();
       expect(screen.getByText('No applications found.')).toBeInTheDocument();
     });
   });

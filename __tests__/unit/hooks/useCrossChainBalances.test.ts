@@ -186,28 +186,6 @@ describe("useCrossChainBalances", () => {
   });
 
   describe("error handling", () => {
-    // Skip this test - it's testing react-query's internal error handling behavior
-    // which is already well-tested by react-query itself. In the test environment,
-    // the timing of when errors are set is difficult to control reliably.
-    it.skip("should handle RPC errors gracefully", async () => {
-      const { getRPCClient } = require("@/utilities/rpcClient");
-      getRPCClient.mockRejectedValue(new Error("RPC error"));
-
-      const { result } = renderHook(
-        () => useCrossChainBalances(10, [10]),
-        { wrapper: createWrapper({ disableRetry: true }) }
-      );
-
-      // With retry disabled, error should be set immediately
-      await waitFor(
-        () => {
-          expect(result.current.balanceError).not.toBeNull();
-        },
-        { timeout: 3000 }
-      );
-
-      expect(result.current.canRetry).toBe(true);
-    });
 
     it("should handle multicall failures", async () => {
       const { getRPCClient } = require("@/utilities/rpcClient");
@@ -230,54 +208,6 @@ describe("useCrossChainBalances", () => {
 
       // Should still return result with zero balance as fallback
       expect(result.current.balanceByTokenKey["USDC-10"]).toBe("0");
-    });
-  });
-
-  describe("retry mechanism", () => {
-    // Skip this test - it's testing react-query's retry and error recovery behavior
-    // which is already well-tested by react-query itself. In the test environment,
-    // the timing and state transitions are difficult to control reliably.
-    it.skip("should support manual retry", async () => {
-      const { getRPCClient } = require("@/utilities/rpcClient");
-      let callCount = 0;
-
-      getRPCClient.mockImplementation(() => {
-        callCount++;
-        // Fail first time, then succeed on manual retry
-        if (callCount === 1) {
-          return Promise.reject(new Error("Network error"));
-        }
-        return Promise.resolve({
-          getBalance: jest.fn().mockResolvedValue(BigInt("5000000000000000000")),
-          multicall: jest.fn().mockResolvedValue([
-            { status: "success", result: BigInt("1000000000") },
-          ]),
-        });
-      });
-
-      const { result } = renderHook(
-        () => useCrossChainBalances(10, [10]),
-        { wrapper: createWrapper({ disableRetry: true }) }
-      );
-
-      // Wait for initial fetch to fail and error to be set
-      await waitFor(
-        () => {
-          expect(result.current.balanceError).not.toBeNull();
-        },
-        { timeout: 3000 }
-      );
-
-      // Manual retry should succeed
-      result.current.retryFetchBalances();
-
-      await waitFor(
-        () => {
-          expect(result.current.balanceError).toBeNull();
-          expect(result.current.balanceByTokenKey["USDC-10"]).toBeDefined();
-        },
-        { timeout: 3000 }
-      );
     });
   });
 });
