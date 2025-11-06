@@ -47,12 +47,6 @@ type CaseStudyCardType = MetricCard | TestimonialCard | CaseStudyCard;
 
 const caseStudyCards: CaseStudyCardType[] = [
     {
-        type: "metric",
-        metric: "700",
-        description: "AI evaluations shared in the last 30 days",
-        communitySlugs: ["optimism", "celo", "scroll"]
-    },
-    {
         type: "testimonial",
         text: "Karma isn't just software, they're a true partner. Their AI-driven evaluations cut review time dramatically. Their platform fits our needs perfectly and their team ships features at lightning speed.",
         author: "Gonna",
@@ -61,16 +55,8 @@ const caseStudyCards: CaseStudyCardType[] = [
         avatar: "/images/homepage/gonna.png"
     },
     {
-        type: "testimonial",
-        text: "Karma has been a valuable partner in helping us grow and support the Celo developer community. Their tools made it easy to recognize contributor impact and run more transparent, data-driven DevRel programs. The team has also been great to work with – responsive, thoughtful, and always looking for ways to improve.",
-        author: "Sophia Dew",
-        authorRole: "Celo Devrel Lead",
-        communitySlug: "celo",
-        avatar: "/images/homepage/sophia-dew.png"
-    },
-    {
         type: "case-study",
-        headline: "Optimism saved hundreds of hours on application evaluation",
+        headline: "100+ hours saved on application evaluation",
         description: "Leverage AI to evaluate grant applications at scale.",
         communitySlug: "optimism",
         link: "https://paragraph.com/@karmahq/optimism-grants-partners-with-karma-for-season-8"
@@ -81,7 +67,15 @@ const caseStudyCards: CaseStudyCardType[] = [
         description: "Over the past 10 months, Celo has leveraged Karma's platform to track 400+ projects, 850+ grants and 3600+ milestones, moving from fragmented tracking to a unified onchain project registry and funding funnel to simplify impact measurement and grow their ecosystem.",
         communitySlug: "celo",
         link: "https://paragraph.com/@karmahq/scaling-ecosystem-success-celo-case-study"
-    }
+    },
+    {
+        type: "testimonial",
+        text: "Karma has been a valuable partner in helping us grow and support the Celo developer community. Their tools made it easy to recognize contributor impact and run more transparent, data-driven DevRel programs. The team has also been great to work with – responsive, thoughtful, and always looking for ways to improve.",
+        author: "Sophia Dew",
+        authorRole: "Celo Devrel Lead",
+        communitySlug: "celo",
+        avatar: "/images/homepage/sophia-dew.png"
+    },
 ];
 
 /**
@@ -166,7 +160,7 @@ function TestimonialCardComponent({ card }: { card: TestimonialCard }) {
                         "text-foreground",
                         "font-semibold text-[40px] leading-[44px] tracking-[-0.02em]"
                     )}>
-                        "
+                        {`“`}
                     </span>
                     <p className={cn(
                         "text-foreground font-normal text-sm",
@@ -209,7 +203,7 @@ function TestimonialCardComponent({ card }: { card: TestimonialCard }) {
  * Renders a case study card highlighting a customer success story.
  * Displays headline, description, optional author attribution, community badge, and external link.
  */
-function CaseStudyCardComponent({ card, hasShadowMd }: { card: CaseStudyCard; hasShadowMd?: boolean }) {
+function CaseStudyCardComponent({ card }: { card: CaseStudyCard }) {
     const community = chosenCommunities(true).find((c) => c.slug === card.communitySlug);
     const imageUrl = getCommunityImage(card.communitySlug);
 
@@ -218,7 +212,6 @@ function CaseStudyCardComponent({ card, hasShadowMd }: { card: CaseStudyCard; ha
             "flex flex-col justify-between",
             "min-h-[317px] h-full w-full",
             "rounded-2xl border border-border bg-background p-5",
-            hasShadowMd ? "shadow-md" : "shadow-sm"
         )}>
             <div className="flex flex-col gap-3">
                 {card.headline && (
@@ -329,24 +322,21 @@ export function CaseStudiesSection() {
                 "max-w-[1920px]",
                 "items-stretch"
             )}>
-                <div className="md:col-span-2">
-                    <MetricCardComponent card={caseStudyCards[0] as MetricCard} />
-                </div>
 
                 <div className="md:col-span-2">
-                    <TestimonialCardComponent card={caseStudyCards[1] as TestimonialCard} />
+                    <TestimonialCardComponent card={caseStudyCards[0] as TestimonialCard} />
+                </div>
+
+                <div className="md:col-span-4">
+                    <CaseStudyCardComponent card={caseStudyCards[1] as CaseStudyCard} />
+                </div>
+
+                <div className="md:col-span-4">
+                    <CaseStudyCardComponent card={caseStudyCards[2] as CaseStudyCard} />
                 </div>
 
                 <div className="md:col-span-2">
-                    <CaseStudyCardComponent card={caseStudyCards[4] as CaseStudyCard} hasShadowMd={true} />
-                </div>
-
-                <div className="md:col-span-3">
-                    <CaseStudyCardComponent card={caseStudyCards[3] as CaseStudyCard} hasShadowMd={true} />
-                </div>
-
-                <div className="md:col-span-3">
-                    <TestimonialCardComponent card={caseStudyCards[2] as TestimonialCard} />
+                    <TestimonialCardComponent card={caseStudyCards[3] as TestimonialCard} />
                 </div>
             </div>
         </section>
