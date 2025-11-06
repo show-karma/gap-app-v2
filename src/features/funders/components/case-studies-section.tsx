@@ -5,33 +5,42 @@ import { cn } from "@/utilities/tailwind";
 import Image from "next/image";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { chosenCommunities } from "@/utilities/chosenCommunities";
+import { useState } from "react";
 
+/**
+ * Metric card displaying a key statistic with optional community logos.
+ */
 interface MetricCard {
-    type: "metric";
-    metric: string;
-    description: string;
-    communitySlug: string;
-    communitySlugs?: string[];
+    readonly type: "metric";
+    readonly metric: string;
+    readonly description: string;
+    readonly communitySlugs: readonly string[];
 }
 
+/**
+ * Testimonial card featuring a quote from a community leader with optional avatar.
+ */
 interface TestimonialCard {
-    type: "testimonial";
-    text: string;
-    author: string;
-    authorRole: string;
-    communitySlug: string;
-    link?: string;
-    avatar?: string;
+    readonly type: "testimonial";
+    readonly text: string;
+    readonly author: string;
+    readonly authorRole: string;
+    readonly communitySlug: string;
+    readonly link?: string;
+    readonly avatar?: string;
 }
 
+/**
+ * Case study card highlighting a specific customer success story.
+ */
 interface CaseStudyCard {
-    type: "case-study";
-    headline: string;
-    description: string;
-    communitySlug: string;
-    link?: string;
-    author?: string;
-    authorRole?: string;
+    readonly type: "case-study";
+    readonly headline: string;
+    readonly description: string;
+    readonly communitySlug: string;
+    readonly link?: string;
+    readonly author?: string;
+    readonly authorRole?: string;
 }
 
 type CaseStudyCardType = MetricCard | TestimonialCard | CaseStudyCard;
@@ -41,7 +50,6 @@ const caseStudyCards: CaseStudyCardType[] = [
         type: "metric",
         metric: "700",
         description: "AI evaluations shared in the last 30 days",
-        communitySlug: "",
         communitySlugs: ["optimism", "celo", "scroll"]
     },
     {
@@ -76,6 +84,11 @@ const caseStudyCards: CaseStudyCardType[] = [
     }
 ];
 
+/**
+ * Retrieves the light theme image URL for a community by its slug.
+ * @param communitySlug - The unique identifier for the community
+ * @returns The light theme image URL if found, null otherwise
+ */
 function getCommunityImage(communitySlug: string): string | null {
     const communities = chosenCommunities(true);
     const community = communities.find((c) => c.slug === communitySlug);
@@ -85,14 +98,23 @@ function getCommunityImage(communitySlug: string): string | null {
     return null;
 }
 
+/**
+ * Renders a metric card displaying a key statistic with optional community logos.
+ * Supports showing multiple communities via the communitySlugs array.
+ */
 function MetricCardComponent({ card }: { card: MetricCard }) {
     const communities = card.communitySlugs
-        ? card.communitySlugs.map(slug => {
+        .map(slug => {
             const community = chosenCommunities(true).find((c) => c.slug === slug);
             const imageUrl = getCommunityImage(slug);
-            return { community, imageUrl };
-        }).filter(item => item.community && item.imageUrl)
-        : [];
+
+            if (!community || !imageUrl) {
+                return null;
+            }
+
+            return { community, imageUrl } as const;
+        })
+        .filter((item): item is { community: NonNullable<ReturnType<typeof chosenCommunities>[number]>; imageUrl: string } => item !== null);
 
     return (
         <div className={cn(
@@ -100,7 +122,6 @@ function MetricCardComponent({ card }: { card: MetricCard }) {
             "min-h-[317px] h-full w-full",
             "rounded-2xl border border-border bg-background p-5 shadow-sm"
         )}>
-            {/* Metric Content */}
             <div className="flex flex-col gap-0">
                 <div className={cn(
                     "text-foreground font-semibold",
@@ -116,18 +137,10 @@ function MetricCardComponent({ card }: { card: MetricCard }) {
                 </div>
             </div>
 
-            {/* Communities */}
             {communities.length > 0 && (
                 <div className="flex items-center gap-2">
                     {communities.map(({ community, imageUrl }, index) => (
-                        <div key={index} className="relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
-                            <Image
-                                src={imageUrl!}
-                                alt={community!.name}
-                                fill
-                                className="object-cover"
-                            />
-                        </div>
+                        <CommunityImage key={index} src={imageUrl} alt={community.name} />
                     ))}
                 </div>
             )}
@@ -135,94 +148,83 @@ function MetricCardComponent({ card }: { card: MetricCard }) {
     );
 }
 
-function TestimonialCardComponent({ card, isSecondCard }: { card: TestimonialCard; isSecondCard?: boolean }) {
-    const community = chosenCommunities(true).find((c) => c.slug === card.communitySlug);
-    const imageUrl = getCommunityImage(card.communitySlug);
+/**
+ * Component for rendering a customer avatar with error fallback.
+ */
+function CustomerAvatar({ src, alt }: { src: string; alt: string }) {
+    const [error, setError] = useState(false);
 
-    if (isSecondCard) {
-        // Gonna card: quote and text in one column, separated by 32px
+    if (error) {
         return (
-            <div className={cn(
-                "flex flex-col justify-between",
-                "min-h-[317px] h-full w-full",
-                "p-5"
-            )}>
-                {/* Testimonial Content */}
-                <div className="flex flex-col justify-between h-full max-md:gap-2 gap-8">
-                    {/* Quote and text container - stacked vertically */}
-                    <div className="flex flex-col gap-8">
-                        {/* Quote mark */}
-                        <span className={cn(
-                            "text-foreground",
-                            "font-semibold text-[40px] leading-[44px] tracking-[-0.02em]"
-                        )}>
-                            “
-                        </span>
-                        {/* Text */}
-                        <p className={cn(
-                            "text-foreground font-normal text-sm",
-                            "leading-[150%] tracking-[0%]"
-                        )}>
-                            {card.text}
-                        </p>
-                    </div>
-                    {/* Author section */}
-                    {(card.author || card.authorRole) && (
-                        <div className="flex flex-col gap-1">
-                            <div className="flex items-center gap-2">
-                                {card.avatar && (
-                                    <div className="relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
-                                        <Image
-                                            src={card.avatar}
-                                            alt={card.author}
-                                            fill
-                                            className="object-cover"
-                                        />
-                                    </div>
-                                )}
-                                {card.author && (
-                                    <span className={cn(
-                                        "text-foreground font-bold text-sm",
-                                        "leading-5 tracking-[0%]"
-                                    )}>
-                                        {card.author}
-                                    </span>
-                                )}
-                            </div>
-                            {card.authorRole && (
-                                <span className={cn(
-                                    "text-muted-foreground font-medium text-sm",
-                                    "leading-5 tracking-[0%]"
-                                )}>
-                                    {card.authorRole}
-                                </span>
-                            )}
-                        </div>
-                    )}
-                </div>
+            <div className="relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
+                <span className="text-xs text-muted-foreground">
+                    {alt.charAt(0).toUpperCase()}
+                </span>
             </div>
         );
     }
 
-    // 5th card (Sophia Dew): quote and text in one column, separated by 32px
+    return (
+        <div className="relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
+            <Image
+                src={src}
+                alt={alt}
+                fill
+                className="object-cover"
+                onError={() => setError(true)}
+            />
+        </div>
+    );
+}
+
+/**
+ * Component for rendering a community logo with error fallback.
+ */
+function CommunityImage({ src, alt }: { src: string; alt: string }) {
+    const [error, setError] = useState(false);
+
+    if (error) {
+        return (
+            <div className="relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
+                <span className="text-[10px] text-muted-foreground font-semibold">
+                    {alt.slice(0, 2).toUpperCase()}
+                </span>
+            </div>
+        );
+    }
+
+    return (
+        <div className="relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
+            <Image
+                src={src}
+                alt={alt}
+                fill
+                className="object-cover"
+                onError={() => setError(true)}
+            />
+        </div>
+    );
+}
+
+/**
+ * Renders a testimonial card with quote styling and author information.
+ * Displays a large quote mark, testimonial text, and optional author avatar.
+ */
+function TestimonialCardComponent({ card }: { card: TestimonialCard }) {
     return (
         <div className={cn(
             "flex flex-col justify-between",
             "min-h-[317px] h-full w-full",
             "p-5"
         )}>
-            {/* Testimonial Content */}
-            <div className="flex flex-col justify-between h-full gap-8">
-                {/* Quote and text container - stacked vertically */}
+            <div className="flex flex-col justify-between h-full max-md:gap-2 gap-8">
                 <div className="flex flex-col gap-8">
-                    {/* Quote mark */}
                     <span className={cn(
                         "text-foreground",
                         "font-semibold text-[40px] leading-[44px] tracking-[-0.02em]"
                     )}>
-                        “
+                        "
                     </span>
-                    {/* Text */}
                     <p className={cn(
                         "text-foreground font-normal text-sm",
                         "leading-[150%] tracking-[0%]"
@@ -230,19 +232,11 @@ function TestimonialCardComponent({ card, isSecondCard }: { card: TestimonialCar
                         {card.text}
                     </p>
                 </div>
-                {/* Author section */}
                 {(card.author || card.authorRole) && (
                     <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
                             {card.avatar && (
-                                <div className="relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
-                                    <Image
-                                        src={card.avatar}
-                                        alt={card.author}
-                                        fill
-                                        className="object-cover"
-                                    />
-                                </div>
+                                <CustomerAvatar src={card.avatar} alt={card.author} />
                             )}
                             {card.author && (
                                 <span className={cn(
@@ -268,6 +262,10 @@ function TestimonialCardComponent({ card, isSecondCard }: { card: TestimonialCar
     );
 }
 
+/**
+ * Renders a case study card highlighting a customer success story.
+ * Displays headline, description, optional author attribution, community badge, and external link.
+ */
 function CaseStudyCardComponent({ card, hasShadowMd }: { card: CaseStudyCard; hasShadowMd?: boolean }) {
     const community = chosenCommunities(true).find((c) => c.slug === card.communitySlug);
     const imageUrl = getCommunityImage(card.communitySlug);
@@ -279,7 +277,6 @@ function CaseStudyCardComponent({ card, hasShadowMd }: { card: CaseStudyCard; ha
             "rounded-2xl border border-border bg-background p-5",
             hasShadowMd ? "shadow-md" : "shadow-sm"
         )}>
-            {/* Case Study Content */}
             <div className="flex flex-col gap-3">
                 {card.headline && (
                     <h3 className={cn(
@@ -317,19 +314,10 @@ function CaseStudyCardComponent({ card, hasShadowMd }: { card: CaseStudyCard; ha
                 )}
             </div>
 
-            {/* Bottom Section: Community and Button */}
             <div className="flex items-center justify-between gap-4 flex-wrap">
-                {/* Community */}
                 {community && imageUrl ? (
                     <div className="flex items-center gap-2">
-                        <div className="relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
-                            <Image
-                                src={imageUrl}
-                                alt={community.name}
-                                fill
-                                className="object-cover"
-                            />
-                        </div>
+                        <CommunityImage src={imageUrl} alt={community.name} />
                         <span className={cn(
                             "text-foreground font-bold text-sm",
                             "leading-5 tracking-[0%]"
@@ -341,7 +329,6 @@ function CaseStudyCardComponent({ card, hasShadowMd }: { card: CaseStudyCard; ha
                     <div />
                 )}
 
-                {/* Read Case Study Button */}
                 {card.link ? <ExternalLink href={card.link}>
                     <Button
                         variant="outline"
@@ -358,6 +345,10 @@ function CaseStudyCardComponent({ card, hasShadowMd }: { card: CaseStudyCard; ha
     );
 }
 
+/**
+ * Main case studies section component displaying customer success stories, metrics, and testimonials.
+ * Features a responsive grid layout with varied card types.
+ */
 export function CaseStudiesSection() {
     return (
         <section className={cn(
@@ -366,9 +357,7 @@ export function CaseStudiesSection() {
         )}
             id="case-studies"
         >
-            {/* Header */}
             <div className="flex flex-col items-start gap-4 w-full">
-                {/* Case Studies Pill */}
                 <Badge
                     variant="secondary"
                     className={cn(
@@ -381,7 +370,6 @@ export function CaseStudiesSection() {
                     Case Studies
                 </Badge>
 
-                {/* Main Heading */}
                 <h2 className={cn(
                     "font-semibold",
                     "text-[32px] leading-[36px] tracking-[-0.02em]",
@@ -393,35 +381,27 @@ export function CaseStudiesSection() {
                 </h2>
             </div>
 
-            {/* Cards Grid */}
             <div className={cn(
                 "grid grid-cols-1 md:grid-cols-6 gap-4 w-full",
                 "max-w-[1920px]",
                 "items-stretch"
             )}>
-                {/* Row 1: 2-2-2 layout */}
-                {/* Card 1: Metric "700" (Row 1, Col 1-2) */}
                 <div className="md:col-span-2">
                     <MetricCardComponent card={caseStudyCards[0] as MetricCard} />
                 </div>
 
-                {/* Card 2: Gonna Testimonial (Row 1, Col 3-4) */}
                 <div className="md:col-span-2">
-                    <TestimonialCardComponent card={caseStudyCards[1] as TestimonialCard} isSecondCard={true} />
+                    <TestimonialCardComponent card={caseStudyCards[1] as TestimonialCard} />
                 </div>
 
-                {/* Card 3: Celo 3,600+ Milestones Case Study (Row 1, Col 5-6) */}
                 <div className="md:col-span-2">
                     <CaseStudyCardComponent card={caseStudyCards[4] as CaseStudyCard} hasShadowMd={true} />
                 </div>
 
-                {/* Row 2: 3-3 layout */}
-                {/* Card 4: Optimism Case Study (Row 2, Col 1-3) */}
                 <div className="md:col-span-3">
                     <CaseStudyCardComponent card={caseStudyCards[3] as CaseStudyCard} hasShadowMd={true} />
                 </div>
 
-                {/* Card 5: Sophia Dew Testimonial (Row 2, Col 4-6) */}
                 <div className="md:col-span-3">
                     <TestimonialCardComponent card={caseStudyCards[2] as TestimonialCard} />
                 </div>
