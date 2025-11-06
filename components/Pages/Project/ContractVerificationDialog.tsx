@@ -172,9 +172,9 @@ export const ContractVerificationDialog: React.FC<
                         <strong>How it works:</strong>
                       </p>
                       <ol className="list-decimal list-inside text-sm text-blue-700 dark:text-blue-400 mt-2 space-y-1">
-                        <li>We'll look up who deployed this contract</li>
+                        <li>We&apos;ll look up who deployed this contract</li>
                         <li>
-                          You'll need to switch to the deployer wallet if needed
+                          You&apos;ll need to switch to the deployer wallet if needed
                         </li>
                         <li>Sign a message to prove you own the deployer wallet</li>
                         <li>Once verified, the contract will be marked as verified</li>
