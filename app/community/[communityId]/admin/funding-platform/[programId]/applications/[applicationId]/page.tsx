@@ -57,6 +57,7 @@ export default function ApplicationDetailPage() {
   const {
     application,
     isLoading: isLoadingApplication,
+    refetch: refetchApplication,
   } = useApplication(applicationId);
 
   // Fetch program config
@@ -276,6 +277,7 @@ export default function ApplicationDetailPage() {
               onStatusChange={handleStatusChange}
               viewMode={applicationViewMode}
               onViewModeChange={setApplicationViewMode}
+              onRefresh={refetchApplication}
             />
           </div>
 
