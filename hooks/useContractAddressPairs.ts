@@ -2,8 +2,21 @@ import { useCallback, useEffect, useState } from "react";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { NetworkAddressPair } from "@/components/Pages/Project/types";
 
+interface VerifiedContract {
+  network: string;
+  address: string;
+  verified: boolean;
+  verifiedAt?: string;
+  verifiedBy?: string;
+}
+
+interface ProjectExternalData extends Record<string, any> {
+  network_addresses?: string[];
+  network_addresses_verified?: VerifiedContract[];
+}
+
 interface UseContractAddressPairsProps {
-  project: IProjectResponse & { external: Record<string, string[]> };
+  project: IProjectResponse & { external: ProjectExternalData };
 }
 
 export const useContractAddressPairs = ({ project }: UseContractAddressPairsProps) => {
@@ -14,13 +27,13 @@ export const useContractAddressPairs = ({ project }: UseContractAddressPairsProp
   // Initialize pairs from project data
   useEffect(() => {
     const networkAddresses = project?.external?.network_addresses || [];
-    const networkAddressesVerified = (project?.external as any)?.network_addresses_verified || [];
+    const networkAddressesVerified = project?.external?.network_addresses_verified || [];
 
     if (networkAddresses.length > 0 || networkAddressesVerified.length > 0) {
       // Create a map of verified contracts for quick lookup
       const verifiedMap = new Map<string, { verified: boolean; verifiedAt?: string; verifiedBy?: string }>();
 
-      networkAddressesVerified.forEach((verifiedEntry: any) => {
+      networkAddressesVerified.forEach((verifiedEntry) => {
         const key = `${verifiedEntry.network}:${verifiedEntry.address}`.toLowerCase();
         verifiedMap.set(key, {
           verified: verifiedEntry.verified || false,
@@ -48,7 +61,7 @@ export const useContractAddressPairs = ({ project }: UseContractAddressPairsProp
     } else {
       setNetworkAddressPairs([{ network: "", address: "", verified: false }]);
     }
-  }, [project?.external?.network_addresses, (project?.external as any)?.network_addresses_verified]);
+  }, [project?.external?.network_addresses, project?.external?.network_addresses_verified]);
 
   const addPair = useCallback(() => {
     setNetworkAddressPairs((prev) => [

@@ -19,7 +19,7 @@ interface ContractVerificationDialogProps {
   network: string;
   contractAddress: string;
   projectUid: string;
-  onSuccess?: () => void;
+  onSuccess?: () => void | Promise<void>;
 }
 
 export const ContractVerificationDialog: React.FC<
@@ -31,7 +31,7 @@ export const ContractVerificationDialog: React.FC<
   const handleVerify = async () => {
     const result = await verifyContract(network, contractAddress, projectUid);
     if (result && onSuccess) {
-      onSuccess();
+      await onSuccess();
     }
   };
 

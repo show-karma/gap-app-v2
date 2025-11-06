@@ -97,6 +97,9 @@ export const ContractAddressItem = memo<ContractAddressItemProps>(
                     : "text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 focus:border-blue-500"
                     }`}
                   placeholder="Enter contract address (0x...)"
+                  aria-label={`Contract address ${index + 1}`}
+                  aria-invalid={hasError}
+                  aria-describedby={hasError ? `contract-error-${index}` : undefined}
                 />
               </div>
               {pair.address && pair.network && (
@@ -116,6 +119,7 @@ export const ContractAddressItem = memo<ContractAddressItemProps>(
                         <button
                           onClick={() => onVerify(index)}
                           className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                          aria-label={`Verify contract ${index + 1}`}
                         >
                           Verify
                         </button>
@@ -137,7 +141,11 @@ export const ContractAddressItem = memo<ContractAddressItemProps>(
           )}
         </div>
         {hasError && (
-          <div className="ml-2 px-4 py-2 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 rounded">
+          <div
+            id={`contract-error-${index}`}
+            className="ml-2 px-4 py-2 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 rounded"
+            role="alert"
+          >
             <p className="text-sm text-red-700 dark:text-red-400">
               {formatError ? (
                 <>

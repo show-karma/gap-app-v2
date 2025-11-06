@@ -31,20 +31,27 @@ export const ContractAddressList: FC<ContractAddressListProps> = ({
 }) => {
   return (
     <div className="max-h-[60vh] flex flex-col gap-4 mt-8 overflow-y-auto">
-      {pairs.map((pair, index) => (
-        <ContractAddressItem
-          key={index}
-          pair={pair}
-          index={index}
-          invalidContracts={invalidContracts}
-          canRemove={pairs.length > 1}
-          onNetworkChange={onNetworkChange}
-          onAddressChange={onAddressChange}
-          onRemove={onRemove}
-          onVerify={onVerify}
-          supportedNetworks={supportedNetworks}
-        />
-      ))}
+      {pairs.map((pair, index) => {
+        // Use network:address as key for filled pairs, fallback to index for empty ones
+        const key = pair.network && pair.address
+          ? `${pair.network}:${pair.address}`
+          : `empty-${index}`;
+
+        return (
+          <ContractAddressItem
+            key={key}
+            pair={pair}
+            index={index}
+            invalidContracts={invalidContracts}
+            canRemove={pairs.length > 1}
+            onNetworkChange={onNetworkChange}
+            onAddressChange={onAddressChange}
+            onRemove={onRemove}
+            onVerify={onVerify}
+            supportedNetworks={supportedNetworks}
+          />
+        );
+      })}
       <Button
         onClick={onAdd}
         className="flex items-center justify-center text-white gap-2 border border-primary-500 bg-primary-500 hover:bg-primary-600"
