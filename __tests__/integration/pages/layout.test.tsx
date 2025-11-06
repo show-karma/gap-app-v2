@@ -14,14 +14,12 @@ jest.mock("@next/third-parties/google", () => ({
   GoogleAnalytics: () => <div data-testid="google-analytics" />,
 }));
 
-jest.mock("@/components/Utilities/Footer", () => ({
-  __esModule: true,
-  default: () => <footer data-testid="footer" />,
+jest.mock("@/src/components/footer/footer", () => ({
+  Footer: () => <footer data-testid="footer" />,
 }));
 
-jest.mock("@/components/Utilities/Header", () => ({
-  __esModule: true,
-  default: () => <header data-testid="header" />,
+jest.mock("@/src/components/navbar/navbar", () => ({
+  Navbar: () => <header data-testid="header" />,
 }));
 
 jest.mock("react-hot-toast", () => ({

@@ -36,11 +36,12 @@ const config: Config = {
     "^@/utilities/(.*)$": "<rootDir>/utilities/$1",
     "^@/constants/(.*)$": "<rootDir>/constants/$1",
     "^@/services/(.*)$": "<rootDir>/services/$1",
+    "^@/src/(.*)$": "<rootDir>/src/$1",
   },
 
   // Transform ESM modules that need to be compiled for Jest
   transformIgnorePatterns: [
-    "/node_modules/(?!(@show-karma|wagmi|@wagmi|viem|@privy-io)/)",
+    "/node_modules/(?!(@show-karma|wagmi|@wagmi|viem|@privy-io|rehype-sanitize|hast-util-sanitize|msw|rehype-external-links)/)",
   ],
 
   globalSetup: "./tests/global.js",
@@ -50,15 +51,15 @@ const config: Config = {
   // Reduce memory usage
   maxWorkers: "50%",
 
-  // Coverage thresholds (commented out - uncomment to enforce)
-  // coverageThreshold: {
-  //   global: {
-  //     branches: 50,
-  //     functions: 50,
-  //     lines: 50,
-  //     statements: 50,
-  //   },
-  // },
+  // Coverage thresholds - enforced for production builds
+  coverageThreshold: {
+    global: {
+      branches: 50,
+      functions: 50,
+      lines: 50,
+      statements: 50,
+    },
+  },
 };
 
 const createJestConfig = nextJest({

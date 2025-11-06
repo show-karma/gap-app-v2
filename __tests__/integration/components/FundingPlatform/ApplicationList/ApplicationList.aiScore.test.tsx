@@ -17,11 +17,11 @@ jest.mock('@/utilities/formatDate', () => ({
 }));
 
 // Mock SortableTableHeader
-jest.mock('@/components/UI/SortableTableHeader', () => {
-  return function MockSortableTableHeader({ 
-    label, 
-    sortKey, 
-    onSort 
+jest.mock('@/components/Utilities/SortableTableHeader', () => {
+  return function MockSortableTableHeader({
+    label,
+    sortKey,
+    onSort
   }: {
     label: string;
     sortKey: string;

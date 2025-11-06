@@ -138,3 +138,15 @@ jest.mock("@sentry/nextjs", () => ({
   captureMessage: jest.fn(),
   withScope: jest.fn((callback) => callback({ setExtras: jest.fn() })),
 }));
+
+// Mock rehype-sanitize to avoid ESM parsing issues
+jest.mock("rehype-sanitize", () => ({
+  __esModule: true,
+  default: () => (tree) => tree, // Pass-through plugin for testing
+}));
+
+// Mock rehype-external-links
+jest.mock("rehype-external-links", () => ({
+  __esModule: true,
+  default: () => (tree) => tree, // Pass-through plugin for testing
+}));
