@@ -42,10 +42,14 @@ export const useContractAddressPairs = ({ project }: UseContractAddressPairsProp
         });
       });
 
+      // Create a set to track which contracts we've already processed
+      const processedKeys = new Set<string>();
+
       // Process network_addresses and merge with verification data
       const pairs = networkAddresses.map((entry: string) => {
         const [network, address] = entry.split(":");
         const key = `${network}:${address}`.toLowerCase();
+        processedKeys.add(key);
         const verificationInfo = verifiedMap.get(key);
 
         return {
@@ -55,6 +59,21 @@ export const useContractAddressPairs = ({ project }: UseContractAddressPairsProp
           verifiedAt: verificationInfo?.verifiedAt,
           verifiedBy: verificationInfo?.verifiedBy
         };
+      });
+
+      // Add verified contracts that are NOT in network_addresses
+      // This handles the case where a contract was verified but not yet added to network_addresses
+      networkAddressesVerified.forEach((verifiedEntry) => {
+        const key = `${verifiedEntry.network}:${verifiedEntry.address}`.toLowerCase();
+        if (!processedKeys.has(key)) {
+          pairs.push({
+            network: verifiedEntry.network,
+            address: verifiedEntry.address,
+            verified: verifiedEntry.verified || false,
+            verifiedAt: verifiedEntry.verifiedAt,
+            verifiedBy: verifiedEntry.verifiedBy
+          });
+        }
       });
 
       setNetworkAddressPairs(pairs);
