@@ -33,5 +33,4 @@ afterAll(() => {
   server.close();
 });
 
-export { rest } from 'msw';
 export { http } from 'msw';

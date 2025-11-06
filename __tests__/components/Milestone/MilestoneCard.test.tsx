@@ -88,7 +88,7 @@ jest.mock('@/utilities/pages', () => ({
 }));
 
 describe('MilestoneCard', () => {
-  const mockProjectMilestone: UnifiedMilestone = {
+  const mockProjectMilestone = {
     uid: 'milestone-123',
     title: 'Test Project Milestone',
     description: 'This is a test milestone description',
@@ -105,9 +105,9 @@ describe('MilestoneCard', () => {
       grantMilestone: null,
     },
     mergedGrants: [],
-  } as UnifiedMilestone;
+  } as unknown as UnifiedMilestone;
 
-  const mockCompletedMilestone: UnifiedMilestone = {
+  const mockCompletedMilestone = {
     ...mockProjectMilestone,
     completed: true,
     source: {
@@ -123,9 +123,9 @@ describe('MilestoneCard', () => {
       },
       grantMilestone: null,
     },
-  } as UnifiedMilestone;
+  } as unknown as UnifiedMilestone;
 
-  const mockGrantMilestone: UnifiedMilestone = {
+  const mockGrantMilestone = {
     uid: 'gm-456',
     title: 'Test Grant Milestone',
     description: 'This is a grant milestone',
@@ -162,7 +162,7 @@ describe('MilestoneCard', () => {
       },
     },
     mergedGrants: [],
-  } as UnifiedMilestone;
+  } as unknown as UnifiedMilestone;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -280,7 +280,7 @@ describe('MilestoneCard', () => {
 
   describe('Merged Grants Display', () => {
     it('should display multiple merged grants', () => {
-      const milestoneWithMergedGrants: UnifiedMilestone = {
+      const milestoneWithMergedGrants = {
         ...mockGrantMilestone,
         mergedGrants: [
           {
@@ -298,7 +298,7 @@ describe('MilestoneCard', () => {
             communityImage: 'https://example.com/b.jpg',
           },
         ],
-      };
+      } as unknown as UnifiedMilestone;
 
       render(<MilestoneCard milestone={milestoneWithMergedGrants} isAuthorized={false} />);
 
@@ -307,7 +307,7 @@ describe('MilestoneCard', () => {
     });
 
     it('should sort merged grants alphabetically', () => {
-      const milestoneWithUnsortedGrants: UnifiedMilestone = {
+      const milestoneWithUnsortedGrants = {
         ...mockGrantMilestone,
         mergedGrants: [
           {
@@ -325,7 +325,7 @@ describe('MilestoneCard', () => {
             communityImage: null,
           },
         ],
-      };
+      } as unknown as UnifiedMilestone;
 
       const { container } = render(
         <MilestoneCard milestone={milestoneWithUnsortedGrants} isAuthorized={false} />
@@ -360,7 +360,7 @@ describe('MilestoneCard', () => {
     });
 
     it('should handle milestone with deliverables data structure', () => {
-      const milestoneWithDeliverables: UnifiedMilestone = {
+      const milestoneWithDeliverables = {
         ...mockCompletedMilestone,
         completed: true,
         source: {
@@ -388,7 +388,7 @@ describe('MilestoneCard', () => {
           } as any,
           grantMilestone: null,
         },
-      } as UnifiedMilestone;
+      } as unknown as UnifiedMilestone;
 
       // Component should render without crashing even with deliverables in data
       render(<MilestoneCard milestone={milestoneWithDeliverables} isAuthorized={false} />);
@@ -424,10 +424,10 @@ describe('MilestoneCard', () => {
 
   describe('Edge Cases', () => {
     it('should handle milestone without description', () => {
-      const milestoneWithoutDescription: UnifiedMilestone = {
+      const milestoneWithoutDescription = {
         ...mockProjectMilestone,
         description: '',
-      };
+      } as unknown as UnifiedMilestone;
 
       render(<MilestoneCard milestone={milestoneWithoutDescription} isAuthorized={false} />);
 
@@ -435,7 +435,7 @@ describe('MilestoneCard', () => {
     });
 
     it('should handle milestone without attester', () => {
-      const milestoneWithoutAttester: UnifiedMilestone = {
+      const milestoneWithoutAttester = {
         ...mockProjectMilestone,
         source: {
           projectMilestone: {
@@ -445,7 +445,7 @@ describe('MilestoneCard', () => {
           },
           grantMilestone: null,
         },
-      };
+      } as unknown as UnifiedMilestone;
 
       render(<MilestoneCard milestone={milestoneWithoutAttester} isAuthorized={false} />);
 
@@ -453,14 +453,14 @@ describe('MilestoneCard', () => {
     });
 
     it('should handle grant milestone without community image', () => {
-      const milestoneWithoutImage: UnifiedMilestone = {
+      const milestoneWithoutImage = {
         ...mockGrantMilestone,
         source: {
           ...mockGrantMilestone.source,
           grantMilestone: {
-            ...mockGrantMilestone.source.grantMilestone!,
+            ...(mockGrantMilestone.source as any).grantMilestone,
             grant: {
-              ...mockGrantMilestone.source.grantMilestone!.grant,
+              ...(mockGrantMilestone.source as any).grantMilestone.grant,
               community: {
                 details: {
                   data: {
@@ -473,7 +473,7 @@ describe('MilestoneCard', () => {
             },
           },
         },
-      };
+      } as unknown as UnifiedMilestone;
 
       render(<MilestoneCard milestone={milestoneWithoutImage} isAuthorized={false} />);
 
@@ -481,14 +481,14 @@ describe('MilestoneCard', () => {
     });
 
     it('should handle grant milestone without title', () => {
-      const milestoneWithoutGrantTitle: UnifiedMilestone = {
+      const milestoneWithoutGrantTitle = {
         ...mockGrantMilestone,
         source: {
           ...mockGrantMilestone.source,
           grantMilestone: {
-            ...mockGrantMilestone.source.grantMilestone!,
+            ...(mockGrantMilestone.source as any).grantMilestone,
             grant: {
-              ...mockGrantMilestone.source.grantMilestone!.grant,
+              ...(mockGrantMilestone.source as any).grantMilestone.grant,
               details: {
                 data: {
                   title: '',
@@ -498,7 +498,7 @@ describe('MilestoneCard', () => {
             },
           },
         },
-      };
+      } as unknown as UnifiedMilestone;
 
       render(<MilestoneCard milestone={milestoneWithoutGrantTitle} isAuthorized={false} />);
 

@@ -83,7 +83,7 @@ jest.mock('@/utilities/markdown', () => ({
 }));
 
 describe('GrantCard', () => {
-  const mockGrant: IGrantResponse = {
+  const mockGrant = {
     uid: 'grant-123',
     refUID: 'ref-123',
     createdAt: 1704067200000,
@@ -116,7 +116,7 @@ describe('GrantCard', () => {
       { uid: 'update-1' } as any,
     ],
     categories: ['DeFi', 'Infrastructure'],
-  } as IGrantResponse;
+  } as unknown as IGrantResponse;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -255,7 +255,7 @@ describe('GrantCard', () => {
       const grantWithoutProject = {
         ...mockGrant,
         project: undefined,
-      } as IGrantResponse;
+      } as unknown as IGrantResponse;
 
       render(<GrantCard grant={grantWithoutProject} index={0} />);
 

@@ -184,7 +184,7 @@ export function createErrorResponse(
   error: string,
   statusCode: number = 400,
   message?: string
-): HttpResponse {
+): ReturnType<typeof HttpResponse.json> {
   return HttpResponse.json(
     {
       error,
@@ -202,7 +202,7 @@ export function createSuccessResponse<T>(
   data: T,
   statusCode: number = 200,
   message?: string
-): HttpResponse {
+): ReturnType<typeof HttpResponse.json> {
   return HttpResponse.json(
     {
       data,

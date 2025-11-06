@@ -88,7 +88,7 @@ describe('StepperDialog', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    (useStepper as jest.Mock).mockReturnValue(defaultStepperState);
+    (useStepper as unknown as jest.Mock).mockReturnValue(defaultStepperState);
   });
 
   describe('Rendering', () => {
@@ -100,7 +100,7 @@ describe('StepperDialog', () => {
     });
 
     it('should not render dialog when isStepperOpen is false', () => {
-      (useStepper as jest.Mock).mockReturnValue({
+      (useStepper as unknown as jest.Mock).mockReturnValue({
         ...defaultStepperState,
         isStepperOpen: false,
       });
@@ -135,7 +135,7 @@ describe('StepperDialog', () => {
 
   describe('Step States', () => {
     it('should highlight "preparing" step when active', () => {
-      (useStepper as jest.Mock).mockReturnValue({
+      (useStepper as unknown as jest.Mock).mockReturnValue({
         ...defaultStepperState,
         stepperStep: 'preparing',
       });
@@ -148,7 +148,7 @@ describe('StepperDialog', () => {
     });
 
     it('should highlight "pending" step when active', () => {
-      (useStepper as jest.Mock).mockReturnValue({
+      (useStepper as unknown as jest.Mock).mockReturnValue({
         ...defaultStepperState,
         stepperStep: 'pending',
       });
@@ -160,7 +160,7 @@ describe('StepperDialog', () => {
     });
 
     it('should highlight "confirmed" step when active', () => {
-      (useStepper as jest.Mock).mockReturnValue({
+      (useStepper as unknown as jest.Mock).mockReturnValue({
         ...defaultStepperState,
         stepperStep: 'confirmed',
       });
@@ -172,7 +172,7 @@ describe('StepperDialog', () => {
     });
 
     it('should highlight "indexing" step when active', () => {
-      (useStepper as jest.Mock).mockReturnValue({
+      (useStepper as unknown as jest.Mock).mockReturnValue({
         ...defaultStepperState,
         stepperStep: 'indexing',
       });
@@ -184,7 +184,7 @@ describe('StepperDialog', () => {
     });
 
     it('should highlight "indexed" step when active', () => {
-      (useStepper as jest.Mock).mockReturnValue({
+      (useStepper as unknown as jest.Mock).mockReturnValue({
         ...defaultStepperState,
         stepperStep: 'indexed',
       });
@@ -196,7 +196,7 @@ describe('StepperDialog', () => {
     });
 
     it('should dim steps that are not yet reached', () => {
-      (useStepper as jest.Mock).mockReturnValue({
+      (useStepper as unknown as jest.Mock).mockReturnValue({
         ...defaultStepperState,
         stepperStep: 'preparing',
       });
@@ -210,7 +210,7 @@ describe('StepperDialog', () => {
     });
 
     it('should keep completed steps highlighted', () => {
-      (useStepper as jest.Mock).mockReturnValue({
+      (useStepper as unknown as jest.Mock).mockReturnValue({
         ...defaultStepperState,
         stepperStep: 'confirmed',
       });
@@ -242,7 +242,7 @@ describe('StepperDialog', () => {
     });
 
     it('should show spinner for active step', () => {
-      (useStepper as jest.Mock).mockReturnValue({
+      (useStepper as unknown as jest.Mock).mockReturnValue({
         ...defaultStepperState,
         stepperStep: 'pending',
       });
@@ -257,7 +257,7 @@ describe('StepperDialog', () => {
     });
 
     it('should show number for completed steps', () => {
-      (useStepper as jest.Mock).mockReturnValue({
+      (useStepper as unknown as jest.Mock).mockReturnValue({
         ...defaultStepperState,
         stepperStep: 'confirmed',
       });
@@ -270,7 +270,7 @@ describe('StepperDialog', () => {
     });
 
     it('should show number for pending steps', () => {
-      (useStepper as jest.Mock).mockReturnValue({
+      (useStepper as unknown as jest.Mock).mockReturnValue({
         ...defaultStepperState,
         stepperStep: 'preparing',
       });
@@ -287,7 +287,7 @@ describe('StepperDialog', () => {
 
   describe('Step Colors', () => {
     it('should use blue color for completed and active steps', () => {
-      (useStepper as jest.Mock).mockReturnValue({
+      (useStepper as unknown as jest.Mock).mockReturnValue({
         ...defaultStepperState,
         stepperStep: 'confirmed',
       });
@@ -306,7 +306,7 @@ describe('StepperDialog', () => {
     });
 
     it('should use gray color for pending steps', () => {
-      (useStepper as jest.Mock).mockReturnValue({
+      (useStepper as unknown as jest.Mock).mockReturnValue({
         ...defaultStepperState,
         stepperStep: 'preparing',
       });
@@ -366,7 +366,7 @@ describe('StepperDialog', () => {
     });
 
     it('should correctly identify step numbers', () => {
-      (useStepper as jest.Mock).mockReturnValue({
+      (useStepper as unknown as jest.Mock).mockReturnValue({
         ...defaultStepperState,
         stepperStep: 'indexing',
       });
@@ -384,7 +384,7 @@ describe('StepperDialog', () => {
     });
 
     it('should handle final step completion', () => {
-      (useStepper as jest.Mock).mockReturnValue({
+      (useStepper as unknown as jest.Mock).mockReturnValue({
         ...defaultStepperState,
         stepperStep: 'indexed',
       });
@@ -510,7 +510,7 @@ describe('StepperDialog', () => {
 
   describe('Animation', () => {
     it('should have spinner animation class', () => {
-      (useStepper as jest.Mock).mockReturnValue({
+      (useStepper as unknown as jest.Mock).mockReturnValue({
         ...defaultStepperState,
         stepperStep: 'pending',
       });
@@ -531,7 +531,7 @@ describe('StepperDialog', () => {
 
   describe('Edge Cases', () => {
     it('should handle undefined stepperStep', () => {
-      (useStepper as jest.Mock).mockReturnValue({
+      (useStepper as unknown as jest.Mock).mockReturnValue({
         ...defaultStepperState,
         stepperStep: undefined,
       });
@@ -545,13 +545,13 @@ describe('StepperDialog', () => {
     it('should handle rapid step changes', () => {
       const { rerender } = render(<StepperDialog />);
 
-      (useStepper as jest.Mock).mockReturnValue({
+      (useStepper as unknown as jest.Mock).mockReturnValue({
         ...defaultStepperState,
         stepperStep: 'pending',
       });
       rerender(<StepperDialog />);
 
-      (useStepper as jest.Mock).mockReturnValue({
+      (useStepper as unknown as jest.Mock).mockReturnValue({
         ...defaultStepperState,
         stepperStep: 'confirmed',
       });
@@ -563,13 +563,13 @@ describe('StepperDialog', () => {
     it('should maintain state when reopened', () => {
       const { rerender } = render(<StepperDialog />);
 
-      (useStepper as jest.Mock).mockReturnValue({
+      (useStepper as unknown as jest.Mock).mockReturnValue({
         ...defaultStepperState,
         isStepperOpen: false,
       });
       rerender(<StepperDialog />);
 
-      (useStepper as jest.Mock).mockReturnValue({
+      (useStepper as unknown as jest.Mock).mockReturnValue({
         ...defaultStepperState,
         isStepperOpen: true,
         stepperStep: 'indexed',
