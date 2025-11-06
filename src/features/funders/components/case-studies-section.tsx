@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { layoutTheme } from "@/src/helper/theme";
+import { marketingLayoutTheme } from "@/src/helper/theme";
 import { cn } from "@/utilities/tailwind";
 import Image from "next/image";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -361,7 +361,7 @@ function CaseStudyCardComponent({ card, hasShadowMd }: { card: CaseStudyCard; ha
 export function CaseStudiesSection() {
     return (
         <section className={cn(
-            layoutTheme.padding,
+            marketingLayoutTheme.padding,
             "flex flex-col items-start w-full gap-16"
         )}
             id="case-studies"

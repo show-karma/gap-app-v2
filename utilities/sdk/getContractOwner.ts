@@ -21,6 +21,7 @@ export async function getContractOwner(
     const owner = await contract.owner?.();
     return owner;
   } catch (error: any) {
+    console.log("error", error);
     errorManager(`Error getting contract owner`, error);
     return undefined;
   }

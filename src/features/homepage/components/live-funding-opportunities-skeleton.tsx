@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRightIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
 import { PAGES } from "@/utilities/pages";
-import { layoutTheme } from "@/src/helper/theme";
+import { marketingLayoutTheme } from "@/src/helper/theme";
 import { cn } from "@/utilities/tailwind";
 
 function FundingOpportunityCardSkeleton() {
@@ -46,7 +46,7 @@ function FundingOpportunityCardSkeleton() {
 
 export function LiveFundingOpportunitiesSkeleton() {
     return (
-        <section className={cn(layoutTheme.padding, "py-16 w-full")}>
+        <section className={cn(marketingLayoutTheme.padding, "py-16 w-full")}>
             {/* Header */}
             <div className="flex items-center justify-between mb-8">
                 <h2 className="text-base font-medium leading-6 text-center text-muted-foreground">

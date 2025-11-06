@@ -1,12 +1,12 @@
 import { cn } from "@/utilities/tailwind";
-import { layoutTheme } from "@/src/helper/theme";
+import { marketingLayoutTheme } from "@/src/helper/theme";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { SOCIALS } from "@/utilities/socials";
 
 export function HandleTheVisionSection() {
     return (
-        <section className={cn(layoutTheme.padding, "pb-16 md:pb-24")}>
+        <section className={cn(marketingLayoutTheme.padding, "pb-16 md:pb-24")}>
             <div className="flex flex-col items-center gap-6">
                 <h2 className="text-3xl md:text-5xl font-semibold text-foreground text-center leading-none tracking-tight">
                     Focus on ecosystem growth and impact.<br /> We handle the infrastructure.

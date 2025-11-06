@@ -19,6 +19,7 @@ import { ContributorProfileDialog } from "@/components/Dialogs/ContributorProfil
 import { OnboardingDialog } from "@/components/Dialogs/OnboardingDialog";
 import { Navbar } from "@/src/components/navbar/navbar";
 import { Footer } from "@/src/components/footer/footer";
+import { PermissionsProvider } from "@/components/Utilities/PermissionsProvider";
 
 export const metadata = defaultMetadata;
 
@@ -46,6 +47,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <PrivyProviderWrapper>
+            <PermissionsProvider />
             <Toaster />
             <StepperDialog />
             <Suspense fallback={null}>

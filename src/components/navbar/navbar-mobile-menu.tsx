@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { PhoneCall, ChevronRight, CircleHelp, LogOutIcon, ToggleLeft, ToggleRight, FolderKanban, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { PhoneCall, ChevronRight, CircleHelp, LogOutIcon, ToggleLeft, ToggleRight, FolderKanban, ShieldCheck, CheckCircle2, Settings } from "lucide-react";
 import { SOCIALS } from "@/utilities/socials";
 import { TwitterIcon, DiscordIcon, TelegramIcon } from "@/components/Icons";
 import { ParagraphIcon } from "@/components/Icons/Paragraph";
@@ -27,12 +27,13 @@ import { NavbarSearch } from "./navbar-search";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "next-themes";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
-import { useContributorProfile } from "@/hooks/useContributorProfile";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import { PAGES } from "@/utilities/pages";
 import { useCommunitiesStore } from "@/store/communities";
-import { useAdminCommunities } from "@/hooks/useAdminCommunities";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
+import { useStaff } from "@/hooks/useStaff";
+import { useOwnerStore } from "@/store";
+import { useRegistryStore } from "@/store/registry";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Logo } from "../shared/logo";
 
@@ -83,18 +84,18 @@ export function NavbarMobileMenu() {
             displayName: formatAddress(address),
         }
         : undefined;
-    const { profile } = useContributorProfile(account?.address as `0x${string}`);
-
-    const firstName = profile?.data?.name?.split(" ")[0] || "";
-    const displayName = firstName || profile?.data?.name || account?.displayName;
 
     // Check admin and reviewer permissions
     const { communities } = useCommunitiesStore();
-    useAdminCommunities(address);
     const { programs: reviewerPrograms } = useReviewerPrograms();
+    const { isStaff } = useStaff();
+    const isOwner = useOwnerStore((state) => state.isOwner);
+    const { isPoolManager, isRegistryAdmin } = useRegistryStore();
 
     const isCommunityAdmin = communities.length !== 0;
     const hasReviewerRole = reviewerPrograms && reviewerPrograms.length > 0;
+    const hasAdminAccess = isStaff || isOwner || isCommunityAdmin;
+    const isRegistryAllowed = (isRegistryAdmin || isPoolManager) && isLoggedIn;
 
     return (
         <div className="xl:hidden flex flex-row items-center gap-4 w-full justify-between">
@@ -219,7 +220,7 @@ export function NavbarMobileMenu() {
                                         <span className={menuStyles.itemText}>Review</span>
                                     </Link>
                                 )}
-                                {isCommunityAdmin && (
+                                {hasAdminAccess && (
                                     <Link
                                         href={PAGES.ADMIN.LIST}
                                         className="w-full flex items-center gap-3 py-3 rounded-md hover:bg-accent text-left"
@@ -227,6 +228,16 @@ export function NavbarMobileMenu() {
                                     >
                                         <ShieldCheck className={menuStyles.itemIcon} />
                                         <span className={menuStyles.itemText}>Admin</span>
+                                    </Link>
+                                )}
+                                {isRegistryAllowed && (
+                                    <Link
+                                        href={PAGES.REGISTRY.MANAGE_PROGRAMS}
+                                        className="w-full flex items-center gap-3 py-3 rounded-md hover:bg-accent text-left"
+                                        onClick={() => setMobileMenuOpen(false)}
+                                    >
+                                        <Settings className={menuStyles.itemIcon} />
+                                        <span className={menuStyles.itemText}>Manage Programs</span>
                                     </Link>
                                 )}
                                 <ExternalLink

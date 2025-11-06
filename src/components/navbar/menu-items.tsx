@@ -105,7 +105,7 @@ export const exploreItems: ExploreItems = {
         {
             href: PAGES.REGISTRY.ROOT,
             icon: Radio,
-            title: "Latest opportunities"
+            title: "Funding Map"
         }
     ]
 };

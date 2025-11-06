@@ -41,7 +41,7 @@ export default async function Page(props: Props) {
   const defaultSelectedMaturityStage = "all" as MaturityStageOptions;
 
   return (
-    <div className="flex flex-col w-full max-w-full sm:px-3 md:px-4 px-6 py-2">
+    <div className="-my-4 flex flex-col w-full max-w-full py-2">
       <CommunityGrants
         categoriesOptions={categoriesOptions}
         defaultSelectedCategories={defaultSelectedCategories}
