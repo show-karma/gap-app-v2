@@ -2,10 +2,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { marketingLayoutTheme } from "@/src/helper/theme";
 import { cn } from "@/utilities/tailwind";
-import Image from "next/image";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { chosenCommunities } from "@/utilities/chosenCommunities";
-import { useState } from "react";
+import { CustomerAvatar } from "./customer-avatar";
+import { CommunityImage } from "./community-image";
 
 /**
  * Metric card displaying a key statistic with optional community logos.
@@ -148,63 +148,6 @@ function MetricCardComponent({ card }: { card: MetricCard }) {
     );
 }
 
-/**
- * Component for rendering a customer avatar with error fallback.
- */
-function CustomerAvatar({ src, alt }: { src: string; alt: string }) {
-    const [error, setError] = useState(false);
-
-    if (error) {
-        return (
-            <div className="relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
-                <span className="text-xs text-muted-foreground">
-                    {alt.charAt(0).toUpperCase()}
-                </span>
-            </div>
-        );
-    }
-
-    return (
-        <div className="relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
-            <Image
-                src={src}
-                alt={alt}
-                fill
-                className="object-cover"
-                onError={() => setError(true)}
-            />
-        </div>
-    );
-}
-
-/**
- * Component for rendering a community logo with error fallback.
- */
-function CommunityImage({ src, alt }: { src: string; alt: string }) {
-    const [error, setError] = useState(false);
-
-    if (error) {
-        return (
-            <div className="relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
-                <span className="text-[10px] text-muted-foreground font-semibold">
-                    {alt.slice(0, 2).toUpperCase()}
-                </span>
-            </div>
-        );
-    }
-
-    return (
-        <div className="relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
-            <Image
-                src={src}
-                alt={alt}
-                fill
-                className="object-cover"
-                onError={() => setError(true)}
-            />
-        </div>
-    );
-}
 
 /**
  * Renders a testimonial card with quote styling and author information.
