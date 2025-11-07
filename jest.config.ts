@@ -25,6 +25,9 @@ const config: Config = {
   // The test environment that will be used for testing
   testEnvironment: "jest-environment-jsdom",
 
+  // Use custom resolver for MSW modules to handle pnpm structure
+  resolver: "<rootDir>/jest-resolver.js",
+
   moduleNameMapper: {
     "^@/app/(.*)$": "<rootDir>/app/$1",
     "^@/components/(.*)$": "<rootDir>/components/$1",
@@ -38,11 +41,6 @@ const config: Config = {
     "^@/services/(.*)$": "<rootDir>/services/$1",
     "^@/src/(.*)$": "<rootDir>/src/$1",
     "^@/__tests__/(.*)$": "<rootDir>/__tests__/$1",
-    "^msw/node$": "<rootDir>/node_modules/msw/lib/node/index.js",
-    "^@mswjs/interceptors$": "<rootDir>/node_modules/.pnpm/@mswjs+interceptors@0.40.0/node_modules/@mswjs/interceptors/lib/node/index.js",
-    "^@mswjs/interceptors/ClientRequest$": "<rootDir>/node_modules/.pnpm/@mswjs+interceptors@0.40.0/node_modules/@mswjs/interceptors/lib/node/interceptors/ClientRequest/index.js",
-    "^@mswjs/interceptors/XMLHttpRequest$": "<rootDir>/node_modules/.pnpm/@mswjs+interceptors@0.40.0/node_modules/@mswjs/interceptors/lib/browser/interceptors/XMLHttpRequest/index.js",
-    "^@mswjs/interceptors/fetch$": "<rootDir>/node_modules/.pnpm/@mswjs+interceptors@0.40.0/node_modules/@mswjs/interceptors/lib/node/interceptors/fetch/index.js",
   },
 
   // Transform ESM modules that need to be compiled for Jest

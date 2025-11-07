@@ -1,10 +1,47 @@
 import "@testing-library/jest-dom";
 import { TextEncoder, TextDecoder } from "util";
-import "@/__tests__/utils/msw/setup";
 
 // Polyfills
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder;
+
+// Fetch API polyfills for MSW (Jest jsdom environment doesn't expose Node's native fetch)
+// MUST be set up BEFORE importing MSW setup
+// Node.js 18+ has native fetch, but Jest's jsdom environment doesn't expose it to the global scope
+if (typeof globalThis.Response === 'undefined') {
+  globalThis.Response = class Response {
+    constructor(body, init = {}) {
+      this.body = body;
+      this.status = init.status || 200;
+      this.statusText = init.statusText || 'OK';
+      this.headers = new Map(Object.entries(init.headers || {}));
+      this.ok = this.status >= 200 && this.status < 300;
+    }
+    async text() {
+      return typeof this.body === 'string' ? this.body : JSON.stringify(this.body);
+    }
+    async json() {
+      return typeof this.body === 'string' ? JSON.parse(this.body) : this.body;
+    }
+  };
+}
+
+if (typeof globalThis.Request === 'undefined') {
+  globalThis.Request = class Request {
+    constructor(input, init = {}) {
+      this.url = typeof input === 'string' ? input : input.url;
+      this.method = init.method || 'GET';
+      this.headers = new Map(Object.entries(init.headers || {}));
+    }
+  };
+}
+
+if (typeof globalThis.Headers === 'undefined') {
+  globalThis.Headers = class Headers extends Map {};
+}
+
+// Import MSW setup AFTER polyfills are configured
+import "@/__tests__/utils/msw/setup";
 
 // Increase timeout for slower tests
 jest.setTimeout(30000);
