@@ -132,9 +132,15 @@ describe("Integration: Donation Flow", () => {
     setupDefaultMocks();
     setupLocalStorageMock();
 
-    // Setup default toast mocks
-    (toast.error as jest.Mock).mockImplementation(() => {});
-    (toast.success as jest.Mock).mockImplementation(() => {});
+    // Setup default toast mocks - track calls instead of silencing them
+    (toast.error as jest.Mock).mockImplementation((message: string) => {
+      // Store error messages for verification in tests
+      const errorCalls = (toast.error as jest.Mock).mock.calls;
+      return `toast-error:${message}`;
+    });
+    (toast.success as jest.Mock).mockImplementation((message: string) => {
+      return `toast-success:${message}`;
+    });
 
     // Clear cart before each test
     const { result } = renderHook(() => useDonationCart());
@@ -357,6 +363,13 @@ describe("Integration: Donation Flow", () => {
         })
       ).rejects.toThrow("User rejected");
 
+      // Assert: Error toast was shown to user
+      expect(toast.error).toHaveBeenCalled();
+      const errorCalls = (toast.error as jest.Mock).mock.calls;
+      expect(errorCalls.length).toBeGreaterThan(0);
+      const lastErrorCall = errorCalls[errorCalls.length - 1][0];
+      expect(lastErrorCall).toBeTruthy();
+
       // Assert: User can retry - the function is still available
       expect(transferHook.result.current.executeDonations).toBeDefined();
     });
@@ -387,6 +400,11 @@ describe("Integration: Donation Flow", () => {
           await transferHook.result.current.executeDonations([payment], getRecipient);
         })
       ).rejects.toThrow();
+
+      // Assert: Error toast was shown to user
+      expect(toast.error).toHaveBeenCalled();
+      const errorCalls = (toast.error as jest.Mock).mock.calls;
+      expect(errorCalls.length).toBeGreaterThan(0);
 
       // User can retry - the function is still available
       expect(transferHook.result.current.executeDonations).toBeDefined();
@@ -510,6 +528,11 @@ describe("Integration: Donation Flow", () => {
           );
         })
       ).rejects.toThrow("Missing payout address");
+
+      // Assert: Error toast was shown to user
+      expect(toast.error).toHaveBeenCalled();
+      const errorCalls = (toast.error as jest.Mock).mock.calls;
+      expect(errorCalls.length).toBeGreaterThan(0);
     });
 
     it("validates payout address format", async () => {
@@ -540,6 +563,11 @@ describe("Integration: Donation Flow", () => {
           );
         })
       ).rejects.toThrow();
+
+      // Assert: Error toast was shown to user
+      expect(toast.error).toHaveBeenCalled();
+      const errorCalls = (toast.error as jest.Mock).mock.calls;
+      expect(errorCalls.length).toBeGreaterThan(0);
     });
   });
 

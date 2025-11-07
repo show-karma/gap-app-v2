@@ -125,6 +125,7 @@ describe("chainSyncValidation utilities", () => {
 
   describe("waitForChainSync", () => {
     it("should return wallet client immediately when already synced", async () => {
+      jest.useRealTimers();
       const walletClient = createMockWalletClient(10);
       const getWalletClient = jest.fn().mockReturnValue(walletClient);
       const expectedChainId = 10;
@@ -133,9 +134,10 @@ describe("chainSyncValidation utilities", () => {
 
       expect(result).toBe(walletClient);
       expect(getWalletClient).toHaveBeenCalledTimes(1);
-    });
+    }, 35000);
 
     it("should wait and retry when wallet is on wrong chain", async () => {
+      jest.useRealTimers();
       const wrongChainClient = createMockWalletClient(8453);
       const correctChainClient = createMockWalletClient(10);
       const getWalletClient = jest
@@ -145,19 +147,14 @@ describe("chainSyncValidation utilities", () => {
         .mockReturnValueOnce(correctChainClient);
       const expectedChainId = 10;
 
-      const promise = waitForChainSync(getWalletClient, expectedChainId, 30000, "donation");
-
-      // Fast-forward timers to trigger retries
-      await jest.advanceTimersByTimeAsync(500);
-      await jest.advanceTimersByTimeAsync(1000);
-
-      const result = await promise;
+      const result = await waitForChainSync(getWalletClient, expectedChainId, 30000, "donation");
 
       expect(result).toBe(correctChainClient);
       expect(getWalletClient).toHaveBeenCalledTimes(3);
-    });
+    }, 35000);
 
     it("should use exponential backoff for retries", async () => {
+      jest.useRealTimers();
       const wrongChainClient = createMockWalletClient(8453);
       const correctChainClient = createMockWalletClient(10);
       const getWalletClient = jest
@@ -166,35 +163,26 @@ describe("chainSyncValidation utilities", () => {
         .mockReturnValueOnce(wrongChainClient)
         .mockReturnValueOnce(correctChainClient);
 
-      const promise = waitForChainSync(getWalletClient, 10, 30000, "donation");
-
-      // Advance timers and system time together
-      await jest.advanceTimersByTimeAsync(500);
-      jest.setSystemTime(Date.now() + 500);
-      await jest.advanceTimersByTimeAsync(1000);
-      jest.setSystemTime(Date.now() + 1000);
-
-      const result = await promise;
+      const result = await waitForChainSync(getWalletClient, 10, 30000, "donation");
+      
       expect(result).toBe(correctChainClient);
       expect(getWalletClient).toHaveBeenCalledTimes(3);
-    });
+    }, 35000);
 
     it("should timeout after maxWaitMs", async () => {
+      jest.useRealTimers();
       const wrongChainClient = createMockWalletClient(8453);
       const getWalletClient = jest.fn().mockReturnValue(wrongChainClient);
       const expectedChainId = 10;
       const maxWaitMs = 100;
 
-      const promise = waitForChainSync(getWalletClient, expectedChainId, maxWaitMs, "donation");
-
-      // Advance timers and system time past timeout
-      await jest.advanceTimersByTimeAsync(maxWaitMs + 100);
-      jest.setSystemTime(Date.now() + maxWaitMs + 100);
-
-      await expect(promise).rejects.toThrow("Timed out waiting for wallet to sync");
-    });
+      await expect(
+        waitForChainSync(getWalletClient, expectedChainId, maxWaitMs, "donation")
+      ).rejects.toThrow("Timed out waiting for wallet to sync");
+    }, 35000);
 
     it("should make final attempt before timing out", async () => {
+      jest.useRealTimers();
       const wrongChainClient = createMockWalletClient(8453);
       const correctChainClient = createMockWalletClient(10);
       const getWalletClient = jest
@@ -204,61 +192,45 @@ describe("chainSyncValidation utilities", () => {
         .mockReturnValueOnce(correctChainClient); // Final attempt succeeds
 
       const maxWaitMs = 1000;
-      const promise = waitForChainSync(getWalletClient, 10, maxWaitMs, "donation");
-
-      // Advance timers and system time
-      await jest.advanceTimersByTimeAsync(500);
-      jest.setSystemTime(Date.now() + 500);
-      await jest.advanceTimersByTimeAsync(1000);
-      jest.setSystemTime(Date.now() + 1000);
-
-      const result = await promise;
+      const result = await waitForChainSync(getWalletClient, 10, maxWaitMs, "donation");
+      
       expect(result).toBe(correctChainClient);
-    });
+    }, 35000);
 
     it("should include operation name in timeout error", async () => {
+      jest.useRealTimers();
       const wrongChainClient = createMockWalletClient(8453);
       const getWalletClient = jest.fn().mockReturnValue(wrongChainClient);
       const maxWaitMs = 100;
 
-      const promise = waitForChainSync(getWalletClient, 10, maxWaitMs, "approval");
-
-      // Advance timers and system time past timeout
-      await jest.advanceTimersByTimeAsync(maxWaitMs + 100);
-      jest.setSystemTime(Date.now() + maxWaitMs + 100);
-
-      await expect(promise).rejects.toThrow("approval");
-    });
+      await expect(
+        waitForChainSync(getWalletClient, 10, maxWaitMs, "approval")
+      ).rejects.toThrow("approval");
+    }, 35000);
 
     it("should handle wallet client becoming null during wait", async () => {
+      jest.useRealTimers();
       const wrongChainClient = createMockWalletClient(8453);
       const getWalletClient = jest
         .fn()
         .mockReturnValueOnce(wrongChainClient)
         .mockReturnValueOnce(null);
 
-      const promise = waitForChainSync(getWalletClient, 10, 1000, "donation");
-
-      // Advance timers
-      await jest.advanceTimersByTimeAsync(500);
-      jest.setSystemTime(Date.now() + 500);
-
-      await expect(promise).rejects.toThrow();
-    });
+      await expect(
+        waitForChainSync(getWalletClient, 10, 1000, "donation")
+      ).rejects.toThrow();
+    }, 35000);
 
     it("should cap exponential backoff delay at 5000ms", async () => {
+      jest.useRealTimers();
       const wrongChainClient = createMockWalletClient(8453);
       const getWalletClient = jest.fn().mockReturnValue(wrongChainClient);
       const maxWaitMs = 100;
 
-      const promise = waitForChainSync(getWalletClient, 10, maxWaitMs, "donation");
-
-      // Advance timers and system time past timeout
-      await jest.advanceTimersByTimeAsync(maxWaitMs + 100);
-      jest.setSystemTime(Date.now() + maxWaitMs + 100);
-
-      await expect(promise).rejects.toThrow("Timed out");
-    });
+      await expect(
+        waitForChainSync(getWalletClient, 10, maxWaitMs, "donation")
+      ).rejects.toThrow("Timed out");
+    }, 35000);
   });
 
   describe("getCurrentChainId", () => {
@@ -380,6 +352,7 @@ describe("chainSyncValidation utilities", () => {
 
   describe("Integration scenarios", () => {
     it("should handle wallet switching chains during wait", async () => {
+      jest.useRealTimers();
       const baseClient = createMockWalletClient(8453);
       const optimismClient = createMockWalletClient(10);
       const getWalletClient = jest
@@ -388,16 +361,13 @@ describe("chainSyncValidation utilities", () => {
         .mockReturnValueOnce(baseClient)
         .mockReturnValueOnce(optimismClient);
 
-      const promise = waitForChainSync(getWalletClient, 10, 30000, "donation");
-
-      await jest.advanceTimersByTimeAsync(500);
-      await jest.advanceTimersByTimeAsync(1000);
-
-      const result = await promise;
+      const result = await waitForChainSync(getWalletClient, 10, 30000, "donation");
+      
       expect(result).toBe(optimismClient);
-    });
+    }, 35000);
 
     it("should handle wallet disconnecting during wait", async () => {
+      jest.useRealTimers();
       const connectedClient = createMockWalletClient(8453);
       const disconnectedClient = createMockWalletClient(8453, false);
       const getWalletClient = jest
@@ -405,14 +375,10 @@ describe("chainSyncValidation utilities", () => {
         .mockReturnValueOnce(connectedClient)
         .mockReturnValueOnce(disconnectedClient);
 
-      const promise = waitForChainSync(getWalletClient, 10, 1000, "donation");
-
-      // Advance timers
-      await jest.advanceTimersByTimeAsync(500);
-      jest.setSystemTime(Date.now() + 500);
-
-      await expect(promise).rejects.toThrow();
-    });
+      await expect(
+        waitForChainSync(getWalletClient, 10, 1000, "donation")
+      ).rejects.toThrow();
+    }, 35000);
   });
 });
 

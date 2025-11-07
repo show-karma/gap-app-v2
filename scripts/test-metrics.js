@@ -124,16 +124,32 @@ function collectTestMetrics() {
     return stats;
   } catch (error) {
     console.error('Error running tests:', error.message);
+    console.error('⚠️  Tests failed - metrics collection will continue but script will exit with error code');
 
     // If tests fail, still try to extract whatever data we can
     const coverage = extractCoverageData();
 
-    return {
+    const failedStats = {
       timestamp: new Date().toISOString(),
       executionTime: Math.round((Date.now() - startTime) / 1000),
       coverage,
       error: error.message,
+      tests: {
+        total: 0,
+        passed: 0,
+        failed: 0,
+        skipped: 0,
+        todo: 0,
+      },
+      suites: {
+        total: 0,
+        passed: 0,
+        failed: 0,
+      },
     };
+
+    // Store failed stats for tracking but throw to exit with error code
+    throw new Error(`Tests failed: ${error.message}`);
   }
 }
 
@@ -486,7 +502,38 @@ function main() {
 
   if (command === 'collect') {
     // Collect new metrics
-    const stats = collectTestMetrics();
+    let stats;
+    let testFailed = false;
+    
+    try {
+      stats = collectTestMetrics();
+    } catch (error) {
+      testFailed = true;
+      console.error('\n❌ Test execution failed:', error.message);
+      console.error('⚠️  Attempting to collect partial metrics...\n');
+      
+      // Try to extract coverage even if tests failed
+      const coverage = extractCoverageData();
+      stats = {
+        timestamp: new Date().toISOString(),
+        executionTime: 0,
+        coverage,
+        error: error.message,
+        tests: {
+          total: 0,
+          passed: 0,
+          failed: 0,
+          skipped: 0,
+          todo: 0,
+        },
+        suites: {
+          total: 0,
+          passed: 0,
+          failed: 0,
+        },
+      };
+    }
+    
     const history = loadHistory();
 
     history.runs.push(stats);
@@ -500,6 +547,12 @@ function main() {
 
     displayDashboard(stats, history);
     generateHtmlReport(stats, history);
+    
+    // Exit with error code if tests failed
+    if (testFailed) {
+      console.error('\n❌ Exiting with error code due to test failures');
+      process.exit(1);
+    }
   } else if (command === 'show') {
     // Show current metrics without running tests
     const history = loadHistory();

@@ -155,16 +155,75 @@ export const handlers = [
     });
   }),
 
-  // Example: Error response handler (can be used in tests)
-  // This is commented out by default but shows how to handle errors
-  /*
-  http.get(`${INDEXER_API_BASE_URL}/v2/error-example`, () => {
-    return new HttpResponse(
-      JSON.stringify({ error: 'Internal Server Error' }),
-      { status: 500 }
-    );
+  // Default error handlers for common error scenarios
+  // These provide baseline error handling that can be overridden in tests
+  // Usage in tests: Add ?forceError=400 to URL to trigger specific error responses
+
+  // Consolidated error handler that checks forceError query parameter
+  http.all(`${INDEXER_API_BASE_URL}/v2/*`, ({ request }) => {
+    const url = new URL(request.url);
+    const forceError = url.searchParams.get('forceError');
+
+    if (!forceError) {
+      // No error requested, let other handlers process
+      return;
+    }
+
+    switch (forceError) {
+      case '400':
+        return createErrorResponse('Bad Request', 400, 'Invalid request parameters');
+      case '401':
+        return createErrorResponse('Unauthorized', 401, 'Authentication required');
+      case '403':
+        return createErrorResponse('Forbidden', 403, 'Insufficient permissions');
+      case '404':
+        return createErrorResponse('Not Found', 404, 'Resource not found');
+      case '429':
+        return createErrorResponse('Too Many Requests', 429, 'Rate limit exceeded');
+      case '500':
+        return createErrorResponse('Internal Server Error', 500, 'An unexpected error occurred');
+      case '502':
+        return createErrorResponse('Bad Gateway', 502, 'Upstream service unavailable');
+      case '503':
+        return createErrorResponse('Service Unavailable', 503, 'Service temporarily unavailable');
+      default:
+        return createErrorResponse('Error', 500, `Unknown error code: ${forceError}`);
+    }
   }),
-  */
+
+  // Example error endpoints for testing specific error scenarios
+  // These can be used directly in tests without query parameters
+  http.get(`${INDEXER_API_BASE_URL}/v2/test-errors/400`, () => {
+    return createErrorResponse('Bad Request', 400, 'Invalid request parameters');
+  }),
+
+  http.get(`${INDEXER_API_BASE_URL}/v2/test-errors/401`, () => {
+    return createErrorResponse('Unauthorized', 401, 'Authentication required');
+  }),
+
+  http.get(`${INDEXER_API_BASE_URL}/v2/test-errors/403`, () => {
+    return createErrorResponse('Forbidden', 403, 'Insufficient permissions');
+  }),
+
+  http.get(`${INDEXER_API_BASE_URL}/v2/test-errors/404`, () => {
+    return createErrorResponse('Not Found', 404, 'Resource not found');
+  }),
+
+  http.get(`${INDEXER_API_BASE_URL}/v2/test-errors/429`, () => {
+    return createErrorResponse('Too Many Requests', 429, 'Rate limit exceeded');
+  }),
+
+  http.get(`${INDEXER_API_BASE_URL}/v2/test-errors/500`, () => {
+    return createErrorResponse('Internal Server Error', 500, 'An unexpected error occurred');
+  }),
+
+  http.get(`${INDEXER_API_BASE_URL}/v2/test-errors/502`, () => {
+    return createErrorResponse('Bad Gateway', 502, 'Upstream service unavailable');
+  }),
+
+  http.get(`${INDEXER_API_BASE_URL}/v2/test-errors/503`, () => {
+    return createErrorResponse('Service Unavailable', 503, 'Service temporarily unavailable');
+  }),
 ];
 
 /**

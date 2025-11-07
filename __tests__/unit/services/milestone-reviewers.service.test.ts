@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import { TokenManager } from '@/utilities/auth/token-manager';
 
 // Mock dependencies BEFORE importing the service
@@ -11,20 +11,29 @@ jest.mock('@/utilities/enviromentVars', () => ({
 }));
 
 // Create a persistent mock instance using var (hoisted) so it's available in jest.mock factory
-var mockAxiosInstance: any;
+// Use proper typing with jest.Mocked to maintain type safety
+let mockAxiosInstance: jest.Mocked<AxiosInstance>;
 
 // Mock api-client - the factory runs at hoist time, so we initialize the mock here
 jest.mock('@/utilities/auth/api-client', () => {
-  // Initialize mock instance inline in the factory
+  // Initialize mock instance inline in the factory with proper typing
   const instance = {
     get: jest.fn(),
     post: jest.fn(),
     delete: jest.fn(),
+    put: jest.fn(),
+    patch: jest.fn(),
+    request: jest.fn(),
+    head: jest.fn(),
+    options: jest.fn(),
     interceptors: {
-      request: { use: jest.fn() },
-      response: { use: jest.fn() }
-    }
-  };
+      request: { use: jest.fn(), eject: jest.fn(), clear: jest.fn() },
+      response: { use: jest.fn(), eject: jest.fn(), clear: jest.fn() }
+    },
+    defaults: {} as any,
+    getUri: jest.fn(),
+    deleteUri: jest.fn(),
+  } as unknown as jest.Mocked<AxiosInstance>;
 
   // Assign to the outer variable so tests can access it
   mockAxiosInstance = instance;
