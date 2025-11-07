@@ -1,0 +1,154 @@
+name: PR Tests
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: ['**'] # Run on PRs targeting any branch
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run linter
+        run: pnpm run lint
+
+      - name: Run tests with coverage
+        run: pnpm run test:coverage
+        env:
+          NODE_ENV: test
+
+      - name: Generate test summary
+        id: test-summary
+        if: always()
+        run: |
+          if [ -f coverage/coverage-summary.json ]; then
+            LINES=$(node -p "JSON.parse(require('fs').readFileSync('coverage/coverage-summary.json', 'utf-8')).total.lines.pct.toFixed(2)")
+            STATEMENTS=$(node -p "JSON.parse(require('fs').readFileSync('coverage/coverage-summary.json', 'utf-8')).total.statements.pct.toFixed(2)")
+            FUNCTIONS=$(node -p "JSON.parse(require('fs').readFileSync('coverage/coverage-summary.json', 'utf-8')).total.functions.pct.toFixed(2)")
+            BRANCHES=$(node -p "JSON.parse(require('fs').readFileSync('coverage/coverage-summary.json', 'utf-8')).total.branches.pct.toFixed(2)")
+            
+            echo "lines=${LINES}" >> $GITHUB_OUTPUT
+            echo "statements=${STATEMENTS}" >> $GITHUB_OUTPUT
+            echo "functions=${FUNCTIONS}" >> $GITHUB_OUTPUT
+            echo "branches=${BRANCHES}" >> $GITHUB_OUTPUT
+            echo "has_coverage=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_coverage=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Comment PR with test results
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const hasCoverage = '${{ steps.test-summary.outputs.has_coverage }}' === 'true';
+            
+            let body = '';
+            
+            if (context.payload.workflow_run && context.payload.workflow_run.conclusion === 'failure') {
+              body = `## ❌ Tests Failed\n\nSome tests failed. Please check the workflow logs for details.`;
+            } else if ('${{ job.status }}' === 'success') {
+              body = `## ✅ All Tests Passed!\n\n`;
+              
+              if (hasCoverage) {
+                const lines = '${{ steps.test-summary.outputs.lines }}';
+                const statements = '${{ steps.test-summary.outputs.statements }}';
+                const functions = '${{ steps.test-summary.outputs.functions }}';
+                const branches = '${{ steps.test-summary.outputs.branches }}';
+                
+                const coverageColor = (pct) => {
+                  const num = parseFloat(pct);
+                  if (num >= 80) return '🟢';
+                  if (num >= 70) return '🟡';
+                  if (num >= 50) return '🟠';
+                  return '🔴';
+                };
+                
+                body += `### 📊 Test Coverage\n\n`;
+                body += `| Metric | Coverage | Status |\n`;
+                body += `|--------|----------|--------|\n`;
+                body += `| Lines | ${lines}% | ${coverageColor(lines)} |\n`;
+                body += `| Statements | ${statements}% | ${coverageColor(statements)} |\n`;
+                body += `| Functions | ${functions}% | ${coverageColor(functions)} |\n`;
+                body += `| Branches | ${branches}% | ${coverageColor(branches)} |\n\n`;
+                
+                const minCoverage = 50;
+                if (parseFloat(lines) >= minCoverage) {
+                  body += `✅ Coverage meets the minimum threshold of ${minCoverage}%\n\n`;
+                } else {
+                  body += `⚠️ **Warning:** Coverage is below the ${minCoverage}% threshold\n\n`;
+                }
+              } else {
+                body += `Coverage report not available.\n\n`;
+              }
+              
+              body += `**Linting:** ✅ Passed\n`;
+              body += `**Tests:** ✅ All tests passed\n\n`;
+            } else {
+              body = `## ⚠️ Tests Completed with Issues\n\nPlease check the workflow logs for details.`;
+            }
+            
+            body += `\n---\n*Automated test report*`;
+            
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' && 
+              (comment.body.includes('All Tests Passed') || 
+               comment.body.includes('Tests Failed') ||
+               comment.body.includes('Tests Completed with Issues'))
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            coverage/
+            test-results.json
+          retention-days: 7
+          if-no-files-found: ignore
+
