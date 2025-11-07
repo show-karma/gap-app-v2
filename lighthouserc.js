@@ -7,6 +7,7 @@ module.exports = {
         'http://localhost:3000/',
         'http://localhost:3000/projects',
         'http://localhost:3000/communities',
+        'http://localhost:3000/grants',
       ],
       numberOfRuns: 3,
     },

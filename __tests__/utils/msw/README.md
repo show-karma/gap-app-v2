@@ -174,9 +174,25 @@ export const handlers = [
 
 The `handlers.ts` file provides helper functions:
 
-- `createAuthHeaders(token)`: Create authenticated request headers
+- `createAuthHeaders(token)`: Create authenticated request headers with Bearer prefix
 - `createErrorResponse(error, statusCode, message)`: Create error responses
 - `createSuccessResponse(data, statusCode, message)`: Create success responses
+
+### Example: Using Helper Functions
+
+```typescript
+import { createAuthHeaders, createErrorResponse, createSuccessResponse } from '@/__tests__/utils/msw/handlers';
+
+// Create authenticated headers (includes Bearer prefix automatically)
+const headers = createAuthHeaders('my-jwt-token');
+// Result: { 'Content-Type': 'application/json', 'Authorization': 'Bearer my-jwt-token' }
+
+// Create error response
+const errorResponse = createErrorResponse('Not Found', 404, 'Resource not found');
+
+// Create success response
+const successResponse = createSuccessResponse({ id: '123', name: 'Test' }, 200, 'Success');
+```
 
 ## Environment Variables
 
