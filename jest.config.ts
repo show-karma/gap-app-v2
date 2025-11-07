@@ -20,6 +20,9 @@ const config: Config = {
   // Indicates which provider should be used to instrument code for coverage
   coverageProvider: "v8",
 
+  // Coverage reporters - include json-summary for GitHub Actions
+  coverageReporters: ["json", "json-summary", "lcov", "text", "clover"],
+
   moduleDirectories: ["node_modules", "<rootDir>"],
 
   // The test environment that will be used for testing
