@@ -40,8 +40,12 @@ if (typeof globalThis.Headers === 'undefined') {
   globalThis.Headers = class Headers extends Map {};
 }
 
+// Mock until-async before importing MSW (it's an ESM-only package that Jest can't transform)
+// The manual mock in __mocks__/until-async.js will be used automatically
+jest.mock('until-async');
+
 // Import MSW setup AFTER polyfills are configured
-import "@/__tests__/utils/msw/setup";
+require("@/__tests__/utils/msw/setup");
 
 // Increase timeout for slower tests
 jest.setTimeout(30000);

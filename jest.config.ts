@@ -41,11 +41,13 @@ const config: Config = {
     "^@/services/(.*)$": "<rootDir>/services/$1",
     "^@/src/(.*)$": "<rootDir>/src/$1",
     "^@/__tests__/(.*)$": "<rootDir>/__tests__/$1",
+    "^until-async$": "<rootDir>/__mocks__/until-async.js",
   },
 
   // Transform ESM modules that need to be compiled for Jest
+  // Include MSW and all its dependencies (including nested pnpm packages)
   transformIgnorePatterns: [
-    "/node_modules/(?!(@show-karma|wagmi|@wagmi/core|@wagmi/connectors|viem|@privy-io|rehype-sanitize|hast-util-sanitize|msw|@mswjs|rehype-external-links)/)",
+    "/node_modules/(?!(@show-karma|wagmi|@wagmi/core|@wagmi/connectors|viem|@privy-io|rehype-sanitize|hast-util-sanitize|msw|@mswjs|until-async|rehype-external-links)/)",
   ],
 
   globalSetup: "./tests/global.js",
@@ -71,4 +73,7 @@ const createJestConfig = nextJest({
   dir: "./",
 });
 
-export default createJestConfig(config);
+// Create the async config function and ensure transformIgnorePatterns are preserved
+const jestConfig = createJestConfig(config);
+
+export default jestConfig;

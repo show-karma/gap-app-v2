@@ -100,6 +100,23 @@ module.exports = (request, options) => {
     }
   }
 
+  // Handle until-async (MSW dependency) - find and return CommonJS version if available
+  if (request === 'until-async') {
+    const untilAsyncPath = findPackageInPnpm('until-async');
+    if (untilAsyncPath) {
+      // Try to find a CommonJS entry point
+      const cjsPath = path.join(untilAsyncPath, 'lib', 'index.js');
+      if (fs.existsSync(cjsPath)) {
+        return cjsPath;
+      }
+      // Fall back to main entry
+      const mainPath = path.join(untilAsyncPath, 'index.js');
+      if (fs.existsSync(mainPath)) {
+        return mainPath;
+      }
+    }
+  }
+
   // Fall back to default resolver
   return options.defaultResolver(request, options);
 };
