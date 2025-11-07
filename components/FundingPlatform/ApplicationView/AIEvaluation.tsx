@@ -9,6 +9,7 @@ import {
     SunIcon,
 } from "@heroicons/react/24/outline";
 import { JSX } from "react";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 
 export type AIEvaluationData = string;
 
@@ -109,17 +110,14 @@ function DecisionDisplay({
     const getDecisionDisplay = (value: string) => {
         if (!isAuditGrants) return value.toUpperCase();
 
+        const decisionMap: Record<string, string> = {
+            "PASS": "High",
+            "NO_PASS": "Medium",
+            "REJECT": "Low"
+        };
+
         const upperValue = value.toUpperCase();
-        switch (upperValue) {
-            case "PASS":
-                return "High";
-            case "NO_PASS":
-                return "Medium";
-            case "REJECT":
-                return "Low";
-            default:
-                return upperValue;
-        }
+        return decisionMap[upperValue] || upperValue;
     };
 
     return (
@@ -141,9 +139,9 @@ function DisqualificationReason({ reason }: { reason: string }) {
             <h4 className="text-sm font-medium mb-2 text-red-700 dark:text-red-300">
                 Disqualification Reason
             </h4>
-            <p className="text-sm text-red-600 dark:text-red-400">
-                {reason}
-            </p>
+            <div className="text-sm text-red-600 dark:text-red-400">
+                <MarkdownPreview source={reason} />
+            </div>
         </div>
     );
 }
@@ -170,8 +168,10 @@ function EvaluationSummary({
                     <ul className="space-y-1">
                         {summary.strengths.map((strength, index) => (
                             <li key={index} className="flex items-start gap-2 text-sm">
-                                <CheckCircleIcon className="w-4 h-4 text-green-500 dark:text-green-400 mt-0.5 flex-shrink-0" />
-                                <span className="text-gray-700 dark:text-gray-300">{strength}</span>
+                                <CheckCircleIcon className="w-4 h-4 text-green-500 dark:text-green-400 mt-1 flex-shrink-0" />
+                                <div className="flex-1 text-gray-700 dark:text-gray-300">
+                                    <MarkdownPreview source={strength} />
+                                </div>
                             </li>
                         ))}
                     </ul>
@@ -186,8 +186,10 @@ function EvaluationSummary({
                     <ul className="space-y-1">
                         {summary.concerns.map((concern, index) => (
                             <li key={index} className="flex items-start gap-2 text-sm">
-                                <ExclamationTriangleIcon className="w-4 h-4 text-yellow-500 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
-                                <span className="text-gray-700 dark:text-gray-300">{concern}</span>
+                                <ExclamationTriangleIcon className="w-4 h-4 text-yellow-500 dark:text-yellow-400 mt-1 flex-shrink-0" />
+                                <div className="flex-1 text-gray-700 dark:text-gray-300">
+                                    <MarkdownPreview source={concern} />
+                                </div>
                             </li>
                         ))}
                     </ul>
@@ -202,8 +204,10 @@ function EvaluationSummary({
                     <ul className="space-y-1">
                         {summary.risk_factors.map((risk, index) => (
                             <li key={index} className="flex items-start gap-2 text-sm">
-                                <XMarkIcon className="w-4 h-4 text-red-500 dark:text-red-400 mt-0.5 flex-shrink-0" />
-                                <span className="text-gray-700 dark:text-gray-300">{risk}</span>
+                                <XMarkIcon className="w-4 h-4 text-red-500 dark:text-red-400 mt-1 flex-shrink-0" />
+                                <div className="flex-1 text-gray-700 dark:text-gray-300">
+                                    <MarkdownPreview source={risk} />
+                                </div>
                             </li>
                         ))}
                     </ul>
@@ -247,14 +251,14 @@ function ImprovementRecommendations({
                             </div>
                         )}
                         {rec.recommendation && (
-                            <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
-                                {rec.recommendation}
-                            </p>
+                            <div className="text-sm text-gray-700 dark:text-gray-300 mb-2">
+                                <MarkdownPreview source={rec.recommendation} />
+                            </div>
                         )}
                         {rec.impact && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                                <strong>Impact:</strong> {rec.impact}
-                            </p>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                                <strong>Impact:</strong> <MarkdownPreview source={rec.impact} />
+                            </div>
                         )}
                     </div>
                 ))}
@@ -268,7 +272,9 @@ function AdditionalNotes({ notes }: { notes: string }) {
     return (
         <div className="bg-gray-100 dark:bg-zinc-800 rounded-lg p-3">
             <h4 className="text-sm font-medium mb-2">Additional Notes</h4>
-            <p className="text-sm text-gray-700 dark:text-gray-300">{notes}</p>
+            <div className="text-sm text-gray-700 dark:text-gray-300">
+                <MarkdownPreview source={notes} />
+            </div>
         </div>
     );
 }
@@ -330,7 +336,11 @@ function EvaluationDisplay({
         }
 
         if (typeof value === "string") {
-            return <span className="text-gray-700 dark:text-gray-300">{value}</span>;
+            return (
+                <div className="text-gray-700 dark:text-gray-300">
+                    <MarkdownPreview source={value} />
+                </div>
+            );
         }
 
         if (typeof value === "number" || typeof value === "boolean") {
@@ -564,46 +574,42 @@ export function AIEvaluationDisplay({
         }
     };
 
-    const getScoreColor = (score: number) => {
+    const getScoreColor = (score: number): string => {
         if (score > 7) return "bg-green-500";
         if (score >= 4) return "bg-yellow-500";
         return "bg-red-500";
     };
 
-    const getScoreIcon = (score: number) => {
+    const getScoreIcon = (score: number): JSX.Element => {
         if (score > 7) return <CheckCircleIcon className="w-5 h-5 text-green-500" />;
         if (score >= 4) return <ExclamationTriangleIcon className="w-5 h-5 text-blue-500" />;
         return <XMarkIcon className="w-5 h-5 text-red-500" />;
     };
 
-    const getPriorityColor = (priority: string) => {
-        if (!priority) return "bg-zinc-100 dark:bg-zinc-700 text-gray-800 dark:text-gray-200";
+    const getPriorityColor = (priority: string): string => {
+        const defaultColor = "bg-zinc-100 dark:bg-zinc-700 text-gray-800 dark:text-gray-200";
+        if (!priority) return defaultColor;
 
-        switch (priority.toLowerCase()) {
-            case "high":
-                return "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300";
-            case "medium":
-                return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300";
-            case "low":
-                return "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300";
-            default:
-                return "bg-zinc-100 dark:bg-zinc-700 text-gray-800 dark:text-gray-200";
-        }
+        const colorMap: Record<string, string> = {
+            high: "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300",
+            medium: "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300",
+            low: "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"
+        };
+
+        return colorMap[priority.toLowerCase()] || defaultColor;
     };
 
-    const getStatusColor = (status: string) => {
-        if (!status) return "bg-zinc-100 dark:bg-zinc-700 text-gray-800 dark:text-gray-200";
+    const getStatusColor = (status: string): string => {
+        const defaultColor = "bg-zinc-100 dark:bg-zinc-700 text-gray-800 dark:text-gray-200";
+        if (!status) return defaultColor;
 
-        switch (status.toLowerCase()) {
-            case "complete":
-                return "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300";
-            case "incomplete":
-                return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300";
-            case "rejected":
-                return "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300";
-            default:
-                return "bg-zinc-100 dark:bg-zinc-700 text-gray-800 dark:text-gray-200";
-        }
+        const colorMap: Record<string, string> = {
+            complete: "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300",
+            incomplete: "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300",
+            rejected: "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
+        };
+
+        return colorMap[status.toLowerCase()] || defaultColor;
     };
 
     return (
