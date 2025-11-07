@@ -136,8 +136,11 @@ jobs:
           }, null, 2));
 
           // Set outputs
-          console.log(\`::set-output name=flaky_count::\${flakyCount}\`);
-          console.log(\`::set-output name=flaky_rate::\${flakyRate}\`);
+          const outputFile = process.env.GITHUB_OUTPUT;
+          if (outputFile) {
+            fs.appendFileSync(outputFile, \`flaky_count=\${flakyCount}\n\`);
+            fs.appendFileSync(outputFile, \`flaky_rate=\${flakyRate}\n\`);
+          }
           "
 
       - name: Upload flaky test report
