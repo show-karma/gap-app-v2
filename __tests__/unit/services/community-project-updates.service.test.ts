@@ -18,12 +18,12 @@ jest.mock('@/utilities/indexer', () => ({
 
 jest.mock('@/components/Utilities/errorManager');
 
-// Mock fetch globally
-global.fetch = jest.fn();
-
 describe('fetchCommunityProjectUpdates', () => {
+  const mockFetch = jest.fn();
+
   beforeEach(() => {
     jest.clearAllMocks();
+    global.fetch = mockFetch;
   });
 
   describe('Successful requests', () => {
@@ -46,7 +46,7 @@ describe('fetchCommunityProjectUpdates', () => {
         }
       };
 
-      (global.fetch as jest.Mock).mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: true,
         headers: {
           get: jest.fn().mockReturnValue('application/json')
@@ -58,7 +58,7 @@ describe('fetchCommunityProjectUpdates', () => {
         communityId: 'community-1'
       });
 
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(mockFetch).toHaveBeenCalledWith(
         'http://localhost:4000/communities/community-1/project-updates?page=1&limit=25'
       );
       expect(result).toEqual(mockResponse);
@@ -75,7 +75,7 @@ describe('fetchCommunityProjectUpdates', () => {
         }
       };
 
-      (global.fetch as jest.Mock).mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: true,
         headers: {
           get: jest.fn().mockReturnValue('application/json')
@@ -91,7 +91,7 @@ describe('fetchCommunityProjectUpdates', () => {
 
       const result = await fetchCommunityProjectUpdates(params);
 
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(mockFetch).toHaveBeenCalledWith(
         'http://localhost:4000/communities/community-1/project-updates?page=2&limit=50'
       );
       expect(result).toEqual(mockResponse);
@@ -113,7 +113,7 @@ describe('fetchCommunityProjectUpdates', () => {
         }
       };
 
-      (global.fetch as jest.Mock).mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: true,
         headers: {
           get: jest.fn().mockReturnValue('application/json')
@@ -128,7 +128,7 @@ describe('fetchCommunityProjectUpdates', () => {
 
       const result = await fetchCommunityProjectUpdates(params);
 
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(mockFetch).toHaveBeenCalledWith(
         'http://localhost:4000/communities/community-1/project-updates?page=1&limit=25&status=pending'
       );
       expect(result).toEqual(mockResponse);
@@ -145,7 +145,7 @@ describe('fetchCommunityProjectUpdates', () => {
         }
       };
 
-      (global.fetch as jest.Mock).mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: true,
         headers: {
           get: jest.fn().mockReturnValue('application/json')
@@ -160,7 +160,7 @@ describe('fetchCommunityProjectUpdates', () => {
 
       await fetchCommunityProjectUpdates(params);
 
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(mockFetch).toHaveBeenCalledWith(
         'http://localhost:4000/communities/community-1/project-updates?page=1&limit=25&status=completed'
       );
     });
@@ -176,7 +176,7 @@ describe('fetchCommunityProjectUpdates', () => {
         }
       };
 
-      (global.fetch as jest.Mock).mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: true,
         headers: {
           get: jest.fn().mockReturnValue('application/json')
@@ -191,14 +191,14 @@ describe('fetchCommunityProjectUpdates', () => {
 
       await fetchCommunityProjectUpdates(params);
 
-      const fetchCall = (global.fetch as jest.Mock).mock.calls[0][0];
+      const fetchCall = mockFetch.mock.calls[0][0];
       expect(fetchCall).not.toContain('status=all');
     });
   });
 
   describe('Error handling', () => {
     it('should handle HTTP errors', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: false,
         status: 404,
         statusText: 'Not Found',
@@ -221,7 +221,7 @@ describe('fetchCommunityProjectUpdates', () => {
     });
 
     it('should handle errors when reading error response text fails', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: false,
         status: 500,
         statusText: 'Internal Server Error',
@@ -242,7 +242,7 @@ describe('fetchCommunityProjectUpdates', () => {
     });
 
     it('should handle non-JSON content-type responses', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: true,
         headers: {
           get: jest.fn().mockReturnValue('text/html')
@@ -265,7 +265,7 @@ describe('fetchCommunityProjectUpdates', () => {
     });
 
     it('should handle missing content-type header', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: true,
         headers: {
           get: jest.fn().mockReturnValue(null)
@@ -279,7 +279,7 @@ describe('fetchCommunityProjectUpdates', () => {
     });
 
     it('should handle JSON parsing errors', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: true,
         headers: {
           get: jest.fn().mockReturnValue('application/json')
@@ -303,7 +303,7 @@ describe('fetchCommunityProjectUpdates', () => {
 
     it('should handle network errors', async () => {
       const networkError = new Error('Network request failed');
-      (global.fetch as jest.Mock).mockRejectedValue(networkError);
+      mockFetch.mockRejectedValue(networkError);
 
       await expect(
         fetchCommunityProjectUpdates({ communityId: 'community-1' })
@@ -322,7 +322,7 @@ describe('fetchCommunityProjectUpdates', () => {
     });
 
     it('should not double-log already handled errors', async () => {
-      (global.fetch as jest.Mock).mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: false,
         status: 400,
         statusText: 'Bad Request',
@@ -342,7 +342,7 @@ describe('fetchCommunityProjectUpdates', () => {
     });
 
     it('should handle unexpected error types', async () => {
-      (global.fetch as jest.Mock).mockRejectedValue('String error');
+      mockFetch.mockRejectedValue('String error');
 
       await expect(
         fetchCommunityProjectUpdates({ communityId: 'community-1' })
@@ -368,7 +368,7 @@ describe('fetchCommunityProjectUpdates', () => {
         }
       };
 
-      (global.fetch as jest.Mock).mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: true,
         headers: {
           get: jest.fn().mockReturnValue('application/json')
@@ -385,7 +385,7 @@ describe('fetchCommunityProjectUpdates', () => {
 
       await fetchCommunityProjectUpdates(params);
 
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(mockFetch).toHaveBeenCalledWith(
         'http://localhost:4000/communities/community-123/project-updates?page=3&limit=10&status=pending'
       );
     });
@@ -401,7 +401,7 @@ describe('fetchCommunityProjectUpdates', () => {
         }
       };
 
-      (global.fetch as jest.Mock).mockResolvedValue({
+      mockFetch.mockResolvedValue({
         ok: true,
         headers: {
           get: jest.fn().mockReturnValue('application/json')
@@ -413,7 +413,7 @@ describe('fetchCommunityProjectUpdates', () => {
         communityId: 'community-with-dashes-123'
       });
 
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(mockFetch).toHaveBeenCalledWith(
         'http://localhost:4000/communities/community-with-dashes-123/project-updates?page=1&limit=25'
       );
     });
