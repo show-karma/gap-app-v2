@@ -16,7 +16,7 @@ const EthereumAddressToENSName: React.FC<Props> = ({
   const lowerCasedAddress = address?.toLowerCase();
 
   useEffect(() => {
-    if (!ensNames[lowerCasedAddress]) {
+    if (lowerCasedAddress && !ensNames[lowerCasedAddress]) {
       populateEns([lowerCasedAddress]);
     }
   }, [lowerCasedAddress, ensNames, populateEns]);
@@ -27,9 +27,9 @@ const EthereumAddressToENSName: React.FC<Props> = ({
 
   return (
     <span className="font-body">
-      {!ensNames[lowerCasedAddress.toLowerCase()]?.name
+      {!lowerCasedAddress || !ensNames[lowerCasedAddress]?.name
         ? addressToDisplay
-        : ensNames[lowerCasedAddress.toLowerCase()].name}
+        : ensNames[lowerCasedAddress].name}
     </span>
   );
 };

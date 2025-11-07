@@ -84,8 +84,10 @@ export function usePayoutAddressManager(
 
   useEffect(() => {
     if (!items.length) {
-      setPayoutAddresses({});
-      setMissingPayouts([]);
+      // Only update state if it's not already empty to prevent infinite loops
+      setPayoutAddresses((prev) => (Object.keys(prev).length === 0 ? prev : {}));
+      setMissingPayouts((prev) => (prev.length === 0 ? prev : []));
+      setIsFetchingPayouts(false);
       return;
     }
 
