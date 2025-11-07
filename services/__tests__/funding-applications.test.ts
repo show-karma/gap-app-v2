@@ -223,6 +223,159 @@ describe('funding-applications service', () => {
     });
   });
 
+  describe('Edge Cases and Additional Coverage', () => {
+    describe('fetchApplicationByProjectUID - 404 handling edge cases', () => {
+      it('should return null when error.response.status is 404 (explicit check)', async () => {
+        mockGet.mockRejectedValue({
+          response: { status: 404 },
+        });
+
+        const result = await fetchApplicationByProjectUID('nonexistent');
+
+        expect(result).toBeNull();
+        // Verify the specific 404 check path (line 18-20 in source)
+        expect(mockGet).toHaveBeenCalled();
+      });
+
+      it('should handle 404 with missing response.data', async () => {
+        mockGet.mockRejectedValue({
+          response: { status: 404, data: undefined },
+        });
+
+        const result = await fetchApplicationByProjectUID('nonexistent');
+
+        expect(result).toBeNull();
+      });
+
+      it('should throw error when error.response exists but status is not 404', async () => {
+        const error = {
+          response: { status: 403 },
+          message: 'Forbidden',
+        };
+        mockGet.mockRejectedValue(error);
+
+        await expect(fetchApplicationByProjectUID('project-123')).rejects.toEqual(error);
+      });
+
+      it('should throw error when error.response is undefined', async () => {
+        const error = new Error('Network error');
+        mockGet.mockRejectedValue(error);
+
+        await expect(fetchApplicationByProjectUID('project-123')).rejects.toThrow('Network error');
+      });
+    });
+
+    describe('deleteApplication - error logging edge cases', () => {
+      it('should log error with all fields when response has full error data', async () => {
+        const error = {
+          response: {
+            status: 500,
+            statusText: 'Internal Server Error',
+            data: { message: 'Database connection failed' },
+          },
+          message: 'Request failed',
+        };
+        mockDelete.mockRejectedValue(error);
+
+        await expect(deleteApplication('REF-ERROR')).rejects.toEqual(error);
+
+        expect(console.error).toHaveBeenCalledWith(
+          'Service layer: Failed to delete application',
+          expect.objectContaining({
+            referenceNumber: 'REF-ERROR',
+            status: 500,
+            statusText: 'Internal Server Error',
+            errorMessage: 'Database connection failed',
+            timestamp: expect.any(String),
+          })
+        );
+      });
+
+      it('should log error with message fallback when response.data.message is missing', async () => {
+        const error = {
+          response: {
+            status: 500,
+            statusText: 'Internal Server Error',
+            data: {},
+          },
+          message: 'Request failed',
+        };
+        mockDelete.mockRejectedValue(error);
+
+        await expect(deleteApplication('REF-ERROR2')).rejects.toEqual(error);
+
+        expect(console.error).toHaveBeenCalledWith(
+          'Service layer: Failed to delete application',
+          expect.objectContaining({
+            referenceNumber: 'REF-ERROR2',
+            status: 500,
+            statusText: 'Internal Server Error',
+            errorMessage: 'Request failed', // Falls back to error.message
+            timestamp: expect.any(String),
+          })
+        );
+      });
+
+      it('should log error with only message when response is missing', async () => {
+        const error = new Error('Network timeout');
+        mockDelete.mockRejectedValue(error);
+
+        await expect(deleteApplication('REF-NO-RESPONSE')).rejects.toThrow('Network timeout');
+
+        expect(console.error).toHaveBeenCalledWith(
+          'Service layer: Failed to delete application',
+          expect.objectContaining({
+            referenceNumber: 'REF-NO-RESPONSE',
+            status: undefined,
+            statusText: undefined,
+            errorMessage: 'Network timeout',
+            timestamp: expect.any(String),
+          })
+        );
+      });
+
+      it('should re-throw error after logging (critical for error propagation)', async () => {
+        const error = {
+          response: {
+            status: 500,
+            statusText: 'Internal Server Error',
+            data: { message: 'Server error' },
+          },
+          message: 'Request failed',
+        };
+        mockDelete.mockRejectedValue(error);
+
+        // Verify error is re-thrown (not swallowed)
+        await expect(deleteApplication('REF-RETHROW')).rejects.toEqual(error);
+
+        // Verify logging happened before re-throw
+        expect(console.error).toHaveBeenCalled();
+      });
+    });
+
+    describe('Network failure scenarios', () => {
+      it('should handle timeout errors', async () => {
+        const timeoutError = new Error('timeout of 30000ms exceeded');
+        mockGet.mockRejectedValue(timeoutError);
+
+        await expect(fetchApplicationByProjectUID('project-timeout')).rejects.toThrow(
+          'timeout of 30000ms exceeded'
+        );
+      });
+
+      it('should handle connection refused errors', async () => {
+        const connectionError = {
+          code: 'ECONNREFUSED',
+          message: 'Connection refused',
+        };
+        mockDelete.mockRejectedValue(connectionError);
+
+        await expect(deleteApplication('REF-CONN')).rejects.toEqual(connectionError);
+        expect(console.error).toHaveBeenCalled();
+      });
+    });
+  });
+
   describe('API client initialization', () => {
     it('should have createAuthenticatedApiClient mocked', () => {
       const { createAuthenticatedApiClient } = jest.requireMock('@/utilities/auth/api-client');
