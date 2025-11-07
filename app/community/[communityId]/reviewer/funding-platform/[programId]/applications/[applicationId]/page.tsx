@@ -54,6 +54,7 @@ export default function ReviewerApplicationDetailPage() {
   const {
     application,
     isLoading: isLoadingApplication,
+    refetch: refetchApplication,
   } = useApplication(applicationId);
 
   // Fetch program config
@@ -241,6 +242,7 @@ export default function ReviewerApplicationDetailPage() {
               onStatusChange={handleStatusChange}
               viewMode={applicationViewMode}
               onViewModeChange={setApplicationViewMode}
+              onRefresh={refetchApplication}
             />
           </div>
 
