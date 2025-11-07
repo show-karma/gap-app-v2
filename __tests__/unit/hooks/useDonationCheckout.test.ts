@@ -1,3 +1,8 @@
+/**
+ * @file Tests for useDonationCheckout hook
+ * @description Tests for donation checkout hook covering state management, validation, and donation execution flow
+ */
+
 import { renderHook, act } from "@testing-library/react";
 import { useDonationCheckout } from "@/hooks/donation/useDonationCheckout";
 import type { SupportedToken } from "@/constants/supportedTokens";

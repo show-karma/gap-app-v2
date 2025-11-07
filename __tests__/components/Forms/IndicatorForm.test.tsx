@@ -1,3 +1,8 @@
+/**
+ * @file Tests for IndicatorForm component
+ * @description Comprehensive tests for the indicator form component covering form validation, submission, and error handling
+ */
+
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { IndicatorForm, type IndicatorFormData } from '@/components/Forms/IndicatorForm';
 import fetchData from '@/utilities/fetchData';

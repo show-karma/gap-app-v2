@@ -1,3 +1,8 @@
+/**
+ * @file Tests for usePayoutAddressManager hook
+ * @description Tests for payout address management hook covering address validation, fetching, and formatting
+ */
+
 import { renderHook, waitFor } from "@testing-library/react";
 import { usePayoutAddressManager } from "@/hooks/donation/usePayoutAddressManager";
 import toast from "react-hot-toast";

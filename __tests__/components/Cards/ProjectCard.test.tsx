@@ -1,3 +1,8 @@
+/**
+ * @file Tests for ProjectCard component
+ * @description Tests for project card component rendering and display functionality
+ */
+
 import { render, screen } from '@testing-library/react';
 import { ProjectCard } from '@/components/Pages/NewProjects/ProjectCard';
 import { ProjectFromList } from '@/types/project';

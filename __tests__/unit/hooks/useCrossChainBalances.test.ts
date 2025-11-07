@@ -1,3 +1,8 @@
+/**
+ * @file Tests for useCrossChainBalances hook
+ * @description Tests for cross-chain balance fetching hook covering multi-chain balance retrieval and caching
+ */
+
 import { renderHook, waitFor } from "@testing-library/react";
 import { useCrossChainBalances } from "@/hooks/donation/useCrossChainBalances";
 import type { SupportedToken } from "@/constants/supportedTokens";

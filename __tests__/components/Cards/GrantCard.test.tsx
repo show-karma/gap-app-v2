@@ -1,3 +1,8 @@
+/**
+ * @file Tests for GrantCard component
+ * @description Tests for grant card component rendering and color picking functionality
+ */
+
 import { render, screen } from '@testing-library/react';
 import { GrantCard, pickColor } from '@/components/GrantCard';
 import { IGrantResponse } from '@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types';
