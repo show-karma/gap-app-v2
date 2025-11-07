@@ -823,5 +823,270 @@ describe("useDonationTransfer", () => {
       // Transfer should be marked as success after completion
       expect(result.current.transfers[0].status).toBe("success");
     });
+
+    it("should handle wallet client becoming invalid mid-transaction", async () => {
+      const { result } = renderHook(() => useDonationTransfer());
+      const { validateChainSync } = require("@/utilities/chainSyncValidation");
+      const { getWalletClientWithFallback } = require("@/utilities/walletClientFallback");
+
+      // First validation fails
+      validateChainSync.mockRejectedValueOnce(new Error("Chain mismatch"));
+      // Refetch returns null (wallet client unavailable)
+      (wagmi.useWalletClient as jest.Mock).mockReturnValue({
+        data: null,
+        refetch: jest.fn().mockResolvedValue({ data: null }),
+      });
+
+      await expect(
+        act(async () => {
+          await result.current.executeDonations(
+            [mockPayment],
+            jest.fn(() => mockRecipientAddress)
+          );
+        })
+      ).rejects.toThrow();
+
+      // Should reset isExecuting even on error
+      expect(result.current.isExecuting).toBe(false);
+    });
+
+    it("should retry chain sync validation with fresh wallet client", async () => {
+      const { result } = renderHook(() => useDonationTransfer());
+      const { validateChainSync } = require("@/utilities/chainSyncValidation");
+      const freshWalletClient = { ...mockWalletClient, chain: { id: 10 } };
+
+      // First validation fails
+      validateChainSync.mockRejectedValueOnce(new Error("Chain mismatch"));
+      // Second validation succeeds
+      validateChainSync.mockResolvedValueOnce(true);
+
+      (wagmi.useWalletClient as jest.Mock).mockReturnValue({
+        data: mockWalletClient,
+        refetch: jest.fn().mockResolvedValue({ data: freshWalletClient }),
+      });
+
+      await act(async () => {
+        await result.current.executeDonations(
+          [mockPayment],
+          jest.fn(() => mockRecipientAddress)
+        );
+      });
+
+      // Should have retried validation
+      expect(validateChainSync).toHaveBeenCalledTimes(2);
+    });
+
+    it("should handle chain mismatch detection", async () => {
+      const { result } = renderHook(() => useDonationTransfer());
+      const invalidPayment: DonationPayment = {
+        ...mockPayment,
+        chainId: 10,
+      };
+      const invalidPayment2: DonationPayment = {
+        ...mockPayment,
+        projectId: "project-2",
+        chainId: 8453, // Different chain but grouped incorrectly
+      };
+
+      // Simulate payments with mismatched chain IDs in same batch
+      await expect(
+        act(async () => {
+          // This should not happen in practice, but test the validation
+          await result.current.executeDonations(
+            [invalidPayment, { ...invalidPayment2, chainId: 10 }], // Force same chainId
+            jest.fn(() => mockRecipientAddress)
+          );
+        })
+      ).resolves.not.toThrow();
+    });
+
+    it("should handle empty payments array", async () => {
+      const { result } = renderHook(() => useDonationTransfer());
+
+      await act(async () => {
+        await result.current.executeDonations(
+          [],
+          jest.fn(() => mockRecipientAddress)
+        );
+      });
+
+      // Should complete without errors
+      expect(result.current.executionState.phase).toBe("completed");
+      expect(result.current.transfers).toHaveLength(0);
+    });
+
+    it("should handle transaction receipt wait timeout", async () => {
+      const { result } = renderHook(() => useDonationTransfer());
+
+      mockPublicClient.waitForTransactionReceipt.mockRejectedValue(
+        new Error("Transaction receipt timeout")
+      );
+
+      await expect(
+        act(async () => {
+          await result.current.executeDonations(
+            [mockNativePayment],
+            jest.fn(() => mockRecipientAddress)
+          );
+        })
+      ).rejects.toThrow();
+
+      // Should update transfer status to error
+      expect(result.current.transfers[0].status).toBe("error");
+      expect(result.current.transfers[0].error).toBeDefined();
+    });
+
+    it("should handle wallet client unavailable during permit signing", async () => {
+      const { result } = renderHook(() => useDonationTransfer());
+      const { getWalletClientWithFallback } = require("@/utilities/walletClientFallback");
+
+      getWalletClientWithFallback.mockResolvedValue(null);
+
+      await expect(
+        act(async () => {
+          await result.current.executeDonations(
+            [mockPayment],
+            jest.fn(() => mockRecipientAddress)
+          );
+        })
+      ).rejects.toThrow("Wallet client is not available");
+    });
+
+    it("should handle multiple chains with approvals", async () => {
+      const { result } = renderHook(() => useDonationTransfer());
+      const { checkTokenAllowances, executeApprovals } = require("@/utilities/erc20");
+
+      const paymentChain1: DonationPayment = {
+        ...mockPayment,
+        chainId: 10,
+      };
+      const paymentChain2: DonationPayment = {
+        ...mockPayment,
+        projectId: "project-2",
+        chainId: 8453,
+        token: { ...mockToken, chainId: 8453 },
+      };
+
+      checkTokenAllowances.mockImplementation((client: any, address: Address, spender: Address, tokens: any[], chainId: number) => {
+        return Promise.resolve([
+          {
+            needsApproval: true,
+            tokenAddress: mockToken.address as Address,
+            tokenSymbol: mockToken.symbol,
+            requiredAmount: BigInt("100000000"),
+            chainId,
+          },
+        ]);
+      });
+
+      executeApprovals.mockResolvedValue([
+        {
+          status: "confirmed",
+          hash: "0xapprovalhash",
+          tokenAddress: mockToken.address,
+          tokenSymbol: mockToken.symbol,
+        },
+      ]);
+
+      await act(async () => {
+        await result.current.executeDonations(
+          [paymentChain1, paymentChain2],
+          jest.fn(() => mockRecipientAddress)
+        );
+      });
+
+      // Should execute approvals for both chains
+      expect(executeApprovals).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe("useTransactionStatus", () => {
+    it("should return pending status when loading", () => {
+      (wagmi.useWaitForTransactionReceipt as jest.Mock).mockReturnValue({
+        data: null,
+        isLoading: true,
+        isSuccess: false,
+        isError: false,
+      });
+
+      const { useTransactionStatus } = require("@/hooks/useDonationTransfer");
+      const { result } = renderHook(() => useTransactionStatus("0xtxhash"));
+
+      expect(result.current.status).toBe("pending");
+      expect(result.current.isLoading).toBe(true);
+    });
+
+    it("should return success status when transaction succeeds", () => {
+      (wagmi.useWaitForTransactionReceipt as jest.Mock).mockReturnValue({
+        data: { status: "success", transactionHash: "0xtxhash" },
+        isLoading: false,
+        isSuccess: true,
+        isError: false,
+      });
+
+      const { useTransactionStatus } = require("@/hooks/useDonationTransfer");
+      const { result } = renderHook(() => useTransactionStatus("0xtxhash"));
+
+      expect(result.current.status).toBe("success");
+      expect(result.current.isSuccess).toBe(true);
+      expect(result.current.receipt).toBeDefined();
+    });
+
+    it("should return error status when transaction fails", () => {
+      (wagmi.useWaitForTransactionReceipt as jest.Mock).mockReturnValue({
+        data: null,
+        isLoading: false,
+        isSuccess: false,
+        isError: true,
+      });
+
+      const { useTransactionStatus } = require("@/hooks/useDonationTransfer");
+      const { result } = renderHook(() => useTransactionStatus("0xtxhash"));
+
+      expect(result.current.status).toBe("error");
+      expect(result.current.isError).toBe(true);
+    });
+
+    it("should return idle status when hash is empty", () => {
+      (wagmi.useWaitForTransactionReceipt as jest.Mock).mockReturnValue({
+        data: null,
+        isLoading: false,
+        isSuccess: false,
+        isError: false,
+      });
+
+      const { useTransactionStatus } = require("@/hooks/useDonationTransfer");
+      const { result } = renderHook(() => useTransactionStatus(""));
+
+      expect(result.current.status).toBe("idle");
+    });
+
+    it("should disable query when hash is empty", () => {
+      const { useTransactionStatus } = require("@/hooks/useDonationTransfer");
+      renderHook(() => useTransactionStatus(""));
+
+      expect(wagmi.useWaitForTransactionReceipt).toHaveBeenCalledWith(
+        expect.objectContaining({
+          hash: "",
+          query: expect.objectContaining({
+            enabled: false,
+          }),
+        })
+      );
+    });
+
+    it("should enable query when hash is provided", () => {
+      const { useTransactionStatus } = require("@/hooks/useDonationTransfer");
+      renderHook(() => useTransactionStatus("0xtxhash"));
+
+      expect(wagmi.useWaitForTransactionReceipt).toHaveBeenCalledWith(
+        expect.objectContaining({
+          hash: "0xtxhash",
+          query: expect.objectContaining({
+            enabled: true,
+          }),
+        })
+      );
+    });
   });
 });

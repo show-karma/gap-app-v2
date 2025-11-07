@@ -65,7 +65,7 @@ jobs:
           echo "Coverage: ${LINES}%"
           echo "Threshold: ${THRESHOLD}%"
 
-          if (( $(echo "$LINES < $THRESHOLD" | bc -l) )); then
+          if node -e "process.exit(${LINES} < ${THRESHOLD} ? 1 : 0)"; then
             echo "❌ Coverage (${LINES}%) is below threshold (${THRESHOLD}%)"
             exit 1
           else
@@ -156,17 +156,14 @@ jobs:
         env:
           LINES: ${{ steps.coverage.outputs.lines }}
         run: |
-          COLOR="red"
-
-          if (( $(echo "$LINES >= 80" | bc -l) )); then
-            COLOR="brightgreen"
-          elif (( $(echo "$LINES >= 70" | bc -l) )); then
-            COLOR="green"
-          elif (( $(echo "$LINES >= 60" | bc -l) )); then
-            COLOR="yellow"
-          elif (( $(echo "$LINES >= 50" | bc -l) )); then
-            COLOR="orange"
-          fi
+          COLOR=$(node -e "
+            const lines = parseFloat('${{ steps.coverage.outputs.lines }}');
+            if (lines >= 80) console.log('brightgreen');
+            else if (lines >= 70) console.log('green');
+            else if (lines >= 60) console.log('yellow');
+            else if (lines >= 50) console.log('orange');
+            else console.log('red');
+          ")
 
           echo "Coverage: ${LINES}% (${COLOR})"
           echo "Badge: ![Coverage](https://img.shields.io/badge/coverage-${LINES}%25-${COLOR})"
