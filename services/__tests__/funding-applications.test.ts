@@ -39,14 +39,19 @@ describe('funding-applications service', () => {
 
   describe('fetchApplicationByProjectUID', () => {
     const mockApplication: IFundingApplication = {
-      uid: 'app-123',
+      id: 'app-123',
       projectUID: 'project-456',
       programId: 'program-789',
+      chainID: 1,
+      applicantEmail: 'test@example.com',
+      applicationData: {},
       referenceNumber: 'REF-12345',
-      status: 'pending',
+      status: 'pending' as const,
+      statusHistory: [],
+      submissionIP: '127.0.0.1',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-    } as IFundingApplication;
+    };
 
     it('should fetch application successfully', async () => {
       mockGet.mockResolvedValue({ data: mockApplication });

@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import { ActivityCard } from '@/components/Shared/ActivityCard';
 import '@testing-library/jest-dom';
+import { IProjectUpdate } from '@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types';
+import { UnifiedMilestone } from '@/types/roadmap';
 
 // Mock store hooks
 jest.mock('@/store/owner', () => ({
@@ -40,20 +42,46 @@ describe('ActivityCard', () => {
   const mockUpdate = {
     type: 'update' as const,
     data: {
-      uid: 'update-1',
-      title: 'Test Update',
-      text: 'Update description',
-    },
+      id: '1',
+      uid: '0xupdate1' as `0x${string}`,
+      schemaUID: '0xschema1' as `0x${string}`,
+      refUID: '0xref1' as `0x${string}`,
+      attester: '0xattester1' as `0x${string}`,
+      recipient: '0xrecipient1' as `0x${string}`,
+      revoked: false,
+      revocationTime: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      chainID: 1,
+      type: 'project-update',
+      data: {
+        title: 'Test Update',
+        text: 'Update description',
+        type: 'project-update',
+      },
+      decodedDataJson: '{}' as any,
+      isOffchain: false,
+      revocable: true,
+      schemaId: '0xschema1' as `0x${string}`,
+    } as IProjectUpdate,
     index: 0,
+  };
+
+  const mockMilestoneData: UnifiedMilestone = {
+    uid: 'milestone-1',
+    type: 'milestone',
+    title: 'Test Milestone',
+    description: 'Milestone description',
+    completed: false,
+    createdAt: new Date().toISOString(),
+    chainID: 1,
+    refUID: '0xref1' as `0x${string}`,
+    source: {},
   };
 
   const mockMilestone = {
     type: 'milestone' as const,
-    data: {
-      uid: 'milestone-1',
-      title: 'Test Milestone',
-      description: 'Milestone description',
-    },
+    data: mockMilestoneData,
   };
 
   describe('Rendering', () => {
@@ -315,7 +343,29 @@ describe('ActivityCard', () => {
     it('should render with minimum required props', () => {
       const minimalUpdate = {
         type: 'update' as const,
-        data: {},
+        data: {
+          id: '1',
+          uid: '0xmin1' as `0x${string}`,
+          schemaUID: '0xschema1' as `0x${string}`,
+          refUID: '0xref1' as `0x${string}`,
+          attester: '0xattester1' as `0x${string}`,
+          recipient: '0xrecipient1' as `0x${string}`,
+          revoked: false,
+          revocationTime: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          chainID: 1,
+          type: 'project-update',
+          data: {
+            title: '',
+            text: '',
+            type: 'project-update',
+          },
+          decodedDataJson: '{}' as any,
+          isOffchain: false,
+          revocable: true,
+          schemaId: '0xschema1' as `0x${string}`,
+        } as IProjectUpdate,
         index: 0,
       };
 

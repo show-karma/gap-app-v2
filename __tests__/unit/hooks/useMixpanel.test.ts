@@ -69,7 +69,9 @@ describe("useMixpanel", () => {
       process.env.NEXT_PUBLIC_ENV = "production";
 
       mockMixpanel.track = jest.fn((event, props, callback) => {
-        callback?.(1);
+        if (typeof callback === 'function') {
+          callback(1);
+        }
       });
 
       const { result } = renderHook(() => useMixpanel());
@@ -95,7 +97,9 @@ describe("useMixpanel", () => {
       process.env.NEXT_PUBLIC_ENV = "production";
 
       mockMixpanel.track = jest.fn((event, props, callback) => {
-        callback?.(1);
+        if (typeof callback === 'function') {
+          callback(1);
+        }
       });
 
       const { result } = renderHook(() => useMixpanel("custom"));
@@ -120,7 +124,9 @@ describe("useMixpanel", () => {
       process.env.NEXT_PUBLIC_ENV = "production";
 
       mockMixpanel.track = jest.fn((event, props, callback) => {
-        callback?.(1);
+        if (typeof callback === 'function') {
+          callback(1);
+        }
       });
 
       const { result } = renderHook(() => useMixpanel());
@@ -145,7 +151,9 @@ describe("useMixpanel", () => {
       process.env.NEXT_PUBLIC_ENV = "production";
 
       mockMixpanel.track = jest.fn((event, props, callback) => {
-        callback?.(1);
+        if (typeof callback === 'function') {
+          callback(1);
+        }
       });
 
       const { result } = renderHook(() => useMixpanel());
@@ -167,7 +175,9 @@ describe("useMixpanel", () => {
 
       const trackError = new Error("Tracking failed");
       mockMixpanel.track = jest.fn((event, props, callback) => {
-        callback?.(trackError);
+        if (typeof callback === 'function') {
+          callback(trackError as any);
+        }
       });
 
       const { result } = renderHook(() => useMixpanel());
@@ -188,7 +198,9 @@ describe("useMixpanel", () => {
       process.env.NEXT_PUBLIC_ENV = "production";
 
       mockMixpanel.track = jest.fn((event, props, callback) => {
-        callback?.(1);
+        if (typeof callback === 'function') {
+          callback(1);
+        }
       });
 
       const { result } = renderHook(() => useMixpanel());
@@ -244,7 +256,9 @@ describe("useMixpanel", () => {
       process.env.NEXT_PUBLIC_ENV = "production";
 
       mockMixpanel.track = jest.fn((event, props, callback) => {
-        callback?.(1);
+        if (typeof callback === 'function') {
+          callback(1);
+        }
       });
 
       const { result } = renderHook(() => useMixpanel());
@@ -280,7 +294,9 @@ describe("useMixpanel", () => {
       process.env.NEXT_PUBLIC_ENV = "production";
 
       mockMixpanel.track = jest.fn((event, props, callback) => {
-        callback?.(1);
+        if (typeof callback === 'function') {
+          callback(1);
+        }
       });
 
       const { result } = renderHook(() => useMixpanel());
@@ -308,7 +324,9 @@ describe("useMixpanel", () => {
       process.env.NEXT_PUBLIC_ENV = "production";
 
       mockMixpanel.track = jest.fn((event, props, callback) => {
-        callback?.(1);
+        if (typeof callback === 'function') {
+          callback(1);
+        }
       });
 
       const { result: result1 } = renderHook(() => useMixpanel("prefix1"));

@@ -264,7 +264,7 @@ describe('programReviewersService', () => {
       ];
 
       // Mock axios.isAxiosError for this test
-      mockedAxios.isAxiosError = jest.fn().mockReturnValue(true);
+      mockedAxios.isAxiosError = jest.fn((payload: any): payload is import('axios').AxiosError => true) as unknown as typeof mockedAxios.isAxiosError;
 
       mockAxiosInstance.post
         .mockResolvedValueOnce({

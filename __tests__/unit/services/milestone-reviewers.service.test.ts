@@ -348,7 +348,7 @@ describe('milestoneReviewersService', () => {
       ];
 
       // Mock axios.isAxiosError for this test
-      mockedAxios.isAxiosError = jest.fn().mockReturnValue(true);
+      mockedAxios.isAxiosError = jest.fn((payload: any): payload is import('axios').AxiosError => true) as unknown as typeof mockedAxios.isAxiosError;
 
       mockAxiosInstance.post
         .mockResolvedValueOnce({
@@ -408,7 +408,7 @@ describe('milestoneReviewersService', () => {
         message: 'Request failed'
       };
 
-      mockedAxios.isAxiosError = jest.fn().mockReturnValue(true);
+      mockedAxios.isAxiosError = jest.fn((payload: any): payload is import('axios').AxiosError => true) as unknown as typeof mockedAxios.isAxiosError;
       mockAxiosInstance.post.mockRejectedValue(axiosError);
 
       const result = await milestoneReviewersService.addMultipleReviewers(
@@ -432,7 +432,7 @@ describe('milestoneReviewersService', () => {
       ];
 
       const error = new Error('Network error');
-      mockedAxios.isAxiosError = jest.fn().mockReturnValue(false);
+      mockedAxios.isAxiosError = jest.fn((payload: any): payload is import('axios').AxiosError => false) as unknown as typeof mockedAxios.isAxiosError;
       mockAxiosInstance.post.mockRejectedValue(error);
 
       const result = await milestoneReviewersService.addMultipleReviewers(

@@ -41,9 +41,18 @@ describe("useFundingApplicationByProjectUID", () => {
   describe("Data Fetching", () => {
     it("should fetch application when projectUID is provided", async () => {
       const mockApplication = {
-        uid: "app-1",
+        id: "app-1",
         projectUID: "project-1",
-        title: "Test Application",
+        programId: "program-1",
+        chainID: 1,
+        applicantEmail: "test@example.com",
+        applicationData: { title: "Test Application" },
+        status: "pending" as const,
+        statusHistory: [],
+        referenceNumber: "APP-00001-00001",
+        submissionIP: "127.0.0.1",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
 
       mockFetchApplicationByProjectUID.mockResolvedValue(mockApplication as any);
@@ -132,7 +141,7 @@ describe("useFundingApplicationByProjectUID", () => {
       mockFetchApplicationByProjectUID.mockImplementation(
         () =>
           new Promise((resolve) =>
-            setTimeout(() => resolve({ uid: "app-1" } as any), 100)
+            setTimeout(() => resolve({ id: "app-1", projectUID: "project-1" } as any), 100)
           )
       );
 
@@ -151,7 +160,7 @@ describe("useFundingApplicationByProjectUID", () => {
 
   describe("Refetch Functionality", () => {
     it("should expose refetch function", async () => {
-      mockFetchApplicationByProjectUID.mockResolvedValue({ uid: "app-1" } as any);
+      mockFetchApplicationByProjectUID.mockResolvedValue({ id: "app-1", projectUID: "project-1" } as any);
 
       const { result } = renderHook(
         () => useFundingApplicationByProjectUID("project-1"),
@@ -167,8 +176,8 @@ describe("useFundingApplicationByProjectUID", () => {
 
     it("should refetch data when refetch is called", async () => {
       mockFetchApplicationByProjectUID
-        .mockResolvedValueOnce({ uid: "app-1", title: "First" } as any)
-        .mockResolvedValueOnce({ uid: "app-1", title: "Updated" } as any);
+        .mockResolvedValueOnce({ id: "app-1", applicationData: { title: "First" } } as any)
+        .mockResolvedValueOnce({ id: "app-1", applicationData: { title: "Updated" } } as any);
 
       const { result } = renderHook(
         () => useFundingApplicationByProjectUID("project-1"),
@@ -176,13 +185,13 @@ describe("useFundingApplicationByProjectUID", () => {
       );
 
       await waitFor(() => {
-        expect(result.current.application?.title).toBe("First");
+        expect(result.current.application?.applicationData?.title).toBe("First");
       });
 
       await result.current.refetch();
 
       await waitFor(() => {
-        expect(result.current.application?.title).toBe("Updated");
+        expect(result.current.application?.applicationData?.title).toBe("Updated");
       });
 
       expect(mockFetchApplicationByProjectUID).toHaveBeenCalledTimes(2);
@@ -191,7 +200,7 @@ describe("useFundingApplicationByProjectUID", () => {
 
   describe("Return Value Structure", () => {
     it("should return correct structure", async () => {
-      mockFetchApplicationByProjectUID.mockResolvedValue({ uid: "app-1" } as any);
+      mockFetchApplicationByProjectUID.mockResolvedValue({ id: "app-1", projectUID: "project-1" } as any);
 
       const { result } = renderHook(
         () => useFundingApplicationByProjectUID("project-1"),
@@ -211,7 +220,7 @@ describe("useFundingApplicationByProjectUID", () => {
 
   describe("Query Key Management", () => {
     it("should use proper query keys", async () => {
-      mockFetchApplicationByProjectUID.mockResolvedValue({ uid: "app-1" } as any);
+      mockFetchApplicationByProjectUID.mockResolvedValue({ id: "app-1", projectUID: "project-1" } as any);
 
       const { result } = renderHook(
         () => useFundingApplicationByProjectUID("project-1"),
@@ -224,7 +233,7 @@ describe("useFundingApplicationByProjectUID", () => {
 
       // Should have fetched with the correct projectUID
       expect(mockFetchApplicationByProjectUID).toHaveBeenCalledWith("project-1");
-      expect(result.current.application?.uid).toBe("app-1");
+      expect(result.current.application?.id).toBe("app-1");
     });
   });
 });

@@ -76,10 +76,17 @@ function collectTestMetrics() {
   const startTime = Date.now();
   const testResultsPath = path.join(METRICS_DIR, 'test-results.json');
 
+  // Add validation before use to prevent directory traversal attacks
+  const resolvedTestResultsPath = path.resolve(testResultsPath);
+  const resolvedMetricsDir = path.resolve(METRICS_DIR);
+  if (!resolvedTestResultsPath.startsWith(resolvedMetricsDir)) {
+    throw new Error('Invalid test results path: path traversal detected');
+  }
+
   try {
     // Run tests with coverage - hardcoded command, no user input
     execSync(
-      `npm run test:coverage -- --json --outputFile=${testResultsPath}`,
+      `npm run test:coverage -- --json --outputFile=${resolvedTestResultsPath}`,
       {
         encoding: 'utf-8',
         stdio: ['inherit', 'pipe', 'pipe'],
@@ -90,7 +97,7 @@ function collectTestMetrics() {
     const executionTime = endTime - startTime;
 
     // Parse test results
-    const testResults = JSON.parse(fs.readFileSync(testResultsPath, 'utf-8'));
+    const testResults = JSON.parse(fs.readFileSync(resolvedTestResultsPath, 'utf-8'));
 
     // Extract coverage data
     const coverage = extractCoverageData();

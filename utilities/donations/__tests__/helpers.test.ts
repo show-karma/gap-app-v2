@@ -36,7 +36,7 @@ describe("Donation Helpers", () => {
     decimals: 6,
     isNative: false,
     address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-    logoURI: "",
+    logoUrl: "",
     name: "USD Coin",
   };
 
@@ -47,7 +47,7 @@ describe("Donation Helpers", () => {
     decimals: 18,
     isNative: true,
     address: "0x0000000000000000000000000000000000000000",
-    logoURI: "",
+    logoUrl: "",
     name: "Ethereum",
   };
 
