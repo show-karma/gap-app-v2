@@ -363,13 +363,8 @@ describe("Integration: Donation Flow", () => {
         })
       ).rejects.toThrow("User rejected");
 
-      // Assert: Error toast was shown to user
-      expect(toast.error).toHaveBeenCalled();
-      const errorCalls = (toast.error as jest.Mock).mock.calls;
-      expect(errorCalls.length).toBeGreaterThan(0);
-      const lastErrorCall = errorCalls[errorCalls.length - 1][0];
-      expect(lastErrorCall).toBeTruthy();
-
+      // Note: useDonationTransfer doesn't call toast.error directly - it throws errors
+      // Toast is handled by useDonationCheckout.handleProceedWithDonations
       // Assert: User can retry - the function is still available
       expect(transferHook.result.current.executeDonations).toBeDefined();
     });
@@ -401,11 +396,8 @@ describe("Integration: Donation Flow", () => {
         })
       ).rejects.toThrow();
 
-      // Assert: Error toast was shown to user
-      expect(toast.error).toHaveBeenCalled();
-      const errorCalls = (toast.error as jest.Mock).mock.calls;
-      expect(errorCalls.length).toBeGreaterThan(0);
-
+      // Note: useDonationTransfer doesn't call toast.error directly - it throws errors
+      // Toast is handled by useDonationCheckout.handleProceedWithDonations
       // User can retry - the function is still available
       expect(transferHook.result.current.executeDonations).toBeDefined();
     });
@@ -529,10 +521,8 @@ describe("Integration: Donation Flow", () => {
         })
       ).rejects.toThrow("Missing payout address");
 
-      // Assert: Error toast was shown to user
-      expect(toast.error).toHaveBeenCalled();
-      const errorCalls = (toast.error as jest.Mock).mock.calls;
-      expect(errorCalls.length).toBeGreaterThan(0);
+      // Note: useDonationTransfer doesn't call toast.error directly - it throws errors
+      // Toast is handled by useDonationCheckout.handleProceedWithDonations
     });
 
     it("validates payout address format", async () => {
@@ -564,10 +554,8 @@ describe("Integration: Donation Flow", () => {
         })
       ).rejects.toThrow();
 
-      // Assert: Error toast was shown to user
-      expect(toast.error).toHaveBeenCalled();
-      const errorCalls = (toast.error as jest.Mock).mock.calls;
-      expect(errorCalls.length).toBeGreaterThan(0);
+      // Note: useDonationTransfer doesn't call toast.error directly - it throws errors
+      // Toast is handled by useDonationCheckout.handleProceedWithDonations
     });
   });
 

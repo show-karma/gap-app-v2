@@ -12,7 +12,7 @@ jest.mock('@/utilities/enviromentVars', () => ({
 
 // Create a persistent mock instance using var (hoisted) so it's available in jest.mock factory
 // Use proper typing with jest.Mocked to maintain type safety
-let mockAxiosInstance: jest.Mocked<AxiosInstance>;
+var mockAxiosInstance: jest.Mocked<AxiosInstance>;
 
 // Mock api-client - the factory runs at hoist time, so we initialize the mock here
 jest.mock('@/utilities/auth/api-client', () => {

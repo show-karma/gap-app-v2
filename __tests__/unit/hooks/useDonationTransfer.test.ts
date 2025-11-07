@@ -1,5 +1,5 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
-import { useDonationTransfer } from "@/hooks/useDonationTransfer";
+import { useDonationTransfer, useTransactionStatus } from "@/hooks/useDonationTransfer";
 import type { DonationPayment } from "@/store/donationCart";
 import type { SupportedToken } from "@/constants/supportedTokens";
 import * as wagmi from "wagmi";
@@ -160,6 +160,19 @@ describe("useDonationTransfer", () => {
     const { validateChainSync } = require("@/utilities/chainSyncValidation");
     validateChainSync.mockResolvedValue(true);
 
+    mockWalletClient.signTypedData.mockResolvedValue("0xsignature");
+    mockWriteContractAsync.mockResolvedValue("0xtxhash");
+    mockPublicClient.waitForTransactionReceipt.mockResolvedValue({
+      status: "success",
+      transactionHash: "0xtxhash",
+    });
+  });
+
+  afterEach(() => {
+    // Reset all mocks to prevent state accumulation
+    jest.clearAllMocks();
+    
+    // Reset mock implementations to defaults
     mockWalletClient.signTypedData.mockResolvedValue("0xsignature");
     mockWriteContractAsync.mockResolvedValue("0xtxhash");
     mockPublicClient.waitForTransactionReceipt.mockResolvedValue({
@@ -1001,6 +1014,11 @@ describe("useDonationTransfer", () => {
   });
 
   describe("useTransactionStatus", () => {
+    beforeEach(() => {
+      // Reset mock for useWaitForTransactionReceipt before each test
+      (wagmi.useWaitForTransactionReceipt as jest.Mock).mockClear();
+    });
+
     it("should return pending status when loading", () => {
       (wagmi.useWaitForTransactionReceipt as jest.Mock).mockReturnValue({
         data: null,
@@ -1009,7 +1027,6 @@ describe("useDonationTransfer", () => {
         isError: false,
       });
 
-      const { useTransactionStatus } = require("@/hooks/useDonationTransfer");
       const { result } = renderHook(() => useTransactionStatus("0xtxhash"));
 
       expect(result.current.status).toBe("pending");
@@ -1024,7 +1041,6 @@ describe("useDonationTransfer", () => {
         isError: false,
       });
 
-      const { useTransactionStatus } = require("@/hooks/useDonationTransfer");
       const { result } = renderHook(() => useTransactionStatus("0xtxhash"));
 
       expect(result.current.status).toBe("success");
@@ -1040,7 +1056,6 @@ describe("useDonationTransfer", () => {
         isError: true,
       });
 
-      const { useTransactionStatus } = require("@/hooks/useDonationTransfer");
       const { result } = renderHook(() => useTransactionStatus("0xtxhash"));
 
       expect(result.current.status).toBe("error");
@@ -1055,14 +1070,12 @@ describe("useDonationTransfer", () => {
         isError: false,
       });
 
-      const { useTransactionStatus } = require("@/hooks/useDonationTransfer");
       const { result } = renderHook(() => useTransactionStatus(""));
 
       expect(result.current.status).toBe("idle");
     });
 
     it("should disable query when hash is empty", () => {
-      const { useTransactionStatus } = require("@/hooks/useDonationTransfer");
       renderHook(() => useTransactionStatus(""));
 
       expect(wagmi.useWaitForTransactionReceipt).toHaveBeenCalledWith(
@@ -1076,7 +1089,6 @@ describe("useDonationTransfer", () => {
     });
 
     it("should enable query when hash is provided", () => {
-      const { useTransactionStatus } = require("@/hooks/useDonationTransfer");
       renderHook(() => useTransactionStatus("0xtxhash"));
 
       expect(wagmi.useWaitForTransactionReceipt).toHaveBeenCalledWith(
