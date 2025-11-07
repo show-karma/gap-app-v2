@@ -156,7 +156,7 @@ export const CommunityGrantsDonate = ({ initialProjects }: CommunityGrantsDonate
         <div className="fixed bottom-6 right-6 z-50">
           <Link
             href={`/community/${communityId}/donate/${programId}/checkout`}
-            className="box-border inline-flex items-center justify-center gap-3 px-7 py-4 relative rounded-[40px] overflow-hidden border border-solid border-grayprimary-700 bg-[linear-gradient(90deg,rgba(0,78,235,1)_0%,rgba(131,8,145,1)_80%)] text-white hover:opacity-80 transition-all duration-200"
+            className="box-border inline-flex items-center justify-center gap-3 px-7 py-4 relative rounded-[40px] overflow-hidden border border-solid border-gray bg-[linear-gradient(90deg,rgba(0,78,235,1)_0%,rgba(131,8,145,1)_80%)] text-white hover:opacity-80 transition-all duration-200"
           >
             <div className="relative">
               <ShoppingCartIconCustom className="text-white" width="21" height="21" />

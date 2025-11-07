@@ -245,7 +245,6 @@ export const useFundingApplications = (
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.applications(programId, chainId, { limit: 25 }) });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.applicationStats(programId, chainId) });
-      toast.success('Application status updated successfully');
     },
     onError: (error) => {
       console.error('Failed to update application status:', error);
@@ -299,7 +298,6 @@ export const useFundingApplication = (applicationId: string) => {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.application(applicationId) });
-      toast.success('Application status updated successfully');
     },
     onError: (error) => {
       console.error('Failed to update application status:', error);
@@ -632,8 +630,6 @@ export const useApplicationStatus = (programId?: string, chainId?: number) => {
       
       // Invalidate all applications lists
       queryClient.invalidateQueries({ queryKey: ['funding-applications'] });
-      
-      toast.success('Application status updated successfully');
     },
     onError: (error: any) => {
       const errorMessage = error?.response?.data?.message || 'Failed to update application status';
