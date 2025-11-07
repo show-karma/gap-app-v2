@@ -1,0 +1,7 @@
+{
+  "projectToken": "CHROMATIC_PROJECT_TOKEN",
+  "buildScriptName": "build-storybook",
+  "exitZeroOnChanges": true,
+  "autoAcceptChanges": false,
+  "exitOnceUploaded": true
+}

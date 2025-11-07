@@ -47,3 +47,5 @@ next-env.d.ts
 yarn.lock
 package-lock.json
 bun.lockb
+*storybook.log
+storybook-static
