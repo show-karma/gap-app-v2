@@ -74,8 +74,8 @@ describe('ProjectCard', () => {
     title: 'Test Project',
     description: 'This is a comprehensive test project description that should be displayed in the card',
     imageURL: 'https://example.com/image.jpg',
-    createdAt: '1704067200000',
-    updatedAt: '1704067200000',
+    createdAt: '2024-01-01T00:00:00.000Z', // ISO date string format as returned by API
+    updatedAt: '2024-01-01T00:00:00.000Z',
     noOfGrants: 5,
     noOfGrantMilestones: 10,
     noOfProjectMilestones: 7,
@@ -472,12 +472,12 @@ describe('ProjectCard', () => {
       expect(formatCurrency).toHaveBeenCalledWith(7); // roadmap items
     });
 
-    it('should call formatDate with timestamp', () => {
+    it('should call formatDate with createdAt string', () => {
       const { formatDate } = require('@/utilities/formatDate');
       render(<ProjectCard project={mockProject} index={0} />);
 
-      // The component converts string timestamp to number
-      expect(formatDate).toHaveBeenCalledWith(Number(mockProject.createdAt));
+      // formatDate accepts string (ISO date), number (timestamp), or Date
+      expect(formatDate).toHaveBeenCalledWith(mockProject.createdAt);
     });
 
     it('should use correct PAGES utility for href', () => {
