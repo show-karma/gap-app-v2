@@ -70,11 +70,11 @@ jobs:
           echo "Coverage: ${LINES}%"
           echo "Threshold: ${THRESHOLD}%"
 
-          if node -e "process.exit(${LINES} < ${THRESHOLD} ? 1 : 0)"; then
+          if node -e "process.exit(${LINES} >= ${THRESHOLD} ? 0 : 1)"; then
+            echo "✅ Coverage (${LINES}%) meets threshold (${THRESHOLD}%)"
+          else
             echo "❌ Coverage (${LINES}%) is below threshold (${THRESHOLD}%)"
             exit 1
-          else
-            echo "✅ Coverage (${LINES}%) meets threshold (${THRESHOLD}%)"
           fi
 
       - name: Upload coverage reports
