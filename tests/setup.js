@@ -1,5 +1,6 @@
 import "@testing-library/jest-dom";
 import { TextEncoder, TextDecoder } from "util";
+import "@/__tests__/utils/msw/setup";
 
 // Polyfills
 global.TextEncoder = TextEncoder;

@@ -37,6 +37,8 @@ const config: Config = {
     "^@/constants/(.*)$": "<rootDir>/constants/$1",
     "^@/services/(.*)$": "<rootDir>/services/$1",
     "^@/src/(.*)$": "<rootDir>/src/$1",
+    "^@/__tests__/(.*)$": "<rootDir>/__tests__/$1",
+    "^msw/node$": "<rootDir>/node_modules/msw/lib/node/index.js",
   },
 
   // Transform ESM modules that need to be compiled for Jest
