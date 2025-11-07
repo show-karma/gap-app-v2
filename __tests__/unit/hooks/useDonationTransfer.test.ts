@@ -891,6 +891,11 @@ describe("useDonationTransfer", () => {
 
     it("should handle chain mismatch detection", async () => {
       const { result } = renderHook(() => useDonationTransfer());
+      
+      // Ensure hook is initialized
+      expect(result.current).toBeDefined();
+      expect(result.current.executeDonations).toBeDefined();
+      
       const invalidPayment: DonationPayment = {
         ...mockPayment,
         chainId: 10,
@@ -905,6 +910,9 @@ describe("useDonationTransfer", () => {
       await expect(
         act(async () => {
           // This should not happen in practice, but test the validation
+          if (!result.current) {
+            throw new Error("Hook not initialized");
+          }
           await result.current.executeDonations(
             [invalidPayment, { ...invalidPayment2, chainId: 10 }], // Force same chainId
             jest.fn(() => mockRecipientAddress)
