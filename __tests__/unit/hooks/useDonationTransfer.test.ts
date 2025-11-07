@@ -158,7 +158,7 @@ describe("useDonationTransfer", () => {
     isWalletClientGoodEnough.mockReturnValue(true);
 
     const { validateChainSync } = require("@/utilities/chainSyncValidation");
-    validateChainSync.mockResolvedValue(true);
+    validateChainSync.mockResolvedValue(undefined);
 
     mockWalletClient.signTypedData.mockResolvedValue("0xsignature");
     mockWriteContractAsync.mockResolvedValue("0xtxhash");
@@ -871,7 +871,7 @@ describe("useDonationTransfer", () => {
       // First validation fails
       validateChainSync.mockRejectedValueOnce(new Error("Chain mismatch"));
       // Second validation succeeds
-      validateChainSync.mockResolvedValueOnce(true);
+      validateChainSync.mockResolvedValueOnce(undefined);
 
       (wagmi.useWalletClient as jest.Mock).mockReturnValue({
         data: mockWalletClient,
@@ -960,8 +960,22 @@ describe("useDonationTransfer", () => {
     it("should handle wallet client unavailable during permit signing", async () => {
       const { result } = renderHook(() => useDonationTransfer());
       const { getWalletClientWithFallback } = require("@/utilities/walletClientFallback");
+      const { checkTokenAllowances } = require("@/utilities/erc20");
 
-      getWalletClientWithFallback.mockResolvedValue(null);
+      // Setup: no approvals needed, but wallet client becomes unavailable during permit signing
+      checkTokenAllowances.mockResolvedValue([
+        {
+          needsApproval: false,
+          tokenAddress: mockToken.address,
+          tokenSymbol: mockToken.symbol,
+          chainId: 10,
+        },
+      ]);
+
+      // Return wallet client initially, then null when called again (during permit signing)
+      getWalletClientWithFallback
+        .mockResolvedValueOnce(mockWalletClient) // First call succeeds
+        .mockResolvedValueOnce(null); // Second call (during permit) returns null
 
       await expect(
         act(async () => {
@@ -970,7 +984,7 @@ describe("useDonationTransfer", () => {
             jest.fn(() => mockRecipientAddress)
           );
         })
-      ).rejects.toThrow("Wallet client is not available");
+      ).rejects.toThrow("Wallet client unavailable for signing permit");
     });
 
     it("should handle multiple chains with approvals", async () => {
