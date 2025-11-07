@@ -14,6 +14,7 @@ import ApplicationVersionSelector from "./ApplicationVersionSelector";
 import ApplicationVersionViewer from "./ApplicationVersionViewer";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
 import { useApplicationVersions } from "@/hooks/useFundingPlatform";
+import toast from "react-hot-toast";
 import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
@@ -121,17 +122,26 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
         await onStatusChange(pendingStatus, reason);
         setStatusModalOpen(false);
         setPendingStatus("");
+        toast.success(`Application status updated to ${formatStatus(pendingStatus)}`);
       } catch (error) {
         console.error("Failed to update status:", error);
+        toast.error("Failed to update application status");
       } finally {
         setIsUpdatingStatus(false);
       }
     }
   };
 
-  const handleAIEvaluationComplete = (): void => {
+  const handleAIEvaluationComplete = async (): Promise<void> => {
     // Refresh the application data to show the updated AI evaluation
-    onRefresh?.();
+    if (onRefresh) {
+      try {
+        await onRefresh();
+      } catch (error) {
+        console.error("Failed to refresh application data after AI evaluation:", error);
+        toast.error("Evaluation completed but failed to refresh the display. Please reload the page.");
+      }
+    }
   };
 
   const getCurrentRevisionReason = (): string | null => {

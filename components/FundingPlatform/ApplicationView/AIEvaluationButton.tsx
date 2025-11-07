@@ -28,11 +28,18 @@ const AIEvaluationButton: FC<AIEvaluationButtonProps> = ({
     
     try {
       const result = await fundingApplicationsAPI.runAIEvaluation(referenceNumber);
-      
+
       toast.success("AI evaluation completed successfully!");
 
       // Call the callback to refresh the application data
-      onEvaluationComplete?.();
+      if (onEvaluationComplete) {
+        try {
+          await onEvaluationComplete();
+        } catch (refreshError) {
+          console.error("Failed to refresh application after AI evaluation:", refreshError);
+          toast.error("Evaluation completed but failed to refresh the display. Please reload the page.");
+        }
+      }
     } catch (error) {
       console.error("Failed to run AI evaluation:", error);
       
