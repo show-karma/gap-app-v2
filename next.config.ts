@@ -20,6 +20,10 @@ const nextConfig: NextConfig = {
   turbopack: {},
   eslint: {
     dirs: ["app", "components", "utilities", "hooks", "store", "types"],
+    ignoreDuringBuilds: false,
+  },
+  typescript: {
+    ignoreBuildErrors: false,
   },
   webpack: (config, { isServer, webpack }) => {
     // Fix for browserslist and other Node.js modules
@@ -52,6 +56,13 @@ const nextConfig: NextConfig = {
       new webpack.IgnorePlugin({
         resourceRegExp: /^\.\/locale$/,
         contextRegExp: /moment$/,
+      })
+    );
+
+    // Exclude Storybook story files from the build
+    config.plugins.push(
+      new webpack.IgnorePlugin({
+        resourceRegExp: /\.stories\.(tsx?|jsx?)$/,
       })
     );
 

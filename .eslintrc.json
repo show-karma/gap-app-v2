@@ -1,8 +1,8 @@
 {
   "extends": [
-    "next/core-web-vitals",
-    "plugin:storybook/recommended"
+    "next/core-web-vitals"
   ],
+  "ignorePatterns": ["**/*.stories.tsx", "**/*.stories.ts"],
   "rules": {
     "no-console": [
       "warn",
