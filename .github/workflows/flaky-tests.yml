@@ -1,0 +1,244 @@
+name: Flaky Test Detection
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  detect-flaky-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    strategy:
+      matrix:
+        run: [1, 2, 3] # Run tests 3 times
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run test suite
+        id: test
+        continue-on-error: true
+        env:
+          NODE_ENV: test
+          RUN_NUMBER: ${{ matrix.run }}
+        run: |
+          npm run test -- --json --outputFile=test-results-${RUN_NUMBER}.json
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.run }}
+          path: test-results-${{ matrix.run }}.json
+          retention-days: 7
+
+  analyze-results:
+    needs: detect-flaky-tests
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all test results
+        uses: actions/download-artifact@v4
+        with:
+          path: test-results
+
+      - name: Analyze flaky tests
+        id: analyze
+        run: |
+          node -e "
+          const fs = require('fs');
+          const path = require('path');
+
+          // Load all test results
+          const results = [];
+          for (let i = 1; i <= 3; i++) {
+            const filePath = path.join('test-results', \`test-results-\${i}\`, \`test-results-\${i}.json\`);
+            if (fs.existsSync(filePath)) {
+              results.push(JSON.parse(fs.readFileSync(filePath, 'utf-8')));
+            }
+          }
+
+          if (results.length === 0) {
+            console.log('No test results found');
+            process.exit(0);
+          }
+
+          // Track test outcomes across runs
+          const testOutcomes = {};
+
+          results.forEach((result, runIndex) => {
+            result.testResults.forEach(suite => {
+              suite.assertionResults.forEach(test => {
+                const testKey = \`\${suite.name}::\${test.fullName}\`;
+
+                if (!testOutcomes[testKey]) {
+                  testOutcomes[testKey] = {
+                    name: test.fullName,
+                    file: suite.name,
+                    outcomes: [],
+                  };
+                }
+
+                testOutcomes[testKey].outcomes.push(test.status);
+              });
+            });
+          });
+
+          // Identify flaky tests (tests with inconsistent outcomes)
+          const flakyTests = [];
+
+          Object.entries(testOutcomes).forEach(([key, test]) => {
+            const passed = test.outcomes.filter(o => o === 'passed').length;
+            const failed = test.outcomes.filter(o => o === 'failed').length;
+
+            // Flaky if it both passed and failed across runs
+            if (passed > 0 && failed > 0) {
+              flakyTests.push({
+                name: test.name,
+                file: test.file,
+                passRate: ((passed / test.outcomes.length) * 100).toFixed(1),
+                outcomes: test.outcomes.join(', '),
+              });
+            }
+          });
+
+          // Calculate flaky rate
+          const totalTests = Object.keys(testOutcomes).length;
+          const flakyCount = flakyTests.length;
+          const flakyRate = totalTests > 0 ? ((flakyCount / totalTests) * 100).toFixed(2) : 0;
+
+          console.log(\`Total tests: \${totalTests}\`);
+          console.log(\`Flaky tests: \${flakyCount}\`);
+          console.log(\`Flaky rate: \${flakyRate}%\`);
+
+          // Write results
+          fs.writeFileSync('flaky-tests.json', JSON.stringify({
+            totalTests,
+            flakyCount,
+            flakyRate,
+            flakyTests,
+          }, null, 2));
+
+          // Set outputs
+          console.log(\`::set-output name=flaky_count::\${flakyCount}\`);
+          console.log(\`::set-output name=flaky_rate::\${flakyRate}\`);
+          "
+
+      - name: Upload flaky test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flaky-test-report
+          path: flaky-tests.json
+          retention-days: 30
+
+      - name: Create issue for flaky tests
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+
+            if (!fs.existsSync('flaky-tests.json')) {
+              console.log('No flaky test report found');
+              return;
+            }
+
+            const report = JSON.parse(fs.readFileSync('flaky-tests.json', 'utf-8'));
+
+            if (report.flakyCount === 0) {
+              console.log('No flaky tests detected! 🎉');
+              return;
+            }
+
+            // Format flaky tests for issue
+            const testList = report.flakyTests
+              .map(test => `- **${test.name}**\n  - File: \`${test.file}\`\n  - Pass Rate: ${test.passRate}%\n  - Outcomes: ${test.outcomes}`)
+              .join('\n\n');
+
+            const body = `
+            ## 🔄 Flaky Test Detection Report
+
+            **Summary:**
+            - Total Tests: ${report.totalTests}
+            - Flaky Tests: ${report.flakyCount}
+            - Flaky Rate: ${report.flakyRate}%
+
+            ${report.flakyRate > 1 ? '⚠️ **Warning:** Flaky test rate exceeds 1% threshold!' : ''}
+
+            ### Detected Flaky Tests
+
+            ${testList}
+
+            ### What are Flaky Tests?
+
+            Flaky tests are tests that sometimes pass and sometimes fail without any code changes. They reduce confidence in the test suite and can hide real bugs.
+
+            ### How to Fix Flaky Tests
+
+            1. **Identify the cause:**
+               - Race conditions in async operations
+               - Improper waiting for elements
+               - Random data without seeding
+               - Date/time dependencies
+               - External service dependencies
+
+            2. **Common solutions:**
+               - Use \`waitFor\` for async operations
+               - Mock time with \`jest.useFakeTimers()\`
+               - Use deterministic test data
+               - Mock external dependencies properly
+
+            3. **Review the checklist:**
+               - See [Test Review Checklist](./docs/testing/TEST_REVIEW_CHECKLIST.md#flaky-test-identification)
+
+            ---
+            *Report generated automatically by Flaky Test Detection workflow*
+            *Run date: ${new Date().toISOString()}*
+            `;
+
+            // Check if an issue already exists
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'flaky-tests',
+            });
+
+            if (issues.length > 0) {
+              // Update existing issue
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues[0].number,
+                body,
+              });
+              console.log(`Updated existing issue #${issues[0].number}`);
+            } else {
+              // Create new issue
+              const issue = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `🔄 Flaky Tests Detected (${report.flakyCount} tests, ${report.flakyRate}% rate)`,
+                body,
+                labels: ['flaky-tests', 'testing', 'bug'],
+              });
+              console.log(`Created new issue #${issue.data.number}`);
+            }

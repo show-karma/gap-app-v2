@@ -1,0 +1,177 @@
+name: Test Coverage
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+jobs:
+  test-coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests with coverage
+        run: npm run test:coverage
+        env:
+          NODE_ENV: test
+
+      - name: Generate coverage summary
+        id: coverage
+        run: |
+          COVERAGE=$(node -p "
+            const fs = require('fs');
+            const coverage = JSON.parse(fs.readFileSync('coverage/coverage-summary.json', 'utf-8'));
+            const lines = coverage.total.lines.pct;
+            const statements = coverage.total.statements.pct;
+            const functions = coverage.total.functions.pct;
+            const branches = coverage.total.branches.pct;
+            JSON.stringify({ lines, statements, functions, branches });
+          ")
+          echo "coverage=${COVERAGE}" >> $GITHUB_OUTPUT
+
+          # Extract individual metrics
+          LINES=$(node -p "JSON.parse('${COVERAGE}').lines")
+          echo "lines=${LINES}" >> $GITHUB_OUTPUT
+
+          STATEMENTS=$(node -p "JSON.parse('${COVERAGE}').statements")
+          echo "statements=${STATEMENTS}" >> $GITHUB_OUTPUT
+
+          FUNCTIONS=$(node -p "JSON.parse('${COVERAGE}').functions")
+          echo "functions=${FUNCTIONS}" >> $GITHUB_OUTPUT
+
+          BRANCHES=$(node -p "JSON.parse('${COVERAGE}').branches")
+          echo "branches=${BRANCHES}" >> $GITHUB_OUTPUT
+
+      - name: Check coverage threshold
+        env:
+          LINES: ${{ steps.coverage.outputs.lines }}
+        run: |
+          THRESHOLD=50
+
+          echo "Coverage: ${LINES}%"
+          echo "Threshold: ${THRESHOLD}%"
+
+          if (( $(echo "$LINES < $THRESHOLD" | bc -l) )); then
+            echo "❌ Coverage (${LINES}%) is below threshold (${THRESHOLD}%)"
+            exit 1
+          else
+            echo "✅ Coverage (${LINES}%) meets threshold (${THRESHOLD}%)"
+          fi
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 30
+
+      - name: Comment PR with coverage
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const coverage = JSON.parse(fs.readFileSync('coverage/coverage-summary.json', 'utf-8'));
+            const total = coverage.total;
+
+            const lines = total.lines.pct.toFixed(2);
+            const statements = total.statements.pct.toFixed(2);
+            const functions = total.functions.pct.toFixed(2);
+            const branches = total.branches.pct.toFixed(2);
+
+            const coverageColor = (pct) => {
+              if (pct >= 80) return '🟢';
+              if (pct >= 70) return '🟡';
+              if (pct >= 50) return '🟠';
+              return '🔴';
+            };
+
+            const body = `
+            ## 📊 Test Coverage Report
+
+            | Metric | Coverage | Status |
+            |--------|----------|--------|
+            | Lines | ${lines}% | ${coverageColor(lines)} |
+            | Statements | ${statements}% | ${coverageColor(statements)} |
+            | Functions | ${functions}% | ${coverageColor(functions)} |
+            | Branches | ${branches}% | ${coverageColor(branches)} |
+
+            ### Coverage Breakdown
+
+            - **Covered Lines:** ${total.lines.covered} / ${total.lines.total}
+            - **Covered Statements:** ${total.statements.covered} / ${total.statements.total}
+            - **Covered Functions:** ${total.functions.covered} / ${total.functions.total}
+            - **Covered Branches:** ${total.branches.covered} / ${total.branches.total}
+
+            ${lines < 50 ? '⚠️ **Warning:** Coverage is below the 50% threshold.' : '✅ Coverage meets the minimum threshold.'}
+
+            ---
+            *Coverage report generated automatically*
+            `;
+
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existingComment = comments.find(comment =>
+              comment.user.type === 'Bot' && comment.body.includes('Test Coverage Report')
+            );
+
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      - name: Generate coverage badge
+        if: github.ref == 'refs/heads/main'
+        env:
+          LINES: ${{ steps.coverage.outputs.lines }}
+        run: |
+          COLOR="red"
+
+          if (( $(echo "$LINES >= 80" | bc -l) )); then
+            COLOR="brightgreen"
+          elif (( $(echo "$LINES >= 70" | bc -l) )); then
+            COLOR="green"
+          elif (( $(echo "$LINES >= 60" | bc -l) )); then
+            COLOR="yellow"
+          elif (( $(echo "$LINES >= 50" | bc -l) )); then
+            COLOR="orange"
+          fi
+
+          echo "Coverage: ${LINES}% (${COLOR})"
+          echo "Badge: ![Coverage](https://img.shields.io/badge/coverage-${LINES}%25-${COLOR})"
+
+      - name: Collect test metrics
+        if: github.ref == 'refs/heads/main'
+        run: |
+          node scripts/test-metrics.js collect || echo "Metrics collection failed (non-blocking)"
