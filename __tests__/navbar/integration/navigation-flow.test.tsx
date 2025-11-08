@@ -13,7 +13,9 @@ import {
   createMockUsePrivy,
   createMockPermissions,
   createMockRouter,
+  updateMocks
 } from "../utils/test-helpers";
+
 import { getAuthFixture } from "../fixtures/auth-fixtures";
 
 describe("Navigation Flow Integration Tests", () => {

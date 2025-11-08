@@ -11,7 +11,9 @@ import {
   setViewportSize,
   createMockUsePrivy,
   createMockPermissions,
+  updateMocks
 } from "../utils/test-helpers";
+
 import { getAuthFixture } from "../fixtures/auth-fixtures";
 
 describe("Responsive Behavior Integration Tests", () => {
@@ -322,12 +324,10 @@ describe("Responsive Behavior Integration Tests", () => {
       setViewportSize(1440, 900);
 
       // Rerender to apply new viewport
-      rerender(
-        <Navbar />,
-        {
+      updateMocks({
           mockUsePrivy: createMockUsePrivy(authFixture.authState),
-        }
-      );
+        });
+      rerender(<Navbar />);
 
       // Desktop navigation should now be accessible
       // Mobile drawer may still be open, but desktop nav should be visible
@@ -383,13 +383,11 @@ describe("Responsive Behavior Integration Tests", () => {
       // Resize to desktop
       setViewportSize(1440, 900);
 
-      rerender(
-        <Navbar />,
-        {
+      updateMocks({
           mockUsePrivy: createMockUsePrivy(authFixture.authState),
           mockPermissions: createMockPermissions(authFixture.permissions),
-        }
-      );
+        });
+      rerender(<Navbar />);
 
       // Auth state should still be preserved
       expect(screen.queryByText("Sign in")).not.toBeInTheDocument();
@@ -421,12 +419,10 @@ describe("Responsive Behavior Integration Tests", () => {
       // Resize to mobile
       setViewportSize(375, 812);
 
-      rerender(
-        <Navbar />,
-        {
+      updateMocks({
           mockUsePrivy: createMockUsePrivy(authFixture.authState),
-        }
-      );
+        });
+      rerender(<Navbar />);
 
       // Mobile menu button should be accessible
       const mobileMenuButton = screen.getByLabelText("Open menu");

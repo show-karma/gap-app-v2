@@ -11,7 +11,9 @@ import {
   createMockUsePrivy,
   createMockPermissions,
   createMockUseLogoutFunction,
+  updateMocks
 } from "../utils/test-helpers";
+
 import { authFixtures, getAuthFixture } from "../fixtures/auth-fixtures";
 
 // Define what we expect for each permission scenario

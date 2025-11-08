@@ -11,7 +11,9 @@ import {
   createMockUsePrivy,
   createMockPermissions,
   createMockUseTheme,
+  updateMocks
 } from "../utils/test-helpers";
+
 import { getAuthFixture } from "../fixtures/auth-fixtures";
 
 describe("Theme Switching Integration Tests", () => {

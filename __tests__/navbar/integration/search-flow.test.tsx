@@ -11,7 +11,9 @@ import {
   renderWithProviders,
   waitForDebounce,
   createMockUsePrivy,
+  updateMocks
 } from "../utils/test-helpers";
+
 import { server } from "../setup";
 import {
   scenarioHandlers,

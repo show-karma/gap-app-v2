@@ -12,6 +12,7 @@ import {
   createMockUseLogoutFunction,
   createMockModalStore,
   createMockPermissions,
+  updateMocks,
 } from "../utils/test-helpers";
 import { getAuthFixture } from "../fixtures/auth-fixtures";
 
@@ -200,13 +201,11 @@ describe("Authentication Flow Integration Tests", () => {
 
       // Simulate logout success - update to unauthenticated
       const unauthFixture = getAuthFixture("unauthenticated");
-      rerender(
-        <Navbar />,
-        {
+      updateMocks({
           mockUsePrivy: createMockUsePrivy(unauthFixture.authState),
           mockUseLogout: createMockUseLogoutFunction(mockLogout),
-        }
-      );
+        });
+      rerender(<Navbar />);
 
       // Verify auth buttons reappear
       await waitFor(() => {
@@ -277,13 +276,11 @@ describe("Authentication Flow Integration Tests", () => {
       }
 
       // Update to ready and authenticated
-      rerender(
-        <Navbar />,
-        {
+      updateMocks({
           mockUsePrivy: createMockUsePrivy(authFixture.authState),
           mockPermissions: createMockPermissions(authFixture.permissions),
-        }
-      );
+        });
+      rerender(<Navbar />);
 
       // Verify skeleton disappears and user menu appears
       await waitFor(() => {
@@ -300,12 +297,10 @@ describe("Authentication Flow Integration Tests", () => {
       });
 
       // Update to ready and unauthenticated
-      rerender(
-        <Navbar />,
-        {
+      updateMocks({
           mockUsePrivy: createMockUsePrivy(unauthFixture.authState),
-        }
-      );
+        });
+      rerender(<Navbar />);
 
       // Verify auth buttons appear
       await waitFor(() => {
@@ -329,13 +324,11 @@ describe("Authentication Flow Integration Tests", () => {
       expect(screen.queryByText("Sign in")).not.toBeInTheDocument();
 
       // Rerender with same state
-      rerender(
-        <Navbar />,
-        {
+      updateMocks({
           mockUsePrivy: createMockUsePrivy(authFixture.authState),
           mockPermissions: createMockPermissions(authFixture.permissions),
-        }
-      );
+        });
+      rerender(<Navbar />);
 
       // State should persist
       expect(screen.queryByText("Sign in")).not.toBeInTheDocument();
@@ -358,13 +351,11 @@ describe("Authentication Flow Integration Tests", () => {
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
 
-      rerender(
-        <Navbar />,
-        {
+      updateMocks({
           mockUsePrivy: createMockUsePrivy(authFixture.authState),
           mockPermissions: createMockPermissions(authFixture.permissions),
-        }
-      );
+        });
+      rerender(<Navbar />);
 
       // User should still be logged in
       expect(screen.queryByText("Sign in")).not.toBeInTheDocument();

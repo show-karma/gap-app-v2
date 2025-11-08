@@ -13,7 +13,9 @@ import {
   createMockPermissions,
   createMockModalStore,
   createMockRouter,
+  updateMocks
 } from "../utils/test-helpers";
+
 import { getAuthFixture } from "../fixtures/auth-fixtures";
 
 describe("Modal Integration Tests", () => {

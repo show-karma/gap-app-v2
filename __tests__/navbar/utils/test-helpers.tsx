@@ -38,19 +38,20 @@ interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
 /**
  * Mock implementations for hooks
  */
-export const createMockUseAuth = (authState: AuthFixture["authState"]) => ({
-  ready: authState.ready,
-  authenticated: authState.authenticated,
-  isConnected: authState.isConnected,
+export const createMockUseAuth = (authState: AuthFixture["authState"] | any) => ({
+  ready: authState.ready ?? true,
+  authenticated: authState.authenticated ?? false,
+  isConnected: authState.isConnected ?? false,
   address: authState.address,
   user: authState.user,
-  authenticate: jest.fn(),
-  login: jest.fn(),
-  logout: jest.fn(),
-  disconnect: jest.fn(),
-  getAccessToken: jest.fn().mockResolvedValue("mock-token"),
+  authenticate: authState.authenticate || jest.fn(),
+  login: authState.login || jest.fn(),
+  logout: authState.logout || jest.fn(),
+  disconnect: authState.disconnect || jest.fn(),
+  getAccessToken: authState.getAccessToken || jest.fn().mockResolvedValue("mock-token"),
   primaryWallet: authState.address ? { address: authState.address } : undefined,
   wallets: authState.address ? [{ address: authState.address }] : [],
+  ...authState, // Allow any additional overrides
 });
 
 /**
@@ -110,6 +111,85 @@ export const createMockRouter = (overrides: any = {}) => ({
   asPath: '/',
   ...overrides,
 });
+
+/**
+ * Update global mocks (for use with rerender)
+ */
+export const updateMocks = (options: Partial<CustomRenderOptions>) => {
+  const {
+    mockUseAuth,
+    mockUsePrivy,
+    mockPermissions,
+    mockUseLogout,
+    mockModalStore,
+    mockUseCommunitiesStore,
+    mockUseReviewerPrograms,
+    mockUseStaff,
+    mockUseOwnerStore,
+    mockUseRegistryStore,
+    mockRouter,
+    mockUseTheme,
+  } = options;
+
+  // Update auth mock
+  if (mockUseAuth || mockUsePrivy) {
+    const authMock = mockUseAuth || mockUsePrivy;
+    const useAuthModule = require("@/hooks/useAuth");
+    if (useAuthModule.useAuth && jest.isMockFunction(useAuthModule.useAuth)) {
+      useAuthModule.useAuth.mockReturnValue(authMock);
+    }
+  }
+
+  // Update permissions mocks
+  if (mockPermissions) {
+    const { mockUseCommunitiesStore: communitiesStore, mockUseReviewerPrograms: reviewerPrograms, mockUseStaff: staff, mockUseOwnerStore: owner, mockUseRegistryStore: registry } = mockPermissions;
+    
+    if (communitiesStore) {
+      const module = require("@/store/communities");
+      if (module.useCommunitiesStore && jest.isMockFunction(module.useCommunitiesStore)) {
+        module.useCommunitiesStore.mockReturnValue(communitiesStore);
+      }
+    }
+    
+    if (reviewerPrograms) {
+      const module = require("@/hooks/usePermissions");
+      if (module.useReviewerPrograms && jest.isMockFunction(module.useReviewerPrograms)) {
+        module.useReviewerPrograms.mockReturnValue(reviewerPrograms);
+      }
+    }
+    
+    if (staff) {
+      const module = require("@/hooks/useStaff");
+      if (module.useStaff && jest.isMockFunction(module.useStaff)) {
+        module.useStaff.mockReturnValue(staff);
+      }
+    }
+    
+    if (owner) {
+      const module = require("@/store/owner");
+      if (module.useOwnerStore && jest.isMockFunction(module.useOwnerStore)) {
+        module.useOwnerStore.mockReturnValue(owner);
+      }
+    }
+    
+    if (registry) {
+      const module = require("@/store/registry");
+      if (module.useRegistryStore && jest.isMockFunction(module.useRegistryStore)) {
+        module.useRegistryStore.mockReturnValue(registry);
+      }
+    }
+  }
+
+  // Individual store mocks
+  if (mockUseCommunitiesStore) {
+    const module = require("@/store/communities");
+    if (module.useCommunitiesStore && jest.isMockFunction(module.useCommunitiesStore)) {
+      module.useCommunitiesStore.mockReturnValue(mockUseCommunitiesStore);
+    }
+  }
+
+  // Add other individual mock updates as needed
+};
 
 export const createMockUseCommunitiesStore = (communities: AuthFixture["permissions"]["communities"]) => ({
   communities,
