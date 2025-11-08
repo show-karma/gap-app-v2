@@ -50,7 +50,7 @@ const config: Config = {
   // Transform ESM modules that need to be compiled for Jest
   // Include MSW and all its dependencies (including nested pnpm packages)
   transformIgnorePatterns: [
-    "/node_modules/(?!(@show-karma|wagmi|@wagmi/core|@wagmi/connectors|viem|@privy-io|rehype-sanitize|hast-util-sanitize|msw|@mswjs|until-async|rehype-external-links)/)",
+    "/node_modules/(?!(@show-karma|wagmi|@wagmi|@wagmi/core|@wagmi/connectors|viem|@privy-io|@coinbase|rehype-sanitize|hast-util-sanitize|msw|@mswjs|until-async|rehype-external-links|@noble)/)",
   ],
 
   globalSetup: "./tests/global.js",
