@@ -4,7 +4,7 @@
  */
 
 import { screen } from "@testing-library/react";
-import { userEvent } from "@testing-library/user-event";
+import userEvent from "@testing-library/user-event";
 import { NavbarAuthButtons } from "@/src/components/navbar/navbar-auth-buttons";
 import { renderWithProviders, createMockUseAuth } from "../utils/test-helpers";
 import { getAuthFixture } from "../fixtures/auth-fixtures";

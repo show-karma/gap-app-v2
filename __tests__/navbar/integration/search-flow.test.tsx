@@ -4,7 +4,7 @@
  */
 
 import { screen, waitFor, within } from "@testing-library/react";
-import { userEvent } from "@testing-library/user-event";
+import userEvent from "@testing-library/user-event";
 import { NavbarSearch } from "@/src/components/navbar/navbar-search";
 import { Navbar } from "@/src/components/navbar/navbar";
 import {

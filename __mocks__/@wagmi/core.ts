@@ -17,5 +17,5 @@ export const watchAccount = jest.fn();
 export const reconnect = jest.fn();
 
 // Mock chain exports
-export * from './chains';
+export * from './chains.js';
 

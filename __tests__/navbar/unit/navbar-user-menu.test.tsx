@@ -4,7 +4,7 @@
  */
 
 import { screen, waitFor } from "@testing-library/react";
-import { userEvent } from "@testing-library/user-event";
+import userEvent from "@testing-library/user-event";
 import { NavbarUserMenu } from "@/src/components/navbar/navbar-user-menu";
 import {
   renderWithProviders,
