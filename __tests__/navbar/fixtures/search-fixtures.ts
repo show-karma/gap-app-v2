@@ -8,23 +8,35 @@ import { ISearchResponse } from "@show-karma/karma-gap-sdk/core/class/karma-inde
 /**
  * Helper: Create mock project
  */
-export const createMockProject = (overrides: Partial<any> = {}) => ({
+export const createMockProject = (overrides: Partial<any> = {}): any => ({
   uid: overrides.uid || `project-${Math.random().toString(36).substr(2, 9)}`,
   title: overrides.title || "Test Project",
   description: overrides.description || "Test project description",
   imageURL: overrides.imageURL || "https://example.com/project.png",
   recipient: overrides.recipient || "0x1234567890123456789012345678901234567890",
+  type: "project",
+  data: {},
+  members: [],
+  grants: [],
+  milestones: [],
+  updates: [],
+  endorsements: [],
   ...overrides,
 });
 
 /**
  * Helper: Create mock community
  */
-export const createMockCommunity = (overrides: Partial<any> = {}) => ({
+export const createMockCommunity = (overrides: Partial<any> = {}): any => ({
   uid: overrides.uid || `community-${Math.random().toString(36).substr(2, 9)}`,
   name: overrides.name || "Test Community",
   description: overrides.description || "Test community description",
   imageURL: overrides.imageURL || "https://example.com/community.png",
+  type: "community",
+  data: {},
+  grants: [],
+  projects: [],
+  members: [],
   ...overrides,
 });
 

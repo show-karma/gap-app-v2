@@ -22,6 +22,17 @@ interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
   mockPermissions?: ReturnType<typeof createMockPermissions>;
   mockUseLogout?: ReturnType<typeof createMockUseLogoutFunction>;
   mockModalStore?: ReturnType<typeof createMockModalStore>;
+  // Individual store mocks
+  mockUseCommunitiesStore?: any;
+  mockUseReviewerPrograms?: any;
+  mockUseStaff?: any;
+  mockUseOwnerStore?: any;
+  mockUseRegistryStore?: any;
+  mockUseContributorProfileModalStore?: any;
+  // Router mock
+  mockRouter?: any;
+  // Theme mock
+  mockUseTheme?: any;
 }
 
 /**
@@ -69,10 +80,35 @@ export const createMockUseLogoutFunction = (logoutFn: jest.Mock) => () => ({
 /**
  * Create mock modal store
  */
-export const createMockModalStore = (isOpen: boolean = false, openModal: jest.Mock = jest.fn(), closeModal: jest.Mock = jest.fn()) => () => ({
-  isOpen,
-  openModal,
-  closeModal,
+export const createMockModalStore = (options?: { isOpen?: boolean; openModal?: jest.Mock; closeModal?: jest.Mock } | boolean) => {
+  // Support both old signature (boolean) and new signature (object)
+  if (typeof options === 'boolean' || options === undefined) {
+    return () => ({
+      isOpen: options || false,
+      openModal: jest.fn(),
+      closeModal: jest.fn(),
+    });
+  }
+  return () => ({
+    isOpen: options.isOpen || false,
+    openModal: options.openModal || jest.fn(),
+    closeModal: options.closeModal || jest.fn(),
+  });
+};
+
+/**
+ * Create mock router (Next.js)
+ */
+export const createMockRouter = (overrides: any = {}) => ({
+  push: jest.fn(),
+  replace: jest.fn(),
+  back: jest.fn(),
+  forward: jest.fn(),
+  refresh: jest.fn(),
+  pathname: '/',
+  query: {},
+  asPath: '/',
+  ...overrides,
 });
 
 export const createMockUseCommunitiesStore = (communities: AuthFixture["permissions"]["communities"]) => ({

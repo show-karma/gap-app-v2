@@ -58,7 +58,7 @@ export interface AuthFixture {
 }
 
 // Helper: Create mock funding program
-export const createMockProgram = (overrides: Partial<FundingProgram> = {}): FundingProgram => ({
+export const createMockProgram = (overrides: any = {}): any => ({
   uid: overrides.uid || "test-program-1",
   metadata: {
     title: overrides.metadata?.title || "Test Program",
@@ -66,8 +66,9 @@ export const createMockProgram = (overrides: Partial<FundingProgram> = {}): Fund
   },
   communityUID: overrides.communityUID || "test-community-1",
   chainID: overrides.chainID || 42161,
+  status: "active",
   ...overrides,
-} as FundingProgram);
+});
 
 // Helper: Create mock community
 export const createMockCommunity = (uid: string, name: string) => ({
