@@ -3,7 +3,7 @@
  * Tests user menu rendering states, permission-based items, theme toggle, and social links
  */
 
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NavbarUserMenu } from "@/src/components/navbar/navbar-user-menu";
 import {
@@ -22,6 +22,25 @@ import {
 import { getAuthFixture } from "../fixtures/auth-fixtures";
 
 describe("NavbarUserMenu", () => {
+  // Helper to setup auth and open menu
+  const setupAuthAndOpenMenu = async (fixtureName: string) => {
+    const authFixture = getAuthFixture(fixtureName);
+    const { useAuth } = require("@/hooks/useAuth");
+    const mockAuth = createMockUseAuth(authFixture.authState);
+    useAuth.mockReturnValue(mockAuth);
+    
+    const user = userEvent.setup();
+    const result = renderWithProviders(<NavbarUserMenu />, {
+      mockPermissions: createMockPermissions(authFixture.permissions),
+    });
+    
+    // Click avatar to open menu
+    const avatar = screen.getByRole("img");
+    await user.click(avatar);
+    
+    return { user, authFixture, ...result };
+  };
+  
   afterEach(() => {
     resetMockAuthState();
   });
@@ -51,16 +70,11 @@ describe("NavbarUserMenu", () => {
       expect(screen.queryByText("Log out")).not.toBeInTheDocument();
     });
 
-    it("should show avatar and menu when logged in", () => {
-      const authFixture = getAuthFixture("authenticated-basic");
-      renderWithProviders(<NavbarUserMenu />, {
-        mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockPermissions: createMockPermissions(authFixture.permissions),
-      });
+    it("should show avatar and menu when logged in", async () => {
+      await setupAuthAndOpenMenu("authenticated-basic");
 
-      // Menu should render when authenticated - check for "My profile" menu item
-      // (it's always visible when logged in)
-      expect(screen.queryByText("My profile")).toBeInTheDocument();
+      // Menu should be open with "My profile" visible
+      expect(screen.getByText("My profile")).toBeInTheDocument();
     });
 
     it("should have desktop-only visibility (hidden on mobile/tablet)", () => {
