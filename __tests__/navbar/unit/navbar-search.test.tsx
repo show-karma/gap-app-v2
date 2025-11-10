@@ -188,28 +188,28 @@ describe("NavbarSearch", () => {
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
       
-      // Type multiple characters rapidly
-      fireEvent.change(searchInput, { target: { value: "p" } });
-      act(() => jest.advanceTimersByTime(100));
-      
-      fireEvent.change(searchInput, { target: { value: "pr" } });
-      act(() => jest.advanceTimersByTime(100));
-      
+      // Type multiple characters rapidly without advancing time between them
       fireEvent.change(searchInput, { target: { value: "pro" } });
-      act(() => jest.advanceTimersByTime(100));
-      
       fireEvent.change(searchInput, { target: { value: "proj" } });
+      fireEvent.change(searchInput, { target: { value: "proje" } });
+      fireEvent.change(searchInput, { target: { value: "project" } });
       
-      // Advance to complete debounce
+      // Verify no calls have been made yet (still in debounce window)
+      expect(gapIndexerApi.search).not.toHaveBeenCalled();
+      
+      // Advance to complete debounce (500ms)
       act(() => {
         jest.advanceTimersByTime(500);
       });
       
-      // Should only call once with final value
+      // Wait for async operations to complete
       await waitFor(() => {
-        expect(gapIndexerApi.search).toHaveBeenCalledTimes(1);
-        expect(gapIndexerApi.search).toHaveBeenCalledWith("proj");
+        expect(gapIndexerApi.search).toHaveBeenCalled();
       });
+      
+      // Should only call once with final value
+      expect(gapIndexerApi.search).toHaveBeenCalledTimes(1);
+      expect(gapIndexerApi.search).toHaveBeenCalledWith("project");
     });
 
     it("debounce timer resets on each keystroke", async () => {
@@ -219,26 +219,33 @@ describe("NavbarSearch", () => {
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
       
-      // First keystroke
+      // Type first value and advance almost to debounce completion
       fireEvent.change(searchInput, { target: { value: "test" } });
-      act(() => jest.advanceTimersByTime(400));
+      act(() => jest.advanceTimersByTime(400)); // Not enough to trigger (need 500ms)
       
-      // Second keystroke before debounce completes
-      fireEvent.change(searchInput, { target: { value: "testi" } });
-      act(() => jest.advanceTimersByTime(400));
+      // No call should have been made yet
+      expect(gapIndexerApi.search).not.toHaveBeenCalled();
       
-      // Third keystroke
-      fireEvent.change(searchInput, { target: { value: "testin" } });
+      // Type again - this resets the timer
+      fireEvent.change(searchInput, { target: { value: "testing" } });
+      act(() => jest.advanceTimersByTime(400)); // Again, not enough
       
-      // Complete debounce from last keystroke
+      // Still no call
+      expect(gapIndexerApi.search).not.toHaveBeenCalled();
+      
+      // Now complete the debounce from the last keystroke
       act(() => {
         jest.advanceTimersByTime(500);
       });
       
+      // Wait for async operation
       await waitFor(() => {
-        expect(gapIndexerApi.search).toHaveBeenCalledTimes(1);
-        expect(gapIndexerApi.search).toHaveBeenCalledWith("testin");
+        expect(gapIndexerApi.search).toHaveBeenCalled();
       });
+      
+      // Should only call once with final value
+      expect(gapIndexerApi.search).toHaveBeenCalledTimes(1);
+      expect(gapIndexerApi.search).toHaveBeenCalledWith("testing");
     });
 
     it("search executes after typing stops", async () => {
