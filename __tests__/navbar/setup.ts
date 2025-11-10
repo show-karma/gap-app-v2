@@ -332,7 +332,7 @@ jest.mock("@/store/modals/contributorProfile", () => ({
  */
 jest.mock("@/components/Utilities/ExternalLink", () => ({
   ExternalLink: ({ children, href, ...props }: any) => 
-    React.createElement("a", { href, target: "_blank", rel: "noreferrer", ...props }, children),
+    React.createElement("a", { href, target: "_blank", rel: "noopener noreferrer", ...props }, children),
 }));
 
 /**
