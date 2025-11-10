@@ -129,7 +129,8 @@ jest.mock("next/image", () => ({
 // Mock next/link
 jest.mock("next/link", () => ({
   __esModule: true,
-  default: ({ children, href, ...props }: any) => children,
+  default: ({ children, href, onClick, ...props }: any) => 
+    React.createElement("a", { href, onClick, ...props }, children),
 }));
 
 // Mock next/navigation
