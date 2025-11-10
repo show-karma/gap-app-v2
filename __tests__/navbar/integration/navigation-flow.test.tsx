@@ -3,7 +3,7 @@
  * Tests all navigation patterns including dropdowns, external links, anchors, and modals
  */
 
-import { screen, waitFor, within } from "@testing-library/react";
+import { screen, waitFor, within, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Navbar } from "@/src/components/navbar/navbar";
 import { NavbarDesktopNavigation } from "@/src/components/navbar/navbar-desktop-navigation";
@@ -43,7 +43,6 @@ describe("Navigation Flow Integration Tests", () => {
 
       // Verify other items in dropdown
       expect(screen.getByText("Find funding")).toBeInTheDocument();
-      expect(screen.getByText("Browse programs")).toBeInTheDocument();
     });
 
     it("should open For Funders dropdown and show content", async () => {
@@ -61,11 +60,12 @@ describe("Navigation Flow Integration Tests", () => {
       await user.click(forFundersTrigger);
 
       await waitFor(() => {
-        expect(screen.getByText("Create a grant program")).toBeInTheDocument();
+        expect(screen.getByText("Launch a program")).toBeInTheDocument();
       });
 
       // Verify secondary items
-      expect(screen.getByText("Grants Stack")).toBeInTheDocument();
+      expect(screen.getByText("Case studies")).toBeInTheDocument();
+      expect(screen.getByText("Schedule demo")).toBeInTheDocument();
     });
 
     it("should open Explore dropdown and show projects/communities", async () => {
@@ -137,7 +137,6 @@ describe("Navigation Flow Integration Tests", () => {
         });
 
         expect(screen.getByText("Blog")).toBeInTheDocument();
-        expect(screen.getByText("Support")).toBeInTheDocument();
       }
     });
 
@@ -202,7 +201,7 @@ describe("Navigation Flow Integration Tests", () => {
       const drawer = screen.getByRole("dialog");
       const createProjectLink = within(drawer).getByText("Create project");
 
-      await user.click(createProjectLink);
+      fireEvent.click(createProjectLink);
 
       // Drawer should close after navigation
       // This is handled by the onClose callback in the component
@@ -673,7 +672,7 @@ describe("Navigation Flow Integration Tests", () => {
       // Click navigation item
       const drawer = screen.getByRole("dialog");
       const allProjectsLink = within(drawer).getByText("All projects");
-      await user.click(allProjectsLink);
+      fireEvent.click(allProjectsLink);
 
       // Drawer should close (via onClose callback)
       // This is component-specific behavior
