@@ -44,4 +44,13 @@ export const QUERY_KEYS = {
       title: string;
     }) => ["duplicate-grant-check", params] as const,
   },
+  DONATIONS: {
+    ALL: ["donations"] as const,
+    BY_USER: (address: string) => ["donations", "user", address] as const,
+    BY_PROJECT: (projectId: string) =>
+      ["donations", "project", projectId] as const,
+  },
+  ONRAMP: {
+    SESSION: (sessionId: string) => ["onramp", "session", sessionId] as const,
+  },
 };

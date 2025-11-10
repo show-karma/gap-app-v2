@@ -8,7 +8,7 @@ import {
     MenubarMenu,
     MenubarTrigger,
 } from "@/components/ui/menubar";
-import { ChevronRight, CircleHelp, CircleUser, LogOutIcon, PhoneCall, ToggleLeft, ToggleRight, Wallet, FolderKanban, ShieldCheck, CheckCircle2, Settings } from "lucide-react";
+import { ChevronRight, CircleHelp, CircleUser, LogOutIcon, PhoneCall, ToggleLeft, ToggleRight, Wallet, FolderKanban, ShieldCheck, CheckCircle2, Settings, Heart } from "lucide-react";
 import { SOCIALS } from "@/utilities/socials";
 import { TwitterIcon, DiscordIcon, TelegramIcon } from "@/components/Icons";
 import { ParagraphIcon } from "@/components/Icons/Paragraph";
@@ -148,6 +148,12 @@ export function NavbarUserMenu() {
                                     <Link href={PAGES.MY_PROJECTS} className="flex items-center gap-2 w-full">
                                         <FolderKanban className={menuStyles.itemIcon} />
                                         <span className={menuStyles.itemText}>My projects</span>
+                                    </Link>
+                                </MenubarItem>
+                                <MenubarItem asChild className="w-full">
+                                    <Link href="/donations" className="flex items-center gap-2 w-full">
+                                        <Heart className={menuStyles.itemIcon} />
+                                        <span className={menuStyles.itemText}>My donations</span>
                                     </Link>
                                 </MenubarItem>
                                 {hasReviewerRole && (
