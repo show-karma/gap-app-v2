@@ -107,85 +107,28 @@ describe("NavbarUserMenu", () => {
   });
 
   describe("User Info Display", () => {
-    it("should render avatar with correct address prop", () => {
-      const authFixture = getAuthFixture("authenticated-basic");
-      renderWithProviders(<NavbarUserMenu />, {
-        mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockPermissions: createMockPermissions(authFixture.permissions),
-      });
+    it("should render avatar with correct address prop", async () => {
+      await setupAuthAndOpenMenu("authenticated-basic");
 
-      // Menu should render - check for formatted address display
+      // Should show formatted address in menu
       expect(screen.getByText(/0x1234/i)).toBeInTheDocument();
     });
 
     it("should format wallet address correctly (0x1234...5678)", async () => {
-      const user = userEvent.setup();
-      const authFixture = getAuthFixture("authenticated-basic");
-      renderWithProviders(<NavbarUserMenu />, {
-        mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockUseCommunitiesStore: createMockUseCommunitiesStore(
-          authFixture.permissions.communities
-        ),
-        mockUseReviewerPrograms: createMockUseReviewerPrograms(
-          authFixture.permissions.reviewerPrograms
-        ),
-        mockUseStaff: createMockUseStaff(authFixture.permissions.isStaff),
-        mockUseOwnerStore: createMockUseOwnerStore(
-          authFixture.permissions.isOwner
-        ),
-        mockUseRegistryStore: createMockUseRegistryStore(
-          authFixture.permissions.isPoolManager,
-          authFixture.permissions.isRegistryAdmin
-        ),
-        mockUseTheme: createMockUseTheme(),
-        mockUseContributorProfileModalStore:
-          createMockUseContributorProfileModalStore(),
-      });
+      await setupAuthAndOpenMenu("authenticated-basic");
 
-      // Click avatar to open menu
-      const avatarButton = screen.getAllByRole("button")[1]; // Second button after help
-      await user.click(avatarButton);
-
-      // Wait for menu to open and check formatted address
-      await waitFor(() => {
-        // Should show formatted address like "0x1234...5678"
-        const addressElement = screen.getByText(/0x\w{4}\.\.\.\w{4}/);
-        expect(addressElement).toBeInTheDocument();
-      });
+      // Should show formatted address like "0x1234...5678"
+      const addressElement = screen.getByText(/0x\w{4}\.\.\.\w{4}/);
+      expect(addressElement).toBeInTheDocument();
     });
   });
 
   describe("Menu Trigger Tests", () => {
     it("should open menu on avatar click", async () => {
-      const user = userEvent.setup();
-      const authFixture = getAuthFixture("authenticated-basic");
-      renderWithProviders(<NavbarUserMenu />, {
-        mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockUseCommunitiesStore: createMockUseCommunitiesStore(
-          authFixture.permissions.communities
-        ),
-        mockUseReviewerPrograms: createMockUseReviewerPrograms(
-          authFixture.permissions.reviewerPrograms
-        ),
-        mockUseStaff: createMockUseStaff(authFixture.permissions.isStaff),
-        mockUseOwnerStore: createMockUseOwnerStore(
-          authFixture.permissions.isOwner
-        ),
-        mockUseRegistryStore: createMockUseRegistryStore(
-          authFixture.permissions.isPoolManager,
-          authFixture.permissions.isRegistryAdmin
-        ),
-        mockUseTheme: createMockUseTheme(),
-        mockUseContributorProfileModalStore:
-          createMockUseContributorProfileModalStore(),
-      });
+      await setupAuthAndOpenMenu("authenticated-basic");
 
-      const avatarButton = screen.getAllByRole("button")[1];
-      await user.click(avatarButton);
-
-      await waitFor(() => {
-        expect(screen.getByText("My profile")).toBeInTheDocument();
-      });
+      // Menu should be open with items visible
+      expect(screen.getByText("My profile")).toBeInTheDocument();
     });
   });
 
