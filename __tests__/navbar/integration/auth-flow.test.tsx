@@ -3,14 +3,12 @@
  * Tests complete authentication journeys including login, logout, profile modal, and state transitions
  */
 
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Navbar } from "@/src/components/navbar/navbar";
 import {
   renderWithProviders,
   createMockUsePrivy,
-  createMockUseLogoutFunction,
-  createMockModalStore,
   createMockPermissions,
   updateMocks,
 } from "../utils/test-helpers";
@@ -30,8 +28,8 @@ describe("Authentication Flow Integration Tests", () => {
         mockUsePrivy: createMockUsePrivy({
           ...unauthFixture.authState,
           authenticate: mockAuthenticate,
+          logout: mockLogout,
         }),
-        mockUseLogout: createMockUseLogoutFunction(mockLogout),
       });
 
       // Verify auth buttons visible
@@ -56,8 +54,8 @@ describe("Authentication Flow Integration Tests", () => {
           mockUsePrivy: createMockUsePrivy({
             ...authFixture.authState,
             authenticate: mockAuthenticate,
+            logout: mockLogout,
           }),
-          mockUseLogout: createMockUseLogoutFunction(mockLogout),
           mockPermissions: createMockPermissions(authFixture.permissions),
         }
       );
@@ -99,7 +97,11 @@ describe("Authentication Flow Integration Tests", () => {
       renderWithProviders(<Navbar />, {
         mockUsePrivy: createMockUsePrivy(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
-        mockModalStore: createMockModalStore({ openModal: mockOpenModal }),
+        mockUseContributorProfileModalStore: {
+          isOpen: false,
+          openModal: mockOpenModal,
+          closeModal: jest.fn(),
+        },
       });
 
       // Try to find user avatar (desktop) - it may be hidden on smaller viewports
@@ -131,7 +133,11 @@ describe("Authentication Flow Integration Tests", () => {
       renderWithProviders(<Navbar />, {
         mockUsePrivy: createMockUsePrivy(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
-        mockModalStore: createMockModalStore({ openModal: mockOpenModal }),
+        mockUseContributorProfileModalStore: {
+          isOpen: false,
+          openModal: mockOpenModal,
+          closeModal: jest.fn(),
+        },
       });
 
       // Open mobile drawer
@@ -150,10 +156,12 @@ describe("Authentication Flow Integration Tests", () => {
       );
 
       if (mobileProfileButton) {
-        await user.click(mobileProfileButton);
+        fireEvent.click(mobileProfileButton);
 
-        // Verify modal opened
-        expect(mockOpenModal).toHaveBeenCalledTimes(1);
+        // Wait for action to complete
+        await waitFor(() => {
+          expect(mockOpenModal).toHaveBeenCalledTimes(1);
+        });
       }
     });
   });
@@ -165,8 +173,10 @@ describe("Authentication Flow Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       const { rerender } = renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
-        mockUseLogout: createMockUseLogoutFunction(mockLogout),
+        mockUsePrivy: createMockUsePrivy({
+          ...authFixture.authState,
+          logout: mockLogout,
+        }),
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
 
@@ -193,26 +203,32 @@ describe("Authentication Flow Integration Tests", () => {
         });
 
         const logoutButton = screen.getByText("Log out");
-        await user.click(logoutButton);
+        fireEvent.click(logoutButton);
       }
 
       // Verify logout called
-      expect(mockLogout).toHaveBeenCalledTimes(1);
+      await waitFor(() => {
+        expect(mockLogout).toHaveBeenCalledTimes(1);
+      });
 
       // Simulate logout success - update to unauthenticated
       const unauthFixture = getAuthFixture("unauthenticated");
       updateMocks({
-          mockUsePrivy: createMockUsePrivy(unauthFixture.authState),
-          mockUseLogout: createMockUseLogoutFunction(mockLogout),
+          mockUsePrivy: createMockUsePrivy({
+            ...unauthFixture.authState,
+            logout: mockLogout,
+          }),
         });
       rerender(<Navbar />);
 
       // Verify auth buttons reappear
       await waitFor(() => {
-        expect(screen.getByText("Sign in")).toBeInTheDocument();
+        const signInButtons = screen.getAllByText("Sign in");
+        expect(signInButtons.length).toBeGreaterThan(0);
       });
 
-      expect(screen.getByText("Contact sales")).toBeInTheDocument();
+      const contactSalesButtons = screen.getAllByText("Contact sales");
+      expect(contactSalesButtons.length).toBeGreaterThan(0);
     });
 
     it("should close menu after logout", async () => {
@@ -221,8 +237,10 @@ describe("Authentication Flow Integration Tests", () => {
       const authFixture = getAuthFixture("authenticated-basic");
 
       renderWithProviders(<Navbar />, {
-        mockUsePrivy: createMockUsePrivy(authFixture.authState),
-        mockUseLogout: createMockUseLogoutFunction(mockLogout),
+        mockUsePrivy: createMockUsePrivy({
+          ...authFixture.authState,
+          logout: mockLogout,
+        }),
         mockPermissions: createMockPermissions(authFixture.permissions),
       });
 
@@ -236,9 +254,11 @@ describe("Authentication Flow Integration Tests", () => {
 
       // Click logout
       const logoutButton = screen.getByText("Log out");
-      await user.click(logoutButton);
+      fireEvent.click(logoutButton);
 
-      expect(mockLogout).toHaveBeenCalledTimes(1);
+      await waitFor(() => {
+        expect(mockLogout).toHaveBeenCalledTimes(1);
+      });
     });
   });
 
@@ -391,10 +411,12 @@ describe("Authentication Flow Integration Tests", () => {
       );
 
       if (mobileSignInButton) {
-        await user.click(mobileSignInButton);
+        fireEvent.click(mobileSignInButton);
 
         // Verify authenticate called
-        expect(mockAuthenticate).toHaveBeenCalled();
+        await waitFor(() => {
+          expect(mockAuthenticate).toHaveBeenCalled();
+        });
       }
     });
 
