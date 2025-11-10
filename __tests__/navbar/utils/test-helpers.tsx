@@ -8,6 +8,25 @@ import { render, RenderOptions, RenderResult } from "@testing-library/react";
 import { ThemeProvider } from "next-themes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthFixture } from "../fixtures/auth-fixtures";
+import { mockAuthState } from "../setup";
+
+/**
+ * Reset mock auth state to default
+ */
+export const resetMockAuthState = () => {
+  mockAuthState.current = {
+    ready: true,
+    authenticated: false,
+    isConnected: false,
+    address: undefined,
+    user: null,
+    authenticate: jest.fn(),
+    login: jest.fn(),
+    logout: jest.fn(),
+    disconnect: jest.fn(),
+    getAccessToken: jest.fn().mockResolvedValue("mock-token"),
+  };
+};
 
 /**
  * Custom render options
@@ -134,10 +153,8 @@ export const updateMocks = (options: Partial<CustomRenderOptions>) => {
   // Update auth mock
   if (mockUseAuth || mockUsePrivy) {
     const authMock = mockUseAuth || mockUsePrivy;
-    const useAuthModule = require("@/hooks/useAuth");
-    if (useAuthModule.useAuth && jest.isMockFunction(useAuthModule.useAuth)) {
-      useAuthModule.useAuth.mockReturnValue(authMock);
-    }
+    // Modify the imported mockAuthState
+    mockAuthState.current = authMock;
   }
 
   // Update permissions mocks
@@ -357,13 +374,11 @@ export const renderWithProviders = (
     ...renderOptions
   } = options;
 
-  // Setup mocks if provided - using mocked modules directly
+  // Setup mocks if provided - modify the global mock state
   if (mockUseAuth || mockUsePrivy) {
     const authMock = mockUseAuth || mockUsePrivy;
-    const useAuthModule = require("@/hooks/useAuth");
-    if (useAuthModule.useAuth && jest.isMockFunction(useAuthModule.useAuth)) {
-      useAuthModule.useAuth.mockReturnValue(authMock);
-    }
+    // Modify the imported mockAuthState
+    mockAuthState.current = authMock;
   }
   
   if (mockPermissions) {

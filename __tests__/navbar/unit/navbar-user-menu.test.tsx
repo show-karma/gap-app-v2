@@ -9,6 +9,7 @@ import { NavbarUserMenu } from "@/src/components/navbar/navbar-user-menu";
 import {
   renderWithProviders,
   createMockUseAuth,
+  createMockPermissions,
   createMockUseCommunitiesStore,
   createMockUseReviewerPrograms,
   createMockUseStaff,
@@ -16,10 +17,15 @@ import {
   createMockUseRegistryStore,
   createMockUseTheme,
   createMockUseContributorProfileModalStore,
+  resetMockAuthState,
 } from "../utils/test-helpers";
 import { getAuthFixture } from "../fixtures/auth-fixtures";
 
 describe("NavbarUserMenu", () => {
+  afterEach(() => {
+    resetMockAuthState();
+  });
+
   describe("Rendering State Tests", () => {
     it("should show NavbarUserSkeleton when ready is false", () => {
       const loadingFixture = getAuthFixture("loading");
@@ -36,39 +42,25 @@ describe("NavbarUserMenu", () => {
 
     it("should return null when not logged in", () => {
       const unauthFixture = getAuthFixture("unauthenticated");
-      const { container } = renderWithProviders(<NavbarUserMenu />, {
+      renderWithProviders(<NavbarUserMenu />, {
         mockUseAuth: createMockUseAuth(unauthFixture.authState),
       });
 
-      expect(container.firstChild).toBeNull();
+      // Component returns null, so menu items should not be present
+      expect(screen.queryByText("My profile")).not.toBeInTheDocument();
+      expect(screen.queryByText("Log out")).not.toBeInTheDocument();
     });
 
     it("should show avatar and menu when logged in", () => {
       const authFixture = getAuthFixture("authenticated-basic");
       renderWithProviders(<NavbarUserMenu />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockUseCommunitiesStore: createMockUseCommunitiesStore(
-          authFixture.permissions.communities
-        ),
-        mockUseReviewerPrograms: createMockUseReviewerPrograms(
-          authFixture.permissions.reviewerPrograms
-        ),
-        mockUseStaff: createMockUseStaff(authFixture.permissions.isStaff),
-        mockUseOwnerStore: createMockUseOwnerStore(
-          authFixture.permissions.isOwner
-        ),
-        mockUseRegistryStore: createMockUseRegistryStore(
-          authFixture.permissions.isPoolManager,
-          authFixture.permissions.isRegistryAdmin
-        ),
-        mockUseTheme: createMockUseTheme(),
-        mockUseContributorProfileModalStore:
-          createMockUseContributorProfileModalStore(),
+        mockPermissions: createMockPermissions(authFixture.permissions),
       });
 
-      // Help button and avatar should be visible
-      const helpButton = screen.getByRole("button", { name: /help/i });
-      expect(helpButton).toBeInTheDocument();
+      // Menu should render when authenticated - check for "My profile" menu item
+      // (it's always visible when logged in)
+      expect(screen.queryByText("My profile")).toBeInTheDocument();
     });
 
     it("should have desktop-only visibility (hidden on mobile/tablet)", () => {

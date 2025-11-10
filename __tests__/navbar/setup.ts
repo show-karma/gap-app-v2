@@ -3,6 +3,7 @@
  * Configures MSW, test environment, and global utilities
  */
 
+import React from "react";
 import { setupServer } from "msw/node";
 import { handlers } from "./mocks/handlers";
 import "@testing-library/jest-dom";
@@ -119,7 +120,10 @@ declare global {
 // Mock next/image
 jest.mock("next/image", () => ({
   __esModule: true,
-  default: (props: any) => props,
+  default: (props: any) => {
+    // eslint-disable-next-line @next/next/no-img-element
+    return React.createElement("img", { ...props, alt: props.alt || "" });
+  },
 }));
 
 // Mock next/link
@@ -237,8 +241,9 @@ jest.mock("@/utilities/wagmi/privy-config", () => ({
 }));
 
 // Mock authentication and permission hooks
-jest.mock("@/hooks/useAuth", () => ({
-  useAuth: jest.fn(() => ({
+// Create a holder for the current auth mock state
+export const mockAuthState = {
+  current: {
     ready: true,
     authenticated: false,
     isConnected: false,
@@ -249,8 +254,23 @@ jest.mock("@/hooks/useAuth", () => ({
     logout: jest.fn(),
     disconnect: jest.fn(),
     getAccessToken: jest.fn().mockResolvedValue("mock-token"),
-  })),
-}));
+  }
+};
+
+jest.mock("@/hooks/useAuth", () => {
+  // Import mockAuthState within the mock factory
+  const setup = require("@/__tests__/navbar/setup");
+  
+  return {
+    useAuth: jest.fn(() => {
+      return setup.mockAuthState ? setup.mockAuthState.current : {
+        ready: true,
+        authenticated: false,
+        isConnected: false,
+      };
+    }),
+  };
+});
 
 jest.mock("@/store/communities", () => ({
   useCommunitiesStore: jest.fn(() => ({ communities: [] })),
@@ -283,7 +303,8 @@ jest.mock("@/store/registry", () => ({
  * Mock external link component
  */
 jest.mock("@/components/Utilities/ExternalLink", () => ({
-  ExternalLink: ({ children }: any) => children,
+  ExternalLink: ({ children, href, ...props }: any) => 
+    React.createElement("a", { href, ...props }, children),
 }));
 
 /**
