@@ -258,362 +258,76 @@ describe("NavbarUserMenu", () => {
 
   describe("Conditional Menu Items - Reviewer", () => {
     it('should hide "Review" link when no reviewer programs', async () => {
-      const user = userEvent.setup();
-      const authFixture = getAuthFixture("authenticated-basic");
-      
-      renderWithProviders(<NavbarUserMenu />, {
-        mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockUseCommunitiesStore: createMockUseCommunitiesStore([]),
-        mockUseReviewerPrograms: createMockUseReviewerPrograms([]),
-        mockUseStaff: createMockUseStaff(false),
-        mockUseOwnerStore: createMockUseOwnerStore(false),
-        mockUseRegistryStore: createMockUseRegistryStore(false, false),
-        mockUseTheme: createMockUseTheme(),
-        mockUseContributorProfileModalStore:
-          createMockUseContributorProfileModalStore(),
-      });
-
-      const avatarButton = screen.getAllByRole("button")[1];
-      await user.click(avatarButton);
-
-      await waitFor(() => {
-        expect(screen.getByText("My projects")).toBeInTheDocument();
-      });
-
+      await setupAuthAndOpenMenu("authenticated-basic");
       expect(screen.queryByText("Review")).not.toBeInTheDocument();
     });
 
     it('should show "Review" link when has reviewer programs', async () => {
-      const user = userEvent.setup();
-      const authFixture = getAuthFixture("authenticated-reviewer");
-      
-      renderWithProviders(<NavbarUserMenu />, {
-        mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockUseCommunitiesStore: createMockUseCommunitiesStore(
-          authFixture.permissions.communities
-        ),
-        mockUseReviewerPrograms: createMockUseReviewerPrograms(
-          authFixture.permissions.reviewerPrograms
-        ),
-        mockUseStaff: createMockUseStaff(authFixture.permissions.isStaff),
-        mockUseOwnerStore: createMockUseOwnerStore(
-          authFixture.permissions.isOwner
-        ),
-        mockUseRegistryStore: createMockUseRegistryStore(
-          authFixture.permissions.isPoolManager,
-          authFixture.permissions.isRegistryAdmin
-        ),
-        mockUseTheme: createMockUseTheme(),
-        mockUseContributorProfileModalStore:
-          createMockUseContributorProfileModalStore(),
-      });
-
-      const avatarButton = screen.getAllByRole("button")[1];
-      await user.click(avatarButton);
-
-      await waitFor(() => {
-        expect(screen.getByText("Review")).toBeInTheDocument();
-      });
+      await setupAuthAndOpenMenu("reviewer-single");
+      expect(screen.getByText("Review")).toBeInTheDocument();
     });
   });
 
   describe("Conditional Menu Items - Admin", () => {
     it('should hide "Admin" link for regular users', async () => {
-      const user = userEvent.setup();
-      const authFixture = getAuthFixture("authenticated-basic");
-      
-      renderWithProviders(<NavbarUserMenu />, {
-        mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockUseCommunitiesStore: createMockUseCommunitiesStore([]),
-        mockUseReviewerPrograms: createMockUseReviewerPrograms([]),
-        mockUseStaff: createMockUseStaff(false),
-        mockUseOwnerStore: createMockUseOwnerStore(false),
-        mockUseRegistryStore: createMockUseRegistryStore(false, false),
-        mockUseTheme: createMockUseTheme(),
-        mockUseContributorProfileModalStore:
-          createMockUseContributorProfileModalStore(),
-      });
-
-      const avatarButton = screen.getAllByRole("button")[1];
-      await user.click(avatarButton);
-
-      await waitFor(() => {
-        expect(screen.getByText("My projects")).toBeInTheDocument();
-      });
-
+      await setupAuthAndOpenMenu("authenticated-basic");
       expect(screen.queryByText("Admin")).not.toBeInTheDocument();
     });
 
     it('should show "Admin" link for staff', async () => {
-      const user = userEvent.setup();
-      const authFixture = getAuthFixture("authenticated-staff");
-      
-      renderWithProviders(<NavbarUserMenu />, {
-        mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockUseCommunitiesStore: createMockUseCommunitiesStore(
-          authFixture.permissions.communities
-        ),
-        mockUseReviewerPrograms: createMockUseReviewerPrograms(
-          authFixture.permissions.reviewerPrograms
-        ),
-        mockUseStaff: createMockUseStaff(authFixture.permissions.isStaff),
-        mockUseOwnerStore: createMockUseOwnerStore(
-          authFixture.permissions.isOwner
-        ),
-        mockUseRegistryStore: createMockUseRegistryStore(
-          authFixture.permissions.isPoolManager,
-          authFixture.permissions.isRegistryAdmin
-        ),
-        mockUseTheme: createMockUseTheme(),
-        mockUseContributorProfileModalStore:
-          createMockUseContributorProfileModalStore(),
-      });
-
-      const avatarButton = screen.getAllByRole("button")[1];
-      await user.click(avatarButton);
-
-      await waitFor(() => {
-        expect(screen.getByText("Admin")).toBeInTheDocument();
-      });
+      await setupAuthAndOpenMenu("staff");
+      expect(screen.getByText("Admin")).toBeInTheDocument();
     });
 
     it('should show "Admin" link for owner', async () => {
-      const user = userEvent.setup();
-      const authFixture = getAuthFixture("authenticated-owner");
-      
-      renderWithProviders(<NavbarUserMenu />, {
-        mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockUseCommunitiesStore: createMockUseCommunitiesStore(
-          authFixture.permissions.communities
-        ),
-        mockUseReviewerPrograms: createMockUseReviewerPrograms(
-          authFixture.permissions.reviewerPrograms
-        ),
-        mockUseStaff: createMockUseStaff(authFixture.permissions.isStaff),
-        mockUseOwnerStore: createMockUseOwnerStore(
-          authFixture.permissions.isOwner
-        ),
-        mockUseRegistryStore: createMockUseRegistryStore(
-          authFixture.permissions.isPoolManager,
-          authFixture.permissions.isRegistryAdmin
-        ),
-        mockUseTheme: createMockUseTheme(),
-        mockUseContributorProfileModalStore:
-          createMockUseContributorProfileModalStore(),
-      });
-
-      const avatarButton = screen.getAllByRole("button")[1];
-      await user.click(avatarButton);
-
-      await waitFor(() => {
-        expect(screen.getByText("Admin")).toBeInTheDocument();
-      });
+      await setupAuthAndOpenMenu("owner");
+      expect(screen.getByText("Admin")).toBeInTheDocument();
     });
 
     it('should show "Admin" link for community admin', async () => {
-      const user = userEvent.setup();
-      const authFixture = getAuthFixture("authenticated-community-admin");
-      
-      renderWithProviders(<NavbarUserMenu />, {
-        mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockUseCommunitiesStore: createMockUseCommunitiesStore(
-          authFixture.permissions.communities
-        ),
-        mockUseReviewerPrograms: createMockUseReviewerPrograms(
-          authFixture.permissions.reviewerPrograms
-        ),
-        mockUseStaff: createMockUseStaff(authFixture.permissions.isStaff),
-        mockUseOwnerStore: createMockUseOwnerStore(
-          authFixture.permissions.isOwner
-        ),
-        mockUseRegistryStore: createMockUseRegistryStore(
-          authFixture.permissions.isPoolManager,
-          authFixture.permissions.isRegistryAdmin
-        ),
-        mockUseTheme: createMockUseTheme(),
-        mockUseContributorProfileModalStore:
-          createMockUseContributorProfileModalStore(),
-      });
-
-      const avatarButton = screen.getAllByRole("button")[1];
-      await user.click(avatarButton);
-
-      await waitFor(() => {
-        expect(screen.getByText("Admin")).toBeInTheDocument();
-      });
+      await setupAuthAndOpenMenu("community-admin-single");
+      expect(screen.getByText("Admin")).toBeInTheDocument();
     });
   });
 
   describe("Conditional Menu Items - Registry", () => {
     it('should hide "Manage Programs" when no registry access', async () => {
-      const user = userEvent.setup();
-      const authFixture = getAuthFixture("authenticated-basic");
-      
-      renderWithProviders(<NavbarUserMenu />, {
-        mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockUseCommunitiesStore: createMockUseCommunitiesStore([]),
-        mockUseReviewerPrograms: createMockUseReviewerPrograms([]),
-        mockUseStaff: createMockUseStaff(false),
-        mockUseOwnerStore: createMockUseOwnerStore(false),
-        mockUseRegistryStore: createMockUseRegistryStore(false, false),
-        mockUseTheme: createMockUseTheme(),
-        mockUseContributorProfileModalStore:
-          createMockUseContributorProfileModalStore(),
-      });
-
-      const avatarButton = screen.getAllByRole("button")[1];
-      await user.click(avatarButton);
-
-      await waitFor(() => {
-        expect(screen.getByText("My projects")).toBeInTheDocument();
-      });
-
+      await setupAuthAndOpenMenu("authenticated-basic");
       expect(screen.queryByText("Manage Programs")).not.toBeInTheDocument();
     });
 
     it('should show "Manage Programs" when isRegistryAdmin', async () => {
-      const user = userEvent.setup();
-      const authFixture = getAuthFixture("authenticated-registry-admin");
-      
-      renderWithProviders(<NavbarUserMenu />, {
-        mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockUseCommunitiesStore: createMockUseCommunitiesStore(
-          authFixture.permissions.communities
-        ),
-        mockUseReviewerPrograms: createMockUseReviewerPrograms(
-          authFixture.permissions.reviewerPrograms
-        ),
-        mockUseStaff: createMockUseStaff(authFixture.permissions.isStaff),
-        mockUseOwnerStore: createMockUseOwnerStore(
-          authFixture.permissions.isOwner
-        ),
-        mockUseRegistryStore: createMockUseRegistryStore(
-          authFixture.permissions.isPoolManager,
-          authFixture.permissions.isRegistryAdmin
-        ),
-        mockUseTheme: createMockUseTheme(),
-        mockUseContributorProfileModalStore:
-          createMockUseContributorProfileModalStore(),
-      });
-
-      const avatarButton = screen.getAllByRole("button")[1];
-      await user.click(avatarButton);
-
-      await waitFor(() => {
-        expect(screen.getByText("Manage Programs")).toBeInTheDocument();
-      });
+      await setupAuthAndOpenMenu("registry-admin");
+      expect(screen.getByText("Manage Programs")).toBeInTheDocument();
     });
 
     it('should show "Manage Programs" when isPoolManager', async () => {
-      const user = userEvent.setup();
-      const authFixture = getAuthFixture("authenticated-pool-manager");
-      
-      renderWithProviders(<NavbarUserMenu />, {
-        mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockUseCommunitiesStore: createMockUseCommunitiesStore(
-          authFixture.permissions.communities
-        ),
-        mockUseReviewerPrograms: createMockUseReviewerPrograms(
-          authFixture.permissions.reviewerPrograms
-        ),
-        mockUseStaff: createMockUseStaff(authFixture.permissions.isStaff),
-        mockUseOwnerStore: createMockUseOwnerStore(
-          authFixture.permissions.isOwner
-        ),
-        mockUseRegistryStore: createMockUseRegistryStore(
-          authFixture.permissions.isPoolManager,
-          authFixture.permissions.isRegistryAdmin
-        ),
-        mockUseTheme: createMockUseTheme(),
-        mockUseContributorProfileModalStore:
-          createMockUseContributorProfileModalStore(),
-      });
-
-      const avatarButton = screen.getAllByRole("button")[1];
-      await user.click(avatarButton);
-
-      await waitFor(() => {
-        expect(screen.getByText("Manage Programs")).toBeInTheDocument();
-      });
+      await setupAuthAndOpenMenu("pool-manager");
+      expect(screen.getByText("Manage Programs")).toBeInTheDocument();
     });
   });
 
   describe("Social Media Links", () => {
     it("should render all 4 social media platforms", async () => {
-      const user = userEvent.setup();
-      const authFixture = getAuthFixture("authenticated-basic");
+      await setupAuthAndOpenMenu("authenticated-basic");
       
-      renderWithProviders(<NavbarUserMenu />, {
-        mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockUseCommunitiesStore: createMockUseCommunitiesStore(
-          authFixture.permissions.communities
-        ),
-        mockUseReviewerPrograms: createMockUseReviewerPrograms(
-          authFixture.permissions.reviewerPrograms
-        ),
-        mockUseStaff: createMockUseStaff(authFixture.permissions.isStaff),
-        mockUseOwnerStore: createMockUseOwnerStore(
-          authFixture.permissions.isOwner
-        ),
-        mockUseRegistryStore: createMockUseRegistryStore(
-          authFixture.permissions.isPoolManager,
-          authFixture.permissions.isRegistryAdmin
-        ),
-        mockUseTheme: createMockUseTheme(),
-        mockUseContributorProfileModalStore:
-          createMockUseContributorProfileModalStore(),
-      });
-
-      const avatarButton = screen.getAllByRole("button")[1];
-      await user.click(avatarButton);
-
-      await waitFor(() => {
-        expect(screen.getByLabelText("Twitter")).toBeInTheDocument();
-        expect(screen.getByLabelText("Telegram")).toBeInTheDocument();
-        expect(screen.getByLabelText("Discord")).toBeInTheDocument();
-        expect(screen.getByLabelText("Paragraph")).toBeInTheDocument();
-      });
+      expect(screen.getByLabelText("Twitter")).toBeInTheDocument();
+      expect(screen.getByLabelText("Telegram")).toBeInTheDocument();
+      expect(screen.getByLabelText("Discord")).toBeInTheDocument();
+      expect(screen.getByLabelText("Paragraph")).toBeInTheDocument();
     });
 
     it('should render "Follow" section title', async () => {
-      const user = userEvent.setup();
-      const authFixture = getAuthFixture("authenticated-basic");
-      
-      renderWithProviders(<NavbarUserMenu />, {
-        mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockUseCommunitiesStore: createMockUseCommunitiesStore(
-          authFixture.permissions.communities
-        ),
-        mockUseReviewerPrograms: createMockUseReviewerPrograms(
-          authFixture.permissions.reviewerPrograms
-        ),
-        mockUseStaff: createMockUseStaff(authFixture.permissions.isStaff),
-        mockUseOwnerStore: createMockUseOwnerStore(
-          authFixture.permissions.isOwner
-        ),
-        mockUseRegistryStore: createMockUseRegistryStore(
-          authFixture.permissions.isPoolManager,
-          authFixture.permissions.isRegistryAdmin
-        ),
-        mockUseTheme: createMockUseTheme(),
-        mockUseContributorProfileModalStore:
-          createMockUseContributorProfileModalStore(),
-      });
-
-      const avatarButton = screen.getAllByRole("button")[1];
-      await user.click(avatarButton);
-
-      await waitFor(() => {
-        expect(screen.getByText("Follow")).toBeInTheDocument();
-      });
+      await setupAuthAndOpenMenu("authenticated-basic");
+      expect(screen.getByText("Follow")).toBeInTheDocument();
     });
   });
 
   describe("Logout Tests", () => {
     it('should call logout() when "Log out" button is clicked', async () => {
-      const user = userEvent.setup();
       const mockLogout = jest.fn();
       const authFixture = getAuthFixture("authenticated-basic");
+      const user = userEvent.setup();
       
       renderWithProviders(<NavbarUserMenu />, {
         mockUseAuth: () => ({
@@ -630,33 +344,15 @@ describe("NavbarUserMenu", () => {
           primaryWallet: { address: authFixture.authState.address },
           wallets: [{ address: authFixture.authState.address }],
         }),
-        mockUseCommunitiesStore: createMockUseCommunitiesStore(
-          authFixture.permissions.communities
-        ),
-        mockUseReviewerPrograms: createMockUseReviewerPrograms(
-          authFixture.permissions.reviewerPrograms
-        ),
-        mockUseStaff: createMockUseStaff(authFixture.permissions.isStaff),
-        mockUseOwnerStore: createMockUseOwnerStore(
-          authFixture.permissions.isOwner
-        ),
-        mockUseRegistryStore: createMockUseRegistryStore(
-          authFixture.permissions.isPoolManager,
-          authFixture.permissions.isRegistryAdmin
-        ),
-        mockUseTheme: createMockUseTheme(),
-        mockUseContributorProfileModalStore:
-          createMockUseContributorProfileModalStore(),
+        mockPermissions: createMockPermissions(authFixture.permissions),
       });
 
-      const avatarButton = screen.getAllByRole("button")[1];
-      await user.click(avatarButton);
+      // Click avatar to open menu
+      const avatar = screen.getByRole("img");
+      await user.click(avatar);
 
-      await waitFor(() => {
-        expect(screen.getByText("Log out")).toBeInTheDocument();
-      });
-
-      const logoutButton = screen.getByText("Log out");
+      // Click logout button
+      const logoutButton = await screen.findByText("Log out");
       await user.click(logoutButton);
 
       expect(mockLogout).toHaveBeenCalledTimes(1);
@@ -665,36 +361,10 @@ describe("NavbarUserMenu", () => {
 
   describe("Separators/Sections", () => {
     it("should render horizontal separators between sections", async () => {
-      const user = userEvent.setup();
-      const authFixture = getAuthFixture("authenticated-basic");
-      const { container } = renderWithProviders(<NavbarUserMenu />, {
-        mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockUseCommunitiesStore: createMockUseCommunitiesStore(
-          authFixture.permissions.communities
-        ),
-        mockUseReviewerPrograms: createMockUseReviewerPrograms(
-          authFixture.permissions.reviewerPrograms
-        ),
-        mockUseStaff: createMockUseStaff(authFixture.permissions.isStaff),
-        mockUseOwnerStore: createMockUseOwnerStore(
-          authFixture.permissions.isOwner
-        ),
-        mockUseRegistryStore: createMockUseRegistryStore(
-          authFixture.permissions.isPoolManager,
-          authFixture.permissions.isRegistryAdmin
-        ),
-        mockUseTheme: createMockUseTheme(),
-        mockUseContributorProfileModalStore:
-          createMockUseContributorProfileModalStore(),
-      });
+      const { container } = await setupAuthAndOpenMenu("authenticated-basic");
 
-      const avatarButton = screen.getAllByRole("button")[1];
-      await user.click(avatarButton);
-
-      await waitFor(() => {
-        const separators = container.querySelectorAll("hr");
-        expect(separators.length).toBeGreaterThanOrEqual(3); // At least 3 separators
-      });
+      const separators = container.querySelectorAll("hr");
+      expect(separators.length).toBeGreaterThanOrEqual(3); // At least 3 separators
     });
   });
 });
