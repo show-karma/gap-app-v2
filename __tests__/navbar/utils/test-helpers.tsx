@@ -431,7 +431,21 @@ export const renderWithProviders = (
     </AllProviders>
   );
 
-  return render(ui, { wrapper: Wrapper, ...renderOptions });
+  const renderResult = render(ui, { wrapper: Wrapper, ...renderOptions });
+
+  // Create custom rerender that accepts options
+  const customRerender = (ui: React.ReactElement, options?: Partial<CustomRenderOptions>) => {
+    if (options) {
+      // Update mocks before rerendering
+      updateMocks(options);
+    }
+    return renderResult.rerender(ui);
+  };
+
+  return {
+    ...renderResult,
+    rerender: customRerender,
+  };
 };
 
 /**

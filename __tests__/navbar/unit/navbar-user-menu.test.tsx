@@ -97,28 +97,11 @@ describe("NavbarUserMenu", () => {
       const authFixture = getAuthFixture("authenticated-basic");
       renderWithProviders(<NavbarUserMenu />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockUseCommunitiesStore: createMockUseCommunitiesStore(
-          authFixture.permissions.communities
-        ),
-        mockUseReviewerPrograms: createMockUseReviewerPrograms(
-          authFixture.permissions.reviewerPrograms
-        ),
-        mockUseStaff: createMockUseStaff(authFixture.permissions.isStaff),
-        mockUseOwnerStore: createMockUseOwnerStore(
-          authFixture.permissions.isOwner
-        ),
-        mockUseRegistryStore: createMockUseRegistryStore(
-          authFixture.permissions.isPoolManager,
-          authFixture.permissions.isRegistryAdmin
-        ),
-        mockUseTheme: createMockUseTheme(),
-        mockUseContributorProfileModalStore:
-          createMockUseContributorProfileModalStore(),
+        mockPermissions: createMockPermissions(authFixture.permissions),
       });
 
-      // Avatar component should be present
-      const avatar = screen.getByRole("button", { name: /avatar/i });
-      expect(avatar).toBeInTheDocument();
+      // Menu should render - check for formatted address display
+      expect(screen.getByText(/0x1234/i)).toBeInTheDocument();
     });
 
     it("should format wallet address correctly (0x1234...5678)", async () => {
