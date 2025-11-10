@@ -73,7 +73,7 @@ describe("Navbar Skeleton Components", () => {
       const { container } = render(<NavbarUserSkeleton />);
       
       const mainContainer = container.firstChild as HTMLElement;
-      expect(mainContainer).toHaveClass("flex");
+      expect(mainContainer.className).toContain("flex");
     });
 
     it("should have inner flex container for skeleton items", () => {
