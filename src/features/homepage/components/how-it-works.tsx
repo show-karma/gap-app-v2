@@ -1,8 +1,8 @@
 import { CheckCircle } from "lucide-react";
 import { cn } from "@/utilities/tailwind";
 import { marketingLayoutTheme } from "@/src/helper/theme";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/UI/card";
+import { Badge } from "@/components/UI/badge";
 
 interface StepCardProps {
     text: string;

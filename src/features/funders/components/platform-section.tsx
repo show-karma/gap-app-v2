@@ -1,4 +1,4 @@
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/components/UI/badge";
 import { marketingLayoutTheme } from "@/src/helper/theme";
 import { cn } from "@/utilities/tailwind";
 import { ThemeImage } from "@/src/components/ui/theme-image";

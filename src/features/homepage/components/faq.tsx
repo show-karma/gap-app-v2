@@ -2,7 +2,7 @@ import { cn } from "@/utilities/tailwind";
 import { marketingLayoutTheme } from "@/src/helper/theme";
 import { MessageCircleMore } from "lucide-react";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/UI/button";
 import { SOCIALS } from "@/utilities/socials";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { FAQAccordion } from "@/src/components/shared/faq-accordion";

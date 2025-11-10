@@ -1,6 +1,6 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/UI/button";
 import { SOCIALS } from "@/utilities/socials";
 import { chosenCommunities } from "@/utilities/chosenCommunities";
 import { InfiniteMovingCards } from "@/src/components/ui/infinite-moving-cards";

@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/UI/button";
 import dynamic from "next/dynamic";
 
 const ProjectDialog = dynamic(

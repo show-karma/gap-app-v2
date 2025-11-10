@@ -6,7 +6,7 @@ import {
     NavigationMenuItem,
     NavigationMenuList,
     NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu";
+} from "@/components/UI/navigation-menu";
 import { ChevronDown } from "lucide-react";
 import {
     ForBuildersContent,

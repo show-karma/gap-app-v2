@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/UI/button";
 import { SOCIALS } from "@/utilities/socials";
 
 export function JoinDiscordButton() {

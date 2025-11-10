@@ -1,6 +1,6 @@
 import { cn } from "@/utilities/tailwind";
 import { marketingLayoutTheme } from "@/src/helper/theme";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/UI/button";
 import Link from "next/link";
 import { SOCIALS } from "@/utilities/socials";
 

@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/UI/button";
 import Image from "next/image";
 import { InfiniteMovingCards } from "@/src/components/ui/infinite-moving-cards";
 import { chosenCommunities } from "@/utilities/chosenCommunities";

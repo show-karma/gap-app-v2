@@ -5,7 +5,7 @@ import {
     AccordionContent,
     AccordionItem,
     AccordionTrigger,
-} from "@/components/ui/accordion";
+} from "@/components/UI/accordion";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { MinusCircle, PlusCircle } from "lucide-react";
 

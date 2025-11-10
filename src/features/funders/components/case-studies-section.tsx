@@ -1,5 +1,5 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/UI/badge";
+import { Button } from "@/components/UI/button";
 import { marketingLayoutTheme } from "@/src/helper/theme";
 import { cn } from "@/utilities/tailwind";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";

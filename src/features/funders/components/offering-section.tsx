@@ -1,7 +1,7 @@
 "use client";
 
 import { SquareCheckBig } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/UI/button";
 import { cn } from "@/utilities/tailwind";
 import { marketingLayoutTheme } from "@/src/helper/theme";
 import Link from "next/link";

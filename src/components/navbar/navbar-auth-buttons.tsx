@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/UI/button";
 import { PhoneCall } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";

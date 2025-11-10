@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import Papa from "papaparse";
 import { FileUpload } from "@/components/Utilities/FileUpload";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/UI/button";
 import { programScoresService, ProgramScoreUploadRequest, ProgramScoreUploadResult } from "@/services/programScoresService";
 import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import toast from "react-hot-toast";

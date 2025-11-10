@@ -1,8 +1,8 @@
 "use client";
 
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/UI/card";
+import { Badge } from "@/components/UI/badge";
+import { Button } from "@/components/UI/button";
 import Image from "next/image";
 import type { FundingProgram } from "@/services/fundingPlatformService";
 import { PAGES } from "@/utilities/pages";

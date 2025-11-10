@@ -1,5 +1,5 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/UI/card";
+import { Badge } from "@/components/UI/badge";
 import Image from "next/image";
 import { cn } from "@/utilities/tailwind";
 import { marketingLayoutTheme } from "@/src/helper/theme";

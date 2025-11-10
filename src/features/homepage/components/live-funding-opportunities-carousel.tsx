@@ -8,8 +8,8 @@ import {
     CarouselNext,
     CarouselPrevious,
     type CarouselApi,
-} from "@/components/ui/carousel";
-import { Button } from "@/components/ui/button";
+} from "@/components/UI/carousel";
+import { Button } from "@/components/UI/button";
 import { ArrowRightIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
 import { PAGES } from "@/utilities/pages";

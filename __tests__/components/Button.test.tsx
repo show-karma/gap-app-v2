@@ -1,9 +1,9 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/UI/button';
 import '@testing-library/jest-dom';
 
 // Mock Spinner
-jest.mock('@/components/ui/spinner', () => ({
+jest.mock('@/components/UI/spinner', () => ({
   Spinner: () => <div data-testid="spinner">Loading...</div>,
 }));
 

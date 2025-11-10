@@ -1,11 +1,11 @@
-import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/UI/skeleton";
+import { Card, CardContent } from "@/components/UI/card";
 import {
     Carousel,
     CarouselContent,
     CarouselItem,
-} from "@/components/ui/carousel";
-import { Button } from "@/components/ui/button";
+} from "@/components/UI/carousel";
+import { Button } from "@/components/UI/button";
 import { ArrowRightIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
 import { PAGES } from "@/utilities/pages";

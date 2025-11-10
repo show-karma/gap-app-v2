@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@/components/UI/badge';
 import '@testing-library/jest-dom';
 
 describe('Badge', () => {

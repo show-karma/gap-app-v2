@@ -7,7 +7,7 @@ import {
     MenubarItem,
     MenubarMenu,
     MenubarTrigger,
-} from "@/components/ui/menubar";
+} from "@/components/UI/menubar";
 import { ChevronRight, CircleHelp, CircleUser, LogOutIcon, PhoneCall, ToggleLeft, ToggleRight, Wallet, FolderKanban, ShieldCheck, CheckCircle2, Settings } from "lucide-react";
 import { SOCIALS } from "@/utilities/socials";
 import { TwitterIcon, DiscordIcon, TelegramIcon } from "@/components/Icons";
@@ -19,7 +19,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "next-themes";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { useContributorProfile } from "@/hooks/useContributorProfile";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/UI/button";
 import { NavbarUserSkeleton } from "./navbar-user-skeleton";
 import Link from "next/link";
 import { PAGES } from "@/utilities/pages";

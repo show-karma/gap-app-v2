@@ -78,7 +78,7 @@ import { DeckIcon } from "@/components/Icons/Deck";
 import { VideoIcon } from "@/components/Icons/Video";
 import { useWallet } from "@/hooks/useWallet";
 import { CustomLink, isCustomLink } from "@/utilities/customLink";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/UI/button";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
