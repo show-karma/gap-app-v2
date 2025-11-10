@@ -197,6 +197,27 @@ jest.mock("wagmi", () => ({
 }));
 
 /**
+ * Mock next-themes
+ */
+export const mockThemeState = {
+  current: {
+    theme: "light",
+    setTheme: jest.fn(),
+    themes: ["light", "dark"],
+    systemTheme: "light",
+    resolvedTheme: "light",
+  }
+};
+
+jest.mock("next-themes", () => ({
+  useTheme: jest.fn(() => {
+    const { mockThemeState } = require("@/__tests__/navbar/setup");
+    return mockThemeState.current;
+  }),
+  ThemeProvider: ({ children }: { children: any }) => children,
+}));
+
+/**
  * Mock @wagmi/core
  */
 jest.mock("@wagmi/core", () => ({
@@ -278,18 +299,32 @@ jest.mock("@/hooks/useStaff", () => ({
 }));
 
 jest.mock("@/store/owner", () => ({
-  useOwnerStore: jest.fn(() => ({ isProjectOwner: false, isOwner: false })),
+  useOwnerStore: jest.fn((selector?: Function) => {
+    const state = { isProjectOwner: false, isOwner: false };
+    return selector ? selector(state) : state;
+  }),
 }));
 
 // Mock @/store (index.ts) which re-exports from multiple stores
 jest.mock("@/store", () => ({
-  useOwnerStore: jest.fn(() => ({ isProjectOwner: false, isOwner: false })),
+  useOwnerStore: jest.fn((selector?: Function) => {
+    const state = { isProjectOwner: false, isOwner: false };
+    return selector ? selector(state) : state;
+  }),
   useProjectStore: jest.fn(() => ({ projects: [] })),
   useDonationCartStore: jest.fn(() => ({ items: [] })),
 }));
 
 jest.mock("@/store/registry", () => ({
   useRegistryStore: jest.fn(() => ({ isPoolManager: false, isRegistryAdmin: false })),
+}));
+
+jest.mock("@/store/modals/contributorProfile", () => ({
+  useContributorProfileModalStore: jest.fn(() => ({
+    isOpen: false,
+    openModal: jest.fn(),
+    closeModal: jest.fn(),
+  })),
 }));
 
 /**
