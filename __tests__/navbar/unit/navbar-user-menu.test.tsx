@@ -132,156 +132,33 @@ describe("NavbarUserMenu", () => {
 
   describe("Always Visible Menu Items", () => {
     it('should display "My profile" button', async () => {
-      const user = userEvent.setup();
-      const authFixture = getAuthFixture("authenticated-basic");
-      renderWithProviders(<NavbarUserMenu />, {
-        mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockUseCommunitiesStore: createMockUseCommunitiesStore(
-          authFixture.permissions.communities
-        ),
-        mockUseReviewerPrograms: createMockUseReviewerPrograms(
-          authFixture.permissions.reviewerPrograms
-        ),
-        mockUseStaff: createMockUseStaff(authFixture.permissions.isStaff),
-        mockUseOwnerStore: createMockUseOwnerStore(
-          authFixture.permissions.isOwner
-        ),
-        mockUseRegistryStore: createMockUseRegistryStore(
-          authFixture.permissions.isPoolManager,
-          authFixture.permissions.isRegistryAdmin
-        ),
-        mockUseTheme: createMockUseTheme(),
-        mockUseContributorProfileModalStore:
-          createMockUseContributorProfileModalStore(),
-      });
-
-      const avatarButton = screen.getAllByRole("button")[1];
-      await user.click(avatarButton);
-
-      await waitFor(() => {
-        expect(screen.getByText("My profile")).toBeInTheDocument();
-      });
+      await setupAuthAndOpenMenu("authenticated-basic");
+      expect(screen.getByText("My profile")).toBeInTheDocument();
     });
 
     it("should display theme toggle", async () => {
-      const user = userEvent.setup();
-      const authFixture = getAuthFixture("authenticated-basic");
-      renderWithProviders(<NavbarUserMenu />, {
-        mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockUseCommunitiesStore: createMockUseCommunitiesStore(
-          authFixture.permissions.communities
-        ),
-        mockUseReviewerPrograms: createMockUseReviewerPrograms(
-          authFixture.permissions.reviewerPrograms
-        ),
-        mockUseStaff: createMockUseStaff(authFixture.permissions.isStaff),
-        mockUseOwnerStore: createMockUseOwnerStore(
-          authFixture.permissions.isOwner
-        ),
-        mockUseRegistryStore: createMockUseRegistryStore(
-          authFixture.permissions.isPoolManager,
-          authFixture.permissions.isRegistryAdmin
-        ),
-        mockUseTheme: createMockUseTheme("light"),
-        mockUseContributorProfileModalStore:
-          createMockUseContributorProfileModalStore(),
-      });
-
-      const avatarButton = screen.getAllByRole("button")[1];
-      await user.click(avatarButton);
-
-      await waitFor(() => {
-        expect(screen.getByText("Dark mode")).toBeInTheDocument();
-      });
+      await setupAuthAndOpenMenu("authenticated-basic");
+      expect(screen.getByText("Dark mode")).toBeInTheDocument();
     });
 
     it('should display "My projects" link', async () => {
-      const user = userEvent.setup();
-      const authFixture = getAuthFixture("authenticated-basic");
-      renderWithProviders(<NavbarUserMenu />, {
-        mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockUseCommunitiesStore: createMockUseCommunitiesStore(
-          authFixture.permissions.communities
-        ),
-        mockUseReviewerPrograms: createMockUseReviewerPrograms(
-          authFixture.permissions.reviewerPrograms
-        ),
-        mockUseStaff: createMockUseStaff(authFixture.permissions.isStaff),
-        mockUseOwnerStore: createMockUseOwnerStore(
-          authFixture.permissions.isOwner
-        ),
-        mockUseRegistryStore: createMockUseRegistryStore(
-          authFixture.permissions.isPoolManager,
-          authFixture.permissions.isRegistryAdmin
-        ),
-        mockUseTheme: createMockUseTheme(),
-        mockUseContributorProfileModalStore:
-          createMockUseContributorProfileModalStore(),
-      });
-
-      const avatarButton = screen.getAllByRole("button")[1];
-      await user.click(avatarButton);
-
-      await waitFor(() => {
-        expect(screen.getByText("My projects")).toBeInTheDocument();
-      });
+      await setupAuthAndOpenMenu("authenticated-basic");
+      expect(screen.getByText("My projects")).toBeInTheDocument();
     });
 
     it('should display "Log out" button', async () => {
-      const user = userEvent.setup();
-      const authFixture = getAuthFixture("authenticated-basic");
-      renderWithProviders(<NavbarUserMenu />, {
-        mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockUseCommunitiesStore: createMockUseCommunitiesStore(
-          authFixture.permissions.communities
-        ),
-        mockUseReviewerPrograms: createMockUseReviewerPrograms(
-          authFixture.permissions.reviewerPrograms
-        ),
-        mockUseStaff: createMockUseStaff(authFixture.permissions.isStaff),
-        mockUseOwnerStore: createMockUseOwnerStore(
-          authFixture.permissions.isOwner
-        ),
-        mockUseRegistryStore: createMockUseRegistryStore(
-          authFixture.permissions.isPoolManager,
-          authFixture.permissions.isRegistryAdmin
-        ),
-        mockUseTheme: createMockUseTheme(),
-        mockUseContributorProfileModalStore:
-          createMockUseContributorProfileModalStore(),
-      });
-
-      const avatarButton = screen.getAllByRole("button")[1];
-      await user.click(avatarButton);
-
-      await waitFor(() => {
-        expect(screen.getByText("Log out")).toBeInTheDocument();
-      });
+      await setupAuthAndOpenMenu("authenticated-basic");
+      expect(screen.getByText("Log out")).toBeInTheDocument();
     });
 
     it("should display help button", () => {
       const authFixture = getAuthFixture("authenticated-basic");
       renderWithProviders(<NavbarUserMenu />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockUseCommunitiesStore: createMockUseCommunitiesStore(
-          authFixture.permissions.communities
-        ),
-        mockUseReviewerPrograms: createMockUseReviewerPrograms(
-          authFixture.permissions.reviewerPrograms
-        ),
-        mockUseStaff: createMockUseStaff(authFixture.permissions.isStaff),
-        mockUseOwnerStore: createMockUseOwnerStore(
-          authFixture.permissions.isOwner
-        ),
-        mockUseRegistryStore: createMockUseRegistryStore(
-          authFixture.permissions.isPoolManager,
-          authFixture.permissions.isRegistryAdmin
-        ),
-        mockUseTheme: createMockUseTheme(),
-        mockUseContributorProfileModalStore:
-          createMockUseContributorProfileModalStore(),
+        mockPermissions: createMockPermissions(authFixture.permissions),
       });
 
+      // Help button is outside menu, always visible
       const helpButton = screen.getByRole("button", { name: /help/i });
       expect(helpButton).toBeInTheDocument();
     });
@@ -289,27 +166,13 @@ describe("NavbarUserMenu", () => {
 
   describe("Profile Modal Tests", () => {
     it('should call openModal() when "My profile" is clicked', async () => {
-      const user = userEvent.setup();
       const mockOpenModal = jest.fn();
       const authFixture = getAuthFixture("authenticated-basic");
+      const user = userEvent.setup();
       
       renderWithProviders(<NavbarUserMenu />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockUseCommunitiesStore: createMockUseCommunitiesStore(
-          authFixture.permissions.communities
-        ),
-        mockUseReviewerPrograms: createMockUseReviewerPrograms(
-          authFixture.permissions.reviewerPrograms
-        ),
-        mockUseStaff: createMockUseStaff(authFixture.permissions.isStaff),
-        mockUseOwnerStore: createMockUseOwnerStore(
-          authFixture.permissions.isOwner
-        ),
-        mockUseRegistryStore: createMockUseRegistryStore(
-          authFixture.permissions.isPoolManager,
-          authFixture.permissions.isRegistryAdmin
-        ),
-        mockUseTheme: createMockUseTheme(),
+        mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseContributorProfileModalStore: () => ({
           isOpen: false,
           openModal: mockOpenModal,
@@ -317,14 +180,12 @@ describe("NavbarUserMenu", () => {
         }),
       });
 
-      const avatarButton = screen.getAllByRole("button")[1];
-      await user.click(avatarButton);
+      // Click avatar to open menu
+      const avatar = screen.getByRole("img");
+      await user.click(avatar);
 
-      await waitFor(() => {
-        expect(screen.getByText("My profile")).toBeInTheDocument();
-      });
-
-      const profileButton = screen.getByText("My profile");
+      // Click "My profile" button
+      const profileButton = await screen.findByText("My profile");
       await user.click(profileButton);
 
       expect(mockOpenModal).toHaveBeenCalledTimes(1);
@@ -333,90 +194,45 @@ describe("NavbarUserMenu", () => {
 
   describe("Theme Toggle Tests", () => {
     it('should show "Dark mode" text when theme is light', async () => {
-      const user = userEvent.setup();
       const authFixture = getAuthFixture("authenticated-basic");
-      renderWithProviders(<NavbarUserMenu />, {
-        mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockUseCommunitiesStore: createMockUseCommunitiesStore(
-          authFixture.permissions.communities
-        ),
-        mockUseReviewerPrograms: createMockUseReviewerPrograms(
-          authFixture.permissions.reviewerPrograms
-        ),
-        mockUseStaff: createMockUseStaff(authFixture.permissions.isStaff),
-        mockUseOwnerStore: createMockUseOwnerStore(
-          authFixture.permissions.isOwner
-        ),
-        mockUseRegistryStore: createMockUseRegistryStore(
-          authFixture.permissions.isPoolManager,
-          authFixture.permissions.isRegistryAdmin
-        ),
-        mockUseTheme: createMockUseTheme("light"),
-        mockUseContributorProfileModalStore:
-          createMockUseContributorProfileModalStore(),
-      });
-
-      const avatarButton = screen.getAllByRole("button")[1];
-      await user.click(avatarButton);
-
-      await waitFor(() => {
-        expect(screen.getByText("Dark mode")).toBeInTheDocument();
-      });
-    });
-
-    it('should show "Light mode" text when theme is dark', async () => {
       const user = userEvent.setup();
-      const authFixture = getAuthFixture("authenticated-basic");
-      renderWithProviders(<NavbarUserMenu />, {
-        mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockUseCommunitiesStore: createMockUseCommunitiesStore(
-          authFixture.permissions.communities
-        ),
-        mockUseReviewerPrograms: createMockUseReviewerPrograms(
-          authFixture.permissions.reviewerPrograms
-        ),
-        mockUseStaff: createMockUseStaff(authFixture.permissions.isStaff),
-        mockUseOwnerStore: createMockUseOwnerStore(
-          authFixture.permissions.isOwner
-        ),
-        mockUseRegistryStore: createMockUseRegistryStore(
-          authFixture.permissions.isPoolManager,
-          authFixture.permissions.isRegistryAdmin
-        ),
-        mockUseTheme: createMockUseTheme("dark"),
-        mockUseContributorProfileModalStore:
-          createMockUseContributorProfileModalStore(),
-      });
-
-      const avatarButton = screen.getAllByRole("button")[1];
-      await user.click(avatarButton);
-
-      await waitFor(() => {
-        expect(screen.getByText("Light mode")).toBeInTheDocument();
-      });
-    });
-
-    it("should call setTheme with opposite value when clicked", async () => {
-      const user = userEvent.setup();
-      const mockSetTheme = jest.fn();
-      const authFixture = getAuthFixture("authenticated-basic");
       
       renderWithProviders(<NavbarUserMenu />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockUseCommunitiesStore: createMockUseCommunitiesStore(
-          authFixture.permissions.communities
-        ),
-        mockUseReviewerPrograms: createMockUseReviewerPrograms(
-          authFixture.permissions.reviewerPrograms
-        ),
-        mockUseStaff: createMockUseStaff(authFixture.permissions.isStaff),
-        mockUseOwnerStore: createMockUseOwnerStore(
-          authFixture.permissions.isOwner
-        ),
-        mockUseRegistryStore: createMockUseRegistryStore(
-          authFixture.permissions.isPoolManager,
-          authFixture.permissions.isRegistryAdmin
-        ),
+        mockPermissions: createMockPermissions(authFixture.permissions),
+        mockUseTheme: createMockUseTheme("light"),
+      });
+
+      const avatar = screen.getByRole("img");
+      await user.click(avatar);
+
+      expect(await screen.findByText("Dark mode")).toBeInTheDocument();
+    });
+
+    it('should show "Light mode" text when theme is dark', async () => {
+      const authFixture = getAuthFixture("authenticated-basic");
+      const user = userEvent.setup();
+      
+      renderWithProviders(<NavbarUserMenu />, {
+        mockUseAuth: createMockUseAuth(authFixture.authState),
+        mockPermissions: createMockPermissions(authFixture.permissions),
+        mockUseTheme: createMockUseTheme("dark"),
+      });
+
+      const avatar = screen.getByRole("img");
+      await user.click(avatar);
+
+      expect(await screen.findByText("Light mode")).toBeInTheDocument();
+    });
+
+    it("should call setTheme with opposite value when clicked", async () => {
+      const mockSetTheme = jest.fn();
+      const authFixture = getAuthFixture("authenticated-basic");
+      const user = userEvent.setup();
+      
+      renderWithProviders(<NavbarUserMenu />, {
+        mockUseAuth: createMockUseAuth(authFixture.authState),
+        mockPermissions: createMockPermissions(authFixture.permissions),
         mockUseTheme: () => ({
           theme: "light",
           setTheme: mockSetTheme,
@@ -424,12 +240,10 @@ describe("NavbarUserMenu", () => {
           systemTheme: "light",
           resolvedTheme: "light",
         }),
-        mockUseContributorProfileModalStore:
-          createMockUseContributorProfileModalStore(),
       });
 
-      const avatarButton = screen.getAllByRole("button")[1];
-      await user.click(avatarButton);
+      const avatar = screen.getByRole("img");
+      await user.click(avatar);
 
       await waitFor(() => {
         expect(screen.getByText("Dark mode")).toBeInTheDocument();
