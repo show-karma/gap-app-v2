@@ -3,7 +3,7 @@
  * Tests modal interactions triggered from navbar (profile modal, create project modal)
  */
 
-import { screen, waitFor, within } from "@testing-library/react";
+import { screen, waitFor, within, fireEvent, cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Navbar } from "@/src/components/navbar/navbar";
 import { NavbarDesktopNavigation } from "@/src/components/navbar/navbar-desktop-navigation";
@@ -11,9 +11,10 @@ import {
   renderWithProviders,
   createMockUsePrivy,
   createMockPermissions,
-  createMockModalStore,
   createMockRouter,
-  updateMocks
+  updateMocks,
+  resetMockAuthState,
+  resetPermissionMocks
 } from "../utils/test-helpers";
 
 import { getAuthFixture } from "../fixtures/auth-fixtures";
@@ -21,6 +22,12 @@ import { getAuthFixture } from "../fixtures/auth-fixtures";
 describe("Modal Integration Tests", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    cleanup();
+    resetMockAuthState();
+    resetPermissionMocks();
   });
   describe("1. Profile Modal from Desktop Menu", () => {
     it("should open profile modal when clicking My profile", async () => {
@@ -31,26 +38,28 @@ describe("Modal Integration Tests", () => {
       renderWithProviders(<Navbar />, {
         mockUsePrivy: createMockUsePrivy(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
-        mockModalStore: createMockModalStore({ openModal: mockOpenModal }),
+        mockUseContributorProfileModalStore: {
+          isOpen: false,
+          openModal: mockOpenModal,
+          closeModal: jest.fn(),
+        },
       });
 
       // Open desktop user menu
-      const userAvatar = screen.queryByTestId("user-avatar");
+      const userAvatar = screen.getByRole("img", { name: /profile picture/i });
 
-      if (userAvatar) {
-        await user.click(userAvatar);
+      await user.click(userAvatar);
 
-        await waitFor(() => {
-          expect(screen.getByText("My profile")).toBeInTheDocument();
-        });
+      await waitFor(() => {
+        expect(screen.getByText("My profile")).toBeInTheDocument();
+      });
 
-        // Click My profile
-        const profileButton = screen.getByText("My profile");
-        await user.click(profileButton);
+      // Click My profile
+      const profileButton = screen.getByText("My profile");
+      await user.click(profileButton);
 
-        // Verify openModal was called
-        expect(mockOpenModal).toHaveBeenCalledTimes(1);
-      }
+      // Verify openModal was called
+      expect(mockOpenModal).toHaveBeenCalledTimes(1);
     });
 
     it("should call openModal with correct parameters", async () => {
@@ -61,24 +70,26 @@ describe("Modal Integration Tests", () => {
       renderWithProviders(<Navbar />, {
         mockUsePrivy: createMockUsePrivy(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
-        mockModalStore: createMockModalStore({ openModal: mockOpenModal }),
+        mockUseContributorProfileModalStore: {
+          isOpen: false,
+          openModal: mockOpenModal,
+          closeModal: jest.fn(),
+        },
       });
 
-      const userAvatar = screen.queryByTestId("user-avatar");
+      const userAvatar = screen.getByRole("img", { name: /profile picture/i });
 
-      if (userAvatar) {
-        await user.click(userAvatar);
+      await user.click(userAvatar);
 
-        await waitFor(() => {
-          expect(screen.getByText("My profile")).toBeInTheDocument();
-        });
+      await waitFor(() => {
+        expect(screen.getByText("My profile")).toBeInTheDocument();
+      });
 
-        const profileButton = screen.getByText("My profile");
-        await user.click(profileButton);
+      const profileButton = screen.getByText("My profile");
+      await user.click(profileButton);
 
-        // Verify openModal was called
-        expect(mockOpenModal).toHaveBeenCalled();
-      }
+      // Verify openModal was called
+      expect(mockOpenModal).toHaveBeenCalled();
     });
 
     it("should close user menu after opening profile modal", async () => {
@@ -89,25 +100,27 @@ describe("Modal Integration Tests", () => {
       renderWithProviders(<Navbar />, {
         mockUsePrivy: createMockUsePrivy(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
-        mockModalStore: createMockModalStore({ openModal: mockOpenModal }),
+        mockUseContributorProfileModalStore: {
+          isOpen: false,
+          openModal: mockOpenModal,
+          closeModal: jest.fn(),
+        },
       });
 
-      const userAvatar = screen.queryByTestId("user-avatar");
+      const userAvatar = screen.getByRole("img", { name: /profile picture/i });
 
-      if (userAvatar) {
-        await user.click(userAvatar);
+      await user.click(userAvatar);
 
-        await waitFor(() => {
-          expect(screen.getByText("My profile")).toBeInTheDocument();
-        });
+      await waitFor(() => {
+        expect(screen.getByText("My profile")).toBeInTheDocument();
+      });
 
-        const profileButton = screen.getByText("My profile");
-        await user.click(profileButton);
+      const profileButton = screen.getByText("My profile");
+      await user.click(profileButton);
 
-        // Menu should close after clicking
-        // This is component-specific behavior
-        expect(mockOpenModal).toHaveBeenCalled();
-      }
+      // Menu should close after clicking
+      // This is component-specific behavior
+      expect(mockOpenModal).toHaveBeenCalled();
     });
   });
 
@@ -120,7 +133,11 @@ describe("Modal Integration Tests", () => {
       renderWithProviders(<Navbar />, {
         mockUsePrivy: createMockUsePrivy(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
-        mockModalStore: createMockModalStore({ openModal: mockOpenModal }),
+        mockUseContributorProfileModalStore: {
+          isOpen: false,
+          openModal: mockOpenModal,
+          closeModal: jest.fn(),
+        },
       });
 
       // Open mobile drawer
@@ -135,11 +152,13 @@ describe("Modal Integration Tests", () => {
       const drawer = screen.getByRole("dialog");
       const profileButton = within(drawer).getByText("My profile");
 
-      // Click My profile
-      await user.click(profileButton);
+      // Click My profile using fireEvent to avoid setPointerCapture error
+      fireEvent.click(profileButton);
 
       // Verify openModal was called
-      expect(mockOpenModal).toHaveBeenCalledTimes(1);
+      await waitFor(() => {
+        expect(mockOpenModal).toHaveBeenCalledTimes(1);
+      });
     });
 
     it("should close drawer after opening profile modal", async () => {
@@ -150,7 +169,11 @@ describe("Modal Integration Tests", () => {
       renderWithProviders(<Navbar />, {
         mockUsePrivy: createMockUsePrivy(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
-        mockModalStore: createMockModalStore({ openModal: mockOpenModal }),
+        mockUseContributorProfileModalStore: {
+          isOpen: false,
+          openModal: mockOpenModal,
+          closeModal: jest.fn(),
+        },
       });
 
       // Open drawer
@@ -161,13 +184,15 @@ describe("Modal Integration Tests", () => {
         expect(screen.getByText("Menu")).toBeInTheDocument();
       });
 
-      // Click profile
+      // Click profile using fireEvent to avoid setPointerCapture error
       const drawer = screen.getByRole("dialog");
       const profileButton = within(drawer).getByText("My profile");
-      await user.click(profileButton);
+      fireEvent.click(profileButton);
 
       // Drawer should close (via onClose callback)
-      expect(mockOpenModal).toHaveBeenCalled();
+      await waitFor(() => {
+        expect(mockOpenModal).toHaveBeenCalled();
+      });
     });
 
     it("should handle profile modal for different user roles", async () => {
@@ -188,7 +213,11 @@ describe("Modal Integration Tests", () => {
         const { unmount } = renderWithProviders(<Navbar />, {
           mockUsePrivy: createMockUsePrivy(authFixture.authState),
           mockPermissions: createMockPermissions(authFixture.permissions),
-          mockModalStore: createMockModalStore({ openModal: mockOpenModal }),
+          mockUseContributorProfileModalStore: {
+            isOpen: false,
+            openModal: mockOpenModal,
+            closeModal: jest.fn(),
+          },
         });
 
         // Open drawer
@@ -199,13 +228,15 @@ describe("Modal Integration Tests", () => {
           expect(screen.getByText("Menu")).toBeInTheDocument();
         });
 
-        // Click profile
+        // Click profile using fireEvent to avoid setPointerCapture error
         const drawer = screen.getByRole("dialog");
         const profileButton = within(drawer).getByText("My profile");
-        await user.click(profileButton);
+        fireEvent.click(profileButton);
 
         // Should work for all roles
-        expect(mockOpenModal).toHaveBeenCalled();
+        await waitFor(() => {
+          expect(mockOpenModal).toHaveBeenCalled();
+        });
 
         unmount();
       }
@@ -419,31 +450,30 @@ describe("Modal Integration Tests", () => {
       renderWithProviders(<Navbar />, {
         mockUsePrivy: createMockUsePrivy(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
-        mockModalStore: createMockModalStore({
+        mockUseContributorProfileModalStore: {
+          isOpen: false,
           openModal: mockOpenModal,
           closeModal: mockCloseModal,
-        }),
+        },
       });
 
       // Open user menu
-      const userAvatar = screen.queryByTestId("user-avatar");
+      const userAvatar = screen.getByRole("img", { name: /profile picture/i });
 
-      if (userAvatar) {
-        await user.click(userAvatar);
+      await user.click(userAvatar);
 
-        await waitFor(() => {
-          expect(screen.getByText("My profile")).toBeInTheDocument();
-        });
+      await waitFor(() => {
+        expect(screen.getByText("My profile")).toBeInTheDocument();
+      });
 
-        // Open profile modal
-        const profileButton = screen.getByText("My profile");
-        await user.click(profileButton);
+      // Open profile modal
+      const profileButton = screen.getByText("My profile");
+      await user.click(profileButton);
 
-        expect(mockOpenModal).toHaveBeenCalled();
+      expect(mockOpenModal).toHaveBeenCalled();
 
-        // Modal state should be managed by modal store
-        // Component only triggers the open action
-      }
+      // Modal state should be managed by modal store
+      // Component only triggers the open action
     });
 
     it("should handle multiple modal interactions", async () => {
@@ -454,7 +484,11 @@ describe("Modal Integration Tests", () => {
       renderWithProviders(<Navbar />, {
         mockUsePrivy: createMockUsePrivy(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
-        mockModalStore: createMockModalStore({ openModal: mockOpenModal }),
+        mockUseContributorProfileModalStore: {
+          isOpen: false,
+          openModal: mockOpenModal,
+          closeModal: jest.fn(),
+        },
       });
 
       // Open mobile drawer
@@ -465,31 +499,40 @@ describe("Modal Integration Tests", () => {
         expect(screen.getByText("Menu")).toBeInTheDocument();
       });
 
-      // Open profile modal
+      // Open profile modal using fireEvent to avoid setPointerCapture error
       const drawer = screen.getByRole("dialog");
       const profileButton = within(drawer).getByText("My profile");
-      await user.click(profileButton);
+      fireEvent.click(profileButton);
 
-      expect(mockOpenModal).toHaveBeenCalledTimes(1);
+      await waitFor(() => {
+        expect(mockOpenModal).toHaveBeenCalledTimes(1);
+      });
 
       // Try opening again
       mockOpenModal.mockClear();
 
-      // Reopen drawer
+      // Wait for drawer to fully close
+      await waitFor(() => {
+        expect(screen.queryByText("Menu")).not.toBeInTheDocument();
+      });
+
+      // Reopen drawer using fireEvent to avoid pointer-events issues
       const reopenButton = screen.getByLabelText("Open menu");
-      await user.click(reopenButton);
+      fireEvent.click(reopenButton);
 
       await waitFor(() => {
         expect(screen.getByText("Menu")).toBeInTheDocument();
       });
 
-      // Open profile again
+      // Open profile again using fireEvent to avoid setPointerCapture error
       const secondProfileButton = within(screen.getByRole("dialog")).getByText(
         "My profile"
       );
-      await user.click(secondProfileButton);
+      fireEvent.click(secondProfileButton);
 
-      expect(mockOpenModal).toHaveBeenCalledTimes(1);
+      await waitFor(() => {
+        expect(mockOpenModal).toHaveBeenCalledTimes(1);
+      });
     });
 
     it("should not interfere with other navigation when modal opens", async () => {
@@ -500,7 +543,11 @@ describe("Modal Integration Tests", () => {
       renderWithProviders(<Navbar />, {
         mockUsePrivy: createMockUsePrivy(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
-        mockModalStore: createMockModalStore({ openModal: mockOpenModal }),
+        mockUseContributorProfileModalStore: {
+          isOpen: false,
+          openModal: mockOpenModal,
+          closeModal: jest.fn(),
+        },
       });
 
       // Open mobile drawer
@@ -511,10 +558,10 @@ describe("Modal Integration Tests", () => {
         expect(screen.getByText("Menu")).toBeInTheDocument();
       });
 
-      // Open profile modal
+      // Open profile modal using fireEvent to avoid setPointerCapture error
       const drawer = screen.getByRole("dialog");
       const profileButton = within(drawer).getByText("My profile");
-      await user.click(profileButton);
+      fireEvent.click(profileButton);
 
       // Other navigation should still work
       // For example, My projects link should still be functional
@@ -532,7 +579,11 @@ describe("Modal Integration Tests", () => {
       renderWithProviders(<Navbar />, {
         mockUsePrivy: createMockUsePrivy(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
-        mockModalStore: createMockModalStore({ openModal: mockOpenModal }),
+        mockUseContributorProfileModalStore: {
+          isOpen: false,
+          openModal: mockOpenModal,
+          closeModal: jest.fn(),
+        },
       });
 
       // Open mobile drawer
@@ -559,7 +610,11 @@ describe("Modal Integration Tests", () => {
       renderWithProviders(<Navbar />, {
         mockUsePrivy: createMockUsePrivy(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
-        mockModalStore: createMockModalStore({ openModal: mockOpenModal }),
+        mockUseContributorProfileModalStore: {
+          isOpen: false,
+          openModal: mockOpenModal,
+          closeModal: jest.fn(),
+        },
       });
 
       // Open mobile drawer

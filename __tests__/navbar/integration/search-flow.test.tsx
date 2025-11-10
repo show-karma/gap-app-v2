@@ -3,7 +3,7 @@
  * Tests complete search journeys including debouncing, API integration, and navigation
  */
 
-import { screen, waitFor, within } from "@testing-library/react";
+import { screen, waitFor, within, fireEvent, cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NavbarSearch } from "@/src/components/navbar/navbar-search";
 import { Navbar } from "@/src/components/navbar/navbar";
@@ -11,7 +11,8 @@ import {
   renderWithProviders,
   waitForDebounce,
   createMockUsePrivy,
-  updateMocks
+  updateMocks,
+  resetMockAuthState
 } from "../utils/test-helpers";
 
 import { server } from "../setup";
@@ -30,6 +31,12 @@ import {
 import { getAuthFixture } from "../fixtures/auth-fixtures";
 
 describe("Search Flow Integration Tests", () => {
+  afterEach(() => {
+    cleanup();
+    resetMockAuthState();
+    server.resetHandlers();
+  });
+
   describe("1. Desktop Search Flow", () => {
     it("should complete full desktop search journey", async () => {
       const user = userEvent.setup();
@@ -140,8 +147,8 @@ describe("Search Flow Integration Tests", () => {
       const drawer = screen.getByRole("dialog");
       const searchInput = within(drawer).getByPlaceholderText("Search Project/Community");
 
-      // Type search query
-      await user.type(searchInput, searchQueries.medium);
+      // Type search query using fireEvent to avoid setPointerCapture error
+      fireEvent.change(searchInput, { target: { value: searchQueries.medium } });
       await waitForDebounce();
 
       // Wait for results in drawer context
@@ -173,10 +180,10 @@ describe("Search Flow Integration Tests", () => {
         expect(screen.getByText("Menu")).toBeInTheDocument();
       });
 
-      // Search in drawer
+      // Search in drawer using fireEvent to avoid setPointerCapture error
       const drawer = screen.getByRole("dialog");
       const searchInput = within(drawer).getByPlaceholderText("Search Project/Community");
-      await user.type(searchInput, searchQueries.medium);
+      fireEvent.change(searchInput, { target: { value: searchQueries.medium } });
       await waitForDebounce();
 
       // Wait for results
