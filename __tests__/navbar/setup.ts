@@ -304,7 +304,7 @@ jest.mock("@/store/registry", () => ({
  */
 jest.mock("@/components/Utilities/ExternalLink", () => ({
   ExternalLink: ({ children, href, ...props }: any) => 
-    React.createElement("a", { href, ...props }, children),
+    React.createElement("a", { href, target: "_blank", rel: "noreferrer", ...props }, children),
 }));
 
 /**
