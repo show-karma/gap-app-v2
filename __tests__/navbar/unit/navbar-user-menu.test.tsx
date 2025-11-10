@@ -25,12 +25,10 @@ describe("NavbarUserMenu", () => {
   // Helper to setup auth and open menu
   const setupAuthAndOpenMenu = async (fixtureName: string) => {
     const authFixture = getAuthFixture(fixtureName);
-    const { useAuth } = require("@/hooks/useAuth");
-    const mockAuth = createMockUseAuth(authFixture.authState);
-    useAuth.mockReturnValue(mockAuth);
-    
     const user = userEvent.setup();
+    
     const result = renderWithProviders(<NavbarUserMenu />, {
+      mockUseAuth: createMockUseAuth(authFixture.authState),
       mockPermissions: createMockPermissions(authFixture.permissions),
     });
     

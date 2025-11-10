@@ -258,22 +258,11 @@ export const mockAuthState = {
   }
 };
 
-// Create useAuth mock function at module level
-const useAuthMock = jest.fn(() => ({
-  ready: true,
-  authenticated: false,
-  isConnected: false,
-  address: undefined,
-  user: null,
-  authenticate: jest.fn(),
-  login: jest.fn(),
-  logout: jest.fn(),
-  disconnect: jest.fn(),
-  getAccessToken: jest.fn().mockResolvedValue("mock-token"),
-}));
-
 jest.mock("@/hooks/useAuth", () => ({
-  useAuth: useAuthMock,
+  useAuth: jest.fn(() => {
+    const { mockAuthState } = require("@/__tests__/navbar/setup");
+    return mockAuthState.current;
+  }),
 }));
 
 jest.mock("@/store/communities", () => ({

@@ -14,21 +14,18 @@ import { mockAuthState } from "../setup";
  * Reset mock auth state to default
  */
 export const resetMockAuthState = () => {
-  const module = require("@/hooks/useAuth");
-  if (module.useAuth && jest.isMockFunction(module.useAuth)) {
-    module.useAuth.mockReturnValue({
-      ready: true,
-      authenticated: false,
-      isConnected: false,
-      address: undefined,
-      user: null,
-      authenticate: jest.fn(),
-      login: jest.fn(),
-      logout: jest.fn(),
-      disconnect: jest.fn(),
-      getAccessToken: jest.fn().mockResolvedValue("mock-token"),
-    });
-  }
+  mockAuthState.current = {
+    ready: true,
+    authenticated: false,
+    isConnected: false,
+    address: undefined,
+    user: null,
+    authenticate: jest.fn(),
+    login: jest.fn(),
+    logout: jest.fn(),
+    disconnect: jest.fn(),
+    getAccessToken: jest.fn().mockResolvedValue("mock-token"),
+  };
 };
 
 /**
@@ -156,10 +153,7 @@ export const updateMocks = (options: Partial<CustomRenderOptions>) => {
   // Update auth mock
   if (mockUseAuth || mockUsePrivy) {
     const authMock = mockUseAuth || mockUsePrivy;
-    const module = require("@/hooks/useAuth");
-    if (module.useAuth && jest.isMockFunction(module.useAuth)) {
-      module.useAuth.mockReturnValue(authMock);
-    }
+    mockAuthState.current = authMock;
   }
 
   // Update permissions mocks
