@@ -38,7 +38,7 @@ describe("Search Flow Integration Tests", () => {
       renderWithProviders(<NavbarSearch />);
 
       // Find search input
-      const searchInput = screen.getByPlaceholderText("Search projects...");
+      const searchInput = screen.getByPlaceholderText("Search Project/Community");
       expect(searchInput).toBeInTheDocument();
 
       // Type in search field
@@ -70,7 +70,7 @@ describe("Search Flow Integration Tests", () => {
 
       renderWithProviders(<NavbarSearch />);
 
-      const searchInput = screen.getByPlaceholderText("Search projects...");
+      const searchInput = screen.getByPlaceholderText("Search Project/Community");
 
       // Type search query
       await user.type(searchInput, searchQueries.mixed);
@@ -93,7 +93,7 @@ describe("Search Flow Integration Tests", () => {
 
       renderWithProviders(<NavbarSearch />);
 
-      const searchInput = screen.getByPlaceholderText("Search projects...");
+      const searchInput = screen.getByPlaceholderText("Search Project/Community");
 
       // Type and search
       await user.type(searchInput, searchQueries.mixed);
@@ -138,7 +138,7 @@ describe("Search Flow Integration Tests", () => {
 
       // Find search input in drawer
       const drawer = screen.getByRole("dialog");
-      const searchInput = within(drawer).getByPlaceholderText("Search projects...");
+      const searchInput = within(drawer).getByPlaceholderText("Search Project/Community");
 
       // Type search query
       await user.type(searchInput, searchQueries.mixed);
@@ -175,7 +175,7 @@ describe("Search Flow Integration Tests", () => {
 
       // Search in drawer
       const drawer = screen.getByRole("dialog");
-      const searchInput = within(drawer).getByPlaceholderText("Search projects...");
+      const searchInput = within(drawer).getByPlaceholderText("Search Project/Community");
       await user.type(searchInput, searchQueries.mixed);
       await waitForDebounce();
 
@@ -208,7 +208,7 @@ describe("Search Flow Integration Tests", () => {
 
       renderWithProviders(<NavbarSearch />);
 
-      const searchInput = screen.getByPlaceholderText("Search projects...");
+      const searchInput = screen.getByPlaceholderText("Search Project/Community");
 
       // Type "pro" quickly
       await user.type(searchInput, "pro", { delay: 50 });
@@ -238,7 +238,7 @@ describe("Search Flow Integration Tests", () => {
 
       renderWithProviders(<NavbarSearch />);
 
-      const searchInput = screen.getByPlaceholderText("Search projects...");
+      const searchInput = screen.getByPlaceholderText("Search Project/Community");
 
       // Type "pro" quickly
       await user.type(searchInput, "pro", { delay: 50 });
@@ -270,7 +270,7 @@ describe("Search Flow Integration Tests", () => {
 
       renderWithProviders(<NavbarSearch />);
 
-      const searchInput = screen.getByPlaceholderText("Search projects...");
+      const searchInput = screen.getByPlaceholderText("Search Project/Community");
 
       // Type 2 characters
       await user.type(searchInput, "pr");
@@ -289,7 +289,7 @@ describe("Search Flow Integration Tests", () => {
 
       renderWithProviders(<NavbarSearch />);
 
-      const searchInput = screen.getByPlaceholderText("Search projects...");
+      const searchInput = screen.getByPlaceholderText("Search Project/Community");
 
       // Type exactly 3 characters
       await user.type(searchInput, "pro");
@@ -308,7 +308,7 @@ describe("Search Flow Integration Tests", () => {
 
       renderWithProviders(<NavbarSearch />);
 
-      const searchInput = screen.getByPlaceholderText("Search projects...");
+      const searchInput = screen.getByPlaceholderText("Search Project/Community");
 
       // First search - projects
       server.use(scenarioHandlers.projectsOnly);
@@ -340,7 +340,7 @@ describe("Search Flow Integration Tests", () => {
 
       renderWithProviders(<NavbarSearch />);
 
-      const searchInput = screen.getByPlaceholderText("Search projects...");
+      const searchInput = screen.getByPlaceholderText("Search Project/Community");
 
       // First search
       server.use(scenarioHandlers.mixedResults);
@@ -377,7 +377,7 @@ describe("Search Flow Integration Tests", () => {
 
       renderWithProviders(<NavbarSearch />);
 
-      const searchInput = screen.getByPlaceholderText("Search projects...");
+      const searchInput = screen.getByPlaceholderText("Search Project/Community");
 
       await user.type(searchInput, "test");
       await waitForDebounce();
@@ -397,7 +397,7 @@ describe("Search Flow Integration Tests", () => {
 
       renderWithProviders(<NavbarSearch />);
 
-      const searchInput = screen.getByPlaceholderText("Search projects...");
+      const searchInput = screen.getByPlaceholderText("Search Project/Community");
 
       // First search - error
       server.use(scenarioHandlers.serverError);
@@ -426,7 +426,7 @@ describe("Search Flow Integration Tests", () => {
 
       renderWithProviders(<NavbarSearch />);
 
-      const searchInput = screen.getByPlaceholderText("Search projects...");
+      const searchInput = screen.getByPlaceholderText("Search Project/Community");
 
       await user.type(searchInput, "timeout");
       await waitForDebounce();
@@ -443,7 +443,7 @@ describe("Search Flow Integration Tests", () => {
 
       renderWithProviders(<NavbarSearch />);
 
-      const searchInput = screen.getByPlaceholderText("Search projects...");
+      const searchInput = screen.getByPlaceholderText("Search Project/Community");
 
       await user.type(searchInput, "nonexistent");
       await waitForDebounce();
@@ -461,7 +461,7 @@ describe("Search Flow Integration Tests", () => {
 
       renderWithProviders(<NavbarSearch />);
 
-      const searchInput = screen.getByPlaceholderText("Search projects...");
+      const searchInput = screen.getByPlaceholderText("Search Project/Community");
 
       // First search - empty
       server.use(scenarioHandlers.emptySearch);
@@ -494,7 +494,7 @@ describe("Search Flow Integration Tests", () => {
 
       renderWithProviders(<NavbarSearch />);
 
-      const searchInput = screen.getByPlaceholderText("Search projects...");
+      const searchInput = screen.getByPlaceholderText("Search Project/Community");
 
       await user.type(searchInput, searchQueries.projectsOnly);
       await waitForDebounce();
@@ -518,7 +518,7 @@ describe("Search Flow Integration Tests", () => {
 
       renderWithProviders(<NavbarSearch />);
 
-      const searchInput = screen.getByPlaceholderText("Search projects...");
+      const searchInput = screen.getByPlaceholderText("Search Project/Community");
 
       await user.type(searchInput, searchQueries.communitiesOnly);
       await waitForDebounce();
@@ -538,7 +538,7 @@ describe("Search Flow Integration Tests", () => {
 
       renderWithProviders(<NavbarSearch />);
 
-      const searchInput = screen.getByPlaceholderText("Search projects...");
+      const searchInput = screen.getByPlaceholderText("Search Project/Community");
 
       await user.type(searchInput, searchQueries.mixed);
       await waitForDebounce();
@@ -561,7 +561,7 @@ describe("Search Flow Integration Tests", () => {
 
       renderWithProviders(<NavbarSearch />);
 
-      const searchInput = screen.getByPlaceholderText("Search projects...");
+      const searchInput = screen.getByPlaceholderText("Search Project/Community");
 
       await user.type(searchInput, searchQueries.large);
       await waitForDebounce();
