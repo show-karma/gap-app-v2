@@ -37,6 +37,7 @@ const config: Config = {
     "^@/contexts/(.*)$": "<rootDir>/contexts/$1",
     "^@/hooks/(.*)$": "<rootDir>/hooks/$1",
     "^@/lib/(.*)$": "<rootDir>/lib/$1",
+    "^@/store$": "<rootDir>/store/index.ts",
     "^@/store/(.*)$": "<rootDir>/store/$1",
     "^@/types/(.*)$": "<rootDir>/types/$1",
     "^@/utilities/(.*)$": "<rootDir>/utilities/$1",

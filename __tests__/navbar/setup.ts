@@ -268,7 +268,7 @@ jest.mock("@/store/owner", () => ({
   useOwnerStore: jest.fn(() => ({ isProjectOwner: false, isOwner: false })),
 }));
 
-// Mock @/store (which re-exports from @/store/owner)
+// Mock @/store (index.ts) which re-exports from multiple stores
 jest.mock("@/store", () => ({
   useOwnerStore: jest.fn(() => ({ isProjectOwner: false, isOwner: false })),
   useProjectStore: jest.fn(() => ({ projects: [] })),
