@@ -333,29 +333,33 @@ describe("NavbarSearch", () => {
       const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
       gapIndexerApi.search.mockResolvedValue({ data: projectsOnlyResults });
       
+      // Use real timers for this test since it involves async state updates
+      jest.useRealTimers();
+      
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
       
       // First, type enough characters to trigger search
       fireEvent.change(searchInput, { target: { value: "test" } });
-      jest.useFakeTimers();
-      act(() => jest.advanceTimersByTime(500));
-      jest.useRealTimers();
       
       await waitFor(() => {
         expect(gapIndexerApi.search).toHaveBeenCalled();
-      });
+      }, { timeout: 1000 });
       
       // Then reduce to less than 3 characters
       gapIndexerApi.search.mockClear();
       fireEvent.change(searchInput, { target: { value: "te" } });
       
-      jest.useFakeTimers();
-      act(() => jest.advanceTimersByTime(500));
-      jest.useRealTimers();
+      // Wait for any potential debounce (there shouldn't be an API call)
+      await act(async () => {
+        await new Promise(resolve => setTimeout(resolve, 600));
+      });
       
       // Should not trigger new search
       expect(gapIndexerApi.search).not.toHaveBeenCalled();
+      
+      // Restore fake timers for other tests
+      jest.useFakeTimers();
     });
   });
 
@@ -420,10 +424,7 @@ describe("NavbarSearch", () => {
   });
 
   describe("API Integration Tests", () => {
-    beforeEach(() => {
-      jest.useFakeTimers();
-    });
-
+    // Don't use fake timers for these tests - they need real async behavior
     it("successful search response displays results", async () => {
       const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
       gapIndexerApi.search.mockResolvedValue({ data: projectsOnlyResults });
@@ -431,14 +432,18 @@ describe("NavbarSearch", () => {
       renderWithProviders(<NavbarSearch />);
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
       
+      // Type search value
       fireEvent.change(searchInput, { target: { value: "awesome" } });
       
-      // Flush timers and promises
-      await flushTimersAndPromises();
+      // First verify the API gets called
+      await waitFor(() => {
+        expect(gapIndexerApi.search).toHaveBeenCalledWith("awesome");
+      }, { timeout: 1000 });
       
+      // Then wait for results to appear
       await waitFor(() => {
         expect(screen.getByText("Awesome Project")).toBeInTheDocument();
-      });
+      }, { timeout: 1000 });
     });
 
     it("empty results show 'No results found' message", async () => {

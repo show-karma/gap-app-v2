@@ -10,9 +10,14 @@ import { ISearchResponse } from "@show-karma/karma-gap-sdk/core/class/karma-inde
  */
 export const createMockProject = (overrides: Partial<any> = {}): any => ({
   uid: overrides.uid || `project-${Math.random().toString(36).substr(2, 9)}`,
-  title: overrides.title || "Test Project",
-  description: overrides.description || "Test project description",
-  imageURL: overrides.imageURL || "https://example.com/project.png",
+  details: {
+    data: {
+      title: overrides.title || "Test Project",
+      description: overrides.description || "Test project description",
+      imageURL: overrides.imageURL || "https://example.com/project.png",
+      slug: overrides.slug || `test-project-${Math.random().toString(36).substr(2, 9)}`,
+    },
+  },
   recipient: overrides.recipient || "0x1234567890123456789012345678901234567890",
   type: "project",
   data: {},
@@ -29,9 +34,14 @@ export const createMockProject = (overrides: Partial<any> = {}): any => ({
  */
 export const createMockCommunity = (overrides: Partial<any> = {}): any => ({
   uid: overrides.uid || `community-${Math.random().toString(36).substr(2, 9)}`,
-  name: overrides.name || "Test Community",
-  description: overrides.description || "Test community description",
-  imageURL: overrides.imageURL || "https://example.com/community.png",
+  details: {
+    data: {
+      name: overrides.name || "Test Community",
+      description: overrides.description || "Test community description",
+      imageURL: overrides.imageURL || "https://example.com/community.png",
+      slug: overrides.slug || `test-community-${Math.random().toString(36).substr(2, 9)}`,
+    },
+  },
   type: "community",
   data: {},
   grants: [],
