@@ -4,6 +4,7 @@ import { chosenCommunities } from "./utilities/chosenCommunities";
 import type { Community } from "@show-karma/karma-gap-sdk";
 import { envVars } from "./utilities/enviromentVars";
 import { shouldRedirectToGov, redirectToGov } from "./utilities/redirectHelpers";
+import { hasForbiddenChars, sanitizeCommunitySlug } from "./utilities/sanitize";
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
@@ -12,6 +13,20 @@ export async function middleware(request: NextRequest) {
   if (shouldRedirectToGov(path)) {
     return redirectToGov(request);
   }
+
+  // Handle community slugs with forbidden characters
+  const communityPathMatch = path.match(/^\/community\/([^\/]+)(\/.*)?$/);
+  if (communityPathMatch) {
+    const communitySlug = communityPathMatch[1];
+    const restOfPath = communityPathMatch[2] || "";
+
+    if (hasForbiddenChars(communitySlug)) {
+      const cleanSlug = sanitizeCommunitySlug(communitySlug);
+      const newPath = `/community/${cleanSlug}${restOfPath}`;
+      return NextResponse.redirect(new URL(newPath, request.url));
+    }
+  }
+
   const communityMatch = path.match(/^\/([^\/]+)(?:\/.*)?$/);
 
   if (communityMatch) {
