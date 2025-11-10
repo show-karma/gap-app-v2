@@ -33,6 +33,16 @@ jest.mock("@/utilities/communityHelpers", () => ({
   groupSimilarCommunities: jest.fn((communities) => communities),
 }));
 
+// Helper to flush timers and promises
+const flushTimersAndPromises = async () => {
+  await act(async () => {
+    jest.runAllTimers();
+    // Flush promise queue
+    await Promise.resolve();
+    await Promise.resolve();
+  });
+};
+
 describe("NavbarSearch", () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -422,7 +432,9 @@ describe("NavbarSearch", () => {
       const searchInput = screen.getByPlaceholderText(/search project\/community/i);
       
       fireEvent.change(searchInput, { target: { value: "awesome" } });
-      act(() => jest.advanceTimersByTime(500));
+      
+      // Flush timers and promises
+      await flushTimersAndPromises();
       
       await waitFor(() => {
         expect(screen.getByText("Awesome Project")).toBeInTheDocument();
