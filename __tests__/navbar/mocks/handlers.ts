@@ -151,6 +151,9 @@ export const handlers = [
  * Handlers for specific test scenarios
  */
 export const scenarioHandlers = {
+  // Mixed search results (default)
+  mixedResults: createSearchHandler("success"),
+
   // Empty search results
   emptySearch: createSearchHandler("empty"),
 
@@ -170,6 +173,7 @@ export const scenarioHandlers = {
   error404: createSearchHandler("error404"),
   error500: createSearchHandler("error500"),
   error503: createSearchHandler("error503"),
+  serverError: createSearchHandler("error500"), // Alias for error500
 
   // Timeout
   timeout: searchHandlerWithTimeout,
@@ -188,9 +192,9 @@ export const resetHandlers = () => {
 /**
  * Helper to override search handler with custom response
  */
-export const createCustomSearchHandler = (response: any, delay: number = 100) => {
+export const createCustomSearchHandler = (response: any, delayMs: number = 100) => {
   return http.get(`${GAP_INDEXER_URL}/search`, async () => {
-    await delay(delay);
+    await delay(delayMs);
     return HttpResponse.json(response);
   });
 };

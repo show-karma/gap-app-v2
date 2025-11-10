@@ -42,7 +42,7 @@ describe("Search Flow Integration Tests", () => {
       expect(searchInput).toBeInTheDocument();
 
       // Type in search field
-      await user.type(searchInput, searchQueries.mixed);
+      await user.type(searchInput, searchQueries.medium);
 
       // Wait for debounce
       await waitForDebounce();
@@ -73,7 +73,7 @@ describe("Search Flow Integration Tests", () => {
       const searchInput = screen.getByPlaceholderText("Search Project/Community");
 
       // Type search query
-      await user.type(searchInput, searchQueries.mixed);
+      await user.type(searchInput, searchQueries.medium);
 
       // Loading spinner should appear immediately
       const loadingIndicator = screen.queryByText(/searching/i) || screen.queryByRole("status");
@@ -96,7 +96,7 @@ describe("Search Flow Integration Tests", () => {
       const searchInput = screen.getByPlaceholderText("Search Project/Community");
 
       // Type and search
-      await user.type(searchInput, searchQueries.mixed);
+      await user.type(searchInput, searchQueries.medium);
       await waitForDebounce();
 
       // Wait for results
@@ -141,7 +141,7 @@ describe("Search Flow Integration Tests", () => {
       const searchInput = within(drawer).getByPlaceholderText("Search Project/Community");
 
       // Type search query
-      await user.type(searchInput, searchQueries.mixed);
+      await user.type(searchInput, searchQueries.medium);
       await waitForDebounce();
 
       // Wait for results in drawer context
@@ -176,7 +176,7 @@ describe("Search Flow Integration Tests", () => {
       // Search in drawer
       const drawer = screen.getByRole("dialog");
       const searchInput = within(drawer).getByPlaceholderText("Search Project/Community");
-      await user.type(searchInput, searchQueries.mixed);
+      await user.type(searchInput, searchQueries.medium);
       await waitForDebounce();
 
       // Wait for results
@@ -312,7 +312,7 @@ describe("Search Flow Integration Tests", () => {
 
       // First search - projects
       server.use(scenarioHandlers.projectsOnly);
-      await user.type(searchInput, searchQueries.projectsOnly);
+      await user.type(searchInput, searchQueries.short);
       await waitForDebounce();
 
       await waitFor(() => {
@@ -324,7 +324,7 @@ describe("Search Flow Integration Tests", () => {
 
       // Second search - communities
       server.use(scenarioHandlers.communitiesOnly);
-      await user.type(searchInput, searchQueries.communitiesOnly);
+      await user.type(searchInput, searchQueries.ethereum);
       await waitForDebounce();
 
       await waitFor(() => {
@@ -344,7 +344,7 @@ describe("Search Flow Integration Tests", () => {
 
       // First search
       server.use(scenarioHandlers.mixedResults);
-      await user.type(searchInput, searchQueries.mixed);
+      await user.type(searchInput, searchQueries.medium);
       await waitForDebounce();
 
       await waitFor(() => {
@@ -409,7 +409,7 @@ describe("Search Flow Integration Tests", () => {
 
       // Second search - success
       server.use(scenarioHandlers.projectsOnly);
-      await user.type(searchInput, searchQueries.projectsOnly);
+      await user.type(searchInput, searchQueries.short);
       await waitForDebounce();
 
       // Should work normally
@@ -477,7 +477,7 @@ describe("Search Flow Integration Tests", () => {
       await user.clear(searchInput);
 
       server.use(scenarioHandlers.projectsOnly);
-      await user.type(searchInput, searchQueries.projectsOnly);
+      await user.type(searchInput, searchQueries.short);
       await waitForDebounce();
 
       // Results should appear normally
@@ -496,7 +496,7 @@ describe("Search Flow Integration Tests", () => {
 
       const searchInput = screen.getByPlaceholderText("Search Project/Community");
 
-      await user.type(searchInput, searchQueries.projectsOnly);
+      await user.type(searchInput, searchQueries.short);
       await waitForDebounce();
 
       await waitFor(() => {
@@ -520,7 +520,7 @@ describe("Search Flow Integration Tests", () => {
 
       const searchInput = screen.getByPlaceholderText("Search Project/Community");
 
-      await user.type(searchInput, searchQueries.communitiesOnly);
+      await user.type(searchInput, searchQueries.ethereum);
       await waitForDebounce();
 
       await waitFor(() => {
@@ -540,7 +540,7 @@ describe("Search Flow Integration Tests", () => {
 
       const searchInput = screen.getByPlaceholderText("Search Project/Community");
 
-      await user.type(searchInput, searchQueries.mixed);
+      await user.type(searchInput, searchQueries.medium);
       await waitForDebounce();
 
       // Should have both projects and communities
@@ -563,7 +563,7 @@ describe("Search Flow Integration Tests", () => {
 
       const searchInput = screen.getByPlaceholderText("Search Project/Community");
 
-      await user.type(searchInput, searchQueries.large);
+      await user.type(searchInput, searchQueries.long);
       await waitForDebounce();
 
       // Results should render (may be limited by component)
