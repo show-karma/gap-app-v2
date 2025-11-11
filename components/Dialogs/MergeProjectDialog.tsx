@@ -33,6 +33,7 @@ import EthereumAddressToENSName from "../EthereumAddressToENSName";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useWallet } from "@/hooks/useWallet";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import { useStaff } from "@/hooks/useStaff";
 
 type MergeProjectProps = {
   buttonElement?: {
@@ -196,6 +197,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
   const setIsProjectAdmin = useProjectStore((state) => state.setIsProjectAdmin);
   const { switchChainAsync } = useWallet();
   const { changeStepperStep, setIsStepper } = useStepper();
+  const { isStaff } = useStaff();
 
   const createProjectPointer = async ({ ogProjectUID }: PointerType) => {
     let gapClient = gap;
@@ -304,7 +306,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
     <>
       {buttonElement ? (
         <Button
-          disabled={!isProjectAdmin}
+          disabled={!isProjectAdmin && !isStaff}
           onClick={openModal}
           className={buttonElement.styleClass}
         >
