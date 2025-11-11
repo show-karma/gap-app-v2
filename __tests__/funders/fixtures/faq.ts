@@ -2,11 +2,7 @@
  * Mock FAQ data for funders page tests
  */
 
-export interface FAQItem {
-  id: string;
-  question: string;
-  answer: string;
-}
+import type { FAQItem } from "@/src/components/shared/faq-accordion";
 
 export const mockFAQItems: FAQItem[] = [
   {
