@@ -24,6 +24,26 @@ import {
 import "@testing-library/jest-dom";
 import { VIEWPORTS } from "../setup";
 
+// Mock InfiniteMovingCards
+jest.mock("@/src/components/ui/infinite-moving-cards", () => ({
+  InfiniteMovingCards: ({ items }: any) => (
+    <div data-testid="infinite-moving-cards">
+      {items?.map((item: any, idx: number) => (
+        <div key={idx} data-testid={`carousel-item-${idx}`}>
+          {item.text || item.name}
+        </div>
+      ))}
+    </div>
+  ),
+}));
+
+// Mock ThemeImage
+jest.mock("@/src/components/ui/theme-image", () => ({
+  ThemeImage: ({ alt, src, className }: any) => (
+    <img data-testid="theme-image" src={src} alt={alt} className={className} />
+  ),
+}));
+
 // Mock the utilities that provide community data
 jest.mock("@/utilities/chosenCommunities", () => ({
   chosenCommunities: jest.fn(() => [

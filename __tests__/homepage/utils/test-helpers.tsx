@@ -3,6 +3,9 @@
  * Provides render utilities, mock factories, and test helpers
  */
 
+// Import homepage setup to ensure mocks are loaded
+import "../setup";
+
 import React from "react";
 import { render, RenderResult, RenderOptions } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
