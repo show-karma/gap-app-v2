@@ -2,34 +2,15 @@
  * Mock case study data for funders page tests
  */
 
-export interface MetricCard {
-  type: "metric";
-  metric: string;
-  description: string;
-  communitySlugs: string[];
-}
+import type {
+  MetricCard,
+  TestimonialCard,
+  CaseStudyCard,
+  CaseStudyCardType,
+} from "@/src/features/funders/components/case-studies-section";
 
-export interface TestimonialCard {
-  type: "testimonial";
-  text: string;
-  author: string;
-  authorRole: string;
-  communitySlug: string;
-  link?: string;
-  avatar?: string;
-}
-
-export interface CaseStudyCard {
-  type: "case-study";
-  headline: string;
-  description: string;
-  communitySlug: string;
-  link?: string;
-  author?: string;
-  authorRole?: string;
-}
-
-export type CaseStudyCardType = MetricCard | TestimonialCard | CaseStudyCard;
+// Re-export types for convenience
+export type { MetricCard, TestimonialCard, CaseStudyCard, CaseStudyCardType };
 
 export const mockCaseStudyCards: CaseStudyCardType[] = [
   {
