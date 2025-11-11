@@ -2,12 +2,7 @@
  * Mock platform card data for funders page tests
  */
 
-export interface PlatformCard {
-  subtitle: string;
-  title: string;
-  description: string;
-  image: string;
-}
+import type { PlatformCard } from "@/src/features/funders/components/platform-section";
 
 export const mockPlatformCards: PlatformCard[] = [
   {

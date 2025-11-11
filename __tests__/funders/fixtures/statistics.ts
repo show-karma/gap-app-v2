@@ -2,11 +2,7 @@
  * Mock statistics data for funders page tests
  */
 
-export interface Statistic {
-  number: string;
-  title: string;
-  description: string;
-}
+import type { Statistic } from "@/src/features/funders/components/numbers-section";
 
 export const mockStatistics: Statistic[] = [
   {
