@@ -481,10 +481,34 @@ describe("NavbarSearch", () => {
       consoleSpy.mockRestore();
     });
 
-    it("network timeout handled gracefully", async () => {
+    it("shows 'No results found' message when API fails", async () => {
       const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
+      gapIndexerApi.search.mockRejectedValue(new Error("API Error"));
+      
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      
+      renderWithProviders(<NavbarSearch />);
+      const searchInput = screen.getByPlaceholderText(/search project\/community/i);
+      
+      fireEvent.change(searchInput, { target: { value: "test" } });
+      act(() => jest.advanceTimersByTime(500));
+      
+      // Wait for error handling to complete
+      await waitFor(() => {
+        expect(screen.getByText(/no results found/i)).toBeInTheDocument();
+      }, { timeout: 3000 });
+      
+      // Verify error UI is displayed
+      expect(screen.getByText(/no results found/i)).toBeInTheDocument();
+      
+      consoleSpy.mockRestore();
+    });
+
+    it("shows loading spinner during API call", async () => {
+      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
+      // Delay the response to see loading state
       gapIndexerApi.search.mockImplementation(
-        () => new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 5000))
+        () => new Promise((resolve) => setTimeout(() => resolve({ data: { projects: [], communities: [] } }), 100))
       );
       
       renderWithProviders(<NavbarSearch />);
@@ -493,13 +517,91 @@ describe("NavbarSearch", () => {
       fireEvent.change(searchInput, { target: { value: "test" } });
       act(() => jest.advanceTimersByTime(500));
       
-      // Advance to timeout
-      act(() => jest.advanceTimersByTime(5000));
+      // Should show loading spinner
+      await waitFor(() => {
+        const spinner = document.querySelector('.animate-spin');
+        expect(spinner).toBeInTheDocument();
+      });
+    });
+
+    it("loading spinner is accessible", async () => {
+      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
+      gapIndexerApi.search.mockImplementation(
+        () => new Promise((resolve) => setTimeout(() => resolve({ data: { projects: [], communities: [] } }), 100))
+      );
+      
+      renderWithProviders(<NavbarSearch />);
+      const searchInput = screen.getByPlaceholderText(/search project\/community/i);
+      
+      fireEvent.change(searchInput, { target: { value: "test" } });
+      act(() => jest.advanceTimersByTime(500));
+      
+      // Loading spinner should be visible and accessible
+      await waitFor(() => {
+        const spinner = document.querySelector('.animate-spin');
+        expect(spinner).toBeInTheDocument();
+        expect(spinner).toBeVisible();
+      });
+    });
+
+    it("network timeout handled gracefully", async () => {
+      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
+      gapIndexerApi.search.mockImplementation(
+        () => new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 100))
+      );
+      
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      
+      renderWithProviders(<NavbarSearch />);
+      const searchInput = screen.getByPlaceholderText(/search project\/community/i);
+      
+      fireEvent.change(searchInput, { target: { value: "test" } });
+      act(() => jest.advanceTimersByTime(500));
+      
+      // Advance to timeout (shorter timeout for test)
+      act(() => jest.advanceTimersByTime(100));
+      
+      // Wait for error handling to complete
+      await waitFor(() => {
+        // Should handle gracefully - shows "No results found" after error
+        expect(searchInput).toBeInTheDocument();
+        expect(screen.getByText(/no results found/i)).toBeInTheDocument();
+      }, { timeout: 3000 });
+      
+      consoleSpy.mockRestore();
+    });
+
+    it("recovers from error and shows results on successful retry", async () => {
+      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      
+      renderWithProviders(<NavbarSearch />);
+      const searchInput = screen.getByPlaceholderText(/search project\/community/i);
+      
+      // First search - error
+      gapIndexerApi.search.mockRejectedValueOnce(new Error("API Error"));
+      fireEvent.change(searchInput, { target: { value: "error" } });
+      act(() => jest.advanceTimersByTime(500));
       
       await waitFor(() => {
-        // Should handle gracefully
-        expect(searchInput).toBeInTheDocument();
+        expect(screen.getByText(/no results found/i)).toBeInTheDocument();
       });
+      
+      // Clear and retry with success
+      fireEvent.change(searchInput, { target: { value: "" } });
+      act(() => jest.advanceTimersByTime(100));
+      
+      gapIndexerApi.search.mockResolvedValueOnce({ data: projectsOnlyResults });
+      fireEvent.change(searchInput, { target: { value: "test" } });
+      act(() => jest.advanceTimersByTime(500));
+      
+      // Should show results after successful retry
+      await waitFor(() => {
+        const firstProject = projectsOnlyResults.projects[0];
+        expect(screen.queryByText(firstProject.details.data.title)).toBeInTheDocument();
+      });
+      
+      consoleSpy.mockRestore();
     });
   });
 

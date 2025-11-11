@@ -56,6 +56,50 @@ export const resetPermissionMocks = () => {
   if (permissionsModule.useReviewerPrograms && jest.isMockFunction(permissionsModule.useReviewerPrograms)) {
     permissionsModule.useReviewerPrograms.mockReturnValue({ isReviewerOfProgram: false, data: [], isLoading: false });
   }
+};
+
+/**
+ * Comprehensive cleanup utility for test isolation
+ * 
+ * This function should be called in afterEach hooks to prevent test pollution.
+ * It cleans up:
+ * - React Testing Library rendered components
+ * - Mock states (auth, theme, permissions)
+ * - Jest timers (fake and real)
+ * - All Jest mocks
+ * 
+ * Usage:
+ * ```typescript
+ * afterEach(() => {
+ *   cleanupAfterEach();
+ * });
+ * ```
+ */
+export const cleanupAfterEach = () => {
+  // Cleanup React Testing Library rendered components
+  const { cleanup } = require("@testing-library/react");
+  cleanup();
+
+  // Reset all mock states
+  resetMockAuthState();
+  resetMockThemeState();
+  resetPermissionMocks();
+
+  // Cleanup timers - ensure we're back to real timers
+  if (jest.isMockFunction(setTimeout)) {
+    jest.clearAllTimers();
+  }
+  jest.useRealTimers();
+
+  // Clear all mocks
+  jest.clearAllMocks();
+};
+
+/**
+ * Reset all permission mocks to default (extended version)
+ */
+const resetAllPermissionMocksExtended = () => {
+  resetPermissionMocks();
 
   // Reset staff
   const staffModule = require("@/hooks/useStaff");

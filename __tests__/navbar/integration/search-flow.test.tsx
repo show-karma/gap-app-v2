@@ -12,7 +12,7 @@ import {
   waitForDebounce,
   createMockUsePrivy,
   updateMocks,
-  resetMockAuthState
+  cleanupAfterEach
 } from "../utils/test-helpers";
 
 import { mockSearchFunction } from "../setup";
@@ -33,8 +33,7 @@ describe("Search Flow Integration Tests", () => {
   });
 
   afterEach(() => {
-    cleanup();
-    resetMockAuthState();
+    cleanupAfterEach();
   });
 
   describe("1. Desktop Search Flow", () => {

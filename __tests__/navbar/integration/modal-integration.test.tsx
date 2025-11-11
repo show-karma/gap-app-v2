@@ -13,8 +13,7 @@ import {
   createMockPermissions,
   createMockRouter,
   updateMocks,
-  resetMockAuthState,
-  resetPermissionMocks
+  cleanupAfterEach
 } from "../utils/test-helpers";
 
 import { getAuthFixture } from "../fixtures/auth-fixtures";
@@ -25,11 +24,7 @@ describe("Modal Integration Tests", () => {
   });
 
   afterEach(() => {
-    cleanup();
-    resetMockAuthState();
-    resetPermissionMocks();
-    // Ensure real timers are restored after each test
-    jest.useRealTimers();
+    cleanupAfterEach();
   });
   describe("1. Profile Modal from Desktop Menu", () => {
     it("should open profile modal when clicking My profile", async () => {

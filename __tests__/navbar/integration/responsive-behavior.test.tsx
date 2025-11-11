@@ -11,12 +11,17 @@ import {
   setViewportSize,
   createMockUsePrivy,
   createMockPermissions,
-  updateMocks
+  updateMocks,
+  cleanupAfterEach
 } from "../utils/test-helpers";
 
 import { getAuthFixture } from "../fixtures/auth-fixtures";
 
 describe("Responsive Behavior Integration Tests", () => {
+  afterEach(() => {
+    cleanupAfterEach();
+  });
+
   describe("1. Mobile Viewport (< 1280px)", () => {
     beforeEach(() => {
       // Set mobile viewport (iPhone X dimensions)

@@ -11,12 +11,17 @@ import {
   createMockUsePrivy,
   createMockPermissions,
   createMockUseTheme,
-  updateMocks
+  updateMocks,
+  cleanupAfterEach
 } from "../utils/test-helpers";
 
 import { getAuthFixture } from "../fixtures/auth-fixtures";
 
 describe("Theme Switching Integration Tests", () => {
+  afterEach(() => {
+    cleanupAfterEach();
+  });
+
   describe("1. Desktop Menu Theme Toggle", () => {
     it("should show correct theme toggle state in light mode", async () => {
       const user = userEvent.setup();

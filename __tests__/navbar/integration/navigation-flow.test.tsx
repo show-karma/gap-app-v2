@@ -13,12 +13,17 @@ import {
   createMockUsePrivy,
   createMockPermissions,
   createMockRouter,
-  updateMocks
+  updateMocks,
+  cleanupAfterEach
 } from "../utils/test-helpers";
 
 import { getAuthFixture } from "../fixtures/auth-fixtures";
 
 describe("Navigation Flow Integration Tests", () => {
+  afterEach(() => {
+    cleanupAfterEach();
+  });
+
   describe("1. Desktop Dropdown Navigation", () => {
     it("should open For Builders dropdown and navigate", async () => {
       const user = userEvent.setup();

@@ -11,7 +11,8 @@ import {
   createMockUsePrivy,
   createMockPermissions,
   createMockUseLogoutFunction,
-  updateMocks
+  updateMocks,
+  cleanupAfterEach
 } from "../utils/test-helpers";
 
 import { authFixtures, getAuthFixture } from "../fixtures/auth-fixtures";
@@ -32,6 +33,9 @@ interface ExpectedElements {
 }
 
 describe("Permission Matrix Integration Tests", () => {
+  afterEach(() => {
+    cleanupAfterEach();
+  });
   // Test each permission scenario systematically
   const scenarios = Object.entries(authFixtures).map(([key, fixture]) => ({
     name: key,

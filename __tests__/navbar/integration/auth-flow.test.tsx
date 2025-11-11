@@ -11,10 +11,15 @@ import {
   createMockUsePrivy,
   createMockPermissions,
   updateMocks,
+  cleanupAfterEach
 } from "../utils/test-helpers";
 import { getAuthFixture } from "../fixtures/auth-fixtures";
 
 describe("Authentication Flow Integration Tests", () => {
+  afterEach(() => {
+    cleanupAfterEach();
+  });
+
   describe("1. Login Flow", () => {
     it("should complete login flow from unauthenticated to authenticated state", async () => {
       const user = userEvent.setup();
