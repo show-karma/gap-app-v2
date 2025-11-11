@@ -55,7 +55,7 @@ const config: Config = {
   ],
 
   globalSetup: "./tests/global.js",
-  setupFilesAfterEnv: ["./tests/setup.js", "./__tests__/navbar/setup.ts"],
+  setupFilesAfterEnv: ["./tests/setup.js", "./__tests__/navbar/setup.ts", "./__tests__/homepage/setup.ts"],
   testMatch: ["**/?(*.)+(spec|test).[jt]s?(x)"],
 
   // Reduce memory usage
