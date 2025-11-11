@@ -49,7 +49,7 @@ export function LiveFundingOpportunitiesSkeleton() {
         <section className={cn(marketingLayoutTheme.padding, "py-16 w-full")}>
             {/* Header */}
             <div className="flex items-center justify-between mb-8">
-                <h2 className="text-base font-medium leading-6 text-center text-muted-foreground">
+                <h2 className={cn("section-title text-foreground")}>
                     Live Funding Opportunities
                 </h2>
                 <Link

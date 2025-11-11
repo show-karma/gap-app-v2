@@ -59,12 +59,11 @@ export function PlatformSection() {
 
                 {/* Main Heading */}
                 <h2 className={cn(
-                    "text-left font-semibold",
-                    "text-[32px] leading-[36px] tracking-[-0.02em]",
-                    "md:text-[40px] md:leading-[44px]",
+                    "section-title",
+                    "text-left",
                     "w-full"
                 )}>
-                    <span className="text-foreground">Modular funding infrastructure</span>
+                    <span className="text-foreground">Modular funding infrastructure</span> <br />
                     <span className="text-muted-foreground"> for growth and impact</span>
                 </h2>
 
@@ -89,7 +88,7 @@ export function PlatformSection() {
                         className={cn(
                             "flex flex-col justify-between gap-3",
                             "bg-secondary rounded-2xl",
-                            "h-[527px]"
+                            "h-[540px]"
                         )}
                     >
                         {/* Text Content */}
@@ -120,12 +119,12 @@ export function PlatformSection() {
                         </div>
 
                         {/* Image */}
-                        <div className="relative w-full h-[294px]">
+                        <div className="relative w-full h-[320px] overflow-hidden">
                             <ThemeImage
                                 src={card.image}
                                 alt={card.title}
                                 fill
-                                className="object-contain"
+                                className="object-cover object-top"
                             />
                         </div>
                     </div>

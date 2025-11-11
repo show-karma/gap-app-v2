@@ -34,7 +34,7 @@ export function FAQAccordion({ items }: FAQAccordionProps) {
                     className="border-b border-border last:border-b-0"
                 >
                     <AccordionTrigger className="group hover:no-underline py-4 [&>svg]:hidden">
-                        <span className="text-lg font-semibold text-foreground leading-[28px] tracking-normal pr-4 text-left flex-1">
+                        <span className="text-lg font-medium text-foreground leading-[28px] tracking-normal pr-4 text-left flex-1">
                             {item.question}
                         </span>
                         <div className="flex-shrink-0 relative w-6 h-6 ml-2">
