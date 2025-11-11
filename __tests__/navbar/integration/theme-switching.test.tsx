@@ -3,7 +3,7 @@
  * Tests theme switching functionality in both desktop and mobile contexts
  */
 
-import { screen, waitFor, within } from "@testing-library/react";
+import { screen, waitFor, within, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Navbar } from "@/src/components/navbar/navbar";
 import {
@@ -110,7 +110,7 @@ describe("Theme Switching Integration Tests", () => {
 
         // Click theme toggle
         const darkModeButton = screen.getByText("Dark mode");
-        await user.click(darkModeButton);
+        fireEvent.click(darkModeButton);
 
         // Verify setTheme called with "dark"
         expect(mockSetTheme).toHaveBeenCalledWith("dark");
@@ -144,7 +144,7 @@ describe("Theme Switching Integration Tests", () => {
 
         // Click theme toggle
         const lightModeButton = screen.getByText("Light mode");
-        await user.click(lightModeButton);
+        fireEvent.click(lightModeButton);
 
         // Verify setTheme called with "light"
         expect(mockSetTheme).toHaveBeenCalledWith("light");
@@ -178,7 +178,7 @@ describe("Theme Switching Integration Tests", () => {
         });
 
         const darkModeButton = screen.getByText("Dark mode");
-        await user.click(darkModeButton);
+        fireEvent.click(darkModeButton);
 
         // Simulate theme change by rerendering with dark theme
         rerender(
@@ -289,7 +289,7 @@ describe("Theme Switching Integration Tests", () => {
 
       // Click theme toggle
       const darkModeButton = within(drawer).getByText("Dark mode");
-      await user.click(darkModeButton);
+      fireEvent.click(darkModeButton);
 
       // Verify setTheme called
       expect(mockSetTheme).toHaveBeenCalledWith("dark");
@@ -321,7 +321,7 @@ describe("Theme Switching Integration Tests", () => {
 
       // Click theme toggle
       const darkModeButton = within(drawer).getByText("Dark mode");
-      await user.click(darkModeButton);
+      fireEvent.click(darkModeButton);
 
       // Drawer should still be open
       await waitFor(() => {
@@ -353,7 +353,7 @@ describe("Theme Switching Integration Tests", () => {
 
       let drawer = screen.getByRole("dialog");
       const darkModeButton = within(drawer).getByText("Dark mode");
-      await user.click(darkModeButton);
+      fireEvent.click(darkModeButton);
 
       // Rerender with dark theme
       rerender(
@@ -368,9 +368,9 @@ describe("Theme Switching Integration Tests", () => {
         }
       );
 
-      // Close and reopen drawer
+      // Close and reopen drawer (use fireEvent for mobile drawer interactions)
       const closeButton = screen.getByLabelText(/close/i);
-      await user.click(closeButton);
+      fireEvent.click(closeButton);
 
       const reopenButton = screen.getByLabelText("Open menu");
       await user.click(reopenButton);
@@ -439,7 +439,7 @@ describe("Theme Switching Integration Tests", () => {
 
       const drawer = screen.getByRole("dialog");
       const darkModeButton = within(drawer).getByText("Dark mode");
-      await user.click(darkModeButton);
+      fireEvent.click(darkModeButton);
 
       // Rerender multiple times with dark theme
       for (let i = 0; i < 3; i++) {
@@ -502,7 +502,7 @@ describe("Theme Switching Integration Tests", () => {
 
         // Click theme toggle
         const darkModeButton = within(drawer).getByText("Dark mode");
-        await user.click(darkModeButton);
+        fireEvent.click(darkModeButton);
 
         // Verify setTheme called
         expect(mockSetTheme).toHaveBeenCalledWith("dark");
