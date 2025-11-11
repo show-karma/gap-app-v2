@@ -335,13 +335,28 @@ export const createMockUseRegistryStore = (isPoolManager: boolean, isRegistryAdm
   setIsRegistryAdminLoading: jest.fn(),
 });
 
-export const createMockUseTheme = (theme: "light" | "dark" = "light") => ({
-  theme,
-  setTheme: jest.fn(),
-  themes: ["light", "dark"],
-  systemTheme: "light",
-  resolvedTheme: theme,
-});
+export const createMockUseTheme = (themeOrOverrides: "light" | "dark" | any = "light") => {
+  // Support both old signature (string) and new signature (object with overrides)
+  if (typeof themeOrOverrides === "string") {
+    return {
+      theme: themeOrOverrides,
+      setTheme: jest.fn(),
+      themes: ["light", "dark"],
+      systemTheme: "light",
+      resolvedTheme: themeOrOverrides,
+    };
+  }
+  // Object with overrides
+  const overrides = themeOrOverrides;
+  return {
+    theme: overrides.theme || "light",
+    setTheme: overrides.setTheme || jest.fn(),
+    themes: overrides.themes || ["light", "dark"],
+    systemTheme: overrides.systemTheme || "light",
+    resolvedTheme: overrides.resolvedTheme || overrides.theme || "light",
+    ...overrides,
+  };
+};
 
 export const createMockUseContributorProfileModalStore = () => ({
   isOpen: false,
