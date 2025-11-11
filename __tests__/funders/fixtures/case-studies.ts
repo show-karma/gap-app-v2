@@ -2,15 +2,7 @@
  * Mock case study data for funders page tests
  */
 
-import type {
-  MetricCard,
-  TestimonialCard,
-  CaseStudyCard,
-  CaseStudyCardType,
-} from "@/src/features/funders/components/case-studies-section";
-
-// Re-export types for convenience
-export type { MetricCard, TestimonialCard, CaseStudyCard, CaseStudyCardType };
+import type { CaseStudyCardType } from "@/src/features/funders/components/case-studies-section";
 
 export const mockCaseStudyCards: CaseStudyCardType[] = [
   {
