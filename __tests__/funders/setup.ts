@@ -98,6 +98,49 @@ jest.mock("@/utilities/chosenCommunities", () => ({
   chosenCommunities: (includeAll?: boolean) => mockChosenCommunities(includeAll),
 }));
 
+// Mock CustomerAvatar component
+jest.mock("@/src/features/funders/components/customer-avatar", () => ({
+  CustomerAvatar: ({ src, alt }: any) => React.createElement("img", {
+    "data-testid": "customer-avatar",
+    src,
+    alt,
+    className: "customer-avatar"
+  }),
+}));
+
+// Mock CommunityImage component
+jest.mock("@/src/features/funders/components/community-image", () => ({
+  CommunityImage: ({ src, alt }: any) => React.createElement("img", {
+    "data-testid": "community-image",
+    src,
+    alt,
+    className: "community-image"
+  }),
+}));
+
+// Mock FAQAccordion component
+jest.mock("@/src/components/shared/faq-accordion", () => ({
+  FAQAccordion: ({ items }: any) => React.createElement(
+    "div",
+    { "data-testid": "faq-accordion" },
+    items?.map((item: any, idx: number) =>
+      React.createElement(
+        "div",
+        { key: idx, "data-testid": `faq-item-${idx}` },
+        item.question
+      )
+    )
+  ),
+}));
+
+// Mock lucide-react icons
+jest.mock("lucide-react", () => ({
+  Mail: (props: any) => React.createElement("svg", { ...props, "data-testid": "mail-icon" }),
+  Zap: (props: any) => React.createElement("svg", { ...props, "data-testid": "zap-icon" }),
+  BarChart2: (props: any) => React.createElement("svg", { ...props, "data-testid": "barchart-icon" }),
+  SquareCheckBig: (props: any) => React.createElement("svg", { ...props, "data-testid": "check-icon" }),
+}));
+
 // Mock useAuth hook
 export const mockAuthState = {
   current: {
