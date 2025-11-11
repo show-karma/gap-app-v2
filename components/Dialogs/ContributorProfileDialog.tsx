@@ -11,7 +11,7 @@ import { useAccount } from "wagmi";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useGap } from "@/hooks/useGap";
-import { getChainIdByName } from "@/utilities/network";
+import { getChainIdByName, gapSupportedNetworks } from "@/utilities/network";
 
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { useStepper } from "@/store/modals/txStepper";
@@ -134,10 +134,16 @@ export const ContributorProfileDialog: FC<
       let targetChainId = 0;
 
       if (isGlobal) {
-        if (chain?.id) {
+        // Check if current chain is supported for GAP attestations
+        const isChainSupported = chain?.id && gapSupportedNetworks.some(c => c.id === chain.id);
+
+        if (isChainSupported) {
           targetChainId = chain.id;
         } else if (gap?.network) {
           targetChainId = getChainIdByName(gap.network);
+        } else {
+          // Default to first supported GAP network if current chain is unsupported
+          targetChainId = gapSupportedNetworks[0].id;
         }
       } else if (project?.chainID) {
         targetChainId = project.chainID;
