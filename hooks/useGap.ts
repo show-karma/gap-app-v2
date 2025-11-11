@@ -7,6 +7,7 @@ import { IpfsStorage } from "@show-karma/karma-gap-sdk/core/class/remote-storage
 import { Networks } from "@show-karma/karma-gap-sdk/core/consts";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import { envVars } from "@/utilities/enviromentVars";
 import {
   appNetwork,
@@ -14,6 +15,7 @@ import {
   getChainIdByName,
   getChainNameById,
 } from "@/utilities/network";
+import { useWallet } from "./useWallet";
 
 const ipfsClient = new IpfsStorage({
   token: envVars.IPFS_TOKEN,
@@ -75,6 +77,7 @@ export const useGap = () => {
   const [isUpdating, setIsUpdating] = useState(false);
   const { chain } = useAccount();
   const defaultSupportedChainId = useMemo(findDefaultSupportedChainId, []);
+  const { switchChainAsync } = useWallet();
 
   const updateGapClient = useCallback(
     async (chainId: number) => {
@@ -90,7 +93,13 @@ export const useGap = () => {
           `GAP::Unsupported chain ${chainId}. Switching to ${firstSupportedChain.name}...`,
         );
 
-        setGapClient(getGapClient(firstSupportedChain.id));
+        const { gapClient } = await ensureCorrectChain({
+          targetChainId: firstSupportedChain.id,
+          currentChainId: chainId,
+          switchChainAsync,
+        });
+
+        setGapClient(gapClient);
         return;
       }
 
