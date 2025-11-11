@@ -25,17 +25,14 @@ const searchHandler = http.get(`${GAP_INDEXER_URL}/search`, async ({ request }) 
 
   // Handle empty or short queries
   if (query.length < 3) {
-    return HttpResponse.json({
-      data: searchFixtures.emptySearchResults,
-    });
+    return HttpResponse.json(searchFixtures.emptySearchResults);
   }
 
   // Get results based on query
   const results = getResultsByQuery(query);
 
-  return HttpResponse.json({
-    data: results,
-  });
+  // Return data directly - the SDK's search method returns results directly
+  return HttpResponse.json(results);
 });
 
 /**
@@ -54,7 +51,9 @@ export const createSearchHandler = (scenario: keyof typeof searchResponseScenari
       );
     }
 
-    return HttpResponse.json({ data: scenarioData.data });
+    // Return data directly, not wrapped in { data: ... }
+    // The SDK's search method returns the results directly
+    return HttpResponse.json(scenarioData.data);
   });
 };
 

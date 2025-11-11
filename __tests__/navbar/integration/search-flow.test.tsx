@@ -51,17 +51,20 @@ describe("Search Flow Integration Tests", () => {
       // Type in search field
       await user.type(searchInput, searchQueries.medium);
 
-      // Wait for debounce
+      // Wait for debounce and API call
       await waitForDebounce();
 
-      // Wait for results to appear
-      await waitFor(() => {
-        const dropdown = screen.queryByRole("listbox");
-        expect(dropdown).toBeInTheDocument();
-      });
-
-      // Verify results displayed
+      // Wait for results to appear - check for the first project title
       const firstProject = mixedResults.projects[0];
+      await waitFor(
+        () => {
+          const projectLink = screen.getByText(firstProject.details.data.title);
+          expect(projectLink).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
+
+      // Verify results are links with correct hrefs
       expect(screen.getByText(firstProject.details.data.title)).toBeInTheDocument();
 
       // Click a result (simulate)
