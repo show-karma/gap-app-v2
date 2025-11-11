@@ -327,6 +327,16 @@ jest.mock("@/store/modals/contributorProfile", () => ({
   })),
 }));
 
+// Mock gapIndexerApi for search functionality
+// This mock will be controlled by tests via module mocking
+export const mockSearchFunction = jest.fn();
+
+jest.mock("@/utilities/gapIndexerApi", () => ({
+  gapIndexerApi: {
+    search: mockSearchFunction,
+  },
+}));
+
 /**
  * Mock external link component
  */

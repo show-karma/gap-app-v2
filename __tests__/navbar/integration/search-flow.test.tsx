@@ -15,11 +15,7 @@ import {
   resetMockAuthState
 } from "../utils/test-helpers";
 
-import { server } from "../setup";
-import {
-  scenarioHandlers,
-  createCustomSearchHandler,
-} from "../mocks/handlers";
+import { mockSearchFunction } from "../setup";
 import {
   mixedResults,
   projectsOnlyResults,
@@ -31,16 +27,22 @@ import {
 import { getAuthFixture } from "../fixtures/auth-fixtures";
 
 describe("Search Flow Integration Tests", () => {
+  beforeEach(() => {
+    // Reset the mock before each test
+    mockSearchFunction.mockReset();
+  });
+
   afterEach(() => {
     cleanup();
     resetMockAuthState();
-    server.resetHandlers();
   });
 
   describe("1. Desktop Search Flow", () => {
     it("should complete full desktop search journey", async () => {
       const user = userEvent.setup();
-      server.use(scenarioHandlers.mixedResults);
+      // Mock the search API to return mixed results
+      // The SDK returns { data: {...} } structure
+      mockSearchFunction.mockResolvedValue({ data: mixedResults });
 
       renderWithProviders(<NavbarSearch />);
 
@@ -53,6 +55,11 @@ describe("Search Flow Integration Tests", () => {
 
       // Wait for debounce and API call
       await waitForDebounce();
+
+      // Verify the search API was called
+      await waitFor(() => {
+        expect(mockSearchFunction).toHaveBeenCalledWith(searchQueries.medium);
+      });
 
       // Wait for results to appear - check for the first project title
       const firstProject = mixedResults.projects[0];
@@ -71,12 +78,13 @@ describe("Search Flow Integration Tests", () => {
       const resultLink = screen.getByRole("link", {
         name: new RegExp(firstProject.details.data.title, "i"),
       });
-      expect(resultLink).toHaveAttribute("href", `/project/${firstProject.details.data.slug}`);
+      // Component uses PAGES.PROJECT.GRANTS which adds /funding suffix
+      expect(resultLink).toHaveAttribute("href", `/project/${firstProject.details.data.slug}/funding`);
     });
 
     it("should show loading spinner during API call", async () => {
       const user = userEvent.setup();
-      server.use(scenarioHandlers.mixedResults);
+      mockSearchFunction.mockResolvedValue({ data: mixedResults });
 
       renderWithProviders(<NavbarSearch />);
 
@@ -91,15 +99,17 @@ describe("Search Flow Integration Tests", () => {
       // Wait for results
       await waitForDebounce();
 
+      // Verify results loaded
+      const firstProject = mixedResults.projects[0];
       await waitFor(() => {
-        const dropdown = screen.queryByRole("listbox");
-        expect(dropdown).toBeInTheDocument();
+        const projectLink = screen.queryByText(firstProject.details.data.title);
+        expect(projectLink).toBeInTheDocument();
       });
     });
 
     it("should navigate and reset search after clicking result", async () => {
       const user = userEvent.setup();
-      server.use(scenarioHandlers.mixedResults);
+      mockSearchFunction.mockResolvedValue({ data: mixedResults });
 
       renderWithProviders(<NavbarSearch />);
 
@@ -130,7 +140,7 @@ describe("Search Flow Integration Tests", () => {
   describe("2. Mobile Search Flow", () => {
     it("should complete search in mobile drawer", async () => {
       const user = userEvent.setup();
-      server.use(scenarioHandlers.mixedResults);
+      mockSearchFunction.mockResolvedValue({ data: mixedResults });
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
@@ -168,7 +178,7 @@ describe("Search Flow Integration Tests", () => {
 
     it("should close drawer after clicking search result", async () => {
       const user = userEvent.setup();
-      server.use(scenarioHandlers.mixedResults);
+      mockSearchFunction.mockResolvedValue({ data: mixedResults });
       const authFixture = getAuthFixture("unauthenticated");
 
       renderWithProviders(<Navbar />, {
@@ -209,12 +219,10 @@ describe("Search Flow Integration Tests", () => {
     it("should debounce rapid typing and only call API once", async () => {
       const user = userEvent.setup();
       const mockHandler = jest.fn();
-      server.use(
-        createCustomSearchHandler((req, url) => {
-          mockHandler();
-          return projectsOnlyResults;
-        })
-      );
+      mockSearchFunction.mockImplementation(() => {
+        mockHandler();
+        return Promise.resolve({ data: projectsOnlyResults });
+      });
 
       renderWithProviders(<NavbarSearch />);
 
@@ -238,13 +246,10 @@ describe("Search Flow Integration Tests", () => {
     it("should cancel previous request and call API with latest query", async () => {
       const user = userEvent.setup();
       const mockHandler = jest.fn();
-      server.use(
-        createCustomSearchHandler((req, url) => {
-          const query = url.searchParams.get("query");
-          mockHandler(query);
-          return projectsOnlyResults;
-        })
-      );
+      mockSearchFunction.mockImplementation((query) => {
+        mockHandler(query);
+        return Promise.resolve({ data: projectsOnlyResults });
+      });
 
       renderWithProviders(<NavbarSearch />);
 
@@ -271,12 +276,10 @@ describe("Search Flow Integration Tests", () => {
     it("should not search when query is less than 3 characters", async () => {
       const user = userEvent.setup();
       const mockHandler = jest.fn();
-      server.use(
-        createCustomSearchHandler(() => {
-          mockHandler();
-          return emptySearchResults;
-        })
-      );
+      mockSearchFunction.mockImplementation(() => {
+        mockHandler();
+        return Promise.resolve({ data: emptySearchResults });
+      });
 
       renderWithProviders(<NavbarSearch />);
 
@@ -295,7 +298,7 @@ describe("Search Flow Integration Tests", () => {
 
     it("should search when query reaches 3 characters", async () => {
       const user = userEvent.setup();
-      server.use(scenarioHandlers.projectsOnly);
+      mockSearchFunction.mockResolvedValue({ data: projectsOnlyResults });
 
       renderWithProviders(<NavbarSearch />);
 
@@ -321,7 +324,7 @@ describe("Search Flow Integration Tests", () => {
       const searchInput = screen.getByPlaceholderText("Search Project/Community");
 
       // First search - projects
-      server.use(scenarioHandlers.projectsOnly);
+      mockSearchFunction.mockResolvedValue({ data: projectsOnlyResults });
       await user.type(searchInput, searchQueries.short);
       await waitForDebounce();
 
@@ -333,7 +336,7 @@ describe("Search Flow Integration Tests", () => {
       await user.clear(searchInput);
 
       // Second search - communities
-      server.use(scenarioHandlers.communitiesOnly);
+      mockSearchFunction.mockResolvedValue({ data: communitiesOnlyResults });
       await user.type(searchInput, searchQueries.ethereum);
       await waitForDebounce();
 
@@ -353,7 +356,7 @@ describe("Search Flow Integration Tests", () => {
       const searchInput = screen.getByPlaceholderText("Search Project/Community");
 
       // First search
-      server.use(scenarioHandlers.mixedResults);
+      mockSearchFunction.mockResolvedValue({ data: mixedResults });
       await user.type(searchInput, searchQueries.medium);
       await waitForDebounce();
 
@@ -383,7 +386,7 @@ describe("Search Flow Integration Tests", () => {
   describe("5. Error Recovery Flow", () => {
     it("should handle API error gracefully", async () => {
       const user = userEvent.setup();
-      server.use(scenarioHandlers.serverError);
+      mockSearchFunction.mockRejectedValue(new Error("Internal server error"));
 
       renderWithProviders(<NavbarSearch />);
 
@@ -410,7 +413,7 @@ describe("Search Flow Integration Tests", () => {
       const searchInput = screen.getByPlaceholderText("Search Project/Community");
 
       // First search - error
-      server.use(scenarioHandlers.serverError);
+      mockSearchFunction.mockRejectedValue(new Error("Internal server error"));
       await user.type(searchInput, "error");
       await waitForDebounce();
 
@@ -418,7 +421,7 @@ describe("Search Flow Integration Tests", () => {
       await user.clear(searchInput);
 
       // Second search - success
-      server.use(scenarioHandlers.projectsOnly);
+      mockSearchFunction.mockResolvedValue({ data: projectsOnlyResults });
       await user.type(searchInput, searchQueries.short);
       await waitForDebounce();
 
@@ -432,7 +435,7 @@ describe("Search Flow Integration Tests", () => {
 
     it("should handle network timeout", async () => {
       const user = userEvent.setup();
-      server.use(scenarioHandlers.timeout);
+      mockSearchFunction.mockRejectedValue(new Error("Request timeout"));
 
       renderWithProviders(<NavbarSearch />);
 
@@ -449,7 +452,7 @@ describe("Search Flow Integration Tests", () => {
   describe("6. Empty State Handling", () => {
     it("should show no results message for empty results", async () => {
       const user = userEvent.setup();
-      server.use(scenarioHandlers.emptySearch);
+      mockSearchFunction.mockResolvedValue({ data: emptySearchResults });
 
       renderWithProviders(<NavbarSearch />);
 
@@ -474,7 +477,7 @@ describe("Search Flow Integration Tests", () => {
       const searchInput = screen.getByPlaceholderText("Search Project/Community");
 
       // First search - empty
-      server.use(scenarioHandlers.emptySearch);
+      mockSearchFunction.mockResolvedValue({ data: emptySearchResults });
       await user.type(searchInput, "nonexistent");
       await waitForDebounce();
 
@@ -486,7 +489,7 @@ describe("Search Flow Integration Tests", () => {
       // Clear and search again
       await user.clear(searchInput);
 
-      server.use(scenarioHandlers.projectsOnly);
+      mockSearchFunction.mockResolvedValue({ data: projectsOnlyResults });
       await user.type(searchInput, searchQueries.short);
       await waitForDebounce();
 
@@ -500,7 +503,7 @@ describe("Search Flow Integration Tests", () => {
   describe("7. Search Result Types", () => {
     it("should display projects only results correctly", async () => {
       const user = userEvent.setup();
-      server.use(scenarioHandlers.projectsOnly);
+      mockSearchFunction.mockResolvedValue({ data: projectsOnlyResults });
 
       renderWithProviders(<NavbarSearch />);
 
@@ -524,7 +527,7 @@ describe("Search Flow Integration Tests", () => {
 
     it("should display communities only results correctly", async () => {
       const user = userEvent.setup();
-      server.use(scenarioHandlers.communitiesOnly);
+      mockSearchFunction.mockResolvedValue({ data: communitiesOnlyResults });
 
       renderWithProviders(<NavbarSearch />);
 
@@ -544,7 +547,7 @@ describe("Search Flow Integration Tests", () => {
 
     it("should display mixed results (projects and communities)", async () => {
       const user = userEvent.setup();
-      server.use(scenarioHandlers.mixedResults);
+      mockSearchFunction.mockResolvedValue({ data: mixedResults });
 
       renderWithProviders(<NavbarSearch />);
 
@@ -567,7 +570,7 @@ describe("Search Flow Integration Tests", () => {
 
     it("should handle large result sets", async () => {
       const user = userEvent.setup();
-      server.use(scenarioHandlers.largeResults);
+      mockSearchFunction.mockResolvedValue({ data: largeResultSet });
 
       renderWithProviders(<NavbarSearch />);
 
