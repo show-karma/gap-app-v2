@@ -5,14 +5,11 @@ import { IProjectUpdate } from '@show-karma/karma-gap-sdk/core/class/karma-index
 import { UnifiedMilestone } from '@/types/roadmap';
 
 // Mock store hooks
-jest.mock('@/store/owner', () => ({
+jest.mock('@/store', () => ({
   useOwnerStore: jest.fn((selector) => {
     const state = { isOwner: false };
     return selector ? selector(state) : state;
   }),
-}));
-
-jest.mock('@/store/project', () => ({
   useProjectStore: jest.fn((selector) => {
     const state = { isProjectAdmin: false };
     return selector ? selector(state) : state;
@@ -24,7 +21,7 @@ jest.mock('@/components/Shared/ActivityCard/UpdateCard', () => ({
   UpdateCard: ({ update, index, isAuthorized }: any) => (
     <div data-testid="update-card">
       <div data-testid="update-index">{index}</div>
-      <div data-testid="update-authorized">{isAuthorized.toString()}</div>
+      <div data-testid="update-authorized">{isAuthorized ? 'true' : 'false'}</div>
     </div>
   ),
 }));
@@ -33,7 +30,7 @@ jest.mock('@/components/Shared/ActivityCard/MilestoneCard', () => ({
   MilestoneCard: ({ milestone, isAuthorized }: any) => (
     <div data-testid="milestone-card">
       <div data-testid="milestone-title">{milestone.title}</div>
-      <div data-testid="milestone-authorized">{isAuthorized.toString()}</div>
+      <div data-testid="milestone-authorized">{isAuthorized ? 'true' : 'false'}</div>
     </div>
   ),
 }));
@@ -207,7 +204,7 @@ describe('ActivityCard', () => {
 
   describe('Store Integration', () => {
     it('should use owner store to check authorization', () => {
-      const { useOwnerStore } = require('@/store/owner');
+      const { useOwnerStore } = require('@/store');
       useOwnerStore.mockImplementation((selector: any) => {
         const state = { isOwner: true };
         return selector ? selector(state) : state;
@@ -225,7 +222,7 @@ describe('ActivityCard', () => {
     });
 
     it('should use project store to check admin status', () => {
-      const { useProjectStore } = require('@/store/project');
+      const { useProjectStore } = require('@/store');
       useProjectStore.mockImplementation((selector: any) => {
         const state = { isProjectAdmin: true };
         return selector ? selector(state) : state;
@@ -243,8 +240,7 @@ describe('ActivityCard', () => {
     });
 
     it('should combine owner and admin checks correctly', () => {
-      const { useOwnerStore } = require('@/store/owner');
-      const { useProjectStore } = require('@/store/project');
+      const { useOwnerStore, useProjectStore } = require('@/store');
 
       useOwnerStore.mockImplementation((selector: any) => {
         const state = { isOwner: true };

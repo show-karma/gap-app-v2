@@ -53,7 +53,7 @@ describe("Homepage Accessibility", () => {
       // Hero may have image-redundant-alt violations in carousel (acceptable)
       // Filter out known acceptable violations
       const criticalViolations = results.violations.filter(
-        (v) => v.id !== "image-redundant-alt"
+        (v: any) => v.id !== "image-redundant-alt"
       );
       
       expect(criticalViolations.length).toBe(0);

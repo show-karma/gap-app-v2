@@ -41,7 +41,7 @@ describe("Funders Page Accessibility", () => {
     
     // Filter out image-redundant-alt violations (acceptable for carousel images)
     const filteredViolations = results.violations.filter(
-      (violation) => violation.id !== "image-redundant-alt"
+      (violation: any) => violation.id !== "image-redundant-alt"
     );
     
     expect({ ...results, violations: filteredViolations }).toHaveNoViolations();
@@ -53,7 +53,7 @@ describe("Funders Page Accessibility", () => {
     
     // Filter out image-redundant-alt violations (acceptable for carousel images)
     const filteredViolations = results.violations.filter(
-      (violation) => violation.id !== "image-redundant-alt"
+      (violation: any) => violation.id !== "image-redundant-alt"
     );
     
     expect({ ...results, violations: filteredViolations }).toHaveNoViolations();
