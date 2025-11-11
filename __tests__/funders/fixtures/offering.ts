@@ -2,12 +2,7 @@
  * Mock offering/pricing tier data for funders page tests
  */
 
-export interface PricingTier {
-  name: string;
-  description: string;
-  features: string[];
-  mostPopular: boolean;
-}
+import type { PricingTier } from "@/src/features/funders/components/offering-section";
 
 export const mockPricingTiers: PricingTier[] = [
   {

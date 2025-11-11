@@ -2,52 +2,70 @@
  * Mock Community Data for Homepage Tests
  */
 
-export interface MockCommunity {
-  name: string;
-  imageURL: string;
-  slug: string;
-  href?: string;
-}
+import type { ChosenCommunity } from "@/utilities/chosenCommunities";
 
-export const mockCommunities: MockCommunity[] = [
+export const mockCommunities: ChosenCommunity[] = [
   {
     name: "Optimism",
-    imageURL: "https://example.com/optimism.png",
     slug: "optimism",
+    uid: "optimism-1",
+    imageURL: {
+      light: "https://example.com/optimism.png",
+      dark: "https://example.com/optimism.png",
+    },
   },
   {
     name: "Arbitrum",
-    imageURL: "https://example.com/arbitrum.png",
     slug: "arbitrum",
+    uid: "arbitrum-1",
+    imageURL: {
+      light: "https://example.com/arbitrum.png",
+      dark: "https://example.com/arbitrum.png",
+    },
   },
   {
     name: "Base",
-    imageURL: "https://example.com/base.png",
     slug: "base",
+    uid: "base-1",
+    imageURL: {
+      light: "https://example.com/base.png",
+      dark: "https://example.com/base.png",
+    },
   },
   {
     name: "Polygon",
-    imageURL: "https://example.com/polygon.png",
     slug: "polygon",
+    uid: "polygon-1",
+    imageURL: {
+      light: "https://example.com/polygon.png",
+      dark: "https://example.com/polygon.png",
+    },
   },
   {
     name: "Starknet",
-    imageURL: "https://example.com/starknet.png",
     slug: "starknet",
+    uid: "starknet-1",
+    imageURL: {
+      light: "https://example.com/starknet.png",
+      dark: "https://example.com/starknet.png",
+    },
   },
 ];
 
-export const createMockCommunity = (overrides: Partial<MockCommunity> = {}): MockCommunity => ({
+export const createMockCommunity = (overrides: Partial<ChosenCommunity> = {}): ChosenCommunity => ({
   name: overrides.name || "Test Community",
-  imageURL: overrides.imageURL || "https://example.com/test-community.png",
   slug: overrides.slug || "test-community",
-  href: overrides.href || `/community/${overrides.slug || "test-community"}`,
+  uid: overrides.uid || "test-community-1",
+  imageURL: overrides.imageURL || {
+    light: "https://example.com/test-community.png",
+    dark: "https://example.com/test-community.png",
+  },
 });
 
 /**
  * Get a specific number of mock communities
  */
-export const getMockCommunities = (count: number): MockCommunity[] => {
+export const getMockCommunities = (count: number): ChosenCommunity[] => {
   return mockCommunities.slice(0, count);
 };
 

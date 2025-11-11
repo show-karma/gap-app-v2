@@ -2,13 +2,9 @@
  * Mock FAQ Data for Homepage Tests
  */
 
-export interface MockFAQItem {
-  id: string;
-  question: string;
-  answer: string;
-}
+import type { FAQItem } from "@/src/components/shared/faq-accordion";
 
-export const mockFAQItems: MockFAQItem[] = [
+export const mockFAQItems: FAQItem[] = [
   {
     id: "what-is-karma",
     question: "What is Karma and how can it help my project?",
@@ -54,7 +50,7 @@ export const mockFAQItems: MockFAQItem[] = [
 /**
  * Create a mock FAQ item
  */
-export const createMockFAQItem = (overrides: Partial<MockFAQItem> = {}): MockFAQItem => ({
+export const createMockFAQItem = (overrides: Partial<FAQItem> = {}): FAQItem => ({
   id: overrides.id || `faq-${Math.random().toString(36).substr(2, 9)}`,
   question: overrides.question || "Test FAQ question?",
   answer: overrides.answer || "Test FAQ answer with some details.",
@@ -63,14 +59,14 @@ export const createMockFAQItem = (overrides: Partial<MockFAQItem> = {}): MockFAQ
 /**
  * Get a specific number of FAQ items
  */
-export const getMockFAQItems = (count: number): MockFAQItem[] => {
+export const getMockFAQItems = (count: number): FAQItem[] => {
   return mockFAQItems.slice(0, count);
 };
 
 /**
  * Get FAQ item by ID
  */
-export const getFAQItemById = (id: string): MockFAQItem | undefined => {
+export const getFAQItemById = (id: string): FAQItem | undefined => {
   return mockFAQItems.find((item) => item.id === id);
 };
 
