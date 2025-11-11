@@ -1,5 +1,15 @@
 // Import custom donation commands
 import "./donation-commands";
+// Import image snapshot command
+import { addMatchImageSnapshotCommand } from "cypress-image-snapshot/command";
+
+addMatchImageSnapshotCommand({
+  customDiffConfig: { threshold: 0.2 },
+  failureThreshold: 0.03,
+  failureThresholdType: "percent",
+  customSnapshotsDir: "cypress/snapshots",
+  customDiffDir: "cypress/snapshots/diff",
+});
 
 export const EXAMPLE = {
   COMMUNITY: "gitcoin",

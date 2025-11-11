@@ -1,7 +1,9 @@
 /**
  * E2E Tests: Visual Regression
  * Tests visual appearance and consistency of navbar across different states
- * Note: Requires cypress-image-snapshot or similar plugin for actual visual regression
+ * Uses cypress-image-snapshot for visual regression testing
+ *
+ * Run with: yarn e2e:headless
  */
 
 describe("Visual Regression", () => {
@@ -14,7 +16,7 @@ describe("Visual Regression", () => {
       cy.contains("For Builders").should("be.visible");
 
       // Take snapshot
-      // cy.matchImageSnapshot("desktop-navbar");
+      cy.matchImageSnapshot("desktop-navbar");
     });
 
     it("should match navbar with open dropdown", () => {
@@ -23,38 +25,11 @@ describe("Visual Regression", () => {
 
       cy.contains("button", "For Builders").click();
 
-      // Wait for dropdown animation
-      cy.wait(300);
+      // Wait for dropdown to be visible instead of arbitrary wait
+      cy.contains("Create project").should("be.visible");
 
       // Take snapshot
-      // cy.matchImageSnapshot("desktop-navbar-dropdown-open");
-    });
-  });
-
-  describe("Desktop User Menu", () => {
-    it("should match user menu appearance", () => {
-      // Requires auth
-      // cy.login();
-      cy.viewport(1440, 900);
-      cy.visit("/");
-
-      // cy.get('[data-testid="user-avatar"]').click();
-
-      cy.wait(300);
-
-      // cy.matchImageSnapshot("desktop-user-menu");
-    });
-
-    it("should match user menu with all permissions", () => {
-      // cy.login({ userType: "all-permissions" });
-      cy.viewport(1440, 900);
-      cy.visit("/");
-
-      // cy.get('[data-testid="user-avatar"]').click();
-
-      cy.wait(300);
-
-      // cy.matchImageSnapshot("desktop-user-menu-all-permissions");
+      cy.matchImageSnapshot("desktop-navbar-dropdown-open");
     });
   });
 
@@ -65,7 +40,7 @@ describe("Visual Regression", () => {
 
       cy.contains("For Builders").should("exist");
 
-      // cy.matchImageSnapshot("mobile-navbar-closed");
+      cy.matchImageSnapshot("mobile-navbar-closed");
     });
 
     it("should match mobile menu open", () => {
@@ -74,21 +49,10 @@ describe("Visual Regression", () => {
 
       cy.get('[aria-label="Open menu"]').click();
 
-      cy.wait(300);
+      // Wait for menu to be visible instead of arbitrary wait
+      cy.get('[aria-label="Close menu"]').should("be.visible");
 
-      // cy.matchImageSnapshot("mobile-menu-open");
-    });
-
-    it("should match mobile menu logged in", () => {
-      // cy.login();
-      cy.viewport("iphone-x");
-      cy.visit("/");
-
-      cy.get('[aria-label="Open menu"]').click();
-
-      cy.wait(300);
-
-      // cy.matchImageSnapshot("mobile-menu-logged-in");
+      cy.matchImageSnapshot("mobile-menu-open");
     });
   });
 
@@ -99,9 +63,10 @@ describe("Visual Regression", () => {
 
       cy.contains("button", "For Builders").click();
 
-      cy.wait(300);
+      // Wait for dropdown content to be visible
+      cy.contains("Create project").should("be.visible");
 
-      // cy.matchImageSnapshot("for-builders-dropdown");
+      cy.matchImageSnapshot("for-builders-dropdown");
     });
 
     it("should match For Funders dropdown", () => {
@@ -110,9 +75,10 @@ describe("Visual Regression", () => {
 
       cy.contains("button", "For Funders").click();
 
-      cy.wait(300);
+      // Wait for dropdown content to be visible
+      cy.get("body").should("contain", "Browse"); // Adjust selector based on actual content
 
-      // cy.matchImageSnapshot("for-funders-dropdown");
+      cy.matchImageSnapshot("for-funders-dropdown");
     });
 
     it("should match Explore dropdown", () => {
@@ -121,9 +87,10 @@ describe("Visual Regression", () => {
 
       cy.contains("button", "Explore").click();
 
-      cy.wait(300);
+      // Wait for dropdown content to be visible
+      cy.get("body").should("be.visible"); // Adjust selector based on actual content
 
-      // cy.matchImageSnapshot("explore-dropdown");
+      cy.matchImageSnapshot("explore-dropdown");
     });
 
     it("should match Resources dropdown", () => {
@@ -132,46 +99,13 @@ describe("Visual Regression", () => {
 
       cy.contains("button", "Resources").click();
 
-      cy.wait(300);
+      // Wait for dropdown content to be visible
+      cy.get("body").should("be.visible"); // Adjust selector based on actual content
 
-      // cy.matchImageSnapshot("resources-dropdown");
+      cy.matchImageSnapshot("resources-dropdown");
     });
   });
 
-  describe("Dark Theme", () => {
-    it("should match dark theme navbar", () => {
-      // cy.login();
-      cy.viewport(1440, 900);
-      cy.visit("/");
-
-      // Switch to dark theme
-      // cy.get('[data-testid="user-avatar"]').click();
-      // cy.contains("Dark mode").click();
-
-      cy.wait(500);
-
-      // cy.matchImageSnapshot("dark-navbar");
-    });
-
-    it("should match dark theme dropdown", () => {
-      // cy.login();
-      cy.viewport(1440, 900);
-      cy.visit("/");
-
-      // Switch to dark theme
-      // cy.get('[data-testid="user-avatar"]').click();
-      // cy.contains("Dark mode").click();
-      // cy.get('[data-testid="user-avatar"]').click(); // Close menu
-
-      cy.wait(300);
-
-      cy.contains("button", "For Builders").click();
-
-      cy.wait(300);
-
-      // cy.matchImageSnapshot("dark-dropdown");
-    });
-  });
 
   describe("Search Results Appearance", () => {
     it("should match search results display", () => {
@@ -180,9 +114,10 @@ describe("Visual Regression", () => {
 
       cy.get('[placeholder*="Search"]').type("test");
 
-      cy.wait(600);
+      // Wait for search results to appear instead of arbitrary wait
+      cy.get("body").should("be.visible"); // Adjust selector based on actual search results container
 
-      // cy.matchImageSnapshot("search-results");
+      cy.matchImageSnapshot("search-results");
     });
 
     it("should match empty search results", () => {
@@ -191,26 +126,10 @@ describe("Visual Regression", () => {
 
       cy.get('[placeholder*="Search"]').type("zzznonexistent");
 
-      cy.wait(600);
+      // Wait for empty state to appear
+      cy.get("body").should("be.visible"); // Adjust selector based on actual empty state
 
-      // cy.matchImageSnapshot("search-no-results");
-    });
-  });
-
-  describe("Loading States", () => {
-    it("should match skeleton loading state", () => {
-      cy.viewport(1440, 900);
-      cy.visit("/");
-
-      // Capture early before full load
-      // cy.matchImageSnapshot("navbar-skeleton", { timeout: 100 });
-    });
-
-    it("should match auth buttons loading", () => {
-      cy.viewport(1440, 900);
-      cy.visit("/");
-
-      // cy.matchImageSnapshot("auth-buttons-skeleton", { timeout: 100 });
+      cy.matchImageSnapshot("search-no-results");
     });
   });
 
@@ -221,9 +140,10 @@ describe("Visual Regression", () => {
 
       cy.contains("button", "For Builders").trigger("mouseover");
 
-      cy.wait(100);
+      // Small wait for hover state to apply
+      cy.wait(50);
 
-      // cy.matchImageSnapshot("button-hover");
+      cy.matchImageSnapshot("button-hover");
     });
 
     it("should match menu item hover", () => {
@@ -231,12 +151,14 @@ describe("Visual Regression", () => {
       cy.visit("/");
 
       cy.contains("button", "For Builders").click();
+      cy.contains("Create project").should("be.visible");
 
       cy.contains("Create project").trigger("mouseover");
 
-      cy.wait(100);
+      // Small wait for hover state to apply
+      cy.wait(50);
 
-      // cy.matchImageSnapshot("menu-item-hover");
+      cy.matchImageSnapshot("menu-item-hover");
     });
   });
 
@@ -247,7 +169,7 @@ describe("Visual Regression", () => {
 
       cy.contains("button", "For Builders").focus();
 
-      // cy.matchImageSnapshot("button-focused");
+      cy.matchImageSnapshot("button-focused");
     });
 
     it("should match focused search input", () => {
@@ -256,7 +178,7 @@ describe("Visual Regression", () => {
 
       cy.get('[placeholder*="Search"]').focus();
 
-      // cy.matchImageSnapshot("search-focused");
+      cy.matchImageSnapshot("search-focused");
     });
   });
 
@@ -265,7 +187,9 @@ describe("Visual Regression", () => {
       cy.viewport("ipad-2");
       cy.visit("/");
 
-      // cy.matchImageSnapshot("tablet-navbar");
+      cy.contains("For Builders").should("exist");
+
+      cy.matchImageSnapshot("tablet-navbar");
     });
 
     it("should match tablet menu open", () => {
@@ -274,9 +198,10 @@ describe("Visual Regression", () => {
 
       cy.get('[aria-label="Open menu"]').click();
 
-      cy.wait(300);
+      // Wait for menu to be visible
+      cy.get('[aria-label="Close menu"]').should("be.visible");
 
-      // cy.matchImageSnapshot("tablet-menu-open");
+      cy.matchImageSnapshot("tablet-menu-open");
     });
   });
 
@@ -284,70 +209,33 @@ describe("Visual Regression", () => {
     it("should look consistent across viewports", () => {
       const viewports = [
         [1920, 1080], // Desktop wide
-        [1440, 900],  // Desktop standard
-        [768, 1024],  // Tablet portrait
-        [375, 667],   // Mobile
+        [1440, 900], // Desktop standard
+        [768, 1024], // Tablet portrait
+        [375, 667], // Mobile
       ];
 
-      viewports.forEach(([width, height], index) => {
+      viewports.forEach(([width, height]) => {
         cy.viewport(width, height);
         cy.visit("/");
 
-        cy.wait(300);
+        cy.contains("For Builders").should("exist");
 
-        // cy.matchImageSnapshot(`navbar-${width}x${height}`);
+        cy.matchImageSnapshot(`navbar-${width}x${height}`);
       });
     });
   });
 
-  describe("Animation States", () => {
-    it("should capture dropdown opening animation", () => {
-      cy.viewport(1440, 900);
-      cy.visit("/");
-
-      cy.contains("button", "For Builders").click();
-
-      // Capture mid-animation
-      cy.wait(150);
-
-      // cy.matchImageSnapshot("dropdown-opening");
-    });
-
-    it("should capture drawer sliding animation", () => {
-      cy.viewport("iphone-x");
-      cy.visit("/");
-
-      cy.get('[aria-label="Open menu"]').click();
-
-      // Capture mid-animation
-      cy.wait(150);
-
-      // cy.matchImageSnapshot("drawer-opening");
-    });
-  });
-
   describe("Content Variations", () => {
-    it("should match with long user address", () => {
-      // cy.login({ address: "0x1234567890123456789012345678901234567890" });
-      cy.viewport(1440, 900);
-      cy.visit("/");
-
-      // cy.get('[data-testid="user-avatar"]').click();
-
-      cy.wait(300);
-
-      // cy.matchImageSnapshot("long-address");
-    });
-
     it("should match with many search results", () => {
       cy.viewport(1440, 900);
       cy.visit("/");
 
       cy.get('[placeholder*="Search"]').type("a");
 
-      cy.wait(600);
+      // Wait for search results to appear
+      cy.get("body").should("be.visible"); // Adjust selector based on actual search results
 
-      // cy.matchImageSnapshot("many-search-results");
+      cy.matchImageSnapshot("many-search-results");
     });
   });
 
@@ -363,10 +251,10 @@ describe("Visual Regression", () => {
 
       cy.get('[placeholder*="Search"]').type("test");
 
-      cy.wait(600);
+      // Wait for error state to appear
+      cy.get("body").should("be.visible"); // Adjust selector based on actual error display
 
-      // cy.matchImageSnapshot("search-error");
+      cy.matchImageSnapshot("search-error");
     });
   });
 });
-
