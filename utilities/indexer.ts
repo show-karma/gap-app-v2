@@ -3,6 +3,10 @@ import { Hex } from "viem";
 export const INDEXER = {
   ATTESTATION_LISTENER: (hash: Hex | string, chainId: number) =>
     `/attestations/index-by-transaction/${hash}/${chainId}`,
+  ATTESTATIONS: {
+    GET: (uid: string, chainId?: number) =>
+      `/attestations/${uid}${chainId ? `?chainId=${chainId}` : ""}`,
+  },
   PROFILE: {
     GET: (address: string) => `/user/${address}`,
   },
@@ -135,7 +139,7 @@ export const INDEXER = {
     IMPACT_INDICATORS: {
       GET: (milestoneUID: string) =>
         `/grants/milestones/${milestoneUID}/indicators/data`,
-      SEND: (milestoneUID: string) => 
+      SEND: (milestoneUID: string) =>
         `/grants/milestones/${milestoneUID}/indicators/data`,
     },
   },
@@ -181,12 +185,12 @@ export const INDEXER = {
             indicatorIds,
             communityUID,
           });
-          
+
           if (programId) params.append("programId", programId);
           if (projectUID) params.append("projectUID", projectUID);
           if (startDate) params.append("startDate", startDate);
           if (endDate) params.append("endDate", endDate);
-          
+
           return `/v2/indicators/aggregate?${params.toString()}`;
         },
       },
