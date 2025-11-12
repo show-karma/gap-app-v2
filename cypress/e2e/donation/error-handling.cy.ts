@@ -50,8 +50,7 @@ describe("E2E: Donation Error Handling", () => {
       cy.visitDonationCheckout(COMMUNITY, "all");
 
       // Select token
-      cy.get('[data-testid="token-selector"]').click({ force: true });
-      cy.contains('[role="option"]', "USDC").click({ force: true });
+      cy.selectToken("USDC");
 
       // Enter very large amount (likely exceeds balance)
       cy.get('input[type="number"]').type("1000000");
@@ -91,8 +90,7 @@ describe("E2E: Donation Error Handling", () => {
       cy.visitDonationCheckout(COMMUNITY, "all");
 
       // Select token
-      cy.get('[data-testid="token-selector"]').click({ force: true });
-      cy.contains('[role="option"]', "USDC").click({ force: true });
+      cy.selectToken("USDC");
 
       // Balance should be displayed
       cy.contains(/balance/i).should("be.visible");
@@ -124,8 +122,7 @@ describe("E2E: Donation Error Handling", () => {
       cy.visitDonationCheckout(COMMUNITY, "all");
 
       // Select token
-      cy.get('[data-testid="token-selector"]').click({ force: true });
-      cy.contains('[role="option"]', "USDC").click({ force: true });
+      cy.selectToken("USDC");
 
       // Enter large amount
       cy.get('input[type="number"]').type("1000000");
@@ -173,8 +170,7 @@ describe("E2E: Donation Error Handling", () => {
       cy.visitDonationCheckout(COMMUNITY, "all");
 
       // Select token
-      cy.get('[data-testid="token-selector"]').click({ force: true });
-      cy.contains('[role="option"]', "USDC").click({ force: true });
+      cy.selectToken("USDC");
 
       // Should show payout address error
       cy.contains(/payout.*address.*not.*configured/i).should("be.visible");
@@ -277,8 +273,7 @@ describe("E2E: Donation Error Handling", () => {
       cy.visitDonationCheckout(COMMUNITY, "all");
 
       // Select token
-      cy.get('[data-testid="token-selector"]').click({ force: true });
-      cy.contains('[role="option"]', "USDC").click({ force: true });
+      cy.selectToken("USDC");
 
       // Try negative amount
       cy.get('input[type="number"]').invoke("attr", "min").should("exist");
@@ -313,8 +308,7 @@ describe("E2E: Donation Error Handling", () => {
       cy.visitDonationCheckout(COMMUNITY, "all");
 
       // Select token
-      cy.get('[data-testid="token-selector"]').click({ force: true });
-      cy.contains('[role="option"]', "USDC").click({ force: true });
+      cy.selectToken("USDC");
 
       // Enter zero
       cy.get('input[type="number"]').type("0");
@@ -350,8 +344,7 @@ describe("E2E: Donation Error Handling", () => {
       cy.visitDonationCheckout(COMMUNITY, "all");
 
       // Select token
-      cy.get('[data-testid="token-selector"]').click({ force: true });
-      cy.contains('[role="option"]', "USDC").click({ force: true });
+      cy.selectToken("USDC");
 
       // Input type="number" should prevent non-numeric input
       cy.get('input[type="number"]').should("have.attr", "type", "number");
@@ -383,8 +376,7 @@ describe("E2E: Donation Error Handling", () => {
       cy.visitDonationCheckout(COMMUNITY, "all");
 
       // Select token
-      cy.get('[data-testid="token-selector"]').click({ force: true });
-      cy.contains('[role="option"]', "USDC").click({ force: true });
+      cy.selectToken("USDC");
 
       // Enter amount with many decimals
       cy.get('input[type="number"]').type("10.123456789");
@@ -701,8 +693,7 @@ describe("E2E: Donation Error Handling", () => {
       cy.visitDonationCheckout(COMMUNITY, "all");
 
       // Select token
-      cy.get('[data-testid="token-selector"]').click({ force: true });
-      cy.contains('[role="option"]', "USDC").click({ force: true });
+      cy.selectToken("USDC");
 
       // Enter invalid amount
       cy.get('input[type="number"]').type("9999999");
@@ -743,8 +734,7 @@ describe("E2E: Donation Error Handling", () => {
       cy.visitDonationCheckout(COMMUNITY, "all");
 
       // Select token
-      cy.get('[data-testid="token-selector"]').click({ force: true });
-      cy.contains('[role="option"]', "USDC").click({ force: true });
+      cy.selectToken("USDC");
 
       // Should show what user can do
       cy.contains(/reduce.*amount|add.*funds|insufficient/i).should(
