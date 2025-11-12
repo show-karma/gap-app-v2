@@ -18,6 +18,7 @@ import { TrackTags } from "@/components/TrackTags";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useProjectStore } from "@/store";
 import { useRouter } from "next/navigation";
+import { GrantCompletionCard } from "@/components/Pages/Grants/MilestonesAndUpdates";
 
 const isValidAmount = (grant?: {
   amount?: Hex;
@@ -100,6 +101,15 @@ export const GrantOverview = () => {
 
   return (
     <Suspense fallback={<ProjectGrantsOverviewLoading />}>
+      {/* Completion Summary */}
+      {grant?.completed &&
+        (grant?.completed.data.title ||
+          grant?.completed.data.text ||
+          grant?.completed?.data?.proofOfWork) ? (
+        <div className="mt-5">
+          <GrantCompletionCard completion={grant?.completed} grant={grant} />
+        </div>
+      ) : null}
       {/* Grant Overview Start */}
       <div className="mt-5 flex flex-row max-lg:flex-col-reverse gap-4 ">
         {grant?.details?.data?.description && (
