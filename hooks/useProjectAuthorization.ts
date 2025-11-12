@@ -2,9 +2,10 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 
 /**
- * Hook to determine authorization for grant completion actions
+ * Generic hook to determine project-level authorization
+ * Returns authorization flags for general and on-chain actions
  */
-export const useGrantCompletionAuthorization = () => {
+export const useProjectAuthorization = () => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isCommunityAdmin = useCommunityAdminStore(
@@ -15,11 +16,10 @@ export const useGrantCompletionAuthorization = () => {
 
   const isAuthorized = isOwner || isProjectAdmin || isCommunityAdmin;
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
-  const canComplete = isAuthorized;
 
   return {
     isAuthorized,
     isOnChainAuthorized,
-    canComplete,
   };
 };
+
