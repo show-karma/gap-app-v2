@@ -127,9 +127,41 @@ Cypress.Commands.add("addProjectToCart", (projectIndex = 0) => {
 
 Cypress.Commands.add(
   "visitDonationCheckout",
-  (communitySlug = EXAMPLE.COMMUNITY, programId = "all") => {
-    cy.visit(`/community/${communitySlug}/donate/${programId}/checkout`);
-    cy.wait(1000); // Wait for checkout page to load
+  (communitySlug = EXAMPLE.COMMUNITY, programId?: string) => {
+    // If no programId provided or it's "all", fetch a real programId first
+    if (!programId || programId === "all") {
+      const indexerUrl = Cypress.env("NEXT_PUBLIC_GAP_INDEXER_URL") || "http://localhost:4000";
+      
+      // Fetch programs for the community and use the first one
+      cy.request({
+        method: "GET",
+        url: `${indexerUrl}/communities/${communitySlug}/programs`,
+        failOnStatusCode: false,
+      }).then((response) => {
+        if (response.status === 200 && response.body?.data?.length > 0) {
+          // Use the first program with format: programId_chainID
+          const firstProgram = response.body.data[0];
+          if (firstProgram.programId && firstProgram.chainID !== undefined) {
+            const combinedId = `${firstProgram.programId}_${firstProgram.chainID}`;
+            cy.visit(`/community/${communitySlug}/donate/${combinedId}/checkout`);
+            cy.wait(2000); // Wait for checkout page to load
+          } else {
+            cy.log("Program missing programId or chainID, visiting program selection page");
+            cy.visit(`/community/${communitySlug}/donate`);
+            cy.wait(2000);
+          }
+        } else {
+          // Fallback: visit the program selection page
+          cy.log("No programs found or failed to fetch. Visiting program selection page.");
+          cy.visit(`/community/${communitySlug}/donate`);
+          cy.wait(2000);
+        }
+      });
+    } else {
+      // Use the provided programId
+      cy.visit(`/community/${communitySlug}/donate/${programId}/checkout`);
+      cy.wait(2000); // Wait for checkout page to load
+    }
   }
 );
 
