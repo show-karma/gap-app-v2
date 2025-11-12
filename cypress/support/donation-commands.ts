@@ -128,33 +128,35 @@ Cypress.Commands.add("addProjectToCart", (projectIndex = 0) => {
 Cypress.Commands.add(
   "visitDonationCheckout",
   (communitySlug = EXAMPLE.COMMUNITY, programId?: string) => {
-    // If no programId provided or it's "all", fetch a real programId first
+    // If no programId provided or it's "all", visit program selection page first
+    // The page will auto-redirect to /donate/{programId} if there's only one program
     if (!programId || programId === "all") {
-      const indexerUrl = Cypress.env("NEXT_PUBLIC_GAP_INDEXER_URL") || "http://localhost:4000";
+      // Visit the program selection page - it will auto-redirect if only one program exists
+      cy.visit(`/community/${communitySlug}/donate`);
       
-      // Fetch programs for the community and use the first one
-      cy.request({
-        method: "GET",
-        url: `${indexerUrl}/communities/${communitySlug}/programs`,
-        failOnStatusCode: false,
-      }).then((response) => {
-        if (response.status === 200 && response.body?.data?.length > 0) {
-          // Use the first program with format: programId_chainID
-          const firstProgram = response.body.data[0];
-          if (firstProgram.programId && firstProgram.chainID !== undefined) {
-            const combinedId = `${firstProgram.programId}_${firstProgram.chainID}`;
-            cy.visit(`/community/${communitySlug}/donate/${combinedId}/checkout`);
-            cy.wait(2000); // Wait for checkout page to load
-          } else {
-            cy.log("Program missing programId or chainID, visiting program selection page");
-            cy.visit(`/community/${communitySlug}/donate`);
-            cy.wait(2000);
-          }
-        } else {
-          // Fallback: visit the program selection page
-          cy.log("No programs found or failed to fetch. Visiting program selection page.");
-          cy.visit(`/community/${communitySlug}/donate`);
+      // Wait for page to load and check if we're redirected
+      cy.url({ timeout: 10000 }).then((url) => {
+        // Check if redirected to a specific program page (format: /donate/{programId})
+        const programMatch = url.match(/\/donate\/([^\/]+)$/);
+        if (programMatch && programMatch[1] !== "all") {
+          // We were redirected to a program page, now navigate to checkout
+          const detectedProgramId = programMatch[1];
+          cy.visit(`/community/${communitySlug}/donate/${detectedProgramId}/checkout`);
           cy.wait(2000);
+        } else if (url.includes("/donate") && !url.includes("/checkout") && !programMatch) {
+          // Still on program selection page - wait a bit more for auto-redirect
+          cy.wait(3000);
+          cy.url().then((currentUrl) => {
+            const newProgramMatch = currentUrl.match(/\/donate\/([^\/]+)$/);
+            if (newProgramMatch && newProgramMatch[1] !== "all") {
+              // Now redirected, go to checkout
+              cy.visit(`/community/${communitySlug}/donate/${newProgramMatch[1]}/checkout`);
+              cy.wait(2000);
+            } else {
+              cy.log("Multiple programs available - tests should handle program selection or provide a programId");
+              // For tests, we'll try to continue - they may need to handle this case
+            }
+          });
         }
       });
     } else {
