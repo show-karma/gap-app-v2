@@ -47,7 +47,7 @@ export function CartItemRow({
   onRemove,
 }: CartItemRowProps) {
   return (
-    <div 
+    <div
       data-testid={`cart-item-${item.uid}`}
       className="group relative overflow-hidden bg-white/90 p-3 transition-all duration-200 hover:border-blue-200 dark:border-gray-800/60 dark:bg-transparent dark:hover:border-blue-800"
     >
