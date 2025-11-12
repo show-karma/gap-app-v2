@@ -3,8 +3,8 @@ describe("Homepage", () => {
     // Visit the homepage
     cy.visit("/");
 
-    // Check if the header is present
-    cy.get("header").should("exist");
+    // Check if the navbar is present (uses <nav> element)
+    cy.get("nav").should("exist");
 
     // Check if the main content area exists
     cy.get("main").should("exist");
@@ -18,10 +18,10 @@ describe("Homepage", () => {
     });
     cy.get("@consoleError").should("not.be.called");
   });
-  it("should display Login / register button", () => {
+  it("should display Sign in button", () => {
     cy.visit("/");
     cy.get("button")
-      .contains(/login|register/i)
+      .contains(/sign in/i)
       .should("exist");
   });
 });

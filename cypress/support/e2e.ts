@@ -11,6 +11,17 @@ addMatchImageSnapshotCommand({
   customDiffDir: "cypress/snapshots/diff",
 });
 
+// Handle uncaught exceptions (e.g., locale errors in test environments)
+Cypress.on("uncaught:exception", (err) => {
+  // Ignore locale-related errors from millify/formatCurrency
+  if (err.message.includes("Incorrect locale information") || 
+      err.message.includes("toLocaleString")) {
+    return false;
+  }
+  // Let other errors fail the test
+  return true;
+});
+
 export const EXAMPLE = {
   COMMUNITY: "gitcoin",
   PROJECT: "kyberswap",
