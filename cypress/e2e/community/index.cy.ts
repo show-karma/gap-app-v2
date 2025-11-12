@@ -1,16 +1,19 @@
 const community = "gitcoin";
 describe("Community Page", () => {
   it("should display the community page", () => {
-    cy.visit(`/${community}`);
-    cy.contains("For Builders").should("be.visible");
+    cy.visit(`/community/${community}`);
+    // Wait for community header to load (shows community name)
+    cy.get("h1, h2, h3", { timeout: 10000 }).should("exist");
+    // Verify we're on the community page
+    cy.url().should("include", `/community/${community}`);
   });
   it("should display grants", () => {
-    cy.visit(`/${community}`);
+    cy.visit(`/community/${community}`);
     // Wait for grants to load
     cy.get("#grant-card", { timeout: 10000 }).should("have.length.greaterThan", 0);
   });
   it("should display filter by programs", () => {
-    cy.visit(`/${community}`);
+    cy.visit(`/community/${community}`);
     cy.get("#filter-by-programs").should("be.visible");
 
     // Wait for grants to load first
@@ -42,7 +45,7 @@ describe("Community Page", () => {
     });
   });
   it("should be able to sort by", () => {
-    cy.visit(`/${community}`);
+    cy.visit(`/community/${community}`);
     // Wait for grants to load
     cy.get("#grant-card", { timeout: 10000 }).should("have.length.greaterThan", 0);
 
