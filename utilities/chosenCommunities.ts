@@ -1,6 +1,16 @@
 import { envVars } from "./enviromentVars";
 
-export const chosenCommunities = (forceProduction: boolean = false) => {
+export interface ChosenCommunity {
+  name: string;
+  slug: string;
+  uid: string;
+  imageURL: {
+    light: string;
+    dark: string;
+  };
+}
+
+export const chosenCommunities = (forceProduction: boolean = false): ChosenCommunity[] => {
   if (envVars.NEXT_PUBLIC_ENV === "staging" && !forceProduction) {
     return [
       {

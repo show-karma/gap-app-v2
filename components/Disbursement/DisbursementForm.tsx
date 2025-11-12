@@ -27,6 +27,7 @@ import {
   DocumentIcon,
 } from "./components/Icons";
 import { useWallet } from "@/hooks/useWallet";
+import toast from "react-hot-toast";
 
 const NETWORK_OPTIONS = [
   { id: 42220, name: "Celo" },
@@ -121,7 +122,14 @@ export const DisbursementForm = () => {
         await switchChainAsync({ chainId: newNetwork });
       } catch (error) {
         console.error("Failed to switch network:", error);
-        // Continue anyway - user might manually switch later
+        toast.error(
+          "Failed to switch network. Please manually switch to the correct network in your wallet."
+        );
+        setPreflightChecks(prev => ({
+          ...prev,
+          isCorrectNetwork: false,
+          error: "Network switch failed - please switch manually"
+        }));
       }
     }
   };

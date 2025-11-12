@@ -1,16 +1,16 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { FC } from "react";
-import { Button } from "@/components/Utilities/Button";
 
 // Define the possible application statuses
-type ApplicationStatus = "pending" | "under_review" | "revision_requested" | "approved" | "rejected";
+type ApplicationStatus = "pending" | "under_review" | "revision_requested" | "approved" | "rejected" | "resubmitted";
 
 // Define status transition configuration
 interface StatusTransition {
   targetStatus: ApplicationStatus;
   label: string;
-  variant?: "primary" | "secondary";
+  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
   className?: string;
 }
 
@@ -20,7 +20,15 @@ const STATUS_TRANSITIONS: Record<ApplicationStatus, StatusTransition[]> = {
     {
       targetStatus: "under_review",
       label: "Start Review",
-      variant: "primary",
+      variant: "default",
+      className: ""
+    }
+  ],
+  resubmitted: [
+    {
+      targetStatus: "under_review",
+      label: "Start Review",
+      variant: "default",
       className: "bg-primary-500 text-white hover:bg-primary-600 dark:text-white dark:bg-primary-900 dark:hover:bg-primary-800"
     }
   ],
@@ -28,8 +36,8 @@ const STATUS_TRANSITIONS: Record<ApplicationStatus, StatusTransition[]> = {
     {
       targetStatus: "revision_requested",
       label: "Request Revision",
-      variant: "secondary",
-      className: 'dark:text-white dark:bg-zinc-900 dark:hover:bg-zinc-800'
+      variant: "outline",
+      className: 'border border-border'
     },
     {
       targetStatus: "approved",
@@ -46,8 +54,8 @@ const STATUS_TRANSITIONS: Record<ApplicationStatus, StatusTransition[]> = {
     {
       targetStatus: "under_review",
       label: "Review",
-      variant: "primary",
-      className: "bg-primary-500 text-white hover:bg-primary-600 dark:text-white dark:bg-primary-900 dark:hover:bg-primary-800"
+      variant: "default",
+      className: ""
     }
   ],
   approved: [],
@@ -69,7 +77,7 @@ const StatusActionButton: FC<StatusActionButtonProps> = ({
   return (
     <Button
       onClick={() => onStatusChange(transition.targetStatus)}
-      variant={transition.variant}
+      variant={transition.variant || "default"}
       className={`flex-1 text-center items-center justify-center ${transition.className || ""}`}
       disabled={disabled}
     >

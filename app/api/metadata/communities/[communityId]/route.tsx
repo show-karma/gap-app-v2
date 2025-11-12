@@ -72,7 +72,7 @@ export async function GET(
             backgroundImage: `url(https://karmahq.xyz/assets/previews/background.png)`,
           }}
         >
-          <div tw="flex flex-col items-start justify-start w-[520px]">
+          <div tw="flex flex-col items-start justify-start w-[520px] pb-[40px]">
             {community?.details?.data.imageURL ? (
               <img
                 alt={community?.details?.data.name}
@@ -91,16 +91,16 @@ export async function GET(
             <p tw="text-white text-2xl font-normal font-body mt-4 break-normal text-wrap whitespace-nowrap">
               {`Discover how ${community?.details?.data.name} is fueling innovation: ${projects}+ projects supported through grants!`}
             </p>
-            <div tw="flex flex-row items-center justify-end w-full">
+            <div tw="flex flex-row items-center justify-end w-full pr-[80px]">
               <img
                 alt={`${PROJECT_NAME} Logo`}
-                src="https://karmahq.xyz/assets/previews/karma-gap-logo-glow.png"
+                src="https://karmahq.xyz/logo/karma-logo-dark.svg"
                 style={{
-                  width: 292,
-                  height: 50,
+                  width: 158,
+                  height: 40,
                 }}
-                width={292}
-                height={50}
+                width={158}
+                height={40}
               />
             </div>
           </div>

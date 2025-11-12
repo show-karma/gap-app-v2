@@ -122,7 +122,12 @@ export function NavbarUserMenu() {
                                         {address ? <span className={menuStyles.itemText}>{formatAddress(address)}</span> : <span className={menuStyles.itemText}>No wallet connected</span>}
                                     </div>
                                 </MenubarItem>
-                                <MenubarItem className="w-full" onClick={() => openProfileModal()}>
+                                <MenubarItem
+                                    className="w-full"
+                                    onClick={() => openProfileModal({
+                                        isGlobal: true
+                                    })}
+                                >
                                     <div className="flex items-center w-full flex-row gap-2 justify-between">
                                         <div className="flex items-center flex-row gap-2">
                                             <CircleUser className={menuStyles.itemIcon} />

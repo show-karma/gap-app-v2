@@ -50,6 +50,7 @@ export const ProgramFilter = ({
       </p>
 
       <SearchWithValueDropdown
+        id="filter-by-programs"
         list={programs || []}
         onSelectFunction={(value: string) => {
           onChange?.(value) || changeSelectedProgramIdQuery(value);
