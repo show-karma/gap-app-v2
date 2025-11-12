@@ -27,6 +27,7 @@ export function TokenSelector({
           Select token for donation
         </label>
         <select
+          data-testid="token-selector"
           id={selectId}
           value={selectedToken ? `${selectedToken.symbol}-${selectedToken.chainId}` : ""}
           onChange={(e) => {
