@@ -47,7 +47,10 @@ export function CartItemRow({
   onRemove,
 }: CartItemRowProps) {
   return (
-    <div className="group relative overflow-hidden bg-white/90 p-3 transition-all duration-200 hover:border-blue-200 dark:border-gray-800/60 dark:bg-transparent dark:hover:border-blue-800">
+    <div
+      data-testid={`cart-item-${item.uid}`}
+      className="group relative overflow-hidden bg-white/90 p-3 transition-all duration-200 hover:border-blue-200 dark:border-gray-800/60 dark:bg-transparent dark:hover:border-blue-800"
+    >
       <div className="grid grid-cols-12 gap-3 items-center">
         {/* Project Info - 4 columns */}
         <div className="col-span-4 flex items-center gap-3">
@@ -139,6 +142,7 @@ export function CartItemRow({
         {/* Remove Button - 1 column */}
         <div className="col-span-1 flex justify-end">
           <button
+            data-testid="remove-item"
             onClick={onRemove}
             className="text-red-500"
             aria-label={`Remove ${item.title} from donation cart`}

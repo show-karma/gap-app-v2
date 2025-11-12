@@ -48,11 +48,11 @@ describe('ExternalLink', () => {
       expect(link).toHaveAttribute('target', '_blank');
     });
 
-    it('should have rel="noreferrer" attribute', () => {
+    it('should have rel="noopener noreferrer" attribute', () => {
       render(<ExternalLink href="https://example.com">Link</ExternalLink>);
 
       const link = screen.getByText('Link');
-      expect(link).toHaveAttribute('rel', 'noreferrer');
+      expect(link).toHaveAttribute('rel', 'noopener noreferrer');
     });
 
     it('should have href attribute', () => {

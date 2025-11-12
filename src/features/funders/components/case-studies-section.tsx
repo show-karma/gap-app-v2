@@ -10,7 +10,7 @@ import { CommunityImage } from "./community-image";
 /**
  * Metric card displaying a key statistic with optional community logos.
  */
-interface MetricCard {
+export interface MetricCard {
     readonly type: "metric";
     readonly metric: string;
     readonly description: string;
@@ -20,7 +20,7 @@ interface MetricCard {
 /**
  * Testimonial card featuring a quote from a community leader with optional avatar.
  */
-interface TestimonialCard {
+export interface TestimonialCard {
     readonly type: "testimonial";
     readonly text: string;
     readonly author: string;
@@ -33,7 +33,7 @@ interface TestimonialCard {
 /**
  * Case study card highlighting a specific customer success story.
  */
-interface CaseStudyCard {
+export interface CaseStudyCard {
     readonly type: "case-study";
     readonly headline: string;
     readonly description: string;
@@ -43,7 +43,7 @@ interface CaseStudyCard {
     readonly authorRole?: string;
 }
 
-type CaseStudyCardType = MetricCard | TestimonialCard | CaseStudyCard;
+export type CaseStudyCardType = MetricCard | TestimonialCard | CaseStudyCard;
 
 const caseStudyCards: CaseStudyCardType[] = [
     {
