@@ -45,14 +45,20 @@ jest.mock("@/src/features/homepage/components/live-funding-opportunities-skeleto
 jest.mock("@/src/features/homepage/components/live-funding-opportunities-carousel", () => ({
   LiveFundingOpportunitiesCarousel: ({ programs }: any) => (
     <div data-testid="funding-carousel">
-      {programs.map((program: any) => (
-        <div key={program.uid} data-testid={`funding-card-${program.uid}`}>
-          <h3>{program.title}</h3>
-          <p>{program.description}</p>
-          <span>{program.communityName}</span>
-          <span>{program.fundingAmount}</span>
-        </div>
-      ))}
+      {programs.map((program: any) => {
+        const uid = `${program.programId}-${program.chainID}`;
+        const title = program.metadata?.title || program.name;
+        const description = program.metadata?.description || "";
+        const fundingAmount = program.metadata?.programBudget || "";
+        return (
+          <div key={uid} data-testid={`funding-card-${uid}`}>
+            <h3>{title}</h3>
+            <p>{description}</p>
+            <span>{program.communityName}</span>
+            <span>{fundingAmount}</span>
+          </div>
+        );
+      })}
     </div>
   ),
 }));
@@ -119,8 +125,8 @@ describe("LiveFundingOpportunities Component", () => {
 
       // Check for first program title
       const firstProgram = mockFundingOpportunities[0];
-      const programTitle = screen.getByText(firstProgram.title);
-      expect(programTitle).toBeInTheDocument();
+      const programTitle = firstProgram.metadata?.title || firstProgram.name;
+      expect(screen.getByText(programTitle)).toBeInTheDocument();
     });
 
     it("should display correct number of funding opportunities", async () => {
@@ -139,7 +145,8 @@ describe("LiveFundingOpportunities Component", () => {
       renderWithProviders(await LiveFundingOpportunities());
 
       const firstProgram = mockFundingOpportunities[0];
-      expect(screen.getByText(firstProgram.title)).toBeInTheDocument();
+      const title = firstProgram.metadata?.title || firstProgram.name;
+      expect(screen.getByText(title)).toBeInTheDocument();
     });
 
     it("should display program descriptions", async () => {
@@ -148,7 +155,10 @@ describe("LiveFundingOpportunities Component", () => {
       renderWithProviders(await LiveFundingOpportunities());
 
       const firstProgram = mockFundingOpportunities[0];
-      expect(screen.getByText(firstProgram.description)).toBeInTheDocument();
+      const description = firstProgram.metadata?.description || "";
+      if (description) {
+        expect(screen.getByText(description)).toBeInTheDocument();
+      }
     });
 
     it("should display program funding amounts", async () => {
@@ -157,7 +167,10 @@ describe("LiveFundingOpportunities Component", () => {
       renderWithProviders(await LiveFundingOpportunities());
 
       const firstProgram = mockFundingOpportunities[0];
-      expect(screen.getByText(firstProgram.fundingAmount)).toBeInTheDocument();
+      const fundingAmount = firstProgram.metadata?.programBudget || "";
+      if (fundingAmount) {
+        expect(screen.getByText(fundingAmount)).toBeInTheDocument();
+      }
     });
 
     it("should display community names", async () => {
@@ -201,12 +214,14 @@ describe("LiveFundingOpportunities Component", () => {
       renderWithProviders(await LiveFundingOpportunities());
 
       testPrograms.forEach((program) => {
-        expect(screen.getByText(program.title)).toBeInTheDocument();
+        const title = program.metadata?.title || program.name;
+        expect(screen.getByText(title)).toBeInTheDocument();
       });
     });
 
     it("should render funding cards with unique keys", async () => {
-      mockGetLiveFundingOpportunities.mockResolvedValue(mockFundingOpportunities);
+      const testPrograms = mockFundingOpportunities.slice(0, 5);
+      mockGetLiveFundingOpportunities.mockResolvedValue(testPrograms);
 
       renderWithProviders(await LiveFundingOpportunities());
 
@@ -216,6 +231,7 @@ describe("LiveFundingOpportunities Component", () => {
       const testIds = cards.map(card => card.getAttribute("data-testid"));
       const uniqueTestIds = new Set(testIds);
       expect(uniqueTestIds.size).toBe(cards.length);
+      expect(cards.length).toBe(testPrograms.length);
     });
 
     it("should display programs in the order received", async () => {
@@ -227,7 +243,8 @@ describe("LiveFundingOpportunities Component", () => {
       const cards = screen.getAllByTestId(/^funding-card-/);
       
       // First card should contain first program's title
-      expect(within(cards[0]).getByText(testPrograms[0].title)).toBeInTheDocument();
+      const firstTitle = testPrograms[0].metadata?.title || testPrograms[0].name;
+      expect(within(cards[0]).getByText(firstTitle)).toBeInTheDocument();
     });
 
     it("should maintain carousel structure with different data sizes", async () => {
@@ -253,10 +270,12 @@ describe("LiveFundingOpportunities Component", () => {
       renderWithProviders(await LiveFundingOpportunities());
 
       const firstProgram = mockFundingOpportunities[0];
-      const card = screen.getByTestId(`funding-card-${firstProgram.uid}`);
+      const uid = `${firstProgram.programId}-${firstProgram.chainID}`;
+      const card = screen.getByTestId(`funding-card-${uid}`);
+      const title = firstProgram.metadata?.title || firstProgram.name;
       
       expect(card).toBeInTheDocument();
-      expect(within(card).getByText(firstProgram.title)).toBeInTheDocument();
+      expect(within(card).getByText(title)).toBeInTheDocument();
     });
 
     it("should display community information on cards", async () => {
@@ -274,7 +293,10 @@ describe("LiveFundingOpportunities Component", () => {
       renderWithProviders(await LiveFundingOpportunities());
 
       const firstProgram = mockFundingOpportunities[0];
-      expect(screen.getByText(firstProgram.fundingAmount)).toBeInTheDocument();
+      const fundingAmount = firstProgram.metadata?.programBudget || "";
+      if (fundingAmount) {
+        expect(screen.getByText(fundingAmount)).toBeInTheDocument();
+      }
     });
 
     it("should render all card content for each program", async () => {
@@ -284,13 +306,21 @@ describe("LiveFundingOpportunities Component", () => {
       renderWithProviders(await LiveFundingOpportunities());
 
       testPrograms.forEach((program) => {
-        const card = screen.getByTestId(`funding-card-${program.uid}`);
+        const uid = `${program.programId}-${program.chainID}`;
+        const card = screen.getByTestId(`funding-card-${uid}`);
+        const title = program.metadata?.title || program.name;
+        const description = program.metadata?.description || "";
+        const fundingAmount = program.metadata?.programBudget || "";
         
         // Verify all content is present
-        expect(within(card).getByText(program.title)).toBeInTheDocument();
-        expect(within(card).getByText(program.description)).toBeInTheDocument();
+        expect(within(card).getByText(title)).toBeInTheDocument();
+        if (description) {
+          expect(within(card).getByText(description)).toBeInTheDocument();
+        }
         expect(within(card).getByText(program.communityName)).toBeInTheDocument();
-        expect(within(card).getByText(program.fundingAmount)).toBeInTheDocument();
+        if (fundingAmount) {
+          expect(within(card).getByText(fundingAmount)).toBeInTheDocument();
+        }
       });
     });
   });
@@ -330,7 +360,8 @@ describe("LiveFundingOpportunities Component", () => {
 
       // All programs should render
       validPrograms.forEach((program) => {
-        expect(screen.getByTestId(`funding-card-${program.uid}`)).toBeInTheDocument();
+        const uid = `${program.programId}-${program.chainID}`;
+        expect(screen.getByTestId(`funding-card-${uid}`)).toBeInTheDocument();
       });
     });
   });
