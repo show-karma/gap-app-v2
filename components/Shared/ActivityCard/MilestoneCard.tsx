@@ -429,11 +429,18 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
           }
         />
       </div>
-      {isCompleting || isEditing || completionReason || completionProof ? (
-        <div className="flex flex-col w-full pl-8 md:pl-[120px]">
-          {renderMilestoneCompletion()}
-        </div>
-      ) : null}
+      {
+        isCompleting ||
+        isEditing ||
+        completionReason ||
+        completionProof ||
+        completionDeliverables ?
+        (
+          <div className="flex flex-col w-full pl-8 md:pl-[120px]">
+            {renderMilestoneCompletion()}
+          </div>
+        ) : null
+      }
     </div>
   );
 };

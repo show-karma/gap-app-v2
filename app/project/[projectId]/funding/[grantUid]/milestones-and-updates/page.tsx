@@ -9,6 +9,7 @@ import { ProjectGrantsMilestonesAndUpdatesLoading } from "@/components/Pages/Pro
 import { envVars } from "@/utilities/enviromentVars";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
+import { PROJECT_NAME } from "@/constants/brand";
 
 type Params = Promise<{
   projectId: string;
@@ -41,7 +42,7 @@ export async function generateMetadata({
       .catch(() => notFound());
     if (grantInfo) {
       const pageMetadata = {
-        title: `${projectInfo?.details?.data?.title} - Milestones and Updates for ${grantInfo?.details?.data.title} | Karma GAP`,
+        title: `${projectInfo?.details?.data?.title} - Milestones and Updates for ${grantInfo?.details?.data.title} | ${PROJECT_NAME}`,
         description: `View all milestones and updates by ${projectInfo?.details?.data?.title} for ${grantInfo?.details?.data.title} grant.`,
       };
 
@@ -55,7 +56,7 @@ export async function generateMetadata({
   } else {
     metadata = {
       ...metadata,
-      title: `${projectInfo?.details?.data?.title} | Karma GAP`,
+      title: `${projectInfo?.details?.data?.title} | ${PROJECT_NAME}`,
       description:
         cleanMarkdownForPlainText(
           projectInfo?.details?.data?.description || "",

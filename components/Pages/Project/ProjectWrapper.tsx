@@ -24,6 +24,8 @@ import { useProjectSocials } from "@/hooks/useProjectSocials";
 import { useProjectMembers } from "@/hooks/useProjectMembers";
 import { isCustomLink } from "@/utilities/customLink";
 import { ensureProtocol } from "@/utilities/ensureProtocol";
+import { layoutTheme } from "@/src/helper/theme";
+import { cn } from "@/utilities/tailwind";
 
 interface ProjectWrapperProps {
   projectId: string;
@@ -66,7 +68,7 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
       {isProgressModalOpen ? <ProgressDialog /> : null}
       {isShareDialogOpen ? <ShareDialog /> : null}
       <div className="relative border-b border-gray-200 ">
-        <div className="px-4 sm:px-6 lg:px-12 lg:flex py-5 lg:items-start lg:justify-between flex flex-row max-lg:flex-col max-lg:justify-center max-lg:items-center gap-4">
+        <div className={(cn(layoutTheme.padding, "lg:flex lg:items-start lg:justify-between flex flex-row max-lg:flex-col max-lg:justify-center max-lg:items-center gap-4"))}>
           <div className="flex flex-row gap-4 items-start">
             <div className="flex justify-center">
               <ProfilePicture
@@ -166,7 +168,7 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
           </div>
         </div>
         <div className="mt-4 max-sm:px-4">
-          <div className="sm:px-6 lg:px-12  sm:block">
+          <div className={cn(layoutTheme.padding, "py-0")}>
             <ProjectNavigator
               hasContactInfo={hasContactInfo}
               grantsLength={project?.grants?.length || 0}

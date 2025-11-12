@@ -13,6 +13,7 @@ import { PAGES } from "@/utilities/pages";
 import { DonationProgramDropdown } from "./Donation/ProgramDropdown";
 import { useCommunityProjectsPaginated } from "@/hooks/useCommunityProjectsPaginated";
 import { ShoppingCartIcon as ShoppingCartIconCustom } from "@/components/Icons/ShoppingCartIcon";
+import useMediaQuery from "@/hooks/useMediaQuery";
 
 interface CommunityGrantsDonateProps {
   initialProjects: CommunityProjectsV2Response;
@@ -23,6 +24,7 @@ export const CommunityGrantsDonate = ({ initialProjects }: CommunityGrantsDonate
   const communityId = params.communityId as string;
   const programId = params.programId as string;
   const { items, toggle } = useDonationCart();
+  const isLargeViewport = useMediaQuery("(min-width: 80rem)");
 
   const {
     data,
@@ -56,14 +58,21 @@ export const CommunityGrantsDonate = ({ initialProjects }: CommunityGrantsDonate
             >
               <AutoSizer disableHeight>
                 {({ width }) => {
-                  const columns = Math.floor(width / 360);
-                  const columnCounter = columns ? (columns > 6 ? 6 : columns) : 1;
+                  const MIN_CARD_WIDTH = 360;
+                  const MAX_COLUMNS_SMALL = 6;
+                  const MAX_COLUMNS_LARGE = 3;
+                  const calculatedColumns = Math.floor(width / MIN_CARD_WIDTH);
+                  const columnCounter = calculatedColumns
+                    ? isLargeViewport
+                      ? MAX_COLUMNS_LARGE
+                      : Math.min(calculatedColumns, MAX_COLUMNS_SMALL)
+                    : 1;
                   const columnWidth = Math.floor(width / columnCounter);
                   const gutterSize = 20;
                   const height = Math.ceil(projects.length / columnCounter) * 360;
                   return (
                     <Grid
-                      key={`grid-${width}-${columnCounter}`}
+                      key={`grid-${width}-${columnCounter}-${isLargeViewport}`}
                       height={height + 60}
                       width={width}
                       rowCount={Math.ceil(projects.length / columnCounter)}
@@ -147,7 +156,7 @@ export const CommunityGrantsDonate = ({ initialProjects }: CommunityGrantsDonate
         <div className="fixed bottom-6 right-6 z-50">
           <Link
             href={`/community/${communityId}/donate/${programId}/checkout`}
-            className="box-border inline-flex items-center justify-center gap-3 px-7 py-4 relative rounded-[40px] overflow-hidden border border-solid border-grayprimary-700 bg-[linear-gradient(90deg,rgba(0,78,235,1)_0%,rgba(131,8,145,1)_80%)] text-white hover:opacity-80 transition-all duration-200"
+            className="box-border inline-flex items-center justify-center gap-3 px-7 py-4 relative rounded-[40px] overflow-hidden border border-solid border-gray bg-[linear-gradient(90deg,rgba(0,78,235,1)_0%,rgba(131,8,145,1)_80%)] text-white hover:opacity-80 transition-all duration-200"
           >
             <div className="relative">
               <ShoppingCartIconCustom className="text-white" width="21" height="21" />

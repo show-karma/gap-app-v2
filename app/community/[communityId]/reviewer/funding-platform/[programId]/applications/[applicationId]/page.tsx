@@ -19,6 +19,7 @@ import {
 import { usePermissions } from "@/hooks/usePermissions";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
 import { PAGES } from "@/utilities/pages";
+import { layoutTheme } from "@/src/helper/theme";
 
 /**
  * Reviewer Application Detail Page
@@ -53,6 +54,7 @@ export default function ReviewerApplicationDetailPage() {
   const {
     application,
     isLoading: isLoadingApplication,
+    refetch: refetchApplication,
   } = useApplication(applicationId);
 
   // Fetch program config
@@ -135,7 +137,7 @@ export default function ReviewerApplicationDetailPage() {
   // Check access
   if (!canView) {
     return (
-      <div className="px-4 sm:px-6 lg:px-12 py-5">
+      <div className={layoutTheme.padding}>
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
           <p className="text-red-700 dark:text-red-300">
             You don&apos;t have permission to view this application.
@@ -155,8 +157,8 @@ export default function ReviewerApplicationDetailPage() {
   // Check if application exists
   if (!application) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-zinc-900">
-        <div className="px-4 sm:px-6 lg:px-12 py-5">
+      <div className="min-h-screen">
+        <div className={layoutTheme.padding}>
           <Link
             href={PAGES.REVIEWER.APPLICATIONS(communityId, programId, parsedChainId)}
             className="flex gap-2 items-center text-black text-sm font-semibold dark:text-white border border-black dark:border-white rounded-md px-2 py-2"
@@ -171,7 +173,7 @@ export default function ReviewerApplicationDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-zinc-900">
+    <div className="min-h-screen">
       {/* Header with Reviewer Badge */}
       <div className="bg-white dark:bg-zinc-800 border-b border-gray-200 dark:border-gray-700">
         <div className="px-4 sm:px-6 lg:px-8 py-4">
@@ -240,6 +242,7 @@ export default function ReviewerApplicationDetailPage() {
               onStatusChange={handleStatusChange}
               viewMode={applicationViewMode}
               onViewModeChange={setApplicationViewMode}
+              onRefresh={refetchApplication}
             />
           </div>
 

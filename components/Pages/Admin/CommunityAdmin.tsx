@@ -5,9 +5,12 @@ import { CommunityDialog } from "@/components/Dialogs/CommunityDialog";
 import { AddAdmin } from "@/components/Pages/Admin/AddAdminDialog";
 import { RemoveAdmin } from "@/components/Pages/Admin/RemoveAdminDialog";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useGap } from "@/hooks/useGap";
 import { useStaff } from "@/hooks/useStaff";
 import { useOwnerStore } from "@/store";
+import { useCommunitiesStore } from "@/store/communities";
+import { useAdminCommunities } from "@/hooks/useAdminCommunities";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import fetchData from "@/utilities/fetchData";
@@ -19,13 +22,14 @@ import { LinkIcon } from "@heroicons/react/24/solid";
 import { Community } from "@show-karma/karma-gap-sdk";
 import { blo } from "blo";
 import Link from "next/link";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { isAddress } from "viem";
 import { useAccount } from "wagmi";
 import { z } from "zod";
 
 import { errorManager } from "@/components/Utilities/errorManager";
+import { layoutTheme } from "@/src/helper/theme";
 
 interface CommunityAdmin {
   id: string;
@@ -46,10 +50,15 @@ export default function CommunitiesToAdminPage() {
   const [communityAdmins, setCommunityAdmins] = useState<CommunityAdmin[]>([]);
 
   const { gap } = useGap();
+  const { address } = useAccount();
   const isOwner = useOwnerStore((state) => state.isOwner);
   const { isStaff } = useStaff();
+  const { communities: userAdminCommunities, isLoading: isLoadingUserCommunities } = useCommunitiesStore();
 
-  const hasAccess = isOwner || isStaff;
+
+  const isStaffOrOwner = isOwner || isStaff;
+  const hasAdminCommunities = userAdminCommunities.length > 0;
+  const hasAccess = isStaffOrOwner || hasAdminCommunities;
 
   const fetchCommunitiesData =
     useCallback(async (): Promise<CommunitiesData> => {
@@ -88,12 +97,28 @@ export default function CommunitiesToAdminPage() {
   const { isLoading, refetch } = useQuery({
     queryKey: ["communities", "admins"],
     queryFn: fetchCommunitiesData,
+    enabled: !!gap && hasAccess,
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
     retry: 1,
   });
+
+  // Filter communities based on user role
+  const displayedCommunities = useMemo(() => {
+    if (isStaffOrOwner) {
+      // Staff/Owner sees all communities
+      return allCommunities;
+    } else if (hasAdminCommunities) {
+      // Regular admin sees only their communities
+      const userAdminUids = new Set(userAdminCommunities.map(c => c.uid));
+      return allCommunities.filter(c => userAdminUids.has(c.uid));
+    }
+    return [];
+  }, [allCommunities, isStaffOrOwner, hasAdminCommunities, userAdminCommunities]);
+
+  const isLoadingData = isLoading || (!isStaffOrOwner && isLoadingUserCommunities);
 
   const handleRefetch = useCallback(async () => {
     try {
@@ -128,139 +153,248 @@ export default function CommunitiesToAdminPage() {
     return `${firstPart}...${lastPart}`;
   }
 
-  return (
-    <div className="px-4 sm:px-6 lg:px-12 py-5">
-      {isLoading ? (
-        <Spinner />
-      ) : hasAccess ? (
-        <div className="flex flex-col gap-2">
-          <div className="flex justify-between">
-            <div className="text-2xl font-bold">
-              All Communities{" "}
-              {allCommunities.length ? `(${allCommunities.length})` : ""}
+  const LoadingSkeleton = () => (
+    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+      {Array.from({ length: 6 }).map((_, index) => (
+        <div
+          key={index}
+          className="border border-zinc-300 rounded-lg p-6 bg-white dark:bg-zinc-900 shadow-sm"
+        >
+          {/* Network skeleton */}
+          <div className="mb-3">
+            <div className="flex flex-row gap-2 items-center">
+              <Skeleton className="w-5 h-5 rounded" />
+              <Skeleton className="h-4 w-24" />
             </div>
-
-            <CommunityDialog refreshCommunities={handleRefetch} />
           </div>
-          <div className="mt-5 w-full gap-5">
-            {allCommunities.length ? (
-              <table className="border-x border-x-zinc-300 border-y border-y-zinc-300">
-                <thead className="border-x border-x-zinc-300 border-y border-y-zinc-300">
-                  <tr className="divide-x">
-                    <th>Img</th>
-                    <th>Name</th>
-                    <th>Created</th>
-                    <th>UUID</th>
-                    <th className="px-4 text-center">Community page</th>
-                    <th className="px-4 text-center">Admin page</th>
-                    <th className="px-4 text-center">View stats</th>
-                    <th>Network</th>
-                    <th>Admins</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-x">
-                  {allCommunities.map((community) => {
-                    const matchingCommunityAdmin = communityAdmins.find(
-                      (admin) => admin.id === community.uid
-                    );
-                    // TypeScript workaround for the 0x string format
-                    const communityId =
-                      community.uid as unknown as `0x${string}`;
 
-                    return (
-                      <React.Fragment key={community.uid}>
-                        <tr className="divide-x">
-                          <td>
-                            <img
-                              src={
-                                community.details?.imageURL ||
-                                blo(community.uid)
-                              }
-                              className="h-[64px] w-[100px] object-cover"
-                              alt={community.details?.name || community.uid}
-                            />
-                          </td>
-                          <td className="max-w-40 px-4">
-                            {community.details?.name}
-                          </td>
-                          <td className="max-w-60 px-4">
-                            {formatDate(community?.createdAt)}
-                          </td>
-                          <td className="max-w-80 break-all px-4">
-                            {community.uid}
-                          </td>
-                          <td className="text-center px-4">
-                            <Link
-                              href={PAGES.COMMUNITY.ALL_GRANTS(
-                                community.details?.slug || community.uid
-                              )}
-                              className="flex flex-row items-center gap-1.5 text-blue-500"
-                            >
-                              Community
-                              <LinkIcon className="w-4 h-4" />
-                            </Link>
-                          </td>
-                          <td className="text-center px-4">
-                            <Link
-                              href={PAGES.ADMIN.ROOT(
-                                community.details?.slug || community.uid
-                              )}
-                              className="flex flex-row items-center gap-1.5 text-blue-500"
-                            >
-                              Admin
-                              <LinkIcon className="w-4 h-4" />
-                            </Link>
-                          </td>
-                          <td className="text-center px-4">
+          {/* Header skeleton */}
+          <div className="flex items-center gap-4 mb-4">
+            <Skeleton className="h-16 w-16 rounded-lg flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <Skeleton className="h-5 w-3/4 mb-2" />
+              <Skeleton className="h-3 w-1/2" />
+            </div>
+          </div>
+
+          {/* UUID skeleton */}
+          <div className="mb-4">
+            <Skeleton className="h-3 w-12 mb-1" />
+            <Skeleton className="h-3 w-full" />
+            <Skeleton className="h-3 w-5/6 mt-1" />
+          </div>
+
+          {/* Links skeleton */}
+          <div className="mb-4 pb-4 border-b border-zinc-200 dark:border-zinc-700">
+            <Skeleton className="h-3 w-20 mb-2" />
+            <div className="flex flex-col gap-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-4 w-24 mt-1" />
+            </div>
+          </div>
+
+          {/* Admins skeleton */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-6 w-6 rounded" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-full rounded" />
+              <Skeleton className="h-8 w-full rounded" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  return (
+    <div className={layoutTheme.padding}>
+      {isLoadingData ? (
+        <div className="flex flex-col gap-6">
+          <div className="flex justify-between items-center">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-10 w-32 rounded" />
+          </div>
+          <div className="mt-5 w-full">
+            <LoadingSkeleton />
+          </div>
+        </div>
+      ) : hasAccess ? (
+        <div className="flex flex-col gap-6">
+          <div className="flex justify-between items-center">
+            <div className="text-2xl font-bold">
+              {isStaffOrOwner ? "All Communities" : "Your Communities"}{" "}
+              {displayedCommunities.length ? `(${displayedCommunities.length})` : ""}
+            </div>
+            {isStaffOrOwner && (
+              <CommunityDialog refreshCommunities={handleRefetch} />
+            )}
+          </div>
+          <div className="mt-5 w-full">
+            {displayedCommunities.length ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                {displayedCommunities.map((community) => {
+                  const matchingCommunityAdmin = communityAdmins.find(
+                    (admin) => admin.id === community.uid
+                  );
+                  // TypeScript workaround for the 0x string format
+                  const communityId =
+                    community.uid as unknown as `0x${string}`;
+
+                  // Check if user is admin of this specific community
+                  const isAdminOfThisCommunity = userAdminCommunities.some(
+                    (userCommunity) => userCommunity.uid === community.uid
+                  );
+
+                  const canManageAdmins = isStaffOrOwner || isAdminOfThisCommunity;
+
+                  return (
+                    <div
+                      key={community.uid}
+                      className="border border-zinc-300 rounded-lg p-6 bg-white dark:bg-zinc-900 shadow-sm hover:shadow-md transition-shadow"
+                    >
+                      {/* Network at top */}
+                      <div className="mb-3">
+                        <div className="flex flex-row gap-2 items-center">
+                          <img
+                            src={chainImgDictionary(community.chainID)}
+                            alt={chainNameDictionary(community.chainID)}
+                            className="w-5 h-5"
+                          />
+                          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            {chainNameDictionary(community.chainID)}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Header with image and name */}
+                      <div className="flex items-center gap-4 mb-4">
+                        <img
+                          src={
+                            community.details?.imageURL ||
+                            blo(community.uid)
+                          }
+                          className="h-16 w-16 rounded-lg object-cover flex-shrink-0"
+                          alt={community.details?.name || community.uid}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+                            {community.details?.name || "Unnamed Community"}
+                          </h3>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            Created {formatDate(community?.createdAt)}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* UUID */}
+                      <div className="mb-4">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                          UUID
+                        </p>
+                        <p className="text-xs font-mono text-gray-700 dark:text-gray-300 break-all">
+                          {community.uid}
+                        </p>
+                      </div>
+
+                      {/* Links & Stats */}
+                      <div className="mb-4 pb-4 border-b border-zinc-200 dark:border-zinc-700">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                          Quick Links
+                        </p>
+                        <div className="flex flex-col gap-2">
+                          <Link
+                            href={PAGES.COMMUNITY.ALL_GRANTS(
+                              community.details?.slug || community.uid
+                            )}
+                            className="flex flex-row items-center gap-2 text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 text-sm"
+                          >
+                            <LinkIcon className="w-4 h-4" />
+                            <span>Community Page</span>
+                          </Link>
+                          <Link
+                            href={PAGES.ADMIN.ROOT(
+                              community.details?.slug || community.uid
+                            )}
+                            className="flex flex-row items-center gap-2 text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 text-sm"
+                          >
+                            <LinkIcon className="w-4 h-4" />
+                            <span>Admin Page</span>
+                          </Link>
+                          <div className="mt-1">
                             <CommunityStats communityId={community.uid} />
-                          </td>
-                          <td className="px-4">
-                            <div className="flex flex-row gap-2 items-center">
-                              <img
-                                src={chainImgDictionary(community.chainID)}
-                                alt={chainNameDictionary(community.chainID)}
-                                className="w-5 h-5"
-                              />
-                              <p>{chainNameDictionary(community.chainID)}</p>
-                            </div>
-                          </td>
-                          <td>
-                            {matchingCommunityAdmin &&
-                              matchingCommunityAdmin.admins.map(
-                                (admin, index) => (
-                                  <div className="flex gap-2 p-5" key={index}>
-                                    <div>{shortenHex(admin.user.id)}</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Admins */}
+                      <div className="mb-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            Admins
+                          </p>
+                          {canManageAdmins && (
+                            <AddAdmin
+                              UUID={communityId}
+                              chainid={community.chainID}
+                              fetchAdmins={handleRefetch}
+                            />
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          {matchingCommunityAdmin &&
+                            matchingCommunityAdmin.admins.length > 0 ? (
+                            matchingCommunityAdmin.admins.map(
+                              (admin, index) => (
+                                <div
+                                  className="flex items-center justify-between gap-2 p-2 bg-gray-50 dark:bg-zinc-800 rounded"
+                                  key={index}
+                                >
+                                  <span className="text-xs font-mono text-gray-700 dark:text-gray-300">
+                                    {shortenHex(admin.user.id)}
+                                  </span>
+                                  {canManageAdmins && (
                                     <RemoveAdmin
                                       UUID={communityId}
                                       chainid={community.chainID}
                                       Admin={formatAdminAddress(admin.user.id)}
                                       fetchAdmins={handleRefetch}
                                     />
-                                  </div>
-                                )
-                              )}
-                          </td>
-                          <td>
-                            <AddAdmin
-                              UUID={communityId}
-                              chainid={community.chainID}
-                              fetchAdmins={handleRefetch}
-                            />
-                          </td>
-                        </tr>
-                      </React.Fragment>
-                    );
-                  })}
-                </tbody>
-              </table>
-            ) : isLoading ? (
-              <Spinner />
-            ) : null}
+                                  )}
+                                </div>
+                              )
+                            )
+                          ) : (
+                            <p className="text-xs text-gray-400 dark:text-gray-500 italic">
+                              No admins yet
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-gray-500 dark:text-gray-400">
+                  {isStaffOrOwner
+                    ? "No communities found"
+                    : MESSAGES.ADMIN.NO_COMMUNITIES}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       ) : (
-        <p>{MESSAGES.REVIEWS.NOT_ADMIN}</p>
+        <div className="text-center py-12">
+          <p className="text-gray-500 dark:text-gray-400">
+            {MESSAGES.REVIEWS.NOT_ADMIN}
+          </p>
+        </div>
       )}
     </div>
   );

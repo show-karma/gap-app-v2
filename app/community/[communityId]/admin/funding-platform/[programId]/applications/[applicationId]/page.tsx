@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeftIcon } from "@heroicons/react/24/solid";
+import { ArrowLeftIcon, TrashIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -8,6 +8,7 @@ import { useAccount } from "wagmi";
 import ApplicationContent from "@/components/FundingPlatform/ApplicationView/ApplicationContent";
 import CommentsSection from "@/components/FundingPlatform/ApplicationView/CommentsSection";
 import PostApprovalData from "@/components/FundingPlatform/ApplicationView/PostApprovalData";
+import DeleteApplicationModal from "@/components/FundingPlatform/ApplicationView/DeleteApplicationModal";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import {
@@ -16,6 +17,7 @@ import {
   useApplicationStatus,
   useApplicationVersions,
   useProgramConfig,
+  useDeleteApplication,
 } from "@/hooks/useFundingPlatform";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { useStaff } from "@/hooks/useStaff";
@@ -23,6 +25,7 @@ import { useOwnerStore } from "@/store";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
+import { layoutTheme } from "@/src/helper/theme";
 
 export default function ApplicationDetailPage() {
   const router = useRouter();
@@ -47,10 +50,14 @@ export default function ApplicationDetailPage() {
   // View mode state for ApplicationContent
   const [applicationViewMode, setApplicationViewMode] = useState<"details" | "changes">("details");
 
+  // Delete modal state
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
   // Fetch application data
   const {
     application,
     isLoading: isLoadingApplication,
+    refetch: refetchApplication,
   } = useApplication(applicationId);
 
   // Fetch program config
@@ -67,6 +74,9 @@ export default function ApplicationDetailPage() {
     editCommentAsync,
     deleteCommentAsync,
   } = useApplicationComments(applicationId, hasAccess);
+
+  // Use the delete application hook
+  const { deleteApplicationAsync, isDeleting } = useDeleteApplication();
 
   // Get application identifier for fetching versions
   const applicationIdentifier = application?.referenceNumber || application?.id || applicationId;
@@ -99,6 +109,32 @@ export default function ApplicationDetailPage() {
 
   const handleCommentDelete = async (commentId: string) => {
     await deleteCommentAsync(commentId);
+  };
+
+  // Handle delete application
+  const handleDeleteClick = () => {
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!application) return;
+
+    try {
+      await deleteApplicationAsync(application.referenceNumber);
+      // Only close modal and navigate on success
+      setIsDeleteModalOpen(false);
+      router.push(
+        `${PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, combinedProgramId)}`
+      );
+    } catch (error) {
+      // Error is handled by the hook (shows toast with specific message and logs to Sentry)
+      // Modal stays open to allow user to retry or cancel
+      console.error('Failed to delete application:', error);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteModalOpen(false);
   };
 
   const handleVersionClick = (versionId: string) => {
@@ -142,7 +178,7 @@ export default function ApplicationDetailPage() {
   // Check access
   if (!hasAccess) {
     return (
-      <div className="px-4 sm:px-6 lg:px-12 py-5">
+      <div className={layoutTheme.padding}>
         <p className="text-red-500">{MESSAGES.REVIEWS.NOT_ADMIN}</p>
       </div>
     );
@@ -151,8 +187,8 @@ export default function ApplicationDetailPage() {
   // Check if application exists
   if (!application) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-zinc-900">
-        <div className="px-4 sm:px-6 lg:px-12 py-5">
+      <div className="min-h-screen">
+        <div className={layoutTheme.padding}>
           <Button
             onClick={handleBackClick}
             variant="secondary"
@@ -168,7 +204,7 @@ export default function ApplicationDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-zinc-900">
+    <div className="min-h-screen">
       {/* Header */}
       <div className="bg-white dark:bg-zinc-800 border-b border-gray-200 dark:border-gray-700">
         <div className="px-4 sm:px-6 lg:px-8 py-4">
@@ -191,6 +227,17 @@ export default function ApplicationDetailPage() {
                 </p>
               </div>
             </div>
+            {/* Delete button - Only show for community admins */}
+            {isCommunityAdmin && (
+              <Button
+                onClick={handleDeleteClick}
+                disabled={isDeleting}
+                className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white"
+              >
+                <TrashIcon className="w-4 h-4" />
+                Delete Application
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -230,6 +277,7 @@ export default function ApplicationDetailPage() {
               onStatusChange={handleStatusChange}
               viewMode={applicationViewMode}
               onViewModeChange={setApplicationViewMode}
+              onRefresh={refetchApplication}
             />
           </div>
 
@@ -252,6 +300,15 @@ export default function ApplicationDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteApplicationModal
+        isOpen={isDeleteModalOpen}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        referenceNumber={application.referenceNumber}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }

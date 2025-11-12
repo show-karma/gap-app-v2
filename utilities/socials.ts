@@ -6,4 +6,6 @@ export const SOCIALS = {
   TELEGRAM: "https://t.me/karmahq",
   PARAGRAPH: "https://paragraph.xyz/@karmahq",
   X_HANDLE: "@karmahq_",
+  DOCS: "https://docs.gap.karmahq.xyz",
+  PARTNER_FORM: "https://tally.so/r/3NKZEl",
 };

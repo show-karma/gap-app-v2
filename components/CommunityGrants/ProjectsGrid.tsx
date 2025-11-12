@@ -3,24 +3,34 @@ import { ProjectV2 } from "@/types/community";
 import { projectV2ToGrant } from "@/utilities/adapters/projectV2ToGrant";
 import { AutoSizer, Grid } from "react-virtualized";
 import { GrantCard } from "../GrantCard";
+import useMediaQuery from "@/hooks/useMediaQuery";
 
 interface ProjectsGridProps {
   projects: ProjectV2[];
 }
 
 export function ProjectsGrid({ projects }: ProjectsGridProps) {
+  const MIN_CARD_WIDTH = 360;
+  const MAX_COLUMNS_SMALL = 6;
+  const MAX_COLUMNS_LARGE = 3;
+  const gutterSize = 20;
+  const isLargeViewport = useMediaQuery("(min-width: 80rem)");
+
   return (
     <AutoSizer disableHeight>
       {({ width }) => {
-        const columns = Math.floor(width / 360);
-        const columnCounter = columns ? (columns > 6 ? 6 : columns) : 1;
+        const calculatedColumns = Math.floor(width / MIN_CARD_WIDTH);
+        const columnCounter = calculatedColumns
+          ? isLargeViewport
+            ? MAX_COLUMNS_LARGE
+            : Math.min(calculatedColumns, MAX_COLUMNS_SMALL)
+          : 1;
         const columnWidth = Math.floor(width / columnCounter);
-        const gutterSize = 20;
         const height = Math.ceil(projects.length / columnCounter) * 360;
 
         return (
           <Grid
-            key={`grid-${width}-${columnCounter}`}
+            key={`grid-${width}-${columnCounter}-${isLargeViewport}`}
             height={height + 60}
             width={width}
             rowCount={Math.ceil(projects.length / columnCounter)}

@@ -31,6 +31,7 @@ import { formatDate } from "@/utilities/formatDate";
 import { Line } from "@rc-component/progress";
 import pluralize from "pluralize";
 import Link from "next/link";
+import { layoutTheme } from "@/src/helper/theme";
 
 /**
  * Reviewer funding platform page
@@ -184,7 +185,7 @@ export default function ReviewerFundingPlatformPage() {
 
   if (programsError) {
     return (
-      <div className="px-4 sm:px-6 lg:px-12 py-5">
+      <div className={layoutTheme.padding}>
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
           <p className="text-red-700 dark:text-red-300">
             Error loading funding programs. Please try again later.

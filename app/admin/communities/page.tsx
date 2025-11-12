@@ -1,10 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
-import { defaultMetadata } from "@/utilities/meta";
-
-import CommunitiesToAdminPage from "@/components/Pages/Admin/CommunityAdmin";
-
-export const metadata = defaultMetadata;
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return <CommunitiesToAdminPage />;
+  redirect("/admin");
 }

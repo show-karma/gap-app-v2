@@ -33,8 +33,8 @@ export const envVars = {
     : "0xf123b01fbc8e244131dd1078c8c6778a7037855139f01e65e0e424e06584edd2",
   VERCEL_URL:
     process.env.NEXT_PUBLIC_ENV === "production"
-      ? `https://gap.karmahq.xyz`
-      : "https://gapstag.karmahq.xyz",
+      ? `https://karmahq.xyz`
+      : "https://staging.karmahq.xyz",
   OSO_API_KEY: process.env.NEXT_PUBLIC_OSO_API_KEY || "",
   PRIVY_APP_ID: process.env.NEXT_PUBLIC_PRIVY_APP_ID || "",
 };

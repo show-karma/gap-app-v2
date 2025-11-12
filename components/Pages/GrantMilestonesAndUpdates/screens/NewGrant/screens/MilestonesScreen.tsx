@@ -31,6 +31,8 @@ import { CancelButton } from "./buttons/CancelButton";
 import { NextButton } from "./buttons/NextButton";
 import { useWallet } from "@/hooks/useWallet";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import { useQueryClient } from "@tanstack/react-query";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 export const MilestonesScreen: React.FC = () => {
   const {
@@ -55,6 +57,7 @@ export const MilestonesScreen: React.FC = () => {
   const { authenticated: isAuth } = useAuth();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
+  const queryClient = useQueryClient();
 
   const pathname = usePathname();
   const isEditing = pathname.includes("edit");
@@ -237,6 +240,13 @@ export const MilestonesScreen: React.FC = () => {
                   : "Successfully applied to funding program!"
               );
               changeStepperStep("indexed");
+
+              // Invalidate duplicate grant check query to refresh data
+              if (!isEditing) {
+                await queryClient.invalidateQueries({
+                  queryKey: ["duplicate-grant-check"],
+                });
+              }
 
               // Reset form data and go back to step 1 for a new grant
               resetFormData();

@@ -37,7 +37,9 @@
       "Bash(pnpm run:*)",
       "Bash(pnpm tsc:*)",
       "Bash(git log:*)",
-      "Bash(npx next lint:*)"
+      "Bash(npx next lint:*)",
+      "Bash(test:*)",
+      "Bash(python3:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",
@@ -48,5 +50,10 @@
       "/Users/mmurthy/dev/dapps/karma_protocol/gap-whitelabel-app/src/app/applications/[applicationId]/edit",
       "/Users/mmurthy/dev/dapps/karma_protocol/gap-whitelabel-app"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "sentry",
+    "asana",
+    "playwright"
+  ]
 }

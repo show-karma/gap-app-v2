@@ -8,11 +8,7 @@ import toast from "react-hot-toast";
 
 interface AIEvaluationButtonProps {
   referenceNumber: string;
-  onEvaluationComplete?: (evaluation: {
-    evaluation: string;
-    promptId: string;
-    updatedAt: string;
-  }) => void;
+  onEvaluationComplete?: () => void;
   disabled?: boolean;
 }
 
@@ -32,16 +28,17 @@ const AIEvaluationButton: FC<AIEvaluationButtonProps> = ({
     
     try {
       const result = await fundingApplicationsAPI.runAIEvaluation(referenceNumber);
-      
+
       toast.success("AI evaluation completed successfully!");
-      
+
       // Call the callback to refresh the application data
       if (onEvaluationComplete) {
-        onEvaluationComplete({
-          evaluation: result.evaluation,
-          promptId: result.promptId,
-          updatedAt: result.updatedAt,
-        });
+        try {
+          await onEvaluationComplete();
+        } catch (refreshError) {
+          console.error("Failed to refresh application after AI evaluation:", refreshError);
+          toast.error("Evaluation completed but failed to refresh the display. Please reload the page.");
+        }
       }
     } catch (error) {
       console.error("Failed to run AI evaluation:", error);

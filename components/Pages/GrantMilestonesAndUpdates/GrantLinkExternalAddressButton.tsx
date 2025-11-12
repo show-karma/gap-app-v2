@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/Utilities/Button";
+import { PROJECT_NAME } from "@/constants/brand";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { envVars } from "@/utilities/enviromentVars";
@@ -122,7 +123,7 @@ export const GrantLinkExternalAddressButton: FC<
                     <p className="text-md text-gray-500 dark:text-gray-400 mt-2">
                       Please add the Ethereum account address you used for the
                       &quot;{grant.details?.data?.title}&quot; in Octant. This
-                      will enable Octant to retrieve your GAP profile data and
+                      will enable Octant to retrieve your {PROJECT_NAME} profile data and
                       display it within the Octant app.
                     </p>
                   </Dialog.Title>

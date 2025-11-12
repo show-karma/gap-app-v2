@@ -7,6 +7,7 @@ import { privyConfig } from "@/utilities/wagmi/privy-config";
 import { WagmiProvider } from '@privy-io/wagmi';
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { envVars } from "@/utilities/enviromentVars";
+import { PROJECT_NAME } from "@/constants/brand";
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,11 +39,11 @@ export default function PrivyProviderWrapper({
       config={{
         appearance: {
           theme: "light",
-          accentColor: "#4C6FFF", // Red accent color as requested
-          logo: "https://gap.karmahq.xyz/logo/karma-gap-logo.png",
-          landingHeader: "Connect to Karma GAP",
+          accentColor: "#1de9b6",
+          logo: "https://karmahq.xyz/logo/karma-logo-light.svg",
+          landingHeader: `Connect to ${PROJECT_NAME}`,
           showWalletLoginFirst: false,
-          walletList: ['detected_wallets', 'metamask', 'wallet_connect_qr', 'rabby_wallet', 'wallet_connect']
+          walletList: ['detected_wallets', 'metamask', 'wallet_connect_qr', 'rainbow', 'rabby_wallet', 'wallet_connect']
         },
         loginMethods: ["wallet"],
         defaultChain: defaultChain,

@@ -98,106 +98,104 @@ export const CommunityAdminPage = ({
   );
 
   return (
-    <div className="container mx-auto px-4 py-8 mt-2">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">
-          Community Admin Dashboard
-        </h1>
+    <div className="max-w-full w-full">
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-8">
+        Community Admin Dashboard
+      </h1>
 
-        {loading ? (
-          <LoadingSkeleton />
-        ) : isAdmin ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <AdminButton
-              href={PAGES.ADMIN.EDIT_CATEGORIES(
-                community?.details?.data?.slug || communityId
-              )}
-              label="Categories"
-              description="Manage and organize community categories"
-              colorClass=""
-              icon={<Square2StackIcon className="w-6 h-6" />}
-            />
+      {loading ? (
+        <LoadingSkeleton />
+      ) : isAdmin ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <AdminButton
+            href={PAGES.ADMIN.EDIT_CATEGORIES(
+              community?.details?.data?.slug || communityId
+            )}
+            label="Categories"
+            description="Manage and organize community categories"
+            colorClass=""
+            icon={<Square2StackIcon className="w-6 h-6" />}
+          />
 
-            <AdminButton
-              href={PAGES.ADMIN.MILESTONES(
-                community?.details?.data?.slug || communityId
-              )}
-              label="Milestones"
-              description="Track and update project milestones"
-              colorClass=""
-              icon={<FlagIcon className="w-6 h-6" />}
-            />
+          <AdminButton
+            href={PAGES.ADMIN.MILESTONES(
+              community?.details?.data?.slug || communityId
+            )}
+            label="Milestones"
+            description="Track and update project milestones"
+            colorClass=""
+            icon={<FlagIcon className="w-6 h-6" />}
+          />
 
-            <AdminButton
-              href={PAGES.ADMIN.MANAGE_INDICATORS(
-                community?.details?.data?.slug || communityId
-              )}
-              label="Impact Measurement"
-              description="Setup and manage impact indicators"
-              colorClass=""
-              icon={<ChartBarIcon className="w-6 h-6" />}
-            />
+          <AdminButton
+            href={PAGES.ADMIN.MANAGE_INDICATORS(
+              community?.details?.data?.slug || communityId
+            )}
+            label="Impact Measurement"
+            description="Setup and manage impact indicators"
+            colorClass=""
+            icon={<ChartBarIcon className="w-6 h-6" />}
+          />
 
-            <AdminButton
-              href={PAGES.ADMIN.TRACKS(
-                community?.details?.data?.slug || communityId
-              )}
-              label="Tracks"
-              description="Manage tracks and assign them to programs"
-              colorClass=""
-              icon={<TagIcon className="w-6 h-6" />}
-            />
+          <AdminButton
+            href={PAGES.ADMIN.TRACKS(
+              community?.details?.data?.slug || communityId
+            )}
+            label="Tracks"
+            description="Manage tracks and assign them to programs"
+            colorClass=""
+            icon={<TagIcon className="w-6 h-6" />}
+          />
 
-            <AdminButton
-              href={PAGES.ADMIN.EDIT_PROJECTS(
-                community?.details?.data?.slug || communityId
-              )}
-              label="Projects"
-              description="Manage your projects and assign regions"
-              colorClass=""
-              icon={<GlobeAltIcon className="w-6 h-6" />}
-            />
+          <AdminButton
+            href={PAGES.ADMIN.EDIT_PROJECTS(
+              community?.details?.data?.slug || communityId
+            )}
+            label="Projects"
+            description="Manage your projects and assign regions"
+            colorClass=""
+            icon={<GlobeAltIcon className="w-6 h-6" />}
+          />
 
-            <AdminButton
-              href={PAGES.ADMIN.FUNDING_PLATFORM(
-                community?.details?.data?.slug || communityId
-              )}
-              label="Funding Platform"
-              description="Create forms and manage funding applications"
-              colorClass=""
-              icon={<CurrencyDollarIcon className="w-6 h-6" />}
-            />
-            <AdminButton
-              href={PAGES.ADMIN.PAYOUTS(
-                community?.details?.data?.slug || communityId
-              )}
-              label="Payouts"
-              description="Manage payout addresses and amounts"
-              colorClass=""
-              icon={<BanknotesIcon className="w-6 h-6" />}
-            />
+          <AdminButton
+            href={PAGES.ADMIN.FUNDING_PLATFORM(
+              community?.details?.data?.slug || communityId
+            )}
+            label="Funding Platform"
+            description="Create forms and manage funding applications"
+            colorClass=""
+            icon={<CurrencyDollarIcon className="w-6 h-6" />}
+          />
+          <AdminButton
+            href={PAGES.ADMIN.PAYOUTS(
+              community?.details?.data?.slug || communityId
+            )}
+            label="Payouts"
+            description="Manage payout addresses and amounts"
+            colorClass=""
+            icon={<BanknotesIcon className="w-6 h-6" />}
+          />
 
-            <AdminButton
-              href={PAGES.ADMIN.PROGRAM_SCORES(
-                community?.details?.data?.slug || communityId
-              )}
-              label="Program Scores"
-              description="Upload CSV scores for program participants"
-              colorClass=""
-              icon={<ArrowTrendingUpIcon className="w-6 h-6" />}
-            />
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center p-8 bg-gray-50 dark:bg-zinc-800/50 rounded-lg">
-            <p className="text-gray-600 dark:text-gray-300 text-center">
-              {MESSAGES.ADMIN.NOT_AUTHORIZED(community?.uid || "")}
-            </p>
-            <Button className="mt-4" onClick={() => window.history.back()}>
-              Go Back
-            </Button>
-          </div>
-        )}
-      </div>
+          <AdminButton
+            href={PAGES.ADMIN.PROGRAM_SCORES(
+              community?.details?.data?.slug || communityId
+            )}
+            label="Program Scores"
+            description="Upload CSV scores for program participants"
+            colorClass=""
+            icon={<ArrowTrendingUpIcon className="w-6 h-6" />}
+          />
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center p-8 bg-gray-50 dark:bg-zinc-800/50 rounded-lg">
+          <p className="text-gray-600 dark:text-gray-300 text-center">
+            {MESSAGES.ADMIN.NOT_AUTHORIZED(community?.uid || "")}
+          </p>
+          <Button className="mt-4" onClick={() => window.history.back()}>
+            Go Back
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

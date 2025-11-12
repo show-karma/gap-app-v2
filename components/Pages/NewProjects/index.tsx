@@ -13,6 +13,8 @@ import { CheckIcon } from "@heroicons/react/20/solid";
 import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
 import { ExplorerSortByOptions, ExplorerSortOrder } from "@/types/explorer";
 import { getExplorerProjects } from "@/utilities/indexer/getExplorerProjects";
+import { layoutTheme } from "@/src/helper/theme";
+import { PROJECT_NAME } from "@/constants/brand";
 
 const sortOptions: Record<ExplorerSortByOptions, string> = {
   createdAt: "Recently Added",
@@ -76,11 +78,11 @@ export const NewProjectsPage = () => {
   };
 
   return (
-    <div className="flex w-full max-w-full flex-row justify-start gap-6 px-12 pb-7 pt-5 max-2xl:px-8 max-md:px-4 max-lg:flex-col">
+    <div className={cn(layoutTheme.padding, "flex w-full max-w-full flex-row justify-start gap-6 pb-7 pt-5 max-lg:flex-col")}>
       <div className="flex w-full max-w-full flex-col justify-start items-center gap-6 mt-4">
         <div className="flex flex-row justify-between items-center gap-3 w-full flex-wrap">
           <h1 className="text-2xl font-bold text-black dark:text-white">
-            Projects on GAP
+            Projects on {PROJECT_NAME}
           </h1>
           <div>
             {/* Sort start */}

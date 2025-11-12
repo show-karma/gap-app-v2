@@ -1,0 +1,6 @@
+{
+  "buildScriptName": "build-storybook",
+  "exitZeroOnChanges": true,
+  "autoAcceptChanges": false,
+  "exitOnceUploaded": true
+}

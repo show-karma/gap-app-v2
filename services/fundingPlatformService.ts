@@ -168,6 +168,28 @@ export const fundingProgramsAPI = {
   },
 
   /**
+   * Get only enabled programs (server-side version with Next.js caching)
+   * Use this in server components for optimal performance
+   */
+  async getEnabledProgramsServer(): Promise<FundingProgram[]> {
+    const baseURL = API_BASE;
+    const response = await fetch(`${baseURL}/v2/funding-program-configs/enabled`, {
+      next: { revalidate: 300 }, // Revalidate every 5 minutes
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      console.error("Failed to fetch enabled programs:", response.statusText);
+      return [];
+    }
+
+    const programs = await response.json() as any[];
+    return programs as FundingProgram[];
+  },
+
+  /**
    * Update program configuration (uses POST for new configs, PUT for updates)
    */
   async createProgramConfiguration(

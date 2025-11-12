@@ -42,6 +42,8 @@
     "node_modules",
     "**/*.cy.ts",
     "**/*.cy.tsx",
-    "cypress/**/*"
+    "cypress/**/*",
+    "**/*.stories.tsx",
+    "**/*.stories.ts"
   ]
 }
