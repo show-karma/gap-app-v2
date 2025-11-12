@@ -172,12 +172,30 @@ Cypress.Commands.add("selectTokenForProject", (projectIndex, tokenSymbol) => {
   cy.get('[data-testid^="cart-item"]')
     .eq(projectIndex)
     .within(() => {
-      // Open token selector dropdown
-      cy.get('[data-testid="token-selector"]').click({ force: true });
+      // Token selector is a <select> element, so we need to select by value
+      // Format is: {symbol}-{chainId} (e.g., "USDC-10" for USDC on Optimism)
+      // For now, we'll select by finding the option that contains the token symbol
+      cy.get('[data-testid="token-selector"]').then(($select) => {
+        // Get all options and find one that contains the token symbol
+        const options = $select.find('option');
+        let foundOption = null;
+        options.each((index, option) => {
+          const text = Cypress.$(option).text();
+          if (text.includes(tokenSymbol)) {
+            foundOption = option;
+            return false; // break
+          }
+        });
+        
+        if (foundOption) {
+          const value = Cypress.$(foundOption).val() as string;
+          cy.get('[data-testid="token-selector"]').select(value, { force: true });
+        } else {
+          // Fallback: try selecting by partial text match
+          cy.get('[data-testid="token-selector"]').select(new RegExp(tokenSymbol, 'i'), { force: true });
+        }
+      });
     });
-
-  // Select token from dropdown
-  cy.contains('[role="option"]', tokenSymbol).click({ force: true });
 
   cy.wait(300);
 });
