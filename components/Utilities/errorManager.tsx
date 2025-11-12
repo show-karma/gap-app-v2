@@ -1,5 +1,23 @@
 import * as Sentry from "@sentry/nextjs";
-import toast from "react-hot-toast";
+
+// Lazy import toast to avoid issues in server components
+let toast: typeof import("react-hot-toast").default | null = null;
+
+const getToast = () => {
+  // Only import and use toast in browser/client environment
+  if (typeof window === "undefined") {
+    return null;
+  }
+  if (!toast) {
+    try {
+      toast = require("react-hot-toast").default;
+    } catch (e) {
+      // Toast not available, return null
+      return null;
+    }
+  }
+  return toast;
+};
 
 export const errorManager = (
   errorMessage: string,
@@ -24,9 +42,12 @@ export const errorManager = (
     }
     const targetNetwork = extra?.targetNetwork;
     if (couldNotSwitchChain) {
-      toast.error(
-        `we couldn't switch to "${targetNetwork}" network in your wallet. Please manually switch network and try again`
-      );
+      const toastInstance = getToast();
+      if (toastInstance) {
+        toastInstance.error(
+          `we couldn't switch to "${targetNetwork}" network in your wallet. Please manually switch network and try again`
+        );
+      }
       return;
     }
   }
@@ -35,14 +56,17 @@ export const errorManager = (
       error?.originalError?.code?.toLowerCase()?.includes("rpc error") ||
       error?.originalError?.message?.toLowerCase()?.includes("rpc error") ||
       error?.message?.toLowerCase()?.includes("rpc error");
-    if (wasRPCIssue) {
-      toast.error(
-        `Oops—${toastError.error.toLowerCase()} It looks like your wallet didn’t respond as expected. Try again shortly. If you continue to have trouble, please message us on Telegram: t.me/karmahq`
-      );
-    } else {
-      toast.error(
-        `${toastError.error} Try again shortly. If you continue to have trouble, please message us on Telegram: t.me/karmahq`
-      );
+    const toastInstance = getToast();
+    if (toastInstance) {
+      if (wasRPCIssue) {
+        toastInstance.error(
+          `Oops—${toastError.error.toLowerCase()} It looks like your wallet didn't respond as expected. Try again shortly. If you continue to have trouble, please message us on Telegram: t.me/karmahq`
+        );
+      } else {
+        toastInstance.error(
+          `${toastError.error} Try again shortly. If you continue to have trouble, please message us on Telegram: t.me/karmahq`
+        );
+      }
     }
   }
   const errorToCapture = error?.originalError || error?.message;

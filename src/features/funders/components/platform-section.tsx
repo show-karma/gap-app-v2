@@ -3,7 +3,7 @@ import { marketingLayoutTheme } from "@/src/helper/theme";
 import { cn } from "@/utilities/tailwind";
 import { ThemeImage } from "@/src/components/ui/theme-image";
 
-interface PlatformCard {
+export interface PlatformCard {
     subtitle: string;
     title: string;
     description: string;

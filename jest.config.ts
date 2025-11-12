@@ -37,6 +37,7 @@ const config: Config = {
     "^@/contexts/(.*)$": "<rootDir>/contexts/$1",
     "^@/hooks/(.*)$": "<rootDir>/hooks/$1",
     "^@/lib/(.*)$": "<rootDir>/lib/$1",
+    "^@/store$": "<rootDir>/store/index.ts",
     "^@/store/(.*)$": "<rootDir>/store/$1",
     "^@/types/(.*)$": "<rootDir>/types/$1",
     "^@/utilities/(.*)$": "<rootDir>/utilities/$1",
@@ -50,11 +51,11 @@ const config: Config = {
   // Transform ESM modules that need to be compiled for Jest
   // Include MSW and all its dependencies (including nested pnpm packages)
   transformIgnorePatterns: [
-    "/node_modules/(?!(@show-karma|wagmi|@wagmi/core|@wagmi/connectors|viem|@privy-io|rehype-sanitize|hast-util-sanitize|msw|@mswjs|until-async|rehype-external-links)/)",
+    "/node_modules/(?!(@show-karma|wagmi|@wagmi|@wagmi/core|@wagmi/connectors|viem|@privy-io|@coinbase|rehype-sanitize|hast-util-sanitize|msw|@mswjs|until-async|rehype-external-links|@noble)/)",
   ],
 
   globalSetup: "./tests/global.js",
-  setupFilesAfterEnv: ["./tests/setup.js"],
+  setupFilesAfterEnv: ["./tests/setup.js", "./__tests__/navbar/setup.ts"],
   testMatch: ["**/?(*.)+(spec|test).[jt]s?(x)"],
 
   // Reduce memory usage

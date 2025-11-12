@@ -1,0 +1,101 @@
+# name: E2E Tests
+
+# on:
+#   pull_request:
+#     types: [opened, synchronize, reopened]
+#     branches: ['**'] # Run on PRs targeting any branch
+#   workflow_dispatch: # Allow manual trigger
+
+# jobs:
+#   e2e-tests:
+#     runs-on: ubuntu-latest
+#     timeout-minutes: 30
+
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+
+#       - name: Setup pnpm
+#         uses: pnpm/action-setup@v4
+#         with:
+#           version: 10
+
+#       - name: Setup Node.js
+#         uses: actions/setup-node@v4
+#         with:
+#           node-version: '20'
+#           cache: 'pnpm'
+
+#       - name: Install dependencies
+#         run: pnpm install --frozen-lockfile
+
+#       - name: Run E2E tests
+#         run: pnpm run e2e:headless
+#         env:
+#           NODE_ENV: test
+
+#       - name: Upload Cypress screenshots
+#         if: failure()
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: cypress-screenshots
+#           path: cypress/screenshots
+#           retention-days: 7
+#           if-no-files-found: ignore
+
+#       - name: Upload Cypress videos
+#         if: failure()
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: cypress-videos
+#           path: cypress/videos
+#           retention-days: 7
+#           if-no-files-found: ignore
+
+#       - name: Upload visual regression snapshots
+#         if: always()
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: visual-regression-snapshots
+#           path: cypress/snapshots
+#           retention-days: 7
+#           if-no-files-found: ignore
+
+#       - name: Comment PR with E2E test results
+#         if: always() && github.event_name == 'pull_request'
+#         uses: actions/github-script@v7
+#         with:
+#           github-token: ${{ secrets.GITHUB_TOKEN }}
+#           script: |
+#             const body = '${{ job.status }}' === 'success'
+#               ? `## ✅ E2E Tests Passed!\n\nAll end-to-end tests completed successfully, including visual regression tests.`
+#               : `## ❌ E2E Tests Failed\n\nSome E2E tests failed. Please check the workflow logs and artifacts for details.\n\n**Artifacts available:**\n- Screenshots (on failure)\n- Videos (on failure)\n- Visual regression snapshots`;
+            
+#             // Find existing E2E test comment
+#             const { data: comments } = await github.rest.issues.listComments({
+#               owner: context.repo.owner,
+#               repo: context.repo.repo,
+#               issue_number: context.issue.number,
+#             });
+            
+#             const e2eComment = comments.find(comment =>
+#               comment.user.type === 'Bot' && 
+#               comment.body.includes('E2E Tests')
+#             );
+            
+#             if (e2eComment) {
+#               await github.rest.issues.updateComment({
+#                 owner: context.repo.owner,
+#                 repo: context.repo.repo,
+#                 comment_id: e2eComment.id,
+#                 body,
+#               });
+#             } else {
+#               await github.rest.issues.createComment({
+#                 owner: context.repo.owner,
+#                 repo: context.repo.repo,
+#                 issue_number: context.issue.number,
+#                 body,
+#               });
+#             }
+
