@@ -13,10 +13,12 @@ import { useFundingApplicationByProjectUID } from "@/hooks/useFundingApplication
 import toast from "react-hot-toast";
 import { CommentsAndActivity } from "./CommentsAndActivity";
 import { MilestoneCard } from "./MilestoneCard";
+import { GrantCompleteButtonForReviewer } from "./GrantCompleteButtonForReviewer";
 import { useAccount } from "wagmi";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { useIsReviewer, useReviewerPrograms } from "@/hooks/usePermissions";
 import { useOwnerStore } from "@/store";
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 interface MilestonesReviewPageProps {
   communityId: string;
@@ -251,7 +253,17 @@ export function MilestonesReviewPage({
     );
   }
 
-  const { project, grantMilestones } = data;
+  const { project, grantMilestones, grant } = data;
+
+  // Convert project to IProjectResponse format for GrantCompleteButtonForReviewer
+  const projectResponse: IProjectResponse = {
+    uid: project.uid,
+    chainID: project.chainID,
+    owner: project.owner,
+    payoutAddress: project.payoutAddress,
+    details: project.details,
+    grants: grant ? [grant] : [],
+  } as IProjectResponse;
 
   return (
     <div className="min-h-screen">
@@ -268,7 +280,7 @@ export function MilestonesReviewPage({
                 {backButtonConfig.label}
               </Button>
             </Link>
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1 flex-1">
               <h1 className="text-2xl font-bold text-black dark:text-white">
                 {project.details.title}
               </h1>
@@ -276,6 +288,19 @@ export function MilestonesReviewPage({
                 {grantName} - Review project milestones
               </p>
             </div>
+                 {/* Grant Complete Button for Milestone Reviewers */}
+                 {grant && canVerifyMilestones && (
+                   <div className="max-sm:w-full">
+                     <GrantCompleteButtonForReviewer
+                       project={projectResponse}
+                       grant={grant}
+                       onComplete={() => {
+                         // Refetch data to update the grant completion status
+                         refetch();
+                       }}
+                     />
+                   </div>
+                 )}
           </div>
         </div>
       </div>
