@@ -1,5 +1,3 @@
-import type { Address } from "viem";
-import type { Signer } from "ethers";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import type {
   IGrantResponse,
@@ -33,22 +31,6 @@ export const createCheckIfCompletionExists = (
       }
     );
   };
-};
-
-/**
- * Get signer address from wallet signer or fallback to address
- */
-export const getSignerAddress = async (
-  walletSigner: Signer | null | undefined,
-  address: Address | undefined
-): Promise<Address> => {
-  if (walletSigner && typeof walletSigner.getAddress === "function") {
-    return (await walletSigner.getAddress()) as Address;
-  } else if (address) {
-    return address;
-  } else {
-    throw new Error("Unable to get signer address");
-  }
 };
 
 /**

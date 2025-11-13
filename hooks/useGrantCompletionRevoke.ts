@@ -53,13 +53,17 @@ export const useGrantCompletionRevoke = ({
     }
 
     setIsRevoking(true);
-    let gapClient = gap;
 
     try {
       // Validate chainID before proceeding
       const chainID = grant.completed.chainID || grant.chainID;
       if (!chainID) {
         throw new Error("Chain ID not found for grant completion");
+      }
+
+      // Validate grant completion UID exists
+      if (!grant.completed.uid) {
+        throw new Error("Grant completion UID not found");
       }
 
       const checkIfCompletionExists = createCheckIfCompletionExists(
@@ -70,12 +74,17 @@ export const useGrantCompletionRevoke = ({
       if (!isOnChainAuthorized) {
         // Use off-chain revocation for users without on-chain authorization
         // No wallet connection needed for off-chain revocation
+        setIsStepper(true);
         await performOffChainRevoke({
           uid: grant.completed.uid as `0x${string}`,
           chainID: chainID,
           checkIfExists: checkIfCompletionExists,
           onSuccess: () => {
             changeStepperStep("indexed");
+          },
+          onError: (error) => {
+            setIsStepper(false);
+            console.error("Off-chain revocation failed:", error);
           },
           toastMessages: {
             success: MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.SUCCESS,
@@ -92,7 +101,7 @@ export const useGrantCompletionRevoke = ({
         chainId: actualChainId,
         gapClient: newGapClient,
       } = await ensureCorrectChain({
-        targetChainId: grant.chainID,
+        targetChainId: chainID,
         currentChainId: chain?.id,
         switchChainAsync,
       });
@@ -102,7 +111,7 @@ export const useGrantCompletionRevoke = ({
         return;
       }
 
-      gapClient = newGapClient;
+      const gapClient = newGapClient;
 
       const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
@@ -172,6 +181,10 @@ export const useGrantCompletionRevoke = ({
           checkIfExists: checkIfCompletionExists,
           onSuccess: () => {
             changeStepperStep("indexed");
+          },
+          onError: (error) => {
+            setIsStepper(false);
+            console.error("Fallback off-chain revocation failed:", error);
           },
           toastMessages: {
             success: MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.SUCCESS,

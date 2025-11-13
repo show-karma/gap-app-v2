@@ -6,7 +6,8 @@ import {
   IProjectResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useGrantCompletionRevoke } from "@/hooks/useGrantCompletionRevoke";
-import { useProjectAuthorization } from "@/hooks/useProjectAuthorization";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { GrantCompletedButton } from "./GrantCompletedButton";
 import { GrantNotCompletedButton } from "./GrantNotCompletedButton";
 
@@ -21,7 +22,12 @@ export const GrantCompleteButton: FC<GrantCompleteProps> = ({
   project,
   text = "Mark as Complete",
 }) => {
-  const { isAuthorized, isOnChainAuthorized } = useProjectAuthorization();
+  const isOwner = useOwnerStore((state) => state.isOwner);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const isCommunityAdmin = useCommunityAdminStore(
+    (state) => state.isCommunityAdmin
+  );
+  const isAuthorized = isOwner || isProjectAdmin || isCommunityAdmin;
 
   const { revokeCompletion, isRevoking } = useGrantCompletionRevoke({
     grant,
