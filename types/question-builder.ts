@@ -33,6 +33,7 @@ export interface FormSchema {
     privateApplications?: boolean; // Whether this program has private applications
     applicationDeadline?: string; // Application deadline date
     donationRound?: boolean; // Whether this is a donation round
+    successPageContent?: string; // Markdown content for "What happens next?" section on success page
   };
   // AI configuration for the entire form
   aiConfig?: {

@@ -4,6 +4,7 @@ export const settingsConfigSchema = z.object({
   privateApplications: z.boolean(),
   applicationDeadline: z.string().optional(),
   donationRound: z.boolean(),
+  successPageContent: z.string().optional(),
 });
 
 export type SettingsConfigFormData = z.infer<typeof settingsConfigSchema>;

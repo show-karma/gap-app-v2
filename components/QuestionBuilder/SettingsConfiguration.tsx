@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FormSchema } from '@/types/question-builder';
 import { ExternalLink } from '../Utilities/ExternalLink';
+import { MarkdownEditor } from '../Utilities/MarkdownEditor';
 import { LinkIcon } from '@heroicons/react/24/outline';
 import { envVars } from '@/utilities/enviromentVars';
 import { fundingPlatformDomains } from '@/utilities/fundingPlatformDomains';
@@ -39,6 +40,7 @@ export function SettingsConfiguration({
   const {
     register,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<SettingsConfigFormData>({
     resolver: zodResolver(settingsConfigSchema),
@@ -46,6 +48,7 @@ export function SettingsConfiguration({
       privateApplications: schema.settings?.privateApplications ?? true,
       applicationDeadline: schema.settings?.applicationDeadline ?? '',
       donationRound: schema.settings?.donationRound ?? false,
+      successPageContent: schema.settings?.successPageContent ?? '',
     },
   });
 
@@ -63,6 +66,7 @@ export function SettingsConfiguration({
           privateApplications: data.privateApplications ?? true,
           applicationDeadline: data.applicationDeadline,
           donationRound: data.donationRound ?? false,
+          successPageContent: data.successPageContent,
         },
       };
 
@@ -137,6 +141,35 @@ export function SettingsConfiguration({
                 </p>
               </div>
             </div>
+          </div>
+
+
+          <hr className="my-4" />
+
+          {/* Success Page Content */}
+          <div className="space-y-2">
+            <label htmlFor="successPageContent" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Success Page Content
+            </label>
+            <div className={readOnly ? 'opacity-50 pointer-events-none' : ''}>
+              <MarkdownEditor
+                value={watch('successPageContent') || ''}
+                onChange={(newValue: string) => {
+                  setValue('successPageContent', newValue || '', {
+                    shouldValidate: true,
+                  });
+                }}
+                placeholderText="**Review Process:** Your application will be carefully reviewed by the Grants Council.
+
+**Notifications:** You'll receive an update by email within 3 weeks.
+
+**Track Progress:** You can monitor your application status anytime through your dashboard."
+                height={250}
+                minHeight={200}
+                disabled={readOnly}
+              />
+            </div>
+
           </div>
         </div>
 
