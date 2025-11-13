@@ -172,6 +172,37 @@ jest.mock("@wagmi/core", () => ({
   switchChain: jest.fn(),
   readContract: jest.fn(),
   writeContract: jest.fn(),
+  createConfig: jest.fn(() => ({})),
+  createStorage: jest.fn(() => ({})),
+  cookieStorage: {},
+  http: jest.fn((url) => ({
+    url,
+    type: "http",
+  })),
+  getConnections: jest.fn(() => []),
+  disconnect: jest.fn(),
+  watchAccount: jest.fn(),
+  reconnect: jest.fn(),
+}));
+
+// Mock @wagmi/core/chains
+jest.mock("@wagmi/core/chains", () => ({
+  optimism: { id: 10, name: "Optimism" },
+  arbitrum: { id: 42161, name: "Arbitrum" },
+  baseSepolia: { id: 84532, name: "Base Sepolia" },
+  base: { id: 8453, name: "Base" },
+  optimismSepolia: { id: 11155420, name: "Optimism Sepolia" },
+  celo: { id: 42220, name: "Celo" },
+  sei: { id: 1329, name: "Sei" },
+  sepolia: { id: 11155111, name: "Sepolia" },
+  lisk: { id: 1135, name: "Lisk" },
+  scroll: { id: 534352, name: "Scroll" },
+}));
+
+// Mock privy-config
+jest.mock("@/utilities/wagmi/privy-config", () => ({
+  privyConfig: {},
+  getPrivyWagmiConfig: jest.fn(() => ({})),
 }));
 
 // Mock Sentry

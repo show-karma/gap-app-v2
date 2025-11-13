@@ -1,4 +1,8 @@
 import { render, screen } from '@testing-library/react';
+
+// Unmock ProfilePicture before importing it (navbar/setup.ts mocks it globally)
+jest.unmock('@/components/Utilities/ProfilePicture');
+
 import { ProfilePicture } from '@/components/Utilities/ProfilePicture';
 
 // Mock boring-avatars

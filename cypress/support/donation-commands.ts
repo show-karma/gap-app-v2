@@ -44,6 +44,13 @@ declare global {
       ): Chainable<void>;
 
       /**
+       * Select a token from a token selector (select element)
+       * @param tokenSymbol - Token symbol (USDC, DAI, ETH, etc.)
+       * @param selector - Selector for the token select element (defaults to [data-testid="token-selector"])
+       */
+      selectToken(tokenSymbol: string, selector?: string): Chainable<void>;
+
+      /**
        * Enter donation amount for a project
        * @param projectIndex - Index of project in cart
        * @param amount - Amount to donate
@@ -127,9 +134,43 @@ Cypress.Commands.add("addProjectToCart", (projectIndex = 0) => {
 
 Cypress.Commands.add(
   "visitDonationCheckout",
-  (communitySlug = EXAMPLE.COMMUNITY, programId = "all") => {
-    cy.visit(`/community/${communitySlug}/donate/${programId}/checkout`);
-    cy.wait(1000); // Wait for checkout page to load
+  (communitySlug = EXAMPLE.COMMUNITY, programId?: string) => {
+    // If no programId provided or it's "all", visit program selection page first
+    // The page will auto-redirect to /donate/{programId} if there's only one program
+    if (!programId || programId === "all") {
+      // Visit the program selection page - it will auto-redirect if only one program exists
+      cy.visit(`/community/${communitySlug}/donate`);
+      
+      // Wait for page to load and check if we're redirected
+      cy.url({ timeout: 10000 }).then((url) => {
+        // Check if redirected to a specific program page (format: /donate/{programId})
+        const programMatch = url.match(/\/donate\/([^\/]+)$/);
+        if (programMatch && programMatch[1] !== "all") {
+          // We were redirected to a program page, now navigate to checkout
+          const detectedProgramId = programMatch[1];
+          cy.visit(`/community/${communitySlug}/donate/${detectedProgramId}/checkout`);
+          cy.wait(2000);
+        } else if (url.includes("/donate") && !url.includes("/checkout") && !programMatch) {
+          // Still on program selection page - wait a bit more for auto-redirect
+          cy.wait(3000);
+          cy.url().then((currentUrl) => {
+            const newProgramMatch = currentUrl.match(/\/donate\/([^\/]+)$/);
+            if (newProgramMatch && newProgramMatch[1] !== "all") {
+              // Now redirected, go to checkout
+              cy.visit(`/community/${communitySlug}/donate/${newProgramMatch[1]}/checkout`);
+              cy.wait(2000);
+            } else {
+              cy.log("Multiple programs available - tests should handle program selection or provide a programId");
+              // For tests, we'll try to continue - they may need to handle this case
+            }
+          });
+        }
+      });
+    } else {
+      // Use the provided programId
+      cy.visit(`/community/${communitySlug}/donate/${programId}/checkout`);
+      cy.wait(2000); // Wait for checkout page to load
+    }
   }
 );
 
@@ -138,14 +179,53 @@ Cypress.Commands.add("selectTokenForProject", (projectIndex, tokenSymbol) => {
   cy.get('[data-testid^="cart-item"]')
     .eq(projectIndex)
     .within(() => {
-      // Open token selector dropdown
-      cy.get('[data-testid="token-selector"]').click({ force: true });
+      // Token selector is a <select> element, so we need to select by value or text
+      // Format is: {symbol}-{chainId} (e.g., "USDC-10" for USDC on Optimism)
+      // Select by finding the option that contains the token symbol
+      cy.get('[data-testid="token-selector"]').then(($select) => {
+        // Get all options and find one that contains the token symbol
+        const options = $select.find('option');
+        let foundValue: string | null = null;
+        options.each((index, option) => {
+          const text = Cypress.$(option).text();
+          if (text.includes(tokenSymbol)) {
+            foundValue = Cypress.$(option).val() as string;
+            return false; // break
+          }
+        });
+        
+        if (foundValue) {
+          cy.get('[data-testid="token-selector"]').select(foundValue, { force: true });
+        } else {
+          // Fallback: try selecting by partial text match using regex
+          cy.get('[data-testid="token-selector"]').select(new RegExp(tokenSymbol, 'i'), { force: true });
+        }
+      });
     });
 
-  // Select token from dropdown
-  cy.contains('[role="option"]', tokenSymbol).click({ force: true });
-
   cy.wait(300);
+});
+
+// Helper command to select a token directly (for use in tests)
+Cypress.Commands.add("selectToken", (tokenSymbol: string, selector = '[data-testid="token-selector"]') => {
+  cy.get(selector).then(($select) => {
+    const options = $select.find('option');
+    let foundValue: string | null = null;
+    options.each((index, option) => {
+      const text = Cypress.$(option).text();
+      if (text.includes(tokenSymbol)) {
+        foundValue = Cypress.$(option).val() as string;
+        return false; // break
+      }
+    });
+    
+    if (foundValue) {
+      cy.get(selector).select(foundValue, { force: true });
+    } else {
+      // Fallback: try selecting by partial text match using regex
+      cy.get(selector).select(new RegExp(tokenSymbol, 'i'), { force: true });
+    }
+  });
 });
 
 Cypress.Commands.add("enterDonationAmount", (projectIndex, amount) => {

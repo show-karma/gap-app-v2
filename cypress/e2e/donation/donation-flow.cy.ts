@@ -73,14 +73,8 @@ describe("E2E: Donation Flow", () => {
       cy.get('[data-testid^="cart-item"]')
         .first()
         .within(() => {
-          // Open token selector
-          cy.get('[data-testid="token-selector"]').click({ force: true });
+          cy.selectToken("USDC");
         });
-
-      // Select USDC from dropdown
-      cy.contains('[role="option"]', "USDC", { timeout: 5000 }).click({
-        force: true,
-      });
 
       cy.wait(500);
 
@@ -136,10 +130,8 @@ describe("E2E: Donation Flow", () => {
       cy.get('[data-testid^="cart-item"]')
         .first()
         .within(() => {
-          cy.get('[data-testid="token-selector"]').click({ force: true });
+          cy.selectToken("USDC");
         });
-
-      cy.contains('[role="option"]', "USDC").click({ force: true });
 
       cy.get('[data-testid^="cart-item"]')
         .first()
@@ -190,9 +182,8 @@ describe("E2E: Donation Flow", () => {
       cy.get('[data-testid^="cart-item"]')
         .eq(0)
         .within(() => {
-          cy.get('[data-testid="token-selector"]').click({ force: true });
+          cy.selectToken("USDC");
         });
-      cy.contains('[role="option"]', "USDC").click({ force: true });
       cy.get('[data-testid^="cart-item"]')
         .eq(0)
         .find('input[type="number"]')
@@ -202,9 +193,8 @@ describe("E2E: Donation Flow", () => {
       cy.get('[data-testid^="cart-item"]')
         .eq(1)
         .within(() => {
-          cy.get('[data-testid="token-selector"]').click({ force: true });
+          cy.selectToken("DAI");
         });
-      cy.contains('[role="option"]', "DAI").click({ force: true });
       cy.get('[data-testid^="cart-item"]')
         .eq(1)
         .find('input[type="number"]')
@@ -214,9 +204,8 @@ describe("E2E: Donation Flow", () => {
       cy.get('[data-testid^="cart-item"]')
         .eq(2)
         .within(() => {
-          cy.get('[data-testid="token-selector"]').click({ force: true });
+          cy.selectToken("ETH");
         });
-      cy.contains('[role="option"]', "ETH").click({ force: true });
       cy.get('[data-testid^="cart-item"]')
         .eq(2)
         .find('input[type="number"]')
@@ -431,13 +420,13 @@ describe("E2E: Donation Flow", () => {
 
       cy.visitDonationCheckout(COMMUNITY, "all");
 
-      // Open token selector
-      cy.get('[data-testid="token-selector"]').click({ force: true });
-
-      // Verify common tokens are available
-      cy.contains('[role="option"]', "USDC").should("be.visible");
-      cy.contains('[role="option"]', "DAI").should("be.visible");
-      cy.contains('[role="option"]', "ETH").should("be.visible");
+      // Verify token selector is visible and has options
+      cy.get('[data-testid="token-selector"]').should("be.visible");
+      
+      // Verify common tokens are available in the options
+      cy.get('[data-testid="token-selector"] option').contains("USDC").should("exist");
+      cy.get('[data-testid="token-selector"] option').contains("DAI").should("exist");
+      cy.get('[data-testid="token-selector"] option').contains("ETH").should("exist");
     });
 
     it("should display balance for selected token", () => {
@@ -466,8 +455,7 @@ describe("E2E: Donation Flow", () => {
       cy.visitDonationCheckout(COMMUNITY, "all");
 
       // Select token
-      cy.get('[data-testid="token-selector"]').click({ force: true });
-      cy.contains('[role="option"]', "USDC").click({ force: true });
+      cy.selectToken("USDC");
 
       // Balance should be displayed (may be 0 if not connected)
       cy.contains(/balance/i).should("be.visible");
@@ -534,8 +522,7 @@ describe("E2E: Donation Flow", () => {
       cy.visitDonationCheckout(COMMUNITY, "all");
 
       // Select token
-      cy.get('[data-testid="token-selector"]').click({ force: true });
-      cy.contains('[role="option"]', "USDC").click({ force: true });
+      cy.selectToken("USDC");
 
       // Enter zero amount
       cy.get('input[type="number"]').type("0");
@@ -570,8 +557,7 @@ describe("E2E: Donation Flow", () => {
       cy.visitDonationCheckout(COMMUNITY, "all");
 
       // Select token
-      cy.get('[data-testid="token-selector"]').click({ force: true });
-      cy.contains('[role="option"]', "USDC").click({ force: true });
+      cy.selectToken("USDC");
 
       // Try to enter negative amount (input should prevent it)
       cy.get('input[type="number"]').invoke("val", "-10").trigger("change");

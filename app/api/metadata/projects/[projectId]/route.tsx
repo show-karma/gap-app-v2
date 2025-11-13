@@ -69,16 +69,16 @@ export async function GET(
             backgroundImage: `url(https://karmahq.xyz/assets/previews/background.png)`,
           }}
         >
-          <div tw="flex flex-col items-start justify-center mt-8 w-[520px]">
+          <div tw="flex flex-col items-start justify-center mt-8 w-[520px] pb-[80px]">
             <img
               alt={`${PROJECT_NAME} Logo`}
-              src="https://karmahq.xyz/assets/previews/karma-gap-logo-glow.png"
+              src="https://karmahq.xyz/logo/karma-logo-dark.svg"
               style={{
-                width: 292,
-                height: 50,
+                width: 158,
+                height: 40,
               }}
-              width={292}
-              height={50}
+              width={158}
+              height={40}
             />
             <span tw="text-white text-5xl font-extrabold font-body mt-8">
               {title}

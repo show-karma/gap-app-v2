@@ -86,13 +86,13 @@ export function DonationExecutor({
       >
         <div className="flex flex-col gap-4">
           <button
+            data-testid="execute-button"
             type="button"
             disabled={isDisabled}
-            className={`inline-flex h-14 items-center justify-center rounded-full px-8 text-sm font-semibold tracking-wide transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 ${
-              !isDisabled
+            className={`inline-flex h-14 items-center justify-center rounded-full px-8 text-sm font-semibold tracking-wide transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 ${!isDisabled
                 ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl transform hover:scale-[1.02]"
                 : "bg-gray-200 text-gray-500 dark:bg-gray-800 dark:text-gray-400 cursor-not-allowed"
-            }`}
+              }`}
             onClick={onExecute}
             aria-label={getAriaLabel()}
             aria-busy={isExecuting}
