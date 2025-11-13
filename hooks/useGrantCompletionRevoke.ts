@@ -119,9 +119,12 @@ export const useGrantCompletionRevoke = ({
 
       changeStepperStep("indexing");
 
-      if (tx.hash) {
+      // Note: multiRevoke returns a transaction object with hash property
+      // If the SDK structure changes to { tx: [{ hash }] }, update accordingly
+      const txHash = tx?.hash || (tx as any)?.tx?.[0]?.hash;
+      if (txHash) {
         await fetchData(
-          INDEXER.ATTESTATION_LISTENER(tx.hash, grantInstance.chainID),
+          INDEXER.ATTESTATION_LISTENER(txHash, grantInstance.chainID),
           "POST",
           {}
         );

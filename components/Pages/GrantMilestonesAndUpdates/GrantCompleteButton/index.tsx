@@ -21,7 +21,7 @@ export const GrantCompleteButton: FC<GrantCompleteProps> = ({
   project,
   text = "Mark as Complete",
 }) => {
-  const { isAuthorized } = useProjectAuthorization();
+  const { isAuthorized, isOnChainAuthorized } = useProjectAuthorization();
 
   const { revokeCompletion, isRevoking } = useGrantCompletionRevoke({
     grant,
@@ -32,9 +32,9 @@ export const GrantCompleteButton: FC<GrantCompleteProps> = ({
     return (
       <GrantCompletedButton
         onClick={revokeCompletion}
-        disabled={isRevoking || !isAuthorized}
+        disabled={isRevoking || !isOnChainAuthorized}
         isRevoking={isRevoking}
-        isAuthorized={isAuthorized}
+        isAuthorized={isOnChainAuthorized}
       />
     );
   }
