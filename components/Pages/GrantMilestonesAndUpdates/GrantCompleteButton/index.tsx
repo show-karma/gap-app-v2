@@ -21,12 +21,11 @@ export const GrantCompleteButton: FC<GrantCompleteProps> = ({
   project,
   text = "Mark as Complete",
 }) => {
-  const { isAuthorized, isOnChainAuthorized } = useProjectAuthorization();
+  const { isAuthorized } = useProjectAuthorization();
 
   const { revokeCompletion, isRevoking } = useGrantCompletionRevoke({
     grant,
     project,
-    isOnChainAuthorized,
   });
 
   if (grant.completed) {

@@ -9,7 +9,6 @@ import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
-import { retryUntilConditionMet } from "@/utilities/retries";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useGrantStore } from "@/store/grant";
 import { useProjectStore } from "@/store";
@@ -21,7 +20,6 @@ import type {
 import { GAP } from "@show-karma/karma-gap-sdk";
 import {
   createCheckIfCompletionExists,
-  getSignerAddress,
   validateGrantCompletion,
   buildRevocationPayload,
 } from "@/utilities/grantCompletionHelpers";
@@ -29,7 +27,6 @@ import {
 interface UseGrantCompletionRevokeProps {
   grant: IGrantResponse;
   project: IProjectResponse;
-  isOnChainAuthorized: boolean;
 }
 
 export const useGrantCompletionRevoke = ({
