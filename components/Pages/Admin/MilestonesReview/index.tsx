@@ -17,6 +17,12 @@ import { useAccount } from "wagmi";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { useIsReviewer, useReviewerPrograms } from "@/hooks/usePermissions";
 import { useOwnerStore } from "@/store";
+import { fundingPlatformService } from "@/services/fundingPlatformService";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { MESSAGES } from "@/utilities/messages";
+import { useQueryClient } from "@tanstack/react-query";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
+import type { ProjectGrantMilestonesResponse } from "@/services/milestones";
 
 interface MilestonesReviewPageProps {
   communityId: string;
@@ -32,8 +38,10 @@ export function MilestonesReviewPage({
   referrer,
 }: MilestonesReviewPageProps) {
   const { data, isLoading, error, refetch } = useProjectGrantMilestones(projectId, programId);
+  const queryClient = useQueryClient();
   const [verifyingMilestoneId, setVerifyingMilestoneId] = useState<string | null>(null);
   const [verificationComment, setVerificationComment] = useState("");
+  const [deletingMilestoneId, setDeletingMilestoneId] = useState<string | null>(null);
 
   const { address } = useAccount();
   const { isCommunityAdmin, isLoading: isLoadingCommunityAdmin } = useIsCommunityAdmin(
@@ -73,6 +81,13 @@ export function MilestonesReviewPage({
   const canVerifyMilestones = useMemo(
     () => isCommunityAdmin || isContractOwner || (isMilestoneReviewer || false),
     [isCommunityAdmin, isContractOwner, isMilestoneReviewer]
+  );
+
+  // Determine if user can delete milestones
+  // Only milestone reviewers can delete milestones (same permission as verification)
+  const canDeleteMilestones = useMemo(
+    () => isMilestoneReviewer || false,
+    [isMilestoneReviewer]
   );
 
   // Get the actual project UID from the data (projectId might be a slug)
@@ -187,6 +202,74 @@ export function MilestonesReviewPage({
       setIsSyncing(false);
     }
   }, [refetch]);
+
+  const handleDeleteMilestone = useCallback(async (milestone: GrantMilestoneWithCompletion) => {
+    if (!milestone.fundingApplicationCompletion) {
+      toast.error("Cannot delete milestone: missing application data");
+      throw new Error("Missing application data");
+    }
+
+    const milestoneId = milestone.uid;
+    setDeletingMilestoneId(milestoneId);
+
+    try {
+      const result = await fundingPlatformService.applications.deleteMilestone(
+        milestone.fundingApplicationCompletion.referenceNumber,
+        milestone.fundingApplicationCompletion.milestoneFieldLabel,
+        milestone.fundingApplicationCompletion.milestoneTitle
+      );
+
+      if (result.milestoneRemoved) {
+        toast.success(`Milestone "${milestone.title}" deleted successfully`);
+        
+        // Optimistically update the React Query cache to remove the deleted milestone
+        const queryKey = QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES(projectId, programId);
+        queryClient.setQueryData<ProjectGrantMilestonesResponse | null>(
+          queryKey,
+          (oldData) => {
+            if (!oldData) return oldData;
+            
+            return {
+              ...oldData,
+              grantMilestones: oldData.grantMilestones.filter(
+                (m) => m.uid !== milestoneId
+              ),
+            };
+          }
+        );
+      } else {
+        const errorMessage = "Failed to delete milestone";
+        toast.error(errorMessage);
+        errorManager(
+          `Failed to delete milestone "${milestone.title}"`,
+          new Error(errorMessage),
+          {
+            milestoneUID: milestone.uid,
+            referenceNumber: milestone.fundingApplicationCompletion.referenceNumber,
+            milestoneTitle: milestone.title,
+          },
+          { error: errorMessage }
+        );
+        throw new Error(errorMessage);
+      }
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || "Failed to delete milestone";
+      errorManager(
+        `Failed to delete milestone "${milestone.title}"`,
+        error,
+        {
+          milestoneUID: milestone.uid,
+          referenceNumber: milestone.fundingApplicationCompletion.referenceNumber,
+          milestoneTitle: milestone.title,
+        },
+        { error: errorMessage }
+      );
+      // Re-throw so DeleteDialog can handle it (it will log and keep modal open)
+      throw error;
+    } finally {
+      setDeletingMilestoneId(null);
+    }
+  }, [projectId, programId, queryClient]);
 
   // Show loading while checking authorization
   if (isLoading || isLoadingCommunityAdmin || isOwnerLoading || isLoadingReviewer) {
@@ -327,11 +410,14 @@ export function MilestonesReviewPage({
                       isVerifying={isVerifying}
                       isSyncing={isSyncing}
                       canVerifyMilestones={canVerifyMilestones}
+                      canDeleteMilestones={canDeleteMilestones}
                       onVerifyClick={handleVerifyClick}
                       onCancelVerification={handleCancelVerification}
                       onVerificationCommentChange={setVerificationComment}
                       onSubmitVerification={handleSubmitVerification}
                       onSyncVerification={handleSyncVerification}
+                      onDeleteMilestone={handleDeleteMilestone}
+                      isDeleting={deletingMilestoneId === milestone.uid}
                     />
                   ))
                 )}

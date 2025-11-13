@@ -2,11 +2,12 @@
 
 import { useMemo } from "react";
 import { Button } from "@/components/Utilities/Button";
-import { CheckCircleIcon } from "@heroicons/react/20/solid";
+import { CheckCircleIcon, TrashIcon } from "@heroicons/react/20/solid";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
 import { shortAddress } from "@/utilities/shortAddress";
 import { formatDate } from "@/utilities/formatDate";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { DeleteDialog } from "@/components/DeleteDialog";
 
 interface MilestoneCardProps {
   milestone: GrantMilestoneWithCompletion;
@@ -16,11 +17,14 @@ interface MilestoneCardProps {
   isVerifying: boolean;
   isSyncing: boolean;
   canVerifyMilestones: boolean;
+  canDeleteMilestones: boolean;
   onVerifyClick: (uid: string) => void;
   onCancelVerification: () => void;
   onVerificationCommentChange: (comment: string) => void;
   onSubmitVerification: (milestone: GrantMilestoneWithCompletion) => void;
   onSyncVerification: (milestone: GrantMilestoneWithCompletion) => void;
+  onDeleteMilestone: (milestone: GrantMilestoneWithCompletion) => Promise<void>;
+  isDeleting?: boolean;
 }
 
 export function MilestoneCard({
@@ -31,11 +35,14 @@ export function MilestoneCard({
   isVerifying,
   isSyncing,
   canVerifyMilestones,
+  canDeleteMilestones,
   onVerifyClick,
   onCancelVerification,
   onVerificationCommentChange,
   onSubmitVerification,
   onSyncVerification,
+  onDeleteMilestone,
+  isDeleting = false,
 }: MilestoneCardProps) {
   // Memoized boolean checks
   const useOnChainData = useMemo(
@@ -86,6 +93,23 @@ export function MilestoneCard({
         <h3 className="text-lg font-medium text-black dark:text-white">
           {milestone.title}
         </h3>
+        {canDeleteMilestones && milestone.fundingApplicationCompletion && (
+          <DeleteDialog
+            deleteFunction={() => onDeleteMilestone(milestone)}
+            isLoading={isDeleting}
+            title={
+              <p className="font-normal">
+                Are you sure you want to delete <b>{milestone.title}</b> milestone?
+              </p>
+            }
+            buttonElement={{
+              text: "",
+              icon: <TrashIcon className="w-5 h-5 text-red-500" />,
+              styleClass:
+                "bg-transparent p-1 w-max h-max text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 border border-red-200 dark:border-red-800 rounded",
+            }}
+          />
+        )}
       </div>
 
       <div className="text-gray-600 dark:text-gray-400 text-sm mb-3">
