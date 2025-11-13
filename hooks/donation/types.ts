@@ -47,7 +47,7 @@ export interface OnrampRequest {
   targetToken: string;
   network: number;
   userEmail?: string;
-  redirectUrl: string;
+  redirectUrl?: string;
 }
 
 export interface OnrampResponse {
