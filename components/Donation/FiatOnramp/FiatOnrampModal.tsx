@@ -91,7 +91,7 @@ export const FiatOnrampModal = React.memo<FiatOnrampModalProps>(
                   You will be redirected to complete your crypto purchase.
                 </p>
                 <p className="text-sm text-gray-500 mt-2">
-                  If the page doesn't open, please{" "}
+                  If the page does not open, please{" "}
                   <a
                     href={onrampUrl}
                     target="_blank"
