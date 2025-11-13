@@ -45,6 +45,7 @@ interface Report {
   totalMilestones: number;
   pendingMilestones: number;
   completedMilestones: number;
+  isGrantCompleted?: boolean;
   proofOfWorkLinks: string[];
   evaluations: Evaluation[] | null | undefined;
   projectSlug: string;
@@ -58,7 +59,7 @@ interface Evaluation {
 
 type MilestoneCompletion = Pick<
   Report,
-  "totalMilestones" | "pendingMilestones" | "completedMilestones"
+  "totalMilestones" | "pendingMilestones" | "completedMilestones" | "isGrantCompleted"
 >;
 
 interface ReportAPIResponse {
@@ -292,11 +293,14 @@ export const ReportMilestonePage = ({
   };
 
   const isFullyCompleted = useCallback((report: MilestoneCompletion) => {
-    return (
+    const allMilestonesComplete =
       report.totalMilestones > 0 &&
       report.pendingMilestones === 0 &&
-      report.completedMilestones === report.totalMilestones
-    );
+      report.completedMilestones === report.totalMilestones;
+    
+    const grantCompleted = report.isGrantCompleted === true;
+    
+    return allMilestonesComplete || grantCompleted;
   }, []);
 
   interface StatCardProps {
