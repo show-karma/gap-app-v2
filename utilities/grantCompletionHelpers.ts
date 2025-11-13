@@ -80,19 +80,40 @@ export const validateGrantCompletion = (
 
 /**
  * Build revocation payload for on-chain revocation
+ * Matches the multiRevoke ABI structure:
+ * - schema: bytes32 (schema UID)
+ * - data: Array<{ uid: bytes32, value: uint256 }>
  */
 export const buildRevocationPayload = (
   schemaUID: string,
-  attestationUID: string
-): Array<{ schemaId: `0x${string}`; uid: `0x${string}` }> => {
+  attestationUID: string,
+  value: bigint | string = 0n
+): Array<{
+  schema: `0x${string}`;
+  data: Array<{
+    uid: `0x${string}`;
+    value: bigint;
+  }>;
+}> => {
   if (!schemaUID) {
     throw new Error("Grant completion schema UID not found");
   }
 
+  if (!attestationUID) {
+    throw new Error("Attestation UID not found");
+  }
+
+  const valueBigInt = typeof value === "string" ? BigInt(value) : value;
+
   return [
     {
-      schemaId: schemaUID as `0x${string}`,
-      uid: attestationUID as `0x${string}`,
+      schema: schemaUID as `0x${string}`,
+      data: [
+        {
+          uid: attestationUID as `0x${string}`,
+          value: valueBigInt,
+        },
+      ],
     },
   ];
 };
