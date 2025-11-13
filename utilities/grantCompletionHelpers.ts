@@ -87,7 +87,7 @@ export const validateGrantCompletion = (
 export const buildRevocationPayload = (
   schemaUID: string,
   attestationUID: string,
-  value: bigint | string = 0n
+  value: bigint = 0n
 ): Array<{
   schema: `0x${string}`;
   data: Array<{
@@ -95,23 +95,13 @@ export const buildRevocationPayload = (
     value: bigint;
   }>;
 }> => {
-  if (!schemaUID) {
-    throw new Error("Grant completion schema UID not found");
-  }
-
-  if (!attestationUID) {
-    throw new Error("Attestation UID not found");
-  }
-
-  const valueBigInt = typeof value === "string" ? BigInt(value) : value;
-
   return [
     {
       schema: schemaUID as `0x${string}`,
       data: [
         {
           uid: attestationUID as `0x${string}`,
-          value: valueBigInt,
+          value,
         },
       ],
     },

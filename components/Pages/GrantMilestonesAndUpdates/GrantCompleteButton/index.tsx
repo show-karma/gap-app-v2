@@ -32,9 +32,9 @@ export const GrantCompleteButton: FC<GrantCompleteProps> = ({
     return (
       <GrantCompletedButton
         onClick={revokeCompletion}
-        disabled={isRevoking || !isOnChainAuthorized}
+        disabled={isRevoking || !isAuthorized}
         isRevoking={isRevoking}
-        isAuthorized={isOnChainAuthorized}
+        isAuthorized={isAuthorized}
       />
     );
   }

@@ -12,6 +12,8 @@ import { MESSAGES } from "@/utilities/messages";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useGrantStore } from "@/store/grant";
 import { useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store";
+import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import toast from "react-hot-toast";
 import type {
   IGrantResponse,
@@ -40,6 +42,10 @@ export const useGrantCompletionRevoke = ({
   const { changeStepperStep, setIsStepper } = useStepper();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const { refreshGrant } = useGrantStore();
+  const { isProjectOwner } = useProjectStore();
+  const { isOwner: isContractOwner } = useOwnerStore();
+  const isOnChainAuthorized = isProjectOwner || isContractOwner;
+  const { performOffChainRevoke } = useOffChainRevoke();
 
   const revokeCompletion = async () => {
     if (!grant.completed || !project) {
@@ -50,6 +56,37 @@ export const useGrantCompletionRevoke = ({
     let gapClient = gap;
 
     try {
+      // Validate chainID before proceeding
+      const chainID = grant.completed.chainID || grant.chainID;
+      if (!chainID) {
+        throw new Error("Chain ID not found for grant completion");
+      }
+
+      const checkIfCompletionExists = createCheckIfCompletionExists(
+        grant.uid,
+        refreshProject
+      );
+
+      if (!isOnChainAuthorized) {
+        // Use off-chain revocation for users without on-chain authorization
+        // No wallet connection needed for off-chain revocation
+        await performOffChainRevoke({
+          uid: grant.completed.uid as `0x${string}`,
+          chainID: chainID,
+          checkIfExists: checkIfCompletionExists,
+          onSuccess: () => {
+            changeStepperStep("indexed");
+          },
+          toastMessages: {
+            success: MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.SUCCESS,
+            loading: MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.LOADING,
+          },
+        });
+        await refreshGrant();
+        return;
+      }
+
+      // On-chain path requires wallet connection
       const {
         success,
         chainId: actualChainId,
@@ -83,17 +120,6 @@ export const useGrantCompletionRevoke = ({
         throw new Error("Grant completion not found");
       }
 
-      // Validate chainID before proceeding
-      const chainID = grantInstance.completed.chainID || grantInstance.chainID;
-      if (!chainID) {
-        throw new Error("Chain ID not found for grant completion");
-      }
-
-      const checkIfCompletionExists = createCheckIfCompletionExists(
-        grant.uid,
-        refreshProject
-      );
-
       // Authorized AND attester matches - proceed with on-chain revocation
       setIsStepper(true);
       validateGrantCompletion(grantInstance.completed);
@@ -108,33 +134,58 @@ export const useGrantCompletionRevoke = ({
         throw new Error("Grant completion schema does not support multiRevoke");
       }
 
-      const contract = await GAP.getMulticall(walletSigner);
+      try {
+        const contract = await GAP.getMulticall(walletSigner);
 
-      const revocationPayload = buildRevocationPayload(
-        schemaToUse.uid,
-        grantInstance.completed.uid
-      );
-
-      const tx = await contract.multiRevoke(revocationPayload);
-
-      changeStepperStep("indexing");
-
-      // Note: multiRevoke returns a transaction object with hash property
-      // If the SDK structure changes to { tx: [{ hash }] }, update accordingly
-      const txHash = tx?.hash || (tx as any)?.tx?.[0]?.hash;
-      if (txHash) {
-        await fetchData(
-          INDEXER.ATTESTATION_LISTENER(txHash, grantInstance.chainID),
-          "POST",
-          {}
+        const revocationPayload = buildRevocationPayload(
+          schemaToUse.uid,
+          grantInstance.completed.uid
         );
-      }
 
-      await checkIfCompletionExists(() => {
-        changeStepperStep("indexed");
-      });
-      await refreshGrant();
-      toast.success(MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.SUCCESS);
+        const tx = await contract.multiRevoke(revocationPayload);
+
+        changeStepperStep("indexing");
+
+        // Note: multiRevoke returns a transaction object with hash property
+        // If the SDK structure changes to { tx: [{ hash }] }, update accordingly
+        const txHash = tx?.hash || (tx as any)?.tx?.[0]?.hash;
+        if (txHash) {
+          await fetchData(
+            INDEXER.ATTESTATION_LISTENER(txHash, grantInstance.chainID),
+            "POST",
+            {}
+          );
+        }
+
+        await checkIfCompletionExists(() => {
+          changeStepperStep("indexed");
+        });
+        await refreshGrant();
+        toast.success(MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.SUCCESS);
+      } catch (onChainError: any) {
+        // Fallback to off-chain revocation if on-chain fails
+        setIsStepper(false); // Reset stepper since we're falling back
+
+        const success = await performOffChainRevoke({
+          uid: grantInstance.completed.uid as `0x${string}`,
+          chainID: chainID,
+          checkIfExists: checkIfCompletionExists,
+          onSuccess: () => {
+            changeStepperStep("indexed");
+          },
+          toastMessages: {
+            success: MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.SUCCESS,
+            loading: MESSAGES.GRANT.MARK_AS_COMPLETE.UNDO.LOADING,
+          },
+        });
+
+        if (success) {
+          await refreshGrant();
+        } else {
+          // Both methods failed - throw the original error
+          throw onChainError;
+        }
+      }
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error
