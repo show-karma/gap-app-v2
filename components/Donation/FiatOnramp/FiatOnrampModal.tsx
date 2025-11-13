@@ -34,7 +34,7 @@ export const FiatOnrampModal = React.memo<FiatOnrampModalProps>(
 
             setOnrampUrl(result.url);
           } catch (error) {
-            console.error("Failed to create onramp session:", error);
+            // Error creating onramp session - modal will remain in loading state
           }
         };
         initOnramp();
