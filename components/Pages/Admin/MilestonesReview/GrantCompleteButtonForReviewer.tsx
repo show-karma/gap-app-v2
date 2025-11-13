@@ -21,7 +21,7 @@ import { Hex } from "viem";
 import type { FC } from "react";
 
 interface GrantCompleteButtonForReviewerProps {
-  project: IProjectResponse;
+  project: { uid: string };
   grant: IGrantResponse;
   text?: string;
   onComplete?: () => void;

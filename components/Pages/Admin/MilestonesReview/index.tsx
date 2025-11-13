@@ -18,7 +18,6 @@ import { useAccount } from "wagmi";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { useIsReviewer, useReviewerPrograms } from "@/hooks/usePermissions";
 import { useOwnerStore } from "@/store";
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 interface MilestonesReviewPageProps {
   communityId: string;
@@ -255,15 +254,10 @@ export function MilestonesReviewPage({
 
   const { project, grantMilestones, grant } = data;
 
-  // Convert project to IProjectResponse format for GrantCompleteButtonForReviewer
-  const projectResponse: IProjectResponse = {
+  // Project data for GrantCompleteButtonForReviewer (only needs uid)
+  const projectForButton = {
     uid: project.uid,
-    chainID: project.chainID,
-    owner: project.owner,
-    payoutAddress: project.payoutAddress,
-    details: project.details,
-    grants: grant ? [grant] : [],
-  } as IProjectResponse;
+  };
 
   return (
     <div className="min-h-screen">
@@ -292,7 +286,7 @@ export function MilestonesReviewPage({
                  {grant && canVerifyMilestones && (
                    <div className="max-sm:w-full">
                      <GrantCompleteButtonForReviewer
-                       project={projectResponse}
+                       project={projectForButton}
                        grant={grant}
                        onComplete={() => {
                          // Refetch data to update the grant completion status
