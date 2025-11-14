@@ -16,10 +16,10 @@ export function NavbarAuthButtons() {
     }
 
     return (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
             <Button
-                variant="outline"
-                className="bg-secondary border-none rounded px-3 py-1 text-sm font-medium text-secondary-foreground hover:text-muted-foreground transition-colors"
+                variant="secondary"
+                size="sm"
                 onClick={login}
             >
                 Sign in
@@ -31,7 +31,6 @@ export function NavbarAuthButtons() {
                 asChild
             >
                 <ExternalLink href={SOCIALS.PARTNER_FORM}>
-                    <PhoneCall className="w-4 h-4" />
                     Contact sales
                 </ExternalLink>
             </Button>

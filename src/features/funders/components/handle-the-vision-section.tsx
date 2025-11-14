@@ -8,7 +8,7 @@ export function HandleTheVisionSection() {
     return (
         <section className={cn(marketingLayoutTheme.padding, "pb-16 md:pb-24")}>
             <div className="flex flex-col items-center gap-6">
-                <h2 className="text-3xl md:text-5xl font-semibold text-foreground text-center leading-none tracking-tight">
+                <h2 className="section-title text-foreground text-center">
                     Focus on ecosystem growth and impact.<br /> We handle the infrastructure.
                 </h2>
                 <p className="text-base md:text-xl font-normal text-muted-foreground text-center leading-[30px] tracking-normal px-4">
