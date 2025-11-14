@@ -1,5 +1,6 @@
 "use client";
 
+import { MarkdownEditor } from '../Utilities/MarkdownEditor';
 import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,7 +27,7 @@ const getApplyUrlByCommunityId = (communityId: string, programId: string) => {
   if (communityId in fundingPlatformDomains) {
     const domain =
       fundingPlatformDomains[
-        communityId as keyof typeof fundingPlatformDomains
+      communityId as keyof typeof fundingPlatformDomains
       ];
     return envVars.isDev
       ? `${domain.dev}/browse-applications?programId=${programId}`
@@ -49,6 +50,7 @@ export function SettingsConfiguration({
   const {
     register,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<SettingsConfigFormData>({
     resolver: zodResolver(settingsConfigSchema),
@@ -56,6 +58,7 @@ export function SettingsConfiguration({
       privateApplications: schema.settings?.privateApplications ?? true,
       applicationDeadline: schema.settings?.applicationDeadline ?? "",
       donationRound: schema.settings?.donationRound ?? false,
+      successPageContent: schema.settings?.successPageContent ?? '',
       showCommentsOnPublicPage:
         schema.settings?.showCommentsOnPublicPage ?? false,
     },
@@ -78,6 +81,7 @@ export function SettingsConfiguration({
           privateApplications: data.privateApplications ?? true,
           applicationDeadline: data.applicationDeadline,
           donationRound: data.donationRound ?? false,
+          successPageContent: data.successPageContent,
           showCommentsOnPublicPage: data.showCommentsOnPublicPage ?? false,
         },
       };
@@ -163,6 +167,35 @@ export function SettingsConfiguration({
                 </p>
               </div>
             </div>
+          </div>
+
+
+          <hr className="my-4" />
+
+          {/* Success Page Content */}
+          <div className="space-y-2">
+            <label htmlFor="successPageContent" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Success Page Content
+            </label>
+            <div className={readOnly ? 'opacity-50 pointer-events-none' : ''}>
+              <MarkdownEditor
+                value={watch('successPageContent') || ''}
+                onChange={(newValue: string) => {
+                  setValue('successPageContent', newValue || '', {
+                    shouldValidate: true,
+                  });
+                }}
+                placeholderText="**Review Process:** Your application will be carefully reviewed by the Grants Council.
+
+**Notifications:** You'll receive an update by email within 3 weeks.
+
+**Track Progress:** You can monitor your application status anytime through your dashboard."
+                height={250}
+                minHeight={200}
+                disabled={readOnly}
+              />
+            </div>
+
           </div>
         </div>
 
