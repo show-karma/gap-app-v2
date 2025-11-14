@@ -1,34 +1,29 @@
 /* eslint-disable @next/next/no-img-element */
-import { cn } from "@/utilities/tailwind";
-import { CheckIcon, ChevronDownIcon } from "@heroicons/react/24/solid";
-import * as Popover from "@radix-ui/react-popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "cmdk";
-import { FC, useEffect, useState } from "react";
+
+import { CheckIcon, ChevronDownIcon } from "@heroicons/react/24/solid"
+import * as Popover from "@radix-ui/react-popover"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk"
+import { type FC, useEffect, useState } from "react"
+import { cn } from "@/utilities/tailwind"
 
 interface Item {
-  value: string;
-  title: string;
+  value: string
+  title: string
 }
 
 interface SearchWithValueDropdownProps {
-  onSelectFunction: (value: string) => void;
-  selected: string[];
-  list: Item[];
-  type: string;
-  cleanFunction?: () => void;
-  prefixUnselected?: string;
-  buttonClassname?: string;
-  shouldSort?: boolean;
-  id?: string;
-  isMultiple?: boolean;
-  customAddButton?: React.ReactNode;
-  disabled?: boolean;
+  onSelectFunction: (value: string) => void
+  selected: string[]
+  list: Item[]
+  type: string
+  cleanFunction?: () => void
+  prefixUnselected?: string
+  buttonClassname?: string
+  shouldSort?: boolean
+  id?: string
+  isMultiple?: boolean
+  customAddButton?: React.ReactNode
+  disabled?: boolean
 }
 
 export const SearchWithValueDropdown: FC<SearchWithValueDropdownProps> = ({
@@ -45,44 +40,40 @@ export const SearchWithValueDropdown: FC<SearchWithValueDropdownProps> = ({
   customAddButton,
   disabled = false,
 }) => {
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState("")
 
-  const [orderedList, setOrderedList] = useState<Item[]>([]);
+  const [orderedList, setOrderedList] = useState<Item[]>([])
 
   useEffect(() => {
     const sortedList = shouldSort
       ? list.sort((a, b) => {
           if (a.title < b.title) {
-            return -1;
+            return -1
           }
           if (a.title > b.title) {
-            return 1;
+            return 1
           }
-          return 0;
+          return 0
         })
-      : list;
-    setOrderedList(sortedList);
-  }, [list, shouldSort]);
+      : list
+    setOrderedList(sortedList)
+  }, [list, shouldSort])
 
   const renderSelected = () => {
     if (selected.length) {
       if (isMultiple) {
         return selected
-          .map(
-            (item) =>
-              orderedList.find((orderedItem) => orderedItem.value === item)
-                ?.title
-          )
+          .map((item) => orderedList.find((orderedItem) => orderedItem.value === item)?.title)
           .sort()
-          .join(", ");
+          .join(", ")
       }
       // For single selection, find the title from the list
-      const selectedItem = orderedList.find((item) => item.value === selected[0]);
-      return selectedItem?.title || selected[0];
+      const selectedItem = orderedList.find((item) => item.value === selected[0])
+      return selectedItem?.title || selected[0]
     }
-    return `${prefixUnselected} ${type}`;
-  };
+    return `${prefixUnselected} ${type}`
+  }
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
@@ -122,7 +113,7 @@ export const SearchWithValueDropdown: FC<SearchWithValueDropdownProps> = ({
                 placeholder={`Search ${type}...`}
                 value={search}
                 onValueChange={(value) => {
-                  setSearch(value);
+                  setSearch(value)
                 }}
               />
             </div>
@@ -140,7 +131,7 @@ export const SearchWithValueDropdown: FC<SearchWithValueDropdownProps> = ({
                 <CommandItem>
                   <div
                     onClick={() => {
-                      cleanFunction();
+                      cleanFunction()
                     }}
                     className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
                   >
@@ -151,9 +142,7 @@ export const SearchWithValueDropdown: FC<SearchWithValueDropdownProps> = ({
                         </p>
                       </div>
                       <CheckIcon
-                        className={cn(
-                          "mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white"
-                        )}
+                        className={cn("mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white")}
                         style={{
                           display: selected.length ? "none" : "block",
                         }}
@@ -167,25 +156,20 @@ export const SearchWithValueDropdown: FC<SearchWithValueDropdownProps> = ({
                   <div
                     id={`${item.value}-item`}
                     onClick={() => {
-                      onSelectFunction(item.value);
+                      onSelectFunction(item.value)
                     }}
                     className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
                   >
                     <div className="flex flex-row gap-2 items-center justify-start w-full">
                       <div className="flex flex-row gap-1  items-center justify-start  flex-1">
-                        <p className="line-clamp-2 text-sm max-w-full break-normal">
-                          {item.title}
-                        </p>
+                        <p className="line-clamp-2 text-sm max-w-full break-normal">{item.title}</p>
                       </div>
                     </div>
                     <CheckIcon
-                      className={cn(
-                        "mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white"
-                      )}
+                      className={cn("mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white")}
                       style={{
                         display:
-                          selected.includes(item.value) ||
-                          selected.includes(item.title)
+                          selected.includes(item.value) || selected.includes(item.title)
                             ? "block"
                             : "none",
                       }}
@@ -200,5 +184,5 @@ export const SearchWithValueDropdown: FC<SearchWithValueDropdownProps> = ({
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>
-  );
-};
+  )
+}

@@ -1,5 +1,5 @@
-import { ProjectV2 } from "@/types/community";
-import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
+import type { ProjectV2 } from "@/types/community"
 
 export const projectV2ToGrant = (project: ProjectV2): IGrantResponse => {
   return {
@@ -40,7 +40,7 @@ export const projectV2ToGrant = (project: ProjectV2): IGrantResponse => {
         },
       },
     },
-    members: project.members.map(member => ({
+    members: project.members.map((member) => ({
       uid: member.address,
       address: member.address,
       role: member.role,
@@ -79,5 +79,5 @@ export const projectV2ToGrant = (project: ProjectV2): IGrantResponse => {
     decodedDataJson: "",
     isOffchain: false,
     schemaId: "",
-  } as unknown as IGrantResponse;
-}; 
+  } as unknown as IGrantResponse
+}

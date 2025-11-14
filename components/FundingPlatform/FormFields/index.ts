@@ -1,5 +1,5 @@
 // Export all form field components
-export { TextField } from "./TextField";
+export { TextField } from "./TextField"
 
 // TODO: Add more field components as they are created
 // export { TextAreaField } from "./TextAreaField";
@@ -12,4 +12,4 @@ export { TextField } from "./TextField";
 // export { DateField } from "./DateField";
 
 // Re-export types that might be needed
-export type { FormField } from "@/types/question-builder";
+export type { FormField } from "@/types/question-builder"

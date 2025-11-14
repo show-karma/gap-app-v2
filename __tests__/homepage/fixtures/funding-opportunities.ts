@@ -2,7 +2,7 @@
  * Mock Funding Opportunity Data for Homepage Tests
  */
 
-import type { FundingProgram } from "@/services/fundingPlatformService";
+import type { FundingProgram } from "@/services/fundingPlatformService"
 
 export const mockFundingOpportunities: FundingProgram[] = [
   {
@@ -175,7 +175,7 @@ export const mockFundingOpportunities: FundingProgram[] = [
       rejectedApplications: 4,
     },
   },
-];
+]
 
 /**
  * Create a mock funding opportunity
@@ -183,9 +183,9 @@ export const mockFundingOpportunities: FundingProgram[] = [
 export const createMockFundingOpportunity = (
   overrides: Partial<FundingProgram> = {}
 ): FundingProgram => {
-  const programId = overrides.programId || `program-${Math.random().toString(36).substr(2, 9)}`;
-  const chainID = overrides.chainID || 1;
-  
+  const programId = overrides.programId || `program-${Math.random().toString(36).substr(2, 9)}`
+  const chainID = overrides.chainID || 1
+
   return {
     programId,
     chainID,
@@ -221,27 +221,26 @@ export const createMockFundingOpportunity = (
       rejectedApplications: 0,
     },
     ...overrides,
-  };
-};
+  }
+}
 
 /**
  * Get active funding opportunities
  */
 export const getActiveFundingOpportunities = (): FundingProgram[] => {
-  return mockFundingOpportunities.filter((p) => p.metadata?.status === "active");
-};
+  return mockFundingOpportunities.filter((p) => p.metadata?.status === "active")
+}
 
 /**
  * Get a specific number of mock funding opportunities
  */
 export const getMockFundingOpportunities = (count: number): FundingProgram[] => {
-  return mockFundingOpportunities.slice(0, count);
-};
+  return mockFundingOpportunities.slice(0, count)
+}
 
 /**
  * Get empty funding opportunities (for testing empty state)
  */
 export const getEmptyFundingOpportunities = (): FundingProgram[] => {
-  return [];
-};
-
+  return []
+}

@@ -1,10 +1,10 @@
-import { getProjectObjectives } from "./getProjectObjectives";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { UnifiedMilestone } from "@/types/roadmap";
-import {
+import type {
   IGrantResponse,
   IMilestoneResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
+import { errorManager } from "@/components/Utilities/errorManager"
+import type { UnifiedMilestone } from "@/types/roadmap"
+import { getProjectObjectives } from "./getProjectObjectives"
 
 export async function getAllMilestones(
   projectId: string,
@@ -12,44 +12,42 @@ export async function getAllMilestones(
 ): Promise<UnifiedMilestone[]> {
   try {
     // Fetch both types of milestones in parallel
-    const projectMilestones = await getProjectObjectives(projectId);
+    const projectMilestones = await getProjectObjectives(projectId)
     const grantMilestonesWithGrants: {
-      milestone: IMilestoneResponse;
-      grant: IGrantResponse;
-    }[] = [];
+      milestone: IMilestoneResponse
+      grant: IGrantResponse
+    }[] = []
     projectGrants.forEach((grant) => {
       if (grant.milestones && grant.milestones.length > 0) {
         grant.milestones.forEach((milestone) => {
           grantMilestonesWithGrants.push({
             milestone,
             grant,
-          });
-        });
+          })
+        })
       }
-    });
+    })
 
     // Transform project milestones to unified format
-    const unifiedProjectMilestones: UnifiedMilestone[] = projectMilestones.map(
-      (milestone) => ({
-        uid: milestone.uid,
-        chainID: milestone.chainID,
-        refUID: milestone.refUID,
-        type: "milestone",
-        title: milestone.data.title,
-        description: milestone.data.text,
-        completed: !!milestone.completed,
-        createdAt: milestone.createdAt,
-        // Project milestones don't have endsAt, using createdAt for sorting
-        endsAt: undefined,
-        source: {
-          projectMilestone: milestone,
-        },
-      })
-    );
+    const unifiedProjectMilestones: UnifiedMilestone[] = projectMilestones.map((milestone) => ({
+      uid: milestone.uid,
+      chainID: milestone.chainID,
+      refUID: milestone.refUID,
+      type: "milestone",
+      title: milestone.data.title,
+      description: milestone.data.text,
+      completed: !!milestone.completed,
+      createdAt: milestone.createdAt,
+      // Project milestones don't have endsAt, using createdAt for sorting
+      endsAt: undefined,
+      source: {
+        projectMilestone: milestone,
+      },
+    }))
 
     // Transform grant milestones to unified format
-    const unifiedGrantMilestones: UnifiedMilestone[] =
-      grantMilestonesWithGrants.map(({ milestone, grant }) => ({
+    const unifiedGrantMilestones: UnifiedMilestone[] = grantMilestonesWithGrants.map(
+      ({ milestone, grant }) => ({
         uid: milestone.uid,
         chainID: milestone.chainID,
         refUID: milestone.refUID,
@@ -65,19 +63,17 @@ export async function getAllMilestones(
             grant,
           },
         },
-      }));
+      })
+    )
 
     // Combine both types of milestones
-    const allMilestones = [
-      ...unifiedProjectMilestones,
-      ...unifiedGrantMilestones,
-    ];
+    const allMilestones = [...unifiedProjectMilestones, ...unifiedGrantMilestones]
 
-    return allMilestones;
+    return allMilestones
   } catch (error) {
     errorManager("Error fetching all milestones", error, {
       projectId,
-    });
-    return [];
+    })
+    return []
   }
 }

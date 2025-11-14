@@ -1,36 +1,35 @@
-"use client";
+"use client"
 
-import { getTotalProjects } from "@/utilities/karma/totalProjects";
-import { getGrants } from "@/utilities/sdk";
-import { useQuery } from "@tanstack/react-query";
-import { useParams } from "next/navigation";
-import pluralize from "pluralize";
-import { Hex } from "viem";
+import { useQuery } from "@tanstack/react-query"
+import { useParams } from "next/navigation"
+import pluralize from "pluralize"
+import type { Hex } from "viem"
+import { getTotalProjects } from "@/utilities/karma/totalProjects"
+import { getGrants } from "@/utilities/sdk"
 
 interface TotalGrantsCounterProps {
-  overrideGrantsNo?: string;
-  overrideProjectsNo?: string;
+  overrideGrantsNo?: string
+  overrideProjectsNo?: string
 }
 
 export const TotalGrantsCounter = (props: TotalGrantsCounterProps) => {
-  const { overrideGrantsNo, overrideProjectsNo } = props;
-  const params = useParams();
-  const communityId = params.communityId as string;
+  const { overrideGrantsNo, overrideProjectsNo } = props
+  const params = useParams()
+  const communityId = params.communityId as string
   const { data: totalProjects, isLoading } = useQuery({
     queryKey: ["totalProjects", communityId],
     queryFn: () => getTotalProjects(communityId),
     enabled: !!communityId,
-  });
+  })
   const { data: fetchedGrants, isLoading: isLoadingGrants } = useQuery({
     queryKey: ["total-grants", communityId],
-    queryFn: () =>
-      getGrants(communityId as Hex).then((res) => res.pageInfo.totalItems),
+    queryFn: () => getGrants(communityId as Hex).then((res) => res.pageInfo.totalItems),
     initialData: 0,
     enabled: !!communityId,
-  });
+  })
 
-  const grants = overrideGrantsNo || fetchedGrants;
-  const projects = overrideProjectsNo || totalProjects || 0;
+  const grants = overrideGrantsNo || fetchedGrants
+  const projects = overrideProjectsNo || totalProjects || 0
   return (
     <div
       id="total-grants"
@@ -38,9 +37,7 @@ export const TotalGrantsCounter = (props: TotalGrantsCounterProps) => {
     >
       Total Grants {grants ? `(${grants})` : null}
       {` `}
-      {!isLoading
-        ? `across ${projects} ${pluralize("projects", projects)}`
-        : null}
+      {!isLoading ? `across ${projects} ${pluralize("projects", projects)}` : null}
     </div>
-  );
-};
+  )
+}

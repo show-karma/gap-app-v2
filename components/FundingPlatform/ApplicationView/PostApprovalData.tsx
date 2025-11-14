@@ -1,34 +1,31 @@
-"use client";
+"use client"
 
-import { FC, useMemo } from "react";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import { formatDate } from "@/utilities/formatDate";
+import { type FC, useMemo } from "react"
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview"
+import { formatDate } from "@/utilities/formatDate"
 
 interface PostApprovalDataProps {
-  postApprovalData: Record<string, any>;
-  program?: any;
+  postApprovalData: Record<string, any>
+  program?: any
 }
 
-const PostApprovalData: FC<PostApprovalDataProps> = ({
-  postApprovalData,
-  program,
-}) => {
+const PostApprovalData: FC<PostApprovalDataProps> = ({ postApprovalData, program }) => {
   // Create field labels mapping from program's post-approval schema
   const fieldLabels = useMemo(() => {
-    const labels: Record<string, string> = {};
+    const labels: Record<string, string> = {}
     if (program?.postApprovalFormSchema?.fields) {
       program.postApprovalFormSchema.fields.forEach((field: any) => {
         if (field.id && field.label) {
-          labels[field.id] = field.label;
+          labels[field.id] = field.label
         }
-      });
+      })
     }
-    return labels;
-  }, [program]);
+    return labels
+  }, [program])
 
   const renderPostApprovalData = () => {
     if (!postApprovalData || Object.keys(postApprovalData).length === 0) {
-      return <p className="text-gray-500 dark:text-gray-400">No post-approval data available</p>;
+      return <p className="text-gray-500 dark:text-gray-400">No post-approval data available</p>
     }
 
     return (
@@ -40,7 +37,10 @@ const PostApprovalData: FC<PostApprovalDataProps> = ({
             </dt>
             <dd className="text-sm text-gray-900 dark:text-gray-100">
               {Array.isArray(value) ? (
-                value.length > 0 && value[0] !== null && typeof value[0] === "object" && "title" in value[0] ? (
+                value.length > 0 &&
+                value[0] !== null &&
+                typeof value[0] === "object" &&
+                "title" in value[0] ? (
                   <div className="space-y-2">
                     {value.map((milestone: any, index) => (
                       <div
@@ -94,17 +94,15 @@ const PostApprovalData: FC<PostApprovalDataProps> = ({
           </div>
         ))}
       </div>
-    );
-  };
+    )
+  }
 
   return (
     <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">
-        Approval Details
-      </h3>
+      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">Approval Details</h3>
       {renderPostApprovalData()}
     </div>
-  );
-};
+  )
+}
 
-export default PostApprovalData;
+export default PostApprovalData

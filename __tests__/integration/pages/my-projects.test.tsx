@@ -1,23 +1,19 @@
-import { render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom";
-import Page from "@/app/my-projects/page";
+import { render, screen } from "@testing-library/react"
+import "@testing-library/jest-dom"
+import Page from "@/app/my-projects/page"
 
 jest.mock("@/components/Pages/MyProjects", () => {
   return function MockMyProjects() {
-    return (
-      <div data-testid="mock-my-projects">Mocked MyProjects Component</div>
-    );
-  };
-});
+    return <div data-testid="mock-my-projects">Mocked MyProjects Component</div>
+  }
+})
 describe("My Projects Page", () => {
   it("renders the MyProjects component", () => {
-    render(<Page />);
-    const myProjectsComponent = screen.getByTestId("mock-my-projects");
-    expect(myProjectsComponent).toBeInTheDocument();
-    expect(myProjectsComponent).toHaveTextContent(
-      "Mocked MyProjects Component"
-    );
-  });
+    render(<Page />)
+    const myProjectsComponent = screen.getByTestId("mock-my-projects")
+    expect(myProjectsComponent).toBeInTheDocument()
+    expect(myProjectsComponent).toHaveTextContent("Mocked MyProjects Component")
+  })
 
   //   check if the page is fetching data from the indexer
   // it("fetches data from the indexer", async () => {
@@ -35,4 +31,4 @@ describe("My Projects Page", () => {
 
   //   await waitFor(() => expect(result.current.isSuccess).toBe(true));
   // });
-});
+})

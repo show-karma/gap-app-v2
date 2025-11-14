@@ -5,4 +5,4 @@ export const defaultQueryOptions = {
   refetchOnMount: true,
   refetchOnReconnect: false,
   retry: 1,
-};
+}

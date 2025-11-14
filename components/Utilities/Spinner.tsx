@@ -1,8 +1,8 @@
-import { cn } from "@/utilities/tailwind";
-import { FC } from "react";
+import type { FC } from "react"
+import { cn } from "@/utilities/tailwind"
 
 interface SpinnerProps {
-  className?: string;
+  className?: string
 }
 
 export const Spinner: FC<SpinnerProps> = ({ className = "" }) => (
@@ -12,4 +12,4 @@ export const Spinner: FC<SpinnerProps> = ({ className = "" }) => (
       className
     )}
   />
-);
+)

@@ -26,4 +26,4 @@ export const FRONTEND_NEXTJS_ROUTES = [
   "/discord/linking",
   "/dynamic-nft/",
   "/app/badge-template",
-] as const;
+] as const

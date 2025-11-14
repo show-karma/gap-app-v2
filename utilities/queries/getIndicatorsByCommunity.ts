@@ -1,49 +1,49 @@
-import { errorManager } from "@/components/Utilities/errorManager";
-import fetchData from "../fetchData";
-import { INDEXER } from "../indexer";
+import { errorManager } from "@/components/Utilities/errorManager"
+import fetchData from "../fetchData"
+import { INDEXER } from "../indexer"
 
 export interface Indicator {
-  id: string;
-  name: string;
-  description: string;
-  unitOfMeasure: string;
+  id: string
+  name: string
+  description: string
+  unitOfMeasure: string
 }
 
 export interface GroupedIndicators {
-  communityAdminCreated: Indicator[];
-  projectOwnerCreated: Indicator[];
+  communityAdminCreated: Indicator[]
+  projectOwnerCreated: Indicator[]
 }
 
 export const getIndicatorsByCommunity = async (communityId: string) => {
   try {
     const [data, error] = await fetchData(
       `${INDEXER.COMMUNITY.INDICATORS.COMMUNITY.LIST(communityId)}/grouped`
-    );
+    )
     if (error) {
-      throw error;
+      throw error
     }
-    const groupedData = data as GroupedIndicators;
-    return groupedData.communityAdminCreated || [];
+    const groupedData = data as GroupedIndicators
+    return groupedData.communityAdminCreated || []
   } catch (error) {
-    errorManager("Error fetching indicators by community", error);
-    return [];
+    errorManager("Error fetching indicators by community", error)
+    return []
   }
-};
+}
 
 export const getGroupedIndicatorsByCommunity = async (communityId: string) => {
   try {
     const [data, error] = await fetchData(
       `${INDEXER.COMMUNITY.INDICATORS.COMMUNITY.LIST(communityId)}/grouped`
-    );
+    )
     if (error) {
-      throw error;
+      throw error
     }
-    return data as GroupedIndicators;
+    return data as GroupedIndicators
   } catch (error) {
-    errorManager("Error fetching grouped indicators by community", error);
+    errorManager("Error fetching grouped indicators by community", error)
     return {
       communityAdminCreated: [],
-      projectOwnerCreated: []
-    };
+      projectOwnerCreated: [],
+    }
   }
-};
+}

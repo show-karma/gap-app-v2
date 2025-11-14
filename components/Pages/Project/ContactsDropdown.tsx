@@ -1,20 +1,14 @@
-import { FC, useState } from "react";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "cmdk";
-import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/solid";
-import * as Popover from "@radix-ui/react-popover";
-import { Contact } from "@/types/project";
-import { cn } from "@/utilities/tailwind";
+import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/solid"
+import * as Popover from "@radix-ui/react-popover"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk"
+import { type FC, useState } from "react"
+import type { Contact } from "@/types/project"
+import { cn } from "@/utilities/tailwind"
 
 interface ContactsDropdownProps {
-  onSelectFunction: (value: string) => void;
-  value: string;
-  contacts?: Contact[];
+  onSelectFunction: (value: string) => void
+  value: string
+  contacts?: Contact[]
 }
 
 export const ContactsDropdown: FC<ContactsDropdownProps> = ({
@@ -22,14 +16,13 @@ export const ContactsDropdown: FC<ContactsDropdownProps> = ({
   contacts,
   value,
 }) => {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false)
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
       <Popover.Trigger className="w-full justify-between text-black dark:text-white dark:bg-zinc-800 flex flex-row gap-2 px-4 py-2 items-center bg-gray-100 rounded-md">
         {value
-          ? contacts?.find((contact) => contact.id === value)?.name ||
-            "Add new contact"
+          ? contacts?.find((contact) => contact.id === value)?.name || "Add new contact"
           : "Select a contact"}
         <ChevronUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
       </Popover.Trigger>
@@ -44,8 +37,8 @@ export const ContactsDropdown: FC<ContactsDropdownProps> = ({
             <CommandItem
               key={"add"}
               onSelect={() => {
-                onSelectFunction("0");
-                setOpen(false);
+                onSelectFunction("0")
+                setOpen(false)
               }}
               className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
             >
@@ -61,8 +54,8 @@ export const ContactsDropdown: FC<ContactsDropdownProps> = ({
               <CommandItem
                 key={contact.id}
                 onSelect={() => {
-                  setOpen(false);
-                  onSelectFunction(contact.id);
+                  setOpen(false)
+                  onSelectFunction(contact.id)
                 }}
                 className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
               >
@@ -79,5 +72,5 @@ export const ContactsDropdown: FC<ContactsDropdownProps> = ({
         </Command>
       </Popover.Content>
     </Popover.Root>
-  );
-};
+  )
+}

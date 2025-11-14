@@ -1,17 +1,17 @@
-"use client";
-import { ChevronDownIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
-import { FC, ReactNode, useState } from "react";
+"use client"
+import { ChevronDownIcon, ChevronRightIcon } from "@heroicons/react/24/solid"
+import { type FC, type ReactNode, useState } from "react"
 
 interface GrantsAccordionProps {
-  children: ReactNode;
+  children: ReactNode
 }
 
 export const GrantsAccordion: FC<GrantsAccordionProps> = ({ children }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false)
 
   const toggleAccordion = () => {
-    setIsOpen(!isOpen);
-  };
+    setIsOpen(!isOpen)
+  }
   return (
     <div className="rounded-lg border border-[#E3E8EF] w-full  px-3 py-4">
       <button
@@ -28,9 +28,7 @@ export const GrantsAccordion: FC<GrantsAccordionProps> = ({ children }) => {
           )}
         </div>
       </button>
-      {isOpen ? (
-        <div className="mt-4 flex flex-col gap-2">{children}</div>
-      ) : null}
+      {isOpen ? <div className="mt-4 flex flex-col gap-2">{children}</div> : null}
     </div>
-  );
-};
+  )
+}

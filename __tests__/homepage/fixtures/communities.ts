@@ -2,7 +2,7 @@
  * Mock Community Data for Homepage Tests
  */
 
-import type { ChosenCommunity } from "@/utilities/chosenCommunities";
+import type { ChosenCommunity } from "@/utilities/chosenCommunities"
 
 export const mockCommunities: ChosenCommunity[] = [
   {
@@ -50,7 +50,7 @@ export const mockCommunities: ChosenCommunity[] = [
       dark: "https://example.com/starknet.png",
     },
   },
-];
+]
 
 export const createMockCommunity = (overrides: Partial<ChosenCommunity> = {}): ChosenCommunity => ({
   name: overrides.name || "Test Community",
@@ -60,12 +60,11 @@ export const createMockCommunity = (overrides: Partial<ChosenCommunity> = {}): C
     light: "https://example.com/test-community.png",
     dark: "https://example.com/test-community.png",
   },
-});
+})
 
 /**
  * Get a specific number of mock communities
  */
 export const getMockCommunities = (count: number): ChosenCommunity[] => {
-  return mockCommunities.slice(0, count);
-};
-
+  return mockCommunities.slice(0, count)
+}

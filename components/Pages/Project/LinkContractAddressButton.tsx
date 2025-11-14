@@ -1,100 +1,98 @@
-"use client";
+"use client"
 
-import { LinkIcon } from "@heroicons/react/24/outline";
-import type { FC } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Button } from "@/components/Utilities/Button";
-import { useContractAddressPairs } from "@/hooks/useContractAddressPairs";
-import { useContractAddressSave } from "@/hooks/useContractAddressSave";
-import { useContractAddressValidation } from "@/hooks/useContractAddressValidation";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
-import { SUPPORTED_CONTRACT_NETWORKS } from "@/constants/contract-networks";
-import { validateNetworkAddressPair } from "@/schemas/contractAddress";
-import { ContractAddressDialog } from "./ContractAddressDialog";
-import { ContractAddressList } from "./ContractAddressList";
-import type { LinkContractAddressesButtonProps } from "./types";
+import { LinkIcon } from "@heroicons/react/24/outline"
+import type { FC } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { Button } from "@/components/Utilities/Button"
+import { SUPPORTED_CONTRACT_NETWORKS } from "@/constants/contract-networks"
+import { useContractAddressPairs } from "@/hooks/useContractAddressPairs"
+import { useContractAddressSave } from "@/hooks/useContractAddressSave"
+import { useContractAddressValidation } from "@/hooks/useContractAddressValidation"
+import { validateNetworkAddressPair } from "@/schemas/contractAddress"
+import { useOwnerStore, useProjectStore } from "@/store"
+import { useCommunityAdminStore } from "@/store/communityAdmin"
+import { ContractAddressDialog } from "./ContractAddressDialog"
+import { ContractAddressList } from "./ContractAddressList"
+import type { LinkContractAddressesButtonProps } from "./types"
 
-export const LinkContractAddressButton: FC<
-  LinkContractAddressesButtonProps
-> = ({
+export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = ({
   project,
   buttonClassName,
   "data-link-contracts-button": dataAttr,
   buttonElement,
   onClose,
 }) => {
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isCommunityAdmin = useCommunityAdminStore(
-    (state) => state.isCommunityAdmin,
-  );
-  const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
-  const [isOpen, setIsOpen] = useState(false);
+  const isOwner = useOwnerStore((state) => state.isOwner)
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner)
+  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin)
+  const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin
+  const [isOpen, setIsOpen] = useState(false)
 
   // Custom hooks for state and logic management
-  const { pairs, addPair, removePair, updateAddress, updateNetwork } = useContractAddressPairs({ project });
-  const { clearError } = useContractAddressValidation({ projectUid: project.uid });
+  const { pairs, addPair, removePair, updateAddress, updateNetwork } = useContractAddressPairs({
+    project,
+  })
+  const { clearError } = useContractAddressValidation({ projectUid: project.uid })
   const { save, isLoading, error, setError, invalidContracts } = useContractAddressSave({
     projectUid: project.uid,
     onSuccess: () => {
       if (buttonElement === null && onClose) {
-        setIsOpen(false);
-        onClose();
+        setIsOpen(false)
+        onClose()
       }
     },
-  });
+  })
 
   useEffect(() => {
     if (buttonElement === null) {
-      setIsOpen(true);
+      setIsOpen(true)
     }
-  }, [buttonElement]);
+  }, [buttonElement])
 
   const handleAddPair = useCallback(() => {
-    addPair();
-  }, [addPair]);
+    addPair()
+  }, [addPair])
 
   const handleRemovePair = useCallback(
     (index: number) => {
-      const pairToRemove = pairs[index];
-      removePair(index);
-      clearError(pairToRemove);
+      const pairToRemove = pairs[index]
+      removePair(index)
+      clearError(pairToRemove)
     },
-    [pairs, removePair, clearError],
-  );
+    [pairs, removePair, clearError]
+  )
 
   const handleAddressChange = useCallback(
     (index: number, value: string) => {
-      const oldPair = pairs[index];
-      updateAddress(index, value);
-      clearError(oldPair);
-      setError(null);
+      const oldPair = pairs[index]
+      updateAddress(index, value)
+      clearError(oldPair)
+      setError(null)
     },
-    [pairs, updateAddress, clearError, setError],
-  );
+    [pairs, updateAddress, clearError, setError]
+  )
 
   const handleNetworkChange = useCallback(
     (index: number, value: string) => {
-      const oldPair = pairs[index];
-      updateNetwork(index, value);
-      clearError(oldPair);
-      setError(null);
+      const oldPair = pairs[index]
+      updateNetwork(index, value)
+      clearError(oldPair)
+      setError(null)
     },
-    [pairs, updateNetwork, clearError, setError],
-  );
+    [pairs, updateNetwork, clearError, setError]
+  )
 
   const handleSave = useCallback(async () => {
-    await save(pairs);
-  }, [pairs, save]);
+    await save(pairs)
+  }, [pairs, save])
 
   // Define a function to handle dialog close
   const handleClose = useCallback(() => {
-    setIsOpen(false);
+    setIsOpen(false)
     if (buttonElement === null && onClose) {
-      onClose();
+      onClose()
     }
-  }, [buttonElement, onClose]);
+  }, [buttonElement, onClose])
 
   // Check if there are any validation errors or incomplete pairs
   const hasValidationErrors = useMemo(() => {
@@ -102,32 +100,30 @@ export const LinkContractAddressButton: FC<
     const hasFormatErrors = pairs.some((pair) => {
       // Skip empty pairs (they will be filtered out on save)
       if (!pair.address.trim() && !pair.network.trim()) {
-        return false;
+        return false
       }
 
       // Check if either field is missing
       if (!pair.network.trim() || !pair.address.trim()) {
-        return true;
+        return true
       }
 
       // Validate the format
-      const validation = validateNetworkAddressPair(pair.network, pair.address);
-      return !validation.isValid;
-    });
+      const validation = validateNetworkAddressPair(pair.network, pair.address)
+      return !validation.isValid
+    })
 
     // Check if there are backend validation errors
-    const hasBackendErrors = invalidContracts.size > 0;
+    const hasBackendErrors = invalidContracts.size > 0
 
     // Check if all pairs are empty (at least one valid pair required)
-    const allPairsEmpty = pairs.every(
-      (pair) => !pair.address.trim() && !pair.network.trim()
-    );
+    const allPairsEmpty = pairs.every((pair) => !pair.address.trim() && !pair.network.trim())
 
-    return hasFormatErrors || hasBackendErrors || allPairsEmpty;
-  }, [pairs, invalidContracts]);
+    return hasFormatErrors || hasBackendErrors || allPairsEmpty
+  }, [pairs, invalidContracts])
 
   if (!isAuthorized) {
-    return null;
+    return null
   }
 
   return (
@@ -175,5 +171,5 @@ export const LinkContractAddressButton: FC<
         </div>
       </ContractAddressDialog>
     </>
-  );
-};
+  )
+}

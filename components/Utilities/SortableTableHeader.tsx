@@ -1,19 +1,19 @@
-"use client";
+"use client"
 
-import { FC } from "react";
-import { cn } from "@/utilities/tailwind";
-import { ChevronUpIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
+import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline"
+import type { FC } from "react"
+import { cn } from "@/utilities/tailwind"
 
-export type SortDirection = 'asc' | 'desc' | null;
+export type SortDirection = "asc" | "desc" | null
 
 interface ISortableTableHeaderProps {
-  label: string;
-  sortKey?: string;
-  currentSortKey?: string | null;
-  currentSortDirection?: SortDirection;
-  onSort?: (key: string) => void;
-  className?: string;
-  sortable?: boolean;
+  label: string
+  sortKey?: string
+  currentSortKey?: string | null
+  currentSortDirection?: SortDirection
+  onSort?: (key: string) => void
+  className?: string
+  sortable?: boolean
 }
 
 const SortableTableHeader: FC<ISortableTableHeaderProps> = ({
@@ -25,20 +25,22 @@ const SortableTableHeader: FC<ISortableTableHeaderProps> = ({
   className,
   sortable = true,
 }) => {
-  const isActive = sortKey === currentSortKey;
-  
+  const isActive = sortKey === currentSortKey
+
   const handleClick = () => {
     if (sortable && sortKey && onSort) {
-      onSort(sortKey);
+      onSort(sortKey)
     }
-  };
+  }
 
   return (
     <th
       className={cn(
         "px-4 py-3 text-left text-xs font-medium uppercase tracking-wider",
         "text-gray-600 dark:text-gray-400",
-        sortable && sortKey && "cursor-pointer hover:text-gray-900 dark:hover:text-white transition-colors",
+        sortable &&
+          sortKey &&
+          "cursor-pointer hover:text-gray-900 dark:hover:text-white transition-colors",
         isActive && "text-gray-900 dark:text-white",
         className
       )}
@@ -51,7 +53,7 @@ const SortableTableHeader: FC<ISortableTableHeaderProps> = ({
             <ChevronUpIcon
               className={cn(
                 "h-3 w-3 transition-colors",
-                isActive && currentSortDirection === 'asc'
+                isActive && currentSortDirection === "asc"
                   ? "text-blue-600 dark:text-blue-400"
                   : "text-gray-400 dark:text-gray-600"
               )}
@@ -59,7 +61,7 @@ const SortableTableHeader: FC<ISortableTableHeaderProps> = ({
             <ChevronDownIcon
               className={cn(
                 "h-3 w-3 -mt-1 transition-colors",
-                isActive && currentSortDirection === 'desc'
+                isActive && currentSortDirection === "desc"
                   ? "text-blue-600 dark:text-blue-400"
                   : "text-gray-400 dark:text-gray-600"
               )}
@@ -68,7 +70,7 @@ const SortableTableHeader: FC<ISortableTableHeaderProps> = ({
         )}
       </div>
     </th>
-  );
-};
+  )
+}
 
-export default SortableTableHeader;
+export default SortableTableHeader

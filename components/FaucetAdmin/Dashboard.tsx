@@ -1,24 +1,24 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import { Tab } from "@headlessui/react";
-import { cn } from "@/utilities/tailwind";
-import { ChainSettingsManager } from "./ChainSettings/ChainSettingsManager";
-import { WhitelistManager } from "./Whitelist/WhitelistManager";
-import { BlocklistManager } from "./Blocklist/BlocklistManager";
-import { UsageAnalytics } from "./Analytics/UsageAnalytics";
-import { GlobalConfigForm } from "./GlobalConfig/GlobalConfigForm";
-import { ChainBalances } from "./Balances/ChainBalances";
-import { ChainManager } from "./Chains/ChainManager";
+import { Tab } from "@headlessui/react"
 import {
-  CogIcon,
+  BanknotesIcon,
   ChartBarIcon,
+  CogIcon,
+  GlobeAltIcon,
+  LinkIcon,
   ShieldCheckIcon,
   ShieldExclamationIcon,
-  GlobeAltIcon,
-  BanknotesIcon,
-  LinkIcon,
-} from "@heroicons/react/24/outline";
+} from "@heroicons/react/24/outline"
+import { useState } from "react"
+import { cn } from "@/utilities/tailwind"
+import { UsageAnalytics } from "./Analytics/UsageAnalytics"
+import { ChainBalances } from "./Balances/ChainBalances"
+import { BlocklistManager } from "./Blocklist/BlocklistManager"
+import { ChainSettingsManager } from "./ChainSettings/ChainSettingsManager"
+import { ChainManager } from "./Chains/ChainManager"
+import { GlobalConfigForm } from "./GlobalConfig/GlobalConfigForm"
+import { WhitelistManager } from "./Whitelist/WhitelistManager"
 
 const tabs = [
   { name: "Overview", icon: ChartBarIcon },
@@ -28,10 +28,10 @@ const tabs = [
   { name: "Whitelist", icon: ShieldCheckIcon },
   { name: "Blocklist", icon: ShieldExclamationIcon },
   { name: "Balances", icon: BanknotesIcon },
-];
+]
 
 export function FaucetAdminDashboard() {
-  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [selectedIndex, setSelectedIndex] = useState(0)
 
   return (
     <div className="min-h-screen">
@@ -110,5 +110,5 @@ export function FaucetAdminDashboard() {
         </Tab.Group>
       </div>
     </div>
-  );
+  )
 }

@@ -14,5 +14,5 @@ export function Loader() {
         <div className="dark:bg-zinc-900 lg:h-4 my-3" />
       </td>
     </tr>
-  );
+  )
 }

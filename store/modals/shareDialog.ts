@@ -1,18 +1,18 @@
-import { create } from "zustand";
+import { create } from "zustand"
 
 interface ShareDialogState {
-  isOpen: boolean;
-  modalShareText?: string;
-  shareButtonText?: string;
-  modalShareSecondText?: string;
-  shareText: string;
+  isOpen: boolean
+  modalShareText?: string
+  shareButtonText?: string
+  modalShareSecondText?: string
+  shareText: string
   openShareDialog: (params: {
-    modalShareText?: string;
-    modalShareSecondText?: string;
-    shareButtonText?: string;
-    shareText: string;
-  }) => void;
-  closeShareDialog: () => void;
+    modalShareText?: string
+    modalShareSecondText?: string
+    shareButtonText?: string
+    shareText: string
+  }) => void
+  closeShareDialog: () => void
 }
 
 export const useShareDialogStore = create<ShareDialogState>((set) => ({
@@ -42,4 +42,4 @@ export const useShareDialogStore = create<ShareDialogState>((set) => ({
       shareText: "",
       modalShareSecondText: undefined,
     }),
-}));
+}))

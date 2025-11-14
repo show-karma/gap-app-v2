@@ -1,14 +1,14 @@
-import React from "react";
+import type React from "react"
 
-type CheckStatus = boolean | null;
+type CheckStatus = boolean | null
 
 interface StatusCheckItemProps {
-  status: CheckStatus;
-  title: string;
-  successMessage: string;
-  failureMessage: string;
-  pendingMessage: string;
-  icon: string; // Emoji icon for the check type
+  status: CheckStatus
+  title: string
+  successMessage: string
+  failureMessage: string
+  pendingMessage: string
+  icon: string // Emoji icon for the check type
 }
 
 const getStatusConfig = (status: CheckStatus) => {
@@ -18,23 +18,23 @@ const getStatusConfig = (status: CheckStatus) => {
       borderColor: "border-green-200",
       textColor: "text-green-700",
       statusIcon: "✅",
-    };
+    }
   } else if (status === false) {
     return {
       bgColor: "bg-red-50",
       borderColor: "border-red-200",
       textColor: "text-red-700",
       statusIcon: "❌",
-    };
+    }
   } else {
     return {
       bgColor: "bg-gray-50",
       borderColor: "border-gray-200",
       textColor: "text-gray-600",
       statusIcon: "⏳",
-    };
+    }
   }
-};
+}
 
 export const StatusCheckItem: React.FC<StatusCheckItemProps> = ({
   status,
@@ -44,13 +44,13 @@ export const StatusCheckItem: React.FC<StatusCheckItemProps> = ({
   pendingMessage,
   icon,
 }) => {
-  const config = getStatusConfig(status);
+  const config = getStatusConfig(status)
 
   const getMessage = () => {
-    if (status === true) return successMessage;
-    if (status === false) return failureMessage;
-    return pendingMessage;
-  };
+    if (status === true) return successMessage
+    if (status === false) return failureMessage
+    return pendingMessage
+  }
 
   return (
     <div
@@ -64,5 +64,5 @@ export const StatusCheckItem: React.FC<StatusCheckItemProps> = ({
         <div className="text-sm">{getMessage()}</div>
       </div>
     </div>
-  );
-};
+  )
+}

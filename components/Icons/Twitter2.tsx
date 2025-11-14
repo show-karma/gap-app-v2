@@ -1,7 +1,5 @@
-import React from "react";
-
 interface Props {
-  className?: string;
+  className?: string
 }
 
 export const Twitter2Icon = ({ className }: Props) => (
@@ -18,4 +16,4 @@ export const Twitter2Icon = ({ className }: Props) => (
       fill="currentColor"
     />
   </svg>
-);
+)

@@ -1,5 +1,5 @@
-import SuperAdminPage from "@/components/Pages/Admin/SuperAdmin";
+import SuperAdminPage from "@/components/Pages/Admin/SuperAdmin"
 
 export default function SuperAdmin() {
-  return <SuperAdminPage />;
+  return <SuperAdminPage />
 }

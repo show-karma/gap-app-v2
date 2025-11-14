@@ -1,10 +1,10 @@
-import type { FC } from "react";
-import { SimpleSpinner } from "./SimpleSpinner";
-import { cn } from "@/utilities/tailwind";
+import type { FC } from "react"
+import { cn } from "@/utilities/tailwind"
+import { SimpleSpinner } from "./SimpleSpinner"
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  isLoading?: boolean;
-  variant?: "primary" | "secondary" | "custom";
+  isLoading?: boolean
+  variant?: "primary" | "secondary" | "custom"
 }
 
 export const Button: FC<ButtonProps> = ({
@@ -18,7 +18,7 @@ export const Button: FC<ButtonProps> = ({
     primary: "bg-black text-white hover:opacity-75",
     secondary: "bg-white text-black border border-black hover:opacity-75",
     custom: "bg-brand-blue text-white hover:bg-brand-blue/80",
-  };
+  }
 
   return (
     <button
@@ -34,5 +34,5 @@ export const Button: FC<ButtonProps> = ({
       {isLoading ? <SimpleSpinner /> : null}
       {children}
     </button>
-  );
-};
+  )
+}

@@ -1,36 +1,32 @@
-import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown";
-import { Button } from "@/components/Utilities/Button";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { useIndicators } from "@/hooks/useIndicators";
-import {
-  Category,
-  ImpactIndicator,
-  ImpactSegment,
-} from "@/types/impactMeasurement";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
-import { MESSAGES } from "@/utilities/messages";
-import { PAGES } from "@/utilities/pages";
-import { cn } from "@/utilities/tailwind";
-import { ChevronDownIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as Accordion from "@radix-ui/react-accordion";
-import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import Link from "next/link";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { z } from "zod";
-import { DeleteDialog } from "@/components/DeleteDialog";
-import { useAccount } from "wagmi";
+import { ChevronDownIcon, TrashIcon } from "@heroicons/react/24/outline"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as Accordion from "@radix-ui/react-accordion"
+import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
+import Link from "next/link"
+import { useState } from "react"
+import { useForm } from "react-hook-form"
+import toast from "react-hot-toast"
+import { useAccount } from "wagmi"
+import { z } from "zod"
+import { DeleteDialog } from "@/components/DeleteDialog"
+import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown"
+import { Button } from "@/components/Utilities/Button"
+import { errorManager } from "@/components/Utilities/errorManager"
+import { useIndicators } from "@/hooks/useIndicators"
+import type { Category, ImpactIndicator, ImpactSegment } from "@/types/impactMeasurement"
+import fetchData from "@/utilities/fetchData"
+import { INDEXER } from "@/utilities/indexer"
+import { MESSAGES } from "@/utilities/messages"
+import { PAGES } from "@/utilities/pages"
+import { cn } from "@/utilities/tailwind"
 
-const OUTPUT_TYPES = ["output", "outcome"] as const;
-type OutputType = (typeof OUTPUT_TYPES)[number];
+const OUTPUT_TYPES = ["output", "outcome"] as const
+type OutputType = (typeof OUTPUT_TYPES)[number]
 
 const OUTPUT_TYPE_DISPLAY = {
   output: "Activity",
   outcome: "Outcome",
-} as const;
+} as const
 
 const impactSegmentSchema = z.object({
   name: z
@@ -43,41 +39,35 @@ const impactSegmentSchema = z.object({
     .max(500, "Description must be less than 500 characters"),
   type: z.enum(OUTPUT_TYPES),
   impact_indicators: z.array(z.string()).optional(),
-});
+})
 
-type ImpactSegmentFormData = z.infer<typeof impactSegmentSchema>;
+type ImpactSegmentFormData = z.infer<typeof impactSegmentSchema>
 
 interface Output {
-  id: string;
-  name: string;
-  categoryId: string;
-  type: OutputType;
-  description?: string;
-  impact_indicators?: string[]; // Array of indicator IDs
+  id: string
+  name: string
+  categoryId: string
+  type: OutputType
+  description?: string
+  impact_indicators?: string[] // Array of indicator IDs
 }
 
 interface ManageCategoriesOutputsProps {
-  categories: Category[];
-  setCategories: (categories: Category[]) => void;
-  community: ICommunityResponse | undefined;
-  refreshCategories: (isSilent?: boolean) => Promise<any>;
+  categories: Category[]
+  setCategories: (categories: Category[]) => void
+  community: ICommunityResponse | undefined
+  refreshCategories: (isSilent?: boolean) => Promise<any>
 }
 
 interface EditFormProps {
-  segment: ImpactSegment;
-  categoryId: string;
-  onSave: (data: ImpactSegmentFormData) => void;
-  isLoading: boolean;
-  impact_indicators: ImpactIndicator[];
+  segment: ImpactSegment
+  categoryId: string
+  onSave: (data: ImpactSegmentFormData) => void
+  isLoading: boolean
+  impact_indicators: ImpactIndicator[]
 }
 
-const EditForm = ({
-  segment,
-  categoryId,
-  onSave,
-  isLoading,
-  impact_indicators,
-}: EditFormProps) => {
+const EditForm = ({ segment, categoryId, onSave, isLoading, impact_indicators }: EditFormProps) => {
   const {
     register,
     handleSubmit,
@@ -90,46 +80,39 @@ const EditForm = ({
       name: segment.name,
       description: segment.description || "",
       type: segment.type,
-      impact_indicators:
-        segment.impact_indicators?.map((item) => item.id) || [],
+      impact_indicators: segment.impact_indicators?.map((item) => item.id) || [],
     },
     mode: "onChange",
-  });
+  })
 
-  const selectedIndicators = watch("impact_indicators") || [];
+  const selectedIndicators = watch("impact_indicators") || []
 
   const handleIndicatorChange = (value: string) => {
-    const current = selectedIndicators;
+    const current = selectedIndicators
     const updated = current.includes(value)
       ? current.filter((id) => id !== value)
-      : [...current, value];
+      : [...current, value]
     setValue("impact_indicators", updated, {
       shouldValidate: true,
       shouldDirty: true,
-    });
-  };
+    })
+  }
 
   return (
     <form onSubmit={handleSubmit(onSave)} className="space-y-4">
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <label className="text-sm text-gray-600 dark:text-gray-400">
-            Name
-          </label>
+          <label className="text-sm text-gray-600 dark:text-gray-400">Name</label>
           <input
             {...register("name")}
             placeholder="Enter name"
             className="text-sm p-2 border border-gray-200 dark:border-gray-700 rounded-md 
               focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-full"
           />
-          {errors.name && (
-            <p className="text-sm text-red-500">{errors.name.message}</p>
-          )}
+          {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
         </div>
         <div className="flex flex-col gap-2">
-          <label className="text-sm text-gray-600 dark:text-gray-400">
-            Description
-          </label>
+          <label className="text-sm text-gray-600 dark:text-gray-400">Description</label>
           <textarea
             {...register("description")}
             placeholder="Enter description"
@@ -142,9 +125,7 @@ const EditForm = ({
           )}
         </div>
         <div className="flex flex-col gap-2">
-          <label className="text-sm text-gray-600 dark:text-gray-400">
-            Type
-          </label>
+          <label className="text-sm text-gray-600 dark:text-gray-400">Type</label>
           <select
             {...register("type")}
             className="text-sm p-2 border border-gray-200 dark:border-gray-700 rounded-md 
@@ -184,8 +165,8 @@ const EditForm = ({
         </Button>
       </div>
     </form>
-  );
-};
+  )
+}
 
 export const ManageCategoriesOutputs = ({
   categories,
@@ -193,17 +174,15 @@ export const ManageCategoriesOutputs = ({
   community,
   refreshCategories,
 }: ManageCategoriesOutputsProps) => {
-  const { address } = useAccount();
-  const [isSavingOutput, setIsSavingOutput] = useState<string>("");
-  const [isDeletingOutput, setIsDeletingOutput] = useState<string>("");
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
-  const selectedCategory = categories.find(
-    (cat) => cat.id === selectedCategoryId
-  );
+  const { address } = useAccount()
+  const [isSavingOutput, setIsSavingOutput] = useState<string>("")
+  const [isDeletingOutput, setIsDeletingOutput] = useState<string>("")
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("")
+  const selectedCategory = categories.find((cat) => cat.id === selectedCategoryId)
 
   const { data: impact_indicators = [] } = useIndicators({
     communityId: community?.uid || "",
-  });
+  })
 
   const {
     register,
@@ -218,16 +197,13 @@ export const ManageCategoriesOutputs = ({
       type: "output",
       impact_indicators: [],
     },
-  });
+  })
 
-  const selectedIndicators = watch("impact_indicators") || [];
+  const selectedIndicators = watch("impact_indicators") || []
 
-  const handleAddOutput = async (
-    data: ImpactSegmentFormData,
-    categoryId: string
-  ) => {
+  const handleAddOutput = async (data: ImpactSegmentFormData, categoryId: string) => {
     try {
-      setIsSavingOutput("new");
+      setIsSavingOutput("new")
       const [, error] = await fetchData(
         INDEXER.CATEGORIES.IMPACT_SEGMENTS.CREATE_OR_UPDATE(categoryId),
         "POST",
@@ -237,14 +213,14 @@ export const ManageCategoriesOutputs = ({
           description: data.description,
           impactIndicators: data.impact_indicators,
         }
-      );
-      if (error) throw error;
+      )
+      if (error) throw error
 
       refreshCategories(true).then((refreshedCategories) => {
-        setCategories(refreshedCategories);
-      });
-      reset();
-      toast.success(MESSAGES.ACTIVITY_OUTCOME.CREATE.SUCCESS);
+        setCategories(refreshedCategories)
+      })
+      reset()
+      toast.success(MESSAGES.ACTIVITY_OUTCOME.CREATE.SUCCESS)
     } catch (error) {
       errorManager(
         MESSAGES.ACTIVITY_OUTCOME.CREATE.ERROR,
@@ -255,28 +231,28 @@ export const ManageCategoriesOutputs = ({
           address,
         },
         { error: MESSAGES.ACTIVITY_OUTCOME.CREATE.ERROR }
-      );
+      )
     } finally {
-      setIsSavingOutput("");
+      setIsSavingOutput("")
     }
-  };
+  }
 
   const handleRemoveOutput = async (categoryId: string, segmentId: string) => {
     try {
-      setIsDeletingOutput(segmentId);
+      setIsDeletingOutput(segmentId)
       const [, error] = await fetchData(
         INDEXER.CATEGORIES.IMPACT_SEGMENTS.DELETE(categoryId),
         "DELETE",
         {
           segmentId,
         }
-      );
-      if (error) throw error;
+      )
+      if (error) throw error
 
       refreshCategories(true).then((refreshedCategories) => {
-        setCategories(refreshedCategories);
-      });
-      toast.success(MESSAGES.ACTIVITY_OUTCOME.DELETE.SUCCESS);
+        setCategories(refreshedCategories)
+      })
+      toast.success(MESSAGES.ACTIVITY_OUTCOME.DELETE.SUCCESS)
     } catch (error) {
       errorManager(
         MESSAGES.ACTIVITY_OUTCOME.DELETE.ERROR,
@@ -287,27 +263,23 @@ export const ManageCategoriesOutputs = ({
           address,
         },
         { error: MESSAGES.ACTIVITY_OUTCOME.DELETE.ERROR }
-      );
+      )
     } finally {
-      setIsDeletingOutput("");
+      setIsDeletingOutput("")
     }
-  };
+  }
 
   const handleNewIndicatorChange = (value: string) => {
-    const current = selectedIndicators;
+    const current = selectedIndicators
     const updated = current.includes(value)
       ? current.filter((id) => id !== value)
-      : [...current, value];
-    setValue("impact_indicators", updated);
-  };
+      : [...current, value]
+    setValue("impact_indicators", updated)
+  }
 
-  const saveOutput = async (
-    data: ImpactSegmentFormData,
-    categoryId: string,
-    outputId: string
-  ) => {
+  const saveOutput = async (data: ImpactSegmentFormData, categoryId: string, outputId: string) => {
     try {
-      setIsSavingOutput(outputId);
+      setIsSavingOutput(outputId)
       const [, error] = await fetchData(
         INDEXER.CATEGORIES.IMPACT_SEGMENTS.CREATE_OR_UPDATE(categoryId),
         "POST",
@@ -317,14 +289,14 @@ export const ManageCategoriesOutputs = ({
           description: data.description,
           impactIndicators: data.impact_indicators,
         }
-      );
-      if (error) throw error;
+      )
+      if (error) throw error
 
       refreshCategories(true).then((refreshedCategories) => {
-        setCategories(refreshedCategories);
-      });
+        setCategories(refreshedCategories)
+      })
 
-      toast.success(MESSAGES.ACTIVITY_OUTCOME.UPDATE.SUCCESS);
+      toast.success(MESSAGES.ACTIVITY_OUTCOME.UPDATE.SUCCESS)
     } catch (error) {
       errorManager(
         MESSAGES.ACTIVITY_OUTCOME.UPDATE.ERROR,
@@ -336,11 +308,11 @@ export const ManageCategoriesOutputs = ({
           address,
         },
         { error: MESSAGES.ACTIVITY_OUTCOME.UPDATE.ERROR }
-      );
+      )
     } finally {
-      setIsSavingOutput("");
+      setIsSavingOutput("")
     }
-  };
+  }
 
   return (
     <div className="bg-white dark:bg-zinc-800 rounded-lg p-8 border border-gray-100 dark:border-zinc-700 w-full">
@@ -402,10 +374,7 @@ export const ManageCategoriesOutputs = ({
                             <DeleteDialog
                               title={`Are you sure you want to delete ${segment.name}?`}
                               deleteFunction={() =>
-                                handleRemoveOutput(
-                                  selectedCategory.id,
-                                  segment.id
-                                )
+                                handleRemoveOutput(selectedCategory.id, segment.id)
                               }
                               isLoading={isDeletingOutput === segment.id}
                               buttonElement={{
@@ -413,8 +382,7 @@ export const ManageCategoriesOutputs = ({
                                   <TrashIcon
                                     className={cn(
                                       "h-4 w-4",
-                                      isDeletingOutput === segment.id &&
-                                        "animate-pulse opacity-50"
+                                      isDeletingOutput === segment.id && "animate-pulse opacity-50"
                                     )}
                                   />
                                 ),
@@ -430,9 +398,7 @@ export const ManageCategoriesOutputs = ({
                         <EditForm
                           segment={segment}
                           categoryId={selectedCategory.id}
-                          onSave={(data) =>
-                            saveOutput(data, selectedCategory.id, segment.id)
-                          }
+                          onSave={(data) => saveOutput(data, selectedCategory.id, segment.id)}
                           isLoading={isSavingOutput === segment.id}
                           impact_indicators={impact_indicators}
                         />
@@ -462,9 +428,7 @@ export const ManageCategoriesOutputs = ({
                         className="flex flex-col gap-4"
                       >
                         <div className="flex flex-col gap-2">
-                          <label className="text-sm text-gray-600 dark:text-gray-400">
-                            Name
-                          </label>
+                          <label className="text-sm text-gray-600 dark:text-gray-400">Name</label>
                           <input
                             {...register("name")}
                             placeholder="Enter Activity/Outcome name"
@@ -472,9 +436,7 @@ export const ManageCategoriesOutputs = ({
                               focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-full"
                           />
                           {errors.name && (
-                            <p className="text-sm text-red-500">
-                              {errors.name.message}
-                            </p>
+                            <p className="text-sm text-red-500">{errors.name.message}</p>
                           )}
                         </div>
                         <div className="flex flex-col gap-2">
@@ -489,15 +451,11 @@ export const ManageCategoriesOutputs = ({
                               focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-full"
                           />
                           {errors.description && (
-                            <p className="text-sm text-red-500">
-                              {errors.description.message}
-                            </p>
+                            <p className="text-sm text-red-500">{errors.description.message}</p>
                           )}
                         </div>
                         <div className="flex flex-col gap-2">
-                          <label className="text-sm text-gray-600 dark:text-gray-400">
-                            Type
-                          </label>
+                          <label className="text-sm text-gray-600 dark:text-gray-400">Type</label>
                           <select
                             {...register("type")}
                             className="text-sm p-2 border border-gray-200 dark:border-gray-700 rounded-md 
@@ -560,5 +518,5 @@ export const ManageCategoriesOutputs = ({
         </div>
       )}
     </div>
-  );
-};
+  )
+}

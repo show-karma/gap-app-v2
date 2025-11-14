@@ -1,56 +1,45 @@
-"use client";
+"use client"
+import { Dialog, Transition } from "@headlessui/react"
+import { ArrowPathIcon, CheckIcon, ClipboardDocumentIcon } from "@heroicons/react/24/outline"
+import * as Tooltip from "@radix-ui/react-tooltip"
+import { type FC, Fragment, useEffect, useState } from "react"
+import { useAccount } from "wagmi"
 /* eslint-disable @next/next/no-img-element */
-import { Button } from "@/components/Utilities/Button";
-import { useProjectStore } from "@/store";
-import { Dialog, Transition } from "@headlessui/react";
-import * as Tooltip from "@radix-ui/react-tooltip";
-import { FC, Fragment, useEffect, useState } from "react";
-import { useAccount } from "wagmi";
+import { Button } from "@/components/Utilities/Button"
 
-import { Spinner } from "@/components/Utilities/Spinner";
-import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import { useInviteLink, useInviteUrl } from "@/hooks/useInviteLink";
-import {
-  ArrowPathIcon,
-  CheckIcon,
-  ClipboardDocumentIcon,
-} from "@heroicons/react/24/outline";
+import { Spinner } from "@/components/Utilities/Spinner"
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
+import { useInviteLink, useInviteUrl } from "@/hooks/useInviteLink"
+import { useProjectStore } from "@/store"
 
-type InviteMemberDialogProps = {};
+type InviteMemberDialogProps = {}
 
 export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isCopied, setIsCopied] = useState(false);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const project = useProjectStore((state) => state.project);
-  const [, copyToClipboard] = useCopyToClipboard();
+  const [isOpen, setIsOpen] = useState(false)
+  const [isCopied, setIsCopied] = useState(false)
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner)
+  const project = useProjectStore((state) => state.project)
+  const [, copyToClipboard] = useCopyToClipboard()
 
-  const {
-    inviteCode,
-    isLoading,
-    isGenerating,
-    isRevoking,
-    generateCode,
-    revokeCode,
-    isSuccess,
-  } = useInviteLink(project?.uid);
+  const { inviteCode, isLoading, isGenerating, isRevoking, generateCode, revokeCode, isSuccess } =
+    useInviteLink(project?.uid)
 
-  const { address } = useAccount();
-  const code = inviteCode?.hash;
-  const inviteUrl = useInviteUrl(project, code);
+  const { address } = useAccount()
+  const code = inviteCode?.hash
+  const inviteUrl = useInviteUrl(project, code)
   const openModal = () => {
-    setIsOpen(true);
-  };
+    setIsOpen(true)
+  }
 
   const closeModal = () => {
-    setIsOpen(false);
-  };
+    setIsOpen(false)
+  }
 
   useEffect(() => {
     if (isSuccess && !inviteCode && isOpen) {
-      generateCode();
+      generateCode()
     }
-  }, [isSuccess, inviteCode, isOpen, generateCode]);
+  }, [isSuccess, inviteCode, isOpen, generateCode])
 
   return (
     <>
@@ -99,16 +88,15 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
                     {code ? (
                       <div className="flex flex-col gap-2 h-full">
                         <p className="text-zinc-800 dark:text-zinc-100">
-                          Share this invite link with your team member to join
-                          your project.
+                          Share this invite link with your team member to join your project.
                         </p>
                         <div className=" items-center flex flex-row gap-2 h-max max-h-40">
                           <Button
                             className="text-zinc-800 font-normal hover:opacity-75 dark:text-zinc-100 w-full h-full bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 p-2 rounded-md text-wrap break-all text-left"
                             onClick={() => {
                               if (inviteUrl) {
-                                copyToClipboard(inviteUrl);
-                                setIsCopied(true);
+                                copyToClipboard(inviteUrl)
+                                setIsCopied(true)
                               }
                             }}
                           >
@@ -123,8 +111,8 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
                                       className="text-zinc-600 p-2 hover:opacity-75 bg-zinc-200 dark:bg-zinc-700 dark:text-zinc-100 hover:bg-zinc-300 dark:hover:bg-zinc-600 h-full rounded-l-md rounded-r-none"
                                       onClick={() => {
                                         if (inviteUrl) {
-                                          copyToClipboard(inviteUrl);
-                                          setIsCopied(true);
+                                          copyToClipboard(inviteUrl)
+                                          setIsCopied(true)
                                         }
                                       }}
                                     >
@@ -154,9 +142,9 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
                                     <Button
                                       className=" text-blue-900 bg-blue-200 dark:text-blue-200 dark:bg-blue-900 p-2 hover:opacity-75 hover:bg-blue-300 dark:hover:bg-blue-800 rounded-r-md rounded-l-none h-full"
                                       onClick={() => {
-                                        setIsCopied(false);
+                                        setIsCopied(false)
                                         if (inviteCode?.id) {
-                                          revokeCode(inviteCode.id);
+                                          revokeCode(inviteCode.id)
                                         }
                                       }}
                                     >
@@ -179,9 +167,7 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
                         </div>
                       </div>
                     ) : isLoading || isGenerating ? (
-                      <p className="text-black dark:text-zinc-200 text-base">
-                        Generating code...
-                      </p>
+                      <p className="text-black dark:text-zinc-200 text-base">Generating code...</p>
                     ) : (
                       <Spinner />
                     )}
@@ -193,5 +179,5 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
         </Dialog>
       </Transition>
     </>
-  );
-};
+  )
+}

@@ -1,5 +1,5 @@
 export interface FormField {
-  id: string;
+  id: string
   type:
     | "text"
     | "textarea"
@@ -10,58 +10,58 @@ export interface FormField {
     | "email"
     | "url"
     | "date"
-    | "milestone";
-  label: string;
-  placeholder?: string;
-  required?: boolean;
-  private?: boolean; // Whether this field should be hidden from public responses
-  options?: string[]; // for select, radio, checkbox
+    | "milestone"
+  label: string
+  placeholder?: string
+  required?: boolean
+  private?: boolean // Whether this field should be hidden from public responses
+  options?: string[] // for select, radio, checkbox
   validation?: {
-    min?: number;
-    max?: number;
-    pattern?: string;
-    message?: string;
-    maxMilestones?: number;
-    minMilestones?: number;
-  };
-  description?: string;
+    min?: number
+    max?: number
+    pattern?: string
+    message?: string
+    maxMilestones?: number
+    minMilestones?: number
+  }
+  description?: string
   // AI evaluation configuration
   aiEvaluation?: {
-    triggerOnChange?: boolean; // Whether to trigger AI evaluation when this field changes
-    includeInEvaluation?: boolean; // Whether to include this field in AI evaluation context
-  };
+    triggerOnChange?: boolean // Whether to trigger AI evaluation when this field changes
+    includeInEvaluation?: boolean // Whether to include this field in AI evaluation context
+  }
 }
 
 export interface FormSchema {
-  id: string;
-  title: string;
-  description?: string;
-  fields: FormField[];
+  id: string
+  title: string
+  description?: string
+  fields: FormField[]
   settings: {
-    submitButtonText: string;
-    confirmationMessage: string;
-    privateApplications?: boolean; // Whether this program has private applications
-    applicationDeadline?: string; // Application deadline date
-    donationRound?: boolean; // Whether this is a donation round
-    successPageContent?: string; // Markdown content for "What happens next?" section on success page
-    showCommentsOnPublicPage?: boolean; // Whether to show comments on public application pages
-  };
+    submitButtonText: string
+    confirmationMessage: string
+    privateApplications?: boolean // Whether this program has private applications
+    applicationDeadline?: string // Application deadline date
+    donationRound?: boolean // Whether this is a donation round
+    successPageContent?: string // Markdown content for "What happens next?" section on success page
+    showCommentsOnPublicPage?: boolean // Whether to show comments on public application pages
+  }
   // AI configuration for the entire form
   aiConfig?: {
-    systemPrompt?: string;
-    detailedPrompt?: string;
-    aiModel?: string;
-    enableRealTimeEvaluation?: boolean;
-    langfusePromptId?: string;
-  };
+    systemPrompt?: string
+    detailedPrompt?: string
+    aiModel?: string
+    enableRealTimeEvaluation?: boolean
+    langfusePromptId?: string
+  }
   // Email addresses that should receive post-approval notifications (only for post-approval forms)
-  emailNotifications?: string[];
+  emailNotifications?: string[]
 }
 
 export interface FormSubmission {
-  id: string;
-  formId: string;
-  data: Record<string, any>;
-  submittedAt: string;
-  submitterAddress?: string;
+  id: string
+  formId: string
+  data: Record<string, any>
+  submittedAt: string
+  submitterAddress?: string
 }

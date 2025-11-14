@@ -2,13 +2,14 @@
  * Mock statistics data for funders page tests
  */
 
-import type { Statistic } from "@/src/features/funders/components/numbers-section";
+import type { Statistic } from "@/src/features/funders/components/numbers-section"
 
 export const mockStatistics: Statistic[] = [
   {
     number: "30+",
     title: "Ecosystems supported",
-    description: "From Optimism to Celo, we've helped leading ecosystems run high-impact funding programs",
+    description:
+      "From Optimism to Celo, we've helped leading ecosystems run high-impact funding programs",
   },
   {
     number: "4k",
@@ -23,9 +24,10 @@ export const mockStatistics: Statistic[] = [
   {
     number: "4x faster",
     title: "Program Launch Time",
-    description: "Ecosystems go from idea to live funding in under 48 hours with our modular infrastructure",
+    description:
+      "Ecosystems go from idea to live funding in under 48 hours with our modular infrastructure",
   },
-];
+]
 
 /**
  * Factory function to create a mock statistic with custom properties
@@ -36,6 +38,5 @@ export function createMockStatistic(overrides: Partial<Statistic> = {}): Statist
     title: "Test Metric",
     description: "A test statistic for unit testing.",
     ...overrides,
-  };
+  }
 }
-

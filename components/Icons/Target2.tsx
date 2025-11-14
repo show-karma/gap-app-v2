@@ -1,6 +1,6 @@
 interface Props {
-  className?: string;
-  style?: React.CSSProperties;
+  className?: string
+  style?: React.CSSProperties
 }
 
 export const Target2Icon = ({ className, style }: Props) => {
@@ -19,5 +19,5 @@ export const Target2Icon = ({ className, style }: Props) => {
         fill="currentColor"
       />
     </svg>
-  );
-};
+  )
+}

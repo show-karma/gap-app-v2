@@ -1,53 +1,53 @@
-"use client";
-import { DonationExecutionState } from "@/hooks/useDonationTransfer";
+"use client"
+import type { DonationExecutionState } from "@/hooks/useDonationTransfer"
 
 interface DonationApprovalStatusProps {
-  executionState: DonationExecutionState;
+  executionState: DonationExecutionState
 }
 
 export function DonationApprovalStatus({ executionState }: DonationApprovalStatusProps) {
   if (executionState.phase === "completed" || executionState.phase === "error") {
-    return null;
+    return null
   }
 
   const getPhaseIcon = (phase: string) => {
     switch (phase) {
       case "checking":
-        return "🔍";
+        return "🔍"
       case "approving":
-        return "⏳";
+        return "⏳"
       case "donating":
-        return "💸";
+        return "💸"
       default:
-        return "⚡";
+        return "⚡"
     }
-  };
+  }
 
   const getPhaseTitle = (phase: string) => {
     switch (phase) {
       case "checking":
-        return "Checking Token Approvals";
+        return "Checking Token Approvals"
       case "approving":
-        return "Approving Tokens";
+        return "Approving Tokens"
       case "donating":
-        return "Submitting Donations";
+        return "Submitting Donations"
       default:
-        return "Processing";
+        return "Processing"
     }
-  };
+  }
 
   const getPhaseDescription = (phase: string) => {
     switch (phase) {
       case "checking":
-        return "Verifying if tokens need approval for Permit2...";
+        return "Verifying if tokens need approval for Permit2..."
       case "approving":
-        return "Approving tokens for batch transfer. Please confirm transactions in your wallet.";
+        return "Approving tokens for batch transfer. Please confirm transactions in your wallet."
       case "donating":
-        return "Submitting batch donation transaction. Please confirm in your wallet.";
+        return "Submitting batch donation transaction. Please confirm in your wallet."
       default:
-        return "Processing your donation...";
+        return "Processing your donation..."
     }
-  };
+  }
 
   return (
     <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
@@ -68,13 +68,15 @@ export function DonationApprovalStatus({ executionState }: DonationApprovalStatu
                   <span className="text-blue-800 dark:text-blue-200">
                     {approval.tokenSymbol} approval
                   </span>
-                  <span className={`font-medium ${
-                    approval.status === "confirmed"
-                      ? "text-green-600 dark:text-green-400"
-                      : approval.status === "failed"
-                      ? "text-red-600 dark:text-red-400"
-                      : "text-blue-600 dark:text-blue-400"
-                  }`}>
+                  <span
+                    className={`font-medium ${
+                      approval.status === "confirmed"
+                        ? "text-green-600 dark:text-green-400"
+                        : approval.status === "failed"
+                          ? "text-red-600 dark:text-red-400"
+                          : "text-blue-600 dark:text-blue-400"
+                    }`}
+                  >
                     {approval.status === "confirmed" && "✅ Confirmed"}
                     {approval.status === "failed" && "❌ Failed"}
                     {approval.status === "pending" && "⏳ Pending"}
@@ -101,5 +103,5 @@ export function DonationApprovalStatus({ executionState }: DonationApprovalStatu
         </div>
       </div>
     </div>
-  );
+  )
 }

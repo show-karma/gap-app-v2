@@ -1,13 +1,13 @@
 export interface ISession {
-  publicAddress: string;
+  publicAddress: string
   /**
    * Timestamp indicating when the session was created, in Unix milliseconds.
    */
-  iat: number;
+  iat: number
   /**
    * Timestamp indicating when the session should expire, in Unix milliseconds.
    */
-  exp: number;
+  exp: number
 }
 
-export type IExpirationStatus = "expired" | "active" | "grace";
+export type IExpirationStatus = "expired" | "active" | "grace"

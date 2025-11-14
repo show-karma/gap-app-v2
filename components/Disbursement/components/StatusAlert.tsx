@@ -1,14 +1,14 @@
-import React from "react";
+import type React from "react"
 
-type AlertType = "error" | "warning" | "info" | "success";
+type AlertType = "error" | "warning" | "info" | "success"
 
 interface StatusAlertProps {
-  type: AlertType;
-  title: string;
-  message: string;
-  onDismiss?: () => void;
-  dismissText?: string;
-  children?: React.ReactNode;
+  type: AlertType
+  title: string
+  message: string
+  onDismiss?: () => void
+  dismissText?: string
+  children?: React.ReactNode
 }
 
 const alertStyles = {
@@ -40,10 +40,10 @@ const alertStyles = {
     message: "text-green-700",
     dismiss: "text-green-800 hover:text-green-900",
   },
-};
+}
 
 const AlertIcon = ({ type }: { type: AlertType }) => {
-  const iconClass = `h-6 w-6 ${alertStyles[type].icon}`;
+  const iconClass = `h-6 w-6 ${alertStyles[type].icon}`
 
   if (type === "error") {
     return (
@@ -54,7 +54,7 @@ const AlertIcon = ({ type }: { type: AlertType }) => {
           clipRule="evenodd"
         />
       </svg>
-    );
+    )
   }
 
   if (type === "warning") {
@@ -66,17 +66,12 @@ const AlertIcon = ({ type }: { type: AlertType }) => {
           clipRule="evenodd"
         />
       </svg>
-    );
+    )
   }
 
   // Default info/success icon
   return (
-    <svg
-      className={iconClass}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
+    <svg className={iconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -84,8 +79,8 @@ const AlertIcon = ({ type }: { type: AlertType }) => {
         d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
       />
     </svg>
-  );
-};
+  )
+}
 
 export const StatusAlert: React.FC<StatusAlertProps> = ({
   type,
@@ -95,7 +90,7 @@ export const StatusAlert: React.FC<StatusAlertProps> = ({
   dismissText = "Dismiss",
   children,
 }) => {
-  const styles = alertStyles[type];
+  const styles = alertStyles[type]
 
   return (
     <div className={`rounded-xl border p-6 shadow-sm ${styles.container}`}>
@@ -121,5 +116,5 @@ export const StatusAlert: React.FC<StatusAlertProps> = ({
         </div>
       </div>
     </div>
-  );
-};
+  )
+}

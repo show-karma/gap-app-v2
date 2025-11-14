@@ -1,19 +1,19 @@
-"use client";
+"use client"
+import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/solid"
+import * as Popover from "@radix-ui/react-popover"
+import { Command, CommandGroup, CommandItem } from "cmdk"
 /* eslint-disable @next/next/no-img-element */
-import { FC, useState } from "react";
-import { Command, CommandGroup, CommandItem } from "cmdk";
-import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/solid";
-import * as Popover from "@radix-ui/react-popover";
-import { cn } from "@/utilities/tailwind";
-import { chainImgDictionary } from "@/utilities/chainImgDictionary";
-import { Chain } from "viem";
+import { type FC, useState } from "react"
+import type { Chain } from "viem"
+import { chainImgDictionary } from "@/utilities/chainImgDictionary"
+import { cn } from "@/utilities/tailwind"
 
 interface NetworkDropdownProps {
-  onSelectFunction: (value: number) => void;
-  previousValue?: number;
-  networks: Chain[];
-  onNetworkChange?: (value: number) => Promise<void>;
-  isChangingNetwork?: boolean;
+  onSelectFunction: (value: number) => void
+  previousValue?: number
+  networks: Chain[]
+  onNetworkChange?: (value: number) => Promise<void>
+  isChangingNetwork?: boolean
 }
 
 export const NetworkDropdown: FC<NetworkDropdownProps> = ({
@@ -23,13 +23,13 @@ export const NetworkDropdown: FC<NetworkDropdownProps> = ({
   onNetworkChange,
   isChangingNetwork = false,
 }) => {
-  const [open, setOpen] = useState(false);
-  const [value, setValue] = useState<number | undefined>(previousValue);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [open, setOpen] = useState(false)
+  const [value, setValue] = useState<number | undefined>(previousValue)
+  const [isProcessing, setIsProcessing] = useState(false)
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
-      <Popover.Trigger 
+      <Popover.Trigger
         className="min-w-[240px] max-w-full w-max  justify-between text-black dark:text-white dark:bg-zinc-800 flex flex-row gap-2 px-4 py-2 items-center bg-gray-100 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
         disabled={isProcessing || isChangingNetwork}
       >
@@ -61,26 +61,26 @@ export const NetworkDropdown: FC<NetworkDropdownProps> = ({
               <CommandItem
                 key={network.id}
                 onSelect={async () => {
-                  setIsProcessing(true);
-                  setValue(network.id);
-                  setOpen(false);
-                  
+                  setIsProcessing(true)
+                  setValue(network.id)
+                  setOpen(false)
+
                   // If onNetworkChange is provided, call it first (for chain switching)
                   if (onNetworkChange) {
                     try {
-                      await onNetworkChange(network.id);
+                      await onNetworkChange(network.id)
                     } catch (error) {
-                      console.error("Failed to change network:", error);
+                      console.error("Failed to change network:", error)
                       // Revert the value if chain switch failed
-                      setValue(previousValue);
-                      setIsProcessing(false);
-                      return;
+                      setValue(previousValue)
+                      setIsProcessing(false)
+                      return
                     }
                   }
-                  
+
                   // Call the original onSelectFunction to update form value
-                  onSelectFunction(network.id);
-                  setIsProcessing(false);
+                  onSelectFunction(network.id)
+                  setIsProcessing(false)
                 }}
                 className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
                 disabled={isProcessing || isChangingNetwork}
@@ -100,9 +100,7 @@ export const NetworkDropdown: FC<NetworkDropdownProps> = ({
                     />
                   </div>
                   <div className="flex flex-row gap-1  items-center justify-start  flex-1">
-                    <p className="line-clamp-2 text-sm max-w-full break-normal">
-                      {network.name}
-                    </p>
+                    <p className="line-clamp-2 text-sm max-w-full break-normal">{network.name}</p>
                   </div>
                 </div>
               </CommandItem>
@@ -111,5 +109,5 @@ export const NetworkDropdown: FC<NetworkDropdownProps> = ({
         </Command>
       </Popover.Content>
     </Popover.Root>
-  );
-};
+  )
+}

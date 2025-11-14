@@ -1,40 +1,40 @@
-"use client";
-import { TransactionStatus } from "./TransactionStatus";
-import { ValidationErrors } from "./ValidationErrors";
-import type { SupportedToken } from "@/constants/supportedTokens";
+"use client"
+import type { SupportedToken } from "@/constants/supportedTokens"
+import { TransactionStatus } from "./TransactionStatus"
+import { ValidationErrors } from "./ValidationErrors"
 
 interface TransferResult {
-  projectId: string;
-  status: "pending" | "success" | "error";
-  hash?: string;
-  error?: string;
+  projectId: string
+  status: "pending" | "success" | "error"
+  hash?: string
+  error?: string
 }
 
 interface CartItem {
-  uid: string;
-  title: string;
+  uid: string
+  title: string
 }
 
 interface DonationExecutorProps {
-  transfers: TransferResult[];
-  items: CartItem[];
-  selectedTokens: Record<string, SupportedToken>;
-  validationErrors: string[];
-  missingPayouts: string[];
-  isExecuting: boolean;
-  isSwitching: boolean;
-  isFetchingPayouts: boolean;
-  isFetchingCrossChainBalances: boolean;
-  isConnected: boolean;
-  address?: string;
-  canProceed: boolean;
-  isCurrentNetworkSupported: boolean;
+  transfers: TransferResult[]
+  items: CartItem[]
+  selectedTokens: Record<string, SupportedToken>
+  validationErrors: string[]
+  missingPayouts: string[]
+  isExecuting: boolean
+  isSwitching: boolean
+  isFetchingPayouts: boolean
+  isFetchingCrossChainBalances: boolean
+  isConnected: boolean
+  address?: string
+  canProceed: boolean
+  isCurrentNetworkSupported: boolean
   executionState: {
-    phase: string;
-    approvalProgress?: number;
-  };
-  executeButtonLabel: string;
-  onExecute: () => void;
+    phase: string
+    approvalProgress?: number
+  }
+  executeButtonLabel: string
+  onExecute: () => void
 }
 
 export function DonationExecutor({
@@ -62,20 +62,20 @@ export function DonationExecutor({
     isFetchingPayouts ||
     isFetchingCrossChainBalances ||
     !isConnected ||
-    !address;
+    !address
 
   // Generate descriptive aria-label for the execute button
   const getAriaLabel = () => {
-    if (isExecuting) return "Processing donations, please wait";
-    if (!isConnected) return "Connect wallet to proceed with donations";
-    if (!address) return "Wallet address required to proceed";
-    if (!isCurrentNetworkSupported) return "Switch to a supported network to proceed";
-    if (isSwitching) return "Network is switching, please wait";
-    if (isFetchingPayouts) return "Loading payout addresses, please wait";
-    if (isFetchingCrossChainBalances) return "Loading token balances, please wait";
-    if (!canProceed) return "Select tokens and amounts before proceeding";
-    return "Review and send donations to selected projects";
-  };
+    if (isExecuting) return "Processing donations, please wait"
+    if (!isConnected) return "Connect wallet to proceed with donations"
+    if (!address) return "Wallet address required to proceed"
+    if (!isCurrentNetworkSupported) return "Switch to a supported network to proceed"
+    if (isSwitching) return "Network is switching, please wait"
+    if (isFetchingPayouts) return "Loading payout addresses, please wait"
+    if (isFetchingCrossChainBalances) return "Loading token balances, please wait"
+    if (!canProceed) return "Select tokens and amounts before proceeding"
+    return "Review and send donations to selected projects"
+  }
 
   return (
     <>
@@ -89,10 +89,11 @@ export function DonationExecutor({
             data-testid="execute-button"
             type="button"
             disabled={isDisabled}
-            className={`inline-flex h-14 items-center justify-center rounded-full px-8 text-sm font-semibold tracking-wide transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 ${!isDisabled
+            className={`inline-flex h-14 items-center justify-center rounded-full px-8 text-sm font-semibold tracking-wide transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 ${
+              !isDisabled
                 ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl transform hover:scale-[1.02]"
                 : "bg-gray-200 text-gray-500 dark:bg-gray-800 dark:text-gray-400 cursor-not-allowed"
-              }`}
+            }`}
             onClick={onExecute}
             aria-label={getAriaLabel()}
             aria-busy={isExecuting}
@@ -145,8 +146,8 @@ export function DonationExecutor({
               <path d="M12 8h.01" />
             </svg>
             <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
-              You&apos;ll approve each token once per network and then confirm the batch
-              transfer. Multi-chain donations are processed securely across networks.
+              You&apos;ll approve each token once per network and then confirm the batch transfer.
+              Multi-chain donations are processed securely across networks.
             </p>
           </div>
         </div>
@@ -158,11 +159,7 @@ export function DonationExecutor({
         items={items}
       />
 
-      <TransactionStatus
-        transfers={transfers}
-        items={items}
-        selectedTokens={selectedTokens}
-      />
+      <TransactionStatus transfers={transfers} items={items} selectedTokens={selectedTokens} />
     </>
-  );
+  )
 }

@@ -1,26 +1,26 @@
-"use client";
+"use client"
 
-import { useMemo } from "react";
-import { Button } from "@/components/Utilities/Button";
-import { CheckCircleIcon } from "@heroicons/react/20/solid";
-import type { GrantMilestoneWithCompletion } from "@/services/milestones";
-import { shortAddress } from "@/utilities/shortAddress";
-import { formatDate } from "@/utilities/formatDate";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { CheckCircleIcon } from "@heroicons/react/20/solid"
+import { useMemo } from "react"
+import { Button } from "@/components/Utilities/Button"
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview"
+import type { GrantMilestoneWithCompletion } from "@/services/milestones"
+import { formatDate } from "@/utilities/formatDate"
+import { shortAddress } from "@/utilities/shortAddress"
 
 interface MilestoneCardProps {
-  milestone: GrantMilestoneWithCompletion;
-  index: number;
-  verifyingMilestoneId: string | null;
-  verificationComment: string;
-  isVerifying: boolean;
-  isSyncing: boolean;
-  canVerifyMilestones: boolean;
-  onVerifyClick: (uid: string) => void;
-  onCancelVerification: () => void;
-  onVerificationCommentChange: (comment: string) => void;
-  onSubmitVerification: (milestone: GrantMilestoneWithCompletion) => void;
-  onSyncVerification: (milestone: GrantMilestoneWithCompletion) => void;
+  milestone: GrantMilestoneWithCompletion
+  index: number
+  verifyingMilestoneId: string | null
+  verificationComment: string
+  isVerifying: boolean
+  isSyncing: boolean
+  canVerifyMilestones: boolean
+  onVerifyClick: (uid: string) => void
+  onCancelVerification: () => void
+  onVerificationCommentChange: (comment: string) => void
+  onSubmitVerification: (milestone: GrantMilestoneWithCompletion) => void
+  onSyncVerification: (milestone: GrantMilestoneWithCompletion) => void
 }
 
 export function MilestoneCard({
@@ -41,41 +41,50 @@ export function MilestoneCard({
   const useOnChainData = useMemo(
     () => !!milestone.completionDetails?.description,
     [milestone.completionDetails?.description]
-  );
+  )
 
   const completionData = useMemo(
-    () => useOnChainData ? milestone.completionDetails : milestone.fundingApplicationCompletion,
+    () => (useOnChainData ? milestone.completionDetails : milestone.fundingApplicationCompletion),
     [useOnChainData, milestone.completionDetails, milestone.fundingApplicationCompletion]
-  );
+  )
 
-  const hasCompletion = useMemo(() => completionData !== null, [completionData]);
-  const isVerified = useMemo(() => milestone.verificationDetails !== null, [milestone.verificationDetails]);
-  const hasOnChainCompletion = useMemo(() => milestone.completionDetails !== null, [milestone.completionDetails]);
-  const hasFundingAppCompletion = useMemo(() => milestone.fundingApplicationCompletion !== null, [milestone.fundingApplicationCompletion]);
+  const hasCompletion = useMemo(() => completionData !== null, [completionData])
+  const isVerified = useMemo(
+    () => milestone.verificationDetails !== null,
+    [milestone.verificationDetails]
+  )
+  const hasOnChainCompletion = useMemo(
+    () => milestone.completionDetails !== null,
+    [milestone.completionDetails]
+  )
+  const hasFundingAppCompletion = useMemo(
+    () => milestone.fundingApplicationCompletion !== null,
+    [milestone.fundingApplicationCompletion]
+  )
 
   // Memoized status tree-decision
   const statusInfo = useMemo(() => {
     if (isVerified) {
       return {
         status: "Verified",
-        statusColor: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-      };
+        statusColor: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
+      }
     } else if (hasOnChainCompletion) {
       return {
         status: "Pending Verification",
-        statusColor: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
-      };
+        statusColor: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
+      }
     } else if (hasFundingAppCompletion) {
       return {
         status: "Pending Completion and Verification",
-        statusColor: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300"
-      };
+        statusColor: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
+      }
     }
     return {
       status: "Not Started",
-      statusColor: "bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300"
-    };
-  }, [isVerified, hasOnChainCompletion, hasFundingAppCompletion]);
+      statusColor: "bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300",
+    }
+  }, [isVerified, hasOnChainCompletion, hasFundingAppCompletion])
 
   return (
     <div
@@ -83,9 +92,7 @@ export function MilestoneCard({
       className="border border-gray-200 dark:border-zinc-700 rounded-lg p-4 hover:border-blue-500 dark:hover:border-blue-400 transition-colors"
     >
       <div className="flex items-start justify-between mb-2">
-        <h3 className="text-lg font-medium text-black dark:text-white">
-          {milestone.title}
-        </h3>
+        <h3 className="text-lg font-medium text-black dark:text-white">{milestone.title}</h3>
       </div>
 
       <div className="text-gray-600 dark:text-gray-400 text-sm mb-3">
@@ -101,13 +108,16 @@ export function MilestoneCard({
             </p>
             <div className="text-sm text-gray-700 dark:text-gray-300">
               <MarkdownPreview
-                source={useOnChainData
-                  ? milestone.completionDetails!.description
-                  : milestone.fundingApplicationCompletion!.completionText}
+                source={
+                  useOnChainData
+                    ? milestone.completionDetails!.description
+                    : milestone.fundingApplicationCompletion!.completionText
+                }
               />
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-              Submitted: {formatDate(
+              Submitted:{" "}
+              {formatDate(
                 useOnChainData
                   ? milestone.completionDetails!.completedAt
                   : milestone.fundingApplicationCompletion!.createdAt
@@ -135,24 +145,28 @@ export function MilestoneCard({
               </div>
               {/* Show sync button if off-chain data is not synced */}
               {/* Only milestone reviewers, admins, and contract owners can sync */}
-              {canVerifyMilestones && milestone.fundingApplicationCompletion && !milestone.fundingApplicationCompletion.isVerified && (
-                <div className="mt-2">
-                  <Button
-                    onClick={() => onSyncVerification(milestone)}
-                    className="flex items-center gap-2 px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700"
-                    disabled={isSyncing}
-                    isLoading={isSyncing}
-                  >
-                    <CheckCircleIcon className="w-4 h-4" />
-                    Sync Verification to Off-chain
-                  </Button>
-                </div>
-              )}
+              {canVerifyMilestones &&
+                milestone.fundingApplicationCompletion &&
+                !milestone.fundingApplicationCompletion.isVerified && (
+                  <div className="mt-2">
+                    <Button
+                      onClick={() => onSyncVerification(milestone)}
+                      className="flex items-center gap-2 px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700"
+                      disabled={isSyncing}
+                      isLoading={isSyncing}
+                    >
+                      <CheckCircleIcon className="w-4 h-4" />
+                      Sync Verification to Off-chain
+                    </Button>
+                  </div>
+                )}
             </div>
           ) : (
             /* Show Verify Button for all non-verified milestones with completion (on-chain or off-chain) */
             /* Only milestone reviewers, admins, and contract owners can verify */
-            canVerifyMilestones && hasCompletion && !isVerified && (
+            canVerifyMilestones &&
+            hasCompletion &&
+            !isVerified && (
               <div className="mb-3">
                 {verifyingMilestoneId === milestone.uid ? (
                   /* Verification Form */
@@ -203,13 +217,12 @@ export function MilestoneCard({
 
       <div className="flex items-center justify-between">
         <div className="text-sm text-gray-500 dark:text-gray-400">
-          <span className="font-medium">Due:</span>{" "}
-          {formatDate(milestone.dueDate)}
+          <span className="font-medium">Due:</span> {formatDate(milestone.dueDate)}
         </div>
         <span className={`text-xs px-3 py-1 rounded-full font-medium ${statusInfo.statusColor}`}>
           {statusInfo.status}
         </span>
       </div>
     </div>
-  );
+  )
 }

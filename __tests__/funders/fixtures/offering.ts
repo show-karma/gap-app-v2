@@ -2,7 +2,7 @@
  * Mock offering/pricing tier data for funders page tests
  */
 
-import type { PricingTier } from "@/src/features/funders/components/offering-section";
+import type { PricingTier } from "@/src/features/funders/components/offering-section"
 
 export const mockPricingTiers: PricingTier[] = [
   {
@@ -39,5 +39,4 @@ export const mockPricingTiers: PricingTier[] = [
     ],
     mostPopular: false,
   },
-];
-
+]

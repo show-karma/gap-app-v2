@@ -1,154 +1,154 @@
-import fetchData from "../fetchData";
+import fetchData from "../fetchData"
 
 // Types
 export interface FaucetEligibilityResponse {
-  eligible: boolean;
-  reason?: string;
-  gasUnits?: string;
-  gasPrice?: string;
-  totalAmount?: string;
-  faucetAddress: string;
-  nextAvailableTime?: Date;
-  waitTimeSeconds?: number;
-  currentBalance?: string;
+  eligible: boolean
+  reason?: string
+  gasUnits?: string
+  gasPrice?: string
+  totalAmount?: string
+  faucetAddress: string
+  nextAvailableTime?: Date
+  waitTimeSeconds?: number
+  currentBalance?: string
 }
 
 export interface ChainResponse {
-    chainId: number
-    createdAt: string
-    decimals: number
-    explorerUrl?: number
-    id: string
-    metadata: any
-    name: string
-    rpcUrl?: string
-    symbol: string
-    updatedAt: string
+  chainId: number
+  createdAt: string
+  decimals: number
+  explorerUrl?: number
+  id: string
+  metadata: any
+  name: string
+  rpcUrl?: string
+  symbol: string
+  updatedAt: string
 }
 export interface FaucetRequestResponse {
-  requestId: string;
-  eligible: boolean;
-  gasUnits: string;
-  gasPrice: string;
-  totalAmount: string;
-  expiresAt: Date;
-  faucetAddress: string;
+  requestId: string
+  eligible: boolean
+  gasUnits: string
+  gasPrice: string
+  totalAmount: string
+  expiresAt: Date
+  faucetAddress: string
 }
 
 export interface FaucetClaimResponse {
-  requestId: string;
-  transactionHash: string;
-  status: string;
-  blockNumber?: string;
-  gasUsed?: string;
+  requestId: string
+  transactionHash: string
+  status: string
+  blockNumber?: string
+  gasUsed?: string
 }
 
 export interface FaucetRequest {
-  id: string;
-  chainId: number;
-  walletAddress: string;
-  contractAddress: string;
-  amount: string;
-  gasUnits: string;
-  gasPrice: string;
-  transactionHash?: string;
-  status: string;
-  claimedAt?: Date;
-  expiresAt: Date;
-  errorMessage?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  id: string
+  chainId: number
+  walletAddress: string
+  contractAddress: string
+  amount: string
+  gasUnits: string
+  gasPrice: string
+  transactionHash?: string
+  status: string
+  claimedAt?: Date
+  expiresAt: Date
+  errorMessage?: string
+  createdAt: Date
+  updatedAt: Date
 }
 
 export interface PaginatedResponse {
-    totalCount: number,
-    page: number,
-    limit: number,
-    totalPages: number,
-    nextPage: number | null,
-    prevPage: number | null,
-    hasNextPage: boolean,
-    hasPrevPage: boolean
+  totalCount: number
+  page: number
+  limit: number
+  totalPages: number
+  nextPage: number | null
+  prevPage: number | null
+  hasNextPage: boolean
+  hasPrevPage: boolean
 }
 export interface FaucetRequests {
-    payload: FaucetRequest[]
-    pagination: PaginatedResponse
+  payload: FaucetRequest[]
+  pagination: PaginatedResponse
 }
 
 export interface WhitelistedPaginatedResponse {
-    data: WhitelistedContract[]
-    pagination: PaginatedResponse
+  data: WhitelistedContract[]
+  pagination: PaginatedResponse
 }
 
 export interface BlockedPaginatedResponse {
-    data: BlockedAddress[]
-    pagination: PaginatedResponse
+  data: BlockedAddress[]
+  pagination: PaginatedResponse
 }
 
 export interface FaucetBalance {
-  chainId: number;
-  chainName: string;
-  balance: string;
-  symbol: string;
-  isLow: boolean;
-  threshold: string;
+  chainId: number
+  chainName: string
+  balance: string
+  symbol: string
+  isLow: boolean
+  threshold: string
 }
 
 export interface FaucetStats {
-  totalRequests: number;
-  successfulClaims: number;
-  failedClaims: number;
-  totalAmountDistributed: string;
-  uniqueAddresses: number;
+  totalRequests: number
+  successfulClaims: number
+  failedClaims: number
+  totalAmountDistributed: string
+  uniqueAddresses: number
 }
 
 export interface FaucetTransaction {
-  to: string;
-  data?: string;
-  value?: string;
+  to: string
+  data?: string
+  value?: string
 }
 
 export interface FaucetChainSettings {
-  id?: string;
-  chainId: number;
-  maxAmountPerRequest: string;
-  rateLimitHours?: number;
-  bufferPercentage?: number;
-  lowBalanceThreshold: string;
-  enabled: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
+  id?: string
+  chainId: number
+  maxAmountPerRequest: string
+  rateLimitHours?: number
+  bufferPercentage?: number
+  lowBalanceThreshold: string
+  enabled: boolean
+  createdAt?: Date
+  updatedAt?: Date
 }
 
 export interface FaucetGlobalConfig {
-  id?: string;
-  defaultRateLimitHours: number;
-  defaultBufferPercentage: number;
-  maxChainsPerRequest: number;
-  globalEnabled: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
+  id?: string
+  defaultRateLimitHours: number
+  defaultBufferPercentage: number
+  maxChainsPerRequest: number
+  globalEnabled: boolean
+  createdAt?: Date
+  updatedAt?: Date
 }
 
 export interface WhitelistedContract {
-  id?: string;
-  chainId: number;
-  contractAddress: string;
-  name: string;
-  description?: string;
-  maxGasLimit?: string;
-  enabled: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
+  id?: string
+  chainId: number
+  contractAddress: string
+  name: string
+  description?: string
+  maxGasLimit?: string
+  enabled: boolean
+  createdAt?: Date
+  updatedAt?: Date
 }
 
 export interface BlockedAddress {
-  id?: string;
-  address: string;
-  chainId?: number;
-  reason: string;
-  expiresAt?: Date;
-  blockedAt?: Date;
+  id?: string
+  address: string
+  chainId?: number
+  reason: string
+  expiresAt?: Date
+  blockedAt?: Date
 }
 
 class FaucetService {
@@ -169,18 +169,18 @@ class FaucetService {
       "POST",
       {
         walletAddress,
-        transaction
+        transaction,
       },
       {},
       {},
       false
-    );
+    )
 
     if (error) {
-      throw new Error(`Failed to check eligibility: ${error}`);
+      throw new Error(`Failed to check eligibility: ${error}`)
     }
 
-    return data;
+    return data
   }
 
   /**
@@ -197,18 +197,18 @@ class FaucetService {
       {
         chainId,
         walletAddress,
-        transaction
+        transaction,
       },
       {},
       {},
       false
-    );
+    )
 
     if (error) {
-      throw new Error(`Failed to create faucet request: ${error}`);
+      throw new Error(`Failed to create faucet request: ${error}`)
     }
 
-    return data;
+    return data
   }
 
   /**
@@ -219,18 +219,18 @@ class FaucetService {
       `/v2/faucet/claim`,
       "POST",
       {
-        requestId
+        requestId,
       },
       {},
       {},
       false
-    );
+    )
 
     if (error) {
-      throw new Error(`Failed to claim faucet`);
+      throw new Error(`Failed to claim faucet`)
     }
 
-    return data;
+    return data
   }
 
   /**
@@ -245,27 +245,20 @@ class FaucetService {
     const params: any = {
       address,
       page,
-      limit
-    };
-    
-    if (chainId !== undefined) {
-      params.chainId = chainId;
+      limit,
     }
 
-    const [data, error] = await fetchData(
-      `/v2/faucet/history`,
-      "GET",
-      {},
-      params,
-      {},
-      false
-    );
+    if (chainId !== undefined) {
+      params.chainId = chainId
+    }
+
+    const [data, error] = await fetchData(`/v2/faucet/history`, "GET", {}, params, {}, false)
 
     if (error) {
-      throw new Error(`Failed to get history: ${error}`);
+      throw new Error(`Failed to get history: ${error}`)
     }
 
-    return data;
+    return data
   }
 
   /**
@@ -273,67 +266,46 @@ class FaucetService {
    */
   async getStats(chainId?: number, days: number = 7): Promise<FaucetStats> {
     const params: any = {
-      days
-    };
-    
-    if (chainId !== undefined) {
-      params.chainId = chainId;
+      days,
     }
 
-    const [data, error] = await fetchData(
-      `/v2/faucet/stats`,
-      "GET",
-      {},
-      params,
-      {},
-      false
-    );
+    if (chainId !== undefined) {
+      params.chainId = chainId
+    }
+
+    const [data, error] = await fetchData(`/v2/faucet/stats`, "GET", {}, params, {}, false)
 
     if (error) {
-      throw new Error(`Failed to get stats: ${error}`);
+      throw new Error(`Failed to get stats: ${error}`)
     }
 
-    return data;
+    return data
   }
 
   /**
    * Get faucet balance for a specific chain
    */
   async getBalance(chainId: number): Promise<FaucetBalance> {
-    const [data, error] = await fetchData(
-      `/v2/faucet/balance/${chainId}`,
-      "GET",
-      {},
-      {},
-      {},
-      false
-    );
+    const [data, error] = await fetchData(`/v2/faucet/balance/${chainId}`, "GET", {}, {}, {}, false)
 
     if (error) {
-      throw new Error(`Failed to get balance: ${error}`);
+      throw new Error(`Failed to get balance: ${error}`)
     }
 
-    return data;
+    return data
   }
 
   /**
    * Get faucet balances for all chains
    */
   async getAllBalances(): Promise<{ balances: FaucetBalance[] }> {
-    const [data, error] = await fetchData(
-      `/v2/faucet/balances`,
-      "GET",
-      {},
-      {},
-      {},
-      false
-    );
+    const [data, error] = await fetchData(`/v2/faucet/balances`, "GET", {}, {}, {}, false)
 
     if (error) {
-      throw new Error(`Failed to get all balances: ${error}`);
+      throw new Error(`Failed to get all balances: ${error}`)
     }
 
-    return data;
+    return data
   }
 
   /**
@@ -347,17 +319,17 @@ class FaucetService {
       {},
       {},
       false
-    );
+    )
 
     if (error) {
       // 404 means request not found
       if (error.includes("404") || error.includes("Not Found")) {
-        return null;
+        return null
       }
-      throw new Error(`Failed to get request: ${error}`);
+      throw new Error(`Failed to get request: ${error}`)
     }
 
-    return data;
+    return data
   }
 
   // ============================================
@@ -368,28 +340,21 @@ class FaucetService {
    * Get faucet configuration (admin only)
    */
   async getConfiguration(): Promise<{
-      configurations: {
-          global: FaucetGlobalConfig;
-          chains: FaucetChainSettings[];
-      }
-    faucetAddress: string;
-      "totalChains": string; enabledChains: string;
-
+    configurations: {
+      global: FaucetGlobalConfig
+      chains: FaucetChainSettings[]
+    }
+    faucetAddress: string
+    totalChains: string
+    enabledChains: string
   }> {
-    const [data, error] = await fetchData(
-      `/v2/admin/faucet/config`,
-      "GET",
-      {},
-      {},
-      {},
-      true
-    );
+    const [data, error] = await fetchData(`/v2/admin/faucet/config`, "GET", {}, {}, {}, true)
 
     if (error) {
-      throw new Error(`Failed to get configuration: ${error}`);
+      throw new Error(`Failed to get configuration: ${error}`)
     }
 
-    return data;
+    return data
   }
 
   /**
@@ -406,19 +371,17 @@ class FaucetService {
       {},
       {},
       true
-    );
+    )
 
     if (error) {
-      throw new Error(`Failed to update chain settings: ${error}`);
+      throw new Error(`Failed to update chain settings: ${error}`)
     }
   }
 
   /**
    * Create faucet settings for a chain (admin only)
    */
-  async createChainSettings(
-    settings: FaucetChainSettings
-  ): Promise<FaucetChainSettings> {
+  async createChainSettings(settings: FaucetChainSettings): Promise<FaucetChainSettings> {
     const [data, error] = await fetchData(
       `/v2/admin/faucet/settings`,
       "POST",
@@ -426,13 +389,13 @@ class FaucetService {
       {},
       {},
       true
-    );
+    )
 
     if (error) {
-      throw new Error(`Failed to create chain settings: ${error}`);
+      throw new Error(`Failed to create chain settings: ${error}`)
     }
 
-    return data;
+    return data
   }
 
   /**
@@ -446,19 +409,17 @@ class FaucetService {
       {},
       {},
       true
-    );
+    )
 
     if (error) {
-      throw new Error(`Failed to delete chain settings: ${error}`);
+      throw new Error(`Failed to delete chain settings: ${error}`)
     }
   }
 
   /**
    * Update global faucet configuration (admin only)
    */
-  async updateGlobalConfig(
-    config: Partial<FaucetGlobalConfig>
-  ): Promise<void> {
+  async updateGlobalConfig(config: Partial<FaucetGlobalConfig>): Promise<void> {
     const [_, error] = await fetchData(
       `/v2/admin/faucet/global-config`,
       "PUT",
@@ -466,10 +427,10 @@ class FaucetService {
       {},
       {},
       true
-    );
+    )
 
     if (error) {
-      throw new Error(`Failed to update global config: ${error}`);
+      throw new Error(`Failed to update global config: ${error}`)
     }
   }
 
@@ -477,33 +438,23 @@ class FaucetService {
    * Add contract to whitelist (admin only)
    */
   async whitelistContract(contract: {
-    chainId: number;
-    contractAddress: string;
-    name: string;
-    description?: string;
-    maxGasLimit?: string;
+    chainId: number
+    contractAddress: string
+    name: string
+    description?: string
+    maxGasLimit?: string
   }): Promise<void> {
-    const [_, error] = await fetchData(
-      `/v2/admin/faucet/whitelist`,
-      "POST",
-      contract,
-      {},
-      {},
-      true
-    );
+    const [_, error] = await fetchData(`/v2/admin/faucet/whitelist`, "POST", contract, {}, {}, true)
 
     if (error) {
-      throw new Error(`Failed to whitelist contract: ${error}`);
+      throw new Error(`Failed to whitelist contract: ${error}`)
     }
   }
 
   /**
    * Remove contract from whitelist (admin only)
    */
-  async removeFromWhitelist(
-    chainId: number,
-    contractAddress: string
-  ): Promise<void> {
+  async removeFromWhitelist(chainId: number, contractAddress: string): Promise<void> {
     const [_, error] = await fetchData(
       `/v2/admin/faucet/whitelist/${chainId}/${contractAddress}`,
       "DELETE",
@@ -511,38 +462,29 @@ class FaucetService {
       {},
       {},
       true
-    );
+    )
 
     if (error) {
-      throw new Error(`Failed to remove from whitelist: ${error}`);
+      throw new Error(`Failed to remove from whitelist: ${error}`)
     }
   }
 
   /**
    * Get whitelisted contracts (admin only)
    */
-  async getWhitelistedContracts(
-    chainId?: number
-  ): Promise<WhitelistedPaginatedResponse> {
-    const params: any = {};
+  async getWhitelistedContracts(chainId?: number): Promise<WhitelistedPaginatedResponse> {
+    const params: any = {}
     if (chainId !== undefined) {
-      params.chainId = chainId;
+      params.chainId = chainId
     }
 
-    const [data, error] = await fetchData(
-      `/v2/admin/faucet/whitelist`,
-      "GET",
-      {},
-      params,
-      {},
-      true
-    );
+    const [data, error] = await fetchData(`/v2/admin/faucet/whitelist`, "GET", {}, params, {}, true)
 
     if (error) {
-      throw new Error(`Failed to get whitelisted contracts: ${error}`);
+      throw new Error(`Failed to get whitelisted contracts: ${error}`)
     }
 
-    return data;
+    return data
   }
 
   /**
@@ -556,28 +498,21 @@ class FaucetService {
   ): Promise<void> {
     const payload: any = {
       address,
-      reason
-    };
-    
-    if (chainId !== undefined) {
-      payload.chainId = chainId;
-    }
-    
-    if (expiresAt) {
-      payload.expiresAt = expiresAt;
+      reason,
     }
 
-    const [_, error] = await fetchData(
-      `/v2/admin/faucet/block`,
-      "POST",
-      payload,
-      {},
-      {},
-      true
-    );
+    if (chainId !== undefined) {
+      payload.chainId = chainId
+    }
+
+    if (expiresAt) {
+      payload.expiresAt = expiresAt
+    }
+
+    const [_, error] = await fetchData(`/v2/admin/faucet/block`, "POST", payload, {}, {}, true)
 
     if (error) {
-      throw new Error(`Failed to block address: ${error}`);
+      throw new Error(`Failed to block address: ${error}`)
     }
   }
 
@@ -585,9 +520,9 @@ class FaucetService {
    * Unblock an address (admin only)
    */
   async unblockAddress(address: string, chainId?: number): Promise<void> {
-    const params: any = {};
+    const params: any = {}
     if (chainId !== undefined) {
-      params.chainId = chainId;
+      params.chainId = chainId
     }
 
     const [_, error] = await fetchData(
@@ -597,10 +532,10 @@ class FaucetService {
       params,
       {},
       true
-    );
+    )
 
     if (error) {
-      throw new Error(`Failed to unblock address: ${error}`);
+      throw new Error(`Failed to unblock address: ${error}`)
     }
   }
 
@@ -608,20 +543,13 @@ class FaucetService {
    * Get blocked addresses (admin only)
    */
   async getBlockedAddresses(): Promise<BlockedPaginatedResponse> {
-    const [data, error] = await fetchData(
-      `/v2/admin/faucet/blocked`,
-      "GET",
-      {},
-      {},
-      {},
-      true
-    );
+    const [data, error] = await fetchData(`/v2/admin/faucet/blocked`, "GET", {}, {}, {}, true)
 
     if (error) {
-      throw new Error(`Failed to get blocked addresses: ${error}`);
+      throw new Error(`Failed to get blocked addresses: ${error}`)
     }
 
-    return data;
+    return data
   }
 
   /**
@@ -635,10 +563,10 @@ class FaucetService {
       {},
       {},
       true
-    );
+    )
 
     if (error) {
-      throw new Error(`Failed to emergency stop: ${error}`);
+      throw new Error(`Failed to emergency stop: ${error}`)
     }
   }
 
@@ -653,10 +581,10 @@ class FaucetService {
       {},
       {},
       true
-    );
+    )
 
     if (error) {
-      throw new Error(`Failed to resume operations: ${error}`);
+      throw new Error(`Failed to resume operations: ${error}`)
     }
   }
 
@@ -664,58 +592,51 @@ class FaucetService {
    * Expire old pending requests (admin only)
    */
   async expireOldRequests(): Promise<{ count: number }> {
-    const [data, error] = await fetchData(
-      `/v2/admin/faucet/expire`,
-      "POST",
-      {},
-      {},
-      {},
-      true
-    );
+    const [data, error] = await fetchData(`/v2/admin/faucet/expire`, "POST", {}, {}, {}, true)
 
     if (error) {
-      throw new Error(`Failed to expire old requests: ${error}`);
+      throw new Error(`Failed to expire old requests: ${error}`)
     }
 
-    return data;
+    return data
   }
 
   /**
    * Get pending requests (admin only)
    */
   async getRequests({
-      page=1,
-      limit=10,
-      status,
-      offset=0,
-      chainId
-                    }: {
-      page: number,
-          limit: number,
-        status?: 'PENDING' | "FAILED" | "CLAIMED" | "EXPIRED",
-      offset?: number,
-      chainId?: number
-}): Promise<FaucetRequests> {
+    page = 1,
+    limit = 10,
+    status,
+    offset = 0,
+    chainId,
+  }: {
+    page: number
+    limit: number
+    status?: "PENDING" | "FAILED" | "CLAIMED" | "EXPIRED"
+    offset?: number
+    chainId?: number
+  }): Promise<FaucetRequests> {
     const [data, error] = await fetchData(
       `/v2/admin/faucet/requests`,
       "GET",
       {},
       {
-          page,
-          limit,
-          status,
-          offset,
-          chainId
+        page,
+        limit,
+        status,
+        offset,
+        chainId,
       },
       {},
       true
-    );
+    )
 
     if (error) {
-      throw new Error(`Failed to get requests: ${error}`);
+      throw new Error(`Failed to get requests: ${error}`)
     }
 
-    return data;
+    return data
   }
 
   // ============================================
@@ -725,70 +646,49 @@ class FaucetService {
   /**
    * Get all chains (admin only)
    */
-  async getAllChains(): Promise<{ chains: ChainResponse[]}> {
-    const [data, error] = await fetchData(
-      `/v2/admin/chains`,
-      "GET",
-      {},
-      {},
-      {},
-      true
-    );
+  async getAllChains(): Promise<{ chains: ChainResponse[] }> {
+    const [data, error] = await fetchData(`/v2/admin/chains`, "GET", {}, {}, {}, true)
 
     if (error) {
-      throw new Error(`Failed to get chains: ${error}`);
+      throw new Error(`Failed to get chains: ${error}`)
     }
 
-    return data;
+    return data
   }
 
   /**
    * Get a specific chain by ID (admin only)
    */
   async getChain(chainId: number): Promise<ChainResponse> {
-    const [data, error] = await fetchData(
-      `/v2/admin/chains/${chainId}`,
-      "GET",
-      {},
-      {},
-      {},
-      true
-    );
+    const [data, error] = await fetchData(`/v2/admin/chains/${chainId}`, "GET", {}, {}, {}, true)
 
     if (error) {
-      throw new Error(`Failed to get chain: ${error}`);
+      throw new Error(`Failed to get chain: ${error}`)
     }
 
-    return data;
+    return data
   }
 
   /**
    * Create a new chain configuration (admin only)
    */
   async createChain(chainData: {
-    chainId: number;
-    name: string;
-    symbol: string;
-    rpcUrl?: string;
-    explorerUrl?: string;
-    decimals: number;
-    enabled?: boolean;
-    metadata?: Record<string, any>;
+    chainId: number
+    name: string
+    symbol: string
+    rpcUrl?: string
+    explorerUrl?: string
+    decimals: number
+    enabled?: boolean
+    metadata?: Record<string, any>
   }): Promise<ChainResponse> {
-    const [data, error] = await fetchData(
-      `/v2/admin/chains`,
-      "POST",
-      chainData,
-      {},
-      {},
-      true
-    );
+    const [data, error] = await fetchData(`/v2/admin/chains`, "POST", chainData, {}, {}, true)
 
     if (error) {
-      throw new Error(`Failed to create chain: ${error}`);
+      throw new Error(`Failed to create chain: ${error}`)
     }
 
-    return data;
+    return data
   }
 
   /**
@@ -797,13 +697,13 @@ class FaucetService {
   async updateChain(
     chainId: number,
     updates: {
-      name?: string;
-      symbol?: string;
-      rpcUrl?: string;
-      explorerUrl?: string;
-      decimals?: number;
-      enabled?: boolean;
-      metadata?: Record<string, any>;
+      name?: string
+      symbol?: string
+      rpcUrl?: string
+      explorerUrl?: string
+      decimals?: number
+      enabled?: boolean
+      metadata?: Record<string, any>
     }
   ): Promise<any> {
     const [data, error] = await fetchData(
@@ -813,32 +713,25 @@ class FaucetService {
       {},
       {},
       true
-    );
+    )
 
     if (error) {
-      throw new Error(`Failed to update chain: ${error}`);
+      throw new Error(`Failed to update chain: ${error}`)
     }
 
-    return data;
+    return data
   }
 
   /**
    * Delete a chain configuration (admin only)
    */
   async deleteChain(chainId: number): Promise<void> {
-    const [_, error] = await fetchData(
-      `/v2/admin/chains/${chainId}`,
-      "DELETE",
-      {},
-      {},
-      {},
-      true
-    );
+    const [_, error] = await fetchData(`/v2/admin/chains/${chainId}`, "DELETE", {}, {}, {}, true)
 
     if (error) {
-      throw new Error(`Failed to delete chain: ${error}`);
+      throw new Error(`Failed to delete chain: ${error}`)
     }
   }
 }
 
-export const faucetService = new FaucetService();
+export const faucetService = new FaucetService()

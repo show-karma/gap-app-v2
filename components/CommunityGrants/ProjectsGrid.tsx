@@ -1,32 +1,32 @@
-"use client";
-import { ProjectV2 } from "@/types/community";
-import { projectV2ToGrant } from "@/utilities/adapters/projectV2ToGrant";
-import { AutoSizer, Grid } from "react-virtualized";
-import { GrantCard } from "../GrantCard";
-import useMediaQuery from "@/hooks/useMediaQuery";
+"use client"
+import { AutoSizer, Grid } from "react-virtualized"
+import useMediaQuery from "@/hooks/useMediaQuery"
+import type { ProjectV2 } from "@/types/community"
+import { projectV2ToGrant } from "@/utilities/adapters/projectV2ToGrant"
+import { GrantCard } from "../GrantCard"
 
 interface ProjectsGridProps {
-  projects: ProjectV2[];
+  projects: ProjectV2[]
 }
 
 export function ProjectsGrid({ projects }: ProjectsGridProps) {
-  const MIN_CARD_WIDTH = 360;
-  const MAX_COLUMNS_SMALL = 6;
-  const MAX_COLUMNS_LARGE = 3;
-  const gutterSize = 20;
-  const isLargeViewport = useMediaQuery("(min-width: 80rem)");
+  const MIN_CARD_WIDTH = 360
+  const MAX_COLUMNS_SMALL = 6
+  const MAX_COLUMNS_LARGE = 3
+  const gutterSize = 20
+  const isLargeViewport = useMediaQuery("(min-width: 80rem)")
 
   return (
     <AutoSizer disableHeight>
       {({ width }) => {
-        const calculatedColumns = Math.floor(width / MIN_CARD_WIDTH);
+        const calculatedColumns = Math.floor(width / MIN_CARD_WIDTH)
         const columnCounter = calculatedColumns
           ? isLargeViewport
             ? MAX_COLUMNS_LARGE
             : Math.min(calculatedColumns, MAX_COLUMNS_SMALL)
-          : 1;
-        const columnWidth = Math.floor(width / columnCounter);
-        const height = Math.ceil(projects.length / columnCounter) * 360;
+          : 1
+        const columnWidth = Math.floor(width / columnCounter)
+        const height = Math.ceil(projects.length / columnCounter) * 360
 
         return (
           <Grid
@@ -38,7 +38,7 @@ export function ProjectsGrid({ projects }: ProjectsGridProps) {
             columnWidth={columnWidth}
             columnCount={columnCounter}
             cellRenderer={({ columnIndex, key, rowIndex, style }) => {
-              const project = projects[rowIndex * columnCounter + columnIndex];
+              const project = projects[rowIndex * columnCounter + columnIndex]
               return (
                 <div
                   key={key}
@@ -65,11 +65,11 @@ export function ProjectsGrid({ projects }: ProjectsGridProps) {
                     </div>
                   )}
                 </div>
-              );
+              )
             }}
           />
-        );
+        )
       }}
     </AutoSizer>
-  );
+  )
 }

@@ -1,7 +1,7 @@
-import { Skeleton } from "@/components/Utilities/Skeleton";
-import { PROJECT_NAME } from "@/constants/brand";
-import { layoutTheme } from "@/src/helper/theme";
-import { cn } from "@/utilities/tailwind";
+import { Skeleton } from "@/components/Utilities/Skeleton"
+import { PROJECT_NAME } from "@/constants/brand"
+import { layoutTheme } from "@/src/helper/theme"
+import { cn } from "@/utilities/tailwind"
 
 const pickColor = (index: number) => {
   const cardColors = [
@@ -15,9 +15,9 @@ const pickColor = (index: number) => {
     "#EE46BC",
     "#EEAAFD",
     "#67E3F9",
-  ];
-  return cardColors[index % cardColors.length];
-};
+  ]
+  return cardColors[index % cardColors.length]
+}
 
 const ProjectCardSkeleton = ({ index }: { index: number }) => {
   return (
@@ -51,33 +51,38 @@ const ProjectCardSkeleton = ({ index }: { index: number }) => {
         <Skeleton className="flex h-6 w-full items-center justify-start rounded-full px-3 py-1 max-2xl:px-2" />
       </div>
     </div>
-  );
-};
+  )
+}
 
 export const ProjectCardListSkeleton = () => {
-  const cardArray = Array.from({ length: 12 }, (_, index) => index);
+  const cardArray = Array.from({ length: 12 }, (_, index) => index)
   return (
     <div className="grid grid-cols-4 w-full gap-4 max-[1600px]:grid-cols-4 max-[1500px]:grid-cols-3 max-[1100px]:grid-cols-2 max-sm:grid-cols-1">
       {cardArray.map((_, index) => (
         <ProjectCardSkeleton key={index} index={index} />
       ))}
     </div>
-  );
-};
+  )
+}
 export const FilterByProgramsSkeleton = () => {
-  const programsArray = Array.from({ length: 6 }, (_, index) => index);
+  const programsArray = Array.from({ length: 6 }, (_, index) => index)
   return (
     <div className="flex flex-col gap-2 w-full">
       {programsArray.map((_, index) => (
         <Skeleton key={index} className={"h-7 w-full"} />
       ))}
     </div>
-  );
-};
+  )
+}
 
 export const NewProjectsLoading = () => {
   return (
-    <div className={cn(layoutTheme.padding, "flex w-full max-w-full flex-row justify-start gap-6 pb-7 pt-5 max-lg:flex-col")}>
+    <div
+      className={cn(
+        layoutTheme.padding,
+        "flex w-full max-w-full flex-row justify-start gap-6 pb-7 pt-5 max-lg:flex-col"
+      )}
+    >
       <div className="flex w-full max-w-full flex-col justify-start items-center gap-6 mt-4">
         <div className="flex flex-row justify-between items-center gap-3 w-full flex-wrap">
           <h1 className="text-2xl font-bold text-black dark:text-white">
@@ -92,5 +97,5 @@ export const NewProjectsLoading = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}

@@ -1,9 +1,5 @@
-export const applicationsQuery = (
-    chainId: number,
-    applicationId: string,
-    roundId: string
-) => ({
-    query: `
+export const applicationsQuery = (chainId: number, applicationId: string, roundId: string) => ({
+  query: `
 query Application(
 $chainId: Int!
 $applicationId: String!
@@ -46,9 +42,9 @@ applications(
 }
 }
 `,
-    variables: {
-        chainId: chainId,
-        applicationId: applicationId,
-        roundId: roundId,
-    }
+  variables: {
+    chainId: chainId,
+    applicationId: applicationId,
+    roundId: roundId,
+  },
 })

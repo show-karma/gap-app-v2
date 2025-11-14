@@ -1,40 +1,41 @@
-"use client";
+"use client"
 
-import React, { Component, ReactNode } from 'react';
-import { ExclamationTriangleIcon } from '@heroicons/react/24/solid';
+import { ExclamationTriangleIcon } from "@heroicons/react/24/solid"
+import type React from "react"
+import { Component, type ReactNode } from "react"
 
 interface ErrorBoundaryState {
-  hasError: boolean;
-  error: Error | null;
+  hasError: boolean
+  error: Error | null
 }
 
 interface ErrorBoundaryProps {
-  children: ReactNode;
-  fallback?: ReactNode;
+  children: ReactNode
+  fallback?: ReactNode
 }
 
 class FormBuilderErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
-    super(props);
-    this.state = { hasError: false, error: null };
+    super(props)
+    this.state = { hasError: false, error: null }
   }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { hasError: true, error };
+    return { hasError: true, error }
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('FormBuilder Error:', error, errorInfo);
+    console.error("FormBuilder Error:", error, errorInfo)
   }
 
   handleReset = () => {
-    this.setState({ hasError: false, error: null });
-  };
+    this.setState({ hasError: false, error: null })
+  }
 
   render() {
     if (this.state.hasError) {
       if (this.props.fallback) {
-        return this.props.fallback;
+        return this.props.fallback
       }
 
       return (
@@ -60,7 +61,7 @@ class FormBuilderErrorBoundary extends Component<ErrorBoundaryProps, ErrorBounda
               Refresh Page
             </button>
           </div>
-          {process.env.NODE_ENV === 'development' && this.state.error && (
+          {process.env.NODE_ENV === "development" && this.state.error && (
             <details className="mt-4 w-full max-w-2xl">
               <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700">
                 Error details (development only)
@@ -72,11 +73,11 @@ class FormBuilderErrorBoundary extends Component<ErrorBoundaryProps, ErrorBounda
             </details>
           )}
         </div>
-      );
+      )
     }
 
-    return this.props.children;
+    return this.props.children
   }
 }
 
-export default FormBuilderErrorBoundary;
+export default FormBuilderErrorBoundary

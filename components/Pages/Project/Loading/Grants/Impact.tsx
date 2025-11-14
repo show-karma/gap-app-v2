@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/Utilities/Skeleton";
+import { Skeleton } from "@/components/Utilities/Skeleton"
 
 export const ProjectGrantsImpactLoading = () => {
   return (
@@ -7,5 +7,5 @@ export const ProjectGrantsImpactLoading = () => {
       <Skeleton className="h-4 w-full" />
       <Skeleton className="h-4 w-full" />
     </div>
-  );
-};
+  )
+}

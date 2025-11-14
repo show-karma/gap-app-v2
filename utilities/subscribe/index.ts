@@ -1,1 +1,1 @@
-export const communitiesToBulkSubscribe: string[] = ["gitcoin"];
+export const communitiesToBulkSubscribe: string[] = ["gitcoin"]

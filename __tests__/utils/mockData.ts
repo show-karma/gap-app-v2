@@ -5,7 +5,7 @@
  * and reduce duplication across test files.
  */
 
-import type { SupportedToken } from "@/constants/supportedTokens";
+import type { SupportedToken } from "@/constants/supportedTokens"
 
 /**
  * Mock Addresses
@@ -15,7 +15,7 @@ export const MOCK_ADDRESSES = {
   VALID_WALLET_2: "0x0987654321098765432109876543210987654321",
   INVALID: "invalid-address",
   ZERO: "0x0000000000000000000000000000000000000000",
-} as const;
+} as const
 
 /**
  * Mock Tokens
@@ -57,7 +57,7 @@ export const MOCK_TOKENS: Record<string, SupportedToken> = {
     chainName: "Optimism",
     isNative: true,
   },
-} as const;
+} as const
 
 /**
  * Mock Cart Items
@@ -80,7 +80,7 @@ export const MOCK_CART_ITEMS = {
     title: "Test Project 3",
     slug: "test-project-3",
   },
-} as const;
+} as const
 
 /**
  * Mock BigInt Values
@@ -91,7 +91,7 @@ export const MOCK_BIGINT = {
   HUNDRED_USDC: BigInt("100000000"), // 100 USDC with 6 decimals
   THOUSAND_USDC: BigInt("1000000000"), // 1000 USDC with 6 decimals
   ZERO: BigInt("0"),
-} as const;
+} as const
 
 /**
  * Mock Error Messages
@@ -102,7 +102,7 @@ export const MOCK_ERRORS = {
   USER_REJECTED: new Error("User rejected the transaction"),
   INSUFFICIENT_BALANCE: new Error("Insufficient balance"),
   RPC_ERROR: new Error("RPC error"),
-} as const;
+} as const
 
 /**
  * Mock API Responses
@@ -136,7 +136,7 @@ export const MOCK_API_RESPONSES = {
       status: 404,
     },
   },
-} as const;
+} as const
 
 /**
  * Mock Transaction Hashes
@@ -145,7 +145,7 @@ export const MOCK_TX_HASHES = {
   SUCCESS: "0xabc123def456789012345678901234567890abcdef0123456789012345678901",
   PENDING: "0x123abc456def789012345678901234567890abcdef0123456789012345678902",
   FAILED: "0x999999999999999999999999999999999999999999999999999999999999999",
-} as const;
+} as const
 
 /**
  * Mock Chain IDs
@@ -157,7 +157,7 @@ export const MOCK_CHAIN_IDS = {
   ARBITRUM: 42161,
   POLYGON: 137,
   UNSUPPORTED: 99999,
-} as const;
+} as const
 
 /**
  * Helper to create mock project data
@@ -171,7 +171,7 @@ export function createMockProject(overrides: Record<string, any> = {}) {
     payoutAddress: MOCK_ADDRESSES.VALID_WALLET,
     imageURL: "https://example.com/project.png",
     ...overrides,
-  };
+  }
 }
 
 /**
@@ -184,5 +184,5 @@ export function createMockPayment(overrides: Record<string, any> = {}) {
     token: MOCK_TOKENS.USDC_OPTIMISM,
     chainId: MOCK_CHAIN_IDS.OPTIMISM,
     ...overrides,
-  };
+  }
 }

@@ -1,7 +1,5 @@
-import React from "react";
-
 interface Props {
-  className?: string;
+  className?: string
 }
 
 export const DiscussionIcon = ({ className }: Props) => (
@@ -18,4 +16,4 @@ export const DiscussionIcon = ({ className }: Props) => (
       fill="currentColor"
     />
   </svg>
-);
+)

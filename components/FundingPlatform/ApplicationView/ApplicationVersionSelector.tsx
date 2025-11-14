@@ -1,16 +1,16 @@
-"use client";
+"use client"
 
-import { FC, useEffect, Fragment } from "react";
-import { Listbox, Transition } from "@headlessui/react";
-import { ChevronDownIcon, ClockIcon, UserIcon } from "@heroicons/react/24/outline";
-import { useApplicationVersionsStore } from "@/store/applicationVersions";
-import { useApplicationVersions } from "@/hooks/useFundingPlatform";
-import { formatDate } from "@/utilities/formatDate";
-import { cn } from "@/utilities/tailwind";
+import { Listbox, Transition } from "@headlessui/react"
+import { ChevronDownIcon, ClockIcon, UserIcon } from "@heroicons/react/24/outline"
+import { type FC, Fragment, useEffect } from "react"
+import { useApplicationVersions } from "@/hooks/useFundingPlatform"
+import { useApplicationVersionsStore } from "@/store/applicationVersions"
+import { formatDate } from "@/utilities/formatDate"
+import { cn } from "@/utilities/tailwind"
 
 interface ApplicationVersionSelectorProps {
-  applicationId: string; // Can be either application ID or reference number
-  onVersionSelect?: (versionId: string) => void;
+  applicationId: string // Can be either application ID or reference number
+  onVersionSelect?: (versionId: string) => void
 }
 
 const ApplicationVersionSelector: FC<ApplicationVersionSelectorProps> = ({
@@ -18,45 +18,41 @@ const ApplicationVersionSelector: FC<ApplicationVersionSelectorProps> = ({
   onVersionSelect,
 }) => {
   // Fetch versions using React Query
-  const { versions, isLoading, error } = useApplicationVersions(applicationId);
+  const { versions, isLoading, error } = useApplicationVersions(applicationId)
 
   // Get UI state from Zustand store
-  const { selectedVersionId, selectedVersion, selectVersion } = useApplicationVersionsStore();
+  const { selectedVersionId, selectedVersion, selectVersion } = useApplicationVersionsStore()
 
   // Auto-select the latest version when versions are loaded
   useEffect(() => {
     if (versions.length > 0 && !selectedVersion) {
-      selectVersion(versions[0].id, versions);
+      selectVersion(versions[0].id, versions)
     }
-  }, [versions, selectedVersion, selectVersion]);
+  }, [versions, selectedVersion, selectVersion])
 
   const handleVersionChange = (versionId: string) => {
-    selectVersion(versionId, versions);
-    onVersionSelect?.(versionId);
-  };
+    selectVersion(versionId, versions)
+    onVersionSelect?.(versionId)
+  }
 
   if (isLoading) {
     return (
       <div className="animate-pulse">
         <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
       </div>
-    );
+    )
   }
 
   if (error) {
     return (
-      <div className="text-sm text-red-600 dark:text-red-400">
-        Failed to load version history
-      </div>
-    );
+      <div className="text-sm text-red-600 dark:text-red-400">Failed to load version history</div>
+    )
   }
 
   if (versions.length === 0) {
     return (
-      <div className="text-sm text-gray-500 dark:text-gray-400">
-        No version history available
-      </div>
-    );
+      <div className="text-sm text-gray-500 dark:text-gray-400">No version history available</div>
+    )
   }
 
   return (
@@ -72,10 +68,12 @@ const ApplicationVersionSelector: FC<ApplicationVersionSelectorProps> = ({
               <span className="block truncate">
                 {selectedVersion ? (
                   <>
-                    Version {selectedVersion.versionNumber} - {formatDate(selectedVersion.createdAt)}
+                    Version {selectedVersion.versionNumber} -{" "}
+                    {formatDate(selectedVersion.createdAt)}
                     {selectedVersion.submittedBy && (
                       <span className="ml-2 text-gray-500 dark:text-gray-400">
-                        by {selectedVersion.submittedBy.slice(0, 6)}...{selectedVersion.submittedBy.slice(-4)}
+                        by {selectedVersion.submittedBy.slice(0, 6)}...
+                        {selectedVersion.submittedBy.slice(-4)}
                       </span>
                     )}
                   </>
@@ -102,7 +100,9 @@ const ApplicationVersionSelector: FC<ApplicationVersionSelectorProps> = ({
                   className={({ active }) =>
                     cn(
                       "relative cursor-pointer select-none py-3 pl-3 pr-9",
-                      active ? "bg-blue-50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-200" : "text-gray-900 dark:text-gray-100"
+                      active
+                        ? "bg-blue-50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-200"
+                        : "text-gray-900 dark:text-gray-100"
                     )
                   }
                   value={version.id}
@@ -128,20 +128,28 @@ const ApplicationVersionSelector: FC<ApplicationVersionSelectorProps> = ({
                                 {" • "}
                                 <span className="inline-flex items-center">
                                   <UserIcon className="h-3 w-3 mr-1 inline" />
-                                  {version.submittedBy.slice(0, 6)}...{version.submittedBy.slice(-4)}
+                                  {version.submittedBy.slice(0, 6)}...
+                                  {version.submittedBy.slice(-4)}
                                 </span>
                               </>
                             )}
                           </div>
                           {version.hasChanges && (
                             <div className="mt-1 text-xs text-gray-500 dark:text-gray-500">
-                              {version.changeCount} change{version.changeCount !== 1 ? 's' : ''}
-                              {version.diffFromPrevious && version.diffFromPrevious.changedFields.length > 0 && (
-                                <span className="ml-1 italic">
-                                  ({version.diffFromPrevious.changedFields.slice(0, 2).map(f => f.fieldLabel).join(', ')}
-                                  {version.diffFromPrevious.changedFields.length > 2 && `, +${version.diffFromPrevious.changedFields.length - 2} more`})
-                                </span>
-                              )}
+                              {version.changeCount} change{version.changeCount !== 1 ? "s" : ""}
+                              {version.diffFromPrevious &&
+                                version.diffFromPrevious.changedFields.length > 0 && (
+                                  <span className="ml-1 italic">
+                                    (
+                                    {version.diffFromPrevious.changedFields
+                                      .slice(0, 2)
+                                      .map((f) => f.fieldLabel)
+                                      .join(", ")}
+                                    {version.diffFromPrevious.changedFields.length > 2 &&
+                                      `, +${version.diffFromPrevious.changedFields.length - 2} more`}
+                                    )
+                                  </span>
+                                )}
                             </div>
                           )}
                         </div>
@@ -178,7 +186,7 @@ const ApplicationVersionSelector: FC<ApplicationVersionSelectorProps> = ({
         </div>
       </Listbox>
     </div>
-  );
-};
+  )
+}
 
-export default ApplicationVersionSelector;
+export default ApplicationVersionSelector

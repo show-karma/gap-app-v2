@@ -1,19 +1,19 @@
-import { Fragment } from "react";
-import { Dialog, Transition } from "@headlessui/react";
-import { XMarkIcon } from "@heroicons/react/24/outline";
-import { Button } from "@/components/Utilities/Button";
-import { Spinner } from "@/components/Utilities/Spinner";
+import { Dialog, Transition } from "@headlessui/react"
+import { XMarkIcon } from "@heroicons/react/24/outline"
+import { Fragment } from "react"
+import { Button } from "@/components/Utilities/Button"
+import { Spinner } from "@/components/Utilities/Spinner"
 
 interface CreateTrackModalProps {
-  show: boolean;
-  onClose: () => void;
+  show: boolean
+  onClose: () => void
   track: {
-    name: string;
-    description: string;
-  };
-  setTrack: (track: { name: string; description: string }) => void;
-  onSubmit: () => void;
-  isSubmitting: boolean;
+    name: string
+    description: string
+  }
+  setTrack: (track: { name: string; description: string }) => void
+  onSubmit: () => void
+  isSubmitting: boolean
 }
 
 export const CreateTrackModal = ({
@@ -106,11 +106,7 @@ export const CreateTrackModal = ({
                       rows={3}
                     />
                   </div>
-                  <Button
-                    onClick={onSubmit}
-                    disabled={isSubmitting}
-                    className="w-full"
-                  >
+                  <Button onClick={onSubmit} disabled={isSubmitting} className="w-full">
                     {isSubmitting ? <Spinner className="w-4 h-4 mr-2" /> : null}
                     Create Track
                   </Button>
@@ -121,5 +117,5 @@ export const CreateTrackModal = ({
         </div>
       </Dialog>
     </Transition>
-  );
-};
+  )
+}

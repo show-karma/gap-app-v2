@@ -1,51 +1,50 @@
-"use client";
+"use client"
 
-import { useOwnerStore, useProjectStore } from "@/store";
-import {
+import type {
   IGrantUpdate,
   IMilestoneResponse,
   IProjectImpact,
   IProjectMilestoneResponse,
   IProjectUpdate,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { FC, useEffect, useState } from "react";
-import { ActivityList } from "@/components/Shared/ActivityList";
-import { MESSAGES } from "@/utilities/messages";
-import { Button } from "@/components/Utilities/Button";
-import { useProgressModalStore } from "@/store/modals/progress";
-import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
-import { useQuery } from "@tanstack/react-query";
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
+import { useQuery } from "@tanstack/react-query"
+import { type FC, useEffect, useState } from "react"
+import { ActivityList } from "@/components/Shared/ActivityList"
+import { Button } from "@/components/Utilities/Button"
+import { useOwnerStore, useProjectStore } from "@/store"
+import { useProgressModalStore } from "@/store/modals/progress"
+import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives"
+import { MESSAGES } from "@/utilities/messages"
 
 export const UpdatesPage: FC = () => {
-  const { project } = useProjectStore();
+  const { project } = useProjectStore()
 
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isAuthorized = isOwner || isProjectAdmin;
+  const isOwner = useOwnerStore((state) => state.isOwner)
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin)
+  const isAuthorized = isOwner || isProjectAdmin
 
-  const [allUpdates, setAllUpdates] = useState<any[]>([]);
-  const { setIsProgressModalOpen, setProgressModalScreen } =
-    useProgressModalStore();
+  const [allUpdates, setAllUpdates] = useState<any[]>([])
+  const { setIsProgressModalOpen, setProgressModalScreen } = useProgressModalStore()
 
   // Fetch project milestones directly from API
   const { data: projectMilestones } = useQuery<IProjectMilestoneResponse[]>({
     queryKey: ["projectMilestones", project?.uid],
     queryFn: () => getProjectObjectives(project?.uid || ""),
     enabled: !!project?.uid,
-  });
+  })
 
   useEffect(() => {
     // Log project structure for debugging
 
-    const updates: IProjectUpdate[] = project?.updates || [];
-    const grantUpdates: IGrantUpdate[] = [];
-    const grantMilestones: IMilestoneResponse[] = [];
-    const impacts: IProjectImpact[] = project?.impacts || [];
+    const updates: IProjectUpdate[] = project?.updates || []
+    const grantUpdates: IGrantUpdate[] = []
+    const grantMilestones: IMilestoneResponse[] = []
+    const impacts: IProjectImpact[] = project?.impacts || []
 
     project?.grants.forEach((grant) => {
-      grantUpdates.push(...grant.updates);
-      grantMilestones.push(...grant.milestones);
-    });
+      grantUpdates.push(...grant.updates)
+      grantMilestones.push(...grant.milestones)
+    })
 
     const sortedUpdates = [
       ...updates,
@@ -57,64 +56,49 @@ export const UpdatesPage: FC = () => {
       // For completed milestones, use completion date for sorting
       const getDateA = () => {
         if ("type" in a) {
-          if (
-            a.type === "ProjectMilestone" &&
-            "completed" in a &&
-            a.completed
-          ) {
-            return new Date(a.completed.createdAt).getTime();
+          if (a.type === "ProjectMilestone" && "completed" in a && a.completed) {
+            return new Date(a.completed.createdAt).getTime()
           }
           if (a.type === "Milestone" && "completed" in a && a.completed) {
-            return new Date(a.completed.createdAt).getTime();
+            return new Date(a.completed.createdAt).getTime()
           }
         }
-        return new Date(a.createdAt).getTime();
-      };
+        return new Date(a.createdAt).getTime()
+      }
 
       const getDateB = () => {
         if ("type" in b) {
-          if (
-            b.type === "ProjectMilestone" &&
-            "completed" in b &&
-            b.completed
-          ) {
-            return new Date(b.completed.createdAt).getTime();
+          if (b.type === "ProjectMilestone" && "completed" in b && b.completed) {
+            return new Date(b.completed.createdAt).getTime()
           }
           if (b.type === "Milestone" && "completed" in b && b.completed) {
-            return new Date(b.completed.createdAt).getTime();
+            return new Date(b.completed.createdAt).getTime()
           }
         }
-        return new Date(b.createdAt).getTime();
-      };
+        return new Date(b.createdAt).getTime()
+      }
 
-      return getDateB() - getDateA();
-    });
+      return getDateB() - getDateA()
+    })
 
-    setAllUpdates(sortedUpdates);
+    setAllUpdates(sortedUpdates)
   }, [
     project?.grants,
     project?.updates,
     project?.impacts,
     projectMilestones, // Use the query result instead of project.milestones
-  ]);
+  ])
 
   return (
     <div className="flex flex-col items-center justify-start">
-      <div
-        id="updates-tab"
-        className="flex flex-col gap-6 my-10 max-lg:my-5 max-w-full w-full"
-      >
+      <div id="updates-tab" className="flex flex-col gap-6 my-10 max-lg:my-5 max-w-full w-full">
         <div className="flex flex-row gap-4 justify-between">
           <p className="font-bold text-black dark:text-zinc-200 text-xl">
             Updates {allUpdates.length ? `(${allUpdates.length})` : ""}
           </p>
         </div>
         {allUpdates.length ? (
-          <ActivityList
-            updates={allUpdates}
-            milestones={[]}
-            isAuthorized={isAuthorized}
-          />
+          <ActivityList updates={allUpdates} milestones={[]} isAuthorized={isAuthorized} />
         ) : (
           <div className="flex flex-col gap-6">
             {isAuthorized ? (
@@ -132,8 +116,8 @@ export const UpdatesPage: FC = () => {
                     type="button"
                     className="w-max bg-brand-blue text-white px-4 py-2 rounded-lg"
                     onClick={() => {
-                      setProgressModalScreen("project_update");
-                      setIsProgressModalOpen(true);
+                      setProgressModalScreen("project_update")
+                      setIsProgressModalOpen(true)
                     }}
                   >
                     Create new activity
@@ -163,5 +147,5 @@ export const UpdatesPage: FC = () => {
         )}
       </div>
     </div>
-  );
-};
+  )
+}

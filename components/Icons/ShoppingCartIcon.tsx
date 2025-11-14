@@ -1,4 +1,4 @@
-import { SVGProps } from "react";
+import type { SVGProps } from "react"
 
 export function ShoppingCartIcon(props: SVGProps<SVGSVGElement>) {
   return (
@@ -15,5 +15,5 @@ export function ShoppingCartIcon(props: SVGProps<SVGSVGElement>) {
         fill="currentColor"
       />
     </svg>
-  );
+  )
 }

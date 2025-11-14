@@ -1,6 +1,6 @@
-"use client";
-import { LoadingPrograms } from "@/components/Pages/ProgramRegistry/Loading/Programs";
-import dynamic from "next/dynamic";
+"use client"
+import dynamic from "next/dynamic"
+import { LoadingPrograms } from "@/components/Pages/ProgramRegistry/Loading/Programs"
 
 const ProgramsExplorer = dynamic(
   () =>
@@ -10,7 +10,7 @@ const ProgramsExplorer = dynamic(
   {
     loading: () => <LoadingPrograms />,
   }
-);
+)
 export const FundingMapWrapper = () => {
-  return <ProgramsExplorer />;
-};
+  return <ProgramsExplorer />
+}

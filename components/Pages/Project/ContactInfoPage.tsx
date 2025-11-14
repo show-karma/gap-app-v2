@@ -1,22 +1,19 @@
-"use client";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { ContactInfoSubscription } from "@/components/ContactInfoSubscription";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { useContactInfo } from "@/hooks/useContactInfo";
-import { useProjectPermissions } from "@/hooks/useProjectPermissions";
+"use client"
+import { ContactInfoSubscription } from "@/components/ContactInfoSubscription"
+import { Spinner } from "@/components/Utilities/Spinner"
+import { useContactInfo } from "@/hooks/useContactInfo"
+import { useProjectPermissions } from "@/hooks/useProjectPermissions"
+import { useOwnerStore, useProjectStore } from "@/store"
 
 const ContactInfoPage = () => {
-  const isOwnerLoading = useOwnerStore((state) => state.isOwnerLoading);
-  const { isLoading: isPermissionLoading } = useProjectPermissions();
-  const project = useProjectStore((state) => state.project);
-  const isAuthorized = useProjectStore((state) => state.isProjectAdmin);
+  const isOwnerLoading = useOwnerStore((state) => state.isOwnerLoading)
+  const { isLoading: isPermissionLoading } = useProjectPermissions()
+  const project = useProjectStore((state) => state.project)
+  const isAuthorized = useProjectStore((state) => state.isProjectAdmin)
 
-  const projectId = project?.uid;
-  const { data: contactsInfo, isLoading } = useContactInfo(
-    projectId,
-    isAuthorized
-  );
-  const isAuthorizationLoading = isOwnerLoading || isPermissionLoading;
+  const projectId = project?.uid
+  const { data: contactsInfo, isLoading } = useContactInfo(projectId, isAuthorized)
+  const isAuthorizationLoading = isOwnerLoading || isPermissionLoading
 
   return (
     <div className="pt-5 pb-20">
@@ -28,12 +25,10 @@ const ContactInfoPage = () => {
           <Spinner />
         </div>
       ) : (
-        <ContactInfoSubscription
-          contactInfo={contactsInfo?.[contactsInfo.length - 1]}
-        />
+        <ContactInfoSubscription contactInfo={contactsInfo?.[contactsInfo.length - 1]} />
       )}
     </div>
-  );
-};
+  )
+}
 
-export default ContactInfoPage;
+export default ContactInfoPage

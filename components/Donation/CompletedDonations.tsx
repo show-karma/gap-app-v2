@@ -1,50 +1,49 @@
-"use client";
-import { DonationSession } from "@/store/donationCart";
-import { useMemo } from "react";
-import Link from "next/link";
-import { getExplorerUrl } from "@/utilities/network";
-import { useParams } from "next/navigation";
+"use client"
+import Link from "next/link"
+import { useParams } from "next/navigation"
+import { useMemo } from "react"
+import type { DonationSession } from "@/store/donationCart"
+import { getExplorerUrl } from "@/utilities/network"
 
 interface CompletedDonationsProps {
-  session: DonationSession;
-  onStartNewDonation: () => void;
+  session: DonationSession
+  onStartNewDonation: () => void
 }
 
 export function CompletedDonations({ session, onStartNewDonation }: CompletedDonationsProps) {
-  const params = useParams();
-  const communityId = params.communityId as string;
-
+  const params = useParams()
+  const communityId = params.communityId as string
 
   const successfulDonations = useMemo(
     () => session.donations.filter((d) => d.status === "success"),
     [session.donations]
-  );
+  )
 
   const failedDonations = useMemo(
     () => session.donations.filter((d) => d.status === "failed"),
     [session.donations]
-  );
+  )
 
   const totalAmount = useMemo(() => {
-    const byToken: Record<string, { amount: number; symbol: string }> = {};
+    const byToken: Record<string, { amount: number; symbol: string }> = {}
 
     successfulDonations.forEach((donation) => {
-      const key = `${donation.token.symbol}-${donation.chainId}`;
+      const key = `${donation.token.symbol}-${donation.chainId}`
       if (!byToken[key]) {
         byToken[key] = {
           amount: 0,
           symbol: donation.token.symbol,
-        };
+        }
       }
       // donation.amount is a decimal string like "0.5" or "100"
-      byToken[key].amount += parseFloat(donation.amount || "0");
-    });
+      byToken[key].amount += parseFloat(donation.amount || "0")
+    })
 
     return Object.values(byToken).map((token) => ({
       amount: token.amount.toString(),
       symbol: token.symbol,
-    }));
-  }, [successfulDonations]);
+    }))
+  }, [successfulDonations])
 
   // Safety check
   if (!session || !session.donations || session.donations.length === 0) {
@@ -60,9 +59,8 @@ export function CompletedDonations({ session, onStartNewDonation }: CompletedDon
           </button>
         </div>
       </div>
-    );
+    )
   }
-
 
   return (
     <div className="min-h-screen my-8">
@@ -86,7 +84,8 @@ export function CompletedDonations({ session, onStartNewDonation }: CompletedDon
             Donation{successfulDonations.length > 1 ? "s" : ""} Complete!
           </h1>
           <p className="text-gray-600 dark:text-gray-400 text-lg">
-            Thank you for supporting {session.totalProjects} project{session.totalProjects > 1 ? "s" : ""}
+            Thank you for supporting {session.totalProjects} project
+            {session.totalProjects > 1 ? "s" : ""}
           </p>
         </div>
 
@@ -165,7 +164,14 @@ export function CompletedDonations({ session, onStartNewDonation }: CompletedDon
                       className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
                     >
                       View TX
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
                         <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
                         <path d="M15 3h6v6" />
                         <path d="M10 14L21 3" />
@@ -222,7 +228,14 @@ export function CompletedDonations({ session, onStartNewDonation }: CompletedDon
             onClick={onStartNewDonation}
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-base font-medium text-white hover:bg-blue-700 transition-colors"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="M12 5v14" />
               <path d="M5 12h14" />
             </svg>
@@ -237,5 +250,5 @@ export function CompletedDonations({ session, onStartNewDonation }: CompletedDon
         </div>
       </div>
     </div>
-  );
+  )
 }

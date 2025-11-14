@@ -1,23 +1,21 @@
-import { errorManager } from "@/components/Utilities/errorManager";
-import { INDEXER } from "@/utilities/indexer";
-import { envVars } from "@/utilities/enviromentVars";
+import { errorManager } from "@/components/Utilities/errorManager"
+import { envVars } from "@/utilities/enviromentVars"
+import { INDEXER } from "@/utilities/indexer"
 
 interface DownloadReportOptions {
-  communityId: string;
-  sortBy?: string;
-  selectedProgramIds?: string[];
-  page?: number;
-  pageLimit?: number;
-  status?: string;
+  communityId: string
+  sortBy?: string
+  selectedProgramIds?: string[]
+  page?: number
+  pageLimit?: number
+  status?: string
 }
 
 /**
  * Utility function to download community reports
  * @param options DownloadReportOptions containing communityId and optional filtering parameters
  */
-export const downloadCommunityReport = (
-  options: DownloadReportOptions
-): void => {
+export const downloadCommunityReport = (options: DownloadReportOptions): void => {
   const {
     communityId,
     sortBy = "totalMilestones",
@@ -25,11 +23,9 @@ export const downloadCommunityReport = (
     page = 0,
     pageLimit = 9999999,
     status = "all",
-  } = options;
+  } = options
 
-  const programFilter = selectedProgramIds
-    .filter((value) => Boolean(value))
-    .join(",");
+  const programFilter = selectedProgramIds.filter((value) => Boolean(value)).join(",")
 
   try {
     const path = INDEXER.COMMUNITY.GRANTS(communityId, {
@@ -39,11 +35,11 @@ export const downloadCommunityReport = (
       status,
       selectedProgramId: programFilter || undefined,
       download: true,
-    });
+    })
 
-    const url = `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${path}`;
-    window.open(url, "_blank");
+    const url = `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${path}`
+    window.open(url, "_blank")
   } catch (error: any) {
-    errorManager("Error downloading report", error);
+    errorManager("Error downloading report", error)
   }
-};
+}

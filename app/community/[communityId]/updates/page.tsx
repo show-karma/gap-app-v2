@@ -1,94 +1,93 @@
-"use client";
+"use client"
 
-import { useState, useMemo, useCallback, Fragment } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { ChevronDownIcon } from "@heroicons/react/24/outline";
-import { SimplePagination } from "@/components/Pages/Community/Updates/SimplePagination";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { Listbox, Transition } from "@headlessui/react";
-import { cn } from "@/utilities/tailwind";
-import { CommunityMilestoneCard } from "@/components/Pages/Community/Updates/CommunityMilestoneCard";
-import pluralize from "pluralize";
-import { useCommunityProjectUpdates } from "@/hooks/useCommunityProjectUpdates";
-import { sortCommunityMilestones } from "@/utilities/sorting/communityMilestoneSort";
+import { Listbox, Transition } from "@headlessui/react"
+import { ChevronDownIcon } from "@heroicons/react/24/outline"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
+import pluralize from "pluralize"
+import { Fragment, useCallback, useMemo, useState } from "react"
+import { CommunityMilestoneCard } from "@/components/Pages/Community/Updates/CommunityMilestoneCard"
+import { SimplePagination } from "@/components/Pages/Community/Updates/SimplePagination"
+import { Spinner } from "@/components/Utilities/Spinner"
+import { useCommunityProjectUpdates } from "@/hooks/useCommunityProjectUpdates"
+import { sortCommunityMilestones } from "@/utilities/sorting/communityMilestoneSort"
+import { cn } from "@/utilities/tailwind"
 
-type FilterOption = "all" | "pending" | "completed";
+type FilterOption = "all" | "pending" | "completed"
 
-const ITEMS_PER_PAGE = 25;
+const ITEMS_PER_PAGE = 25
 
 const filterOptions: { value: FilterOption; label: string }[] = [
   { value: "all", label: "All" },
   { value: "pending", label: "Pending" },
   { value: "completed", label: "Completed" },
-];
+]
 
 export default function CommunityUpdatesPage() {
-  const { communityId } = useParams<{ communityId: string }>();
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const { communityId } = useParams<{ communityId: string }>()
+  const router = useRouter()
+  const searchParams = useSearchParams()
 
   // Get filter from URL searchParams, default to 'all' if not present or invalid
-  const filterFromUrl = searchParams.get('filter');
+  const filterFromUrl = searchParams.get("filter")
   const isValidFilter = (filter: string | null): filter is FilterOption => {
-    return filter === 'all' || filter === 'pending' || filter === 'completed';
-  };
-  const selectedFilter = isValidFilter(filterFromUrl) ? filterFromUrl : 'all';
-  const [currentPage, setCurrentPage] = useState(1);
+    return filter === "all" || filter === "pending" || filter === "completed"
+  }
+  const selectedFilter = isValidFilter(filterFromUrl) ? filterFromUrl : "all"
+  const [currentPage, setCurrentPage] = useState(1)
 
   // Fetch community updates from API using custom hook
   const { data, isLoading, error } = useCommunityProjectUpdates(communityId, {
     page: currentPage,
     limit: ITEMS_PER_PAGE,
     status: selectedFilter,
-  });
+  })
 
   // Memoize sorted data to prevent unnecessary recalculations
   const sortedRawData = useMemo(() => {
-    if (!data?.payload) return [];
-    return sortCommunityMilestones(data.payload, selectedFilter, communityId);
-  }, [data?.payload, selectedFilter, communityId]);
+    if (!data?.payload) return []
+    return sortCommunityMilestones(data.payload, selectedFilter, communityId)
+  }, [data?.payload, selectedFilter, communityId])
 
   // Calculate total pages
-  const totalPages = data ? Math.ceil((data.pagination.totalCount || 0) / ITEMS_PER_PAGE) : 0;
+  const totalPages = data ? Math.ceil((data.pagination.totalCount || 0) / ITEMS_PER_PAGE) : 0
 
   // Memoize filter change handler to prevent unnecessary recreations
-  const handleFilterChange = useCallback((newFilter: FilterOption) => {
-    const params = new URLSearchParams(searchParams.toString());
+  const handleFilterChange = useCallback(
+    (newFilter: FilterOption) => {
+      const params = new URLSearchParams(searchParams.toString())
 
-    if (newFilter === 'all') {
-      params.delete('filter');
-    } else {
-      params.set('filter', newFilter);
-    }
+      if (newFilter === "all") {
+        params.delete("filter")
+      } else {
+        params.set("filter", newFilter)
+      }
 
-    // Reset page to 1 when filter changes
-    setCurrentPage(1);
+      // Reset page to 1 when filter changes
+      setCurrentPage(1)
 
-    // Update URL
-    router.push(`?${params.toString()}`);
-  }, [searchParams, router]);
+      // Update URL
+      router.push(`?${params.toString()}`)
+    },
+    [searchParams, router]
+  )
 
   // Memoize page change handler
   const handlePageChange = useCallback((page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
+    setCurrentPage(page)
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }, [])
 
   // Memoize empty state rendering
   const renderEmptyState = useMemo(() => {
     const message =
       selectedFilter === "all"
         ? "No milestones have been created by any projects in this community yet."
-        : `No ${selectedFilter} milestones found.`;
+        : `No ${selectedFilter} milestones found.`
 
     return (
       <div className="flex w-full items-center justify-center rounded border border-gray-200 px-6 py-10">
         <div className="flex max-w-[438px] flex-col items-center justify-center gap-6">
-          <img
-            src="/images/comments.png"
-            alt=""
-            className="h-[185px] w-[438px] object-cover"
-          />
+          <img src="/images/comments.png" alt="" className="h-[185px] w-[438px] object-cover" />
           <div className="flex w-full flex-col items-center justify-center gap-3">
             <p className="text-center text-lg font-semibold text-black dark:text-zinc-100">
               Community Updates
@@ -99,15 +98,15 @@ export default function CommunityUpdatesPage() {
           </div>
         </div>
       </div>
-    );
-  }, [selectedFilter]);
+    )
+  }, [selectedFilter])
 
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px]">
         <p className="text-red-500">Error loading community updates</p>
       </div>
-    );
+    )
   }
 
   return (
@@ -119,7 +118,7 @@ export default function CommunityUpdatesPage() {
             <span className="text-sm text-gray-600 dark:text-gray-400">
               {isLoading
                 ? "Loading..."
-                : `${data?.pagination?.totalCount || 0} ${pluralize('milestone update', data?.pagination?.totalCount || 0)}`}
+                : `${data?.pagination?.totalCount || 0} ${pluralize("milestone update", data?.pagination?.totalCount || 0)}`}
             </span>
           </div>
 
@@ -127,10 +126,7 @@ export default function CommunityUpdatesPage() {
           <Listbox value={selectedFilter} onChange={handleFilterChange}>
             <div className="relative">
               <Listbox.Button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-blue dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-600">
-                {
-                  filterOptions.find((opt) => opt.value === selectedFilter)
-                    ?.label
-                }
+                {filterOptions.find((opt) => opt.value === selectedFilter)?.label}
                 <ChevronDownIcon className="w-4 h-4" />
               </Listbox.Button>
               <Transition
@@ -146,19 +142,14 @@ export default function CommunityUpdatesPage() {
                       className={({ active }) =>
                         cn(
                           "relative cursor-pointer select-none py-2 px-4",
-                          active
-                            ? "bg-brand-blue text-white"
-                            : "text-gray-900 dark:text-zinc-200"
+                          active ? "bg-brand-blue text-white" : "text-gray-900 dark:text-zinc-200"
                         )
                       }
                       value={option.value}
                     >
                       {({ selected }) => (
                         <span
-                          className={cn(
-                            "block truncate",
-                            selected ? "font-medium" : "font-normal"
-                          )}
+                          className={cn("block truncate", selected ? "font-medium" : "font-normal")}
                         >
                           {option.label}
                         </span>
@@ -180,10 +171,7 @@ export default function CommunityUpdatesPage() {
           <>
             <div className="flex flex-col gap-4 px-2">
               {sortedRawData.map((milestone) => (
-                <CommunityMilestoneCard
-                  key={milestone.uid}
-                  milestone={milestone}
-                />
+                <CommunityMilestoneCard key={milestone.uid} milestone={milestone} />
               ))}
             </div>
 
@@ -203,5 +191,5 @@ export default function CommunityUpdatesPage() {
         )}
       </div>
     </div>
-  );
+  )
 }

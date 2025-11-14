@@ -1,22 +1,18 @@
-import type { Grant } from "@show-karma/karma-gap-sdk";
+import type { Grant } from "@show-karma/karma-gap-sdk"
+import type { StatusOptions } from "@/types/filters"
+import { filterGrantsByCompleted } from "./filter/filterGrantsByCompleted"
+import { filterGrantsByStarting } from "./filter/filterGrantsByStarting"
+import { filterGrantsByToBeCompleted } from "./filter/filterGrantsByToBeCompleted"
 
-import { filterGrantsByCompleted } from "./filter/filterGrantsByCompleted";
-import { filterGrantsByStarting } from "./filter/filterGrantsByStarting";
-import { filterGrantsByToBeCompleted } from "./filter/filterGrantsByToBeCompleted";
-import { StatusOptions } from "@/types/filters";
-
-export const filterByStatus = (
-  option: StatusOptions,
-  grantToFilter: Grant[]
-) => {
+export const filterByStatus = (option: StatusOptions, grantToFilter: Grant[]) => {
   if (option === "completed") {
-    return filterGrantsByCompleted(grantToFilter);
+    return filterGrantsByCompleted(grantToFilter)
   }
   if (option === "starting") {
-    return filterGrantsByStarting(grantToFilter);
+    return filterGrantsByStarting(grantToFilter)
   }
   if (option === "to-complete") {
-    return filterGrantsByToBeCompleted(grantToFilter);
+    return filterGrantsByToBeCompleted(grantToFilter)
   }
-  return grantToFilter;
-};
+  return grantToFilter
+}
