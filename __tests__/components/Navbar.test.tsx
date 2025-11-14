@@ -140,7 +140,7 @@ describe('Navbar', () => {
     it('should have vertical padding', () => {
       const { container } = render(<Navbar />);
 
-      const innerDiv = container.querySelector('div.py-5');
+      const innerDiv = container.querySelector('div.py-3');
       expect(innerDiv).toBeInTheDocument();
     });
   });

@@ -223,3 +223,15 @@ jest.mock("rehype-external-links", () => ({
   __esModule: true,
   default: () => (tree) => tree, // Pass-through plugin for testing
 }));
+
+// Mock remark-gfm to avoid ESM parsing issues
+jest.mock("remark-gfm", () => ({
+  __esModule: true,
+  default: () => (tree) => tree, // Pass-through plugin for testing
+}));
+
+// Mock remark-breaks to avoid ESM parsing issues
+jest.mock("remark-breaks", () => ({
+  __esModule: true,
+  default: () => (tree) => tree, // Pass-through plugin for testing
+}));
