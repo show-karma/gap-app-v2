@@ -166,6 +166,11 @@ export const MESSAGES = {
     MARK_AS_COMPLETE: {
       SUCCESS: "Grant completed successfully",
       ERROR: "There was an error doing the grant completion.",
+      UNDO: {
+        SUCCESS: "Grant completion revoked successfully",
+        LOADING: "Revoking grant completion...",
+        ERROR: "There was an error revoking grant completion.",
+      },
     },
     CREATE: {
       SUCCESS: "Your grant was created successfully!",

@@ -237,12 +237,6 @@ export default function MilestonesAndUpdates() {
   return (
     <div className="w-full">
       <div className="space-y-5">
-        {grant?.completed &&
-          (grant?.completed.data.title ||
-            grant?.completed.data.text ||
-            grant?.completed?.data?.proofOfWork) ? (
-          <GrantCompletionCard completion={grant?.completed} grant={grant} />
-        ) : null}
         {hasMilestonesOrUpdates ? (
           <div className="flex flex-1 flex-col gap-4">
             {grant && (
