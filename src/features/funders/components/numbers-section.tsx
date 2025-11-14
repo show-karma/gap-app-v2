@@ -55,14 +55,13 @@ export function NumbersSection() {
                             "bg-secondary border-0 w-fit"
                         )}
                     >
-                        The numbers
+                        The Numbers
                     </Badge>
 
                     {/* Main Heading */}
                     <h2 className={cn(
-                        "text-foreground font-semibold",
-                        "text-[30px] leading-[38px] tracking-[0%]",
-                        "lg:text-[40px] lg:leading-[44px] lg:tracking-[-0.02em]"
+                        "text-foreground",
+                        "section-title"
                     )}>
                         Proven expertise in ecosystem funding
                     </h2>
@@ -102,7 +101,7 @@ export function NumbersSection() {
                                     </span>
                                     <span
                                         className={cn(
-                                            "font-normal text-[40px] leading-[72px]"
+                                            "text-lg font-medium leading-[72px]"
                                         )}
                                         style={{
                                             backgroundImage: 'linear-gradient(180deg, #6A6A6A 5.77%, #D0D0D0 100%)',

@@ -225,7 +225,7 @@ export function PlatformFeatures() {
         <Badge variant="secondary">
           Our Platform
         </Badge>
-        <h2 className="text-[36px] font-semibold text-foreground leading-tight tracking-tight max-w-4xl">
+        <h2 className={cn("section-title text-foreground max-w-4xl")}>
           Karma connects builders <br /><span>to funding opportunities</span>
         </h2>
         <p className="text-base md:text-lg text-muted-foreground max-w-3xl">

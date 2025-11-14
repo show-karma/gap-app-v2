@@ -41,7 +41,7 @@ export function JoinCommunity() {
     return (
         <section className={cn(marketingLayoutTheme.padding, "py-16 w-full")}>
             <div className="flex flex-col items-center gap-6 mb-12">
-                <h2 className="text-[36px] font-semibold text-foreground text-center tracking-tight">
+                <h2 className="section-title text-foreground text-center">
                     Join our community
                 </h2>
                 <p className="text-xl font-normal text-muted-foreground text-center">

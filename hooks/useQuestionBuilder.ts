@@ -1,43 +1,61 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fundingPlatformService } from '@/services/fundingPlatformService';
-import { FormSchema } from '@/types/question-builder';
-import toast from 'react-hot-toast';
-import { IFundingProgramConfig } from '@/types/funding-platform';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { fundingPlatformService } from "@/services/fundingPlatformService";
+import { FormSchema } from "@/types/question-builder";
+import toast from "react-hot-toast";
+import { IFundingProgramConfig } from "@/types/funding-platform";
 
 // Query keys for caching
 const QUERY_KEYS = {
-  questionSchema: (programId: string, chainId: number) => ['question-schema', programId, chainId],
-  programConfig: (programId: string, chainId: number) => ['program-config', programId, chainId],
+  questionSchema: (programId: string, chainId: number) => [
+    "question-schema",
+    programId,
+    chainId,
+  ],
+  programConfig: (programId: string, chainId: number) => [
+    "program-config",
+    programId,
+    chainId,
+  ],
 };
 
 /**
  * Generic hook factory for managing form schemas
  */
 function createFormSchemaHook(
-  schemaType: 'application' | 'postApproval',
+  schemaType: "application" | "postApproval",
   options?: {
     successMessage?: string;
     errorMessage?: string;
   }
 ) {
-  const isPostApproval = schemaType === 'postApproval';
-  const schemaField = isPostApproval ? 'postApprovalFormSchema' : 'formSchema';
-  const successMessage = options?.successMessage ||
-    (isPostApproval ? 'Post approval form schema saved successfully' : 'Form schema saved successfully');
-  const errorMessage = options?.errorMessage ||
-    (isPostApproval ? 'Failed to save post approval form schema' : 'Failed to save form schema');
+  const isPostApproval = schemaType === "postApproval";
+  const schemaField = isPostApproval ? "postApprovalFormSchema" : "formSchema";
+  const successMessage =
+    options?.successMessage ||
+    (isPostApproval
+      ? "Post approval form schema saved successfully"
+      : "Form schema saved successfully");
+  const errorMessage =
+    options?.errorMessage ||
+    (isPostApproval
+      ? "Failed to save post approval form schema"
+      : "Failed to save form schema");
 
   return function useFormSchema(programId: string, chainId: number) {
     const queryClient = useQueryClient();
     const queryKey = isPostApproval
-      ? [...QUERY_KEYS.questionSchema(programId, chainId), 'post-approval']
+      ? [...QUERY_KEYS.questionSchema(programId, chainId), "post-approval"]
       : QUERY_KEYS.questionSchema(programId, chainId);
 
     const schemaQuery = useQuery({
       queryKey,
       queryFn: async () => {
         try {
-          const result = await fundingPlatformService.programs.getProgramConfiguration(programId, chainId);
+          const result =
+            await fundingPlatformService.programs.getProgramConfiguration(
+              programId,
+              chainId
+            );
 
           // The service returns FundingProgram type, config is in applicationConfig
           const config = result?.applicationConfig;
@@ -61,8 +79,13 @@ function createFormSchemaHook(
     });
 
     const updateSchemaMutation = useMutation({
-      mutationFn: async ({schema, existingConfig}: {schema: FormSchema, existingConfig?: IFundingProgramConfig | null}) => {
-
+      mutationFn: async ({
+        schema,
+        existingConfig,
+      }: {
+        schema: FormSchema;
+        existingConfig?: IFundingProgramConfig | null;
+      }) => {
         if (!existingConfig) {
           // Create minimal valid configuration for new configs
           // The backend should handle setting defaults for other required fields
@@ -72,7 +95,11 @@ function createFormSchemaHook(
             [schemaField]: schema,
             isEnabled: true,
           };
-          return fundingPlatformService.programs.createProgramConfiguration(programId, chainId, newConfig);
+          return fundingPlatformService.programs.createProgramConfiguration(
+            programId,
+            chainId,
+            newConfig
+          );
         }
 
         // For existing configs, preserve all fields and only update the relevant schema
@@ -81,11 +108,17 @@ function createFormSchemaHook(
           [schemaField]: schema,
         };
 
-        return fundingPlatformService.programs.updateProgramConfiguration(programId, chainId, updatedConfig);
+        return fundingPlatformService.programs.updateProgramConfiguration(
+          programId,
+          chainId,
+          updatedConfig
+        );
       },
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey });
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.programConfig(programId, chainId) });
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.programConfig(programId, chainId),
+        });
         toast.success(successMessage);
       },
       onError: (error) => {
@@ -108,9 +141,9 @@ function createFormSchemaHook(
 /**
  * Hook for managing React Hook Form question builder schemas using existing configuration endpoint
  */
-export const useQuestionBuilderSchema = createFormSchemaHook('application');
+export const useQuestionBuilderSchema = createFormSchemaHook("application");
 
 /**
  * Hook for managing post-approval form schemas using existing configuration endpoint
  */
-export const usePostApprovalSchema = createFormSchemaHook('postApproval');
+export const usePostApprovalSchema = createFormSchemaHook("postApproval");

@@ -44,7 +44,13 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-const TAB_KEYS = ["build", "settings", "post-approval", "ai-config", "reviewers"] as const;
+const TAB_KEYS = [
+  "build",
+  "settings",
+  "post-approval",
+  "ai-config",
+  "reviewers",
+] as const;
 type TabKey = (typeof TAB_KEYS)[number];
 const DEFAULT_TAB: TabKey = "build";
 
@@ -58,14 +64,19 @@ const getValidTab = (value: string | null): TabKey =>
 const TAB_CONFIG = [
   { key: "build" as TabKey, icon: WrenchScrewdriverIcon, label: "Build" },
   { key: "settings" as TabKey, icon: Cog6ToothIcon, label: "Settings" },
-  { key: "post-approval" as TabKey, icon: CheckCircleIcon, label: "Post Approval" },
+  {
+    key: "post-approval" as TabKey,
+    icon: CheckCircleIcon,
+    label: "Post Approval",
+  },
   { key: "ai-config" as TabKey, icon: CpuChipIcon, label: "AI Config" },
   { key: "reviewers" as TabKey, icon: UserGroupIcon, label: "Reviewers" },
 ] as const;
 
 // Helper to get tab button class names
 const getTabButtonClassName = (isActive: boolean): string => {
-  const base = "flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors";
+  const base =
+    "flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors";
   return isActive
     ? `${base} bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm`
     : `${base} text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white`;
@@ -121,7 +132,8 @@ export function QuestionBuilder({
       fields: [],
       settings: {
         submitButtonText: "Submit Post Approval Information",
-        confirmationMessage: "Thank you for providing the additional information!",
+        confirmationMessage:
+          "Thank you for providing the additional information!",
         privateApplications: true, // Post-approval forms are always private
       },
     }
@@ -137,7 +149,9 @@ export function QuestionBuilder({
   // Helper to determine if we're working with post approval form
   const isPostApprovalMode = activeTab === "post-approval";
   const currentSchema = isPostApprovalMode ? postApprovalSchema : schema;
-  const setCurrentSchema = isPostApprovalMode ? setPostApprovalSchema : setSchema;
+  const setCurrentSchema = isPostApprovalMode
+    ? setPostApprovalSchema
+    : setSchema;
 
   // Sync URL tab parameter with local state and clean up invalid tabs
   useEffect(() => {
@@ -156,11 +170,9 @@ export function QuestionBuilder({
         router.replace(url);
       }
     } catch (error) {
-      errorManager(
-        "Failed to synchronize tab state with URL",
-        error,
-        { pathname }
-      );
+      errorManager("Failed to synchronize tab state with URL", error, {
+        pathname,
+      });
       // Fallback to default tab on error
       setActiveTab(DEFAULT_TAB);
     }
@@ -179,12 +191,13 @@ export function QuestionBuilder({
       const url = params.toString() ? `${pathname}?${params}` : pathname;
       router.replace(url);
     } catch (error) {
-      errorManager(
-        `Failed to update URL for tab: ${tab}`,
-        error,
-        { tab, pathname }
+      errorManager(`Failed to update URL for tab: ${tab}`, error, {
+        tab,
+        pathname,
+      });
+      toast.error(
+        "Navigation updated locally. The URL may not reflect your current view."
       );
-      toast.error("Navigation updated locally. The URL may not reflect your current view.");
     }
   };
 
@@ -196,7 +209,9 @@ export function QuestionBuilder({
 
     // Only update URL if it needs to change
     const currentTabParam = searchParams.get("tab");
-    const needsUrlUpdate = (tab !== DEFAULT_TAB || currentTabParam !== null) && currentTabParam !== tab;
+    const needsUrlUpdate =
+      (tab !== DEFAULT_TAB || currentTabParam !== null) &&
+      currentTabParam !== tab;
 
     if (needsUrlUpdate) {
       updateTabInUrl(tab);
@@ -219,7 +234,10 @@ export function QuestionBuilder({
       setPostApprovalSchema({
         ...initialPostApprovalSchema,
         fields: Array.isArray(initialPostApprovalSchema.fields)
-          ? initialPostApprovalSchema.fields.map(field => ({ ...field, private: true })) // Ensure all fields are private
+          ? initialPostApprovalSchema.fields.map((field) => ({
+              ...field,
+              private: true,
+            })) // Ensure all fields are private
           : [],
         settings: {
           ...initialPostApprovalSchema.settings,
@@ -333,11 +351,10 @@ export function QuestionBuilder({
         }));
       }
     } catch (error) {
-      errorManager(
-        "Failed to reorder form fields",
-        error,
-        { activeId: event.active.id, overId: event.over?.id }
-      );
+      errorManager("Failed to reorder form fields", error, {
+        activeId: event.active.id,
+        overId: event.over?.id,
+      });
       toast.error("Failed to reorder fields. Please try again.");
     }
   };
@@ -391,15 +408,13 @@ export function QuestionBuilder({
         toast.success("Form saved successfully!");
       }
     } catch (error) {
-      errorManager(
-        "Failed to save form schema",
-        error,
-        {
-          isPostApprovalMode,
-          formId: isPostApprovalMode ? postApprovalSchema.id : schema.id,
-          fieldsCount: isPostApprovalMode ? postApprovalSchema.fields.length : schema.fields.length
-        }
-      );
+      errorManager("Failed to save form schema", error, {
+        isPostApprovalMode,
+        formId: isPostApprovalMode ? postApprovalSchema.id : schema.id,
+        fieldsCount: isPostApprovalMode
+          ? postApprovalSchema.fields.length
+          : schema.fields.length,
+      });
       toast.error("Failed to save form. Please try again.");
     }
   };
@@ -450,7 +465,10 @@ export function QuestionBuilder({
     try {
       setCurrentSchema((prev) => ({
         ...prev,
-        emailNotifications: prev.emailNotifications?.filter((_email: string, i: number) => i !== index) || [],
+        emailNotifications:
+          prev.emailNotifications?.filter(
+            (_email: string, i: number) => i !== index
+          ) || [],
       }));
       toast.success("Email removed successfully!");
     } catch (error) {
@@ -466,46 +484,41 @@ export function QuestionBuilder({
     }
   };
 
-
   return (
-    <div
-      className={`flex flex-col h-full${className}`}
-    >
+    <div className={`flex flex-col h-full${className}`}>
       {/* Header */}
       <div className="border-b border-gray-200 dark:border-gray-700 sm:px-3 md:px-4 px-6 py-2">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between flex-wrap gap-4">
           <div className="flex flex-col gap-2 mb-4 sm:mb-0">
-            {
-              readOnly ? (
-                <>
-                  <div className="text-xl font-bold text-gray-900 dark:text-white px-3 py-2">
-                    {schema.title}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400 px-3 py-1">
-                    <MarkdownPreview source={schema.description || ""} />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <input
-                    type="text"
-                    value={currentSchema.title}
-                    onChange={(e) => handleTitleChange(e.target.value)}
-                    className="text-xl font-bold bg-transparent border-none outline-none bg-zinc-100 dark:bg-zinc-800 rounded-md text-gray-900 dark:text-white placeholder-gray-400"
-                    placeholder="Form Title"
-                  />
-                  <MarkdownEditor
-                    value={currentSchema.description || ""}
-                    onChange={(value: string) => handleDescriptionChange(value)}
-                    className="mt-1 text-sm bg-transparent border-none outline-none bg-zinc-100 dark:bg-zinc-800 rounded-md text-gray-600 dark:text-gray-400 placeholder-gray-500"
-                    placeholderText="Form Description"
-                    height={100}
-                    minHeight={100}
-                  />
-                </>
-              )
-            }
-          </div >
+            {readOnly ? (
+              <>
+                <div className="text-xl font-bold text-gray-900 dark:text-white px-3 py-2">
+                  {schema.title}
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 px-3 py-1">
+                  <MarkdownPreview source={schema.description || ""} />
+                </div>
+              </>
+            ) : (
+              <>
+                <input
+                  type="text"
+                  value={currentSchema.title}
+                  onChange={(e) => handleTitleChange(e.target.value)}
+                  className="text-xl font-bold bg-transparent border-none outline-none bg-zinc-100 dark:bg-zinc-800 rounded-md text-gray-900 dark:text-white placeholder-gray-400"
+                  placeholder="Form Title"
+                />
+                <MarkdownEditor
+                  value={currentSchema.description || ""}
+                  onChange={(value: string) => handleDescriptionChange(value)}
+                  className="mt-1 text-sm bg-transparent border-none outline-none bg-zinc-100 dark:bg-zinc-800 rounded-md text-gray-600 dark:text-gray-400 placeholder-gray-500"
+                  placeholderText="Form Description"
+                  height={100}
+                  minHeight={100}
+                />
+              </>
+            )}
+          </div>
 
           <div className="flex items-center gap-3 flex-row flex-wrap">
             <div className="flex flex-row flex-wrap bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
@@ -521,13 +534,14 @@ export function QuestionBuilder({
               ))}
             </div>
 
-            {
-              !readOnly && (<Button
+            {!readOnly && (
+              <Button
                 onClick={handleSave}
-                className={`py-2 ${needsEmailValidation()
-                  ? "bg-yellow-600 hover:bg-yellow-700"
-                  : "bg-blue-600 hover:bg-blue-700"
-                  }`}
+                className={`py-2 ${
+                  needsEmailValidation()
+                    ? "bg-yellow-600 hover:bg-yellow-700"
+                    : "bg-blue-600 hover:bg-blue-700"
+                }`}
                 title={
                   needsEmailValidation()
                     ? "Add an email field before saving"
@@ -538,25 +552,28 @@ export function QuestionBuilder({
                   <ExclamationTriangleIcon className="w-4 h-4 mr-2" />
                 )}
                 {isPostApprovalMode ? "Save Post Approval Form" : "Save Form"}
-              </Button>)}
+              </Button>
+            )}
           </div>
         </div>
       </div>
 
       {/* Content */}
-      < div className="flex-1 overflow-hidden  sm:px-3 md:px-4 px-6 py-2" >
+      <div className="flex-1 overflow-hidden  sm:px-3 md:px-4 px-6 py-2">
         {activeTab === "build" || activeTab === "post-approval" ? (
           <div className="h-full grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Field Types Panel */}
             {!readOnly && (
-
               <div className="lg:col-span-1">
-                <FieldTypeSelector onFieldAdd={handleFieldAdd} isPostApprovalMode={isPostApprovalMode} />
+                <FieldTypeSelector
+                  onFieldAdd={handleFieldAdd}
+                  isPostApprovalMode={isPostApprovalMode}
+                />
               </div>
             )}
 
             {/* Form Builder */}
-            <div className={readOnly ? '' : 'lg:col-span-2 overflow-y-auto'}>
+            <div className={readOnly ? "" : "lg:col-span-2 overflow-y-auto"}>
               <div className="space-y-4">
                 {/* Email Field Warning - only for main application form */}
                 {needsEmailValidation() && (
@@ -584,7 +601,8 @@ export function QuestionBuilder({
                         Post Approval Form
                       </h4>
                       <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                        This form will be shown to applicants after their application is approved.
+                        This form will be shown to applicants after their
+                        application is approved.
                         {`Use it to collect additional information needed for the next steps. All fields are automatically set as private, and email fields are not required since we already have the applicant's information.`}
                       </p>
                     </div>
@@ -648,56 +666,61 @@ export function QuestionBuilder({
                           Post Approval Email Notifications
                         </h3>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                          Add email addresses that should receive notifications when post-approval forms are submitted.
+                          Add email addresses that should receive notifications
+                          when post-approval forms are submitted.
                         </p>
                       </div>
                     </div>
 
                     {/* Email List */}
-                    {currentSchema.emailNotifications && currentSchema.emailNotifications.length > 0 && (
-                      <div className="space-y-2 mb-4">
-                        {currentSchema.emailNotifications.map((email, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 px-4 py-3 rounded-lg group hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                                <svg
-                                  className="w-4 h-4 text-blue-600 dark:text-blue-400"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                                  />
-                                </svg>
-                              </div>
-                              <span className="text-sm font-medium text-gray-900 dark:text-white">
-                                {email}
-                              </span>
-                            </div>
-                            {!readOnly && (
-                              <button
-                                type="button"
-                                onClick={() => handleRemoveEmail(index)}
-                                className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors opacity-0 group-hover:opacity-100"
-                                aria-label={`Remove ${email}`}
+                    {currentSchema.emailNotifications &&
+                      currentSchema.emailNotifications.length > 0 && (
+                        <div className="space-y-2 mb-4">
+                          {currentSchema.emailNotifications.map(
+                            (email, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 px-4 py-3 rounded-lg group hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                               >
-                                <XMarkIcon className="w-5 h-5" />
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                                <div className="flex items-center gap-3">
+                                  <div className="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                                    <svg
+                                      className="w-4 h-4 text-blue-600 dark:text-blue-400"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                                      />
+                                    </svg>
+                                  </div>
+                                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                    {email}
+                                  </span>
+                                </div>
+                                {!readOnly && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveEmail(index)}
+                                    className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors opacity-0 group-hover:opacity-100"
+                                    aria-label={`Remove ${email}`}
+                                  >
+                                    <XMarkIcon className="w-5 h-5" />
+                                  </button>
+                                )}
+                              </div>
+                            )
+                          )}
+                        </div>
+                      )}
 
                     {/* Empty state */}
-                    {(!currentSchema.emailNotifications || currentSchema.emailNotifications.length === 0) && (
+                    {(!currentSchema.emailNotifications ||
+                      currentSchema.emailNotifications.length === 0) && (
                       <div className="text-center py-8 mb-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
                         <svg
                           className="mx-auto h-12 w-12 text-gray-400"
@@ -800,7 +823,7 @@ export function QuestionBuilder({
           </div>
         ) : null}
       </div>
-    </div >
+    </div>
   );
 }
 
@@ -853,10 +876,11 @@ function SortableFieldItem({
         fieldRefs.current[field.id] = el;
       }}
       style={style}
-      className={`border rounded-lg transition-all ${selectedFieldId === field.id
-        ? "border-blue-500 bg-white dark:bg-gray-800 shadow-lg"
-        : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600"
-        } ${isDragging ? "z-50" : ""}`}
+      className={`border rounded-lg transition-all ${
+        selectedFieldId === field.id
+          ? "border-blue-500 bg-white dark:bg-gray-800 shadow-lg"
+          : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600"
+      } ${isDragging ? "z-50" : ""}`}
     >
       <div className="p-4">
         <div className="flex items-center justify-between">

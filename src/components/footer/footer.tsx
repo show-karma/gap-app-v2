@@ -76,7 +76,7 @@ export function Footer() {
                                             key={link.label}
                                             {...linkProps}
                                             className={cn(
-                                                "font-semibold text-base leading-6 text-muted-foreground",
+                                                "font-medium text-sm leading-6 text-muted-foreground",
                                                 "hover:text-foreground transition-colors"
                                             )}
                                         >
@@ -97,7 +97,7 @@ export function Footer() {
                                             className="text-foreground transition-colors"
                                             aria-label={social.name}
                                         >
-                                            <IconComponent className="w-8 h-8" />
+                                            <IconComponent className="w-6 h-6" />
                                         </ExternalLink>
                                     );
                                 })}
@@ -129,7 +129,7 @@ export function Footer() {
                                         key={link.label}
                                         {...linkProps}
                                         className={cn(
-                                            "font-normal text-base leading-6 text-muted-foreground",
+                                            "font-normal text-sm leading-6 text-muted-foreground",
                                             "hover:text-foreground transition-colors"
                                         )}
                                     >
@@ -140,7 +140,7 @@ export function Footer() {
                         </div>
 
                         {/* Copyright */}
-                        <p className="font-normal text-base leading-6 text-muted-foreground">
+                        <p className="font-normal text-sm leading-6 text-muted-foreground">
                             © {currentYear} Karma. All rights reserved.
                         </p>
                     </div>

@@ -20,16 +20,18 @@ const items = chosenCommunities(true).map((community) => ({
 
 export function Hero() {
     return (
-        <section className={cn(marketingLayoutTheme.padding, "flex flex-col items-start justify-start gap-12 flex-1 w-full")}>
+        <section className={cn(marketingLayoutTheme.padding, "flex flex-col items-start justify-center gap-14 flex-1 w-full min-h-[calc(100vh-75px)]")}>
             <div className="flex flex-row items-center justify-between gap-10 w-full max-md:flex-wrap max-md:gap-0">
                 <div className="flex flex-col items-start justify-center gap-4 max-w-full lg:max-w-lg 2xl:max-w-2xl">
                     <h1 className="text-foreground text-[40px] lg:text-5xl font-semibold leading-none tracking-[-0.02em]">
-                        Where builders get funded and ecosystems grow
+                        Where builders{" "}
+                        <br className="hidden lg:block" />
+                        get funded and ecosystems grow
                     </h1>
                     <p className="text-muted-foreground text-sm sm:text-base font-medium">Ecosystems use Karma to fund projects transparently. Builders use it to share progress, earn reputation, and get discovered for more opportunities.</p>
-                    <div className="flex flex-col md:flex-row gap-3 md:gap-4">
+                    <div className="flex flex-col md:flex-row gap-3 md:gap-3">
                         <CreateProjectButton />
-                        <Button variant='outline' className="px-6 py-2.5 text-sm font-medium border border-border-3" asChild>
+                        <Button variant='outline' className="px-4 py-2.5 text-sm font-medium border border-border-3" asChild>
                             <Link href={PAGES.FUNDERS}>Run a funding program</Link>
                         </Button>
                     </div>
@@ -73,25 +75,26 @@ export function Hero() {
                 />
             </div>
 
-            {/* Infinite sliding pills section */}
-            <div className="w-full max-md:-my-4">
-                <InfiniteMovingCards
-                    items={items}
-                    variant="pill"
-                    direction="left"
-                    speed="slow"
-                    pauseOnHover
-                    className="w-full"
-                />
-            </div>
+            <div className="flex w-full flex-col gap-4">
+                <div className="w-full max-md:-my-4">
+                    <InfiniteMovingCards
+                        items={items}
+                        variant="pill"
+                        direction="left"
+                        speed="slow"
+                        pauseOnHover
+                        className="w-full"
+                    />
+                </div>
 
-            <div className="w-full flex flex-row items-center justify-center mt-4">
-                <div className="flex flex-row items-center justify-center gap-8">
-                    <p className="text-muted-foreground text-base font-medium">Communities on Karma</p>
-                    <Link href={PAGES.COMMUNITIES} className="px-2 flex flex-row items-center gap-2 text-foreground text-sm font-semibold border-none shadow-none">
-                        View all
-                        <ArrowRightIcon className="w-4 h-4" />
-                    </Link>
+                <div className="w-full flex flex-row items-center justify-center">
+                    <div className="flex flex-row items-center justify-center gap-4">
+                        <p className="text-muted-foreground text-base font-medium">Communities on Karma</p>
+                        <Link href={PAGES.COMMUNITIES} className="px-2 flex flex-row items-center gap-2 text-foreground text-sm font-semibold border-none shadow-none">
+                            View all
+                            <ArrowRightIcon className="w-4 h-4" />
+                        </Link>
+                    </div>
                 </div>
             </div>
 
