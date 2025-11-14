@@ -1,0 +1,82 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.3.5/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "ignoreUnknown": false,
+    "includes": [
+      "**",
+      "!!**/*.stories.tsx",
+      "!!**/*.stories.ts",
+      "!!**/node_modules",
+      "!!**/.next",
+      "!!**/out",
+      "!!**/build",
+      "!!**/coverage",
+      "!!**/cypress",
+      "!!**/storybook-static"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "suspicious": {
+        "noConsole": {
+          "level": "warn",
+          "options": {
+            "allow": ["warn", "error", "info"]
+          }
+        }
+      },
+      "correctness": {
+        "useExhaustiveDependencies": "warn"
+      },
+      "style": {
+        "noNonNullAssertion": "off"
+      },
+      "a11y": {
+        "useButtonType": "warn",
+        "useAltText": "warn"
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double",
+      "semicolons": "asNeeded",
+      "trailingCommas": "es5",
+      "arrowParentheses": "always"
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUnusedImports": "warn",
+            "noUnusedVariables": "warn"
+          }
+        }
+      }
+    }
+  ],
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  }
+}
