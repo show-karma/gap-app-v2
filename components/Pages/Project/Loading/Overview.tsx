@@ -1,14 +1,12 @@
-import { Skeleton } from "@/components/Utilities/Skeleton";
+import { Skeleton } from "@/components/Utilities/Skeleton"
 
 export const ProjectOverviewLoading = () => {
   const Team = () => {
     // empty array of 3 elements
-    const members = Array(3).fill({});
+    const members = Array(3).fill({})
     return (
       <div className="flex flex-col gap-2 w-full min-w-48">
-        <div className="font-semibold text-black dark:text-white leading-none">
-          Team
-        </div>
+        <div className="font-semibold text-black dark:text-white leading-none">Team</div>
         <div className="flex flex-col divide-y divide-y-zinc-200 border border-zinc-200 rounded-xl">
           {members?.map((member, index) => (
             <div key={index} className="flex items-center flex-row gap-3 p-3">
@@ -24,8 +22,8 @@ export const ProjectOverviewLoading = () => {
           ))}
         </div>
       </div>
-    );
-  };
+    )
+  }
 
   const ProjectBlocks = () => {
     return (
@@ -34,8 +32,8 @@ export const ProjectOverviewLoading = () => {
         <Skeleton className="h-10 w-full" />
         <Skeleton className="h-10 w-full" />
       </>
-    );
-  };
+    )
+  }
 
   return (
     <div className="flex flex-row max-lg:flex-col gap-6 max-md:gap-4 py-5 mb-20">
@@ -55,9 +53,7 @@ export const ProjectOverviewLoading = () => {
         </div>
 
         <div className="flex flex-col gap-1">
-          <p className="text-black dark:text-zinc-400 font-bold text-sm">
-            Project impact
-          </p>
+          <p className="text-black dark:text-zinc-400 font-bold text-sm">Project impact</p>
           <div className="flex flex-row  max-lg:flex-col gap-4">
             <div className="flex flex-1 rounded border border-[#EAECf0] dark:border-zinc-600 border-l-[#155EEF] dark:border-l-[#155EEF] border-l-[4px] p-4 justify-between items-center">
               <div className="flex flex-col gap-2">
@@ -122,5 +118,5 @@ export const ProjectOverviewLoading = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}

@@ -1,18 +1,18 @@
-"use client";
-import { useMemo } from "react";
-import { SUPPORTED_NETWORKS, type SupportedToken } from "@/constants/supportedTokens";
+"use client"
+import { useMemo } from "react"
+import { estimateDonationTime, formatEstimatedTime } from "@/constants/donation"
+import { SUPPORTED_NETWORKS, type SupportedToken } from "@/constants/supportedTokens"
 import {
-  getDonationSummaryByNetwork,
   countNetworkSwitches,
   type DonationPayment,
-} from "@/utilities/donations/helpers";
-import { estimateDonationTime, formatEstimatedTime } from "@/constants/donation";
-import { NetworkSwitchItem } from "./NetworkSwitchItem";
+  getDonationSummaryByNetwork,
+} from "@/utilities/donations/helpers"
+import { NetworkSwitchItem } from "./NetworkSwitchItem"
 
 interface NetworkSwitchPreviewProps {
-  payments: DonationPayment[];
-  currentChainId: number | null;
-  className?: string;
+  payments: DonationPayment[]
+  currentChainId: number | null
+  className?: string
 }
 
 /**
@@ -33,27 +33,23 @@ export function NetworkSwitchPreview({
   className = "",
 }: NetworkSwitchPreviewProps) {
   const networkSummary = useMemo(() => {
-    return getDonationSummaryByNetwork(payments, currentChainId);
-  }, [payments, currentChainId]);
+    return getDonationSummaryByNetwork(payments, currentChainId)
+  }, [payments, currentChainId])
 
   const switchCount = useMemo(() => {
-    return countNetworkSwitches(payments, currentChainId);
-  }, [payments, currentChainId]);
+    return countNetworkSwitches(payments, currentChainId)
+  }, [payments, currentChainId])
 
   const estimatedTime = useMemo(() => {
-    const approvalCount = payments.filter((p) => !p.token.isNative).length;
-    const donationCount = payments.length;
-    const totalSeconds = estimateDonationTime(
-      switchCount,
-      approvalCount,
-      donationCount
-    );
-    return formatEstimatedTime(totalSeconds);
-  }, [switchCount, payments]);
+    const approvalCount = payments.filter((p) => !p.token.isNative).length
+    const donationCount = payments.length
+    const totalSeconds = estimateDonationTime(switchCount, approvalCount, donationCount)
+    return formatEstimatedTime(totalSeconds)
+  }, [switchCount, payments])
 
   // Don't show if only one network or no payments
   if (networkSummary.length <= 1 || payments.length === 0) {
-    return null;
+    return null
   }
 
   return (
@@ -91,15 +87,10 @@ export function NetworkSwitchPreview({
           </h3>
 
           <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
-            Your wallet will prompt you to switch networks during the donation
-            process.
+            Your wallet will prompt you to switch networks during the donation process.
           </p>
 
-          <div
-            className="mt-3 space-y-2"
-            role="list"
-            aria-label="Network donation summary"
-          >
+          <div className="mt-3 space-y-2" role="list" aria-label="Network donation summary">
             {networkSummary.map((summary, index) => (
               <NetworkSwitchItem
                 key={summary.chainId}
@@ -112,9 +103,7 @@ export function NetworkSwitchPreview({
           </div>
 
           <div className="mt-3 flex items-center justify-between border-t border-amber-200 pt-3 text-xs dark:border-amber-900/50">
-            <span className="font-medium text-amber-900 dark:text-amber-100">
-              Estimated time:
-            </span>
+            <span className="font-medium text-amber-900 dark:text-amber-100">Estimated time:</span>
             <span
               className="font-semibold text-amber-700 dark:text-amber-300"
               aria-label={`Estimated time: ${estimatedTime}`}
@@ -125,5 +114,5 @@ export function NetworkSwitchPreview({
         </div>
       </div>
     </div>
-  );
+  )
 }

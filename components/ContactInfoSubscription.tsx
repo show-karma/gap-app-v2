@@ -1,23 +1,22 @@
-"use client";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { FC, useState } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
-import { z } from "zod";
-import { Button } from "./Utilities/Button";
-import toast from "react-hot-toast";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { Contact } from "@/types/project";
-import { INDEXER } from "@/utilities/indexer";
-import fetchData from "@/utilities/fetchData";
-import { TrashIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
+"use client"
+import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { type FC, useState } from "react"
+import { type SubmitHandler, useForm } from "react-hook-form"
+import toast from "react-hot-toast"
+import { z } from "zod"
+import { useContactInfo } from "@/hooks/useContactInfo"
+import { useOwnerStore, useProjectStore } from "@/store"
+import type { Contact } from "@/types/project"
+import fetchData from "@/utilities/fetchData"
+import { generateRandomString } from "@/utilities/generateRandomString"
+import { INDEXER } from "@/utilities/indexer"
+import { Button } from "./Utilities/Button"
+import { errorManager } from "./Utilities/errorManager"
 
-import { errorManager } from "./Utilities/errorManager";
-import { generateRandomString } from "@/utilities/generateRandomString";
-import { useContactInfo } from "@/hooks/useContactInfo";
-
-const labelStyle = "text-sm font-bold";
+const labelStyle = "text-sm font-bold"
 const inputStyle =
-  "mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white";
+  "mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
 
 const subscriptionSchema = z.object({
   id: z.string().min(1),
@@ -32,16 +31,16 @@ const subscriptionSchema = z.object({
       message: "E-mail must be a valid email",
     })
     .min(3, "E-mail must be at least 3 characters long"),
-});
+})
 
-type FormType = z.infer<typeof subscriptionSchema>;
+type FormType = z.infer<typeof subscriptionSchema>
 
 interface ContactBlockProps {
-  onSelectFunction: (value: string) => void;
-  contacts?: Contact[] | null;
-  value: string;
-  deleteFunction: (value: string) => void;
-  newContact: () => void;
+  onSelectFunction: (value: string) => void
+  contacts?: Contact[] | null
+  value: string
+  deleteFunction: (value: string) => void
+  newContact: () => void
 }
 const ContactBlock: FC<ContactBlockProps> = ({
   contacts,
@@ -61,10 +60,7 @@ const ContactBlock: FC<ContactBlockProps> = ({
             key={contact.id}
             className="min-h-max h-max max-h-max p-4 bg-white dark:bg-zinc-600 rounded-xl justify-between items-end flex w-full flex-row gap-2"
             style={{
-              border:
-                value === contact.id
-                  ? "2px solid #155EEF"
-                  : "2px solid transparent",
+              border: value === contact.id ? "2px solid #155EEF" : "2px solid transparent",
             }}
           >
             <div className="flex-col justify-center items-start gap-1 flex">
@@ -79,7 +75,7 @@ const ContactBlock: FC<ContactBlockProps> = ({
               <button
                 type="button"
                 onClick={() => {
-                  onSelectFunction(contact.id);
+                  onSelectFunction(contact.id)
                 }}
               >
                 <PencilSquareIcon className="w-6 h-6 max-md:w-7 max-md:h-7 text-black dark:text-white" />
@@ -87,7 +83,7 @@ const ContactBlock: FC<ContactBlockProps> = ({
               <button
                 type="button"
                 onClick={() => {
-                  deleteFunction(contact.id);
+                  deleteFunction(contact.id)
                 }}
               >
                 <TrashIcon className="w-6 h-6 max-md:w-7 max-md:h-7 text-red-500" />
@@ -107,34 +103,34 @@ const ContactBlock: FC<ContactBlockProps> = ({
         Add Contact
       </button>
     </div>
-  );
-};
-
-interface ContactInfoSubscriptionProps {
-  contactInfo?: Contact;
+  )
 }
 
-export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
-  contactInfo,
-}) => {
-  const project = useProjectStore((state) => state.project);
-  const projectId = project?.uid;
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isAuthorized = isOwner || isProjectAdmin;
-  const { data: existingContacts, refetch: refreshContactInfo } =
-    useContactInfo(projectId, isAuthorized);
+interface ContactInfoSubscriptionProps {
+  contactInfo?: Contact
+}
 
-  const [isLoading, setIsLoading] = useState(false);
+export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({ contactInfo }) => {
+  const project = useProjectStore((state) => state.project)
+  const projectId = project?.uid
+  const isOwner = useOwnerStore((state) => state.isOwner)
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin)
+  const isAuthorized = isOwner || isProjectAdmin
+  const { data: existingContacts, refetch: refreshContactInfo } = useContactInfo(
+    projectId,
+    isAuthorized
+  )
 
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const [isLoading, setIsLoading] = useState(false)
+
+  const refreshProject = useProjectStore((state) => state.refreshProject)
 
   const dataToUpdate = {
     id: contactInfo?.id || "0",
     name: contactInfo?.name || "",
     email: contactInfo?.email || "",
     telegram: contactInfo?.telegram || "",
-  };
+  }
   const {
     register,
     handleSubmit,
@@ -147,7 +143,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
     reValidateMode: "onChange",
     mode: "onChange",
     defaultValues: dataToUpdate,
-  });
+  })
 
   const clear = () => {
     reset(
@@ -163,21 +159,19 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
         keepTouched: false,
         keepIsValid: false,
       }
-    );
-  };
+    )
+  }
 
   const onSubmit: SubmitHandler<FormType> = async (data) => {
-    setIsLoading(true);
+    setIsLoading(true)
     try {
       if (data.telegram.includes("@")) {
         // remove all @ from the string
-        data.telegram = data.telegram.replace(/@/g, "");
+        data.telegram = data.telegram.replace(/@/g, "")
       }
       if (data.id === "0") {
         await fetchData(
-          INDEXER.SUBSCRIPTION.CREATE(
-            project?.details?.data?.slug || (project?.uid as string)
-          ),
+          INDEXER.SUBSCRIPTION.CREATE(project?.details?.data?.slug || (project?.uid as string)),
           "POST",
           { contacts: [data] },
           {},
@@ -185,15 +179,15 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
           true
         ).then(([res, error]) => {
           if (!error) {
-            toast.success("Contact info created successfully");
-            refreshProject();
-            refreshContactInfo();
-            clear();
+            toast.success("Contact info created successfully")
+            refreshProject()
+            refreshContactInfo()
+            clear()
           } else {
-            toast.error("Something went wrong. Please try again later.");
-            throw new Error("Something went wrong while creating contact info");
+            toast.error("Something went wrong. Please try again later.")
+            throw new Error("Something went wrong while creating contact info")
           }
-        });
+        })
       } else {
         await fetchData(
           INDEXER.SUBSCRIPTION.UPDATE(
@@ -207,14 +201,14 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
           true
         ).then(([res, error]) => {
           if (!error) {
-            toast.success("Contact info updated successfully");
-            refreshProject();
-            refreshContactInfo();
-            clear();
+            toast.success("Contact info updated successfully")
+            refreshProject()
+            refreshContactInfo()
+            clear()
           } else {
-            throw Error(error);
+            throw Error(error)
           }
-        });
+        })
       }
     } catch (error: any) {
       errorManager(
@@ -228,23 +222,21 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
         {
           error: "Failed to update contact information.",
         }
-      );
+      )
 
-      console.log(error);
+      console.log(error)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
-  const [isDeleteLoading, setIsDeleteLoading] = useState(false);
+  const [isDeleteLoading, setIsDeleteLoading] = useState(false)
 
   const deleteContact = async (id: string) => {
-    setIsDeleteLoading(true);
+    setIsDeleteLoading(true)
     try {
       await fetchData(
-        INDEXER.SUBSCRIPTION.DELETE(
-          project?.details?.data?.slug || (project?.uid as string)
-        ),
+        INDEXER.SUBSCRIPTION.DELETE(project?.details?.data?.slug || (project?.uid as string)),
         "DELETE",
         { contacts: [id] },
         {},
@@ -252,13 +244,13 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
         true
       ).then(([res, error]) => {
         if (!error) {
-          toast.success("Contact info deleted successfully");
-          refreshProject();
-          refreshContactInfo();
+          toast.success("Contact info deleted successfully")
+          refreshProject()
+          refreshContactInfo()
         } else {
-          throw Error(error);
+          throw Error(error)
         }
-      });
+      })
     } catch (error: any) {
       errorManager(
         "Error deleting contact info",
@@ -270,44 +262,39 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
         {
           error: "Failed to delete contact info.",
         }
-      );
-      console.log(error);
+      )
+      console.log(error)
     } finally {
-      setIsDeleteLoading(false);
+      setIsDeleteLoading(false)
     }
-  };
+  }
 
   const changeId = (value: string) => {
     setValue("id", value, {
       shouldValidate: true,
-    });
-    const contact = existingContacts?.find((contact) => contact.id === value);
+    })
+    const contact = existingContacts?.find((contact) => contact.id === value)
     setValue("name", contact?.name || "", {
       shouldValidate: contact ? true : false,
-    });
+    })
     setValue("email", contact?.email || "", {
       shouldValidate: contact ? true : false,
-    });
+    })
     setValue("telegram", contact?.telegram || "", {
       shouldValidate: contact ? true : false,
-    });
-  };
+    })
+  }
 
   return isAuthorized ? (
     <div className="px-4 py-4 rounded-md border border-transparent dark:bg-zinc-800 dark:border flex flex-col gap-4 items-start">
-      <h3 className="text-xl font-bold leading-6 text-gray-900 dark:text-zinc-100">
-        Contact Info
-      </h3>
+      <h3 className="text-xl font-bold leading-6 text-gray-900 dark:text-zinc-100">Contact Info</h3>
       <p className="text-zinc-600 dark:text-blue-100">
-        We promise to never spam you. We will send notifications to inform you
-        if your project qualifies for any grants (proactive or retroactive), and
-        provide reminders about milestones and grant deadlines.
+        We promise to never spam you. We will send notifications to inform you if your project
+        qualifies for any grants (proactive or retroactive), and provide reminders about milestones
+        and grant deadlines.
       </p>
 
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="flex flex-col md:flex-row gap-8"
-      >
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col md:flex-row gap-8">
         <div className="flex w-full flex-col gap-3">
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="name-input" className={labelStyle}>
@@ -378,5 +365,5 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
         This is a private page. You are not authorized to view this page.
       </p>
     </div>
-  );
-};
+  )
+}

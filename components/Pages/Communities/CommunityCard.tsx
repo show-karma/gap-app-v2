@@ -1,51 +1,50 @@
-import { useRef, useEffect, useState } from "react";
-import Link from "next/link";
-import { ChevronRightIcon } from "@heroicons/react/24/solid";
-import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
-import { PAGES } from "@/utilities/pages";
-import { CommunityWithStats } from "@/hooks/useCommunities";
+import { ChevronRightIcon } from "@heroicons/react/24/solid"
+import Link from "next/link"
+import { useEffect, useRef, useState } from "react"
+import { ProfilePicture } from "@/components/Utilities/ProfilePicture"
+import type { CommunityWithStats } from "@/hooks/useCommunities"
+import { PAGES } from "@/utilities/pages"
 
 interface CommunityCardProps {
-  community: CommunityWithStats;
+  community: CommunityWithStats
 }
 
 export const CommunityCard = ({ community }: CommunityCardProps) => {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [cardWidth, setCardWidth] = useState<number>(0);
+  const cardRef = useRef<HTMLDivElement>(null)
+  const [cardWidth, setCardWidth] = useState<number>(0)
 
   useEffect(() => {
     const updateWidth = () => {
       if (cardRef.current) {
-        setCardWidth(cardRef.current.offsetWidth);
+        setCardWidth(cardRef.current.offsetWidth)
       }
-    };
-
-    updateWidth();
-
-    const resizeObserver = new ResizeObserver(updateWidth);
-    if (cardRef.current) {
-      resizeObserver.observe(cardRef.current);
     }
 
-    return () => resizeObserver.disconnect();
-  }, []);
+    updateWidth()
+
+    const resizeObserver = new ResizeObserver(updateWidth)
+    if (cardRef.current) {
+      resizeObserver.observe(cardRef.current)
+    }
+
+    return () => resizeObserver.disconnect()
+  }, [])
 
   // Extract data from the API response structure
-  const name = community.details?.name || community.uid;
-  const slug = community.details?.slug;
-  const imageURL = community.details?.logoUrl;
+  const name = community.details?.name || community.uid
+  const slug = community.details?.slug
+  const imageURL = community.details?.logoUrl
   const stats = {
     grants: community.stats?.totalGrants || 0,
     projects: community.stats?.totalProjects || 0,
     members: community.stats?.totalMembers || 0,
-  };
-
+  }
 
   return (
     <div
       ref={cardRef}
       className="flex flex-col p-4 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 ease-in-out w-full min-w-0"
-      style={{ height: '318px' }}
+      style={{ height: "318px" }}
     >
       <div className="flex justify-center mb-3 min-h-[72px] h-18 mx-auto">
         <ProfilePicture
@@ -62,7 +61,6 @@ export const CommunityCard = ({ community }: CommunityCardProps) => {
           {name}
         </h3>
       </div>
-
 
       <div className="flex justify-center space-x-4 mb-3 min-w-0">
         <div className="text-center min-w-0">
@@ -101,5 +99,5 @@ export const CommunityCard = ({ community }: CommunityCardProps) => {
         </Link>
       </div>
     </div>
-  );
-}; 
+  )
+}

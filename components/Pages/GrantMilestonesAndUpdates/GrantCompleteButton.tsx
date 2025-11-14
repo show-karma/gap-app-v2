@@ -1,20 +1,20 @@
-"use client";
+"use client"
 
-import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
-import { PAGES } from "@/utilities/pages";
-import { CheckCircleIcon } from "@heroicons/react/24/outline";
-import {
+import { CheckCircleIcon } from "@heroicons/react/24/outline"
+import type {
   IGrantResponse,
   IProjectResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import Link from "next/link";
-import type { FC } from "react";
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
+import Link from "next/link"
+import type { FC } from "react"
+import { useOwnerStore, useProjectStore } from "@/store"
+import { useCommunityAdminStore } from "@/store/communityAdmin"
+import { PAGES } from "@/utilities/pages"
 
 interface GrantCompleteProps {
-  project: IProjectResponse;
-  grant: IGrantResponse;
-  text?: string;
+  project: IProjectResponse
+  grant: IGrantResponse
+  text?: string
 }
 
 export const GrantCompleteButton: FC<GrantCompleteProps> = ({
@@ -22,12 +22,10 @@ export const GrantCompleteButton: FC<GrantCompleteProps> = ({
   project,
   text = "Mark as Complete",
 }) => {
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isCommunityAdmin = useCommunityAdminStore(
-    (state) => state.isCommunityAdmin
-  );
-  const isAuthorized = isOwner || isProjectAdmin || isCommunityAdmin;
+  const isOwner = useOwnerStore((state) => state.isOwner)
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin)
+  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin)
+  const isAuthorized = isOwner || isProjectAdmin || isCommunityAdmin
   if (grant.completed) {
     return (
       <div className="flex flex-row items-center  justify-center gap-2 rounded-md border border-emerald-600 bg-green-100 px-3.5 py-2 text-sm font-semibold text-emerald-700 hover:bg-green-100">
@@ -36,9 +34,9 @@ export const GrantCompleteButton: FC<GrantCompleteProps> = ({
           <CheckCircleIcon className="h-5 w-5" />
         </div>
       </div>
-    );
+    )
   }
-  if (!isAuthorized || !project) return null;
+  if (!isAuthorized || !project) return null
   return (
     <Link
       href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
@@ -53,5 +51,5 @@ export const GrantCompleteButton: FC<GrantCompleteProps> = ({
         <CheckCircleIcon className="h-5 w-5" />
       </div>
     </Link>
-  );
-};
+  )
+}

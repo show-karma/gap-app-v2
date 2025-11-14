@@ -1,17 +1,17 @@
-"use client";
+"use client"
 
-import React from "react";
-import * as Tooltip from "@radix-ui/react-tooltip";
-import { Spinner } from "./Utilities/Spinner";
-import { TagIcon } from "@heroicons/react/24/outline";
-import { useTracksForCommunity } from "@/hooks/useTracks";
+import { TagIcon } from "@heroicons/react/24/outline"
+import * as Tooltip from "@radix-ui/react-tooltip"
+import type React from "react"
+import { useTracksForCommunity } from "@/hooks/useTracks"
+import { Spinner } from "./Utilities/Spinner"
 
 interface TrackTagsProps {
-  communityId: string;
-  trackIds?: string[];
-  className?: string;
-  showLabel?: boolean;
-  programId?: string;
+  communityId: string
+  trackIds?: string[]
+  className?: string
+  showLabel?: boolean
+  programId?: string
 }
 
 export const TrackTags: React.FC<TrackTagsProps> = ({
@@ -20,18 +20,12 @@ export const TrackTags: React.FC<TrackTagsProps> = ({
   className = "",
   showLabel = false,
 }) => {
-  const {
-    data: communityTracks = [],
-    isLoading,
-    isError,
-  } = useTracksForCommunity(communityId);
+  const { data: communityTracks = [], isLoading, isError } = useTracksForCommunity(communityId)
 
-  const tracks = communityTracks.filter((track) =>
-    trackIds?.includes(track.id)
-  );
+  const tracks = communityTracks.filter((track) => trackIds?.includes(track.id))
 
   if (!trackIds || trackIds.length === 0) {
-    return null;
+    return null
   }
 
   if (isLoading) {
@@ -42,11 +36,11 @@ export const TrackTags: React.FC<TrackTagsProps> = ({
         <Spinner className="h-3 w-3 mr-1" />
         Loading
       </div>
-    );
+    )
   }
 
   if (isError || tracks.length === 0) {
-    return null;
+    return null
   }
 
   return (
@@ -90,5 +84,5 @@ export const TrackTags: React.FC<TrackTagsProps> = ({
         ))}
       </div>
     </div>
-  );
-};
+  )
+}

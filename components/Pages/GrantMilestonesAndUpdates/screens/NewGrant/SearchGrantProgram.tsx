@@ -1,29 +1,29 @@
-import React, { useEffect, useState } from "react";
-import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
-import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { GrantTitleDropdown } from "./GrantTitleDropdown";
-import { TrackSelection } from "./TrackSelection";
-import { useGrantFormStore } from "./store";
-import { usePathname } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import { parseISO, isPast } from "date-fns";
+import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
+import { useQuery } from "@tanstack/react-query"
+import { isPast, parseISO } from "date-fns"
+import { usePathname } from "next/navigation"
+import React, { useEffect, useState } from "react"
+import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList"
+import fetchData from "@/utilities/fetchData"
+import { INDEXER } from "@/utilities/indexer"
+import { GrantTitleDropdown } from "./GrantTitleDropdown"
+import { useGrantFormStore } from "./store"
+import { TrackSelection } from "./TrackSelection"
 
 interface SearchGrantProgramProps {
-  grantToEdit?: IGrantResponse;
-  communityUID: string;
-  chainId: number;
+  grantToEdit?: IGrantResponse
+  communityUID: string
+  chainId: number
   setValue: (
     field: string,
     value: string | undefined,
     options?: {
-      shouldValidate: boolean;
+      shouldValidate: boolean
     }
-  ) => void;
-  watch: (field: string) => any;
-  searchForProgram?: string | string[];
-  canAdd?: boolean;
+  ) => void
+  watch: (field: string) => any
+  searchForProgram?: string | string[]
+  canAdd?: boolean
 }
 
 export function SearchGrantProgram({
@@ -35,74 +35,64 @@ export function SearchGrantProgram({
   searchForProgram,
   canAdd = true,
 }: SearchGrantProgramProps) {
-  const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(
-    null
-  );
-  const [hasAttemptedAutoSelect, setHasAttemptedAutoSelect] =
-    useState<boolean>(false);
-  const { formData, updateFormData, flowType } = useGrantFormStore();
-  const pathname = usePathname();
-  const isEditing = pathname.includes("/edit");
+  const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(null)
+  const [hasAttemptedAutoSelect, setHasAttemptedAutoSelect] = useState<boolean>(false)
+  const { formData, updateFormData, flowType } = useGrantFormStore()
+  const pathname = usePathname()
+  const isEditing = pathname.includes("/edit")
 
   // Use React Query to fetch programs
   const { data: allPrograms = [], isLoading } = useQuery({
     queryKey: ["programs", communityUID, searchForProgram],
     queryFn: async () => {
-      if (!communityUID) return [];
+      if (!communityUID) return []
 
       try {
-        const [result, error] = await fetchData(
-          INDEXER.COMMUNITY.PROGRAMS(communityUID)
-        );
+        const [result, error] = await fetchData(INDEXER.COMMUNITY.PROGRAMS(communityUID))
 
         if (error) {
-          console.error("Error fetching programs:", error);
-          return [];
+          console.error("Error fetching programs:", error)
+          return []
         }
 
         const filteredResult = result.filter((program: GrantProgram) => {
-          if (
-            !program.metadata?.endsAt ||
-            flowType !== 'program'
-          ) return true;
+          if (!program.metadata?.endsAt || flowType !== "program") return true
 
-          const endsAt = parseISO(program.metadata.endsAt);
-          return !isPast(endsAt);
-        });
+          const endsAt = parseISO(program.metadata.endsAt)
+          return !isPast(endsAt)
+        })
 
-        let programsList = filteredResult;
+        let programsList = filteredResult
 
         // Filter programs if searchForProgram is specified
         if (searchForProgram) {
           programsList = filteredResult.filter((program: GrantProgram) => {
-            const title = program.metadata?.title?.toLowerCase() || "";
+            const title = program.metadata?.title?.toLowerCase() || ""
             if (Array.isArray(searchForProgram)) {
-              return searchForProgram.some((term) =>
-                title.includes(term.toLowerCase())
-              );
+              return searchForProgram.some((term) => title.includes(term.toLowerCase()))
             }
-            return title.includes(searchForProgram.toLowerCase());
-          });
+            return title.includes(searchForProgram.toLowerCase())
+          })
         } else {
           // Sort alphabetically
           programsList = filteredResult.sort((a: GrantProgram, b: GrantProgram) => {
-            const aTitle = a.metadata?.title || "";
-            const bTitle = b.metadata?.title || "";
-            if (aTitle < bTitle) return -1;
-            if (aTitle > bTitle) return 1;
-            return 0;
-          });
+            const aTitle = a.metadata?.title || ""
+            const bTitle = b.metadata?.title || ""
+            if (aTitle < bTitle) return -1
+            if (aTitle > bTitle) return 1
+            return 0
+          })
         }
 
-        return programsList;
+        return programsList
       } catch (err) {
-        console.error("Failed to fetch programs:", err);
-        return [];
+        console.error("Failed to fetch programs:", err)
+        return []
       }
     },
     enabled: !!communityUID,
     staleTime: 5 * 60 * 1000, // 5 minutes
-  });
+  })
 
   // Handle auto-selection for editing mode
   useEffect(() => {
@@ -112,44 +102,34 @@ export function SearchGrantProgram({
       grantToEdit?.details?.data?.programId &&
       !hasAttemptedAutoSelect
     ) {
-      const editingProgramId = grantToEdit.details.data.programId.split("_")[0];
+      const editingProgramId = grantToEdit.details.data.programId.split("_")[0]
       const matchingProgram = allPrograms.find(
         (program: GrantProgram) => program.programId === editingProgramId
-      );
+      )
 
       if (matchingProgram) {
-        setSelectedProgram(matchingProgram);
-        setValue(
-          "programId",
-          `${matchingProgram.programId}_${matchingProgram.chainID}`
-        );
+        setSelectedProgram(matchingProgram)
+        setValue("programId", `${matchingProgram.programId}_${matchingProgram.chainID}`)
         if (!formData.title) {
           setValue("title", matchingProgram.metadata?.title, {
             shouldValidate: true,
-          });
+          })
         }
       }
 
       // Mark that we've attempted auto-selection to prevent endless loops
-      setHasAttemptedAutoSelect(true);
+      setHasAttemptedAutoSelect(true)
     }
-  }, [
-    allPrograms,
-    isEditing,
-    grantToEdit,
-    hasAttemptedAutoSelect,
-    setValue,
-    formData.title,
-  ]);
+  }, [allPrograms, isEditing, grantToEdit, hasAttemptedAutoSelect, setValue, formData.title])
 
-  const programIdWatch = watch("programId");
+  const programIdWatch = watch("programId")
 
   // Reset selected program when programId is cleared
   useEffect(() => {
     if (!programIdWatch && !isEditing) {
-      setSelectedProgram(null);
+      setSelectedProgram(null)
     }
-  }, [programIdWatch, isEditing]);
+  }, [programIdWatch, isEditing])
 
   return (
     <div className="w-full">
@@ -172,8 +152,9 @@ export function SearchGrantProgram({
             grantToEdit={grantToEdit}
             selectedProgram={selectedProgram}
             prefixUnselected="Select"
-            buttonClassname={`w-full max-w-full ${isEditing ? "opacity-70 pointer-events-none" : ""
-              }`}
+            buttonClassname={`w-full max-w-full ${
+              isEditing ? "opacity-70 pointer-events-none" : ""
+            }`}
             canAdd={canAdd && !isEditing}
             canSearch={!isEditing}
           />
@@ -189,7 +170,7 @@ export function SearchGrantProgram({
               selectedTrackIds={formData.selectedTrackIds || []}
               onTrackSelectionChange={(trackIds) => {
                 // Allow track selection in both edit and create modes
-                updateFormData({ selectedTrackIds: trackIds });
+                updateFormData({ selectedTrackIds: trackIds })
               }}
               disabled={false} // Never disable track selection
             />
@@ -197,5 +178,5 @@ export function SearchGrantProgram({
         </>
       )}
     </div>
-  );
+  )
 }

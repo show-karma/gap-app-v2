@@ -1,19 +1,16 @@
-import type { ReactNode } from "react";
+import type { ReactNode } from "react"
 
 export const additionalQuestion = (id?: number | string, query?: string) => {
-  if (!id) return false;
+  if (!id) return false
   const generalIds =
-    process.env.NEXT_PUBLIC_ENV === "production"
-      ? ["00000004b48822456c5d7ab8", 4, "4"]
-      : [6, "6"];
+    process.env.NEXT_PUBLIC_ENV === "production" ? ["00000004b48822456c5d7ab8", 4, "4"] : [6, "6"]
   const hasAdditional =
-    query?.toLowerCase().includes("additional") ||
-    query?.toLowerCase().includes("addtional");
-  if (hasAdditional) return true;
-  return generalIds.includes(+id);
-};
+    query?.toLowerCase().includes("additional") || query?.toLowerCase().includes("addtional")
+  if (hasAdditional) return true
+  return generalIds.includes(+id)
+}
 
-export const votingPowerCommunities = ["Arb", "Arbitrum"];
+export const votingPowerCommunities = ["Arb", "Arbitrum"]
 
 export const specificCategoriesAndQuestions: Record<string, ReactNode> = {
   "PL - Arbitrum Citizen": (
@@ -33,4 +30,4 @@ export const specificCategoriesAndQuestions: Record<string, ReactNode> = {
       </p>
     </>
   ),
-};
+}

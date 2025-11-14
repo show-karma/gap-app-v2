@@ -1,42 +1,39 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, Fragment, useState } from "react";
-import { Dialog, Transition } from "@headlessui/react";
-import { PlusIcon } from "@heroicons/react/24/solid";
-import { Button } from "@/components/Utilities/Button";
-import { z } from "zod";
-import { SubmitHandler, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import toast from "react-hot-toast";
-import fetchData from "@/utilities/fetchData";
-import { useParams } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
-import { INDEXER } from "@/utilities/indexer";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { useAccount } from "wagmi";
-import { useCommunityDetails } from "@/hooks/useCommunityDetails";
+
+import { Dialog, Transition } from "@headlessui/react"
+import { PlusIcon } from "@heroicons/react/24/solid"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useParams } from "next/navigation"
+import { type FC, Fragment, useState } from "react"
+import { type SubmitHandler, useForm } from "react-hook-form"
+import toast from "react-hot-toast"
+import { useAccount } from "wagmi"
+import { z } from "zod"
+import { Button } from "@/components/Utilities/Button"
+import { errorManager } from "@/components/Utilities/errorManager"
+import { useAuth } from "@/hooks/useAuth"
+import { useCommunityDetails } from "@/hooks/useCommunityDetails"
+import fetchData from "@/utilities/fetchData"
+import { INDEXER } from "@/utilities/indexer"
 
 type RegionCreationDialogProps = {
-  refreshRegions: () => Promise<void>;
-};
+  refreshRegions: () => Promise<void>
+}
 
 const schema = z.object({
-  name: z
-    .string()
-    .min(3, { message: "Region name must be at least 3 characters" }),
-});
+  name: z.string().min(3, { message: "Region name must be at least 3 characters" }),
+})
 
-type SchemaType = z.infer<typeof schema>;
+type SchemaType = z.infer<typeof schema>
 
-export const RegionCreationDialog: FC<RegionCreationDialogProps> = ({
-  refreshRegions,
-}) => {
-  let [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const { address } = useAccount();
-  const params = useParams();
-  const communityId = params.communityId as string;
+export const RegionCreationDialog: FC<RegionCreationDialogProps> = ({ refreshRegions }) => {
+  const [isOpen, setIsOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const { address } = useAccount()
+  const params = useParams()
+  const communityId = params.communityId as string
 
-  const { data: community } = useCommunityDetails(communityId);
+  const { data: community } = useCommunityDetails(communityId)
 
   const {
     register,
@@ -47,30 +44,30 @@ export const RegionCreationDialog: FC<RegionCreationDialogProps> = ({
     resolver: zodResolver(schema),
     reValidateMode: "onChange",
     mode: "onChange",
-  });
+  })
 
   function closeModal() {
-    setIsOpen(false);
-    reset();
+    setIsOpen(false)
+    reset()
   }
 
   function openModal() {
-    setIsOpen(true);
+    setIsOpen(true)
   }
 
-  const { authenticated: isAuth } = useAuth();
-  const { authenticate } = useAuth();
+  const { authenticated: isAuth } = useAuth()
+  const { authenticate } = useAuth()
 
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
     try {
-      setIsLoading(true);
+      setIsLoading(true)
       if (!isAuth) {
-        await authenticate();
+        await authenticate()
       }
 
-      const communityUID = community?.uid || communityId;
+      const communityUID = community?.uid || communityId
       if (!communityUID) {
-        throw new Error("Community ID is not available");
+        throw new Error("Community ID is not available")
       }
 
       const [request, error] = await fetchData(
@@ -82,14 +79,13 @@ export const RegionCreationDialog: FC<RegionCreationDialogProps> = ({
         {},
         {},
         true
-      );
+      )
 
-      if (error)
-        throw new Error("An error occurred while creating the region");
+      if (error) throw new Error("An error occurred while creating the region")
 
-      toast.success("Region created successfully");
-      refreshRegions();
-      closeModal();
+      toast.success("Region created successfully")
+      refreshRegions()
+      closeModal()
     } catch (error: any) {
       errorManager(
         "Error creating region",
@@ -98,12 +94,12 @@ export const RegionCreationDialog: FC<RegionCreationDialogProps> = ({
         {
           error: "Failed to create region. Please try again.",
         }
-      );
-      console.log(error);
+      )
+      console.log(error)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   return (
     <>
@@ -142,15 +138,9 @@ export const RegionCreationDialog: FC<RegionCreationDialogProps> = ({
                 leaveTo="opacity-0 scale-95"
               >
                 <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle  transition-all">
-                  <form
-                    onSubmit={handleSubmit(onSubmit)}
-                    className="flex w-full flex-col gap-4"
-                  >
+                  <form onSubmit={handleSubmit(onSubmit)} className="flex w-full flex-col gap-4">
                     <div className="flex w-full flex-col">
-                      <label
-                        htmlFor="region-name"
-                        className={"text-sm font-bold"}
-                      >
+                      <label htmlFor="region-name" className={"text-sm font-bold"}>
                         Region name *
                       </label>
                       <input
@@ -161,9 +151,7 @@ export const RegionCreationDialog: FC<RegionCreationDialogProps> = ({
                         placeholder="Ex: North America, Europe, Asia"
                         {...register("name")}
                       />
-                      <p className="text-base text-red-400">
-                        {errors.name?.message}
-                      </p>
+                      <p className="text-base text-red-400">{errors.name?.message}</p>
                     </div>
                     <div className="flex flex-row gap-4 justify-end">
                       <Button
@@ -190,5 +178,5 @@ export const RegionCreationDialog: FC<RegionCreationDialogProps> = ({
         </Dialog>
       </Transition>
     </>
-  );
-};
+  )
+}

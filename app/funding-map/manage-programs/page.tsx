@@ -1,8 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
-import { Metadata } from "next";
-import { defaultMetadata } from "@/utilities/meta";
-import ManageProgramsWrapper from "@/components/Pages/ProgramRegistry/ManageProgramsWrapper";
-import { PROJECT_NAME } from "@/constants/brand";
+import type { Metadata } from "next"
+import ManageProgramsWrapper from "@/components/Pages/ProgramRegistry/ManageProgramsWrapper"
+import { PROJECT_NAME } from "@/constants/brand"
+import { defaultMetadata } from "@/utilities/meta"
 
 export const metadata: Metadata = {
   title: `${PROJECT_NAME} - Grant Program Aggregator`,
@@ -27,10 +27,10 @@ export const metadata: Metadata = {
       url: "/favicon.ico",
     },
   ],
-};
+}
 
 const GrantProgramRegistry = () => {
-  return <ManageProgramsWrapper />;
-};
+  return <ManageProgramsWrapper />
+}
 
-export default GrantProgramRegistry;
+export default GrantProgramRegistry

@@ -1,7 +1,7 @@
-import React from "react";
+import React from "react"
 
 interface Props {
-  className?: string;
+  className?: string
 }
 
 export const ArrowInIcon = ({ className }: Props) => (
@@ -42,4 +42,4 @@ export const ArrowInIcon = ({ className }: Props) => (
       </clipPath>
     </defs>
   </svg>
-);
+)

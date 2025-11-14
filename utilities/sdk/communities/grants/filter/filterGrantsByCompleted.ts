@@ -1,16 +1,11 @@
-import type { Grant } from '@show-karma/karma-gap-sdk';
+import type { Grant } from "@show-karma/karma-gap-sdk"
 
 export const filterGrantsByCompleted = (grants: Grant[]) => {
-  const newGrants = [...grants];
+  const newGrants = [...grants]
   return newGrants.filter((grant) => {
-    const { milestones } = grant;
-    const completedMilestones = milestones.filter(
-      (milestone) => milestone.completed
-    );
+    const { milestones } = grant
+    const completedMilestones = milestones.filter((milestone) => milestone.completed)
 
-    return (
-      milestones.length === completedMilestones.length &&
-      milestones.length !== 0
-    );
-  });
-};
+    return milestones.length === completedMilestones.length && milestones.length !== 0
+  })
+}

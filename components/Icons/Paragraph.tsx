@@ -1,5 +1,5 @@
 interface Props {
-  className?: string;
+  className?: string
 }
 export const ParagraphIcon = ({ className }: Props) => {
   return (
@@ -12,9 +12,7 @@ export const ParagraphIcon = ({ className }: Props) => {
       preserveAspectRatio="xMidYMid meet"
       className={className}
     >
-      <metadata>
-        Created by potrace 1.14, written by Peter Selinger 2001-2017
-      </metadata>
+      <metadata>Created by potrace 1.14, written by Peter Selinger 2001-2017</metadata>
       <g
         transform="translate(0.000000,521.000000) scale(0.100000,-0.100000)"
         fill="currentColor"
@@ -66,5 +64,5 @@ export const ParagraphIcon = ({ className }: Props) => {
         />
       </g>
     </svg>
-  );
-};
+  )
+}

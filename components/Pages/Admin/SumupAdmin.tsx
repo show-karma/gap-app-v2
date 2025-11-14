@@ -1,33 +1,31 @@
-"use client";
-import { useOwnerStore } from "@/store";
-import { useState } from "react";
-import { z } from "zod";
-import { SubmitHandler, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import toast from "react-hot-toast";
-import { Button } from "@/components/Utilities/Button";
-import axios from "axios";
-import { envVars } from "@/utilities/enviromentVars";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { MESSAGES } from "@/utilities/messages";
+"use client"
+import { zodResolver } from "@hookform/resolvers/zod"
+import axios from "axios"
+import { useState } from "react"
+import { type SubmitHandler, useForm } from "react-hook-form"
+import toast from "react-hot-toast"
+import { z } from "zod"
+import { Button } from "@/components/Utilities/Button"
+import { errorManager } from "@/components/Utilities/errorManager"
+import { useOwnerStore } from "@/store"
+import { envVars } from "@/utilities/enviromentVars"
+import { MESSAGES } from "@/utilities/messages"
 
 const schema = z.object({
   addressOrEmail: z
     .string()
     .min(1, { message: "Input is required" })
     .refine(
-      (value) =>
-        /^0x[a-fA-F0-9]{40}$/.test(value) ||
-        /^[\w-]+@([\w-]+\.)+[\w-]{2,4}$/.test(value),
+      (value) => /^0x[a-fA-F0-9]{40}$/.test(value) || /^[\w-]+@([\w-]+\.)+[\w-]{2,4}$/.test(value),
       { message: "Must be a valid email or Ethereum address" }
     ),
-});
+})
 
-type SchemaType = z.infer<typeof schema>;
+type SchemaType = z.infer<typeof schema>
 
 export default function SumupAdminPage() {
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const [isLoading, setIsLoading] = useState(false);
+  const isOwner = useOwnerStore((state) => state.isOwner)
+  const [isLoading, setIsLoading] = useState(false)
 
   const {
     register,
@@ -38,19 +36,16 @@ export default function SumupAdminPage() {
     resolver: zodResolver(schema),
     reValidateMode: "onChange",
     mode: "onChange",
-  });
+  })
 
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
     try {
-      setIsLoading(true);
-      const response = await axios.post(
-        `${envVars.NEXT_PUBLIC_KARMA_API}/sum-up/user/whitelist`,
-        {
-          identifier: data.addressOrEmail,
-        }
-      );
-      reset();
-      toast.success(MESSAGES.SUMUP_ADMIN.ADD_TO_WHITELIST.SUCCESS);
+      setIsLoading(true)
+      const response = await axios.post(`${envVars.NEXT_PUBLIC_KARMA_API}/sum-up/user/whitelist`, {
+        identifier: data.addressOrEmail,
+      })
+      reset()
+      toast.success(MESSAGES.SUMUP_ADMIN.ADD_TO_WHITELIST.SUCCESS)
     } catch (error: any) {
       errorManager(
         MESSAGES.SUMUP_ADMIN.ADD_TO_WHITELIST.ERROR,
@@ -59,21 +54,18 @@ export default function SumupAdminPage() {
           addressOrEmail: data.addressOrEmail,
         },
         { error: MESSAGES.SUMUP_ADMIN.ADD_TO_WHITELIST.ERROR }
-      );
+      )
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   return isOwner ? (
     <div className="flex flex-col w-full justify-center items-center p-3 gap-2">
       <div className="font-bold text-2xl">SumUp Config</div>
 
       <div className="w-full transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle  transition-all">
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="flex w-full flex-col gap-4"
-        >
+        <form onSubmit={handleSubmit(onSubmit)} className="flex w-full flex-col gap-4">
           <div className="flex w-full flex-col">
             <div className="font-bold text-base">WhiteList</div>
             <label htmlFor="addressOrEmail" className={"text-sm font-bold"}>
@@ -87,9 +79,7 @@ export default function SumupAdminPage() {
               placeholder="Ex: mahesh@karmahq.xyz or 0x1234567890abcdef1234567890abcdef12345678"
               {...register("addressOrEmail")}
             />
-            <p className="text-base text-red-400">
-              {errors.addressOrEmail?.message}
-            </p>
+            <p className="text-base text-red-400">{errors.addressOrEmail?.message}</p>
           </div>
           <div className="flex flex-row gap-4 justify-end">
             <Button
@@ -106,9 +96,7 @@ export default function SumupAdminPage() {
     </div>
   ) : (
     <div className="flex w-full items-center justify-center m-12">
-      <p>
-        You are account isnt super admin.Only Super admin can view this page
-      </p>
+      <p>You are account isnt super admin.Only Super admin can view this page</p>
     </div>
-  );
+  )
 }

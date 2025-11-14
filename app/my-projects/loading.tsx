@@ -1,8 +1,8 @@
-import { LoadingCard } from "@/components/Pages/MyProjects/LoadingCard";
-import { layoutTheme } from "@/src/helper/theme";
+import { LoadingCard } from "@/components/Pages/MyProjects/LoadingCard"
+import { layoutTheme } from "@/src/helper/theme"
 
 export default function Loading() {
-  const loadingArray = Array.from({ length: 12 }, (_, index) => index);
+  const loadingArray = Array.from({ length: 12 }, (_, index) => index)
 
   return (
     <div className={layoutTheme.padding}>
@@ -18,5 +18,5 @@ export default function Loading() {
         </div>
       </div>
     </div>
-  );
+  )
 }

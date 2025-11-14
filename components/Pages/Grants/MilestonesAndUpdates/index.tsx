@@ -1,47 +1,41 @@
-"use client";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
-import { useGrantStore } from "@/store/grant";
-import { formatDate } from "@/utilities/formatDate";
-import { MESSAGES } from "@/utilities/messages";
-import { PAGES } from "@/utilities/pages";
-import { ReadMore } from "@/utilities/ReadMore";
-import {
+"use client"
+import type {
   IGrantResponse,
   IProjectResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import dynamic from "next/dynamic";
-import Link from "next/link";
-import { useTracksForProgram } from "@/hooks/useTracks";
-import { Track } from "@/services/tracks";
-import { ProjectGrantsMilestonesListLoading } from "../../Project/Loading/Grants/MilestonesAndUpdate";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import Image from "next/image";
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
+import dynamic from "next/dynamic"
+import Image from "next/image"
+import Link from "next/link"
+import { ExternalLink } from "@/components/Utilities/ExternalLink"
+import { useTracksForProgram } from "@/hooks/useTracks"
+import type { Track } from "@/services/tracks"
+import { useOwnerStore, useProjectStore } from "@/store"
+import { useCommunityAdminStore } from "@/store/communityAdmin"
+import { useGrantStore } from "@/store/grant"
+import { formatDate } from "@/utilities/formatDate"
+import { MESSAGES } from "@/utilities/messages"
+import { PAGES } from "@/utilities/pages"
+import { ReadMore } from "@/utilities/ReadMore"
+import { ProjectGrantsMilestonesListLoading } from "../../Project/Loading/Grants/MilestonesAndUpdate"
 
 const EmptyMilestone = ({
   grant,
   project,
 }: {
-  grant?: IGrantResponse;
-  project?: IProjectResponse;
+  grant?: IGrantResponse
+  project?: IProjectResponse
 }) => {
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isCommunityAdmin = useCommunityAdminStore(
-    (state) => state.isCommunityAdmin
-  );
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin)
+  const isContractOwner = useOwnerStore((state) => state.isOwner)
+  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin)
 
-  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
+  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin
 
   if (!isAuthorized) {
     return (
       <div className="flex w-full items-center justify-center rounded-md border border-gray-200 px-6 py-10">
         <div className="flex max-w-[438px] flex-col items-center justify-center gap-6">
-          <img
-            src="/images/comments.png"
-            alt=""
-            className="h-[185px] w-[438px] object-cover"
-          />
+          <img src="/images/comments.png" alt="" className="h-[185px] w-[438px] object-cover" />
           <div className="flex w-full flex-col items-center justify-center gap-3">
             <p className="text-center text-lg font-semibold text-black dark:text-zinc-100">
               {MESSAGES.PROJECT.EMPTY.GRANTS.UPDATES}
@@ -52,16 +46,12 @@ const EmptyMilestone = ({
           </div>
         </div>
       </div>
-    );
+    )
   }
   return (
     <div className="flex w-full items-center justify-center rounded-md border border-gray-200 px-6 py-10">
       <div className="flex max-w-[438px] flex-col items-center justify-center gap-6">
-        <img
-          src="/images/comments.png"
-          alt=""
-          className="h-[185px] w-[438px] object-cover"
-        />
+        <img src="/images/comments.png" alt="" className="h-[185px] w-[438px] object-cover" />
         <div className="flex w-full flex-col items-center justify-center gap-3">
           <p className="text-center text-lg font-semibold text-black dark:text-white">
             {MESSAGES.PROJECT.EMPTY.GRANTS.NOT_ADDED_MILESTONE}
@@ -75,45 +65,41 @@ const EmptyMilestone = ({
               )}
               className="items-center flex flex-row justify-center gap-2 rounded border border-blue-600 dark:bg-blue-800 bg-brand-blue px-4 py-2.5 text-base font-semibold text-white hover:bg-brand-blue"
             >
-              <img
-                src="/icons/plus.svg"
-                alt="Add"
-                className="relative h-5 w-5"
-              />
+              <img src="/icons/plus.svg" alt="Add" className="relative h-5 w-5" />
               Add a new Milestone
             </Link>
           </div>
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
 interface GrantCompletionCardProps {
-  completion: IGrantResponse["completed"] | undefined;
-  grant?: IGrantResponse;
+  completion: IGrantResponse["completed"] | undefined
+  grant?: IGrantResponse
 }
 
 export const GrantCompletionCard = ({ completion, grant }: GrantCompletionCardProps) => {
   // Get program ID for fetching tracks
   const programId = grant?.details?.data?.programId
     ? `${grant.details.data.programId}_${grant.chainID}`
-    : undefined;
+    : undefined
 
-  const { data: tracks = [] } = useTracksForProgram(programId as string);
+  const { data: tracks = [] } = useTracksForProgram(programId as string)
 
-  if (!completion) return null;
+  if (!completion) return null
 
   // Access new fields from completion data
-  const pitchDeckLink = completion.data?.pitchDeckLink;
-  const demoVideoLink = completion.data?.demoVideoLink;
-  const trackExplanations = completion.data?.trackExplanations;
+  const pitchDeckLink = completion.data?.pitchDeckLink
+  const demoVideoLink = completion.data?.demoVideoLink
+  const trackExplanations = completion.data?.trackExplanations
 
   // Helper to get track name
   const getTrackName = (trackId: string): string => {
-    const track = tracks.find((t: Track) => t.id === trackId);
-    return track?.name || 'Track';
-  };
+    const track = tracks.find((t: Track) => t.id === trackId)
+    return track?.name || "Track"
+  }
 
   return (
     <div className="flex flex-col gap-2">
@@ -135,7 +121,9 @@ export const GrantCompletionCard = ({ completion, grant }: GrantCompletionCardPr
           <div className="flex flex-col gap-4 px-4 pb-3">
             {/* Description */}
             <div className="flex flex-col gap-2">
-              <p className="text-sm font-semibold text-gray-700 dark:text-gray-100">Completion Summary</p>
+              <p className="text-sm font-semibold text-gray-700 dark:text-gray-100">
+                Completion Summary
+              </p>
               {completion.data.text && (
                 <div className="max-lg:max-w-xl max-sm:max-w-[300px]">
                   <ReadMore readLessText="Read less" readMoreText="Read full">
@@ -150,7 +138,9 @@ export const GrantCompletionCard = ({ completion, grant }: GrantCompletionCardPr
               <div className="flex flex-row gap-3 flex-wrap pt-2 border-t border-gray-300">
                 {pitchDeckLink && (
                   <ExternalLink
-                    href={pitchDeckLink.includes("http") ? pitchDeckLink : `https://${pitchDeckLink}`}
+                    href={
+                      pitchDeckLink.includes("http") ? pitchDeckLink : `https://${pitchDeckLink}`
+                    }
                     className="flex-1 min-w-[140px]"
                   >
                     <div className="flex flex-row items-center gap-3 p-3 rounded-lg bg-slate-200 dark:bg-slate-700 hover:opacity-90 transition-opacity cursor-pointer">
@@ -161,13 +151,17 @@ export const GrantCompletionCard = ({ completion, grant }: GrantCompletionCardPr
                         alt="Pitch Deck"
                         className="w-6 h-6"
                       />
-                      <p className="text-sm font-bold text-black dark:text-white text-left">Read Pitch Deck</p>
+                      <p className="text-sm font-bold text-black dark:text-white text-left">
+                        Read Pitch Deck
+                      </p>
                     </div>
                   </ExternalLink>
                 )}
                 {demoVideoLink && (
                   <ExternalLink
-                    href={demoVideoLink.includes("http") ? demoVideoLink : `https://${demoVideoLink}`}
+                    href={
+                      demoVideoLink.includes("http") ? demoVideoLink : `https://${demoVideoLink}`
+                    }
                     className="flex-1 min-w-[140px]"
                   >
                     <div className="flex flex-row items-center gap-3 p-3 rounded-lg bg-slate-200 dark:bg-gray-800 hover:opacity-90 transition-opacity cursor-pointer">
@@ -178,7 +172,9 @@ export const GrantCompletionCard = ({ completion, grant }: GrantCompletionCardPr
                         alt="Demo Video"
                         className="w-6 h-6"
                       />
-                      <p className="text-sm text-black dark:text-white font-bold text-black text-left">Watch Demo Video</p>
+                      <p className="text-sm text-black dark:text-white font-bold text-black text-left">
+                        Watch Demo Video
+                      </p>
                     </div>
                   </ExternalLink>
                 )}
@@ -188,10 +184,15 @@ export const GrantCompletionCard = ({ completion, grant }: GrantCompletionCardPr
             {/* Track Explanations */}
             {trackExplanations && trackExplanations.length > 0 && (
               <div className="flex flex-col gap-3">
-                <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-100">Track Integration</h5>
+                <h5 className="text-sm font-semibold text-gray-700 dark:text-gray-100">
+                  Track Integration
+                </h5>
                 <div className="flex flex-col gap-1">
                   {trackExplanations.map((trackExplanation: any) => (
-                    <div key={trackExplanation.trackUID} className="bg-white/50 dark:bg-zinc-800 rounded-md p-3">
+                    <div
+                      key={trackExplanation.trackUID}
+                      className="bg-white/50 dark:bg-zinc-800 rounded-md p-3"
+                    >
                       <h6 className="text-sm font-medium text-gray-800 dark:text-gray-100 mb-1">
                         {getTrackName(trackExplanation.trackUID)}
                       </h6>
@@ -209,8 +210,8 @@ export const GrantCompletionCard = ({ completion, grant }: GrantCompletionCardPr
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
 const MilestonesList = dynamic(
   () =>
@@ -220,27 +221,24 @@ const MilestonesList = dynamic(
   {
     loading: () => <ProjectGrantsMilestonesListLoading />,
   }
-);
+)
 
 export default function MilestonesAndUpdates() {
-  const { grant } = useGrantStore();
-  const project = useProjectStore((state) => state.project);
-  const hasMilestonesOrUpdates =
-    grant?.milestones?.length || grant?.updates?.length;
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isCommunityAdmin = useCommunityAdminStore(
-    (state) => state.isCommunityAdmin
-  );
-  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
+  const { grant } = useGrantStore()
+  const project = useProjectStore((state) => state.project)
+  const hasMilestonesOrUpdates = grant?.milestones?.length || grant?.updates?.length
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin)
+  const isContractOwner = useOwnerStore((state) => state.isOwner)
+  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin)
+  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin
 
   return (
     <div className="w-full">
       <div className="space-y-5">
         {grant?.completed &&
-          (grant?.completed.data.title ||
-            grant?.completed.data.text ||
-            grant?.completed?.data?.proofOfWork) ? (
+        (grant?.completed.data.title ||
+          grant?.completed.data.text ||
+          grant?.completed?.data?.proofOfWork) ? (
           <GrantCompletionCard completion={grant?.completed} grant={grant} />
         ) : null}
         {hasMilestonesOrUpdates ? (
@@ -277,5 +275,5 @@ export default function MilestonesAndUpdates() {
         )}
       </div>
     </div>
-  );
+  )
 }

@@ -1,20 +1,16 @@
-"use client";
+"use client"
 
-import { ChevronLeftIcon } from "@heroicons/react/20/solid";
-import { useRouter } from "next/navigation";
+import { ChevronLeftIcon } from "@heroicons/react/20/solid"
+import { useRouter } from "next/navigation"
 
 interface CheckoutHeaderProps {
-  communityId?: string;
-  totalItems: number;
-  onClear: () => void;
+  communityId?: string
+  totalItems: number
+  onClear: () => void
 }
 
-export function CheckoutHeader({
-  communityId,
-  totalItems,
-  onClear,
-}: CheckoutHeaderProps) {
-  const router = useRouter();
+export function CheckoutHeader({ communityId, totalItems, onClear }: CheckoutHeaderProps) {
+  const router = useRouter()
   return (
     <div className="mb-4 -mt-3">
       <div className="flex items-center justify-between">
@@ -40,5 +36,5 @@ export function CheckoutHeader({
         </div>
       </div>
     </div>
-  );
+  )
 }

@@ -1,71 +1,60 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, Fragment, ReactNode, useEffect, useState } from "react";
-import { Dialog, Transition } from "@headlessui/react";
 
-import { DocumentCheckIcon, LightBulbIcon } from "@heroicons/react/24/solid";
-import { Button } from "../Utilities/Button";
-import toast from "react-hot-toast";
-import { useProjectStore } from "@/store";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
+import { Dialog, Transition } from "@headlessui/react"
+import { DocumentCheckIcon, LightBulbIcon } from "@heroicons/react/24/solid"
+/* eslint-disable @next/next/no-img-element */
+import React, { type FC, Fragment, ReactNode, useEffect, useState } from "react"
+import toast from "react-hot-toast"
+import { useProjectStore } from "@/store"
+import { useGrantGenieModalStore } from "@/store/modals/genie"
+import fetchData from "@/utilities/fetchData"
+import { INDEXER } from "@/utilities/indexer"
+import { cn } from "@/utilities/tailwind"
+import { Button } from "../Utilities/Button"
+import { Spinner } from "../Utilities/Spinner"
 
-import React from "react";
-
-import { Spinner } from "../Utilities/Spinner";
-import { cn } from "@/utilities/tailwind";
-import { useGrantGenieModalStore } from "@/store/modals/genie";
-type Props = {};
+type Props = {}
 
 function GrantGenieRecommendations({ projectId }: { projectId: string }) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState(false)
   const [recommendations, setRecommendations] = useState<
     {
-      name: string;
-      description: string;
-      title: string;
-      score: number;
-      recommendation: string;
+      name: string
+      description: string
+      title: string
+      score: number
+      recommendation: string
     }[]
-  >([]);
+  >([])
 
   useEffect(() => {
-    setIsLoading(true);
-    fetchData(
-      INDEXER.PROJECT.GRANTS_GENIE(projectId),
-      "GET",
-      {},
-      {},
-      {},
-      undefined
-    ).then(([res, error]) => {
-      setIsLoading(false);
-      setError(error);
-      if (error) {
-        toast.error("Failed to fetch recommendations");
-        return;
+    setIsLoading(true)
+    fetchData(INDEXER.PROJECT.GRANTS_GENIE(projectId), "GET", {}, {}, {}, undefined).then(
+      ([res, error]) => {
+        setIsLoading(false)
+        setError(error)
+        if (error) {
+          toast.error("Failed to fetch recommendations")
+          return
+        }
+        setRecommendations(res?.grants)
       }
-      setRecommendations(res?.grants);
-    });
-  }, [projectId]);
+    )
+  }, [projectId])
 
   return (
     <section className="grid grid-cols-1 gap-4 mt-3 h-[60vh] overflow-y-scroll">
       {isLoading ? (
         <div className="flex flex-col  gap-5 justify-center items-center h-full">
           <Spinner />
-          <div>
-            Hold on, Grants Genie is working on finding you the best programs...
-          </div>
+          <div>Hold on, Grants Genie is working on finding you the best programs...</div>
         </div>
       ) : recommendations?.length === 0 || error ? (
         <div>No recommendations available at the moment.</div>
       ) : (
         recommendations.map((recommendation, index) => (
-          <div
-            key={index}
-            className="rounded-xl bg-teal-50 shadow p-8 gap-5 grid grid-cols-2"
-          >
+          <div key={index} className="rounded-xl bg-teal-50 shadow p-8 gap-5 grid grid-cols-2">
             <div className="">
               <h3 className="font-semibold">{recommendation.title}</h3>
               <p>{recommendation.description}</p>
@@ -78,7 +67,7 @@ function GrantGenieRecommendations({ projectId }: { projectId: string }) {
         ))
       )}
     </section>
-  );
+  )
 }
 
 export const GrantsGenieDialog: FC<Props> = () => {
@@ -86,10 +75,10 @@ export const GrantsGenieDialog: FC<Props> = () => {
     isGrantGenieModalOpen: isOpen,
     closeGrantGenieModal: closeModal,
     openGrantGenieModal: openModal,
-  } = useGrantGenieModalStore();
-  const project = useProjectStore((state) => state.project);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const [isLoading, setIsLoading] = useState(false);
+  } = useGrantGenieModalStore()
+  const project = useProjectStore((state) => state.project)
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin)
+  const [isLoading, setIsLoading] = useState(false)
 
   return (
     <>
@@ -126,9 +115,7 @@ export const GrantsGenieDialog: FC<Props> = () => {
                     Funding Recommendations from Karma Grants Genie 🧞:
                   </Dialog.Title>
 
-                  <GrantGenieRecommendations
-                    projectId={project?.uid as string}
-                  />
+                  <GrantGenieRecommendations projectId={project?.uid as string} />
 
                   <div className="flex flex-row gap-4 mt-10 justify-end">
                     <Button
@@ -146,5 +133,5 @@ export const GrantsGenieDialog: FC<Props> = () => {
         </Dialog>
       </Transition>
     </>
-  );
-};
+  )
+}

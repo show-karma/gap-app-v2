@@ -1,108 +1,116 @@
-"use client";
+"use client"
 
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import Image from "next/image";
-import type { FundingProgram } from "@/services/fundingPlatformService";
-import { PAGES } from "@/utilities/pages";
-import { Clock } from "lucide-react";
-import { cn } from "@/utilities/tailwind";
-import { chosenCommunities } from "@/utilities/chosenCommunities";
-import { blo } from "blo";
-import { useTheme } from "next-themes";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { blo } from "blo"
+import { Clock } from "lucide-react"
+import Image from "next/image"
+import { useTheme } from "next-themes"
+import { ExternalLink } from "@/components/Utilities/ExternalLink"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import type { FundingProgram } from "@/services/fundingPlatformService"
+import { chosenCommunities } from "@/utilities/chosenCommunities"
+import { PAGES } from "@/utilities/pages"
+import { cn } from "@/utilities/tailwind"
 
 interface FundingOpportunityCardProps {
-  program: FundingProgram;
-  isFeatured?: boolean;
+  program: FundingProgram
+  isFeatured?: boolean
 }
 
 function formatCurrency(amount: string | undefined): string {
-  if (!amount) return "TBD";
-  const num = parseFloat(amount);
-  if (num >= 1000000) return `$${(num / 1000000).toFixed(0)}M`;
-  if (num >= 1000) return `$${(num / 1000).toFixed(0)}k`;
-  return `$${num.toFixed(0)}`;
+  if (!amount) return "TBD"
+  const num = parseFloat(amount)
+  if (num >= 1000000) return `$${(num / 1000000).toFixed(0)}M`
+  if (num >= 1000) return `$${(num / 1000).toFixed(0)}k`
+  return `$${num.toFixed(0)}`
 }
 
 function getProgramStatus(program: FundingProgram): {
-  label: string;
-  variant: "default" | "secondary" | "destructive" | "outline";
-  endsSoon: boolean;
+  label: string
+  variant: "default" | "secondary" | "destructive" | "outline"
+  endsSoon: boolean
 } {
-  const endsAt = program.metadata?.endsAt;
-  const isEnabled = program.applicationConfig?.isEnabled;
+  const endsAt = program.metadata?.endsAt
+  const isEnabled = program.applicationConfig?.isEnabled
 
   if (!isEnabled) {
-    return { label: "Closed", variant: "secondary", endsSoon: false };
+    return { label: "Closed", variant: "secondary", endsSoon: false }
   }
 
   if (endsAt) {
     const daysUntilEnd = Math.ceil(
       (new Date(endsAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
-    );
+    )
     if (daysUntilEnd <= 7 && daysUntilEnd > 0) {
-      return { label: "Ends soon", variant: "destructive", endsSoon: true };
+      return { label: "Ends soon", variant: "destructive", endsSoon: true }
     }
   }
 
-  return { label: "Open for Applications", variant: "default", endsSoon: false };
+  return { label: "Open for Applications", variant: "default", endsSoon: false }
 }
 
 function getCommunityImage(program: FundingProgram, theme: string | undefined): string | null {
   // First check if communityImage is already provided
   if (program.communityImage) {
-    return program.communityImage;
+    return program.communityImage
   }
 
   // Try to find in chosenCommunities by slug or uid
-  const communities = chosenCommunities(true);
+  const communities = chosenCommunities(true)
   const community = communities.find(
     (c) => c.slug === program.communitySlug || c.uid === program.communityUID
-  );
+  )
 
   if (community) {
-    return theme === "dark" ? community.imageURL.dark : community.imageURL.light;
+    return theme === "dark" ? community.imageURL.dark : community.imageURL.light
   }
 
   // If communityUID exists, generate blockie
   if (program.communityUID) {
-    return blo(program.communityUID as `0x${string}`);
+    return blo(program.communityUID as `0x${string}`)
   }
 
-  return null;
+  return null
 }
 
 export function FundingOpportunityCard({
   program,
-  isFeatured = false
+  isFeatured = false,
 }: FundingOpportunityCardProps) {
-  const { theme } = useTheme();
-  const status = getProgramStatus(program);
-  const title = program.metadata?.title || program.name;
-  const budget = program.metadata?.programBudget;
-  const communityName = program.communityName || program.communitySlug || "Unknown";
-  const communityImage = getCommunityImage(program, theme) || program.metadata?.logoImg;
-  const programDetailUrl = program.communitySlug && program.programId
-    ? PAGES.EXTERNAL_PROGRAM.DETAIL(program.communitySlug, program.programId)
-    : null;
-  const applyUrl = program.communitySlug && program.programId
-    ? PAGES.EXTERNAL_PROGRAM.APPLY(program.communitySlug, program.programId)
-    : null;
+  const { theme } = useTheme()
+  const status = getProgramStatus(program)
+  const title = program.metadata?.title || program.name
+  const budget = program.metadata?.programBudget
+  const communityName = program.communityName || program.communitySlug || "Unknown"
+  const communityImage = getCommunityImage(program, theme) || program.metadata?.logoImg
+  const programDetailUrl =
+    program.communitySlug && program.programId
+      ? PAGES.EXTERNAL_PROGRAM.DETAIL(program.communitySlug, program.programId)
+      : null
+  const applyUrl =
+    program.communitySlug && program.programId
+      ? PAGES.EXTERNAL_PROGRAM.APPLY(program.communitySlug, program.programId)
+      : null
 
   if (isFeatured) {
     // Mobile featured card with gradient background
-    const handleCardClick = programDetailUrl ? () => {
-      window.open(programDetailUrl, '_blank', 'noopener,noreferrer');
-    } : undefined;
+    const handleCardClick = programDetailUrl
+      ? () => {
+          window.open(programDetailUrl, "_blank", "noopener,noreferrer")
+        }
+      : undefined
 
     return (
-      <Card className={cn("relative overflow-hidden border-0", programDetailUrl && "cursor-pointer")} onClick={handleCardClick}>
+      <Card
+        className={cn("relative overflow-hidden border-0", programDetailUrl && "cursor-pointer")}
+        onClick={handleCardClick}
+      >
         <div
           className="absolute inset-0 bg-gradient-to-b from-blue-900 via-purple-900 to-blue-800"
           style={{
-            backgroundImage: "linear-gradient(to bottom, rgba(30, 58, 138, 0.9), rgba(88, 28, 135, 0.9), rgba(30, 64, 175, 0.9))"
+            backgroundImage:
+              "linear-gradient(to bottom, rgba(30, 58, 138, 0.9), rgba(88, 28, 135, 0.9), rgba(30, 64, 175, 0.9))",
           }}
         />
         <CardContent className="relative p-6 md:p-8 min-h-[400px] flex flex-col justify-between">
@@ -180,23 +188,29 @@ export function FundingOpportunityCard({
           </div>
         </CardContent>
       </Card>
-    );
+    )
   }
 
   // Desktop card (3-card layout)
-  const handleCardClick = programDetailUrl ? () => {
-    window.open(programDetailUrl, '_blank', 'noopener,noreferrer');
-  } : undefined;
+  const handleCardClick = programDetailUrl
+    ? () => {
+        window.open(programDetailUrl, "_blank", "noopener,noreferrer")
+      }
+    : undefined
 
   return (
-    <Card className={cn("h-full flex flex-col", programDetailUrl && "cursor-pointer")} onClick={handleCardClick}>
+    <Card
+      className={cn("h-full flex flex-col", programDetailUrl && "cursor-pointer")}
+      onClick={handleCardClick}
+    >
       <CardContent className="p-6 flex flex-col h-full">
         {/* Top section */}
         <div className="flex items-start justify-between mb-4">
           <Badge
             variant={status.variant === "default" ? "default" : "secondary"}
             className={cn(
-              status.variant === "default" && "bg-teal-100 text-teal-700 border-teal-200 hover:bg-teal-100 hover:text-teal-700 hover:border-teal-200 text-xs font-normal leading-[1.5] tracking-[0.015em] text-center align-middle"
+              status.variant === "default" &&
+                "bg-teal-100 text-teal-700 border-teal-200 hover:bg-teal-100 hover:text-teal-700 hover:border-teal-200 text-xs font-normal leading-[1.5] tracking-[0.015em] text-center align-middle"
             )}
           >
             {status.label}
@@ -231,7 +245,9 @@ export function FundingOpportunityCard({
                 className="rounded-full w-6 h-6"
               />
             ) : null}
-            <span className="text-xs font-medium leading-[1.5] tracking-[0.015em] text-foreground">{communityName}</span>
+            <span className="text-xs font-medium leading-[1.5] tracking-[0.015em] text-foreground">
+              {communityName}
+            </span>
           </div>
           {applyUrl ? (
             <ExternalLink
@@ -260,6 +276,5 @@ export function FundingOpportunityCard({
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }
-

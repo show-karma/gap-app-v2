@@ -1,21 +1,18 @@
-import { Skeleton } from "@/components/Utilities/Skeleton";
-import { cn } from "@/utilities/tailwind";
-import { FC } from "react";
+import type { FC } from "react"
+import { Skeleton } from "@/components/Utilities/Skeleton"
+import { cn } from "@/utilities/tailwind"
 
 const rowClass =
-  "text-normal  text-zinc-800 dark:text-zinc-200 text-base break-normal line-clamp-2 w-full max-w-[320px] px-1 py-2";
-const headerClass =
-  "text-normal  text-zinc-800 dark:text-zinc-200 text-base w-max max-w-[320px]";
+  "text-normal  text-zinc-800 dark:text-zinc-200 text-base break-normal line-clamp-2 w-full max-w-[320px] px-1 py-2"
+const headerClass = "text-normal  text-zinc-800 dark:text-zinc-200 text-base w-max max-w-[320px]"
 
 interface AllProjectsLoadingTableProps {
-  pageSize: number;
+  pageSize: number
 }
 
-export const AllProjectsLoadingTable: FC<AllProjectsLoadingTableProps> = ({
-  pageSize,
-}) => {
+export const AllProjectsLoadingTable: FC<AllProjectsLoadingTableProps> = ({ pageSize }) => {
   // create an empty array of length pageSize
-  const rows = Array.from({ length: pageSize }, (_, index) => index);
+  const rows = Array.from({ length: pageSize }, (_, index) => index)
 
   return (
     <table className="border-x border-x-zinc-300 border-y border-y-zinc-300 w-full table-fixed">
@@ -50,5 +47,5 @@ export const AllProjectsLoadingTable: FC<AllProjectsLoadingTableProps> = ({
         ))}
       </tbody>
     </table>
-  );
-};
+  )
+}

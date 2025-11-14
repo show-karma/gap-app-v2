@@ -1,14 +1,14 @@
-"use client";
-import { getCommunityRegions } from "@/utilities/queries/getCommunityRegions";
-import { useQuery } from "@tanstack/react-query";
+"use client"
+import { useQuery } from "@tanstack/react-query"
+import { getCommunityRegions } from "@/utilities/queries/getCommunityRegions"
 
 export interface RegionOption {
-  id: string;
-  name: string;
-  communityId: string;
-  isDeleted: boolean;
-  createdAt: string;
-  updatedAt: string;
+  id: string
+  name: string
+  communityId: string
+  isDeleted: boolean
+  createdAt: string
+  updatedAt: string
 }
 
 export function useCommunityRegions(communityId: string) {
@@ -16,5 +16,5 @@ export function useCommunityRegions(communityId: string) {
     queryKey: ["community-regions", communityId],
     queryFn: () => getCommunityRegions(communityId),
     enabled: !!communityId,
-  });
+  })
 }

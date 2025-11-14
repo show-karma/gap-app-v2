@@ -1,16 +1,16 @@
-"use client";
+"use client"
 
-import { FC, memo } from "react";
-import { containerClassName } from "@/components/Shared/ActivityCard";
-import { ActivityAttribution } from "@/components/Shared/ActivityCard/ActivityAttribution";
-import { ActivityStatusHeader } from "@/components/Shared/ActivityCard/ActivityStatusHeader";
-import { ReadMore } from "@/utilities/ReadMore";
-import { cn } from "@/utilities/tailwind";
+import { type FC, memo } from "react"
+import { containerClassName } from "@/components/Shared/ActivityCard"
+import { ActivityAttribution } from "@/components/Shared/ActivityCard/ActivityAttribution"
+import { ActivityStatusHeader } from "@/components/Shared/ActivityCard/ActivityStatusHeader"
+import { ReadMore } from "@/utilities/ReadMore"
+import { cn } from "@/utilities/tailwind"
 
 interface MilestoneCompletionInfoProps {
-  completionReason?: string;
-  completionDate?: string;
-  completedBy?: string;
+  completionReason?: string
+  completionDate?: string
+  completedBy?: string
 }
 
 const MilestoneCompletionInfoComponent: FC<MilestoneCompletionInfoProps> = ({
@@ -18,7 +18,7 @@ const MilestoneCompletionInfoComponent: FC<MilestoneCompletionInfoProps> = ({
   completionDate,
   completedBy,
 }) => {
-  if (!completionReason) return null;
+  if (!completionReason) return null
 
   return (
     <div className={cn(containerClassName, "flex flex-col gap-1 w-full")}>
@@ -41,14 +41,10 @@ const MilestoneCompletionInfoComponent: FC<MilestoneCompletionInfoProps> = ({
         )}
       </div>
       {completionDate && (
-        <ActivityAttribution
-          date={completionDate}
-          attester={completedBy || ""}
-          isCompleted
-        />
+        <ActivityAttribution date={completionDate} attester={completedBy || ""} isCompleted />
       )}
     </div>
-  );
-};
+  )
+}
 
-export const MilestoneCompletionInfo = memo(MilestoneCompletionInfoComponent);
+export const MilestoneCompletionInfo = memo(MilestoneCompletionInfoComponent)

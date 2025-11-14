@@ -1,6 +1,6 @@
-"use client";
-import type { SupportedToken } from "@/constants/supportedTokens";
-import { CartItemRow } from "./CartItemRow";
+"use client"
+import type { SupportedToken } from "@/constants/supportedTokens"
+import { CartItemRow } from "./CartItemRow"
 
 /**
  * Get token options including the currently selected token if not in the list
@@ -9,46 +9,44 @@ function getTokenOptionsWithSelected(
   allAvailableTokens: SupportedToken[],
   selectedToken?: SupportedToken
 ): SupportedToken[] {
-  const base = [...allAvailableTokens];
+  const base = [...allAvailableTokens]
 
   if (
     selectedToken &&
     !base.some(
-      (token) =>
-        token.symbol === selectedToken.symbol &&
-        token.chainId === selectedToken.chainId
+      (token) => token.symbol === selectedToken.symbol && token.chainId === selectedToken.chainId
     )
   ) {
-    base.push(selectedToken);
+    base.push(selectedToken)
   }
 
-  return base;
+  return base
 }
 
 interface CartItem {
-  uid: string;
-  slug?: string;
-  title: string;
-  imageURL?: string;
+  uid: string
+  slug?: string
+  title: string
+  imageURL?: string
 }
 
 interface PayoutInfo {
-  address?: string;
-  isLoading: boolean;
-  isMissing: boolean;
+  address?: string
+  isLoading: boolean
+  isMissing: boolean
 }
 
 interface CartItemListProps {
-  items: CartItem[];
-  selectedTokens: Record<string, SupportedToken>;
-  amounts: Record<string, string>;
-  payoutStatusByProject: Record<string, PayoutInfo>;
-  allAvailableTokens: SupportedToken[];
-  balanceByTokenKey: Record<string, string>;
-  formatAddress: (address?: string) => string;
-  onTokenSelect: (projectId: string, token: SupportedToken) => void;
-  onAmountChange: (projectId: string, amount: string) => void;
-  onRemove: (projectId: string) => void;
+  items: CartItem[]
+  selectedTokens: Record<string, SupportedToken>
+  amounts: Record<string, string>
+  payoutStatusByProject: Record<string, PayoutInfo>
+  allAvailableTokens: SupportedToken[]
+  balanceByTokenKey: Record<string, string>
+  formatAddress: (address?: string) => string
+  onTokenSelect: (projectId: string, token: SupportedToken) => void
+  onAmountChange: (projectId: string, amount: string) => void
+  onRemove: (projectId: string) => void
 }
 
 export function CartItemList({
@@ -74,10 +72,10 @@ export function CartItemList({
       </div>
 
       {items.map((item) => {
-        const selectedToken = selectedTokens[item.uid];
-        const currentAmount = amounts[item.uid] || "";
-        const payoutInfo = payoutStatusByProject[item.uid];
-        const tokenOptions = getTokenOptionsWithSelected(allAvailableTokens, selectedToken);
+        const selectedToken = selectedTokens[item.uid]
+        const currentAmount = amounts[item.uid] || ""
+        const payoutInfo = payoutStatusByProject[item.uid]
+        const tokenOptions = getTokenOptionsWithSelected(allAvailableTokens, selectedToken)
 
         return (
           <CartItemRow
@@ -93,8 +91,8 @@ export function CartItemList({
             onAmountChange={(amount) => onAmountChange(item.uid, amount)}
             onRemove={() => onRemove(item.uid)}
           />
-        );
+        )
       })}
     </div>
-  );
+  )
 }

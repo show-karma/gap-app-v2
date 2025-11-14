@@ -1,41 +1,37 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, Fragment, ReactNode, useState } from "react";
-import { Dialog, Transition } from "@headlessui/react";
-import { PlusIcon } from "@heroicons/react/24/solid";
-import { Button } from "@/components/Utilities/Button";
-import { z } from "zod";
-import { SubmitHandler, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import toast from "react-hot-toast";
-import fetchData from "@/utilities/fetchData";
-import { useParams } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
-import { INDEXER } from "@/utilities/indexer";
 
-import { errorManager } from "@/components/Utilities/errorManager";
-import { MESSAGES } from "@/utilities/messages";
-import { useAccount } from "wagmi";
+import { Dialog, Transition } from "@headlessui/react"
+import { PlusIcon } from "@heroicons/react/24/solid"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useParams } from "next/navigation"
+import { type FC, Fragment, ReactNode, useState } from "react"
+import { type SubmitHandler, useForm } from "react-hook-form"
+import toast from "react-hot-toast"
+import { useAccount } from "wagmi"
+import { z } from "zod"
+import { Button } from "@/components/Utilities/Button"
+import { errorManager } from "@/components/Utilities/errorManager"
+import { useAuth } from "@/hooks/useAuth"
+import fetchData from "@/utilities/fetchData"
+import { INDEXER } from "@/utilities/indexer"
+import { MESSAGES } from "@/utilities/messages"
 
 type CategoryCreationDialogProps = {
-  refreshCategories: () => Promise<void>;
-};
+  refreshCategories: () => Promise<void>
+}
 
 const schema = z.object({
-  name: z
-    .string()
-    .min(3, { message: "Category name must be at least 3 characters" }),
-});
+  name: z.string().min(3, { message: "Category name must be at least 3 characters" }),
+})
 
-type SchemaType = z.infer<typeof schema>;
+type SchemaType = z.infer<typeof schema>
 
-export const CategoryCreationDialog: FC<CategoryCreationDialogProps> = ({
-  refreshCategories,
-}) => {
-  let [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const { address } = useAccount();
-  const params = useParams();
-  const communityId = params.communityId as string;
+export const CategoryCreationDialog: FC<CategoryCreationDialogProps> = ({ refreshCategories }) => {
+  const [isOpen, setIsOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const { address } = useAccount()
+  const params = useParams()
+  const communityId = params.communityId as string
 
   const {
     register,
@@ -45,23 +41,23 @@ export const CategoryCreationDialog: FC<CategoryCreationDialogProps> = ({
     resolver: zodResolver(schema),
     reValidateMode: "onChange",
     mode: "onChange",
-  });
+  })
 
   function closeModal() {
-    setIsOpen(false);
+    setIsOpen(false)
   }
   function openModal() {
-    setIsOpen(true);
+    setIsOpen(true)
   }
 
-  const { authenticated: isAuth } = useAuth();
-  const { authenticate } = useAuth();
+  const { authenticated: isAuth } = useAuth()
+  const { authenticate } = useAuth()
 
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
     try {
-      setIsLoading(true);
+      setIsLoading(true)
       if (!isAuth) {
-        await authenticate();
+        await authenticate()
       }
       const [request, error] = await fetchData(
         INDEXER.CATEGORIES.CREATE(communityId),
@@ -70,12 +66,11 @@ export const CategoryCreationDialog: FC<CategoryCreationDialogProps> = ({
         {},
         {},
         true
-      );
-      if (error)
-        throw new Error("An error occurred while creating the category");
-      toast.success("Category created successfully");
-      refreshCategories();
-      closeModal();
+      )
+      if (error) throw new Error("An error occurred while creating the category")
+      toast.success("Category created successfully")
+      refreshCategories()
+      closeModal()
     } catch (error: any) {
       errorManager(
         MESSAGES.CATEGORY.CREATE.ERROR,
@@ -84,12 +79,12 @@ export const CategoryCreationDialog: FC<CategoryCreationDialogProps> = ({
         {
           error: MESSAGES.CATEGORY.CREATE.ERROR,
         }
-      );
-      console.log(error);
+      )
+      console.log(error)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   return (
     <>
@@ -128,15 +123,9 @@ export const CategoryCreationDialog: FC<CategoryCreationDialogProps> = ({
                 leaveTo="opacity-0 scale-95"
               >
                 <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle  transition-all">
-                  <form
-                    onSubmit={handleSubmit(onSubmit)}
-                    className="flex w-full flex-col gap-4"
-                  >
+                  <form onSubmit={handleSubmit(onSubmit)} className="flex w-full flex-col gap-4">
                     <div className="flex w-full flex-col">
-                      <label
-                        htmlFor="milestone-title"
-                        className={"text-sm font-bold"}
-                      >
+                      <label htmlFor="milestone-title" className={"text-sm font-bold"}>
                         Category name *
                       </label>
                       <input
@@ -147,9 +136,7 @@ export const CategoryCreationDialog: FC<CategoryCreationDialogProps> = ({
                         placeholder="Ex: Community building"
                         {...register("name")}
                       />
-                      <p className="text-base text-red-400">
-                        {errors.name?.message}
-                      </p>
+                      <p className="text-base text-red-400">{errors.name?.message}</p>
                     </div>
                     <div className="flex flex-row gap-4 justify-end">
                       <Button
@@ -176,5 +163,5 @@ export const CategoryCreationDialog: FC<CategoryCreationDialogProps> = ({
         </Dialog>
       </Transition>
     </>
-  );
-};
+  )
+}

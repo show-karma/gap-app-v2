@@ -1,36 +1,37 @@
 /* eslint-disable @next/next/no-img-element */
-import { Button } from "@/components/Utilities/Button";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { getGapClient, useGap } from "@/hooks/useGap";
-import { useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import fetchData from "@/utilities/fetchData";
-import { formatDate } from "@/utilities/formatDate";
-import { INDEXER } from "@/utilities/indexer";
-import { MESSAGES } from "@/utilities/messages";
-import { sanitizeObject } from "@/utilities/sanitize";
-import { privyConfig as config } from "@/utilities/wagmi/privy-config";
-import { Popover } from "@headlessui/react";
-import { CalendarIcon } from "@heroicons/react/24/outline";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { ProjectImpact } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact";
-import { getWalletClient } from "@wagmi/core";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { useQueryState } from "nuqs";
-import type { FC } from "react";
-import { useState } from "react";
-import { DayPicker } from "react-day-picker";
-import type { SubmitHandler } from "react-hook-form";
-import { Controller, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { Hex } from "viem";
-import { useAccount } from "wagmi";
-import { z } from "zod";
-import { DatePicker } from "@/components/Utilities/DatePicker";
-import { useWallet } from "@/hooks/useWallet";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+
+import { Popover } from "@headlessui/react"
+import { CalendarIcon } from "@heroicons/react/24/outline"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { ProjectImpact } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact"
+import { getWalletClient } from "@wagmi/core"
+import { useQueryState } from "nuqs"
+import type { FC } from "react"
+import { useState } from "react"
+import { DayPicker } from "react-day-picker"
+import type { SubmitHandler } from "react-hook-form"
+import { Controller, useForm } from "react-hook-form"
+import toast from "react-hot-toast"
+import type { Hex } from "viem"
+import { useAccount } from "wagmi"
+import { z } from "zod"
+import { Button } from "@/components/Utilities/Button"
+import { DatePicker } from "@/components/Utilities/DatePicker"
+import { errorManager } from "@/components/Utilities/errorManager"
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor"
+import { getGapClient, useGap } from "@/hooks/useGap"
+import { useWallet } from "@/hooks/useWallet"
+import { useProjectStore } from "@/store"
+import { useStepper } from "@/store/modals/txStepper"
+import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils"
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain"
+import fetchData from "@/utilities/fetchData"
+import { formatDate } from "@/utilities/formatDate"
+import { INDEXER } from "@/utilities/indexer"
+import { MESSAGES } from "@/utilities/messages"
+import { sanitizeObject } from "@/utilities/sanitize"
+import { privyConfig as config } from "@/utilities/wagmi/privy-config"
+import { safeGetWalletClient } from "@/utilities/wallet-helpers"
 
 const updateSchema = z.object({
   startedAt: z.date({
@@ -39,27 +40,27 @@ const updateSchema = z.object({
   completedAt: z.date({
     required_error: MESSAGES.PROJECT.IMPACT.FORM.DATE,
   }),
-});
+})
 
-const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
+const labelStyle = "text-sm font-bold text-black dark:text-zinc-100"
 const inputStyle =
-  "mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300";
+  "mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300"
 
-type UpdateType = z.infer<typeof updateSchema>;
+type UpdateType = z.infer<typeof updateSchema>
 
-interface AddImpactScreenProps {}
+type AddImpactScreenProps = {}
 
 export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
-  const [proof, setProof] = useState("");
-  const [impact, setImpact] = useState("");
-  const [work, setWork] = useState("");
+  const [proof, setProof] = useState("")
+  const [impact, setImpact] = useState("")
+  const [work, setWork] = useState("")
 
-  const { address } = useAccount();
-  const { chain } = useAccount();
-  const { switchChainAsync } = useWallet();
-  const project = useProjectStore((state) => state.project);
-  const refreshProject = useProjectStore((state) => state.refreshProject);
-  const [, changeTab] = useQueryState("tab");
+  const { address } = useAccount()
+  const { chain } = useAccount()
+  const { switchChainAsync } = useWallet()
+  const project = useProjectStore((state) => state.project)
+  const refreshProject = useProjectStore((state) => state.refreshProject)
+  const [, changeTab] = useQueryState("tab")
   const {
     register,
     handleSubmit,
@@ -75,41 +76,43 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
       startedAt: new Date(),
       completedAt: new Date(),
     },
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const { gap } = useGap();
-  const { changeStepperStep, setIsStepper } = useStepper();
+  })
+  const [isLoading, setIsLoading] = useState(false)
+  const { gap } = useGap()
+  const { changeStepperStep, setIsStepper } = useStepper()
 
   const onSubmit: SubmitHandler<UpdateType> = async (data, event) => {
-    event?.preventDefault();
-    event?.stopPropagation();
-    const { completedAt, startedAt } = data;
-    if (!address || !project) return;
-    setIsLoading(true);
-    let gapClient = gap;
+    event?.preventDefault()
+    event?.stopPropagation()
+    const { completedAt, startedAt } = data
+    if (!address || !project) return
+    setIsLoading(true)
+    let gapClient = gap
     try {
-      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+      const {
+        success,
+        chainId: actualChainId,
+        gapClient: newGapClient,
+      } = await ensureCorrectChain({
         targetChainId: project.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
-      });
+      })
 
       if (!success) {
-        setIsLoading(false);
-        return;
+        setIsLoading(false)
+        return
       }
 
-      gapClient = newGapClient;
+      gapClient = newGapClient
 
-      const { walletClient, error } = await safeGetWalletClient(
-        actualChainId
-      );
+      const { walletClient, error } = await safeGetWalletClient(actualChainId)
 
       if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+        throw new Error("Failed to connect to wallet", { cause: error })
       }
 
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await walletClientToSigner(walletClient)
       const dataToAttest = sanitizeObject({
         work,
         impact,
@@ -117,7 +120,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
         startedAt: Math.floor(startedAt.getTime() / 1000),
         completedAt: Math.floor(completedAt.getTime() / 1000),
         verified: [],
-      });
+      })
       const newImpact = new ProjectImpact({
         data: dataToAttest,
         recipient: address as `0x${string}`,
@@ -125,40 +128,28 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
         schema: gapClient!.findSchema("ProjectImpact"),
         refUID: project.uid,
         createdAt: new Date(),
-      });
-      await newImpact
-        .attest(walletSigner as any, changeStepperStep)
-        .then(async (res) => {
-          const txHash = res?.tx[0]?.hash;
-          if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, newImpact.chainID),
-              "POST",
-              {}
-            );
+      })
+      await newImpact.attest(walletSigner as any, changeStepperStep).then(async (res) => {
+        const txHash = res?.tx[0]?.hash
+        if (txHash) {
+          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, newImpact.chainID), "POST", {})
+        }
+        let retries = 1000
+        changeStepperStep("indexing")
+        let fetchedProject = null
+        while (retries > 0) {
+          fetchedProject = await gapClient!.fetch.projectById(project.uid as Hex).catch(() => null)
+          if (fetchedProject?.impacts?.find((impact) => impact.uid === newImpact.uid)) {
+            retries = 0
+            changeStepperStep("indexed")
+            changeTab(null)
+            await refreshProject()
           }
-          let retries = 1000;
-          changeStepperStep("indexing");
-          let fetchedProject = null;
-          while (retries > 0) {
-            fetchedProject = await gapClient!.fetch
-              .projectById(project.uid as Hex)
-              .catch(() => null);
-            if (
-              fetchedProject?.impacts?.find(
-                (impact) => impact.uid === newImpact.uid
-              )
-            ) {
-              retries = 0;
-              changeStepperStep("indexed");
-              changeTab(null);
-              await refreshProject();
-            }
-            retries -= 1;
-            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-            await new Promise((resolve) => setTimeout(resolve, 1500));
-          }
-        });
+          retries -= 1
+          // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+          await new Promise((resolve) => setTimeout(resolve, 1500))
+        }
+      })
     } catch (error: any) {
       errorManager(
         MESSAGES.PROJECT.IMPACT.ERROR,
@@ -170,35 +161,30 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
         {
           error: MESSAGES.PROJECT.IMPACT.ERROR,
         }
-      );
+      )
     } finally {
-      setIsLoading(false);
-      setIsStepper(false);
+      setIsLoading(false)
+      setIsStepper(false)
     }
-  };
+  }
 
-  const isDescriptionValid = !!proof.length || !!impact.length;
+  const isDescriptionValid = !!proof.length || !!impact.length
 
   return (
     <div className="flex flex-1">
       <div className="flex w-full max-w-3xl flex-col gap-6 rounded-md bg-gray-200 dark:bg-zinc-900  px-4 py-6 max-lg:max-w-full">
         <div className="flex w-full flex-row justify-between">
-          <h4 className="text-2xl font-bold text-black dark:text-zinc-100">
-            Add impact work
-          </h4>
+          <h4 className="text-2xl font-bold text-black dark:text-zinc-100">Add impact work</h4>
           <button
             className="bg-transparent p-4 hover:bg-transparent hover:opacity-75"
             onClick={() => {
-              changeTab(null);
+              changeTab(null)
             }}
           >
             <img src="/icons/close.svg" alt="Close" className="h-5 w-5 " />
           </button>
         </div>
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="flex w-full flex-col gap-4"
-        >
+        <form onSubmit={handleSubmit(onSubmit)} className="flex w-full flex-col gap-4">
           <div className="flex w-full flex-col">
             <label htmlFor="work" className={labelStyle}>
               Explain the work you did *
@@ -223,16 +209,14 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
                     onSelect={(date) => {
                       setValue("startedAt", date, {
                         shouldValidate: true,
-                      });
-                      field.onChange(date);
+                      })
+                      field.onChange(date)
                     }}
                     minDate={new Date("2000-01-01")}
                     placeholder="Pick a date"
                     buttonClassName="w-full text-base bg-white dark:bg-zinc-800"
                   />
-                  <p className="text-base text-red-400">
-                    {formState.errors.startedAt?.message}
-                  </p>
+                  <p className="text-base text-red-400">{formState.errors.startedAt?.message}</p>
                 </div>
               )}
             />
@@ -248,16 +232,14 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
                     onSelect={(date) => {
                       setValue("completedAt", date, {
                         shouldValidate: true,
-                      });
-                      field.onChange(date);
+                      })
+                      field.onChange(date)
                     }}
                     minDate={watch("startedAt")}
                     placeholder="Pick a date"
                     buttonClassName="w-full text-base bg-white dark:bg-zinc-800"
                   />
-                  <p className="text-base text-red-400">
-                    {formState.errors.completedAt?.message}
-                  </p>
+                  <p className="text-base text-red-400">{formState.errors.completedAt?.message}</p>
                 </div>
               )}
             />
@@ -307,5 +289,5 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
         </form>
       </div>
     </div>
-  );
-};
+  )
+}

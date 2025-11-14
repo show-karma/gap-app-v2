@@ -1,25 +1,25 @@
-"use client";
-import { type SupportedToken } from "@/constants/supportedTokens";
-import { TransactionStatusItem } from "./TransactionStatusItem";
+"use client"
+import type { SupportedToken } from "@/constants/supportedTokens"
+import { TransactionStatusItem } from "./TransactionStatusItem"
 
 interface TransferResult {
-  projectId: string;
-  status: "pending" | "success" | "error";
-  hash?: string;
-  error?: string;
+  projectId: string
+  status: "pending" | "success" | "error"
+  hash?: string
+  error?: string
 }
 
 interface CartItem {
-  uid: string;
-  title: string;
+  uid: string
+  title: string
 }
 
 interface TransactionStatusProps {
-  transfers: TransferResult[];
-  items: CartItem[];
-  selectedTokens: Record<string, SupportedToken>;
-  onRetry?: () => void;
-  canRetry?: boolean;
+  transfers: TransferResult[]
+  items: CartItem[]
+  selectedTokens: Record<string, SupportedToken>
+  onRetry?: () => void
+  canRetry?: boolean
 }
 
 export function TransactionStatus({
@@ -29,11 +29,11 @@ export function TransactionStatus({
   onRetry,
   canRetry = false,
 }: TransactionStatusProps) {
-  if (transfers.length === 0) return null;
+  if (transfers.length === 0) return null
 
-  const hasFailures = transfers.some((t) => t.status === "error");
-  const hasSuccesses = transfers.some((t) => t.status === "success");
-  const hasPending = transfers.some((t) => t.status === "pending");
+  const hasFailures = transfers.some((t) => t.status === "error")
+  const hasSuccesses = transfers.some((t) => t.status === "success")
+  const hasPending = transfers.some((t) => t.status === "pending")
 
   return (
     <div className="rounded-2xl border-2 border-gray-200 bg-white/80 p-5 shadow-sm dark:border-gray-800 dark:bg-zinc-950/70">
@@ -61,8 +61,8 @@ export function TransactionStatus({
 
       <div className="mt-3 space-y-3">
         {transfers.map((transfer) => {
-          const project = items.find((item) => item.uid === transfer.projectId);
-          const token = selectedTokens[transfer.projectId];
+          const project = items.find((item) => item.uid === transfer.projectId)
+          const token = selectedTokens[transfer.projectId]
 
           return (
             <TransactionStatusItem
@@ -71,9 +71,9 @@ export function TransactionStatus({
               projectTitle={project?.title}
               token={token}
             />
-          );
+          )
         })}
       </div>
     </div>
-  );
+  )
 }

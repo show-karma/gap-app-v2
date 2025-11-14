@@ -1,31 +1,28 @@
-"use client";
+"use client"
 
-import { FC, useState, useCallback, useEffect, useMemo } from "react";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { ArrowDownTrayIcon, FunnelIcon } from "@heroicons/react/24/outline"
 // eslint-disable-next-line import/no-extraneous-dependencies
-import debounce from "lodash.debounce";
-import InfiniteScroll from "react-infinite-scroll-component";
-import ApplicationList from "./ApplicationList";
-import {
-  useFundingApplications,
-  useApplicationExport,
-} from "@/hooks/useFundingPlatform";
-import { IApplicationFilters } from "@/services/fundingPlatformService";
-import { IFundingApplication } from "@/types/funding-platform";
-import { Button } from "@/components/Utilities/Button";
-import { ArrowDownTrayIcon, FunnelIcon } from "@heroicons/react/24/outline";
-import formatCurrency from "@/utilities/formatCurrency";
-import pluralize from "pluralize";
+import debounce from "lodash.debounce"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import pluralize from "pluralize"
+import { type FC, useCallback, useEffect, useMemo, useState } from "react"
+import InfiniteScroll from "react-infinite-scroll-component"
+import { Button } from "@/components/Utilities/Button"
+import { useApplicationExport, useFundingApplications } from "@/hooks/useFundingPlatform"
+import type { IApplicationFilters } from "@/services/fundingPlatformService"
+import type { IFundingApplication } from "@/types/funding-platform"
+import formatCurrency from "@/utilities/formatCurrency"
+import ApplicationList from "./ApplicationList"
 
 interface IApplicationListWithAPIProps {
-  programId: string;
-  chainId: number;
-  onApplicationSelect?: (application: IFundingApplication) => void;
-  onApplicationHover?: (applicationId: string) => void;
-  showStatusActions?: boolean;
-  initialFilters?: IApplicationFilters;
-  onStatusChange?: (applicationId: string, status: string, note?: string) => Promise<any>;
-  isAdmin?: boolean;
+  programId: string
+  chainId: number
+  onApplicationSelect?: (application: IFundingApplication) => void
+  onApplicationHover?: (applicationId: string) => void
+  showStatusActions?: boolean
+  initialFilters?: IApplicationFilters
+  onStatusChange?: (applicationId: string, status: string, note?: string) => Promise<any>
+  isAdmin?: boolean
 }
 
 const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
@@ -38,42 +35,42 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
   onStatusChange: parentOnStatusChange,
   isAdmin = false,
 }) => {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
 
   // Initialize filters from URL params (excluding page for infinite scroll)
   const [filters, setFilters] = useState<IApplicationFilters>(() => {
-    const urlFilters = { ...initialFilters };
-    if (searchParams.get('search')) urlFilters.search = searchParams.get('search')!;
-    if (searchParams.get('status')) urlFilters.status = searchParams.get('status')!;
-    if (searchParams.get('dateFrom')) urlFilters.dateFrom = searchParams.get('dateFrom')!;
-    if (searchParams.get('dateTo')) urlFilters.dateTo = searchParams.get('dateTo')!;
+    const urlFilters = { ...initialFilters }
+    if (searchParams.get("search")) urlFilters.search = searchParams.get("search")!
+    if (searchParams.get("status")) urlFilters.status = searchParams.get("status")!
+    if (searchParams.get("dateFrom")) urlFilters.dateFrom = searchParams.get("dateFrom")!
+    if (searchParams.get("dateTo")) urlFilters.dateTo = searchParams.get("dateTo")!
     // Remove page handling for infinite scroll
-    return urlFilters;
-  });
+    return urlFilters
+  })
 
   // Local state for search input (immediate UI updates)
-  const [searchInput, setSearchInput] = useState(filters.search || "");
+  const [searchInput, setSearchInput] = useState(filters.search || "")
 
-  const [sortBy, setSortBy] = useState<IApplicationFilters['sortBy']>(() => {
-    const urlSortBy = searchParams.get('sortBy');
-    return (urlSortBy as IApplicationFilters['sortBy']) || 'status';
-  });
+  const [sortBy, setSortBy] = useState<IApplicationFilters["sortBy"]>(() => {
+    const urlSortBy = searchParams.get("sortBy")
+    return (urlSortBy as IApplicationFilters["sortBy"]) || "status"
+  })
 
-  const [sortOrder, setSortOrder] = useState<IApplicationFilters['sortOrder']>(() => {
-    const urlSortOrder = searchParams.get('sortOrder');
-    return (urlSortOrder as IApplicationFilters['sortOrder']) || 'asc';
-  });
+  const [sortOrder, setSortOrder] = useState<IApplicationFilters["sortOrder"]>(() => {
+    const urlSortOrder = searchParams.get("sortOrder")
+    return (urlSortOrder as IApplicationFilters["sortOrder"]) || "asc"
+  })
 
   // Debounced search function (waits 500ms after user stops typing)
   const debouncedSearch = useMemo(
     () =>
       debounce((searchValue: string) => {
-        setFilters((prev) => ({ ...prev, search: searchValue || undefined }));
+        setFilters((prev) => ({ ...prev, search: searchValue || undefined }))
       }, 500),
     []
-  );
+  )
 
   const {
     applications,
@@ -89,123 +86,122 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
     updateApplicationStatus,
     isUpdatingStatus,
     refetch,
-  } = useFundingApplications(programId, chainId, { ...filters, sortBy, sortOrder });
+  } = useFundingApplications(programId, chainId, { ...filters, sortBy, sortOrder })
 
   // Load more function for infinite scroll
   const loadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
+      fetchNextPage()
     }
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
-  const { exportApplications, isExporting } = useApplicationExport(
-    programId,
-    chainId,
-    isAdmin
-  );
+  const { exportApplications, isExporting } = useApplicationExport(programId, chainId, isAdmin)
 
   // Sync filters and sorting with URL
   useEffect(() => {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(searchParams.toString())
 
     // Update filter params
     if (filters.search) {
-      params.set("search", filters.search);
+      params.set("search", filters.search)
     } else {
-      params.delete("search");
+      params.delete("search")
     }
 
     if (filters.status) {
-      params.set("status", filters.status);
+      params.set("status", filters.status)
     } else {
-      params.delete("status");
+      params.delete("status")
     }
 
     if (filters.dateFrom) {
-      params.set("dateFrom", filters.dateFrom);
+      params.set("dateFrom", filters.dateFrom)
     } else {
-      params.delete("dateFrom");
+      params.delete("dateFrom")
     }
 
     if (filters.dateTo) {
-      params.set("dateTo", filters.dateTo);
+      params.set("dateTo", filters.dateTo)
     } else {
-      params.delete("dateTo");
+      params.delete("dateTo")
     }
 
     // Remove page handling for infinite scroll
 
     // Add sorting params
-    if (sortBy && sortBy !== 'createdAt') {
-      params.set("sortBy", sortBy);
+    if (sortBy && sortBy !== "createdAt") {
+      params.set("sortBy", sortBy)
     } else {
-      params.delete("sortBy");
+      params.delete("sortBy")
     }
 
     // Always persist sortOrder in URL if it's set
     if (sortOrder) {
-      params.set("sortOrder", sortOrder);
+      params.set("sortOrder", sortOrder)
     } else {
-      params.delete("sortOrder");
+      params.delete("sortOrder")
     }
 
-    const queryString = params.toString();
-    const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
+    const queryString = params.toString()
+    const newUrl = queryString ? `${pathname}?${queryString}` : pathname
 
-    router.replace(newUrl, { scroll: false });
-  }, [filters, sortBy, sortOrder, pathname, router, searchParams]);
+    router.replace(newUrl, { scroll: false })
+  }, [filters, sortBy, sortOrder, pathname, router, searchParams])
 
   const handleStatusChange = useCallback(
     async (applicationId: string, status: string, note?: string) => {
       try {
-        await updateApplicationStatus({ applicationId, status, note });
+        await updateApplicationStatus({ applicationId, status, note })
         // Refetch to get updated data
-        refetch();
+        refetch()
         // Call parent's onStatusChange if provided
       } catch (error) {
-        console.error("Failed to update application status:", error);
+        console.error("Failed to update application status:", error)
       }
     },
     [updateApplicationStatus, refetch]
-  );
+  )
 
   const handleExport = useCallback(
     (format: "json" | "csv" = "json") => {
-      exportApplications(format, { ...filters, sortBy, sortOrder });
+      exportApplications(format, { ...filters, sortBy, sortOrder })
     },
     [exportApplications, filters, sortBy, sortOrder]
-  );
+  )
 
   const handleFilterChange = useCallback((newFilters: IApplicationFilters) => {
-    setFilters((prev) => ({ ...prev, ...newFilters }));
-  }, []);
+    setFilters((prev) => ({ ...prev, ...newFilters }))
+  }, [])
 
   const handleSearchChange = useCallback(
     (value: string) => {
-      setSearchInput(value); // Update UI immediately
-      debouncedSearch(value); // Update filters after 500ms
+      setSearchInput(value) // Update UI immediately
+      debouncedSearch(value) // Update filters after 500ms
     },
     [debouncedSearch]
-  );
+  )
 
   // Cleanup debounced function on unmount
   useEffect(() => {
     return () => {
-      debouncedSearch.cancel();
-    };
-  }, [debouncedSearch]);
-
-  const handleSortChange = useCallback((newSortBy: string) => {
-    const typedSortBy = newSortBy as IApplicationFilters['sortBy'];
-    if (sortBy === typedSortBy) {
-      // Toggle sort order if clicking the same column
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      // Set new sort column with default desc order
-      setSortBy(typedSortBy);
-      setSortOrder('desc');
+      debouncedSearch.cancel()
     }
-  }, [sortBy, sortOrder]);
+  }, [debouncedSearch])
+
+  const handleSortChange = useCallback(
+    (newSortBy: string) => {
+      const typedSortBy = newSortBy as IApplicationFilters["sortBy"]
+      if (sortBy === typedSortBy) {
+        // Toggle sort order if clicking the same column
+        setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+      } else {
+        // Set new sort column with default desc order
+        setSortBy(typedSortBy)
+        setSortOrder("desc")
+      }
+    },
+    [sortBy, sortOrder]
+  )
 
   // Show error state
   if (error) {
@@ -227,7 +223,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
           </button>
         </div>
       </div>
-    );
+    )
   }
 
   const statsMap = [
@@ -255,7 +251,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
       title: "Rejected",
       value: stats?.rejectedApplications || 0,
     },
-  ];
+  ]
 
   return (
     <div className="w-full space-y-6">
@@ -343,10 +339,10 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
           <div className="flex justify-end space-x-2">
             <Button
               onClick={() => {
-                setFilters({});
-                setSearchInput("");
-                debouncedSearch.cancel(); // Cancel any pending debounced search
-                router.push(pathname, { scroll: false });
+                setFilters({})
+                setSearchInput("")
+                debouncedSearch.cancel() // Cancel any pending debounced search
+                router.push(pathname, { scroll: false })
               }}
               variant="secondary"
               className="w-fit px-3 py-1 border bg-transparent text-zinc-500 font-medium border-zinc-200 dark:border-zinc-400 dark:text-zinc-400 flex flex-row gap-2"
@@ -364,7 +360,6 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
               <ArrowDownTrayIcon className="w-5 h-5" />
               {isExporting ? "Exporting..." : "Export CSV"}
             </Button>
-
           </div>
         </div>
       </div>
@@ -406,7 +401,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
         />
       </InfiniteScroll>
     </div>
-  );
-};
+  )
+}
 
-export default ApplicationListWithAPI;
+export default ApplicationListWithAPI

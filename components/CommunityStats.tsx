@@ -1,35 +1,33 @@
-"use client";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
-import { useState, Fragment } from "react";
-import { Dialog, Transition } from "@headlessui/react";
-import { Button } from "@/components/Utilities/Button";
-import { ArrowPathIcon, ChartBarSquareIcon } from "@heroicons/react/24/solid";
+"use client"
+import { Dialog, Transition } from "@headlessui/react"
+import { ArrowPathIcon, ChartBarSquareIcon } from "@heroicons/react/24/solid"
+import { Fragment, useState } from "react"
+import { Button } from "@/components/Utilities/Button"
+import fetchData from "@/utilities/fetchData"
+import { INDEXER } from "@/utilities/indexer"
 
-import { errorManager } from "./Utilities/errorManager";
+import { errorManager } from "./Utilities/errorManager"
 
 interface CommunityStatsProps {
-  communityId: string;
+  communityId: string
 }
 
 export default function CommunityStats({ communityId }: CommunityStatsProps) {
-  let [isOpen, setIsOpen] = useState(false);
-  const [stats, setStats] = useState<any>({});
-  const [error, setError] = useState<any>("");
-  const [loading, setLoading] = useState<boolean>(true);
+  const [isOpen, setIsOpen] = useState(false)
+  const [stats, setStats] = useState<any>({})
+  const [error, setError] = useState<any>("")
+  const [loading, setLoading] = useState<boolean>(true)
 
   async function fetchStats() {
-    setLoading(true);
+    setLoading(true)
     try {
-      const [data, error]: any = await fetchData(
-        INDEXER.COMMUNITY.STATS(communityId as string)
-      );
+      const [data, error]: any = await fetchData(INDEXER.COMMUNITY.STATS(communityId as string))
       if (error) {
-        console.error("Error fetching data:", error);
-        setError(error);
+        console.error("Error fetching data:", error)
+        setError(error)
       } else {
         if (data && data?.projects) {
-          console.log("Stats fetched:", data);
+          console.log("Stats fetched:", data)
           setStats({
             "No. of Projects": data?.projects,
             "No. of Project Edits": data?.ProjectEdits,
@@ -60,32 +58,32 @@ export default function CommunityStats({ communityId }: CommunityStatsProps) {
               data?.GrantUpdateStatuses +
               data?.GrantEdits +
               data?.ProjectEdits,
-          });
+          })
 
-          setError("");
+          setError("")
         } else {
-          console.error("No stats found for community:", communityId);
-          setError("No stats found for community");
+          console.error("No stats found for community:", communityId)
+          setError("No stats found for community")
         }
       }
     } catch (error: any) {
-      console.error("Error fetching stats:", error);
+      console.error("Error fetching stats:", error)
       errorManager(`Error fetching stats: ${error}`, error, {
         communityId,
-      });
-      setError(error);
+      })
+      setError(error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
   function closeModal() {
-    setIsOpen(false);
+    setIsOpen(false)
   }
 
   async function openModal() {
-    setIsOpen(true);
-    await fetchStats();
+    setIsOpen(true)
+    await fetchStats()
   }
 
   return (
@@ -134,16 +132,11 @@ export default function CommunityStats({ communityId }: CommunityStatsProps) {
                   {loading ? (
                     <div>Loading stats...</div>
                   ) : error ? (
-                    <div className="font-bold">
-                      Error fetching stats: {JSON.stringify(error)}
-                    </div>
+                    <div className="font-bold">Error fetching stats: {JSON.stringify(error)}</div>
                   ) : (
                     <>
                       {Object.entries(stats).map(([key, value]) => (
-                        <div
-                          className="mx-1 flex items-center justify-between"
-                          key={key}
-                        >
+                        <div className="mx-1 flex items-center justify-between" key={key}>
                           <p>{key}</p>
                           <p className="text-blue-500">{value as any}</p>
                         </div>
@@ -157,5 +150,5 @@ export default function CommunityStats({ communityId }: CommunityStatsProps) {
         </Dialog>
       </Transition>
     </>
-  );
+  )
 }

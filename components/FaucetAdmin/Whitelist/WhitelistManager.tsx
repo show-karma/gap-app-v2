@@ -1,52 +1,52 @@
-"use client";
+"use client"
 
-import {useChains, useWhitelistedContracts} from "@/hooks/useFaucetAdmin";
-import { useState } from "react";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { TrashIcon } from "@heroicons/react/24/outline";
+import { TrashIcon } from "@heroicons/react/24/outline"
+import { useState } from "react"
+import { Spinner } from "@/components/Utilities/Spinner"
+import { useChains, useWhitelistedContracts } from "@/hooks/useFaucetAdmin"
 
 export function WhitelistManager() {
-  const { contracts, isLoading, whitelistContract, removeFromWhitelist } = useWhitelistedContracts();
-  const [showAddForm, setShowAddForm] = useState(false);
+  const { contracts, isLoading, whitelistContract, removeFromWhitelist } = useWhitelistedContracts()
+  const [showAddForm, setShowAddForm] = useState(false)
   const [formData, setFormData] = useState({
     chainId: "",
     contractAddress: "",
     name: "",
     description: "",
     maxGasLimit: "",
-  });
+  })
   const { chains } = useChains()
 
-    console.log(contracts)
+  console.log(contracts)
   const handleAdd = (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
     whitelistContract({
       chainId: parseInt(formData.chainId),
       contractAddress: formData.contractAddress,
       name: formData.name,
       description: formData.description,
       maxGasLimit: formData.maxGasLimit || undefined,
-    });
+    })
     setFormData({
       chainId: "",
       contractAddress: "",
       name: "",
       description: "",
       maxGasLimit: "",
-    });
-    setShowAddForm(false);
-  };
+    })
+    setShowAddForm(false)
+  }
 
   const getChainName = (chainId: number) => {
-    return chains?.find(n => n.chainId === chainId)?.name || `Chain ${chainId}`;
-  };
+    return chains?.find((n) => n.chainId === chainId)?.name || `Chain ${chainId}`
+  }
 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <Spinner />
       </div>
-    );
+    )
   }
 
   return (
@@ -192,22 +192,26 @@ export function WhitelistManager() {
                   {contract.name}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 py-1 text-xs rounded-full ${
-                    contract.enabled 
-                      ? "bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400"
-                      : "bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400"
-                  }`}>
+                  <span
+                    className={`px-2 py-1 text-xs rounded-full ${
+                      contract.enabled
+                        ? "bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400"
+                        : "bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400"
+                    }`}
+                  >
                     {contract.enabled ? "Enabled" : "Disabled"}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                   <button
                     onClick={() => {
-                      if (confirm("Are you sure you want to remove this contract from the whitelist?")) {
-                        removeFromWhitelist({ 
-                          chainId: contract.chainId, 
-                          address: contract.contractAddress 
-                        });
+                      if (
+                        confirm("Are you sure you want to remove this contract from the whitelist?")
+                      ) {
+                        removeFromWhitelist({
+                          chainId: contract.chainId,
+                          address: contract.contractAddress,
+                        })
                       }
                     }}
                     className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
@@ -227,5 +231,5 @@ export function WhitelistManager() {
         )}
       </div>
     </div>
-  );
+  )
 }

@@ -1,5 +1,5 @@
-import fetchData from "../fetchData";
-import { INDEXER } from "../indexer";
+import fetchData from "../fetchData"
+import { INDEXER } from "../indexer"
 
 export const getTotalProjects = async (communityId: string) => {
   try {
@@ -10,10 +10,10 @@ export const getTotalProjects = async (communityId: string) => {
       {},
       {},
       false
-    );
-    if (error || !data.projects) return 0;
-    return data.projects;
+    )
+    if (error || !data.projects) return 0
+    return data.projects
   } catch {
-    return 0;
+    return 0
   }
-};
+}

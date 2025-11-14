@@ -1,48 +1,43 @@
-"use client";
-import { useParams } from "next/navigation";
-import { useMemo } from "react";
-import InfiniteScroll from "react-infinite-scroll-component";
-import { AutoSizer, Grid } from "react-virtualized";
-import { CommunityProjectsV2Response } from "@/types/community";
-import { projectV2ToGrant } from "@/utilities/adapters/projectV2ToGrant";
-import { GrantCard } from "./GrantCard";
-import { CardListSkeleton } from "./Pages/Communities/Loading";
-import { useDonationCart } from "@/store";
-import Link from "next/link";
-import { PAGES } from "@/utilities/pages";
-import { DonationProgramDropdown } from "./Donation/ProgramDropdown";
-import { useCommunityProjectsPaginated } from "@/hooks/useCommunityProjectsPaginated";
-import { ShoppingCartIcon as ShoppingCartIconCustom } from "@/components/Icons/ShoppingCartIcon";
-import useMediaQuery from "@/hooks/useMediaQuery";
+"use client"
+import Link from "next/link"
+import { useParams } from "next/navigation"
+import { useMemo } from "react"
+import InfiniteScroll from "react-infinite-scroll-component"
+import { AutoSizer, Grid } from "react-virtualized"
+import { ShoppingCartIcon as ShoppingCartIconCustom } from "@/components/Icons/ShoppingCartIcon"
+import { useCommunityProjectsPaginated } from "@/hooks/useCommunityProjectsPaginated"
+import useMediaQuery from "@/hooks/useMediaQuery"
+import { useDonationCart } from "@/store"
+import type { CommunityProjectsV2Response } from "@/types/community"
+import { projectV2ToGrant } from "@/utilities/adapters/projectV2ToGrant"
+import { PAGES } from "@/utilities/pages"
+import { DonationProgramDropdown } from "./Donation/ProgramDropdown"
+import { GrantCard } from "./GrantCard"
+import { CardListSkeleton } from "./Pages/Communities/Loading"
 
 interface CommunityGrantsDonateProps {
-  initialProjects: CommunityProjectsV2Response;
+  initialProjects: CommunityProjectsV2Response
 }
 
 export const CommunityGrantsDonate = ({ initialProjects }: CommunityGrantsDonateProps) => {
-  const params = useParams();
-  const communityId = params.communityId as string;
-  const programId = params.programId as string;
-  const { items, toggle } = useDonationCart();
-  const isLargeViewport = useMediaQuery("(min-width: 80rem)");
+  const params = useParams()
+  const communityId = params.communityId as string
+  const programId = params.programId as string
+  const { items, toggle } = useDonationCart()
+  const isLargeViewport = useMediaQuery("(min-width: 80rem)")
 
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-  } = useCommunityProjectsPaginated({
-    communityId,
-    programId,
-    itemsPerPage: 12,
-  });
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
+    useCommunityProjectsPaginated({
+      communityId,
+      programId,
+      itemsPerPage: 12,
+    })
 
   // Flatten all pages into a single array
   const projects = useMemo(() => {
-    if (!data?.pages) return initialProjects.payload;
-    return data.pages.flatMap((page) => page.payload);
-  }, [data, initialProjects.payload]);
+    if (!data?.pages) return initialProjects.payload
+    return data.pages.flatMap((page) => page.payload)
+  }, [data, initialProjects.payload])
 
   return (
     <div className="flex flex-col gap-4 w-full relative">
@@ -58,18 +53,18 @@ export const CommunityGrantsDonate = ({ initialProjects }: CommunityGrantsDonate
             >
               <AutoSizer disableHeight>
                 {({ width }) => {
-                  const MIN_CARD_WIDTH = 360;
-                  const MAX_COLUMNS_SMALL = 6;
-                  const MAX_COLUMNS_LARGE = 3;
-                  const calculatedColumns = Math.floor(width / MIN_CARD_WIDTH);
+                  const MIN_CARD_WIDTH = 360
+                  const MAX_COLUMNS_SMALL = 6
+                  const MAX_COLUMNS_LARGE = 3
+                  const calculatedColumns = Math.floor(width / MIN_CARD_WIDTH)
                   const columnCounter = calculatedColumns
                     ? isLargeViewport
                       ? MAX_COLUMNS_LARGE
                       : Math.min(calculatedColumns, MAX_COLUMNS_SMALL)
-                    : 1;
-                  const columnWidth = Math.floor(width / columnCounter);
-                  const gutterSize = 20;
-                  const height = Math.ceil(projects.length / columnCounter) * 360;
+                    : 1
+                  const columnWidth = Math.floor(width / columnCounter)
+                  const gutterSize = 20
+                  const height = Math.ceil(projects.length / columnCounter) * 360
                   return (
                     <Grid
                       key={`grid-${width}-${columnCounter}-${isLargeViewport}`}
@@ -80,7 +75,7 @@ export const CommunityGrantsDonate = ({ initialProjects }: CommunityGrantsDonate
                       columnWidth={columnWidth}
                       columnCount={columnCounter}
                       cellRenderer={({ columnIndex, key, rowIndex, style }) => {
-                        const project = projects[rowIndex * columnCounter + columnIndex];
+                        const project = projects[rowIndex * columnCounter + columnIndex]
                         return (
                           <div
                             key={key}
@@ -102,48 +97,58 @@ export const CommunityGrantsDonate = ({ initialProjects }: CommunityGrantsDonate
                                   hideCategories
                                   cardClassName="rounded-lg"
                                   actionSlot={(() => {
-                                    const inCart = items.some((i) => i.uid === project.uid);
+                                    const inCart = items.some((i) => i.uid === project.uid)
                                     return (
                                       <button
                                         onClick={(e) => {
-                                          e.preventDefault();
+                                          e.preventDefault()
                                           toggle({
                                             uid: project.uid,
                                             title: project.details?.title || project.uid,
                                             slug: project.details?.slug,
                                             imageURL: project.details?.logoUrl,
-                                          });
+                                          })
                                         }}
-                                        className={`group relative flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 shadow-sm border ${inCart
-                                          ? "bg-red-100 hover:bg-red-200 text-red-700 border-red-200 hover:border-red-300"
-                                          : "bg-[#F0FDF4] hover:bg-emerald-100 text-emerald-700 border-[#BDEFE2] hover:border-emerald-300"
-                                          } hover:shadow-md`}
-                                        aria-label={inCart ? "Remove from donation cart" : "Add to donation cart"}
+                                        className={`group relative flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 shadow-sm border ${
+                                          inCart
+                                            ? "bg-red-100 hover:bg-red-200 text-red-700 border-red-200 hover:border-red-300"
+                                            : "bg-[#F0FDF4] hover:bg-emerald-100 text-emerald-700 border-[#BDEFE2] hover:border-emerald-300"
+                                        } hover:shadow-md`}
+                                        aria-label={
+                                          inCart
+                                            ? "Remove from donation cart"
+                                            : "Add to donation cart"
+                                        }
                                       >
-                                        <div className={`w-5 h-5 flex items-center justify-center transition-transform duration-200 ${inCart ? "group-hover:rotate-90" : ""
-                                          }`}>
-                                          <ShoppingCartIconCustom className={inCart ? "text-red-700" : "text-emerald-700"} />
+                                        <div
+                                          className={`w-5 h-5 flex items-center justify-center transition-transform duration-200 ${
+                                            inCart ? "group-hover:rotate-90" : ""
+                                          }`}
+                                        >
+                                          <ShoppingCartIconCustom
+                                            className={inCart ? "text-red-700" : "text-emerald-700"}
+                                          />
                                         </div>
                                         {inCart ? "Remove" : "Add to Cart"}
                                         {inCart && (
                                           <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
                                         )}
                                       </button>
-                                    );
+                                    )
                                   })()}
                                 />
                               </div>
                             )}
                           </div>
-                        );
+                        )
                       }}
                     />
-                  );
+                  )
                 }}
               </AutoSizer>
             </InfiniteScroll>
           ) : null}
-          {(isLoading || isFetchingNextPage) ? (
+          {isLoading || isFetchingNextPage ? (
             <div className="w-full flex items-center justify-center">
               <CardListSkeleton />
             </div>
@@ -162,11 +167,11 @@ export const CommunityGrantsDonate = ({ initialProjects }: CommunityGrantsDonate
               <ShoppingCartIconCustom className="text-white" width="21" height="21" />
             </div>
             <span className="font-semibold whitespace-nowrap">
-              Checkout ({items.length} {items.length === 1 ? 'item' : 'items'})
+              Checkout ({items.length} {items.length === 1 ? "item" : "items"})
             </span>
           </Link>
         </div>
       )}
     </div>
-  );
-};
+  )
+}

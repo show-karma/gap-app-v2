@@ -1,13 +1,13 @@
-"use client";
-import { useParams, useRouter } from "next/navigation";
-import { usePermissions } from "@/hooks/usePermissions";
-import { QuestionBuilder } from "@/components/QuestionBuilder";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { Button } from "@/components/Utilities/Button";
-import { ArrowLeftIcon, EyeIcon } from "@heroicons/react/24/solid";
-import { usePostApprovalSchema, useQuestionBuilderSchema } from "@/hooks/useQuestionBuilder";
-import { PAGES } from "@/utilities/pages";
-import { layoutTheme } from "@/src/helper/theme";
+"use client"
+import { ArrowLeftIcon, EyeIcon } from "@heroicons/react/24/solid"
+import { useParams, useRouter } from "next/navigation"
+import { QuestionBuilder } from "@/components/QuestionBuilder"
+import { Button } from "@/components/Utilities/Button"
+import { Spinner } from "@/components/Utilities/Spinner"
+import { usePermissions } from "@/hooks/usePermissions"
+import { usePostApprovalSchema, useQuestionBuilderSchema } from "@/hooks/useQuestionBuilder"
+import { layoutTheme } from "@/src/helper/theme"
+import { PAGES } from "@/utilities/pages"
 
 /**
  * Reviewer Question Builder Page
@@ -15,50 +15,50 @@ import { layoutTheme } from "@/src/helper/theme";
  * Reuses the QuestionBuilder component with all interactions disabled
  */
 export default function ReviewerQuestionBuilderPage() {
-  const router = useRouter();
+  const router = useRouter()
   const { communityId, programId: combinedProgramId } = useParams() as {
-    communityId: string;
-    programId: string;
-  };
+    communityId: string
+    programId: string
+  }
 
   // Extract programId and chainId from the combined format (e.g., "777_11155111")
-  const [programId, chainId] = combinedProgramId.split("_");
-  const parsedChainId = parseInt(chainId, 10);
+  const [programId, chainId] = combinedProgramId.split("_")
+  const parsedChainId = parseInt(chainId, 10)
 
   // Check if user is a reviewer for this program
   const { hasPermission: canView, isLoading: isLoadingPermission } = usePermissions({
     programId,
     chainID: parsedChainId,
     action: "read",
-  });
+  })
 
   // Load the existing schema
   const {
     schema: existingSchema,
     isLoading: isLoadingSchema,
     error: schemaError,
-  } = useQuestionBuilderSchema(programId, parsedChainId);
+  } = useQuestionBuilderSchema(programId, parsedChainId)
 
   const {
     schema: existingPostApprovalSchema,
     isLoading: isLoadingPostApprovalSchema,
     error: postApprovalSchemaError,
-  } = usePostApprovalSchema(programId, parsedChainId);
+  } = usePostApprovalSchema(programId, parsedChainId)
 
   const handleBackClick = () => {
-    router.push(PAGES.REVIEWER.DASHBOARD(communityId));
-  };
+    router.push(PAGES.REVIEWER.DASHBOARD(communityId))
+  }
 
   const handleViewApplications = () => {
-    router.push(PAGES.REVIEWER.APPLICATIONS(communityId, programId, parsedChainId));
-  };
+    router.push(PAGES.REVIEWER.APPLICATIONS(communityId, programId, parsedChainId))
+  }
 
   if (isLoadingPermission || isLoadingSchema || isLoadingPostApprovalSchema) {
     return (
       <div className="flex w-full items-center justify-center min-h-[600px]">
         <Spinner />
       </div>
-    );
+    )
   }
 
   if (!canView) {
@@ -68,17 +68,13 @@ export default function ReviewerQuestionBuilderPage() {
           <p className="text-red-700 dark:text-red-300">
             You don&apos;t have permission to view the form builder for this program.
           </p>
-          <Button
-            onClick={handleBackClick}
-            variant="secondary"
-            className="mt-4 flex items-center"
-          >
+          <Button onClick={handleBackClick} variant="secondary" className="mt-4 flex items-center">
             <ArrowLeftIcon className="w-4 h-4 mr-2" />
             Back to Programs
           </Button>
         </div>
       </div>
-    );
+    )
   }
 
   if (schemaError || !existingSchema || postApprovalSchemaError) {
@@ -92,11 +88,7 @@ export default function ReviewerQuestionBuilderPage() {
             The form builder for this program has not been set up yet.
           </p>
           <div className="flex space-x-3">
-            <Button
-              onClick={handleBackClick}
-              variant="secondary"
-              className="flex items-center"
-            >
+            <Button onClick={handleBackClick} variant="secondary" className="flex items-center">
               <ArrowLeftIcon className="w-4 h-4 mr-2" />
               Back to Programs
             </Button>
@@ -111,7 +103,7 @@ export default function ReviewerQuestionBuilderPage() {
           </div>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -121,19 +113,13 @@ export default function ReviewerQuestionBuilderPage() {
         <div className="sm:px-3 md:px-4 px-6 py-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Button
-                onClick={handleBackClick}
-                variant="secondary"
-                className="flex items-center"
-              >
+              <Button onClick={handleBackClick} variant="secondary" className="flex items-center">
                 <ArrowLeftIcon className="w-4 h-4 mr-2" />
                 Back
               </Button>
 
               <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Form Builder
-                </h1>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white">Form Builder</h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Program ID: {programId} | Chain ID: {parsedChainId}
                 </p>
@@ -163,7 +149,6 @@ export default function ReviewerQuestionBuilderPage() {
         </div>
       </div>
 
-
       {/* QuestionBuilder in Read-Only Mode */}
       <div>
         <QuestionBuilder
@@ -177,5 +162,5 @@ export default function ReviewerQuestionBuilderPage() {
         />
       </div>
     </div>
-  );
+  )
 }

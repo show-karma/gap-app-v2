@@ -1,22 +1,18 @@
-'use client'
+"use client"
+import { Dialog, Transition } from "@headlessui/react"
+import { ChevronLeftIcon, ChevronRightIcon, XMarkIcon } from "@heroicons/react/24/solid"
 /* eslint-disable @next/next/no-img-element */
-import { FC, Fragment, useEffect, useMemo } from "react";
-import { Dialog, Transition } from "@headlessui/react";
-import { Button } from "../Utilities/Button";
-import { useOnboarding } from "@/store/modals/onboarding";
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/solid";
-import { useMixpanel } from "@/hooks/useMixpanel";
-import { useAccount } from "wagmi";
-import { Hex } from "viem";
-import { PROJECT_NAME } from "@/constants/brand";
+import { type FC, Fragment, useEffect, useMemo } from "react"
+import type { Hex } from "viem"
+import { useAccount } from "wagmi"
+import { PROJECT_NAME } from "@/constants/brand"
+import { useMixpanel } from "@/hooks/useMixpanel"
+import { useOnboarding } from "@/store/modals/onboarding"
+import { Button } from "../Utilities/Button"
 
 const WelcomeStep = () => {
-  const { address } = useAccount();
-  const { changeOnboardingStep, isOnboardingOpen } = useOnboarding();
+  const { address } = useAccount()
+  const { changeOnboardingStep, isOnboardingOpen } = useOnboarding()
 
   return (
     <div className="flex flex-row gap-6 items-center">
@@ -26,20 +22,10 @@ const WelcomeStep = () => {
         className="h-[320px] w-[320px] max-sm:hidden"
       />
       <div className="flex flex-col gap-6">
-        <img
-          alt="Karma"
-          className="h-8 w-52 dark:hidden block"
-          src="/logo/karma-logo-light.svg"
-        />
-        <img
-          alt="Karma"
-          className="h-8 w-52 hidden dark:block"
-          src="/logo/karma-logo-dark.svg"
-        />
+        <img alt="Karma" className="h-8 w-52 dark:hidden block" src="/logo/karma-logo-light.svg" />
+        <img alt="Karma" className="h-8 w-52 hidden dark:block" src="/logo/karma-logo-dark.svg" />
         <div className="flex flex-col gap-0">
-          <h1 className="text-3xl font-bold max-sm:text-2xl">
-            Welcome to {PROJECT_NAME}!
-          </h1>
+          <h1 className="text-3xl font-bold max-sm:text-2xl">Welcome to {PROJECT_NAME}!</h1>
           <p className="text-base font-normal text-black dark:text-zinc-400">
             {`We're thrilled to have you join our community of builders. This is a 30 second walkthrough to help you utilize ${PROJECT_NAME} effectively.`}
           </p>
@@ -55,11 +41,11 @@ const WelcomeStep = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 const FirstStep = () => {
-  const { changeOnboardingStep } = useOnboarding();
-  const { address } = useAccount();
+  const { changeOnboardingStep } = useOnboarding()
+  const { address } = useAccount()
   return (
     <div className="flex flex-row gap-6 items-center">
       <img
@@ -69,9 +55,7 @@ const FirstStep = () => {
       />
       <div className="flex flex-col gap-6">
         <div className="mt-4 flex flex-col gap-0">
-          <h3 className="text-sm font-semibold text-brand-gray dark:text-zinc-200">
-            STEP 1
-          </h3>
+          <h3 className="text-sm font-semibold text-brand-gray dark:text-zinc-200">STEP 1</h3>
           <h4 className="text-black dark:text-white font-bold text-xl">
             Add your project/personal profile
           </h4>
@@ -98,11 +82,11 @@ You do this just once!`}</p>
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 const GrantStep = () => {
-  const { changeOnboardingStep } = useOnboarding();
-  const { address } = useAccount();
+  const { changeOnboardingStep } = useOnboarding()
+  const { address } = useAccount()
 
   return (
     <div className="flex flex-row gap-6 items-start pt-6">
@@ -113,12 +97,8 @@ const GrantStep = () => {
       />
       <div className="flex flex-col gap-6">
         <div className="mt-4 flex flex-col gap-0">
-          <h3 className="text-sm font-semibold text-brand-gray dark:text-zinc-200">
-            STEP 2
-          </h3>
-          <h4 className="text-black dark:text-white font-bold text-xl">
-            Add Grant
-          </h4>
+          <h3 className="text-sm font-semibold text-brand-gray dark:text-zinc-200">STEP 2</h3>
+          <h4 className="text-black dark:text-white font-bold text-xl">Add Grant</h4>
           <div className="flex flex-col gap-4">
             <p className="text-base font-normal text-[#1D2939] dark:text-zinc-400">{`Once you've created your project, you can now add a grant you've received. You can add as many grants as you like. They will all be linked to your project!`}</p>
             <p className="text-base font-normal text-[#1D2939] dark:text-zinc-400">{`While you are at it, go ahead and answer some questions about impact and how you plan to use those funds.`}</p>
@@ -134,21 +114,19 @@ const GrantStep = () => {
           </Button>
           <Button
             className="text-white text-lg bg-black border-black max-sm:justify-center flex flex-row gap-2 items-center hover:bg-black hover:text-white py-2.5 px-10 rounded-sm"
-            onClick={() =>
-              changeOnboardingStep("updates-milestones", address as Hex)
-            }
+            onClick={() => changeOnboardingStep("updates-milestones", address as Hex)}
           >
             Next <ChevronRightIcon className="h-5 w-5" />
           </Button>
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 const UpdatesStep = () => {
-  const { changeOnboardingStep } = useOnboarding();
+  const { changeOnboardingStep } = useOnboarding()
 
-  const { address } = useAccount();
+  const { address } = useAccount()
 
   return (
     <div className="flex flex-col">
@@ -187,12 +165,12 @@ const UpdatesStep = () => {
         </Button>
       </div>
     </div>
-  );
-};
+  )
+}
 const StructureStep = () => {
-  const { changeOnboardingStep, setIsOnboarding } = useOnboarding();
+  const { changeOnboardingStep, setIsOnboarding } = useOnboarding()
 
-  const { address } = useAccount();
+  const { address } = useAccount()
 
   return (
     <div className="flex flex-col">
@@ -209,9 +187,7 @@ const StructureStep = () => {
       <div className="flex flex-row gap-4 justify-end max-sm:flex-col">
         <Button
           className="text-black text-lg  bg-white max-sm:justify-center border border-black dark:border-none flex flex-row gap-2 items-center hover:bg-white hover:text-black py-2.5 px-10 rounded-sm"
-          onClick={() =>
-            changeOnboardingStep("updates-milestones", address as Hex)
-          }
+          onClick={() => changeOnboardingStep("updates-milestones", address as Hex)}
         >
           <ChevronLeftIcon className="h-5 w-5" />
           Back
@@ -224,36 +200,32 @@ const StructureStep = () => {
         </Button>
       </div>
     </div>
-  );
-};
+  )
+}
 
 export const OnboardingDialog: FC = () => {
-  const {
-    isOnboardingOpen: isOpen,
-    setIsOnboarding,
-    onboardingStep,
-  } = useOnboarding();
+  const { isOnboardingOpen: isOpen, setIsOnboarding, onboardingStep } = useOnboarding()
 
   const closeModal = () => {
-    setIsOnboarding(false);
-  };
+    setIsOnboarding(false)
+  }
 
   const handleRender = () => {
     switch (onboardingStep) {
       case "welcome":
-        return <WelcomeStep />;
+        return <WelcomeStep />
       case "project":
-        return <FirstStep />;
+        return <FirstStep />
       case "grants":
-        return <GrantStep />;
+        return <GrantStep />
       case "updates-milestones":
-        return <UpdatesStep />;
+        return <UpdatesStep />
       case "structure":
-        return <StructureStep />;
+        return <StructureStep />
       default:
-        return <WelcomeStep />;
+        return <WelcomeStep />
     }
-  };
+  }
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -295,5 +267,5 @@ export const OnboardingDialog: FC = () => {
         </div>
       </Dialog>
     </Transition>
-  );
-};
+  )
+}

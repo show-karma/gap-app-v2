@@ -1,38 +1,36 @@
-import { ProgramImpactDataResponse } from "@/types/programs";
-import { BarChart, Card, Select, SelectItem, Title } from "@tremor/react";
-import { useState } from "react";
+import { BarChart, Card, Select, SelectItem, Title } from "@tremor/react"
+import { useState } from "react"
+import type { ProgramImpactDataResponse } from "@/types/programs"
 
 const aggregateDataByCategory = (data: ProgramImpactDataResponse[]) => {
   // Group data by categories first
-  const categoryGroups: { [key: string]: any[] } = {};
-  const categoryAmounts: { [key: string]: number } = {};
+  const categoryGroups: { [key: string]: any[] } = {}
+  const categoryAmounts: { [key: string]: number } = {}
   const indicatorMetrics: {
     [key: string]: {
-      min: number;
-      max: number;
-      avg: number;
-    };
-  } = {};
+      min: number
+      max: number
+      avg: number
+    }
+  } = {}
 
   data.forEach((category) => {
     category.impacts.forEach((impact) => {
       impact.indicators?.forEach((indicator) => {
         if (!categoryGroups[category.categoryName]) {
-          categoryGroups[category.categoryName] = [];
-          categoryAmounts[category.categoryName] = 0;
+          categoryGroups[category.categoryName] = []
+          categoryAmounts[category.categoryName] = 0
         }
 
         // Sum up grant amounts for each category
         categoryAmounts[category.categoryName] += Number(
           indicator?.amount?.replace(/[^0-9]/g, "") || 0
-        );
+        )
 
         const currentValue =
           indicator.datapoints.length > 0
-            ? Number(
-                indicator.datapoints[indicator.datapoints.length - 1].value
-              )
-            : 0;
+            ? Number(indicator.datapoints[indicator.datapoints.length - 1].value)
+            : 0
 
         // Create project-specific entry
         categoryGroups[category.categoryName].push({
@@ -43,7 +41,7 @@ const aggregateDataByCategory = (data: ProgramImpactDataResponse[]) => {
           value: currentValue,
           grantAmount: Number(indicator?.amount || 0),
           unit: indicator.indicatorUnitOfMeasure,
-        });
+        })
 
         indicatorMetrics[indicator.indicatorName] = {
           min: Math.min(
@@ -63,46 +61,31 @@ const aggregateDataByCategory = (data: ProgramImpactDataResponse[]) => {
             categoryGroups[category.categoryName].filter(
               (item) => item.name === indicator.indicatorName
             ).length,
-        };
-      });
-    });
-  });
+        }
+      })
+    })
+  })
 
-  return { categoryGroups, categoryAmounts, indicatorMetrics };
-};
+  return { categoryGroups, categoryAmounts, indicatorMetrics }
+}
 
-export const ProgramAnalytics = ({
-  data,
-}: {
-  data: ProgramImpactDataResponse[];
-}) => {
-  const { categoryGroups, categoryAmounts, indicatorMetrics } =
-    aggregateDataByCategory(data);
-  const categories = Object.keys(categoryGroups);
-  const [selectedCategory, setSelectedCategory] = useState<string>(
-    categories[0] || ""
-  );
+export const ProgramAnalytics = ({ data }: { data: ProgramImpactDataResponse[] }) => {
+  const { categoryGroups, categoryAmounts, indicatorMetrics } = aggregateDataByCategory(data)
+  const categories = Object.keys(categoryGroups)
+  const [selectedCategory, setSelectedCategory] = useState<string>(categories[0] || "")
 
   // Format category amounts for chart
-  const categoryAmountsData = Object.entries(categoryAmounts).map(
-    ([category, amount]) => ({
-      category,
-      amount,
-    })
-  );
+  const categoryAmountsData = Object.entries(categoryAmounts).map(([category, amount]) => ({
+    category,
+    amount,
+  }))
 
   // Get unique segment names for the selected category
   const segments = selectedCategory
-    ? Array.from(
-        new Set(
-          categoryGroups[selectedCategory].map((item) => item.segmentName)
-        )
-      )
-    : [];
+    ? Array.from(new Set(categoryGroups[selectedCategory].map((item) => item.segmentName)))
+    : []
 
-  const [selectedSegment, setSelectedSegment] = useState<string>(
-    segments[0] || ""
-  );
+  const [selectedSegment, setSelectedSegment] = useState<string>(segments[0] || "")
 
   // Get unique indicator names for the selected segment
   const indicatorNames =
@@ -114,27 +97,21 @@ export const ProgramAnalytics = ({
               .map((item) => item.name)
           )
         )
-      : [];
+      : []
 
-  const [selectedIndicator, setSelectedIndicator] = useState<string>(
-    indicatorNames[0] || ""
-  );
+  const [selectedIndicator, setSelectedIndicator] = useState<string>(indicatorNames[0] || "")
 
   // Prepare data for the selected indicator
   const chartData =
     selectedCategory && selectedSegment && selectedIndicator
       ? categoryGroups[selectedCategory]
-          .filter(
-            (item) =>
-              item.segmentName === selectedSegment &&
-              item.name === selectedIndicator
-          )
+          .filter((item) => item.segmentName === selectedSegment && item.name === selectedIndicator)
           .map((item) => ({
             projectName: item.projectName,
             value: item.value,
             unit: item.unit,
           }))
-      : [];
+      : []
 
   return (
     <div className="space-y-6 w-full max-w-4xl">
@@ -151,9 +128,9 @@ export const ProgramAnalytics = ({
             className="w-full"
             value={selectedCategory}
             onValueChange={(value) => {
-              setSelectedCategory(value);
-              setSelectedSegment("");
-              setSelectedIndicator("");
+              setSelectedCategory(value)
+              setSelectedSegment("")
+              setSelectedIndicator("")
             }}
             placeholder="Select category"
           >
@@ -177,8 +154,8 @@ export const ProgramAnalytics = ({
             className="w-full"
             value={selectedSegment}
             onValueChange={(value) => {
-              setSelectedSegment(value);
-              setSelectedIndicator("");
+              setSelectedSegment(value)
+              setSelectedIndicator("")
             }}
             placeholder="Select impact segment"
           >
@@ -217,9 +194,7 @@ export const ProgramAnalytics = ({
         {selectedCategory && selectedSegment && selectedIndicator && (
           <Card>
             <Title>{`${selectedIndicator} by Project`}</Title>
-            <p className="text-sm text-gray-500 mt-1">
-              Unit: {chartData[0]?.unit || "N/A"}
-            </p>
+            <p className="text-sm text-gray-500 mt-1">Unit: {chartData[0]?.unit || "N/A"}</p>
             <BarChart
               className="mt-4 h-72"
               data={chartData}
@@ -236,10 +211,7 @@ export const ProgramAnalytics = ({
           <Title>Project Metrics</Title>
           <div className="grid grid-cols-2 gap-4 mt-4">
             {chartData.map((metric) => (
-              <div
-                key={metric.projectName}
-                className="p-4 rounded-lg bg-gray-50 dark:bg-zinc-800"
-              >
+              <div key={metric.projectName} className="p-4 rounded-lg bg-gray-50 dark:bg-zinc-800">
                 <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
                   {metric.projectName}
                 </h3>
@@ -294,5 +266,5 @@ export const ProgramAnalytics = ({
         </Card>
       )}
     </div>
-  );
-};
+  )
+}

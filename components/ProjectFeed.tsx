@@ -1,69 +1,65 @@
-"use client";
+"use client"
+import { useParams } from "next/navigation"
+import { useTheme } from "next-themes"
+import { useEffect, useState } from "react"
 /* eslint-disable @next/next/no-img-element */
-import { Feed } from "@/types";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
-import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { Spinner } from "./Utilities/Spinner";
-import { ExternalLink } from "./Utilities/ExternalLink";
-import { feedIconDictionary, getFeedHref } from "@/utilities/feed";
-import { formatDate } from "@/utilities/formatDate";
-import EthereumAddressToENSName from "./EthereumAddressToENSName";
-import { MarkdownPreview } from "./Utilities/MarkdownPreview";
-import { useTheme } from "next-themes";
-import { cn } from "@/utilities/tailwind";
-
-import EthereumAddressToENSAvatar from "./EthereumAddressToENSAvatar";
-import { errorManager } from "./Utilities/errorManager";
+import type { Feed } from "@/types"
+import { feedIconDictionary, getFeedHref } from "@/utilities/feed"
+import fetchData from "@/utilities/fetchData"
+import { formatDate } from "@/utilities/formatDate"
+import { INDEXER } from "@/utilities/indexer"
+import { cn } from "@/utilities/tailwind"
+import EthereumAddressToENSAvatar from "./EthereumAddressToENSAvatar"
+import EthereumAddressToENSName from "./EthereumAddressToENSName"
+import { ExternalLink } from "./Utilities/ExternalLink"
+import { errorManager } from "./Utilities/errorManager"
+import { MarkdownPreview } from "./Utilities/MarkdownPreview"
+import { Spinner } from "./Utilities/Spinner"
 
 interface ProjectFeedProps {
-  initialFeed?: Feed[];
+  initialFeed?: Feed[]
 }
 
 export const ProjectFeed = ({ initialFeed = [] }: ProjectFeedProps) => {
-  const params = useParams();
-  const projectId = params.projectId; // Get the projectId from the URL
+  const params = useParams()
+  const projectId = params.projectId // Get the projectId from the URL
 
-  const [feed, setFeed] = useState<Feed[]>(initialFeed); // Set the initial feed state to an empty array
-  const [feedLoading, setFeedLoading] = useState<boolean>(false); // Set the initial loading state to true
-  const itemsPerPage = 12; // Set the total number of items you want returned from the API
-  const [page, setPage] = useState<number>(1);
-  const { theme } = useTheme();
-  const [hasMore, setHasMore] = useState<boolean>(true);
+  const [feed, setFeed] = useState<Feed[]>(initialFeed) // Set the initial feed state to an empty array
+  const [feedLoading, setFeedLoading] = useState<boolean>(false) // Set the initial loading state to true
+  const itemsPerPage = 12 // Set the total number of items you want returned from the API
+  const [page, setPage] = useState<number>(1)
+  const { theme } = useTheme()
+  const [hasMore, setHasMore] = useState<boolean>(true)
 
   // Fetch the feed data from the API
 
   // Call the feed API when the component loads
   useEffect(() => {
     const callFeedAPI = async () => {
-      setFeedLoading(true);
+      setFeedLoading(true)
       try {
         const [data, error, pageInfo]: any = await fetchData(
           `${INDEXER.PROJECT.FEED(projectId as string)}?limit=${itemsPerPage}`
-        );
-        if (!data || !data.length) return;
-        const oldFeed = feed;
-        const newFeed = data.slice(0, itemsPerPage * page);
-        setFeed(newFeed);
-        const canLoadMore = oldFeed.length !== newFeed.length;
-        setHasMore(canLoadMore);
+        )
+        if (!data || !data.length) return
+        const oldFeed = feed
+        const newFeed = data.slice(0, itemsPerPage * page)
+        setFeed(newFeed)
+        const canLoadMore = oldFeed.length !== newFeed.length
+        setHasMore(canLoadMore)
       } catch (error: any) {
-        console.error("Error fetching data:", error);
-        errorManager(
-          `Error fetching data feed for project ${projectId}`,
-          error
-        );
+        console.error("Error fetching data:", error)
+        errorManager(`Error fetching data feed for project ${projectId}`, error)
       } finally {
-        setFeedLoading(false);
+        setFeedLoading(false)
       }
-    };
+    }
 
     if (projectId) {
-      callFeedAPI();
+      callFeedAPI()
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }
-  }, [projectId, page]);
+  }, [projectId, page])
 
   return (
     <div className="w-full flex flex-col gap-2">
@@ -109,7 +105,7 @@ export const ProjectFeed = ({ initialFeed = [] }: ProjectFeedProps) => {
                                 >
                                   {children}
                                 </ExternalLink>
-                              );
+                              )
                             },
                           }}
                           source={item.message}
@@ -133,7 +129,7 @@ export const ProjectFeed = ({ initialFeed = [] }: ProjectFeedProps) => {
                     <div className="border-b border-b-gray-200 dark:border-b-gray-700"></div>
                   ) : null}
                 </div>
-              );
+              )
             })
           ) : feedLoading ? null : (
             <p className="text-base font-normal text-black dark:text-zinc-100 px-4">{`This project doesn't have any activity yet`}</p>
@@ -142,7 +138,7 @@ export const ProjectFeed = ({ initialFeed = [] }: ProjectFeedProps) => {
             <li className="mx-5 flex items-center justify-center">
               <button
                 onClick={() => {
-                  setPage((oldValue) => oldValue + 1);
+                  setPage((oldValue) => oldValue + 1)
                 }}
                 className="rounded-sm mb-2 w-max px-9 py-2 font-semibold text-base bg-white border text-black dark:bg-zinc-800 border-black dark:text-zinc-200 dark:border-white hover:opacity-75 dark:hover:opacity-75"
               >
@@ -165,5 +161,5 @@ export const ProjectFeed = ({ initialFeed = [] }: ProjectFeedProps) => {
       </div>
       {/* Feed end */}
     </div>
-  );
-};
+  )
+}

@@ -1,6 +1,6 @@
-import { ImpactIndicatorWithData } from "@/types/impactMeasurement";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
+import type { ImpactIndicatorWithData } from "@/types/impactMeasurement"
+import fetchData from "@/utilities/fetchData"
+import { INDEXER } from "@/utilities/indexer"
 
 /**
  * Fetches impact indicator data for a project
@@ -11,16 +11,14 @@ import { INDEXER } from "@/utilities/indexer";
 export const getImpactAnswers = async (
   projectIdentifier: string
 ): Promise<ImpactIndicatorWithData[]> => {
-  const [data, error] = await fetchData(
-    INDEXER.PROJECT.IMPACT_INDICATORS.GET(projectIdentifier)
-  );
+  const [data, error] = await fetchData(INDEXER.PROJECT.IMPACT_INDICATORS.GET(projectIdentifier))
 
   if (error) {
-    throw new Error(error);
+    throw new Error(error)
   }
 
-  return data;
-};
+  return data
+}
 
 /**
  * Sends impact indicator data for a project
@@ -34,10 +32,10 @@ export const sendImpactAnswers = async (
   projectIdentifier: string,
   indicatorId: string,
   datapoints: {
-    value: number | string;
-    proof: string;
-    startDate: string;
-    endDate: string;
+    value: number | string
+    proof: string
+    startDate: string
+    endDate: string
   }[]
 ): Promise<boolean> => {
   try {
@@ -53,15 +51,15 @@ export const sendImpactAnswers = async (
           endDate: item.endDate,
         })),
       }
-    );
+    )
 
     if (error) {
-      throw new Error(error);
+      throw new Error(error)
     }
 
-    return true;
+    return true
   } catch (error) {
-    console.error("Error sending impact answers:", error);
-    throw error;
+    console.error("Error sending impact answers:", error)
+    throw error
   }
-};
+}

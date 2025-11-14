@@ -1,64 +1,58 @@
-"use client";
+"use client"
 
-import React, { useState, useEffect, useRef } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import toast from "react-hot-toast";
-import { FormField, FormSchema } from "@/types/question-builder";
-import { fieldTypes, FieldTypeSelector } from "./FieldTypeSelector";
-import { FieldEditor } from "./FieldEditor";
-import { AIPromptConfiguration } from "./AIPromptConfiguration";
-import { SettingsConfiguration } from "./SettingsConfiguration";
-import { ReviewerManagementTab } from "@/components/FundingPlatform/QuestionBuilder/ReviewerManagementTab";
-import { Button } from "@/components/Utilities/Button";
-import { errorManager } from "@/components/Utilities/errorManager";
 import {
-  Cog6ToothIcon,
-  CpuChipIcon,
-  ChevronDownIcon,
-  ChevronRightIcon,
-  ExclamationTriangleIcon,
-  WrenchScrewdriverIcon,
-  CheckCircleIcon,
-  UserGroupIcon,
-  Bars3Icon,
-  PlusIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/solid";
-import { MarkdownPreview } from "../Utilities/MarkdownPreview";
-import { MarkdownEditor } from "../Utilities/MarkdownEditor";
-import {
-  DndContext,
   closestCenter,
+  DndContext,
+  type DragEndEvent,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
-  DragEndEvent,
-} from "@dnd-kit/core";
+} from "@dnd-kit/core"
 import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
+import {
+  Bars3Icon,
+  CheckCircleIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  Cog6ToothIcon,
+  CpuChipIcon,
+  ExclamationTriangleIcon,
+  PlusIcon,
+  UserGroupIcon,
+  WrenchScrewdriverIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/solid"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import type React from "react"
+import { useEffect, useRef, useState } from "react"
+import toast from "react-hot-toast"
+import { ReviewerManagementTab } from "@/components/FundingPlatform/QuestionBuilder/ReviewerManagementTab"
+import { Button } from "@/components/Utilities/Button"
+import { errorManager } from "@/components/Utilities/errorManager"
+import type { FormField, FormSchema } from "@/types/question-builder"
+import { MarkdownEditor } from "../Utilities/MarkdownEditor"
+import { MarkdownPreview } from "../Utilities/MarkdownPreview"
+import { AIPromptConfiguration } from "./AIPromptConfiguration"
+import { FieldEditor } from "./FieldEditor"
+import { FieldTypeSelector, fieldTypes } from "./FieldTypeSelector"
+import { SettingsConfiguration } from "./SettingsConfiguration"
 
-const TAB_KEYS = [
-  "build",
-  "settings",
-  "post-approval",
-  "ai-config",
-  "reviewers",
-] as const;
-type TabKey = (typeof TAB_KEYS)[number];
-const DEFAULT_TAB: TabKey = "build";
+const TAB_KEYS = ["build", "settings", "post-approval", "ai-config", "reviewers"] as const
+type TabKey = (typeof TAB_KEYS)[number]
+const DEFAULT_TAB: TabKey = "build"
 
 const isTabKey = (value: string | null): value is TabKey =>
-  !!value && TAB_KEYS.includes(value as TabKey);
+  !!value && TAB_KEYS.includes(value as TabKey)
 
-const getValidTab = (value: string | null): TabKey =>
-  isTabKey(value) ? value : DEFAULT_TAB;
+const getValidTab = (value: string | null): TabKey => (isTabKey(value) ? value : DEFAULT_TAB)
 
 // Tab configuration for rendering buttons
 const TAB_CONFIG = [
@@ -71,27 +65,26 @@ const TAB_CONFIG = [
   },
   { key: "ai-config" as TabKey, icon: CpuChipIcon, label: "AI Config" },
   { key: "reviewers" as TabKey, icon: UserGroupIcon, label: "Reviewers" },
-] as const;
+] as const
 
 // Helper to get tab button class names
 const getTabButtonClassName = (isActive: boolean): string => {
-  const base =
-    "flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors";
+  const base = "flex items-center px-3 py-1 text-sm font-medium rounded-lg transition-colors"
   return isActive
     ? `${base} bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm`
-    : `${base} text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white`;
-};
+    : `${base} text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white`
+}
 
 interface QuestionBuilderProps {
-  initialSchema?: FormSchema;
-  onSave?: (schema: FormSchema) => void;
-  className?: string;
-  programId: string;
-  chainId: number;
-  communityId: string;
-  readOnly?: boolean;
-  initialPostApprovalSchema?: FormSchema;
-  onSavePostApproval?: (schema: FormSchema) => void;
+  initialSchema?: FormSchema
+  onSave?: (schema: FormSchema) => void
+  className?: string
+  programId: string
+  chainId: number
+  communityId: string
+  readOnly?: boolean
+  initialPostApprovalSchema?: FormSchema
+  onSavePostApproval?: (schema: FormSchema) => void
 }
 
 export function QuestionBuilder({
@@ -105,9 +98,9 @@ export function QuestionBuilder({
   initialPostApprovalSchema,
   onSavePostApproval,
 }: QuestionBuilderProps) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
 
   const [schema, setSchema] = useState<FormSchema>(
     initialSchema || {
@@ -122,7 +115,7 @@ export function QuestionBuilder({
         successPageContent: "", // Empty by default to encourage configuration
       },
     }
-  );
+  )
 
   const [postApprovalSchema, setPostApprovalSchema] = useState<FormSchema>(
     initialPostApprovalSchema || {
@@ -132,91 +125,83 @@ export function QuestionBuilder({
       fields: [],
       settings: {
         submitButtonText: "Submit Post Approval Information",
-        confirmationMessage:
-          "Thank you for providing the additional information!",
+        confirmationMessage: "Thank you for providing the additional information!",
         privateApplications: true, // Post-approval forms are always private
       },
     }
-  );
+  )
 
-  const [activeTab, setActiveTab] = useState<TabKey>(() =>
-    getValidTab(searchParams.get("tab"))
-  );
-  const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
-  const fieldRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
-  const [newEmail, setNewEmail] = useState<string>("");
+  const [activeTab, setActiveTab] = useState<TabKey>(() => getValidTab(searchParams.get("tab")))
+  const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null)
+  const fieldRefs = useRef<{ [key: string]: HTMLDivElement | null }>({})
+  const [newEmail, setNewEmail] = useState<string>("")
 
   // Helper to determine if we're working with post approval form
-  const isPostApprovalMode = activeTab === "post-approval";
-  const currentSchema = isPostApprovalMode ? postApprovalSchema : schema;
-  const setCurrentSchema = isPostApprovalMode
-    ? setPostApprovalSchema
-    : setSchema;
+  const isPostApprovalMode = activeTab === "post-approval"
+  const currentSchema = isPostApprovalMode ? postApprovalSchema : schema
+  const setCurrentSchema = isPostApprovalMode ? setPostApprovalSchema : setSchema
 
   // Sync URL tab parameter with local state and clean up invalid tabs
   useEffect(() => {
     try {
-      const tabParam = searchParams.get("tab");
-      const nextTab = getValidTab(tabParam);
+      const tabParam = searchParams.get("tab")
+      const nextTab = getValidTab(tabParam)
 
       // Update active tab state if needed
-      setActiveTab((prev) => (prev === nextTab ? prev : nextTab));
+      setActiveTab((prev) => (prev === nextTab ? prev : nextTab))
 
       // Clean up invalid tab parameters from URL
       if (tabParam && !isTabKey(tabParam)) {
-        const params = new URLSearchParams(searchParams.toString());
-        params.delete("tab");
-        const url = params.toString() ? `${pathname}?${params}` : pathname;
-        router.replace(url);
+        const params = new URLSearchParams(searchParams.toString())
+        params.delete("tab")
+        const url = params.toString() ? `${pathname}?${params}` : pathname
+        router.replace(url)
       }
     } catch (error) {
       errorManager("Failed to synchronize tab state with URL", error, {
         pathname,
-      });
+      })
       // Fallback to default tab on error
-      setActiveTab(DEFAULT_TAB);
+      setActiveTab(DEFAULT_TAB)
     }
-  }, [pathname, router, searchParams]);
+  }, [pathname, router, searchParams])
 
   const updateTabInUrl = (tab: TabKey) => {
     try {
-      const params = new URLSearchParams(searchParams.toString());
+      const params = new URLSearchParams(searchParams.toString())
 
       if (tab === DEFAULT_TAB) {
-        params.delete("tab");
+        params.delete("tab")
       } else {
-        params.set("tab", tab);
+        params.set("tab", tab)
       }
 
-      const url = params.toString() ? `${pathname}?${params}` : pathname;
-      router.replace(url);
+      const url = params.toString() ? `${pathname}?${params}` : pathname
+      router.replace(url)
     } catch (error) {
       errorManager(`Failed to update URL for tab: ${tab}`, error, {
         tab,
         pathname,
-      });
-      toast.error(
-        "Navigation updated locally. The URL may not reflect your current view."
-      );
+      })
+      toast.error("Navigation updated locally. The URL may not reflect your current view.")
     }
-  };
+  }
 
   const handleTabChange = (tab: TabKey) => {
-    if (tab === activeTab) return;
+    if (tab === activeTab) return
 
     // Update state first (immediate UI feedback)
-    setActiveTab(tab);
+    setActiveTab(tab)
 
     // Only update URL if it needs to change
-    const currentTabParam = searchParams.get("tab");
+    const currentTabParam = searchParams.get("tab")
     const needsUrlUpdate =
-      (tab !== DEFAULT_TAB || currentTabParam !== null) &&
-      currentTabParam !== tab;
+      (tab !== DEFAULT_TAB || currentTabParam !== null) && currentTabParam !== tab
 
     if (needsUrlUpdate) {
-      updateTabInUrl(tab);
+      updateTabInUrl(tab)
     }
-  };
+  }
 
   // Update schema when initialSchema changes (e.g., after loading from API)
   useEffect(() => {
@@ -224,9 +209,9 @@ export function QuestionBuilder({
       setSchema({
         ...initialSchema,
         fields: Array.isArray(initialSchema.fields) ? initialSchema.fields : [],
-      });
+      })
     }
-  }, [initialSchema]);
+  }, [initialSchema])
 
   // Update post approval schema when initialPostApprovalSchema changes
   useEffect(() => {
@@ -243,9 +228,9 @@ export function QuestionBuilder({
           ...initialPostApprovalSchema.settings,
           privateApplications: true, // Ensure post-approval forms are always private
         },
-      });
+      })
     }
-  }, [initialPostApprovalSchema]);
+  }, [initialPostApprovalSchema])
 
   // Scroll to the selected field editor when it opens
   useEffect(() => {
@@ -254,13 +239,13 @@ export function QuestionBuilder({
         fieldRefs.current[selectedFieldId]?.scrollIntoView({
           behavior: "smooth",
           block: "nearest",
-        });
-      }, 100);
+        })
+      }, 100)
     }
-  }, [selectedFieldId]);
+  }, [selectedFieldId])
 
   const handleFieldAdd = (fieldType: FormField["type"]) => {
-    if (readOnly) return; // Prevent adding fields in read-only mode
+    if (readOnly) return // Prevent adding fields in read-only mode
 
     const newField: FormField = {
       id: `field_${Date.now()}`,
@@ -271,93 +256,87 @@ export function QuestionBuilder({
       options: ["select", "radio", "checkbox"].includes(fieldType)
         ? ["Option 1", "Option 2"]
         : undefined,
-    };
+    }
 
     setCurrentSchema((prev) => ({
       ...prev,
       fields: [...(prev.fields || []), newField],
-    }));
+    }))
 
-    setSelectedFieldId(newField.id);
-  };
+    setSelectedFieldId(newField.id)
+  }
 
   const handleFieldUpdate = (updatedField: FormField) => {
-    if (readOnly) return; // Prevent updating fields in read-only mode
+    if (readOnly) return // Prevent updating fields in read-only mode
 
     setCurrentSchema((prev) => ({
       ...prev,
       fields: (prev.fields || []).map((field) =>
         field.id === updatedField.id ? updatedField : field
       ),
-    }));
-  };
+    }))
+  }
 
   const handleFieldDelete = (fieldId: string) => {
-    if (readOnly) return; // Prevent deleting fields in read-only mode
+    if (readOnly) return // Prevent deleting fields in read-only mode
 
     setCurrentSchema((prev) => ({
       ...prev,
       fields: (prev.fields || []).filter((field) => field.id !== fieldId),
-    }));
+    }))
 
     if (selectedFieldId === fieldId) {
-      setSelectedFieldId(null);
+      setSelectedFieldId(null)
     }
 
     // Clean up the ref
-    delete fieldRefs.current[fieldId];
-  };
+    delete fieldRefs.current[fieldId]
+  }
 
   const handleFieldMove = (fieldId: string, direction: "up" | "down") => {
-    if (readOnly) return; // Prevent moving fields in read-only mode
-    if (!currentSchema.fields) return;
+    if (readOnly) return // Prevent moving fields in read-only mode
+    if (!currentSchema.fields) return
 
-    const currentIndex = currentSchema.fields.findIndex(
-      (field) => field.id === fieldId
-    );
-    if (currentIndex === -1) return;
+    const currentIndex = currentSchema.fields.findIndex((field) => field.id === fieldId)
+    if (currentIndex === -1) return
 
-    const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
-    if (newIndex < 0 || newIndex >= currentSchema.fields.length) return;
+    const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1
+    if (newIndex < 0 || newIndex >= currentSchema.fields.length) return
 
-    const newFields = [...currentSchema.fields];
-    const [movedField] = newFields.splice(currentIndex, 1);
-    newFields.splice(newIndex, 0, movedField);
+    const newFields = [...currentSchema.fields]
+    const [movedField] = newFields.splice(currentIndex, 1)
+    newFields.splice(newIndex, 0, movedField)
 
     setCurrentSchema((prev) => ({
       ...prev,
       fields: newFields,
-    }));
-  };
+    }))
+  }
 
   const handleDragEnd = (event: DragEndEvent) => {
     try {
-      const { active, over } = event;
+      const { active, over } = event
 
-      if (!over || active.id === over.id || readOnly) return;
+      if (!over || active.id === over.id || readOnly) return
 
-      const oldIndex = currentSchema.fields.findIndex(
-        (field) => field.id === active.id
-      );
-      const newIndex = currentSchema.fields.findIndex(
-        (field) => field.id === over.id
-      );
+      const oldIndex = currentSchema.fields.findIndex((field) => field.id === active.id)
+      const newIndex = currentSchema.fields.findIndex((field) => field.id === over.id)
 
       if (oldIndex !== -1 && newIndex !== -1) {
-        const newFields = arrayMove(currentSchema.fields, oldIndex, newIndex);
+        const newFields = arrayMove(currentSchema.fields, oldIndex, newIndex)
         setCurrentSchema((prev) => ({
           ...prev,
           fields: newFields,
-        }));
+        }))
       }
     } catch (error) {
       errorManager("Failed to reorder form fields", error, {
         activeId: event.active.id,
         overId: event.over?.id,
-      });
-      toast.error("Failed to reorder fields. Please try again.");
+      })
+      toast.error("Failed to reorder fields. Please try again.")
     }
-  };
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -368,121 +347,116 @@ export function QuestionBuilder({
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
-  );
+  )
 
   const handleTitleChange = (title: string) => {
-    setCurrentSchema((prev) => ({ ...prev, title }));
-  };
+    setCurrentSchema((prev) => ({ ...prev, title }))
+  }
 
   const handleDescriptionChange = (description: string) => {
-    setCurrentSchema((prev) => ({ ...prev, description }));
-  };
+    setCurrentSchema((prev) => ({ ...prev, description }))
+  }
 
   const hasEmailField = () => {
-    if (!currentSchema.fields) return false;
+    if (!currentSchema.fields) return false
     return currentSchema.fields.some(
-      (field) =>
-        field.type === "email" || field.label.toLowerCase().includes("email")
-    );
-  };
+      (field) => field.type === "email" || field.label.toLowerCase().includes("email")
+    )
+  }
 
   const needsEmailValidation = () => {
     // Only require email field for main application form, not for post approval
-    return !isPostApprovalMode && !hasEmailField();
-  };
+    return !isPostApprovalMode && !hasEmailField()
+  }
 
   const handleSave = async () => {
     try {
       if (isPostApprovalMode) {
         // For post approval forms, email field is not required
-        await onSavePostApproval?.(postApprovalSchema);
-        toast.success("Post approval form saved successfully!");
+        await onSavePostApproval?.(postApprovalSchema)
+        toast.success("Post approval form saved successfully!")
       } else {
         if (needsEmailValidation()) {
           toast.error(
             "Please add at least one email field to the form. This is required for application tracking."
-          );
-          return;
+          )
+          return
         }
-        await onSave?.(schema);
-        toast.success("Form saved successfully!");
+        await onSave?.(schema)
+        toast.success("Form saved successfully!")
       }
     } catch (error) {
       errorManager("Failed to save form schema", error, {
         isPostApprovalMode,
         formId: isPostApprovalMode ? postApprovalSchema.id : schema.id,
-        fieldsCount: isPostApprovalMode
-          ? postApprovalSchema.fields.length
-          : schema.fields.length,
-      });
-      toast.error("Failed to save form. Please try again.");
+        fieldsCount: isPostApprovalMode ? postApprovalSchema.fields.length : schema.fields.length,
+      })
+      toast.error("Failed to save form. Please try again.")
     }
-  };
+  }
 
   const handleAIConfigUpdate = (updatedSchema: FormSchema) => {
     if (isPostApprovalMode) {
-      setPostApprovalSchema(updatedSchema);
+      setPostApprovalSchema(updatedSchema)
     } else {
-      setSchema(updatedSchema);
+      setSchema(updatedSchema)
     }
-  };
+  }
 
   const handleAddEmail = () => {
     try {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      const trimmedEmail = newEmail.trim();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      const trimmedEmail = newEmail.trim()
 
       if (!trimmedEmail) {
-        toast.error("Please enter an email address.");
-        return;
+        toast.error("Please enter an email address.")
+        return
       }
 
       if (!emailRegex.test(trimmedEmail)) {
-        toast.error("Please enter a valid email address.");
-        return;
+        toast.error("Please enter a valid email address.")
+        return
       }
 
-      const currentEmails = currentSchema.emailNotifications || [];
+      const currentEmails = currentSchema.emailNotifications || []
 
       if (currentEmails.includes(trimmedEmail)) {
-        toast.error("This email is already in the list.");
-        return;
+        toast.error("This email is already in the list.")
+        return
       }
 
       setCurrentSchema((prev) => ({
         ...prev,
         emailNotifications: [...currentEmails, trimmedEmail],
-      }));
-      setNewEmail("");
-      toast.success("Email added successfully!");
+      }))
+      setNewEmail("")
+      toast.success("Email added successfully!")
     } catch (error) {
-      errorManager("Failed to add email", error, { email: newEmail });
-      toast.error("Failed to add email. Please try again.");
+      errorManager("Failed to add email", error, { email: newEmail })
+      toast.error("Failed to add email. Please try again.")
     }
-  };
+  }
 
   const handleRemoveEmail = (index: number) => {
     try {
       setCurrentSchema((prev) => ({
         ...prev,
         emailNotifications:
-          prev.emailNotifications?.filter(
-            (_email: string, i: number) => i !== index
-          ) || [],
-      }));
-      toast.success("Email removed successfully!");
+          prev.emailNotifications?.filter((_email: string, i: number) => i !== index) || [],
+      }))
+      toast.success("Email removed successfully!")
     } catch (error) {
-      errorManager("Failed to remove email", error, { index });
-      toast.error("Failed to remove email. Please try again.");
+      errorManager("Failed to remove email", error, { index })
+      toast.error("Failed to remove email. Please try again.")
     }
-  };
+  }
 
   const handleEmailKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
-      e.preventDefault();
-      handleAddEmail();
+      e.preventDefault()
+      handleAddEmail()
     }
-  };
+  }
 
   return (
     <div className={`flex flex-col h-full${className}`}>
@@ -542,15 +516,9 @@ export function QuestionBuilder({
                     ? "bg-yellow-600 hover:bg-yellow-700"
                     : "bg-blue-600 hover:bg-blue-700"
                 }`}
-                title={
-                  needsEmailValidation()
-                    ? "Add an email field before saving"
-                    : undefined
-                }
+                title={needsEmailValidation() ? "Add an email field before saving" : undefined}
               >
-                {needsEmailValidation() && (
-                  <ExclamationTriangleIcon className="w-4 h-4 mr-2" />
-                )}
+                {needsEmailValidation() && <ExclamationTriangleIcon className="w-4 h-4 mr-2" />}
                 {isPostApprovalMode ? "Save Post Approval Form" : "Save Form"}
               </Button>
             )}
@@ -601,8 +569,7 @@ export function QuestionBuilder({
                         Post Approval Form
                       </h4>
                       <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                        This form will be shown to applicants after their
-                        application is approved.
+                        This form will be shown to applicants after their application is approved.
                         {`Use it to collect additional information needed for the next steps. All fields are automatically set as private, and email fields are not required since we already have the applicant's information.`}
                       </p>
                     </div>
@@ -618,8 +585,7 @@ export function QuestionBuilder({
                       No fields yet
                     </h3>
                     <p className="text-gray-600 dark:text-gray-400">
-                      Add form fields from the panel on the left to start
-                      building your form.
+                      Add form fields from the panel on the left to start building your form.
                     </p>
                   </div>
                 ) : (
@@ -666,8 +632,8 @@ export function QuestionBuilder({
                           Post Approval Email Notifications
                         </h3>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                          Add email addresses that should receive notifications
-                          when post-approval forms are submitted.
+                          Add email addresses that should receive notifications when post-approval
+                          forms are submitted.
                         </p>
                       </div>
                     </div>
@@ -676,45 +642,43 @@ export function QuestionBuilder({
                     {currentSchema.emailNotifications &&
                       currentSchema.emailNotifications.length > 0 && (
                         <div className="space-y-2 mb-4">
-                          {currentSchema.emailNotifications.map(
-                            (email, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 px-4 py-3 rounded-lg group hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div className="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                                    <svg
-                                      className="w-4 h-4 text-blue-600 dark:text-blue-400"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                                      />
-                                    </svg>
-                                  </div>
-                                  <span className="text-sm font-medium text-gray-900 dark:text-white">
-                                    {email}
-                                  </span>
-                                </div>
-                                {!readOnly && (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRemoveEmail(index)}
-                                    className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors opacity-0 group-hover:opacity-100"
-                                    aria-label={`Remove ${email}`}
+                          {currentSchema.emailNotifications.map((email, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 px-4 py-3 rounded-lg group hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                                  <svg
+                                    className="w-4 h-4 text-blue-600 dark:text-blue-400"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
                                   >
-                                    <XMarkIcon className="w-5 h-5" />
-                                  </button>
-                                )}
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                                    />
+                                  </svg>
+                                </div>
+                                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                  {email}
+                                </span>
                               </div>
-                            )
-                          )}
+                              {!readOnly && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveEmail(index)}
+                                  className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors opacity-0 group-hover:opacity-100"
+                                  aria-label={`Remove ${email}`}
+                                >
+                                  <XMarkIcon className="w-5 h-5" />
+                                </button>
+                              )}
+                            </div>
+                          ))}
                         </div>
                       )}
 
@@ -824,21 +788,21 @@ export function QuestionBuilder({
         ) : null}
       </div>
     </div>
-  );
+  )
 }
 
 interface SortableFieldItemProps {
-  field: FormField;
-  index: number;
-  selectedFieldId: string | null;
-  setSelectedFieldId: (id: string | null) => void;
-  handleFieldUpdate: (field: FormField) => void;
-  handleFieldDelete: (fieldId: string) => void;
-  handleFieldMove: (fieldId: string, direction: "up" | "down") => void;
-  readOnly: boolean;
-  isPostApprovalMode: boolean;
-  totalFields: number;
-  fieldRefs: React.MutableRefObject<{ [key: string]: HTMLDivElement | null }>;
+  field: FormField
+  index: number
+  selectedFieldId: string | null
+  setSelectedFieldId: (id: string | null) => void
+  handleFieldUpdate: (field: FormField) => void
+  handleFieldDelete: (fieldId: string) => void
+  handleFieldMove: (fieldId: string, direction: "up" | "down") => void
+  readOnly: boolean
+  isPostApprovalMode: boolean
+  totalFields: number
+  fieldRefs: React.MutableRefObject<{ [key: string]: HTMLDivElement | null }>
 }
 
 function SortableFieldItem({
@@ -854,26 +818,22 @@ function SortableFieldItem({
   totalFields,
   fieldRefs,
 }: SortableFieldItemProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: field.id, disabled: readOnly });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: field.id,
+    disabled: readOnly,
+  })
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-  };
+  }
 
   return (
     <div
       ref={(el) => {
-        setNodeRef(el);
-        fieldRefs.current[field.id] = el;
+        setNodeRef(el)
+        fieldRefs.current[field.id] = el
       }}
       style={style}
       className={`border rounded-lg transition-all ${
@@ -898,27 +858,18 @@ function SortableFieldItem({
 
           <div
             className="flex-1 cursor-pointer"
-            onClick={() =>
-              setSelectedFieldId(selectedFieldId === field.id ? null : field.id)
-            }
+            onClick={() => setSelectedFieldId(selectedFieldId === field.id ? null : field.id)}
           >
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <div className="flex items-center space-x-2">
                   <span className="text-xs font-medium px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded">
-                    {fieldTypes.find((item) => item.type === field.type)
-                      ?.label || field.type}
+                    {fieldTypes.find((item) => item.type === field.type)?.label || field.type}
                   </span>
-                  {field.required && (
-                    <span className="text-xs text-red-500">Required</span>
-                  )}
+                  {field.required && <span className="text-xs text-red-500">Required</span>}
                   {field.private && (
                     <span className="text-xs text-gray-600 bg-gray-100 dark:bg-gray-700 dark:text-gray-300 px-2 py-1 rounded flex items-center space-x-1">
-                      <svg
-                        className="w-3 h-3"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                         <path
                           fillRule="evenodd"
                           d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
@@ -929,9 +880,7 @@ function SortableFieldItem({
                     </span>
                   )}
                 </div>
-                <h4 className="font-medium text-gray-900 dark:text-white mt-1">
-                  {field.label}
-                </h4>
+                <h4 className="font-medium text-gray-900 dark:text-white mt-1">{field.label}</h4>
                 {field.description && (
                   <MarkdownPreview
                     className="text-sm text-gray-500 dark:text-gray-400 mt-1"
@@ -967,9 +916,7 @@ function SortableFieldItem({
               onDelete={handleFieldDelete}
               readOnly={readOnly}
               onMoveUp={
-                index === 0
-                  ? undefined
-                  : (fieldId: string) => handleFieldMove(fieldId, "up")
+                index === 0 ? undefined : (fieldId: string) => handleFieldMove(fieldId, "up")
               }
               onMoveDown={
                 index === totalFields - 1
@@ -982,5 +929,5 @@ function SortableFieldItem({
         )}
       </div>
     </div>
-  );
+  )
 }

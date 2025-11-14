@@ -1,44 +1,35 @@
-import pluralize from "pluralize";
-import { type FC, useEffect, useMemo, useState, use } from "react";
-
-import { Button } from "@/components/Utilities/Button";
-import { GrantUpdate } from "./GrantUpdate";
-import { MilestoneDetails } from "./MilestoneDetails";
-import { cn } from "@/utilities/tailwind";
-import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
+import pluralize from "pluralize"
+import { type FC, use, useEffect, useMemo, useState } from "react"
+import { Button } from "@/components/Utilities/Button"
+import { cn } from "@/utilities/tailwind"
+import { GrantUpdate } from "./GrantUpdate"
+import { MilestoneDetails } from "./MilestoneDetails"
 
 interface MilestonesListProps {
-  grant: IGrantResponse;
+  grant: IGrantResponse
 }
 
-type Tab = "completed" | "pending" | "all";
+type Tab = "completed" | "pending" | "all"
 
 interface TabButtonProps {
-  handleSelection: (text: Tab) => void;
-  tab: Tab;
-  selectedType?: Tab;
-  tabName: string;
-  length: number;
+  handleSelection: (text: Tab) => void
+  tab: Tab
+  selectedType?: Tab
+  tabName: string
+  length: number
 }
 
-const TabButton: FC<TabButtonProps> = ({
-  handleSelection,
-  tab,
-  tabName,
-  selectedType,
-  length,
-}) => {
-  const isSelected = selectedType === tab;
+const TabButton: FC<TabButtonProps> = ({ handleSelection, tab, tabName, selectedType, length }) => {
+  const isSelected = selectedType === tab
   return (
     <Button
       className={cn(
         "flex flex-row my-0.5 items-center gap-2 bg-transparent px-2 py-1 font-medium text-black hover:bg-white hover:text-black max-sm:text-sm",
-        isSelected
-          ? "text-black bg-white dark:bg-zinc-600 dark:text-white"
-          : "text-gray-500"
+        isSelected ? "text-black bg-white dark:bg-zinc-600 dark:text-white" : "text-gray-500"
       )}
       onClick={() => {
-        handleSelection(tab);
+        handleSelection(tab)
       }}
     >
       {tabName}
@@ -52,25 +43,23 @@ const TabButton: FC<TabButtonProps> = ({
         {length}
       </p>
     </Button>
-  );
-};
+  )
+}
 
 export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
-  const { milestones } = grant;
-  const { updates } = grant;
+  const { milestones } = grant
+  const { updates } = grant
 
-  const [generalArray, setGeneralArray] = useState([] as any[]);
-  const [selectedTabArray, setSelectedTabArray] = useState([] as any[]);
-  const [pendingMilestones, setPendingMilestones] = useState([] as any[]);
-  const [completedMilestones, setCompletedMilestones] = useState([] as any[]);
-  const [allMilestones, setAllMilestones] = useState([] as any[]);
+  const [generalArray, setGeneralArray] = useState([] as any[])
+  const [selectedTabArray, setSelectedTabArray] = useState([] as any[])
+  const [pendingMilestones, setPendingMilestones] = useState([] as any[])
+  const [completedMilestones, setCompletedMilestones] = useState([] as any[])
+  const [allMilestones, setAllMilestones] = useState([] as any[])
 
-  const [selectedMilestoneType, setSelectedMilestoneType] = useState<
-    Tab | undefined
-  >(undefined);
+  const [selectedMilestoneType, setSelectedMilestoneType] = useState<Tab | undefined>(undefined)
 
   const getOrderedMerge = () => {
-    const merged: any[] = [];
+    const merged: any[] = []
 
     if (updates) {
       updates.forEach((update) => {
@@ -78,8 +67,8 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
           object: update,
           date: new Date(update.createdAt).getTime() / 1000,
           type: "update",
-        });
-      });
+        })
+      })
     }
     if (milestones) {
       grant.milestones?.forEach((milestone) => {
@@ -87,113 +76,99 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
           object: milestone,
           date: milestone.data.endsAt || milestone.createdAt,
           type: "milestone",
-        });
-      });
+        })
+      })
     }
 
     const ordered = merged.sort((a, b) => {
-      return new Date(b.date).getTime() - new Date(a.date).getTime();
-    });
-    setGeneralArray(ordered);
-    return ordered;
-  };
+      return new Date(b.date).getTime() - new Date(a.date).getTime()
+    })
+    setGeneralArray(ordered)
+    return ordered
+  }
 
   useEffect(() => {
-    getOrderedMerge();
-  }, [updates, milestones, grant.uid]);
+    getOrderedMerge()
+  }, [updates, milestones, grant.uid])
 
   const getUnsortedMilestones = () => {
     const unsortedCompletedMilestones = generalArray.filter((item) => {
-      return item.object.completed || item.type === "update";
-    });
+      return item.object.completed || item.type === "update"
+    })
 
     const unsortedPendingMilestones = generalArray.filter(
       (item) => !item.object.completed && item.type !== "update"
-    );
+    )
 
-    const unsortedAllMilestones = [...generalArray];
+    const unsortedAllMilestones = [...generalArray]
     return {
       unsortedCompletedMilestones,
       unsortedPendingMilestones,
       unsortedAllMilestones,
-    };
-  };
+    }
+  }
 
   const rearrangeArrayByType = () => {
-    const {
-      unsortedCompletedMilestones,
-      unsortedPendingMilestones,
-      unsortedAllMilestones,
-    } = getUnsortedMilestones();
+    const { unsortedCompletedMilestones, unsortedPendingMilestones, unsortedAllMilestones } =
+      getUnsortedMilestones()
 
-    const completedMilestonesToSet = unsortedCompletedMilestones.sort(
-      (a, b) => {
-        const getDate = (item: any) => {
-          if (item.type === "update") {
-            return new Date(item.object.createdAt).getTime();
-          }
-          if (item.object.completed)
-            return new Date(item.object.completed.createdAt).getTime();
-          return (
-            new Date(item.object.endsAt).getTime() ||
-            new Date(item.object.createdAt).getTime()
-          );
-        };
-        const bDate = getDate(b);
-        const aDate = getDate(a);
-        return bDate - aDate;
+    const completedMilestonesToSet = unsortedCompletedMilestones.sort((a, b) => {
+      const getDate = (item: any) => {
+        if (item.type === "update") {
+          return new Date(item.object.createdAt).getTime()
+        }
+        if (item.object.completed) return new Date(item.object.completed.createdAt).getTime()
+        return new Date(item.object.endsAt).getTime() || new Date(item.object.createdAt).getTime()
       }
-    );
+      const bDate = getDate(b)
+      const aDate = getDate(a)
+      return bDate - aDate
+    })
 
     const pendingMilestonesToSet = unsortedPendingMilestones.sort((a, b) => {
       const getDate = (item: any) => {
-        return new Date(item.object.endsAt) || new Date(item.object.createdAt);
-      };
-      const bDate = getDate(b);
-      const aDate = getDate(a);
+        return new Date(item.object.endsAt) || new Date(item.object.createdAt)
+      }
+      const bDate = getDate(b)
+      const aDate = getDate(a)
 
-      return aDate < bDate ? -1 : 1;
-    });
+      return aDate < bDate ? -1 : 1
+    })
 
     const allMilestonesToSet = unsortedAllMilestones.sort((a, b) => {
       const getDate = (item: any) => {
         if (item.type === "update") {
-          return new Date(item.object.createdAt).getTime() / 1000;
+          return new Date(item.object.createdAt).getTime() / 1000
         }
         if (item.object.completed) {
-          return new Date(item.object.completed.createdAt).getTime() / 1000;
+          return new Date(item.object.completed.createdAt).getTime() / 1000
         }
-        return (
-          new Date(item.object.endsAt).getTime() ||
-          new Date(item.object.createdAt).getTime()
-        );
-      };
-      const bDate = getDate(b);
-      const aDate = getDate(a);
-      return bDate - aDate;
-    });
+        return new Date(item.object.endsAt).getTime() || new Date(item.object.createdAt).getTime()
+      }
+      const bDate = getDate(b)
+      const aDate = getDate(a)
+      return bDate - aDate
+    })
 
-    setPendingMilestones(pendingMilestonesToSet);
-    setCompletedMilestones(completedMilestonesToSet);
-    setAllMilestones(allMilestonesToSet);
+    setPendingMilestones(pendingMilestonesToSet)
+    setCompletedMilestones(completedMilestonesToSet)
+    setAllMilestones(allMilestonesToSet)
 
     const setDictionary = {
       completed: completedMilestonesToSet,
       pending: pendingMilestonesToSet,
       all: allMilestonesToSet,
-    };
+    }
 
-    const ordered = selectedMilestoneType
-      ? setDictionary[selectedMilestoneType]
-      : [];
+    const ordered = selectedMilestoneType ? setDictionary[selectedMilestoneType] : []
 
-    setSelectedTabArray(ordered);
-  };
+    setSelectedTabArray(ordered)
+  }
 
   const handleSelection = (text: Tab) => {
-    setSelectedMilestoneType(text);
-    window.location.hash = text;
-  };
+    setSelectedMilestoneType(text)
+    window.location.hash = text
+  }
 
   // useEffect(() => {
   //   const { unsortedCompletedMilestones, unsortedPendingMilestones } =
@@ -209,24 +184,23 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
   //   }
   // }, [grant.uid, generalArray]);
 
-  const hash = window.location.hash.replace("#", "") as Tab;
+  const hash = window.location.hash.replace("#", "") as Tab
   useEffect(() => {
     if (!hash) {
-      setSelectedMilestoneType("completed");
+      setSelectedMilestoneType("completed")
     } else {
       if (["completed", "pending", "all"].includes(hash)) {
-        setSelectedMilestoneType(hash);
+        setSelectedMilestoneType(hash)
       }
     }
-  }, [hash]);
+  }, [hash])
 
   useMemo(() => {
-    rearrangeArrayByType();
-  }, [selectedMilestoneType, grant.uid, generalArray]);
+    rearrangeArrayByType()
+  }, [selectedMilestoneType, grant.uid, generalArray])
 
-  const updatesLength =
-    grant.milestones.filter((i) => i.completed).length + updates.length;
-  const milestonesCounter = milestones.length;
+  const updatesLength = grant.milestones.filter((i) => i.completed).length + updates.length
+  const milestonesCounter = milestones.length
 
   return (
     <div className="flex flex-col gap-2" id="milestones-and-updates-list">
@@ -234,9 +208,7 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
         <div className=" flex flex-col items-start justify-start gap-0 ">
           <div className="flex w-full flex-row flex-wrap items-center justify-between gap-4 py-3">
             <div className="flex w-max flex-row flex-wrap items-center  gap-4 max-sm:flex-col max-sm:items-start max-sm:justify-start">
-              <p className="text-xs font-bold text-slate-600 dark:text-slate-200">
-                MILESTONES
-              </p>
+              <p className="text-xs font-bold text-slate-600 dark:text-slate-200">MILESTONES</p>
               <div className="flex flex-row flex-wrap gap-2 rounded bg-[#F2F4F7] dark:bg-zinc-800 px-2 py-1">
                 <TabButton
                   handleSelection={() => handleSelection("completed")}
@@ -263,9 +235,8 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
             </div>
             <div className="flex flex-row flex-wrap gap-5">
               <p className="text-base font-normal text-gray-500 max-sm:text-sm">
-                {milestonesCounter} {pluralize("Milestone", milestonesCounter)},{" "}
-                {updatesLength} {pluralize("update", updatesLength)} in this
-                grant
+                {milestonesCounter} {pluralize("Milestone", milestonesCounter)}, {updatesLength}{" "}
+                {pluralize("update", updatesLength)} in this grant
               </p>
             </div>
           </div>
@@ -273,16 +244,14 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
           <div className="mt-3 flex w-full flex-col gap-6">
             {selectedTabArray.map((item) => {
               if (item.type === "update") {
-                const updatesArray = generalArray.filter(
-                  (i) => i.type === "update"
-                );
+                const updatesArray = generalArray.filter((i) => i.type === "update")
                 const updatesIndex = updatesArray.findIndex(
                   (i) =>
                     // eslint-disable-next-line no-underscore-dangle
                     (i?.object._uid || i.object.uid) ===
                     // eslint-disable-next-line no-underscore-dangle
                     (item?.object._uid || item.object.uid)
-                );
+                )
                 return (
                   <GrantUpdate
                     key={item.object.uid}
@@ -292,26 +261,24 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
                     date={item.object.createdAt}
                     update={item.object}
                   />
-                );
+                )
               }
 
-              const milestoneArray = generalArray.filter(
-                (i) => i.type === "milestone"
-              );
+              const milestoneArray = generalArray.filter((i) => i.type === "milestone")
               const mIndex = milestoneArray.findIndex(
                 (i) =>
                   // eslint-disable-next-line no-underscore-dangle
                   (i?.object._uid || i.object.uid) ===
                   // eslint-disable-next-line no-underscore-dangle
                   (item?.object._uid || item.object.uid)
-              );
+              )
               return (
                 <MilestoneDetails
                   key={item.object.uid}
                   milestone={item.object}
                   index={milestoneArray.length - mIndex}
                 />
-              );
+              )
             })}
             {!selectedTabArray.length && (
               <div className="flex h-max w-full items-center justify-center">
@@ -324,5 +291,5 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}

@@ -1,5 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
-import { getUnlinkedIndicators, UnlinkedIndicator } from "@/utilities/queries/getUnlinkedIndicators";
+import { useQuery } from "@tanstack/react-query"
+import {
+  getUnlinkedIndicators,
+  type UnlinkedIndicator,
+} from "@/utilities/queries/getUnlinkedIndicators"
 
 export const useUnlinkedIndicators = () => {
   return useQuery<UnlinkedIndicator[]>({
@@ -7,5 +10,5 @@ export const useUnlinkedIndicators = () => {
     queryFn: getUnlinkedIndicators,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
-  });
-}; 
+  })
+}

@@ -1,17 +1,18 @@
-"use client";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import { MarkdownPreviewProps } from "@uiw/react-markdown-preview";
-import React, { useEffect, useState } from "react";
+"use client"
+import type { MarkdownPreviewProps } from "@uiw/react-markdown-preview"
+import type React from "react"
+import { useEffect, useState } from "react"
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview"
 
 interface Props {
-  words?: any;
-  children: string;
-  readMoreText?: string;
-  readLessText?: string;
-  side?: "left" | "right";
-  markdownClass?: MarkdownPreviewProps["className"];
-  markdownComponents?: MarkdownPreviewProps["components"];
-  othersideButton?: React.ReactNode;
+  words?: any
+  children: string
+  readMoreText?: string
+  readLessText?: string
+  side?: "left" | "right"
+  markdownClass?: MarkdownPreviewProps["className"]
+  markdownComponents?: MarkdownPreviewProps["components"]
+  othersideButton?: React.ReactNode
 }
 
 export const ReadMore = ({
@@ -24,66 +25,66 @@ export const ReadMore = ({
   markdownComponents,
   othersideButton,
 }: Props) => {
-  const [isReadMore, setIsReadMore] = useState(true);
+  const [isReadMore, setIsReadMore] = useState(true)
   const toggleReadMore = () => {
-    setIsReadMore(!isReadMore);
-  };
+    setIsReadMore(!isReadMore)
+  }
 
-  const text = children ? children : "";
+  const text = children ? children : ""
 
   const getMinimumText = () => {
-    let wordsCounter = 400;
+    let wordsCounter = 400
     for (let i = words || 400; i < text.length; i++) {
-      const regex = /\s/;
+      const regex = /\s/
       if (!regex.test(text[i])) {
-        wordsCounter++;
+        wordsCounter++
       } else {
-        wordsCounter++;
-        break;
+        wordsCounter++
+        break
       }
     }
-    return wordsCounter;
-  };
+    return wordsCounter
+  }
 
   // Function to safely truncate markdown without breaking syntax elements
   const safelyTruncateMarkdown = (text: string, cutoffLength: number) => {
-    if (text.length <= cutoffLength) return text;
+    if (text.length <= cutoffLength) return text
 
     // Basic cut position
-    let cutPosition = cutoffLength;
+    let cutPosition = cutoffLength
 
     // Find all markdown link structures in the text
-    const linkMatches: { start: number; end: number }[] = [];
-    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-    let match;
+    const linkMatches: { start: number; end: number }[] = []
+    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g
+    let match
 
     while ((match = linkRegex.exec(text)) !== null) {
       linkMatches.push({
         start: match.index,
         end: match.index + match[0].length,
-      });
+      })
     }
 
     // Check if we're cutting in the middle of a link
-    let insideLink = false;
-    let linkStart = -1;
+    let insideLink = false
+    let linkStart = -1
 
     for (const link of linkMatches) {
       if (cutPosition > link.start && cutPosition < link.end) {
-        insideLink = true;
-        linkStart = link.start;
-        break;
+        insideLink = true
+        linkStart = link.start
+        break
       }
     }
 
     // If we're inside a link, move cut position to before the link
     if (insideLink && linkStart >= 0) {
       // Find the last space before the link
-      const lastSpaceBeforeLink = text.lastIndexOf(" ", linkStart);
+      const lastSpaceBeforeLink = text.lastIndexOf(" ", linkStart)
       if (lastSpaceBeforeLink >= 0) {
-        cutPosition = lastSpaceBeforeLink;
+        cutPosition = lastSpaceBeforeLink
       } else {
-        cutPosition = linkStart;
+        cutPosition = linkStart
       }
     }
 
@@ -99,69 +100,69 @@ export const ReadMore = ({
       { char: "~", importance: 6 }, // Strikethrough
       { char: ">", importance: 5 }, // Blockquote
       { char: "#", importance: 5 }, // Heading
-    ];
+    ]
 
     // Check for unbalanced markdown syntax by tracking the stack of opened elements
-    const textBeforeCut = text.substring(0, cutPosition);
-    const stack: { char: string; position: number }[] = [];
+    const textBeforeCut = text.substring(0, cutPosition)
+    const stack: { char: string; position: number }[] = []
 
     // Track all special characters in the text before cut
     for (let i = 0; i < textBeforeCut.length; i++) {
       // Look for multi-character patterns
       if (textBeforeCut.substring(i, i + 3) === "```") {
         // Handle code blocks (```)
-        const item = { char: "```", position: i };
-        const matchingIndex = stack.findIndex((s) => s.char === "```");
+        const item = { char: "```", position: i }
+        const matchingIndex = stack.findIndex((s) => s.char === "```")
         if (matchingIndex !== -1) {
-          stack.splice(matchingIndex, 1); // Remove the matching open
+          stack.splice(matchingIndex, 1) // Remove the matching open
         } else {
-          stack.push(item); // Add to stack
+          stack.push(item) // Add to stack
         }
-        i += 2; // Skip next two characters
-        continue;
+        i += 2 // Skip next two characters
+        continue
       }
 
       if (textBeforeCut.substring(i, i + 2) === "**") {
         // Handle bold (**)
-        const item = { char: "**", position: i };
-        const matchingIndex = stack.findIndex((s) => s.char === "**");
+        const item = { char: "**", position: i }
+        const matchingIndex = stack.findIndex((s) => s.char === "**")
         if (matchingIndex !== -1) {
-          stack.splice(matchingIndex, 1); // Remove the matching open
+          stack.splice(matchingIndex, 1) // Remove the matching open
         } else {
-          stack.push(item); // Add to stack
+          stack.push(item) // Add to stack
         }
-        i += 1; // Skip next character
-        continue;
+        i += 1 // Skip next character
+        continue
       }
 
       if (textBeforeCut.substring(i, i + 2) === "__") {
         // Handle alternate bold (__)
-        const item = { char: "__", position: i };
-        const matchingIndex = stack.findIndex((s) => s.char === "__");
+        const item = { char: "__", position: i }
+        const matchingIndex = stack.findIndex((s) => s.char === "__")
         if (matchingIndex !== -1) {
-          stack.splice(matchingIndex, 1); // Remove the matching open
+          stack.splice(matchingIndex, 1) // Remove the matching open
         } else {
-          stack.push(item); // Add to stack
+          stack.push(item) // Add to stack
         }
-        i += 1; // Skip next character
-        continue;
+        i += 1 // Skip next character
+        continue
       }
 
       // Check for link syntax specifically - this is critical for URLs
       if (i > 0 && textBeforeCut[i] === "(" && textBeforeCut[i - 1] === "]") {
         // We're at the beginning of a URL in a markdown link
         // Find where this URL ends (the closing parenthesis)
-        let urlEndPos = -1;
-        let openParens = 1;
+        let urlEndPos = -1
+        let openParens = 1
 
         for (let j = i + 1; j < textBeforeCut.length; j++) {
           if (textBeforeCut[j] === "(") {
-            openParens++;
+            openParens++
           } else if (textBeforeCut[j] === ")") {
-            openParens--;
+            openParens--
             if (openParens === 0) {
-              urlEndPos = j;
-              break;
+              urlEndPos = j
+              break
             }
           }
         }
@@ -169,32 +170,32 @@ export const ReadMore = ({
         // If we found the end of the URL but it's after our cut position
         if (urlEndPos > cutPosition || urlEndPos === -1) {
           // We're cutting in the middle of a URL, so find the [ that starts this link
-          let linkTextStart = -1;
+          let linkTextStart = -1
           for (let j = i - 2; j >= 0; j--) {
             if (textBeforeCut[j] === "[") {
-              linkTextStart = j;
-              break;
+              linkTextStart = j
+              break
             }
           }
 
           if (linkTextStart >= 0) {
             // Find the last space before the link
-            const lastSpaceBeforeLink = text.lastIndexOf(" ", linkTextStart);
+            const lastSpaceBeforeLink = text.lastIndexOf(" ", linkTextStart)
             if (lastSpaceBeforeLink >= 0) {
-              cutPosition = Math.min(cutPosition, lastSpaceBeforeLink);
+              cutPosition = Math.min(cutPosition, lastSpaceBeforeLink)
             } else {
-              cutPosition = Math.min(cutPosition, linkTextStart);
+              cutPosition = Math.min(cutPosition, linkTextStart)
             }
 
             // Skip the rest of the checks since we've decided to cut before the link
-            break;
+            break
           }
         }
 
         // If we have a complete URL, skip past it
         if (urlEndPos > 0) {
-          i = urlEndPos;
-          continue;
+          i = urlEndPos
+          continue
         }
       }
 
@@ -204,44 +205,37 @@ export const ReadMore = ({
           // Special handling for nested combinations
           if (special.char === "(" && i > 0 && textBeforeCut[i - 1] === "]") {
             // This is potentially a link - keep track of it
-            const item = { char: "](", position: i - 1 };
-            stack.push(item);
+            const item = { char: "](", position: i - 1 }
+            stack.push(item)
           } else if (special.closes) {
             // This is a character that can be closed
-            const matchingIndex = stack.findIndex(
-              (s) => s.char === special.closes
-            );
+            const matchingIndex = stack.findIndex((s) => s.char === special.closes)
             if (matchingIndex !== -1) {
-              stack.splice(matchingIndex, 1); // Remove the matching open
+              stack.splice(matchingIndex, 1) // Remove the matching open
             } else {
-              stack.push({ char: special.char, position: i });
+              stack.push({ char: special.char, position: i })
             }
           } else {
             // Standalone special character
             if (special.char === "*" || special.char === "_") {
               // Check if it's a single * or a ** (already handled)
-              if (
-                i + 1 < textBeforeCut.length &&
-                textBeforeCut[i + 1] === special.char
-              ) {
-                continue; // Skip - this is part of ** or __ which is handled above
+              if (i + 1 < textBeforeCut.length && textBeforeCut[i + 1] === special.char) {
+                continue // Skip - this is part of ** or __ which is handled above
               }
 
               // Single * or _ - find matching single character
-              const item = { char: special.char, position: i };
-              const matchingIndex = stack.findIndex(
-                (s) => s.char === special.char
-              );
+              const item = { char: special.char, position: i }
+              const matchingIndex = stack.findIndex((s) => s.char === special.char)
               if (matchingIndex !== -1) {
-                stack.splice(matchingIndex, 1); // Remove the matching open
+                stack.splice(matchingIndex, 1) // Remove the matching open
               } else {
-                stack.push(item); // Add to stack
+                stack.push(item) // Add to stack
               }
             } else {
-              stack.push({ char: special.char, position: i });
+              stack.push({ char: special.char, position: i })
             }
           }
-          break;
+          break
         }
       }
     }
@@ -249,42 +243,39 @@ export const ReadMore = ({
     // If we have unbalanced elements, find the earliest one
     if (stack.length > 0) {
       // Sort by position, earliest first
-      stack.sort((a, b) => a.position - b.position);
+      stack.sort((a, b) => a.position - b.position)
 
       // Find the earliest position of all unbalanced markdown elements
-      const earliestPosition = stack[0].position;
+      const earliestPosition = stack[0].position
 
       // Find the last space before this position
-      const lastSpaceBeforeMarkdown = textBeforeCut.lastIndexOf(
-        " ",
-        earliestPosition
-      );
+      const lastSpaceBeforeMarkdown = textBeforeCut.lastIndexOf(" ", earliestPosition)
 
       if (lastSpaceBeforeMarkdown !== -1) {
-        cutPosition = Math.min(cutPosition, lastSpaceBeforeMarkdown);
+        cutPosition = Math.min(cutPosition, lastSpaceBeforeMarkdown)
       } else if (earliestPosition > 0) {
         // If no space, just cut before the earliest markdown
-        cutPosition = Math.min(cutPosition, earliestPosition);
+        cutPosition = Math.min(cutPosition, earliestPosition)
       }
     } else if (!insideLink) {
       // Even if balanced and not inside a link, still find a good break point
-      const lastSpaceBeforeCut = text.lastIndexOf(" ", cutPosition);
+      const lastSpaceBeforeCut = text.lastIndexOf(" ", cutPosition)
       if (lastSpaceBeforeCut > 0 && cutPosition - lastSpaceBeforeCut < 20) {
-        cutPosition = lastSpaceBeforeCut;
+        cutPosition = lastSpaceBeforeCut
       }
     }
 
-    return text.slice(0, cutPosition);
-  };
+    return text.slice(0, cutPosition)
+  }
 
   useEffect(() => {
     if (text && text.length - 1 < getMinimumText()) {
-      setIsReadMore(false);
+      setIsReadMore(false)
     } else {
-      setIsReadMore(true);
+      setIsReadMore(true)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text]);
+  }, [text])
 
   return (
     <div className="w-full max-w-full">
@@ -336,5 +327,5 @@ export const ReadMore = ({
         </div>
       ) : null}
     </div>
-  );
-};
+  )
+}

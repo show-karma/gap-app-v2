@@ -1,6 +1,6 @@
-"use client";
-import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
-import dynamic from "next/dynamic";
+"use client"
+import dynamic from "next/dynamic"
+import { DefaultLoading } from "@/components/Utilities/DefaultLoading"
 
 const GrantCompletion = dynamic(
   () =>
@@ -10,7 +10,7 @@ const GrantCompletion = dynamic(
   {
     loading: () => <DefaultLoading />,
   }
-);
+)
 export default function Page() {
-  return <GrantCompletion />;
+  return <GrantCompletion />
 }

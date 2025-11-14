@@ -4,4 +4,4 @@ export type ActivityType =
   | "ProjectImpact"
   | "MilestoneUpdate"
   | "Milestone"
-  | "ProjectMilestone";
+  | "ProjectMilestone"

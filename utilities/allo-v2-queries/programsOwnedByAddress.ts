@@ -64,4 +64,4 @@ export const getProgramsOwnedByAddress = (
       },
     },
   },
-});
+})

@@ -1,1 +1,1 @@
-export * from "./isDelegateOf";
+export * from "./isDelegateOf"

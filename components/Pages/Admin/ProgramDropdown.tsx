@@ -1,34 +1,29 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, useEffect, useState } from "react";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "cmdk";
-import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/solid";
-import * as Popover from "@radix-ui/react-popover";
-import { cn } from "@/utilities/tailwind";
-import { ChevronDown } from "@/components/Icons/ChevronDown";
-import pluralize from "pluralize";
-import Image from "next/image";
-import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
-import { useAccount } from "wagmi";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
-import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+
+import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/solid"
+import * as Popover from "@radix-ui/react-popover"
+import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk"
+import Image from "next/image"
+import pluralize from "pluralize"
+import { type FC, useEffect, useState } from "react"
+import { useAccount } from "wagmi"
+import { ChevronDown } from "@/components/Icons/ChevronDown"
+import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList"
+import fetchData from "@/utilities/fetchData"
+import { INDEXER } from "@/utilities/indexer"
+import { cn } from "@/utilities/tailwind"
 
 const ProgramDropdown: FC<{
-  selectedProgram: GrantProgram | null;
+  selectedProgram: GrantProgram | null
 
-  list: GrantProgram[];
+  list: GrantProgram[]
 
-  cleanFunction?: () => void;
-  prefixUnselected?: string;
-  buttonClassname?: string;
+  cleanFunction?: () => void
+  prefixUnselected?: string
+  buttonClassname?: string
 
-  setSelectedProgram: (program: GrantProgram) => void;
+  setSelectedProgram: (program: GrantProgram) => void
 }> = ({
   selectedProgram,
   list,
@@ -39,9 +34,9 @@ const ProgramDropdown: FC<{
 
   setSelectedProgram,
 }) => {
-  const [open, setOpen] = useState(false);
-  const [adding, setAdding] = useState(false);
-  const { address: owner } = useAccount();
+  const [open, setOpen] = useState(false)
+  const [adding, setAdding] = useState(false)
+  const { address: owner } = useAccount()
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
@@ -77,7 +72,7 @@ const ProgramDropdown: FC<{
               <CommandItem>
                 <div
                   onClick={() => {
-                    cleanFunction();
+                    cleanFunction()
                   }}
                   className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
                 >
@@ -88,9 +83,7 @@ const ProgramDropdown: FC<{
                       </p>
                     </div>
                     <CheckIcon
-                      className={cn(
-                        "mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white"
-                      )}
+                      className={cn("mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white")}
                       style={{
                         display: selectedProgram ? "none" : "block",
                       }}
@@ -103,7 +96,7 @@ const ProgramDropdown: FC<{
               <CommandItem key={index}>
                 <div
                   onClick={() => {
-                    setSelectedProgram(item);
+                    setSelectedProgram(item)
                   }}
                   className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
                 >
@@ -115,13 +108,10 @@ const ProgramDropdown: FC<{
                     </div>
                   </div>
                   <CheckIcon
-                    className={cn(
-                      "mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white"
-                    )}
+                    className={cn("mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white")}
                     style={{
                       display:
-                        selectedProgram?.metadata?.title ==
-                        item?.metadata?.title
+                        selectedProgram?.metadata?.title == item?.metadata?.title
                           ? "block"
                           : "none",
                     }}
@@ -133,7 +123,7 @@ const ProgramDropdown: FC<{
         </Command>
       </Popover.Content>
     </Popover.Root>
-  );
-};
+  )
+}
 
-export default ProgramDropdown;
+export default ProgramDropdown

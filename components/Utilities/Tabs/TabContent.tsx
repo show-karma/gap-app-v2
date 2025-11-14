@@ -1,18 +1,18 @@
-import { ReactNode, useContext } from "react";
+import { type ReactNode, useContext } from "react"
 
-import { useTabsContext } from "./Tabs";
+import { useTabsContext } from "./Tabs"
 
 type TabContentProps = {
-  value: string;
-  children: ReactNode;
+  value: string
+  children: ReactNode
 }
 
 export const TabContent = ({ value, children }: TabContentProps) => {
   const { activeTab } = useTabsContext()
 
   if (activeTab !== value) {
-    return null;
+    return null
   }
 
-  return children;
+  return children
 }

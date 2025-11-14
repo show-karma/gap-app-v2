@@ -1,15 +1,15 @@
-"use client";
-import { Skeleton } from "@/components/Utilities/Skeleton";
-import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
-import { useImpactMeasurement } from "@/hooks/useImpactMeasurement";
-import { useCommunityStore } from "@/store/community";
-import formatCurrency from "@/utilities/formatCurrency";
-import { getCommunityStatsV2 } from "@/utilities/queries/getCommunityDataV2";
-import { useQuery } from "@tanstack/react-query";
-import { useParams, usePathname } from "next/navigation";
+"use client"
+import { useQuery } from "@tanstack/react-query"
+import { useParams, usePathname } from "next/navigation"
+import { InfoTooltip } from "@/components/Utilities/InfoTooltip"
+import { Skeleton } from "@/components/Utilities/Skeleton"
+import { useImpactMeasurement } from "@/hooks/useImpactMeasurement"
+import { useCommunityStore } from "@/store/community"
+import formatCurrency from "@/utilities/formatCurrency"
+import { getCommunityStatsV2 } from "@/utilities/queries/getCommunityDataV2"
 
 export const ImpactStatCards = () => {
-  const { data, isLoading } = useImpactMeasurement();
+  const { data, isLoading } = useImpactMeasurement()
 
   const stats = [
     {
@@ -31,13 +31,12 @@ export const ImpactStatCards = () => {
     {
       title: "Total Funding Allocated (with available data)",
       value:
-        data?.stats.totalFundingAllocated &&
-          data?.stats.totalFundingAllocated !== "NaN"
+        data?.stats.totalFundingAllocated && data?.stats.totalFundingAllocated !== "NaN"
           ? data?.stats.totalFundingAllocated
           : "-",
       color: "#A6EF67",
     },
-  ];
+  ]
 
   return stats.map((item) => (
     <div
@@ -65,23 +64,23 @@ export const ImpactStatCards = () => {
         )}
       </div>
     </div>
-  ));
-};
+  ))
+}
 
 export const CommunityStatCards = () => {
-  const params = useParams();
-  const communityId = params.communityId as string;
+  const params = useParams()
+  const communityId = params.communityId as string
   const {
     totalProjects: filteredProjectsCount,
     totalGrants: filteredGrantsCount,
     totalMilestones: filteredMilestonesCount,
-    isLoadingFilters
-  } = useCommunityStore();
+    isLoadingFilters,
+  } = useCommunityStore()
   const { data, isLoading } = useQuery({
     queryKey: ["community-stats", communityId],
     queryFn: () => getCommunityStatsV2(communityId),
     enabled: !!communityId,
-  });
+  })
 
   const stats = [
     {
@@ -113,32 +112,44 @@ export const CommunityStatCards = () => {
           </div>
           <div className="flex justify-between gap-3 text-xs">
             <span className="text-gray-600 dark:text-gray-400">Project Milestones</span>
-            <span className="font-medium">{formatCurrency(data.projectUpdatesBreakdown.projectMilestones)}</span>
+            <span className="font-medium">
+              {formatCurrency(data.projectUpdatesBreakdown.projectMilestones)}
+            </span>
           </div>
           <div className="flex justify-between gap-3 text-xs">
             <span className="text-gray-600 dark:text-gray-400">Project Milestone Completions</span>
-            <span className="font-medium">{formatCurrency(data.projectUpdatesBreakdown.projectCompletedMilestones)}</span>
+            <span className="font-medium">
+              {formatCurrency(data.projectUpdatesBreakdown.projectCompletedMilestones)}
+            </span>
           </div>
           <div className="flex justify-between gap-3 text-xs">
             <span className="text-gray-600 dark:text-gray-400">Project Updates</span>
-            <span className="font-medium">{formatCurrency(data.projectUpdatesBreakdown.projectUpdates)}</span>
+            <span className="font-medium">
+              {formatCurrency(data.projectUpdatesBreakdown.projectUpdates)}
+            </span>
           </div>
           <div className="flex justify-between gap-3 text-xs">
             <span className="text-gray-600 dark:text-gray-400">Grant Milestones</span>
-            <span className="font-medium">{formatCurrency(data.projectUpdatesBreakdown.grantMilestones)}</span>
+            <span className="font-medium">
+              {formatCurrency(data.projectUpdatesBreakdown.grantMilestones)}
+            </span>
           </div>
           <div className="flex justify-between gap-3 text-xs">
             <span className="text-gray-600 dark:text-gray-400">Grant Milestone Completions</span>
-            <span className="font-medium">{formatCurrency(data.projectUpdatesBreakdown.grantCompletedMilestones)}</span>
+            <span className="font-medium">
+              {formatCurrency(data.projectUpdatesBreakdown.grantCompletedMilestones)}
+            </span>
           </div>
           <div className="flex justify-between gap-3 text-xs">
             <span className="text-gray-600 dark:text-gray-400">Grant Updates</span>
-            <span className="font-medium">{formatCurrency(data.projectUpdatesBreakdown.grantUpdates)}</span>
+            <span className="font-medium">
+              {formatCurrency(data.projectUpdatesBreakdown.grantUpdates)}
+            </span>
           </div>
         </div>
       ) : null,
     },
-  ];
+  ]
   return stats.map((item) => (
     <div
       key={item.title}
@@ -158,7 +169,7 @@ export const CommunityStatCards = () => {
             {item.title}
           </h3>
           {item.tooltip && (
-            <InfoTooltip 
+            <InfoTooltip
               content={item.tooltip}
               side="top"
               align="start"
@@ -175,16 +186,16 @@ export const CommunityStatCards = () => {
         )}
       </div>
     </div>
-  ));
-};
+  ))
+}
 
 export const CommunityImpactStatCards = () => {
-  const pathname = usePathname();
-  const isImpactPage = pathname.includes("/impact");
+  const pathname = usePathname()
+  const isImpactPage = pathname.includes("/impact")
 
   return (
     <div className="flex flex-1 gap-6 flex-row max-sm:flex-col py-2">
       {isImpactPage ? <ImpactStatCards /> : <CommunityStatCards />}
     </div>
-  );
-};
+  )
+}

@@ -1,19 +1,14 @@
-import { Button } from "@/components/Utilities/Button";
-import { Skeleton } from "@/components/Utilities/Skeleton";
-import {
-  ChevronLeftIcon,
-  MagnifyingGlassIcon,
-} from "@heroicons/react/24/solid";
-import { LoadingProgramTable } from "./Programs";
+import { ChevronLeftIcon, MagnifyingGlassIcon } from "@heroicons/react/24/solid"
+import { Button } from "@/components/Utilities/Button"
+import { Skeleton } from "@/components/Utilities/Skeleton"
+import { LoadingProgramTable } from "./Programs"
 export const LoadingManagePrograms = () => {
   return (
     <section className="my-10 flex w-full max-w-full flex-col justify-between items-center gap-6 px-12 pb-7 pt-5 max-2xl:px-8 max-md:px-4">
       <div className="flex flex-row gap-2 justify-start w-full">
         <Button className="flex flex-row gap-2 bg-transparent hover:bg-transparent text-[#004EEB] text-sm p-0">
           <ChevronLeftIcon className="w-4 h-4" />
-          <p className="border-b border-b-[#004EEB]">
-            Back to Programs Explorer
-          </p>
+          <p className="border-b border-b-[#004EEB]">Back to Programs Explorer</p>
         </Button>
       </div>
 
@@ -72,5 +67,5 @@ export const LoadingManagePrograms = () => {
         </div>
       </>
     </section>
-  );
-};
+  )
+}

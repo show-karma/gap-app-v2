@@ -1,6 +1,7 @@
 // Carousel.tsx
-import React, { CSSProperties } from "react";
-import { useSnapCarousel } from "react-snap-carousel";
+import type React from "react"
+import type { CSSProperties } from "react"
+import { useSnapCarousel } from "react-snap-carousel"
 
 const styles = {
   root: {},
@@ -47,25 +48,20 @@ const styles = {
     display: "flex",
     justifyContent: "center",
   },
-} satisfies Record<string, CSSProperties>;
+} satisfies Record<string, CSSProperties>
 
 interface CarouselProps<T> {
-  readonly items: T[];
-  readonly renderItem: (
-    props: CarouselRenderItemProps<T>
-  ) => React.ReactElement<CarouselItemProps>;
+  readonly items: T[]
+  readonly renderItem: (props: CarouselRenderItemProps<T>) => React.ReactElement<CarouselItemProps>
 }
 
 interface CarouselRenderItemProps<T> {
-  item: T;
-  isSnapPoint: boolean;
-  index: number;
+  item: T
+  isSnapPoint: boolean
+  index: number
 }
 
-export const Carousel = <T extends any>({
-  items,
-  renderItem,
-}: CarouselProps<T>) => {
+export const Carousel = <T,>({ items, renderItem }: CarouselProps<T>) => {
   const {
     scrollRef,
     pages,
@@ -76,7 +72,7 @@ export const Carousel = <T extends any>({
     next,
     goTo,
     snapPointIndexes,
-  } = useSnapCarousel();
+  } = useSnapCarousel()
   return (
     <div style={styles.root}>
       <ul style={styles.scroll} ref={scrollRef}>
@@ -101,12 +97,12 @@ export const Carousel = <T extends any>({
         ))}
       </div>
     </div>
-  );
-};
+  )
+}
 
 interface CarouselItemProps {
-  readonly isSnapPoint: boolean;
-  readonly children?: React.ReactNode;
+  readonly isSnapPoint: boolean
+  readonly children?: React.ReactNode
 }
 
 export const CarouselItem = ({ isSnapPoint, children }: CarouselItemProps) => (
@@ -118,4 +114,4 @@ export const CarouselItem = ({ isSnapPoint, children }: CarouselItemProps) => (
   >
     {children}
   </li>
-);
+)

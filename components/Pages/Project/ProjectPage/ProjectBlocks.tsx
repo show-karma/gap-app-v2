@@ -1,30 +1,30 @@
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import { useProjectStore } from "@/store";
-import { useEndorsementStore } from "@/store/modals/endorsement";
-import { useIntroModalStore } from "@/store/modals/intro";
-import { envVars } from "@/utilities/enviromentVars";
-import { PAGES } from "@/utilities/pages";
-import { cn } from "@/utilities/tailwind";
-import Image from "next/image";
-import { useParams } from "next/navigation";
+import Image from "next/image"
+import { useParams } from "next/navigation"
+import { ExternalLink } from "@/components/Utilities/ExternalLink"
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
+import { useProjectStore } from "@/store"
+import { useEndorsementStore } from "@/store/modals/endorsement"
+import { useIntroModalStore } from "@/store/modals/intro"
+import { envVars } from "@/utilities/enviromentVars"
+import { PAGES } from "@/utilities/pages"
+import { cn } from "@/utilities/tailwind"
 
 export function ProjectBlocks() {
-  const project = useProjectStore((state) => state.project);
-  const { setIsEndorsementOpen } = useEndorsementStore();
-  const [, copy] = useCopyToClipboard();
-  const params = useParams();
-  const { setIsIntroModalOpen } = useIntroModalStore();
+  const project = useProjectStore((state) => state.project)
+  const { setIsEndorsementOpen } = useEndorsementStore()
+  const [, copy] = useCopyToClipboard()
+  const params = useParams()
+  const { setIsIntroModalOpen } = useIntroModalStore()
 
   const mountBlocks = () => {
-    let blocks: {
-      iconSrc: string;
-      title: string;
-      description: string;
-      link?: string;
-      action?: () => void;
-      disabled?: boolean;
-      bg: string;
+    const blocks: {
+      iconSrc: string
+      title: string
+      description: string
+      link?: string
+      action?: () => void
+      disabled?: boolean
+      bg: string
     }[] = [
       {
         iconSrc: "/icons/wave.svg",
@@ -33,17 +33,13 @@ export function ProjectBlocks() {
         action: () => setIsIntroModalOpen(true),
         bg: "bg-[#DBFFC5]",
       },
-    ];
+    ]
 
-    const havePitchDeck = !!project?.details?.data.links?.find(
-      (link) => link.type === "pitchDeck"
-    )?.url;
-    const haveDemoVideo = !!project?.details?.data.links?.find(
-      (link) => link.type === "demoVideo"
-    )?.url;
-    const haveWebsite = !!project?.details?.data.links?.find(
-      (link) => link.type === "website"
-    )?.url;
+    const havePitchDeck = !!project?.details?.data.links?.find((link) => link.type === "pitchDeck")
+      ?.url
+    const haveDemoVideo = !!project?.details?.data.links?.find((link) => link.type === "demoVideo")
+      ?.url
+    const haveWebsite = !!project?.details?.data.links?.find((link) => link.type === "website")?.url
 
     if (!havePitchDeck || !haveDemoVideo) {
       blocks.push({
@@ -52,7 +48,7 @@ export function ProjectBlocks() {
         description: "Publicly endorse our project",
         action: () => setIsEndorsementOpen(true),
         bg: "bg-[#FFF3D4]",
-      });
+      })
     }
     if (haveWebsite) {
       blocks.push({
@@ -62,16 +58,10 @@ export function ProjectBlocks() {
         link: project?.details?.data.links
           ?.find((link) => link.type === "website")
           ?.url.includes("http")
-          ? project?.details?.data.links?.find(
-              (link) => link.type === "website"
-            )?.url
-          : `https://${
-              project?.details?.data.links?.find(
-                (link) => link.type === "website"
-              )?.url
-            }`,
+          ? project?.details?.data.links?.find((link) => link.type === "website")?.url
+          : `https://${project?.details?.data.links?.find((link) => link.type === "website")?.url}`,
         bg: "bg-[#FFE6D5]",
-      });
+      })
     }
     if (havePitchDeck) {
       blocks.push({
@@ -82,15 +72,11 @@ export function ProjectBlocks() {
         link: project?.details?.data.links
           ?.find((link) => link.type === "pitchDeck")
           ?.url.includes("http")
-          ? project?.details?.data.links?.find(
-              (link) => link.type === "pitchDeck"
-            )?.url
+          ? project?.details?.data.links?.find((link) => link.type === "pitchDeck")?.url
           : `https://${
-              project?.details?.data.links?.find(
-                (link) => link.type === "pitchDeck"
-              )?.url
+              project?.details?.data.links?.find((link) => link.type === "pitchDeck")?.url
             }`,
-      });
+      })
     }
     if (haveDemoVideo) {
       blocks.push({
@@ -101,21 +87,17 @@ export function ProjectBlocks() {
         link: project?.details?.data.links
           ?.find((link) => link.type === "demoVideo")
           ?.url.includes("http")
-          ? project?.details?.data.links?.find(
-              (link) => link.type === "demoVideo"
-            )?.url
+          ? project?.details?.data.links?.find((link) => link.type === "demoVideo")?.url
           : `https://${
-              project?.details?.data.links?.find(
-                (link) => link.type === "demoVideo"
-              )?.url
+              project?.details?.data.links?.find((link) => link.type === "demoVideo")?.url
             }`,
-      });
+      })
     }
 
-    return blocks;
-  };
+    return blocks
+  }
 
-  const blocksMounted = mountBlocks();
+  const blocksMounted = mountBlocks()
 
   function Block({ item }: { item: (typeof blocksMounted)[number] }) {
     return (
@@ -125,16 +107,10 @@ export function ProjectBlocks() {
           item.bg
         )}
       >
-        <Image
-          width={24}
-          height={24}
-          src={item.iconSrc}
-          alt={item.title}
-          className="w-6 h-6"
-        />
+        <Image width={24} height={24} src={item.iconSrc} alt={item.title} className="w-6 h-6" />
         <p className="text-sm font-bold text-black text-left">{item.title}</p>
       </div>
-    );
+    )
   }
 
   return (
@@ -152,15 +128,12 @@ export function ProjectBlocks() {
           </div>
         ) : (
           <div className="flex flex-1" key={item.title}>
-            <ExternalLink
-              href={item.link}
-              className="w-full h-full min-h-max max-h-full"
-            >
+            <ExternalLink href={item.link} className="w-full h-full min-h-max max-h-full">
               <Block key={item.title} item={item} />
             </ExternalLink>
           </div>
         )
       )}
     </div>
-  );
+  )
 }

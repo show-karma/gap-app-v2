@@ -1,39 +1,39 @@
-"use client";
-import { ProjectObjectiveForm } from "@/components/Forms/ProjectObjective";
-import { Button } from "@/components/Utilities/Button";
-import { DatePicker } from "@/components/Utilities/DatePicker";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { useAllMilestones } from "@/hooks/useAllMilestones";
-import { useGap } from "@/hooks/useGap";
-import { useProjectStore } from "@/store";
-import { useProgressModalStore } from "@/store/modals/progress";
-import { useStepper } from "@/store/modals/txStepper";
-import { chainNameDictionary } from "@/utilities/chainNameDictionary";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
-import { PAGES } from "@/utilities/pages";
-import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Milestone } from "@show-karma/karma-gap-sdk";
-import { GapContract } from "@show-karma/karma-gap-sdk/core/class/contract/GapContract";
-import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
-import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { Transaction } from "ethers";
-import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
-import { Controller, SubmitHandler, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
-import { z } from "zod";
-import { MultiSelect } from "../../../components/Utilities/MultiSelect";
-import { useWallet } from "@/hooks/useWallet";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+"use client"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { Milestone } from "@show-karma/karma-gap-sdk"
+import { GapContract } from "@show-karma/karma-gap-sdk/core/class/contract/GapContract"
+import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone"
+import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
+import type { Transaction } from "ethers"
+import { useParams, useRouter } from "next/navigation"
+import { useState } from "react"
+import { Controller, type SubmitHandler, useForm } from "react-hook-form"
+import toast from "react-hot-toast"
+import { useAccount } from "wagmi"
+import { z } from "zod"
+import { ProjectObjectiveForm } from "@/components/Forms/ProjectObjective"
+import { Button } from "@/components/Utilities/Button"
+import { DatePicker } from "@/components/Utilities/DatePicker"
+import { errorManager } from "@/components/Utilities/errorManager"
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor"
+import { useAllMilestones } from "@/hooks/useAllMilestones"
+import { useGap } from "@/hooks/useGap"
+import { useWallet } from "@/hooks/useWallet"
+import { useProjectStore } from "@/store"
+import { useProgressModalStore } from "@/store/modals/progress"
+import { useStepper } from "@/store/modals/txStepper"
+import { chainNameDictionary } from "@/utilities/chainNameDictionary"
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils"
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain"
+import fetchData from "@/utilities/fetchData"
+import { INDEXER } from "@/utilities/indexer"
+import { PAGES } from "@/utilities/pages"
+import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize"
+import { safeGetWalletClient } from "@/utilities/wallet-helpers"
+import { MultiSelect } from "../../../components/Utilities/MultiSelect"
 
 // Helper function to wait for a specified time
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 // Define the form schema for creating milestones
 const milestoneSchema = z.object({
@@ -58,33 +58,33 @@ const milestoneSchema = z.object({
     .refine(
       (data) => {
         // Only validate if both dates exist
-        if (!data || !data.startsAt || !data.endsAt) return true;
+        if (!data || !data.startsAt || !data.endsAt) return true
 
         // Ensure start date is not after end date
-        return data.startsAt <= data.endsAt;
+        return data.startsAt <= data.endsAt
       },
       {
         message: "Start date must be before the end date",
         path: ["startsAt"],
       }
     ),
-});
+})
 
-type MilestoneFormData = z.infer<typeof milestoneSchema>;
+type MilestoneFormData = z.infer<typeof milestoneSchema>
 
 export const UnifiedMilestoneScreen = () => {
-  const { project, refreshProject } = useProjectStore();
-  const { closeProgressModal } = useProgressModalStore();
-  const [selectedGrantIds, setSelectedGrantIds] = useState<string[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const grants: IGrantResponse[] = project?.grants || [];
-  const { address, chain } = useAccount();
-  const { switchChainAsync } = useWallet();
-  const { gap } = useGap();
-  const { changeStepperStep, setIsStepper } = useStepper();
-  const { projectId } = useParams();
-  const { refetch } = useAllMilestones(projectId as string);
-  const router = useRouter();
+  const { project, refreshProject } = useProjectStore()
+  const { closeProgressModal } = useProgressModalStore()
+  const [selectedGrantIds, setSelectedGrantIds] = useState<string[]>([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const grants: IGrantResponse[] = project?.grants || []
+  const { address, chain } = useAccount()
+  const { switchChainAsync } = useWallet()
+  const { gap } = useGap()
+  const { changeStepperStep, setIsStepper } = useStepper()
+  const { projectId } = useParams()
+  const { refetch } = useAllMilestones(projectId as string)
+  const router = useRouter()
 
   const {
     register,
@@ -100,37 +100,41 @@ export const UnifiedMilestoneScreen = () => {
       description: "",
       priority: undefined,
     },
-  });
+  })
 
   const grantOptions = grants.map((grant) => ({
     value: grant.uid,
     label: `${grant.details?.data.title || "Untitled Grant"}`,
     chainId: grant.chainID,
-  }));
+  }))
 
   const handleGrantSelectionChange = (selectedIds: string[]) => {
-    setSelectedGrantIds(selectedIds);
-  };
+    setSelectedGrantIds(selectedIds)
+  }
 
   // Create a roadmap milestone (project objective)
   const createRoadmapMilestone = async (data: MilestoneFormData) => {
-    if (!gap || !project) return;
-    let gapClient = gap;
-    setIsSubmitting(true);
+    if (!gap || !project) return
+    let gapClient = gap
+    setIsSubmitting(true)
 
     try {
-      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+      const {
+        success,
+        chainId: actualChainId,
+        gapClient: newGapClient,
+      } = await ensureCorrectChain({
         targetChainId: project.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
-      });
+      })
 
       if (!success) {
-        setIsSubmitting(false);
-        return;
+        setIsSubmitting(false)
+        return
       }
 
-      gapClient = newGapClient;
+      gapClient = newGapClient
 
       const newObjective = new ProjectMilestone({
         data: sanitizeObject({
@@ -141,212 +145,192 @@ export const UnifiedMilestoneScreen = () => {
         schema: gapClient.findSchema("ProjectMilestone"),
         refUID: project.uid,
         recipient: (address as `0x${string}`) || "0x00",
-      });
+      })
 
-      const { walletClient, error } = await safeGetWalletClient(
-        actualChainId
-      );
+      const { walletClient, error } = await safeGetWalletClient(actualChainId)
 
       if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+        throw new Error("Failed to connect to wallet", { cause: error })
       }
 
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await walletClientToSigner(walletClient)
       const sanitizedData = {
         title: sanitizeInput(data.title),
         text: sanitizeInput(data.description),
-      };
+      }
 
       await newObjective
         .attest(walletSigner as any, sanitizedData, changeStepperStep)
         .then(async (res) => {
-          const txHash = res?.tx[0]?.hash;
+          const txHash = res?.tx[0]?.hash
           if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, project.chainID),
-              "POST",
-              {}
-            );
+            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), "POST", {})
           } else {
             await fetchData(
               INDEXER.ATTESTATION_LISTENER(newObjective.uid, project.chainID),
               "POST",
               {}
-            );
+            )
           }
 
-          changeStepperStep("indexing");
+          changeStepperStep("indexing")
 
           // More robust refetch with multiple attempts
-          await tryRefetch();
+          await tryRefetch()
 
-          toast.success("Roadmap milestone created successfully");
-          changeStepperStep("indexed");
-          closeProgressModal();
-        });
+          toast.success("Roadmap milestone created successfully")
+          changeStepperStep("indexed")
+          closeProgressModal()
+        })
     } catch (error) {
-      errorManager("Error creating roadmap milestone", error);
-      toast.error("Failed to create roadmap milestone");
-      console.log(error);
+      errorManager("Error creating roadmap milestone", error)
+      toast.error("Failed to create roadmap milestone")
+      console.log(error)
     } finally {
-      setIsSubmitting(false);
-      setIsStepper(false);
+      setIsSubmitting(false)
+      setIsStepper(false)
     }
-  };
+  }
 
   // Function to attempt multiple refetches with delays between attempts
   const tryRefetch = async (attempts = 3, delayMs = 2000) => {
     for (let i = 0; i < attempts; i++) {
-      await refetch();
-      await refreshProject();
+      await refetch()
+      await refreshProject()
       if (i < attempts - 1) {
-        await sleep(delayMs);
+        await sleep(delayMs)
       }
     }
-  };
+  }
 
   // Create grant milestone(s) for selected grants
   const createGrantMilestones = async (data: MilestoneFormData) => {
-    if (!gap || !project || selectedGrantIds.length === 0) return;
+    if (!gap || !project || selectedGrantIds.length === 0) return
 
-    setIsSubmitting(true);
-    setIsStepper(true);
+    setIsSubmitting(true)
+    setIsStepper(true)
 
-    let toastsToRemove: string[] = [];
+    const toastsToRemove: string[] = []
 
     try {
       // Group grants by chain ID to process each network separately
-      const grantsByChain: Record<
-        number,
-        { grant: IGrantResponse; index: number }[]
-      > = {};
+      const grantsByChain: Record<number, { grant: IGrantResponse; index: number }[]> = {}
 
       // Build the groups by chain
       selectedGrantIds.forEach((grantId, index) => {
-        const grant = grants.find((g) => g.uid === grantId);
-        if (!grant) return;
+        const grant = grants.find((g) => g.uid === grantId)
+        if (!grant) return
 
         if (!grantsByChain[grant.chainID]) {
-          grantsByChain[grant.chainID] = [];
+          grantsByChain[grant.chainID] = []
         }
 
-        grantsByChain[grant.chainID].push({ grant, index });
-      });
+        grantsByChain[grant.chainID].push({ grant, index })
+      })
 
       // Sort chain IDs to prioritize the user's current chain
       const sortedChainIds = Object.keys(grantsByChain).sort((a, b) => {
-        const aId = Number(a);
-        const bId = Number(b);
+        const aId = Number(a)
+        const bId = Number(b)
 
         // If user is on chain A, prioritize A
-        if (chain?.id === aId) return -1;
+        if (chain?.id === aId) return -1
         // If user is on chain B, prioritize B
-        if (chain?.id === bId) return 1;
+        if (chain?.id === bId) return 1
         // Otherwise, just sort numerically as fallback
-        return aId - bId;
-      });
+        return aId - bId
+      })
 
       // Process each chain group in the prioritized order
       for (const chainIdStr of sortedChainIds) {
-        let gapClient = gap;
-        const chainId = Number(chainIdStr);
-        const chainGrants = grantsByChain[chainId];
-        const chainName = chainNameDictionary(chainId);
+        let gapClient = gap
+        const chainId = Number(chainIdStr)
+        const chainGrants = grantsByChain[chainId]
+        const chainName = chainNameDictionary(chainId)
 
-        changeStepperStep("preparing");
+        changeStepperStep("preparing")
         // Notify user we're processing grants on this chain
         toast.loading(`Creating milestone`, {
           id: `chain-${chainId}`,
-        });
-        toastsToRemove.push(`chain-${chainId}`);
+        })
+        toastsToRemove.push(`chain-${chainId}`)
 
         // Switch chain if needed
-        const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        const {
+          success,
+          chainId: actualChainId,
+          gapClient: newGapClient,
+        } = await ensureCorrectChain({
           targetChainId: chainId,
           currentChainId: chain?.id,
           switchChainAsync,
-        });
+        })
 
         if (!success) {
-          setIsSubmitting(false);
-          continue; // Skip this chain if switch fails
+          setIsSubmitting(false)
+          continue // Skip this chain if switch fails
         }
 
-        gapClient = newGapClient;
+        gapClient = newGapClient
 
         // If there's only one grant on this chain, process it normally
         if (chainGrants.length === 1) {
-          const { grant } = chainGrants[0];
+          const { grant } = chainGrants[0]
 
           const milestone = sanitizeObject({
             title: data.title,
             description: data.description,
-            endsAt: data.dates?.endsAt
-              ? data.dates.endsAt.getTime() / 1000
-              : undefined,
-            startsAt: data.dates?.startsAt
-              ? data.dates.startsAt.getTime() / 1000
-              : undefined,
+            endsAt: data.dates?.endsAt ? data.dates.endsAt.getTime() / 1000 : undefined,
+            startsAt: data.dates?.startsAt ? data.dates.startsAt.getTime() / 1000 : undefined,
             priority:
-              data.priority !== undefined && data.priority !== null
-                ? data.priority
-                : undefined,
-          });
+              data.priority !== undefined && data.priority !== null ? data.priority : undefined,
+          })
 
           const milestoneToAttest = new Milestone({
             refUID: grant.uid,
             schema: gapClient.findSchema("Milestone"),
             recipient: address as `0x${string}`,
             data: milestone,
-          });
+          })
 
-          const { walletClient, error } = await safeGetWalletClient(actualChainId);
+          const { walletClient, error } = await safeGetWalletClient(actualChainId)
 
           if (error || !walletClient || !gapClient) {
             throw new Error(`Failed to connect to wallet on ${chainName}`, {
               cause: error,
-            });
+            })
           }
 
-          const walletSigner = await walletClientToSigner(walletClient);
+          const walletSigner = await walletClientToSigner(walletClient)
 
-          const result = await milestoneToAttest.attest(
-            walletSigner as any,
-            changeStepperStep
-          );
+          const result = await milestoneToAttest.attest(walletSigner as any, changeStepperStep)
 
           // Handle indexer notification
-          const txHash = result?.tx[0]?.hash;
+          const txHash = result?.tx[0]?.hash
           if (txHash) {
             await fetchData(
               INDEXER.ATTESTATION_LISTENER(txHash, milestoneToAttest.chainID),
               "POST",
               {}
-            );
+            )
           }
 
           toast.success(`Created milestone successfully`, {
             id: `chain-${chainId}`,
-          });
+          })
         } else {
           // Multiple grants on the same chain - use attestToMultipleGrants
           // Get the first grant as reference
-          const firstGrant = chainGrants[0].grant;
+          const firstGrant = chainGrants[0].grant
 
           const milestone = sanitizeObject({
             title: data.title,
             description: data.description,
-            endsAt: data.dates?.endsAt
-              ? data.dates.endsAt.getTime() / 1000
-              : undefined,
-            startsAt: data.dates?.startsAt
-              ? data.dates.startsAt.getTime() / 1000
-              : undefined,
+            endsAt: data.dates?.endsAt ? data.dates.endsAt.getTime() / 1000 : undefined,
+            startsAt: data.dates?.startsAt ? data.dates.startsAt.getTime() / 1000 : undefined,
             priority:
-              data.priority !== undefined && data.priority !== null
-                ? data.priority
-                : undefined,
-          });
+              data.priority !== undefined && data.priority !== null ? data.priority : undefined,
+          })
 
           const milestoneToAttest = new Milestone({
             // We'll use the first grant as reference, but it will be attested to all selected grants
@@ -354,25 +338,23 @@ export const UnifiedMilestoneScreen = () => {
             schema: gapClient.findSchema("Milestone"),
             recipient: address as `0x${string}`,
             data: milestone,
-          });
+          })
 
-          const { walletClient, error } = await safeGetWalletClient(actualChainId);
+          const { walletClient, error } = await safeGetWalletClient(actualChainId)
 
           if (error || !walletClient || !gapClient) {
             throw new Error(`Failed to connect to wallet on ${chainName}`, {
               cause: error,
-            });
+            })
           }
 
-          const walletSigner = await walletClientToSigner(walletClient);
+          const walletSigner = await walletClientToSigner(walletClient)
 
           // Instead of using indices, directly use grant UIDs
-          const grantUIDs = chainGrants.map(
-            (item) => item.grant.uid as `0x${string}`
-          );
+          const grantUIDs = chainGrants.map((item) => item.grant.uid as `0x${string}`)
 
           // Create separate milestone objects for each grant
-          const allPayloads: any[] = [];
+          const allPayloads: any[] = []
 
           for (const grantUID of grantUIDs) {
             // Create a new milestone for each grant with direct reference
@@ -381,12 +363,12 @@ export const UnifiedMilestoneScreen = () => {
               recipient: milestoneToAttest.recipient,
               data: milestoneToAttest.data,
               refUID: grantUID, // Direct reference to the grant UID
-            });
+            })
 
             // Generate payload for this grant
-            const payload = await grantMilestone.multiAttestPayload();
+            const payload = await grantMilestone.multiAttestPayload()
             // Add each item from payload to allPayloads
-            payload.forEach((item) => allPayloads.push(item));
+            payload.forEach((item) => allPayloads.push(item))
           }
 
           // Use the GapContract to submit all attestations in a single transaction
@@ -394,76 +376,71 @@ export const UnifiedMilestoneScreen = () => {
             walletSigner as any,
             allPayloads.map((p) => p[1]),
             changeStepperStep
-          );
+          )
 
           // Handle indexer notification for each tx
           if (result.tx.length > 0) {
             const txPromises = result.tx.map((tx: Transaction) =>
               tx.hash
                 ? fetchData(
-                  INDEXER.ATTESTATION_LISTENER(
-                    tx.hash as `0x${string}`,
-                    chainId
-                  ),
-                  "POST",
-                  {}
-                )
+                    INDEXER.ATTESTATION_LISTENER(tx.hash as `0x${string}`, chainId),
+                    "POST",
+                    {}
+                  )
                 : Promise.resolve()
-            );
-            await Promise.all(txPromises);
+            )
+            await Promise.all(txPromises)
           }
 
           toast.success(`Created milestones on ${chainName}`, {
             id: `chain-${chainId}`,
-          });
+          })
         }
       }
 
-      changeStepperStep("indexing");
+      changeStepperStep("indexing")
 
       // Wait a bit for indexing and perform multiple refetch attempts
-      await sleep(1500);
-      await tryRefetch();
+      await sleep(1500)
+      await tryRefetch()
 
-      changeStepperStep("indexed");
+      changeStepperStep("indexed")
 
-      router.push(
-        PAGES.PROJECT.UPDATES(project?.details?.data.slug || project?.uid || "")
-      );
-      closeProgressModal();
+      router.push(PAGES.PROJECT.UPDATES(project?.details?.data.slug || project?.uid || ""))
+      closeProgressModal()
     } catch (error) {
-      errorManager("Error creating grant milestones", error);
-      toastsToRemove.forEach((toastId) => toast.remove(toastId));
-      console.log(error);
+      errorManager("Error creating grant milestones", error)
+      toastsToRemove.forEach((toastId) => toast.remove(toastId))
+      console.log(error)
     } finally {
-      setIsSubmitting(false);
-      setIsStepper(false);
+      setIsSubmitting(false)
+      setIsStepper(false)
     }
-  };
+  }
 
   const onSubmit: SubmitHandler<MilestoneFormData> = async (data) => {
     // For grant milestones, validate that endsAt is provided
     if (selectedGrantIds.length > 0 && !data.dates?.endsAt) {
-      toast.error("End date is required for grant milestones");
-      return;
+      toast.error("End date is required for grant milestones")
+      return
     }
 
     // Validate dates relationship if both exist
     if (data.dates?.startsAt && data.dates?.endsAt) {
       if (data.dates.startsAt > data.dates.endsAt) {
-        toast.error("Start date must be before the end date");
-        return;
+        toast.error("Start date must be before the end date")
+        return
       }
     }
 
     if (selectedGrantIds.length === 0) {
       // Create a roadmap milestone
-      await createRoadmapMilestone(data);
+      await createRoadmapMilestone(data)
     } else {
       // Create grant milestone(s)
-      await createGrantMilestones(data);
+      await createGrantMilestones(data)
     }
-  };
+  }
 
   // If no grants exist - simpler UI for roadmap milestones only
   if (!grants.length && project) {
@@ -471,30 +448,33 @@ export const UnifiedMilestoneScreen = () => {
       <div className="flex flex-col gap-6">
         <ProjectObjectiveForm
           stateHandler={(state) => {
-            if (!state) closeProgressModal();
+            if (!state) closeProgressModal()
           }}
         />
       </div>
-    );
+    )
   }
 
   // Group grants by chain for better display
-  const grantsByChain = selectedGrantIds.reduce((acc, grantId) => {
-    const grant = grants.find((g) => g.uid === grantId);
-    if (!grant) return acc;
+  const grantsByChain = selectedGrantIds.reduce(
+    (acc, grantId) => {
+      const grant = grants.find((g) => g.uid === grantId)
+      if (!grant) return acc
 
-    const chainId = grant.chainID;
-    if (!acc[chainId]) {
-      acc[chainId] = {
-        chainId,
-        chainName: chainNameDictionary(chainId),
-        grants: [],
-      };
-    }
+      const chainId = grant.chainID
+      if (!acc[chainId]) {
+        acc[chainId] = {
+          chainId,
+          chainName: chainNameDictionary(chainId),
+          grants: [],
+        }
+      }
 
-    acc[chainId].grants.push(grant);
-    return acc;
-  }, {} as Record<number, { chainId: number; chainName: string; grants: IGrantResponse[] }>);
+      acc[chainId].grants.push(grant)
+      return acc
+    },
+    {} as Record<number, { chainId: number; chainName: string; grants: IGrantResponse[] }>
+  )
 
   return (
     <div className="flex flex-col gap-6">
@@ -514,24 +494,18 @@ export const UnifiedMilestoneScreen = () => {
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         {/* Title Field - For Both Types */}
         <div className="flex flex-col gap-2">
-          <label className="text-sm font-bold text-black dark:text-zinc-100">
-            Title *
-          </label>
+          <label className="text-sm font-bold text-black dark:text-zinc-100">Title *</label>
           <input
             className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
             placeholder="Milestone title"
             {...register("title")}
           />
-          {errors.title && (
-            <p className="text-red-500 text-sm">{errors.title.message}</p>
-          )}
+          {errors.title && <p className="text-red-500 text-sm">{errors.title.message}</p>}
         </div>
 
         {/* Description Field - For Both Types */}
         <div className="flex flex-col gap-2">
-          <label className="text-sm font-bold text-black dark:text-zinc-100">
-            Description *
-          </label>
+          <label className="text-sm font-bold text-black dark:text-zinc-100">Description *</label>
           <Controller
             name="description"
             control={control}
@@ -582,7 +556,7 @@ export const UnifiedMilestoneScreen = () => {
                     <DatePicker
                       selected={field.value}
                       onSelect={(date: Date) => {
-                        field.onChange(date);
+                        field.onChange(date)
                       }}
                       maxDate={watch("dates.endsAt")}
                       placeholder="Select start date"
@@ -602,7 +576,7 @@ export const UnifiedMilestoneScreen = () => {
                     <DatePicker
                       selected={field.value}
                       onSelect={(date: Date) => {
-                        field.onChange(date);
+                        field.onChange(date)
                       }}
                       minDate={watch("dates.startsAt") || new Date()}
                       placeholder="Select end date"
@@ -611,9 +585,7 @@ export const UnifiedMilestoneScreen = () => {
                   )}
                 />
                 {errors.dates?.endsAt && (
-                  <p className="text-red-500 text-sm">
-                    {errors.dates?.endsAt.message}
-                  </p>
+                  <p className="text-red-500 text-sm">{errors.dates?.endsAt.message}</p>
                 )}
               </div>
             </div>
@@ -621,15 +593,14 @@ export const UnifiedMilestoneScreen = () => {
         )}
 
         {/* Display warning if grants are on multiple chains */}
-        {selectedGrantIds.length > 0 &&
-          Object.keys(grantsByChain).length > 1 && (
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
-              <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                You are creating milestones across multiple chains. You will
-                need to approve transactions for each chain separately.
-              </p>
-            </div>
-          )}
+        {selectedGrantIds.length > 0 && Object.keys(grantsByChain).length > 1 && (
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
+            <p className="text-sm text-yellow-700 dark:text-yellow-300">
+              You are creating milestones across multiple chains. You will need to approve
+              transactions for each chain separately.
+            </p>
+          </div>
+        )}
 
         <div className="flex flex-row gap-2 justify-end mt-4">
           <Button
@@ -650,5 +621,5 @@ export const UnifiedMilestoneScreen = () => {
         </div>
       </form>
     </div>
-  );
-};
+  )
+}

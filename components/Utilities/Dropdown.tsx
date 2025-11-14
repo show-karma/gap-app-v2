@@ -1,21 +1,18 @@
-import { Dispatch, FC, Fragment, useState } from "react";
-import { Listbox, Transition } from "@headlessui/react";
-import { CheckIcon } from "@heroicons/react/20/solid";
-import { ChevronDown } from "../Icons/ChevronDown";
+import { Listbox, Transition } from "@headlessui/react"
+import { CheckIcon } from "@heroicons/react/20/solid"
+import { type Dispatch, type FC, Fragment, useState } from "react"
+import { ChevronDown } from "../Icons/ChevronDown"
 
 function classNames(...classes: any[]) {
-  return classes.filter(Boolean).join(" ");
+  return classes.filter(Boolean).join(" ")
 }
 
 interface DropdownProps {
-  list: string[];
-  onChangeListener: (
-    value: string,
-    setToChange: Dispatch<React.SetStateAction<string[]>>
-  ) => void;
-  setToChange: Dispatch<React.SetStateAction<string[]>>;
-  unselectedText: string;
-  selected: string[];
+  list: string[]
+  onChangeListener: (value: string, setToChange: Dispatch<React.SetStateAction<string[]>>) => void
+  setToChange: Dispatch<React.SetStateAction<string[]>>
+  unselectedText: string
+  selected: string[]
 }
 
 export const Dropdown: FC<DropdownProps> = ({
@@ -32,9 +29,7 @@ export const Dropdown: FC<DropdownProps> = ({
           <div className="relative">
             <Listbox.Button className="relative min-w-40 max-w-52 w-full cursor-default rounded-md bg-white dark:bg-zinc-800 dark:text-zinc-100 py-3 pl-4 pr-12 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
               <span className="block truncate">
-                {selected.length
-                  ? `${selected.length} selected`
-                  : unselectedText}
+                {selected.length ? `${selected.length} selected` : unselectedText}
               </span>
               <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                 <ChevronDown className="h-5 w-5 text-black dark:text-white" />
@@ -61,7 +56,7 @@ export const Dropdown: FC<DropdownProps> = ({
                   }
                   value={"All"}
                   onClick={() => {
-                    setToChange([]);
+                    setToChange([])
                   }}
                 >
                   <div className="flex flex-row gap-3">
@@ -75,11 +70,7 @@ export const Dropdown: FC<DropdownProps> = ({
                     </span>
 
                     {!selected.length ? (
-                      <span
-                        className={
-                          "absolute inset-y-0 right-0 flex items-center pr-4"
-                        }
-                      >
+                      <span className={"absolute inset-y-0 right-0 flex items-center pr-4"}>
                         <CheckIcon className="h-5 w-5" aria-hidden="true" />
                       </span>
                     ) : null}
@@ -110,11 +101,7 @@ export const Dropdown: FC<DropdownProps> = ({
                       </span>
 
                       {selected.includes(item) ? (
-                        <span
-                          className={
-                            "absolute inset-y-0 right-0 flex items-center pr-4"
-                          }
-                        >
+                        <span className={"absolute inset-y-0 right-0 flex items-center pr-4"}>
                           <CheckIcon className="h-5 w-5" aria-hidden="true" />
                         </span>
                       ) : null}
@@ -127,5 +114,5 @@ export const Dropdown: FC<DropdownProps> = ({
         </>
       )}
     </Listbox>
-  );
-};
+  )
+}

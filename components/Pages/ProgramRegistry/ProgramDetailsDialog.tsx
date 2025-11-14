@@ -1,4 +1,8 @@
-"use client";
+"use client"
+import { Dialog, Transition } from "@headlessui/react"
+import { XMarkIcon } from "@heroicons/react/24/solid"
+import Image from "next/image"
+import { type FC, Fragment } from "react"
 /* eslint-disable @next/next/no-img-element */
 import {
   BlogIcon,
@@ -7,42 +11,38 @@ import {
   OrganizationIcon,
   Telegram2Icon,
   Twitter2Icon,
-} from "@/components/Icons";
-import { Button } from "@/components/Utilities/Button";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import formatCurrency from "@/utilities/formatCurrency";
-import { cn } from "@/utilities/tailwind";
-import { Dialog, Transition } from "@headlessui/react";
-import { XMarkIcon } from "@heroicons/react/24/solid";
-import Image from "next/image";
-import { FC, Fragment } from "react";
-import { registryHelper } from "./helper";
-import { GrantProgram } from "./ProgramList";
+} from "@/components/Icons"
+import { Button } from "@/components/Utilities/Button"
+import { ExternalLink } from "@/components/Utilities/ExternalLink"
+import formatCurrency from "@/utilities/formatCurrency"
+import { cn } from "@/utilities/tailwind"
+import { registryHelper } from "./helper"
+import type { GrantProgram } from "./ProgramList"
 
 type ProgramDetailsDialogProps = {
-  program: GrantProgram;
-  isOpen: boolean;
-  closeModal: () => void;
-};
+  program: GrantProgram
+  isOpen: boolean
+  closeModal: () => void
+}
 
 const cardClassnames = {
   div: "flex flex-col gap-2 bg-[#F4F8FF] dark:bg-zinc-600 rounded-xl py-3 px-4",
   label: "text-base text-gray-900 font-body dark:text-zinc-100 font-semibold",
   list: "flex flex-row gap-2 flex-wrap",
   pill: "rounded-full font-body flex flex-row gap-2 bg-white px-2 py-1 text-sm text-[#155EEF] font-medium dark:bg-zinc-700 dark:text-zinc-100",
-};
+}
 
 const statsClassnames = {
   div: "flex flex-row justify-between gap-2 items-center px-4 py-0.5",
   label: "text-base font-body font-normal text-gray-900 dark:text-zinc-100",
   pill: "text-base font-body text-zinc-600 font-semibold dark:text-zinc-300",
-};
+}
 
 const iconsClassnames = {
   light: "text-black dark:text-white dark:hidden",
   dark: "text-black dark:text-white hidden dark:block",
   general: "w-6 h-6 text-black dark:text-white",
-};
+}
 
 export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
   program,
@@ -54,7 +54,7 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
       label: "Budget",
       component: <p>{program?.metadata?.programBudget}</p>,
     },
-  ];
+  ]
 
   return (
     <>
@@ -72,10 +72,7 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
             <div className="fixed inset-0 bg-black/25" />
           </Transition.Child>
 
-          <div
-            className="fixed inset-0 overflow-y-auto"
-            id="grant-program-details-modal"
-          >
+          <div className="fixed inset-0 overflow-y-auto" id="grant-program-details-modal">
             <div className="flex min-h-full items-center justify-center p-4 text-center">
               <Transition.Child
                 as={Fragment}
@@ -101,27 +98,21 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                           <XMarkIcon className="w-6 h-6" />
                         </button>
                       </div>
-                      <div
-                        className={
-                          "flex flex-row max-sm:flex-col gap-2 justify-between pb-3"
-                        }
-                      >
+                      <div className={"flex flex-row max-sm:flex-col gap-2 justify-between pb-3"}>
                         <div className="flex flex-1">
                           {program.metadata?.grantTypes?.length ? (
                             <div className={cardClassnames.list}>
-                              {program.metadata?.grantTypes?.map(
-                                (grantType) => (
-                                  <div
-                                    key={grantType}
-                                    className={cn(
-                                      cardClassnames.pill,
-                                      "bg-[#F2F4F7] py-1 px-3 rounded-full text-[#1D2939]"
-                                    )}
-                                  >
-                                    {grantType}
-                                  </div>
-                                )
-                              )}
+                              {program.metadata?.grantTypes?.map((grantType) => (
+                                <div
+                                  key={grantType}
+                                  className={cn(
+                                    cardClassnames.pill,
+                                    "bg-[#F2F4F7] py-1 px-3 rounded-full text-[#1D2939]"
+                                  )}
+                                >
+                                  {grantType}
+                                </div>
+                              ))}
                             </div>
                           ) : null}
                         </div>
@@ -129,19 +120,14 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                           {program.metadata?.socialLinks?.grantsSite ? (
                             <ExternalLink
                               href={
-                                program.metadata?.socialLinks?.grantsSite.includes(
-                                  "http"
-                                )
+                                program.metadata?.socialLinks?.grantsSite.includes("http")
                                   ? program.metadata?.socialLinks?.grantsSite
                                   : `https://${program.metadata?.socialLinks?.grantsSite}`
                               }
                               className="w-max"
                             >
                               <Image
-                                className={cn(
-                                  iconsClassnames.general,
-                                  iconsClassnames.light
-                                )}
+                                className={cn(iconsClassnames.general, iconsClassnames.light)}
                                 width={20}
                                 height={20}
                                 src="/icons/globe.svg"
@@ -150,10 +136,7 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                               <Image
                                 width={20}
                                 height={20}
-                                className={cn(
-                                  iconsClassnames.general,
-                                  iconsClassnames.dark
-                                )}
+                                className={cn(iconsClassnames.general, iconsClassnames.dark)}
                                 src="/icons/globe-white.svg"
                                 alt={program.metadata?.socialLinks?.grantsSite}
                               />
@@ -162,73 +145,55 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                           {program.metadata?.socialLinks?.twitter ? (
                             <ExternalLink
                               href={
-                                program.metadata?.socialLinks?.twitter.includes(
-                                  "http"
-                                )
+                                program.metadata?.socialLinks?.twitter.includes("http")
                                   ? program.metadata?.socialLinks?.twitter
                                   : `https://${program.metadata?.socialLinks?.twitter}`
                               }
                               className="w-max"
                             >
-                              <Twitter2Icon
-                                className={iconsClassnames.general}
-                              />
+                              <Twitter2Icon className={iconsClassnames.general} />
                             </ExternalLink>
                           ) : null}
                           {program.metadata?.socialLinks?.discord ? (
                             <ExternalLink
                               href={
-                                program.metadata?.socialLinks?.discord.includes(
-                                  "http"
-                                )
+                                program.metadata?.socialLinks?.discord.includes("http")
                                   ? program.metadata?.socialLinks?.discord
                                   : `https://${program.metadata?.socialLinks?.discord}`
                               }
                               className="w-max"
                             >
-                              <Discord2Icon
-                                className={iconsClassnames.general}
-                              />
+                              <Discord2Icon className={iconsClassnames.general} />
                             </ExternalLink>
                           ) : null}
                           {program.metadata?.socialLinks?.telegram ? (
                             <ExternalLink
                               href={
-                                program.metadata?.socialLinks?.telegram.includes(
-                                  "http"
-                                )
+                                program.metadata?.socialLinks?.telegram.includes("http")
                                   ? program.metadata?.socialLinks?.telegram
                                   : `https://${program.metadata?.socialLinks?.telegram}`
                               }
                               className="w-max"
                             >
-                              <Telegram2Icon
-                                className={iconsClassnames.general}
-                              />
+                              <Telegram2Icon className={iconsClassnames.general} />
                             </ExternalLink>
                           ) : null}
                           {program.metadata?.socialLinks?.forum ? (
                             <ExternalLink
                               href={
-                                program.metadata?.socialLinks?.forum.includes(
-                                  "http"
-                                )
+                                program.metadata?.socialLinks?.forum.includes("http")
                                   ? program.metadata?.socialLinks?.forum
                                   : `https://${program.metadata?.socialLinks?.forum}`
                               }
                               className="w-max"
                             >
-                              <DiscussionIcon
-                                className={iconsClassnames.general}
-                              />
+                              <DiscussionIcon className={iconsClassnames.general} />
                             </ExternalLink>
                           ) : null}
                           {program.metadata?.socialLinks?.blog ? (
                             <ExternalLink
                               href={
-                                program.metadata?.socialLinks?.blog.includes(
-                                  "http"
-                                )
+                                program.metadata?.socialLinks?.blog.includes("http")
                                   ? program.metadata?.socialLinks?.blog
                                   : `https://${program.metadata?.socialLinks?.blog}`
                               }
@@ -240,17 +205,13 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                           {program.metadata?.socialLinks?.orgWebsite ? (
                             <ExternalLink
                               href={
-                                program.metadata?.socialLinks?.orgWebsite.includes(
-                                  "http"
-                                )
+                                program.metadata?.socialLinks?.orgWebsite.includes("http")
                                   ? program.metadata?.socialLinks?.orgWebsite
                                   : `https://${program.metadata?.socialLinks?.orgWebsite}`
                               }
                               className="w-max"
                             >
-                              <OrganizationIcon
-                                className={iconsClassnames.general}
-                              />
+                              <OrganizationIcon className={iconsClassnames.general} />
                             </ExternalLink>
                           ) : null}
                         </div>
@@ -271,15 +232,10 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                     <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-4 py-3">
                       {program.metadata?.categories?.length ? (
                         <div className={cardClassnames.div}>
-                          <label className={cardClassnames.label}>
-                            Categories
-                          </label>
+                          <label className={cardClassnames.label}>Categories</label>
                           <div className={cardClassnames.list}>
                             {program.metadata?.categories?.map((category) => (
-                              <div
-                                key={category}
-                                className={cardClassnames.pill}
-                              >
+                              <div key={category} className={cardClassnames.pill}>
                                 {category}
                               </div>
                             ))}
@@ -289,27 +245,18 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
 
                       {program.metadata?.networks?.length ? (
                         <div className={cardClassnames.div}>
-                          <label className={cardClassnames.label}>
-                            Networks
-                          </label>
+                          <label className={cardClassnames.label}>Networks</label>
                           <div className={cardClassnames.list}>
                             {program.metadata?.networks?.map((network) => (
-                              <div
-                                key={network}
-                                className={cardClassnames.pill}
-                              >
+                              <div key={network} className={cardClassnames.pill}>
                                 <div className="w-5 h-5 rounded-full flex justify-center items-center">
-                                  {registryHelper.networkImages[
-                                    network.toLowerCase()
-                                  ] ? (
+                                  {registryHelper.networkImages[network.toLowerCase()] ? (
                                     <>
                                       <Image
                                         width={20}
                                         height={20}
                                         src={
-                                          registryHelper.networkImages[
-                                            network.toLowerCase()
-                                          ].light
+                                          registryHelper.networkImages[network.toLowerCase()].light
                                         }
                                         alt={network}
                                         className="rounded-full w-5 h-5  dark:hidden"
@@ -318,9 +265,7 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                                         width={20}
                                         height={20}
                                         src={
-                                          registryHelper.networkImages[
-                                            network.toLowerCase()
-                                          ].dark
+                                          registryHelper.networkImages[network.toLowerCase()].dark
                                         }
                                         alt={network}
                                         className="rounded-full w-5 h-5  hidden dark:block"
@@ -338,15 +283,10 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                       ) : null}
                       {program.metadata?.ecosystems?.length ? (
                         <div className={cardClassnames.div}>
-                          <label className={cardClassnames.label}>
-                            Ecosystems
-                          </label>
+                          <label className={cardClassnames.label}>Ecosystems</label>
                           <div className={cardClassnames.list}>
                             {program.metadata?.ecosystems?.map((ecosystem) => (
-                              <div
-                                key={ecosystem}
-                                className={cardClassnames.pill}
-                              >
+                              <div key={ecosystem} className={cardClassnames.pill}>
                                 {ecosystem}
                               </div>
                             ))}
@@ -356,20 +296,13 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
 
                       {program.metadata?.platformsUsed?.length ? (
                         <div className={cardClassnames.div}>
-                          <label className={cardClassnames.label}>
-                            Platforms Used
-                          </label>
+                          <label className={cardClassnames.label}>Platforms Used</label>
                           <div className={cardClassnames.list}>
-                            {program.metadata?.platformsUsed?.map(
-                              (platform) => (
-                                <div
-                                  key={platform}
-                                  className={cardClassnames.pill}
-                                >
-                                  {platform}
-                                </div>
-                              )
-                            )}
+                            {program.metadata?.platformsUsed?.map((platform) => (
+                              <div key={platform} className={cardClassnames.pill}>
+                                {platform}
+                              </div>
+                            ))}
                           </div>
                         </div>
                       ) : null}
@@ -377,20 +310,13 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                     <div className="grid grid-cols-2 gap-4">
                       {program.metadata?.organizations?.length ? (
                         <div className={cardClassnames.div}>
-                          <label className={cardClassnames.label}>
-                            Organizations
-                          </label>
+                          <label className={cardClassnames.label}>Organizations</label>
                           <div className={cardClassnames.list}>
-                            {program.metadata?.organizations?.map(
-                              (organization) => (
-                                <div
-                                  key={organization}
-                                  className={cardClassnames.pill}
-                                >
-                                  {organization}
-                                </div>
-                              )
-                            )}
+                            {program.metadata?.organizations?.map((organization) => (
+                              <div key={organization} className={cardClassnames.pill}>
+                                {organization}
+                              </div>
+                            ))}
                           </div>
                         </div>
                       ) : null}
@@ -402,36 +328,24 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                         <div className="flex flex-col gap-1 divide-y divide-y-zinc-200  bg-[#F4F8FF] rounded-xl py-3">
                           {program?.metadata?.programBudget ? (
                             <div className={statsClassnames.div}>
-                              <label className={statsClassnames.label}>
-                                Budget
-                              </label>
+                              <label className={statsClassnames.label}>Budget</label>
                               <p className={statsClassnames.pill}>
                                 {program?.metadata?.programBudget
-                                  ? formatCurrency(
-                                      +program?.metadata?.programBudget
-                                    ) === "NaN"
+                                  ? formatCurrency(+program?.metadata?.programBudget) === "NaN"
                                     ? program?.metadata?.programBudget
-                                    : `$${formatCurrency(
-                                        +program?.metadata?.programBudget
-                                      )}`
+                                    : `$${formatCurrency(+program?.metadata?.programBudget)}`
                                   : ""}
                               </p>
                             </div>
                           ) : null}
-                          {program?.metadata?.minGrantSize &&
-                          program?.metadata?.maxGrantSize ? (
+                          {program?.metadata?.minGrantSize && program?.metadata?.maxGrantSize ? (
                             <div className={statsClassnames.div}>
-                              <label className={statsClassnames.label}>
-                                Grant Size
-                              </label>
+                              <label className={statsClassnames.label}>Grant Size</label>
                               <div className={statsClassnames.pill}>
-                                {program?.metadata?.minGrantSize &&
-                                program?.metadata?.maxGrantSize
+                                {program?.metadata?.minGrantSize && program?.metadata?.maxGrantSize
                                   ? `$${formatCurrency(
                                       +program?.metadata?.minGrantSize
-                                    )} - $${formatCurrency(
-                                      +program?.metadata?.maxGrantSize
-                                    )}`
+                                    )} - $${formatCurrency(+program?.metadata?.maxGrantSize)}`
                                   : ""}
                               </div>
                             </div>
@@ -443,14 +357,11 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                               </label>
                               <p className={statsClassnames.pill}>
                                 {program?.metadata?.amountDistributedToDate
-                                  ? formatCurrency(
-                                      +program?.metadata
-                                        ?.amountDistributedToDate
-                                    ) === "NaN"
+                                  ? formatCurrency(+program?.metadata?.amountDistributedToDate) ===
+                                    "NaN"
                                     ? program?.metadata?.amountDistributedToDate
                                     : `$${formatCurrency(
-                                        +program?.metadata
-                                          ?.amountDistributedToDate
+                                        +program?.metadata?.amountDistributedToDate
                                       )}`
                                   : ""}
                               </p>
@@ -458,14 +369,10 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                           ) : null}
                           {program?.metadata?.grantsToDate ? (
                             <div className={statsClassnames.div}>
-                              <label className={statsClassnames.label}>
-                                Grants Issued to Date
-                              </label>
+                              <label className={statsClassnames.label}>Grants Issued to Date</label>
                               <p className={statsClassnames.pill}>
                                 {program?.metadata?.amountDistributedToDate
-                                  ? formatCurrency(
-                                      +program.metadata.amountDistributedToDate
-                                    )
+                                  ? formatCurrency(+program.metadata.amountDistributedToDate)
                                   : null}
                               </p>
                             </div>
@@ -488,9 +395,7 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                       {program.metadata?.socialLinks?.grantsSite ? (
                         <ExternalLink
                           href={
-                            program.metadata?.socialLinks?.grantsSite.includes(
-                              "http"
-                            )
+                            program.metadata?.socialLinks?.grantsSite.includes("http")
                               ? program.metadata?.socialLinks?.grantsSite
                               : `https://${program.metadata?.socialLinks?.grantsSite}`
                           }
@@ -523,5 +428,5 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
         </Dialog>
       </Transition>
     </>
-  );
-};
+  )
+}

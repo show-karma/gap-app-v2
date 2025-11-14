@@ -1,11 +1,11 @@
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { ChevronDownIcon } from "@heroicons/react/24/solid";
-import * as Accordion from "@radix-ui/react-accordion";
-import "./styles.css";
+import { ChevronDownIcon } from "@heroicons/react/24/solid"
+import * as Accordion from "@radix-ui/react-accordion"
+import { ExternalLink } from "@/components/Utilities/ExternalLink"
+import "./styles.css"
 
 const rounds: {
-  title: string;
-  url: string;
+  title: string
+  url: string
 }[] = [
   {
     title: "Thriving Arbitrum Summer Round",
@@ -55,14 +55,12 @@ const rounds: {
     title: "Sei Creator Fund: Round #2",
     url: "https://explorer.gitcoin.co/#/round/1329/9",
   },
-];
+]
 
 export const RecentRounds = () => {
   return (
     <div className="flex flex-col gap-4 bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md max-h-max h-full max-lg:hidden">
-      <h3 className="text-xl font-bold text-zinc-800 dark:text-zinc-200">
-        Recent Gitcoin Rounds
-      </h3>
+      <h3 className="text-xl font-bold text-zinc-800 dark:text-zinc-200">Recent Gitcoin Rounds</h3>
       <div className="flex flex-col gap-2">
         {rounds.map((round) => (
           <ExternalLink
@@ -75,8 +73,8 @@ export const RecentRounds = () => {
         ))}
       </div>
     </div>
-  );
-};
+  )
+}
 
 export const RecentRoundsMobile = () => {
   return (
@@ -106,5 +104,5 @@ export const RecentRoundsMobile = () => {
         </Accordion.AccordionContent>
       </Accordion.Item>
     </Accordion.Root>
-  );
-};
+  )
+}

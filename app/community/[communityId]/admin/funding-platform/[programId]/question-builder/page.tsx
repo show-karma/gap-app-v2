@@ -1,36 +1,35 @@
-"use client";
-import { useParams, useRouter } from "next/navigation";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
-import { useOwnerStore } from "@/store";
-import { useStaff } from "@/hooks/useStaff";
-import { QuestionBuilder } from "@/components/QuestionBuilder";
-import FormBuilderErrorBoundary from "@/components/ErrorBoundary/FormBuilderErrorBoundary";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { Button } from "@/components/Utilities/Button";
-import { ArrowLeftIcon } from "@heroicons/react/24/solid";
-import { MESSAGES } from "@/utilities/messages";
-import { FormSchema } from "@/types/question-builder";
-import { useQuestionBuilderSchema, usePostApprovalSchema } from "@/hooks/useQuestionBuilder";
-import { useProgramConfig } from "@/hooks/useFundingPlatform";
-import { layoutTheme } from "@/src/helper/theme";
+"use client"
+import { ArrowLeftIcon } from "@heroicons/react/24/solid"
+import { useParams, useRouter } from "next/navigation"
+import FormBuilderErrorBoundary from "@/components/ErrorBoundary/FormBuilderErrorBoundary"
+import { QuestionBuilder } from "@/components/QuestionBuilder"
+import { Button } from "@/components/Utilities/Button"
+import { Spinner } from "@/components/Utilities/Spinner"
+import { useProgramConfig } from "@/hooks/useFundingPlatform"
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin"
+import { usePostApprovalSchema, useQuestionBuilderSchema } from "@/hooks/useQuestionBuilder"
+import { useStaff } from "@/hooks/useStaff"
+import { layoutTheme } from "@/src/helper/theme"
+import { useOwnerStore } from "@/store"
+import type { FormSchema } from "@/types/question-builder"
+import { MESSAGES } from "@/utilities/messages"
 
 export default function QuestionBuilderPage() {
-  const router = useRouter();
+  const router = useRouter()
   const { communityId, programId: combinedProgramId } = useParams() as {
-    communityId: string;
-    programId: string;
-  };
+    communityId: string
+    programId: string
+  }
 
   // Extract programId and chainId from the combined format (e.g., "777_11155111")
-  const [programId, chainId] = combinedProgramId.split("_");
-  const parsedChainId = parseInt(chainId, 10);
+  const [programId, chainId] = combinedProgramId.split("_")
+  const parsedChainId = parseInt(chainId, 10)
 
-  const { isCommunityAdmin, isLoading: isLoadingAdmin } =
-    useIsCommunityAdmin(communityId);
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isStaff } = useStaff();
+  const { isCommunityAdmin, isLoading: isLoadingAdmin } = useIsCommunityAdmin(communityId)
+  const isOwner = useOwnerStore((state) => state.isOwner)
+  const { isStaff } = useStaff()
 
-  const hasAccess = isCommunityAdmin || isOwner || isStaff;
+  const hasAccess = isCommunityAdmin || isOwner || isStaff
 
   const {
     schema: existingSchema,
@@ -38,7 +37,7 @@ export default function QuestionBuilderPage() {
     error: schemaError,
     updateSchema,
     isUpdating,
-  } = useQuestionBuilderSchema(programId, parsedChainId);
+  } = useQuestionBuilderSchema(programId, parsedChainId)
 
   const {
     schema: existingPostApprovalSchema,
@@ -46,28 +45,28 @@ export default function QuestionBuilderPage() {
     error: postApprovalSchemaError,
     updateSchema: updatePostApprovalSchema,
     isUpdating: isUpdatingPostApproval,
-  } = usePostApprovalSchema(programId, parsedChainId);
+  } = usePostApprovalSchema(programId, parsedChainId)
 
-  const { config: existingConfig } = useProgramConfig(programId, parsedChainId);
+  const { config: existingConfig } = useProgramConfig(programId, parsedChainId)
 
   const handleSchemaChange = (schema: FormSchema) => {
-    updateSchema({ schema, existingConfig: existingConfig || null });
-  };
+    updateSchema({ schema, existingConfig: existingConfig || null })
+  }
 
   const handlePostApprovalSchemaChange = (schema: FormSchema) => {
-    updatePostApprovalSchema({ schema, existingConfig: existingConfig || null });
-  };
+    updatePostApprovalSchema({ schema, existingConfig: existingConfig || null })
+  }
 
   const handleBackClick = () => {
-    router.push(`/community/${communityId}/admin/funding-platform`);
-  };
+    router.push(`/community/${communityId}/admin/funding-platform`)
+  }
 
   if (isLoadingAdmin || isLoadingSchema || isLoadingPostApprovalSchema) {
     return (
       <div className="flex w-full items-center justify-center min-h-[600px]">
         <Spinner />
       </div>
-    );
+    )
   }
 
   if (!hasAccess) {
@@ -75,7 +74,7 @@ export default function QuestionBuilderPage() {
       <div className={layoutTheme.padding}>
         <p className="text-red-500">{MESSAGES.REVIEWS.NOT_ADMIN}</p>
       </div>
-    );
+    )
   }
 
   if (schemaError || postApprovalSchemaError) {
@@ -86,15 +85,11 @@ export default function QuestionBuilderPage() {
             Error Loading Form Schema
           </h3>
           <p className="text-red-600 dark:text-red-400 mb-4">
-            Unable to load the form schema. This might be the first time
-            creating a form for this program.
+            Unable to load the form schema. This might be the first time creating a form for this
+            program.
           </p>
           <div className="flex space-x-3">
-            <Button
-              onClick={handleBackClick}
-              variant="secondary"
-              className="flex items-center"
-            >
+            <Button onClick={handleBackClick} variant="secondary" className="flex items-center">
               <ArrowLeftIcon className="w-4 h-4 mr-2" />
               Back to Programs
             </Button>
@@ -107,7 +102,7 @@ export default function QuestionBuilderPage() {
           </div>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -117,19 +112,13 @@ export default function QuestionBuilderPage() {
         <div className="sm:px-3 md:px-4 px-6 py-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Button
-                onClick={handleBackClick}
-                variant="secondary"
-                className="flex items-center"
-              >
+              <Button onClick={handleBackClick} variant="secondary" className="flex items-center">
                 <ArrowLeftIcon className="w-4 h-4 mr-2" />
                 Back
               </Button>
 
               <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Form Builder
-                </h1>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white">Form Builder</h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Program ID: {programId} | Chain ID: {parsedChainId}
                 </p>
@@ -167,5 +156,5 @@ export default function QuestionBuilderPage() {
         />
       </FormBuilderErrorBoundary>
     </div>
-  );
+  )
 }

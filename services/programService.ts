@@ -1,7 +1,7 @@
-import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { getPrograms } from "@/utilities/sdk/communities/getPrograms";
-import { Hex } from "viem";
+import type { Hex } from "viem"
+import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList"
+import { errorManager } from "@/components/Utilities/errorManager"
+import { getPrograms } from "@/utilities/sdk/communities/getPrograms"
 
 export const programService = {
   /**
@@ -11,20 +11,17 @@ export const programService = {
    */
   getCommunityPrograms: async (communityId: Hex): Promise<GrantProgram[]> => {
     try {
-      const programs = await getPrograms(communityId);
+      const programs = await getPrograms(communityId)
 
       // Sort programs by creation date (newest first)
       return programs.sort((a, b) => {
-        const aTime = new Date(a.createdAt).getTime();
-        const bTime = new Date(b.createdAt).getTime();
-        return bTime - aTime;
-      });
+        const aTime = new Date(a.createdAt).getTime()
+        const bTime = new Date(b.createdAt).getTime()
+        return bTime - aTime
+      })
     } catch (error: any) {
-      errorManager(
-        `Error fetching programs for community ${communityId}`,
-        error
-      );
-      throw error;
+      errorManager(`Error fetching programs for community ${communityId}`, error)
+      throw error
     }
   },
-};
+}

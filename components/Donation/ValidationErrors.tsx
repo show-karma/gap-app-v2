@@ -1,14 +1,14 @@
-"use client";
+"use client"
 
 interface CartItem {
-  uid: string;
-  title: string;
+  uid: string
+  title: string
 }
 
 interface ValidationErrorsProps {
-  validationErrors: string[];
-  missingPayouts: string[];
-  items: CartItem[];
+  validationErrors: string[]
+  missingPayouts: string[]
+  items: CartItem[]
 }
 
 /**
@@ -21,37 +21,37 @@ export function ValidationErrors({
   items,
 }: ValidationErrorsProps) {
   if (validationErrors.length === 0 && missingPayouts.length === 0) {
-    return null;
+    return null
   }
 
   // Parse validation errors to extract actionable information
   const parseValidationError = (error: string) => {
     // Check if it's an insufficient balance error
     if (error.includes("Insufficient") && error.includes("balance")) {
-      const match = error.match(/Insufficient (.+?) balance\. Required: (.+?), Available: (.+)/);
+      const match = error.match(/Insufficient (.+?) balance\. Required: (.+?), Available: (.+)/)
       if (match) {
-        const [, token, required, available] = match;
+        const [, token, required, available] = match
         return {
           type: "insufficient_balance",
           token,
           required,
           available,
           message: error,
-        };
+        }
       }
     }
 
     // Check if it's a missing balance info error
     if (error.includes("No balance information available")) {
-      const match = error.match(/No balance information available for (.+?) on (.+)/);
+      const match = error.match(/No balance information available for (.+?) on (.+)/)
       if (match) {
-        const [, token, chain] = match;
+        const [, token, chain] = match
         return {
           type: "missing_balance_info",
           token,
           chain,
           message: error,
-        };
+        }
       }
     }
 
@@ -60,14 +60,14 @@ export function ValidationErrors({
       return {
         type: "invalid_amount",
         message: error,
-      };
+      }
     }
 
     return {
       type: "unknown",
       message: error,
-    };
-  };
+    }
+  }
 
   return (
     <div className="rounded-2xl border-2 border-red-200 bg-red-50/80 p-5 shadow-sm dark:border-red-900/40 dark:bg-red-900/20">
@@ -93,7 +93,7 @@ export function ValidationErrors({
       <div className="space-y-3">
         {/* Missing payout addresses */}
         {missingPayouts.map((projectId) => {
-          const project = items.find((item) => item.uid === projectId);
+          const project = items.find((item) => item.uid === projectId)
           return (
             <div
               key={`missing-${projectId}`}
@@ -113,12 +113,12 @@ export function ValidationErrors({
                 <li>• Remove this project from your cart to proceed with other donations</li>
               </ul>
             </div>
-          );
+          )
         })}
 
         {/* Validation errors with enhanced messaging */}
         {validationErrors.map((error, index) => {
-          const parsed = parseValidationError(error);
+          const parsed = parseValidationError(error)
 
           return (
             <div
@@ -173,9 +173,9 @@ export function ValidationErrors({
                 </>
               )}
             </div>
-          );
+          )
         })}
       </div>
     </div>
-  );
+  )
 }

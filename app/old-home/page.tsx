@@ -1,10 +1,10 @@
-import { defaultMetadata } from "@/utilities/meta";
-import { Presentation } from "@/components/Pages/Home/Presentation";
-import { NewFeatureBanner } from "@/components/Pages/Home/NewFeatureBanner";
-import { Communities } from "@/components/Pages/Home/Communities";
-import { WhatIsSolving } from "@/components/Pages/Home/WhatIsSolving";
+import { Communities } from "@/components/Pages/Home/Communities"
+import { NewFeatureBanner } from "@/components/Pages/Home/NewFeatureBanner"
+import { Presentation } from "@/components/Pages/Home/Presentation"
+import { WhatIsSolving } from "@/components/Pages/Home/WhatIsSolving"
+import { defaultMetadata } from "@/utilities/meta"
 
-export const metadata = defaultMetadata;
+export const metadata = defaultMetadata
 
 export default function Index() {
   return (
@@ -17,5 +17,5 @@ export default function Index() {
         </div>
       </div>
     </main>
-  );
+  )
 }

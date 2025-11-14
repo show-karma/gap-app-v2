@@ -1,32 +1,27 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, useEffect, useState } from "react";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "cmdk";
-import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/solid";
-import * as Popover from "@radix-ui/react-popover";
-import { cn } from "@/utilities/tailwind";
-import { ChevronDown } from "@/components/Icons/ChevronDown";
-import pluralize from "pluralize";
+
+import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/solid"
+import * as Popover from "@radix-ui/react-popover"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk"
+import pluralize from "pluralize"
+import { type FC, useEffect, useState } from "react"
+import { ChevronDown } from "@/components/Icons/ChevronDown"
+import { cn } from "@/utilities/tailwind"
 
 interface DropdownItem {
-  value: string;
-  id: string;
-  timestamp?: string;
+  value: string
+  id: string
+  timestamp?: string
 }
 interface DropdownProps {
-  onSelectFunction: (value: string) => void;
-  selected: string | undefined;
-  list: DropdownItem[];
-  type: string;
-  prefixUnselected?: string;
-  buttonClassname?: string;
-  shouldSort?: boolean;
-  canSearch?: boolean;
+  onSelectFunction: (value: string) => void
+  selected: string | undefined
+  list: DropdownItem[]
+  type: string
+  prefixUnselected?: string
+  buttonClassname?: string
+  shouldSort?: boolean
+  canSearch?: boolean
 }
 export const Dropdown: FC<DropdownProps> = ({
   onSelectFunction,
@@ -38,26 +33,26 @@ export const Dropdown: FC<DropdownProps> = ({
   shouldSort = true,
   canSearch = true,
 }) => {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false)
 
-  const [orderedList, setOrderedList] = useState<DropdownItem[]>([]);
+  const [orderedList, setOrderedList] = useState<DropdownItem[]>([])
 
   useEffect(() => {
     const sortedList = shouldSort
       ? list.sort((a, b) => {
-          const aTimestamp = a.timestamp ? new Date(a.timestamp).getTime() : 0;
-          const bTimestamp = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+          const aTimestamp = a.timestamp ? new Date(a.timestamp).getTime() : 0
+          const bTimestamp = b.timestamp ? new Date(b.timestamp).getTime() : 0
           if (aTimestamp > bTimestamp) {
-            return -1;
+            return -1
           }
           if (aTimestamp < bTimestamp) {
-            return 1;
+            return 1
           }
-          return 0;
+          return 0
         })
-      : list;
-    setOrderedList(sortedList);
-  }, []);
+      : list
+    setOrderedList(sortedList)
+  }, [])
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
@@ -99,22 +94,18 @@ export const Dropdown: FC<DropdownProps> = ({
                 <CommandItem key={item.value}>
                   <div
                     onClick={() => {
-                      onSelectFunction(item.id);
-                      setOpen(false);
+                      onSelectFunction(item.id)
+                      setOpen(false)
                     }}
                     className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
                   >
                     <div className="flex flex-row gap-2 items-center justify-start w-full">
                       <div className="flex flex-row gap-1  items-center justify-start  flex-1">
-                        <p className="line-clamp-2 text-sm max-w-full break-normal">
-                          {item.value}
-                        </p>
+                        <p className="line-clamp-2 text-sm max-w-full break-normal">{item.value}</p>
                       </div>
                     </div>
                     <CheckIcon
-                      className={cn(
-                        "mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white"
-                      )}
+                      className={cn("mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white")}
                       style={{
                         display: selected === item.id ? "block" : "none",
                       }}
@@ -127,5 +118,5 @@ export const Dropdown: FC<DropdownProps> = ({
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>
-  );
-};
+  )
+}

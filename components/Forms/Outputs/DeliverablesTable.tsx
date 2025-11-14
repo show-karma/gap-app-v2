@@ -1,28 +1,28 @@
-"use client";
+"use client"
 
-import { TrashIcon } from "@heroicons/react/24/solid";
-import { cn } from "@/utilities/tailwind";
-import { Button } from "@/components/Utilities/Button";
-import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
-import type { UseFormRegister, FieldErrors } from "react-hook-form";
+import { TrashIcon } from "@heroicons/react/24/solid"
+import type { FieldErrors, UseFormRegister } from "react-hook-form"
+import { Button } from "@/components/Utilities/Button"
+import { InfoTooltip } from "@/components/Utilities/InfoTooltip"
+import { cn } from "@/utilities/tailwind"
 
 interface DeliverableField {
-  id: string;
-  name?: string;
-  proof?: string;
-  description?: string;
+  id: string
+  name?: string
+  proof?: string
+  description?: string
 }
 
 interface DeliverablesTableProps {
-  fields: Record<"id", string>[];
-  register: UseFormRegister<any>;
-  errors: FieldErrors<any>;
-  onAdd: () => void;
-  onRemove: (index: number) => void;
-  labelStyle: string;
+  fields: Record<"id", string>[]
+  register: UseFormRegister<any>
+  errors: FieldErrors<any>
+  onAdd: () => void
+  onRemove: (index: number) => void
+  labelStyle: string
 }
 
-const EmptyDiv = () => <div className="h-5 w-1" />;
+const EmptyDiv = () => <div className="h-5 w-1" />
 
 export const DeliverablesTable = ({
   fields,
@@ -48,9 +48,7 @@ export const DeliverablesTable = ({
 
       {fields.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-8">
-          <p className="text-gray-500 dark:text-zinc-400 mb-4">
-            Add your deliverables
-          </p>
+          <p className="text-gray-500 dark:text-zinc-400 mb-4">Add your deliverables</p>
           <Button
             type="button"
             onClick={onAdd}
@@ -154,5 +152,5 @@ export const DeliverablesTable = ({
         </div>
       )}
     </div>
-  );
-};
+  )
+}

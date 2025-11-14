@@ -1,18 +1,18 @@
-"use client";
-import React, { Component, ErrorInfo, ReactNode } from "react";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { useDonationCart } from "@/store/donationCart";
-import { getDetailedErrorInfo } from "@/utilities/donations/errorMessages";
-import Link from "next/link";
+"use client"
+import Link from "next/link"
+import React, { Component, type ErrorInfo, type ReactNode } from "react"
+import { errorManager } from "@/components/Utilities/errorManager"
+import { useDonationCart } from "@/store/donationCart"
+import { getDetailedErrorInfo } from "@/utilities/donations/errorMessages"
 
 interface Props {
-  children: ReactNode;
+  children: ReactNode
 }
 
 interface State {
-  hasError: boolean;
-  error: Error | null;
-  errorInfo: ErrorInfo | null;
+  hasError: boolean
+  error: Error | null
+  errorInfo: ErrorInfo | null
 }
 
 /**
@@ -23,12 +23,12 @@ interface State {
  */
 class DonationErrorBoundaryClass extends Component<Props, State> {
   constructor(props: Props) {
-    super(props);
+    super(props)
     this.state = {
       hasError: false,
       error: null,
       errorInfo: null,
-    };
+    }
   }
 
   static getDerivedStateFromError(error: Error): State {
@@ -36,7 +36,7 @@ class DonationErrorBoundaryClass extends Component<Props, State> {
       hasError: true,
       error,
       errorInfo: null,
-    };
+    }
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
@@ -44,13 +44,13 @@ class DonationErrorBoundaryClass extends Component<Props, State> {
     errorManager("DonationErrorBoundary caught an error", error, {
       componentStack: errorInfo.componentStack,
       errorBoundary: "donation-flow",
-    });
+    })
 
     // Store error info in state
     this.setState({
       error,
       errorInfo,
-    });
+    })
 
     // Cart state is already persisted by Zustand to localStorage
     // No additional action needed here
@@ -61,24 +61,24 @@ class DonationErrorBoundaryClass extends Component<Props, State> {
       hasError: false,
       error: null,
       errorInfo: null,
-    });
-  };
+    })
+  }
 
   handleClearCart = () => {
     // Clear cart state
     try {
-      localStorage.removeItem("donation-cart-storage");
+      localStorage.removeItem("donation-cart-storage")
     } catch (e) {
-      console.error("Failed to clear cart:", e);
+      console.error("Failed to clear cart:", e)
     }
 
     // Reset error state and reload
-    window.location.href = window.location.pathname;
-  };
+    window.location.href = window.location.pathname
+  }
 
   render() {
     if (this.state.hasError && this.state.error) {
-      const parsedError = getDetailedErrorInfo(this.state.error);
+      const parsedError = getDetailedErrorInfo(this.state.error)
 
       return (
         <div className="mx-auto max-w-3xl px-4 py-12">
@@ -114,9 +114,7 @@ class DonationErrorBoundaryClass extends Component<Props, State> {
                 <h2 className="mb-2 text-sm font-semibold text-red-900 dark:text-red-200">
                   Error Details
                 </h2>
-                <p className="text-sm text-red-800 dark:text-red-300">
-                  {parsedError.message}
-                </p>
+                <p className="text-sm text-red-800 dark:text-red-300">{parsedError.message}</p>
               </div>
 
               {parsedError.actionableSteps.length > 0 && (
@@ -177,10 +175,10 @@ class DonationErrorBoundaryClass extends Component<Props, State> {
             </div>
           </div>
         </div>
-      );
+      )
     }
 
-    return this.props.children;
+    return this.props.children
   }
 }
 
@@ -189,5 +187,5 @@ class DonationErrorBoundaryClass extends Component<Props, State> {
  * Error boundaries can't use hooks, so we wrap it
  */
 export function DonationErrorBoundary({ children }: Props) {
-  return <DonationErrorBoundaryClass>{children}</DonationErrorBoundaryClass>;
+  return <DonationErrorBoundaryClass>{children}</DonationErrorBoundaryClass>
 }

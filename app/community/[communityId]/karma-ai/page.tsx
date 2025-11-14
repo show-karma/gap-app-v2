@@ -1,57 +1,54 @@
-import { CommunityProjectEvaluatorPage } from "@/components/Pages/Communities/CommunityProjectEvaluatorPage";
-import { zeroUID } from "@/utilities/commons";
-import { envVars } from "@/utilities/enviromentVars";
-import fetchData from "@/utilities/fetchData";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { INDEXER } from "@/utilities/indexer";
-import { defaultMetadata } from "@/utilities/meta";
-import { Metadata } from "next";
-import { notFound } from "next/navigation";
+import type { Metadata } from "next"
+import { notFound } from "next/navigation"
+import { CommunityProjectEvaluatorPage } from "@/components/Pages/Communities/CommunityProjectEvaluatorPage"
+import { zeroUID } from "@/utilities/commons"
+import { envVars } from "@/utilities/enviromentVars"
+import fetchData from "@/utilities/fetchData"
+import { gapIndexerApi } from "@/utilities/gapIndexerApi"
+import { INDEXER } from "@/utilities/indexer"
+import { defaultMetadata } from "@/utilities/meta"
 
 type Params = Promise<{
-  communityId: string;
-}>;
+  communityId: string
+}>
 type SearchParams = Promise<{
-  programId: string;
-}>;
+  programId: string
+}>
 
 export async function generateMetadata({
   params,
   searchParams,
 }: {
-  params: Params;
-  searchParams: SearchParams;
+  params: Params
+  searchParams: SearchParams
 }): Promise<Metadata> {
-  const { communityId } = await params;
-  const { programId } = await searchParams;
-  let communityName = communityId;
+  const { communityId } = await params
+  const { programId } = await searchParams
+  let communityName = communityId
 
   try {
-    const { data } = await gapIndexerApi.communityBySlug(communityId);
-    communityName = data?.details?.data?.name || communityId;
+    const { data } = await gapIndexerApi.communityBySlug(communityId)
+    communityName = data?.details?.data?.name || communityId
     if (!data || data?.uid === zeroUID || !data?.details?.data?.name) {
-      notFound();
+      notFound()
     }
   } catch {
-    notFound();
+    notFound()
   }
 
   let dynamicMetadata = {
     title: `Karma AI - ${communityName} community grants`,
     description: `Chat with Karma AI assistant to projects in ${communityName}, measure their impact and fund them.`,
-  };
+  }
 
   if (programId) {
-    const [programsRes, programsError] = await fetchData(
-      INDEXER.COMMUNITY.PROGRAMS(communityId)
-    );
-    const program = programsRes?.find((p: any) => p.programId === programId)
-      ?.metadata?.title;
+    const [programsRes, programsError] = await fetchData(INDEXER.COMMUNITY.PROGRAMS(communityId))
+    const program = programsRes?.find((p: any) => p.programId === programId)?.metadata?.title
     if (program) {
       dynamicMetadata = {
         ...dynamicMetadata,
         description: `Chat with Karma AI assistant to projects in ${communityName}'s ${program}, measure their impact and fund them.`,
-      };
+      }
     }
   }
 
@@ -85,7 +82,7 @@ export async function generateMetadata({
     //     href: "/favicon.ico",
     //   },
     // ],
-  };
+  }
 }
 
 export default function ProjectsEvaluatorPage() {
@@ -93,5 +90,5 @@ export default function ProjectsEvaluatorPage() {
     <div className="flex flex-col gap-5 h-full">
       <CommunityProjectEvaluatorPage />
     </div>
-  );
+  )
 }

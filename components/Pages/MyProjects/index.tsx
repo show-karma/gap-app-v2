@@ -1,36 +1,33 @@
-"use client";
+"use client"
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
+import { useQuery } from "@tanstack/react-query"
+import dynamic from "next/dynamic"
+import Link from "next/link"
+import { useTheme } from "next-themes"
+import pluralize from "pluralize"
+import { useState } from "react"
+import { useAccount } from "wagmi"
 /* eslint-disable @next/next/no-img-element */
-import { Button } from "@/components/Utilities/Button";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import Pagination from "@/components/Utilities/Pagination";
-import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
-import { useMixpanel } from "@/hooks/useMixpanel";
-import { useAuth } from "@/hooks/useAuth";
-import { useOnboarding } from "@/store/modals/onboarding";
-import formatCurrency from "@/utilities/formatCurrency";
-import { formatDate } from "@/utilities/formatDate";
-import { MESSAGES } from "@/utilities/messages";
-import { PAGES } from "@/utilities/pages";
-import { fetchMyProjects } from "@/utilities/sdk/projects/fetchMyProjects";
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useQuery } from "@tanstack/react-query";
-import { useTheme } from "next-themes";
-import dynamic from "next/dynamic";
-import Link from "next/link";
-import pluralize from "pluralize";
-import { useState } from "react";
-import { useAccount } from "wagmi";
-import { LoadingCard } from "./LoadingCard";
-import { layoutTheme } from "@/src/helper/theme";
-import { PROJECT_NAME } from "@/constants/brand";
+import { Button } from "@/components/Utilities/Button"
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview"
+import Pagination from "@/components/Utilities/Pagination"
+import { ProfilePicture } from "@/components/Utilities/ProfilePicture"
+import { PROJECT_NAME } from "@/constants/brand"
+import { useAuth } from "@/hooks/useAuth"
+import { useMixpanel } from "@/hooks/useMixpanel"
+import { layoutTheme } from "@/src/helper/theme"
+import { useOnboarding } from "@/store/modals/onboarding"
+import formatCurrency from "@/utilities/formatCurrency"
+import { formatDate } from "@/utilities/formatDate"
+import { MESSAGES } from "@/utilities/messages"
+import { PAGES } from "@/utilities/pages"
+import { fetchMyProjects } from "@/utilities/sdk/projects/fetchMyProjects"
+import { LoadingCard } from "./LoadingCard"
 
 const ProjectDialog = dynamic(
-  () =>
-    import("@/components/Dialogs/ProjectDialog/index").then(
-      (mod) => mod.ProjectDialog
-    ),
+  () => import("@/components/Dialogs/ProjectDialog/index").then((mod) => mod.ProjectDialog),
   { ssr: false }
-);
+)
 
 const pickColor = (index: number) => {
   const cardColors = [
@@ -44,43 +41,43 @@ const pickColor = (index: number) => {
     "#EE46BC",
     "#EEAAFD",
     "#67E3F9",
-  ];
-  return cardColors[index % cardColors.length];
-};
+  ]
+  return cardColors[index % cardColors.length]
+}
 
 const OnboardingButton = () => {
-  const { setIsOnboarding } = useOnboarding();
-  const { mixpanel } = useMixpanel();
-  const { address } = useAccount();
+  const { setIsOnboarding } = useOnboarding()
+  const { mixpanel } = useMixpanel()
+  const { address } = useAccount()
 
   return (
     <Button
       onClick={() => {
-        setIsOnboarding(true);
+        setIsOnboarding(true)
         if (address) {
           mixpanel.reportEvent({
             event: "onboarding:popup",
             properties: { address },
-          });
+          })
           mixpanel.reportEvent({
             event: "onboarding:navigation",
             properties: { address, id: "welcome" },
-          });
+          })
         }
       }}
       className="w-max h-max bg-transparent dark:bg-transparent hover:bg-transparent text-black border border-black"
     >
       {PROJECT_NAME} Platform Walkthrough
     </Button>
-  );
-};
+  )
+}
 
 export default function MyProjects() {
-  const { isConnected, address } = useAccount();
-  const { authenticated: isAuth } = useAuth();
-  const { theme: currentTheme } = useTheme();
-  const itemsPerPage = 12;
-  const [page, setPage] = useState<number>(1);
+  const { isConnected, address } = useAccount()
+  const { authenticated: isAuth } = useAuth()
+  const { theme: currentTheme } = useTheme()
+  const itemsPerPage = 12
+  const [page, setPage] = useState<number>(1)
 
   const {
     data: projects,
@@ -90,14 +87,14 @@ export default function MyProjects() {
     queryKey: ["totalProjects", address],
     queryFn: () => fetchMyProjects(address as `0x${string}` | undefined),
     enabled: Boolean(address),
-  });
+  })
 
-  const totalProjects: number = projects?.length || 0;
+  const totalProjects: number = projects?.length || 0
   const myProjects: IProjectResponse[] =
-    projects?.slice(itemsPerPage * (page - 1), itemsPerPage * page) || [];
+    projects?.slice(itemsPerPage * (page - 1), itemsPerPage * page) || []
 
   // do a empty array of 12
-  const loadingArray = Array.from({ length: 12 }, (_, index) => index);
+  const loadingArray = Array.from({ length: 12 }, (_, index) => index)
 
   return (
     <div className={layoutTheme.padding}>
@@ -116,24 +113,22 @@ export default function MyProjects() {
               <div className="flex flex-col gap-4 justify-start">
                 <div className="grid grid-cols-4 gap-7 pb-4 max-xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1">
                   {myProjects.map((card, index) => {
-                    let active = 0;
-                    let total = card.grants?.length || 0;
+                    let active = 0
+                    const total = card.grants?.length || 0
                     card.grants?.forEach((grant) => {
-                      if (grant.completed) return;
+                      if (grant.completed) return
                       const hasActive = grant.milestones.find(
                         (milestone: any) => !milestone.completed
-                      );
-                      if (hasActive) active += 1;
-                    });
+                      )
+                      if (hasActive) active += 1
+                    })
                     return (
                       <div
                         key={index}
                         className="h-full bg-white dark:bg-zinc-900 dark:border-gray-900 border border-gray-200 rounded-xl   pb-5 w-full transition-all ease-in-out duration-200"
                       >
                         <Link
-                          href={PAGES.PROJECT.OVERVIEW(
-                            card.details?.data.slug || card.uid
-                          )}
+                          href={PAGES.PROJECT.OVERVIEW(card.details?.data.slug || card.uid)}
                           className="w-full flex flex-1 flex-col justify-start gap-3"
                         >
                           <div className="px-2 w-full mt-2.5">
@@ -171,17 +166,12 @@ export default function MyProjects() {
                                 source={card.details?.data.description || ""}
                                 style={{
                                   backgroundColor: "transparent",
-                                  color:
-                                    currentTheme === "dark"
-                                      ? "white"
-                                      : "rgb(71, 85, 105)",
+                                  color: currentTheme === "dark" ? "white" : "rgb(71, 85, 105)",
                                   width: "100%",
                                   fontSize: "16px",
                                 }}
                                 components={{
-                                  a: ({ children, href }) => (
-                                    <span>{children}</span>
-                                  ),
+                                  a: ({ children, href }) => <span>{children}</span>,
                                 }}
                               />
                             </div>
@@ -191,8 +181,7 @@ export default function MyProjects() {
                             {total ? (
                               <div className="flex h-7 items-center justify-start rounded-2xl bg-slate-50 px-3 py-1">
                                 <p className="text-center text-sm font-semibold leading-tight text-slate-600">
-                                  {formatCurrency(total)} total{" "}
-                                  {pluralize("grants", total)}
+                                  {formatCurrency(total)} total {pluralize("grants", total)}
                                 </p>
                               </div>
                             ) : null}
@@ -202,15 +191,14 @@ export default function MyProjects() {
                                   <div className="absolute left-[1px] top-[1px] h-1.5 w-1.5 rounded-full bg-teal-600" />
                                 </div>
                                 <p className="text-center text-sm font-medium leading-tight text-teal-600">
-                                  {formatCurrency(active)} active{" "}
-                                  {pluralize("grants", active)}
+                                  {formatCurrency(active)} active {pluralize("grants", active)}
                                 </p>
                               </div>
                             ) : null}
                           </div>
                         </Link>
                       </div>
-                    );
+                    )
                   })}
                 </div>
                 {totalProjects && totalProjects > itemsPerPage ? (
@@ -219,7 +207,7 @@ export default function MyProjects() {
                     postsPerPage={itemsPerPage}
                     totalPosts={totalProjects}
                     setCurrentPage={(newPage) => {
-                      setPage(newPage);
+                      setPage(newPage)
                     }}
                   />
                 ) : null}
@@ -234,11 +222,10 @@ export default function MyProjects() {
                 >
                   <p className="text-lg font-bold text-black">Attention!</p>
                   <p className="w-max max-w-md break-normal max-sm:break-keep max-sm:whitespace-break-spaces text-left text-lg max-sm:max-w-full max-sm:text-center max-sm:text-base max-sm:w-full font-normal text-black">
-                    We were unable to locate any projects associated with your
-                    wallet address: {address}. <br />
-                    To find your project, please use the search function above.
-                    If your project isn&apos;t listed, feel free to create a new
-                    one.
+                    We were unable to locate any projects associated with your wallet address:{" "}
+                    {address}. <br />
+                    To find your project, please use the search function above. If your project
+                    isn&apos;t listed, feel free to create a new one.
                   </p>
                   <ProjectDialog />
                 </div>
@@ -258,5 +245,5 @@ export default function MyProjects() {
         )}
       </div>
     </div>
-  );
+  )
 }

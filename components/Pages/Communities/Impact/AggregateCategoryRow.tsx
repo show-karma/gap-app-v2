@@ -1,21 +1,21 @@
-"use client";
-import { Carousel, CarouselItem } from "@/components/SnapCarousel";
-import { Button } from "@/components/Utilities/Button";
-import {
+"use client"
+import { InformationCircleIcon } from "@heroicons/react/24/outline"
+import * as Tooltip from "@radix-ui/react-tooltip"
+import { AreaChart, Card } from "@tremor/react"
+import Image from "next/image"
+import pluralize from "pluralize"
+import { useState } from "react"
+import { Carousel, CarouselItem } from "@/components/SnapCarousel"
+import { Button } from "@/components/Utilities/Button"
+import type {
   ImpactAggregateData,
   ImpactAggregateIndicator,
   ImpactAggregateSegment,
-} from "@/types/programs";
-import { formatDate } from "@/utilities/formatDate";
-import { cn } from "@/utilities/tailwind";
-import { AreaChart, Card } from "@tremor/react";
-import Image from "next/image";
-import { useState } from "react";
-import { InformationCircleIcon } from "@heroicons/react/24/outline";
-import * as Tooltip from "@radix-ui/react-tooltip";
-import { EmptySegment, fundedAmountFormatter } from "./CategoryRow";
-import pluralize from "pluralize";
-import formatCurrency from "@/utilities/formatCurrency";
+} from "@/types/programs"
+import formatCurrency from "@/utilities/formatCurrency"
+import { formatDate } from "@/utilities/formatDate"
+import { cn } from "@/utilities/tailwind"
+import { EmptySegment, fundedAmountFormatter } from "./CategoryRow"
 
 export const prepareChartData = (
   timestamps: string[],
@@ -32,11 +32,11 @@ export const prepareChartData = (
         Total: Number(total_values[index]) || 0,
         Min: Number(min_values[index]) || 0,
         Max: Number(max_values[index]) || 0,
-      };
+      }
     })
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  return timestampsData;
-};
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  return timestampsData
+}
 
 // Create a reusable card component to reduce duplication
 const AggregateMetricCard = ({
@@ -44,9 +44,9 @@ const AggregateMetricCard = ({
   index,
   maxItems,
 }: {
-  item: ImpactAggregateIndicator;
-  index: number;
-  maxItems: number;
+  item: ImpactAggregateIndicator
+  index: number
+  maxItems: number
 }) => (
   <Card className="rounded-lg bg-white dark:bg-zinc-800 flex-1">
     <div className="flex justify-between items-start w-full">
@@ -55,14 +55,10 @@ const AggregateMetricCard = ({
           <p className="text-slate-600 text-sm font-semibold">
             Metric {index + 1} of {maxItems}
           </p>
-          <div className="font-bold text-lg text-black dark:text-white">
-            {item.indicatorName}
-          </div>
+          <div className="font-bold text-lg text-black dark:text-white">{item.indicatorName}</div>
           {item?.amount ? (
             <div className="flex flex-row gap-2 text-sm">
-              <span className="text-[#079455] dark:text-[#079455] text-base">
-                Funded Amount
-              </span>
+              <span className="text-[#079455] dark:text-[#079455] text-base">Funded Amount</span>
               <span className="text-[#079455] dark:text-[#079455] font-bold text-base">
                 {item?.amount ? fundedAmountFormatter(item.amount) : null}
               </span>
@@ -73,9 +69,7 @@ const AggregateMetricCard = ({
     </div>
     <AreaChart
       data={prepareChartData(
-        item.datapoints.map(
-          (datapoint) => datapoint.outputTimestamp || new Date().toISOString()
-        ),
+        item.datapoints.map((datapoint) => datapoint.outputTimestamp || new Date().toISOString()),
         item.datapoints
           .map((datapoint) => datapoint.avg_value)
           .filter((val): val is number => val !== undefined),
@@ -98,22 +92,17 @@ const AggregateMetricCard = ({
       noDataText="Awaiting grantees to submit values"
     />
   </Card>
-);
+)
 
-const AggregateSegmentCard = ({
-  segmentsByType,
-}: {
-  segmentsByType: ImpactAggregateSegment[];
-}) => {
-  const [selectedSegment, setSelectedSegment] =
-    useState<ImpactAggregateSegment | null>(segmentsByType[0]);
+const AggregateSegmentCard = ({ segmentsByType }: { segmentsByType: ImpactAggregateSegment[] }) => {
+  const [selectedSegment, setSelectedSegment] = useState<ImpactAggregateSegment | null>(
+    segmentsByType[0]
+  )
   const orderedSegments = segmentsByType.sort((a, b) => {
-    return a.impactSegmentName.localeCompare(b.impactSegmentName);
-  });
+    return a.impactSegmentName.localeCompare(b.impactSegmentName)
+  })
   return (
-    <div
-      className={"flex flex-col w-full bg-[#F9FAFB] dark:bg-zinc-800 rounded"}
-    >
+    <div className={"flex flex-col w-full bg-[#F9FAFB] dark:bg-zinc-800 rounded"}>
       {orderedSegments.length > 1 ? (
         <div className="flex flex-row gap-y-2 gap-x-0 flex-wrap border-b border-gray-100 dark:border-zinc-700">
           {orderedSegments.map((item, index) => (
@@ -128,9 +117,7 @@ const AggregateSegmentCard = ({
               type="button"
               onClick={() => setSelectedSegment(item)}
             >
-              <span className="text-sm text-black dark:text-white">
-                {item.impactSegmentName}
-              </span>
+              <span className="text-sm text-black dark:text-white">{item.impactSegmentName}</span>
             </button>
           ))}
         </div>
@@ -191,24 +178,20 @@ const AggregateSegmentCard = ({
         ) : null}
       </div>
     </div>
-  );
-};
+  )
+}
 
-const AggregateCategoryBlocks = ({
-  category,
-}: {
-  category: ImpactAggregateData;
-}) => {
+const AggregateCategoryBlocks = ({ category }: { category: ImpactAggregateData }) => {
   const outputsById = category.impacts.filter(
     (impact) =>
       impact?.impactSegmentType === "output" ||
       impact?.indicators?.[0]?.impactSegmentType === "output"
-  );
+  )
   const outcomesById = category.impacts.filter(
     (impact) =>
       impact?.impactSegmentType === "outcome" ||
       impact?.indicators?.[0]?.impactSegmentType === "outcome"
-  );
+  )
   return (
     <div className={`grid grid-cols-2 gap-6 max-md:flex max-md:flex-col`}>
       {/* Outputs Column */}
@@ -225,20 +208,14 @@ const AggregateCategoryBlocks = ({
         <EmptySegment type="outcome" category={category.categoryName} />
       ) : (
         <div className={"flex flex-col w-full"}>
-          {outcomesById.length ? (
-            <AggregateSegmentCard segmentsByType={outcomesById} />
-          ) : null}
+          {outcomesById.length ? <AggregateSegmentCard segmentsByType={outcomesById} /> : null}
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export const AggregateCategoryRow = ({
-  program,
-}: {
-  program: ImpactAggregateData;
-}) => {
+export const AggregateCategoryRow = ({ program }: { program: ImpactAggregateData }) => {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-row gap-3 items-center">
@@ -254,17 +231,12 @@ export const AggregateCategoryRow = ({
         <AggregateCategoryBlocks category={program} />
       ) : (
         <div className="flex flex-col justify-center items-center gap-8 rounded-xl px-12 py-6 min-h-[280px] border border-dashed border-gray-400 dark:border-gray-600 bg-gray-50 dark:bg-zinc-900">
-          <Image
-            src={"/icons/poker-face.png"}
-            alt="no data"
-            width={40}
-            height={40}
-          />
+          <Image src={"/icons/poker-face.png"} alt="no data" width={40} height={40} />
           <p className="text-center text-gray-900 dark:text-zinc-100 text-base font-bold leading-normal">
             We are waiting for project to submit values for this metric
           </p>
         </div>
       )}
     </div>
-  );
-};
+  )
+}

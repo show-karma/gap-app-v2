@@ -1,26 +1,26 @@
-import { useQuery } from "@tanstack/react-query";
-import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
-import { useAccount } from "wagmi";
-import type { Hex } from "viem";
-import { useEffect, useState } from "react";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { useAuth } from "@/hooks/useAuth";
-import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
+import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
+import { useQuery } from "@tanstack/react-query"
+import { useEffect, useState } from "react"
+import type { Hex } from "viem"
+import { useAccount } from "wagmi"
+import { useAuth } from "@/hooks/useAuth"
+import { useSigner } from "@/utilities/eas-wagmi-utils"
+import { gapIndexerApi } from "@/utilities/gapIndexerApi"
+import { defaultQueryOptions } from "@/utilities/queries/defaultOptions"
+import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin"
 
 /**
  * Options for configuring the useIsCommunityAdmin hook
  */
 interface UseIsCommunityAdminOptions {
   /** Whether the query should be enabled. Defaults to true when prerequisites are met */
-  enabled?: boolean;
+  enabled?: boolean
   /** Optional Zustand store sync configuration for backwards compatibility */
   zustandSync?: {
     /** Function to update the community admin status in Zustand store */
-    setIsCommunityAdmin?: (isAdmin: boolean) => void;
+    setIsCommunityAdmin?: (isAdmin: boolean) => void
     /** Function to update the loading state in Zustand store */
-  };
+  }
 }
 
 /**
@@ -52,57 +52,54 @@ export const useIsCommunityAdmin = (
   options?: UseIsCommunityAdminOptions,
   community?: ICommunityResponse // Optional community object to avoid API calls
 ) => {
-  const { address: accountAddress } = useAccount();
-  const signer = useSigner();
-  const { authenticated: isAuth } = useAuth();
-  const [resolvedCommunity, setResolvedCommunity] =
-    useState<ICommunityResponse | null>(null);
+  const { address: accountAddress } = useAccount()
+  const signer = useSigner()
+  const { authenticated: isAuth } = useAuth()
+  const [resolvedCommunity, setResolvedCommunity] = useState<ICommunityResponse | null>(null)
 
   // Use provided address or connected account address
-  const checkAddress = address || accountAddress;
+  const checkAddress = address || accountAddress
 
   // Determine if input is a community or grant, and resolve community data
   useEffect(() => {
     // If community object is provided, use it directly
     if (community) {
-      setResolvedCommunity(community);
-      return;
+      setResolvedCommunity(community)
+      return
     }
 
     // Otherwise, fetch community data by UID
     if (!communityUID) {
-      setResolvedCommunity(null);
-      return;
+      setResolvedCommunity(null)
+      return
     }
 
-    let cancelled = false; // Flag to prevent race conditions
+    let cancelled = false // Flag to prevent race conditions
 
     const resolveCommunity = async () => {
       try {
-        const response = await gapIndexerApi
-          .communityBySlug(communityUID)
-          .catch(() => null);
+        const response = await gapIndexerApi.communityBySlug(communityUID).catch(() => null)
 
         // Only update state if this effect hasn't been cancelled
         if (!cancelled) {
-          const communityData = response?.data || null;
-          setResolvedCommunity(communityData);
+          const communityData = response?.data || null
+          setResolvedCommunity(communityData)
         }
       } catch (error: any) {
-        console.error("Error fetching community data:", error);
+        console.error("Error fetching community data:", error)
         if (!cancelled) {
-          setResolvedCommunity(null);
+          setResolvedCommunity(null)
         }
       }
-    };
+    }
 
-    resolveCommunity();
+    resolveCommunity()
 
     // Cleanup function to prevent race conditions
     return () => {
-      cancelled = true;
-    };
-  }, [communityUID, community]);
+      cancelled = true
+    }
+  }, [communityUID, community])
 
   const query = useQuery({
     queryKey: [
@@ -115,20 +112,20 @@ export const useIsCommunityAdmin = (
     ],
     queryFn: async () => {
       if (!resolvedCommunity || !checkAddress || !isAuth) {
-        return false;
+        return false
       }
 
-      return await isCommunityAdminOf(resolvedCommunity, checkAddress, signer);
+      return await isCommunityAdminOf(resolvedCommunity, checkAddress, signer)
     },
     enabled: !!resolvedCommunity && options?.enabled !== false,
     ...defaultQueryOptions,
-  });
+  })
 
   useEffect(() => {
     if (options?.zustandSync?.setIsCommunityAdmin && !query.isLoading) {
-      options.zustandSync.setIsCommunityAdmin(query.data ?? false);
+      options.zustandSync.setIsCommunityAdmin(query.data ?? false)
     }
-  }, [query.data, query.isLoading, options?.zustandSync?.setIsCommunityAdmin]);
+  }, [query.data, query.isLoading, options?.zustandSync?.setIsCommunityAdmin])
 
   return {
     isCommunityAdmin: query.data ?? false,
@@ -136,8 +133,8 @@ export const useIsCommunityAdmin = (
     isError: query.isError,
     error: query.error,
     refetch: query.refetch,
-  };
-};
+  }
+}
 
 /**
  * Convenience hook specifically for grant-based admin checks with automatic Zustand store synchronization
@@ -168,7 +165,7 @@ export const useGrantCommunityAdmin = (
   communityUID?: string,
   address?: string | Hex,
   zustandSync?: {
-    setIsCommunityAdmin?: (isAdmin: boolean) => void;
+    setIsCommunityAdmin?: (isAdmin: boolean) => void
   },
   community?: ICommunityResponse // Optional community object to avoid API calls
 ) => {
@@ -179,5 +176,5 @@ export const useGrantCommunityAdmin = (
       zustandSync,
     },
     community
-  );
-};
+  )
+}

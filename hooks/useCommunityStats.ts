@@ -1,18 +1,19 @@
-import { useQuery } from "@tanstack/react-query";
-import fetchData from "@/utilities/fetchData";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { INDEXER } from "@/utilities/indexer";
+import { useQuery } from "@tanstack/react-query"
+import { errorManager } from "@/components/Utilities/errorManager"
+import fetchData from "@/utilities/fetchData"
+import { INDEXER } from "@/utilities/indexer"
+
 interface CommunityStatsResponse {
-  activeCommunities: number;
-  totalProjectUpdates: number;
-  totalProjects: number;
-  totalGrants: number;
+  activeCommunities: number
+  totalProjectUpdates: number
+  totalProjects: number
+  totalGrants: number
 }
 
 interface SummaryStats {
-  title: string;
-  value: string | number;
-  shouldRound?: boolean;
+  title: string
+  value: string | number
+  shouldRound?: boolean
 }
 
 export const useCommunityStats = () => {
@@ -20,45 +21,45 @@ export const useCommunityStats = () => {
     queryKey: ["community-stats"],
     queryFn: async (): Promise<SummaryStats[]> => {
       try {
-        const endpoint = INDEXER.COMMUNITY.GLOBAL_STATS();
-        const [response, error] = await fetchData(endpoint, "GET", {}, {}, {}, false);
-        
+        const endpoint = INDEXER.COMMUNITY.GLOBAL_STATS()
+        const [response, error] = await fetchData(endpoint, "GET", {}, {}, {}, false)
+
         if (error) {
-          throw new Error(error);
-        }
-        
-        if (!response) {
-          throw new Error("No response received");
+          throw new Error(error)
         }
 
-        const data = response as CommunityStatsResponse;
-        
+        if (!response) {
+          throw new Error("No response received")
+        }
+
+        const data = response as CommunityStatsResponse
+
         // Transform the API response to match the expected format
         return [
-          { 
-            title: "Active Communities", 
+          {
+            title: "Active Communities",
             value: data.activeCommunities,
-            shouldRound: false // Don't round community count
+            shouldRound: false, // Don't round community count
           },
-          { 
-            title: "Projects", 
+          {
+            title: "Projects",
             value: data.totalProjects,
-            shouldRound: true
+            shouldRound: true,
           },
-          { 
-            title: "Grants Tracked", 
+          {
+            title: "Grants Tracked",
             value: data.totalGrants,
-            shouldRound: true
+            shouldRound: true,
           },
-          { 
-            title: "Project Updates", 
+          {
+            title: "Project Updates",
             value: data.totalProjectUpdates,
-            shouldRound: true
+            shouldRound: true,
           },
-        ];
+        ]
       } catch (error: any) {
-        errorManager("Error fetching community stats", error);
-        throw error;
+        errorManager("Error fetching community stats", error)
+        throw error
       }
     },
     staleTime: 60 * 60 * 1000, // 1 hour
@@ -67,7 +68,7 @@ export const useCommunityStats = () => {
     refetchOnMount: true,
     refetchOnReconnect: false,
     retry: 2,
-  });
-};
+  })
+}
 
-export type { CommunityStatsResponse, SummaryStats }; 
+export type { CommunityStatsResponse, SummaryStats }

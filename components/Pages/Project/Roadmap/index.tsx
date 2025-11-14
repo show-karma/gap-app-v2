@@ -1,77 +1,72 @@
-"use client";
-import { ObjectivesSub } from "@/components/Pages/Project/Objective/ObjectivesSub";
-import { RoadmapListLoading } from "../Loading/Roadmap";
+"use client"
 import {
-  IGrantUpdate,
-  IMilestoneResponse,
-  IProjectImpact,
+  type IGrantUpdate,
+  type IMilestoneResponse,
+  type IProjectImpact,
   IProjectMilestoneResponse,
-  IProjectResponse,
-  IProjectUpdate,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useAllMilestones } from "@/hooks/useAllMilestones";
-import { MilestonesList } from "@/components/Milestone/MilestonesList";
-import { useParams, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
-import { useQuery } from "@tanstack/react-query";
-import { useProgressModalStore } from "@/store/modals/progress";
-import { Button } from "@/components/Utilities/Button";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { MESSAGES } from "@/utilities/messages";
-import { UnifiedMilestone } from "@/types/roadmap";
+  type IProjectResponse,
+  type IProjectUpdate,
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
+import { useQuery } from "@tanstack/react-query"
+import { useParams, useSearchParams } from "next/navigation"
+import { useEffect, useMemo, useState } from "react"
+import { MilestonesList } from "@/components/Milestone/MilestonesList"
+import { ObjectivesSub } from "@/components/Pages/Project/Objective/ObjectivesSub"
+import { Button } from "@/components/Utilities/Button"
+import { useAllMilestones } from "@/hooks/useAllMilestones"
+import { useOwnerStore, useProjectStore } from "@/store"
+import { useProgressModalStore } from "@/store/modals/progress"
+import type { UnifiedMilestone } from "@/types/roadmap"
+import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives"
+import { MESSAGES } from "@/utilities/messages"
+import { RoadmapListLoading } from "../Loading/Roadmap"
 
 interface ProjectRoadmapProps {
-  project?: IProjectResponse;
+  project?: IProjectResponse
 }
 
-export const ProjectRoadmap = ({
-  project: propProject,
-}: ProjectRoadmapProps) => {
-  const { projectId } = useParams();
-  const searchParams = useSearchParams();
+export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) => {
+  const { projectId } = useParams()
+  const searchParams = useSearchParams()
 
-  const zustandProject = useProjectStore((state) => state.project);
+  const zustandProject = useProjectStore((state) => state.project)
 
-  const project = propProject || zustandProject;
+  const project = propProject || zustandProject
 
-  const { milestones = [], isLoading } = useAllMilestones(projectId as string);
+  const { milestones = [], isLoading } = useAllMilestones(projectId as string)
 
-  const { setIsProgressModalOpen, setProgressModalScreen } =
-    useProgressModalStore();
+  const { setIsProgressModalOpen, setProgressModalScreen } = useProgressModalStore()
 
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isAuthorized = isOwner || isProjectAdmin;
+  const isOwner = useOwnerStore((state) => state.isOwner)
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin)
+  const isAuthorized = isOwner || isProjectAdmin
 
   // Parse filters from URL
   const getActiveFilters = () => {
-    const filterParam = searchParams.get("filter");
-    if (!filterParam) return ["all"];
-    return filterParam.split(",");
-  };
+    const filterParam = searchParams.get("filter")
+    if (!filterParam) return ["all"]
+    return filterParam.split(",")
+  }
 
-  const [activeFilters, setActiveFilters] = useState<string[]>(
-    getActiveFilters()
-  );
+  const [activeFilters, setActiveFilters] = useState<string[]>(getActiveFilters())
 
   // Sync with URL params when they change
   useEffect(() => {
-    setActiveFilters(getActiveFilters());
-  }, [searchParams]);
+    setActiveFilters(getActiveFilters())
+  }, [searchParams])
 
   // Helper function to normalize any timestamp format to milliseconds
   const normalizeToMilliseconds = (timestamp: unknown): number | null => {
     if (timestamp === null || timestamp === undefined) {
-      return null;
+      return null
     }
 
     // If it's already a number
     if (typeof timestamp === "number") {
       // Detect if it's seconds (Unix timestamps in seconds typically have 10 digits or less)
       // While millisecond timestamps have 13 digits
-      const isSeconds = timestamp < 10000000000; // If less than 11 digits, assume seconds
-      return isSeconds ? timestamp * 1000 : timestamp;
+      const isSeconds = timestamp < 10000000000 // If less than 11 digits, assume seconds
+      return isSeconds ? timestamp * 1000 : timestamp
     }
 
     // If it's a string date or anything else, try to parse it
@@ -82,14 +77,14 @@ export const ProjectRoadmap = ({
         timestamp instanceof Date ||
         (typeof timestamp === "object" && timestamp !== null)
       ) {
-        const parsed = new Date(timestamp as string | number | Date).getTime();
-        return !isNaN(parsed) ? parsed : null;
+        const parsed = new Date(timestamp as string | number | Date).getTime()
+        return !isNaN(parsed) ? parsed : null
       }
-      return null;
+      return null
     } catch {
-      return null;
+      return null
     }
-  };
+  }
 
   // Create a function to get sortable timestamp for any item
   const getSortTimestamp = (item: UnifiedMilestone): number => {
@@ -98,71 +93,67 @@ export const ProjectRoadmap = ({
       const dates = [
         normalizeToMilliseconds(item?.endsAt),
         normalizeToMilliseconds(item?.startsAt),
-        item?.completed &&
-        typeof item.completed === "object" &&
-        "createdAt" in item.completed
+        item?.completed && typeof item.completed === "object" && "createdAt" in item.completed
           ? normalizeToMilliseconds(item.completed.createdAt)
           : null,
         normalizeToMilliseconds(item?.createdAt),
-      ];
+      ]
 
-      return dates.find((date) => date !== null) || Date.now();
+      return dates.find((date) => date !== null) || Date.now()
     } catch (error) {
-      return Date.now();
+      return Date.now()
     }
-  };
+  }
 
   const combinedUpdatesAndMilestones = useMemo(() => {
-    const updates: IProjectUpdate[] = project?.updates || [];
-    const grantUpdates: IGrantUpdate[] = [];
-    const grantMilestones: IMilestoneResponse[] = [];
-    const impacts: IProjectImpact[] = project?.impacts || [];
+    const updates: IProjectUpdate[] = project?.updates || []
+    const grantUpdates: IGrantUpdate[] = []
+    const grantMilestones: IMilestoneResponse[] = []
+    const impacts: IProjectImpact[] = project?.impacts || []
 
     if (project?.grants) {
       project.grants.forEach((grant) => {
-        if (grant.updates) grantUpdates.push(...grant.updates);
-        if (grant.milestones) grantMilestones.push(...grant.milestones);
-      });
+        if (grant.updates) grantUpdates.push(...grant.updates)
+        if (grant.milestones) grantMilestones.push(...grant.milestones)
+      })
     }
 
-    const allUpdates = [...updates, ...grantUpdates, ...impacts];
+    const allUpdates = [...updates, ...grantUpdates, ...impacts]
 
     const updateItems = allUpdates.map((update: any): UnifiedMilestone => {
-      const createdAt = update.createdAt || new Date().toISOString();
+      const createdAt = update.createdAt || new Date().toISOString()
 
-      let startDate: number | undefined;
+      let startDate: number | undefined
       if (update.data?.startDate) {
-        const parsedDate = new Date(update.data.startDate).getTime();
-        startDate = !isNaN(parsedDate) ? parsedDate : undefined;
+        const parsedDate = new Date(update.data.startDate).getTime()
+        startDate = !isNaN(parsedDate) ? parsedDate : undefined
       }
 
-      let endDate: number | undefined;
+      let endDate: number | undefined
       if (update.data?.endDate) {
-        const parsedDate = new Date(update.data.endDate).getTime();
-        endDate = !isNaN(parsedDate) ? parsedDate : undefined;
+        const parsedDate = new Date(update.data.endDate).getTime()
+        endDate = !isNaN(parsedDate) ? parsedDate : undefined
       }
 
-      let type = "update";
+      let type = "update"
 
       if (
         update.data?.type === "impact" ||
         update.data?.type === "project-impact" ||
-        (update.data?.title &&
-          update.data.title.toLowerCase().includes("impact")) ||
+        (update.data?.title && update.data.title.toLowerCase().includes("impact")) ||
         (update.__typename && update.__typename === "Impact")
       ) {
-        type = "impact";
+        type = "impact"
       } else if (
         update.source === "grant" ||
-        (update.data?.title &&
-          update.data.title.toLowerCase().includes("grant")) ||
+        (update.data?.title && update.data.title.toLowerCase().includes("grant")) ||
         (update.refUID && update.refUID !== project?.uid) // If referencing something other than the project, likely a grant
       ) {
-        type = "grant_update";
+        type = "grant_update"
       } else if (update.data?.type === "project-milestone") {
-        type = "milestone";
+        type = "milestone"
       } else {
-        type = "activity";
+        type = "activity"
       }
 
       return {
@@ -181,34 +172,28 @@ export const ProjectRoadmap = ({
           type: update.data?.type === "impact" ? "impact" : "update",
           update,
         },
-      };
-    });
+      }
+    })
 
-    const milestonesArray = Array.isArray(milestones) ? milestones : [];
+    const milestonesArray = Array.isArray(milestones) ? milestones : []
 
-    const allItems = [...milestonesArray, ...updateItems];
+    const allItems = [...milestonesArray, ...updateItems]
 
     const allSortedItems = [...allItems].sort((a, b) => {
-      const timestampA = getSortTimestamp(a);
-      const timestampB = getSortTimestamp(b);
+      const timestampA = getSortTimestamp(a)
+      const timestampB = getSortTimestamp(b)
 
-      return timestampB - timestampA;
-    });
+      return timestampB - timestampA
+    })
 
-    return allSortedItems;
-  }, [
-    project?.grants,
-    project?.updates,
-    project?.impacts,
-    project?.uid,
-    milestones,
-  ]);
+    return allSortedItems
+  }, [project?.grants, project?.updates, project?.impacts, project?.uid, milestones])
 
   // Filter items based on active filters
   const filteredItems = useMemo(() => {
     // If user selected "all", return everything
     if (activeFilters.includes("all")) {
-      return combinedUpdatesAndMilestones;
+      return combinedUpdatesAndMilestones
     }
 
     // Core filtering function
@@ -221,12 +206,10 @@ export const ProjectRoadmap = ({
         if (item.completed === false) {
           // For pending, check the underlying schema matches a milestone type
           const isMilestoneType =
-            item.type === "milestone" ||
-            item.type === "grant" ||
-            item.type === "project";
+            item.type === "milestone" || item.type === "grant" || item.type === "project"
 
           if (isMilestoneType) {
-            return true;
+            return true
           }
         }
       }
@@ -235,17 +218,14 @@ export const ProjectRoadmap = ({
       if (activeFilters.includes("completed")) {
         // Both boolean true and object {"createdAt": ...} should be treated as completed
         const isItemCompleted =
-          item.completed === true ||
-          (item.completed && typeof item.completed === "object");
+          item.completed === true || (item.completed && typeof item.completed === "object")
 
         // Check if it's a milestone or grant type
         const isMilestoneType =
-          item.type === "milestone" ||
-          item.type === "grant" ||
-          item.type === "project";
+          item.type === "milestone" || item.type === "grant" || item.type === "project"
 
         if (isItemCompleted && isMilestoneType) {
-          return true;
+          return true
         }
       }
 
@@ -253,7 +233,7 @@ export const ProjectRoadmap = ({
       if (activeFilters.includes("impacts")) {
         // Simply check the type - we've improved the type detection
         if (item.type === "impact") {
-          return true;
+          return true
         }
       }
 
@@ -261,7 +241,7 @@ export const ProjectRoadmap = ({
       if (activeFilters.includes("activities")) {
         // Activities should only be items explicitly marked as activities
         if (item.type === "activity") {
-          return true;
+          return true
         }
       }
 
@@ -269,18 +249,18 @@ export const ProjectRoadmap = ({
       if (activeFilters.includes("updates")) {
         // Simply check the type - we've improved the type detection
         if (item.type === "grant_update") {
-          return true;
+          return true
         }
       }
 
       // If none of the filters matched, don't include this item
-      return false;
-    });
-  }, [combinedUpdatesAndMilestones, activeFilters]);
+      return false
+    })
+  }, [combinedUpdatesAndMilestones, activeFilters])
 
   // If no project data is available, show loading
   if (!project) {
-    return <RoadmapListLoading />;
+    return <RoadmapListLoading />
   }
 
   return (
@@ -307,15 +287,14 @@ export const ProjectRoadmap = ({
                     }}
                   >
                     <p className="w-full text-center text-lg break-words h-max font-semibold text-black dark:text-zinc-200">
-                      Go ahead and create your first project activity or
-                      milestone
+                      Go ahead and create your first project activity or milestone
                     </p>
                     <Button
                       type="button"
                       className="w-max bg-brand-blue text-white px-4 py-2 rounded-lg"
                       onClick={() => {
-                        setProgressModalScreen("project_update");
-                        setIsProgressModalOpen(true);
+                        setProgressModalScreen("project_update")
+                        setIsProgressModalOpen(true)
                       }}
                     >
                       Create new activity
@@ -346,5 +325,5 @@ export const ProjectRoadmap = ({
         </div>
       </div>
     </div>
-  );
-};
+  )
+}

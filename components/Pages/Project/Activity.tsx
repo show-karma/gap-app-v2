@@ -1,42 +1,42 @@
-import { useProjectStore } from "@/store";
-import { Tab } from "@headlessui/react";
-import { Fragment, useState } from "react";
-import { cn } from "@/utilities/tailwind";
-import { ActivityList } from "@/components/Shared/ActivityList";
-import { UnifiedMilestone } from "@/types/roadmap";
-import { useAllMilestones } from "@/hooks/useAllMilestones";
-import { useParams } from "next/navigation";
+import { Tab } from "@headlessui/react"
+import { useParams } from "next/navigation"
+import { Fragment, useState } from "react"
+import { ActivityList } from "@/components/Shared/ActivityList"
+import { useAllMilestones } from "@/hooks/useAllMilestones"
+import { useProjectStore } from "@/store"
+import type { UnifiedMilestone } from "@/types/roadmap"
+import { cn } from "@/utilities/tailwind"
 
 export const ProjectActivity = () => {
-  const { project, isProjectAdmin } = useProjectStore();
-  const { projectId } = useParams();
-  const { milestones = [] } = useAllMilestones(projectId as string);
-  const [selectedTab, setSelectedTab] = useState(0);
+  const { project, isProjectAdmin } = useProjectStore()
+  const { projectId } = useParams()
+  const { milestones = [] } = useAllMilestones(projectId as string)
+  const [selectedTab, setSelectedTab] = useState(0)
 
   // Combine all types of updates like in the original Updates.tsx
   const getAllUpdates = () => {
-    const updates = project?.updates || [];
-    const grantUpdates: any[] = [];
-    const grantMilestones: any[] = [];
-    const impacts = project?.impacts || [];
+    const updates = project?.updates || []
+    const grantUpdates: any[] = []
+    const grantMilestones: any[] = []
+    const impacts = project?.impacts || []
 
     project?.grants?.forEach((grant) => {
-      grantUpdates.push(...(grant.updates || []));
-      grantMilestones.push(...(grant.milestones || []));
-    });
+      grantUpdates.push(...(grant.updates || []))
+      grantMilestones.push(...(grant.milestones || []))
+    })
 
-    return [...updates, ...grantUpdates, ...grantMilestones, ...impacts];
-  };
+    return [...updates, ...grantUpdates, ...grantMilestones, ...impacts]
+  }
 
-  const allUpdates = getAllUpdates();
-  const isAuthorized = isProjectAdmin;
+  const allUpdates = getAllUpdates()
+  const isAuthorized = isProjectAdmin
 
   // Tabs for filtering different activity types
   const tabs = [
     { name: "All", count: allUpdates.length + (milestones?.length || 0) },
     { name: "Updates", count: allUpdates.length },
     { name: "Milestones", count: milestones?.length || 0 },
-  ];
+  ]
 
   // Filter activities based on selected tab
   const getFilteredActivities = () => {
@@ -45,31 +45,28 @@ export const ProjectActivity = () => {
         return {
           updates: allUpdates,
           milestones: (milestones as UnifiedMilestone[]) || [],
-        };
+        }
       case 1: // Updates only
-        return { updates: allUpdates, milestones: [] };
+        return { updates: allUpdates, milestones: [] }
       case 2: // Milestones only
         return {
           updates: [],
           milestones: (milestones as UnifiedMilestone[]) || [],
-        };
+        }
       default:
         return {
           updates: allUpdates,
           milestones: (milestones as UnifiedMilestone[]) || [],
-        };
+        }
     }
-  };
+  }
 
-  const { updates: filteredUpdates, milestones: filteredMilestones } =
-    getFilteredActivities();
+  const { updates: filteredUpdates, milestones: filteredMilestones } = getFilteredActivities()
 
   return (
     <div className="w-full flex flex-col gap-8">
       <div className="flex flex-col gap-4">
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Project Activity
-        </h2>
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Project Activity</h2>
         <p className="text-gray-500 dark:text-gray-400">
           View all updates and milestones for this project
         </p>
@@ -113,5 +110,5 @@ export const ProjectActivity = () => {
         </Tab.Panels>
       </Tab.Group>
     </div>
-  );
-};
+  )
+}

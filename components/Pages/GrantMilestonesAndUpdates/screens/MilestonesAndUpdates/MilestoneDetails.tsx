@@ -1,29 +1,29 @@
-"use client";
+"use client"
 
-import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
-import { formatDate } from "@/utilities/formatDate";
-import { ReadMore } from "@/utilities/ReadMore";
-import { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { type FC } from "react";
-import { MilestoneDelete } from "./MilestoneDelete";
-import { Updates } from "./Updates";
+import type { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
+import type { FC } from "react"
+import { useOwnerStore, useProjectStore } from "@/store"
+import { useCommunityAdminStore } from "@/store/communityAdmin"
+import { formatDate } from "@/utilities/formatDate"
+import { ReadMore } from "@/utilities/ReadMore"
+import { MilestoneDelete } from "./MilestoneDelete"
+import { Updates } from "./Updates"
 
 interface MilestoneDateStatusProps {
-  milestone: IMilestoneResponse;
+  milestone: IMilestoneResponse
 }
 
 const statusDictionary = {
   completed: "Completed",
   pending: "Pending",
   "past due": "Past Due",
-};
+}
 
 const statusBg = {
   completed: "bg-blue-600",
   pending: "bg-gray-500",
   "past due": "bg-red-600",
-};
+}
 
 const FlagIcon = () => {
   return (
@@ -42,19 +42,17 @@ const FlagIcon = () => {
       <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
       <line x1="4" x2="4" y1="22" y2="15"></line>
     </svg>
-  );
-};
+  )
+}
 
-export const MilestoneDateStatus: FC<MilestoneDateStatusProps> = ({
-  milestone,
-}) => {
+export const MilestoneDateStatus: FC<MilestoneDateStatusProps> = ({ milestone }) => {
   const getMilestoneStatus = () => {
-    if (milestone.completed) return "completed";
-    if (milestone.data.endsAt < Date.now() / 1000) return "past due";
-    return "pending";
-  };
+    if (milestone.completed) return "completed"
+    if (milestone.data.endsAt < Date.now() / 1000) return "past due"
+    return "pending"
+  }
 
-  const status = getMilestoneStatus();
+  const status = getMilestoneStatus()
 
   return (
     <div className="flex max-w-full w-max max-lg:w-full flex-row items-center justify-center gap-4 max-lg:justify-start flex-wrap">
@@ -65,20 +63,18 @@ export const MilestoneDateStatus: FC<MilestoneDateStatusProps> = ({
             )}`
           : `Due on ${formatDate(milestone.data.endsAt * 1000)}`}
       </p>
-      <div
-        className={`flex items-center justify-start rounded-2xl px-2 py-1 ${statusBg[status]}`}
-      >
+      <div className={`flex items-center justify-start rounded-2xl px-2 py-1 ${statusBg[status]}`}>
         <p className="text-center text-xs font-medium leading-none text-white">
           {statusDictionary[status]}
         </p>
       </div>
     </div>
-  );
-};
+  )
+}
 
 interface MilestoneTagProps {
-  index: number;
-  priority?: number;
+  index: number
+  priority?: number
 }
 export const MilestoneTag: FC<MilestoneTagProps> = ({ index, priority }) => {
   return (
@@ -93,24 +89,19 @@ export const MilestoneTag: FC<MilestoneTagProps> = ({ index, priority }) => {
         </div>
       ) : null}
     </div>
-  );
-};
-
-interface MilestoneDetailsProps {
-  milestone: IMilestoneResponse;
-  index: number;
+  )
 }
 
-export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
-  milestone,
-  index,
-}) => {
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isCommunityAdmin = useCommunityAdminStore(
-    (state) => state.isCommunityAdmin
-  );
-  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
+interface MilestoneDetailsProps {
+  milestone: IMilestoneResponse
+  index: number
+}
+
+export const MilestoneDetails: FC<MilestoneDetailsProps> = ({ milestone, index }) => {
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin)
+  const isContractOwner = useOwnerStore((state) => state.isOwner)
+  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin)
+  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin
   return (
     <div className="flex flex-col gap-2">
       <div className="flex w-full flex-1 flex-col rounded-lg border border-zinc-200 bg-white dark:bg-zinc-800 transition-all duration-200 ease-in-out">
@@ -127,10 +118,7 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
         >
           <div className="flex w-full flex-row items-start justify-between px-4 max-lg:mb-4 max-lg:flex-col">
             <div className="flex flex-col gap-3">
-              <MilestoneTag
-                index={index}
-                priority={milestone?.data?.priority}
-              />
+              <MilestoneTag index={index} priority={milestone?.data?.priority} />
               <h4 className="text-base font-bold leading-normal text-black dark:text-zinc-100">
                 {milestone.data.title}
               </h4>
@@ -161,5 +149,5 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
         )}
       </div>
     </div>
-  );
-};
+  )
+}

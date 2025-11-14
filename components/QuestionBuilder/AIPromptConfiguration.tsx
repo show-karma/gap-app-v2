@@ -1,14 +1,12 @@
-"use client";
+"use client"
 
-import React from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Button } from "@/components/Utilities/Button";
-import { FormSchema } from "@/types/question-builder";
-import { useEffect } from "react";
-import { useProgram } from "@/hooks/usePrograms";
-
+import { zodResolver } from "@hookform/resolvers/zod"
+import React, { useEffect } from "react"
+import { useForm } from "react-hook-form"
+import { z } from "zod"
+import { Button } from "@/components/Utilities/Button"
+import { useProgram } from "@/hooks/usePrograms"
+import type { FormSchema } from "@/types/question-builder"
 
 const aiConfigSchema = z.object({
   // systemPrompt: z.string().min(10, 'System prompt must be at least 10 characters'),
@@ -16,17 +14,17 @@ const aiConfigSchema = z.object({
   aiModel: z.string().min(1, "AI model is required"),
   enableRealTimeEvaluation: z.boolean(),
   langfusePromptId: z.string().optional(),
-});
+})
 
-type AIConfigFormData = z.infer<typeof aiConfigSchema>;
+type AIConfigFormData = z.infer<typeof aiConfigSchema>
 
 interface AIPromptConfigurationProps {
-  schema: FormSchema;
-  onUpdate?: (updatedSchema: FormSchema) => void;
-  className?: string;
-  programId?: string;
-  chainId?: number;
-  readOnly?: boolean;
+  schema: FormSchema
+  onUpdate?: (updatedSchema: FormSchema) => void
+  className?: string
+  programId?: string
+  chainId?: number
+  readOnly?: boolean
 }
 
 export function AIPromptConfiguration({
@@ -38,11 +36,12 @@ export function AIPromptConfiguration({
   readOnly = false,
 }: AIPromptConfigurationProps) {
   // Fetch program data for default langfusePromptId
-  const { data: program } = useProgram(programId || "");
+  const { data: program } = useProgram(programId || "")
 
   // Get default langfusePromptId from program registry if not set in schema
-  const defaultLangfusePromptId = schema.aiConfig?.langfusePromptId || program?.langfusePromptId || "";
-  const recommendedPrompt = "";
+  const defaultLangfusePromptId =
+    schema.aiConfig?.langfusePromptId || program?.langfusePromptId || ""
+  const recommendedPrompt = ""
 
   const {
     register,
@@ -57,29 +56,27 @@ export function AIPromptConfiguration({
       // systemPrompt: schema.aiConfig?.systemPrompt || '',
       // detailedPrompt: schema.aiConfig?.detailedPrompt || '',
       aiModel: schema.aiConfig?.aiModel || "gpt-4o",
-      enableRealTimeEvaluation:
-        schema.aiConfig?.enableRealTimeEvaluation || false,
+      enableRealTimeEvaluation: schema.aiConfig?.enableRealTimeEvaluation || false,
       langfusePromptId: defaultLangfusePromptId || recommendedPrompt,
     },
-  });
+  })
 
-  const watchedValues = watch();
-  const currentLangfusePromptId = watchedValues.langfusePromptId || "";
+  const watchedValues = watch()
+  const currentLangfusePromptId = watchedValues.langfusePromptId || ""
 
-  const displayValue = currentLangfusePromptId === recommendedPrompt
-    ? recommendedPrompt
-    : currentLangfusePromptId;
+  const displayValue =
+    currentLangfusePromptId === recommendedPrompt ? recommendedPrompt : currentLangfusePromptId
 
   // Update form value when program data loads and no langfusePromptId is set
   useEffect(() => {
     if (program?.langfusePromptId && !schema.aiConfig?.langfusePromptId) {
-      setValue("langfusePromptId", program.langfusePromptId);
+      setValue("langfusePromptId", program.langfusePromptId)
     }
-  }, [program?.langfusePromptId, schema.aiConfig?.langfusePromptId, setValue]);
+  }, [program?.langfusePromptId, schema.aiConfig?.langfusePromptId, setValue])
 
   // Auto-update the schema when form values change
   useEffect(() => {
-    if (readOnly || !onUpdate) return; // Don't update in read-only mode
+    if (readOnly || !onUpdate) return // Don't update in read-only mode
 
     const subscription = watch((data) => {
       // Only update if we have a valid system prompt (minimum requirement)
@@ -92,12 +89,12 @@ export function AIPromptConfiguration({
           enableRealTimeEvaluation: data.enableRealTimeEvaluation || false,
           langfusePromptId: data.langfusePromptId || "",
         },
-      };
-      onUpdate(updatedSchema);
-    });
+      }
+      onUpdate(updatedSchema)
+    })
 
-    return () => subscription.unsubscribe();
-  }, [watch, onUpdate, schema, readOnly]);
+    return () => subscription.unsubscribe()
+  }, [watch, onUpdate, schema, readOnly])
 
   return (
     <div
@@ -108,13 +105,11 @@ export function AIPromptConfiguration({
           AI Evaluation Configuration
         </h3>
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          Configure AI prompts and settings for automatic evaluation of grant
-          applications.
+          Configure AI prompts and settings for automatic evaluation of grant applications.
         </p>
       </div>
 
       <div className="space-y-6">
-
         {/* AI Model Selection */}
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -123,18 +118,14 @@ export function AIPromptConfiguration({
           <select
             {...register("aiModel")}
             disabled={readOnly}
-            className={`w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 ${readOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             <option value="gpt-4o">GPT-4o (Recommended)</option>
             <option value="gpt-5">GPT-5 (Latest)</option>
             <option value="gpt-5-nano">GPT-5 Nano (Fastest)</option>
             <option value="gpt-5-mini">GPT-5 Mini (Reasoning)</option>
           </select>
-          {errors.aiModel && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.aiModel.message}
-            </p>
-          )}
+          {errors.aiModel && <p className="text-red-500 text-sm mt-1">{errors.aiModel.message}</p>}
         </div>
 
         {/* Langfuse Prompt Name */}
@@ -147,21 +138,19 @@ export function AIPromptConfiguration({
             value={displayValue}
             disabled={readOnly}
             onChange={(e) => {
-              const value = e.target.value;
-              const cleanValue = value.replace(/ \(Recommended\)$/, "");
-              setValue("langfusePromptId", cleanValue);
+              const value = e.target.value
+              const cleanValue = value.replace(/ \(Recommended\)$/, "")
+              setValue("langfusePromptId", cleanValue)
             }}
-            className={`w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300 ${readOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300 ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
             placeholder=""
           />
           {errors.langfusePromptId && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.langfusePromptId.message}
-            </p>
+            <p className="text-red-500 text-sm mt-1">{errors.langfusePromptId.message}</p>
           )}
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-            The name of the Langfuse prompt to use for AI evaluation. If not specified,
-            the default prompt from the program registry will be used.
+            The name of the Langfuse prompt to use for AI evaluation. If not specified, the default
+            prompt from the program registry will be used.
           </p>
         </div>
 
@@ -174,15 +163,15 @@ export function AIPromptConfiguration({
                   {...register("enableRealTimeEvaluation")}
                   type="checkbox"
                   disabled={readOnly}
-                  className={`rounded border-gray-300 text-blue-600 focus:ring-blue-500 ${readOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`rounded border-gray-300 text-blue-600 focus:ring-blue-500 ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
                 />
                 <label className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
                   Enable Real-time Evaluation
                 </label>
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-6">
-                Provide instant feedback to applicants as they complete form
-                fields. This uses only the system prompt for faster responses.
+                Provide instant feedback to applicants as they complete form fields. This uses only
+                the system prompt for faster responses.
               </p>
             </div>
           </div>
@@ -202,35 +191,25 @@ export function AIPromptConfiguration({
                 </dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-gray-600 dark:text-gray-400">
-                  Real-time Evaluation:
-                </dt>
+                <dt className="text-gray-600 dark:text-gray-400">Real-time Evaluation:</dt>
                 <dd className="text-gray-900 dark:text-white">
-                  {schema.aiConfig.enableRealTimeEvaluation
-                    ? "Enabled"
-                    : "Disabled"}
+                  {schema.aiConfig.enableRealTimeEvaluation ? "Enabled" : "Disabled"}
                 </dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-gray-600 dark:text-gray-400">
-                  Langfuse Prompt:
-                </dt>
+                <dt className="text-gray-600 dark:text-gray-400">Langfuse Prompt:</dt>
                 <dd className="text-gray-900 dark:text-white font-mono text-xs">
                   {schema.aiConfig.langfusePromptId || "Default from registry"}
                 </dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-gray-600 dark:text-gray-400">
-                  System Prompt Length:
-                </dt>
+                <dt className="text-gray-600 dark:text-gray-400">System Prompt Length:</dt>
                 <dd className="text-gray-900 dark:text-white">
                   {schema.aiConfig.systemPrompt?.length || 0} characters
                 </dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-gray-600 dark:text-gray-400">
-                  Detailed Prompt Length:
-                </dt>
+                <dt className="text-gray-600 dark:text-gray-400">Detailed Prompt Length:</dt>
                 <dd className="text-gray-900 dark:text-white">
                   {schema.aiConfig.detailedPrompt?.length || 0} characters
                 </dd>
@@ -240,5 +219,5 @@ export function AIPromptConfiguration({
         )}
       </div>
     </div>
-  );
+  )
 }

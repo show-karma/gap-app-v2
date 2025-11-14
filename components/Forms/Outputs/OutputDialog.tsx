@@ -1,17 +1,17 @@
-"use client";
+"use client"
 
-import * as Dialog from "@radix-ui/react-dialog";
-import { XMarkIcon } from "@heroicons/react/24/solid";
-import { ImpactIndicatorWithData } from "@/types/impactMeasurement";
-import { IndicatorForm } from "@/components/Forms/IndicatorForm";
-import type { FC } from "react";
+import { XMarkIcon } from "@heroicons/react/24/solid"
+import * as Dialog from "@radix-ui/react-dialog"
+import type { FC } from "react"
+import { IndicatorForm } from "@/components/Forms/IndicatorForm"
+import type { ImpactIndicatorWithData } from "@/types/impactMeasurement"
 
 interface OutputDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  selectedPrograms: { programId: string; title: string; chainID: number }[];
-  onSuccess: (indicator: ImpactIndicatorWithData) => void;
-  onError: () => void;
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  selectedPrograms: { programId: string; title: string; chainID: number }[]
+  onSuccess: (indicator: ImpactIndicatorWithData) => void
+  onError: () => void
 }
 
 export const OutputDialog: FC<OutputDialogProps> = ({
@@ -19,7 +19,7 @@ export const OutputDialog: FC<OutputDialogProps> = ({
   onOpenChange,
   selectedPrograms,
   onSuccess,
-  onError
+  onError,
 }) => (
   <Dialog.Root open={open} onOpenChange={onOpenChange}>
     <Dialog.Portal>
@@ -33,9 +33,7 @@ export const OutputDialog: FC<OutputDialogProps> = ({
         }}
       >
         <div className="flex items-center justify-between mb-4">
-          <Dialog.Title className="text-lg font-semibold">
-            Create New Metric
-          </Dialog.Title>
+          <Dialog.Title className="text-lg font-semibold">Create New Metric</Dialog.Title>
           <Dialog.Close className="text-gray-400 hover:text-gray-500">
             <XMarkIcon className="h-5 w-5" />
           </Dialog.Close>
@@ -49,4 +47,4 @@ export const OutputDialog: FC<OutputDialogProps> = ({
       </Dialog.Content>
     </Dialog.Portal>
   </Dialog.Root>
-);
+)

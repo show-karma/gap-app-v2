@@ -1,15 +1,15 @@
-import fetchData from "@/utilities/fetchData";
+import fetchData from "@/utilities/fetchData"
 
 export interface ProgramScoreUploadRequest {
-  communityUID: string;
-  programId: string;
-  chainId: number;
-  csvData: any[];
+  communityUID: string
+  programId: string
+  chainId: number
+  csvData: any[]
 }
 
 export interface ProgramScoreUploadResult {
-  successful: number;
-  failed: string[];
+  successful: number
+  failed: string[]
 }
 
 export const programScoresService = {
@@ -18,12 +18,12 @@ export const programScoresService = {
       "/v2/program-scores/bulk-create-from-csv",
       "POST",
       request
-    );
-    
+    )
+
     if (error) {
-      throw new Error(`Failed to upload program scores: ${error}`);
+      throw new Error(`Failed to upload program scores: ${error}`)
     }
 
-    return data as ProgramScoreUploadResult;
-  }
-};
+    return data as ProgramScoreUploadResult
+  },
+}

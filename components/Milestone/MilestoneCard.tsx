@@ -1,16 +1,16 @@
-"use client";
-import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
-import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
-import { formatDate } from "@/utilities/formatDate";
-import { ReadMore } from "@/utilities/ReadMore";
-import { useState } from "react";
-import { cn } from "@/utilities/tailwind";
-import dynamic from "next/dynamic";
-import Image from "next/image";
-import { UnifiedMilestone } from "@/types/roadmap";
-import { ExternalLink } from "../Utilities/ExternalLink";
-import { PAGES } from "@/utilities/pages";
-import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
+"use client"
+import dynamic from "next/dynamic"
+import Image from "next/image"
+import { useState } from "react"
+import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar"
+import EthereumAddressToENSName from "@/components/EthereumAddressToENSName"
+import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers"
+import type { UnifiedMilestone } from "@/types/roadmap"
+import { formatDate } from "@/utilities/formatDate"
+import { PAGES } from "@/utilities/pages"
+import { ReadMore } from "@/utilities/ReadMore"
+import { cn } from "@/utilities/tailwind"
+import { ExternalLink } from "../Utilities/ExternalLink"
 
 const ProjectObjectiveCompletion = dynamic(
   () =>
@@ -20,27 +20,22 @@ const ProjectObjectiveCompletion = dynamic(
   {
     ssr: false,
   }
-);
+)
 
 const ObjectiveOptionsMenu = dynamic(
   () =>
-    import("@/components/Pages/Project/Objective/Options").then(
-      (mod) => mod.ObjectiveOptionsMenu
-    ),
+    import("@/components/Pages/Project/Objective/Options").then((mod) => mod.ObjectiveOptionsMenu),
   {
     ssr: false,
   }
-);
+)
 
 const GrantMilestoneOptionsMenu = dynamic(
-  () =>
-    import("./GrantMilestoneOptionsMenu").then(
-      (mod) => mod.GrantMilestoneOptionsMenu
-    ),
+  () => import("./GrantMilestoneOptionsMenu").then((mod) => mod.GrantMilestoneOptionsMenu),
   {
     ssr: false,
   }
-);
+)
 
 const GrantMilestoneCompletion = dynamic(
   () =>
@@ -50,84 +45,78 @@ const GrantMilestoneCompletion = dynamic(
   {
     ssr: false,
   }
-);
+)
 
 interface MilestoneCardProps {
-  milestone: UnifiedMilestone;
-  isAuthorized: boolean;
+  milestone: UnifiedMilestone
+  isAuthorized: boolean
 }
 
-export const MilestoneCard = ({
-  milestone,
-  isAuthorized,
-}: MilestoneCardProps) => {
-  const [isCompleting, setIsCompleting] = useState(false);
+export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) => {
+  const [isCompleting, setIsCompleting] = useState(false)
 
   const handleCompleting = (isCompleting: boolean) => {
-    setIsCompleting(isCompleting);
-  };
+    setIsCompleting(isCompleting)
+  }
 
-  const { title, description, completed, type } = milestone;
+  const { title, description, completed, type } = milestone
 
   // Fetch milestone impact data (outputs/metrics) if milestone is completed
   const { data: milestoneImpactData } = useMilestoneImpactAnswers({
     milestoneUID: completed ? milestone.uid : undefined,
-  });
+  })
 
   // project milestone-specific properties
-  const projectMilestone = milestone.source.projectMilestone;
+  const projectMilestone = milestone.source.projectMilestone
   const attester =
-    projectMilestone?.attester ||
-    milestone.source.grantMilestone?.milestone.attester ||
-    "";
-  const createdAt = milestone.createdAt;
+    projectMilestone?.attester || milestone.source.grantMilestone?.milestone.attester || ""
+  const createdAt = milestone.createdAt
 
   // grant milestone-specific properties
-  const grantMilestone = milestone.source.grantMilestone;
-  const grantTitle = grantMilestone?.grant.details?.data.title;
-  const programId = grantMilestone?.grant.details?.data.programId;
-  const communityData = grantMilestone?.grant.community?.details?.data;
-  const endsAt = milestone.endsAt;
+  const grantMilestone = milestone.source.grantMilestone
+  const grantTitle = grantMilestone?.grant.details?.data.title
+  const programId = grantMilestone?.grant.details?.data.programId
+  const communityData = grantMilestone?.grant.community?.details?.data
+  const endsAt = milestone.endsAt
 
   // completion information
   const completionReason =
-    projectMilestone?.completed?.data?.reason ||
-    grantMilestone?.milestone.completed?.data?.reason;
+    projectMilestone?.completed?.data?.reason || grantMilestone?.milestone.completed?.data?.reason
   const completionProof =
     projectMilestone?.completed?.data?.proofOfWork ||
-    grantMilestone?.milestone.completed?.data?.proofOfWork;
+    grantMilestone?.milestone.completed?.data?.proofOfWork
   const completionDeliverables =
     (projectMilestone?.completed?.data as any)?.deliverables ||
-    (grantMilestone?.milestone.completed?.data as any)?.deliverables;
+    (grantMilestone?.milestone.completed?.data as any)?.deliverables
 
   // Determine border color and tag based on milestone type and status
   const getBorderColor = () => {
-    if (completed) return "border-brand-blue";
-    return "border-gray-300 dark:border-zinc-400";
-  };
+    if (completed) return "border-brand-blue"
+    return "border-gray-300 dark:border-zinc-400"
+  }
 
   const getLeftBorderColor = () => {
-    if (completed) return "#2ED3B7";
-    return "#FDB022";
-  };
+    if (completed) return "#2ED3B7"
+    return "#FDB022"
+  }
 
   const getStatusColor = () => {
-    if (completed) return "bg-brand-blue text-white";
-    return "bg-[#FFFAEB] text-[#B54708] dark:bg-[#FFFAEB]/10 dark:text-orange-100";
-  };
+    if (completed) return "bg-brand-blue text-white"
+    return "bg-[#FFFAEB] text-[#B54708] dark:bg-[#FFFAEB]/10 dark:text-orange-100"
+  }
 
   const getStatusBorder = () => {
-    if (completed) return "";
-    return "border border-[#FEDF89]";
-  };
+    if (completed) return ""
+    return "border border-[#FEDF89]"
+  }
 
   const getStatusText = () => {
-    return completed ? "Completed" : "Pending";
-  };
+    return completed ? "Completed" : "Pending"
+  }
 
   // Function to handle completion for project milestones
   const handleProjectMilestoneCompletion = () => {
-    if (!projectMilestone) return null;
+    if (!projectMilestone) return null
 
     return (
       <div className="w-full flex-col flex gap-2 px-4 py-2 bg-[#F8F9FC] dark:bg-zinc-700 rounded-lg">
@@ -161,8 +150,8 @@ export const MilestoneCard = ({
           </>
         )}
       </div>
-    );
-  };
+    )
+  }
 
   // Simple function to determine content of milestone card
   const renderMilestoneContent = () => {
@@ -171,9 +160,7 @@ export const MilestoneCard = ({
         {/* Title and Controls */}
         <div className="flex flex-row gap-3 items-start justify-between w-full">
           <div className="flex flex-row gap-3 items-center max-lg:flex-col-reverse max-lg:items-start max-lg:gap-2 w-full">
-            <p className="text-xl font-bold text-[#101828] dark:text-zinc-100">
-              {title}
-            </p>
+            <p className="text-xl font-bold text-[#101828] dark:text-zinc-100">{title}</p>
             <p
               className={cn(
                 "px-2 py-0.5 rounded-full text-xs",
@@ -235,7 +222,11 @@ export const MilestoneCard = ({
         </div>
 
         {/* Completion Information */}
-        {isCompleting || completionReason || completionProof || (completionDeliverables && completionDeliverables.length > 0) || (milestoneImpactData && milestoneImpactData.length > 0) ? (
+        {isCompleting ||
+        completionReason ||
+        completionProof ||
+        (completionDeliverables && completionDeliverables.length > 0) ||
+        (milestoneImpactData && milestoneImpactData.length > 0) ? (
           <>
             {type === "project" ? (
               handleProjectMilestoneCompletion()
@@ -274,7 +265,10 @@ export const MilestoneCard = ({
                       Deliverables:
                     </p>
                     {completionDeliverables.map((deliverable: any, index: number) => (
-                      <div key={index} className="border border-gray-200 dark:border-zinc-600 rounded-lg p-3 bg-white dark:bg-zinc-800">
+                      <div
+                        key={index}
+                        className="border border-gray-200 dark:border-zinc-600 rounded-lg p-3 bg-white dark:bg-zinc-800"
+                      >
                         <div className="flex flex-col gap-1">
                           <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                             {deliverable.name}
@@ -305,15 +299,21 @@ export const MilestoneCard = ({
                       Metrics:
                     </p>
                     {milestoneImpactData.map((metric: any, index: number) => (
-                      <div key={index} className="border border-gray-200 dark:border-zinc-600 rounded-lg p-3 bg-white dark:bg-zinc-800">
+                      <div
+                        key={index}
+                        className="border border-gray-200 dark:border-zinc-600 rounded-lg p-3 bg-white dark:bg-zinc-800"
+                      >
                         <div className="flex flex-col gap-1">
                           <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                            {metric.name || metric.indicator?.data?.title || 'Untitled Indicator'}
+                            {metric.name || metric.indicator?.data?.title || "Untitled Indicator"}
                           </p>
                           {metric.datapoints && metric.datapoints.length > 0 && (
                             <div className="flex flex-col gap-1">
                               <p className="text-sm text-gray-600 dark:text-gray-400">
-                                Value: <span className="font-medium text-zinc-900 dark:text-zinc-100">{metric.datapoints[0].value}</span>
+                                Value:{" "}
+                                <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                                  {metric.datapoints[0].value}
+                                </span>
                               </p>
                               {metric.datapoints[0].proof && (
                                 <a
@@ -337,8 +337,8 @@ export const MilestoneCard = ({
           </>
         ) : null}
       </>
-    );
-  };
+    )
+  }
 
   return (
     <div
@@ -354,12 +354,7 @@ export const MilestoneCard = ({
             "bg-[#FFEFE0] text-black dark:bg-[#FFEFE0] dark:text-black"
           )}
         >
-          <Image
-            src={"/icons/milestone.svg"}
-            alt={"Milestone"}
-            width={20}
-            height={20}
-          />
+          <Image src={"/icons/milestone.svg"} alt={"Milestone"} width={20} height={20} />
           Milestone
         </span>
         {/* Multiple grants display */}
@@ -370,16 +365,13 @@ export const MilestoneCard = ({
               [...milestone.mergedGrants]
                 .sort((a, b) => {
                   // Sort alphabetically by grant title
-                  const titleA = a.grantTitle || "Untitled Grant";
-                  const titleB = b.grantTitle || "Untitled Grant";
-                  return titleA.localeCompare(titleB);
+                  const titleA = a.grantTitle || "Untitled Grant"
+                  const titleB = b.grantTitle || "Untitled Grant"
+                  return titleA.localeCompare(titleB)
                 })
                 .map((grant, index) => (
                   <ExternalLink
-                    href={PAGES.COMMUNITY.ALL_GRANTS(
-                      communityData?.slug || "",
-                      grant.programId
-                    )}
+                    href={PAGES.COMMUNITY.ALL_GRANTS(communityData?.slug || "", grant.programId)}
                     key={`${grant.grantUID}-${grant.grantTitle}-${milestone.uid}-${milestone.title}-${index}`}
                     className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1"
                   >
@@ -393,18 +385,13 @@ export const MilestoneCard = ({
                         />
                       </div>
                     ) : null}
-                    <span className="font-medium">
-                      {grant.grantTitle || "Untitled Grant"}
-                    </span>
+                    <span className="font-medium">{grant.grantTitle || "Untitled Grant"}</span>
                   </ExternalLink>
                 ))
             ) : // Single grant display with community image
             grantTitle ? (
               <ExternalLink
-                href={PAGES.COMMUNITY.ALL_GRANTS(
-                  communityData?.slug || "",
-                  programId
-                )}
+                href={PAGES.COMMUNITY.ALL_GRANTS(communityData?.slug || "", programId)}
                 className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1"
               >
                 {communityData?.imageURL ? (
@@ -426,5 +413,5 @@ export const MilestoneCard = ({
       {/* Use the extracted render function for the main content */}
       {renderMilestoneContent()}
     </div>
-  );
-};
+  )
+}

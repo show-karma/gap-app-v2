@@ -1,27 +1,25 @@
 /* eslint-disable @next/next/no-img-element */
-import { CommunityGrants } from "@/components/CommunityGrants";
-import type { SortByOptions, MaturityStageOptions } from "@/types";
-import {
-  getCommunityCategories,
-} from "@/utilities/queries/getCommunityData";
+import { CommunityGrants } from "@/components/CommunityGrants"
+import type { MaturityStageOptions, SortByOptions } from "@/types"
+import { pagesOnRoot } from "@/utilities/pagesOnRoot"
+import { getCommunityCategories } from "@/utilities/queries/getCommunityData"
 import {
   getCommunityDetailsV2,
-  getCommunityStatsV2,
   getCommunityProjectsV2,
-} from "@/utilities/queries/getCommunityDataV2";
-import { pagesOnRoot } from "@/utilities/pagesOnRoot";
+  getCommunityStatsV2,
+} from "@/utilities/queries/getCommunityDataV2"
 
 type Props = {
   params: Promise<{
-    communityId: string;
-  }>;
-};
+    communityId: string
+  }>
+}
 
 export default async function Page(props: Props) {
-  const { communityId } = await props.params;
+  const { communityId } = await props.params
 
   if (pagesOnRoot.includes(communityId)) {
-    return undefined;
+    return undefined
   }
 
   const [communityDetails, communityStats, categoriesOptions, initialProjects] = await Promise.all([
@@ -29,16 +27,16 @@ export default async function Page(props: Props) {
     getCommunityStatsV2(communityId),
     getCommunityCategories(communityId),
     getCommunityProjectsV2(communityId, { page: 1, limit: 12 }),
-  ]);
+  ])
 
   // Layout handles notFound, but TypeScript needs this check
   if (!communityDetails) {
-    return null;
+    return null
   }
 
-  const defaultSortBy = "milestones" as SortByOptions;
-  const defaultSelectedCategories: string[] = [];
-  const defaultSelectedMaturityStage = "all" as MaturityStageOptions;
+  const defaultSortBy = "milestones" as SortByOptions
+  const defaultSelectedCategories: string[] = []
+  const defaultSelectedMaturityStage = "all" as MaturityStageOptions
 
   return (
     <div className="-my-4 flex flex-col w-full max-w-full py-2">
@@ -52,5 +50,5 @@ export default async function Page(props: Props) {
         initialProjects={initialProjects}
       />
     </div>
-  );
+  )
 }

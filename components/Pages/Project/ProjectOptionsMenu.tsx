@@ -1,18 +1,6 @@
-"use client";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { useGap } from "@/hooks/useGap";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { useGrantGenieModalStore } from "@/store/modals/genie";
-import { useMergeModalStore } from "@/store/modals/merge";
-import { useProjectEditModalStore } from "@/store/modals/projectEdit";
-import { useTransferOwnershipModalStore } from "@/store/modals/transferOwnership";
-import { useStepper } from "@/store/modals/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { MESSAGES } from "@/utilities/messages";
-import { PAGES } from "@/utilities/pages";
-import { deleteProject, getProjectById } from "@/utilities/sdk";
+"use client"
 
-import { Menu, Transition } from "@headlessui/react";
+import { Menu, Transition } from "@headlessui/react"
 import {
   ArrowDownOnSquareIcon,
   ArrowsRightLeftIcon,
@@ -23,169 +11,159 @@ import {
   PencilSquareIcon,
   TrashIcon,
   WalletIcon,
-} from "@heroicons/react/24/outline";
-import { EllipsisVerticalIcon, PlusIcon } from "@heroicons/react/24/solid";
-
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import dynamic from "next/dynamic";
-import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { Fragment, useEffect, useState } from "react";
-import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
-import { LinkContractAddressButton } from "./LinkContractAddressButton";
-import { LinkGithubRepoButton } from "./LinkGithubRepoButton";
-import { SetPayoutAddressButton } from "./SetPayoutAddressButton";
-
-import { AdminTransferOwnershipDialog } from "@/components/Dialogs/AdminTransferOwnershipDialog";
-import { useContactInfo } from "@/hooks/useContactInfo";
-import { useStaff } from "@/hooks/useStaff";
-import { useAdminTransferOwnershipModalStore } from "@/store/modals/adminTransferOwnership";
-import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { LinkOSOProfileButton } from "./LinkOSOProfileButton";
-import { LinkDivviWalletButton } from "./LinkDivviWalletButton";
-import { GithubIcon } from "@/components/Icons";
-import { useWallet } from "@/hooks/useWallet";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+} from "@heroicons/react/24/outline"
+import { EllipsisVerticalIcon, PlusIcon } from "@heroicons/react/24/solid"
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
+import dynamic from "next/dynamic"
+import Link from "next/link"
+import { useParams, useRouter } from "next/navigation"
+import { Fragment, useEffect, useState } from "react"
+import toast from "react-hot-toast"
+import { useAccount } from "wagmi"
+import { AdminTransferOwnershipDialog } from "@/components/Dialogs/AdminTransferOwnershipDialog"
+import { GithubIcon } from "@/components/Icons"
+import { errorManager } from "@/components/Utilities/errorManager"
+import { useContactInfo } from "@/hooks/useContactInfo"
+import { useGap } from "@/hooks/useGap"
+import { useStaff } from "@/hooks/useStaff"
+import { useWallet } from "@/hooks/useWallet"
+import { useOwnerStore, useProjectStore } from "@/store"
+import { useAdminTransferOwnershipModalStore } from "@/store/modals/adminTransferOwnership"
+import { useGrantGenieModalStore } from "@/store/modals/genie"
+import { useMergeModalStore } from "@/store/modals/merge"
+import { useProjectEditModalStore } from "@/store/modals/projectEdit"
+import { useTransferOwnershipModalStore } from "@/store/modals/transferOwnership"
+import { useStepper } from "@/store/modals/txStepper"
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils"
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain"
+import { MESSAGES } from "@/utilities/messages"
+import { PAGES } from "@/utilities/pages"
+import { deleteProject, getProjectById } from "@/utilities/sdk"
+import { safeGetWalletClient } from "@/utilities/wallet-helpers"
+import { LinkContractAddressButton } from "./LinkContractAddressButton"
+import { LinkDivviWalletButton } from "./LinkDivviWalletButton"
+import { LinkGithubRepoButton } from "./LinkGithubRepoButton"
+import { LinkOSOProfileButton } from "./LinkOSOProfileButton"
+import { SetPayoutAddressButton } from "./SetPayoutAddressButton"
 
 const ProjectDialog = dynamic(
-  () =>
-    import("@/components/Dialogs/ProjectDialog").then(
-      (mod) => mod.ProjectDialog
-    ),
+  () => import("@/components/Dialogs/ProjectDialog").then((mod) => mod.ProjectDialog),
   { ssr: false }
-);
+)
 const GrantsGenieDialog = dynamic(
-  () =>
-    import("@/components/Dialogs/GrantGenieDialog").then(
-      (mod) => mod.GrantsGenieDialog
-    ),
+  () => import("@/components/Dialogs/GrantGenieDialog").then((mod) => mod.GrantsGenieDialog),
   { ssr: false }
-);
+)
 
 const DeleteDialog = dynamic(() =>
   import("@/components/DeleteDialog").then((mod) => mod.DeleteDialog)
-);
+)
 
 const TransferOwnershipDialog = dynamic(() =>
-  import("@/components/Dialogs/TransferOwnershipDialog").then(
-    (mod) => mod.TransferOwnershipDialog
-  )
-);
+  import("@/components/Dialogs/TransferOwnershipDialog").then((mod) => mod.TransferOwnershipDialog)
+)
 const MergeProjectDialog = dynamic(() =>
-  import("@/components/Dialogs/MergeProjectDialog").then(
-    (mod) => mod.MergeProjectDialog
-  )
-);
+  import("@/components/Dialogs/MergeProjectDialog").then((mod) => mod.MergeProjectDialog)
+)
 
-const buttonClassName = `group border-none ring-none font-normal bg-transparent dark:bg-transparent text-gray-900 dark:text-zinc-100 dark:hover:bg-brand-blue dark:hover:opacity-100 dark:hover:text-white hover:bg-brand-blue hover:opacity-100 hover:text-white flex w-full items-start justify-start rounded-md px-2 py-2 text-sm`;
+const buttonClassName = `group border-none ring-none font-normal bg-transparent dark:bg-transparent text-gray-900 dark:text-zinc-100 dark:hover:bg-brand-blue dark:hover:opacity-100 dark:hover:text-white hover:bg-brand-blue hover:opacity-100 hover:text-white flex w-full items-start justify-start rounded-md px-2 py-2 text-sm`
 
 export const ProjectOptionsMenu = () => {
-  const { project } = useProjectStore();
-  const params = useParams();
-  const projectId = params.projectId as string;
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [showLinkContractsDialog, setShowLinkContractsDialog] = useState(false);
-  const [showLinkGithubDialog, setShowLinkGithubDialog] = useState(false);
-  const [showLinkOSODialog, setShowLinkOSODialog] = useState(false);
-  const [showLinkDivviDialog, setShowLinkDivviDialog] = useState(false);
-  const [showSetPayoutDialog, setShowSetPayoutDialog] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const { address, chain } = useAccount();
-  const { switchChainAsync } = useWallet();
-  const router = useRouter();
-  const { gap } = useGap();
-  const { changeStepperStep, setIsStepper } = useStepper();
-  const { isProjectEditModalOpen, openProjectEditModal } =
-    useProjectEditModalStore();
-  const { isMergeModalOpen, openMergeModal } = useMergeModalStore();
-  const { openGrantGenieModal, isGrantGenieModalOpen } =
-    useGrantGenieModalStore();
+  const { project } = useProjectStore()
+  const params = useParams()
+  const projectId = params.projectId as string
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [showLinkContractsDialog, setShowLinkContractsDialog] = useState(false)
+  const [showLinkGithubDialog, setShowLinkGithubDialog] = useState(false)
+  const [showLinkOSODialog, setShowLinkOSODialog] = useState(false)
+  const [showLinkDivviDialog, setShowLinkDivviDialog] = useState(false)
+  const [showSetPayoutDialog, setShowSetPayoutDialog] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const { address, chain } = useAccount()
+  const { switchChainAsync } = useWallet()
+  const router = useRouter()
+  const { gap } = useGap()
+  const { changeStepperStep, setIsStepper } = useStepper()
+  const { isProjectEditModalOpen, openProjectEditModal } = useProjectEditModalStore()
+  const { isMergeModalOpen, openMergeModal } = useMergeModalStore()
+  const { openGrantGenieModal, isGrantGenieModalOpen } = useGrantGenieModalStore()
   const { isTransferOwnershipModalOpen, openTransferOwnershipModal } =
-    useTransferOwnershipModalStore();
+    useTransferOwnershipModalStore()
   const { isAdminTransferOwnershipModalOpen, openAdminTransferOwnershipModal } =
-    useAdminTransferOwnershipModalStore();
-  const { isProjectOwner } = useProjectStore();
-  const { data: contactsInfo } = useContactInfo(projectId);
-  const { isOwner: isContractOwner } = useOwnerStore();
-  const isAuthorized = isProjectOwner || isContractOwner;
-  const { isStaff } = useStaff();
+    useAdminTransferOwnershipModalStore()
+  const { isProjectOwner } = useProjectStore()
+  const { data: contactsInfo } = useContactInfo(projectId)
+  const { isOwner: isContractOwner } = useOwnerStore()
+  const isAuthorized = isProjectOwner || isContractOwner
+  const { isStaff } = useStaff()
 
   // Event handlers to reset state when dialogs close
   const handleLinkContractsDialogClose = () => {
-    setShowLinkContractsDialog(false);
-  };
+    setShowLinkContractsDialog(false)
+  }
 
   const handleLinkGithubDialogClose = () => {
-    setShowLinkGithubDialog(false);
-  };
+    setShowLinkGithubDialog(false)
+  }
 
   const handleLinkOSODialogClose = () => {
-    setShowLinkOSODialog(false);
-  };
+    setShowLinkOSODialog(false)
+  }
 
   const handleLinkDivviDialogClose = () => {
-    setShowLinkDivviDialog(false);
-  };
+    setShowLinkDivviDialog(false)
+  }
 
   const handleSetPayoutDialogClose = () => {
-    setShowSetPayoutDialog(false);
-  };
+    setShowSetPayoutDialog(false)
+  }
 
   const handleDeleteDialogClose = () => {
-    setShowDeleteDialog(false);
-  };
+    setShowDeleteDialog(false)
+  }
 
   const deleteFn = async () => {
-    if (!address || !project) return;
-    setIsDeleting(true);
+    if (!address || !project) return
+    setIsDeleting(true)
     try {
       const { success, chainId: actualChainId } = await ensureCorrectChain({
         targetChainId: project.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
-      });
+      })
 
       if (!success) {
-        setIsDeleting(false);
-        return;
+        setIsDeleting(false)
+        return
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        actualChainId,
-        true,
-        setIsDeleting
-      );
+      const { walletClient, error } = await safeGetWalletClient(actualChainId, true, setIsDeleting)
 
       if (error || !walletClient) {
-        return;
+        return
       }
 
-      const walletSigner = await walletClientToSigner(walletClient);
-      const fetchedProject = await getProjectById(projectId);
-      if (!fetchedProject) return;
-      await deleteProject(
-        fetchedProject,
-        walletSigner,
-        gap,
-        router,
-        changeStepperStep
-      ).then(async () => {
-        toast.success(MESSAGES.PROJECT.DELETE.SUCCESS);
-      });
+      const walletSigner = await walletClientToSigner(walletClient)
+      const fetchedProject = await getProjectById(projectId)
+      if (!fetchedProject) return
+      await deleteProject(fetchedProject, walletSigner, gap, router, changeStepperStep).then(
+        async () => {
+          toast.success(MESSAGES.PROJECT.DELETE.SUCCESS)
+        }
+      )
     } catch (error: any) {
       errorManager(
         MESSAGES.PROJECT.DELETE.ERROR,
         error,
         { projectUID: projectId, address },
         { error: MESSAGES.PROJECT.DELETE.ERROR }
-      );
-      setIsStepper(false);
+      )
+      setIsStepper(false)
     } finally {
-      setIsDeleting(false);
-      setIsStepper(false);
+      setIsDeleting(false)
+      setIsStepper(false)
     }
-  };
+  }
 
   return (
     <>
@@ -200,9 +178,7 @@ export const ProjectOptionsMenu = () => {
       ) : null}
       {isMergeModalOpen ? <MergeProjectDialog buttonElement={null} /> : null}
       {isGrantGenieModalOpen ? <GrantsGenieDialog /> : null}
-      {isTransferOwnershipModalOpen && (
-        <TransferOwnershipDialog buttonElement={null} />
-      )}
+      {isTransferOwnershipModalOpen && <TransferOwnershipDialog buttonElement={null} />}
       {isAdminTransferOwnershipModalOpen && <AdminTransferOwnershipDialog />}
 
       {/* Add the dialog components with visibility controlled by state */}
@@ -214,7 +190,7 @@ export const ProjectOptionsMenu = () => {
               buttonClassName={buttonClassName}
               project={
                 project as IProjectResponse & {
-                  external: Record<string, string[]>;
+                  external: Record<string, string[]>
                 }
               }
               onClose={handleLinkContractsDialogClose}
@@ -226,7 +202,7 @@ export const ProjectOptionsMenu = () => {
               buttonClassName={buttonClassName}
               project={
                 project as IProjectResponse & {
-                  external: Record<string, string[]>;
+                  external: Record<string, string[]>
                 }
               }
               onClose={handleLinkGithubDialogClose}
@@ -238,7 +214,7 @@ export const ProjectOptionsMenu = () => {
               buttonClassName={buttonClassName}
               project={
                 project as IProjectResponse & {
-                  external: Record<string, string[]>;
+                  external: Record<string, string[]>
                 }
               }
               onClose={handleLinkOSODialogClose}
@@ -250,7 +226,7 @@ export const ProjectOptionsMenu = () => {
               buttonClassName={buttonClassName}
               project={
                 project as IProjectResponse & {
-                  external: Record<string, string[]>;
+                  external: Record<string, string[]>
                 }
               }
               onClose={handleLinkDivviDialogClose}
@@ -268,8 +244,8 @@ export const ProjectOptionsMenu = () => {
             <DeleteDialog
               title="Are you sure you want to delete this project?"
               deleteFunction={async () => {
-                await deleteFn();
-                handleDeleteDialogClose();
+                await deleteFn()
+                handleDeleteDialogClose()
               }}
               isLoading={isDeleting}
               buttonElement={null}
@@ -311,25 +287,15 @@ export const ProjectOptionsMenu = () => {
                           onClick={openProjectEditModal}
                           className={buttonClassName}
                         >
-                          <PencilSquareIcon
-                            className={"mr-2 h-5 w-5"}
-                            aria-hidden="true"
-                          />
+                          <PencilSquareIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
                           Edit project
                         </button>
                       )}
                     </Menu.Item>
                     <Menu.Item>
                       {({ active }) => (
-                        <button
-                          type="button"
-                          onClick={openMergeModal}
-                          className={buttonClassName}
-                        >
-                          <ArrowDownOnSquareIcon
-                            className={"mr-2 h-5 w-5"}
-                            aria-hidden="true"
-                          />
+                        <button type="button" onClick={openMergeModal} className={buttonClassName}>
+                          <ArrowDownOnSquareIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
                           Merge
                         </button>
                       )}
@@ -342,10 +308,7 @@ export const ProjectOptionsMenu = () => {
                             onClick={openTransferOwnershipModal}
                             className={buttonClassName}
                           >
-                            <ArrowsRightLeftIcon
-                              className={"mr-2 h-5 w-5"}
-                              aria-hidden="true"
-                            />
+                            <ArrowsRightLeftIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
                             Transfer ownership
                           </button>
                         )}
@@ -353,93 +316,78 @@ export const ProjectOptionsMenu = () => {
                     )}
                     <Menu.Item>
                       {({ active }) => {
-                        if (!project) return <span></span>;
+                        if (!project) return <span></span>
                         return (
                           <button
                             type="button"
                             onClick={() => setShowLinkContractsDialog(true)}
                             className={buttonClassName}
                           >
-                            <LinkIcon
-                              className={"mr-2 h-5 w-5"}
-                              aria-hidden="true"
-                            />
+                            <LinkIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
                             Link Contracts
                           </button>
-                        );
+                        )
                       }}
                     </Menu.Item>
 
                     <Menu.Item>
                       {({ active }) => {
-                        if (!project) return <span></span>;
+                        if (!project) return <span></span>
                         return (
                           <button
                             type="button"
                             onClick={() => setShowLinkGithubDialog(true)}
                             className={buttonClassName}
                           >
-                            <GithubIcon
-                              className={"mr-2 h-5 w-5"}
-                              aria-hidden="true"
-                            />
+                            <GithubIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
                             Link GitHub Repo
                           </button>
-                        );
+                        )
                       }}
                     </Menu.Item>
                     <Menu.Item>
                       {({ active }) => {
-                        if (!project) return <span></span>;
+                        if (!project) return <span></span>
                         return (
                           <button
                             type="button"
                             onClick={() => setShowLinkOSODialog(true)}
                             className={buttonClassName}
                           >
-                            <FingerPrintIcon
-                              className={"mr-2 h-5 w-5"}
-                              aria-hidden="true"
-                            />
+                            <FingerPrintIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
                             Link OSO Profile
                           </button>
-                        );
+                        )
                       }}
                     </Menu.Item>
                     <Menu.Item>
                       {({ active }) => {
-                        if (!project) return <span></span>;
+                        if (!project) return <span></span>
                         return (
                           <button
                             type="button"
                             onClick={() => setShowLinkDivviDialog(true)}
                             className={buttonClassName}
                           >
-                            <WalletIcon
-                              className={"mr-2 h-5 w-5"}
-                              aria-hidden="true"
-                            />
+                            <WalletIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
                             Link Divvi Identifier
                           </button>
-                        );
+                        )
                       }}
                     </Menu.Item>
                     <Menu.Item>
                       {({ active }) => {
-                        if (!project) return <span></span>;
+                        if (!project) return <span></span>
                         return (
                           <button
                             type="button"
                             onClick={() => setShowSetPayoutDialog(true)}
                             className={buttonClassName}
                           >
-                            <CurrencyDollarIcon
-                              className={"mr-2 h-5 w-5"}
-                              aria-hidden="true"
-                            />
+                            <CurrencyDollarIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
                             Set Payout Address
                           </button>
-                        );
+                        )
                       }}
                     </Menu.Item>
                     <Menu.Item>
@@ -461,10 +409,7 @@ export const ProjectOptionsMenu = () => {
                           onClick={() => setShowDeleteDialog(true)}
                           className={buttonClassName}
                         >
-                          <TrashIcon
-                            className={"mr-2 h-5 w-5"}
-                            aria-hidden="true"
-                          />
+                          <TrashIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
                           Delete project
                         </button>
                       )}
@@ -475,15 +420,8 @@ export const ProjectOptionsMenu = () => {
                   <>
                     <Menu.Item>
                       {({ active }) => (
-                        <button
-                          type="button"
-                          onClick={openMergeModal}
-                          className={buttonClassName}
-                        >
-                          <ArrowDownOnSquareIcon
-                            className={"mr-2 h-5 w-5"}
-                            aria-hidden="true"
-                          />
+                        <button type="button" onClick={openMergeModal} className={buttonClassName}>
+                          <ArrowDownOnSquareIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
                           Merge
                         </button>
                       )}
@@ -495,10 +433,7 @@ export const ProjectOptionsMenu = () => {
                           onClick={openAdminTransferOwnershipModal}
                           className={buttonClassName}
                         >
-                          <ArrowsRightLeftIcon
-                            className={"mr-2 h-5 w-5"}
-                            aria-hidden="true"
-                          />
+                          <ArrowsRightLeftIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
                           Transfer ownership
                         </button>
                       )}
@@ -511,5 +446,5 @@ export const ProjectOptionsMenu = () => {
         </Menu>
       )}
     </>
-  );
-};
+  )
+}

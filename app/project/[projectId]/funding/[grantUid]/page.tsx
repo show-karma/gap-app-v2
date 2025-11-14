@@ -1,34 +1,29 @@
-import { GrantOverview } from "@/components/Pages/Project/Grants/Overview";
-import { ProjectGrantsOverviewLoading } from "@/components/Pages/Project/Loading/Grants/Overview";
-import { zeroUID } from "@/utilities/commons";
-import { envVars } from "@/utilities/enviromentVars";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { cleanMarkdownForPlainText } from "@/utilities/markdown";
-import { defaultMetadata } from "@/utilities/meta";
-import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
-
-import { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { Suspense } from "react";
-import { PROJECT_NAME } from "@/constants/brand";
+import type { Metadata } from "next"
+import { notFound } from "next/navigation"
+import { Suspense } from "react"
+import { GrantOverview } from "@/components/Pages/Project/Grants/Overview"
+import { ProjectGrantsOverviewLoading } from "@/components/Pages/Project/Loading/Grants/Overview"
+import { PROJECT_NAME } from "@/constants/brand"
+import { zeroUID } from "@/utilities/commons"
+import { envVars } from "@/utilities/enviromentVars"
+import { gapIndexerApi } from "@/utilities/gapIndexerApi"
+import { cleanMarkdownForPlainText } from "@/utilities/markdown"
+import { defaultMetadata } from "@/utilities/meta"
+import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData"
 
 type Params = Promise<{
-  projectId: string;
-  grantUid: string;
-}>;
+  projectId: string
+  grantUid: string
+}>
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Params;
-}): Promise<Metadata> {
-  const awaitedParams = await params;
-  const { projectId, grantUid } = awaitedParams;
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+  const awaitedParams = await params
+  const { projectId, grantUid } = awaitedParams
 
-  const projectInfo = await getProjectCachedData(projectId);
+  const projectInfo = await getProjectCachedData(projectId)
 
   if (projectInfo?.uid === zeroUID || !projectInfo) {
-    notFound();
+    notFound()
   }
   let metadata = {
     title: defaultMetadata.title,
@@ -36,46 +31,40 @@ export async function generateMetadata({
     twitter: defaultMetadata.twitter,
     openGraph: defaultMetadata.openGraph,
     icons: defaultMetadata.icons,
-  };
+  }
   if (grantUid) {
     const grantInfo = await gapIndexerApi
       .grantBySlug(grantUid as `0x${string}`)
       .then((res) => res.data)
-      .catch(() => notFound());
+      .catch(() => notFound())
 
     if (grantInfo) {
       const tabMetadata: Record<
         string,
         {
-          title: string;
-          description: string;
+          title: string
+          description: string
         }
       > = {
         overview: {
           title: `${grantInfo?.details?.data?.title} Grant Overview | ${projectInfo?.details?.data?.title} | ${PROJECT_NAME}`,
           description:
-            `${cleanMarkdownForPlainText(
-              grantInfo?.details?.data?.description || "",
-              160
-            )}` || "",
+            `${cleanMarkdownForPlainText(grantInfo?.details?.data?.description || "", 160)}` || "",
         },
-      };
+      }
 
       metadata = {
         ...metadata,
         title: tabMetadata["overview"]?.title || "",
         description: tabMetadata["overview"]?.description || "",
-      };
+      }
     }
   } else {
     metadata = {
       ...metadata,
       title: `${projectInfo?.details?.data?.title} | ${PROJECT_NAME}`,
-      description: cleanMarkdownForPlainText(
-        projectInfo?.details?.data?.description || "",
-        80
-      ),
-    };
+      description: cleanMarkdownForPlainText(projectInfo?.details?.data?.description || "", 80),
+    }
   }
 
   return {
@@ -104,14 +93,14 @@ export async function generateMetadata({
       ],
     },
     icons: metadata.icons,
-  };
+  }
 }
 const Page = () => {
   return (
     <Suspense fallback={<ProjectGrantsOverviewLoading />}>
       <GrantOverview />
     </Suspense>
-  );
-};
+  )
+}
 
-export default Page;
+export default Page

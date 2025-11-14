@@ -1,49 +1,50 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, Fragment, useState } from "react";
-import { Dialog, Transition } from "@headlessui/react";
-import { Button } from "@/components/Utilities/Button";
-import { z } from "zod";
-import { SubmitHandler, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import toast from "react-hot-toast";
-import { useAuth } from "@/hooks/useAuth";
-import { useAccount } from "wagmi";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { MESSAGES } from "@/utilities/messages";
-import { getGapClient, useGap } from "@/hooks/useGap";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
-import {
+
+import { Dialog, Transition } from "@headlessui/react"
+import { ArrowRightIcon } from "@heroicons/react/24/solid"
+import { zodResolver } from "@hookform/resolvers/zod"
+import type {
   IMilestoneCompleted,
   IMilestoneResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
-
-import { errorManager } from "@/components/Utilities/errorManager";
-import { sanitizeObject } from "@/utilities/sanitize";
-import { ArrowRightIcon } from "@heroicons/react/24/solid";
-import { useWallet } from "@/hooks/useWallet";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
+import { type FC, Fragment, useState } from "react"
+import { type SubmitHandler, useForm } from "react-hook-form"
+import toast from "react-hot-toast"
+import { useAccount } from "wagmi"
+import { z } from "zod"
+import { Button } from "@/components/Utilities/Button"
+import { errorManager } from "@/components/Utilities/errorManager"
+import { useAuth } from "@/hooks/useAuth"
+import { getGapClient, useGap } from "@/hooks/useGap"
+import { useWallet } from "@/hooks/useWallet"
+import { useOwnerStore, useProjectStore } from "@/store"
+import { useStepper } from "@/store/modals/txStepper"
+import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid"
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils"
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain"
+import fetchData from "@/utilities/fetchData"
+import { INDEXER } from "@/utilities/indexer"
+import { MESSAGES } from "@/utilities/messages"
+import { sanitizeObject } from "@/utilities/sanitize"
+import { safeGetWalletClient } from "@/utilities/wallet-helpers"
 
 type VerifyMilestoneUpdateDialogProps = {
-  milestone: IMilestoneResponse;
-  addVerifiedMilestone: (newVerified: IMilestoneCompleted) => void;
-};
+  milestone: IMilestoneResponse
+  addVerifiedMilestone: (newVerified: IMilestoneCompleted) => void
+}
 
 const schema = z.object({
   comment: z.string(),
-});
+})
 
-type SchemaType = z.infer<typeof schema>;
+type SchemaType = z.infer<typeof schema>
 
-export const VerifyMilestoneUpdateDialog: FC<
-  VerifyMilestoneUpdateDialogProps
-> = ({ milestone, addVerifiedMilestone }) => {
-  let [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+export const VerifyMilestoneUpdateDialog: FC<VerifyMilestoneUpdateDialogProps> = ({
+  milestone,
+  addVerifiedMilestone,
+}) => {
+  const [isOpen, setIsOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   const {
     register,
@@ -53,61 +54,63 @@ export const VerifyMilestoneUpdateDialog: FC<
     resolver: zodResolver(schema),
     reValidateMode: "onChange",
     mode: "onChange",
-  });
+  })
 
   function closeModal() {
-    setIsOpen(false);
+    setIsOpen(false)
   }
   function openModal() {
-    setIsOpen(true);
+    setIsOpen(true)
   }
-  const { address, isConnected, chain } = useAccount();
+  const { address, isConnected, chain } = useAccount()
 
   const hasVerifiedThis = milestone?.verified?.find(
     (v) => v.attester?.toLowerCase() === address?.toLowerCase()
-  );
-  const { switchChainAsync } = useWallet();
-  const { gap } = useGap();
-  const refreshProject = useProjectStore((state) => state.refreshProject);
-  const { changeStepperStep, setIsStepper } = useStepper();
-  const project = useProjectStore((state) => state.project);
+  )
+  const { switchChainAsync } = useWallet()
+  const { gap } = useGap()
+  const refreshProject = useProjectStore((state) => state.refreshProject)
+  const { changeStepperStep, setIsStepper } = useStepper()
+  const project = useProjectStore((state) => state.project)
 
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
-    let gapClient = gap;
-    if (!gap) throw new Error("Please, connect a wallet");
+    let gapClient = gap
+    if (!gap) throw new Error("Please, connect a wallet")
     try {
-      setIsLoading(true);
-      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+      setIsLoading(true)
+      const {
+        success,
+        chainId: actualChainId,
+        gapClient: newGapClient,
+      } = await ensureCorrectChain({
         targetChainId: milestone.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
-      });
+      })
 
       if (!success) {
-        setIsLoading(false);
-        return;
+        setIsLoading(false)
+        return
       }
 
-      gapClient = newGapClient;
+      gapClient = newGapClient
 
-      const { walletClient, error } = await safeGetWalletClient(
-        actualChainId
-      );
+      const { walletClient, error } = await safeGetWalletClient(actualChainId)
 
       if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+        throw new Error("Failed to connect to wallet", { cause: error })
       }
-      const walletSigner = await walletClientToSigner(walletClient);
-      const fetchedProject = await gapClient.fetch.projectById(project?.uid);
-      if (!fetchedProject) return;
+      const walletSigner = await walletClientToSigner(walletClient)
+      const fetchedProject = await gapClient.fetch.projectById(project?.uid)
+      if (!fetchedProject) return
       const grantInstance = fetchedProject.grants.find(
         (g) => g.uid.toLowerCase() === milestone.refUID.toLowerCase()
-      );
-      if (!grantInstance) return;
+      )
+      if (!grantInstance) return
       const milestoneInstance = grantInstance.milestones?.find(
         (u) => u.uid.toLowerCase() === milestone.uid.toLowerCase()
-      );
-      if (!milestoneInstance) return;
+      )
+      if (!milestoneInstance) return
       await milestoneInstance
         .verify(
           walletSigner,
@@ -117,49 +120,46 @@ export const VerifyMilestoneUpdateDialog: FC<
           changeStepperStep
         )
         .then(async (res) => {
-          let retries = 1000;
-          changeStepperStep("indexing");
-          const txHash = res?.tx[0]?.hash;
+          let retries = 1000
+          changeStepperStep("indexing")
+          const txHash = res?.tx[0]?.hash
           if (txHash) {
             await fetchData(
               INDEXER.ATTESTATION_LISTENER(txHash, milestoneInstance.chainID),
               "POST",
               {}
-            );
+            )
           }
           while (retries > 0) {
             await refreshProject()
               .then(async (fetchedProject) => {
-                const foundGrant = fetchedProject?.grants.find(
-                  (g) => g.uid === milestone.refUID
-                );
+                const foundGrant = fetchedProject?.grants.find((g) => g.uid === milestone.refUID)
 
                 const fetchedMilestone = foundGrant?.milestones.find(
                   (u: any) => u.uid === milestone.uid
-                );
+                )
 
                 const alreadyExists = fetchedMilestone?.verified?.find(
-                  (v: any) =>
-                    v.attester?.toLowerCase() === address?.toLowerCase()
-                );
+                  (v: any) => v.attester?.toLowerCase() === address?.toLowerCase()
+                )
 
                 if (alreadyExists) {
-                  retries = 0;
-                  changeStepperStep("indexed");
-                  toast.success(MESSAGES.MILESTONES.VERIFY.SUCCESS);
+                  retries = 0
+                  changeStepperStep("indexed")
+                  toast.success(MESSAGES.MILESTONES.VERIFY.SUCCESS)
                 }
-                retries -= 1;
+                retries -= 1
                 // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
+                await new Promise((resolve) => setTimeout(resolve, 1500))
               })
               .catch(async () => {
-                retries -= 1;
+                retries -= 1
                 // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-              });
+                await new Promise((resolve) => setTimeout(resolve, 1500))
+              })
           }
-        });
-      closeModal();
+        })
+      closeModal()
     } catch (error: any) {
       errorManager(
         MESSAGES.MILESTONES.VERIFY.ERROR,
@@ -170,21 +170,21 @@ export const VerifyMilestoneUpdateDialog: FC<
           address,
         },
         { error: MESSAGES.MILESTONES.VERIFY.ERROR }
-      );
+      )
     } finally {
-      setIsLoading(false);
-      setIsStepper(false);
+      setIsLoading(false)
+      setIsStepper(false)
     }
-  };
-  const { authenticated: isAuth } = useAuth();
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isContractOwner = useOwnerStore((state) => state.isOwner);
+  }
+  const { authenticated: isAuth } = useAuth()
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin)
+  const isContractOwner = useOwnerStore((state) => state.isOwner)
   const verifyPermission = () => {
-    if (!isAuth) return false;
-    return isContractOwner || !isProjectAdmin;
-  };
-  const ableToVerify = verifyPermission();
-  if (hasVerifiedThis || !ableToVerify) return null;
+    if (!isAuth) return false
+    return isContractOwner || !isProjectAdmin
+  }
+  const ableToVerify = verifyPermission()
+  if (hasVerifiedThis || !ableToVerify) return null
 
   return (
     <>
@@ -221,10 +221,7 @@ export const VerifyMilestoneUpdateDialog: FC<
                 leaveTo="opacity-0 scale-95"
               >
                 <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle  transition-all">
-                  <form
-                    onSubmit={handleSubmit(onSubmit)}
-                    className="flex w-full flex-col gap-4"
-                  >
+                  <form onSubmit={handleSubmit(onSubmit)} className="flex w-full flex-col gap-4">
                     <div className="flex w-full flex-col">
                       <label htmlFor="comment" className={"text-sm font-bold"}>
                         Post a comment (optional)
@@ -237,9 +234,7 @@ export const VerifyMilestoneUpdateDialog: FC<
                         placeholder="I tested and can confirm it works as expected"
                         {...register("comment")}
                       />
-                      <p className="text-base text-red-400">
-                        {errors.comment?.message}
-                      </p>
+                      <p className="text-base text-red-400">{errors.comment?.message}</p>
                     </div>
                     <div className="flex flex-row gap-4 justify-end">
                       <Button
@@ -266,5 +261,5 @@ export const VerifyMilestoneUpdateDialog: FC<
         </Dialog>
       </Transition>
     </>
-  );
-};
+  )
+}

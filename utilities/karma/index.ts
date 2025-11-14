@@ -1,2 +1,2 @@
-export * from "./communities";
-export * from "./karma";
+export * from "./communities"
+export * from "./karma"

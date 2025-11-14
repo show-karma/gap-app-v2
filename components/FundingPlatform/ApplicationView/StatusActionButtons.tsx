@@ -1,17 +1,23 @@
-"use client";
+"use client"
 
-import { Button } from "@/components/ui/button";
-import { FC } from "react";
+import type { FC } from "react"
+import { Button } from "@/components/ui/button"
 
 // Define the possible application statuses
-type ApplicationStatus = "pending" | "under_review" | "revision_requested" | "approved" | "rejected" | "resubmitted";
+type ApplicationStatus =
+  | "pending"
+  | "under_review"
+  | "revision_requested"
+  | "approved"
+  | "rejected"
+  | "resubmitted"
 
 // Define status transition configuration
 interface StatusTransition {
-  targetStatus: ApplicationStatus;
-  label: string;
-  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
-  className?: string;
+  targetStatus: ApplicationStatus
+  label: string
+  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"
+  className?: string
 }
 
 // Configuration for allowed status transitions
@@ -21,58 +27,61 @@ const STATUS_TRANSITIONS: Record<ApplicationStatus, StatusTransition[]> = {
       targetStatus: "under_review",
       label: "Start Review",
       variant: "default",
-      className: ""
-    }
+      className: "",
+    },
   ],
   resubmitted: [
     {
       targetStatus: "under_review",
       label: "Start Review",
       variant: "default",
-      className: "bg-primary-500 text-white hover:bg-primary-600 dark:text-white dark:bg-primary-900 dark:hover:bg-primary-800"
-    }
+      className:
+        "bg-primary-500 text-white hover:bg-primary-600 dark:text-white dark:bg-primary-900 dark:hover:bg-primary-800",
+    },
   ],
   under_review: [
     {
       targetStatus: "revision_requested",
       label: "Request Revision",
       variant: "outline",
-      className: 'border border-border'
+      className: "border border-border",
     },
     {
       targetStatus: "approved",
       label: "Approve",
-      className: "border border-emerald-600 text-emerald-700 bg-green-100 hover:bg-green-200 dark:text-white dark:bg-emerald-900 dark:hover:bg-emerald-800"
+      className:
+        "border border-emerald-600 text-emerald-700 bg-green-100 hover:bg-green-200 dark:text-white dark:bg-emerald-900 dark:hover:bg-emerald-800",
     },
     {
       targetStatus: "rejected",
       label: "Reject",
-      className: "border border-red-600 text-red-700 bg-red-100 hover:bg-red-200 dark:text-white dark:bg-red-900 dark:hover:bg-red-800"
-    }
+      className:
+        "border border-red-600 text-red-700 bg-red-100 hover:bg-red-200 dark:text-white dark:bg-red-900 dark:hover:bg-red-800",
+    },
   ],
   revision_requested: [
     {
       targetStatus: "under_review",
       label: "Review",
       variant: "default",
-      className: ""
-    }
+      className: "",
+    },
   ],
   approved: [],
-  rejected: []
-};
+  rejected: [],
+}
 
 interface StatusActionButtonProps {
-  transition: StatusTransition;
-  onStatusChange: (status: ApplicationStatus) => void;
-  disabled?: boolean;
+  transition: StatusTransition
+  onStatusChange: (status: ApplicationStatus) => void
+  disabled?: boolean
 }
 
 // Individual status action button component
 const StatusActionButton: FC<StatusActionButtonProps> = ({
   transition,
   onStatusChange,
-  disabled = false
+  disabled = false,
 }) => {
   return (
     <Button
@@ -83,25 +92,25 @@ const StatusActionButton: FC<StatusActionButtonProps> = ({
     >
       {transition.label}
     </Button>
-  );
-};
+  )
+}
 
 interface StatusActionButtonsProps {
-  currentStatus: ApplicationStatus;
-  onStatusChange: (status: string) => void;
-  isUpdating?: boolean;
+  currentStatus: ApplicationStatus
+  onStatusChange: (status: string) => void
+  isUpdating?: boolean
 }
 
 // Main component that renders appropriate status action buttons
 export const StatusActionButtons: FC<StatusActionButtonsProps> = ({
   currentStatus,
   onStatusChange,
-  isUpdating = false
+  isUpdating = false,
 }) => {
-  const availableTransitions = STATUS_TRANSITIONS[currentStatus] || [];
+  const availableTransitions = STATUS_TRANSITIONS[currentStatus] || []
 
   if (availableTransitions.length === 0) {
-    return null;
+    return null
   }
 
   return (
@@ -123,5 +132,5 @@ export const StatusActionButtons: FC<StatusActionButtonsProps> = ({
         </p>
       )}
     </div>
-  );
-};
+  )
+}

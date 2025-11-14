@@ -1,26 +1,25 @@
-"use client";
+"use client"
+import { Dialog, Transition } from "@headlessui/react"
+import { zodResolver } from "@hookform/resolvers/zod"
 /* eslint-disable @next/next/no-img-element */
-import { FC, Fragment, useState } from "react";
-import { Dialog, Transition } from "@headlessui/react";
-import { Button } from "@/components/Utilities/Button";
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { useProjectStore } from "@/store";
-import { shortAddress } from "@/utilities/shortAddress";
-import { useGap } from "@/hooks/useGap";
-import { useIntroModalStore } from "@/store/modals/intro";
-import fetchData from "@/utilities/fetchData";
-import toast from "react-hot-toast";
-import { MESSAGES } from "@/utilities/messages";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { INDEXER } from "@/utilities/indexer";
+import { type FC, Fragment, useState } from "react"
+import { useForm } from "react-hook-form"
+import toast from "react-hot-toast"
+import { useAccount } from "wagmi"
+import { z } from "zod"
+import { Button } from "@/components/Utilities/Button"
+import { errorManager } from "@/components/Utilities/errorManager"
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor"
+import { useContactInfo } from "@/hooks/useContactInfo"
+import { useGap } from "@/hooks/useGap"
+import { useProjectStore } from "@/store"
+import { useIntroModalStore } from "@/store/modals/intro"
+import fetchData from "@/utilities/fetchData"
+import { INDEXER } from "@/utilities/indexer"
+import { MESSAGES } from "@/utilities/messages"
+import { shortAddress } from "@/utilities/shortAddress"
 
-import { errorManager } from "@/components/Utilities/errorManager";
-import { useContactInfo } from "@/hooks/useContactInfo";
-import { useAccount } from "wagmi";
-
-type IntroDialogProps = {};
+type IntroDialogProps = {}
 
 const schema = z.object({
   email: z.string().email({ message: MESSAGES.PROJECT.INTRO.EMAIL }).min(3, {
@@ -31,24 +30,21 @@ const schema = z.object({
     .string()
     .describe(MESSAGES.PROJECT.INTRO.MESSAGE)
     .min(3, MESSAGES.PROJECT.INTRO.MESSAGE),
-});
+})
 
-type SchemaType = z.infer<typeof schema>;
+type SchemaType = z.infer<typeof schema>
 
-const inputStyle =
-  "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
-const labelStyle =
-  "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
+const inputStyle = "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900"
+const labelStyle = "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200"
 
 export const IntroDialog: FC<IntroDialogProps> = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const { address } = useAccount();
+  const [isLoading, setIsLoading] = useState(false)
+  const { address } = useAccount()
 
-  const { isIntroModalOpen: isOpen, setIsIntroModalOpen: setIsOpen } =
-    useIntroModalStore();
+  const { isIntroModalOpen: isOpen, setIsIntroModalOpen: setIsOpen } = useIntroModalStore()
 
-  const project = useProjectStore((state) => state.project);
-  const { data: contactsInfo } = useContactInfo(project?.uid);
+  const project = useProjectStore((state) => state.project)
+  const { data: contactsInfo } = useContactInfo(project?.uid)
 
   const {
     register,
@@ -57,21 +53,21 @@ export const IntroDialog: FC<IntroDialogProps> = () => {
   } = useForm<SchemaType>({
     resolver: zodResolver(schema),
     mode: "onChange",
-  });
+  })
 
   function closeModal() {
-    setIsOpen(false);
+    setIsOpen(false)
   }
 
   const handleFunction = async (data: SchemaType) => {
-    setIsLoading(true);
+    setIsLoading(true)
     try {
       if ((contactsInfo?.length as number) < 1) {
-        toast.error("No contact info found");
-        return;
+        toast.error("No contact info found")
+        return
       }
 
-      if (!project || !data.email || !data.message) return;
+      if (!project || !data.email || !data.message) return
 
       const [response, error] = await fetchData(
         INDEXER.PROJECT.REQUEST_INTRO(project.details?.data.slug as string),
@@ -84,12 +80,12 @@ export const IntroDialog: FC<IntroDialogProps> = () => {
         {},
         {},
         false
-      );
+      )
       if (!response || error) {
-        toast.error(`Error requesting intro: ${error}`);
+        toast.error(`Error requesting intro: ${error}`)
       }
-      closeModal();
-      toast.success("Successfully requested intro!");
+      closeModal()
+      toast.success("Successfully requested intro!")
     } catch (error: any) {
       errorManager(
         MESSAGES.REQUEST_INTRO.ERROR,
@@ -99,11 +95,11 @@ export const IntroDialog: FC<IntroDialogProps> = () => {
           address,
         },
         { error: MESSAGES.REQUEST_INTRO.ERROR }
-      );
+      )
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -139,9 +135,7 @@ export const IntroDialog: FC<IntroDialogProps> = () => {
                   Request Intro to{" "}
                   <b>
                     {project?.details?.data?.title ||
-                      (project?.uid
-                        ? shortAddress(project?.uid as string)
-                        : "this project")}{" "}
+                      (project?.uid ? shortAddress(project?.uid as string) : "this project")}{" "}
                   </b>
                   team
                 </Dialog.Title>
@@ -158,9 +152,7 @@ export const IntroDialog: FC<IntroDialogProps> = () => {
                         placeholder="Enter your email address"
                         {...register("email")}
                       />
-                      <p className="text-red-600 mb-2">
-                        {errors.email?.message}
-                      </p>
+                      <p className="text-red-600 mb-2">{errors.email?.message}</p>
                     </div>
                     <div className="flex w-full flex-col gap-2">
                       <label htmlFor="telegram-input" className={labelStyle}>
@@ -173,9 +165,7 @@ export const IntroDialog: FC<IntroDialogProps> = () => {
                         placeholder="Enter your telegram address"
                         {...register("telegram")}
                       />
-                      <p className="text-red-600 mb-2">
-                        {errors.telegram?.message}
-                      </p>
+                      <p className="text-red-600 mb-2">{errors.telegram?.message}</p>
                     </div>
                     <div className="flex w-full flex-col gap-2">
                       <label htmlFor="message-input" className={labelStyle}>
@@ -187,9 +177,7 @@ export const IntroDialog: FC<IntroDialogProps> = () => {
                         placeholder="Tell us why you want to connect with them. Keep your message concise and to the point."
                         {...register("message")}
                       />
-                      <p className="text-red-600 mb-2">
-                        {errors.message?.message}
-                      </p>
+                      <p className="text-red-600 mb-2">{errors.message?.message}</p>
                     </div>
                   </div>
                   <div className="flex flex-row gap-4 mt-10 justify-end">
@@ -216,5 +204,5 @@ export const IntroDialog: FC<IntroDialogProps> = () => {
         </div>
       </Dialog>
     </Transition>
-  );
-};
+  )
+}

@@ -1,39 +1,33 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, useEffect, useState, useRef } from "react";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "cmdk";
-import { CheckIcon } from "@heroicons/react/24/solid";
-import * as Popover from "@radix-ui/react-popover";
-import { cn } from "@/utilities/tailwind";
-import pluralize from "pluralize";
-import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
-import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { ChevronDownIcon } from "@heroicons/react/24/solid";
+
+import { CheckIcon, ChevronDownIcon } from "@heroicons/react/24/solid"
+import * as Popover from "@radix-ui/react-popover"
+import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk"
+import pluralize from "pluralize"
+import { type FC, useEffect, useRef, useState } from "react"
+import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList"
+import { cn } from "@/utilities/tailwind"
 
 export const GrantTitleDropdown: FC<{
   setValue: (
     field: string,
     value: string | undefined,
     options?: {
-      shouldValidate: boolean;
+      shouldValidate: boolean
     }
-  ) => void;
-  selectedProgram: GrantProgram | null;
-  grantToEdit: IGrantResponse | undefined;
-  list: GrantProgram[];
-  type: string;
-  chainId: number;
-  cleanFunction?: () => void;
-  prefixUnselected?: string;
-  buttonClassname?: string;
-  canAdd?: boolean;
-  canSearch?: boolean;
-  setSelectedProgram: (program: GrantProgram) => void;
+  ) => void
+  selectedProgram: GrantProgram | null
+  grantToEdit: IGrantResponse | undefined
+  list: GrantProgram[]
+  type: string
+  chainId: number
+  cleanFunction?: () => void
+  prefixUnselected?: string
+  buttonClassname?: string
+  canAdd?: boolean
+  canSearch?: boolean
+  setSelectedProgram: (program: GrantProgram) => void
 }> = ({
   setValue,
   selectedProgram,
@@ -48,48 +42,48 @@ export const GrantTitleDropdown: FC<{
   canSearch = true,
   setSelectedProgram,
 }) => {
-  const [open, setOpen] = useState(false);
-  const [adding, setAdding] = useState(false);
-  const [title, setTitle] = useState("");
-  const [search, setSearch] = useState("");
-  const [list, setList] = useState(listProp);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const [triggerWidth, setTriggerWidth] = useState<number | null>(null);
+  const [open, setOpen] = useState(false)
+  const [adding, setAdding] = useState(false)
+  const [title, setTitle] = useState("")
+  const [search, setSearch] = useState("")
+  const [list, setList] = useState(listProp)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const [triggerWidth, setTriggerWidth] = useState<number | null>(null)
 
   useEffect(() => {
     if (triggerRef.current) {
-      setTriggerWidth(triggerRef.current.offsetWidth);
+      setTriggerWidth(triggerRef.current.offsetWidth)
     }
-  }, [open]);
+  }, [open])
 
   const addCustom = async (custom: string) => {
-    const trimmedCustom = custom.trim();
+    const trimmedCustom = custom.trim()
 
     if (!trimmedCustom) {
-      return;
+      return
     }
 
     const programAlreadyExists = list.find(
       (item) => item.metadata?.title?.toLowerCase() === trimmedCustom.toLowerCase()
-    );
+    )
 
-    let requestProgram: GrantProgram;
+    let requestProgram: GrantProgram
 
     if (programAlreadyExists) {
-      requestProgram = programAlreadyExists;
+      requestProgram = programAlreadyExists
 
       setValue(
         "programId",
         !programAlreadyExists.programId
           ? undefined
           : `${programAlreadyExists.programId}_${programAlreadyExists.chainID}`
-      );
+      )
 
       setValue("title", programAlreadyExists.metadata?.title, {
         shouldValidate: true,
-      });
+      })
     } else {
-      const timestamp = new Date().getTime().toString();
+      const timestamp = new Date().getTime().toString()
 
       requestProgram = {
         metadata: {
@@ -104,29 +98,29 @@ export const GrantTitleDropdown: FC<{
         _id: { $oid: custom },
         createdAt: timestamp,
         updatedAt: timestamp,
-      };
+      }
 
-      setList(prevList => [...prevList, requestProgram]);
+      setList((prevList) => [...prevList, requestProgram])
 
-      setValue("programId", undefined);
+      setValue("programId", undefined)
       setValue("title", trimmedCustom, {
         shouldValidate: true,
-      });
+      })
     }
 
-    setSelectedProgram(requestProgram);
+    setSelectedProgram(requestProgram)
 
-    setAdding(false);
+    setAdding(false)
 
     if (search.length) {
-      setSearch("");
+      setSearch("")
       setTimeout(() => {
         setSearch(trimmedCustom)
-      }, 100);
+      }, 100)
     }
 
-    setTitle("");
-  };
+    setTitle("")
+  }
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
@@ -142,8 +136,8 @@ export const GrantTitleDropdown: FC<{
             {selectedProgram?.metadata?.title
               ? selectedProgram.metadata.title
               : grantToEdit
-              ? grantToEdit?.details?.data?.title
-              : `${prefixUnselected} ${type}`}
+                ? grantToEdit?.details?.data?.title
+                : `${prefixUnselected} ${type}`}
           </p>
           <ChevronDownIcon className="h-4 w-4" />
         </div>
@@ -154,8 +148,8 @@ export const GrantTitleDropdown: FC<{
       >
         <Command
           filter={(value, search) => {
-            if (value.includes(search)) return 1;
-            return 0;
+            if (value.includes(search)) return 1
+            return 0
           }}
         >
           {canSearch ? (
@@ -165,7 +159,7 @@ export const GrantTitleDropdown: FC<{
                 placeholder={`Search ${type}...`}
                 value={search}
                 onValueChange={(value) => {
-                  setSearch(value);
+                  setSearch(value)
                 }}
               />
             </div>
@@ -182,12 +176,12 @@ export const GrantTitleDropdown: FC<{
                     placeholder={`${pluralize(type, 1)} name...`}
                     value={title}
                     onChange={(e) => {
-                      setTitle(e.target.value);
+                      setTitle(e.target.value)
                     }}
                     // on enter key press, add the network
                     onKeyDown={(e: any) => {
                       if (e.key === "Enter") {
-                        addCustom(title);
+                        addCustom(title)
                       }
                     }}
                   />
@@ -197,14 +191,14 @@ export const GrantTitleDropdown: FC<{
                   <button
                     className="text-brand-blue dark:text-blue-200 font-semibold text-sm"
                     onClick={(e) => {
-                      e?.preventDefault?.();
+                      e?.preventDefault?.()
                       if (search.length >= 3) {
-                        addCustom(search);
+                        addCustom(search)
                       } else if (search.length) {
-                        setTitle(search);
-                        setAdding(true);
+                        setTitle(search)
+                        setAdding(true)
                       } else {
-                        setAdding(true);
+                        setAdding(true)
                       }
                     }}
                   >
@@ -221,7 +215,7 @@ export const GrantTitleDropdown: FC<{
               <CommandItem>
                 <div
                   onClick={() => {
-                    cleanFunction();
+                    cleanFunction()
                   }}
                   className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
                 >
@@ -232,9 +226,7 @@ export const GrantTitleDropdown: FC<{
                       </p>
                     </div>
                     <CheckIcon
-                      className={cn(
-                        "mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white"
-                      )}
+                      className={cn("mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white")}
                       style={{
                         display: selectedProgram ? "none" : "block",
                       }}
@@ -247,16 +239,14 @@ export const GrantTitleDropdown: FC<{
               <CommandItem key={index}>
                 <div
                   onClick={() => {
-                    setSelectedProgram(item);
+                    setSelectedProgram(item)
                     setValue(
                       "programId",
-                      !item?.programId
-                        ? undefined
-                        : `${item.programId}_${item.chainID}`
-                    );
+                      !item?.programId ? undefined : `${item.programId}_${item.chainID}`
+                    )
                     setValue("title", item?.metadata?.title, {
                       shouldValidate: true,
-                    });
+                    })
                   }}
                   className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
                 >
@@ -268,20 +258,16 @@ export const GrantTitleDropdown: FC<{
                     </div>
                   </div>
                   <CheckIcon
-                    className={cn(
-                      "mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white"
-                    )}
+                    className={cn("mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white")}
                     style={{
                       display:
                         grantToEdit && !selectedProgram
-                          ? grantToEdit?.details?.data?.title ==
-                            item?.metadata?.title
+                          ? grantToEdit?.details?.data?.title == item?.metadata?.title
                             ? "block"
                             : "none"
-                          : selectedProgram?.metadata?.title ==
-                            item?.metadata?.title
-                          ? "block"
-                          : "none",
+                          : selectedProgram?.metadata?.title == item?.metadata?.title
+                            ? "block"
+                            : "none",
                     }}
                   />
                 </div>
@@ -291,5 +277,5 @@ export const GrantTitleDropdown: FC<{
         </Command>
       </Popover.Content>
     </Popover.Root>
-  );
-};
+  )
+}

@@ -7,22 +7,22 @@ export type IAttestationStatsNames =
   | "communities"
   | "grantUpdates"
   | "milestoneUpdates"
-  | "totals";
+  | "totals"
 
-export type StatPeriod = "Days" | "Weeks" | "Months" | "Years";
+export type StatPeriod = "Days" | "Weeks" | "Months" | "Years"
 export interface StatChartData {
-  name: IAttestationStatsNames;
+  name: IAttestationStatsNames
   data: {
-    [key: string]: string | number;
-    Date: string;
-  }[];
+    [key: string]: string | number
+    Date: string
+  }[]
 }
 export interface IAttestationStats {
-  name: IAttestationStatsNames;
+  name: IAttestationStatsNames
   data: {
-    date: string;
-    value: number;
-    timestamp: number;
-  }[];
+    date: string
+    value: number
+    timestamp: number
+  }[]
 }
-export type StatsResponse = IAttestationStats[];
+export type StatsResponse = IAttestationStats[]

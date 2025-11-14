@@ -1,41 +1,41 @@
-import { ReadMore } from "@/utilities/ReadMore";
-import formatCurrency from "@/utilities/formatCurrency";
-import { formatDate } from "@/utilities/formatDate";
-import Image from "next/image";
-import { FC, useEffect, useMemo, useRef, useState } from "react";
-import * as Tooltip from "@radix-ui/react-tooltip";
-import { registryHelper } from "./helper";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { Discord2Icon, Telegram2Icon, Twitter2Icon } from "@/components/Icons";
-import { DiscussionIcon } from "@/components/Icons/Discussion";
-import { BlogIcon } from "@/components/Icons/Blog";
-import { OrganizationIcon } from "@/components/Icons/Organization";
-import { Button } from "@/components/Utilities/Button";
+import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid"
+import * as Tooltip from "@radix-ui/react-tooltip"
 import {
-  ColumnDef,
-  Row,
-  SortingState,
+  type ColumnDef,
   flexRender,
   getCoreRowModel,
   getSortedRowModel,
+  type Row,
+  type SortingState,
   useReactTable,
-} from "@tanstack/react-table";
-import { useQueryState } from "nuqs";
-import { useVirtualizer } from "@tanstack/react-virtual";
-import { GrantProgram } from "./ProgramList";
-import { shortAddress } from "@/utilities/shortAddress";
-import { useAccount } from "wagmi";
-import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
-import { useSearchParams } from "next/navigation";
+} from "@tanstack/react-table"
+import { useVirtualizer } from "@tanstack/react-virtual"
+import Image from "next/image"
+import { useSearchParams } from "next/navigation"
+import { useQueryState } from "nuqs"
+import { type FC, useEffect, useMemo, useRef, useState } from "react"
+import { useAccount } from "wagmi"
+import { Discord2Icon, Telegram2Icon, Twitter2Icon } from "@/components/Icons"
+import { BlogIcon } from "@/components/Icons/Blog"
+import { DiscussionIcon } from "@/components/Icons/Discussion"
+import { OrganizationIcon } from "@/components/Icons/Organization"
+import { Button } from "@/components/Utilities/Button"
+import { ExternalLink } from "@/components/Utilities/ExternalLink"
+import formatCurrency from "@/utilities/formatCurrency"
+import { formatDate } from "@/utilities/formatDate"
+import { ReadMore } from "@/utilities/ReadMore"
+import { shortAddress } from "@/utilities/shortAddress"
+import { registryHelper } from "./helper"
+import type { GrantProgram } from "./ProgramList"
 
 interface MyProgramListProps {
-  grantPrograms: GrantProgram[];
-  tab: "accepted" | "rejected" | "pending";
-  editFn: (program: GrantProgram) => any;
-  selectProgram: (program: GrantProgram) => void;
-  isAllowed: boolean;
-  setSortField: (field: string) => void;
-  setSortOrder: (order: "asc" | "desc") => void;
+  grantPrograms: GrantProgram[]
+  tab: "accepted" | "rejected" | "pending"
+  editFn: (program: GrantProgram) => any
+  selectProgram: (program: GrantProgram) => void
+  isAllowed: boolean
+  setSortField: (field: string) => void
+  setSortOrder: (order: "asc" | "desc") => void
 }
 
 export const MyProgramList: FC<MyProgramListProps> = ({
@@ -45,19 +45,19 @@ export const MyProgramList: FC<MyProgramListProps> = ({
   selectProgram,
   isAllowed,
 }) => {
-  const searchParams = useSearchParams();
-  const { address } = useAccount();
+  const searchParams = useSearchParams()
+  const { address } = useAccount()
 
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>([])
 
-  const defaultSort = searchParams.get("sortField") || "updatedAt";
-  const defaultSortOrder = searchParams.get("sortOrder") || "desc";
+  const defaultSort = searchParams.get("sortField") || "updatedAt"
+  const defaultSortOrder = searchParams.get("sortOrder") || "desc"
   const [sortField, setSortField] = useQueryState("sortField", {
     defaultValue: defaultSort,
-  });
+  })
   const [sortOrder, setSortOrder] = useQueryState("sortOrder", {
     defaultValue: defaultSortOrder,
-  });
+  })
 
   const columns = useMemo<ColumnDef<GrantProgram>[]>(
     () => [
@@ -65,7 +65,7 @@ export const MyProgramList: FC<MyProgramListProps> = ({
         accessorFn: (row) => row,
         id: "Name",
         cell: (info) => {
-          const grant = info.row.original;
+          const grant = info.row.original
           return (
             <div className="flex flex-1 w-full whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300 text-wrap max-w-[285px] mr-4">
               <div className="flex flex-col gap-1 w-max max-w-full">
@@ -177,7 +177,7 @@ export const MyProgramList: FC<MyProgramListProps> = ({
                 </div>
               </div>
             </div>
-          );
+          )
         },
         header: () => (
           // <button
@@ -204,13 +204,10 @@ export const MyProgramList: FC<MyProgramListProps> = ({
         accessorFn: (row) => row,
         id: "Description",
         cell: (info) => {
-          const grant = info.row.original;
+          const grant = info.row.original
           return (
             <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-400 max-w-[240px]">
-              <div
-                className="w-[360px] max-w-[360px] text-wrap pr-8"
-                data-color-mode="light"
-              >
+              <div className="w-[360px] max-w-[360px] text-wrap pr-8" data-color-mode="light">
                 <ReadMore
                   readLessText="Show less description"
                   readMoreText="Show full description"
@@ -221,7 +218,7 @@ export const MyProgramList: FC<MyProgramListProps> = ({
                 </ReadMore>
               </div>
             </div>
-          );
+          )
         },
         header: () => (
           <div className="px-3 py-3.5 text-left w-[420px] text-sm font-bold text-gray-900 dark:text-zinc-100 font-body">
@@ -233,16 +230,16 @@ export const MyProgramList: FC<MyProgramListProps> = ({
         accessorFn: (row) => row,
         id: "Networks",
         cell: (info) => {
-          const grant = info.row.original;
-          const networks = grant.metadata?.networks;
-          const firstNetworks = networks?.slice(0, 4);
-          const restNetworks = networks?.slice(4);
+          const grant = info.row.original
+          const networks = grant.metadata?.networks
+          const firstNetworks = networks?.slice(0, 4)
+          const restNetworks = networks?.slice(4)
           if (
             !firstNetworks ||
             typeof firstNetworks === "string" ||
             typeof restNetworks === "string"
           )
-            return null;
+            return null
           return (
             <div className="w-full max-w-44 flex flex-row flex-wrap gap-1 my-2 items-center">
               {firstNetworks?.map((network, index) => (
@@ -255,22 +252,14 @@ export const MyProgramList: FC<MyProgramListProps> = ({
                             <Image
                               width={20}
                               height={20}
-                              src={
-                                registryHelper.networkImages[
-                                  network.toLowerCase()
-                                ].light
-                              }
+                              src={registryHelper.networkImages[network.toLowerCase()].light}
                               alt={network}
                               className="rounded-full w-5 h-5  dark:hidden"
                             />
                             <Image
                               width={20}
                               height={20}
-                              src={
-                                registryHelper.networkImages[
-                                  network.toLowerCase()
-                                ].dark
-                              }
+                              src={registryHelper.networkImages[network.toLowerCase()].dark}
                               alt={network}
                               className="rounded-full w-5 h-5  hidden dark:block"
                             />
@@ -288,17 +277,11 @@ export const MyProgramList: FC<MyProgramListProps> = ({
                       >
                         <div className="flex flex-col gap-3">
                           <div className="flex flex-row gap-2 items-center">
-                            {registryHelper.networkImages[
-                              network.toLowerCase()
-                            ] ? (
+                            {registryHelper.networkImages[network.toLowerCase()] ? (
                               <Image
                                 width={16}
                                 height={16}
-                                src={
-                                  registryHelper.networkImages[
-                                    network.toLowerCase()
-                                  ].dark
-                                }
+                                src={registryHelper.networkImages[network.toLowerCase()].dark}
                                 alt={network}
                                 className="rounded-full w-4 h-4"
                               />
@@ -335,21 +318,12 @@ export const MyProgramList: FC<MyProgramListProps> = ({
                       >
                         <div className="flex flex-col gap-3">
                           {restNetworks.map((item) => (
-                            <div
-                              key={item}
-                              className="flex flex-row gap-2 items-center"
-                            >
-                              {registryHelper.networkImages[
-                                item.toLowerCase()
-                              ] ? (
+                            <div key={item} className="flex flex-row gap-2 items-center">
+                              {registryHelper.networkImages[item.toLowerCase()] ? (
                                 <Image
                                   width={16}
                                   height={16}
-                                  src={
-                                    registryHelper.networkImages[
-                                      item.toLowerCase()
-                                    ].dark
-                                  }
+                                  src={registryHelper.networkImages[item.toLowerCase()].dark}
                                   alt={item}
                                   className="rounded-full w-4 h-4"
                                 />
@@ -369,7 +343,7 @@ export const MyProgramList: FC<MyProgramListProps> = ({
                 </Tooltip.Provider>
               ) : null}
             </div>
-          );
+          )
         },
         header: () => (
           <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64">
@@ -381,26 +355,24 @@ export const MyProgramList: FC<MyProgramListProps> = ({
         accessorFn: (row) => (row.createdAt ? row.createdAt : null),
         id: "Date Added",
         cell: (info) => {
-          const program = info.row.original;
+          const program = info.row.original
 
           return (
             <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
               {program?.createdAt ? formatDate(program?.createdAt) : ""}
             </div>
-          );
+          )
         },
         header: () => (
           <div className="flex items-center gap-1">
             <div
               className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64 cursor-pointer"
               onClick={() => {
-                setSortField("createdAt");
+                setSortField("createdAt")
                 if (searchParams.get("sortField") === "createdAt") {
-                  setSortOrder(
-                    searchParams.get("sortOrder") === "asc" ? "desc" : "asc"
-                  );
+                  setSortOrder(searchParams.get("sortOrder") === "asc" ? "desc" : "asc")
                 }
-                setSortOrder("asc");
+                setSortOrder("asc")
               }}
             >
               Date Added
@@ -409,9 +381,7 @@ export const MyProgramList: FC<MyProgramListProps> = ({
               {searchParams.get("sortField") === "asc" && (
                 <ChevronUpIcon className="w-4 h-4 inline-block" />
               )}
-              {searchParams.get("sortField") === "desc" && (
-                <ChevronDownIcon className="w-4 h-4" />
-              )}
+              {searchParams.get("sortField") === "desc" && <ChevronDownIcon className="w-4 h-4" />}
             </div>
           </div>
         ),
@@ -443,7 +413,7 @@ export const MyProgramList: FC<MyProgramListProps> = ({
         id: "Categories",
         accessorKey: "metadata.categories",
         cell: (info) => {
-          const grant = info.row.original;
+          const grant = info.row.original
 
           return (
             <div className="w-full flex flex-row flex-wrap gap-1">
@@ -456,7 +426,7 @@ export const MyProgramList: FC<MyProgramListProps> = ({
                 </span>
               ))}
             </div>
-          );
+          )
         },
         header: () => (
           <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64">
@@ -468,7 +438,7 @@ export const MyProgramList: FC<MyProgramListProps> = ({
         accessorFn: (row) => row,
         id: "Types",
         cell: (info) => {
-          const grant = info.row.original;
+          const grant = info.row.original
 
           return (
             <div className="whitespace-nowrap max-w-[220px] flex flex-row flex-wrap gap-1 px-3 py-5 text-sm text-black dark:text-zinc-300">
@@ -481,7 +451,7 @@ export const MyProgramList: FC<MyProgramListProps> = ({
                 </span>
               ))}
             </div>
-          );
+          )
         },
         header: () => (
           <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64">
@@ -493,7 +463,7 @@ export const MyProgramList: FC<MyProgramListProps> = ({
         accessorFn: (row) => row,
         id: "Admins",
         cell: (info) => {
-          const program = info.row.original;
+          const program = info.row.original
 
           return (
             <div className="whitespace-nowrap max-w-[220px] flex flex-row flex-wrap gap-1 px-3 py-5 text-sm text-black dark:text-zinc-300">
@@ -501,16 +471,14 @@ export const MyProgramList: FC<MyProgramListProps> = ({
                 <span
                   key={index}
                   className={`mr-1 inline-flex items-center rounded-md  px-2 py-1 text-xs font-medium text-black ring-1 ring-inset ring-zinc-600/20 ${
-                    admin.toLowerCase() === address?.toLowerCase()
-                      ? "bg-blue-100"
-                      : "bg-zinc-50"
+                    admin.toLowerCase() === address?.toLowerCase() ? "bg-blue-100" : "bg-zinc-50"
                   }`}
                 >
                   {shortAddress(admin.toLowerCase())}
                 </span>
               ))}
             </div>
-          );
+          )
         },
         header: () => (
           <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64">
@@ -523,7 +491,7 @@ export const MyProgramList: FC<MyProgramListProps> = ({
         id: "Action",
 
         cell: (info) => {
-          const grant = info.row.original;
+          const grant = info.row.original
 
           return (
             <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300 w-48">
@@ -532,7 +500,7 @@ export const MyProgramList: FC<MyProgramListProps> = ({
                   <Button
                     className="text-sm bg-black dark:bg-black hover:bg-black text-white"
                     onClick={() => {
-                      editFn(grant);
+                      editFn(grant)
                     }}
                   >
                     Update
@@ -540,7 +508,7 @@ export const MyProgramList: FC<MyProgramListProps> = ({
                 </div>
               ) : null}
             </div>
-          );
+          )
         },
         header: () => (
           <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 font-body">
@@ -550,7 +518,7 @@ export const MyProgramList: FC<MyProgramListProps> = ({
       },
     ],
     [grantPrograms, isAllowed]
-  );
+  )
 
   const table = useReactTable({
     data: grantPrograms,
@@ -559,17 +527,17 @@ export const MyProgramList: FC<MyProgramListProps> = ({
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-  });
+  })
 
-  const { rows } = table.getRowModel();
+  const { rows } = table.getRowModel()
 
   const virtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => 120,
-  });
+  })
 
-  const parentRef = useRef(null);
+  const parentRef = useRef(null)
 
   return (
     <div ref={parentRef} className="w-full">
@@ -592,48 +560,38 @@ export const MyProgramList: FC<MyProgramListProps> = ({
                       style={{ width: header.getSize() }}
                     >
                       {header.isPlaceholder ? null : (
-                        <div>
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                        </div>
+                        <div>{flexRender(header.column.columnDef.header, header.getContext())}</div>
                       )}
                     </th>
-                  );
+                  )
                 })}
               </tr>
             ))}
           </thead>
           <tbody className="divide-y divide-gray-200 ">
             {virtualizer.getVirtualItems().map((virtualRow, index) => {
-              const row = rows[virtualRow.index] as Row<GrantProgram>;
+              const row = rows[virtualRow.index] as Row<GrantProgram>
               return (
                 <tr
                   key={row.id}
                   style={{
                     height: `${virtualRow.size}px`,
-                    transform: `translateY(${
-                      virtualRow.start - index * virtualRow.size
-                    }px)`,
+                    transform: `translateY(${virtualRow.start - index * virtualRow.size}px)`,
                   }}
                 >
                   {row.getVisibleCells().map((cell) => {
                     return (
                       <td key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
-                    );
+                    )
                   })}
                 </tr>
-              );
+              )
             })}
           </tbody>
         </table>
       </div>
     </div>
-  );
-};
+  )
+}

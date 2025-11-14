@@ -1,22 +1,19 @@
+import { type QueryKey, type QueryOptions, useQuery } from "@tanstack/react-query"
 import {
-  GroupedIndicators,
+  type GroupedIndicators,
   getGroupedIndicatorsByCommunity,
-} from "@/utilities/queries/getIndicatorsByCommunity";
-import { QueryKey, QueryOptions, useQuery } from "@tanstack/react-query";
+} from "@/utilities/queries/getIndicatorsByCommunity"
 
 interface UseGroupedIndicatorsProps {
-  communityId: string;
-  queryOptions?: QueryOptions<GroupedIndicators, Error, GroupedIndicators, QueryKey>;
+  communityId: string
+  queryOptions?: QueryOptions<GroupedIndicators, Error, GroupedIndicators, QueryKey>
 }
 
-export const useGroupedIndicators = ({
-  communityId,
-  queryOptions,
-}: UseGroupedIndicatorsProps) => {
+export const useGroupedIndicators = ({ communityId, queryOptions }: UseGroupedIndicatorsProps) => {
   return useQuery<GroupedIndicators>({
     queryKey: ["groupedIndicators", communityId],
     queryFn: () => getGroupedIndicatorsByCommunity(communityId),
     enabled: !!communityId,
     ...queryOptions,
-  });
-}; 
+  })
+}

@@ -1,30 +1,30 @@
-"use client";
+"use client"
 
-import { useState, useCallback } from "react";
-import Papa from "papaparse";
-import { isAddress } from "viem";
-import { FileUpload } from "@/components/Utilities/FileUpload";
-import toast from "react-hot-toast";
-import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
-import { cn } from "@/utilities/tailwind";
-import { PROJECT_NAME } from "@/constants/brand";
+import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid"
+import Papa from "papaparse"
+import { useCallback, useState } from "react"
+import toast from "react-hot-toast"
+import { isAddress } from "viem"
+import { FileUpload } from "@/components/Utilities/FileUpload"
+import { PROJECT_NAME } from "@/constants/brand"
+import { cn } from "@/utilities/tailwind"
 
 export interface CsvPayoutData {
-  projectSlug: string;
-  payoutAddress: string;
-  amount: string;
+  projectSlug: string
+  payoutAddress: string
+  amount: string
 }
 
 export interface CsvParseResult {
-  data: CsvPayoutData[];
-  unmatchedProjects: string[];
+  data: CsvPayoutData[]
+  unmatchedProjects: string[]
 }
 
 interface PayoutsCsvUploadProps {
-  onDataParsed: (result: CsvParseResult) => void;
-  disabled?: boolean;
-  unmatchedProjects?: string[];
-  onDownloadExample?: () => void;
+  onDataParsed: (result: CsvParseResult) => void
+  disabled?: boolean
+  unmatchedProjects?: string[]
+  onDownloadExample?: () => void
 }
 
 export function PayoutsCsvUpload({
@@ -33,31 +33,31 @@ export function PayoutsCsvUpload({
   unmatchedProjects,
   onDownloadExample,
 }: PayoutsCsvUploadProps) {
-  const [file, setFile] = useState<File | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [file, setFile] = useState<File | null>(null)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(false)
   const [parseResults, setParseResults] = useState<{
-    successful: number;
-    failed: number;
-    skipped: number;
-    errors: string[];
-  } | null>(null);
+    successful: number
+    failed: number
+    skipped: number
+    errors: string[]
+  } | null>(null)
 
   const extractProjectSlug = (url: string): string | null => {
-    if (!url || typeof url !== "string") return null;
+    if (!url || typeof url !== "string") return null
 
     // Match various KarmaGAP URL patterns
-    const patterns = [/\/project\/([^\/\s?#]+)/, /\/projects\/([^\/\s?#]+)/];
+    const patterns = [/\/project\/([^/\s?#]+)/, /\/projects\/([^/\s?#]+)/]
 
     for (const pattern of patterns) {
-      const match = url.match(pattern);
+      const match = url.match(pattern)
       if (match && match[1]) {
-        return match[1].trim();
+        return match[1].trim()
       }
     }
 
-    return null;
-  };
+    return null
+  }
 
   const findColumn = (headers: string[], possibleNames: string[]): number => {
     const normalizedHeaders = headers.map((h) =>
@@ -65,23 +65,21 @@ export function PayoutsCsvUpload({
         .toLowerCase()
         .trim()
         .replace(/[^a-z0-9]+/g, "")
-    );
+    )
 
     for (const name of possibleNames) {
-      const normalizedName = name.toLowerCase().replace(/[^a-z0-9]+/g, "");
-      const index = normalizedHeaders.findIndex((h) =>
-        h.includes(normalizedName)
-      );
-      if (index !== -1) return index;
+      const normalizedName = name.toLowerCase().replace(/[^a-z0-9]+/g, "")
+      const index = normalizedHeaders.findIndex((h) => h.includes(normalizedName))
+      if (index !== -1) return index
     }
 
-    return -1;
-  };
+    return -1
+  }
 
   const processFile = useCallback(
     (file: File) => {
-      setIsProcessing(true);
-      setParseResults(null);
+      setIsProcessing(true)
+      setParseResults(null)
 
       Papa.parse(file, {
         header: false,
@@ -89,15 +87,13 @@ export function PayoutsCsvUpload({
         complete: (results) => {
           try {
             if (!results.data || results.data.length < 2) {
-              toast.error(
-                "CSV file appears to be empty or only contains headers"
-              );
-              setIsProcessing(false);
-              return;
+              toast.error("CSV file appears to be empty or only contains headers")
+              setIsProcessing(false)
+              return
             }
 
-            const headers = results.data[0] as string[];
-            const dataRows = results.data.slice(1) as string[][];
+            const headers = results.data[0] as string[]
+            const dataRows = results.data.slice(1) as string[][]
 
             // Find columns with flexible naming
             const projectColIndex = findColumn(headers, [
@@ -107,7 +103,7 @@ export function PayoutsCsvUpload({
               "Project",
               "Project URL",
               "URL",
-            ]);
+            ])
 
             const addressColIndex = findColumn(headers, [
               "Wallet Address",
@@ -115,7 +111,7 @@ export function PayoutsCsvUpload({
               "Payout Address",
               "Wallet",
               "Recipient",
-            ]);
+            ])
 
             const amountColIndex = findColumn(headers, [
               "PRIZE WON",
@@ -123,143 +119,141 @@ export function PayoutsCsvUpload({
               "Prize",
               "Payout Amount",
               "Value",
-            ]);
+            ])
 
             if (projectColIndex === -1) {
-              toast.error("Could not find project/profile column in CSV");
-              setIsProcessing(false);
-              return;
+              toast.error("Could not find project/profile column in CSV")
+              setIsProcessing(false)
+              return
             }
 
             if (addressColIndex === -1) {
-              toast.error("Could not find wallet address column in CSV");
-              setIsProcessing(false);
-              return;
+              toast.error("Could not find wallet address column in CSV")
+              setIsProcessing(false)
+              return
             }
 
             if (amountColIndex === -1) {
-              toast.error("Could not find amount column in CSV");
-              setIsProcessing(false);
-              return;
+              toast.error("Could not find amount column in CSV")
+              setIsProcessing(false)
+              return
             }
 
-            const parsedData: CsvPayoutData[] = [];
-            const errors: string[] = [];
-            let successful = 0;
-            let failed = 0;
-            let skipped = 0;
+            const parsedData: CsvPayoutData[] = []
+            const errors: string[] = []
+            let successful = 0
+            let failed = 0
+            let skipped = 0
 
             dataRows.forEach((row, index) => {
-              const rowNum = index + 2; // +2 because we start from row 2 (after headers)
+              const rowNum = index + 2 // +2 because we start from row 2 (after headers)
 
-              const projectUrl = row[projectColIndex]?.trim();
-              const address = row[addressColIndex]?.trim();
-              const amount = row[amountColIndex]?.trim();
+              const projectUrl = row[projectColIndex]?.trim()
+              const address = row[addressColIndex]?.trim()
+              const amount = row[amountColIndex]?.trim()
 
               if (!projectUrl && !address && !amount) {
                 // Skip completely empty rows
-                return;
+                return
               }
 
-              let hasError = false;
-              const rowErrors: string[] = [];
+              let hasError = false
+              const rowErrors: string[] = []
 
               // Extract project slug
-              const projectSlug = extractProjectSlug(projectUrl);
+              const projectSlug = extractProjectSlug(projectUrl)
               if (!projectSlug) {
-                rowErrors.push(`Row ${rowNum}: Invalid or missing project URL`);
-                hasError = true;
+                rowErrors.push(`Row ${rowNum}: Invalid or missing project URL`)
+                hasError = true
               }
 
               // Validate address - skip row if missing, only error if invalid
               if (!address) {
                 // Skip rows with missing addresses silently
-                skipped++;
-                return;
+                skipped++
+                return
               } else if (!isAddress(address)) {
-                rowErrors.push(
-                  `Row ${rowNum}: Invalid wallet address: ${address}`
-                );
-                hasError = true;
+                rowErrors.push(`Row ${rowNum}: Invalid wallet address: ${address}`)
+                hasError = true
               }
 
               // Validate amount
               if (!amount) {
-                rowErrors.push(`Row ${rowNum}: Missing amount`);
-                hasError = true;
+                rowErrors.push(`Row ${rowNum}: Missing amount`)
+                hasError = true
               } else {
-                const numAmount = parseFloat(amount);
+                const numAmount = parseFloat(amount)
                 if (isNaN(numAmount) || numAmount <= 0) {
-                  rowErrors.push(`Row ${rowNum}: Invalid amount: ${amount}`);
-                  hasError = true;
+                  rowErrors.push(`Row ${rowNum}: Invalid amount: ${amount}`)
+                  hasError = true
                 } else if (!/^\d+(\.\d{0,2})?$/.test(amount)) {
                   rowErrors.push(
                     `Row ${rowNum}: Amount must have at most 2 decimal places: ${amount}`
-                  );
-                  hasError = true;
+                  )
+                  hasError = true
                 }
               }
 
               if (hasError) {
-                failed++;
-                errors.push(...rowErrors);
+                failed++
+                errors.push(...rowErrors)
               } else {
-                successful++;
+                successful++
                 parsedData.push({
                   projectSlug: projectSlug!,
                   payoutAddress: address,
                   amount: amount,
-                });
+                })
               }
-            });
+            })
 
-            setParseResults({ successful, failed, skipped, errors });
+            setParseResults({ successful, failed, skipped, errors })
 
             if (parsedData.length > 0) {
               // Pass the parsed data to parent component for matching
-              onDataParsed({ data: parsedData, unmatchedProjects: [] });
-              toast.success(`Successfully parsed ${successful} entries`);
+              onDataParsed({ data: parsedData, unmatchedProjects: [] })
+              toast.success(`Successfully parsed ${successful} entries`)
             } else {
-              toast.error("No valid entries found in CSV");
+              toast.error("No valid entries found in CSV")
             }
 
             if (errors.length > 0) {
-              console.error("CSV parsing errors:", errors);
+              console.error("CSV parsing errors:", errors)
             }
           } catch (error) {
-            console.error("Error processing CSV:", error);
-            toast.error("Failed to process CSV file");
+            console.error("Error processing CSV:", error)
+            toast.error("Failed to process CSV file")
           } finally {
-            setIsProcessing(false);
+            setIsProcessing(false)
           }
         },
         error: (error) => {
-          console.error("Papa Parse error:", error);
-          toast.error("Failed to parse CSV file");
-          setIsProcessing(false);
+          console.error("Papa Parse error:", error)
+          toast.error("Failed to parse CSV file")
+          setIsProcessing(false)
         },
-      });
+      })
     },
     [onDataParsed]
-  );
+  )
 
   const handleFileSelect = useCallback(
     (selectedFile: File) => {
       if (selectedFile.type !== "text/csv") {
-        toast.error("Please upload a CSV file");
-        return;
+        toast.error("Please upload a CSV file")
+        return
       }
 
-      setFile(selectedFile);
-      processFile(selectedFile);
+      setFile(selectedFile)
+      processFile(selectedFile)
     },
     [processFile]
-  );
+  )
 
   const handleNewUpload = useCallback(() => {
-    setFile(null);
-    setParseResults(null);
-  }, []);
+    setFile(null)
+    setParseResults(null)
+  }, [])
 
   return (
     <div className="w-full mb-6 border border-gray-200 dark:border-zinc-700 rounded-lg">
@@ -268,9 +262,7 @@ export function PayoutsCsvUpload({
         className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
       >
         <div>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-            Upload CSV File
-          </h3>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white">Upload CSV File</h3>
           {!isExpanded && (
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
               Bulk populate payout addresses and amounts from CSV
@@ -294,8 +286,7 @@ export function PayoutsCsvUpload({
           <div className="flex items-start justify-between mb-4">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Upload a CSV file to bulk populate payout addresses and amounts.
-              <br /> The CSV should contain columns for project URLs, wallet
-              addresses, and amounts.
+              <br /> The CSV should contain columns for project URLs, wallet addresses, and amounts.
             </p>
             {onDownloadExample && (
               <button
@@ -311,9 +302,7 @@ export function PayoutsCsvUpload({
             <div className="space-y-4">
               <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-zinc-800 rounded-md">
                 <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    {file.name}
-                  </p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{file.name}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     Uploaded successfully
                   </p>
@@ -335,16 +324,16 @@ export function PayoutsCsvUpload({
                     {parseResults.errors.length > 0 && (
                       <button
                         onClick={() => {
-                          const errorText = parseResults.errors.join("\n");
+                          const errorText = parseResults.errors.join("\n")
                           const blob = new Blob([errorText], {
                             type: "text/plain",
-                          });
-                          const url = URL.createObjectURL(blob);
-                          const a = document.createElement("a");
-                          a.href = url;
-                          a.download = "csv-errors.txt";
-                          a.click();
-                          URL.revokeObjectURL(url);
+                          })
+                          const url = URL.createObjectURL(blob)
+                          const a = document.createElement("a")
+                          a.href = url
+                          a.download = "csv-errors.txt"
+                          a.click()
+                          URL.revokeObjectURL(url)
                         }}
                         className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
                       >
@@ -376,50 +365,44 @@ export function PayoutsCsvUpload({
 
                   {(parseResults.errors.length > 0 ||
                     (unmatchedProjects && unmatchedProjects.length > 0)) && (
-                      <div className="mt-3 space-y-3">
-                        {parseResults.errors.length > 0 && (
-                          <div className="max-h-32 overflow-y-auto">
-                            <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                              Errors:
-                            </p>
-                            <div className="text-xs text-red-600 dark:text-red-400 space-y-1">
-                              {parseResults.errors
-                                .slice(0, 5)
-                                .map((error, index) => (
-                                  <p key={index}>{error}</p>
-                                ))}
-                              {parseResults.errors.length > 5 && (
-                                <p className="text-gray-500 dark:text-gray-400">
-                                  ... and {parseResults.errors.length - 5} more
-                                  errors
-                                </p>
-                              )}
-                            </div>
+                    <div className="mt-3 space-y-3">
+                      {parseResults.errors.length > 0 && (
+                        <div className="max-h-32 overflow-y-auto">
+                          <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Errors:
+                          </p>
+                          <div className="text-xs text-red-600 dark:text-red-400 space-y-1">
+                            {parseResults.errors.slice(0, 5).map((error, index) => (
+                              <p key={index}>{error}</p>
+                            ))}
+                            {parseResults.errors.length > 5 && (
+                              <p className="text-gray-500 dark:text-gray-400">
+                                ... and {parseResults.errors.length - 5} more errors
+                              </p>
+                            )}
                           </div>
-                        )}
+                        </div>
+                      )}
 
-                        {unmatchedProjects && unmatchedProjects.length > 0 && (
-                          <div className="max-h-32 overflow-y-auto">
-                            <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                              Unmatched project slugs:
-                            </p>
-                            <div className="text-xs text-orange-600 dark:text-orange-400 space-y-1">
-                              {unmatchedProjects
-                                .slice(0, 5)
-                                .map((slug, index) => (
-                                  <p key={index}>• {slug}</p>
-                                ))}
-                              {unmatchedProjects.length > 5 && (
-                                <p className="text-gray-500 dark:text-gray-400">
-                                  ... and {unmatchedProjects.length - 5} more
-                                  unmatched
-                                </p>
-                              )}
-                            </div>
+                      {unmatchedProjects && unmatchedProjects.length > 0 && (
+                        <div className="max-h-32 overflow-y-auto">
+                          <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Unmatched project slugs:
+                          </p>
+                          <div className="text-xs text-orange-600 dark:text-orange-400 space-y-1">
+                            {unmatchedProjects.slice(0, 5).map((slug, index) => (
+                              <p key={index}>• {slug}</p>
+                            ))}
+                            {unmatchedProjects.length > 5 && (
+                              <p className="text-gray-500 dark:text-gray-400">
+                                ... and {unmatchedProjects.length - 5} more unmatched
+                              </p>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    )}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -435,5 +418,5 @@ export function PayoutsCsvUpload({
         </div>
       </div>
     </div>
-  );
+  )
 }

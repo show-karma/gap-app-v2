@@ -1,50 +1,44 @@
 /* eslint-disable @next/next/no-img-element */
-"use client";
+"use client"
 
-import { useOwnerStore, useProjectStore } from "@/store";
-import { useParams, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useTeamProfiles } from "@/hooks/useTeamProfiles";
-
-import { PAGES } from "@/utilities/pages";
-import Link from "next/link";
-
-import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
-import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import { useActivityTabStore } from "@/store/activityTab";
-import { useENS } from "@/store/ens";
-import formatCurrency from "@/utilities/formatCurrency";
-import { shortAddress } from "@/utilities/shortAddress";
-import { ChevronRightIcon } from "@heroicons/react/24/solid";
-import { Hex } from "viem";
-import { ProjectSubscription } from "../ProjectSubscription";
-import { ProjectImpact } from "./ProjectImpact";
-import { ProjectSubTabs } from "../ProjectSubTabs";
-import { ProjectBlocks } from "./ProjectBlocks";
-
-import { MemberDialog } from "@/components/Dialogs/Member";
-import { DeleteMemberDialog } from "@/components/Dialogs/Member/DeleteMember";
-import { DemoteMemberDialog } from "@/components/Dialogs/Member/DemoteMember";
-import { InviteMemberDialog } from "@/components/Dialogs/Member/InviteMember";
-import { PromoteMemberDialog } from "@/components/Dialogs/Member/PromoteMember";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { Skeleton } from "@/components/Utilities/Skeleton";
-import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
-import fetchData from "@/utilities/fetchData";
-import {
-  getProjectMemberRoles,
-  Member,
-} from "@/utilities/getProjectMemberRoles";
-import { INDEXER } from "@/utilities/indexer";
-import { PencilIcon } from "@heroicons/react/24/outline";
-import * as Tooltip from "@radix-ui/react-tooltip";
-import { useQuery } from "@tanstack/react-query";
-import dynamic from "next/dynamic";
-import pluralize from "pluralize";
-import { useAccount } from "wagmi";
-import { InformationBlock } from "./ProjectBodyTabs";
-import { useProjectInstance } from "@/hooks/useProjectInstance";
-import { useMemberRoles } from "@/hooks/useMemberRoles";
+import { PencilIcon } from "@heroicons/react/24/outline"
+import { ChevronRightIcon } from "@heroicons/react/24/solid"
+import * as Tooltip from "@radix-ui/react-tooltip"
+import { useQuery } from "@tanstack/react-query"
+import dynamic from "next/dynamic"
+import Link from "next/link"
+import { useParams, useSearchParams } from "next/navigation"
+import pluralize from "pluralize"
+import { useEffect, useState } from "react"
+import type { Hex } from "viem"
+import { useAccount } from "wagmi"
+import { MemberDialog } from "@/components/Dialogs/Member"
+import { DeleteMemberDialog } from "@/components/Dialogs/Member/DeleteMember"
+import { DemoteMemberDialog } from "@/components/Dialogs/Member/DemoteMember"
+import { InviteMemberDialog } from "@/components/Dialogs/Member/InviteMember"
+import { PromoteMemberDialog } from "@/components/Dialogs/Member/PromoteMember"
+import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar"
+import { errorManager } from "@/components/Utilities/errorManager"
+import { Skeleton } from "@/components/Utilities/Skeleton"
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
+import { useMemberRoles } from "@/hooks/useMemberRoles"
+import { useProjectInstance } from "@/hooks/useProjectInstance"
+import { useTeamProfiles } from "@/hooks/useTeamProfiles"
+import { useOwnerStore, useProjectStore } from "@/store"
+import { useActivityTabStore } from "@/store/activityTab"
+import { useENS } from "@/store/ens"
+import { useContributorProfileModalStore } from "@/store/modals/contributorProfile"
+import fetchData from "@/utilities/fetchData"
+import formatCurrency from "@/utilities/formatCurrency"
+import { getProjectMemberRoles, type Member } from "@/utilities/getProjectMemberRoles"
+import { INDEXER } from "@/utilities/indexer"
+import { PAGES } from "@/utilities/pages"
+import { shortAddress } from "@/utilities/shortAddress"
+import { ProjectSubscription } from "../ProjectSubscription"
+import { ProjectSubTabs } from "../ProjectSubTabs"
+import { ProjectBlocks } from "./ProjectBlocks"
+import { InformationBlock } from "./ProjectBodyTabs"
+import { ProjectImpact } from "./ProjectImpact"
 
 const ContributorProfileDialog = dynamic(
   () =>
@@ -54,42 +48,42 @@ const ContributorProfileDialog = dynamic(
   {
     ssr: false,
   }
-);
+)
 
 function ProjectPage() {
-  const project = useProjectStore((state) => state.project);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isAuthorized = isProjectOwner || isContractOwner;
-  const isAdminOrAbove = isProjectOwner || isContractOwner || isProjectAdmin;
+  const project = useProjectStore((state) => state.project)
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner)
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin)
+  const isContractOwner = useOwnerStore((state) => state.isOwner)
+  const isAuthorized = isProjectOwner || isContractOwner
+  const isAdminOrAbove = isProjectOwner || isContractOwner || isProjectAdmin
   const { project: projectInstance } = useProjectInstance(
     project?.details?.data.slug || project?.uid || ""
-  );
-  const { teamProfiles } = useTeamProfiles(project);
-  const { address } = useAccount();
-  const { openModal } = useContributorProfileModalStore();
-  const inviteCodeParam = useSearchParams().get("invite-code");
-  const params = useParams();
-  const projectId = params.projectId as string;
-  const { populateEns, ensData } = useENS();
+  )
+  const { teamProfiles } = useTeamProfiles(project)
+  const { address } = useAccount()
+  const { openModal } = useContributorProfileModalStore()
+  const inviteCodeParam = useSearchParams().get("invite-code")
+  const params = useParams()
+  const projectId = params.projectId as string
+  const { populateEns, ensData } = useENS()
 
   const {
     data: memberRoles,
     isLoading: isLoadingRoles,
     isFetching: isFetchingRoles,
-  } = useMemberRoles();
+  } = useMemberRoles()
 
   useEffect(() => {
     if (project?.members) {
-      populateEns(project?.members?.map((v) => v.recipient));
+      populateEns(project?.members?.map((v) => v.recipient))
     }
-  }, [project?.members]);
+  }, [project?.members])
 
-  const [, copy] = useCopyToClipboard();
+  const [, copy] = useCopyToClipboard()
 
   const mountMembers = () => {
-    const members: Member[] = [];
+    const members: Member[] = []
     if (project?.members) {
       project.members.forEach((member) => {
         if (!members.find((m) => m.recipient === member.recipient)) {
@@ -99,43 +93,40 @@ function ProjectPage() {
             details: {
               name: member?.details?.name,
             },
-          });
+          })
         }
-      });
+      })
     }
     const alreadyHasOwner = project?.members.find(
-      (member) =>
-        member.recipient.toLowerCase() === project.recipient.toLowerCase()
-    );
+      (member) => member.recipient.toLowerCase() === project.recipient.toLowerCase()
+    )
     if (!alreadyHasOwner) {
       members.push({
         uid: project?.recipient || "",
         recipient: project?.recipient || "",
-      });
+      })
     }
     // sort by owner
     members.sort((a, b) => {
-      return a.recipient.toLowerCase() === project?.recipient?.toLowerCase()
-        ? -1
-        : 1;
-    });
-    return members;
-  };
+      return a.recipient.toLowerCase() === project?.recipient?.toLowerCase() ? -1 : 1
+    })
+    return members
+  }
 
   const members = mountMembers().sort((a, b) => {
-    const roleA = memberRoles?.[a.recipient] || "Member";
-    const roleB = memberRoles?.[b.recipient] || "Member";
+    const roleA = memberRoles?.[a.recipient] || "Member"
+    const roleB = memberRoles?.[b.recipient] || "Member"
 
     const roleOrder = {
       Owner: 0,
       Admin: 1,
       Member: 2,
-    };
+    }
 
-    return roleOrder[roleA] - roleOrder[roleB];
-  });
+    return roleOrder[roleA] - roleOrder[roleB]
+  })
 
-  const { setActivityTab } = useActivityTabStore();
+  const { setActivityTab } = useActivityTabStore()
 
   const Team = () => {
     return members.length ? (
@@ -147,15 +138,10 @@ function ProjectPage() {
           <div className="flex flex-col divide-y divide-y-zinc-200">
             {members?.map((member) => {
               const profile = teamProfiles?.find(
-                (profile) =>
-                  profile.recipient.toLowerCase() ===
-                  member.recipient.toLowerCase()
-              );
+                (profile) => profile.recipient.toLowerCase() === member.recipient.toLowerCase()
+              )
               return (
-                <div
-                  key={member.uid}
-                  className="flex items-center flex-row gap-3 justify-between"
-                >
+                <div key={member.uid} className="flex items-center flex-row gap-3 justify-between">
                   <div className="flex items-center flex-row gap-3 p-3">
                     <EthereumAddressToENSAvatar
                       address={member.recipient}
@@ -183,8 +169,7 @@ function ProjectPage() {
                       {isLoadingRoles || isFetchingRoles ? (
                         <Skeleton className="w-full h-4" />
                       ) : memberRoles &&
-                        memberRoles[member.recipient.toLowerCase()] !==
-                          "Member" ? (
+                        memberRoles[member.recipient.toLowerCase()] !== "Member" ? (
                         <p className="text-sm text-brand-blue font-medium leading-none">
                           {memberRoles[member.recipient.toLowerCase()]}
                         </p>
@@ -193,10 +178,7 @@ function ProjectPage() {
                         <p className="text-sm font-medium text-[#475467] dark:text-gray-300 line-clamp-1 text-wrap whitespace-nowrap">
                           {shortAddress(member.recipient)}
                         </p>
-                        <button
-                          type="button"
-                          onClick={() => copy(member.recipient)}
-                        >
+                        <button type="button" onClick={() => copy(member.recipient)}>
                           <img
                             src="/icons/copy-2.svg"
                             alt="Copy"
@@ -207,8 +189,7 @@ function ProjectPage() {
                     </div>
                   </div>
                   <div className="flex flex-row gap-2 mr-2">
-                    {member.recipient.toLowerCase() ===
-                    address?.toLowerCase() ? (
+                    {member.recipient.toLowerCase() === address?.toLowerCase() ? (
                       <Tooltip.Provider>
                         <Tooltip.Root delayDuration={0}>
                           <Tooltip.Trigger asChild>
@@ -255,46 +236,46 @@ function ProjectPage() {
                     ) : null}
                   </div>
                 </div>
-              );
+              )
             })}
           </div>
         </div>
         {isAuthorized ? <InviteMemberDialog /> : null}
       </div>
-    ) : null;
-  };
+    ) : null
+  }
 
   const checkCodeValidation = async () => {
-    if (!inviteCodeParam) return;
+    if (!inviteCodeParam) return
     try {
       const [data, error] = await fetchData(
         INDEXER.PROJECT.INVITATION.CHECK_CODE(projectId, inviteCodeParam)
-      );
-      if (error) throw error;
-      if (data.message === "Valid") return true;
-      return false;
+      )
+      if (error) throw error
+      if (data.message === "Valid") return true
+      return false
     } catch (error) {
       errorManager("Failed to check code validation", error, {
         projectId,
         code: inviteCodeParam,
         address,
-      });
+      })
     }
-  };
+  }
 
   useEffect(() => {
     const isAlreadyMember = project?.members.some(
       (member) => member.recipient.toLowerCase() === address?.toLowerCase()
-    );
-    if (isAlreadyMember) return;
+    )
+    if (isAlreadyMember) return
     checkCodeValidation().then((isValid) => {
       if (isValid) {
         openModal({
           isGlobal: false,
-        });
+        })
       }
-    });
-  }, [project, address, inviteCodeParam]);
+    })
+  }, [project, address, inviteCodeParam])
 
   return (
     <div className="flex flex-row max-lg:flex-col gap-6 max-md:gap-4 py-5 mb-20">
@@ -331,11 +312,7 @@ function ProjectPage() {
                   <p className="font-normal text-brand-gray text-sm dark:text-zinc-300">
                     {pluralize("Grant", project?.grants.length || 0)}
                   </p>
-                  <img
-                    src={"/icons/funding.png"}
-                    alt="Grants"
-                    className="w-5 h-5"
-                  />
+                  <img src={"/icons/funding.png"} alt="Grants" className="w-5 h-5" />
                 </div>
               </div>
               <div className="w-5 h-5 flex justify-center items-center">
@@ -353,16 +330,9 @@ function ProjectPage() {
                 </p>
                 <div className="flex flex-row gap-2">
                   <p className="font-normal text-brand-gray text-sm dark:text-zinc-300">
-                    {pluralize(
-                      "Endorsement",
-                      project?.endorsements.length || 0
-                    )}
+                    {pluralize("Endorsement", project?.endorsements.length || 0)}
                   </p>
-                  <img
-                    src={"/icons/endorsements.png"}
-                    alt="Endorsements"
-                    className="w-5 h-5"
-                  />
+                  <img src={"/icons/endorsements.png"} alt="Endorsements" className="w-5 h-5" />
                 </div>
               </div>
               <div className="w-5 h-5 flex justify-center items-center">
@@ -377,7 +347,7 @@ function ProjectPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }
 
-export default ProjectPage;
+export default ProjectPage

@@ -1,5 +1,5 @@
-import { ProjectGrantsMilestonesAndUpdatesLoading } from "@/components/Pages/Project/Loading/Grants/MilestonesAndUpdate";
+import { ProjectGrantsMilestonesAndUpdatesLoading } from "@/components/Pages/Project/Loading/Grants/MilestonesAndUpdate"
 
 export default function Loading() {
-  return <ProjectGrantsMilestonesAndUpdatesLoading />;
+  return <ProjectGrantsMilestonesAndUpdatesLoading />
 }

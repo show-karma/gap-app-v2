@@ -1,18 +1,17 @@
-"use client";
-import { formatDate } from "@/utilities/formatDate";
-import { useAllMilestones } from "@/hooks/useAllMilestones";
-import { useParams } from "next/navigation";
-import pluralize from "pluralize";
+"use client"
+import { useParams } from "next/navigation"
+import pluralize from "pluralize"
+import { useAllMilestones } from "@/hooks/useAllMilestones"
+import { formatDate } from "@/utilities/formatDate"
 
 export const ObjectivesSub = () => {
-  const { projectId } = useParams();
-  const { milestones } = useAllMilestones(projectId as string);
+  const { projectId } = useParams()
+  const { milestones } = useAllMilestones(projectId as string)
 
-  const completedMilestones =
-    milestones?.filter((milestone) => milestone.completed)?.length || 0;
-  const totalMilestones = milestones?.length || 0;
+  const completedMilestones = milestones?.filter((milestone) => milestone.completed)?.length || 0
+  const totalMilestones = milestones?.length || 0
 
-  if (totalMilestones === 0) return null;
+  if (totalMilestones === 0) return null
 
   return (
     <div className="flex flex-row gap-2 items-center justify-start max-lg:flex-col max-lg:items-start max-lg:justify-center max-lg:gap-1">
@@ -23,5 +22,5 @@ export const ObjectivesSub = () => {
         )}, ${completedMilestones} Completed`}
       </p>
     </div>
-  );
-};
+  )
+}

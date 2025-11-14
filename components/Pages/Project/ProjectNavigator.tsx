@@ -1,26 +1,26 @@
-"use client";
-import { Button } from "@/components/Utilities/Button";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { useProgressModalStore } from "@/store/modals/progress";
-import formatCurrency from "@/utilities/formatCurrency";
-import { PAGES } from "@/utilities/pages";
-import { cn } from "@/utilities/tailwind";
-import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
-import Link from "next/link";
-import { useParams, usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { ProjectOptionsMenu } from "./ProjectOptionsMenu";
+"use client"
+import { ExclamationTriangleIcon } from "@heroicons/react/24/solid"
+import Link from "next/link"
+import { useParams, usePathname } from "next/navigation"
+import { useEffect, useState } from "react"
+import { Button } from "@/components/Utilities/Button"
+import { useOwnerStore, useProjectStore } from "@/store"
+import { useProgressModalStore } from "@/store/modals/progress"
+import formatCurrency from "@/utilities/formatCurrency"
+import { PAGES } from "@/utilities/pages"
+import { cn } from "@/utilities/tailwind"
+import { ProjectOptionsMenu } from "./ProjectOptionsMenu"
 
 export const ProjectNavigator = ({
   hasContactInfo,
   grantsLength,
 }: {
-  hasContactInfo: boolean;
-  grantsLength: number;
+  hasContactInfo: boolean
+  grantsLength: number
 }) => {
-  const pathname = usePathname();
-  const projectId = useParams().projectId as string;
-  const project = useProjectStore((state) => state.project);
+  const pathname = usePathname()
+  const projectId = useParams().projectId as string
+  const project = useProjectStore((state) => state.project)
   const publicTabs = [
     {
       name: "Project",
@@ -36,21 +36,19 @@ export const ProjectNavigator = ({
     },
     {
       name: "Impact",
-      href: PAGES.PROJECT.IMPACT.ROOT(
-        project?.details?.data?.slug || projectId
-      ),
+      href: PAGES.PROJECT.IMPACT.ROOT(project?.details?.data?.slug || projectId),
     },
     {
       name: "Team",
       href: PAGES.PROJECT.TEAM(project?.details?.data?.slug || projectId),
     },
-  ];
-  const [tabs, setTabs] = useState<typeof publicTabs>(publicTabs);
+  ]
+  const [tabs, setTabs] = useState<typeof publicTabs>(publicTabs)
 
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const isOwner = useOwnerStore((state) => state.isOwner)
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin)
 
-  const isAuthorized = isOwner || isProjectAdmin;
+  const isAuthorized = isOwner || isProjectAdmin
   useEffect(() => {
     const mountTabs = () => {
       if (isAuthorized) {
@@ -58,19 +56,17 @@ export const ProjectNavigator = ({
           ...publicTabs,
           {
             name: "Contact Info",
-            href: PAGES.PROJECT.CONTACT_INFO(
-              project?.details?.data.slug || projectId
-            ),
+            href: PAGES.PROJECT.CONTACT_INFO(project?.details?.data.slug || projectId),
           },
-        ]);
+        ])
       } else {
-        setTabs(publicTabs);
+        setTabs(publicTabs)
       }
-    };
-    mountTabs();
-  }, [isAuthorized, project]);
+    }
+    mountTabs()
+  }, [isAuthorized, project])
 
-  const { setIsProgressModalOpen } = useProgressModalStore();
+  const { setIsProgressModalOpen } = useProgressModalStore()
   return (
     <div className="flex flex-row gap-2 justify-between items-end max-lg:flex-col-reverse max-lg:items-center">
       <nav className="gap-10 flex flex-row max-w-full w-max items-center max-lg:gap-8 overflow-x-auto">
@@ -111,5 +107,5 @@ export const ProjectNavigator = ({
         <ProjectOptionsMenu />
       </div>
     </div>
-  );
-};
+  )
+}

@@ -1,17 +1,17 @@
-"use client";
+"use client"
 
-import { useFaucetConfig } from "@/hooks/useFaucetAdmin";
-import { useState, useEffect } from "react";
-import { Spinner } from "@/components/Utilities/Spinner";
+import { useEffect, useState } from "react"
+import { Spinner } from "@/components/Utilities/Spinner"
+import { useFaucetConfig } from "@/hooks/useFaucetAdmin"
 
 export function GlobalConfigForm() {
-  const { config, isLoading, updateGlobalConfig } = useFaucetConfig();
+  const { config, isLoading, updateGlobalConfig } = useFaucetConfig()
   const [formData, setFormData] = useState({
     defaultRateLimitHours: 1,
     defaultBufferPercentage: 20,
     maxChainsPerRequest: 1,
     globalEnabled: true,
-  });
+  })
 
   useEffect(() => {
     if (config?.configurations.global) {
@@ -20,21 +20,21 @@ export function GlobalConfigForm() {
         defaultBufferPercentage: config.configurations.global.defaultBufferPercentage,
         maxChainsPerRequest: config.configurations.global.maxChainsPerRequest,
         globalEnabled: config.configurations.global.globalEnabled,
-      });
+      })
     }
-  }, [config]);
+  }, [config])
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    updateGlobalConfig(formData);
-  };
+    e.preventDefault()
+    updateGlobalConfig(formData)
+  }
 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <Spinner />
       </div>
-    );
+    )
   }
 
   return (
@@ -52,7 +52,9 @@ export function GlobalConfigForm() {
             type="number"
             step="0.0001"
             value={formData.defaultRateLimitHours}
-            onChange={(e) => setFormData({ ...formData, defaultRateLimitHours: parseFloat(e.target.value) })}
+            onChange={(e) =>
+              setFormData({ ...formData, defaultRateLimitHours: parseFloat(e.target.value) })
+            }
             className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900 text-gray-900 dark:text-white"
             required
           />
@@ -68,7 +70,9 @@ export function GlobalConfigForm() {
           <input
             type="number"
             value={formData.defaultBufferPercentage}
-            onChange={(e) => setFormData({ ...formData, defaultBufferPercentage: parseInt(e.target.value) })}
+            onChange={(e) =>
+              setFormData({ ...formData, defaultBufferPercentage: parseInt(e.target.value) })
+            }
             className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900 text-gray-900 dark:text-white"
             required
           />
@@ -84,7 +88,9 @@ export function GlobalConfigForm() {
           <input
             type="number"
             value={formData.maxChainsPerRequest}
-            onChange={(e) => setFormData({ ...formData, maxChainsPerRequest: parseInt(e.target.value) })}
+            onChange={(e) =>
+              setFormData({ ...formData, maxChainsPerRequest: parseInt(e.target.value) })
+            }
             className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900 text-gray-900 dark:text-white"
             required
           />
@@ -101,7 +107,10 @@ export function GlobalConfigForm() {
             onChange={(e) => setFormData({ ...formData, globalEnabled: e.target.checked })}
             className="rounded border-gray-300 dark:border-zinc-600"
           />
-          <label htmlFor="globalEnabled" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label
+            htmlFor="globalEnabled"
+            className="text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
             Enable faucet globally
           </label>
         </div>
@@ -109,7 +118,8 @@ export function GlobalConfigForm() {
         {!formData.globalEnabled && (
           <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
             <p className="text-sm text-yellow-800 dark:text-yellow-200">
-              Warning: Disabling the faucet globally will prevent all users from claiming funds on any chain.
+              Warning: Disabling the faucet globally will prevent all users from claiming funds on
+              any chain.
             </p>
           </div>
         )}
@@ -124,5 +134,5 @@ export function GlobalConfigForm() {
         </div>
       </form>
     </div>
-  );
+  )
 }

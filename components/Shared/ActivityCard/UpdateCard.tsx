@@ -1,44 +1,40 @@
-import { FC } from "react";
-import Link from "next/link";
-import { useProjectStore } from "@/store";
-import { useUpdateActions } from "@/hooks/useUpdateActions";
-import { ActivityStatus } from "./ActivityStatus";
-import { ActivityStatusHeader } from "./ActivityStatusHeader";
-import { ActivityMenu } from "./ActivityMenu";
-import { ActivityAttribution } from "./ActivityAttribution";
-import { ReadMore } from "@/utilities/ReadMore";
-import { PAGES } from "@/utilities/pages";
-import { ProjectActivityBlock } from "../../Pages/Project/Updates/ProjectActivityBlock";
-import { EditUpdateDialog } from "../../Pages/Project/Updates/EditUpdateDialog";
-import { formatDate } from "@/utilities/formatDate";
-import {
+import type {
   IGrantUpdate,
   IMilestoneResponse,
   IProjectImpact,
   IProjectMilestoneResponse,
   IProjectUpdate,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { ActivityType } from "./ActivityTypes";
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
+import Link from "next/link"
+import type { FC } from "react"
+import { useUpdateActions } from "@/hooks/useUpdateActions"
+import { useProjectStore } from "@/store"
+import { formatDate } from "@/utilities/formatDate"
+import { PAGES } from "@/utilities/pages"
+import { ReadMore } from "@/utilities/ReadMore"
+import { EditUpdateDialog } from "../../Pages/Project/Updates/EditUpdateDialog"
+import { ProjectActivityBlock } from "../../Pages/Project/Updates/ProjectActivityBlock"
+import { ActivityAttribution } from "./ActivityAttribution"
+import { ActivityMenu } from "./ActivityMenu"
+import { ActivityStatus } from "./ActivityStatus"
+import { ActivityStatusHeader } from "./ActivityStatusHeader"
+import type { ActivityType } from "./ActivityTypes"
 
 type UpdateType =
   | IProjectUpdate
   | IGrantUpdate
   | IMilestoneResponse
   | IProjectImpact
-  | IProjectMilestoneResponse;
+  | IProjectMilestoneResponse
 
 interface UpdateCardProps {
-  update: UpdateType;
-  index: number;
-  isAuthorized: boolean;
+  update: UpdateType
+  index: number
+  isAuthorized: boolean
 }
 
-export const UpdateCard: FC<UpdateCardProps> = ({
-  update,
-  index,
-  isAuthorized,
-}) => {
-  const { project } = useProjectStore();
+export const UpdateCard: FC<UpdateCardProps> = ({ update, index, isAuthorized }) => {
+  const { project } = useProjectStore()
   const {
     isDeletingUpdate,
     isEditDialogOpen,
@@ -47,38 +43,37 @@ export const UpdateCard: FC<UpdateCardProps> = ({
     handleEdit,
     closeEditDialog,
     canShare,
-  } = useUpdateActions(update);
+  } = useUpdateActions(update)
 
   const getUpdateContent = () => {
     switch (update.type) {
       case "ProjectUpdate":
       case "GrantUpdate":
-        return update.data.text;
+        return update.data.text
       case "Milestone":
-        return "description" in update.data ? update.data.description : "";
+        return "description" in update.data ? update.data.description : ""
       case "ProjectMilestone":
-        return update.data.text || "";
-      case "ProjectImpact":
-        const data = update.data as IProjectImpact["data"];
-        const { impact, proof, work } = data;
-        return `### Work \n${work} \n\n### Impact \n${impact} \n\n### Proof \n${proof}`;
+        return update.data.text || ""
+      case "ProjectImpact": {
+        const data = update.data as IProjectImpact["data"]
+        const { impact, proof, work } = data
+        return `### Work \n${work} \n\n### Impact \n${impact} \n\n### Proof \n${proof}`
+      }
       default:
-        return "";
+        return ""
     }
-  };
+  }
 
   const getReadMoreSideButton = () => {
     if (update.type === "ProjectImpact") {
       return (
         <Link
-          href={PAGES.PROJECT.IMPACT.ROOT(
-            project?.details?.data.slug || project?.uid || ""
-          )}
+          href={PAGES.PROJECT.IMPACT.ROOT(project?.details?.data.slug || project?.uid || "")}
           className="underline text-blue-600 dark:text-blue-400 font-semibold text-sm hover:underline"
         >
           See impact
         </Link>
-      );
+      )
     }
 
     if (
@@ -95,51 +90,50 @@ export const UpdateCard: FC<UpdateCardProps> = ({
         >
           View proof
         </Link>
-      );
+      )
     }
 
-    return null;
-  };
+    return null
+  }
 
-  const canEdit =
-    update.type === "ProjectUpdate" || update.type === "ProjectImpact";
+  const canEdit = update.type === "ProjectUpdate" || update.type === "ProjectImpact"
   const canDelete =
     update.type === "ProjectUpdate" ||
     update.type === "ProjectImpact" ||
     update.type === "GrantUpdate" ||
     update.type === "Milestone" ||
-    update.type === "ProjectMilestone";
+    update.type === "ProjectMilestone"
 
   // Get due date for milestones
   const getDueDate = () => {
     if (update.type === "Milestone" || update.type === "ProjectMilestone") {
-      const milestoneData = update.data as any;
+      const milestoneData = update.data as any
       if (milestoneData.endsAt) {
-        return formatDate(milestoneData.endsAt * 1000);
+        return formatDate(milestoneData.endsAt * 1000)
       }
       if (milestoneData.endDate) {
-        return formatDate(milestoneData.endDate);
+        return formatDate(milestoneData.endDate)
       }
     }
-    return null;
-  };
+    return null
+  }
 
   // Get completion status for milestones
   const getCompletionStatus = () => {
     if (update.type === "Milestone" || update.type === "ProjectMilestone") {
-      const milestoneData = update.data as any;
+      const milestoneData = update.data as any
       return (
         milestoneData.completed ||
         (milestoneData.completed &&
           typeof milestoneData.completed === "object" &&
           Object.keys(milestoneData.completed).length > 0)
-      );
+      )
     }
-    return false;
-  };
+    return false
+  }
 
-  const startDate = (update as any).data?.startDate;
-  const endDate = (update as any).data?.endDate;
+  const startDate = (update as any).data?.startDate
+  const endDate = (update as any).data?.endDate
 
   return (
     <div className="flex flex-col gap-0 w-full">
@@ -151,9 +145,7 @@ export const UpdateCard: FC<UpdateCardProps> = ({
           <ActivityStatusHeader
             activityType={update.type as ActivityType}
             dueDate={getDueDate()}
-            showCompletionStatus={
-              update.type === "Milestone" || update.type === "ProjectMilestone"
-            }
+            showCompletionStatus={update.type === "Milestone" || update.type === "ProjectMilestone"}
             completed={getCompletionStatus()}
             completionStatusClassName="text-xs px-2 py-1"
             update={update}
@@ -200,17 +192,15 @@ export const UpdateCard: FC<UpdateCardProps> = ({
           </div>
         ) : null}
         {/* Bottom Attribution with Actions */}
-        {isAuthorized &&
-          (update.type === "ProjectUpdate" ||
-            update.type === "ProjectImpact") && (
-            <EditUpdateDialog
-              isOpen={isEditDialogOpen}
-              onClose={closeEditDialog}
-              projectId={project?.uid || ""}
-              updateId={update.uid}
-              updateType={update.type as "ProjectUpdate" | "ProjectImpact"}
-            />
-          )}
+        {isAuthorized && (update.type === "ProjectUpdate" || update.type === "ProjectImpact") && (
+          <EditUpdateDialog
+            isOpen={isEditDialogOpen}
+            onClose={closeEditDialog}
+            projectId={project?.uid || ""}
+            updateId={update.uid}
+            updateType={update.type as "ProjectUpdate" | "ProjectImpact"}
+          />
+        )}
       </div>
       <ActivityAttribution
         date={update.createdAt}
@@ -230,8 +220,7 @@ export const UpdateCard: FC<UpdateCardProps> = ({
               activityType={update.type}
               deleteTitle={
                 <p className="font-normal">
-                  Are you sure you want to delete <b>{update.data.title}</b>{" "}
-                  update?
+                  Are you sure you want to delete <b>{update.data.title}</b> update?
                 </p>
               }
             />
@@ -239,5 +228,5 @@ export const UpdateCard: FC<UpdateCardProps> = ({
         }
       />
     </div>
-  );
-};
+  )
+}

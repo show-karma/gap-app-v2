@@ -1,27 +1,27 @@
 export interface SupportedToken {
-  symbol: string;
-  name: string;
-  address: string; // Use "native" for ETH
-  decimals: number;
-  chainId: number;
-  chainName: string;
-  isNative: boolean;
-  logoUrl?: string;
+  symbol: string
+  name: string
+  address: string // Use "native" for ETH
+  decimals: number
+  chainId: number
+  chainName: string
+  isNative: boolean
+  logoUrl?: string
 }
 
 export interface NetworkConfig {
-  chainId: number;
-  chainName: string;
-  rpcUrl: string;
-  blockExplorer: string;
+  chainId: number
+  chainName: string
+  rpcUrl: string
+  blockExplorer: string
   nativeCurrency: {
-    name: string;
-    symbol: string;
-    decimals: number;
-  };
+    name: string
+    symbol: string
+    decimals: number
+  }
 }
 
-const includeTestNetworks = process.env.NEXT_PUBLIC_ENV !== "production";
+const includeTestNetworks = process.env.NEXT_PUBLIC_ENV !== "production"
 
 // Network configurations
 const MAINNET_NETWORKS: Record<number, NetworkConfig> = {
@@ -78,7 +78,7 @@ const MAINNET_NETWORKS: Record<number, NetworkConfig> = {
     blockExplorer: "https://polygonscan.com",
     nativeCurrency: { name: "Matic", symbol: "MATIC", decimals: 18 },
   },
-};
+}
 
 const TEST_NETWORKS: Record<number, NetworkConfig> = {
   // Ethereum Sepolia
@@ -111,10 +111,11 @@ const TEST_NETWORKS: Record<number, NetworkConfig> = {
     blockExplorer: "https://sepolia.basescan.org",
     nativeCurrency: { name: "Base Sepolia Ether", symbol: "ETH", decimals: 18 },
   },
-};
+}
 
-export const SUPPORTED_NETWORKS: Record<number, NetworkConfig> =
-  includeTestNetworks ? TEST_NETWORKS : MAINNET_NETWORKS;
+export const SUPPORTED_NETWORKS: Record<number, NetworkConfig> = includeTestNetworks
+  ? TEST_NETWORKS
+  : MAINNET_NETWORKS
 
 // Supported tokens configuration
 export const SUPPORTED_TOKENS: SupportedToken[] = [
@@ -447,7 +448,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     chainName: "Polygon",
     isNative: false,
   },
-];
+]
 
 const TEST_NETWORK_TOKENS: SupportedToken[] = [
   // Native ETH tokens for test networks
@@ -507,34 +508,32 @@ const TEST_NETWORK_TOKENS: SupportedToken[] = [
     chainName: "Base Sepolia",
     isNative: false,
   },
-];
+]
 
 if (includeTestNetworks) {
-  SUPPORTED_TOKENS.push(...TEST_NETWORK_TOKENS);
+  SUPPORTED_TOKENS.push(...TEST_NETWORK_TOKENS)
 }
 
 // Helper functions
 export function getTokensByChain(chainId: number): SupportedToken[] {
-  return SUPPORTED_TOKENS.filter((token) => token.chainId === chainId);
+  return SUPPORTED_TOKENS.filter((token) => token.chainId === chainId)
 }
 
 export function getTokenBySymbolAndChain(
   symbol: string,
   chainId: number
 ): SupportedToken | undefined {
-  return SUPPORTED_TOKENS.find(
-    (token) => token.symbol === symbol && token.chainId === chainId
-  );
+  return SUPPORTED_TOKENS.find((token) => token.symbol === symbol && token.chainId === chainId)
 }
 
 export function getAllSupportedChains(): number[] {
-  return Object.keys(SUPPORTED_NETWORKS).map(Number);
+  return Object.keys(SUPPORTED_NETWORKS).map(Number)
 }
 
 export function isChainSupported(chainId: number): boolean {
-  return chainId in SUPPORTED_NETWORKS;
+  return chainId in SUPPORTED_NETWORKS
 }
 
 export function getNetworkConfig(chainId: number): NetworkConfig | undefined {
-  return SUPPORTED_NETWORKS[chainId];
+  return SUPPORTED_NETWORKS[chainId]
 }

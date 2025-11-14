@@ -1,30 +1,26 @@
-import { Button } from "@/components/Utilities/Button";
-import { errorManager } from "@/components/Utilities/errorManager";
-import {
-  Category,
-  ImpactIndicator,
-  ImpactSegment,
-} from "@/types/impactMeasurement";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
-import { Dialog, Transition } from "@headlessui/react";
-import { Fragment, useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import toast from "react-hot-toast";
-import { XMarkIcon } from "@heroicons/react/24/outline";
-import Image from "next/image";
-import { IndicatorsDropdown } from "./IndicatorsDropdown";
-import { useAccount } from "wagmi";
+import { Dialog, Transition } from "@headlessui/react"
+import { XMarkIcon } from "@heroicons/react/24/outline"
+import { zodResolver } from "@hookform/resolvers/zod"
+import Image from "next/image"
+import { Fragment, useEffect, useState } from "react"
+import { useForm } from "react-hook-form"
+import toast from "react-hot-toast"
+import { useAccount } from "wagmi"
+import { z } from "zod"
+import { Button } from "@/components/Utilities/Button"
+import { errorManager } from "@/components/Utilities/errorManager"
+import type { Category, ImpactIndicator, ImpactSegment } from "@/types/impactMeasurement"
+import fetchData from "@/utilities/fetchData"
+import { INDEXER } from "@/utilities/indexer"
+import { IndicatorsDropdown } from "./IndicatorsDropdown"
 
-const OUTPUT_TYPES = ["output", "outcome"] as const;
-type OutputType = (typeof OUTPUT_TYPES)[number];
+const OUTPUT_TYPES = ["output", "outcome"] as const
+type OutputType = (typeof OUTPUT_TYPES)[number]
 
 const OUTPUT_TYPE_DISPLAY = {
   output: "Activity",
   outcome: "Outcome",
-} as const;
+} as const
 
 // Schema definition for the form data
 const impactSegmentSchema = z.object({
@@ -38,20 +34,20 @@ const impactSegmentSchema = z.object({
     .max(500, "Description must be less than 500 characters"),
   type: z.enum(OUTPUT_TYPES),
   impact_indicators: z.array(z.string()).optional(),
-});
+})
 
-type ImpactSegmentFormData = z.infer<typeof impactSegmentSchema>;
+type ImpactSegmentFormData = z.infer<typeof impactSegmentSchema>
 
 interface ActivityOutcomeModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  category: Category;
-  impact_indicators: ImpactIndicator[];
-  onSuccess: () => void;
-  initialType?: OutputType;
-  communityId?: string;
-  editingSegment?: ImpactSegment | null;
-  isLoadingIndicators?: boolean;
+  isOpen: boolean
+  onClose: () => void
+  category: Category
+  impact_indicators: ImpactIndicator[]
+  onSuccess: () => void
+  initialType?: OutputType
+  communityId?: string
+  editingSegment?: ImpactSegment | null
+  isLoadingIndicators?: boolean
 }
 
 export const ActivityOutcomeModal = ({
@@ -65,8 +61,8 @@ export const ActivityOutcomeModal = ({
   editingSegment = null,
   isLoadingIndicators = false,
 }: ActivityOutcomeModalProps) => {
-  const [isSaving, setIsSaving] = useState(false);
-  const { address } = useAccount();
+  const [isSaving, setIsSaving] = useState(false)
+  const { address } = useAccount()
 
   const {
     register,
@@ -81,11 +77,10 @@ export const ActivityOutcomeModal = ({
       type: editingSegment ? editingSegment.type : initialType,
       name: editingSegment ? editingSegment.name : "",
       description: editingSegment ? editingSegment.description : "",
-      impact_indicators:
-        editingSegment?.impact_indicators?.map((ind) => ind.id) || [],
+      impact_indicators: editingSegment?.impact_indicators?.map((ind) => ind.id) || [],
     },
     mode: "onChange",
-  });
+  })
 
   useEffect(() => {
     if (isOpen) {
@@ -93,34 +88,33 @@ export const ActivityOutcomeModal = ({
         type: editingSegment ? editingSegment.type : initialType,
         name: editingSegment ? editingSegment.name : "",
         description: editingSegment ? editingSegment.description : "",
-        impact_indicators:
-          editingSegment?.impact_indicators?.map((ind) => ind.id) || [],
-      });
+        impact_indicators: editingSegment?.impact_indicators?.map((ind) => ind.id) || [],
+      })
     }
-  }, [editingSegment, isOpen, initialType, reset]);
+  }, [editingSegment, isOpen, initialType, reset])
 
-  const selectedIndicators = watch("impact_indicators") || [];
-  const selectedType = watch("type");
+  const selectedIndicators = watch("impact_indicators") || []
+  const selectedType = watch("type")
 
   const handleClose = () => {
-    reset();
-    onClose();
-  };
+    reset()
+    onClose()
+  }
 
   const handleIndicatorChange = (value: string) => {
-    const current = selectedIndicators;
+    const current = selectedIndicators
     const updated = current.includes(value)
       ? current.filter((id) => id !== value)
-      : [...current, value];
+      : [...current, value]
     setValue("impact_indicators", updated, {
       shouldValidate: true,
       shouldDirty: true,
-    });
-  };
+    })
+  }
 
   const handleAddOutput = async (data: ImpactSegmentFormData) => {
     try {
-      setIsSaving(true);
+      setIsSaving(true)
       const [, error] = await fetchData(
         INDEXER.CATEGORIES.IMPACT_SEGMENTS.CREATE_OR_UPDATE(category.id),
         "POST",
@@ -131,17 +125,17 @@ export const ActivityOutcomeModal = ({
           description: data.description,
           impactIndicators: data.impact_indicators,
         }
-      );
+      )
 
-      if (error) throw error;
+      if (error) throw error
 
-      const action = editingSegment ? "updated" : "created";
-      toast.success(`${OUTPUT_TYPE_DISPLAY[data.type]} ${action} successfully`);
-      reset();
-      onSuccess();
-      handleClose();
+      const action = editingSegment ? "updated" : "created"
+      toast.success(`${OUTPUT_TYPE_DISPLAY[data.type]} ${action} successfully`)
+      reset()
+      onSuccess()
+      handleClose()
     } catch (error) {
-      const action = editingSegment ? "update" : "create";
+      const action = editingSegment ? "update" : "create"
       errorManager(
         `Failed to ${action} impact segment`,
         error,
@@ -150,15 +144,13 @@ export const ActivityOutcomeModal = ({
           address,
         },
         {
-          error: `Failed to ${action} ${OUTPUT_TYPE_DISPLAY[
-            data.type
-          ].toLowerCase()}`,
+          error: `Failed to ${action} ${OUTPUT_TYPE_DISPLAY[data.type].toLowerCase()}`,
         }
-      );
+      )
     } finally {
-      setIsSaving(false);
+      setIsSaving(false)
     }
-  };
+  }
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -202,31 +194,20 @@ export const ActivityOutcomeModal = ({
                   </button>
                 </div>
 
-                <form
-                  onSubmit={handleSubmit(handleAddOutput)}
-                  className="space-y-4"
-                >
+                <form onSubmit={handleSubmit(handleAddOutput)} className="space-y-4">
                   <div className="flex flex-col gap-2">
-                    <label className="text-sm text-gray-600 dark:text-gray-400">
-                      Name
-                    </label>
+                    <label className="text-sm text-gray-600 dark:text-gray-400">Name</label>
                     <input
                       {...register("name")}
                       placeholder={`Enter activity or outcome name`}
                       className="text-sm p-2 border border-gray-200 dark:border-gray-700 rounded-md 
                         focus:ring-2 focus:ring-blue-500 dark:bg-zinc-700 dark:text-white w-full"
                     />
-                    {errors.name && (
-                      <p className="text-sm text-red-500">
-                        {errors.name.message}
-                      </p>
-                    )}
+                    {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
                   </div>
 
                   <div className="flex flex-col gap-2">
-                    <label className="text-sm text-gray-600 dark:text-gray-400">
-                      Description
-                    </label>
+                    <label className="text-sm text-gray-600 dark:text-gray-400">Description</label>
                     <textarea
                       {...register("description")}
                       placeholder="Enter description"
@@ -235,19 +216,15 @@ export const ActivityOutcomeModal = ({
                         focus:ring-2 focus:ring-blue-500 dark:bg-zinc-700 dark:text-white w-full"
                     />
                     {errors.description && (
-                      <p className="text-sm text-red-500">
-                        {errors.description.message}
-                      </p>
+                      <p className="text-sm text-red-500">{errors.description.message}</p>
                     )}
                   </div>
 
                   <div className="flex flex-col gap-2 mb-2">
-                    <label className="text-sm text-gray-600 dark:text-gray-400">
-                      Type
-                    </label>
+                    <label className="text-sm text-gray-600 dark:text-gray-400">Type</label>
                     <div className="grid grid-cols-2 gap-4">
                       {OUTPUT_TYPES.map((type) => {
-                        const isSelected = watch("type") === type;
+                        const isSelected = watch("type") === type
                         return (
                           <label
                             key={type}
@@ -274,9 +251,7 @@ export const ActivityOutcomeModal = ({
                                   : "border-gray-300 dark:border-gray-600"
                               } flex items-center justify-center`}
                             >
-                              {isSelected && (
-                                <div className="w-2 h-2 rounded-full bg-white" />
-                              )}
+                              {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
                             </div>
                             <div className="flex flex-row gap-4 items-center justify-center flex-1">
                               <div
@@ -311,7 +286,7 @@ export const ActivityOutcomeModal = ({
                               </div>
                             </div>
                           </label>
-                        );
+                        )
                       })}
                     </div>
                   </div>
@@ -327,7 +302,7 @@ export const ActivityOutcomeModal = ({
                       communityId={communityId}
                       isLoading={isLoadingIndicators}
                       onIndicatorCreated={(newIndicator) => {
-                        toast.success("Indicator created successfully");
+                        toast.success("Indicator created successfully")
                       }}
                     />
                   </div>
@@ -358,5 +333,5 @@ export const ActivityOutcomeModal = ({
         </div>
       </Dialog>
     </Transition>
-  );
-};
+  )
+}

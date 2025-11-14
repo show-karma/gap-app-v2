@@ -1,37 +1,33 @@
-import { Button } from "@/components/Utilities/Button";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import TablePagination from "@/components/Utilities/TablePagination";
-import { SimplifiedGrant } from "@/hooks/useGrants";
-import { PAGES } from "@/utilities/pages";
-import { cn } from "@/utilities/tailwind";
-import {
-  ChevronDownIcon,
-  ChevronUpDownIcon,
-  ChevronUpIcon,
-} from "@heroicons/react/20/solid";
-import pluralize from "pluralize";
-import { Fragment } from "react";
-import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown";
+import { ChevronDownIcon, ChevronUpDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid"
+import pluralize from "pluralize"
+import { Fragment } from "react"
+import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown"
+import { Button } from "@/components/Utilities/Button"
+import { ExternalLink } from "@/components/Utilities/ExternalLink"
+import TablePagination from "@/components/Utilities/TablePagination"
+import type { SimplifiedGrant } from "@/hooks/useGrants"
+import { PAGES } from "@/utilities/pages"
+import { cn } from "@/utilities/tailwind"
 
-type SortField = "project" | "grant" | "description" | "categories";
-type SortDirection = "asc" | "desc";
+type SortField = "project" | "grant" | "description" | "categories"
+type SortDirection = "asc" | "desc"
 
 interface GrantsTableProps {
-  grants: SimplifiedGrant[];
-  categories: { id: number; name: string }[];
-  selectedCategories: Record<string, string[]>;
-  onCategoryChange: (uid: string, categories: string[]) => void;
-  currentPage: number;
-  totalItems: number;
-  itemsPerPage: number;
-  onPageChange: (page: number) => void;
-  isSaving?: boolean;
-  onSave: () => void;
+  grants: SimplifiedGrant[]
+  categories: { id: number; name: string }[]
+  selectedCategories: Record<string, string[]>
+  onCategoryChange: (uid: string, categories: string[]) => void
+  currentPage: number
+  totalItems: number
+  itemsPerPage: number
+  onPageChange: (page: number) => void
+  isSaving?: boolean
+  onSave: () => void
   sort: {
-    field?: SortField;
-    direction?: SortDirection;
-  };
-  onSort: (field: SortField) => void;
+    field?: SortField
+    direction?: SortDirection
+  }
+  onSort: (field: SortField) => void
 }
 
 export const GrantsTable = ({
@@ -48,29 +44,18 @@ export const GrantsTable = ({
   sort,
   onSort,
 }: GrantsTableProps) => {
-  const hasChanges = Object.keys(selectedCategories).length > 0;
+  const hasChanges = Object.keys(selectedCategories).length > 0
 
   const renderSortIcon = (field: SortField) => {
     if (sort.field !== field) {
-      return (
-        <ChevronUpDownIcon
-          className="h-4 w-4 text-gray-400 ml-1"
-          aria-hidden="true"
-        />
-      );
+      return <ChevronUpDownIcon className="h-4 w-4 text-gray-400 ml-1" aria-hidden="true" />
     }
     return sort.direction === "asc" ? (
-      <ChevronUpIcon
-        className="h-4 w-4 text-primary-600 ml-1"
-        aria-hidden="true"
-      />
+      <ChevronUpIcon className="h-4 w-4 text-primary-600 ml-1" aria-hidden="true" />
     ) : (
-      <ChevronDownIcon
-        className="h-4 w-4 text-primary-600 ml-1"
-        aria-hidden="true"
-      />
-    );
-  };
+      <ChevronDownIcon className="h-4 w-4 text-primary-600 ml-1" aria-hidden="true" />
+    )
+  }
 
   const renderColumnHeader = (field: SortField, label: string) => (
     <button
@@ -80,7 +65,7 @@ export const GrantsTable = ({
       {label}
       {renderSortIcon(field)}
     </button>
-  );
+  )
 
   return (
     <div className="flex flex-col justify-center w-full max-w-full overflow-x-auto rounded-md border">
@@ -99,28 +84,19 @@ export const GrantsTable = ({
             <th scope="col" className="h-12 px-4 text-left align-middle">
               {renderColumnHeader("categories", "Categories")}
             </th>
-            <th
-              scope="col"
-              className="h-12 px-4 text-left align-middle font-medium"
-            >
+            <th scope="col" className="h-12 px-4 text-left align-middle font-medium">
               Manage categories
             </th>
           </tr>
         </thead>
         <tbody className="px-4 divide-y divide-gray-200 dark:divide-zinc-800">
           {grants.map((grant) => {
-            const grantCategories =
-              selectedCategories[grant.projectUid] || grant.categories;
+            const grantCategories = selectedCategories[grant.projectUid] || grant.categories
             return (
-              <tr
-                key={grant.uid}
-                className="dark:text-zinc-300 text-gray-900 px-4 py-4"
-              >
+              <tr key={grant.uid} className="dark:text-zinc-300 text-gray-900 px-4 py-4">
                 <td className="px-4 py-2 font-medium h-16">
                   <ExternalLink
-                    href={PAGES.PROJECT.OVERVIEW(
-                      grant.projectSlug || grant.projectUid
-                    )}
+                    href={PAGES.PROJECT.OVERVIEW(grant.projectSlug || grant.projectUid)}
                     className="max-w-full line-clamp-2 underline"
                   >
                     {grant.project}
@@ -128,23 +104,16 @@ export const GrantsTable = ({
                 </td>
                 <td className="px-4 py-2">
                   <ExternalLink
-                    href={PAGES.PROJECT.GRANT(
-                      grant.projectSlug || grant.projectUid,
-                      grant.uid
-                    )}
+                    href={PAGES.PROJECT.GRANT(grant.projectSlug || grant.projectUid, grant.uid)}
                     className="max-w-full line-clamp-2 underline w-max"
                   >
                     {grant.grant}
                   </ExternalLink>
                 </td>
                 <td className="px-4 py-2">
-                  <div className="max-w-[200px] line-clamp-2">
-                    {grant.description}
-                  </div>
+                  <div className="max-w-[200px] line-clamp-2">{grant.description}</div>
                 </td>
-                <td className="px-4 py-2 max-w-[200px]">
-                  {grant.categories.sort().join(", ")}
-                </td>
+                <td className="px-4 py-2 max-w-[200px]">{grant.categories.sort().join(", ")}</td>
                 <td className="w-max">
                   <SearchWithValueDropdown
                     list={categories.map((cat) => ({
@@ -166,7 +135,7 @@ export const GrantsTable = ({
                   />
                 </td>
               </tr>
-            );
+            )
           })}
         </tbody>
       </table>
@@ -188,5 +157,5 @@ export const GrantsTable = ({
         </Button>
       </div>
     </div>
-  );
-};
+  )
+}

@@ -1,7 +1,7 @@
-"use client";
-import { cn } from "@/utilities/tailwind";
-import { Card } from "@tremor/react";
-import Image from "next/image";
+"use client"
+import { Card } from "@tremor/react"
+import Image from "next/image"
+import { cn } from "@/utilities/tailwind"
 
 export const SegmentSkeleton = ({
   segmentType,
@@ -9,10 +9,10 @@ export const SegmentSkeleton = ({
   segmentDescription,
   indicatorCount,
 }: {
-  segmentType: "output" | "outcome";
-  segmentName: string;
-  segmentDescription: string;
-  indicatorCount: number;
+  segmentType: "output" | "outcome"
+  segmentName: string
+  segmentDescription: string
+  indicatorCount: number
 }) => {
   return (
     <div className="flex flex-col w-full bg-[#F9FAFB] dark:bg-zinc-800 rounded mb-4">
@@ -28,19 +28,13 @@ export const SegmentSkeleton = ({
           >
             <div className="flex flex-row gap-3 items-center">
               <Image
-                src={
-                  segmentType === "outcome"
-                    ? "/icons/outcome.svg"
-                    : "/icons/activity.svg"
-                }
+                src={segmentType === "outcome" ? "/icons/outcome.svg" : "/icons/activity.svg"}
                 alt={segmentType}
                 width={32}
                 height={32}
               />
               <div className="flex flex-col gap-0">
-                <p className="text-black dark:text-white text-lg font-semibold">
-                  {segmentName}
-                </p>
+                <p className="text-black dark:text-white text-lg font-semibold">{segmentName}</p>
                 <p className="text-black dark:text-white text-base font-normal">
                   {segmentDescription}
                 </p>
@@ -50,13 +44,13 @@ export const SegmentSkeleton = ({
               {indicatorCount} {indicatorCount === 1 ? "metric" : "metrics"}
             </p>
           </div>
-          
+
           {/* Chart Skeleton */}
           <Card className="bg-white dark:bg-zinc-700">
             <div className="mb-4">
               {/* Title skeleton */}
               <div className="h-6 bg-gray-200 dark:bg-gray-600 rounded w-48 mb-2 animate-pulse" />
-              
+
               {/* Tags skeleton */}
               <div className="flex flex-wrap gap-2">
                 {Array.from({ length: Math.min(indicatorCount, 3) }).map((_, index) => (
@@ -67,7 +61,7 @@ export const SegmentSkeleton = ({
                 ))}
               </div>
             </div>
-            
+
             {/* Chart area skeleton */}
             <div className="h-72 bg-gray-100 dark:bg-gray-600 rounded animate-pulse flex items-center justify-center">
               <div className="text-center">
@@ -79,5 +73,5 @@ export const SegmentSkeleton = ({
         </div>
       </div>
     </div>
-  );
-};
+  )
+}

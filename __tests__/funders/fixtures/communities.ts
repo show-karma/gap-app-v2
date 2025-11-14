@@ -2,7 +2,7 @@
  * Mock community data for funders page tests
  */
 
-import type { ChosenCommunity } from "@/utilities/chosenCommunities";
+import type { ChosenCommunity } from "@/utilities/chosenCommunities"
 
 export const mockCommunities: ChosenCommunity[] = [
   {
@@ -59,7 +59,7 @@ export const mockCommunities: ChosenCommunity[] = [
       dark: "/images/communities/zksync.png",
     },
   },
-];
+]
 
 /**
  * Factory function to create a mock community with custom properties
@@ -74,13 +74,12 @@ export function createMockCommunity(overrides: Partial<ChosenCommunity> = {}): C
       dark: "/images/communities/test.png",
     },
     ...overrides,
-  };
+  }
 }
 
 /**
  * Get a subset of communities for carousel testing
  */
 export function getCarouselCommunities(count: number = 6): ChosenCommunity[] {
-  return mockCommunities.slice(0, count);
+  return mockCommunities.slice(0, count)
 }
-

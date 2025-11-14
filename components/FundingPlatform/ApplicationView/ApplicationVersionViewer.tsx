@@ -1,31 +1,37 @@
-"use client";
+"use client"
 
-import { FC } from "react";
-import { IApplicationVersion } from "@/types/funding-platform";
-import { cn } from "@/utilities/tailwind";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import { formatDate } from "@/utilities/formatDate";
-import { DocumentTextIcon } from "@heroicons/react/24/outline";
+import { DocumentTextIcon } from "@heroicons/react/24/outline"
+import type { FC } from "react"
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview"
+import type { IApplicationVersion } from "@/types/funding-platform"
+import { formatDate } from "@/utilities/formatDate"
+import { cn } from "@/utilities/tailwind"
 
 interface ApplicationVersionViewerProps {
-  version: IApplicationVersion;
-  className?: string;
+  version: IApplicationVersion
+  className?: string
 }
 
 // Function to render field value
-const renderFieldValue = (value: string | null | undefined,
+const renderFieldValue = (
+  value: string | null | undefined,
   className?: string
 ): React.ReactElement => {
   if (value === null || value === undefined || value === "") {
-    return <span className={cn("text-gray-400 italic", className)}>Empty</span>;
+    return <span className={cn("text-gray-400 italic", className)}>Empty</span>
   }
 
   // Check if the value looks like JSON
   try {
-    const parsed = JSON.parse(value);
+    const parsed = JSON.parse(value)
     if (typeof parsed === "object") {
       // Check if it's an array of milestones
-      if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === "object" && "title" in parsed[0]) {
+      if (
+        Array.isArray(parsed) &&
+        parsed.length > 0 &&
+        typeof parsed[0] === "object" &&
+        "title" in parsed[0]
+      ) {
         return (
           <div className="space-y-2">
             {parsed.map((milestone: any, index: number) => (
@@ -45,7 +51,12 @@ const renderFieldValue = (value: string | null | undefined,
                     )}
                   </div>
                   {milestone.description && (
-                    <div className={cn("text-sm text-gray-600 dark:text-gray-400 prose prose-sm dark:prose-invert max-w-none", className)}>
+                    <div
+                      className={cn(
+                        "text-sm text-gray-600 dark:text-gray-400 prose prose-sm dark:prose-invert max-w-none",
+                        className
+                      )}
+                    >
                       <MarkdownPreview source={milestone.description} className={className} />
                     </div>
                   )}
@@ -53,14 +64,19 @@ const renderFieldValue = (value: string | null | undefined,
               </div>
             ))}
           </div>
-        );
+        )
       }
       // For other arrays or objects, display as JSON
       return (
-        <pre className={cn("bg-zinc-50 dark:bg-zinc-800 p-2 rounded text-xs overflow-x-auto", className)}>
+        <pre
+          className={cn(
+            "bg-zinc-50 dark:bg-zinc-800 p-2 rounded text-xs overflow-x-auto",
+            className
+          )}
+        >
           {JSON.stringify(parsed, null, 2)}
         </pre>
-      );
+      )
     }
   } catch {
     // Not JSON, continue with regular rendering
@@ -70,7 +86,9 @@ const renderFieldValue = (value: string | null | undefined,
   if (value.includes("\n") || value.includes("#") || value.includes("*")) {
     return (
       <div className={cn("prose prose-sm dark:prose-invert max-w-none", className)}>
-        <MarkdownPreview source={value} className={className}
+        <MarkdownPreview
+          source={value}
+          className={className}
           components={{
             p: (props) => (
               <p className={cn("text-tiny text-foreground-400", className)} {...props} />
@@ -81,28 +99,24 @@ const renderFieldValue = (value: string | null | undefined,
           }}
         />
       </div>
-    );
+    )
   }
 
-  return <span className={className}>{value}</span>;
-};
+  return <span className={className}>{value}</span>
+}
 
-const ApplicationVersionViewer: FC<ApplicationVersionViewerProps> = ({
-  version,
-  className,
-}) => {
-
+const ApplicationVersionViewer: FC<ApplicationVersionViewerProps> = ({ version, className }) => {
   // Get application data from the version
   const getApplicationData = () => {
     // If version has changes, reconstruct the full application data from changedFields
     if (version.diffFromPrevious?.changedFields) {
-      const fields = version.diffFromPrevious.changedFields;
-      return fields;
+      const fields = version.diffFromPrevious.changedFields
+      return fields
     }
-    return [];
-  };
+    return []
+  }
 
-  const applicationFields = getApplicationData();
+  const applicationFields = getApplicationData()
 
   // Check if there's data to display
   if (!applicationFields || applicationFields.length === 0) {
@@ -112,7 +126,7 @@ const ApplicationVersionViewer: FC<ApplicationVersionViewerProps> = ({
           ? "Initial version data"
           : "No application data available for this version"}
       </div>
-    );
+    )
   }
 
   return (
@@ -130,9 +144,12 @@ const ApplicationVersionViewer: FC<ApplicationVersionViewerProps> = ({
           {/* Field values - show old value if different from new value */}
           <dd className="space-y-1 flex flex-col gap-1">
             {/* Old value - show only if it exists and is different from new value */}
-            {field.oldValue && field.oldValue !== field.newValue && (
-              renderFieldValue(field.oldValue, "text-sm text-red-500 dark:text-red-400 italic line-through")
-            )}
+            {field.oldValue &&
+              field.oldValue !== field.newValue &&
+              renderFieldValue(
+                field.oldValue,
+                "text-sm text-red-500 dark:text-red-400 italic line-through"
+              )}
 
             {/* New value - current value for this version */}
             {renderFieldValue(field.newValue, "text-sm text-zinc-600 dark:text-zinc-400")}
@@ -140,7 +157,7 @@ const ApplicationVersionViewer: FC<ApplicationVersionViewerProps> = ({
         </div>
       ))}
     </div>
-  );
-};
+  )
+}
 
-export default ApplicationVersionViewer;
+export default ApplicationVersionViewer

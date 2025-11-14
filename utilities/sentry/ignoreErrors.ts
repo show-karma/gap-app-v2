@@ -1,7 +1,7 @@
 const unsupportedWalletErrors = [
   "Backpack couldn't override `window.ethereum`.",
   "Talisman extension has not been configured yet",
-];
+]
 
 const walletConnectErrors = [
   "No matching key. session topic doesn't exist",
@@ -9,7 +9,7 @@ const walletConnectErrors = [
   "this.provider.disconnect is not a function",
   "n.disconnect is not a function",
   "indexedDB is not defined",
-];
+]
 
 export const sentryIgnoreErrors = [
   // user rejected a confirmation in the wallet
@@ -23,4 +23,4 @@ export const sentryIgnoreErrors = [
   `TypeError: can't access dead object`,
   ...unsupportedWalletErrors,
   ...walletConnectErrors,
-];
+]

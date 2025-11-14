@@ -1,5 +1,5 @@
-import { PROJECT_NAME } from "@/constants/brand";
-import { SOCIALS } from "../socials";
+import { PROJECT_NAME } from "@/constants/brand"
+import { SOCIALS } from "../socials"
 
 export const SHARE_TEXTS = {
   MILESTONE_COMPLETED: (title: string, slugOrUid: string, grantUid: string) =>
@@ -12,4 +12,4 @@ export const SHARE_TEXTS = {
     `Project ${title} is 🔥!\nEndorsed it on ${SOCIALS.X_HANDLE} to make it known.\nhttps://karmahq.xyz/project/${slugOrUid}`,
   MILESTONE_PENDING: (title: string, slugOrUid: string, grantUid: string) =>
     `Just posted a milestone for my grant from ${title}! Follow along with my progress on ${SOCIALS.X_HANDLE} ${PROJECT_NAME} → https://karmahq.xyz/project/${slugOrUid}/funding?grantId=${grantUid}&tab=milestones-and-updates\n\nStay tuned for updates!`,
-};
+}

@@ -1,8 +1,8 @@
-import { Button } from "@/components/Utilities/Button";
-import { Skeleton } from "@/components/Utilities/Skeleton";
+import { Button } from "@/components/Utilities/Button"
+import { Skeleton } from "@/components/Utilities/Skeleton"
 
 interface TabButtonProps {
-  tabName: string;
+  tabName: string
 }
 const TabButton = ({ tabName }: TabButtonProps) => {
   return (
@@ -14,8 +14,8 @@ const TabButton = ({ tabName }: TabButtonProps) => {
       {tabName}
       <Skeleton className="rounded-full px-2.5 w-5 h-5" />
     </Button>
-  );
-};
+  )
+}
 
 const MilestoneCard = () => {
   return (
@@ -40,11 +40,11 @@ const MilestoneCard = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
 export const ProjectGrantsMilestonesListLoading = () => {
-  const emptyArray = Array.from({ length: 6 }, () => ({}));
+  const emptyArray = Array.from({ length: 6 }, () => ({}))
   return (
     <div className="mt-3 flex w-full flex-col gap-6">
       {emptyArray.map((item, index) => (
@@ -53,8 +53,8 @@ export const ProjectGrantsMilestonesListLoading = () => {
         </div>
       ))}
     </div>
-  );
-};
+  )
+}
 
 export const ProjectGrantsMilestonesAndUpdatesLoading = () => {
   return (
@@ -89,5 +89,5 @@ export const ProjectGrantsMilestonesAndUpdatesLoading = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}

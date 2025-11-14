@@ -1,22 +1,22 @@
-"use client";
+"use client"
 
 interface BalanceError {
-  message: string;
-  chainIds: number[];
-  canRetry: boolean;
+  message: string
+  chainIds: number[]
+  canRetry: boolean
 }
 
 interface BalanceDisplayProps {
   selectedToken?: {
-    symbol: string;
-    chainId: number;
-  };
-  balanceByTokenKey: Record<string, string>;
-  isFetchingBalances?: boolean;
-  balanceError?: BalanceError | null;
-  isSlowFetch?: boolean;
-  onRetry?: () => void;
-  canRetry?: boolean;
+    symbol: string
+    chainId: number
+  }
+  balanceByTokenKey: Record<string, string>
+  isFetchingBalances?: boolean
+  balanceError?: BalanceError | null
+  isSlowFetch?: boolean
+  onRetry?: () => void
+  canRetry?: boolean
 }
 
 export function BalanceDisplay({
@@ -28,10 +28,10 @@ export function BalanceDisplay({
   onRetry,
   canRetry = false,
 }: BalanceDisplayProps) {
-  if (!selectedToken) return null;
+  if (!selectedToken) return null
 
-  const balanceKey = `${selectedToken.symbol}-${selectedToken.chainId}`;
-  const tokenBalance = balanceByTokenKey[balanceKey];
+  const balanceKey = `${selectedToken.symbol}-${selectedToken.chainId}`
+  const tokenBalance = balanceByTokenKey[balanceKey]
 
   // Show error state if balance fetch failed for this specific chain
   if (balanceError && balanceError.chainIds.includes(selectedToken.chainId)) {
@@ -52,7 +52,7 @@ export function BalanceDisplay({
           You can still proceed with the donation
         </div>
       </div>
-    );
+    )
   }
 
   // Show loading state
@@ -88,7 +88,7 @@ export function BalanceDisplay({
           </div>
         )}
       </div>
-    );
+    )
   }
 
   // Show balance if available
@@ -97,7 +97,7 @@ export function BalanceDisplay({
       <div className="mt-1 text-right text-xs text-gray-500 dark:text-gray-400">
         {parseFloat(tokenBalance).toFixed(4)} available
       </div>
-    );
+    )
   }
 
   // Show fallback message if no balance info and not loading
@@ -106,8 +106,8 @@ export function BalanceDisplay({
       <div className="mt-1 text-right text-xs text-gray-400 dark:text-gray-500">
         Balance unavailable
       </div>
-    );
+    )
   }
 
-  return null;
+  return null
 }

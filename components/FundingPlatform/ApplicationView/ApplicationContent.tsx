@@ -1,39 +1,39 @@
-"use client";
+"use client"
 
-import { FC, useState, useEffect, useMemo, JSX } from "react";
-import { IFundingApplication } from "@/types/funding-platform";
-import { cn } from "@/utilities/tailwind";
-import { formatDate } from "@/utilities/formatDate";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import { getProjectTitle } from "../helper/getProjecTitle";
-import { AIEvaluationDisplay } from "./AIEvaluation";
-import StatusChangeModal from "./StatusChangeModal";
-import { StatusActionButtons } from "./StatusActionButtons";
-import AIEvaluationButton from "./AIEvaluationButton";
-import ApplicationVersionSelector from "./ApplicationVersionSelector";
-import ApplicationVersionViewer from "./ApplicationVersionViewer";
-import { useApplicationVersionsStore } from "@/store/applicationVersions";
-import { useApplicationVersions } from "@/hooks/useFundingPlatform";
-import toast from "react-hot-toast";
 import {
-  CheckCircleIcon,
-  ExclamationTriangleIcon,
-  ClockIcon,
-  XMarkIcon,
-  DocumentTextIcon,
   ArrowPathIcon,
-} from "@heroicons/react/24/outline";
-import PostApprovalData from "./PostApprovalData";
+  CheckCircleIcon,
+  ClockIcon,
+  DocumentTextIcon,
+  ExclamationTriangleIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline"
+import { type FC, type JSX, useEffect, useMemo, useState } from "react"
+import toast from "react-hot-toast"
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview"
+import { useApplicationVersions } from "@/hooks/useFundingPlatform"
+import { useApplicationVersionsStore } from "@/store/applicationVersions"
+import type { IFundingApplication } from "@/types/funding-platform"
+import { formatDate } from "@/utilities/formatDate"
+import { cn } from "@/utilities/tailwind"
+import { getProjectTitle } from "../helper/getProjecTitle"
+import { AIEvaluationDisplay } from "./AIEvaluation"
+import AIEvaluationButton from "./AIEvaluationButton"
+import ApplicationVersionSelector from "./ApplicationVersionSelector"
+import ApplicationVersionViewer from "./ApplicationVersionViewer"
+import PostApprovalData from "./PostApprovalData"
+import { StatusActionButtons } from "./StatusActionButtons"
+import StatusChangeModal from "./StatusChangeModal"
 
 interface ApplicationContentProps {
-  application: IFundingApplication;
-  program?: any;
-  showStatusActions?: boolean;
-  showAIEvaluationButton?: boolean;
-  onStatusChange?: (status: string, note?: string) => Promise<void>;
-  viewMode?: "details" | "changes";
-  onViewModeChange?: (mode: "details" | "changes") => void;
-  onRefresh?: () => void;
+  application: IFundingApplication
+  program?: any
+  showStatusActions?: boolean
+  showAIEvaluationButton?: boolean
+  onStatusChange?: (status: string, note?: string) => Promise<void>
+  viewMode?: "details" | "changes"
+  onViewModeChange?: (mode: "details" | "changes") => void
+  onRefresh?: () => void
 }
 
 const statusColors = {
@@ -42,7 +42,7 @@ const statusColors = {
   revision_requested: "bg-yellow-100 text-yellow-800 border-yellow-200",
   approved: "bg-green-100 text-green-800 border-green-200",
   rejected: "bg-red-100 text-red-800 border-red-200",
-};
+}
 
 const statusIcons = {
   pending: ClockIcon,
@@ -50,14 +50,14 @@ const statusIcons = {
   revision_requested: ExclamationTriangleIcon,
   approved: CheckCircleIcon,
   rejected: XMarkIcon,
-};
+}
 
 const formatStatus = (status: string): string => {
   return status
     .split("_")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-};
+    .join(" ")
+}
 
 const ApplicationContent: FC<ApplicationContentProps> = ({
   application,
@@ -69,95 +69,98 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
   onViewModeChange,
   onRefresh,
 }) => {
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
-  const [statusModalOpen, setStatusModalOpen] = useState(false);
-  const [pendingStatus, setPendingStatus] = useState<string>("");
-  const [internalViewMode, setInternalViewMode] = useState<"details" | "changes">("details");
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
+  const [statusModalOpen, setStatusModalOpen] = useState(false)
+  const [pendingStatus, setPendingStatus] = useState<string>("")
+  const [internalViewMode, setInternalViewMode] = useState<"details" | "changes">("details")
 
   // Use controlled mode if provided, otherwise use internal state
-  const viewMode = controlledViewMode ?? internalViewMode;
-  const setViewMode = onViewModeChange ?? setInternalViewMode;
+  const viewMode = controlledViewMode ?? internalViewMode
+  const setViewMode = onViewModeChange ?? setInternalViewMode
 
   // Get UI state from Zustand store
-  const { selectedVersion } = useApplicationVersionsStore();
+  const { selectedVersion } = useApplicationVersionsStore()
 
   // Get application identifier for fetching versions
-  const applicationIdentifier = application?.referenceNumber || application?.id;
+  const applicationIdentifier = application?.referenceNumber || application?.id
 
   // Fetch versions using React Query
-  const { versions } = useApplicationVersions(applicationIdentifier);
+  const { versions } = useApplicationVersions(applicationIdentifier)
 
   // Auto-select the latest version when versions are loaded
-  const { selectVersion } = useApplicationVersionsStore();
+  const { selectVersion } = useApplicationVersionsStore()
   useEffect(() => {
     if (versions.length > 0 && !selectedVersion) {
-      selectVersion(versions[0].id, versions);
+      selectVersion(versions[0].id, versions)
     }
-  }, [versions, selectedVersion, selectVersion]);
+  }, [versions, selectedVersion, selectVersion])
 
   // Create field labels mapping from program schema
   const fieldLabels = useMemo(() => {
-    const labels: Record<string, string> = {};
+    const labels: Record<string, string> = {}
     if (program?.formSchema?.fields) {
       program.formSchema.fields.forEach((field: any) => {
         if (field.id && field.label) {
-          labels[field.id] = field.label;
+          labels[field.id] = field.label
         }
-      });
+      })
     }
-    return labels;
-  }, [program]);
+    return labels
+  }, [program])
 
-  const StatusIcon = statusIcons[application.status as keyof typeof statusIcons] || ClockIcon;
+  const StatusIcon = statusIcons[application.status as keyof typeof statusIcons] || ClockIcon
 
   const handleStatusChangeClick = (newStatus: string) => {
-    setPendingStatus(newStatus);
-    setStatusModalOpen(true);
-  };
+    setPendingStatus(newStatus)
+    setStatusModalOpen(true)
+  }
 
   const handleStatusChangeConfirm = async (reason?: string) => {
     if (onStatusChange && pendingStatus) {
       try {
-        setIsUpdatingStatus(true);
-        await onStatusChange(pendingStatus, reason);
-        setStatusModalOpen(false);
-        setPendingStatus("");
-        toast.success(`Application status updated to ${formatStatus(pendingStatus)}`);
+        setIsUpdatingStatus(true)
+        await onStatusChange(pendingStatus, reason)
+        setStatusModalOpen(false)
+        setPendingStatus("")
+        toast.success(`Application status updated to ${formatStatus(pendingStatus)}`)
       } catch (error) {
-        console.error("Failed to update status:", error);
-        toast.error("Failed to update application status");
+        console.error("Failed to update status:", error)
+        toast.error("Failed to update application status")
       } finally {
-        setIsUpdatingStatus(false);
+        setIsUpdatingStatus(false)
       }
     }
-  };
+  }
 
   const handleAIEvaluationComplete = async (): Promise<void> => {
     // Refresh the application data to show the updated AI evaluation
     if (onRefresh) {
       try {
-        await onRefresh();
+        await onRefresh()
       } catch (error) {
-        console.error("Failed to refresh application data after AI evaluation:", error);
-        toast.error("Evaluation completed but failed to refresh the display. Please reload the page.");
+        console.error("Failed to refresh application data after AI evaluation:", error)
+        toast.error(
+          "Evaluation completed but failed to refresh the display. Please reload the page."
+        )
       }
     }
-  };
+  }
 
   const getCurrentRevisionReason = (): string | null => {
     if (application.status === "revision_requested" && application.statusHistory) {
       const revisionEntry = application.statusHistory
         .filter((h) => h.status === "revision_requested")
-        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
-      return revisionEntry?.reason || null;
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0]
+      return revisionEntry?.reason || null
     }
-    return null;
-  };
+    return null
+  }
 
   const renderFieldValue = (value: any): JSX.Element => {
     if (Array.isArray(value)) {
       // Check if it's an array of milestones
-      const isMilestoneArray = value.length > 0 && typeof value[0] === "object" && "title" in value[0];
+      const isMilestoneArray =
+        value.length > 0 && typeof value[0] === "object" && "title" in value[0]
 
       if (isMilestoneArray) {
         return (
@@ -187,7 +190,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
               </div>
             ))}
           </div>
-        );
+        )
       }
 
       // Regular array - render as tags
@@ -202,11 +205,11 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
             </span>
           ))}
         </div>
-      );
+      )
     }
 
     if (typeof value === "boolean") {
-      return <span>{value ? "Yes" : "No"}</span>;
+      return <span>{value ? "Yes" : "No"}</span>
     }
 
     if (typeof value === "object" && value !== null) {
@@ -214,7 +217,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
         <pre className="bg-zinc-50 dark:bg-zinc-800 p-2 rounded text-xs overflow-x-auto">
           {JSON.stringify(value, null, 2)}
         </pre>
-      );
+      )
     }
 
     // Default: render as markdown
@@ -222,14 +225,14 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
       <div className="prose prose-sm dark:prose-invert max-w-none">
         <MarkdownPreview source={String(value)} />
       </div>
-    );
-  };
+    )
+  }
 
   const renderApplicationData = (): JSX.Element => {
-    const dataToRender = application.applicationData;
+    const dataToRender = application.applicationData
 
     if (!dataToRender || Object.keys(dataToRender).length === 0) {
-      return <p className="text-gray-500 dark:text-gray-400">No application data available</p>;
+      return <p className="text-gray-500 dark:text-gray-400">No application data available</p>
     }
 
     return (
@@ -239,14 +242,12 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
             <dt className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
               {fieldLabels[key] || key.replace(/_/g, " ")}
             </dt>
-            <dd className="text-sm text-gray-900 dark:text-gray-100">
-              {renderFieldValue(value)}
-            </dd>
+            <dd className="text-sm text-gray-900 dark:text-gray-100">{renderFieldValue(value)}</dd>
           </div>
         ))}
       </div>
-    );
-  };
+    )
+  }
 
   return (
     <>
@@ -258,7 +259,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
               className={cn(
                 "flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium",
                 statusColors[application.status as keyof typeof statusColors] ||
-                "bg-zinc-100 text-gray-800 border-gray-200"
+                  "bg-zinc-100 text-gray-800 border-gray-200"
               )}
             >
               <StatusIcon className="w-4 h-4" />
@@ -272,7 +273,6 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
                 {application.applicantEmail}
               </p>
             </div>
-
           </div>
 
           <dl className="grid grid-cols-2 gap-4">
@@ -292,16 +292,16 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
 
           {/* Status Actions */}
           {!["approved", "rejected"].includes(application.status) &&
-           showStatusActions &&
-           onStatusChange && (
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <StatusActionButtons
-                currentStatus={application.status as any}
-                onStatusChange={handleStatusChangeClick}
-                isUpdating={isUpdatingStatus}
-              />
-            </div>
-          )}
+            showStatusActions &&
+            onStatusChange && (
+              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <StatusActionButtons
+                  currentStatus={application.status as any}
+                  onStatusChange={handleStatusChangeClick}
+                  isUpdating={isUpdatingStatus}
+                />
+              </div>
+            )}
         </div>
 
         {/* Current Revision Reason */}
@@ -316,16 +316,15 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
           </div>
         )}
 
-
         {application?.postApprovalData && Object.keys(application?.postApprovalData).length > 0 && (
-          <PostApprovalData
-            postApprovalData={application?.postApprovalData}
-            program={program}
-          />
+          <PostApprovalData postApprovalData={application?.postApprovalData} program={program} />
         )}
 
         {/* Application Data Section with Toggle */}
-        <div id="application-details" className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div
+          id="application-details"
+          className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+        >
           {/* Toggle Header */}
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white">
@@ -361,14 +360,10 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
             )}
           </div>
 
-
-
           {/* Content based on view mode */}
           {viewMode === "details" ? (
             /* Details Mode - Show full application data */
-            <div>
-              {renderApplicationData()}
-            </div>
+            <div>{renderApplicationData()}</div>
           ) : (
             /* Changes Mode - Show version selector and changed fields */
             <div>
@@ -383,7 +378,6 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
             </div>
           )}
         </div>
-
 
         {/* AI Evaluation */}
         <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
@@ -411,8 +405,8 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
       <StatusChangeModal
         isOpen={statusModalOpen}
         onClose={() => {
-          setStatusModalOpen(false);
-          setPendingStatus("");
+          setStatusModalOpen(false)
+          setPendingStatus("")
         }}
         onConfirm={handleStatusChangeConfirm}
         status={pendingStatus}
@@ -420,7 +414,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
         isReasonRequired={pendingStatus === "revision_requested"}
       />
     </>
-  );
-};
+  )
+}
 
-export default ApplicationContent;
+export default ApplicationContent

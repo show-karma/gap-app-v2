@@ -1,24 +1,24 @@
-"use client";
+"use client"
+import { Dialog, Transition } from "@headlessui/react"
+import { PlusIcon } from "@heroicons/react/24/solid"
 /* eslint-disable @next/next/no-img-element */
-import { FC, Fragment, ReactNode, useState } from "react";
-import { Dialog, Transition } from "@headlessui/react";
-import { PlusIcon } from "@heroicons/react/24/solid";
-import { Button } from "./Utilities/Button";
+import { type FC, Fragment, type ReactNode, useState } from "react"
+import { Button } from "./Utilities/Button"
 
 type DeleteDialogProps = {
-  title?: ReactNode;
-  deleteFunction: () => Promise<void>;
+  title?: ReactNode
+  deleteFunction: () => Promise<void>
   buttonElement?: {
-    text: string;
-    icon: ReactNode;
-    styleClass: string;
-  } | null;
-  isLoading: boolean;
-  afterFunction?: () => void;
-  "data-delete-project-button"?: string;
-  externalIsOpen?: boolean;
-  externalSetIsOpen?: (isOpen: boolean) => void;
-};
+    text: string
+    icon: ReactNode
+    styleClass: string
+  } | null
+  isLoading: boolean
+  afterFunction?: () => void
+  "data-delete-project-button"?: string
+  externalIsOpen?: boolean
+  externalSetIsOpen?: (isOpen: boolean) => void
+}
 
 export const DeleteDialog: FC<DeleteDialogProps> = ({
   title = "Are you sure you want to delete?",
@@ -35,27 +35,27 @@ export const DeleteDialog: FC<DeleteDialogProps> = ({
   externalIsOpen,
   externalSetIsOpen,
 }) => {
-  let [isOpen, setIsOpen] = useState(externalIsOpen || false);
+  const [isOpen, setIsOpen] = useState(externalIsOpen || false)
 
   function closeModal() {
-    setIsOpen(false);
-    externalSetIsOpen?.(false);
+    setIsOpen(false)
+    externalSetIsOpen?.(false)
   }
   function openModal() {
-    setIsOpen(true);
-    externalSetIsOpen?.(true);
+    setIsOpen(true)
+    externalSetIsOpen?.(true)
   }
 
   const handleFunction = async () => {
     try {
       await deleteFunction().then(() => {
-        afterFunction?.();
-      });
-      closeModal();
+        afterFunction?.()
+      })
+      closeModal()
     } catch (error: any) {
-      console.log(error);
+      console.log(error)
     }
-  };
+  }
 
   return (
     <>
@@ -125,5 +125,5 @@ export const DeleteDialog: FC<DeleteDialogProps> = ({
         </Dialog>
       </Transition>
     </>
-  );
-};
+  )
+}

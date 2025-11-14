@@ -1,54 +1,54 @@
-import "@testing-library/jest-dom";
-import { TextEncoder, TextDecoder } from "util";
+import "@testing-library/jest-dom"
+import { TextDecoder, TextEncoder } from "util"
 
 // Polyfills
-global.TextEncoder = TextEncoder;
-global.TextDecoder = TextDecoder;
+global.TextEncoder = TextEncoder
+global.TextDecoder = TextDecoder
 
 // Fetch API polyfills for MSW (Jest jsdom environment doesn't expose Node's native fetch)
 // MUST be set up BEFORE importing MSW setup
 // Node.js 18+ has native fetch, but Jest's jsdom environment doesn't expose it to the global scope
-if (typeof globalThis.Response === 'undefined') {
+if (typeof globalThis.Response === "undefined") {
   globalThis.Response = class Response {
     constructor(body, init = {}) {
-      this.body = body;
-      this.status = init.status || 200;
-      this.statusText = init.statusText || 'OK';
-      this.headers = new Map(Object.entries(init.headers || {}));
-      this.ok = this.status >= 200 && this.status < 300;
+      this.body = body
+      this.status = init.status || 200
+      this.statusText = init.statusText || "OK"
+      this.headers = new Map(Object.entries(init.headers || {}))
+      this.ok = this.status >= 200 && this.status < 300
     }
     async text() {
-      return typeof this.body === 'string' ? this.body : JSON.stringify(this.body);
+      return typeof this.body === "string" ? this.body : JSON.stringify(this.body)
     }
     async json() {
-      return typeof this.body === 'string' ? JSON.parse(this.body) : this.body;
+      return typeof this.body === "string" ? JSON.parse(this.body) : this.body
     }
-  };
+  }
 }
 
-if (typeof globalThis.Request === 'undefined') {
+if (typeof globalThis.Request === "undefined") {
   globalThis.Request = class Request {
     constructor(input, init = {}) {
-      this.url = typeof input === 'string' ? input : input.url;
-      this.method = init.method || 'GET';
-      this.headers = new Map(Object.entries(init.headers || {}));
+      this.url = typeof input === "string" ? input : input.url
+      this.method = init.method || "GET"
+      this.headers = new Map(Object.entries(init.headers || {}))
     }
-  };
+  }
 }
 
-if (typeof globalThis.Headers === 'undefined') {
-  globalThis.Headers = class Headers extends Map {};
+if (typeof globalThis.Headers === "undefined") {
+  globalThis.Headers = class Headers extends Map {}
 }
 
 // Mock until-async before importing MSW (it's an ESM-only package that Jest can't transform)
 // The manual mock in __mocks__/until-async.js will be used automatically
-jest.mock('until-async');
+jest.mock("until-async")
 
 // Import MSW setup AFTER polyfills are configured
-require("@/__tests__/utils/msw/setup");
+require("@/__tests__/utils/msw/setup")
 
 // Increase timeout for slower tests
-jest.setTimeout(30000);
+jest.setTimeout(30000)
 
 // Mock window.matchMedia
 Object.defineProperty(window, "matchMedia", {
@@ -63,7 +63,7 @@ Object.defineProperty(window, "matchMedia", {
     removeEventListener: jest.fn(),
     dispatchEvent: jest.fn(),
   })),
-});
+})
 
 // Mock IntersectionObserver
 global.IntersectionObserver = class IntersectionObserver {
@@ -71,10 +71,10 @@ global.IntersectionObserver = class IntersectionObserver {
   disconnect() {}
   observe() {}
   takeRecords() {
-    return [];
+    return []
   }
   unobserve() {}
-};
+}
 
 // Mock ResizeObserver
 global.ResizeObserver = class ResizeObserver {
@@ -82,7 +82,7 @@ global.ResizeObserver = class ResizeObserver {
   disconnect() {}
   observe() {}
   unobserve() {}
-};
+}
 
 // Mock Next.js router
 jest.mock("next/navigation", () => ({
@@ -95,20 +95,20 @@ jest.mock("next/navigation", () => ({
       pathname: "/",
       query: {},
       asPath: "/",
-    };
+    }
   },
   usePathname() {
-    return "/";
+    return "/"
   },
   useSearchParams() {
-    return new URLSearchParams();
+    return new URLSearchParams()
   },
   useParams() {
-    return {};
+    return {}
   },
   notFound: jest.fn(),
   redirect: jest.fn(),
-}));
+}))
 
 // Mock Privy authentication
 jest.mock("@privy-io/react-auth", () => ({
@@ -131,7 +131,7 @@ jest.mock("@privy-io/react-auth", () => ({
     logout: jest.fn(),
   }),
   PrivyProvider: ({ children }) => children,
-}));
+}))
 
 // Mock Wagmi
 jest.mock("wagmi", () => ({
@@ -163,7 +163,7 @@ jest.mock("wagmi", () => ({
   }),
   WagmiProvider: ({ children }) => children,
   createConfig: jest.fn(),
-}));
+}))
 
 // Mock @wagmi/core
 jest.mock("@wagmi/core", () => ({
@@ -183,7 +183,7 @@ jest.mock("@wagmi/core", () => ({
   disconnect: jest.fn(),
   watchAccount: jest.fn(),
   reconnect: jest.fn(),
-}));
+}))
 
 // Mock @wagmi/core/chains
 jest.mock("@wagmi/core/chains", () => ({
@@ -197,41 +197,41 @@ jest.mock("@wagmi/core/chains", () => ({
   sepolia: { id: 11155111, name: "Sepolia" },
   lisk: { id: 1135, name: "Lisk" },
   scroll: { id: 534352, name: "Scroll" },
-}));
+}))
 
 // Mock privy-config
 jest.mock("@/utilities/wagmi/privy-config", () => ({
   privyConfig: {},
   getPrivyWagmiConfig: jest.fn(() => ({})),
-}));
+}))
 
 // Mock Sentry
 jest.mock("@sentry/nextjs", () => ({
   captureException: jest.fn(),
   captureMessage: jest.fn(),
   withScope: jest.fn((callback) => callback({ setExtras: jest.fn() })),
-}));
+}))
 
 // Mock rehype-sanitize to avoid ESM parsing issues
 jest.mock("rehype-sanitize", () => ({
   __esModule: true,
   default: () => (tree) => tree, // Pass-through plugin for testing
-}));
+}))
 
 // Mock rehype-external-links
 jest.mock("rehype-external-links", () => ({
   __esModule: true,
   default: () => (tree) => tree, // Pass-through plugin for testing
-}));
+}))
 
 // Mock remark-gfm to avoid ESM parsing issues
 jest.mock("remark-gfm", () => ({
   __esModule: true,
   default: () => (tree) => tree, // Pass-through plugin for testing
-}));
+}))
 
 // Mock remark-breaks to avoid ESM parsing issues
 jest.mock("remark-breaks", () => ({
   __esModule: true,
   default: () => (tree) => tree, // Pass-through plugin for testing
-}));
+}))

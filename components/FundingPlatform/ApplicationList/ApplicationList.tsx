@@ -1,51 +1,43 @@
-"use client";
+"use client"
 
-import { FC, useState } from "react";
-import { Button } from "@/components/Utilities/Button";
-import {
-  IApplicationListProps,
-  IFundingApplication,
-} from "@/types/funding-platform";
-import { cn } from "@/utilities/tailwind";
-import StatusChangeModal from "../ApplicationView/StatusChangeModal";
-import { getProjectTitle } from "../helper/getProjecTitle";
-import { formatDate } from "@/utilities/formatDate";
-import SortableTableHeader from "@/components/Utilities/SortableTableHeader";
-import { IApplicationFilters } from "@/services/fundingPlatformService";
-import { TableStatusActionButtons } from "./TableStatusActionButtons";
-import { formatAIScore } from "../helper/getAIScore";
+import { type FC, useState } from "react"
+import { Button } from "@/components/Utilities/Button"
+import SortableTableHeader from "@/components/Utilities/SortableTableHeader"
+import type { IApplicationFilters } from "@/services/fundingPlatformService"
+import type { IApplicationListProps, IFundingApplication } from "@/types/funding-platform"
+import { formatDate } from "@/utilities/formatDate"
+import { cn } from "@/utilities/tailwind"
+import StatusChangeModal from "../ApplicationView/StatusChangeModal"
+import { formatAIScore } from "../helper/getAIScore"
+import { getProjectTitle } from "../helper/getProjecTitle"
+import { TableStatusActionButtons } from "./TableStatusActionButtons"
 
 interface IApplicationListComponentProps extends IApplicationListProps {
-  applications: IFundingApplication[];
-  isLoading?: boolean;
-  onStatusChange?: (
-    applicationId: string,
-    status: string,
-    note?: string
-  ) => Promise<void>;
-  onExport?: () => void;
-  showStatusActions?: boolean;
-  sortBy?: IApplicationFilters['sortBy'];
-  sortOrder?: IApplicationFilters['sortOrder'];
-  onSortChange?: (sortBy: string) => void;
+  applications: IFundingApplication[]
+  isLoading?: boolean
+  onStatusChange?: (applicationId: string, status: string, note?: string) => Promise<void>
+  onExport?: () => void
+  showStatusActions?: boolean
+  sortBy?: IApplicationFilters["sortBy"]
+  sortOrder?: IApplicationFilters["sortOrder"]
+  onSortChange?: (sortBy: string) => void
 }
 
 const statusColors = {
   pending: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
   resubmitted: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
   under_review: "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-300",
-  revision_requested:
-    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
+  revision_requested: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
   approved: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
   rejected: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
-};
+}
 
 const formatStatus = (status: string): string => {
   return status
     .split("_")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-};
+    .join(" ")
+}
 
 const ApplicationList: FC<IApplicationListComponentProps> = ({
   applications,
@@ -58,59 +50,58 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
   sortOrder,
   onSortChange,
 }) => {
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
-  const [statusModalOpen, setStatusModalOpen] = useState(false);
-  const [pendingStatus, setPendingStatus] = useState<string>("");
-  const [pendingApplicationId, setPendingApplicationId] = useState<string>("");
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
+  const [statusModalOpen, setStatusModalOpen] = useState(false)
+  const [pendingStatus, setPendingStatus] = useState<string>("")
+  const [pendingApplicationId, setPendingApplicationId] = useState<string>("")
 
   // Show all applications (no internal pagination for infinite scroll)
-  const paginatedApplications = applications;
+  const paginatedApplications = applications
 
   const handleStatusChangeClick = (
     applicationId: string,
     newStatus: string,
     e: React.MouseEvent
   ) => {
-    e.stopPropagation();
-    setPendingApplicationId(applicationId);
-    setPendingStatus(newStatus);
-    setStatusModalOpen(true);
-  };
+    e.stopPropagation()
+    setPendingApplicationId(applicationId)
+    setPendingStatus(newStatus)
+    setStatusModalOpen(true)
+  }
 
   const handleStatusChangeConfirm = async (reason?: string) => {
     if (onStatusChange && pendingApplicationId && pendingStatus) {
       try {
-        setIsUpdatingStatus(true);
-        await onStatusChange(pendingApplicationId, pendingStatus, reason);
-        setIsUpdatingStatus(false);
-        setStatusModalOpen(false);
-        setPendingStatus("");
-        setPendingApplicationId("");
+        setIsUpdatingStatus(true)
+        await onStatusChange(pendingApplicationId, pendingStatus, reason)
+        setIsUpdatingStatus(false)
+        setStatusModalOpen(false)
+        setPendingStatus("")
+        setPendingApplicationId("")
       } catch (error) {
-        console.error("Failed to update status:", error);
-        setIsUpdatingStatus(false);
+        console.error("Failed to update status:", error)
+        setIsUpdatingStatus(false)
       }
     }
-  };
+  }
 
   const getStatusBadge = (status: string) => (
     <span
       className={cn(
         "inline-flex px-2 py-1 rounded-full text-xs font-medium",
-        statusColors[status as keyof typeof statusColors] ||
-        "bg-gray-100 text-gray-800"
+        statusColors[status as keyof typeof statusColors] || "bg-gray-100 text-gray-800"
       )}
     >
       {formatStatus(status)}
     </span>
-  );
+  )
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="text-gray-500">Loading applications...</div>
       </div>
-    );
+    )
   }
 
   return (
@@ -193,10 +184,10 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                   onClick={(e) => {
                     // Open in new tab for application details
                     if (onApplicationSelect) {
-                      e.preventDefault();
-                      const currentPath = window.location.pathname;
-                      const newPath = `${currentPath}/${application.referenceNumber}`;
-                      window.open(newPath, '_blank');
+                      e.preventDefault()
+                      const currentPath = window.location.pathname
+                      const newPath = `${currentPath}/${application.referenceNumber}`
+                      window.open(newPath, "_blank")
                     }
                   }}
                   onMouseEnter={() => onApplicationHover?.(application.referenceNumber)}
@@ -216,9 +207,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                     {getStatusBadge(application.status)}
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400 text-center">
-                    <span className="font-medium">
-                      {formatAIScore(application)}
-                    </span>
+                    <span className="font-medium">{formatAIScore(application)}</span>
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">
                     {formatDate(application.createdAt)}
@@ -249,16 +238,16 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
       <StatusChangeModal
         isOpen={statusModalOpen}
         onClose={() => {
-          setStatusModalOpen(false);
-          setPendingStatus("");
-          setPendingApplicationId("");
+          setStatusModalOpen(false)
+          setPendingStatus("")
+          setPendingApplicationId("")
         }}
         onConfirm={handleStatusChangeConfirm}
         status={pendingStatus}
         isSubmitting={isUpdatingStatus}
       />
     </div>
-  );
-};
+  )
+}
 
-export default ApplicationList;
+export default ApplicationList

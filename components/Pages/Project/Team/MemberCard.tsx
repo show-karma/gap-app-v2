@@ -1,50 +1,47 @@
 /* eslint-disable @next/next/no-img-element */
-import { DeleteMemberDialog } from "@/components/Dialogs/Member/DeleteMember";
-import { DemoteMemberDialog } from "@/components/Dialogs/Member/DemoteMember";
-import { PromoteMemberDialog } from "@/components/Dialogs/Member/PromoteMember";
-import { GithubIcon, LinkedInIcon, Twitter2Icon } from "@/components/Icons";
-import { FarcasterIcon } from "@/components/Icons/Farcaster";
-import { formatFarcasterLink } from "@/utilities/farcaster";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { Skeleton } from "@/components/Utilities/Skeleton";
-import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { useENS } from "@/store/ens";
-import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
-import {
-  getProjectMemberRoles,
-  Member,
-} from "@/utilities/getProjectMemberRoles";
-import { PencilIcon } from "@heroicons/react/24/outline";
-import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
-import { useAccount } from "wagmi";
-import { type Hex } from "viem";
-import { useTeamProfiles } from "@/hooks/useTeamProfiles";
-import { useProjectInstance } from "@/hooks/useProjectInstance";
+
+import { PencilIcon } from "@heroicons/react/24/outline"
+import { useQuery } from "@tanstack/react-query"
+import { useEffect } from "react"
+import type { Hex } from "viem"
+import { useAccount } from "wagmi"
+import { DeleteMemberDialog } from "@/components/Dialogs/Member/DeleteMember"
+import { DemoteMemberDialog } from "@/components/Dialogs/Member/DemoteMember"
+import { PromoteMemberDialog } from "@/components/Dialogs/Member/PromoteMember"
+import { GithubIcon, LinkedInIcon, Twitter2Icon } from "@/components/Icons"
+import { FarcasterIcon } from "@/components/Icons/Farcaster"
+import { ExternalLink } from "@/components/Utilities/ExternalLink"
+import { Skeleton } from "@/components/Utilities/Skeleton"
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
+import { useProjectInstance } from "@/hooks/useProjectInstance"
+import { useTeamProfiles } from "@/hooks/useTeamProfiles"
+import { useOwnerStore, useProjectStore } from "@/store"
+import { useENS } from "@/store/ens"
+import { useContributorProfileModalStore } from "@/store/modals/contributorProfile"
+import { formatFarcasterLink } from "@/utilities/farcaster"
+import { getProjectMemberRoles, type Member } from "@/utilities/getProjectMemberRoles"
 
 const iconsClassnames = {
-  general:
-    "w-6 h-6 text-zinc-400 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-300",
-};
+  general: "w-6 h-6 text-zinc-400 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-300",
+}
 
 export const MemberCard = ({ member }: { member: string }) => {
-  const project = useProjectStore((state) => state.project);
-  const { teamProfiles } = useTeamProfiles(project);
+  const project = useProjectStore((state) => state.project)
+  const { teamProfiles } = useTeamProfiles(project)
   const profile = teamProfiles?.find(
     (item) => item.recipient.toLowerCase() === member.toLowerCase()
-  );
-  const [, copy] = useCopyToClipboard();
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const { address } = useAccount();
-  const isAuthorized = isProjectOwner || isContractOwner;
-  const isAdminOrAbove = isProjectOwner || isContractOwner || isProjectAdmin;
+  )
+  const [, copy] = useCopyToClipboard()
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner)
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin)
+  const isContractOwner = useOwnerStore((state) => state.isOwner)
+  const { address } = useAccount()
+  const isAuthorized = isProjectOwner || isContractOwner
+  const isAdminOrAbove = isProjectOwner || isContractOwner || isProjectAdmin
   const { project: projectInstance } = useProjectInstance(
     project?.details?.data.slug || project?.uid || ""
-  );
-  const { openModal } = useContributorProfileModalStore();
+  )
+  const { openModal } = useContributorProfileModalStore()
 
   const {
     data: memberRoles,
@@ -53,21 +50,19 @@ export const MemberCard = ({ member }: { member: string }) => {
   } = useQuery<Record<string, Member["role"]>>({
     queryKey: ["memberRoles", project?.uid],
     queryFn: () =>
-      project && projectInstance
-        ? getProjectMemberRoles(project, projectInstance)
-        : {},
+      project && projectInstance ? getProjectMemberRoles(project, projectInstance) : {},
     enabled: !!project && !!projectInstance,
     staleTime: 1000 * 60 * 5,
-  });
+  })
 
-  const ensNames = useENS((state) => state.ensData);
-  const populateEns = useENS((state) => state.populateEns);
+  const ensNames = useENS((state) => state.ensData)
+  const populateEns = useENS((state) => state.populateEns)
 
   useEffect(() => {
     if (member) {
-      populateEns([member?.toLowerCase() as string]);
+      populateEns([member?.toLowerCase() as string])
     }
-  }, [memberRoles, member]);
+  }, [memberRoles, member])
 
   return (
     <div className="flex w-full flex-col gap-4 items-start shadow-sm rounded-lg p-4 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700">
@@ -82,27 +77,20 @@ export const MemberCard = ({ member }: { member: string }) => {
             </p>
             {isLoadingRoles || isFetchingRoles ? (
               <Skeleton className="w-full h-4" />
-            ) : memberRoles &&
-              memberRoles[member.toLowerCase()] !== "Member" ? (
+            ) : memberRoles && memberRoles[member.toLowerCase()] !== "Member" ? (
               <p className="text-sm text-brand-blue font-medium leading-none">
                 {memberRoles[member.toLowerCase()]}
               </p>
             ) : null}
           </div>
           <div className="flex flex-row gap-2 mr-2">
-            {isAuthorized &&
-            memberRoles &&
-            memberRoles[member.toLowerCase()] === "Member" ? (
+            {isAuthorized && memberRoles && memberRoles[member.toLowerCase()] === "Member" ? (
               <PromoteMemberDialog memberAddress={member} />
             ) : null}
-            {isAuthorized &&
-            memberRoles &&
-            memberRoles[member.toLowerCase()] === "Admin" ? (
+            {isAuthorized && memberRoles && memberRoles[member.toLowerCase()] === "Admin" ? (
               <DemoteMemberDialog memberAddress={member} />
             ) : null}
-            {isAuthorized &&
-            memberRoles &&
-            memberRoles[member.toLowerCase()] !== "Owner" ? (
+            {isAuthorized && memberRoles && memberRoles[member.toLowerCase()] !== "Owner" ? (
               <DeleteMemberDialog memberAddress={member} />
             ) : null}
             {member.toLowerCase() === address?.toLowerCase() ? (
@@ -121,9 +109,7 @@ export const MemberCard = ({ member }: { member: string }) => {
           </div>
         </div>
         <div className="flex flex-row gap-2">
-          <p className="text-sm text-zinc-600 dark:text-zinc-400 w-full truncate">
-            {member}
-          </p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 w-full truncate">{member}</p>
           <button type="button" onClick={() => copy(member)}>
             <img
               src="/icons/copy-2.svg"
@@ -136,9 +122,7 @@ export const MemberCard = ({ member }: { member: string }) => {
           {profile?.data.aboutMe}
         </p>
       </div>
-      {profile?.data.twitter ||
-      profile?.data.linkedin ||
-      profile?.data.github ? (
+      {profile?.data.twitter || profile?.data.linkedin || profile?.data.github ? (
         <div className="flex flex-row gap-3">
           <div className="flex flex-row gap-2">
             {profile?.data.twitter ? (
@@ -147,9 +131,9 @@ export const MemberCard = ({ member }: { member: string }) => {
                   profile?.data.twitter.includes("http")
                     ? profile?.data.twitter
                     : profile?.data.twitter.includes("twitter.com") ||
-                      profile?.data.twitter.includes("x.com")
-                    ? `https://${profile?.data.twitter}`
-                    : `https://x.com/${profile?.data.twitter}`
+                        profile?.data.twitter.includes("x.com")
+                      ? `https://${profile?.data.twitter}`
+                      : `https://x.com/${profile?.data.twitter}`
                 }
                 className="w-max "
               >
@@ -162,8 +146,8 @@ export const MemberCard = ({ member }: { member: string }) => {
                   profile?.data.github.includes("http")
                     ? profile?.data.github
                     : profile?.data.github.includes("github.com")
-                    ? `https://${profile?.data.github}`
-                    : `https://github.com/${profile?.data.github}`
+                      ? `https://${profile?.data.github}`
+                      : `https://github.com/${profile?.data.github}`
                 }
                 className="w-max"
               >
@@ -176,8 +160,8 @@ export const MemberCard = ({ member }: { member: string }) => {
                   profile?.data.linkedin.includes("http")
                     ? profile?.data.linkedin
                     : profile?.data.linkedin.includes("linkedin.com")
-                    ? `https://${profile?.data.linkedin}`
-                    : `https://linkedin.com/in/${profile?.data.linkedin}`
+                      ? `https://${profile?.data.linkedin}`
+                      : `https://linkedin.com/in/${profile?.data.linkedin}`
                 }
                 className="w-max"
               >
@@ -185,10 +169,7 @@ export const MemberCard = ({ member }: { member: string }) => {
               </ExternalLink>
             ) : null}
             {profile?.data.farcaster ? (
-              <ExternalLink
-                href={formatFarcasterLink(profile?.data.farcaster)}
-                className="w-max"
-              >
+              <ExternalLink href={formatFarcasterLink(profile?.data.farcaster)} className="w-max">
                 <FarcasterIcon className={iconsClassnames.general} />
               </ExternalLink>
             ) : null}
@@ -196,5 +177,5 @@ export const MemberCard = ({ member }: { member: string }) => {
         </div>
       ) : null}
     </div>
-  );
-};
+  )
+}

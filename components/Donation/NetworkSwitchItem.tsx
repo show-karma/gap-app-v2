@@ -1,8 +1,8 @@
 interface NetworkSwitchItemProps {
-  index: number;
-  chainName: string;
-  projectCount: number;
-  needsSwitch: boolean;
+  index: number
+  chainName: string
+  projectCount: number
+  needsSwitch: boolean
 }
 
 export function NetworkSwitchItem({
@@ -20,9 +20,7 @@ export function NetworkSwitchItem({
         <span className="font-mono font-medium text-amber-900 dark:text-amber-100">
           {index + 1}.
         </span>
-        <span className="font-medium text-amber-900 dark:text-amber-100">
-          {chainName}
-        </span>
+        <span className="font-medium text-amber-900 dark:text-amber-100">{chainName}</span>
         {needsSwitch && (
           <span
             className="inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/60 dark:text-amber-300"
@@ -45,13 +43,10 @@ export function NetworkSwitchItem({
       </div>
       <span
         className="text-amber-700 dark:text-amber-300"
-        aria-label={`${projectCount} ${
-          projectCount === 1 ? "project" : "projects"
-        }`}
+        aria-label={`${projectCount} ${projectCount === 1 ? "project" : "projects"}`}
       >
-        {projectCount}{" "}
-        {projectCount === 1 ? "project" : "projects"}
+        {projectCount} {projectCount === 1 ? "project" : "projects"}
       </span>
     </div>
-  );
+  )
 }

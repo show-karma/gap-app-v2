@@ -1,39 +1,39 @@
-"use client";
+"use client"
 
-import { Button } from "@/components/Utilities/Button";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
-import { MESSAGES } from "@/utilities/messages";
-import { Dialog, Transition } from "@headlessui/react";
-import { CurrencyDollarIcon, CheckIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
-import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import type { FC, ReactNode } from "react";
-import { Fragment, useEffect, useState, useCallback, useMemo } from "react";
-import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
-import { isAddress } from "viem";
-import debounce from "lodash.debounce";
+import { Dialog, Transition } from "@headlessui/react"
+import { CheckIcon, ChevronDownIcon, CurrencyDollarIcon } from "@heroicons/react/24/outline"
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
+import debounce from "lodash.debounce"
+import type { FC, ReactNode } from "react"
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react"
+import toast from "react-hot-toast"
+import { isAddress } from "viem"
+import { useAccount } from "wagmi"
+import { Button } from "@/components/Utilities/Button"
+import { errorManager } from "@/components/Utilities/errorManager"
+import { useOwnerStore, useProjectStore } from "@/store"
+import { useCommunityAdminStore } from "@/store/communityAdmin"
+import fetchData from "@/utilities/fetchData"
+import { INDEXER } from "@/utilities/indexer"
+import { MESSAGES } from "@/utilities/messages"
 
 // Updated interface to handle new JSON payoutAddress structure
 interface SetPayoutAddressButtonProps {
-  buttonClassName?: string;
-  project: IProjectResponse & { 
-    payoutAddress?: string | { [communityUID: string]: string };
-  };
-  "data-set-payout-button"?: string;
-  buttonElement?: { text: string; icon: ReactNode; styleClass: string } | null;
-  onClose?: () => void;
+  buttonClassName?: string
+  project: IProjectResponse & {
+    payoutAddress?: string | { [communityUID: string]: string }
+  }
+  "data-set-payout-button"?: string
+  buttonElement?: { text: string; icon: ReactNode; styleClass: string } | null
+  onClose?: () => void
 }
 
 // Community option interface for dropdown
 interface CommunityOption {
-  uid: string;
-  name: string;
-  imageURL?: string;
-  currentPayoutAddress?: string;
+  uid: string
+  name: string
+  imageURL?: string
+  currentPayoutAddress?: string
 }
 
 export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
@@ -43,192 +43,187 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
   buttonElement,
   onClose,
 }) => {
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const setProject = useProjectStore((state) => state.setProject);
-  const isCommunityAdmin = useCommunityAdminStore(
-    (state) => state.isCommunityAdmin
-  );
-  const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
-  const { address } = useAccount();
+  const isOwner = useOwnerStore((state) => state.isOwner)
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner)
+  const setProject = useProjectStore((state) => state.setProject)
+  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin)
+  const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin
+  const { address } = useAccount()
 
-  const [isOpen, setIsOpen] = useState(false);
-  const [payoutAddress, setPayoutAddress] = useState("");
-  const [selectedCommunity, setSelectedCommunity] = useState<CommunityOption | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [validationError, setValidationError] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [isValidated, setIsValidated] = useState(false);
-  const [showDropdown, setShowDropdown] = useState(false);
+  const [isOpen, setIsOpen] = useState(false)
+  const [payoutAddress, setPayoutAddress] = useState("")
+  const [selectedCommunity, setSelectedCommunity] = useState<CommunityOption | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [validationError, setValidationError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [isValidated, setIsValidated] = useState(false)
+  const [showDropdown, setShowDropdown] = useState(false)
 
   // Get communities where this project has grants
   const communities: CommunityOption[] = useMemo(() => {
-    if (!project?.grants) return [];
+    if (!project?.grants) return []
 
-    const communityMap = new Map<string, CommunityOption>();
-    
+    const communityMap = new Map<string, CommunityOption>()
+
     project.grants.forEach((grant) => {
       if (grant.community?.uid) {
-        const communityUID = grant.community.uid;
-        const payoutAddresses = typeof project.payoutAddress === 'object' && project.payoutAddress 
-          ? project.payoutAddress as { [key: string]: string }
-          : {};
-        
+        const communityUID = grant.community.uid
+        const payoutAddresses =
+          typeof project.payoutAddress === "object" && project.payoutAddress
+            ? (project.payoutAddress as { [key: string]: string })
+            : {}
+
         communityMap.set(communityUID, {
           uid: communityUID,
-          name: grant.community.details?.data?.name || 'Unknown Community',
+          name: grant.community.details?.data?.name || "Unknown Community",
           imageURL: grant.community.details?.data?.imageURL,
-          currentPayoutAddress: payoutAddresses[communityUID]
-        });
+          currentPayoutAddress: payoutAddresses[communityUID],
+        })
       }
-    });
+    })
 
-    return Array.from(communityMap.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [project?.grants, project?.payoutAddress]);
+    return Array.from(communityMap.values()).sort((a, b) => a.name.localeCompare(b.name))
+  }, [project?.grants, project?.payoutAddress])
 
   // Helper function for default error messages based on status code
   const getDefaultErrorMessage = (status: number): string => {
     switch (status) {
       case 400:
-        return "Invalid request. Please check your input.";
+        return "Invalid request. Please check your input."
       case 401:
-        return "Authentication required.";
+        return "Authentication required."
       case 403:
-        return "Insufficient permissions - Project Admin access required.";
+        return "Insufficient permissions - Project Admin access required."
       case 422:
-        return "Project not found.";
+        return "Project not found."
       default:
-        return "An error occurred. Please try again.";
+        return "An error occurred. Please try again."
     }
-  };
+  }
 
   // Auto open the dialog if buttonElement is null
   useEffect(() => {
     if (buttonElement === null) {
-      setIsOpen(true);
+      setIsOpen(true)
     }
-  }, [buttonElement]);
+  }, [buttonElement])
 
   // Reset modal state when opening and set default values
   useEffect(() => {
     if (isOpen) {
       // Reset form state when modal opens
-      setError(null);
-      setValidationError(null);
-      setShowDropdown(false);
+      setError(null)
+      setValidationError(null)
+      setShowDropdown(false)
 
       // Auto-select first community if only one exists
       if (communities.length === 1) {
-        const community = communities[0];
-        setSelectedCommunity(community);
-        setPayoutAddress(community.currentPayoutAddress || "");
-        setIsValidated(!!community.currentPayoutAddress);
+        const community = communities[0]
+        setSelectedCommunity(community)
+        setPayoutAddress(community.currentPayoutAddress || "")
+        setIsValidated(!!community.currentPayoutAddress)
       } else {
         // Reset selections if multiple communities
-        setSelectedCommunity(null);
-        setPayoutAddress("");
-        setIsValidated(false);
+        setSelectedCommunity(null)
+        setPayoutAddress("")
+        setIsValidated(false)
       }
     }
-  }, [isOpen, communities]);
+  }, [isOpen, communities])
 
   // Update payout address when community selection changes
   useEffect(() => {
     if (selectedCommunity) {
-      const currentAddress = selectedCommunity.currentPayoutAddress || "";
-      setPayoutAddress(currentAddress);
-      setIsValidated(!!currentAddress);
-      setValidationError(null);
-      setError(null);
+      const currentAddress = selectedCommunity.currentPayoutAddress || ""
+      setPayoutAddress(currentAddress)
+      setIsValidated(!!currentAddress)
+      setValidationError(null)
+      setError(null)
     }
-  }, [selectedCommunity]);
+  }, [selectedCommunity])
 
   const validatePayoutAddress = useCallback((address: string): boolean => {
     if (!address.trim()) {
       // Empty is valid (for removing payout address)
-      setValidationError(null);
-      setIsValidated(true);
-      return true;
+      setValidationError(null)
+      setIsValidated(true)
+      return true
     }
 
     // Check exact format: must be exactly 42 characters including '0x' prefix
     if (address.length !== 42) {
-      setValidationError(
-        "Ethereum address must be exactly 42 characters including '0x' prefix"
-      );
-      setIsValidated(false);
-      return false;
+      setValidationError("Ethereum address must be exactly 42 characters including '0x' prefix")
+      setIsValidated(false)
+      return false
     }
 
     // Check if it starts with 0x
     if (!address.startsWith("0x")) {
-      setValidationError("Ethereum address must start with '0x'");
-      setIsValidated(false);
-      return false;
+      setValidationError("Ethereum address must start with '0x'")
+      setIsValidated(false)
+      return false
     }
 
     // Check if the rest are hexadecimal characters
-    const hexPart = address.slice(2);
+    const hexPart = address.slice(2)
     if (!/^[a-fA-F0-9]{40}$/.test(hexPart)) {
-      setValidationError(
-        "Ethereum address must contain only hexadecimal characters after '0x'"
-      );
-      setIsValidated(false);
-      return false;
+      setValidationError("Ethereum address must contain only hexadecimal characters after '0x'")
+      setIsValidated(false)
+      return false
     }
 
     // Use viem's isAddress for final validation
     if (!isAddress(address)) {
-      setValidationError("Please enter a valid Ethereum address");
-      setIsValidated(false);
-      return false;
+      setValidationError("Please enter a valid Ethereum address")
+      setIsValidated(false)
+      return false
     }
 
     // Clear any validation errors
-    setValidationError(null);
-    setIsValidated(true);
-    return true;
-  }, []);
+    setValidationError(null)
+    setIsValidated(true)
+    return true
+  }, [])
 
   const debouncedValidate = useCallback(
     debounce((address: string) => {
-      validatePayoutAddress(address);
+      validatePayoutAddress(address)
     }, 300),
     [validatePayoutAddress]
-  );
+  )
 
   // Cleanup debounced function on unmount
   useEffect(() => {
     return () => {
-      debouncedValidate.cancel();
-    };
-  }, [debouncedValidate]);
+      debouncedValidate.cancel()
+    }
+  }, [debouncedValidate])
 
   const handleAddressChange = (value: string) => {
-    setPayoutAddress(value);
-    setError(null);
+    setPayoutAddress(value)
+    setError(null)
 
     // Clear validation state when user starts typing
-    setIsValidated(false);
-    setValidationError(null);
+    setIsValidated(false)
+    setValidationError(null)
 
     // Trigger debounced validation
-    debouncedValidate(value);
-  };
+    debouncedValidate(value)
+  }
 
   const handleSave = async () => {
     if (!selectedCommunity) {
-      setError("Please select a community first");
-      return;
+      setError("Please select a community first")
+      return
     }
 
-    setIsLoading(true);
-    setError(null);
+    setIsLoading(true)
+    setError(null)
 
     // Validate before saving
     if (!validatePayoutAddress(payoutAddress)) {
-      setIsLoading(false);
-      return;
+      setIsLoading(false)
+      return
     }
 
     try {
@@ -239,55 +234,54 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
           payoutAddress: payoutAddress.trim() || null,
           communityUID: selectedCommunity.uid,
         }
-      );
+      )
 
       if (data) {
         // Show success message from API response
-        toast.success(data.message || MESSAGES.PROJECT.PAYOUT_ADDRESS.SUCCESS);
+        toast.success(data.message || MESSAGES.PROJECT.PAYOUT_ADDRESS.SUCCESS)
 
         // Update project store with new payout address structure
-        const currentPayoutAddresses = typeof project.payoutAddress === 'object' && project.payoutAddress 
-          ? { ...(project.payoutAddress as { [key: string]: string }) } 
-          : ({} as { [key: string]: string });
+        const currentPayoutAddresses =
+          typeof project.payoutAddress === "object" && project.payoutAddress
+            ? { ...(project.payoutAddress as { [key: string]: string }) }
+            : ({} as { [key: string]: string })
 
         if (payoutAddress.trim()) {
-          currentPayoutAddresses[selectedCommunity.uid] = payoutAddress.trim();
+          currentPayoutAddresses[selectedCommunity.uid] = payoutAddress.trim()
         } else {
-          delete currentPayoutAddresses[selectedCommunity.uid];
+          delete currentPayoutAddresses[selectedCommunity.uid]
         }
 
         const updatedProject = {
           ...project,
           payoutAddress: currentPayoutAddresses,
-        };
-        setProject(updatedProject as any);
+        }
+        setProject(updatedProject as any)
 
         // Update selected community's current address
         setSelectedCommunity({
           ...selectedCommunity,
-          currentPayoutAddress: payoutAddress.trim() || undefined
-        });
+          currentPayoutAddress: payoutAddress.trim() || undefined,
+        })
 
         // Close modal
-        setIsOpen(false);
+        setIsOpen(false)
         if (buttonElement === null && onClose) {
-          onClose();
+          onClose()
         }
       }
 
       if (error) {
         // Use the error message from the API, with fallbacks for different status codes
-        const errorMessage =
-          error.message || getDefaultErrorMessage(error.status);
-        setError(errorMessage);
-        throw new Error(errorMessage);
+        const errorMessage = error.message || getDefaultErrorMessage(error.status)
+        setError(errorMessage)
+        throw new Error(errorMessage)
       }
     } catch (err) {
       // Only show errorManager for unexpected errors
       if (!error) {
         errorManager(
-          MESSAGES.PROJECT.PAYOUT_ADDRESS.ERROR ||
-            "Error setting payout address",
+          MESSAGES.PROJECT.PAYOUT_ADDRESS.ERROR || "Error setting payout address",
           err,
           {
             projectUID: project.uid,
@@ -296,21 +290,21 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
             address,
           },
           { error: "Failed to save payout address" }
-        );
+        )
       }
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   const handleRemove = async () => {
     if (!selectedCommunity) {
-      setError("Please select a community first");
-      return;
+      setError("Please select a community first")
+      return
     }
 
-    setIsLoading(true);
-    setError(null);
+    setIsLoading(true)
+    setError(null)
 
     try {
       const [data, error] = await fetchData(
@@ -320,48 +314,47 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
           payoutAddress: null,
           communityUID: selectedCommunity.uid,
         }
-      );
+      )
 
       if (data) {
         // Show success message from API response
-        toast.success(data.message || "Payout address removed successfully");
+        toast.success(data.message || "Payout address removed successfully")
 
         // Update project store to remove payout address for this community
-        const currentPayoutAddresses = typeof project.payoutAddress === 'object' && project.payoutAddress 
-          ? { ...(project.payoutAddress as { [key: string]: string }) } 
-          : {};
-        
-        delete currentPayoutAddresses[selectedCommunity.uid];
+        const currentPayoutAddresses =
+          typeof project.payoutAddress === "object" && project.payoutAddress
+            ? { ...(project.payoutAddress as { [key: string]: string }) }
+            : {}
 
-        const updatedProject = { 
-          ...project, 
-          payoutAddress: Object.keys(currentPayoutAddresses).length > 0 
-            ? currentPayoutAddresses 
-            : undefined 
-        };
-        setProject(updatedProject as any);
+        delete currentPayoutAddresses[selectedCommunity.uid]
+
+        const updatedProject = {
+          ...project,
+          payoutAddress:
+            Object.keys(currentPayoutAddresses).length > 0 ? currentPayoutAddresses : undefined,
+        }
+        setProject(updatedProject as any)
 
         // Clear form and update selected community
-        setPayoutAddress("");
-        setIsValidated(false);
+        setPayoutAddress("")
+        setIsValidated(false)
         setSelectedCommunity({
           ...selectedCommunity,
-          currentPayoutAddress: undefined
-        });
+          currentPayoutAddress: undefined,
+        })
 
         // Close modal
-        setIsOpen(false);
+        setIsOpen(false)
         if (buttonElement === null && onClose) {
-          onClose();
+          onClose()
         }
       }
 
       if (error) {
         // Use the error message from the API, with fallbacks for different status codes
-        const errorMessage =
-          error.message || getDefaultErrorMessage(error.status);
-        setError(errorMessage);
-        throw new Error(errorMessage);
+        const errorMessage = error.message || getDefaultErrorMessage(error.status)
+        setError(errorMessage)
+        throw new Error(errorMessage)
       }
     } catch (err) {
       // Only show errorManager for unexpected errors
@@ -375,38 +368,38 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
             address,
           },
           { error: "Failed to remove payout address" }
-        );
+        )
       }
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   const handleClose = () => {
-    setIsOpen(false);
+    setIsOpen(false)
     if (buttonElement === null && onClose) {
-      onClose();
+      onClose()
     }
-  };
+  }
 
   // Check if project has any payout addresses
   const hasAnyPayoutAddress = useMemo(() => {
-    if (typeof project?.payoutAddress === 'string') {
-      return !!project.payoutAddress;
+    if (typeof project?.payoutAddress === "string") {
+      return !!project.payoutAddress
     }
-    if (typeof project?.payoutAddress === 'object' && project.payoutAddress) {
-      return Object.keys(project.payoutAddress).length > 0;
+    if (typeof project?.payoutAddress === "object" && project.payoutAddress) {
+      return Object.keys(project.payoutAddress).length > 0
     }
-    return false;
-  }, [project?.payoutAddress]);
+    return false
+  }, [project?.payoutAddress])
 
   if (!isAuthorized) {
-    return null;
+    return null
   }
 
   // Don't show if no communities with grants
   if (communities.length === 0) {
-    return null;
+    return null
   }
 
   return (
@@ -418,9 +411,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
           data-set-payout-button={dataAttr}
         >
           <CurrencyDollarIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
-          {hasAnyPayoutAddress
-            ? "Manage Payout Address"
-            : "Set Payout Address"}
+          {hasAnyPayoutAddress ? "Manage Payout Address" : "Set Payout Address"}
         </Button>
       )}
       <Transition appear show={isOpen} as={Fragment}>
@@ -453,9 +444,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
                     as="h2"
                     className="text-gray-900 dark:text-zinc-100 text-2xl font-bold leading-6"
                   >
-                    {hasAnyPayoutAddress
-                      ? "Manage Payout Address"
-                      : "Set Payout Address"}
+                    {hasAnyPayoutAddress ? "Manage Payout Address" : "Set Payout Address"}
                   </Dialog.Title>
                   <p className="text-md text-gray-500 dark:text-gray-400 mt-2">
                     {hasAnyPayoutAddress
@@ -470,7 +459,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
                         <label className="text-md font-bold text-gray-900 dark:text-zinc-100 mb-2 block">
                           Select Community
                         </label>
-                        <div 
+                        <div
                           className="flex items-center justify-between p-3 bg-gray-100 dark:bg-zinc-700 rounded-lg cursor-pointer border border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400 transition-colors"
                           onClick={() => setShowDropdown(!showDropdown)}
                         >
@@ -478,8 +467,8 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
                             {selectedCommunity ? (
                               <>
                                 {selectedCommunity.imageURL && (
-                                  <img 
-                                    src={selectedCommunity.imageURL} 
+                                  <img
+                                    src={selectedCommunity.imageURL}
                                     alt={selectedCommunity.name}
                                     className="w-8 h-8 rounded-full object-cover"
                                   />
@@ -501,10 +490,10 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
                               </span>
                             )}
                           </div>
-                          <ChevronDownIcon 
+                          <ChevronDownIcon
                             className={`h-5 w-5 text-gray-400 transition-transform ${
-                              showDropdown ? 'rotate-180' : ''
-                            }`} 
+                              showDropdown ? "rotate-180" : ""
+                            }`}
                           />
                         </div>
 
@@ -516,13 +505,13 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
                                 key={community.uid}
                                 className="flex items-center space-x-3 p-3 hover:bg-gray-50 dark:hover:bg-zinc-600 cursor-pointer transition-colors"
                                 onClick={() => {
-                                  setSelectedCommunity(community);
-                                  setShowDropdown(false);
+                                  setSelectedCommunity(community)
+                                  setShowDropdown(false)
                                 }}
                               >
                                 {community.imageURL && (
-                                  <img 
-                                    src={community.imageURL} 
+                                  <img
+                                    src={community.imageURL}
                                     alt={community.name}
                                     className="w-8 h-8 rounded-full object-cover"
                                   />
@@ -558,9 +547,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
                               <input
                                 type="text"
                                 value={payoutAddress}
-                                onChange={(e) =>
-                                  handleAddressChange(e.target.value)
-                                }
+                                onChange={(e) => handleAddressChange(e.target.value)}
                                 className="text-sm rounded-md w-full text-gray-600 dark:text-gray-300 bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none focus:border-blue-500"
                                 placeholder="0x1234567890abcdef1234567890abcdef12345678"
                               />
@@ -580,16 +567,12 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
                             </div>
                           </div>
                           {validationError && (
-                            <p className="text-red-500 text-sm mt-1 ml-4">
-                              {validationError}
-                            </p>
+                            <p className="text-red-500 text-sm mt-1 ml-4">{validationError}</p>
                           )}
                         </div>
                       )}
                     </div>
-                    {error && (
-                      <p className="text-red-500 text-sm mt-4">{error}</p>
-                    )}
+                    {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
                   </div>
                   <div className="flex flex-row gap-4 mt-10 justify-end">
                     <Button
@@ -605,8 +588,8 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
                       {isLoading
                         ? "Saving..."
                         : selectedCommunity?.currentPayoutAddress
-                        ? "Update Payout Address"
-                        : "Set Payout Address"}
+                          ? "Update Payout Address"
+                          : "Set Payout Address"}
                     </Button>
                     {selectedCommunity?.currentPayoutAddress && (
                       <Button
@@ -632,8 +615,8 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
         </Dialog>
       </Transition>
     </>
-  );
-};
+  )
+}
 
 // Add display name
-SetPayoutAddressButton.displayName = "SetPayoutAddressButton";
+SetPayoutAddressButton.displayName = "SetPayoutAddressButton"

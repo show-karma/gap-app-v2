@@ -1,43 +1,37 @@
-"use client";
+"use client"
 
-import { MarkdownEditor } from '../Utilities/MarkdownEditor';
-import React, { useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { FormSchema } from "@/types/question-builder";
-import { ExternalLink } from "../Utilities/ExternalLink";
-import { LinkIcon } from "@heroicons/react/24/outline";
-import { envVars } from "@/utilities/enviromentVars";
-import { fundingPlatformDomains } from "@/utilities/fundingPlatformDomains";
-import { useParams } from "next/navigation";
-import {
-  settingsConfigSchema,
-  type SettingsConfigFormData,
-} from "@/schemas/settingsConfigSchema";
+import { LinkIcon } from "@heroicons/react/24/outline"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useParams } from "next/navigation"
+import React, { useEffect } from "react"
+import { useForm } from "react-hook-form"
+import { type SettingsConfigFormData, settingsConfigSchema } from "@/schemas/settingsConfigSchema"
+import type { FormSchema } from "@/types/question-builder"
+import { envVars } from "@/utilities/enviromentVars"
+import { fundingPlatformDomains } from "@/utilities/fundingPlatformDomains"
+import { ExternalLink } from "../Utilities/ExternalLink"
+import { MarkdownEditor } from "../Utilities/MarkdownEditor"
 
 interface SettingsConfigurationProps {
-  schema: FormSchema;
-  onUpdate?: (updatedSchema: FormSchema) => void;
-  className?: string;
-  programId?: string;
-  readOnly?: boolean;
+  schema: FormSchema
+  onUpdate?: (updatedSchema: FormSchema) => void
+  className?: string
+  programId?: string
+  readOnly?: boolean
 }
 
 const getApplyUrlByCommunityId = (communityId: string, programId: string) => {
   if (communityId in fundingPlatformDomains) {
-    const domain =
-      fundingPlatformDomains[
-      communityId as keyof typeof fundingPlatformDomains
-      ];
+    const domain = fundingPlatformDomains[communityId as keyof typeof fundingPlatformDomains]
     return envVars.isDev
       ? `${domain.dev}/browse-applications?programId=${programId}`
-      : `${domain.prod}/browse-applications?programId=${programId}`;
+      : `${domain.prod}/browse-applications?programId=${programId}`
   } else {
     return envVars.isDev
       ? `${fundingPlatformDomains.shared.dev}/${communityId}/browse-applications?programId=${programId}`
-      : `${fundingPlatformDomains.shared.prod}/${communityId}/browse-applications?programId=${programId}`;
+      : `${fundingPlatformDomains.shared.prod}/${communityId}/browse-applications?programId=${programId}`
   }
-};
+}
 
 export function SettingsConfiguration({
   schema,
@@ -46,7 +40,7 @@ export function SettingsConfiguration({
   programId,
   readOnly = false,
 }: SettingsConfigurationProps) {
-  const { communityId } = useParams() as { communityId: string };
+  const { communityId } = useParams() as { communityId: string }
   const {
     register,
     watch,
@@ -58,43 +52,39 @@ export function SettingsConfiguration({
       privateApplications: schema.settings?.privateApplications ?? true,
       applicationDeadline: schema.settings?.applicationDeadline ?? "",
       donationRound: schema.settings?.donationRound ?? false,
-      successPageContent: schema.settings?.successPageContent ?? '',
-      showCommentsOnPublicPage:
-        schema.settings?.showCommentsOnPublicPage ?? false,
+      successPageContent: schema.settings?.successPageContent ?? "",
+      showCommentsOnPublicPage: schema.settings?.showCommentsOnPublicPage ?? false,
     },
-  });
+  })
 
   // Watch for changes and auto-update
   useEffect(() => {
-    if (readOnly || !onUpdate) return; // Don't update in read-only mode
+    if (readOnly || !onUpdate) return // Don't update in read-only mode
 
     const subscription = watch((data) => {
       const updatedSchema: FormSchema = {
         ...schema,
         settings: {
           ...schema.settings,
-          submitButtonText:
-            schema.settings?.submitButtonText || "Submit Application",
+          submitButtonText: schema.settings?.submitButtonText || "Submit Application",
           confirmationMessage:
-            schema.settings?.confirmationMessage ||
-            "Thank you for your submission!",
+            schema.settings?.confirmationMessage || "Thank you for your submission!",
           privateApplications: data.privateApplications ?? true,
           applicationDeadline: data.applicationDeadline,
           donationRound: data.donationRound ?? false,
           successPageContent: data.successPageContent,
           showCommentsOnPublicPage: data.showCommentsOnPublicPage ?? false,
         },
-      };
+      }
 
-      onUpdate(updatedSchema);
-    });
+      onUpdate(updatedSchema)
+    })
 
-    return () => subscription.unsubscribe();
-  }, [watch, onUpdate, schema]);
+    return () => subscription.unsubscribe()
+  }, [watch, onUpdate, schema])
 
-  const privateApplicationsValue = watch("privateApplications");
-  const privateFieldsCount =
-    schema.fields?.filter((field) => field.private).length || 0;
+  const privateApplicationsValue = watch("privateApplications")
+  const privateFieldsCount = schema.fields?.filter((field) => field.private).length || 0
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -108,10 +98,7 @@ export function SettingsConfiguration({
             <div className="flex flex-row items-center space-x-2">
               <ExternalLink
                 className="underline text-blue-500"
-                href={getApplyUrlByCommunityId(
-                  communityId,
-                  programId as string
-                )}
+                href={getApplyUrlByCommunityId(communityId, programId as string)}
               >
                 Browse All Applications
               </ExternalLink>
@@ -139,8 +126,8 @@ export function SettingsConfiguration({
               className={`w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-zinc-700 dark:text-white ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
             />
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Set a deadline for when applications will no longer be accepted.
-              Leave empty for no deadline.
+              Set a deadline for when applications will no longer be accepted. Leave empty for no
+              deadline.
             </p>
           </div>
 
@@ -162,28 +149,29 @@ export function SettingsConfiguration({
                   Donation Round
                 </label>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Enable this if this program is a donation round where users
-                  can contribute funds.
+                  Enable this if this program is a donation round where users can contribute funds.
                 </p>
               </div>
             </div>
           </div>
 
-
           <hr className="my-4" />
 
           {/* Success Page Content */}
           <div className="space-y-2">
-            <label htmlFor="successPageContent" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label
+              htmlFor="successPageContent"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
               Success Page Content
             </label>
-            <div className={readOnly ? 'opacity-50 pointer-events-none' : ''}>
+            <div className={readOnly ? "opacity-50 pointer-events-none" : ""}>
               <MarkdownEditor
-                value={watch('successPageContent') || ''}
+                value={watch("successPageContent") || ""}
                 onChange={(newValue: string) => {
-                  setValue('successPageContent', newValue || '', {
+                  setValue("successPageContent", newValue || "", {
                     shouldValidate: true,
-                  });
+                  })
                 }}
                 placeholderText="**Review Process:** Your application will be carefully reviewed by the Grants Council.
 
@@ -195,7 +183,6 @@ export function SettingsConfiguration({
                 disabled={readOnly}
               />
             </div>
-
           </div>
         </div>
 
@@ -220,8 +207,8 @@ export function SettingsConfiguration({
                   Show comments on public page
                 </label>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Enable this to display comments on public application pages.
-                  By default, comments are hidden from public view.
+                  Enable this to display comments on public application pages. By default, comments
+                  are hidden from public view.
                 </p>
               </div>
             </div>
@@ -243,9 +230,8 @@ export function SettingsConfiguration({
                   Private Applications
                 </label>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  When enabled, all application data will be hidden from public
-                  view. Only program administrators and applicants can see
-                  applications.
+                  When enabled, all application data will be hidden from public view. Only program
+                  administrators and applicants can see applications.
                 </p>
               </div>
             </div>
@@ -266,10 +252,9 @@ export function SettingsConfiguration({
                     />
                   </svg>
                   <div className="text-xs text-amber-800 dark:text-amber-300">
-                    <strong>Note:</strong> You have {privateFieldsCount} private
-                    field{privateFieldsCount !== 1 ? "s" : ""} in your form.
-                    These will be filtered from public responses even with
-                    public applications enabled.
+                    <strong>Note:</strong> You have {privateFieldsCount} private field
+                    {privateFieldsCount !== 1 ? "s" : ""} in your form. These will be filtered from
+                    public responses even with public applications enabled.
                   </div>
                 </div>
               </div>
@@ -291,9 +276,9 @@ export function SettingsConfiguration({
                     />
                   </svg>
                   <div className="text-xs text-blue-800 dark:text-blue-300">
-                    <strong>Private mode:</strong> Public API requests will
-                    return a privacy message instead of application data. Only
-                    authenticated administrators can access application details.
+                    <strong>Private mode:</strong> Public API requests will return a privacy message
+                    instead of application data. Only authenticated administrators can access
+                    application details.
                   </div>
                 </div>
               </div>
@@ -307,31 +292,23 @@ export function SettingsConfiguration({
             </h4>
             <dl className="text-xs space-y-2">
               <div className="flex justify-between">
-                <dt className="text-gray-600 dark:text-gray-400">
-                  Application Visibility:
-                </dt>
+                <dt className="text-gray-600 dark:text-gray-400">Application Visibility:</dt>
                 <dd className="text-gray-900 dark:text-white font-medium">
                   {privateApplicationsValue ? "Private" : "Public"}
                 </dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-gray-600 dark:text-gray-400">
-                  Private Fields:
-                </dt>
+                <dt className="text-gray-600 dark:text-gray-400">Private Fields:</dt>
                 <dd className="text-gray-900 dark:text-white font-medium">
                   {privateFieldsCount} field
                   {privateFieldsCount !== 1 ? "s" : ""}
                 </dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-gray-600 dark:text-gray-400">
-                  Public Fields:
-                </dt>
+                <dt className="text-gray-600 dark:text-gray-400">Public Fields:</dt>
                 <dd className="text-gray-900 dark:text-white font-medium">
                   {(schema.fields?.length || 0) - privateFieldsCount} field
-                  {(schema.fields?.length || 0) - privateFieldsCount !== 1
-                    ? "s"
-                    : ""}
+                  {(schema.fields?.length || 0) - privateFieldsCount !== 1 ? "s" : ""}
                 </dd>
               </div>
             </dl>
@@ -340,17 +317,15 @@ export function SettingsConfiguration({
           {/* Help Text */}
           <div className="text-xs text-gray-500 dark:text-gray-400">
             <p className="mb-2">
-              <strong>Private Applications:</strong> Hide all application data
-              from public view
+              <strong>Private Applications:</strong> Hide all application data from public view
             </p>
             <p>
-              <strong>Private Fields:</strong> Individual fields marked as
-              private are filtered from public responses (configure per field in
-              the form builder)
+              <strong>Private Fields:</strong> Individual fields marked as private are filtered from
+              public responses (configure per field in the form builder)
             </p>
           </div>
         </div>
       </div>
     </div>
-  );
+  )
 }

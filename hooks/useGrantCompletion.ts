@@ -1,26 +1,25 @@
-import { useState } from "react";
-import { useAccount } from "wagmi";
-import { useWallet } from "@/hooks/useWallet";
-import { useStepper } from "@/store/modals/txStepper";
-import toast from "react-hot-toast";
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { MESSAGES } from "@/utilities/messages";
-import { sanitizeObject } from "@/utilities/sanitize";
-
+import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
+import { useState } from "react"
+import toast from "react-hot-toast"
+import { useAccount } from "wagmi"
+import { errorManager } from "@/components/Utilities/errorManager"
+import { useWallet } from "@/hooks/useWallet"
+import { useStepper } from "@/store/modals/txStepper"
+import { pollForGrantCompletion } from "@/utilities/attestation-polling"
 // Import the utilities we created
-import { setupChainAndWallet } from "@/utilities/chain-wallet-setup";
-import { fetchGrantInstance } from "@/utilities/grant-helpers";
-import { notifyIndexerForGrant } from "@/utilities/indexer-notification";
-import { pollForGrantCompletion } from "@/utilities/attestation-polling";
+import { setupChainAndWallet } from "@/utilities/chain-wallet-setup"
+import { fetchGrantInstance } from "@/utilities/grant-helpers"
+import { notifyIndexerForGrant } from "@/utilities/indexer-notification"
+import { MESSAGES } from "@/utilities/messages"
+import { sanitizeObject } from "@/utilities/sanitize"
 
 interface UseGrantCompletionParams {
-  onComplete?: () => void;
+  onComplete?: () => void
 }
 
 interface UseGrantCompletionReturn {
-  completeGrant: (grant: IGrantResponse, project: { uid: string }) => Promise<void>;
-  isCompleting: boolean;
+  completeGrant: (grant: IGrantResponse, project: { uid: string }) => Promise<void>
+  isCompleting: boolean
 }
 
 /**
@@ -48,93 +47,93 @@ interface UseGrantCompletionReturn {
 export const useGrantCompletion = ({
   onComplete,
 }: UseGrantCompletionParams): UseGrantCompletionReturn => {
-  const [isCompleting, setIsCompleting] = useState(false);
-  const { chain, address } = useAccount();
-  const { switchChainAsync } = useWallet();
-  const { changeStepperStep, setIsStepper } = useStepper();
+  const [isCompleting, setIsCompleting] = useState(false)
+  const { chain, address } = useAccount()
+  const { switchChainAsync } = useWallet()
+  const { changeStepperStep, setIsStepper } = useStepper()
 
   const completeGrant = async (grant: IGrantResponse, project: { uid: string }) => {
     if (!address || !project || !grant) {
-      toast.error("Please connect your wallet");
-      return;
+      toast.error("Please connect your wallet")
+      return
     }
 
-    setIsCompleting(true);
-    setIsStepper(true);
+    setIsCompleting(true)
+    setIsStepper(true)
 
     try {
-      changeStepperStep("preparing");
+      changeStepperStep("preparing")
 
       // Step 1: Setup chain and wallet (using utility)
       const setup = await setupChainAndWallet({
         targetChainId: grant.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
-      });
+      })
 
       if (!setup) {
-        toast.error("Please switch to the correct network and try again");
-        return;
+        toast.error("Please switch to the correct network and try again")
+        return
       }
 
-      const { gapClient, walletSigner } = setup;
+      const { gapClient, walletSigner } = setup
 
       // Step 2: Fetch grant instance (using utility)
       const grantInstance = await fetchGrantInstance({
         gapClient,
         projectUid: project.uid,
         grantUid: grant.uid,
-      });
+      })
 
       // Step 3: Execute grant completion
       const sanitizedGrantComplete = sanitizeObject({
         title: "",
         text: "",
-      });
+      })
 
       const result = await grantInstance.complete(
         walletSigner,
         sanitizedGrantComplete,
         changeStepperStep
-      );
+      )
 
-      changeStepperStep("indexing");
+      changeStepperStep("indexing")
 
       // Step 4: Notify indexer (using utility)
-      const txHash = result?.tx[0]?.hash ?? undefined;
-      await notifyIndexerForGrant(txHash, grant.chainID, project.uid);
+      const txHash = result?.tx[0]?.hash ?? undefined
+      await notifyIndexerForGrant(txHash, grant.chainID, project.uid)
 
       // Step 5: Poll for completion (using utility)
       await pollForGrantCompletion({
         gapClient,
         projectUid: project.uid,
         grantUid: grant.uid,
-      });
+      })
 
-      changeStepperStep("indexed");
-      toast.success(MESSAGES.GRANT.MARK_AS_COMPLETE.SUCCESS);
-      onComplete?.();
+      changeStepperStep("indexed")
+      toast.success(MESSAGES.GRANT.MARK_AS_COMPLETE.SUCCESS)
+      onComplete?.()
     } catch (error: any) {
-      console.error("Error completing grant:", error);
+      console.error("Error completing grant:", error)
 
       // User cancelled
       if (error?.message?.includes("User rejected") || error?.code === 4001) {
-        toast.error("Grant completion cancelled");
+        toast.error("Grant completion cancelled")
       } else {
-        toast.error(MESSAGES.GRANT.MARK_AS_COMPLETE.ERROR);
+        toast.error(MESSAGES.GRANT.MARK_AS_COMPLETE.ERROR)
         errorManager("Error completing grant", error, {
           grantUID: grant.uid,
           address,
-        });
+        })
       }
     } finally {
-      setIsCompleting(false);
-      setIsStepper(false);
+      setIsCompleting(false)
+      setIsStepper(false)
     }
-  };
+  }
 
   return {
     completeGrant,
     isCompleting,
-  };
-};
+  }
+}

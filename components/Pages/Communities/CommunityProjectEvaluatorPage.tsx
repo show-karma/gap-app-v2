@@ -1,27 +1,30 @@
-"use client";
+"use client"
 
-import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { ChevronRightIcon, PaperAirplaneIcon } from "@heroicons/react/24/solid";
-import { INDEXER } from "@/utilities/indexer";
-import fetchData from "@/utilities/fetchData";
-import { useChat } from "./useChat";
-import React from "react";
-import { envVars } from "@/utilities/enviromentVars";
-import Image from "next/image";
-import { SearchDropdown } from "../ProgramRegistry/SearchDropdown";
-import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/solid";
-import { cn } from "@/utilities/tailwind";
-import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
-import { formatDate } from "@/utilities/formatDate";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { PAGES } from "@/utilities/pages";
-import pluralize from "pluralize";
-import { ShareIcon } from "@heroicons/react/24/outline";
-import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
-import { PROJECT_NAME } from "@/constants/brand";
+import { ShareIcon } from "@heroicons/react/24/outline"
+import {
+  ChevronRightIcon,
+  MagnifyingGlassIcon,
+  PaperAirplaneIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/solid"
+import Image from "next/image"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
+import pluralize from "pluralize"
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar"
+import { ExternalLink } from "@/components/Utilities/ExternalLink"
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview"
+import { ProfilePicture } from "@/components/Utilities/ProfilePicture"
+import { PROJECT_NAME } from "@/constants/brand"
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
+import { envVars } from "@/utilities/enviromentVars"
+import fetchData from "@/utilities/fetchData"
+import { formatDate } from "@/utilities/formatDate"
+import { INDEXER } from "@/utilities/indexer"
+import { PAGES } from "@/utilities/pages"
+import { cn } from "@/utilities/tailwind"
+import { SearchDropdown } from "../ProgramRegistry/SearchDropdown"
+import { useChat } from "./useChat"
 
 const sanitizeMarkdown = (text: string) => {
   return (
@@ -51,73 +54,73 @@ const sanitizeMarkdown = (text: string) => {
       // Remove extra whitespace
       .replace(/\s+/g, " ")
       .trim()
-  );
-};
+  )
+}
 
 interface Program {
-  programId: string;
-  name: string;
-  chainID: string;
+  programId: string
+  name: string
+  chainID: string
 }
 
 interface ProjectMilestone {
-  description: string;
-  title: string;
-  endsAt: string;
-  startsAt: string;
+  description: string
+  title: string
+  endsAt: string
+  startsAt: string
   status: {
-    approved: boolean;
-    completed: boolean;
-    rejected: boolean;
-  };
+    approved: boolean
+    completed: boolean
+    rejected: boolean
+  }
 }
 
 interface ProjectProgram {
-  programId: string;
-  name: string;
-  description: string;
+  programId: string
+  name: string
+  description: string
 }
 
 interface ProjectUpdate {
-  title: string;
-  text: string;
-  type: string;
+  title: string
+  text: string
+  type: string
 }
 
 interface ProjectDetails {
-  uid: string;
+  uid: string
   data: {
-    title: string;
-    description?: string;
-    problem: string;
-    missionSummary: string;
-    locationOfImpact: string;
-    imageURL: string;
-    links: any; // Define specific type if known
-    slug: string;
-    tags: string[];
-    businessModel: string;
-    stageInLife: string;
-    raisedMoney: string;
-    createdAt: string;
-  };
+    title: string
+    description?: string
+    problem: string
+    missionSummary: string
+    locationOfImpact: string
+    imageURL: string
+    links: any // Define specific type if known
+    slug: string
+    tags: string[]
+    businessModel: string
+    stageInLife: string
+    raisedMoney: string
+    createdAt: string
+  }
 }
 
 interface ProjectInProgram {
-  projectUID: string;
-  grantUID: string;
-  milestone_count: number;
-  milestones: ProjectMilestone[];
-  program: ProjectProgram[];
-  updates: ProjectUpdate[];
-  projectDetails: ProjectDetails;
-  project_categories: string[];
-  impacts: any; // Define specific type if known
-  external: any; // Define specific type if known
+  projectUID: string
+  grantUID: string
+  milestone_count: number
+  milestones: ProjectMilestone[]
+  program: ProjectProgram[]
+  updates: ProjectUpdate[]
+  projectDetails: ProjectDetails
+  project_categories: string[]
+  impacts: any // Define specific type if known
+  external: any // Define specific type if known
 }
 
 // Update the Project interface to use the new type
-export type Project = ProjectInProgram;
+export type Project = ProjectInProgram
 
 const cardColors = [
   "#5FE9D0",
@@ -130,7 +133,7 @@ const cardColors = [
   "#EE46BC",
   "#EEAAFD",
   "#67E3F9",
-] as const;
+] as const
 
 function MessageSkeleton() {
   return (
@@ -157,7 +160,7 @@ function MessageSkeleton() {
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 function ChatInput({
@@ -169,13 +172,13 @@ function ChatInput({
   className = "",
   isLoadingProjects = false,
 }: {
-  input: string;
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleSubmit: (e: React.FormEvent) => void;
-  isLoadingChat: boolean;
-  placeholder?: string;
-  className?: string;
-  isLoadingProjects?: boolean;
+  input: string
+  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  handleSubmit: (e: React.FormEvent) => void
+  isLoadingChat: boolean
+  placeholder?: string
+  className?: string
+  isLoadingProjects?: boolean
 }) {
   return (
     <form
@@ -203,7 +206,7 @@ function ChatInput({
         <PaperAirplaneIcon className="h-5 w-5" aria-hidden="true" />
       </button>
     </form>
-  );
+  )
 }
 
 function SuggestionsBlock({
@@ -213,45 +216,41 @@ function SuggestionsBlock({
   chatHook,
   isLoadingProjects,
 }: {
-  projects: Project[];
-  selectedProgram: Program;
-  onClose: () => void;
-  chatHook: ReturnType<typeof useChat>;
-  isLoadingProjects: boolean;
+  projects: Project[]
+  selectedProgram: Program
+  onClose: () => void
+  chatHook: ReturnType<typeof useChat>
+  isLoadingProjects: boolean
 }) {
-  const {
-    input,
-    handleInputChange,
-    handleSubmit,
-    isLoading: isLoadingChat,
-  } = chatHook;
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const { input, handleInputChange, handleSubmit, isLoading: isLoadingChat } = chatHook
+  const router = useRouter()
+  const searchParams = useSearchParams()
 
   const handleClose = () => {
     // Remove programId from URL
-    const newSearchParams = new URLSearchParams(searchParams);
-    newSearchParams.delete("programId");
+    const newSearchParams = new URLSearchParams(searchParams)
+    newSearchParams.delete("programId")
     router.push(
-      `${window.location.pathname}${newSearchParams.toString() ? `?${newSearchParams.toString()}` : ""
+      `${window.location.pathname}${
+        newSearchParams.toString() ? `?${newSearchParams.toString()}` : ""
       }`
-    );
+    )
 
-    onClose();
-  };
+    onClose()
+  }
 
   const handleSuggestionClick = (suggestion: string) => {
-    if (isLoadingProjects) return;
+    if (isLoadingProjects) return
 
     const fakeEvent = {
       target: { value: suggestion },
-      preventDefault: () => { },
-    };
-    handleInputChange(fakeEvent as any);
+      preventDefault: () => {},
+    }
+    handleInputChange(fakeEvent as any)
     setTimeout(() => {
-      handleSubmit(new Event("submit") as any);
-    }, 0);
-  };
+      handleSubmit(new Event("submit") as any)
+    }, 0)
+  }
 
   const suggestions = [
     {
@@ -267,8 +266,7 @@ function SuggestionsBlock({
       description: "Track project metrics and measure impact",
       bgColor: "bg-purple-50",
       hoverColor: "hover:bg-purple-100",
-      query:
-        "Can you analyze the performance metrics and impact of these projects?",
+      query: "Can you analyze the performance metrics and impact of these projects?",
     },
     {
       title: "Milestone Tracking",
@@ -277,19 +275,14 @@ function SuggestionsBlock({
       hoverColor: "hover:bg-teal-100",
       query: "Can you show me the milestone progress for all projects?",
     },
-  ];
+  ]
 
   return (
     <div className="max-w-3xl mx-auto w-full border border-gray-200 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900 shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between py-4 px-6 border-b border-gray-200 dark:border-zinc-600">
         <div className="flex items-center gap-4">
-          <Image
-            src="/logo/logo-dark.png"
-            width={32}
-            height={32}
-            alt={`${PROJECT_NAME} Logo`}
-          />
+          <Image src="/logo/logo-dark.png" width={32} height={32} alt={`${PROJECT_NAME} Logo`} />
           <span className="text-lg font-semibold text-gray-900 dark:text-white">
             {selectedProgram.name}
           </span>
@@ -319,9 +312,7 @@ function SuggestionsBlock({
               role="button"
               tabIndex={isLoadingProjects ? -1 : 0}
               onKeyDown={(e) =>
-                !isLoadingProjects &&
-                e.key === "Enter" &&
-                handleSuggestionClick(suggestion.query)
+                !isLoadingProjects && e.key === "Enter" && handleSuggestionClick(suggestion.query)
               }
               aria-label={suggestion.title}
               aria-disabled={isLoadingProjects}
@@ -329,9 +320,7 @@ function SuggestionsBlock({
               <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
                 {suggestion.title}
               </h3>
-              <p className="text-sm text-gray-600 dark:text-zinc-400">
-                {suggestion.description}
-              </p>
+              <p className="text-sm text-gray-600 dark:text-zinc-400">{suggestion.description}</p>
             </div>
           ))}
         </div>
@@ -355,20 +344,20 @@ function SuggestionsBlock({
         </div>
       )}
     </div>
-  );
+  )
 }
 
 interface ChatMessageProps {
   message: {
-    id: string;
-    role: "user" | "assistant" | "tool" | "system";
-    content: string;
-    timestamp?: string;
-    sender?: string;
-  };
-  isLastAssistantMessage: boolean;
-  isLastUserMessage: boolean;
-  isLastInSequence: boolean;
+    id: string
+    role: "user" | "assistant" | "tool" | "system"
+    content: string
+    timestamp?: string
+    sender?: string
+  }
+  isLastAssistantMessage: boolean
+  isLastUserMessage: boolean
+  isLastInSequence: boolean
 }
 
 const ChatMessage = React.memo(
@@ -380,8 +369,7 @@ const ChatMessage = React.memo(
   }: ChatMessageProps) => {
     return (
       <div
-        className={`flex flex-col w-full ${m.role === "assistant" ? "items-start" : "items-end"
-          }`}
+        className={`flex flex-col w-full ${m.role === "assistant" ? "items-start" : "items-end"}`}
       >
         <div
           className={cn(
@@ -391,10 +379,9 @@ const ChatMessage = React.memo(
         >
           <div className="w-max max-w-full flex-col flex">
             <div
-              className={` p-3  rounded-xl ${m.role === "assistant"
-                ? "bg-[#EEF4FF] text-gray-900 "
-                : "bg-indigo-500 text-white"
-                }`}
+              className={` p-3  rounded-xl ${
+                m.role === "assistant" ? "bg-[#EEF4FF] text-gray-900 " : "bg-indigo-500 text-white"
+              }`}
               style={{
                 borderBottomLeftRadius: m.role === "assistant" ? "0px" : "8px",
                 borderBottomRightRadius: m.role === "assistant" ? "8px" : "0px",
@@ -457,19 +444,15 @@ const ChatMessage = React.memo(
           </div>
         </div>
       </div>
-    );
+    )
   }
-);
+)
 
-ChatMessage.displayName = "ChatMessage";
+ChatMessage.displayName = "ChatMessage"
 
 const DateSeparator = ({ firstMessageDate }: { firstMessageDate: Date }) => {
-  const formattedDate = formatDate(
-    firstMessageDate.toISOString(),
-    "local",
-    "DDD, MMM DD"
-  );
-  const [dayName, restOfDate] = formattedDate.split(",");
+  const formattedDate = formatDate(firstMessageDate.toISOString(), "local", "DDD, MMM DD")
+  const [dayName, restOfDate] = formattedDate.split(",")
 
   return (
     <div className="flex items-center justify-center my-4">
@@ -479,17 +462,17 @@ const DateSeparator = ({ firstMessageDate }: { firstMessageDate: Date }) => {
         </p>
       </div>
     </div>
-  );
-};
+  )
+}
 
 function ChatWithKarmaCoPilot({
   projects,
   chatHook,
   isLoadingProjects,
 }: {
-  projects: any[];
-  chatHook: ReturnType<typeof useChat>;
-  isLoadingProjects: boolean;
+  projects: any[]
+  chatHook: ReturnType<typeof useChat>
+  isLoadingProjects: boolean
 }) {
   const {
     messages,
@@ -498,91 +481,83 @@ function ChatWithKarmaCoPilot({
     handleSubmit,
     isLoading: isLoadingChat,
     isStreaming,
-  } = chatHook;
+  } = chatHook
 
-  const messageContainerRef = useRef<HTMLDivElement>(null);
+  const messageContainerRef = useRef<HTMLDivElement>(null)
 
   // Scroll to bottom whenever messages change or when streaming
   useEffect(() => {
     if (messageContainerRef.current) {
-      messageContainerRef.current.scrollTop =
-        messageContainerRef.current.scrollHeight;
+      messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight
     }
-  }, [messages, isStreaming, input]); // Added input to dependencies
+  }, [messages, isStreaming, input]) // Added input to dependencies
 
   // Modified handleInputChange to include scrolling
   const handleLocalInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    handleInputChange(e);
+    handleInputChange(e)
     // Scroll after a short delay to ensure the DOM has updated
     setTimeout(() => {
       if (messageContainerRef.current) {
-        messageContainerRef.current.scrollTop =
-          messageContainerRef.current.scrollHeight;
+        messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight
       }
-    }, 0);
-  };
+    }, 0)
+  }
 
-  const hasMessages = messages.length > 0;
+  const hasMessages = messages.length > 0
 
   // Find the last assistant message
   const lastAssistantMessageId = useMemo(() => {
-    const assistantMessages = messages.filter(
-      (m) => m.role === "assistant" && m.content
-    );
-    return assistantMessages[assistantMessages.length - 1]?.id;
-  }, [messages]);
+    const assistantMessages = messages.filter((m) => m.role === "assistant" && m.content)
+    return assistantMessages[assistantMessages.length - 1]?.id
+  }, [messages])
 
   // Find the last user message
   const lastUserMessageId = useMemo(() => {
-    const userMessages = messages.filter((m) => m.role === "user" && m.content);
-    return userMessages[userMessages.length - 1]?.id;
-  }, [messages]);
+    const userMessages = messages.filter((m) => m.role === "user" && m.content)
+    return userMessages[userMessages.length - 1]?.id
+  }, [messages])
 
   // Group messages by date
   const groupedMessages = useMemo(() => {
     const filteredMessages = messages.filter(
       (m) => (m.role === "user" || m.role === "assistant") && m.content
-    );
+    )
 
     const groups: {
-      [key: string]: { messages: typeof messages; firstMessageDate: Date };
-    } = {};
+      [key: string]: { messages: typeof messages; firstMessageDate: Date }
+    } = {}
 
     filteredMessages.forEach((message) => {
       if (message.timestamp) {
-        const date = new Date(message.timestamp);
-        const dateKey = date.toISOString().split("T")[0];
+        const date = new Date(message.timestamp)
+        const dateKey = date.toISOString().split("T")[0]
         if (!groups[dateKey]) {
           groups[dateKey] = {
             messages: [],
             firstMessageDate: date,
-          };
+          }
         }
-        groups[dateKey].messages.push(message);
+        groups[dateKey].messages.push(message)
       }
-    });
+    })
 
-    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
-  }, [messages]);
+    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b))
+  }, [messages])
 
   // Helper function to determine if a message is last in its sequence
-  const isLastInSequence = (
-    messages: typeof chatHook.messages,
-    index: number
-  ) => {
-    if (index === messages.length - 1) return true;
-    const currentMessage = messages[index];
-    const nextMessage = messages[index + 1];
-    return currentMessage.role !== nextMessage.role;
-  };
+  const isLastInSequence = (messages: typeof chatHook.messages, index: number) => {
+    if (index === messages.length - 1) return true
+    const currentMessage = messages[index]
+    const nextMessage = messages[index + 1]
+    return currentMessage.role !== nextMessage.role
+  }
 
   useEffect(() => {
     // Only scroll when streaming is complete and there are messages
     if (!isStreaming && messages.length > 0 && messageContainerRef.current) {
-      messageContainerRef.current.scrollTop =
-        messageContainerRef.current.scrollHeight;
+      messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight
     }
-  }, [messages, isStreaming]);
+  }, [messages, isStreaming])
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-zinc-800">
@@ -593,22 +568,15 @@ function ChatWithKarmaCoPilot({
         >
           {groupedMessages.map(([date, messagesInDay]) => (
             <div key={date}>
-              <DateSeparator
-                firstMessageDate={messagesInDay.firstMessageDate}
-              />
+              <DateSeparator firstMessageDate={messagesInDay.firstMessageDate} />
               <div className="space-y-4">
                 {messagesInDay.messages.map((message, index) => (
                   <ChatMessage
                     key={message.id}
                     message={message}
-                    isLastAssistantMessage={
-                      message.id === lastAssistantMessageId
-                    }
+                    isLastAssistantMessage={message.id === lastAssistantMessageId}
                     isLastUserMessage={message.id === lastUserMessageId}
-                    isLastInSequence={isLastInSequence(
-                      messagesInDay.messages,
-                      index
-                    )}
+                    isLastInSequence={isLastInSequence(messagesInDay.messages, index)}
                   />
                 ))}
               </div>
@@ -626,14 +594,13 @@ function ChatWithKarmaCoPilot({
           isLoadingChat={isLoadingChat}
           isLoadingProjects={isLoadingProjects}
           placeholder="Ask anything about the participating projects"
-          className={`${hasMessages ? "" : "max-w-3xl"} ${projects.length > 0
-            ? ""
-            : " opacity-50 cursor-not-allowed pointer-events-none"
-            }`}
+          className={`${hasMessages ? "" : "max-w-3xl"} ${
+            projects.length > 0 ? "" : " opacity-50 cursor-not-allowed pointer-events-none"
+          }`}
         />
       </div>
     </div>
-  );
+  )
 }
 
 function ProjectCardSkeleton() {
@@ -656,15 +623,15 @@ function ProjectCardSkeleton() {
         <div className="h-8 w-32 bg-gray-200 dark:bg-zinc-800 rounded-full animate-pulse" />
       </div>
     </div>
-  );
+  )
 }
 
 function ProjectCard({ project, index }: { project: Project; index: number }) {
   const pickColor = useCallback((index: number) => {
-    return cardColors[index % cardColors.length];
-  }, []);
+    return cardColors[index % cardColors.length]
+  }, [])
 
-  const cardColor = useMemo(() => pickColor(index), [pickColor, index]);
+  const cardColor = useMemo(() => pickColor(index), [pickColor, index])
 
   return (
     <ExternalLink
@@ -695,46 +662,39 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 
             <div className="flex flex-col gap-1 flex-1 h-[64px] w-full max-w-full">
               <div className="line-clamp-2 w-full break-normal text-sm font-normal text-black dark:text-zinc-100 max-2xl:text-sm">
-                {sanitizeMarkdown(
-                  project.projectDetails.data?.description?.slice(0, 200) || ""
-                )}
+                {sanitizeMarkdown(project.projectDetails.data?.description?.slice(0, 200) || "")}
               </div>
             </div>
           </div>
         </div>
         <div className="flex w-full flex-col gap-2">
           <div className="flex items-center justify-start gap-4 mt-2 flex-wrap">
-            {Array.from(new Set(project?.project_categories || [])).length >
-              0 && (
-                <div className="flex flex-wrap gap-2">
-                  {Array.from(new Set(project?.project_categories || [])).map(
-                    (category, i) => (
-                      <div
-                        key={i}
-                        className="flex h-max items-center justify-start rounded-full bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2"
-                      >
-                        <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
-                          {category}
-                        </p>
-                      </div>
-                    )
-                  )}
-                </div>
-              )}
+            {Array.from(new Set(project?.project_categories || [])).length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {Array.from(new Set(project?.project_categories || [])).map((category, i) => (
+                  <div
+                    key={i}
+                    className="flex h-max items-center justify-start rounded-full bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2"
+                  >
+                    <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
+                      {category}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {project.updates.length > 0 && (
               <div className="flex h-max items-center justify-start rounded-full bg-teal-50 dark:bg-teal-700 text-teal-600 dark:text-teal-200 px-3 py-1 max-2xl:px-2">
                 <p className="text-center text-sm font-medium text-teal-600 dark:text-teal-100 max-2xl:text-[13px]">
-                  {project.updates.length || 0}{" "}
-                  {pluralize("Updates", project.updates.length || 0)}
+                  {project.updates.length || 0} {pluralize("Updates", project.updates.length || 0)}
                 </p>
               </div>
             )}
             {project.impacts?.length > 0 && (
               <div className="flex h-max w-max items-center justify-start rounded-full bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">
                 <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
-                  {project.impacts.length || 0}{" "}
-                  {pluralize("Impacts", project.impacts.length || 0)}
+                  {project.impacts.length || 0} {pluralize("Impacts", project.impacts.length || 0)}
                 </p>
               </div>
             )}
@@ -758,22 +718,18 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
         </button>
       </div>
     </ExternalLink>
-  );
+  )
 }
 
-const MemoizedProjectCard = React.memo(ProjectCard);
+const MemoizedProjectCard = React.memo(ProjectCard)
 
 interface ProjectsSidebarProps {
-  projects: Project[];
-  isLoadingProjects: boolean;
-  programName: string;
+  projects: Project[]
+  isLoadingProjects: boolean
+  programName: string
 }
 
-function ProjectsSidebar({
-  projects,
-  isLoadingProjects,
-  programName,
-}: ProjectsSidebarProps) {
+function ProjectsSidebar({ projects, isLoadingProjects, programName }: ProjectsSidebarProps) {
   return (
     <div className="w-1/4 max-md:w-full max-md:h-1/2 overflow-y-auto bg-gray-50 dark:bg-zinc-900 divide-y divide-gray-200 dark:divide-zinc-600">
       <h2 className="text-zinc-800 text-sm font-bold dark:text-white px-3 py-4">
@@ -785,15 +741,11 @@ function ProjectsSidebar({
         </div>
       ) : (
         projects.map((project, index) => (
-          <MemoizedProjectCard
-            key={project.projectUID}
-            project={project}
-            index={index}
-          />
+          <MemoizedProjectCard key={project.projectUID} project={project} index={index} />
         ))
       )}
     </div>
-  );
+  )
 }
 
 function ChatScreen({
@@ -802,13 +754,13 @@ function ChatScreen({
   selectedProgram,
   setSelectedProgram,
 }: {
-  projects: Project[];
-  isLoadingProjects: boolean;
-  selectedProgram: Program;
-  setSelectedProgram: (program: Program | null) => void;
+  projects: Project[]
+  isLoadingProjects: boolean
+  selectedProgram: Program
+  setSelectedProgram: (program: Program | null) => void
 }) {
-  const [, copy] = useCopyToClipboard();
-  const chatScreenRef = useRef<HTMLDivElement>(null);
+  const [, copy] = useCopyToClipboard()
+  const chatScreenRef = useRef<HTMLDivElement>(null)
   const chatHook = useChat({
     body: {
       projects: projects,
@@ -820,7 +772,7 @@ function ChatScreen({
       chainId: selectedProgram.chainID.toString(),
       communityId: useParams().communityId as string,
     },
-  });
+  })
 
   const {
     messages,
@@ -830,34 +782,31 @@ function ChatScreen({
     handleSubmit,
     isLoading: isLoadingChat,
     isStreaming,
-  } = chatHook;
+  } = chatHook
 
   const handleProjectClick = useCallback(
     (title: string) => {
       setInput((currentInput) => {
-        if (!currentInput) return title;
-        return `${currentInput.trim()} ${title}`;
-      });
+        if (!currentInput) return title
+        return `${currentInput.trim()} ${title}`
+      })
     },
     [setInput]
-  );
+  )
 
   const handleShare = () => {
-    copy(window.location.href, "Link copied to clipboard!");
-  };
+    copy(window.location.href, "Link copied to clipboard!")
+  }
 
   useEffect(() => {
     if (messages.length === 1) {
-      chatScreenRef.current?.scrollIntoView({ behavior: "smooth" });
+      chatScreenRef.current?.scrollIntoView({ behavior: "smooth" })
     }
-  }, [messages.length]);
+  }, [messages.length])
 
   if (messages.length === 0) {
     return (
-      <div
-        ref={chatScreenRef}
-        className="flex w-full h-full max-md:flex-col flex-row"
-      >
+      <div ref={chatScreenRef} className="flex w-full h-full max-md:flex-col flex-row">
         <ProjectsSidebar
           projects={projects}
           isLoadingProjects={isLoadingProjects}
@@ -874,15 +823,12 @@ function ChatScreen({
           />
         </div>
       </div>
-    );
+    )
   }
 
   return (
     <>
-      <div
-        ref={chatScreenRef}
-        className="flex w-full h-full max-md:flex-col flex-row"
-      >
+      <div ref={chatScreenRef} className="flex w-full h-full max-md:flex-col flex-row">
         <ProjectsSidebar
           projects={projects}
           isLoadingProjects={isLoadingProjects}
@@ -906,11 +852,7 @@ function ChatScreen({
                   </p>
                   <p className="text-gray-600 dark:text-zinc-400 text-sm font-normal">
                     {messages.length > 0 && messages[0].timestamp
-                      ? `Started ${formatDate(
-                        messages[0].timestamp,
-                        "local",
-                        "DDD, MMM DD"
-                      )}`
+                      ? `Started ${formatDate(messages[0].timestamp, "local", "DDD, MMM DD")}`
                       : "No messages yet"}
                   </p>
                 </div>
@@ -920,8 +862,7 @@ function ChatScreen({
                 className="flex flex-row rounded items-center h-max hover:opacity-80 justify-center gap-2 px-3 py-2 border border-brand-blue text-brand-blue bg-transparent"
                 aria-label="Share current page"
               >
-                Share{" "}
-                <ShareIcon className="w-5 h-5 min-h-5 min-w-5  max-h-5 max-w-5" />
+                Share <ShareIcon className="w-5 h-5 min-h-5 min-w-5  max-h-5 max-w-5" />
               </button>
             </div>
             <div className="w-full flex-1">
@@ -935,104 +876,90 @@ function ChatScreen({
         )}
       </div>
     </>
-  );
+  )
 }
 
 export const CommunityProjectEvaluatorPage = () => {
-  const params = useParams();
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const communityId = params.communityId as string;
-  const programId = searchParams.get("programId");
+  const params = useParams()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const communityId = params.communityId as string
+  const programId = searchParams.get("programId")
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingProjects, setIsLoadingProjects] = useState(false);
-  const [programs, setPrograms] = useState<Program[]>([]);
-  const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingProjects, setIsLoadingProjects] = useState(false)
+  const [programs, setPrograms] = useState<Program[]>([])
+  const [selectedProgram, setSelectedProgram] = useState<Program | null>(null)
+  const [projects, setProjects] = useState<Project[]>([])
 
   useEffect(() => {
     const fetchInitialData = async () => {
-      setIsLoading(true);
+      setIsLoading(true)
       try {
         const [[programsRes, programsError]] = await Promise.all([
           fetchData(INDEXER.COMMUNITY.PROGRAMS(communityId)),
-        ]);
+        ])
         if (programsError) {
-          console.error("Error fetching programs:", programsError);
+          console.error("Error fetching programs:", programsError)
         }
-        setPrograms(programsRes);
+        setPrograms(programsRes)
 
         // If we have a programId in the URL, find and select that program
         if (programId && programsRes) {
-          const program = programsRes.find(
-            (p: Program) => p.programId === programId
-          );
+          const program = programsRes.find((p: Program) => p.programId === programId)
           if (program) {
-            setSelectedProgram(program);
+            setSelectedProgram(program)
           }
         }
       } catch (error) {
-        console.error("Error fetching initial data:", error);
+        console.error("Error fetching initial data:", error)
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
-    };
-    fetchInitialData();
-  }, [communityId, programId]);
+    }
+    fetchInitialData()
+  }, [communityId, programId])
 
-  async function getProjectsByProgram(
-    programId: string,
-    chainId: number,
-    communityId: string
-  ) {
+  async function getProjectsByProgram(programId: string, chainId: number, communityId: string) {
     try {
-      setIsLoadingProjects(true);
+      setIsLoadingProjects(true)
       const [projects, error] = (await fetchData(
         INDEXER.PROJECTS.BY_PROGRAM(programId, chainId, communityId)
-      )) as [Project[], Error | null];
+      )) as [Project[], Error | null]
       if (error) {
-        console.error("Error fetching projects:", error);
-        return;
+        console.error("Error fetching projects:", error)
+        return
       }
 
-      setProjects(projects);
+      setProjects(projects)
     } catch (error) {
-      console.error("Error fetching projects:", error);
+      console.error("Error fetching projects:", error)
     } finally {
-      setIsLoadingProjects(false);
+      setIsLoadingProjects(false)
     }
   }
 
   useEffect(() => {
     if (selectedProgram) {
-      setProjects([]);
-      setIsLoading(true);
-      getProjectsByProgram(
-        selectedProgram.programId,
-        Number(selectedProgram.chainID),
-        communityId
-      );
-      setIsLoading(false);
+      setProjects([])
+      setIsLoading(true)
+      getProjectsByProgram(selectedProgram.programId, Number(selectedProgram.chainID), communityId)
+      setIsLoading(false)
     }
-  }, [selectedProgram, communityId]);
+  }, [selectedProgram, communityId])
 
   // Function to handle program selection
   const handleProgramSelect = (program: Program) => {
-    setSelectedProgram(program);
-    setProjects([]); // Clear previous projects
+    setSelectedProgram(program)
+    setProjects([]) // Clear previous projects
 
     // Update URL with the selected program ID
-    const newSearchParams = new URLSearchParams(searchParams);
-    newSearchParams.set("programId", program.programId);
-    router.push(`${window.location.pathname}?${newSearchParams.toString()}`);
+    const newSearchParams = new URLSearchParams(searchParams)
+    newSearchParams.set("programId", program.programId)
+    router.push(`${window.location.pathname}?${newSearchParams.toString()}`)
 
-    getProjectsByProgram(
-      program.programId,
-      Number(program.chainID),
-      communityId
-    );
-  };
+    getProjectsByProgram(program.programId, Number(program.chainID), communityId)
+  }
 
   return (
     <div className="flex flex-col w-full h-full min-h-screen">
@@ -1067,23 +994,13 @@ export const CommunityProjectEvaluatorPage = () => {
                   <div className="w-full flex flex-col justify-center items-center">
                     <SearchDropdown
                       onSelectFunction={(value) => {
-                        const program = programs.find(
-                          (p: Program) => p.name === value
-                        );
+                        const program = programs.find((p: Program) => p.name === value)
                         if (program) {
-                          handleProgramSelect(program);
+                          handleProgramSelect(program)
                         }
                       }}
-                      selected={
-                        selectedProgram
-                          ? [(selectedProgram as Program).name]
-                          : []
-                      }
-                      list={
-                        programs.length > 0
-                          ? programs.map((p: Program) => p.name)
-                          : []
-                      }
+                      selected={selectedProgram ? [(selectedProgram as Program).name] : []}
+                      list={programs.length > 0 ? programs.map((p: Program) => p.name) : []}
                       type="program"
                       prefixUnselected="Select a "
                       buttonClassname="w-full max-w-[684px]"
@@ -1120,5 +1037,5 @@ export const CommunityProjectEvaluatorPage = () => {
         </div>
       )}
     </div>
-  );
-};
+  )
+}

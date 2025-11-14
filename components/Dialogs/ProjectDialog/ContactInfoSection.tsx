@@ -1,33 +1,32 @@
-import{ zodResolver } from "@hookform/resolvers/zod";
-import { FC, useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import toast from "react-hot-toast";
-import { useProjectStore } from "@/store";
-import { APIContact, Contact } from "@/types/project";
-import { INDEXER } from "@/utilities/indexer";
-import fetchData from "@/utilities/fetchData";
-import { Button } from "@/components/Utilities/Button";
-import { Hex } from "viem";
-import Image from "next/image";
-import { TrashIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
-import { generateRandomString } from "@/utilities/generateRandomString";
+import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useMutation } from "@tanstack/react-query"
+import Image from "next/image"
+import { type FC, useState } from "react"
+import { useForm } from "react-hook-form"
+import toast from "react-hot-toast"
+import { Hex } from "viem"
+import { useAccount } from "wagmi"
+import { z } from "zod"
+import { Button } from "@/components/Utilities/Button"
+import { errorManager } from "@/components/Utilities/errorManager"
+import { useContactInfo } from "@/hooks/useContactInfo"
+import { useProjectStore } from "@/store"
+import { APIContact, type Contact } from "@/types/project"
+import fetchData from "@/utilities/fetchData"
+import { generateRandomString } from "@/utilities/generateRandomString"
+import { INDEXER } from "@/utilities/indexer"
 
-import { errorManager } from "@/components/Utilities/errorManager";
-import { useContactInfo } from "@/hooks/useContactInfo";
-import { useMutation } from "@tanstack/react-query";
-import { useAccount } from "wagmi";
-
-const labelStyle = "text-sm font-bold";
+const labelStyle = "text-sm font-bold"
 const inputStyle =
-  "mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white";
+  "mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
 
 interface ContactInfoSectionProps {
-  existingContacts?: Contact[];
-  contactInfo?: Contact;
-  isEditing: boolean;
-  addContact: (contact: Contact) => void;
-  removeContact: (contact: Contact) => void;
+  existingContacts?: Contact[]
+  contactInfo?: Contact
+  isEditing: boolean
+  addContact: (contact: Contact) => void
+  removeContact: (contact: Contact) => void
 }
 
 const EmptyContactBlock = () => {
@@ -58,15 +57,15 @@ const EmptyContactBlock = () => {
         </p>
       </div>
     </div>
-  );
-};
+  )
+}
 
 interface ContactBlockProps {
-  onSelectFunction: (value: string) => void;
-  contacts?: Contact[];
-  value: string;
-  deleteFunction: (value: string) => void;
-  newContact: () => void;
+  onSelectFunction: (value: string) => void
+  contacts?: Contact[]
+  value: string
+  deleteFunction: (value: string) => void
+  newContact: () => void
 }
 const ContactBlock: FC<ContactBlockProps> = ({
   contacts,
@@ -86,10 +85,7 @@ const ContactBlock: FC<ContactBlockProps> = ({
             key={contact.id}
             className="min-h-max h-max max-h-max p-4 bg-white dark:bg-zinc-600 rounded-xl justify-between items-end flex w-full flex-row gap-2"
             style={{
-              border:
-                value === contact.id
-                  ? "2px solid #155EEF"
-                  : "2px solid transparent",
+              border: value === contact.id ? "2px solid #155EEF" : "2px solid transparent",
             }}
           >
             <div className="flex-col justify-center items-start gap-1 flex">
@@ -104,7 +100,7 @@ const ContactBlock: FC<ContactBlockProps> = ({
               <button
                 type="button"
                 onClick={() => {
-                  onSelectFunction(contact.id);
+                  onSelectFunction(contact.id)
                 }}
               >
                 <PencilSquareIcon className="w-6 h-6 max-md:w-7 max-md:h-7 text-black dark:text-white" />
@@ -112,7 +108,7 @@ const ContactBlock: FC<ContactBlockProps> = ({
               <button
                 type="button"
                 onClick={() => {
-                  deleteFunction(contact.id);
+                  deleteFunction(contact.id)
                 }}
               >
                 <TrashIcon className="w-6 h-6 max-md:w-7 max-md:h-7 text-red-500" />
@@ -132,8 +128,8 @@ const ContactBlock: FC<ContactBlockProps> = ({
         Add Contact
       </button>
     </div>
-  );
-};
+  )
+}
 
 export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
   contactInfo,
@@ -142,16 +138,16 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
   addContact,
   removeContact,
 }) => {
-  const { address } = useAccount();
-  const [isLoading, setIsLoading] = useState(false);
-  const project = useProjectStore((state) => state.project);
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { address } = useAccount()
+  const [isLoading, setIsLoading] = useState(false)
+  const project = useProjectStore((state) => state.project)
+  const refreshProject = useProjectStore((state) => state.refreshProject)
   const dataToUpdate = {
     id: contactInfo?.id || "0",
     name: contactInfo?.name || "",
     email: contactInfo?.email || "",
     telegram: contactInfo?.telegram || "",
-  };
+  }
 
   const subscriptionShema = z
     .object({
@@ -169,21 +165,19 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
         .min(3, "E-mail must be at least 3 characters long"),
     })
     .superRefine((data, ctx) => {
-      const emailAlreadyExists = existingContacts?.find(
-        (contact) => contact.email === data.email
-      );
+      const emailAlreadyExists = existingContacts?.find((contact) => contact.email === data.email)
       if (emailAlreadyExists && emailAlreadyExists.id !== data.id) {
         ctx.addIssue({
           path: ["email"],
           code: "custom",
           message: "E-mail already exists in your list",
-        });
-        return false;
+        })
+        return false
       }
-      return true;
-    });
+      return true
+    })
 
-  type FormType = z.infer<typeof subscriptionShema>;
+  type FormType = z.infer<typeof subscriptionShema>
 
   const {
     register,
@@ -197,9 +191,9 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
     reValidateMode: "onChange",
     mode: "onChange",
     defaultValues: dataToUpdate,
-  });
+  })
 
-  const { refetch: refreshList } = useContactInfo(project?.uid, true);
+  const { refetch: refreshList } = useContactInfo(project?.uid, true)
 
   const clear = () => {
     reset(
@@ -215,21 +209,21 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
         keepTouched: false,
         keepIsValid: false,
       }
-    );
-  };
+    )
+  }
 
   const createContact = async () => {
-    setIsLoading(true);
+    setIsLoading(true)
     const data = {
       id: watch("id"),
       name: watch("name"),
       email: watch("email"),
       telegram: watch("telegram"),
-    };
+    }
     try {
       if (data.telegram.includes("@")) {
         // remove all @ from the string
-        data.telegram = data.telegram.replace(/@/g, "");
+        data.telegram = data.telegram.replace(/@/g, "")
       }
       if (!isEditing) {
         addContact({
@@ -237,21 +231,17 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
           name: data.name,
           email: data.email,
           telegram: data.telegram,
-        });
-        clear();
+        })
+        clear()
         toast.success("Contact info saved successfully", {
           className: "z-[9999]",
-        });
-        return;
+        })
+        return
       }
-      const idAlreadyExists = existingContacts?.find(
-        (contact) => contact.id === data.id
-      );
+      const idAlreadyExists = existingContacts?.find((contact) => contact.id === data.id)
       if (!idAlreadyExists) {
         await fetchData(
-          INDEXER.SUBSCRIPTION.CREATE(
-            project?.details?.data?.slug || (project?.uid as string)
-          ),
+          INDEXER.SUBSCRIPTION.CREATE(project?.details?.data?.slug || (project?.uid as string)),
           "POST",
           { contacts: [data] },
           {},
@@ -259,18 +249,18 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
           true
         ).then(([res, error]) => {
           if (!error) {
-            refreshList();
-            refreshProject();
-            clear();
+            refreshList()
+            refreshProject()
+            clear()
             toast.success("Contact info created successfully", {
               className: "z-[9999]",
-            });
+            })
           } else {
             toast.error("Something went wrong. Please try again later.", {
               className: "z-[9999]",
-            });
+            })
           }
-        });
+        })
       } else {
         await fetchData(
           INDEXER.SUBSCRIPTION.UPDATE(
@@ -284,14 +274,14 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
           true
         ).then(async ([res, error]) => {
           if (!error) {
-            toast.success("Contact info updated successfully");
-            clear();
-            refreshList();
-            refreshProject();
+            toast.success("Contact info updated successfully")
+            clear()
+            refreshList()
+            refreshProject()
           } else {
-            throw Error(error);
+            throw Error(error)
           }
-        });
+        })
       }
     } catch (error: any) {
       errorManager(
@@ -305,32 +295,27 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
         {
           error: "Failed to create contact.",
         }
-      );
+      )
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
-  const [isDeleteLoading, setIsDeleteLoading] = useState(false);
+  const [isDeleteLoading, setIsDeleteLoading] = useState(false)
 
   const deleteContact = async (contactId: string) => {
-    setIsDeleteLoading(true);
+    setIsDeleteLoading(true)
     try {
       if (!isEditing) {
-        removeContact(
-          existingContacts?.find((item) => item.id === contactId) ||
-          contactInfo!
-        );
-        clear();
+        removeContact(existingContacts?.find((item) => item.id === contactId) || contactInfo!)
+        clear()
         toast.success("Contact info deleted successfully", {
           className: "z-[9999]",
-        });
-        return;
+        })
+        return
       }
       await fetchData(
-        INDEXER.SUBSCRIPTION.DELETE(
-          project?.details?.data?.slug || (project?.uid as string)
-        ),
+        INDEXER.SUBSCRIPTION.DELETE(project?.details?.data?.slug || (project?.uid as string)),
         "DELETE",
         { contacts: [contactId] },
         {},
@@ -340,15 +325,16 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
         if (!error) {
           toast.success("Contact info deleted successfully", {
             className: "z-[9999]",
-          });
-          refreshList();
+          })
+          refreshList()
         } else {
-          throw Error(error);
+          throw Error(error)
         }
-      });
+      })
     } catch (error: any) {
       errorManager(
-        `Error deleting contact ${contactId} from project ${project?.details?.data?.slug || project?.uid
+        `Error deleting contact ${contactId} from project ${
+          project?.details?.data?.slug || project?.uid
         }`,
         error,
         {
@@ -359,38 +345,36 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
         {
           error: "Failed to delete contact.",
         }
-      );
-      console.log(error);
+      )
+      console.log(error)
     } finally {
-      setIsDeleteLoading(false);
+      setIsDeleteLoading(false)
     }
-  };
+  }
 
   const changeId = (value: string) => {
     setValue("id", value, {
       shouldValidate: true,
-    });
-    const contact = existingContacts?.find((contact) => contact.id === value);
+    })
+    const contact = existingContacts?.find((contact) => contact.id === value)
     setValue("name", contact?.name || "", {
       shouldValidate: contact ? true : false,
-    });
+    })
     setValue("email", contact?.email || "", {
       shouldValidate: contact ? true : false,
-    });
+    })
     setValue("telegram", contact?.telegram || "", {
       shouldValidate: contact ? true : false,
-    });
-  };
+    })
+  }
 
   return (
     <div className="rounded-md border border-transparent dark:bg-zinc-800  dark:border flex flex-col gap-4 items-start">
-      <h3 className="text-xl font-bold leading-6 text-gray-900 dark:text-zinc-100">
-        Contact Info
-      </h3>
+      <h3 className="text-xl font-bold leading-6 text-gray-900 dark:text-zinc-100">Contact Info</h3>
       <p className="text-zinc-600 dark:text-blue-100">
-        We promise to never spam you. We will send notifications to inform you
-        if your project qualifies for any grants (proactive or retroactive), and
-        provide reminders about milestones and grant deadlines.
+        We promise to never spam you. We will send notifications to inform you if your project
+        qualifies for any grants (proactive or retroactive), and provide reminders about milestones
+        and grant deadlines.
       </p>
 
       <div className="flex flex-row gap-8 w-full max-md:flex-col-reverse">
@@ -455,7 +439,7 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
               onSelectFunction={changeId}
               deleteFunction={deleteContact}
               newContact={() => {
-                clear();
+                clear()
               }}
             />
           ) : (
@@ -464,5 +448,5 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
         </div>
       </div>
     </div>
-  );
-};
+  )
+}

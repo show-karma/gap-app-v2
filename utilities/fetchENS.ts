@@ -1,7 +1,7 @@
-import { errorManager } from "@/components/Utilities/errorManager";
-import { createPublicClient, type Hex, http } from "viem";
-import { mainnet } from "viem/chains";
-import { retry } from "./retries";
+import { createPublicClient, type Hex, http } from "viem"
+import { mainnet } from "viem/chains"
+import { errorManager } from "@/components/Utilities/errorManager"
+import { retry } from "./retries"
 
 export const fetchENS = async (addresses: (Hex | string)[]) => {
   const alchemyTransport = http(
@@ -9,12 +9,12 @@ export const fetchENS = async (addresses: (Hex | string)[]) => {
     {
       batch: true,
     }
-  );
+  )
 
   const client = createPublicClient({
     chain: mainnet,
     transport: alchemyTransport,
-  });
+  })
 
   try {
     const calls = addresses.map(async (address) => {
@@ -24,35 +24,35 @@ export const fetchENS = async (addresses: (Hex | string)[]) => {
         1000, // initialDelay
         5000, // maxDelay
         2 // backoff factor
-      );
-      if (!name) return { name: undefined, address };
+      )
+      if (!name) return { name: undefined, address }
       const avatar = await retry(
         async () => await client.getEnsAvatar({ name }),
         5, // maxRetries
         1000, // initialDelay
         5000, // maxDelay
         1 // backoff factor
-      );
+      )
       return {
         name,
         address,
         avatar,
-      };
-    });
-    const names = await Promise.all(calls);
-    return names;
+      }
+    })
+    const names = await Promise.all(calls)
+    return names
   } catch (error: any) {
     errorManager(`Error in fetch ens names`, error, {
       addresses,
-    });
-    console.log(error);
+    })
+    console.log(error)
     return addresses.map((address) => ({
       name: undefined,
       address,
       avatar: undefined,
-    }));
+    }))
   }
-};
+}
 
 /**
  * Fetches Ethereum addresses from ENS names
@@ -65,12 +65,12 @@ export const fetchAddressFromENS = async (ensNames: string[]) => {
     {
       batch: true,
     }
-  );
+  )
 
   const client = createPublicClient({
     chain: mainnet,
     transport: alchemyTransport,
-  });
+  })
 
   try {
     const calls = ensNames.map(async (name) => {
@@ -80,24 +80,24 @@ export const fetchAddressFromENS = async (ensNames: string[]) => {
         1000, // initialDelay
         5000, // maxDelay
         2 // backoff factor
-      );
+      )
 
       return {
         name,
         address: address || undefined,
-      };
-    });
+      }
+    })
 
-    const addresses = await Promise.all(calls);
-    return addresses;
+    const addresses = await Promise.all(calls)
+    return addresses
   } catch (error: any) {
     errorManager(`Error in fetch addresses from ENS names`, error, {
       ensNames,
-    });
-    console.log(error);
+    })
+    console.log(error)
     return ensNames.map((name) => ({
       name,
       address: undefined,
-    }));
+    }))
   }
-};
+}

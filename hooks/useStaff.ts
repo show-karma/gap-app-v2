@@ -1,31 +1,31 @@
-import fetchData from "@/utilities/fetchData";
-import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
-import { useQuery } from "@tanstack/react-query";
-import { useAccount } from "wagmi";
-import { useAuth } from "./useAuth";
+import { useQuery } from "@tanstack/react-query"
+import { useAccount } from "wagmi"
+import fetchData from "@/utilities/fetchData"
+import { defaultQueryOptions } from "@/utilities/queries/defaultOptions"
+import { useAuth } from "./useAuth"
 
 export const useStaff = () => {
-  const { address } = useAccount();
-  const { authenticated: isAuth } = useAuth();
+  const { address } = useAccount()
+  const { authenticated: isAuth } = useAuth()
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["staffAuthorization", address, isAuth],
     queryFn: async () => {
-      if (!address || !isAuth) return { authorized: false };
+      if (!address || !isAuth) return { authorized: false }
 
-      const [data, error] = await fetchData("/auth/staff/authorized");
+      const [data, error] = await fetchData("/auth/staff/authorized")
 
       if (error) {
-        throw new Error(error || "Failed to check staff authorization");
+        throw new Error(error || "Failed to check staff authorization")
       }
 
-      return data;
+      return data
     },
     enabled: !!address && isAuth,
     ...defaultQueryOptions,
-  });
+  })
 
-  const isStaff = data?.authorized ?? false;
+  const isStaff = data?.authorized ?? false
 
-  return { isStaff, isLoading, error };
-};
+  return { isStaff, isLoading, error }
+}

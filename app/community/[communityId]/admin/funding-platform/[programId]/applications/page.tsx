@@ -1,132 +1,126 @@
-"use client";
-import { useParams, useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useMemo } from "react";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
-import { usePermissions } from "@/hooks/usePermissions";
-import { useOwnerStore } from "@/store";
-import { useStaff } from "@/hooks/useStaff";
-import { ApplicationListWithAPI } from "@/components/FundingPlatform";
-import { IFundingApplication } from "@/types/funding-platform";
-import { IApplicationFilters } from "@/services/fundingPlatformService";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { Button } from "@/components/Utilities/Button";
-import { ArrowLeftIcon } from "@heroicons/react/24/solid";
-import Link from "next/link";
-import { MESSAGES } from "@/utilities/messages";
-import { PAGES } from "@/utilities/pages";
-import { Cog6ToothIcon } from "@heroicons/react/24/outline";
+"use client"
+import { Cog6ToothIcon } from "@heroicons/react/24/outline"
+import { ArrowLeftIcon } from "@heroicons/react/24/solid"
+import Link from "next/link"
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation"
+import { useMemo } from "react"
+import { ApplicationListWithAPI } from "@/components/FundingPlatform"
+import { Button } from "@/components/Utilities/Button"
+import { Spinner } from "@/components/Utilities/Spinner"
 import {
-  useFundingApplications,
   useApplication,
-  useApplicationStatus
-} from "@/hooks/useFundingPlatform";
-import { layoutTheme } from "@/src/helper/theme";
+  useApplicationStatus,
+  useFundingApplications,
+} from "@/hooks/useFundingPlatform"
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin"
+import { usePermissions } from "@/hooks/usePermissions"
+import { useStaff } from "@/hooks/useStaff"
+import type { IApplicationFilters } from "@/services/fundingPlatformService"
+import { layoutTheme } from "@/src/helper/theme"
+import { useOwnerStore } from "@/store"
+import type { IFundingApplication } from "@/types/funding-platform"
+import { MESSAGES } from "@/utilities/messages"
+import { PAGES } from "@/utilities/pages"
 
 export default function ApplicationsPage() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const { communityId, programId: combinedProgramId } = useParams() as {
-    communityId: string;
-    programId: string;
-  };
+    communityId: string
+    programId: string
+  }
 
   // Extract programId and chainId from the combined format (e.g., "777_11155111")
-  const [programId, chainId] = combinedProgramId.split("_");
-  const parsedChainId = parseInt(chainId, 10);
+  const [programId, chainId] = combinedProgramId.split("_")
+  const parsedChainId = parseInt(chainId, 10)
 
   // Parse initial filters from URL
   const initialFilters = useMemo((): IApplicationFilters => {
-    const filters: IApplicationFilters = {};
+    const filters: IApplicationFilters = {}
 
-    const search = searchParams.get("search");
-    if (search) filters.search = search;
+    const search = searchParams.get("search")
+    if (search) filters.search = search
 
-    const status = searchParams.get("status");
-    if (status) filters.status = status as any;
+    const status = searchParams.get("status")
+    if (status) filters.status = status as any
 
-    const dateFrom = searchParams.get("dateFrom");
-    if (dateFrom) filters.dateFrom = dateFrom;
+    const dateFrom = searchParams.get("dateFrom")
+    if (dateFrom) filters.dateFrom = dateFrom
 
-    const dateTo = searchParams.get("dateTo");
-    if (dateTo) filters.dateTo = dateTo;
+    const dateTo = searchParams.get("dateTo")
+    if (dateTo) filters.dateTo = dateTo
 
-    const page = searchParams.get("page");
-    if (page) filters.page = parseInt(page, 10);
+    const page = searchParams.get("page")
+    if (page) filters.page = parseInt(page, 10)
 
-    const sortBy = searchParams.get("sortBy");
-    if (sortBy) filters.sortBy = sortBy as any;
+    const sortBy = searchParams.get("sortBy")
+    if (sortBy) filters.sortBy = sortBy as any
 
-    const sortOrder = searchParams.get("sortOrder");
-    if (sortOrder) filters.sortOrder = sortOrder as any;
+    const sortOrder = searchParams.get("sortOrder")
+    if (sortOrder) filters.sortOrder = sortOrder as any
 
-    return filters;
-  }, [searchParams]);
+    return filters
+  }, [searchParams])
 
   // State no longer needed for sidesheet
 
-  const { isCommunityAdmin, isLoading: isLoadingAdmin } =
-    useIsCommunityAdmin(communityId);
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isStaff } = useStaff();
+  const { isCommunityAdmin, isLoading: isLoadingAdmin } = useIsCommunityAdmin(communityId)
+  const isOwner = useOwnerStore((state) => state.isOwner)
+  const { isStaff } = useStaff()
 
   // Check if user is a reviewer for this program
   const { hasPermission: canView, isLoading: isLoadingPermission } = usePermissions({
     programId,
     chainID: parsedChainId,
     action: "read",
-  });
+  })
 
   const { hasPermission: canComment } = usePermissions({
     programId,
     chainID: parsedChainId,
     action: "comment",
-  });
+  })
 
   // Use the funding applications hook to get applications data
-  const { applications } = useFundingApplications(
-    programId,
-    parsedChainId,
-    initialFilters
-  );
+  const { applications } = useFundingApplications(programId, parsedChainId, initialFilters)
 
   // Prefetch hook for better UX on hover
-  const { prefetchApplication } = useApplication(null);
+  const { prefetchApplication } = useApplication(null)
 
   // Use the custom application status hook
-  const { updateStatusAsync } = useApplicationStatus(programId, parsedChainId);
+  const { updateStatusAsync } = useApplicationStatus(programId, parsedChainId)
 
   // Admin, owner, staff have full access; reviewers have view and comment access
-  const hasAccess = isCommunityAdmin || isOwner || isStaff || canView;
-  const isAdmin = isCommunityAdmin || isOwner || isStaff;
-  const isReviewer = canView && !isAdmin;
+  const hasAccess = isCommunityAdmin || isOwner || isStaff || canView
+  const isAdmin = isCommunityAdmin || isOwner || isStaff
+  const isReviewer = canView && !isAdmin
 
   const handleBackClick = () => {
-    router.push(PAGES.ADMIN.FUNDING_PLATFORM(communityId));
-  };
+    router.push(PAGES.ADMIN.FUNDING_PLATFORM(communityId))
+  }
 
   const handleApplicationSelect = (application: IFundingApplication) => {
     // This function is now called by ApplicationList but we handle opening in new tab there
     // Keep this for compatibility but it won't be directly used
-  };
+  }
 
   // Prefetch application on hover for better UX
   const handleApplicationHover = (applicationId: string) => {
-    prefetchApplication(applicationId);
-  };
-
+    prefetchApplication(applicationId)
+  }
 
   // Handle status change for both ApplicationList and ApplicationDetailSidesheet
   const handleStatusChange = async (applicationId: string, status: string, note?: string) => {
-    return updateStatusAsync({ applicationId, status, note });
-  };
+    return updateStatusAsync({ applicationId, status, note })
+  }
 
   if (isLoadingAdmin || isLoadingPermission) {
     return (
       <div className="flex w-full items-center justify-center min-h-[600px]">
         <Spinner />
       </div>
-    );
+    )
   }
 
   if (!hasAccess) {
@@ -138,7 +132,7 @@ export default function ApplicationsPage() {
             : MESSAGES.REVIEWS.NOT_ADMIN}
         </p>
       </div>
-    );
+    )
   }
 
   return (
@@ -148,11 +142,7 @@ export default function ApplicationsPage() {
         <div className="sm:px-3 md:px-4 px-6 py-2">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center space-x-4 mb-4 sm:mb-0">
-              <Button
-                onClick={handleBackClick}
-                variant="secondary"
-                className="flex items-center"
-              >
+              <Button onClick={handleBackClick} variant="secondary" className="flex items-center">
                 <ArrowLeftIcon className="w-4 h-4 mr-2" />
                 Back
               </Button>
@@ -161,9 +151,7 @@ export default function ApplicationsPage() {
                 <h1 className="text-xl font-bold text-gray-900 dark:text-white">
                   Funding Applications
                 </h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Program ID: {programId}
-                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Program ID: {programId}</p>
               </div>
             </div>
 
@@ -204,7 +192,6 @@ export default function ApplicationsPage() {
           isAdmin={isAdmin}
         />
       </div>
-
     </div>
-  );
+  )
 }

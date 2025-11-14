@@ -1,23 +1,16 @@
-"use client";
-import {
-  ProgressModalScreen,
-  useProgressModalStore,
-} from "@/store/modals/progress";
-import {
-  ArrowLeftCircleIcon,
-  ArrowLeftIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/solid";
-import Image from "next/image";
-import { FC, Fragment, ReactNode, useState } from "react";
-import { Button } from "../../Utilities/Button";
-import { GrantUpdateScreen } from "./GrantUpdateScreen";
-import { Transition, Dialog } from "@headlessui/react";
-import { ProjectUpdateScreen } from "./ProjectUpdateScreen";
-import { MilestoneScreen } from "./MilestoneScreen";
-import { MilestoneUpdateScreen } from "./MilestoneUpdateScreen";
-import { UnifiedMilestoneScreen } from "./UnifiedMilestoneScreen";
-import { cn } from "@/utilities/tailwind";
+"use client"
+import { Dialog, Transition } from "@headlessui/react"
+import { ArrowLeftCircleIcon, ArrowLeftIcon, XMarkIcon } from "@heroicons/react/24/solid"
+import Image from "next/image"
+import { type FC, Fragment, type ReactNode, useState } from "react"
+import { type ProgressModalScreen, useProgressModalStore } from "@/store/modals/progress"
+import { cn } from "@/utilities/tailwind"
+import { Button } from "../../Utilities/Button"
+import { GrantUpdateScreen } from "./GrantUpdateScreen"
+import { MilestoneScreen } from "./MilestoneScreen"
+import { MilestoneUpdateScreen } from "./MilestoneUpdateScreen"
+import { ProjectUpdateScreen } from "./ProjectUpdateScreen"
+import { UnifiedMilestoneScreen } from "./UnifiedMilestoneScreen"
 
 const Box = ({
   icon,
@@ -26,11 +19,11 @@ const Box = ({
   onClick,
   isSelected,
 }: {
-  icon: string;
-  title: string;
-  description: string;
-  onClick: () => void;
-  isSelected: boolean;
+  icon: string
+  title: string
+  description: string
+  onClick: () => void
+  isSelected: boolean
 }) => {
   return (
     <button
@@ -43,19 +36,11 @@ const Box = ({
       )}
     >
       <div className="flex flex-col items-center justify-center gap-4">
-        <Image
-          src={icon}
-          width={40}
-          height={40}
-          alt=""
-          className="object-contain h-10 w-10"
-        />
+        <Image src={icon} width={40} height={40} alt="" className="object-contain h-10 w-10" />
         <h3
           className={cn(
             `text-lg font-bold`,
-            isSelected
-              ? "text-gray-900 dark:text-zinc-200"
-              : "text-gray-900 dark:text-zinc-200"
+            isSelected ? "text-gray-900 dark:text-zinc-200" : "text-gray-900 dark:text-zinc-200"
           )}
         >
           {title}
@@ -63,25 +48,23 @@ const Box = ({
         <p
           className={cn(
             `text-center text-base font-normal`,
-            isSelected
-              ? "text-gray-900 dark:text-zinc-200"
-              : "text-gray-900 dark:text-zinc-200"
+            isSelected ? "text-gray-900 dark:text-zinc-200" : "text-gray-900 dark:text-zinc-200"
           )}
         >
           {description}
         </p>
       </div>
     </button>
-  );
-};
+  )
+}
 
 interface FooterProps {
-  selectFn: () => void;
-  selectedScreen: ProgressModalScreen;
+  selectFn: () => void
+  selectedScreen: ProgressModalScreen
 }
 
 const Footer: FC<FooterProps> = ({ selectFn, selectedScreen }) => {
-  const { closeProgressModal } = useProgressModalStore();
+  const { closeProgressModal } = useProgressModalStore()
   return (
     <div className="flex flex-row gap-4 justify-end">
       <Button
@@ -98,24 +81,23 @@ const Footer: FC<FooterProps> = ({ selectFn, selectedScreen }) => {
         Next
       </Button>
     </div>
-  );
-};
+  )
+}
 
 const Menu = () => {
-  const [selectedScreen, setSelectedScreen] =
-    useState<ProgressModalScreen>("menu");
+  const [selectedScreen, setSelectedScreen] = useState<ProgressModalScreen>("menu")
   const select = (screen: ProgressModalScreen) => {
     if (screen === selectedScreen) {
-      setSelectedScreen("menu");
+      setSelectedScreen("menu")
     } else {
-      setSelectedScreen(screen);
+      setSelectedScreen(screen)
     }
-  };
-  const { setProgressModalScreen } = useProgressModalStore();
+  }
+  const { setProgressModalScreen } = useProgressModalStore()
 
   const next = () => {
-    setProgressModalScreen(selectedScreen);
-  };
+    setProgressModalScreen(selectedScreen)
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -144,8 +126,8 @@ const Menu = () => {
       </div>
       <Footer selectFn={next} selectedScreen={selectedScreen} />
     </div>
-  );
-};
+  )
+}
 
 export const ProgressDialog = () => {
   const {
@@ -153,11 +135,11 @@ export const ProgressDialog = () => {
     setIsProgressModalOpen,
     progressModalScreen,
     setProgressModalScreen,
-  } = useProgressModalStore();
+  } = useProgressModalStore()
 
   const closeModal = () => {
-    setIsProgressModalOpen(false);
-  };
+    setIsProgressModalOpen(false)
+  }
 
   const screenToShow: Record<ProgressModalScreen, ReactNode> = {
     menu: <Menu />,
@@ -165,13 +147,13 @@ export const ProgressDialog = () => {
     milestone: <MilestoneScreen />,
     milestone_update: <MilestoneUpdateScreen />,
     unified_milestone: <UnifiedMilestoneScreen />,
-  };
+  }
 
   const screenTitleAndDescription: Record<
     ProgressModalScreen,
     {
-      title: string;
-      description: string;
+      title: string
+      description: string
     }
   > = {
     menu: { title: `What would you like to share today?`, description: "" },
@@ -191,7 +173,7 @@ export const ProgressDialog = () => {
       title: `Create a Milestone`,
       description: "Create milestones for your project or grant(s).",
     },
-  };
+  }
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -241,10 +223,7 @@ export const ProgressDialog = () => {
                       </button>
                     </div>
                     <h3 className="text-zinc-600 dark:text-zinc-300 w-full text-center">
-                      {
-                        screenTitleAndDescription[progressModalScreen]
-                          .description
-                      }
+                      {screenTitleAndDescription[progressModalScreen].description}
                     </h3>
                   </div>
                   {screenToShow[progressModalScreen]}
@@ -255,5 +234,5 @@ export const ProgressDialog = () => {
         </div>
       </Dialog>
     </Transition>
-  );
-};
+  )
+}

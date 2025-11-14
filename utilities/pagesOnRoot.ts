@@ -27,4 +27,4 @@ export const pagesOnRoot = [
   "static",
   "docs",
   "assets",
-];
+]

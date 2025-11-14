@@ -1,27 +1,27 @@
-"use client";
+"use client"
 
-import { FC, useEffect, useState } from "react";
-import { useFaucetEligibility, useFaucetClaim } from "@/hooks/useFaucet";
-import { Button } from "@/components/Utilities/Button";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { type Hex } from "viem";
-import { ExclamationTriangleIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { cn } from "@/utilities/tailwind";
-import type { FaucetTransaction } from "@/utilities/faucet/faucetService";
-import { buildProjectAttestationTransaction } from "@/utilities/gap/buildAttestationTransaction";
-import { getGapClient } from "@/hooks/useGap";
-import { useAccount } from "wagmi";
-import { useWallet } from "@/hooks/useWallet";
-import toast from "react-hot-toast";
+import { CheckCircleIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline"
+import { type FC, useEffect, useState } from "react"
+import toast from "react-hot-toast"
+import type { Hex } from "viem"
+import { useAccount } from "wagmi"
+import { Button } from "@/components/Utilities/Button"
+import { ExternalLink } from "@/components/Utilities/ExternalLink"
+import { Spinner } from "@/components/Utilities/Spinner"
+import { useFaucetClaim, useFaucetEligibility } from "@/hooks/useFaucet"
+import { getGapClient } from "@/hooks/useGap"
+import { useWallet } from "@/hooks/useWallet"
+import type { FaucetTransaction } from "@/utilities/faucet/faucetService"
+import { buildProjectAttestationTransaction } from "@/utilities/gap/buildAttestationTransaction"
+import { cn } from "@/utilities/tailwind"
 
 interface FaucetSectionProps {
-  chainId?: number;
-  projectFormData?: any;
-  walletSigner?: any;
-  recipient?: string;
-  onFundsReceived?: () => void;
-  disabled?: boolean;
+  chainId?: number
+  projectFormData?: any
+  walletSigner?: any
+  recipient?: string
+  onFundsReceived?: () => void
+  disabled?: boolean
 }
 
 export const FaucetSection: FC<FaucetSectionProps> = ({
@@ -30,93 +30,87 @@ export const FaucetSection: FC<FaucetSectionProps> = ({
   walletSigner,
   recipient,
   onFundsReceived,
-  disabled
+  disabled,
 }) => {
-  const [showFaucet, setShowFaucet] = useState(false);
-  const [transaction, setTransaction] = useState<FaucetTransaction | undefined>();
-  const [isBuilding, setIsBuilding] = useState(false);
-  const { chain } = useAccount();
-  const { switchChainAsync } = useWallet();
-  const [isSwitchingChain, setIsSwitchingChain] = useState(false);
+  const [showFaucet, setShowFaucet] = useState(false)
+  const [transaction, setTransaction] = useState<FaucetTransaction | undefined>()
+  const [isBuilding, setIsBuilding] = useState(false)
+  const { chain } = useAccount()
+  const { switchChainAsync } = useWallet()
+  const [isSwitchingChain, setIsSwitchingChain] = useState(false)
 
-  
   // Build the real attestation transaction for accurate gas estimation
   useEffect(() => {
     const buildTransaction = async () => {
       if (projectFormData && chainId && walletSigner && recipient) {
-        setIsBuilding(true);
+        setIsBuilding(true)
         try {
-          const gapClient = getGapClient(chainId);
+          const gapClient = getGapClient(chainId)
           const tx = await buildProjectAttestationTransaction(
             projectFormData,
             walletSigner,
             gapClient,
             recipient as Hex
-          );
-          setTransaction(tx);
+          )
+          setTransaction(tx)
         } catch (error) {
-          console.error("Failed to build attestation transaction:", error);
+          console.error("Failed to build attestation transaction:", error)
           // Set a fallback transaction if building fails
-          setTransaction(undefined);
+          setTransaction(undefined)
         } finally {
-          setIsBuilding(false);
+          setIsBuilding(false)
         }
       }
-    };
-    
-    buildTransaction();
-  }, [projectFormData, chainId, walletSigner, recipient]);
+    }
 
-  const {
-    data: eligibility,
-    isLoading: isCheckingEligibility,
-  } = useFaucetEligibility(chainId, transaction);
+    buildTransaction()
+  }, [projectFormData, chainId, walletSigner, recipient])
 
-  const {
-    claimFaucet,
-    isClaimingFaucet,
-    claimError,
-    transactionHash,
-    resetFaucetState
-  } = useFaucetClaim();
+  const { data: eligibility, isLoading: isCheckingEligibility } = useFaucetEligibility(
+    chainId,
+    transaction
+  )
+
+  const { claimFaucet, isClaimingFaucet, claimError, transactionHash, resetFaucetState } =
+    useFaucetClaim()
 
   // Show faucet section only if eligible
   useEffect(() => {
     if (eligibility) {
-      setShowFaucet(eligibility.eligible);
+      setShowFaucet(eligibility.eligible)
     }
-  }, [eligibility]);
+  }, [eligibility])
 
   const handleClaimFunds = async () => {
-    if (!chainId || !transaction) return;
+    if (!chainId || !transaction) return
 
     try {
       // Check if we need to switch chains first
       if (chain?.id !== chainId) {
-        setIsSwitchingChain(true);
+        setIsSwitchingChain(true)
         try {
-          await switchChainAsync({ chainId });
+          await switchChainAsync({ chainId })
           // Wait a moment for the chain switch to complete
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, 1000))
         } catch (switchError) {
-          console.error("Failed to switch chain:", switchError);
-          toast.error("Please switch to the correct network to claim funds");
-          return;
+          console.error("Failed to switch chain:", switchError)
+          toast.error("Please switch to the correct network to claim funds")
+          return
         } finally {
-          setIsSwitchingChain(false);
+          setIsSwitchingChain(false)
         }
       }
 
-      const result = await claimFaucet(chainId, transaction);
+      const result = await claimFaucet(chainId, transaction)
       if (result && onFundsReceived) {
-        onFundsReceived();
+        onFundsReceived()
       }
     } catch (error) {
-      console.error("Failed to claim funds:", error);
+      console.error("Failed to claim funds:", error)
     }
-  };
+  }
 
-// Show loader while checking eligibility or building transaction
+  // Show loader while checking eligibility or building transaction
   if (isCheckingEligibility || isBuilding) {
     return (
       <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-900/20 rounded-lg border border-gray-200 dark:border-gray-800">
@@ -127,11 +121,11 @@ export const FaucetSection: FC<FaucetSectionProps> = ({
           </p>
         </div>
       </div>
-    );
+    )
   }
 
   if (!showFaucet && !eligibility?.reason) {
-    return null;
+    return null
   }
 
   // Show rate limit message
@@ -177,7 +171,7 @@ export const FaucetSection: FC<FaucetSectionProps> = ({
           </div>
         </div>
       </div>
-    );
+    )
   }
 
   // Show error state
@@ -190,20 +184,14 @@ export const FaucetSection: FC<FaucetSectionProps> = ({
             <p className="text-sm text-red-800 dark:text-red-200 font-medium">
               Failed to Get Funds
             </p>
-            <p className="text-sm text-red-600 dark:text-red-300 mt-1">
-              {claimError}
-            </p>
-            <Button
-              onClick={resetFaucetState}
-              className="mt-2 text-xs"
-              variant="secondary"
-            >
+            <p className="text-sm text-red-600 dark:text-red-300 mt-1">{claimError}</p>
+            <Button onClick={resetFaucetState} className="mt-2 text-xs" variant="secondary">
               Try Again
             </Button>
           </div>
         </div>
       </div>
-    );
+    )
   }
 
   // Show faucet claim button
@@ -224,10 +212,9 @@ export const FaucetSection: FC<FaucetSectionProps> = ({
                   </span>
                 )}
               </p>
-            
             </div>
           </div>
-          
+
           <Button
             onClick={handleClaimFunds}
             disabled={disabled || isClaimingFaucet || isSwitchingChain}
@@ -252,7 +239,7 @@ export const FaucetSection: FC<FaucetSectionProps> = ({
           </Button>
         </div>
       </div>
-    );
+    )
   }
 
   // Show reason why not eligible (other than rate limit)
@@ -279,5 +266,5 @@ export const FaucetSection: FC<FaucetSectionProps> = ({
   //   );
   // }
 
-  return null;
-};
+  return null
+}

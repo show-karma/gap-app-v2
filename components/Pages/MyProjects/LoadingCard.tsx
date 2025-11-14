@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/Utilities/Skeleton";
+import { Skeleton } from "@/components/Utilities/Skeleton"
 
 export const LoadingCard = () => {
   return (
@@ -43,5 +43,5 @@ export const LoadingCard = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}

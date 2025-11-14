@@ -1,26 +1,26 @@
-import { Menu, Transition } from "@headlessui/react";
-import { Fragment } from "react";
+import { Menu, Transition } from "@headlessui/react"
 import {
   EllipsisVerticalIcon,
   PencilSquareIcon,
   ShareIcon,
   TrashIcon,
-} from "@heroicons/react/24/outline";
-import { Button } from "@/components/Utilities/Button";
-import { DeleteDialog } from "@/components/DeleteDialog";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { cn } from "@/utilities/tailwind";
+} from "@heroicons/react/24/outline"
+import { Fragment } from "react"
+import { DeleteDialog } from "@/components/DeleteDialog"
+import { Button } from "@/components/Utilities/Button"
+import { ExternalLink } from "@/components/Utilities/ExternalLink"
+import { cn } from "@/utilities/tailwind"
 
 interface ActivityMenuProps {
-  onShare?: () => void;
-  onEdit?: () => void;
-  onDelete?: () => Promise<void>;
-  canShare?: boolean;
-  canEdit?: boolean;
-  canDelete?: boolean;
-  isDeleting?: boolean;
-  deleteTitle?: React.ReactNode;
-  activityType?: string; // For determining edit capabilities
+  onShare?: () => void
+  onEdit?: () => void
+  onDelete?: () => Promise<void>
+  canShare?: boolean
+  canEdit?: boolean
+  canDelete?: boolean
+  isDeleting?: boolean
+  deleteTitle?: React.ReactNode
+  activityType?: string // For determining edit capabilities
 }
 
 export const ActivityMenu = ({
@@ -34,17 +34,16 @@ export const ActivityMenu = ({
   deleteTitle = "Are you sure you want to delete this item?",
   activityType,
 }: ActivityMenuProps) => {
-  const buttonClassName = `group border-none ring-none font-normal bg-transparent dark:bg-transparent text-gray-900 dark:text-zinc-100 hover:bg-white dark:hover:bg-zinc-800 dark:hover:opacity-75 hover:opacity-75 flex w-full items-start justify-start rounded-md px-2 py-2 text-sm flex-row gap-2`;
+  const buttonClassName = `group border-none ring-none font-normal bg-transparent dark:bg-transparent text-gray-900 dark:text-zinc-100 hover:bg-white dark:hover:bg-zinc-800 dark:hover:opacity-75 hover:opacity-75 flex w-full items-start justify-start rounded-md px-2 py-2 text-sm flex-row gap-2`
 
   // Determine which activities can be edited
   const canActuallyEdit =
-    canEdit &&
-    (activityType === "ProjectUpdate" || activityType === "ProjectImpact");
+    canEdit && (activityType === "ProjectUpdate" || activityType === "ProjectImpact")
 
-  const hasAnyAction = canShare || canActuallyEdit || canDelete;
+  const hasAnyAction = canShare || canActuallyEdit || canDelete
 
   if (!hasAnyAction) {
-    return null;
+    return null
   }
 
   return (
@@ -77,13 +76,8 @@ export const ActivityMenu = ({
           title={deleteTitle}
           buttonElement={{
             text: "",
-            icon: (
-              <TrashIcon className="h-5 w-5 text-[#D92D20] dark:text-red-500" />
-            ),
-            styleClass: cn(
-              buttonClassName,
-              "text-[#D92D20] dark:text-red-500 w-max p-0"
-            ),
+            icon: <TrashIcon className="h-5 w-5 text-[#D92D20] dark:text-red-500" />,
+            styleClass: cn(buttonClassName, "text-[#D92D20] dark:text-red-500 w-max p-0"),
           }}
         />
         // <Menu as="div" className="relative inline-block text-left h-6">
@@ -130,5 +124,5 @@ export const ActivityMenu = ({
         // </Menu>
       )}
     </div>
-  );
-};
+  )
+}

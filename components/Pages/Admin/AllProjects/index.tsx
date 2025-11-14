@@ -1,26 +1,26 @@
-"use client";
-import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
-import { errorManager } from "@/components/Utilities/errorManager";
-import Pagination from "@/components/Utilities/Pagination";
-import { useOwnerStore } from "@/store";
-import { PageInfo } from "@/types/pagination";
-import { ProjectReport } from "@/types/project";
-import fetchData from "@/utilities/fetchData";
-import { formatDate } from "@/utilities/formatDate";
-import { INDEXER } from "@/utilities/indexer";
-import { MESSAGES } from "@/utilities/messages";
-import { ReadMore } from "@/utilities/ReadMore";
-import { cn } from "@/utilities/tailwind";
-import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
-import { ProjectDescriptionDialog } from "./Dialog";
-import { ProjectContacts } from "./Contacts";
-import { AllProjectsLoadingTable } from "./Loading";
-import { useAuth } from "@/hooks/useAuth";
-import { PAGES } from "@/utilities/pages";
-import Link from "next/link";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { layoutTheme } from "@/src/helper/theme";
+"use client"
+import { useQuery } from "@tanstack/react-query"
+import Link from "next/link"
+import { useState } from "react"
+import { DefaultLoading } from "@/components/Utilities/DefaultLoading"
+import { ExternalLink } from "@/components/Utilities/ExternalLink"
+import { errorManager } from "@/components/Utilities/errorManager"
+import Pagination from "@/components/Utilities/Pagination"
+import { useAuth } from "@/hooks/useAuth"
+import { layoutTheme } from "@/src/helper/theme"
+import { useOwnerStore } from "@/store"
+import type { PageInfo } from "@/types/pagination"
+import type { ProjectReport } from "@/types/project"
+import fetchData from "@/utilities/fetchData"
+import { formatDate } from "@/utilities/formatDate"
+import { INDEXER } from "@/utilities/indexer"
+import { MESSAGES } from "@/utilities/messages"
+import { PAGES } from "@/utilities/pages"
+import { ReadMore } from "@/utilities/ReadMore"
+import { cn } from "@/utilities/tailwind"
+import { ProjectContacts } from "./Contacts"
+import { ProjectDescriptionDialog } from "./Dialog"
+import { AllProjectsLoadingTable } from "./Loading"
 
 const getAllProjects = async (
   offset: number,
@@ -35,45 +35,43 @@ const getAllProjects = async (
     true
   ).then(([res, error]) => {
     if (!error) {
-      return res;
+      return res
     }
     errorManager(
       MESSAGES.PROJECT.ALL_REPORT.ERROR,
       error,
       {},
       { error: MESSAGES.PROJECT.ALL_REPORT.ERROR }
-    );
-    return [];
-  });
+    )
+    return []
+  })
 
-  return response;
-};
+  return response
+}
 
 const rowClass =
-  "text-normal text-center  text-zinc-800 dark:text-zinc-200 text-base break-normal line-clamp-2 w-full max-w-[320px] px-1 py-2";
+  "text-normal text-center  text-zinc-800 dark:text-zinc-200 text-base break-normal line-clamp-2 w-full max-w-[320px] px-1 py-2"
 
 const headerClass =
-  "text-normal text-center  text-zinc-800 dark:text-zinc-200 text-base w-max max-w-[320px]";
+  "text-normal text-center  text-zinc-800 dark:text-zinc-200 text-base w-max max-w-[320px]"
 
 export const AllProjects = () => {
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
-  const [currentPageInfo, setCurrentPageInfo] = useState<PageInfo | undefined>(
-    undefined
-  );
+  const isOwner = useOwnerStore((state) => state.isOwner)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
+  const [currentPageInfo, setCurrentPageInfo] = useState<PageInfo | undefined>(undefined)
 
-  const { authenticated: isAuth } = useAuth();
+  const { authenticated: isAuth } = useAuth()
   const { data, isLoading } = useQuery({
     queryKey: ["all-projects", page, pageSize],
     queryFn: () =>
       getAllProjects((page - 1) * pageSize, pageSize).then((res) => {
-        setCurrentPageInfo(res.pageInfo);
-        return res;
+        setCurrentPageInfo(res.pageInfo)
+        return res
       }),
     enabled: isAuth && isOwner,
-  });
-  const projects = data?.data || [];
+  })
+  const projects = data?.data || []
 
   return (
     <div className={layoutTheme.padding}>
@@ -119,16 +117,12 @@ export const AllProjects = () => {
                         className="divide-zinc-300 divide-x"
                       >
                         <td className="w-max min-w-max max-w-1/5 px-2 py-1">
-                          <p className={cn(rowClass)}>
-                            {formatDate(project.createdAt)}
-                          </p>
+                          <p className={cn(rowClass)}>{formatDate(project.createdAt)}</p>
                         </td>
                         <td className="w-1/5 min-w-[300px] max-w-1/5 px-2 py-1">
                           <div className="flex flex-row gap-2 justify-center items-center">
                             <ExternalLink
-                              href={PAGES.PROJECT.OVERVIEW(
-                                project.slug || project.uid
-                              )}
+                              href={PAGES.PROJECT.OVERVIEW(project.slug || project.uid)}
                               className={cn(rowClass, "underline max-w-max")}
                             >
                               {project.title}
@@ -136,9 +130,7 @@ export const AllProjects = () => {
                           </div>
                         </td>
                         <td className="w-1/5 min-w-[200px] max-w-1/5 px-2 py-1">
-                          <p className={cn(rowClass)}>
-                            {project?.categories?.join(", ")}
-                          </p>
+                          <p className={cn(rowClass)}>{project?.categories?.join(", ")}</p>
                         </td>
                         <td className="w-1/5 min-w-[300px] max-w-1/5 px-2 py-1">
                           <ProjectDescriptionDialog
@@ -160,7 +152,7 @@ export const AllProjects = () => {
                           ) : null}
                         </td>
                       </tr>
-                    );
+                    )
                   })}
                 </tbody>
               </table>
@@ -179,5 +171,5 @@ export const AllProjects = () => {
         <p>{MESSAGES.REVIEWS.NOT_ADMIN}</p>
       )}
     </div>
-  );
-};
+  )
+}

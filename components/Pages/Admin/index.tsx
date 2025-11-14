@@ -1,33 +1,36 @@
-"use client";
+"use client"
+import { LinkIcon } from "@heroicons/react/24/solid"
+import type { Community } from "@show-karma/karma-gap-sdk"
+import { blo } from "blo"
+import debounce from "lodash.debounce"
+import Link from "next/link"
 /* eslint-disable @next/next/no-img-element */
-import React, { useEffect, useState } from "react";
-import debounce from "lodash.debounce";
-import Link from "next/link";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { useCommunitiesStore } from "@/store/communities";
-import { PAGES } from "@/utilities/pages";
-import { MESSAGES } from "@/utilities/messages";
-import { Community } from "@show-karma/karma-gap-sdk";
-import { AddAdmin } from "./AddAdminDialog";
-import { RemoveAdmin } from "./RemoveAdminDialog";
-import { formatDate } from "@/utilities/formatDate";
-import { blo } from "blo";
-import { LinkIcon } from "@heroicons/react/24/solid";
-import CommunityStats from "@/components/CommunityStats";
-import { chainImgDictionary } from "@/utilities/chainImgDictionary";
-import { chainNameDictionary } from "@/utilities/chainNameDictionary";
-import { useOwnerStore } from "@/store/owner";
-import { useCommunityConfig, useCommunityConfigMutation } from "@/hooks/useCommunityConfig";
-import { useAllCommunitiesWithAdmins, type AllCommunitiesWithAdminsData } from "@/hooks/useAllCommunitiesWithAdmins";
-import { layoutTheme } from "@/src/helper/theme";
+import React, { useEffect, useState } from "react"
+import CommunityStats from "@/components/CommunityStats"
+import { Spinner } from "@/components/Utilities/Spinner"
+import {
+  type AllCommunitiesWithAdminsData,
+  useAllCommunitiesWithAdmins,
+} from "@/hooks/useAllCommunitiesWithAdmins"
+import { useCommunityConfig, useCommunityConfigMutation } from "@/hooks/useCommunityConfig"
+import { layoutTheme } from "@/src/helper/theme"
+import { useCommunitiesStore } from "@/store/communities"
+import { useOwnerStore } from "@/store/owner"
+import { chainImgDictionary } from "@/utilities/chainImgDictionary"
+import { chainNameDictionary } from "@/utilities/chainNameDictionary"
+import { formatDate } from "@/utilities/formatDate"
+import { MESSAGES } from "@/utilities/messages"
+import { PAGES } from "@/utilities/pages"
+import { AddAdmin } from "./AddAdminDialog"
+import { RemoveAdmin } from "./RemoveAdminDialog"
 
 export const CommunitiesToAdmin = () => {
-  const { communities: communitiesToAdmin, isLoading } = useCommunitiesStore();
-  const { isOwner } = useOwnerStore();
-  const { data, isLoading: isLoadingCommunities, refetch } = useAllCommunitiesWithAdmins();
+  const { communities: communitiesToAdmin, isLoading } = useCommunitiesStore()
+  const { isOwner } = useOwnerStore()
+  const { data, isLoading: isLoadingCommunities, refetch } = useAllCommunitiesWithAdmins()
 
-  const communities = data?.communities ?? [];
-  const communityAdmins = data?.communityAdmins ?? [];
+  const communities = data?.communities ?? []
+  const communityAdmins = data?.communityAdmins ?? []
 
   return (
     <div className={layoutTheme.padding}>
@@ -37,8 +40,7 @@ export const CommunitiesToAdmin = () => {
         <div className="flex flex-col gap-2">
           <div className="flex justify-between">
             <div className="text-2xl font-bold">
-              Your Communities{" "}
-              {communities.length ? `(${communitiesToAdmin.length})` : ""}
+              Your Communities {communities.length ? `(${communitiesToAdmin.length})` : ""}
             </div>
           </div>
           <div className="mt-5 w-full gap-5">
@@ -53,15 +55,9 @@ export const CommunitiesToAdmin = () => {
                       <th className="min-w-[100px]">Created</th>
                       <th className="min-w-[200px]">UUID</th>
                       {/* Set minimum width */}
-                      <th className="px-4 text-center min-w-[150px]">
-                        Community page
-                      </th>
-                      <th className="px-4 text-center min-w-[120px]">
-                        Admin page
-                      </th>
-                      <th className="px-4 text-center min-w-[120px]">
-                        View stats
-                      </th>
+                      <th className="px-4 text-center min-w-[150px]">Community page</th>
+                      <th className="px-4 text-center min-w-[120px]">Admin page</th>
+                      <th className="px-4 text-center min-w-[120px]">View stats</th>
                       <th className="min-w-[150px]">Network</th>
                       <th className="min-w-[150px]">Admins</th>
                       <th className="min-w-[100px]">Action</th>
@@ -72,17 +68,16 @@ export const CommunitiesToAdmin = () => {
                   <tbody className="divide-y divide-x">
                     {communities.map((community) => {
                       const isCommunityAdmin = communitiesToAdmin.some(
-                        (adminOfCommunity) =>
-                          adminOfCommunity.uid === community.uid
-                      );
+                        (adminOfCommunity) => adminOfCommunity.uid === community.uid
+                      )
 
-                      if (!isCommunityAdmin && !isOwner) return null;
+                      if (!isCommunityAdmin && !isOwner) return null
 
                       const matchingCommunityAdmin = communityAdmins.find(
                         (admin: any) => admin.id === community.uid
-                      );
+                      )
 
-                      const slug = community.details?.slug || community.uid;
+                      const slug = community.details?.slug || community.uid
 
                       return (
                         <CommunityRowWithConfig
@@ -94,7 +89,7 @@ export const CommunitiesToAdmin = () => {
                           isOwner={isOwner}
                           isCommunityAdmin={isCommunityAdmin}
                         />
-                      );
+                      )
                     })}
                   </tbody>
                 </table>
@@ -110,16 +105,16 @@ export const CommunitiesToAdmin = () => {
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
 interface CommunityRowWithConfigProps {
-  community: Community;
-  slug: string;
-  matchingCommunityAdmin: any;
-  refetchCommunities: () => void;
-  isOwner: boolean;
-  isCommunityAdmin: boolean;
+  community: Community
+  slug: string
+  matchingCommunityAdmin: any
+  refetchCommunities: () => void
+  isOwner: boolean
+  isCommunityAdmin: boolean
 }
 
 const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
@@ -128,38 +123,35 @@ const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
   matchingCommunityAdmin,
   refetchCommunities,
   isOwner,
-  isCommunityAdmin
+  isCommunityAdmin,
 }) => {
-  const updateConfigMutation = useCommunityConfigMutation();
-  const { data: config, isLoading: configLoading } = useCommunityConfig(
-    slug,
-    isOwner
-  );
-  const [localRank, setLocalRank] = useState<number>(0);
+  const updateConfigMutation = useCommunityConfigMutation()
+  const { data: config, isLoading: configLoading } = useCommunityConfig(slug, isOwner)
+  const [localRank, setLocalRank] = useState<number>(0)
 
   function shortenHex(hexString: string) {
-    const firstPart = hexString.substring(0, 6);
-    const lastPart = hexString.substring(hexString.length - 6);
+    const firstPart = hexString.substring(0, 6)
+    const lastPart = hexString.substring(hexString.length - 6)
 
-    return `${firstPart}...${lastPart}`;
+    return `${firstPart}...${lastPart}`
   }
 
-  const isPublic = config?.public === true || config?.public === undefined;
-  const rank = config?.rank || 0;
+  const isPublic = config?.public === true || config?.public === undefined
+  const rank = config?.rank || 0
 
   useEffect(() => {
-    setLocalRank(rank);
-  }, [rank]);
+    setLocalRank(rank)
+  }, [rank])
 
   const handlePublicChange = (checked: boolean) => {
     updateConfigMutation.mutate({
       slug,
       config: {
         public: checked,
-        rank: config?.rank
-      }
-    });
-  };
+        rank: config?.rank,
+      },
+    })
+  }
 
   useEffect(() => {
     const handler = debounce(() => {
@@ -168,23 +160,23 @@ const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
           slug,
           config: {
             public: config?.public,
-            rank: localRank
-          }
-        });
+            rank: localRank,
+          },
+        })
       }
-    }, 1000);
+    }, 1000)
 
-    handler();
+    handler()
 
-    return () => handler.cancel();
-  }, [localRank, rank, slug, config?.public, updateConfigMutation]);
+    return () => handler.cancel()
+  }, [localRank, rank, slug, config?.public, updateConfigMutation])
 
   const handleRankInputChange = (value: string) => {
-    const numValue = parseInt(value) || 0;
+    const numValue = parseInt(value) || 0
     if (numValue >= 0) {
-      setLocalRank(numValue);
+      setLocalRank(numValue)
     }
-  };
+  }
 
   return (
     <React.Fragment>
@@ -196,20 +188,12 @@ const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
             alt={community.details?.name || community.uid}
           />
         </td>
-        <td className="max-w-40 px-4 min-w-[150px]">
-          {community.details?.name}
-        </td>
-        <td className="max-w-60 px-4 min-w-[100px]">
-          {formatDate(community?.createdAt)}
-        </td>
-        <td className="max-w-80 break-all px-4 min-w-[200px]">
-          {community.uid}
-        </td>
+        <td className="max-w-40 px-4 min-w-[150px]">{community.details?.name}</td>
+        <td className="max-w-60 px-4 min-w-[100px]">{formatDate(community?.createdAt)}</td>
+        <td className="max-w-80 break-all px-4 min-w-[200px]">{community.uid}</td>
         <td className="text-center px-4 min-w-[150px]">
           <Link
-            href={PAGES.COMMUNITY.ALL_GRANTS(
-              community.details?.slug || community.uid
-            )}
+            href={PAGES.COMMUNITY.ALL_GRANTS(community.details?.slug || community.uid)}
             className="flex flex-row items-center gap-1.5 text-blue-500"
           >
             Community
@@ -219,9 +203,7 @@ const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
         <td className="text-center px-4 min-w-[120px]">
           {isCommunityAdmin ? (
             <Link
-              href={PAGES.ADMIN.ROOT(
-                community.details?.slug || community.uid
-              )}
+              href={PAGES.ADMIN.ROOT(community.details?.slug || community.uid)}
               className="flex flex-row items-center gap-1.5 text-blue-500"
             >
               Admin
@@ -249,21 +231,17 @@ const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
             matchingCommunityAdmin &&
             matchingCommunityAdmin.admins &&
             matchingCommunityAdmin.admins.length > 0 &&
-            matchingCommunityAdmin.admins.map(
-              (admin: any, index: number) => (
-                <div className="flex gap-2 p-5" key={index}>
-                  <div>
-                    {shortenHex(admin.user.id)}
-                  </div>
-                  <RemoveAdmin
-                    UUID={community.uid}
-                    chainid={community.chainID}
-                    Admin={admin.user.id}
-                    fetchAdmins={refetchCommunities}
-                  />
-                </div>
-              )
-            )
+            matchingCommunityAdmin.admins.map((admin: any, index: number) => (
+              <div className="flex gap-2 p-5" key={index}>
+                <div>{shortenHex(admin.user.id)}</div>
+                <RemoveAdmin
+                  UUID={community.uid}
+                  chainid={community.chainID}
+                  Admin={admin.user.id}
+                  fetchAdmins={refetchCommunities}
+                />
+              </div>
+            ))
           ) : (
             <span className="text-gray-500 px-4">No access</span>
           )}
@@ -325,5 +303,5 @@ const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
         )}
       </tr>
     </React.Fragment>
-  );
-};
+  )
+}

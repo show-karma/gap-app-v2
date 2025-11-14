@@ -1,40 +1,38 @@
-"use client";
+"use client"
 
-import { formatDate } from "@/utilities/formatDate";
-import { getGAPWeeklyActiveUsers } from "@/utilities/indexer/stats";
-import { Card, LineChart, Title } from "@tremor/react";
-import { useEffect, useState } from "react";
+import { Card, LineChart, Title } from "@tremor/react"
+import { useEffect, useState } from "react"
+import { formatDate } from "@/utilities/formatDate"
+import { getGAPWeeklyActiveUsers } from "@/utilities/indexer/stats"
 
 export const WeeklyActiveUsersChart = () => {
-  const [data, setData] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [data, setData] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
 
   function reduceDays(dateString: string, days: number) {
-    const date = new Date(dateString);
-    date.setDate(date.getDate() - days);
-    return date.toISOString();
+    const date = new Date(dateString)
+    date.setDate(date.getDate() - days)
+    return date.toISOString()
   }
 
   useEffect(() => {
     const fetchData = async () => {
-      setIsLoading(true);
-      const response: any = await getGAPWeeklyActiveUsers();
+      setIsLoading(true)
+      const response: any = await getGAPWeeklyActiveUsers()
       const formattedData = response.map((item: any) => ({
         // eslint-disable-next-line no-underscore-dangle
 
         Date: `${formatDate(reduceDays(item.date.$date, 7))} - ${formatDate(
           item.date.$date
-        )} ${item["percentileChange"] > 0 ? "🟢" : "🔴"} ${parseInt(
-          item["percentileChange"]
-        )}%`,
+        )} ${item["percentileChange"] > 0 ? "🟢" : "🔴"} ${parseInt(item["percentileChange"])}%`,
         "Weekly Active Users": item["wau"],
         "Percent Change": item["percentileChange"],
-      }));
-      setData(formattedData);
-      setIsLoading(false);
-    };
-    fetchData();
-  }, [setData, setIsLoading]);
+      }))
+      setData(formattedData)
+      setIsLoading(false)
+    }
+    fetchData()
+  }, [setData, setIsLoading])
 
   return (
     <div className="container mx-auto sm:px-0 lg:px-20 w-full flex-col items-center justify-center">
@@ -42,9 +40,7 @@ export const WeeklyActiveUsersChart = () => {
         <p>Loading...</p>
       ) : (
         <Card className="min-w-[400px]">
-          <Title className="flex flex-row flex-wrap items-center gap-2">
-            Weekly Active Users
-          </Title>
+          <Title className="flex flex-row flex-wrap items-center gap-2">Weekly Active Users</Title>
           <LineChart
             categories={["Weekly Active Users"]}
             data={data}
@@ -56,5 +52,5 @@ export const WeeklyActiveUsersChart = () => {
         </Card>
       )}
     </div>
-  );
-};
+  )
+}

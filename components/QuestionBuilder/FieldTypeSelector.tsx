@@ -1,11 +1,11 @@
-"use client";
+"use client"
 
-import React from "react";
-import { FormField } from "@/types/question-builder";
+import React from "react"
+import type { FormField } from "@/types/question-builder"
 
 interface FieldTypeSelectorProps {
-  onFieldAdd: (fieldType: FormField["type"]) => void;
-  isPostApprovalMode?: boolean;
+  onFieldAdd: (fieldType: FormField["type"]) => void
+  isPostApprovalMode?: boolean
 }
 
 export const fieldTypes = [
@@ -69,14 +69,15 @@ export const fieldTypes = [
     icon: "🎯",
     description: "Dynamic milestone management with title, description, and due dates",
   },
-];
+]
 
-export function FieldTypeSelector({ onFieldAdd, isPostApprovalMode = false }: FieldTypeSelectorProps) {
+export function FieldTypeSelector({
+  onFieldAdd,
+  isPostApprovalMode = false,
+}: FieldTypeSelectorProps) {
   return (
     <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-        Add Form Field
-      </h3>
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Add Form Field</h3>
 
       <div className="grid grid-cols-1 gap-2">
         {fieldTypes.map((fieldType) => (
@@ -92,9 +93,7 @@ export function FieldTypeSelector({ onFieldAdd, isPostApprovalMode = false }: Fi
             <span className="text-2xl mr-3">{fieldType.icon}</span>
             <div className="flex-1">
               <div className="flex items-center space-x-2">
-                <span className="font-medium text-gray-900 dark:text-white">
-                  {fieldType.label}
-                </span>
+                <span className="font-medium text-gray-900 dark:text-white">{fieldType.label}</span>
                 {fieldType.type === "email" && !isPostApprovalMode && (
                   <span className="text-xs bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 px-2 py-0.5 rounded-full">
                     Required
@@ -109,5 +108,5 @@ export function FieldTypeSelector({ onFieldAdd, isPostApprovalMode = false }: Fi
         ))}
       </div>
     </div>
-  );
+  )
 }

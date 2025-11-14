@@ -1,8 +1,8 @@
-"use client";
-import { useEffect } from "react";
-import { getDetailedErrorInfo } from "@/utilities/donations/errorMessages";
-import { errorManager } from "@/components/Utilities/errorManager";
-import Link from "next/link";
+"use client"
+import Link from "next/link"
+import { useEffect } from "react"
+import { errorManager } from "@/components/Utilities/errorManager"
+import { getDetailedErrorInfo } from "@/utilities/donations/errorMessages"
 
 /**
  * Next.js App Router error page for donation checkout route
@@ -12,18 +12,18 @@ export default function DonationCheckoutError({
   error,
   reset,
 }: {
-  error: Error & { digest?: string };
-  reset: () => void;
+  error: Error & { digest?: string }
+  reset: () => void
 }) {
   // Log error to Sentry using errorManager
   useEffect(() => {
     errorManager("Donation checkout error", error, {
       digest: error.digest,
       route: "checkout",
-    });
-  }, [error]);
+    })
+  }, [error])
 
-  const parsedError = getDetailedErrorInfo(error);
+  const parsedError = getDetailedErrorInfo(error)
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
@@ -59,9 +59,7 @@ export default function DonationCheckoutError({
             <h2 className="mb-2 text-sm font-semibold text-red-900 dark:text-red-200">
               Error Details
             </h2>
-            <p className="text-sm text-red-800 dark:text-red-300">
-              {parsedError.message}
-            </p>
+            <p className="text-sm text-red-800 dark:text-red-300">{parsedError.message}</p>
           </div>
 
           {parsedError.actionableSteps.length > 0 && (
@@ -120,5 +118,5 @@ export default function DonationCheckoutError({
         </div>
       </div>
     </div>
-  );
+  )
 }

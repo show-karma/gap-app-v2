@@ -1,35 +1,30 @@
-"use client";
+"use client"
+import { Popover } from "@headlessui/react"
+import { CalendarIcon, ChevronDownIcon, PencilIcon } from "@heroicons/react/24/outline"
+import { XMarkIcon } from "@heroicons/react/24/solid"
+import { zodResolver } from "@hookform/resolvers/zod"
+import type { IMilestone } from "@show-karma/karma-gap-sdk"
+import { type FC, useEffect } from "react"
+import { DayPicker } from "react-day-picker"
+import type { SubmitHandler } from "react-hook-form"
+import { Controller, useForm } from "react-hook-form"
+import { z } from "zod"
 /* eslint-disable @next/next/no-img-element */
-import { Button } from "@/components/Utilities/Button";
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import { DatePicker } from "@/components/Utilities/DatePicker";
-
-import { formatDate } from "@/utilities/formatDate";
-import { Popover } from "@headlessui/react";
-import {
-  CalendarIcon,
-  ChevronDownIcon,
-  PencilIcon,
-} from "@heroicons/react/24/outline";
-import { XMarkIcon } from "@heroicons/react/24/solid";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { IMilestone } from "@show-karma/karma-gap-sdk";
-import { type FC, useEffect } from "react";
-import { DayPicker } from "react-day-picker";
-import type { SubmitHandler } from "react-hook-form";
-import { Controller, useForm } from "react-hook-form";
-import { z } from "zod";
-import { useGrantFormStore } from "./store";
+import { Button } from "@/components/Utilities/Button"
+import { DatePicker } from "@/components/Utilities/DatePicker"
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor"
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview"
+import { formatDate } from "@/utilities/formatDate"
+import { useGrantFormStore } from "./store"
 
 interface MilestoneProps {
-  currentMilestone: IMilestone;
-  index: number;
+  currentMilestone: IMilestone
+  index: number
 }
 
-const labelStyle = "text-sm font-bold";
+const labelStyle = "text-sm font-bold"
 const inputStyle =
-  "mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white";
+  "mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
 
 const milestoneSchema = z.object({
   title: z
@@ -46,12 +41,10 @@ const milestoneSchema = z.object({
     })
     .refine(
       (data) => {
-        const endsAt = data.endsAt.getTime() / 1000;
-        const startsAt = data.startsAt
-          ? data.startsAt.getTime() / 1000
-          : undefined;
+        const endsAt = data.endsAt.getTime() / 1000
+        const startsAt = data.startsAt ? data.startsAt.getTime() / 1000 : undefined
 
-        return startsAt ? startsAt <= endsAt : true;
+        return startsAt ? startsAt <= endsAt : true
       },
       {
         message: "Start date must be before the end date",
@@ -59,14 +52,14 @@ const milestoneSchema = z.object({
       }
     ),
   description: z.string().optional(),
-});
+})
 
-type MilestoneType = z.infer<typeof milestoneSchema>;
+type MilestoneType = z.infer<typeof milestoneSchema>
 
 export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
   const form = useForm<z.infer<typeof milestoneSchema>>({
     resolver: zodResolver(milestoneSchema),
-  });
+  })
   const {
     removeMilestone,
     saveMilestone,
@@ -75,7 +68,7 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
     milestonesForms,
     formPriorities,
     setFormPriorities,
-  } = useGrantFormStore();
+  } = useGrantFormStore()
 
   const {
     register,
@@ -87,39 +80,36 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
     resolver: zodResolver(milestoneSchema),
     reValidateMode: "onChange",
     mode: "onChange",
-  });
+  })
 
   const switchEditing = () => {
-    switchMilestoneEditing(index);
-  };
+    switchMilestoneEditing(index)
+  }
 
   const onSubmit: SubmitHandler<MilestoneType> = (data, event) => {
-    event?.preventDefault();
-    event?.stopPropagation();
+    event?.preventDefault()
+    event?.stopPropagation()
     saveMilestone(
       {
         title: data.title,
         description: data.description || "",
         endsAt: data.dates.endsAt.getTime() / 1000,
-        startsAt: data.dates.startsAt
-          ? data.dates.startsAt.getTime() / 1000
-          : undefined,
+        startsAt: data.dates.startsAt ? data.dates.startsAt.getTime() / 1000 : undefined,
         priority: data.priority,
       },
       index
-    );
-  };
+    )
+  }
 
   useEffect(() => {
     if (isValid) {
-      const title = watch("title") || currentMilestone.title;
-      const description = watch("description") || currentMilestone.description;
-      const endsAt =
-        watch("dates.endsAt").getTime() / 1000 || currentMilestone.endsAt;
+      const title = watch("title") || currentMilestone.title
+      const description = watch("description") || currentMilestone.description
+      const endsAt = watch("dates.endsAt").getTime() / 1000 || currentMilestone.endsAt
       const startsAt = watch("dates.startsAt")
         ? watch("dates.startsAt")!.getTime() / 1000
-        : currentMilestone.startsAt;
-      const priority = watch("priority") || currentMilestone.priority;
+        : currentMilestone.startsAt
+      const priority = watch("priority") || currentMilestone.priority
       changeMilestoneForm(index, {
         isValid: isValid,
         isEditing: milestonesForms[index].isEditing,
@@ -130,18 +120,15 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
           startsAt,
           priority,
         },
-      });
+      })
     }
-  }, [isValid]);
+  }, [isValid])
 
-  const priorities = Array.from({ length: 5 }, (_, index) => index + 1);
+  const priorities = Array.from({ length: 5 }, (_, index) => index + 1)
 
   return milestonesForms[index].isEditing ? (
     <div className="flex w-full flex-col gap-6 rounded-md border border-gray-200 dark:border-zinc-700 p-6">
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="flex w-full flex-col gap-4"
-      >
+      <form onSubmit={handleSubmit(onSubmit)} className="flex w-full flex-col gap-4">
         <div className="flex w-full flex-col">
           <label htmlFor="milestone-title" className={labelStyle}>
             Milestone title *
@@ -164,7 +151,7 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
               onChange={(newValue: string) => {
                 setValue("description", newValue || "", {
                   shouldValidate: true,
-                });
+                })
               }}
               placeholderText="Please provide a concise description of your objectives for this milestone"
             />
@@ -180,27 +167,24 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
                     <DatePicker
                       selected={field.value}
                       onSelect={(date) => {
-                        if (
-                          formatDate(date) ===
-                          formatDate(watch("dates.startsAt") || "")
-                        ) {
+                        if (formatDate(date) === formatDate(watch("dates.startsAt") || "")) {
                           setValue("dates.startsAt", undefined, {
                             shouldValidate: true,
-                          });
-                          field.onChange(undefined);
+                          })
+                          field.onChange(undefined)
                         } else {
                           setValue("dates.startsAt", date, {
                             shouldValidate: true,
-                          });
-                          field.onChange(date);
+                          })
+                          field.onChange(date)
                         }
                       }}
                       placeholder="Pick a date"
                       clearButtonFn={() => {
                         setValue("dates.startsAt", undefined, {
                           shouldValidate: true,
-                        });
-                        field.onChange(undefined);
+                        })
+                        field.onChange(undefined)
                       }}
                       buttonClassName="max-md:w-full"
                     />
@@ -223,8 +207,8 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
                       onSelect={(date) => {
                         setValue("dates.endsAt", date, {
                           shouldValidate: true,
-                        });
-                        field.onChange(date);
+                        })
+                        field.onChange(date)
                       }}
                       minDate={watch("dates.startsAt")}
                       placeholder="Pick a date"
@@ -247,9 +231,7 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
                     <div>
                       <Popover className="relative">
                         <Popover.Button className="max-lg:w-full w-max text-sm flex-row flex gap-2 items-center text-black dark:text-white border border-gray-200 bg-white dark:bg-zinc-800 px-4 py-2 rounded-md">
-                          {field.value
-                            ? `Priority ${field.value}`
-                            : `Select priority`}
+                          {field.value ? `Priority ${field.value}` : `Select priority`}
                           <ChevronDownIcon className="ml-auto h-4 w-4 opacity-50 text-black dark:text-white" />
                         </Popover.Button>
                         <Popover.Panel className="absolute z-10 bg-white border border-gray-200 dark:bg-zinc-800 mt-4 rounded-md w-[160px] scroll-smooth overflow-y-auto overflow-x-hidden py-2">
@@ -259,14 +241,14 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
                                 key={"none"}
                                 className="cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 w-full disabled:opacity-30 disabled:cursor-not-allowed disabled:bg-zinc-200 dark:disabled:bg-zinc-900"
                                 onClick={(event) => {
-                                  event?.preventDefault();
-                                  event?.stopPropagation();
-                                  field.onChange(undefined);
+                                  event?.preventDefault()
+                                  event?.stopPropagation()
+                                  field.onChange(undefined)
                                   setValue("priority", undefined, {
                                     shouldValidate: true,
-                                  });
+                                  })
 
-                                  close();
+                                  close()
                                 }}
                               >
                                 None
@@ -281,35 +263,29 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
                                       : formPriorities.includes(priority)
                                   }
                                   onClick={(event) => {
-                                    event?.preventDefault();
-                                    event?.stopPropagation();
+                                    event?.preventDefault()
+                                    event?.stopPropagation()
                                     if (watch("priority") === priority) {
-                                      field.onChange(undefined);
+                                      field.onChange(undefined)
                                       setValue("priority", undefined, {
                                         shouldValidate: true,
-                                      });
+                                      })
                                     } else {
-                                      field.onChange(priority);
+                                      field.onChange(priority)
                                       setValue("priority", priority, {
                                         shouldValidate: true,
-                                      });
+                                      })
                                     }
-                                    const watchPriority = watch("priority");
+                                    const watchPriority = watch("priority")
                                     if (formPriorities.includes(priority)) {
-                                      const newPriorities =
-                                        formPriorities.filter(
-                                          (p) =>
-                                            p !== priority &&
-                                            p !== watchPriority
-                                        );
-                                      setFormPriorities(newPriorities);
+                                      const newPriorities = formPriorities.filter(
+                                        (p) => p !== priority && p !== watchPriority
+                                      )
+                                      setFormPriorities(newPriorities)
                                     } else {
-                                      setFormPriorities([
-                                        ...formPriorities,
-                                        priority,
-                                      ]);
+                                      setFormPriorities([...formPriorities, priority])
                                     }
-                                    close();
+                                    close()
                                   }}
                                 >
                                   Priority {priority}
@@ -334,10 +310,8 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
           <Button
             variant="secondary"
             onClick={() => {
-              removeMilestone(index);
-              setFormPriorities(
-                formPriorities.filter((p) => p !== watch("priority"))
-              );
+              removeMilestone(index)
+              setFormPriorities(formPriorities.filter((p) => p !== watch("priority")))
             }}
           >
             Delete
@@ -389,5 +363,5 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
         />
       </div>
     </div>
-  );
-};
+  )
+}

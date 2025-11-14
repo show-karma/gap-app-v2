@@ -1,26 +1,25 @@
-"use client";
-import "@uiw/react-md-editor/markdown-editor.css";
-import "@uiw/react-markdown-preview/markdown.css";
+"use client"
+import "@uiw/react-md-editor/markdown-editor.css"
+import "@uiw/react-markdown-preview/markdown.css"
 
-import dynamic from "next/dynamic";
-import type { FC } from "react";
-import rehypeSanitize from "rehype-sanitize";
-import { cn } from "@/utilities/tailwind";
+import dynamic from "next/dynamic"
+import type { FC } from "react"
+import rehypeSanitize from "rehype-sanitize"
+import { cn } from "@/utilities/tailwind"
 
 interface MarkdownEditorProps {
-  value: string;
-  onChange: any;
-  className?: string;
-  placeholderText?: string;
-  height?: number;
-  minHeight?: number;
-  disabled?: boolean;
-  overflow?: boolean;
+  value: string
+  onChange: any
+  className?: string
+  placeholderText?: string
+  height?: number
+  minHeight?: number
+  disabled?: boolean
+  overflow?: boolean
 }
-const MDEditor = dynamic(
-  () => import("@uiw/react-md-editor").then((mod) => mod.default),
-  { ssr: false }
-);
+const MDEditor = dynamic(() => import("@uiw/react-md-editor").then((mod) => mod.default), {
+  ssr: false,
+})
 
 export const MarkdownEditor: FC<MarkdownEditorProps> = ({
   value,
@@ -33,11 +32,7 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
   overflow = false,
 }) => {
   return (
-    <div
-      data-color-mode="light"
-      className="h-full w-full"
-      style={{ minHeight: "100%" }}
-    >
+    <div data-color-mode="light" className="h-full w-full" style={{ minHeight: "100%" }}>
       <MDEditor
         className={cn(
           "flex-1 bg-white dark:bg-zinc-900 dark:text-white text-black dark:border-gray-600",
@@ -61,5 +56,5 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
         highlightEnable={false}
       />
     </div>
-  );
-};
+  )
+}

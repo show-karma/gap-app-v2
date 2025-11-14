@@ -103,7 +103,7 @@ body * {
     display: inline;
   }
   *::after {
-    content: " \A";
+    content: " A";
     white-space: pre;
   }
   strong::after,
@@ -124,7 +124,7 @@ body * {
     display: inline;
   }
   *::after {
-    content: " \A";
+    content: " A";
     white-space: pre;
   }
   strong::after,
@@ -156,7 +156,7 @@ body * {
     display: list-item;
   }
   *::after {
-    content: " \A";
+    content: " A";
     white-space: pre;
   }
   strong::after,
@@ -177,7 +177,7 @@ body * {
     display: inline;
   }
   *::after {
-    content: " \A";
+    content: " A";
     white-space: pre;
   }
   strong::after,

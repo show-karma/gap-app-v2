@@ -1,44 +1,49 @@
-"use client";
+"use client"
 
-import { useMemo } from "react";
-import { useFieldArray } from "react-hook-form";
-import { useQuery } from "@tanstack/react-query";
-import { DeliverablesTable } from "./DeliverablesTable";
-import { MetricsTable } from "./MetricsTable";
-import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
-import { cn } from "@/utilities/tailwind";
-import { useImpactAnswers } from "@/hooks/useImpactAnswers";
-import { useUnlinkedIndicators } from "@/hooks/useUnlinkedIndicators";
-import { getIndicatorsByCommunity } from "@/utilities/queries/getIndicatorsByCommunity";
-import { ImpactIndicatorWithData } from "@/types/impactMeasurement";
-import { CategorizedIndicator, OutputData, DeliverableData, CommunityData } from "./types";
-import type { 
-  UseFormRegister, 
-  UseFormSetValue, 
-  UseFormWatch, 
-  FieldErrors, 
-  Control 
-} from "react-hook-form";
+import { useQuery } from "@tanstack/react-query"
+import { useMemo } from "react"
+import type {
+  Control,
+  FieldErrors,
+  UseFormRegister,
+  UseFormSetValue,
+  UseFormWatch,
+} from "react-hook-form"
+import { useFieldArray } from "react-hook-form"
+import { InfoTooltip } from "@/components/Utilities/InfoTooltip"
+import { useImpactAnswers } from "@/hooks/useImpactAnswers"
+import { useUnlinkedIndicators } from "@/hooks/useUnlinkedIndicators"
+import type { ImpactIndicatorWithData } from "@/types/impactMeasurement"
+import { getIndicatorsByCommunity } from "@/utilities/queries/getIndicatorsByCommunity"
+import { cn } from "@/utilities/tailwind"
+import { DeliverablesTable } from "./DeliverablesTable"
+import { MetricsTable } from "./MetricsTable"
+import {
+  type CategorizedIndicator,
+  type CommunityData,
+  DeliverableData,
+  type OutputData,
+} from "./types"
 
 interface OutputsSectionProps {
   // Form controls
-  register: UseFormRegister<any>;
-  control: Control<any>;
-  setValue: UseFormSetValue<any>;
-  watch: UseFormWatch<any>;
-  errors: FieldErrors<any>;
-  
+  register: UseFormRegister<any>
+  control: Control<any>
+  setValue: UseFormSetValue<any>
+  watch: UseFormWatch<any>
+  errors: FieldErrors<any>
+
   // Data
-  projectUID?: string;
-  selectedCommunities: CommunityData[];
-  selectedPrograms: { programId: string; title: string; chainID: number }[];
-  
+  projectUID?: string
+  selectedCommunities: CommunityData[]
+  selectedPrograms: { programId: string; title: string; chainID: number }[]
+
   // Handlers
-  onCreateNewIndicator: (index: number) => void;
-  onIndicatorCreated: (indicator: ImpactIndicatorWithData) => void;
-  
+  onCreateNewIndicator: (index: number) => void
+  onIndicatorCreated: (indicator: ImpactIndicatorWithData) => void
+
   // Styling
-  labelStyle: string;
+  labelStyle: string
 }
 
 export const OutputsSection = ({
@@ -58,121 +63,113 @@ export const OutputsSection = ({
   const { fields, append, remove } = useFieldArray({
     control,
     name: "deliverables",
-  });
+  })
 
   // Get current form values
-  const outputs = watch("outputs") || [];
+  const outputs = watch("outputs") || []
 
   // Fetch project indicators
   const { data: indicatorsData } = useImpactAnswers({
     projectIdentifier: projectUID,
-  });
+  })
 
   // Fetch community indicators for all selected communities
   const { data: communityIndicatorsData = [] } = useQuery({
-    queryKey: [
-      "allCommunityIndicators",
-      selectedCommunities.map((c) => c.uid).sort(),
-    ],
+    queryKey: ["allCommunityIndicators", selectedCommunities.map((c) => c.uid).sort()],
     queryFn: async () => {
-      if (selectedCommunities.length === 0) return [];
+      if (selectedCommunities.length === 0) return []
       const results = await Promise.all(
         selectedCommunities.map(async (community) => {
           try {
-            const indicators = await getIndicatorsByCommunity(community.uid);
+            const indicators = await getIndicatorsByCommunity(community.uid)
             return indicators.map((indicator) => ({
               ...indicator,
               communityId: community.uid,
               communityName: community.name,
-            }));
+            }))
           } catch (error) {
-            console.error(
-              `Failed to fetch indicators for community ${community.uid}:`,
-              error
-            );
-            return [];
+            console.error(`Failed to fetch indicators for community ${community.uid}:`, error)
+            return []
           }
         })
-      );
-      return results.flat();
+      )
+      return results.flat()
     },
     enabled: selectedCommunities.length > 0,
-  });
+  })
 
   // Fetch unlinked indicators
-  const { data: unlinkedIndicatorsData = [] } = useUnlinkedIndicators();
+  const { data: unlinkedIndicatorsData = [] } = useUnlinkedIndicators()
 
   // Categorized indicators combining project, community, and unlinked indicators
   const categorizedIndicators = useMemo((): CategorizedIndicator[] => {
-    const projectIndicators: CategorizedIndicator[] = (
-      indicatorsData || []
-    ).map((indicator) => ({
+    const projectIndicators: CategorizedIndicator[] = (indicatorsData || []).map((indicator) => ({
       ...indicator,
       source: "project" as const,
-    }));
+    }))
 
-    const communityIndicators: CategorizedIndicator[] = (
-      communityIndicatorsData || []
-    ).map((indicator) => ({
-      id: indicator.id,
-      name: indicator.name,
-      description: indicator.description,
-      unitOfMeasure: indicator.unitOfMeasure,
-      datapoints: [],
-      programs: [], // Community indicators don't have specific programs associated
-      hasData: false, // Community indicators start without data
-      isAssociatedWithPrograms: false, // Community indicators are not associated with specific programs
-      source: "community" as const,
-      communityName: indicator.communityName,
-      communityId: indicator.communityId,
-    }));
+    const communityIndicators: CategorizedIndicator[] = (communityIndicatorsData || []).map(
+      (indicator) => ({
+        id: indicator.id,
+        name: indicator.name,
+        description: indicator.description,
+        unitOfMeasure: indicator.unitOfMeasure,
+        datapoints: [],
+        programs: [], // Community indicators don't have specific programs associated
+        hasData: false, // Community indicators start without data
+        isAssociatedWithPrograms: false, // Community indicators are not associated with specific programs
+        source: "community" as const,
+        communityName: indicator.communityName,
+        communityId: indicator.communityId,
+      })
+    )
 
-    const unlinkedIndicators: CategorizedIndicator[] = (
-      unlinkedIndicatorsData || []
-    ).map((indicator) => ({
-      id: indicator.id,
-      name: indicator.name,
-      description: indicator.description,
-      unitOfMeasure: indicator.unitOfMeasure,
-      datapoints: [],
-      programs: [], // Unlinked indicators don't have specific programs associated
-      hasData: false, // Unlinked indicators start without data
-      isAssociatedWithPrograms: false, // Unlinked indicators are not associated with specific programs
-      source: "unlinked" as const,
-    }));
+    const unlinkedIndicators: CategorizedIndicator[] = (unlinkedIndicatorsData || []).map(
+      (indicator) => ({
+        id: indicator.id,
+        name: indicator.name,
+        description: indicator.description,
+        unitOfMeasure: indicator.unitOfMeasure,
+        datapoints: [],
+        programs: [], // Unlinked indicators don't have specific programs associated
+        hasData: false, // Unlinked indicators start without data
+        isAssociatedWithPrograms: false, // Unlinked indicators are not associated with specific programs
+        source: "unlinked" as const,
+      })
+    )
 
-    return [...projectIndicators, ...communityIndicators, ...unlinkedIndicators];
-  }, [indicatorsData, communityIndicatorsData, unlinkedIndicatorsData]);
+    return [...projectIndicators, ...communityIndicators, ...unlinkedIndicators]
+  }, [indicatorsData, communityIndicatorsData, unlinkedIndicatorsData])
 
   const indicatorsList = categorizedIndicators.map((output) => ({
     indicatorId: output.id,
     name: output.name,
-  }));
+  }))
 
   // Deliverable handlers
   const handleAddDeliverable = () => {
-    append({ name: "", proof: "", description: "" });
+    append({ name: "", proof: "", description: "" })
     // Ensure form validation is triggered after state update
     setTimeout(() => {
-      setValue("deliverables", watch("deliverables"), { shouldValidate: true });
-    }, 0);
-  };
+      setValue("deliverables", watch("deliverables"), { shouldValidate: true })
+    }, 0)
+  }
 
   const handleRemoveDeliverable = (index: number) => {
-    remove(index);
+    remove(index)
     // Ensure form validation is triggered after state update
     setTimeout(() => {
-      setValue("deliverables", watch("deliverables"), { shouldValidate: true });
-    }, 0);
-  };
+      setValue("deliverables", watch("deliverables"), { shouldValidate: true })
+    }, 0)
+  }
 
   // Output handlers
   const handleOutputsChange = (newOutputs: OutputData[]) => {
     setValue("outputs", newOutputs, {
       shouldValidate: true,
       shouldDirty: true,
-    });
-  };
+    })
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -202,5 +199,5 @@ export const OutputsSection = ({
         labelStyle={labelStyle}
       />
     </div>
-  );
-};
+  )
+}

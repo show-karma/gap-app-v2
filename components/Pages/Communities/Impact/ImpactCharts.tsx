@@ -1,12 +1,12 @@
-"use client";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { useImpactMeasurement } from "@/hooks/useImpactMeasurement";
-import { useSearchParams } from "next/navigation";
-import { CategoryRow } from "./CategoryRow";
-import { formatDate } from "@/utilities/formatDate";
-import pluralize from "pluralize";
-import { ProgramBanner } from "./ProgramBanner";
-import { ProgramImpactDataResponse } from "@/types/programs";
+"use client"
+import { useSearchParams } from "next/navigation"
+import pluralize from "pluralize"
+import { Spinner } from "@/components/Utilities/Spinner"
+import { useImpactMeasurement } from "@/hooks/useImpactMeasurement"
+import type { ProgramImpactDataResponse } from "@/types/programs"
+import { formatDate } from "@/utilities/formatDate"
+import { CategoryRow } from "./CategoryRow"
+import { ProgramBanner } from "./ProgramBanner"
 
 export const prepareChartData = (
   values: number[],
@@ -23,38 +23,38 @@ export const prepareChartData = (
           [name]: Number(values[index]) || 0,
           Cumulative: Number(runningValues[index]) || 0,
           proof: proofs?.[index] || "",
-        };
+        }
       }
       return {
         date: formatDate(new Date(timestamp), "UTC"),
         [name]: Number(values[index]) || 0,
         proof: proofs?.[index] || "",
-      };
+      }
     })
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  return chartData;
-};
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  return chartData
+}
 
 export const CommunityImpactCharts = () => {
-  const searchParams = useSearchParams();
-  const projectSelected = searchParams.get("projectId");
-  const programSelected = searchParams.get("programId");
-  const { data, isLoading } = useImpactMeasurement(projectSelected);
+  const searchParams = useSearchParams()
+  const projectSelected = searchParams.get("projectId")
+  const programSelected = searchParams.get("programId")
+  const { data, isLoading } = useImpactMeasurement(projectSelected)
 
-  const categories = data?.data as ProgramImpactDataResponse[] | undefined;
+  const categories = data?.data as ProgramImpactDataResponse[] | undefined
 
   const orderedData = categories?.sort((a, b) => {
     // First, compare by whether they have impacts
-    const aHasImpacts = a.impacts?.length > 0;
-    const bHasImpacts = b.impacts?.length > 0;
+    const aHasImpacts = a.impacts?.length > 0
+    const bHasImpacts = b.impacts?.length > 0
 
     if (aHasImpacts !== bHasImpacts) {
-      return aHasImpacts ? -1 : 1; // Categories with impacts come first
+      return aHasImpacts ? -1 : 1 // Categories with impacts come first
     }
 
     // If both have or don't have impacts, sort alphabetically
-    return a.categoryName.localeCompare(b.categoryName);
-  });
+    return a.categoryName.localeCompare(b.categoryName)
+  })
 
   return (
     <div className="flex flex-col gap-4 flex-1 mb-10">
@@ -94,5 +94,5 @@ export const CommunityImpactCharts = () => {
         </div>
       )}
     </div>
-  );
-};
+  )
+}

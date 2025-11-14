@@ -1,5 +1,5 @@
 interface Props {
-  className?: string;
+  className?: string
 }
 export const MirrorIcon = ({ className }: Props) => {
   return (
@@ -16,5 +16,5 @@ export const MirrorIcon = ({ className }: Props) => {
         shapeRendering="geometricPrecision"
       />
     </svg>
-  );
-};
+  )
+}

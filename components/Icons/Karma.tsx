@@ -1,5 +1,5 @@
 interface Props {
-  className?: string;
+  className?: string
 }
 
 export const KarmaLogo = ({ className }: Props) => {
@@ -18,5 +18,5 @@ export const KarmaLogo = ({ className }: Props) => {
         fill="currentColor"
       />
     </svg>
-  );
-};
+  )
+}

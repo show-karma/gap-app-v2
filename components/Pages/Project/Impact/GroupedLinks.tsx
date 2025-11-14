@@ -1,66 +1,61 @@
-import { useState, useEffect, useRef } from "react";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { linkName, mapLinks } from "./utils/links";
-import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
-import { useProjectStore } from "@/store";
-import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline"
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
+import { useEffect, useRef, useState } from "react"
+import { ExternalLink } from "@/components/Utilities/ExternalLink"
+import { useProjectStore } from "@/store"
+import { linkName, mapLinks } from "./utils/links"
 
 export interface ProjectWithExternal extends IProjectResponse {
   external?: {
-    network_addresses?: string[];
-  };
+    network_addresses?: string[]
+  }
 }
 
 export const GroupedLinks = ({ proofs }: { proofs: string[] }) => {
-  const { project } = useProjectStore();
-  const links = mapLinks(
-    proofs,
-    (project as ProjectWithExternal)?.external?.network_addresses
-  );
-  const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>(
-    {}
-  );
-  const dropdownRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const { project } = useProjectStore()
+  const links = mapLinks(proofs, (project as ProjectWithExternal)?.external?.network_addresses)
+  const [openDropdowns, setOpenDropdowns] = useState<Record<string, boolean>>({})
+  const dropdownRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
   // Group links by their names
-  const groupedLinks = links.reduce((acc, link) => {
-    const name = linkName(link as string);
-    if (!acc[name]) {
-      acc[name] = [];
-    }
-    acc[name].push(link as string);
-    return acc;
-  }, {} as Record<string, string[]>);
+  const groupedLinks = links.reduce(
+    (acc, link) => {
+      const name = linkName(link as string)
+      if (!acc[name]) {
+        acc[name] = []
+      }
+      acc[name].push(link as string)
+      return acc
+    },
+    {} as Record<string, string[]>
+  )
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       Object.entries(dropdownRefs.current).forEach(([name, ref]) => {
         if (ref && !ref.contains(event.target as Node) && openDropdowns[name]) {
-          setOpenDropdowns((prev) => ({ ...prev, [name]: false }));
+          setOpenDropdowns((prev) => ({ ...prev, [name]: false }))
         }
-      });
-    };
+      })
+    }
 
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside)
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [openDropdowns]);
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [openDropdowns])
 
   const toggleDropdown = (name: string) => {
     setOpenDropdowns((prev) => ({
       ...prev,
       [name]: !prev[name],
-    }));
-  };
+    }))
+  }
 
   return (
     <>
       {Object.entries(groupedLinks).map(([name, urls], groupIndex) => (
-        <div
-          key={groupIndex}
-          className="relative flex items-center gap-1 mr-2 mb-1"
-        >
+        <div key={groupIndex} className="relative flex items-center gap-1 mr-2 mb-1">
           {urls.length === 1 ? (
             <ExternalLink
               href={urls[0]}
@@ -72,7 +67,7 @@ export const GroupedLinks = ({ proofs }: { proofs: string[] }) => {
             <div
               ref={(el) => {
                 if (el) {
-                  dropdownRefs.current[name] = el;
+                  dropdownRefs.current[name] = el
                 }
               }}
               className="relative"
@@ -107,5 +102,5 @@ export const GroupedLinks = ({ proofs }: { proofs: string[] }) => {
         </div>
       ))}
     </>
-  );
-};
+  )
+}

@@ -3,18 +3,18 @@
  * @description Tests for grant milestone completion form component covering rendering, validation, and submission
  */
 
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { GrantMilestoneCompletionForm } from "@/components/Forms/GrantMilestoneCompletion";
-import { useMilestone } from "@/hooks/useMilestone";
-import { UnifiedMilestone } from "@/types/roadmap";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { GrantMilestoneCompletionForm } from "@/components/Forms/GrantMilestoneCompletion"
+import { useMilestone } from "@/hooks/useMilestone"
+import type { UnifiedMilestone } from "@/types/roadmap"
 
 jest.mock("@/hooks/useMilestone", () => ({
   useMilestone: jest.fn(),
-}));
+}))
 
 jest.mock("@/components/Forms/Outputs/OutputsSection", () => ({
   OutputsSection: () => <div data-testid="outputs-section">Outputs Section</div>,
-}));
+}))
 
 jest.mock("@/components/Utilities/MarkdownEditor", () => ({
   MarkdownEditor: ({ value, onChange, placeholderText }: any) => (
@@ -25,7 +25,7 @@ jest.mock("@/components/Utilities/MarkdownEditor", () => ({
       placeholder={placeholderText}
     />
   ),
-}));
+}))
 
 jest.mock("@/components/Utilities/Button", () => ({
   Button: ({ children, onClick, disabled, isLoading, type, className }: any) => (
@@ -39,26 +39,26 @@ jest.mock("@/components/Utilities/Button", () => ({
       {isLoading ? "Loading..." : children}
     </button>
   ),
-}));
+}))
 
-const mockUseMilestone = useMilestone as jest.MockedFunction<typeof useMilestone>;
+const mockUseMilestone = useMilestone as jest.MockedFunction<typeof useMilestone>
 
 describe("GrantMilestoneCompletionForm", () => {
   const mockMilestone: UnifiedMilestone = {
     uid: "milestone-123",
     title: "Test Milestone",
     type: "grant",
-  } as UnifiedMilestone;
+  } as UnifiedMilestone
 
-  const mockHandleCompleting = jest.fn();
-  const mockCompleteMilestone = jest.fn();
+  const mockHandleCompleting = jest.fn()
+  const mockCompleteMilestone = jest.fn()
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.clearAllMocks()
     mockUseMilestone.mockReturnValue({
       completeMilestone: mockCompleteMilestone,
-    } as any);
-  });
+    } as any)
+  })
 
   it("should render form with all fields", () => {
     render(
@@ -66,14 +66,14 @@ describe("GrantMilestoneCompletionForm", () => {
         milestone={mockMilestone}
         handleCompleting={mockHandleCompleting}
       />
-    );
+    )
 
-    expect(screen.getByText("Description (optional)")).toBeInTheDocument();
-    expect(screen.getByText("What % of your grant is complete? (optional)")).toBeInTheDocument();
-    expect(screen.getByTestId("outputs-section")).toBeInTheDocument();
-    expect(screen.getByText("Cancel")).toBeInTheDocument();
-    expect(screen.getByText("Complete")).toBeInTheDocument();
-  });
+    expect(screen.getByText("Description (optional)")).toBeInTheDocument()
+    expect(screen.getByText("What % of your grant is complete? (optional)")).toBeInTheDocument()
+    expect(screen.getByTestId("outputs-section")).toBeInTheDocument()
+    expect(screen.getByText("Cancel")).toBeInTheDocument()
+    expect(screen.getByText("Complete")).toBeInTheDocument()
+  })
 
   it("should render markdown editor for description", () => {
     render(
@@ -81,12 +81,12 @@ describe("GrantMilestoneCompletionForm", () => {
         milestone={mockMilestone}
         handleCompleting={mockHandleCompleting}
       />
-    );
+    )
 
-    const editor = screen.getByTestId("markdown-editor");
-    expect(editor).toBeInTheDocument();
-    expect(editor).toHaveAttribute("placeholder", "Describe what has been completed...");
-  });
+    const editor = screen.getByTestId("markdown-editor")
+    expect(editor).toBeInTheDocument()
+    expect(editor).toHaveAttribute("placeholder", "Describe what has been completed...")
+  })
 
   it("should update description when markdown editor changes", () => {
     render(
@@ -94,40 +94,40 @@ describe("GrantMilestoneCompletionForm", () => {
         milestone={mockMilestone}
         handleCompleting={mockHandleCompleting}
       />
-    );
+    )
 
-    const editor = screen.getByTestId("markdown-editor");
-    fireEvent.change(editor, { target: { value: "Test description" } });
+    const editor = screen.getByTestId("markdown-editor")
+    fireEvent.change(editor, { target: { value: "Test description" } })
 
-    expect(editor).toHaveValue("Test description");
-  });
+    expect(editor).toHaveValue("Test description")
+  })
 
   it("should accept valid completion percentage", async () => {
-    mockCompleteMilestone.mockResolvedValue(undefined);
+    mockCompleteMilestone.mockResolvedValue(undefined)
 
     render(
       <GrantMilestoneCompletionForm
         milestone={mockMilestone}
         handleCompleting={mockHandleCompleting}
       />
-    );
+    )
 
     // Fill in description to make form valid
-    const descriptionEditor = screen.getByTestId("markdown-editor");
-    fireEvent.change(descriptionEditor, { target: { value: "Test description" } });
+    const descriptionEditor = screen.getByTestId("markdown-editor")
+    fireEvent.change(descriptionEditor, { target: { value: "Test description" } })
 
     // Wait for form to become valid
     await waitFor(() => {
-      const submitButton = screen.getByText("Complete");
-      expect(submitButton).not.toBeDisabled();
-    });
+      const submitButton = screen.getByText("Complete")
+      expect(submitButton).not.toBeDisabled()
+    })
 
     // Enter valid percentage
-    const percentageInput = screen.getByPlaceholderText("0-100");
-    fireEvent.change(percentageInput, { target: { value: "75" } });
+    const percentageInput = screen.getByPlaceholderText("0-100")
+    fireEvent.change(percentageInput, { target: { value: "75" } })
 
-    const submitButton = screen.getByText("Complete");
-    fireEvent.click(submitButton);
+    const submitButton = screen.getByText("Complete")
+    fireEvent.click(submitButton)
 
     // Should submit successfully with valid percentage
     await waitFor(() => {
@@ -136,32 +136,32 @@ describe("GrantMilestoneCompletionForm", () => {
         expect.objectContaining({
           completionPercentage: "75",
         })
-      );
-    });
-  });
+      )
+    })
+  })
 
   it("should call completeMilestone on form submission", async () => {
-    mockCompleteMilestone.mockResolvedValue(undefined);
+    mockCompleteMilestone.mockResolvedValue(undefined)
 
     render(
       <GrantMilestoneCompletionForm
         milestone={mockMilestone}
         handleCompleting={mockHandleCompleting}
       />
-    );
+    )
 
     // Form needs valid data - description with at least 3 characters
-    const descriptionEditor = screen.getByTestId("markdown-editor");
-    fireEvent.change(descriptionEditor, { target: { value: "Completed milestone" } });
+    const descriptionEditor = screen.getByTestId("markdown-editor")
+    fireEvent.change(descriptionEditor, { target: { value: "Completed milestone" } })
 
     // Wait for form to become valid
     await waitFor(() => {
-      const submitButton = screen.getByText("Complete");
-      expect(submitButton).not.toBeDisabled();
-    });
+      const submitButton = screen.getByText("Complete")
+      expect(submitButton).not.toBeDisabled()
+    })
 
-    const submitButton = screen.getByText("Complete");
-    fireEvent.click(submitButton);
+    const submitButton = screen.getByText("Complete")
+    fireEvent.click(submitButton)
 
     await waitFor(() => {
       expect(mockCompleteMilestone).toHaveBeenCalledWith(
@@ -173,71 +173,71 @@ describe("GrantMilestoneCompletionForm", () => {
           deliverables: [],
           noProofCheckbox: true,
         })
-      );
-    });
-  });
+      )
+    })
+  })
 
   it("should call handleCompleting(false) after successful submission", async () => {
-    mockCompleteMilestone.mockResolvedValue(undefined);
+    mockCompleteMilestone.mockResolvedValue(undefined)
 
     render(
       <GrantMilestoneCompletionForm
         milestone={mockMilestone}
         handleCompleting={mockHandleCompleting}
       />
-    );
+    )
 
     // Form needs valid data
-    const descriptionEditor = screen.getByTestId("markdown-editor");
-    fireEvent.change(descriptionEditor, { target: { value: "Test description" } });
+    const descriptionEditor = screen.getByTestId("markdown-editor")
+    fireEvent.change(descriptionEditor, { target: { value: "Test description" } })
 
     await waitFor(() => {
-      const submitButton = screen.getByText("Complete");
-      expect(submitButton).not.toBeDisabled();
-    });
+      const submitButton = screen.getByText("Complete")
+      expect(submitButton).not.toBeDisabled()
+    })
 
-    const submitButton = screen.getByText("Complete");
-    fireEvent.click(submitButton);
+    const submitButton = screen.getByText("Complete")
+    fireEvent.click(submitButton)
 
     await waitFor(() => {
-      expect(mockHandleCompleting).toHaveBeenCalledWith(false);
-    });
-  });
+      expect(mockHandleCompleting).toHaveBeenCalledWith(false)
+    })
+  })
 
   it("should not call handleCompleting on error", async () => {
-    const error = new Error("Failed to complete milestone");
-    mockCompleteMilestone.mockRejectedValue(error);
+    const error = new Error("Failed to complete milestone")
+    mockCompleteMilestone.mockRejectedValue(error)
 
-    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation()
 
     render(
       <GrantMilestoneCompletionForm
         milestone={mockMilestone}
         handleCompleting={mockHandleCompleting}
       />
-    );
+    )
 
     // Form needs valid data
-    const descriptionEditor = screen.getByTestId("markdown-editor");
-    fireEvent.change(descriptionEditor, { target: { value: "Test description" } });
+    const descriptionEditor = screen.getByTestId("markdown-editor")
+    fireEvent.change(descriptionEditor, { target: { value: "Test description" } })
 
     await waitFor(() => {
-      const submitButton = screen.getByText("Complete");
-      expect(submitButton).not.toBeDisabled();
-    });
+      const submitButton = screen.getByText("Complete")
+      expect(submitButton).not.toBeDisabled()
+    })
 
-    const submitButton = screen.getByText("Complete");
-    fireEvent.click(submitButton);
+    const submitButton = screen.getByText("Complete")
+    fireEvent.click(submitButton)
 
     await waitFor(() => {
-      expect(mockCompleteMilestone).toHaveBeenCalled();
-    });
+      expect(mockCompleteMilestone).toHaveBeenCalled()
+    })
 
-    expect(mockHandleCompleting).not.toHaveBeenCalled();
-    expect(consoleErrorSpy).toHaveBeenCalledWith("Error completing milestone:", error);
+    expect(mockHandleCompleting).not.toHaveBeenCalled()
+    expect(consoleErrorSpy).toHaveBeenCalledWith("Error completing milestone:", error)
 
-    consoleErrorSpy.mockRestore();
-  });
+    consoleErrorSpy.mockRestore()
+  })
 
   it("should disable submit button when form is invalid", () => {
     render(
@@ -245,11 +245,11 @@ describe("GrantMilestoneCompletionForm", () => {
         milestone={mockMilestone}
         handleCompleting={mockHandleCompleting}
       />
-    );
+    )
 
-    const submitButton = screen.getByText("Complete");
-    expect(submitButton).toBeDisabled();
-  });
+    const submitButton = screen.getByText("Complete")
+    expect(submitButton).toBeDisabled()
+  })
 
   it("should call handleCompleting(false) when cancel button is clicked", () => {
     render(
@@ -257,41 +257,40 @@ describe("GrantMilestoneCompletionForm", () => {
         milestone={mockMilestone}
         handleCompleting={mockHandleCompleting}
       />
-    );
+    )
 
-    const cancelButton = screen.getByText("Cancel");
-    fireEvent.click(cancelButton);
+    const cancelButton = screen.getByText("Cancel")
+    fireEvent.click(cancelButton)
 
-    expect(mockHandleCompleting).toHaveBeenCalledWith(false);
-  });
+    expect(mockHandleCompleting).toHaveBeenCalledWith(false)
+  })
 
   it("should show loading state during submission", async () => {
     mockCompleteMilestone.mockImplementation(
       () => new Promise((resolve) => setTimeout(() => resolve(undefined), 100))
-    );
+    )
 
     render(
       <GrantMilestoneCompletionForm
         milestone={mockMilestone}
         handleCompleting={mockHandleCompleting}
       />
-    );
+    )
 
     // Form needs valid data - description with at least 3 characters
-    const descriptionEditor = screen.getByTestId("markdown-editor");
-    fireEvent.change(descriptionEditor, { target: { value: "Test description" } });
+    const descriptionEditor = screen.getByTestId("markdown-editor")
+    fireEvent.change(descriptionEditor, { target: { value: "Test description" } })
 
     await waitFor(() => {
-      const submitButton = screen.getByText("Complete");
-      expect(submitButton).not.toBeDisabled();
-    });
+      const submitButton = screen.getByText("Complete")
+      expect(submitButton).not.toBeDisabled()
+    })
 
-    const submitButton = screen.getByText("Complete");
-    fireEvent.click(submitButton);
+    const submitButton = screen.getByText("Complete")
+    fireEvent.click(submitButton)
 
     await waitFor(() => {
-      expect(screen.getByText("Loading...")).toBeInTheDocument();
-    });
-  });
-});
-
+      expect(screen.getByText("Loading...")).toBeInTheDocument()
+    })
+  })
+})

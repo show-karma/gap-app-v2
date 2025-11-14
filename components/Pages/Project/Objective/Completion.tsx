@@ -1,33 +1,32 @@
-import { Button } from "@/components/Utilities/Button";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { getGapClient, useGap } from "@/hooks/useGap";
-import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
-import { useWallet } from "@/hooks/useWallet";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
-import { useStepper } from "@/store/modals/txStepper";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import fetchData from "@/utilities/fetchData";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
-import { INDEXER } from "@/utilities/indexer";
-import { MESSAGES } from "@/utilities/messages";
-import { ReadMore } from "@/utilities/ReadMore";
-import { retryUntilConditionMet } from "@/utilities/retries";
-import { getProjectById } from "@/utilities/sdk";
-import { privyConfig as config } from "@/utilities/wagmi/privy-config";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { TrashIcon } from "@heroicons/react/24/outline";
-import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
-import { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useQuery } from "@tanstack/react-query";
-
-import dynamic from "next/dynamic";
-import { useParams } from "next/navigation";
-import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
+import { TrashIcon } from "@heroicons/react/24/outline"
+import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone"
+import type { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
+import { useQuery } from "@tanstack/react-query"
+import dynamic from "next/dynamic"
+import { useParams } from "next/navigation"
+import toast from "react-hot-toast"
+import { useAccount } from "wagmi"
+import { Button } from "@/components/Utilities/Button"
+import { ExternalLink } from "@/components/Utilities/ExternalLink"
+import { errorManager } from "@/components/Utilities/errorManager"
+import { getGapClient, useGap } from "@/hooks/useGap"
+import { useOffChainRevoke } from "@/hooks/useOffChainRevoke"
+import { useWallet } from "@/hooks/useWallet"
+import { useOwnerStore, useProjectStore } from "@/store"
+import { useStepper } from "@/store/modals/txStepper"
+import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid"
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils"
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain"
+import fetchData from "@/utilities/fetchData"
+import { gapIndexerApi } from "@/utilities/gapIndexerApi"
+import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives"
+import { INDEXER } from "@/utilities/indexer"
+import { MESSAGES } from "@/utilities/messages"
+import { ReadMore } from "@/utilities/ReadMore"
+import { retryUntilConditionMet } from "@/utilities/retries"
+import { getProjectById } from "@/utilities/sdk"
+import { privyConfig as config } from "@/utilities/wagmi/privy-config"
+import { safeGetWalletClient } from "@/utilities/wallet-helpers"
 
 const ProjectObjectiveCompletion = dynamic(
   () =>
@@ -37,92 +36,91 @@ const ProjectObjectiveCompletion = dynamic(
   {
     ssr: false,
   }
-);
+)
 
 export const ObjectiveCardComplete = ({
   objective,
   isCompleting,
   handleCompleting,
 }: {
-  objective: IProjectMilestoneResponse;
-  isCompleting: boolean;
-  handleCompleting: (isCompleting: boolean) => void;
+  objective: IProjectMilestoneResponse
+  isCompleting: boolean
+  handleCompleting: (isCompleting: boolean) => void
 }) => {
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isAuthorized = isProjectAdmin || isContractOwner;
-  const { isProjectOwner } = useProjectStore();
-  const isOnChainAuthorized = isProjectOwner || isContractOwner;
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin)
+  const isContractOwner = useOwnerStore((state) => state.isOwner)
+  const isAuthorized = isProjectAdmin || isContractOwner
+  const { isProjectOwner } = useProjectStore()
+  const isOnChainAuthorized = isProjectOwner || isContractOwner
 
-  const { changeStepperStep, setIsStepper } = useStepper();
-  const { gap } = useGap();
-  const { chain, address } = useAccount();
-  const { switchChainAsync } = useWallet();
-  const { performOffChainRevoke } = useOffChainRevoke();
+  const { changeStepperStep, setIsStepper } = useStepper()
+  const { gap } = useGap()
+  const { chain, address } = useAccount()
+  const { switchChainAsync } = useWallet()
+  const { performOffChainRevoke } = useOffChainRevoke()
 
-  const params = useParams();
-  const projectId = params.projectId as string;
+  const params = useParams()
+  const projectId = params.projectId as string
 
   const { refetch } = useQuery<IProjectMilestoneResponse[]>({
     queryKey: ["projectMilestones"],
     queryFn: () => getProjectObjectives(projectId),
-  });
+  })
 
   const deleteObjectiveCompletion = async () => {
-    let gapClient = gap;
+    let gapClient = gap
     try {
-      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+      const {
+        success,
+        chainId: actualChainId,
+        gapClient: newGapClient,
+      } = await ensureCorrectChain({
         targetChainId: objective.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
-      });
+      })
 
       if (!success) {
-        return;
+        return
       }
 
-      gapClient = newGapClient;
+      gapClient = newGapClient
 
-      const { walletClient, error } = await safeGetWalletClient(
-        actualChainId
-      );
+      const { walletClient, error } = await safeGetWalletClient(actualChainId)
 
       if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+        throw new Error("Failed to connect to wallet", { cause: error })
       }
-      if (!walletClient || !gapClient) return;
-      const walletSigner = await walletClientToSigner(walletClient);
-      const fetchedProject = await getProjectById(projectId);
-      if (!fetchedProject) return;
+      if (!walletClient || !gapClient) return
+      const walletSigner = await walletClientToSigner(walletClient)
+      const fetchedProject = await getProjectById(projectId)
+      if (!fetchedProject) return
       const fetchedMilestones = await gapIndexerApi
         .projectMilestones(projectId)
-        .then((res) => res.data);
-      if (!fetchedMilestones || !gapClient?.network) return;
-      const objectivesInstances = ProjectMilestone.from(
-        fetchedMilestones,
-        gapClient?.network
-      );
+        .then((res) => res.data)
+      if (!fetchedMilestones || !gapClient?.network) return
+      const objectivesInstances = ProjectMilestone.from(fetchedMilestones, gapClient?.network)
       const objectiveInstance = objectivesInstances.find(
         (item) => item.uid.toLowerCase() === objective.uid.toLowerCase()
-      );
-      if (!objectiveInstance) return;
+      )
+      if (!objectiveInstance) return
 
       const checkIfAttestationExists = async (callbackFn?: () => void) => {
         await retryUntilConditionMet(
           async () => {
-            const fetchedObjectives = await getProjectObjectives(projectId);
+            const fetchedObjectives = await getProjectObjectives(projectId)
             const stillExists = fetchedObjectives.find(
               (item) => item.uid.toLowerCase() === objective.uid.toLowerCase()
-            )?.completed;
+            )?.completed
 
-            return !stillExists;
+            return !stillExists
           },
           async () => {
-            callbackFn?.();
-            await refetch();
+            callbackFn?.()
+            await refetch()
           }
-        );
-      };
+        )
+      }
 
       if (!isOnChainAuthorized) {
         await performOffChainRevoke({
@@ -133,27 +131,30 @@ export const ObjectiveCardComplete = ({
             success: MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.SUCCESS,
             loading: MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.LOADING,
           },
-        });
+        })
       } else {
         try {
-          const res = await objectiveInstance.revokeCompletion(walletSigner as any, changeStepperStep);
-          changeStepperStep("indexing");
-          const txHash = res?.tx[0]?.hash;
+          const res = await objectiveInstance.revokeCompletion(
+            walletSigner as any,
+            changeStepperStep
+          )
+          changeStepperStep("indexing")
+          const txHash = res?.tx[0]?.hash
           if (txHash) {
             await fetchData(
               INDEXER.ATTESTATION_LISTENER(txHash, objectiveInstance.chainID),
               "POST",
               {}
-            );
+            )
           }
           await checkIfAttestationExists(() => {
-            changeStepperStep("indexed");
-          });
-          toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.SUCCESS);
+            changeStepperStep("indexed")
+          })
+          toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.SUCCESS)
         } catch (onChainError: any) {
           // Silently fallback to off-chain revoke
-          setIsStepper(false); // Reset stepper since we're falling back
-          
+          setIsStepper(false) // Reset stepper since we're falling back
+
           const success = await performOffChainRevoke({
             uid: objectiveInstance.completed?.uid as `0x${string}`,
             chainID: objectiveInstance.completed?.chainID || objectiveInstance.chainID,
@@ -162,11 +163,11 @@ export const ObjectiveCardComplete = ({
               success: MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.SUCCESS,
               loading: MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.LOADING,
             },
-          });
-          
+          })
+
           if (!success) {
             // Both methods failed - throw the original error to maintain expected behavior
-            throw onChainError;
+            throw onChainError
           }
         }
       }
@@ -180,24 +181,17 @@ export const ObjectiveCardComplete = ({
           address,
         },
         { error: MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.ERROR }
-      );
+      )
     } finally {
-      setIsStepper(false);
+      setIsStepper(false)
     }
-  };
+  }
 
   if (objective.completed) {
     return (
       <div className="rounded-xl gap-6 flex flex-col items-start justify-start w-full">
-        <div
-          className="flex flex-col items-start w-full gap-6"
-          data-color-mode="light"
-        >
-          <ReadMore
-            readLessText="Read less"
-            readMoreText="Read more"
-            side="left"
-          >
+        <div className="flex flex-col items-start w-full gap-6" data-color-mode="light">
+          <ReadMore readLessText="Read less" readMoreText="Read more" side="left">
             {objective.completed.data?.reason || ""}
           </ReadMore>
 
@@ -216,19 +210,16 @@ export const ObjectiveCardComplete = ({
                   className="flex flex-row w-max max-w-full gap-2 bg-transparent text-sm font-semibold text-blue-600 underline dark:text-blue-100 hover:bg-transparent break-all line-clamp-3"
                 >
                   {objective?.completed?.data.proofOfWork.includes("http")
-                    ? `${objective?.completed?.data.proofOfWork.slice(0, 80)}${objective?.completed?.data.proofOfWork.slice(0, 80)
-                      .length >= 80
-                      ? "..."
-                      : ""
-                    }`
-                    : `https://${objective?.completed?.data.proofOfWork.slice(
-                      0,
-                      80
-                    )}${objective?.completed?.data.proofOfWork.slice(0, 80)
-                      .length >= 80
-                      ? "..."
-                      : ""
-                    }`}
+                    ? `${objective?.completed?.data.proofOfWork.slice(0, 80)}${
+                        objective?.completed?.data.proofOfWork.slice(0, 80).length >= 80
+                          ? "..."
+                          : ""
+                      }`
+                    : `https://${objective?.completed?.data.proofOfWork.slice(0, 80)}${
+                        objective?.completed?.data.proofOfWork.slice(0, 80).length >= 80
+                          ? "..."
+                          : ""
+                      }`}
                 </ExternalLink>
               ) : (
                 <p className="text-sm font-medium text-gray-500 dark:text-zinc-300 max-sm:text-xs">
@@ -254,7 +245,7 @@ export const ObjectiveCardComplete = ({
           </div>
         </div>
       </div>
-    );
+    )
   }
   if (isCompleting) {
     return (
@@ -262,7 +253,7 @@ export const ObjectiveCardComplete = ({
         objectiveUID={objective.uid}
         handleCompleting={handleCompleting}
       />
-    );
+    )
   }
-  return null;
-};
+  return null
+}

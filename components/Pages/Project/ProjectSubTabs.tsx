@@ -1,26 +1,24 @@
-"use client";
-import { EndorsementList } from "../ProgramRegistry/EndorsementList";
-import { useMemo } from "react";
-import { useEndorsementStore } from "@/store/modals/endorsement";
-import { useAccount } from "wagmi";
-import { useAuth } from "@/hooks/useAuth";
-import * as Tooltip from "@radix-ui/react-tooltip";
-import { useProjectStore } from "@/store";
+"use client"
+import * as Tooltip from "@radix-ui/react-tooltip"
+import { useMemo } from "react"
+import { useAccount } from "wagmi"
+import { useAuth } from "@/hooks/useAuth"
+import { useProjectStore } from "@/store"
+import { useEndorsementStore } from "@/store/modals/endorsement"
+import { EndorsementList } from "../ProgramRegistry/EndorsementList"
 
 export const ProjectSubTabs = () => {
-  const project = useProjectStore((state) => state.project);
-  const { setIsEndorsementOpen: setIsOpen } = useEndorsementStore();
-  const { address, isConnected } = useAccount();
-  const { authenticated: isAuth, login } = useAuth();
+  const project = useProjectStore((state) => state.project)
+  const { setIsEndorsementOpen: setIsOpen } = useEndorsementStore()
+  const { address, isConnected } = useAccount()
+  const { authenticated: isAuth, login } = useAuth()
 
   const userHasEndorsed = useMemo(() => {
-    if (!address || !isConnected || !isAuth || !project?.endorsements?.length)
-      return false;
+    if (!address || !isConnected || !isAuth || !project?.endorsements?.length) return false
     return project.endorsements.some(
-      (endorsement) =>
-        endorsement.recipient?.toLowerCase() === address.toLowerCase()
-    );
-  }, [address, isConnected, isAuth, project?.endorsements]);
+      (endorsement) => endorsement.recipient?.toLowerCase() === address.toLowerCase()
+    )
+  }, [address, isConnected, isAuth, project?.endorsements])
   return (
     <div className="flex flex-col border border-zinc-300 rounded-xl w-full">
       <div className="flex flex-row gap-1 justify-between items-center border-b border-b-zinc-300">
@@ -35,9 +33,9 @@ export const ProjectSubTabs = () => {
                   <button
                     onClick={() => {
                       if (isConnected) {
-                        setIsOpen(true);
+                        setIsOpen(true)
                       } else {
-                        login?.();
+                        login?.()
                       }
                     }}
                     className="whitespace-nowrap text-blue-600 text-sm px-4 py-2 rounded-md underline bg-transparent hover:bg-transparent transition-colors"
@@ -64,5 +62,5 @@ export const ProjectSubTabs = () => {
       </div>
       <EndorsementList />
     </div>
-  );
-};
+  )
+}

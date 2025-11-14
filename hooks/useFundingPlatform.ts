@@ -1,66 +1,96 @@
-import { useState, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
-import { fundingPlatformService, IApplicationFilters, fundingApplicationsAPI } from '@/services/fundingPlatformService';
-import { applicationCommentsService } from '@/services/application-comments.service';
-import { deleteApplication } from '@/services/funding-applications';
-import { 
-  IFormSchema, 
-  IFundingApplication, 
-  IFundingProgramConfig,
-  IApplicationSubmitRequest,
-  IApplicationUpdateRequest,
-  IApplicationStatusUpdateRequest,
-  FundingApplicationStatusV2,
-  ExportFormat,
-  ApplicationComment
-} from '@/types/funding-platform';
-import toast from 'react-hot-toast';
-import { errorManager } from '@/components/Utilities/errorManager';
-import { useAuth } from './useAuth';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useCallback, useState } from "react"
+import toast from "react-hot-toast"
+import { errorManager } from "@/components/Utilities/errorManager"
+import { applicationCommentsService } from "@/services/application-comments.service"
+import { deleteApplication } from "@/services/funding-applications"
+import {
+  fundingApplicationsAPI,
+  fundingPlatformService,
+  type IApplicationFilters,
+} from "@/services/fundingPlatformService"
+import {
+  ApplicationComment,
+  type ExportFormat,
+  type FundingApplicationStatusV2,
+  type IApplicationStatusUpdateRequest,
+  type IApplicationSubmitRequest,
+  type IApplicationUpdateRequest,
+  type IFormSchema,
+  type IFundingApplication,
+  type IFundingProgramConfig,
+} from "@/types/funding-platform"
+import { useAuth } from "./useAuth"
 
 // Query keys for caching
 const QUERY_KEYS = {
-  programs: (communityId: string) => ['grant-programs', communityId],
-  programConfig: (programId: string, chainId: number) => ['program-config', programId, chainId],
-  programStats: (programId: string, chainId: number) => ['program-stats', programId, chainId],
-  applications: (programId: string, chainId: number, filters: IApplicationFilters) => 
-    ['applications', programId, chainId, filters],
-  application: (applicationId: string) => ['funding-application', applicationId],
-  applicationByReference: (referenceNumber: string) => ['application-by-reference', referenceNumber],
-  applicationByEmail: (programId: string, chainId: number, email: string) => 
-    ['application-by-email', programId, chainId, email],
-  applicationStats: (programId: string, chainId: number) => ['application-stats', programId, chainId],
-  applicationComments: (applicationId: string, isAdmin?: boolean) => 
-    ['application-comments', applicationId, isAdmin],
-  applicationVersions: (applicationIdOrReference: string) => 
-    ['application-versions', applicationIdOrReference],
-};
+  programs: (communityId: string) => ["grant-programs", communityId],
+  programConfig: (programId: string, chainId: number) => ["program-config", programId, chainId],
+  programStats: (programId: string, chainId: number) => ["program-stats", programId, chainId],
+  applications: (programId: string, chainId: number, filters: IApplicationFilters) => [
+    "applications",
+    programId,
+    chainId,
+    filters,
+  ],
+  application: (applicationId: string) => ["funding-application", applicationId],
+  applicationByReference: (referenceNumber: string) => [
+    "application-by-reference",
+    referenceNumber,
+  ],
+  applicationByEmail: (programId: string, chainId: number, email: string) => [
+    "application-by-email",
+    programId,
+    chainId,
+    email,
+  ],
+  applicationStats: (programId: string, chainId: number) => [
+    "application-stats",
+    programId,
+    chainId,
+  ],
+  applicationComments: (applicationId: string, isAdmin?: boolean) => [
+    "application-comments",
+    applicationId,
+    isAdmin,
+  ],
+  applicationVersions: (applicationIdOrReference: string) => [
+    "application-versions",
+    applicationIdOrReference,
+  ],
+}
 
 /**
  * Hook for managing funding programs for a community
  */
 export const useFundingPrograms = (communityId: string) => {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
 
   const programsQuery = useQuery({
     queryKey: QUERY_KEYS.programs(communityId),
     queryFn: () => fundingPlatformService.programs.getProgramsByCommunity(communityId),
     enabled: !!communityId,
-  });
-
+  })
 
   const createProgramConfigurationMutation = useMutation({
-    mutationFn: ({programId, chainId, config}: {programId: string, chainId: number, config: Omit<IFundingProgramConfig, 'id' | 'createdAt' | 'updatedAt'>}) =>
-      fundingPlatformService.programs.createProgramConfiguration(programId, chainId, config),
+    mutationFn: ({
+      programId,
+      chainId,
+      config,
+    }: {
+      programId: string
+      chainId: number
+      config: Omit<IFundingProgramConfig, "id" | "createdAt" | "updatedAt">
+    }) => fundingPlatformService.programs.createProgramConfiguration(programId, chainId, config),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.programs(communityId) });
-      toast.success('Program created successfully');
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.programs(communityId) })
+      toast.success("Program created successfully")
     },
     onError: (error) => {
-      console.error('Failed to create program:', error);
-      toast.error('Failed to create program');
+      console.error("Failed to create program:", error)
+      toast.error("Failed to create program")
     },
-  });
+  })
 
   return {
     programs: programsQuery.data || [],
@@ -69,83 +99,81 @@ export const useFundingPrograms = (communityId: string) => {
     createProgramConfig: createProgramConfigurationMutation.mutate,
     isCreating: createProgramConfigurationMutation.isPending,
     refetch: () => {
-      programsQuery.refetch();
+      programsQuery.refetch()
     },
-  };
-};
+  }
+}
 
 /**
  * Hook for managing a specific program configuration
  */
 export const useProgramStats = (programId: string, chainId: number) => {
-
   const statsQuery = useQuery({
     queryKey: QUERY_KEYS.programStats(programId, chainId),
     queryFn: () => fundingPlatformService.programs.getProgramStats(programId, chainId),
     enabled: !!programId && !!chainId,
-  });
+  })
 
   return {
     stats: statsQuery.data,
     isLoading: statsQuery.isLoading,
     error: statsQuery.error,
     refetch: () => {
-      statsQuery.refetch();
+      statsQuery.refetch()
     },
-  };
-};
-
+  }
+}
 
 /**
  * Hook for managing a specific program configuration
  */
 export const useProgramConfig = (programId: string, chainId: number) => {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
 
   const configQuery = useQuery({
     queryKey: QUERY_KEYS.programConfig(programId, chainId),
     queryFn: () => fundingPlatformService.programs.getProgramConfiguration(programId, chainId),
     enabled: !!programId && !!chainId,
-  });
+  })
 
   const updateConfigMutation = useMutation({
     mutationFn: (config: Partial<IFundingProgramConfig | null>) =>
       fundingPlatformService.programs.updateProgramConfiguration(programId, chainId, config),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.programConfig(programId, chainId) });
-      toast.success('Program configuration updated successfully');
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.programConfig(programId, chainId) })
+      toast.success("Program configuration updated successfully")
     },
     onError: (error) => {
-      console.error('Failed to update program configuration:', error);
-      toast.error('Failed to update program configuration');
+      console.error("Failed to update program configuration:", error)
+      toast.error("Failed to update program configuration")
     },
-  });
+  })
 
   const updateFormSchemaMutation = useMutation({
     mutationFn: (formSchema: IFormSchema) =>
       fundingPlatformService.programs.updateFormSchema(programId, chainId, formSchema),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.programConfig(programId, chainId) });
-      toast.success('Form schema updated successfully');
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.programConfig(programId, chainId) })
+      toast.success("Form schema updated successfully")
     },
     onError: (error) => {
-      console.error('Failed to update form schema:', error);
-      toast.error('Failed to update form schema');
+      console.error("Failed to update form schema:", error)
+      toast.error("Failed to update form schema")
     },
-  });
+  })
 
   const toggleStatusMutation = useMutation({
     mutationFn: (enabled: boolean) =>
       fundingPlatformService.programs.toggleProgramStatus(programId, chainId, enabled),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.programConfig(programId, chainId) });
-      toast.success('Program status updated successfully');
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.programConfig(programId, chainId) })
+      toast.success("Program status updated successfully")
     },
     onError: (error) => {
-      console.error('Failed to toggle program status:', error);
-      toast.error('Failed to update program status');
+      console.error("Failed to toggle program status:", error)
+      toast.error("Failed to update program status")
     },
-  });
+  })
 
   return {
     data: configQuery.data,
@@ -155,13 +183,16 @@ export const useProgramConfig = (programId: string, chainId: number) => {
     updateConfig: updateConfigMutation.mutate,
     updateFormSchema: updateFormSchemaMutation.mutate,
     toggleStatus: toggleStatusMutation.mutate,
-    isUpdating: updateConfigMutation.isPending || updateFormSchemaMutation.isPending || toggleStatusMutation.isPending,
+    isUpdating:
+      updateConfigMutation.isPending ||
+      updateFormSchemaMutation.isPending ||
+      toggleStatusMutation.isPending,
     refetch: () => {
-      configQuery.refetch();
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.programStats(programId, chainId) });
+      configQuery.refetch()
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.programStats(programId, chainId) })
     },
-  };
-};
+  }
+}
 
 /**
  * Hook for managing grant applications with infinite scroll
@@ -171,51 +202,50 @@ export const useFundingApplications = (
   chainId: number,
   filters: IApplicationFilters = {}
 ) => {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
 
   // Set default limit to 25 if not provided, exclude page from filters for infinite scroll
-  const { page, ...filtersWithoutPage } = filters;
+  const { page, ...filtersWithoutPage } = filters
   const filtersWithDefaults = {
     limit: 25,
-    ...filtersWithoutPage
-  };
-  const { authenticated } = useAuth();
+    ...filtersWithoutPage,
+  }
+  const { authenticated } = useAuth()
 
   const applicationsQuery = useInfiniteQuery({
     queryKey: QUERY_KEYS.applications(programId, chainId, filtersWithDefaults),
     queryFn: ({ pageParam = 1 }) =>
       fundingPlatformService.applications.getApplicationsByProgram(programId, chainId, {
         ...filtersWithDefaults,
-        page: pageParam
+        page: pageParam,
       }),
     enabled: !!programId && !!chainId && authenticated,
     getNextPageParam: (lastPage) => {
-      const { pagination } = lastPage;
-      return pagination.page < pagination.totalPages ? pagination.page + 1 : undefined;
+      const { pagination } = lastPage
+      return pagination.page < pagination.totalPages ? pagination.page + 1 : undefined
     },
     initialPageParam: 1,
-  });
+  })
 
   const statsQuery = useQuery({
     queryKey: QUERY_KEYS.applicationStats(programId, chainId),
     queryFn: () => fundingPlatformService.applications.getApplicationStatistics(programId, chainId),
     enabled: !!programId && !!chainId && authenticated,
-  });
+  })
 
   const submitApplicationMutation = useMutation({
     mutationFn: (applicationData: Record<string, any>) => {
       // Extract email from application data
-      let applicantEmail = '';
+      let applicantEmail = ""
       const emailFields = Object.keys(applicationData).filter(
         (key) =>
-          key.toLowerCase().includes('email') ||
-          (typeof applicationData[key] === 'string' &&
-            applicationData[key].includes('@'))
-      );
+          key.toLowerCase().includes("email") ||
+          (typeof applicationData[key] === "string" && applicationData[key].includes("@"))
+      )
       if (emailFields.length > 0) {
-        applicantEmail = applicationData[emailFields[0]];
+        applicantEmail = applicationData[emailFields[0]]
       } else {
-        throw new Error('Email field is required in the application form');
+        throw new Error("Email field is required in the application form")
       }
 
       return fundingPlatformService.applications.submitApplication({
@@ -223,38 +253,50 @@ export const useFundingApplications = (
         chainID: chainId,
         applicantEmail,
         applicationData,
-      });
+      })
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.applications(programId, chainId, { limit: 25 }) });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.applicationStats(programId, chainId) });
-      toast.success('Application submitted successfully!');
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.applications(programId, chainId, { limit: 25 }),
+      })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.applicationStats(programId, chainId) })
+      toast.success("Application submitted successfully!")
     },
     onError: (error) => {
-      console.error('Failed to submit application:', error);
-      toast.error('Failed to submit application. Please try again.');
+      console.error("Failed to submit application:", error)
+      toast.error("Failed to submit application. Please try again.")
     },
-  });
+  })
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ applicationId, status, note }: { applicationId: string; status: string; note?: string }) =>
+    mutationFn: ({
+      applicationId,
+      status,
+      note,
+    }: {
+      applicationId: string
+      status: string
+      note?: string
+    }) =>
       fundingPlatformService.applications.updateApplicationStatus(applicationId, {
         status: status as FundingApplicationStatusV2,
-        reason: note || '',
+        reason: note || "",
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.applications(programId, chainId, { limit: 25 }) });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.applicationStats(programId, chainId) });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.applications(programId, chainId, { limit: 25 }),
+      })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.applicationStats(programId, chainId) })
     },
     onError: (error) => {
-      console.error('Failed to update application status:', error);
-      toast.error('Failed to update application status');
+      console.error("Failed to update application status:", error)
+      toast.error("Failed to update application status")
     },
-  });
+  })
 
   // Flatten the paginated data
-  const applications = applicationsQuery.data?.pages.flatMap(page => page.applications) || [];
-  const firstPage = applicationsQuery.data?.pages[0];
+  const applications = applicationsQuery.data?.pages.flatMap((page) => page.applications) || []
+  const firstPage = applicationsQuery.data?.pages[0]
 
   return {
     applications,
@@ -272,38 +314,38 @@ export const useFundingApplications = (
     isSubmitting: submitApplicationMutation.isPending,
     isUpdatingStatus: updateStatusMutation.isPending,
     refetch: () => {
-      applicationsQuery.refetch();
-      statsQuery.refetch();
+      applicationsQuery.refetch()
+      statsQuery.refetch()
     },
-  };
-};
+  }
+}
 
 /**
  * Hook for managing a single application
  */
 export const useFundingApplication = (applicationId: string) => {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
 
   const applicationQuery = useQuery({
     queryKey: QUERY_KEYS.application(applicationId),
     queryFn: () => fundingPlatformService.applications.getApplication(applicationId),
     enabled: !!applicationId,
-  });
+  })
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ status, note }: { status: string; note?: string }) =>
       fundingPlatformService.applications.updateApplicationStatus(applicationId, {
         status: status as FundingApplicationStatusV2,
-        reason: note || '',
+        reason: note || "",
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.application(applicationId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.application(applicationId) })
     },
     onError: (error) => {
-      console.error('Failed to update application status:', error);
-      toast.error('Failed to update application status');
+      console.error("Failed to update application status:", error)
+      toast.error("Failed to update application status")
     },
-  });
+  })
 
   return {
     application: applicationQuery.data,
@@ -312,27 +354,30 @@ export const useFundingApplication = (applicationId: string) => {
     updateStatus: updateStatusMutation.mutate,
     isUpdatingStatus: updateStatusMutation.isPending,
     refetch: applicationQuery.refetch,
-  };
-};
+  }
+}
 
 /**
  * Hook for form schema management with auto-save
  */
 export const useFormSchemaManager = (programId: string, chainId: number) => {
-  const [isDirty, setIsDirty] = useState(false);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  
-  const { config, updateFormSchema, isUpdating } = useProgramConfig(programId, chainId);
+  const [isDirty, setIsDirty] = useState(false)
+  const [lastSaved, setLastSaved] = useState<Date | null>(null)
 
-  const saveSchema = useCallback((schema: IFormSchema) => {
-    updateFormSchema(schema);
-    setIsDirty(false);
-    setLastSaved(new Date());
-  }, [updateFormSchema]);
+  const { config, updateFormSchema, isUpdating } = useProgramConfig(programId, chainId)
+
+  const saveSchema = useCallback(
+    (schema: IFormSchema) => {
+      updateFormSchema(schema)
+      setIsDirty(false)
+      setLastSaved(new Date())
+    },
+    [updateFormSchema]
+  )
 
   const markDirty = useCallback(() => {
-    setIsDirty(true);
-  }, []);
+    setIsDirty(true)
+  }, [])
 
   return {
     currentSchema: config?.formSchema,
@@ -341,140 +386,150 @@ export const useFormSchemaManager = (programId: string, chainId: number) => {
     isDirty,
     lastSaved,
     isSaving: isUpdating,
-  };
-};
+  }
+}
 
 /**
  * Hook for V2 application submission with better error handling
  */
 export const useApplicationSubmissionV2 = (programId: string, chainId: number) => {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
 
   // Check if user already has an application
-  const checkExistingApplication = useCallback(async (email: string) => {
-    try {
-      const existing = await fundingPlatformService.applications.getApplicationByEmail(
-        programId,
-        chainId,
-        email
-      );
-      return existing;
-    } catch (error) {
-      console.error('Error checking existing application:', error);
-      return null;
-    }
-  }, [programId, chainId]);
+  const checkExistingApplication = useCallback(
+    async (email: string) => {
+      try {
+        const existing = await fundingPlatformService.applications.getApplicationByEmail(
+          programId,
+          chainId,
+          email
+        )
+        return existing
+      } catch (error) {
+        console.error("Error checking existing application:", error)
+        return null
+      }
+    },
+    [programId, chainId]
+  )
 
   const submitMutation = useMutation({
     mutationFn: async (request: IApplicationSubmitRequest) => {
       // Check for existing application first
-      const existing = await checkExistingApplication(request.applicantEmail);
+      const existing = await checkExistingApplication(request.applicantEmail)
       if (existing) {
-        throw new Error('You have already submitted an application for this program');
+        throw new Error("You have already submitted an application for this program")
       }
-      
-      return fundingPlatformService.applications.submitApplication(request);
+
+      return fundingPlatformService.applications.submitApplication(request)
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.applications(programId, chainId, { limit: 25 })
-      });
-      queryClient.invalidateQueries({ 
-        queryKey: QUERY_KEYS.applicationStats(programId, chainId) 
-      });
-      toast.success(`Application submitted successfully! Reference: ${data.referenceNumber}`);
+        queryKey: QUERY_KEYS.applications(programId, chainId, { limit: 25 }),
+      })
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.applicationStats(programId, chainId),
+      })
+      toast.success(`Application submitted successfully! Reference: ${data.referenceNumber}`)
     },
     onError: (error: any) => {
-      console.error('Failed to submit application:', error);
-      const message = error.response?.data?.message || error.message || 'Failed to submit application';
-      toast.error(message);
+      console.error("Failed to submit application:", error)
+      const message =
+        error.response?.data?.message || error.message || "Failed to submit application"
+      toast.error(message)
     },
-  });
+  })
 
   return {
     submitApplication: submitMutation.mutate,
     isSubmitting: submitMutation.isPending,
     error: submitMutation.error,
     checkExistingApplication,
-  };
-};
+  }
+}
 
 /**
  * Hook for application updates (for users updating their applications)
  */
 export const useApplicationUpdateV2 = () => {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
 
   const updateMutation = useMutation({
-    mutationFn: ({ applicationId, ...request }: { applicationId: string } & IApplicationUpdateRequest) =>
+    mutationFn: ({
+      applicationId,
+      ...request
+    }: { applicationId: string } & IApplicationUpdateRequest) =>
       fundingPlatformService.applications.updateApplication(applicationId, request),
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ 
-        queryKey: QUERY_KEYS.application(variables.applicationId) 
-      });
-      
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.application(variables.applicationId),
+      })
+
       // Show appropriate message based on status change
-      if (data.status === 'pending' && data.statusHistory?.some(h => h.status === 'revision_requested')) {
-        toast.success('Application resubmitted for review');
+      if (
+        data.status === "pending" &&
+        data.statusHistory?.some((h) => h.status === "revision_requested")
+      ) {
+        toast.success("Application resubmitted for review")
       } else {
-        toast.success('Application updated successfully');
+        toast.success("Application updated successfully")
       }
     },
     onError: (error: any) => {
-      console.error('Failed to update application:', error);
-      const message = error.response?.data?.message || 'Failed to update application';
-      toast.error(message);
+      console.error("Failed to update application:", error)
+      const message = error.response?.data?.message || "Failed to update application"
+      toast.error(message)
     },
-  });
+  })
 
   return {
     updateApplication: updateMutation.mutate,
     isUpdating: updateMutation.isPending,
     error: updateMutation.error,
-  };
-};
+  }
+}
 
 /**
  * Hook for admin status updates with V2 reason support
  */
 export const useApplicationStatusV2 = (applicationId?: string) => {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ applicationId: appId, request }: { 
-      applicationId: string; 
-      request: IApplicationStatusUpdateRequest 
+    mutationFn: ({
+      applicationId: appId,
+      request,
+    }: {
+      applicationId: string
+      request: IApplicationStatusUpdateRequest
     }) =>
-      fundingPlatformService.applications.updateApplicationStatus(
-        appId || applicationId!, 
-        request
-      ),
+      fundingPlatformService.applications.updateApplicationStatus(appId || applicationId!, request),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ 
-        queryKey: QUERY_KEYS.application(variables.applicationId) 
-      });
-      queryClient.invalidateQueries({ 
-        queryKey: ['applications'] // Invalidate all application lists
-      });
-      
-      toast.success(`Application ${variables.request.status.replace('_', ' ')}`);
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.application(variables.applicationId),
+      })
+      queryClient.invalidateQueries({
+        queryKey: ["applications"], // Invalidate all application lists
+      })
+
+      toast.success(`Application ${variables.request.status.replace("_", " ")}`)
     },
     onError: (error: any) => {
-      console.error('Failed to update application status:', error);
-      toast.error('Failed to update application status');
+      console.error("Failed to update application status:", error)
+      toast.error("Failed to update application status")
     },
-  });
+  })
 
   return {
-    updateStatus: (appId: string, status: FundingApplicationStatusV2, reason: string) => 
-      updateStatusMutation.mutate({ 
-        applicationId: appId, 
-        request: { status, reason } 
+    updateStatus: (appId: string, status: FundingApplicationStatusV2, reason: string) =>
+      updateStatusMutation.mutate({
+        applicationId: appId,
+        request: { status, reason },
       }),
     isUpdating: updateStatusMutation.isPending,
     error: updateStatusMutation.error,
-  };
-};
+  }
+}
 
 /**
  * Hook for searching applications by Application ID
@@ -485,111 +540,121 @@ export const useApplicationByReference = (referenceNumber: string) => {
     queryFn: () => fundingPlatformService.applications.getApplicationByReference(referenceNumber),
     enabled: !!referenceNumber && referenceNumber.length > 0,
     retry: false,
-  });
+  })
 
   return {
     application: applicationQuery.data,
     isLoading: applicationQuery.isLoading,
     error: applicationQuery.error,
     isNotFound: applicationQuery.error && (applicationQuery.error as any)?.response?.status === 404,
-  };
-};
+  }
+}
 
 /**
  * Hook for exporting applications with V2 format support
  */
-export const useApplicationExport = (programId: string, chainId: number, isAdmin: boolean = false) => {
-  const [isExporting, setIsExporting] = useState(false);
+export const useApplicationExport = (
+  programId: string,
+  chainId: number,
+  isAdmin: boolean = false
+) => {
+  const [isExporting, setIsExporting] = useState(false)
 
-  const exportApplications = useCallback(async (
-    format: ExportFormat = 'csv',
-    filters: IApplicationFilters = {}
-  ) => {
-    setIsExporting(true);
-    try {
-      const response = isAdmin 
-        ? await fundingPlatformService.applications.exportApplicationsAdmin(
-            programId,
-            chainId,
-            format,
-            filters
-          )
-        : await fundingPlatformService.applications.exportApplications(
-            programId,
-            chainId,
-            format,
-            filters
-          );
+  const exportApplications = useCallback(
+    async (format: ExportFormat = "csv", filters: IApplicationFilters = {}) => {
+      setIsExporting(true)
+      try {
+        const response = isAdmin
+          ? await fundingPlatformService.applications.exportApplicationsAdmin(
+              programId,
+              chainId,
+              format,
+              filters
+            )
+          : await fundingPlatformService.applications.exportApplications(
+              programId,
+              chainId,
+              format,
+              filters
+            )
 
-      // Extract data and filename from response
-      const { data, filename } = response;
+        // Extract data and filename from response
+        const { data, filename } = response
 
-      // Handle blob response for CSV
-      let blob: Blob;
-      if (format === 'csv' && data instanceof Blob) {
-        blob = data;
-      } else if (format === 'csv') {
-        blob = new Blob([data], { type: 'text/csv' });
-      } else {
-        blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        // Handle blob response for CSV
+        let blob: Blob
+        if (format === "csv" && data instanceof Blob) {
+          blob = data
+        } else if (format === "csv") {
+          blob = new Blob([data], { type: "text/csv" })
+        } else {
+          blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })
+        }
+
+        // Download file
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement("a")
+        link.href = url
+
+        // Use filename from server if available, otherwise generate one
+        if (filename) {
+          link.download = filename
+        } else {
+          const filePrefix = isAdmin ? "admin-applications" : "applications"
+          link.download = `${filePrefix}-${programId}-${new Date().toISOString().split("T")[0]}.${format}`
+        }
+
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        window.URL.revokeObjectURL(url)
+
+        toast.success(`Applications exported as ${format.toUpperCase()}`)
+      } catch (error) {
+        console.error("Failed to export applications:", error)
+        toast.error("Failed to export applications")
+      } finally {
+        setIsExporting(false)
       }
-
-      // Download file
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      
-      // Use filename from server if available, otherwise generate one
-      if (filename) {
-        link.download = filename;
-      } else {
-        const filePrefix = isAdmin ? 'admin-applications' : 'applications';
-        link.download = `${filePrefix}-${programId}-${new Date().toISOString().split('T')[0]}.${format}`;
-      }
-      
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-
-      toast.success(`Applications exported as ${format.toUpperCase()}`);
-    } catch (error) {
-      console.error('Failed to export applications:', error);
-      toast.error('Failed to export applications');
-    } finally {
-      setIsExporting(false);
-    }
-  }, [programId, chainId, isAdmin]);
+    },
+    [programId, chainId, isAdmin]
+  )
 
   return {
     exportApplications,
     isExporting,
-  };
-};
+  }
+}
 
 /**
  * Hook for fetching a single application with prefetch support
  */
 export const useApplication = (applicationId: string | null) => {
-  const queryClient = useQueryClient();
-  const { authenticated } = useAuth();
+  const queryClient = useQueryClient()
+  const { authenticated } = useAuth()
 
   const applicationQuery = useQuery({
     queryKey: QUERY_KEYS.application(applicationId!),
     queryFn: () => fundingApplicationsAPI.getApplication(applicationId!),
     enabled: !!applicationId && authenticated,
-  });
+  })
 
-  const prefetchApplication = useCallback((applicationId: string) => {
-    queryClient.prefetchQuery({
-      queryKey: QUERY_KEYS.application(applicationId),
-      queryFn: () => fundingApplicationsAPI.getApplication(applicationId),
-    });
-  }, [queryClient]);
+  const prefetchApplication = useCallback(
+    (applicationId: string) => {
+      queryClient.prefetchQuery({
+        queryKey: QUERY_KEYS.application(applicationId),
+        queryFn: () => fundingApplicationsAPI.getApplication(applicationId),
+      })
+    },
+    [queryClient]
+  )
 
-  const setApplicationData = useCallback((applicationId: string, data: IFundingApplication) => {
-    queryClient.setQueryData(QUERY_KEYS.application(applicationId), data);
-  }, [queryClient]);
+  const setApplicationData = useCallback(
+    (applicationId: string, data: IFundingApplication) => {
+      queryClient.setQueryData(QUERY_KEYS.application(applicationId), data)
+    },
+    [queryClient]
+  )
 
   return {
     application: applicationQuery.data,
@@ -598,60 +663,64 @@ export const useApplication = (applicationId: string | null) => {
     refetch: applicationQuery.refetch,
     prefetchApplication,
     setApplicationData,
-  };
-};
+  }
+}
 
 /**
  * Hook for managing application status updates
  */
 export const useApplicationStatus = (programId?: string, chainId?: number) => {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
 
   const statusMutation = useMutation({
-    mutationFn: ({ applicationId, status, note }: { 
-      applicationId: string; 
-      status: string; 
-      note?: string 
+    mutationFn: ({
+      applicationId,
+      status,
+      note,
+    }: {
+      applicationId: string
+      status: string
+      note?: string
     }) =>
       fundingApplicationsAPI.updateApplicationStatus(applicationId, {
         status: status as any,
-        reason: note || '',
+        reason: note || "",
       }),
     onSuccess: (_, variables) => {
       // Invalidate and refetch application data
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.application(variables.applicationId) });
-      
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.application(variables.applicationId) })
+
       // Invalidate applications list if programId and chainId are provided
       if (programId && chainId) {
         queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.applications(programId, chainId, { limit: 25 })
-        });
+          queryKey: QUERY_KEYS.applications(programId, chainId, { limit: 25 }),
+        })
       }
-      
+
       // Invalidate all applications lists
-      queryClient.invalidateQueries({ queryKey: ['funding-applications'] });
+      queryClient.invalidateQueries({ queryKey: ["funding-applications"] })
     },
     onError: (error: any) => {
-      const errorMessage = error?.response?.data?.message || 'Failed to update application status';
-      toast.error(errorMessage);
-      console.error('Failed to update application status:', error);
+      const errorMessage = error?.response?.data?.message || "Failed to update application status"
+      toast.error(errorMessage)
+      console.error("Failed to update application status:", error)
     },
-  });
+  })
 
   return {
     updateStatus: statusMutation.mutate,
     updateStatusAsync: statusMutation.mutateAsync,
     isUpdating: statusMutation.isPending,
     error: statusMutation.error,
-  };
-};
+  }
+}
 
 /**
  * Hook for managing application comments with React Query
  */
 export const useApplicationComments = (applicationId: string | null, isAdmin: boolean = false) => {
-  const queryClient = useQueryClient();
-  const { authenticated } = useAuth();
+  const queryClient = useQueryClient()
+  const { authenticated } = useAuth()
 
   // Query for fetching comments
   const commentsQuery = useQuery({
@@ -660,7 +729,7 @@ export const useApplicationComments = (applicationId: string | null, isAdmin: bo
     enabled: !!applicationId && authenticated,
     staleTime: 1000 * 60 * 2, // 2 minutes
     gcTime: 1000 * 60 * 1, // 5 minutes
-  });
+  })
 
   // Mutation for creating comments
   const createCommentMutation = useMutation({
@@ -669,17 +738,17 @@ export const useApplicationComments = (applicationId: string | null, isAdmin: bo
     onSuccess: () => {
       // Invalidate and refetch comments after successful creation
       queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.applicationComments(applicationId!)
-      });
-      toast.success('Comment added successfully');
+        queryKey: QUERY_KEYS.applicationComments(applicationId!),
+      })
+      toast.success("Comment added successfully")
     },
     onError: (error: any) => {
-      const errorMessage = error?.response?.data?.message || 'Failed to add comment';
-      toast.error(errorMessage);
-      errorManager(errorMessage, error);
-      console.error('Failed to add comment:', error);
+      const errorMessage = error?.response?.data?.message || "Failed to add comment"
+      toast.error(errorMessage)
+      errorManager(errorMessage, error)
+      console.error("Failed to add comment:", error)
     },
-  });
+  })
 
   // Mutation for editing comments
   const editCommentMutation = useMutation({
@@ -687,62 +756,61 @@ export const useApplicationComments = (applicationId: string | null, isAdmin: bo
       applicationCommentsService.editComment(commentId, content),
     onSuccess: () => {
       // Invalidate and refetch comments after successful edit
-      queryClient.invalidateQueries({ 
-        queryKey: QUERY_KEYS.applicationComments(applicationId!) 
-      });
-      toast.success('Comment updated successfully');
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.applicationComments(applicationId!),
+      })
+      toast.success("Comment updated successfully")
     },
     onError: (error: any) => {
-      const errorMessage = error?.response?.data?.message || 'Failed to edit comment';
-      toast.error(errorMessage);
-      console.error('Failed to edit comment:', error);
+      const errorMessage = error?.response?.data?.message || "Failed to edit comment"
+      toast.error(errorMessage)
+      console.error("Failed to edit comment:", error)
     },
-  });
+  })
 
   // Mutation for deleting comments
   const deleteCommentMutation = useMutation({
-    mutationFn: (commentId: string) =>
-      applicationCommentsService.deleteComment(commentId),
+    mutationFn: (commentId: string) => applicationCommentsService.deleteComment(commentId),
     onSuccess: () => {
       // Refetch comments after deletion
-      queryClient.invalidateQueries({ 
-        queryKey: QUERY_KEYS.applicationComments(applicationId!) 
-      });
-      toast.success('Comment deleted successfully');
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.applicationComments(applicationId!),
+      })
+      toast.success("Comment deleted successfully")
     },
     onError: (error: any) => {
-      const errorMessage = error?.response?.data?.message || 'Failed to delete comment';
-      toast.error(errorMessage);
-      console.error('Failed to delete comment:', error);
+      const errorMessage = error?.response?.data?.message || "Failed to delete comment"
+      toast.error(errorMessage)
+      console.error("Failed to delete comment:", error)
     },
-  });
+  })
 
   return {
     comments: commentsQuery.data || [],
     isLoading: commentsQuery.isLoading,
     error: commentsQuery.error,
     refetch: commentsQuery.refetch,
-    
+
     createComment: createCommentMutation.mutate,
     createCommentAsync: createCommentMutation.mutateAsync,
     isCreatingComment: createCommentMutation.isPending,
-    
+
     editComment: editCommentMutation.mutate,
     editCommentAsync: editCommentMutation.mutateAsync,
     isEditingComment: editCommentMutation.isPending,
-    
+
     deleteComment: deleteCommentMutation.mutate,
     deleteCommentAsync: deleteCommentMutation.mutateAsync,
     isDeletingComment: deleteCommentMutation.isPending,
-  };
-};
+  }
+}
 
 /**
  * Hook for managing application versions with React Query
  */
 export const useApplicationVersions = (applicationIdOrReference: string | null) => {
-  const queryClient = useQueryClient();
-  const { authenticated } = useAuth();
+  const queryClient = useQueryClient()
+  const { authenticated } = useAuth()
 
   // Query for fetching application versions
   const versionsQuery = useQuery({
@@ -753,45 +821,48 @@ export const useApplicationVersions = (applicationIdOrReference: string | null) 
     gcTime: 1000 * 60 * 10, // 10 minutes
     select: (data) => {
       // Sort versions by version number descending (newest first)
-      return data.sort((a, b) => b.versionNumber - a.versionNumber);
+      return data.sort((a, b) => b.versionNumber - a.versionNumber)
     },
-  });
+  })
 
   // Helper to get reference number
   const getReferenceNumber = useCallback(async () => {
-    if (!applicationIdOrReference) return null;
-    
+    if (!applicationIdOrReference) return null
+
     // If it's already a reference number, return it
-    if (applicationIdOrReference.startsWith('APP-')) {
-      return applicationIdOrReference;
+    if (applicationIdOrReference.startsWith("APP-")) {
+      return applicationIdOrReference
     }
-    
+
     // Otherwise, fetch the application to get the reference number
     try {
-      const application = await fundingApplicationsAPI.getApplication(applicationIdOrReference);
-      return application.referenceNumber;
+      const application = await fundingApplicationsAPI.getApplication(applicationIdOrReference)
+      return application.referenceNumber
     } catch (error) {
-      console.error('Failed to get reference number:', error);
-      return null;
+      console.error("Failed to get reference number:", error)
+      return null
     }
-  }, [applicationIdOrReference]);
+  }, [applicationIdOrReference])
 
   // Prefetch versions
-  const prefetchVersions = useCallback((applicationIdOrReference: string) => {
-    queryClient.prefetchQuery({
-      queryKey: QUERY_KEYS.applicationVersions(applicationIdOrReference),
-      queryFn: () => fundingApplicationsAPI.getApplicationVersions(applicationIdOrReference),
-    });
-  }, [queryClient]);
+  const prefetchVersions = useCallback(
+    (applicationIdOrReference: string) => {
+      queryClient.prefetchQuery({
+        queryKey: QUERY_KEYS.applicationVersions(applicationIdOrReference),
+        queryFn: () => fundingApplicationsAPI.getApplicationVersions(applicationIdOrReference),
+      })
+    },
+    [queryClient]
+  )
 
   // Invalidate versions cache
   const invalidateVersions = useCallback(() => {
     if (applicationIdOrReference) {
-      queryClient.invalidateQueries({ 
-        queryKey: QUERY_KEYS.applicationVersions(applicationIdOrReference) 
-      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.applicationVersions(applicationIdOrReference),
+      })
     }
-  }, [queryClient, applicationIdOrReference]);
+  }, [queryClient, applicationIdOrReference])
 
   return {
     versions: versionsQuery.data || [],
@@ -801,70 +872,72 @@ export const useApplicationVersions = (applicationIdOrReference: string | null) 
     getReferenceNumber,
     prefetchVersions,
     invalidateVersions,
-  };
-};
+  }
+}
 
 /**
  * Hook for deleting an application (Admin only)
  */
 export const useDeleteApplication = () => {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
 
   const deleteMutation = useMutation({
-    mutationFn: (referenceNumber: string) =>
-      deleteApplication(referenceNumber),
+    mutationFn: (referenceNumber: string) => deleteApplication(referenceNumber),
     onSuccess: (_data, referenceNumber) => {
       // Invalidate all application-related queries
       queryClient.invalidateQueries({
-        queryKey: ['funding-application']
-      });
+        queryKey: ["funding-application"],
+      })
       queryClient.invalidateQueries({
-        queryKey: ['applications']
-      });
+        queryKey: ["applications"],
+      })
       queryClient.invalidateQueries({
-        queryKey: ['application-stats']
-      });
-      toast.success('Application deleted successfully');
+        queryKey: ["application-stats"],
+      })
+      toast.success("Application deleted successfully")
     },
     onError: (error: any, referenceNumber: string) => {
       // Determine specific error message based on status code
-      let userMessage: string;
-      const statusCode = error?.response?.status;
+      let userMessage: string
+      const statusCode = error?.response?.status
 
       if (statusCode === 401 || statusCode === 403) {
-        userMessage = 'You do not have permission to delete this application. Only community admins can delete applications.';
+        userMessage =
+          "You do not have permission to delete this application. Only community admins can delete applications."
       } else if (statusCode === 404) {
-        userMessage = 'Application not found. It may have already been deleted.';
+        userMessage = "Application not found. It may have already been deleted."
       } else if (statusCode === 500 || (statusCode && statusCode >= 500)) {
-        userMessage = 'Server error occurred while deleting the application. Please try again or contact support.';
-      } else if (!statusCode || error?.code === 'ERR_NETWORK') {
-        userMessage = 'Network error. Please check your connection and try again.';
+        userMessage =
+          "Server error occurred while deleting the application. Please try again or contact support."
+      } else if (!statusCode || error?.code === "ERR_NETWORK") {
+        userMessage = "Network error. Please check your connection and try again."
       } else {
         // Fallback for other errors
-        userMessage = error?.response?.data?.message || 'Failed to delete application. Please try again.';
+        userMessage =
+          error?.response?.data?.message || "Failed to delete application. Please try again."
       }
 
       // Use errorManager for comprehensive error handling with Sentry
       errorManager(
-        'Failed to delete application',
+        "Failed to delete application",
         error,
         {
           referenceNumber,
           statusCode,
-          operation: 'delete-application',
-          errorResponse: error?.response?.data
+          operation: "delete-application",
+          errorResponse: error?.response?.data,
         },
         {
-          error: userMessage
+          error: userMessage,
         }
-      );
+      )
     },
-  });
+  })
 
   return {
     deleteApplication: deleteMutation.mutate,
     deleteApplicationAsync: deleteMutation.mutateAsync,
     isDeleting: deleteMutation.isPending,
     error: deleteMutation.error,
-  };
-};
+  }
+}

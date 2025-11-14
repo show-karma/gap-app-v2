@@ -3,16 +3,16 @@
  * Configures MSW, test environment, and global utilities
  */
 
-import React from "react";
-import { setupServer } from "msw/node";
-import { handlers } from "./mocks/handlers";
-import "@testing-library/jest-dom";
-import { toHaveNoViolations } from "jest-axe";
+import { setupServer } from "msw/node"
+import React from "react"
+import { handlers } from "./mocks/handlers"
+import "@testing-library/jest-dom"
+import { toHaveNoViolations } from "jest-axe"
 
 /**
  * Setup MSW (Mock Service Worker) server
  */
-export const server = setupServer(...handlers);
+export const server = setupServer(...handlers)
 
 /**
  * Global test setup
@@ -21,7 +21,7 @@ beforeAll(() => {
   // Start MSW server
   server.listen({
     onUnhandledRequest: "warn",
-  });
+  })
 
   // Setup window.matchMedia mock
   Object.defineProperty(window, "matchMedia", {
@@ -36,7 +36,7 @@ beforeAll(() => {
       removeEventListener: jest.fn(),
       dispatchEvent: jest.fn(),
     })),
-  });
+  })
 
   // Mock IntersectionObserver
   global.IntersectionObserver = class IntersectionObserver {
@@ -44,10 +44,10 @@ beforeAll(() => {
     disconnect() {}
     observe() {}
     takeRecords() {
-      return [];
+      return []
     }
     unobserve() {}
-  } as any;
+  } as any
 
   // Mock ResizeObserver
   global.ResizeObserver = class ResizeObserver {
@@ -55,52 +55,52 @@ beforeAll(() => {
     disconnect() {}
     observe() {}
     unobserve() {}
-  } as any;
+  } as any
 
   // Mock scrollTo
-  window.scrollTo = jest.fn();
+  window.scrollTo = jest.fn()
 
   // Mock requestAnimationFrame
   global.requestAnimationFrame = jest.fn((cb) => {
-    cb(0);
-    return 0;
-  });
+    cb(0)
+    return 0
+  })
 
   // Mock cancelAnimationFrame
-  global.cancelAnimationFrame = jest.fn();
+  global.cancelAnimationFrame = jest.fn()
 
   // Setup environment variables
-  process.env.NEXT_PUBLIC_GAP_INDEXER_URL = "https://gap-indexer.vercel.app";
-  process.env.NEXT_PUBLIC_PRIVY_APP_ID = "test-privy-app-id";
+  process.env.NEXT_PUBLIC_GAP_INDEXER_URL = "https://gap-indexer.vercel.app"
+  process.env.NEXT_PUBLIC_PRIVY_APP_ID = "test-privy-app-id"
 
   // Extend Jest matchers with jest-axe
-  expect.extend(toHaveNoViolations);
-});
+  expect.extend(toHaveNoViolations)
+})
 
 /**
  * Reset handlers after each test
  */
 afterEach(() => {
   // Reset handlers to initial state
-  server.resetHandlers();
+  server.resetHandlers()
 
   // Clear all mocks
-  jest.clearAllMocks();
+  jest.clearAllMocks()
 
   // Clear timers
-  jest.clearAllTimers();
-});
+  jest.clearAllTimers()
+})
 
 /**
  * Cleanup after all tests
  */
 afterAll(() => {
   // Close MSW server
-  server.close();
+  server.close()
 
   // Restore all mocks
-  jest.restoreAllMocks();
-});
+  jest.restoreAllMocks()
+})
 
 /**
  * Custom matchers for navbar tests
@@ -108,7 +108,7 @@ afterAll(() => {
 declare global {
   namespace jest {
     interface Matchers<R> {
-      toHaveNoViolations(): R;
+      toHaveNoViolations(): R
     }
   }
 }
@@ -122,16 +122,16 @@ jest.mock("next/image", () => ({
   __esModule: true,
   default: (props: any) => {
     // eslint-disable-next-line @next/next/no-img-element
-    return React.createElement("img", { ...props, alt: props.alt || "" });
+    return React.createElement("img", { ...props, alt: props.alt || "" })
   },
-}));
+}))
 
 // Mock next/link
 jest.mock("next/link", () => ({
   __esModule: true,
-  default: ({ children, href, onClick, ...props }: any) => 
+  default: ({ children, href, onClick, ...props }: any) =>
     React.createElement("a", { href, onClick, ...props }, children),
-}));
+}))
 
 // Mock next/navigation
 jest.mock("next/navigation", () => ({
@@ -149,20 +149,20 @@ jest.mock("next/navigation", () => ({
     get: jest.fn(),
   })),
   useParams: jest.fn(() => ({})),
-}));
+}))
 
 // Mock lodash.debounce to use fake timers
 jest.mock("lodash.debounce", () => {
   return (fn: Function, delay: number) => {
-    let timeoutId: NodeJS.Timeout;
+    let timeoutId: NodeJS.Timeout
     const debounced = (...args: any[]) => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => fn(...args), delay);
-    };
-    debounced.cancel = () => clearTimeout(timeoutId);
-    return debounced;
-  };
-});
+      clearTimeout(timeoutId)
+      timeoutId = setTimeout(() => fn(...args), delay)
+    }
+    debounced.cancel = () => clearTimeout(timeoutId)
+    return debounced
+  }
+})
 
 /**
  * Mock Privy
@@ -180,7 +180,7 @@ jest.mock("@privy-io/react-auth", () => ({
     wallets: [],
   })),
   PrivyProvider: ({ children }: { children: any }) => children,
-}));
+}))
 
 /**
  * Mock Wagmi
@@ -194,7 +194,7 @@ jest.mock("wagmi", () => ({
     disconnect: jest.fn(),
   })),
   WagmiProvider: ({ children }: { children: any }) => children,
-}));
+}))
 
 /**
  * Mock next-themes
@@ -206,16 +206,16 @@ export const mockThemeState = {
     themes: ["light", "dark"],
     systemTheme: "light",
     resolvedTheme: "light",
-  }
-};
+  },
+}
 
 jest.mock("next-themes", () => ({
   useTheme: jest.fn(() => {
-    const { mockThemeState } = require("@/__tests__/navbar/setup");
-    return mockThemeState.current;
+    const { mockThemeState } = require("@/__tests__/navbar/setup")
+    return mockThemeState.current
   }),
   ThemeProvider: ({ children }: { children: any }) => children,
-}));
+}))
 
 /**
  * Mock @wagmi/core
@@ -236,7 +236,7 @@ jest.mock("@wagmi/core", () => ({
   disconnect: jest.fn(),
   watchAccount: jest.fn(),
   reconnect: jest.fn(),
-}));
+}))
 
 /**
  * Mock @wagmi/core/chains
@@ -252,7 +252,7 @@ jest.mock("@wagmi/core/chains", () => ({
   sepolia: { id: 11155111, name: "Sepolia" },
   lisk: { id: 1135, name: "Lisk" },
   scroll: { id: 534352, name: "Scroll" },
-}));
+}))
 
 /**
  * Mock privy-config
@@ -260,7 +260,7 @@ jest.mock("@wagmi/core/chains", () => ({
 jest.mock("@/utilities/wagmi/privy-config", () => ({
   privyConfig: {},
   getPrivyWagmiConfig: jest.fn(() => ({})),
-}));
+}))
 
 // Mock authentication and permission hooks
 // Create a holder for the current auth mock state
@@ -276,48 +276,48 @@ export const mockAuthState = {
     logout: jest.fn(),
     disconnect: jest.fn(),
     getAccessToken: jest.fn().mockResolvedValue("mock-token"),
-  }
-};
+  },
+}
 
 jest.mock("@/hooks/useAuth", () => ({
   useAuth: jest.fn(() => {
-    const { mockAuthState } = require("@/__tests__/navbar/setup");
-    return mockAuthState.current;
+    const { mockAuthState } = require("@/__tests__/navbar/setup")
+    return mockAuthState.current
   }),
-}));
+}))
 
 jest.mock("@/store/communities", () => ({
   useCommunitiesStore: jest.fn(() => ({ communities: [] })),
-}));
+}))
 
 jest.mock("@/hooks/usePermissions", () => ({
   useReviewerPrograms: jest.fn(() => ({ isReviewerOfProgram: false, data: [] })),
-}));
+}))
 
 jest.mock("@/hooks/useStaff", () => ({
   useStaff: jest.fn(() => ({ isStaff: false })),
-}));
+}))
 
 jest.mock("@/store/owner", () => ({
   useOwnerStore: jest.fn((selector?: Function) => {
-    const state = { isProjectOwner: false, isOwner: false };
-    return selector ? selector(state) : state;
+    const state = { isProjectOwner: false, isOwner: false }
+    return selector ? selector(state) : state
   }),
-}));
+}))
 
 // Mock @/store (index.ts) which re-exports from multiple stores
 jest.mock("@/store", () => ({
   useOwnerStore: jest.fn((selector?: Function) => {
-    const state = { isProjectOwner: false, isOwner: false };
-    return selector ? selector(state) : state;
+    const state = { isProjectOwner: false, isOwner: false }
+    return selector ? selector(state) : state
   }),
   useProjectStore: jest.fn(() => ({ projects: [] })),
   useDonationCartStore: jest.fn(() => ({ items: [] })),
-}));
+}))
 
 jest.mock("@/store/registry", () => ({
   useRegistryStore: jest.fn(() => ({ isPoolManager: false, isRegistryAdmin: false })),
-}));
+}))
 
 jest.mock("@/store/modals/contributorProfile", () => ({
   useContributorProfileModalStore: jest.fn(() => ({
@@ -325,41 +325,45 @@ jest.mock("@/store/modals/contributorProfile", () => ({
     openModal: jest.fn(),
     closeModal: jest.fn(),
   })),
-}));
+}))
 
 // Mock gapIndexerApi for search functionality
 // This mock will be controlled by tests via module mocking
-export const mockSearchFunction = jest.fn();
+export const mockSearchFunction = jest.fn()
 
 jest.mock("@/utilities/gapIndexerApi", () => ({
   gapIndexerApi: {
     search: mockSearchFunction,
   },
-}));
+}))
 
 /**
  * Mock external link component
  */
 jest.mock("@/components/Utilities/ExternalLink", () => ({
-  ExternalLink: ({ children, href, ...props }: any) => 
-    React.createElement("a", { href, target: "_blank", rel: "noopener noreferrer", ...props }, children),
-}));
+  ExternalLink: ({ children, href, ...props }: any) =>
+    React.createElement(
+      "a",
+      { href, target: "_blank", rel: "noopener noreferrer", ...props },
+      children
+    ),
+}))
 
 /**
  * Mock profile picture component
  */
 jest.mock("@/components/Utilities/ProfilePicture", () => ({
   ProfilePicture: () => "ProfilePicture",
-}));
+}))
 
 /**
  * Mock error manager
  */
 jest.mock("@/components/Utilities/errorManager", () => ({
   errorManager: jest.fn((message, error) => {
-    console.error(message, error);
+    console.error(message, error)
   }),
-}));
+}))
 
 /**
  * Helper functions for tests
@@ -369,30 +373,30 @@ jest.mock("@/components/Utilities/errorManager", () => ({
  * Setup fake timers for debounce tests
  */
 export const setupFakeTimers = () => {
-  jest.useFakeTimers();
-};
+  jest.useFakeTimers()
+}
 
 /**
  * Cleanup fake timers
  */
 export const cleanupFakeTimers = () => {
-  jest.runOnlyPendingTimers();
-  jest.useRealTimers();
-};
+  jest.runOnlyPendingTimers()
+  jest.useRealTimers()
+}
 
 /**
  * Advance timers by specific amount
  */
 export const advanceTimersByTime = (ms: number) => {
-  jest.advanceTimersByTime(ms);
-};
+  jest.advanceTimersByTime(ms)
+}
 
 /**
  * Run all pending timers
  */
 export const runAllTimers = () => {
-  jest.runAllTimers();
-};
+  jest.runAllTimers()
+}
 
 /**
  * Viewport sizes for responsive testing
@@ -402,7 +406,7 @@ export const VIEWPORTS = {
   TABLET: { width: 1024, height: 768 },
   DESKTOP: { width: 1440, height: 900 },
   WIDE: { width: 1920, height: 1080 },
-};
+}
 
 /**
  * Set viewport size
@@ -412,19 +416,18 @@ export const setViewportSize = (width: number, height: number) => {
     writable: true,
     configurable: true,
     value: width,
-  });
+  })
   Object.defineProperty(window, "innerHeight", {
     writable: true,
     configurable: true,
     value: height,
-  });
+  })
 
   // Trigger resize event
-  window.dispatchEvent(new Event("resize"));
-};
+  window.dispatchEvent(new Event("resize"))
+}
 
 /**
  * Export server for test file usage
  */
-export { server as mswServer };
-
+export { server as mswServer }

@@ -1,41 +1,42 @@
-"use client";
+"use client"
 
-import {useChains, useFaucetConfig, useFaucetEmergency} from "@/hooks/useFaucetAdmin";
-import { useState } from "react";
-import { ChainSettingsForm } from "./ChainSettingsForm";
-import { EmergencyControls } from "./EmergencyControls";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { appNetwork } from "@/utilities/network";
-import { formatEther, parseEther } from "viem";
-import type { FaucetChainSettings } from "@/utilities/faucet/faucetService";
+import { useState } from "react"
+import { formatEther, parseEther } from "viem"
+import { Spinner } from "@/components/Utilities/Spinner"
+import { useChains, useFaucetConfig, useFaucetEmergency } from "@/hooks/useFaucetAdmin"
+import type { FaucetChainSettings } from "@/utilities/faucet/faucetService"
+import { appNetwork } from "@/utilities/network"
+import { ChainSettingsForm } from "./ChainSettingsForm"
+import { EmergencyControls } from "./EmergencyControls"
 
 export function ChainSettingsManager() {
-  const { config, isLoading, updateChainSettings, createChainSettings, deleteChainSettings } = useFaucetConfig();
-  const { emergencyStop, resumeOperations } = useFaucetEmergency();
-  const [editingChain, setEditingChain] = useState<number | null>(null);
-  const [showAddForm, setShowAddForm] = useState(false);
+  const { config, isLoading, updateChainSettings, createChainSettings, deleteChainSettings } =
+    useFaucetConfig()
+  const { emergencyStop, resumeOperations } = useFaucetEmergency()
+  const [editingChain, setEditingChain] = useState<number | null>(null)
+  const [showAddForm, setShowAddForm] = useState(false)
   console.log(config)
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <Spinner />
       </div>
-    );
+    )
   }
 
   const handleSaveSettings = (chainId: number, settings: Partial<FaucetChainSettings>) => {
-    updateChainSettings({ chainId, settings });
-    setEditingChain(null);
-  };
+    updateChainSettings({ chainId, settings })
+    setEditingChain(null)
+  }
 
   const handleCreateSettings = (settings: FaucetChainSettings) => {
-    createChainSettings(settings);
-    setShowAddForm(false);
-  };
+    createChainSettings(settings)
+    setShowAddForm(false)
+  }
 
   const getChainName = (chainId: number) => {
-    return appNetwork.find(n => n.id === chainId)?.name || `Chain ${chainId}`;
-  };
+    return appNetwork.find((n) => n.id === chainId)?.name || `Chain ${chainId}`
+  }
 
   return (
     <div className="space-y-6">
@@ -92,7 +93,7 @@ export function ChainSettingsManager() {
                 <button
                   onClick={() => {
                     if (confirm("Are you sure you want to delete these settings?")) {
-                      deleteChainSettings(settings.chainId);
+                      deleteChainSettings(settings.chainId)
                     }
                   }}
                   className="px-3 py-1 text-sm bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded hover:bg-red-200 dark:hover:bg-red-900/30"
@@ -119,8 +120,8 @@ export function ChainSettingsManager() {
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Rate Limit</p>
                   <p className="text-lg font-medium text-gray-900 dark:text-white">
-                    {settings.rateLimitHours 
-                      ? settings.rateLimitHours < 1 
+                    {settings.rateLimitHours
+                      ? settings.rateLimitHours < 1
                         ? `${Math.round(settings.rateLimitHours * 60)} minutes`
                         : `${settings.rateLimitHours} hours`
                       : "Default"}
@@ -140,7 +141,9 @@ export function ChainSettingsManager() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Status</p>
-                  <p className={`text-lg font-medium ${settings.enabled ? "text-green-600" : "text-red-600"}`}>
+                  <p
+                    className={`text-lg font-medium ${settings.enabled ? "text-green-600" : "text-red-600"}`}
+                  >
                     {settings.enabled ? "Enabled" : "Disabled"}
                   </p>
                 </div>
@@ -149,20 +152,21 @@ export function ChainSettingsManager() {
           </div>
         ))}
 
-        {(!config?.configurations.chains || config?.configurations.chains.length === 0) && !showAddForm && (
-          <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm p-8 text-center">
-            <p className="text-gray-500 dark:text-gray-400 mb-4">
-              No chain settings configured yet
-            </p>
-            <button
-              onClick={() => setShowAddForm(true)}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-            >
-              Add First Chain
-            </button>
-          </div>
-        )}
+        {(!config?.configurations.chains || config?.configurations.chains.length === 0) &&
+          !showAddForm && (
+            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm p-8 text-center">
+              <p className="text-gray-500 dark:text-gray-400 mb-4">
+                No chain settings configured yet
+              </p>
+              <button
+                onClick={() => setShowAddForm(true)}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                Add First Chain
+              </button>
+            </div>
+          )}
       </div>
     </div>
-  );
+  )
 }

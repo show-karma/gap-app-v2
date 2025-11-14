@@ -1,12 +1,8 @@
-import { Skeleton } from "@/components/Utilities/Skeleton";
-import { ReactNode } from "react";
+import type { ReactNode } from "react"
+import { Skeleton } from "@/components/Utilities/Skeleton"
 
-export const ProjectGrantsLayoutLoading = ({
-  children,
-}: {
-  children?: ReactNode;
-}) => {
-  const emptyArray = Array.from({ length: 3 }, (_, index) => index);
+export const ProjectGrantsLayoutLoading = ({ children }: { children?: ReactNode }) => {
+  const emptyArray = Array.from({ length: 3 }, (_, index) => index)
   return (
     <>
       <div className="flex max-lg:flex-col">
@@ -16,10 +12,7 @@ export const ProjectGrantsLayoutLoading = ({
               <Skeleton className="w-full h-10" />
             </div>
           </div>
-          <nav
-            className="flex flex-1 flex-col gap-4 max-lg:hidden"
-            aria-label="Sidebar"
-          >
+          <nav className="flex flex-1 flex-col gap-4 max-lg:hidden" aria-label="Sidebar">
             <div className="flex w-full min-w-[240px] flex-row items-center gap-2">
               <svg
                 width="16"
@@ -44,16 +37,12 @@ export const ProjectGrantsLayoutLoading = ({
                 </defs>
               </svg>
 
-              <p className="text-xs font-bold text-black dark:text-zinc-300 ">
-                FUNDING
-              </p>
+              <p className="text-xs font-bold text-black dark:text-zinc-300 ">FUNDING</p>
             </div>
             <ul role="list" className="space-y-2 mt-8">
               {emptyArray.map((item, index) => (
                 <li key={index}>
-                  <Skeleton
-                    className={"h-8 flex items-center rounded-md w-full"}
-                  />
+                  <Skeleton className={"h-8 flex items-center rounded-md w-full"} />
                 </li>
               ))}
             </ul>
@@ -89,5 +78,5 @@ export const ProjectGrantsLayoutLoading = ({
         </div>
       </div>
     </>
-  );
-};
+  )
+}

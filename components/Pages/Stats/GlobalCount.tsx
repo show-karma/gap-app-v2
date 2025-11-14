@@ -1,50 +1,50 @@
-"use client";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
-import { useState, useEffect } from "react";
-import { Button } from "@/components/Utilities/Button";
-import { ArrowPathIcon } from "@heroicons/react/24/solid";
-import { Card, LineChart, Title } from "@tremor/react";
-import { errorManager } from "@/components/Utilities/errorManager";
+"use client"
+import { ArrowPathIcon } from "@heroicons/react/24/solid"
+import { Card, LineChart, Title } from "@tremor/react"
+import { useEffect, useState } from "react"
+import { Button } from "@/components/Utilities/Button"
+import { errorManager } from "@/components/Utilities/errorManager"
+import fetchData from "@/utilities/fetchData"
+import { INDEXER } from "@/utilities/indexer"
 
 export function GlobalCount() {
-  const [stats, setStats] = useState<any>([]);
-  const [error, setError] = useState<any>("");
-  const [loading, setLoading] = useState<boolean>(true);
+  const [stats, setStats] = useState<any>([])
+  const [error, setError] = useState<any>("")
+  const [loading, setLoading] = useState<boolean>(true)
 
   async function fetchStats() {
-    setLoading(true);
+    setLoading(true)
     try {
-      const [data, error]: any = await fetchData(INDEXER.GAP.GLOBAL_COUNT);
+      const [data, error]: any = await fetchData(INDEXER.GAP.GLOBAL_COUNT)
       if (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching data:", error)
       } else {
         if (data) {
           const total = data.reduce((acc: number, item: any) => {
-            return acc + item.count;
-          }, 0);
+            return acc + item.count
+          }, 0)
           setStats([
             ...data.sort((a: any, b: any) => b.count - a.count),
             { _id: "Total", count: total },
-          ]);
-          setError("");
+          ])
+          setError("")
         } else {
-          console.error("No stats found");
-          setError("No stats found");
+          console.error("No stats found")
+          setError("No stats found")
         }
       }
     } catch (error: any) {
-      console.error("Error fetching stats:", error);
-      errorManager("Error fetching stats", error);
-      setError(error);
+      console.error("Error fetching stats:", error)
+      errorManager("Error fetching stats", error)
+      setError(error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchStats();
-  }, []);
+    fetchStats()
+  }, [])
 
   return (
     <div className="container mx-auto sm:px-0 lg:px-20 w-full flex-col items-center justify-center">
@@ -66,14 +66,12 @@ export function GlobalCount() {
             {stats.map((item: any) => (
               <div className="mx-1" key={item._id as any}>
                 <p>{item._id}</p>
-                <p className="text-blue-500 font-bold text-xl">
-                  {item.count as any}
-                </p>
+                <p className="text-blue-500 font-bold text-xl">{item.count as any}</p>
               </div>
             ))}
           </div>
         )}
       </Card>
     </div>
-  );
+  )
 }

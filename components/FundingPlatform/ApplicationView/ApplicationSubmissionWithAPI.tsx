@@ -1,18 +1,15 @@
-"use client";
+"use client"
 
-import { FC, useState, useEffect } from "react";
-import ApplicationSubmission from "./ApplicationSubmission";
-import {
-  useProgramConfig,
-  useFundingApplications,
-} from "@/hooks/useFundingPlatform";
-import { IFormSchema } from "@/types/funding-platform";
+import { type FC, useEffect, useState } from "react"
+import { useFundingApplications, useProgramConfig } from "@/hooks/useFundingPlatform"
+import { IFormSchema } from "@/types/funding-platform"
+import ApplicationSubmission from "./ApplicationSubmission"
 
 interface IApplicationSubmissionWithAPIProps {
-  programId: string;
-  chainId: number;
-  onSubmissionSuccess?: (applicationId: string) => void;
-  onCancel?: () => void;
+  programId: string
+  chainId: number
+  onSubmissionSuccess?: (applicationId: string) => void
+  onCancel?: () => void
 }
 
 const ApplicationSubmissionWithAPI: FC<IApplicationSubmissionWithAPIProps> = ({
@@ -25,25 +22,22 @@ const ApplicationSubmissionWithAPI: FC<IApplicationSubmissionWithAPIProps> = ({
     config,
     isLoading: isLoadingConfig,
     error: configError,
-  } = useProgramConfig(programId, chainId);
-  const { submitApplication, isSubmitting } = useFundingApplications(
-    programId,
-    chainId
-  );
-  const [submissionError, setSubmissionError] = useState<string | null>(null);
+  } = useProgramConfig(programId, chainId)
+  const { submitApplication, isSubmitting } = useFundingApplications(programId, chainId)
+  const [submissionError, setSubmissionError] = useState<string | null>(null)
 
   const handleSubmit = async (applicationData: Record<string, any>) => {
     try {
-      setSubmissionError(null);
-      await submitApplication(applicationData);
+      setSubmissionError(null)
+      await submitApplication(applicationData)
       // The mutation handles success notifications via toast
-      onSubmissionSuccess?.("submitted");
+      onSubmissionSuccess?.("submitted")
     } catch (error) {
-      console.error("Submission failed:", error);
-      setSubmissionError("Failed to submit application. Please try again.");
-      throw error;
+      console.error("Submission failed:", error)
+      setSubmissionError("Failed to submit application. Please try again.")
+      throw error
     }
-  };
+  }
 
   // Show loading state while fetching form schema
   if (isLoadingConfig) {
@@ -51,12 +45,10 @@ const ApplicationSubmissionWithAPI: FC<IApplicationSubmissionWithAPIProps> = ({
       <div className="flex items-center justify-center p-12">
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="text-gray-600 dark:text-gray-400">
-            Loading application form...
-          </p>
+          <p className="text-gray-600 dark:text-gray-400">Loading application form...</p>
         </div>
       </div>
-    );
+    )
   }
 
   // Show error if form schema couldn't be loaded
@@ -69,8 +61,7 @@ const ApplicationSubmissionWithAPI: FC<IApplicationSubmissionWithAPIProps> = ({
             Unable to Load Application Form
           </h3>
           <p className="text-gray-600 dark:text-gray-400">
-            There was an error loading the grant application form. Please try
-            again later.
+            There was an error loading the grant application form. Please try again later.
           </p>
           {onCancel && (
             <button
@@ -82,7 +73,7 @@ const ApplicationSubmissionWithAPI: FC<IApplicationSubmissionWithAPIProps> = ({
           )}
         </div>
       </div>
-    );
+    )
   }
 
   // Show message if program is disabled
@@ -95,8 +86,7 @@ const ApplicationSubmissionWithAPI: FC<IApplicationSubmissionWithAPIProps> = ({
             Applications Currently Closed
           </h3>
           <p className="text-gray-600 dark:text-gray-400">
-            This grant program is not currently accepting applications. Please
-            check back later.
+            This grant program is not currently accepting applications. Please check back later.
           </p>
           {onCancel && (
             <button
@@ -108,7 +98,7 @@ const ApplicationSubmissionWithAPI: FC<IApplicationSubmissionWithAPIProps> = ({
           )}
         </div>
       </div>
-    );
+    )
   }
 
   // Show message if no form schema is configured
@@ -121,8 +111,8 @@ const ApplicationSubmissionWithAPI: FC<IApplicationSubmissionWithAPIProps> = ({
             Form Not Yet Configured
           </h3>
           <p className="text-gray-600 dark:text-gray-400">
-            The application form for this grant program has not been set up yet.
-            Please check back later.
+            The application form for this grant program has not been set up yet. Please check back
+            later.
           </p>
           {onCancel && (
             <button
@@ -134,7 +124,7 @@ const ApplicationSubmissionWithAPI: FC<IApplicationSubmissionWithAPIProps> = ({
           )}
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -148,9 +138,7 @@ const ApplicationSubmissionWithAPI: FC<IApplicationSubmissionWithAPIProps> = ({
               <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
                 Submission Error
               </h3>
-              <p className="mt-1 text-sm text-red-700 dark:text-red-300">
-                {submissionError}
-              </p>
+              <p className="mt-1 text-sm text-red-700 dark:text-red-300">{submissionError}</p>
             </div>
           </div>
         </div>
@@ -166,7 +154,7 @@ const ApplicationSubmissionWithAPI: FC<IApplicationSubmissionWithAPIProps> = ({
         isLoading={isSubmitting}
       />
     </div>
-  );
-};
+  )
+}
 
-export default ApplicationSubmissionWithAPI;
+export default ApplicationSubmissionWithAPI
