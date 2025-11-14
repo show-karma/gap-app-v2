@@ -6,6 +6,7 @@ import { CheckCircleIcon } from "@heroicons/react/20/solid";
 import type { GrantMilestoneWithCompletion } from "@/services/milestones";
 import { shortAddress } from "@/utilities/shortAddress";
 import { formatDate } from "@/utilities/formatDate";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 
 interface MilestoneCardProps {
   milestone: GrantMilestoneWithCompletion;
@@ -87,9 +88,9 @@ export function MilestoneCard({
         </h3>
       </div>
 
-      <p className="text-gray-600 dark:text-gray-400 text-sm mb-3">
-        {milestone.description}
-      </p>
+      <div className="text-gray-600 dark:text-gray-400 text-sm mb-3">
+        <MarkdownPreview source={milestone.description} />
+      </div>
 
       {hasCompletion && (
         <>
@@ -98,11 +99,13 @@ export function MilestoneCard({
             <p className="text-sm font-semibold text-blue-900 dark:text-blue-200 mb-2">
               Completion Details {useOnChainData ? "(On-chain)" : "(Off-chain)"}
             </p>
-            <p className="text-sm text-gray-700 dark:text-gray-300">
-              {useOnChainData
-                ? milestone.completionDetails!.description
-                : milestone.fundingApplicationCompletion!.completionText}
-            </p>
+            <div className="text-sm text-gray-700 dark:text-gray-300">
+              <MarkdownPreview
+                source={useOnChainData
+                  ? milestone.completionDetails!.description
+                  : milestone.fundingApplicationCompletion!.completionText}
+              />
+            </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
               Submitted: {formatDate(
                 useOnChainData
@@ -120,9 +123,9 @@ export function MilestoneCard({
                 <p className="text-sm font-semibold text-green-900 dark:text-green-200 mb-2">
                   Verification (On-chain)
                 </p>
-                <p className="text-sm text-gray-700 dark:text-gray-300">
-                  {milestone.verificationDetails.description}
-                </p>
+                <div className="text-sm text-gray-700 dark:text-gray-300">
+                  <MarkdownPreview source={milestone.verificationDetails.description} />
+                </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                   Verified by: {shortAddress(milestone.verificationDetails.verifiedBy)}
                 </p>

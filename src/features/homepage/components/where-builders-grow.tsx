@@ -9,7 +9,7 @@ export function WhereBuildersGrow() {
     return (
         <section className={cn(marketingLayoutTheme.padding, "py-24")}>
             <div className="flex flex-col items-center gap-6">
-                <h2 className="text-5xl font-semibold text-foreground text-center leading-none tracking-tight">
+                <h2 className="section-title text-foreground text-center">
                     Where builders grow
                 </h2>
                 <p className="text-xl font-normal text-muted-foreground text-center leading-[30px] tracking-normal">

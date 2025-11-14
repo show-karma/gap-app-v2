@@ -33,14 +33,14 @@ interface MenuSectionProps {
 export function MenuSection({ title, variant = 'desktop', className }: MenuSectionProps) {
     if (variant === 'mobile') {
         return (
-            <h3 className={cn(menuStyles.itemDescription, className)}>
+            <h3 className={cn(menuStyles.itemDescription, "mb-2", className)}>
                 {title}
             </h3>
         );
     }
 
     return (
-        <p className={cn(menuStyles.itemDescription, className)}>{title}</p>
+        <p className={cn(menuStyles.itemDescription, "mb-2", className)}>{title}</p>
     );
 }
 
