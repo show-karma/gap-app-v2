@@ -23,6 +23,7 @@ import { Spinner } from '@/components/Utilities/Spinner';
 import CommentItem from './CommentItem';
 import CommentInput from './CommentInput';
 import pluralize from 'pluralize';
+import { MarkdownPreview } from '@/components/Utilities/MarkdownPreview';
 
 interface CommentsTimelineProps {
   applicationId: string;
@@ -224,9 +225,11 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
               <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
                 Reason:
               </p>
-              <p className="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 rounded-md p-2">
-                {status.reason}
-              </p>
+              <MarkdownPreview components={
+                {
+                  p: ({ children }) => <p className="text-sm">{children}</p>
+                }
+              } source={status.reason} className="text-sm" />
             </div>
           )}
         </div>

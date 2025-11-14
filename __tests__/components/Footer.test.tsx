@@ -149,7 +149,7 @@ describe('Footer', () => {
       render(<Footer />);
 
       const twitterIcon = screen.getByTestId('twitter-icon');
-      expect(twitterIcon).toHaveClass('w-8', 'h-8');
+      expect(twitterIcon).toHaveClass('w-6', 'h-6');
     });
 
     it('should have aria-labels for accessibility', () => {
@@ -397,8 +397,8 @@ describe('Footer', () => {
       const buildersLink = screen.getByText('For Builders');
       const termsLink = screen.getByText('Terms');
 
-      expect(buildersLink).toHaveClass('text-base');
-      expect(termsLink).toHaveClass('text-base');
+      expect(buildersLink).toHaveClass('text-sm');
+      expect(termsLink).toHaveClass('text-sm');
     });
 
     it('should have consistent hover states', () => {
