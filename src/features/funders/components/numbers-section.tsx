@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { marketingLayoutTheme } from "@/src/helper/theme";
 import { cn } from "@/utilities/tailwind";
 
-interface Statistic {
+export interface Statistic {
     number: string;
     title: string;
     description: string;

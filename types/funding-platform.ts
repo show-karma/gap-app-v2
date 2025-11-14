@@ -1,10 +1,11 @@
 // V2 Status Types
-export type FundingApplicationStatusV2 = 
+export type FundingApplicationStatusV2 =
   | "pending"
   | "under_review"
-  | "revision_requested" 
+  | "revision_requested"
   | "approved"
-  | "rejected";
+  | "rejected"
+  | "resubmitted";
 
 // Application Comment Types
 export interface ApplicationComment {
@@ -129,6 +130,7 @@ export interface IApplicationStatistics {
   rejectedApplications: number;
   revisionRequestedApplications?: number;
   underReviewApplications?: number;
+  resubmittedApplications?: number;
 }
 
 // V2 API Error Response

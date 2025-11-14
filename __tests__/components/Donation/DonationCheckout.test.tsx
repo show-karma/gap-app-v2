@@ -32,9 +32,11 @@ jest.mock("wagmi", () => ({
   useChainId: jest.fn(),
 }));
 
-// Mock custom hooks
-jest.mock("@/store/donationCart", () => ({
+// Mock store hooks
+jest.mock("@/store", () => ({
   useDonationCart: jest.fn(),
+  useOwnerStore: jest.fn(() => ({ isOwner: false })),
+  useProjectStore: jest.fn(() => ({ isProjectAdmin: false })),
 }));
 
 jest.mock("@/hooks/useNetworkSwitching", () => ({
@@ -215,7 +217,7 @@ describe("DonationCheckout", () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    const { useDonationCart } = require("@/store/donationCart");
+    const { useDonationCart } = require("@/store");
     useDonationCart.mockReturnValue(defaultCartState);
 
     const { useNetworkSwitching } = require("@/hooks/useNetworkSwitching");
@@ -251,7 +253,7 @@ describe("DonationCheckout", () => {
     });
 
     it("should render empty cart when no items", () => {
-      const { useDonationCart } = require("@/store/donationCart");
+      const { useDonationCart } = require("@/store");
       useDonationCart.mockReturnValue({
         ...defaultCartState,
         items: [],
@@ -264,7 +266,7 @@ describe("DonationCheckout", () => {
     });
 
     it("should render completed donations when session exists", () => {
-      const { useDonationCart } = require("@/store/donationCart");
+      const { useDonationCart } = require("@/store");
       useDonationCart.mockReturnValue({
         ...defaultCartState,
         items: [],
@@ -358,7 +360,7 @@ describe("DonationCheckout", () => {
     });
 
     it("should show 'Select tokens and amounts' when cannot proceed", () => {
-      const { useDonationCart } = require("@/store/donationCart");
+      const { useDonationCart } = require("@/store");
       useDonationCart.mockReturnValue({
         ...defaultCartState,
         amounts: {},
@@ -412,7 +414,7 @@ describe("DonationCheckout", () => {
 
     it("should call clear when clear button clicked", () => {
       const mockClear = jest.fn();
-      const { useDonationCart } = require("@/store/donationCart");
+      const { useDonationCart } = require("@/store");
       useDonationCart.mockReturnValue({
         ...defaultCartState,
         clear: mockClear,
@@ -463,7 +465,7 @@ describe("DonationCheckout", () => {
     });
 
     it("should navigate back when browse projects clicked", () => {
-      const { useDonationCart } = require("@/store/donationCart");
+      const { useDonationCart } = require("@/store");
       useDonationCart.mockReturnValue({
         ...defaultCartState,
         items: [],
@@ -479,7 +481,7 @@ describe("DonationCheckout", () => {
 
     it("should clear session and navigate back when start new donation clicked", () => {
       const mockClearSession = jest.fn();
-      const { useDonationCart } = require("@/store/donationCart");
+      const { useDonationCart } = require("@/store");
       useDonationCart.mockReturnValue({
         ...defaultCartState,
         items: [],
@@ -512,7 +514,7 @@ describe("DonationCheckout", () => {
     });
 
     it("should show info message when cannot proceed", () => {
-      const { useDonationCart } = require("@/store/donationCart");
+      const { useDonationCart } = require("@/store");
       useDonationCart.mockReturnValue({
         ...defaultCartState,
         amounts: {},
@@ -621,7 +623,7 @@ describe("DonationCheckout", () => {
 
   describe("Edge Cases", () => {
     it("should handle empty amounts object", () => {
-      const { useDonationCart } = require("@/store/donationCart");
+      const { useDonationCart } = require("@/store");
       useDonationCart.mockReturnValue({
         ...defaultCartState,
         amounts: {},

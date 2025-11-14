@@ -472,21 +472,38 @@ export const ProjectOptionsMenu = () => {
                   </>
                 )}
                 {isStaff && (
-                  <Menu.Item>
-                    {({ active }) => (
-                      <button
-                        type="button"
-                        onClick={openAdminTransferOwnershipModal}
-                        className={buttonClassName}
-                      >
-                        <ArrowsRightLeftIcon
-                          className={"mr-2 h-5 w-5"}
-                          aria-hidden="true"
-                        />
-                        Transfer ownership
-                      </button>
-                    )}
-                  </Menu.Item>
+                  <>
+                    <Menu.Item>
+                      {({ active }) => (
+                        <button
+                          type="button"
+                          onClick={openMergeModal}
+                          className={buttonClassName}
+                        >
+                          <ArrowDownOnSquareIcon
+                            className={"mr-2 h-5 w-5"}
+                            aria-hidden="true"
+                          />
+                          Merge
+                        </button>
+                      )}
+                    </Menu.Item>
+                    <Menu.Item>
+                      {({ active }) => (
+                        <button
+                          type="button"
+                          onClick={openAdminTransferOwnershipModal}
+                          className={buttonClassName}
+                        >
+                          <ArrowsRightLeftIcon
+                            className={"mr-2 h-5 w-5"}
+                            aria-hidden="true"
+                          />
+                          Transfer ownership
+                        </button>
+                      )}
+                    </Menu.Item>
+                  </>
                 )}
               </div>
             </Menu.Items>

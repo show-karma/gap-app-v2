@@ -7,7 +7,14 @@ import { marketingLayoutTheme } from "@/src/helper/theme";
 import Link from "next/link";
 import { SOCIALS } from "@/utilities/socials";
 
-const pricingTiers = [
+export interface PricingTier {
+    name: string;
+    description: string;
+    features: string[];
+    mostPopular: boolean;
+}
+
+const pricingTiers: PricingTier[] = [
     {
         name: "Starter",
         description: "Start your accountability journey with limited distribution capabilities",

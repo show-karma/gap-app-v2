@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
 import debounce from "lodash.debounce";
 import { ISearchResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
@@ -38,26 +38,37 @@ export function NavbarSearch() {
         };
     }, [isSearchListOpen]);
 
-    const debouncedSearch = debounce(async (value: string) => {
-        if (value.length < 3) {
-            setResults({ communities: [], projects: [] });
-            setIsSearchListOpen(false);
-            setIsLoading(false);
-            return;
-        }
+    // Create debounced search function only once using useMemo
+    const debouncedSearch = useMemo(
+        () => debounce(async (value: string) => {
+            if (value.length < 3) {
+                setResults({ communities: [], projects: [] });
+                setIsSearchListOpen(false);
+                setIsLoading(false);
+                return;
+            }
 
-        setIsLoading(true);
-        setIsSearchListOpen(true);
-        try {
-            const result = await gapIndexerApi.search(value);
-            setResults(result.data);
-        } catch (error) {
-            errorManager(`Error searching: ${error}`, error);
-            setResults({ communities: [], projects: [] });
-        } finally {
-            setIsLoading(false);
-        }
-    }, 500);
+            setIsLoading(true);
+            setIsSearchListOpen(true);
+            try {
+                const result = await gapIndexerApi.search(value);
+                setResults(result.data);
+            } catch (error) {
+                errorManager(`Error searching: ${error}`, error);
+                setResults({ communities: [], projects: [] });
+            } finally {
+                setIsLoading(false);
+            }
+        }, 500),
+        []
+    );
+
+    // Cleanup debounced function on unmount
+    useEffect(() => {
+        return () => {
+            debouncedSearch.cancel();
+        };
+    }, [debouncedSearch]);
 
     const handleInputChange = (value: string) => {
         setSearchValue(value);

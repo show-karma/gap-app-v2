@@ -139,7 +139,7 @@ export function DonationStepsPreview({ payments, onProceed, onCancel, isLoading 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-2xl rounded-2xl border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-zinc-950">
+      <div data-testid="steps-preview" className="w-full max-w-2xl rounded-2xl border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-zinc-950">
         {/* Header */}
         <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-800">
           <div className="flex items-center justify-between">

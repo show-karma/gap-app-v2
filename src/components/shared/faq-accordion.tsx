@@ -9,7 +9,7 @@ import {
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { MinusCircle, PlusCircle } from "lucide-react";
 
-interface FAQItem {
+export interface FAQItem {
     id: string;
     question: string;
     answer: string;

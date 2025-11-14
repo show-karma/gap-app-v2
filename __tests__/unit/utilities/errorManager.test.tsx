@@ -1,15 +1,23 @@
 import { errorManager } from "@/components/Utilities/errorManager";
 import * as Sentry from "@sentry/nextjs";
 
+// Unmock errorManager from global setup to test the actual implementation
+jest.unmock("@/components/Utilities/errorManager");
 jest.mock("@sentry/nextjs");
 
 describe("errorManager", () => {
+  let consoleLogSpy: jest.SpyInstance;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    consoleLogSpy = jest.spyOn(console, "log").mockImplementation();
+  });
+
+  afterEach(() => {
+    consoleLogSpy.mockRestore();
   });
 
   it("should not capture exception when error is 'rejected'", () => {
-    const consoleLogSpy = jest.spyOn(console, "log");
     const error = { message: "User rejected the transaction" };
 
     errorManager("Test error", error);
