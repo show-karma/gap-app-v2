@@ -3,25 +3,25 @@
  * @description Tests chain switching and wallet connection for attestation operations
  */
 
-// Mock dependencies BEFORE importing anything else
-jest.mock("@/utilities/ensureCorrectChain");
-jest.mock("@/utilities/wallet-helpers");
-jest.mock("@/utilities/eas-wagmi-utils");
+// Mock ALL dependencies to avoid ESM import issues
+const mockEnsureCorrectChain = jest.fn();
+const mockSafeGetWalletClient = jest.fn();
+const mockWalletClientToSigner = jest.fn();
 
-import { setupChainAndWallet } from "@/utilities/chain-wallet-setup";
-import * as ensureCorrectChainModule from "@/utilities/ensureCorrectChain";
-import * as walletHelpersModule from "@/utilities/wallet-helpers";
-import * as easWagmiUtilsModule from "@/utilities/eas-wagmi-utils";
+jest.mock("@/utilities/ensureCorrectChain", () => ({
+  ensureCorrectChain: mockEnsureCorrectChain,
+}));
 
-const mockEnsureCorrectChain = ensureCorrectChainModule.ensureCorrectChain as jest.MockedFunction<
-  typeof ensureCorrectChainModule.ensureCorrectChain
->;
-const mockSafeGetWalletClient = walletHelpersModule.safeGetWalletClient as jest.MockedFunction<
-  typeof walletHelpersModule.safeGetWalletClient
->;
-const mockWalletClientToSigner = easWagmiUtilsModule.walletClientToSigner as jest.MockedFunction<
-  typeof easWagmiUtilsModule.walletClientToSigner
->;
+jest.mock("@/utilities/wallet-helpers", () => ({
+  safeGetWalletClient: mockSafeGetWalletClient,
+}));
+
+jest.mock("@/utilities/eas-wagmi-utils", () => ({
+  walletClientToSigner: mockWalletClientToSigner,
+}));
+
+// Import the function to test AFTER mocking dependencies
+const { setupChainAndWallet } = require("@/utilities/chain-wallet-setup");
 
 describe("setupChainAndWallet", () => {
   const mockGapClient = { fetch: { projectById: jest.fn() } } as any;

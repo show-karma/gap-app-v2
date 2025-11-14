@@ -3,51 +3,66 @@
  * @description Tests grant completion workflow with utilities
  */
 
-// Mock ALL dependencies BEFORE importing anything else
-jest.mock("@/utilities/chain-wallet-setup");
-jest.mock("@/utilities/grant-helpers");
-jest.mock("@/utilities/indexer-notification");
-jest.mock("@/utilities/attestation-polling");
-jest.mock("react-hot-toast");
-jest.mock("@/components/Utilities/errorManager");
-jest.mock("wagmi", () => ({
-  useAccount: jest.fn(() => ({ chain: { id: 1 }, address: "0x123" })),
+// Mock ALL dependencies to avoid ESM import issues
+const mockSetupChainAndWallet = jest.fn();
+const mockFetchGrantInstance = jest.fn();
+const mockNotifyIndexerForGrant = jest.fn();
+const mockPollForGrantCompletion = jest.fn();
+const mockToastSuccess = jest.fn();
+const mockToastError = jest.fn();
+
+jest.mock("@/utilities/chain-wallet-setup", () => ({
+  setupChainAndWallet: mockSetupChainAndWallet,
 }));
+
+jest.mock("@/utilities/grant-helpers", () => ({
+  fetchGrantInstance: mockFetchGrantInstance,
+}));
+
+jest.mock("@/utilities/indexer-notification", () => ({
+  notifyIndexerForGrant: mockNotifyIndexerForGrant,
+}));
+
+jest.mock("@/utilities/attestation-polling", () => ({
+  pollForGrantCompletion: mockPollForGrantCompletion,
+}));
+
+jest.mock("react-hot-toast", () => ({
+  __esModule: true,
+  default: {
+    success: mockToastSuccess,
+    error: mockToastError,
+  },
+}));
+
+jest.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: jest.fn(),
+}));
+
+const mockUseAccount = jest.fn();
+jest.mock("wagmi", () => ({
+  useAccount: mockUseAccount,
+}));
+
 jest.mock("@/hooks/useWallet", () => ({
   useWallet: jest.fn(() => ({ switchChainAsync: jest.fn() })),
 }));
+
 jest.mock("@/store/modals/txStepper", () => ({
   useStepper: jest.fn(() => ({
     changeStepperStep: jest.fn(),
     setIsStepper: jest.fn(),
   })),
 }));
+
 jest.mock("@/utilities/sanitize", () => ({
   sanitizeObject: jest.fn((obj) => obj),
 }));
 
 import { renderHook, act } from "@testing-library/react";
-import { useGrantCompletion } from "@/hooks/useGrantCompletion";
-import * as chainWalletSetupModule from "@/utilities/chain-wallet-setup";
-import * as grantHelpersModule from "@/utilities/grant-helpers";
-import * as indexerNotificationModule from "@/utilities/indexer-notification";
-import * as attestationPollingModule from "@/utilities/attestation-polling";
-import toast from "react-hot-toast";
-import * as errorManagerModule from "@/components/Utilities/errorManager";
 
-const mockSetupChainAndWallet = chainWalletSetupModule.setupChainAndWallet as jest.MockedFunction<
-  typeof chainWalletSetupModule.setupChainAndWallet
->;
-const mockFetchGrantInstance = grantHelpersModule.fetchGrantInstance as jest.MockedFunction<
-  typeof grantHelpersModule.fetchGrantInstance
->;
-const mockNotifyIndexerForGrant = indexerNotificationModule.notifyIndexerForGrant as jest.MockedFunction<
-  typeof indexerNotificationModule.notifyIndexerForGrant
->;
-const mockPollForGrantCompletion = attestationPollingModule.pollForGrantCompletion as jest.MockedFunction<
-  typeof attestationPollingModule.pollForGrantCompletion
->;
-const mockToast = toast as jest.Mocked<typeof toast>;
+// Import the hook to test AFTER mocking dependencies
+const { useGrantCompletion } = require("@/hooks/useGrantCompletion");
 
 describe("useGrantCompletion", () => {
   const mockGrant = {
@@ -68,6 +83,8 @@ describe("useGrantCompletion", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Reset useAccount mock to default values
+    mockUseAccount.mockReturnValue({ chain: { id: 1 }, address: "0x123" });
   });
 
   describe("Initialization", () => {
@@ -137,7 +154,7 @@ describe("useGrantCompletion", () => {
         grantUid: "grant-123",
       });
 
-      expect(mockToast.success).toHaveBeenCalled();
+      expect(mockToastSuccess).toHaveBeenCalled();
       expect(onComplete).toHaveBeenCalled();
       expect(result.current.isCompleting).toBe(false);
     });
@@ -164,7 +181,7 @@ describe("useGrantCompletion", () => {
         await result.current.completeGrant(mockGrant, mockProject);
       });
 
-      expect(mockToast.success).toHaveBeenCalled();
+      expect(mockToastSuccess).toHaveBeenCalled();
       expect(result.current.isCompleting).toBe(false);
     });
   });
@@ -179,7 +196,7 @@ describe("useGrantCompletion", () => {
         await result.current.completeGrant(mockGrant, mockProject);
       });
 
-      expect(mockToast.error).toHaveBeenCalledWith(
+      expect(mockToastError).toHaveBeenCalledWith(
         "Please switch to the correct network and try again"
       );
       expect(mockFetchGrantInstance).not.toHaveBeenCalled();
@@ -189,8 +206,7 @@ describe("useGrantCompletion", () => {
 
   describe("Validation", () => {
     it("should not proceed without address", async () => {
-      const useAccount = require("wagmi").useAccount;
-      useAccount.mockReturnValue({ chain: { id: 1 }, address: undefined });
+      mockUseAccount.mockReturnValue({ chain: { id: 1 }, address: undefined });
 
       const { result } = renderHook(() => useGrantCompletion({}));
 
@@ -198,7 +214,7 @@ describe("useGrantCompletion", () => {
         await result.current.completeGrant(mockGrant, mockProject);
       });
 
-      expect(mockToast.error).toHaveBeenCalledWith("Please connect your wallet");
+      expect(mockToastError).toHaveBeenCalledWith("Please connect your wallet");
       expect(mockSetupChainAndWallet).not.toHaveBeenCalled();
     });
 
@@ -209,7 +225,7 @@ describe("useGrantCompletion", () => {
         await result.current.completeGrant(mockGrant, null as any);
       });
 
-      expect(mockToast.error).toHaveBeenCalledWith("Please connect your wallet");
+      expect(mockToastError).toHaveBeenCalledWith("Please connect your wallet");
       expect(mockSetupChainAndWallet).not.toHaveBeenCalled();
     });
 
@@ -220,7 +236,7 @@ describe("useGrantCompletion", () => {
         await result.current.completeGrant(null as any, mockProject);
       });
 
-      expect(mockToast.error).toHaveBeenCalledWith("Please connect your wallet");
+      expect(mockToastError).toHaveBeenCalledWith("Please connect your wallet");
       expect(mockSetupChainAndWallet).not.toHaveBeenCalled();
     });
   });
@@ -245,7 +261,7 @@ describe("useGrantCompletion", () => {
         await result.current.completeGrant(mockGrant, mockProject);
       });
 
-      expect(mockToast.error).toHaveBeenCalledWith("Grant completion cancelled");
+      expect(mockToastError).toHaveBeenCalledWith("Grant completion cancelled");
       expect(result.current.isCompleting).toBe(false);
     });
 
@@ -266,7 +282,7 @@ describe("useGrantCompletion", () => {
         await result.current.completeGrant(mockGrant, mockProject);
       });
 
-      expect(mockToast.error).toHaveBeenCalledWith("Grant completion cancelled");
+      expect(mockToastError).toHaveBeenCalledWith("Grant completion cancelled");
     });
 
     it("should handle general errors", async () => {
@@ -284,8 +300,8 @@ describe("useGrantCompletion", () => {
         await result.current.completeGrant(mockGrant, mockProject);
       });
 
-      expect(mockToast.error).toHaveBeenCalledWith(
-        expect.stringContaining("Error")
+      expect(mockToastError).toHaveBeenCalledWith(
+        "There was an error doing the grant completion."
       );
       expect(result.current.isCompleting).toBe(false);
     });
