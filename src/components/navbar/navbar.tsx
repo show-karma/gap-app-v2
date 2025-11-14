@@ -1,6 +1,5 @@
 import { cn } from "@/utilities/tailwind"
 import { layoutTheme } from "../../helper/theme"
-import { Logo } from "../shared/logo"
 import { NavbarDesktopNavigation } from "./navbar-desktop-navigation"
 import { NavbarMobileMenu } from "./navbar-mobile-menu"
 

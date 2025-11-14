@@ -1,6 +1,5 @@
 import axios from "axios"
 import type { MetadataRoute } from "next"
-import { chosenCommunities } from "@/utilities/chosenCommunities"
 
 export async function generateSitemaps() {
   return [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }]
@@ -8,8 +7,6 @@ export async function generateSitemaps() {
 
 export default async function sitemap({ id }: { id: number }): Promise<MetadataRoute.Sitemap> {
   let final: MetadataRoute.Sitemap = []
-
-  console.log("Fetching sitemaps: ", id)
 
   try {
     const response = await axios.get(`https://gapapi.karmahq.xyz/projects/sitemap`, {
@@ -72,8 +69,6 @@ export default async function sitemap({ id }: { id: number }): Promise<MetadataR
     console.warn("Returning empty sitemap as fallback")
     final = []
   }
-
-  console.log("Totally ", final.length, " URLs generated on sitemap")
 
   return final
 }

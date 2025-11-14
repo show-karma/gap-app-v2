@@ -1,6 +1,6 @@
 "use client"
 import { ArrowPathIcon } from "@heroicons/react/24/solid"
-import { Card, LineChart, Title } from "@tremor/react"
+import { Card, Title } from "@tremor/react"
 import { useEffect, useState } from "react"
 import { Button } from "@/components/Utilities/Button"
 import { errorManager } from "@/components/Utilities/errorManager"
@@ -44,7 +44,7 @@ export function GlobalCount() {
 
   useEffect(() => {
     fetchStats()
-  }, [])
+  }, [fetchStats])
 
   return (
     <div className="container mx-auto sm:px-0 lg:px-20 w-full flex-col items-center justify-center">

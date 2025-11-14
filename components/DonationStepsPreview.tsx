@@ -92,7 +92,7 @@ export function DonationStepsPreview({
 
   const totalEstimatedTime = useMemo(() => {
     const totalSeconds = steps.reduce((acc, step) => {
-      const [min, max] = step.estimatedTime.split("-").map((t) => parseInt(t.replace("s", "")))
+      const [min, max] = step.estimatedTime.split("-").map((t) => parseInt(t.replace("s", ""), 10))
       return acc + (min + max) / 2
     }, 0)
 

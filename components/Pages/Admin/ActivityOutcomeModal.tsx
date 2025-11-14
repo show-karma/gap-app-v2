@@ -94,7 +94,7 @@ export const ActivityOutcomeModal = ({
   }, [editingSegment, isOpen, initialType, reset])
 
   const selectedIndicators = watch("impact_indicators") || []
-  const selectedType = watch("type")
+  const _selectedType = watch("type")
 
   const handleClose = () => {
     reset()
@@ -301,7 +301,7 @@ export const ActivityOutcomeModal = ({
                       onIndicatorChange={handleIndicatorChange}
                       communityId={communityId}
                       isLoading={isLoadingIndicators}
-                      onIndicatorCreated={(newIndicator) => {
+                      onIndicatorCreated={(_newIndicator) => {
                         toast.success("Indicator created successfully")
                       }}
                     />

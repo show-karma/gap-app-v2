@@ -1,7 +1,7 @@
 "use client"
 import { zodResolver } from "@hookform/resolvers/zod"
 import Image from "next/image"
-import { useState, useTransition } from "react"
+import { useState } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 import toast from "react-hot-toast"
 import { isAddress } from "viem"
@@ -9,7 +9,6 @@ import { z } from "zod"
 import { Button } from "@/components/Utilities/Button"
 import { ExternalLink } from "@/components/Utilities/ExternalLink"
 import { errorManager } from "@/components/Utilities/errorManager"
-import { Spinner } from "@/components/Utilities/Spinner"
 import fetchData from "@/utilities/fetchData"
 import { INDEXER } from "@/utilities/indexer"
 
@@ -47,7 +46,7 @@ const SubscribeForm = ({ address, changeIsSubscribed }: SubscribeFormProps) => {
   const onSubmit: SubmitHandler<SubscribeFormType> = async (data) => {
     setIsLoading(true)
     try {
-      const [res, error] = await fetchData(INDEXER.COMMUNITY.SUBSCRIBE.BULK, "POST", {
+      const [_res, error] = await fetchData(INDEXER.COMMUNITY.SUBSCRIBE.BULK, "POST", {
         publicAddress: address.toLowerCase(),
         email: data.email,
       })

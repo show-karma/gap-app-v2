@@ -2,11 +2,7 @@
 import { useCallback, useMemo } from "react"
 import { formatUnits } from "viem"
 import { useAccount, useBalance, useReadContracts } from "wagmi"
-import {
-  getTokensByChain,
-  SUPPORTED_TOKENS,
-  type SupportedToken,
-} from "@/constants/supportedTokens"
+import { getTokensByChain, type SupportedToken } from "@/constants/supportedTokens"
 
 interface TokenBalance {
   token: SupportedToken

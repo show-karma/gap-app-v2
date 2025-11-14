@@ -2,7 +2,7 @@ import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-
 import { useQuery } from "@tanstack/react-query"
 import { isPast, parseISO } from "date-fns"
 import { usePathname } from "next/navigation"
-import React, { useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList"
 import fetchData from "@/utilities/fetchData"
 import { INDEXER } from "@/utilities/indexer"

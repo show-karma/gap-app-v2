@@ -334,7 +334,7 @@ describe("fetchCommunityProjectUpdates", () => {
 
       try {
         await fetchCommunityProjectUpdates({ communityId: "community-1" })
-      } catch (error) {
+      } catch (_error) {
         // Error should be thrown
       }
 

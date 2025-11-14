@@ -3,7 +3,7 @@
  * Tests complete search journeys including debouncing, API integration, and navigation
  */
 
-import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react"
+import { fireEvent, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { Navbar } from "@/src/components/navbar/navbar"
 import { NavbarSearch } from "@/src/components/navbar/navbar-search"
@@ -21,7 +21,6 @@ import {
   cleanupAfterEach,
   createMockUsePrivy,
   renderWithProviders,
-  updateMocks,
   waitForDebounce,
 } from "../utils/test-helpers"
 
@@ -95,7 +94,7 @@ describe("Search Flow Integration Tests", () => {
       await user.type(searchInput, searchQueries.medium)
 
       // Loading spinner should appear immediately
-      const loadingIndicator = screen.queryByText(/searching/i) || screen.queryByRole("status")
+      const _loadingIndicator = screen.queryByText(/searching/i) || screen.queryByRole("status")
 
       // Wait for results
       await waitForDebounce()

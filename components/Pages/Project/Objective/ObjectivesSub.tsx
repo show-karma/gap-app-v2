@@ -2,7 +2,6 @@
 import { useParams } from "next/navigation"
 import pluralize from "pluralize"
 import { useAllMilestones } from "@/hooks/useAllMilestones"
-import { formatDate } from "@/utilities/formatDate"
 
 export const ObjectivesSub = () => {
   const { projectId } = useParams()

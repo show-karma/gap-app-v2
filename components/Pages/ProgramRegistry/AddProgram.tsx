@@ -1,13 +1,11 @@
 "use client"
-import { Popover } from "@headlessui/react"
-import { CalendarIcon, ChevronLeftIcon } from "@heroicons/react/24/solid"
+import { ChevronLeftIcon } from "@heroicons/react/24/solid"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { AlloBase } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/Allo"
 import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { DayPicker } from "react-day-picker"
 import type { SubmitHandler } from "react-hook-form"
 import { Controller, useForm } from "react-hook-form"
 import toast from "react-hot-toast"
@@ -42,7 +40,6 @@ import { PAGES } from "@/utilities/pages"
 import { urlRegex } from "@/utilities/regexs/urlRegex"
 import { sanitizeObject } from "@/utilities/sanitize"
 import { cn } from "@/utilities/tailwind"
-import { privyConfig as config } from "@/utilities/wagmi/privy-config"
 import { safeGetWalletClient } from "@/utilities/wallet-helpers"
 import { registryHelper } from "./helper"
 import type { GrantProgram } from "./ProgramList"
@@ -169,7 +166,7 @@ export default function AddProgram({
   refreshPrograms?: () => Promise<void>
 }) {
   const router = useRouter()
-  const supportedChains = appNetwork
+  const _supportedChains = appNetwork
     .filter((chain) => {
       const support = [10, 42161, 11155111]
       return support.includes(chain.id)
@@ -192,15 +189,14 @@ export default function AddProgram({
         const result = await gapIndexerApi.communities()
         setAllCommunities(result.data)
         return result
-      } catch (error: any) {
-        console.log(error)
+      } catch (_error: any) {
         setAllCommunities([])
         return undefined
       }
     }
 
     if (allCommunities.length === 0) fetchCommunities()
-  }, [allCommunities])
+  }, [allCommunities, gap])
 
   const {
     register,
@@ -340,7 +336,7 @@ export default function AddProgram({
         communityRef: data.communityRef,
       }
 
-      const [request, error] = await fetchData(
+      const [_request, error] = await fetchData(
         INDEXER.REGISTRY.CREATE,
         "POST",
         {
@@ -470,7 +466,7 @@ export default function AddProgram({
             let retries = 1000
             changeStepperStep("indexing")
             while (retries > 0) {
-              await fetchData(INDEXER.REGISTRY.GET_ALL + `?programId=${programToEdit?.programId}`)
+              await fetchData(`${INDEXER.REGISTRY.GET_ALL}?programId=${programToEdit?.programId}`)
                 .then(async ([res]) => {
                   const hasUpdated =
                     new Date(programToEdit?.updatedAt) <
@@ -500,7 +496,7 @@ export default function AddProgram({
           throw new Error("Error editing program")
         }
       } else {
-        const [request, error] = await fetchData(
+        const [_request, error] = await fetchData(
           INDEXER.REGISTRY.UPDATE(programToEdit?._id.$oid as string, chainSelected as number),
           "PUT",
           {

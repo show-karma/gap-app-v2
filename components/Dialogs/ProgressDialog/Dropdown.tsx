@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/solid"
+import { CheckIcon } from "@heroicons/react/24/solid"
 import * as Popover from "@radix-ui/react-popover"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk"
 import pluralize from "pluralize"
@@ -52,7 +52,7 @@ export const Dropdown: FC<DropdownProps> = ({
         })
       : list
     setOrderedList(sortedList)
-  }, [])
+  }, [list, shouldSort])
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>

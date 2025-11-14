@@ -15,14 +15,13 @@ import { z } from "zod"
 import { OutputsSection } from "@/components/Forms/Outputs/OutputsSection"
 import { Button } from "@/components/Utilities/Button"
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor"
-import { getGapClient, useGap } from "@/hooks/useGap"
+import { useGap } from "@/hooks/useGap"
 import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers"
 import { useWallet } from "@/hooks/useWallet"
 import { useOwnerStore, useProjectStore } from "@/store"
 import { useCommunityAdminStore } from "@/store/communityAdmin"
 import { useShareDialogStore } from "@/store/modals/shareDialog"
 import { useStepper } from "@/store/modals/txStepper"
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid"
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils"
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain"
 import fetchData from "@/utilities/fetchData"
@@ -30,11 +29,9 @@ import { sendMilestoneImpactAnswers } from "@/utilities/impact/milestoneImpactAn
 import { INDEXER } from "@/utilities/indexer"
 import { MESSAGES } from "@/utilities/messages"
 import { PAGES } from "@/utilities/pages"
-import { urlRegex } from "@/utilities/regexs/urlRegex"
 import { sanitizeObject } from "@/utilities/sanitize"
 import { SHARE_TEXTS } from "@/utilities/share/text"
 import { cn } from "@/utilities/tailwind"
-import { privyConfig as config } from "@/utilities/wagmi/privy-config"
 import { safeGetWalletClient } from "@/utilities/wallet-helpers"
 import { errorManager } from "../Utilities/errorManager"
 
@@ -57,7 +54,7 @@ const schema = z.object({
     (value) => {
       if (value === "") return false // Empty string is not valid
       const num = Number(value)
-      return !isNaN(num) && num >= 0 && num <= 100
+      return !Number.isNaN(num) && num >= 0 && num <= 100
     },
     {
       message: "Please enter a number between 0 and 100",
@@ -90,14 +87,14 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   afterSubmit,
   setIsUpdating: parentSetIsUpdating,
 }) => {
-  const selectedProject = useProjectStore((state) => state.project)
+  const _selectedProject = useProjectStore((state) => state.project)
   const [isSubmitLoading, setIsSubmitLoading] = useState(false)
   const { chain, address } = useAccount()
   const { switchChainAsync } = useWallet()
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin)
   const isContractOwner = useOwnerStore((state) => state.isOwner)
   const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin)
-  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin
+  const _isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin
   const refreshProject = useProjectStore((state) => state.refreshProject)
   const { openShareDialog, closeShareDialog } = useShareDialogStore()
   const router = useRouter()
@@ -150,7 +147,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
       const transformedOutputs = transformMilestoneImpactToOutputs(milestoneImpactData)
       setValue("outputs", transformedOutputs, { shouldValidate: true })
     }
-  }, [milestoneImpactData, setValue])
+  }, [milestoneImpactData, setValue, transformMilestoneImpactToOutputs])
 
   const openDialog = () => {
     openShareDialog({
@@ -212,9 +209,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
               milestoneUID,
               output.outputId,
               datapoints,
-              () => {
-                console.log(`Successfully sent output data for indicator ${output.outputId}`)
-              },
+              () => {},
               (error) => {
                 console.error(`Error sending output data for indicator ${output.outputId}:`, error)
               }
@@ -225,9 +220,6 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
 
       // Send deliverables data if any
       if (data.deliverables && data.deliverables.length > 0) {
-        // For now, deliverables are just stored with the milestone completion
-        // In the future, they could be sent as separate entities to the backend
-        console.log("Deliverables included with milestone completion:", data.deliverables)
       }
     } catch (error) {
       console.error("Error sending outputs and deliverables:", error)
@@ -339,7 +331,6 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           }
         })
     } catch (error) {
-      console.log(error)
       errorManager(
         `Error completing milestone ${milestone.uid} from grant ${milestone.refUID}`,
         error,
@@ -460,7 +451,6 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           }
         })
     } catch (error) {
-      console.log(error)
       errorManager(
         `Error updating milestone completion ${milestone.uid} from grant ${milestone.refUID}`,
         error,

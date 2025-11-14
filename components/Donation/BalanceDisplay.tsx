@@ -34,7 +34,7 @@ export function BalanceDisplay({
   const tokenBalance = balanceByTokenKey[balanceKey]
 
   // Show error state if balance fetch failed for this specific chain
-  if (balanceError && balanceError.chainIds.includes(selectedToken.chainId)) {
+  if (balanceError?.chainIds.includes(selectedToken.chainId)) {
     return (
       <div className="mt-1 text-right text-xs">
         <div className="flex items-center justify-end gap-1">

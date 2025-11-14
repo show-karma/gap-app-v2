@@ -6,7 +6,6 @@ import type {
   IProjectImpact,
   IProjectImpactStatus,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import { getWalletClient } from "@wagmi/core"
 import { type FC, Fragment, useState } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 import toast from "react-hot-toast"
@@ -17,11 +16,10 @@ import { z } from "zod"
 import { Button } from "@/components/Utilities/Button"
 import { errorManager } from "@/components/Utilities/errorManager"
 import { useAuth } from "@/hooks/useAuth"
-import { getGapClient, useGap } from "@/hooks/useGap"
+import { useGap } from "@/hooks/useGap"
 import { useWallet } from "@/hooks/useWallet"
 import { useOwnerStore, useProjectStore } from "@/store"
 import { useStepper } from "@/store/modals/txStepper"
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid"
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils"
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain"
 import fetchData from "@/utilities/fetchData"
@@ -29,7 +27,6 @@ import { INDEXER } from "@/utilities/indexer"
 import { MESSAGES } from "@/utilities/messages"
 import { sanitizeObject } from "@/utilities/sanitize"
 import { getProjectById } from "@/utilities/sdk"
-import { privyConfig as config } from "@/utilities/wagmi/privy-config"
 import { safeGetWalletClient } from "@/utilities/wallet-helpers"
 
 type VerifyImpactDialogProps = {
@@ -152,7 +149,6 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({ impact, addVer
         })
       closeModal()
     } catch (error: any) {
-      console.log(error)
       errorManager(
         MESSAGES.PROJECT.IMPACT.VERIFY.ERROR,
         error,

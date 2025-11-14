@@ -1,17 +1,12 @@
 import { Dialog, Transition } from "@headlessui/react"
 import type { ContributorProfile } from "@show-karma/karma-gap-sdk"
-import { type FC, Fragment, useEffect, useState } from "react"
-import { useAccount } from "wagmi"
+import { type FC, Fragment, useState } from "react"
 import { GithubIcon, LinkedInIcon } from "@/components/Icons"
 import { FarcasterIcon } from "@/components/Icons/Farcaster"
 import { Twitter2Icon } from "@/components/Icons/Twitter2"
 import { Button } from "@/components/Utilities/Button"
 import { ExternalLink } from "@/components/Utilities/ExternalLink"
-import { errorManager } from "@/components/Utilities/errorManager"
-import { useProjectStore } from "@/store"
 import { formatFarcasterLink } from "@/utilities/farcaster"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
 
 interface MemberDialogProps {
   profile: ContributorProfile

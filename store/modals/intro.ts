@@ -5,7 +5,7 @@ interface IntroModalStore {
   setIsIntroModalOpen: (isIntroModalOpen: boolean) => void
 }
 
-export const useIntroModalStore = create<IntroModalStore>((set, get) => ({
+export const useIntroModalStore = create<IntroModalStore>((set, _get) => ({
   isIntroModalOpen: false,
   setIsIntroModalOpen: (isIntroModalOpen: boolean) => set({ isIntroModalOpen }),
 }))

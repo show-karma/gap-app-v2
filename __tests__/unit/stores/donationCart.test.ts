@@ -1,6 +1,6 @@
-import { act, renderHook, waitFor } from "@testing-library/react"
+import { act, renderHook } from "@testing-library/react"
 import type { SupportedToken } from "@/constants/supportedTokens"
-import { type DonationCartItem, DonationPayment, useDonationCart } from "@/store/donationCart"
+import { type DonationCartItem, useDonationCart } from "@/store/donationCart"
 
 // Mock the zustand persist middleware
 const mockStorageData: Record<string, string> = {}

@@ -5,7 +5,6 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline"
 import dynamic from "next/dynamic"
-import Link from "next/link"
 import { useParams } from "next/navigation"
 import type { FC } from "react"
 import { MilestoneVerificationSection } from "@/components/Shared/MilestoneVerification"
@@ -25,7 +24,6 @@ import { SHARE_TEXTS } from "@/utilities/share/text"
 import { cn } from "@/utilities/tailwind"
 import { containerClassName } from "../ActivityCard"
 import { ActivityAttribution } from "./ActivityAttribution"
-import { ActivityStatus } from "./ActivityStatus"
 import { ActivityStatusHeader } from "./ActivityStatusHeader"
 
 const ProjectObjectiveCompletion = dynamic(
@@ -103,8 +101,8 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
   // grant milestone-specific properties
   const grantMilestone = milestone.source.grantMilestone
   const grantTitle = grantMilestone?.grant.details?.data.title
-  const programId = grantMilestone?.grant.details?.data.programId
-  const communityData = grantMilestone?.grant.community?.details?.data
+  const _programId = grantMilestone?.grant.details?.data.programId
+  const _communityData = grantMilestone?.grant.community?.details?.data
   const endsAt = milestone.endsAt
 
   // completion information
@@ -117,7 +115,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
     projectMilestone?.completed?.createdAt || grantMilestone?.milestone.completed?.createdAt
   const completionAttester =
     projectMilestone?.completed?.attester || grantMilestone?.milestone.completed?.attester
-  const verifiedMilestones =
+  const _verifiedMilestones =
     projectMilestone?.verified?.length || grantMilestone?.milestone.verified?.length
   const completionDeliverables =
     (projectMilestone?.completed?.data as any)?.deliverables ||

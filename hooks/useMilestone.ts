@@ -9,7 +9,6 @@ import { useOwnerStore, useProjectStore } from "@/store"
 import { useStepper } from "@/store/modals/txStepper"
 import type { UnifiedMilestone } from "@/types/roadmap"
 import { chainNameDictionary } from "@/utilities/chainNameDictionary"
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid"
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils"
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain"
 import fetchData from "@/utilities/fetchData"
@@ -24,7 +23,7 @@ import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize"
 import { getProjectById } from "@/utilities/sdk"
 import { safeGetWalletClient } from "@/utilities/wallet-helpers"
 import { useAllMilestones } from "./useAllMilestones"
-import { getGapClient, useGap } from "./useGap"
+import { useGap } from "./useGap"
 import { useOffChainRevoke } from "./useOffChainRevoke"
 import { useWallet } from "./useWallet"
 
@@ -54,9 +53,7 @@ const sendOutputsAndDeliverables = async (
             milestoneUID,
             output.outputId,
             datapoints,
-            () => {
-              console.log(`Successfully sent output data for indicator ${output.outputId}`)
-            },
+            () => {},
             (error) => {
               console.error(`Error sending output data for indicator ${output.outputId}:`, error)
             }
@@ -67,9 +64,6 @@ const sendOutputsAndDeliverables = async (
 
     // Send deliverables data if any
     if (data.deliverables && data.deliverables.length > 0) {
-      // For now, deliverables are just stored with the milestone completion
-      // In the future, they could be sent as separate entities to the backend
-      console.log("Deliverables included with milestone completion:", data.deliverables)
     }
   } catch (error) {
     console.error("Error sending outputs and deliverables:", error)
@@ -90,7 +84,7 @@ export const useMilestone = () => {
   const router = useRouter()
   const { isProjectOwner } = useProjectStore()
   const { isOwner: isContractOwner } = useOwnerStore()
-  const isOnChainAuthorized = isProjectOwner || isContractOwner
+  const _isOnChainAuthorized = isProjectOwner || isContractOwner
   const { performOffChainRevoke } = useOffChainRevoke()
 
   const multiGrantDelete = async (milestone: UnifiedMilestone) => {
@@ -412,7 +406,7 @@ export const useMilestone = () => {
             throw new Error("Failed to connect to wallet", { cause: error })
           }
 
-          const walletSigner = await walletClientToSigner(walletClient)
+          const _walletSigner = await walletClientToSigner(walletClient)
           const fetchedProject = await getProjectById(project!.details?.data.slug || "")
           if (!fetchedProject) {
             throw new Error("Failed to fetch project data")
@@ -504,7 +498,7 @@ export const useMilestone = () => {
           throw new Error("Failed to connect to wallet", { cause: error })
         }
 
-        const walletSigner = await walletClientToSigner(walletClient)
+        const _walletSigner = await walletClientToSigner(walletClient)
         const fetchedProject = await gapClient.fetch.projectById(project?.uid)
 
         if (!fetchedProject) {

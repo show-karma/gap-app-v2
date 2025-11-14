@@ -1,10 +1,9 @@
-import { InfiniteMovingCards } from "@/src/components/ui/infinite-moving-cards"
 import { marketingLayoutTheme } from "@/src/helper/theme"
 import { cn } from "@/utilities/tailwind"
 import { CreateProfileButton } from "./create-profile-button"
 import { JoinDiscordButton } from "./join-discord-button"
 
-const testimonials = [
+const _testimonials = [
   {
     quote:
       "As a co-founder, I can say that Karma made obtaining funding straightforward and stress-free.",

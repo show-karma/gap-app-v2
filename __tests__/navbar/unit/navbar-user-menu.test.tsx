@@ -3,7 +3,7 @@
  * Tests user menu rendering states, permission-based items, theme toggle, and social links
  */
 
-import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react"
+import { cleanup, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { NavbarUserMenu } from "@/src/components/navbar/navbar-user-menu"
 import { getAuthFixture } from "../fixtures/auth-fixtures"
@@ -56,7 +56,7 @@ describe("NavbarUserMenu", () => {
       })
 
       // Skeleton should be present (test by presence of loading indicators)
-      const skeleton = container.querySelector('[data-testid="user-skeleton"]')
+      const _skeleton = container.querySelector('[data-testid="user-skeleton"]')
       // If skeleton component adds specific test IDs, verify them
       // Otherwise verify the component renders something
       expect(container.firstChild).toBeInTheDocument()

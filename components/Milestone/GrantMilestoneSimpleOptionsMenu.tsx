@@ -1,7 +1,5 @@
 "use client"
-import { Menu, Transition } from "@headlessui/react"
-import { EllipsisVerticalIcon, TrashIcon } from "@heroicons/react/24/outline"
-import { Fragment } from "react"
+import { TrashIcon } from "@heroicons/react/24/outline"
 import { DeleteDialog } from "@/components/DeleteDialog"
 import { useMilestone } from "@/hooks/useMilestone"
 import type { UnifiedMilestone } from "@/types/roadmap"

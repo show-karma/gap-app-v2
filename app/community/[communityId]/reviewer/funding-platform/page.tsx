@@ -21,7 +21,6 @@ import Link from "next/link"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import pluralize from "pluralize"
 import { useEffect, useMemo, useState } from "react"
-import { FundingPlatformStatsCard } from "@/components/FundingPlatform/Dashboard/card"
 import { Button } from "@/components/Utilities/Button"
 import { Spinner } from "@/components/Utilities/Spinner"
 import { useFundingPrograms } from "@/hooks/useFundingPlatform"
@@ -188,7 +187,7 @@ export default function ReviewerFundingPlatformPage() {
     )
   }
 
-  const stats = [
+  const _stats = [
     {
       title: "Total Programs",
       value: formatCurrency(statistics.totalPrograms),

@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query"
-import { useMemo } from "react"
 import { formatUnits } from "viem"
 import { useAccount } from "wagmi"
 import type { SupportedToken } from "@/constants/supportedTokens"
@@ -144,7 +143,7 @@ async function fetchMultiChainBalances(
   return balanceMap
 }
 
-export function useCrossChainBalances(currentChainId: number | null, chainIds: number[]) {
+export function useCrossChainBalances(_currentChainId: number | null, chainIds: number[]) {
   const { address, isConnected } = useAccount()
 
   // Use react-query for caching, automatic refetching, and state management

@@ -6,12 +6,12 @@ import pluralize from "pluralize"
 import { PROJECT_NAME } from "@/constants/brand"
 import { gapIndexerApi } from "@/utilities/gapIndexerApi"
 import { getTotalProjects } from "@/utilities/karma/totalProjects"
-import { getGrants, getProjectById } from "@/utilities/sdk"
+import { getGrants } from "@/utilities/sdk"
 // App router includes @vercel/og.
 // No need to install it.
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   context: { params: Promise<{ communityId: string }> }
 ) {
   const communityId = (await context.params).communityId

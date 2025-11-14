@@ -21,25 +21,18 @@ export function useNetworkSwitching() {
    */
   const waitForWalletClientRefresh = useCallback(
     async (expectedChainId: number, maxRetries = 15, delayMs = 1000): Promise<boolean> => {
-      console.log(`🔄 Waiting for wallet client refresh to chain ${expectedChainId}...`)
-
       try {
         await retryWithBackoff(
           async () => {
             const { data: freshWalletClient } = await refetchWalletClient()
 
             if (freshWalletClient && freshWalletClient.chain?.id === expectedChainId) {
-              console.log(`✅ Wallet client refreshed successfully for chain ${expectedChainId}`)
               return true
             }
 
             // If we have a wallet client but on wrong chain, that's progress
-            if (freshWalletClient && freshWalletClient.account) {
-              console.log(
-                `⏳ Wallet client available but on chain ${freshWalletClient.chain?.id}, expected ${expectedChainId}`
-              )
+            if (freshWalletClient?.account) {
             } else {
-              console.log(`❌ Wallet client not available`)
             }
 
             throw new Error("Wallet client not ready")
@@ -55,7 +48,7 @@ export function useNetworkSwitching() {
           }
         )
         return true
-      } catch (error) {
+      } catch (_error) {
         console.warn(
           `⚠️ Wallet client refresh incomplete after ${maxRetries} attempts - returning current state`
         )
@@ -116,11 +109,8 @@ export function useNetworkSwitching() {
       }
 
       if (chainId === targetChainId) {
-        console.log(`Already on target chain ${targetChainId}`)
         return // Already on target network
       }
-
-      console.log(`Switching from chain ${chainId} to chain ${targetChainId}`)
 
       // Try different switching methods in order of preference
       let switchError: Error | null = null
@@ -129,7 +119,6 @@ export function useNetworkSwitching() {
       try {
         // Method 1: Use switchChainAsync (preferred)
         if (switchChainAsync) {
-          console.log("Attempting switch via switchChainAsync")
           await switchChainAsync({ chainId: targetChainId })
           switchSuccessful = true
         }
@@ -142,7 +131,6 @@ export function useNetworkSwitching() {
         try {
           // Method 2: Use wallet client switchChain
           if (walletClient && typeof walletClient.switchChain === "function") {
-            console.log("Attempting switch via walletClient.switchChain")
             await walletClient.switchChain({ id: targetChainId })
             switchSuccessful = true
           }
@@ -157,7 +145,6 @@ export function useNetworkSwitching() {
         try {
           // Method 3: Use switchChain (fallback method)
           if (switchChain) {
-            console.log("Attempting switch via switchChain")
             switchChain({ chainId: targetChainId })
             switchSuccessful = true
           }
@@ -171,19 +158,11 @@ export function useNetworkSwitching() {
       if (!switchSuccessful) {
         throw switchError || new Error("All network switching methods failed")
       }
-
-      // Wait for the chain switch to be confirmed
-      console.log("Waiting for chain switch confirmation...")
       const chainSwitchConfirmed = await verifyChainSwitch(targetChainId)
 
       if (!chainSwitchConfirmed) {
         throw new Error(`Chain switch to ${targetChainId} was not confirmed within timeout`)
       }
-
-      console.log(`Chain switch to ${targetChainId} confirmed`)
-
-      // Wait for wallet client to refresh and be available on the new chain
-      console.log("🔄 Refreshing wallet client...")
       const walletClientRefreshed = await waitForWalletClientRefresh(targetChainId)
 
       if (!walletClientRefreshed) {
@@ -192,12 +171,10 @@ export function useNetworkSwitching() {
         )
         // Don't throw an error here - let the transaction validation handle it
       } else {
-        console.log(`✅ Wallet client refresh completed for chain ${targetChainId}`)
       }
 
       // Update the last switched chain
       lastSwitchedChain.current = targetChainId
-      console.log(`Successfully switched to chain ${targetChainId}`)
     },
     [
       isConnected,

@@ -54,7 +54,7 @@ export async function ensureCorrectNetwork(
     try {
       await switchToNetwork(targetChainId)
       activeChainId = targetChainId
-    } catch (error) {
+    } catch (_error) {
       toast.error("Switch to the required network to continue.")
       return null
     }

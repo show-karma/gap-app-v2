@@ -1,5 +1,4 @@
 import { SquareCheckBig } from "lucide-react"
-import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { ThemeImage } from "@/src/components/ui/theme-image"

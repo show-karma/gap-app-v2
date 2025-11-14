@@ -1,6 +1,5 @@
 import { ArrowUpRight } from "lucide-react"
 import Image from "next/image"
-import Link from "next/link"
 import { ExternalLink } from "@/components/Utilities/ExternalLink"
 import { cn } from "@/utilities/tailwind"
 import { MenuItemClient } from "./menu-item-client"

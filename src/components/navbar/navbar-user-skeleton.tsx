@@ -1,5 +1,4 @@
 import { Skeleton } from "@/components/ui/skeleton"
-import { cn } from "@/utilities/tailwind"
 
 export function NavbarUserSkeleton() {
   return (

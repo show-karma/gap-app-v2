@@ -1,7 +1,7 @@
 import { Dialog, Transition } from "@headlessui/react"
 import { CheckIcon, XMarkIcon } from "@heroicons/react/24/solid"
 /* eslint-disable @next/next/no-img-element */
-import { type FC, Fragment, ReactNode, useEffect, useState } from "react"
+import { type FC, Fragment, useState } from "react"
 import { Button } from "../Utilities/Button"
 
 export const ReasonsModal: FC<{

@@ -19,7 +19,6 @@ import {
   createMockUseTheme,
   renderWithProviders,
   resetMockAuthState,
-  updateMocks,
 } from "../utils/test-helpers"
 
 describe("NavbarDesktopNavigation", () => {

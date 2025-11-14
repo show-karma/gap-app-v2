@@ -38,7 +38,7 @@ const CommentItem: FC<CommentItemProps> = ({
   // Update editContent when comment changes to handle optimistic updates
   React.useEffect(() => {
     setEditContent(comment.content)
-  }, [comment.content, comment.id])
+  }, [comment.content])
 
   // Users can edit their own comments (if not deleted)
   const isAuthor = currentUserAddress?.toLowerCase() === comment.authorAddress?.toLowerCase()

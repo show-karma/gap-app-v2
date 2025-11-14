@@ -4,7 +4,6 @@ import type {
   CommunityProjectsV2Response,
   CommunityStatsV2,
 } from "@/types/community"
-import { SortByOptions, StatusOptions } from "@/types/filters"
 import { zeroUID } from "@/utilities/commons"
 import fetchData from "@/utilities/fetchData"
 import { INDEXER } from "@/utilities/indexer"
@@ -19,8 +18,7 @@ export const getCommunityDetailsV2 = cache(
       }
 
       return data as CommunityDetailsV2
-    } catch (error) {
-      console.log("Not found community", slug, error)
+    } catch (_error) {
       return null
     }
   }
@@ -50,8 +48,7 @@ export const getCommunityStatsV2 = cache(async (slug: string): Promise<Community
       totalTransactions: 0,
       averageCompletion: 0,
     }
-  } catch (error) {
-    console.log("Error fetching community stats", slug, error)
+  } catch (_error) {
     return {
       totalProjects: 0,
       totalGrants: 0,
@@ -103,8 +100,7 @@ export const getCommunityProjectsV2 = async (
         hasPrevPage: false,
       },
     }
-  } catch (error) {
-    console.log("Error fetching community projects", slug, error)
+  } catch (_error) {
     return {
       payload: [],
       pagination: {

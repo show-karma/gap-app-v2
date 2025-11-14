@@ -4,7 +4,6 @@ import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramLis
 import { errorManager } from "@/components/Utilities/errorManager"
 import { zeroUID } from "@/utilities/commons"
 import fetchData from "@/utilities/fetchData"
-import { gapIndexerApi } from "@/utilities/gapIndexerApi"
 import { INDEXER } from "@/utilities/indexer"
 import { defaultMetadata } from "@/utilities/meta"
 import { getCommunityData } from "@/utilities/queries/getCommunityData"
@@ -22,7 +21,7 @@ const getGrantPrograms = async (communityId: string): Promise<GrantProgram[]> =>
       errorManager(`Error with fetching grant programs for community ${communityId}`, error)
     }
     return result as GrantProgram[]
-  } catch (error: any) {
+  } catch (error: unknown) {
     errorManager(`Error while fetching grant programs of community ${communityId}`, error)
     return []
   }

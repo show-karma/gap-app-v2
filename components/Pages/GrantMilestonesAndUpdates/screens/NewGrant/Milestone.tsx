@@ -1,11 +1,10 @@
 "use client"
 import { Popover } from "@headlessui/react"
-import { CalendarIcon, ChevronDownIcon, PencilIcon } from "@heroicons/react/24/outline"
+import { ChevronDownIcon, PencilIcon } from "@heroicons/react/24/outline"
 import { XMarkIcon } from "@heroicons/react/24/solid"
 import { zodResolver } from "@hookform/resolvers/zod"
 import type { IMilestone } from "@show-karma/karma-gap-sdk"
 import { type FC, useEffect } from "react"
-import { DayPicker } from "react-day-picker"
 import type { SubmitHandler } from "react-hook-form"
 import { Controller, useForm } from "react-hook-form"
 import { z } from "zod"
@@ -122,7 +121,18 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
         },
       })
     }
-  }, [isValid])
+  }, [
+    isValid,
+    changeMilestoneForm,
+    currentMilestone.description,
+    currentMilestone.endsAt,
+    currentMilestone.priority,
+    currentMilestone.startsAt,
+    currentMilestone.title,
+    index,
+    milestonesForms[index].isEditing,
+    watch,
+  ])
 
   const priorities = Array.from({ length: 5 }, (_, index) => index + 1)
 

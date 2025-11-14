@@ -1,13 +1,10 @@
 import { ChevronDownIcon, ChevronUpDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid"
-import pluralize from "pluralize"
-import { Fragment } from "react"
 import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown"
 import { Button } from "@/components/Utilities/Button"
 import { ExternalLink } from "@/components/Utilities/ExternalLink"
 import TablePagination from "@/components/Utilities/TablePagination"
 import type { SimplifiedGrant } from "@/hooks/useGrants"
 import { PAGES } from "@/utilities/pages"
-import { cn } from "@/utilities/tailwind"
 
 type SortField = "project" | "grant" | "description" | "categories"
 type SortDirection = "asc" | "desc"

@@ -72,7 +72,7 @@ export function validateChainId(chainID: number | string): boolean {
   }
   if (typeof chainID === "string") {
     const parsed = parseInt(chainID, 10)
-    return !isNaN(parsed) && parsed > 0 && parsed.toString() === chainID.trim()
+    return !Number.isNaN(parsed) && parsed > 0 && parsed.toString() === chainID.trim()
   }
   return false
 }

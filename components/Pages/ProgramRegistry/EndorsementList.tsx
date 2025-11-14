@@ -20,7 +20,7 @@ const EndorsementRow: FC<EndorsementRowProps> = ({ endorsement }) => {
   const { ensData, populateEns } = useENS()
   useEffect(() => {
     populateEns([endorsement.recipient])
-  }, [endorsement.recipient])
+  }, [endorsement.recipient, populateEns])
 
   return (
     <div className="flex flex-col w-full p-4 gap-3">
@@ -94,30 +94,28 @@ export const EndorsementList: FC = () => {
       setHandledEndorsements(sliced)
     }
     checkUniqueEndorsements()
-  }, [project?.endorsements, page])
+  }, [project?.endorsements, page, populateEns])
 
   return (
     <div className="w-full flex flex-col gap-3">
       {handledEndorsements.length ? (
-        <>
-          <div className="flex flex-col gap-0 divide-y divide-y-gray-200  rounded-xl">
-            {handledEndorsements.map((endorsement, index) => (
-              <EndorsementRow key={index} endorsement={endorsement} />
-            ))}
-            {hasMore ? (
-              <div className="w-full flex flex-row justify-center items-center py-2 px-4">
-                <Button
-                  onClick={() => {
-                    setPage((old) => old + 1)
-                  }}
-                  className="w-max text-base bg-white border border-black dark:text-black dark:bg-black dark:border-white hover:bg-black dark:hover:bg-white"
-                >
-                  Load more
-                </Button>
-              </div>
-            ) : null}
-          </div>
-        </>
+        <div className="flex flex-col gap-0 divide-y divide-y-gray-200  rounded-xl">
+          {handledEndorsements.map((endorsement, index) => (
+            <EndorsementRow key={index} endorsement={endorsement} />
+          ))}
+          {hasMore ? (
+            <div className="w-full flex flex-row justify-center items-center py-2 px-4">
+              <Button
+                onClick={() => {
+                  setPage((old) => old + 1)
+                }}
+                className="w-max text-base bg-white border border-black dark:text-black dark:bg-black dark:border-white hover:bg-black dark:hover:bg-white"
+              >
+                Load more
+              </Button>
+            </div>
+          ) : null}
+        </div>
       ) : (
         <EmptyEndorsmentList />
       )}

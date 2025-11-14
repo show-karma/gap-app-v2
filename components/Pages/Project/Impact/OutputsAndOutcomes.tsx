@@ -10,11 +10,8 @@ import { Button } from "@/components/Utilities/Button"
 import { useImpactAnswers } from "@/hooks/useImpactAnswers"
 import { useOwnerStore, useProjectStore } from "@/store"
 import { useCommunityAdminStore } from "@/store/communityAdmin"
-import { ImpactIndicatorWithData } from "@/types/impactMeasurement"
-import fetchData from "@/utilities/fetchData"
 import formatCurrency from "@/utilities/formatCurrency"
 import { formatDate } from "@/utilities/formatDate"
-import { INDEXER } from "@/utilities/indexer"
 import { MESSAGES } from "@/utilities/messages"
 import { urlRegex } from "@/utilities/regexs/urlRegex"
 import { cn } from "@/utilities/tailwind"
@@ -146,7 +143,7 @@ export const OutputsAndOutcomes = () => {
       )
 
       handleCancel()
-    } catch (error) {
+    } catch (_error) {
       setForms((prev) =>
         prev.map((f) =>
           f.id === id
@@ -222,7 +219,7 @@ export const OutputsAndOutcomes = () => {
         }))
       )
     }
-  }, [impactAnswers])
+  }, [impactAnswers, forms.reduce])
 
   const handleEditClick = (id: string) => {
     setForms((prev) => prev.map((f) => (f.id === id ? { ...f, isEditing: true } : f)))
@@ -303,7 +300,7 @@ export const OutputsAndOutcomes = () => {
     if (unitOfMeasure === "int") {
       return !Number.isInteger(Number(value))
     }
-    return isNaN(value) || value === 0
+    return Number.isNaN(value) || value === 0
   }
 
   const isInvalidTimestamp = (id: string, timestamp: string) => {
@@ -375,7 +372,7 @@ export const OutputsAndOutcomes = () => {
                   new Date(a.endDate || new Date().toISOString()).getTime()
               )[0]?.endDate
             const allOutputs = filteredOutputs.find((subItem) => subItem.id === item.id)
-            const outputs = allOutputs?.datapoints.map((datapoint, index) => ({
+            const outputs = allOutputs?.datapoints.map((datapoint, _index) => ({
               value: datapoint.value,
               proof: datapoint.proof,
               timestamp: datapoint.endDate || new Date().toISOString(),
@@ -442,14 +439,11 @@ export const OutputsAndOutcomes = () => {
                             noDataText="Awaiting grantees to submit values"
                             onValueChange={(v) => {
                               if (!v) {
-                                console.log("No value received from chart click")
                                 return
                               }
-                              console.log("Chart click data:", v)
 
                               const selectedItem = filteredOutputs.find((i) => i.id === item.id)
                               if (!selectedItem) {
-                                console.log("Could not find matching item")
                                 return
                               }
 
@@ -464,8 +458,6 @@ export const OutputsAndOutcomes = () => {
                                   Number(dp.value) === Number(v[selectedItem.name])
                                 )
                               })
-
-                              console.log("Found matching datapoint:", exactDatapoint)
 
                               setSelectedPoint({
                                 itemId: item.id,

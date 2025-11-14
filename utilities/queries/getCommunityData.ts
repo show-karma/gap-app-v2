@@ -15,8 +15,7 @@ export const getCommunityData = cache(async (communityId: string): Promise<IComm
     }
 
     return data as ICommunityResponse
-  } catch (error) {
-    console.log("Not found community", communityId, error)
+  } catch (_error) {
     notFound()
   }
 })
@@ -31,8 +30,7 @@ export const getCommunityCategories = cache(async (communityId: string): Promise
     }
 
     return []
-  } catch (error) {
-    console.log("Error fetching categories", communityId, error)
+  } catch (_error) {
     return []
   }
 })

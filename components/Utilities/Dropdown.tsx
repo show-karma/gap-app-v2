@@ -1,6 +1,6 @@
 import { Listbox, Transition } from "@headlessui/react"
 import { CheckIcon } from "@heroicons/react/20/solid"
-import { type Dispatch, type FC, Fragment, useState } from "react"
+import { type Dispatch, type FC, Fragment } from "react"
 import { ChevronDown } from "../Icons/ChevronDown"
 
 function classNames(...classes: any[]) {
@@ -76,7 +76,7 @@ export const Dropdown: FC<DropdownProps> = ({
                     ) : null}
                   </div>
                 </Listbox.Option>
-                {list.map((item, index) => (
+                {list.map((item, _index) => (
                   <Listbox.Option
                     key={item}
                     className={({ active }) =>

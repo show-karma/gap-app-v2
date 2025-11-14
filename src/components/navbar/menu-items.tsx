@@ -1,5 +1,4 @@
 import {
-  ArrowUpRight,
   BanknoteArrowDown,
   BellDot,
   Flame,

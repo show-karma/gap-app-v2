@@ -2,7 +2,7 @@
 import { ChevronLeftIcon } from "@heroicons/react/20/solid"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import toast from "react-hot-toast"
 import { useAccount } from "wagmi"
 import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown"
@@ -165,7 +165,7 @@ export default function EditProjectsPage() {
   const { authenticated: isAuth } = useAuth()
   const params = useParams()
   const communityId = params.communityId as string
-  const [selectedRegions, setSelectedRegions] = useState<Record<string, string>>({})
+  const [selectedRegions, _setSelectedRegions] = useState<Record<string, string>>({})
   const [optimisticRegions, setOptimisticRegions] = useState<Record<string, string>>({})
   const [isSaving, setIsSaving] = useState<boolean>(false)
 
@@ -188,7 +188,7 @@ export default function EditProjectsPage() {
     ) {
       router.push(PAGES.NOT_FOUND)
     }
-  }, [communityError])
+  }, [communityError, router.push])
 
   // Simple state management for pagination since we're using the v2 endpoint
   const [currentPage, setCurrentPage] = useState(1)

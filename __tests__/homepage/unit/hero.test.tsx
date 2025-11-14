@@ -11,16 +11,7 @@
  */
 
 import { Hero } from "@/src/features/homepage/components/hero"
-import {
-  createMockAuth,
-  createMockRouter,
-  renderWithProviders,
-  screen,
-  setViewportSize,
-  userEvent,
-  waitFor,
-  within,
-} from "../utils/test-helpers"
+import { renderWithProviders, screen, setViewportSize, userEvent } from "../utils/test-helpers"
 import "@testing-library/jest-dom"
 import { VIEWPORTS } from "../setup"
 

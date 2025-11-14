@@ -14,15 +14,11 @@ import {
   ArrowLeftIcon,
   ArrowTrendingUpIcon,
   ChevronDownIcon,
-  ChevronRightIcon,
-  CogIcon,
   EyeIcon,
   PlusIcon,
 } from "@heroicons/react/24/solid"
-import { Line } from "@rc-component/progress"
 import Link from "next/link"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
-import pluralize from "pluralize"
 import { useEffect, useMemo, useState } from "react"
 import toast from "react-hot-toast"
 import { FundingPlatformStatsCard } from "@/components/FundingPlatform/Dashboard/card"
@@ -286,7 +282,7 @@ export default function FundingPlatformAdminPage() {
     },
   ]
 
-  const cardStats = (program: any) => [
+  const _cardStats = (program: Record<string, unknown>) => [
     {
       title: "Funding Amount",
       value: formatCurrency(program.totalAmount || program.metadata?.totalAmount || 0) || 0,

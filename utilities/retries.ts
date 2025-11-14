@@ -30,8 +30,6 @@ export async function retry<T>(
 
       // Calculate next delay with exponential backoff
       delay = Math.min(delay * backoff, maxDelay)
-
-      console.log(`Retry attempt ${retries}. Waiting for ${delay}ms before next attempt.`)
       await new Promise((resolve) => setTimeout(resolve, delay))
     }
   }

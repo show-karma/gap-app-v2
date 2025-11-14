@@ -46,7 +46,7 @@ jest.mock("@/utilities/auth/api-client", () => {
 // Import the service AFTER all mocks are set up
 import { type PermissionCheckOptions, PermissionsService } from "@/services/permissions.service"
 
-const mockedAxios = axios as jest.Mocked<typeof axios>
+const _mockedAxios = axios as jest.Mocked<typeof axios>
 
 describe("PermissionsService", () => {
   let service: PermissionsService

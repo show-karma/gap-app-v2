@@ -9,7 +9,7 @@ import toast from "react-hot-toast"
 import { useAccount } from "wagmi"
 import { z } from "zod"
 import { useAllMilestones } from "@/hooks/useAllMilestones"
-import { getGapClient, useGap } from "@/hooks/useGap"
+import { useGap } from "@/hooks/useGap"
 import { useWallet } from "@/hooks/useWallet"
 import { useProjectStore } from "@/store"
 import { useStepper } from "@/store/modals/txStepper"
@@ -127,7 +127,7 @@ export const ProjectObjectiveForm = ({
       await newObjective
         .attest(walletSigner as any, sanitizedData, changeStepperStep)
         .then(async (res) => {
-          const fetchedObjectives = null
+          const _fetchedObjectives = null
           const txHash = res?.tx[0]?.hash
           if (txHash) {
             await fetchData(
@@ -235,7 +235,7 @@ export const ProjectObjectiveForm = ({
       await objectiveInstance
         .attest(walletSigner as any, sanitizedData, changeStepperStep)
         .then(async (res) => {
-          const fetchedObjectives = null
+          const _fetchedObjectives = null
           const txHash = res?.tx[0]?.hash
           if (txHash) {
             await fetchData(

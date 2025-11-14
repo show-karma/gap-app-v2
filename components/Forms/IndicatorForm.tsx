@@ -82,7 +82,7 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
   })
 
   const [isLoading, setIsLoading] = useState(false)
-  const [availablePrograms, setAvailablePrograms] = useState<GrantProgram[]>([])
+  const [_availablePrograms, setAvailablePrograms] = useState<GrantProgram[]>([])
   const finalIsLoading = isLoading || externalIsLoading
 
   // Reset form when defaultValues change
@@ -125,19 +125,6 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
 
     setIsLoading(true)
     try {
-      console.log("Submitting indicator data:", {
-        ...data,
-        programs:
-          preSelectedPrograms?.map((item) => {
-            return {
-              programId: item.programId,
-              chainID: item.chainID,
-            }
-          }) ||
-          data.programs ||
-          [],
-      })
-
       const [response, error] = await fetchData(INDEXER.INDICATORS.CREATE_OR_UPDATE(), "POST", {
         indicatorId: indicatorId,
         name: data.name,
@@ -154,9 +141,6 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
           data.programs ||
           [],
       })
-
-      console.log("API Response:", response)
-      console.log("API Error:", error)
 
       if (error) throw error
 
@@ -191,7 +175,7 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
     }
   }
 
-  const selectedPrograms = watch("programs") || []
+  const _selectedPrograms = watch("programs") || []
 
   const renderProgramSelector = () => {
     // If we have pre-selected programs (ProjectUpdate scenario)

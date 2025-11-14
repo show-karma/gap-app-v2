@@ -7,7 +7,7 @@ import {
 
 // Mock console methods
 const mockConsoleLog = jest.spyOn(console, "log").mockImplementation(() => {})
-const mockConsoleWarn = jest.spyOn(console, "warn").mockImplementation(() => {})
+const _mockConsoleWarn = jest.spyOn(console, "warn").mockImplementation(() => {})
 
 describe("chainSyncValidation utilities", () => {
   const mockAccount = {

@@ -9,7 +9,6 @@ import { Button } from "@/components/Utilities/Button"
 import { PROJECT_NAME } from "@/constants/brand"
 import { useOwnerStore, useProjectStore } from "@/store"
 import { useCommunityAdminStore } from "@/store/communityAdmin"
-import { envVars } from "@/utilities/enviromentVars"
 import fetchData from "@/utilities/fetchData"
 import { INDEXER } from "@/utilities/indexer"
 

@@ -11,14 +11,13 @@ import { useAccount } from "wagmi"
 import { Button } from "@/components/Utilities/Button"
 import { errorManager } from "@/components/Utilities/errorManager"
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor"
-import { getGapClient, useGap } from "@/hooks/useGap"
+import { useGap } from "@/hooks/useGap"
 import { useTracksForProgram } from "@/hooks/useTracks"
 import { useWallet } from "@/hooks/useWallet"
 import { useProjectStore } from "@/store"
 import { useGrantStore } from "@/store/grant"
 import { useStepper } from "@/store/modals/txStepper"
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid"
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils"
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils"
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain"
 import fetchData from "@/utilities/fetchData"
 import { isFundingProgramGrant } from "@/utilities/funding-programs"
@@ -102,7 +101,7 @@ export const GrantCompletion: FC = () => {
     }
 
     checkFundingProgram()
-  }, [grant?.community, grant?.details?.data?.title])
+  }, [grant?.community, grant?.details?.data?.title, grant])
 
   useEffect(() => {
     if (grant?.details?.data?.selectedTrackIds) {
@@ -240,7 +239,7 @@ export const GrantCompletion: FC = () => {
                 return null
               })
             const grant = fetchedProject?.grants?.find((g) => g.uid === grantToComplete.uid)
-            if (grant && grant.completed) {
+            if (grant?.completed) {
               changeStepperStep("indexed")
               toast.success(MESSAGES.GRANT.MARK_AS_COMPLETE.SUCCESS)
               await refreshProject().then(() => {

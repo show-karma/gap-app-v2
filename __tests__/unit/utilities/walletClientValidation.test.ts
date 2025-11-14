@@ -3,13 +3,12 @@ import {
   getWalletClientReadinessScore,
   shouldRefreshWalletClient,
   validateWalletClient,
-  type WalletClientValidationResult,
   waitForValidWalletClient,
 } from "@/utilities/walletClientValidation"
 
 // Mock console methods
-const mockConsoleLog = jest.spyOn(console, "log").mockImplementation(() => {})
-const mockConsoleError = jest.spyOn(console, "error").mockImplementation(() => {})
+const _mockConsoleLog = jest.spyOn(console, "log").mockImplementation(() => {})
+const _mockConsoleError = jest.spyOn(console, "error").mockImplementation(() => {})
 
 describe("walletClientValidation utilities", () => {
   const mockAccount = {

@@ -77,7 +77,7 @@ export function validateDonationAmount(amount: string): {
 } {
   const numAmount = parseFloat(amount)
 
-  if (isNaN(numAmount) || numAmount <= 0) {
+  if (Number.isNaN(numAmount) || numAmount <= 0) {
     return {
       valid: false,
       error: "Amount must be greater than 0",
@@ -109,7 +109,7 @@ export function hasSufficientBalance(amount: string, balance: string): boolean {
     const amountNum = parseFloat(amount)
     const balanceNum = parseFloat(balance)
 
-    if (isNaN(amountNum) || isNaN(balanceNum)) {
+    if (Number.isNaN(amountNum) || Number.isNaN(balanceNum)) {
       return false
     }
 

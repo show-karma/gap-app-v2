@@ -2,11 +2,10 @@
 import { Dialog, Transition } from "@headlessui/react"
 import { ChevronLeftIcon, ChevronRightIcon, XMarkIcon } from "@heroicons/react/24/solid"
 /* eslint-disable @next/next/no-img-element */
-import { type FC, Fragment, useEffect, useMemo } from "react"
+import { type FC, Fragment } from "react"
 import type { Hex } from "viem"
 import { useAccount } from "wagmi"
 import { PROJECT_NAME } from "@/constants/brand"
-import { useMixpanel } from "@/hooks/useMixpanel"
 import { useOnboarding } from "@/store/modals/onboarding"
 import { Button } from "../Utilities/Button"
 

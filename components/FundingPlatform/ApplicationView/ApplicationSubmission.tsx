@@ -1,7 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { type FC, useCallback, useEffect, useState } from "react"
+import { type FC, useCallback, useState } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 import toast from "react-hot-toast"
 import { useAccount } from "wagmi"
@@ -49,12 +49,10 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
           fieldSchema = z.string().url("Please enter a valid URL")
           break
         case "number":
-          fieldSchema = z.string().refine((val) => !isNaN(Number(val)), {
+          fieldSchema = z.string().refine((val) => !Number.isNaN(Number(val)), {
             message: "Please enter a valid number",
           })
           break
-        case "textarea":
-        case "text":
         default:
           fieldSchema = z.string()
           break
@@ -225,10 +223,6 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
             {error && <p className="text-sm text-red-400 mt-1">{String(errorMessage)}</p>}
           </div>
         )
-
-      case "email":
-      case "url":
-      case "text":
       default:
         return (
           <div key={index} className="flex w-full flex-col">

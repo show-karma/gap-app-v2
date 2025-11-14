@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
 import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
 
 export interface CommunityGrant {
   programId: string

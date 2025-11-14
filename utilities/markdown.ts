@@ -8,7 +8,7 @@ const markdownIt = new MarkdownIt({
 
 const defaultLinkOpen =
   markdownIt.renderer.rules.link_open ||
-  function defaultLinkOpen(tokens, idx, options, env, self) {
+  function defaultLinkOpen(tokens, idx, options, _env, self) {
     return self.renderToken(tokens, idx, options)
   }
 
@@ -49,7 +49,7 @@ export function renderToPlainText(markdownSourceText: string) {
 
 export function truncateDescription(description: string, maxLength: number) {
   if (description.length > maxLength) {
-    return description.slice(0, maxLength) + "..."
+    return `${description.slice(0, maxLength)}...`
   } else {
     return description
   }

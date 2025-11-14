@@ -64,7 +64,7 @@ export const useCommunityConfigMutation = () => {
       // Return a context object with the snapshotted value
       return { previousConfig: previousConfig ?? null }
     },
-    onError: (err, { slug }, context) => {
+    onError: (_err, { slug }, context) => {
       // If the mutation fails, use the context returned from onMutate to roll back
       if (context?.previousConfig) {
         queryClient.setQueryData(["community-config", slug], context.previousConfig)

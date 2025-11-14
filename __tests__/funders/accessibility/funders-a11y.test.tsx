@@ -8,7 +8,6 @@
  * - Screen reader compatibility
  */
 
-import { render } from "@testing-library/react"
 import { axe, toHaveNoViolations } from "jest-axe"
 import FundersPage from "@/app/funders/page"
 import { CaseStudiesSection } from "@/src/features/funders/components/case-studies-section"

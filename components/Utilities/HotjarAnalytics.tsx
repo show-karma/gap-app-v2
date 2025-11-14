@@ -15,7 +15,6 @@ export default function HotjarAnalytics() {
         console.error("Failed to initialize Hotjar:", error)
       } finally {
         if (process.env.NEXT_PUBLIC_ENV !== "production") {
-          console.log("Hotjar initiated")
         }
       }
 

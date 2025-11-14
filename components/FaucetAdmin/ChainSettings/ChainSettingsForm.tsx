@@ -4,7 +4,6 @@ import { useState } from "react"
 import { formatEther, parseEther } from "viem"
 import { useChains } from "@/hooks/useFaucetAdmin"
 import type { FaucetChainSettings } from "@/utilities/faucet/faucetService"
-import { appNetwork } from "@/utilities/network"
 
 interface ChainSettingsFormProps {
   settings?: FaucetChainSettings
@@ -34,7 +33,7 @@ export function ChainSettingsForm({ settings, onSave, onCancel }: ChainSettingsF
 
     // Only include if not creating new settings
     if (!settings) {
-      payload.chainId = parseInt(formData.chainId.toString())
+      payload.chainId = parseInt(formData.chainId.toString(), 10)
     }
 
     // Only include if values are provided
@@ -42,7 +41,7 @@ export function ChainSettingsForm({ settings, onSave, onCancel }: ChainSettingsF
       payload.rateLimitHours = parseFloat(formData.rateLimitHours)
     }
     if (formData.bufferPercentage) {
-      payload.bufferPercentage = parseInt(formData.bufferPercentage)
+      payload.bufferPercentage = parseInt(formData.bufferPercentage, 10)
     }
 
     onSave(payload)

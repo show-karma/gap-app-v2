@@ -11,7 +11,7 @@ const getToast = () => {
   if (!toast) {
     try {
       toast = require("react-hot-toast").default
-    } catch (e) {
+    } catch (_e) {
       // Toast not available, return null
       return null
     }
@@ -37,7 +37,6 @@ export const errorManager = (
       error?.originalError?.message?.toLowerCase()?.includes("switch chain") ||
       error?.message?.toLowerCase()?.includes("switch chain")
     if (wasRejected) {
-      console.log("User rejected action")
       return
     }
     const targetNetwork = extra?.targetNetwork

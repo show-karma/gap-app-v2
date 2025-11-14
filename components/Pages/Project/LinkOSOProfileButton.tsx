@@ -1,7 +1,7 @@
 "use client"
 
 import { Dialog, Transition } from "@headlessui/react"
-import { FingerPrintIcon, LinkIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline"
+import { FingerPrintIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline"
 import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
 import type { FC, ReactNode } from "react"
 import { Fragment, useEffect, useState } from "react"

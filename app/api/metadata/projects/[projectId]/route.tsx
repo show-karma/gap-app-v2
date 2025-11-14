@@ -8,7 +8,7 @@ import { cleanMarkdownForPlainText } from "@/utilities/markdown"
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData"
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   context: { params: Promise<{ projectId: string }> }
 ) {
   const projectId = (await context.params).projectId
@@ -19,7 +19,7 @@ export async function GET(
 
   const title =
     project?.details?.data.title && project?.details?.data.title.length > 30
-      ? project?.details?.data.title.substring(0, 30) + "..."
+      ? `${project?.details?.data.title.substring(0, 30)}...`
       : project?.details?.data.title
 
   const description = cleanMarkdownForPlainText(project?.details?.data?.description || "", 200)

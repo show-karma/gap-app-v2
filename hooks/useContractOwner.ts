@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query"
 import { JsonRpcProvider } from "ethers"
 import { useEffect } from "react"
 import type { Chain } from "viem"
-import { useAccount, useChainId } from "wagmi"
 import { errorManager } from "@/components/Utilities/errorManager"
 import { useAuth } from "@/hooks/useAuth"
 import { useOwnerStore } from "@/store/owner"
@@ -43,7 +42,7 @@ export const useContractOwner = (chainOverride?: Chain) => {
       }),
     enabled: !!address && isAuth,
     staleTime: 10 * 60 * 1000, // 10 minutes - contract owner changes rarely
-    retry: (failureCount, error) => {
+    retry: (failureCount, _error) => {
       // Retry up to 2 times for network errors
       return failureCount < 2
     },

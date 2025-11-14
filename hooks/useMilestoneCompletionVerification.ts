@@ -57,7 +57,7 @@ export const useMilestoneCompletionVerification = ({
 
   const setupChainAndWallet = async (
     milestone: GrantMilestoneWithCompletion,
-    data: ProjectGrantMilestonesResponse
+    _data: ProjectGrantMilestonesResponse
   ): Promise<{ gapClient: GAP; walletSigner: Signer } | null> => {
     // Use chainId from milestone (now required in API response)
     const targetChainId = +milestone.chainId

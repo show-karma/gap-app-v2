@@ -79,26 +79,24 @@ export const MultiSelect = ({
         {value.length === 0 ? (
           <span className="text-gray-400 dark:text-gray-500">{placeholder}</span>
         ) : (
-          <>
-            {selectedLabels.map((label) => (
-              <span
-                key={label}
-                className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-md text-sm flex items-center"
-              >
-                {label}
-                <XMarkIcon
-                  className="h-3.5 w-3.5 ml-1 cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    const optionToRemove = options.find((o) => o.label === label)
-                    if (optionToRemove) {
-                      onChange(value.filter((v) => v !== optionToRemove.value))
-                    }
-                  }}
-                />
-              </span>
-            ))}
-          </>
+          selectedLabels.map((label) => (
+            <span
+              key={label}
+              className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-md text-sm flex items-center"
+            >
+              {label}
+              <XMarkIcon
+                className="h-3.5 w-3.5 ml-1 cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  const optionToRemove = options.find((o) => o.label === label)
+                  if (optionToRemove) {
+                    onChange(value.filter((v) => v !== optionToRemove.value))
+                  }
+                }}
+              />
+            </span>
+          ))
         )}
       </div>
 

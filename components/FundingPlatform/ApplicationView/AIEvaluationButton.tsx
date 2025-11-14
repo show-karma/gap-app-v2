@@ -27,7 +27,7 @@ const AIEvaluationButton: FC<AIEvaluationButtonProps> = ({
     setIsEvaluating(true)
 
     try {
-      const result = await fundingApplicationsAPI.runAIEvaluation(referenceNumber)
+      const _result = await fundingApplicationsAPI.runAIEvaluation(referenceNumber)
 
       toast.success("AI evaluation completed successfully!")
 

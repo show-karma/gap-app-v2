@@ -77,7 +77,7 @@ describe("sanitizeInput", () => {
     })
 
     it("should handle very long strings", () => {
-      const longString = " " + "a".repeat(10000) + " "
+      const longString = ` ${"a".repeat(10000)} `
       expect(sanitizeInput(longString)).toBe("a".repeat(10000))
     })
 

@@ -1,10 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { Dialog, Transition } from "@headlessui/react"
-import { ChevronRightIcon, PlusIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/solid"
+import { TrashIcon, XMarkIcon } from "@heroicons/react/24/solid"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { GAP } from "@show-karma/karma-gap-sdk"
-import { type FC, Fragment, ReactNode, useState } from "react"
+import { type FC, Fragment, useState } from "react"
 import { useForm } from "react-hook-form"
 import toast from "react-hot-toast"
 import { useAccount } from "wagmi"
@@ -12,16 +12,15 @@ import { z } from "zod"
 import { errorManager } from "@/components/Utilities/errorManager"
 import { useWallet } from "@/hooks/useWallet"
 import { useStepper } from "@/store/modals/txStepper"
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils"
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils"
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain"
 import fetchData from "@/utilities/fetchData"
 import { INDEXER } from "@/utilities/indexer"
 import { MESSAGES } from "@/utilities/messages"
-import { privyConfig as config } from "@/utilities/wagmi/privy-config"
 import { safeGetWalletClient } from "@/utilities/wallet-helpers"
 import { Button } from "../../Utilities/Button"
 
-const inputStyle = "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900"
+const _inputStyle = "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900"
 const labelStyle = "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200"
 
 const schema = z.object({
@@ -128,9 +127,7 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({ UUID, chainid, Admin, 
               closeModal() // Close the dialog upon successful submission
               break
             }
-          } catch (error: any) {
-            console.log("Retrying...")
-          }
+          } catch (_error: any) {}
 
           retries -= 1
           // eslint-disable-next-line no-await-in-loop
@@ -143,7 +140,6 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({ UUID, chainid, Admin, 
         community: UUID,
         address,
       })
-      console.log(error)
     } finally {
       setIsStepper(false)
       setIsLoading(false)

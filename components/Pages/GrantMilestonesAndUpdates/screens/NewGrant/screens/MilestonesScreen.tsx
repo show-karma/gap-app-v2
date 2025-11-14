@@ -8,18 +8,16 @@ import { useAccount } from "wagmi"
 import { Button } from "@/components/Utilities/Button"
 import { errorManager } from "@/components/Utilities/errorManager"
 import { useAuth } from "@/hooks/useAuth"
-import { getGapClient, useGap } from "@/hooks/useGap"
+import { useGap } from "@/hooks/useGap"
 import { useWallet } from "@/hooks/useWallet"
 import { useProjectStore } from "@/store"
 import { useStepper } from "@/store/modals/txStepper"
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid"
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils"
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain"
 import fetchData from "@/utilities/fetchData"
 import { INDEXER } from "@/utilities/indexer"
 import { MESSAGES } from "@/utilities/messages"
 import { PAGES } from "@/utilities/pages"
-import { QUERY_KEYS } from "@/utilities/queryKeys"
 import { sanitizeObject } from "@/utilities/sanitize"
 import { safeGetWalletClient } from "@/utilities/wallet-helpers"
 import { Milestone } from "../Milestone"
@@ -245,7 +243,7 @@ export const MilestonesScreen: React.FC = () => {
                 try {
                   const programIdParts = newGrantData.programId.split("_")
                   const programId = programIdParts[0]
-                  const chainID = parseInt(programIdParts[1] || communityNetworkId.toString())
+                  const _chainID = parseInt(programIdParts[1] || communityNetworkId.toString(), 10)
 
                   await fetchData(INDEXER.PROJECTS.TRACKS(selectedProject.uid), "POST", {
                     communityUID: newGrantData.community,

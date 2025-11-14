@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import toast from "react-hot-toast"
 import { getImpactAnswers, sendImpactAnswers } from "@/services/impactService"
-import { ImpactIndicatorWithData } from "@/types/impactMeasurement"
 import { MESSAGES } from "@/utilities/messages"
 
 interface UseImpactAnswersProps {

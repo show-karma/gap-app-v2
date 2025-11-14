@@ -1,13 +1,11 @@
 import type { Address, PublicClient, WalletClient } from "viem"
 import {
-  type ApprovalTransaction,
   approveToken,
   checkTokenAllowance,
   checkTokenAllowances,
   executeApprovals,
   getApprovalAmount,
   MAX_UINT256,
-  type TokenApprovalInfo,
 } from "@/utilities/erc20"
 
 // Mock viem
@@ -468,7 +466,7 @@ describe("erc20 utilities", () => {
           [mockApprovals[0]],
           onProgress
         )
-      } catch (e) {
+      } catch (_e) {
         // Expected to throw
       }
 

@@ -1,6 +1,6 @@
 import { CheckCircleIcon, ClockIcon } from "@heroicons/react/24/outline"
 import Link from "next/link"
-import { type FC, memo, useMemo } from "react"
+import { type FC, memo } from "react"
 import { containerClassName } from "@/components/Shared/ActivityCard"
 import { ActivityAttribution } from "@/components/Shared/ActivityCard/ActivityAttribution"
 import type { CommunityMilestoneUpdate } from "@/types/community-updates"

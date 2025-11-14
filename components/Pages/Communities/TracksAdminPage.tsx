@@ -1,22 +1,14 @@
 "use client"
-import { Dialog, Transition } from "@headlessui/react"
-import {
-  ArchiveBoxIcon,
-  PencilIcon,
-  PlusIcon,
-  TagIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/outline"
+import { ArchiveBoxIcon, PencilIcon, PlusIcon } from "@heroicons/react/24/outline"
 import { ChevronLeftIcon } from "@heroicons/react/24/solid"
 import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Fragment, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import toast from "react-hot-toast"
 import { useAccount } from "wagmi"
 import { CreateTrackModal } from "@/components/Pages/Communities/Tracks/CreateTrackModal"
 import { Button } from "@/components/Utilities/Button"
-import { errorManager } from "@/components/Utilities/errorManager"
 import { Spinner } from "@/components/Utilities/Spinner"
 import { useAuth } from "@/hooks/useAuth"
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin"
@@ -25,7 +17,6 @@ import {
   useArchiveTrack,
   useAssignTracksToProgram,
   useCreateTrack,
-  useRemoveTrackFromProgram,
   useRemoveTracksFromProgramBatch,
   useTracksForCommunity,
   useTracksForProgram,
@@ -33,7 +24,6 @@ import {
 } from "@/hooks/useTracks"
 import type { Track } from "@/services/tracks"
 import { useSigner } from "@/utilities/eas-wagmi-utils"
-import { INDEXER } from "@/utilities/indexer"
 import { MESSAGES } from "@/utilities/messages"
 import { PAGES } from "@/utilities/pages"
 import { cn } from "@/utilities/tailwind"
@@ -56,9 +46,9 @@ export const TracksAdminPage = ({
   const [selectedTrackIds, setSelectedTrackIds] = useState<string[]>([])
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false)
   const [showEditModal, setShowEditModal] = useState<boolean>(false)
-  const [showAssignModal, setShowAssignModal] = useState<boolean>(false)
+  const [_showAssignModal, _setShowAssignModal] = useState<boolean>(false)
 
-  const signer = useSigner()
+  const _signer = useSigner()
 
   // Check if user is admin of this community
   const { isCommunityAdmin: isAdmin, isLoading: loading } = useIsCommunityAdmin(

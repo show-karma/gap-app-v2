@@ -10,8 +10,6 @@ import useMediaQuery from "@/hooks/useMediaQuery"
 import { useDonationCart } from "@/store"
 import type { CommunityProjectsV2Response } from "@/types/community"
 import { projectV2ToGrant } from "@/utilities/adapters/projectV2ToGrant"
-import { PAGES } from "@/utilities/pages"
-import { DonationProgramDropdown } from "./Donation/ProgramDropdown"
 import { GrantCard } from "./GrantCard"
 import { CardListSkeleton } from "./Pages/Communities/Loading"
 

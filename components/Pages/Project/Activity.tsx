@@ -1,6 +1,6 @@
 import { Tab } from "@headlessui/react"
 import { useParams } from "next/navigation"
-import { Fragment, useState } from "react"
+import { useState } from "react"
 import { ActivityList } from "@/components/Shared/ActivityList"
 import { useAllMilestones } from "@/hooks/useAllMilestones"
 import { useProjectStore } from "@/store"
@@ -92,7 +92,7 @@ export const ProjectActivity = () => {
           ))}
         </Tab.List>
         <Tab.Panels className="mt-2">
-          {tabs.map((tab, idx) => (
+          {tabs.map((_tab, idx) => (
             <Tab.Panel
               key={idx}
               className={cn(

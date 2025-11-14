@@ -16,7 +16,7 @@ interface CommunityStore {
   setIsLoadingFilters: (isLoading: boolean) => void
 }
 
-export const useCommunityStore = create<CommunityStore>((set, get) => ({
+export const useCommunityStore = create<CommunityStore>((set, _get) => ({
   totalProjects: 0,
   totalGrants: 0,
   totalMilestones: 0,

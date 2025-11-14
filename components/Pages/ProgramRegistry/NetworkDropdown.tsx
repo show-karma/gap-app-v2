@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/solid"
+import { CheckIcon } from "@heroicons/react/24/solid"
 import * as Popover from "@radix-ui/react-popover"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk"
 import { type FC, useState } from "react"

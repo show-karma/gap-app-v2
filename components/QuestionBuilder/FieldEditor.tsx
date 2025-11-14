@@ -2,7 +2,7 @@
 
 import { TrashIcon } from "@heroicons/react/24/solid"
 import { zodResolver } from "@hookform/resolvers/zod"
-import React, { useEffect } from "react"
+import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { Button } from "@/components/Utilities/Button"
@@ -104,7 +104,7 @@ export function FieldEditor({
     })
 
     return () => subscription.unsubscribe()
-  }, [watch, onUpdate, field, hasOptions])
+  }, [watch, onUpdate, field, hasOptions, isPostApprovalMode])
 
   const updateOption = (index: number, value: string) => {
     const newOptions = [...watchedOptions]

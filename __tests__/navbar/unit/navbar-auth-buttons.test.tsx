@@ -346,7 +346,7 @@ describe("NavbarAuthButtons", () => {
 
   describe("Interaction States", () => {
     it("should show hover state on sign in button", async () => {
-      const user = userEvent.setup()
+      const _user = userEvent.setup()
       const unauthFixture = getAuthFixture("unauthenticated")
       mockUseAuthImplementation.mockReturnValue(createMockUseAuth(unauthFixture.authState))
       renderWithProviders(<NavbarAuthButtons />)

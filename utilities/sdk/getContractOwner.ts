@@ -14,11 +14,10 @@ export async function getContractOwner(
     if (!network) throw new Error(`Network ${chain.name || chain.id} not supported.`)
 
     const address = network.contracts.multicall
-    const contract = new Contract(address, MulticallABI, signer as any)
+    const contract = new Contract(address, MulticallABI, signer)
     const owner = await contract.owner?.()
     return owner
-  } catch (error: any) {
-    console.log("error", error)
+  } catch (error: unknown) {
     errorManager(`Error getting contract owner`, error)
     return undefined
   }

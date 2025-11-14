@@ -1,10 +1,8 @@
 "use client"
-import { useQuery } from "@tanstack/react-query"
 import Image from "next/image"
 import { useParams } from "next/navigation"
 import { useQueryState } from "nuqs"
 import { useCommunityPrograms } from "@/hooks/usePrograms"
-import { getAllProgramsOfCommunity } from "@/utilities/registry/getAllProgramsOfCommunity"
 import { SearchWithValueDropdown } from "./SearchWithValueDropdown"
 
 interface ProgramFilterProps {

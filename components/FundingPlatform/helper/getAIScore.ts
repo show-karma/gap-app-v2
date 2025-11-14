@@ -15,7 +15,7 @@ const isValidEvaluation = (evaluation: unknown): evaluation is { final_score: nu
     typeof evaluation === "object" &&
     "final_score" in evaluation &&
     typeof (evaluation as any).final_score === "number" &&
-    !isNaN((evaluation as any).final_score)
+    !Number.isNaN((evaluation as any).final_score)
   )
 }
 
@@ -53,7 +53,7 @@ export const getAIScore = (application: IFundingApplication): number | null => {
     console.warn("Failed to parse AI evaluation for application:", {
       referenceNumber: application.referenceNumber,
       error: error instanceof Error ? error.message : String(error),
-      evaluationData: application.aiEvaluation?.evaluation?.substring(0, 100) + "...",
+      evaluationData: `${application.aiEvaluation?.evaluation?.substring(0, 100)}...`,
     })
     return null
   }

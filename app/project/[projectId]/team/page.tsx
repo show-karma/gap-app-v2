@@ -1,7 +1,6 @@
 import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
-import React from "react"
 import type { Hex } from "viem"
 import { Team } from "@/components/Pages/Project/Team"
 import { PROJECT_NAME } from "@/constants/brand"

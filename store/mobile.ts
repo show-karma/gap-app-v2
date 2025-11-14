@@ -5,7 +5,7 @@ interface MobileStore {
   setIsMobileMenuOpen: (isMobileMenuOpen: boolean) => void
 }
 
-export const useMobileStore = create<MobileStore>((set, get) => ({
+export const useMobileStore = create<MobileStore>((set, _get) => ({
   isMobileMenuOpen: false,
   setIsMobileMenuOpen: (isMobileMenuOpen: boolean) => set({ isMobileMenuOpen }),
 }))

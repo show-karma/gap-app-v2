@@ -87,7 +87,7 @@ describe("useCrossChainBalances", () => {
     })
 
     // Mock RPC client
-    getRPCClient.mockImplementation((chainId: number) => {
+    getRPCClient.mockImplementation((_chainId: number) => {
       const mockClient = {
         getBalance: jest.fn().mockResolvedValue(BigInt("5000000000000000000")), // 5 ETH
         multicall: jest.fn().mockResolvedValue([

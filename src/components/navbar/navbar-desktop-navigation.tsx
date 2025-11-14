@@ -1,6 +1,5 @@
 "use client"
 
-import { ChevronDown } from "lucide-react"
 import { DiscordIcon, TelegramIcon, TwitterIcon } from "@/components/Icons"
 import { ParagraphIcon } from "@/components/Icons/Paragraph"
 import { ExternalLink } from "@/components/Utilities/ExternalLink"

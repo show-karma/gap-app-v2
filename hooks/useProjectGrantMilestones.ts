@@ -1,8 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
-import {
-  fetchProjectGrantMilestones,
-  type ProjectGrantMilestonesResponse,
-} from "@/services/milestones"
+import { fetchProjectGrantMilestones } from "@/services/milestones"
 import { QUERY_KEYS } from "@/utilities/queryKeys"
 
 /**

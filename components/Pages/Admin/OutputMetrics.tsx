@@ -69,7 +69,7 @@ export const OutputMetrics = ({ communitySlug }: { communitySlug: string }) => {
 
   useEffect(() => {
     fetchMetricData(selectedMetric)
-  }, [selectedMetric, communitySlug])
+  }, [selectedMetric, fetchMetricData])
 
   const chartData = metricData.map((point) => ({
     date: `${point._id.year}-${String(point._id.month).padStart(2, "0")}`,

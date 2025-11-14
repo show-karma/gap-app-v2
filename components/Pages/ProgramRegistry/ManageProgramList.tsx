@@ -13,7 +13,7 @@ import { useVirtualizer } from "@tanstack/react-virtual"
 import Image from "next/image"
 import { useSearchParams } from "next/navigation"
 import { useQueryState } from "nuqs"
-import { type FC, useEffect, useMemo, useRef, useState } from "react"
+import { type FC, useMemo, useRef, useState } from "react"
 import { useAccount } from "wagmi"
 import { Discord2Icon, Telegram2Icon, Twitter2Icon } from "@/components/Icons"
 import { BlogIcon } from "@/components/Icons/Blog"
@@ -21,7 +21,6 @@ import { DiscussionIcon } from "@/components/Icons/Discussion"
 import { OrganizationIcon } from "@/components/Icons/Organization"
 import { Button } from "@/components/Utilities/Button"
 import { ExternalLink } from "@/components/Utilities/ExternalLink"
-import formatCurrency from "@/utilities/formatCurrency"
 import { formatDate } from "@/utilities/formatDate"
 import { ReadMore } from "@/utilities/ReadMore"
 import { shortAddress } from "@/utilities/shortAddress"
@@ -54,7 +53,7 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
 
   const defaultSort = searchParams.get("sortField") || "updatedAt"
   const defaultSortOrder = searchParams.get("sortOrder") || "desc"
-  const [sortField, setSortField] = useQueryState("sortField", {
+  const [_sortField, setSortField] = useQueryState("sortField", {
     defaultValue: defaultSort,
   })
   const [sortOrder, setSortOrder] = useQueryState("sortOrder", {
@@ -310,7 +309,7 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
             return null
           return (
             <div className="w-full max-w-44 flex flex-row flex-wrap gap-1 my-2 items-center">
-              {firstNetworks?.map((network, index) => (
+              {firstNetworks?.map((network, _index) => (
                 <Tooltip.Provider key={network}>
                   <Tooltip.Root delayDuration={0.5}>
                     <Tooltip.Trigger asChild>
@@ -481,7 +480,7 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
 
           return (
             <div className="w-full flex flex-row flex-wrap gap-1">
-              {grant.metadata?.categories?.map((category, index) => (
+              {grant.metadata?.categories?.map((category, _index) => (
                 <span
                   key={`${category}${grant.programId}`}
                   className="mr-1 inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20"
@@ -650,7 +649,17 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
         ),
       },
     ],
-    [grantPrograms, isAllowed]
+    [
+      isAllowed,
+      address?.toLowerCase,
+      approveOrReject,
+      editFn,
+      selectProgram,
+      setSortField,
+      setSortOrder,
+      sortOrder,
+      tab,
+    ]
   )
 
   const table = useReactTable({

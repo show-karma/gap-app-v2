@@ -18,7 +18,7 @@ export function BlocklistManager() {
     e.preventDefault()
     blockAddress({
       address: formData.address,
-      chainId: formData.chainId ? parseInt(formData.chainId) : undefined,
+      chainId: formData.chainId ? parseInt(formData.chainId, 10) : undefined,
       expiresAt: formData.expiresAt || undefined,
       reason: formData.reason,
     })

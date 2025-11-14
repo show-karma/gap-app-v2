@@ -10,7 +10,6 @@ import type {
 import type { FC } from "react"
 import { useOwnerStore, useProjectStore } from "@/store"
 import type { UnifiedMilestone } from "@/types/roadmap"
-import { cn } from "@/utilities/tailwind"
 import { MilestoneCard } from "./ActivityCard/MilestoneCard"
 import { UpdateCard } from "./ActivityCard/UpdateCard"
 

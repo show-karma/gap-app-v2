@@ -17,7 +17,6 @@ import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview"
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture"
 import { PROJECT_NAME } from "@/constants/brand"
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
-import { envVars } from "@/utilities/enviromentVars"
 import fetchData from "@/utilities/fetchData"
 import { formatDate } from "@/utilities/formatDate"
 import { INDEXER } from "@/utilities/indexer"
@@ -490,7 +489,7 @@ function ChatWithKarmaCoPilot({
     if (messageContainerRef.current) {
       messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight
     }
-  }, [messages, isStreaming, input]) // Added input to dependencies
+  }, []) // Added input to dependencies
 
   // Modified handleInputChange to include scrolling
   const handleLocalInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -603,7 +602,7 @@ function ChatWithKarmaCoPilot({
   )
 }
 
-function ProjectCardSkeleton() {
+function _ProjectCardSkeleton() {
   return (
     <div className="flex-shrink-0 w-[320px] h-[240px] rounded-2xl border border-zinc-200 bg-white dark:bg-zinc-900 p-2">
       <div className="w-full flex flex-col gap-1">
@@ -784,7 +783,7 @@ function ChatScreen({
     isStreaming,
   } = chatHook
 
-  const handleProjectClick = useCallback(
+  const _handleProjectClick = useCallback(
     (title: string) => {
       setInput((currentInput) => {
         if (!currentInput) return title
@@ -827,55 +826,53 @@ function ChatScreen({
   }
 
   return (
-    <>
-      <div ref={chatScreenRef} className="flex w-full h-full max-md:flex-col flex-row">
-        <ProjectsSidebar
-          projects={projects}
-          isLoadingProjects={isLoadingProjects}
-          programName={selectedProgram.name}
-        />
+    <div ref={chatScreenRef} className="flex w-full h-full max-md:flex-col flex-row">
+      <ProjectsSidebar
+        projects={projects}
+        isLoadingProjects={isLoadingProjects}
+        programName={selectedProgram.name}
+      />
 
-        {selectedProgram && (
-          <div className="w-3/4 max-lg:w-full bg-white dark:bg-zinc-900 flex flex-col items-center h-full">
-            <div className="flex flex-row gap-4 items-center justify-between w-full px-3 py-4 border-b border-gray-200 dark:border-zinc-600">
-              <div className="flex flex-row gap-3 items-center">
-                <Image
-                  src="/logo/logo-dark.png"
-                  width={40}
-                  height={40}
-                  alt={`${PROJECT_NAME} Logo`}
-                  quality={75}
-                />
-                <div className="flex flex-col gap-0">
-                  <p className="text-zinc-800 dark:text-zinc-200 text-lg font-semibold">
-                    Ask Karma AI
-                  </p>
-                  <p className="text-gray-600 dark:text-zinc-400 text-sm font-normal">
-                    {messages.length > 0 && messages[0].timestamp
-                      ? `Started ${formatDate(messages[0].timestamp, "local", "DDD, MMM DD")}`
-                      : "No messages yet"}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={handleShare}
-                className="flex flex-row rounded items-center h-max hover:opacity-80 justify-center gap-2 px-3 py-2 border border-brand-blue text-brand-blue bg-transparent"
-                aria-label="Share current page"
-              >
-                Share <ShareIcon className="w-5 h-5 min-h-5 min-w-5  max-h-5 max-w-5" />
-              </button>
-            </div>
-            <div className="w-full flex-1">
-              <ChatWithKarmaCoPilot
-                projects={projects}
-                chatHook={chatHook}
-                isLoadingProjects={isLoadingProjects}
+      {selectedProgram && (
+        <div className="w-3/4 max-lg:w-full bg-white dark:bg-zinc-900 flex flex-col items-center h-full">
+          <div className="flex flex-row gap-4 items-center justify-between w-full px-3 py-4 border-b border-gray-200 dark:border-zinc-600">
+            <div className="flex flex-row gap-3 items-center">
+              <Image
+                src="/logo/logo-dark.png"
+                width={40}
+                height={40}
+                alt={`${PROJECT_NAME} Logo`}
+                quality={75}
               />
+              <div className="flex flex-col gap-0">
+                <p className="text-zinc-800 dark:text-zinc-200 text-lg font-semibold">
+                  Ask Karma AI
+                </p>
+                <p className="text-gray-600 dark:text-zinc-400 text-sm font-normal">
+                  {messages.length > 0 && messages[0].timestamp
+                    ? `Started ${formatDate(messages[0].timestamp, "local", "DDD, MMM DD")}`
+                    : "No messages yet"}
+                </p>
+              </div>
             </div>
+            <button
+              onClick={handleShare}
+              className="flex flex-row rounded items-center h-max hover:opacity-80 justify-center gap-2 px-3 py-2 border border-brand-blue text-brand-blue bg-transparent"
+              aria-label="Share current page"
+            >
+              Share <ShareIcon className="w-5 h-5 min-h-5 min-w-5  max-h-5 max-w-5" />
+            </button>
           </div>
-        )}
-      </div>
-    </>
+          <div className="w-full flex-1">
+            <ChatWithKarmaCoPilot
+              projects={projects}
+              chatHook={chatHook}
+              isLoadingProjects={isLoadingProjects}
+            />
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -946,7 +943,7 @@ export const CommunityProjectEvaluatorPage = () => {
       getProjectsByProgram(selectedProgram.programId, Number(selectedProgram.chainID), communityId)
       setIsLoading(false)
     }
-  }, [selectedProgram, communityId])
+  }, [selectedProgram, communityId, getProjectsByProgram])
 
   // Function to handle program selection
   const handleProgramSelect = (program: Program) => {

@@ -40,7 +40,7 @@ export default function EditCategoriesPage() {
   const communityId = params.communityId as string
   const [selectedCategories, setSelectedCategories] = useState<Record<string, string[]>>({})
   const [isSaving, setIsSaving] = useState<boolean>(false)
-  const signer = useSigner()
+  const _signer = useSigner()
 
   const {
     data: community,
@@ -61,7 +61,7 @@ export default function EditCategoriesPage() {
     ) {
       router.push(PAGES.NOT_FOUND)
     }
-  }, [communityError])
+  }, [communityError, router.push])
 
   // Fetch grants data
   const { data, isLoading: isLoadingGrants, refetch: refreshGrants } = useGrants(communityId)
@@ -131,7 +131,6 @@ export default function EditCategoriesPage() {
         },
         { error: MESSAGES.CATEGORY.UPDATE.ERROR }
       )
-      console.log(error)
     } finally {
       setIsSaving(false)
     }

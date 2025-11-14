@@ -1,7 +1,6 @@
 "use client"
 import { useMemo } from "react"
 import { estimateDonationTime, formatEstimatedTime } from "@/constants/donation"
-import { SUPPORTED_NETWORKS, type SupportedToken } from "@/constants/supportedTokens"
 import {
   countNetworkSwitches,
   type DonationPayment,

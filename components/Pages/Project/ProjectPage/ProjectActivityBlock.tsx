@@ -1,8 +1,4 @@
-import {
-  IGrantResponse,
-  IProjectResponse,
-  type IProjectUpdate,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
+import type { IProjectUpdate } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
 import { useMemo } from "react"
 import { useAccount } from "wagmi"
 import { ExternalLink } from "@/components/Utilities/ExternalLink"

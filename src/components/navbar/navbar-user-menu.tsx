@@ -7,7 +7,6 @@ import {
   CircleUser,
   FolderKanban,
   LogOutIcon,
-  PhoneCall,
   Settings,
   ShieldCheck,
   ToggleLeft,
@@ -29,7 +28,6 @@ import {
   MenubarTrigger,
 } from "@/components/ui/menubar"
 import { useAuth } from "@/hooks/useAuth"
-import { useContributorProfile } from "@/hooks/useContributorProfile"
 import { useReviewerPrograms } from "@/hooks/usePermissions"
 import { useStaff } from "@/hooks/useStaff"
 import { useOwnerStore } from "@/store"

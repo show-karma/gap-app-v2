@@ -1,4 +1,4 @@
-import React, { Suspense } from "react"
+import { Suspense } from "react"
 import { Stats } from "@/components/Pages/Stats"
 import { defaultMetadata } from "@/utilities/meta"
 

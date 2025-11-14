@@ -1,8 +1,7 @@
 "use client"
 import Link from "next/link"
-import React, { Component, type ErrorInfo, type ReactNode } from "react"
+import { Component, type ErrorInfo, type ReactNode } from "react"
 import { errorManager } from "@/components/Utilities/errorManager"
-import { useDonationCart } from "@/store/donationCart"
 import { getDetailedErrorInfo } from "@/utilities/donations/errorMessages"
 
 interface Props {

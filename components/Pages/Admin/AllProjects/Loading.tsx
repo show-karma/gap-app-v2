@@ -2,7 +2,7 @@ import type { FC } from "react"
 import { Skeleton } from "@/components/Utilities/Skeleton"
 import { cn } from "@/utilities/tailwind"
 
-const rowClass =
+const _rowClass =
   "text-normal  text-zinc-800 dark:text-zinc-200 text-base break-normal line-clamp-2 w-full max-w-[320px] px-1 py-2"
 const headerClass = "text-normal  text-zinc-800 dark:text-zinc-200 text-base w-max max-w-[320px]"
 

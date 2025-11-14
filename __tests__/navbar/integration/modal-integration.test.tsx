@@ -3,7 +3,7 @@
  * Tests modal interactions triggered from navbar (profile modal, create project modal)
  */
 
-import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react"
+import { fireEvent, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { Navbar } from "@/src/components/navbar/navbar"
 import { NavbarDesktopNavigation } from "@/src/components/navbar/navbar-desktop-navigation"
@@ -14,7 +14,6 @@ import {
   createMockRouter,
   createMockUsePrivy,
   renderWithProviders,
-  updateMocks,
 } from "../utils/test-helpers"
 
 describe("Modal Integration Tests", () => {

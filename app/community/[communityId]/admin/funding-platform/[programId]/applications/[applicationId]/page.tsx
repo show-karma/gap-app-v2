@@ -8,7 +8,6 @@ import { useAccount } from "wagmi"
 import ApplicationContent from "@/components/FundingPlatform/ApplicationView/ApplicationContent"
 import CommentsSection from "@/components/FundingPlatform/ApplicationView/CommentsSection"
 import DeleteApplicationModal from "@/components/FundingPlatform/ApplicationView/DeleteApplicationModal"
-import PostApprovalData from "@/components/FundingPlatform/ApplicationView/PostApprovalData"
 import { Button } from "@/components/Utilities/Button"
 import { Spinner } from "@/components/Utilities/Spinner"
 import {

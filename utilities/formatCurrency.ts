@@ -2,7 +2,7 @@ import millify from "millify"
 
 export default function formatCurrency(value: number) {
   let result = ""
-  if (value == 0) {
+  if (value === 0) {
     result = "0"
   } else if (value < 1) {
     result = Number(value)?.toFixed(2)
@@ -13,7 +13,7 @@ export default function formatCurrency(value: number) {
         units: ["", "K", "M", "B", "T", "P", "E"],
         lowercase: false,
       })
-    } catch (error) {
+    } catch (_error) {
       // Fallback if millify fails (e.g., locale issues in test environments)
       if (value >= 1000000000000) {
         result = `${(value / 1000000000000).toFixed(1)}T`

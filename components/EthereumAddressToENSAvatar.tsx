@@ -18,8 +18,7 @@ const EthereumAddressToENSAvatar: React.FC<Props> = ({ address, className }) => 
 
   useEffect(() => {
     if (
-      address &&
-      address.startsWith("0x") &&
+      address?.startsWith("0x") &&
       lowerCasedAddress &&
       !ensAvatars[lowerCasedAddress as `0x${string}`]
     ) {

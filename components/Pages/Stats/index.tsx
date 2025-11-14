@@ -94,7 +94,6 @@ export const Stats = () => {
       })
       setData(stats)
     } catch (error: any) {
-      console.log(error)
       errorManager(`Error fetching ${PROJECT_NAME} stats`, error)
     } finally {
       setIsLoading(false)
@@ -103,7 +102,7 @@ export const Stats = () => {
 
   useEffect(() => {
     getData()
-  }, [])
+  }, [getData])
 
   return (
     <div className="mb-10 mt-4  flex w-full flex-col items-center justify-center px-12 max-xl:px-12 max-md:px-4">

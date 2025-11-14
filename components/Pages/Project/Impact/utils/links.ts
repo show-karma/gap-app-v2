@@ -62,7 +62,7 @@ export const linkName = (link: string) => {
     if (network && networkNames[network]) {
       return `${networkNames[network]} Contract`
     }
-  } catch (error) {
+  } catch (_error) {
     // If URL parsing fails, return original link
     return link
   }

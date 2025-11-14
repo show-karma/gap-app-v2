@@ -25,7 +25,7 @@ export const VotingPowerPopover: FC<VotingPowerPopoverProps> = ({
 }) => {
   const [votingPower, setVotingPower] = useState<string | null>(null)
   const [delegatedVotes, setDelegatedVotes] = useState<string | null>(null)
-  const [isFetching, setIsFetching] = useState(false)
+  const [_isFetching, setIsFetching] = useState(false)
   const [isDelegate, setIsDelegate] = useState(false)
   const [canFetch, setCanFetch] = useState(false)
 
@@ -52,7 +52,6 @@ export const VotingPowerPopover: FC<VotingPowerPopoverProps> = ({
           reviewer,
           community: daoDictionary[community.details?.data?.slug] || community.details?.data?.slug,
         })
-        console.log(error)
         setVotingPower(null)
         setIsDelegate(false)
       } finally {
@@ -62,7 +61,7 @@ export const VotingPowerPopover: FC<VotingPowerPopoverProps> = ({
     if (canFetch) {
       getVotingPower()
     }
-  }, [canFetch])
+  }, [canFetch, community.details?.data?.slug, reviewer])
 
   return (
     <div className="w-full max-w-md">

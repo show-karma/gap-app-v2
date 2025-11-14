@@ -185,7 +185,6 @@ export const UnifiedMilestoneScreen = () => {
     } catch (error) {
       errorManager("Error creating roadmap milestone", error)
       toast.error("Failed to create roadmap milestone")
-      console.log(error)
     } finally {
       setIsSubmitting(false)
       setIsStepper(false)
@@ -411,7 +410,6 @@ export const UnifiedMilestoneScreen = () => {
     } catch (error) {
       errorManager("Error creating grant milestones", error)
       toastsToRemove.forEach((toastId) => toast.remove(toastId))
-      console.log(error)
     } finally {
       setIsSubmitting(false)
       setIsStepper(false)

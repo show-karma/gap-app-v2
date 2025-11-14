@@ -27,12 +27,12 @@ export const getProjectMemberRoles = async (
         .map(async (member) => {
           const isProjectOwner = await projectInstance
             .isOwner(signer, member.recipient)
-            .catch((error) => {
+            .catch((_error) => {
               return false
             })
           const isProjectAdmin = await projectInstance
             .isAdmin(signer, member.recipient)
-            .catch((error) => {
+            .catch((_error) => {
               return false
             })
           if (!roles[member.recipient.toLowerCase()]) {

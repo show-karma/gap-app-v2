@@ -8,7 +8,7 @@ import { useAccount } from "wagmi"
 import { Button } from "@/components/Utilities/Button"
 import { errorManager } from "@/components/Utilities/errorManager"
 import { queryClient } from "@/components/Utilities/PrivyProviderWrapper"
-import { getGapClient, useGap } from "@/hooks/useGap"
+import { useGap } from "@/hooks/useGap"
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke"
 import { useWallet } from "@/hooks/useWallet"
 import { useProjectStore } from "@/store"
@@ -20,7 +20,7 @@ import { INDEXER } from "@/utilities/indexer"
 import { getProjectById } from "@/utilities/sdk"
 import { safeGetWalletClient } from "@/utilities/wallet-helpers"
 
-const DeleteDialog = dynamic(() =>
+const _DeleteDialog = dynamic(() =>
   import("@/components/DeleteDialog").then((mod) => mod.DeleteDialog)
 )
 

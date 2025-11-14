@@ -15,11 +15,10 @@ import { z } from "zod"
 import { Button } from "@/components/Utilities/Button"
 import { errorManager } from "@/components/Utilities/errorManager"
 import { useAuth } from "@/hooks/useAuth"
-import { getGapClient, useGap } from "@/hooks/useGap"
+import { useGap } from "@/hooks/useGap"
 import { useWallet } from "@/hooks/useWallet"
 import { useOwnerStore, useProjectStore } from "@/store"
 import { useStepper } from "@/store/modals/txStepper"
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid"
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils"
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain"
 import fetchData from "@/utilities/fetchData"
@@ -162,7 +161,6 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
         })
       closeModal()
     } catch (error: any) {
-      console.log(error)
       errorManager(
         MESSAGES.GRANT.GRANT_UPDATE.VERIFY.ERROR,
         error,

@@ -252,7 +252,7 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
 
   const totalItems: any = pageInfo?.totalItems || 0
 
-  const signer = useSigner()
+  const _signer = useSigner()
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
@@ -350,14 +350,12 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
             </div>
             <div className="mb-2 grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 w-full">
               {isLoading ? (
-                <>
-                  {[...Array(8)].map((_, index) => (
-                    <div key={index} className="bg-white dark:bg-zinc-800 p-4 rounded-lg shadow">
-                      <Skeleton className="h-4 w-3/4 mb-2" />
-                      <Skeleton className="h-6 w-1/2" />
-                    </div>
-                  ))}
-                </>
+                [...Array(8)].map((_, index) => (
+                  <div key={index} className="bg-white dark:bg-zinc-800 p-4 rounded-lg shadow">
+                    <Skeleton className="h-4 w-3/4 mb-2" />
+                    <Skeleton className="h-6 w-1/2" />
+                  </div>
+                ))
               ) : (
                 <>
                   <StatCard title="Total Grants" value={`${data?.stats?.totalGrants}`} />

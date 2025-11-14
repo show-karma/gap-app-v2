@@ -1,6 +1,5 @@
 "use client"
 
-import React from "react"
 import { useForm } from "react-hook-form"
 import { Button } from "@/components/Utilities/Button"
 import type { FormSchema } from "@/types/question-builder"

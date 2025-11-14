@@ -112,7 +112,7 @@ interface IndicatorsHubProps {
 
 export const IndicatorsHub = ({ communitySlug, communityId }: IndicatorsHubProps) => {
   const { address } = useAccount()
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, _setIsLoading] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [editingIndicator, setEditingIndicator] = useState<IndicatorWithPrograms | null>(null)
   const [selectedAutosynced, setSelectedAutosynced] = useState<string>("")

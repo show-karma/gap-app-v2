@@ -1,4 +1,3 @@
-import axios from "axios"
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client"
 import { envVars } from "@/utilities/enviromentVars"
 import type { FundingProgram } from "./fundingPlatformService"
@@ -61,7 +60,6 @@ export interface ReviewerProgram {
  * Service for handling permission checks and role management
  */
 export class PermissionsService {
-  constructor() {}
   /**
    * Check if a user has permission for a specific action
    */
@@ -169,10 +167,7 @@ export class PermissionsService {
           permissions: item.permissions,
         })
       })
-    } catch (error) {
-      // Fall back to parallel calls if batch endpoint doesn't exist
-      console.log("Batch endpoint not available, falling back to parallel calls")
-
+    } catch (_error) {
       const promises = programIds.map(async ({ programId, chainID, action }) => {
         try {
           const result = await this.checkPermission({ programId, chainID, action })

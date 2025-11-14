@@ -6,9 +6,7 @@
  */
 
 import {
-  ExploreItems,
   exploreItems,
-  ForFundersItems,
   forBuildersItems,
   forFundersItems,
   type MenuItem,
@@ -236,7 +234,7 @@ describe("Menu Items Configuration", () => {
   describe("No Duplicate Hrefs", () => {
     it("should not have duplicate hrefs in forBuildersItems", () => {
       const hrefs = forBuildersItems.map((item) => item.href)
-      const uniqueHrefs = new Set(hrefs)
+      const _uniqueHrefs = new Set(hrefs)
       // Note: We allow duplicate hrefs because "Create project" and other items might go to the same page
       // with different behaviors (modal vs navigation)
       expect(hrefs.length).toBeGreaterThan(0)

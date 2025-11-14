@@ -7,7 +7,6 @@
 
 import { fireEvent, screen, waitFor } from "@testing-library/react"
 import { UserPlus } from "lucide-react"
-import React from "react"
 import { MenuItemClient } from "@/src/components/navbar/menu-item-client"
 import { renderWithProviders } from "../utils/test-helpers"
 

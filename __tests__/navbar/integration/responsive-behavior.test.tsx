@@ -162,7 +162,7 @@ describe("Responsive Behavior Integration Tests", () => {
       expect(screen.getByRole("button", { name: /explore/i })).toBeInTheDocument()
 
       // Mobile menu button should have hidden class (xl:hidden)
-      const mobileMenuButton = screen.queryByLabelText("Open menu")
+      const _mobileMenuButton = screen.queryByLabelText("Open menu")
       // May still be in DOM but hidden via CSS
     })
 
@@ -334,7 +334,7 @@ describe("Responsive Behavior Integration Tests", () => {
       // Desktop navigation should now be accessible
       // In test environment, CSS classes don't actually hide elements,
       // so we verify the component structure is intact
-      const forBuildersButton = screen.queryByRole("button", { name: /for builders/i })
+      const _forBuildersButton = screen.queryByRole("button", { name: /for builders/i })
       // Button may or may not be visible depending on CSS in test env
       // The important thing is the component rendered without errors
     })

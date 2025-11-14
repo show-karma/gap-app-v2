@@ -6,7 +6,7 @@ export const fetchMyProjects = async (address: `0x${string}` | undefined) => {
   try {
     const { data: projectsOf } = await gapIndexerApi.projectsOf(address)
     return projectsOf || []
-  } catch (error: any) {
+  } catch (error: unknown) {
     errorManager(`Error fetching projects of ${address}`, error)
     return []
   }

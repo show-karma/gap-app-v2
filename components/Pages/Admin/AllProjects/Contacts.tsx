@@ -1,5 +1,5 @@
 "use client"
-import { AtSymbolIcon, InboxArrowDownIcon } from "@heroicons/react/24/solid"
+import { AtSymbolIcon } from "@heroicons/react/24/solid"
 import { type FC, useState } from "react"
 import { TelegramIcon } from "@/components/Icons"
 import { ExternalLink } from "@/components/Utilities/ExternalLink"

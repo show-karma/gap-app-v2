@@ -13,7 +13,6 @@ import {
   createMockUsePrivy,
   createMockUseTheme,
   renderWithProviders,
-  updateMocks,
 } from "../utils/test-helpers"
 
 describe("Theme Switching Integration Tests", () => {

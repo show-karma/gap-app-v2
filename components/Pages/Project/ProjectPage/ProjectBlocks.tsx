@@ -5,15 +5,13 @@ import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
 import { useProjectStore } from "@/store"
 import { useEndorsementStore } from "@/store/modals/endorsement"
 import { useIntroModalStore } from "@/store/modals/intro"
-import { envVars } from "@/utilities/enviromentVars"
-import { PAGES } from "@/utilities/pages"
 import { cn } from "@/utilities/tailwind"
 
 export function ProjectBlocks() {
   const project = useProjectStore((state) => state.project)
   const { setIsEndorsementOpen } = useEndorsementStore()
-  const [, copy] = useCopyToClipboard()
-  const params = useParams()
+  const [, _copy] = useCopyToClipboard()
+  const _params = useParams()
   const { setIsIntroModalOpen } = useIntroModalStore()
 
   const mountBlocks = () => {

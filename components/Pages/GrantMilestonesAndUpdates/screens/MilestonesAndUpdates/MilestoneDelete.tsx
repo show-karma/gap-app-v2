@@ -5,20 +5,17 @@ import toast from "react-hot-toast"
 import { useAccount } from "wagmi"
 import { DeleteDialog } from "@/components/DeleteDialog"
 import { errorManager } from "@/components/Utilities/errorManager"
-import { getGapClient, useGap } from "@/hooks/useGap"
+import { useGap } from "@/hooks/useGap"
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke"
 import { useWallet } from "@/hooks/useWallet"
 import { useOwnerStore, useProjectStore } from "@/store"
-import { useCommunityAdminStore } from "@/store/communityAdmin"
 import { useStepper } from "@/store/modals/txStepper"
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid"
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils"
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain"
 import fetchData from "@/utilities/fetchData"
 import { INDEXER } from "@/utilities/indexer"
 import { MESSAGES } from "@/utilities/messages"
 import { retryUntilConditionMet } from "@/utilities/retries"
-import { privyConfig as config } from "@/utilities/wagmi/privy-config"
 import { safeGetWalletClient } from "@/utilities/wallet-helpers"
 
 interface MilestoneDeleteProps {
@@ -33,7 +30,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
   const refreshProject = useProjectStore((state) => state.refreshProject)
   const { gap } = useGap()
   const { changeStepperStep, setIsStepper } = useStepper()
-  const selectedProject = useProjectStore((state) => state.project)
+  const _selectedProject = useProjectStore((state) => state.project)
 
   const { project, isProjectOwner } = useProjectStore()
   const { isOwner: isContractOwner } = useOwnerStore()

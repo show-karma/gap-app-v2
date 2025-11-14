@@ -18,7 +18,7 @@ export const GrantPercentage: React.FC<TProps> = ({ grant, className }) => {
       for (const update of sortedUpdates) {
         if (update.data.completionPercentage) {
           const manualPercentage = Number(update.data.completionPercentage)
-          if (!isNaN(manualPercentage)) {
+          if (!Number.isNaN(manualPercentage)) {
             return formatPercentage(manualPercentage)
           }
         }

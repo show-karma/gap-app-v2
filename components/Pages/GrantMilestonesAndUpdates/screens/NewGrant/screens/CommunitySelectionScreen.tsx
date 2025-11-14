@@ -211,7 +211,7 @@ export const CommunitySelectionScreen: React.FC = () => {
               communityUID={formData.community}
               chainId={communityNetworkId}
               canAdd={flowType === "grant"}
-              setValue={(field: string, value?: string, options?: { shouldValidate: boolean }) => {
+              setValue={(field: string, value?: string, _options?: { shouldValidate: boolean }) => {
                 if (field === "programId" && !isEditing) {
                   updateFormData({ programId: value })
                 } else if (field === "title" && !isEditing) {

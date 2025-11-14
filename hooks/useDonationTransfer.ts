@@ -1,8 +1,7 @@
 import { useCallback, useState } from "react"
-import { type Address, formatUnits, getAddress, type PublicClient, parseUnits } from "viem"
+import { type Address, getAddress, type PublicClient, parseUnits } from "viem"
 import {
   useAccount,
-  useChainId,
   usePublicClient,
   useWaitForTransactionReceipt,
   useWalletClient,
@@ -14,10 +13,9 @@ import { validateChainSync } from "@/utilities/chainSyncValidation"
 import {
   BATCH_DONATIONS_CONTRACTS,
   BatchDonationsABI,
-  getBatchDonationsContractAddress,
   PERMIT2_ADDRESS,
 } from "@/utilities/donations/batchDonations"
-import { getShortErrorMessage, parseDonationError } from "@/utilities/donations/errorMessages"
+import { parseDonationError } from "@/utilities/donations/errorMessages"
 import {
   type ApprovalTransaction,
   checkTokenAllowances,
@@ -30,7 +28,6 @@ import {
   getWalletClientWithFallback,
   isWalletClientGoodEnough,
 } from "@/utilities/walletClientFallback"
-import { validateWalletClient, waitForValidWalletClient } from "@/utilities/walletClientValidation"
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000" as Address
 const PERMIT_DEADLINE_SECONDS = 3600
@@ -249,7 +246,7 @@ export function useDonationTransfer() {
 
       // SECURITY: Validate all recipient addresses upfront before starting execution
       // This implements the checks-effects-interactions pattern
-      const recipientValidation = payments.map((payment) => {
+      const _recipientValidation = payments.map((payment) => {
         const recipient = getRecipientAddress(payment.projectId)
         if (!recipient) {
           throw new Error(`Missing payout address for project ${payment.projectId}`)
@@ -608,6 +605,7 @@ export function useDonationTransfer() {
       writeContractAsync,
       checkApprovals,
       executeApprovalTransactions,
+      refetchWalletClient,
     ]
   )
 
@@ -635,7 +633,7 @@ export function useDonationTransfer() {
       for (const payment of payments) {
         // SECURITY: Validate payment amount is positive and valid
         const amount = parseFloat(payment.amount)
-        if (isNaN(amount) || amount <= 0) {
+        if (Number.isNaN(amount) || amount <= 0) {
           errors.push(`Invalid amount for ${payment.token.symbol}: ${payment.amount}`)
           continue
         }

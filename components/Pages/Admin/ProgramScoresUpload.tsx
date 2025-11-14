@@ -112,12 +112,6 @@ export function ProgramScoresUpload({
   }, [])
 
   const handleUpload = async () => {
-    console.log("handleUpload called", {
-      selectedProgram,
-      parsedData,
-      hasRequiredColumns: parsedData?.hasRequiredColumns,
-    })
-
     if (!selectedProgram || !parsedData || !parsedData.hasRequiredColumns) {
       toast.error("Please select a program and upload a valid CSV file")
       return
@@ -132,8 +126,6 @@ export function ProgramScoresUpload({
         chainId: selectedProgram.chainID || chainId,
         csvData: parsedData.rows,
       }
-
-      console.log("Sending request:", request)
       const result = await programScoresService.uploadProgramScores(request)
 
       setUploadResult(result)
@@ -182,7 +174,7 @@ export function ProgramScoresUpload({
               if (e.target.value) {
                 const [progId, chain] = e.target.value.split("_")
                 const program = programs.find(
-                  (p) => p.programId === progId && p.chainID === parseInt(chain)
+                  (p) => p.programId === progId && p.chainID === parseInt(chain, 10)
                 )
                 setSelectedProgram(program || null)
                 if (program?.chainID) {
@@ -216,7 +208,7 @@ export function ProgramScoresUpload({
           <input
             type="number"
             value={chainId}
-            onChange={(e) => setChainId(parseInt(e.target.value) || 0)}
+            onChange={(e) => setChainId(parseInt(e.target.value, 10) || 0)}
             placeholder="42220"
             className="bg-background text-foreground w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             disabled={isUploading}

@@ -4,12 +4,11 @@
 import { PencilIcon } from "@heroicons/react/24/outline"
 import { ChevronRightIcon } from "@heroicons/react/24/solid"
 import * as Tooltip from "@radix-ui/react-tooltip"
-import { useQuery } from "@tanstack/react-query"
 import dynamic from "next/dynamic"
 import Link from "next/link"
 import { useParams, useSearchParams } from "next/navigation"
 import pluralize from "pluralize"
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import type { Hex } from "viem"
 import { useAccount } from "wagmi"
 import { MemberDialog } from "@/components/Dialogs/Member"
@@ -30,13 +29,12 @@ import { useENS } from "@/store/ens"
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile"
 import fetchData from "@/utilities/fetchData"
 import formatCurrency from "@/utilities/formatCurrency"
-import { getProjectMemberRoles, type Member } from "@/utilities/getProjectMemberRoles"
+import type { Member } from "@/utilities/getProjectMemberRoles"
 import { INDEXER } from "@/utilities/indexer"
 import { PAGES } from "@/utilities/pages"
 import { shortAddress } from "@/utilities/shortAddress"
 import { ProjectSubscription } from "../ProjectSubscription"
 import { ProjectSubTabs } from "../ProjectSubTabs"
-import { ProjectBlocks } from "./ProjectBlocks"
 import { InformationBlock } from "./ProjectBodyTabs"
 import { ProjectImpact } from "./ProjectImpact"
 
@@ -56,7 +54,7 @@ function ProjectPage() {
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin)
   const isContractOwner = useOwnerStore((state) => state.isOwner)
   const isAuthorized = isProjectOwner || isContractOwner
-  const isAdminOrAbove = isProjectOwner || isContractOwner || isProjectAdmin
+  const _isAdminOrAbove = isProjectOwner || isContractOwner || isProjectAdmin
   const { project: projectInstance } = useProjectInstance(
     project?.details?.data.slug || project?.uid || ""
   )
@@ -78,7 +76,7 @@ function ProjectPage() {
     if (project?.members) {
       populateEns(project?.members?.map((v) => v.recipient))
     }
-  }, [project?.members])
+  }, [project?.members, populateEns])
 
   const [, copy] = useCopyToClipboard()
 
@@ -107,7 +105,7 @@ function ProjectPage() {
       })
     }
     // sort by owner
-    members.sort((a, b) => {
+    members.sort((a, _b) => {
       return a.recipient.toLowerCase() === project?.recipient?.toLowerCase() ? -1 : 1
     })
     return members
@@ -275,7 +273,7 @@ function ProjectPage() {
         })
       }
     })
-  }, [project, address, inviteCodeParam])
+  }, [project, address, checkCodeValidation, openModal])
 
   return (
     <div className="flex flex-row max-lg:flex-col gap-6 max-md:gap-4 py-5 mb-20">

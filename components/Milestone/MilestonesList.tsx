@@ -10,9 +10,7 @@ import type {
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useQueryState } from "nuqs"
-import pluralize from "pluralize"
-import { Fragment, useEffect, useMemo, useState } from "react"
-import { SetAnObjective } from "@/components/Pages/Project/Objective/SetAnObjective"
+import { Fragment, useMemo } from "react"
 import { ActivityCard } from "@/components/Shared/ActivityCard"
 import { useOwnerStore, useProjectStore } from "@/store"
 import type { UnifiedMilestone } from "@/types/roadmap"
@@ -51,9 +49,9 @@ export const MilestonesList = ({
     parse: (value) => (value ? (value as StatusOptions) : ("all" as StatusOptions)),
   })
 
-  const router = useRouter()
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
+  const _router = useRouter()
+  const _pathname = usePathname()
+  const _searchParams = useSearchParams()
 
   // Content type filter with URL search params support
   const [selectedContentType, setSelectedContentTypeQuery] = useQueryState("contentType", {
@@ -234,7 +232,7 @@ export const MilestonesList = ({
 
     // Merge duplicates for regular milestones
     return mergeDuplicateMilestones(filteredMilestones)
-  }, [milestones, showAllTypes, status, selectedContentType])
+  }, [milestones, showAllTypes, status, selectedContentType, mergeDuplicateMilestones])
 
   return (
     <div className="flex flex-col gap-6 w-full">

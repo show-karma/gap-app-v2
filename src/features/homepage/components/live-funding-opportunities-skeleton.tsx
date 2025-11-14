@@ -1,6 +1,5 @@
 import { ArrowRightIcon } from "@heroicons/react/20/solid"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel"
 import { Skeleton } from "@/components/ui/skeleton"

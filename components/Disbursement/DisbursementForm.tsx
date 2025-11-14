@@ -136,7 +136,7 @@ export const DisbursementForm = () => {
   }
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
+    if (event.target.files?.[0]) {
       const selectedFile = event.target.files[0]
       processFile(selectedFile)
     }
@@ -165,7 +165,7 @@ export const DisbursementForm = () => {
       setIsDragOver(false)
 
       const files = e.dataTransfer.files
-      if (files && files[0] && files[0].type === "text/csv") {
+      if (files?.[0] && files[0].type === "text/csv") {
         processFile(files[0])
       }
     },
@@ -187,7 +187,7 @@ export const DisbursementForm = () => {
 
           if (!isAddress(address)) {
             error = "Invalid address"
-          } else if (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+          } else if (Number.isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
             error = "Invalid amount"
           }
 
@@ -322,7 +322,7 @@ export const DisbursementForm = () => {
     if (safeAddress && userAddress && isConnected && recipients.length > 0) {
       runPreflightChecks()
     }
-  }, [runPreflightChecks, safeAddress, userAddress, isConnected, recipients, walletChainId])
+  }, [runPreflightChecks, safeAddress, userAddress, isConnected, recipients])
 
   // Update step based on form completion
   useEffect(() => {

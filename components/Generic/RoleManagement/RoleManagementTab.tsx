@@ -241,7 +241,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
         setRemovingMemberId(null)
       }
     },
-    [config.roleDisplayName, onRemove, onRefresh, members]
+    [onRemove, onRefresh, members]
   )
 
   const getMemberDisplayValue = useCallback((member: RoleMember, fieldName: string): string => {

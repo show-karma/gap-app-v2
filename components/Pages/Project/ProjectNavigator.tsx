@@ -64,7 +64,7 @@ export const ProjectNavigator = ({
       }
     }
     mountTabs()
-  }, [isAuthorized, project])
+  }, [isAuthorized, project, projectId, publicTabs])
 
   const { setIsProgressModalOpen } = useProgressModalStore()
   return (

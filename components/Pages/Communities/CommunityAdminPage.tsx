@@ -11,12 +11,9 @@ import {
   TagIcon,
 } from "@heroicons/react/24/outline"
 import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import { useEffect, useState } from "react"
 import { useAccount } from "wagmi"
 import { Button } from "@/components/Utilities/Button"
-import { errorManager } from "@/components/Utilities/errorManager"
 import { Skeleton } from "@/components/Utilities/Skeleton"
-import { Spinner } from "@/components/Utilities/Spinner"
 import { useAuth } from "@/hooks/useAuth"
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin"
 import { useSigner } from "@/utilities/eas-wagmi-utils"
@@ -80,7 +77,7 @@ export const CommunityAdminPage = ({
   const { address, isConnected } = useAccount()
   const { authenticated: isAuth } = useAuth()
 
-  const signer = useSigner()
+  const _signer = useSigner()
 
   // Check if user is admin of this community
   const { isCommunityAdmin: isAdmin, isLoading: loading } = useIsCommunityAdmin(

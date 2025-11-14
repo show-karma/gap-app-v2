@@ -16,12 +16,10 @@ export function WhitelistManager() {
     maxGasLimit: "",
   })
   const { chains } = useChains()
-
-  console.log(contracts)
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault()
     whitelistContract({
-      chainId: parseInt(formData.chainId),
+      chainId: parseInt(formData.chainId, 10),
       contractAddress: formData.contractAddress,
       name: formData.name,
       description: formData.description,

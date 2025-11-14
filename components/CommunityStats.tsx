@@ -26,8 +26,7 @@ export default function CommunityStats({ communityId }: CommunityStatsProps) {
         console.error("Error fetching data:", error)
         setError(error)
       } else {
-        if (data && data?.projects) {
-          console.log("Stats fetched:", data)
+        if (data?.projects) {
           setStats({
             "No. of Projects": data?.projects,
             "No. of Project Edits": data?.ProjectEdits,
@@ -134,14 +133,12 @@ export default function CommunityStats({ communityId }: CommunityStatsProps) {
                   ) : error ? (
                     <div className="font-bold">Error fetching stats: {JSON.stringify(error)}</div>
                   ) : (
-                    <>
-                      {Object.entries(stats).map(([key, value]) => (
-                        <div className="mx-1 flex items-center justify-between" key={key}>
-                          <p>{key}</p>
-                          <p className="text-blue-500">{value as any}</p>
-                        </div>
-                      ))}
-                    </>
+                    Object.entries(stats).map(([key, value]) => (
+                      <div className="mx-1 flex items-center justify-between" key={key}>
+                        <p>{key}</p>
+                        <p className="text-blue-500">{value as any}</p>
+                      </div>
+                    ))
                   )}
                 </Dialog.Panel>
               </Transition.Child>

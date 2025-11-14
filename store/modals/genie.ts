@@ -7,7 +7,7 @@ interface GrantGenieModalStore {
   closeGrantGenieModal: () => void
 }
 
-export const useGrantGenieModalStore = create<GrantGenieModalStore>((set, get) => ({
+export const useGrantGenieModalStore = create<GrantGenieModalStore>((set, _get) => ({
   isGrantGenieModalOpen: false,
   setIsGrantGenieModalOpen: (isGrantGenieModalOpen: boolean) => set({ isGrantGenieModalOpen }),
   openGrantGenieModal: () => set({ isGrantGenieModalOpen: true }),

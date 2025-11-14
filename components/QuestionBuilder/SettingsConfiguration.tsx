@@ -3,7 +3,7 @@
 import { LinkIcon } from "@heroicons/react/24/outline"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useParams } from "next/navigation"
-import React, { useEffect } from "react"
+import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { type SettingsConfigFormData, settingsConfigSchema } from "@/schemas/settingsConfigSchema"
 import type { FormSchema } from "@/types/question-builder"
@@ -81,7 +81,7 @@ export function SettingsConfiguration({
     })
 
     return () => subscription.unsubscribe()
-  }, [watch, onUpdate, schema])
+  }, [watch, onUpdate, schema, readOnly])
 
   const privateApplicationsValue = watch("privateApplications")
   const privateFieldsCount = schema.fields?.filter((field) => field.private).length || 0

@@ -5,13 +5,11 @@ import { blo } from "blo"
 import debounce from "lodash.debounce"
 import Link from "next/link"
 /* eslint-disable @next/next/no-img-element */
-import React, { useEffect, useState } from "react"
+import type React from "react"
+import { useEffect, useState } from "react"
 import CommunityStats from "@/components/CommunityStats"
 import { Spinner } from "@/components/Utilities/Spinner"
-import {
-  type AllCommunitiesWithAdminsData,
-  useAllCommunitiesWithAdmins,
-} from "@/hooks/useAllCommunitiesWithAdmins"
+import { useAllCommunitiesWithAdmins } from "@/hooks/useAllCommunitiesWithAdmins"
 import { useCommunityConfig, useCommunityConfigMutation } from "@/hooks/useCommunityConfig"
 import { layoutTheme } from "@/src/helper/theme"
 import { useCommunitiesStore } from "@/store/communities"
@@ -172,136 +170,133 @@ const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
   }, [localRank, rank, slug, config?.public, updateConfigMutation])
 
   const handleRankInputChange = (value: string) => {
-    const numValue = parseInt(value) || 0
+    const numValue = parseInt(value, 10) || 0
     if (numValue >= 0) {
       setLocalRank(numValue)
     }
   }
 
   return (
-    <React.Fragment>
-      <tr className="divide-x">
-        <td className="min-w-[80px]">
-          <img
-            src={community.details?.imageURL || blo(community.uid)}
-            className="h-[64px] w-[100px] object-cover"
-            alt={community.details?.name || community.uid}
-          />
-        </td>
-        <td className="max-w-40 px-4 min-w-[150px]">{community.details?.name}</td>
-        <td className="max-w-60 px-4 min-w-[100px]">{formatDate(community?.createdAt)}</td>
-        <td className="max-w-80 break-all px-4 min-w-[200px]">{community.uid}</td>
-        <td className="text-center px-4 min-w-[150px]">
+    <tr className="divide-x">
+      <td className="min-w-[80px]">
+        <img
+          src={community.details?.imageURL || blo(community.uid)}
+          className="h-[64px] w-[100px] object-cover"
+          alt={community.details?.name || community.uid}
+        />
+      </td>
+      <td className="max-w-40 px-4 min-w-[150px]">{community.details?.name}</td>
+      <td className="max-w-60 px-4 min-w-[100px]">{formatDate(community?.createdAt)}</td>
+      <td className="max-w-80 break-all px-4 min-w-[200px]">{community.uid}</td>
+      <td className="text-center px-4 min-w-[150px]">
+        <Link
+          href={PAGES.COMMUNITY.ALL_GRANTS(community.details?.slug || community.uid)}
+          className="flex flex-row items-center gap-1.5 text-blue-500"
+        >
+          Community
+          <LinkIcon className="w-4 h-4" />
+        </Link>
+      </td>
+      <td className="text-center px-4 min-w-[120px]">
+        {isCommunityAdmin ? (
           <Link
-            href={PAGES.COMMUNITY.ALL_GRANTS(community.details?.slug || community.uid)}
+            href={PAGES.ADMIN.ROOT(community.details?.slug || community.uid)}
             className="flex flex-row items-center gap-1.5 text-blue-500"
           >
-            Community
+            Admin
             <LinkIcon className="w-4 h-4" />
           </Link>
-        </td>
-        <td className="text-center px-4 min-w-[120px]">
-          {isCommunityAdmin ? (
-            <Link
-              href={PAGES.ADMIN.ROOT(community.details?.slug || community.uid)}
-              className="flex flex-row items-center gap-1.5 text-blue-500"
-            >
-              Admin
-              <LinkIcon className="w-4 h-4" />
-            </Link>
-          ) : (
-            <span className="text-gray-500">No access</span>
-          )}
-        </td>
-        <td className="text-center px-4 min-w-[120px]">
-          <CommunityStats communityId={community.uid} />
-        </td>
-        <td className="px-4 min-w-[150px]">
-          <div className="flex flex-row gap-2 items-center">
-            <img
-              src={chainImgDictionary(community.chainID)}
-              alt={chainNameDictionary(community.chainID)}
-              className="w-5 h-5"
-            />
-            <p>{chainNameDictionary(community.chainID)}</p>
+        ) : (
+          <span className="text-gray-500">No access</span>
+        )}
+      </td>
+      <td className="text-center px-4 min-w-[120px]">
+        <CommunityStats communityId={community.uid} />
+      </td>
+      <td className="px-4 min-w-[150px]">
+        <div className="flex flex-row gap-2 items-center">
+          <img
+            src={chainImgDictionary(community.chainID)}
+            alt={chainNameDictionary(community.chainID)}
+            className="w-5 h-5"
+          />
+          <p>{chainNameDictionary(community.chainID)}</p>
+        </div>
+      </td>
+      <td className="min-w-[150px]">
+        {isCommunityAdmin ? (
+          matchingCommunityAdmin?.admins &&
+          matchingCommunityAdmin.admins.length > 0 &&
+          matchingCommunityAdmin.admins.map((admin: any, index: number) => (
+            <div className="flex gap-2 p-5" key={index}>
+              <div>{shortenHex(admin.user.id)}</div>
+              <RemoveAdmin
+                UUID={community.uid}
+                chainid={community.chainID}
+                Admin={admin.user.id}
+                fetchAdmins={refetchCommunities}
+              />
+            </div>
+          ))
+        ) : (
+          <span className="text-gray-500 px-4">No access</span>
+        )}
+      </td>
+      <td className="min-w-[100px]">
+        {isCommunityAdmin ? (
+          <AddAdmin
+            UUID={community.uid}
+            chainid={community.chainID}
+            fetchAdmins={refetchCommunities}
+          />
+        ) : (
+          <span className="text-gray-500">No access</span>
+        )}
+      </td>
+      {isOwner && (
+        <td className="px-2 text-center">
+          <div className="flex items-center justify-center gap-2">
+            {configLoading ? (
+              <div className="w-4 h-4 animate-spin border border-gray-300 rounded-full border-t-transparent" />
+            ) : (
+              <>
+                <input
+                  type="checkbox"
+                  checked={isPublic}
+                  onChange={(e) => handlePublicChange(e.target.checked)}
+                  disabled={updateConfigMutation.isPending}
+                />
+                {updateConfigMutation.isPending && (
+                  <div className="w-3 h-3 animate-spin border border-blue-500 rounded-full border-t-transparent" />
+                )}
+              </>
+            )}
           </div>
         </td>
-        <td className="min-w-[150px]">
-          {isCommunityAdmin ? (
-            matchingCommunityAdmin &&
-            matchingCommunityAdmin.admins &&
-            matchingCommunityAdmin.admins.length > 0 &&
-            matchingCommunityAdmin.admins.map((admin: any, index: number) => (
-              <div className="flex gap-2 p-5" key={index}>
-                <div>{shortenHex(admin.user.id)}</div>
-                <RemoveAdmin
-                  UUID={community.uid}
-                  chainid={community.chainID}
-                  Admin={admin.user.id}
-                  fetchAdmins={refetchCommunities}
+      )}
+      {isOwner && (
+        <td className="px-2 text-center">
+          <div className="flex items-center justify-center gap-2">
+            {configLoading ? (
+              <div className="w-4 h-4 animate-spin border border-gray-300 rounded-full border-t-transparent" />
+            ) : (
+              <>
+                <input
+                  type="number"
+                  value={localRank}
+                  onChange={(e) => handleRankInputChange(e.target.value)}
+                  min="0"
+                  className="w-16 px-1 border border-gray-300 rounded text-center"
+                  disabled={updateConfigMutation.isPending}
                 />
-              </div>
-            ))
-          ) : (
-            <span className="text-gray-500 px-4">No access</span>
-          )}
+                {updateConfigMutation.isPending && (
+                  <div className="w-3 h-3 animate-spin border border-blue-500 rounded-full border-t-transparent" />
+                )}
+              </>
+            )}
+          </div>
         </td>
-        <td className="min-w-[100px]">
-          {isCommunityAdmin ? (
-            <AddAdmin
-              UUID={community.uid}
-              chainid={community.chainID}
-              fetchAdmins={refetchCommunities}
-            />
-          ) : (
-            <span className="text-gray-500">No access</span>
-          )}
-        </td>
-        {isOwner && (
-          <td className="px-2 text-center">
-            <div className="flex items-center justify-center gap-2">
-              {configLoading ? (
-                <div className="w-4 h-4 animate-spin border border-gray-300 rounded-full border-t-transparent" />
-              ) : (
-                <>
-                  <input
-                    type="checkbox"
-                    checked={isPublic}
-                    onChange={(e) => handlePublicChange(e.target.checked)}
-                    disabled={updateConfigMutation.isPending}
-                  />
-                  {updateConfigMutation.isPending && (
-                    <div className="w-3 h-3 animate-spin border border-blue-500 rounded-full border-t-transparent" />
-                  )}
-                </>
-              )}
-            </div>
-          </td>
-        )}
-        {isOwner && (
-          <td className="px-2 text-center">
-            <div className="flex items-center justify-center gap-2">
-              {configLoading ? (
-                <div className="w-4 h-4 animate-spin border border-gray-300 rounded-full border-t-transparent" />
-              ) : (
-                <>
-                  <input
-                    type="number"
-                    value={localRank}
-                    onChange={(e) => handleRankInputChange(e.target.value)}
-                    min="0"
-                    className="w-16 px-1 border border-gray-300 rounded text-center"
-                    disabled={updateConfigMutation.isPending}
-                  />
-                  {updateConfigMutation.isPending && (
-                    <div className="w-3 h-3 animate-spin border border-blue-500 rounded-full border-t-transparent" />
-                  )}
-                </>
-              )}
-            </div>
-          </td>
-        )}
-      </tr>
-    </React.Fragment>
+      )}
+    </tr>
   )
 }

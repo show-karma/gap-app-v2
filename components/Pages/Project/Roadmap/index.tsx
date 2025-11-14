@@ -1,23 +1,19 @@
 "use client"
-import {
-  type IGrantUpdate,
-  type IMilestoneResponse,
-  type IProjectImpact,
-  IProjectMilestoneResponse,
-  type IProjectResponse,
-  type IProjectUpdate,
+import type {
+  IGrantUpdate,
+  IMilestoneResponse,
+  IProjectImpact,
+  IProjectResponse,
+  IProjectUpdate,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import { useQuery } from "@tanstack/react-query"
 import { useParams, useSearchParams } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import { MilestonesList } from "@/components/Milestone/MilestonesList"
-import { ObjectivesSub } from "@/components/Pages/Project/Objective/ObjectivesSub"
 import { Button } from "@/components/Utilities/Button"
 import { useAllMilestones } from "@/hooks/useAllMilestones"
 import { useOwnerStore, useProjectStore } from "@/store"
 import { useProgressModalStore } from "@/store/modals/progress"
 import type { UnifiedMilestone } from "@/types/roadmap"
-import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives"
 import { MESSAGES } from "@/utilities/messages"
 import { RoadmapListLoading } from "../Loading/Roadmap"
 
@@ -53,7 +49,7 @@ export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) =>
   // Sync with URL params when they change
   useEffect(() => {
     setActiveFilters(getActiveFilters())
-  }, [searchParams])
+  }, [getActiveFilters])
 
   // Helper function to normalize any timestamp format to milliseconds
   const normalizeToMilliseconds = (timestamp: unknown): number | null => {
@@ -78,7 +74,7 @@ export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) =>
         (typeof timestamp === "object" && timestamp !== null)
       ) {
         const parsed = new Date(timestamp as string | number | Date).getTime()
-        return !isNaN(parsed) ? parsed : null
+        return !Number.isNaN(parsed) ? parsed : null
       }
       return null
     } catch {
@@ -100,7 +96,7 @@ export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) =>
       ]
 
       return dates.find((date) => date !== null) || Date.now()
-    } catch (error) {
+    } catch (_error) {
       return Date.now()
     }
   }
@@ -126,13 +122,13 @@ export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) =>
       let startDate: number | undefined
       if (update.data?.startDate) {
         const parsedDate = new Date(update.data.startDate).getTime()
-        startDate = !isNaN(parsedDate) ? parsedDate : undefined
+        startDate = !Number.isNaN(parsedDate) ? parsedDate : undefined
       }
 
       let endDate: number | undefined
       if (update.data?.endDate) {
         const parsedDate = new Date(update.data.endDate).getTime()
-        endDate = !isNaN(parsedDate) ? parsedDate : undefined
+        endDate = !Number.isNaN(parsedDate) ? parsedDate : undefined
       }
 
       let type = "update"
@@ -140,13 +136,13 @@ export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) =>
       if (
         update.data?.type === "impact" ||
         update.data?.type === "project-impact" ||
-        (update.data?.title && update.data.title.toLowerCase().includes("impact")) ||
+        update.data?.title?.toLowerCase().includes("impact") ||
         (update.__typename && update.__typename === "Impact")
       ) {
         type = "impact"
       } else if (
         update.source === "grant" ||
-        (update.data?.title && update.data.title.toLowerCase().includes("grant")) ||
+        update.data?.title?.toLowerCase().includes("grant") ||
         (update.refUID && update.refUID !== project?.uid) // If referencing something other than the project, likely a grant
       ) {
         type = "grant_update"
@@ -187,7 +183,14 @@ export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) =>
     })
 
     return allSortedItems
-  }, [project?.grants, project?.updates, project?.impacts, project?.uid, milestones])
+  }, [
+    project?.grants,
+    project?.updates,
+    project?.impacts,
+    project?.uid,
+    milestones,
+    getSortTimestamp,
+  ])
 
   // Filter items based on active filters
   const filteredItems = useMemo(() => {

@@ -3,9 +3,8 @@
  * Tests: Drawer behavior, authentication states, navigation structure
  */
 
-import { fireEvent, screen, waitFor } from "@testing-library/react"
+import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import React from "react"
 import { NavbarMobileMenu } from "@/src/components/navbar/navbar-mobile-menu"
 import { getAuthFixture } from "../fixtures/auth-fixtures"
 import {

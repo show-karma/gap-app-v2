@@ -1,6 +1,5 @@
 "use client"
 import { useSearchParams } from "next/navigation"
-import pluralize from "pluralize"
 import { Spinner } from "@/components/Utilities/Spinner"
 import { useImpactMeasurement } from "@/hooks/useImpactMeasurement"
 import type { ProgramImpactDataResponse } from "@/types/programs"

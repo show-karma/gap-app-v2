@@ -1,11 +1,11 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { render, screen } from "@testing-library/react"
 import { MilestoneCard } from "@/components/Milestone/MilestoneCard"
 import type { UnifiedMilestone } from "@/types/roadmap"
 
 // Mock Next.js dynamic imports
 jest.mock("next/dynamic", () => ({
   __esModule: true,
-  default: (fn: any) => {
+  default: (_fn: any) => {
     const Component = (props: any) => {
       const MockedComponent = () => (
         <div data-testid="mocked-dynamic-component">{props.children}</div>

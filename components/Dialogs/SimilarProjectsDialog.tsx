@@ -2,7 +2,7 @@
 
 import { Dialog, Transition } from "@headlessui/react"
 import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import { type FC, Fragment, useState } from "react"
+import { type FC, Fragment } from "react"
 import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects"
 import { PAGES } from "@/utilities/pages"
 import { Button } from "../Utilities/Button"

@@ -1,12 +1,9 @@
 "use client"
-import { InformationCircleIcon } from "@heroicons/react/24/outline"
-import * as Tooltip from "@radix-ui/react-tooltip"
 import { AreaChart, Card } from "@tremor/react"
 import Image from "next/image"
 import pluralize from "pluralize"
 import { useState } from "react"
 import { Carousel, CarouselItem } from "@/components/SnapCarousel"
-import { Button } from "@/components/Utilities/Button"
 import type {
   ImpactAggregateData,
   ImpactAggregateIndicator,

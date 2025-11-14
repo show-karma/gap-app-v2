@@ -1,5 +1,4 @@
 import type {
-  ExportFormat,
   IApplicationStatistics,
   IApplicationStatusUpdateRequest,
   IApplicationSubmitRequest,

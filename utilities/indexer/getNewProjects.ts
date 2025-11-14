@@ -1,6 +1,5 @@
 import { errorManager } from "@/components/Utilities/errorManager"
 import type { SortByOptions, SortOrder } from "@/types/newProjects"
-import { PageInfo } from "@/types/pagination"
 import type { ProjectFromList } from "@/types/project"
 import fetchData from "../fetchData"
 import { INDEXER } from "../indexer"

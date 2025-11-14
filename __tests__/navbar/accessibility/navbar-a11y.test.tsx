@@ -5,7 +5,6 @@
 
 import { fireEvent, screen, within } from "@testing-library/react"
 import { axe, toHaveNoViolations } from "jest-axe"
-import React from "react"
 import { Navbar } from "@/src/components/navbar/navbar"
 import { getAuthFixture } from "../fixtures/auth-fixtures"
 import { renderWithProviders, setViewport } from "../utils/test-helpers"
@@ -14,8 +13,8 @@ import { renderWithProviders, setViewport } from "../utils/test-helpers"
 jest.mock("@/src/components/navbar/navbar-desktop-navigation", () => ({
   NavbarDesktopNavigation: () => (
     <div data-testid="desktop-navigation" className="hidden xl:flex">
-      <nav role="navigation" aria-label="Main navigation">
-        <input type="search" role="searchbox" aria-label="Search" placeholder="Search..." />
+      <nav aria-label="Main navigation">
+        <input type="search" aria-label="Search" placeholder="Search..." />
         <button type="button">Sign in</button>
         <a href="/contact">Contact sales</a>
       </nav>
@@ -35,12 +34,7 @@ jest.mock("@/src/components/navbar/navbar-mobile-menu", () => ({
 
 jest.mock("@/src/components/navbar/navbar-search", () => ({
   NavbarSearch: () => (
-    <input
-      type="search"
-      role="searchbox"
-      aria-label="Search projects and communities"
-      placeholder="Search..."
-    />
+    <input type="search" aria-label="Search projects and communities" placeholder="Search..." />
   ),
 }))
 
@@ -201,7 +195,7 @@ describe("Navbar Accessibility Tests", () => {
 
       // Get all focusable elements
       const buttons = screen.queryAllByRole("button")
-      const links = screen.queryAllByRole("link")
+      const _links = screen.queryAllByRole("link")
 
       // Elements should be tab-focusable (can receive focus)
       if (buttons.length > 0) {

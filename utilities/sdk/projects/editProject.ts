@@ -1,7 +1,9 @@
 import type {
   ExternalCustomLink,
   ExternalLink,
+  GAP,
   Project,
+  SignerOrProvider,
   TExternalLink,
 } from "@show-karma/karma-gap-sdk"
 import { errorManager } from "@/components/Utilities/errorManager"
@@ -10,6 +12,11 @@ import type { TxStepperSteps } from "@/store/modals/txStepper"
 import fetchData from "@/utilities/fetchData"
 import { gapIndexerApi } from "@/utilities/gapIndexerApi"
 import { INDEXER } from "@/utilities/indexer"
+
+function _getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message
+  return String(error)
+}
 
 export const updateProject = async (
   project: Project,
@@ -42,8 +49,8 @@ export const updateProject = async (
       url: string
     }>
   },
-  signer: any,
-  gap: any,
+  signer: SignerOrProvider,
+  gap: GAP,
   changeStepperStep: (step: TxStepperSteps) => void,
   closeModal: () => void
 ) => {
@@ -95,7 +102,7 @@ export const updateProject = async (
 
     const projectBefore = await gapIndexerApi.projectBySlug(project.uid).then((res) => res.data)
 
-    await project.details?.attest(signer as any, changeStepperStep).then(async (res) => {
+    await project.details?.attest(signer, changeStepperStep).then(async (res) => {
       let retries = 1000
       changeStepperStep("indexing")
       const txHash = res?.tx[0]?.hash
@@ -130,7 +137,7 @@ export const updateProject = async (
       }
     })
     return project
-  } catch (error: any) {
+  } catch (error: unknown) {
     project.details?.setValues(oldProjectData)
     errorManager(`Error editing project: ${project.uid}`, error)
     throw error

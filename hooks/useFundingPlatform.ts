@@ -9,16 +9,15 @@ import {
   fundingPlatformService,
   type IApplicationFilters,
 } from "@/services/fundingPlatformService"
-import {
-  ApplicationComment,
-  type ExportFormat,
-  type FundingApplicationStatusV2,
-  type IApplicationStatusUpdateRequest,
-  type IApplicationSubmitRequest,
-  type IApplicationUpdateRequest,
-  type IFormSchema,
-  type IFundingApplication,
-  type IFundingProgramConfig,
+import type {
+  ExportFormat,
+  FundingApplicationStatusV2,
+  IApplicationStatusUpdateRequest,
+  IApplicationSubmitRequest,
+  IApplicationUpdateRequest,
+  IFormSchema,
+  IFundingApplication,
+  IFundingProgramConfig,
 } from "@/types/funding-platform"
 import { useAuth } from "./useAuth"
 
@@ -718,7 +717,7 @@ export const useApplicationStatus = (programId?: string, chainId?: number) => {
 /**
  * Hook for managing application comments with React Query
  */
-export const useApplicationComments = (applicationId: string | null, isAdmin: boolean = false) => {
+export const useApplicationComments = (applicationId: string | null, _isAdmin: boolean = false) => {
   const queryClient = useQueryClient()
   const { authenticated } = useAuth()
 
@@ -883,7 +882,7 @@ export const useDeleteApplication = () => {
 
   const deleteMutation = useMutation({
     mutationFn: (referenceNumber: string) => deleteApplication(referenceNumber),
-    onSuccess: (_data, referenceNumber) => {
+    onSuccess: (_data, _referenceNumber) => {
       // Invalidate all application-related queries
       queryClient.invalidateQueries({
         queryKey: ["funding-application"],

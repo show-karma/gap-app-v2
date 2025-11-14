@@ -43,8 +43,7 @@ export default function CommunityStats() {
       result.sort((a, b) => (a.details?.name || a.uid).localeCompare(b.details?.name || b.uid))
       setAllCommunities(result)
       return result
-    } catch (error) {
-      console.log(error)
+    } catch (_error) {
       setAllCommunities([])
       return undefined
     } finally {
@@ -100,9 +99,7 @@ export default function CommunityStats() {
         }
       })
       setCommunityStats(statsMap)
-    } catch (error) {
-      console.log("Failed to fetch community stats", error)
-    }
+    } catch (_error) {}
   }
 
   useEffect(() => {
@@ -111,7 +108,7 @@ export default function CommunityStats() {
         fetchCommunityStats(communities)
       }
     })
-  }, [])
+  }, [fetchCommunities, fetchCommunityStats])
 
   return (
     <div className={layoutTheme.padding}>

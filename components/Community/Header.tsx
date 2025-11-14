@@ -1,5 +1,4 @@
 "use client"
-import Link from "next/link"
 import { useParams, usePathname } from "next/navigation"
 import { CommunityPageNavigator } from "@/components/Pages/Communities/CommunityPageNavigator"
 import { CommunityImpactStatCards } from "@/components/Pages/Communities/Impact/StatCards"
@@ -38,8 +37,8 @@ const AdminCommunityHeader = ({ community }: { community: CommunityDetailsV2 }) 
 }
 
 const NormalCommunityHeader = ({ community }: { community: CommunityDetailsV2 }) => {
-  const pathname = usePathname()
-  const params = useParams()
+  const _pathname = usePathname()
+  const _params = useParams()
 
   return (
     <div

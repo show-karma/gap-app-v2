@@ -4,7 +4,6 @@ import { marketingLayoutTheme } from "@/src/helper/theme"
 import { getLiveFundingOpportunities } from "@/src/services/funding/getLiveFundingOpportunities"
 import { PAGES } from "@/utilities/pages"
 import { cn } from "@/utilities/tailwind"
-import { FundingOpportunityCard } from "./funding-opportunity-card"
 import { LiveFundingOpportunitiesCarousel } from "./live-funding-opportunities-carousel"
 
 export async function LiveFundingOpportunities() {

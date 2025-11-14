@@ -18,7 +18,7 @@ import { PAGES } from "@/utilities/pages"
 import { sanitizeObject } from "@/utilities/sanitize"
 import { getProjectById } from "@/utilities/sdk"
 import { safeGetWalletClient } from "@/utilities/wallet-helpers"
-import { getGapClient, useGap } from "./useGap"
+import { useGap } from "./useGap"
 import { useWallet } from "./useWallet"
 
 export function useGrant() {
@@ -47,7 +47,7 @@ export function useGrant() {
    */
   const updateGrant = async (oldGrant: IGrantResponse, data: Partial<typeof formData>) => {
     if (!address || !oldGrant?.refUID || !selectedProject) return
-    const gapClient = gap
+    const _gapClient = gap
     try {
       setIsLoading(true)
       setIsStepper(true)

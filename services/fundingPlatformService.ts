@@ -1,4 +1,3 @@
-import axios from "axios"
 import type {
   ExportFormat,
   FundingApplicationStatusV2,
@@ -452,7 +451,7 @@ export const fundingApplicationsAPI = {
 
     if (contentDisposition) {
       const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/)
-      if (filenameMatch && filenameMatch[1]) {
+      if (filenameMatch?.[1]) {
         filename = filenameMatch[1].replace(/['"]/g, "")
       }
     }
@@ -491,7 +490,7 @@ export const fundingApplicationsAPI = {
 
     if (contentDisposition) {
       const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/)
-      if (filenameMatch && filenameMatch[1]) {
+      if (filenameMatch?.[1]) {
         filename = filenameMatch[1].replace(/['"]/g, "")
       }
     }

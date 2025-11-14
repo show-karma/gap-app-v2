@@ -22,7 +22,7 @@ export const useAdminCommunities = (address?: string) => {
     queryFn: () => fetchAdminCommunities(address!),
     enabled: !!address && isAuth,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: (failureCount, error) => {
+    retry: (failureCount, _error) => {
       // Retry up to 2 times for network errors
       return failureCount < 2
     },

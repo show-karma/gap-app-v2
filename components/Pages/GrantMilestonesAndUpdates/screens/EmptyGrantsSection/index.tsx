@@ -11,7 +11,7 @@ import { PAGES } from "@/utilities/pages"
 
 export const EmptyGrantsSection: FC = () => {
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin)
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner)
+  const _isProjectOwner = useProjectStore((state) => state.isProjectOwner)
   const isOwner = useOwnerStore((state) => state.isOwner)
   const project = useProjectStore((state) => state.project)
   const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin)

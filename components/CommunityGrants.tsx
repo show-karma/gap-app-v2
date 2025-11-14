@@ -136,7 +136,7 @@ export const CommunityGrants = ({
 
     const timeoutId = setTimeout(handleScroll, 200)
     return () => clearTimeout(timeoutId)
-  }, [projects, hasNextPage, loadMore, isFilterLoading, isFetchingNextPage])
+  }, [hasNextPage, loadMore, isFilterLoading, isFetchingNextPage])
 
   const handleCategoryChange = useCallback(
     (categories: string[]) => {

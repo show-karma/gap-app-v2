@@ -2,7 +2,6 @@ import Link from "next/link"
 import { MegaphoneIcon } from "@/components/Icons/Megaphone"
 import { RightArrowIcon } from "@/components/Icons/RightArrow"
 import { ExternalLink } from "@/components/Utilities/ExternalLink"
-import { PAGES } from "@/utilities/pages"
 
 const bannerLink = "https://www.notion.so/Job-Board-15b0525cb96480fd98a5c1f4f31ee792"
 

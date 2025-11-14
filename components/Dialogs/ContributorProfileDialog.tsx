@@ -182,7 +182,7 @@ export const ContributorProfileDialog: FC<ContributorProfileDialogProps> = () =>
       })
       await contributorProfile.attest(walletSigner as any, changeStepperStep).then(async (res) => {
         if (!isProjectMember && !isGlobal && inviteCodeParam) {
-          const [data, error] = await fetchData(
+          const [_data, error] = await fetchData(
             INDEXER.PROJECT.INVITATION.ACCEPT_LINK(project?.uid as string),
             "POST",
             {
@@ -282,7 +282,7 @@ export const ContributorProfileDialog: FC<ContributorProfileDialogProps> = () =>
     } else {
       reset()
     }
-  }, [profile, setValue])
+  }, [profile, setValue, reset])
 
   return (
     <Transition appear show={isOpen} as={Fragment}>

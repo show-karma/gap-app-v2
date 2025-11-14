@@ -3,7 +3,6 @@ import { Suspense } from "react"
 import { TracksAdminPage } from "@/components/Pages/Communities/TracksAdminPage"
 import { Spinner } from "@/components/Utilities/Spinner"
 import { zeroUID } from "@/utilities/commons"
-import { gapIndexerApi } from "@/utilities/gapIndexerApi"
 import { defaultMetadata } from "@/utilities/meta"
 import { getCommunityData } from "@/utilities/queries/getCommunityData"
 

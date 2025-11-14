@@ -1,4 +1,3 @@
-import { Hex } from "viem"
 import { create } from "zustand"
 
 export type TxStepperSteps = "preparing" | "pending" | "confirmed" | "indexing" | "indexed"
@@ -10,7 +9,7 @@ interface TxStepperStore {
   changeStepperStep: (stepperStep: TxStepperSteps) => void
 }
 
-export const useStepper = create<TxStepperStore>((set, get) => ({
+export const useStepper = create<TxStepperStore>((set, _get) => ({
   isStepperOpen: false,
   setIsStepper: (isStepperOpen: boolean) => {
     set({ isStepperOpen })

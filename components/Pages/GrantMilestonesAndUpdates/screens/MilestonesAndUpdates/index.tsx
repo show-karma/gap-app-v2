@@ -12,10 +12,8 @@ import { useOwnerStore, useProjectStore } from "@/store"
 // import { MilestonesList } from "./MilestonesList";
 import { useCommunityAdminStore } from "@/store/communityAdmin"
 import { useGrantStore } from "@/store/grant"
-import { formatDate } from "@/utilities/formatDate"
 import { MESSAGES } from "@/utilities/messages"
 import { PAGES } from "@/utilities/pages"
-import { ReadMore } from "@/utilities/ReadMore"
 
 const MilestonesList = dynamic(
   () =>

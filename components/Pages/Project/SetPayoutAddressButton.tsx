@@ -189,7 +189,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
     debounce((address: string) => {
       validatePayoutAddress(address)
     }, 300),
-    [validatePayoutAddress]
+    []
   )
 
   // Cleanup debounced function on unmount

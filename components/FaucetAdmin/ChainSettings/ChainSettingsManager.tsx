@@ -1,9 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { formatEther, parseEther } from "viem"
+import { formatEther } from "viem"
 import { Spinner } from "@/components/Utilities/Spinner"
-import { useChains, useFaucetConfig, useFaucetEmergency } from "@/hooks/useFaucetAdmin"
+import { useFaucetConfig, useFaucetEmergency } from "@/hooks/useFaucetAdmin"
 import type { FaucetChainSettings } from "@/utilities/faucet/faucetService"
 import { appNetwork } from "@/utilities/network"
 import { ChainSettingsForm } from "./ChainSettingsForm"
@@ -15,7 +15,6 @@ export function ChainSettingsManager() {
   const { emergencyStop, resumeOperations } = useFaucetEmergency()
   const [editingChain, setEditingChain] = useState<number | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
-  console.log(config)
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">

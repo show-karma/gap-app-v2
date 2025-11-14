@@ -7,7 +7,6 @@
 
 import { fireEvent, screen } from "@testing-library/react"
 import { LayoutGrid } from "lucide-react"
-import React from "react"
 import { SimpleMenuItemClient } from "@/src/components/navbar/simple-menu-item-client"
 import { renderWithProviders } from "../utils/test-helpers"
 

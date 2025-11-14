@@ -1,6 +1,5 @@
 "use client"
 
-import { DocumentTextIcon } from "@heroicons/react/24/outline"
 import type { FC } from "react"
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview"
 import type { IApplicationVersion } from "@/types/funding-platform"

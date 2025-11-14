@@ -159,7 +159,6 @@ export const ObjectiveSimpleOptionsMenu = ({ objectiveId }: ObjectiveSimpleOptio
         }
       }
     } catch (error: any) {
-      console.log(error)
       toast.error(MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.ERROR)
       errorManager(`Error deleting objective ${objectiveId}`, error, {
         project: projectId,

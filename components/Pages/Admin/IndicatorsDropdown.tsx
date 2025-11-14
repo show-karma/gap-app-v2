@@ -1,11 +1,5 @@
 import { Dialog, Switch, Transition } from "@headlessui/react"
-import {
-  CheckIcon,
-  ChevronDownIcon,
-  MagnifyingGlassIcon,
-  PlusIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/outline"
+import { ChevronDownIcon, MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/outline"
 import * as Popover from "@radix-ui/react-popover"
 import { type FC, Fragment, useEffect, useState } from "react"
 import { LoadingSpinner } from "@/components/Disbursement/components/LoadingSpinner"
@@ -151,7 +145,6 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
                   placeholder="Search for indicators"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  autoFocus
                   disabled={isLoading}
                 />
               </div>

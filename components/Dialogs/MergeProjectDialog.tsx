@@ -14,7 +14,7 @@ import { type FC, Fragment, type ReactNode, useEffect, useState } from "react"
 import toast from "react-hot-toast"
 import { useAccount } from "wagmi"
 import { z } from "zod"
-import { getGapClient, useGap } from "@/hooks/useGap"
+import { useGap } from "@/hooks/useGap"
 import { useStaff } from "@/hooks/useStaff"
 import { useWallet } from "@/hooks/useWallet"
 import { useProjectStore } from "@/store"
@@ -85,7 +85,7 @@ function SearchProject({
     return setIsLoading(false)
   }, 500)
 
-  const renderItem = (item: IProjectResponse, href: string) => {
+  const renderItem = (item: IProjectResponse, _href: string) => {
     return (
       <div
         key={item.uid}
@@ -182,11 +182,11 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
   function openModal() {
     setIsOpen(true)
   }
-  const signer = useSigner()
+  const _signer = useSigner()
   const project = useProjectStore((state) => state.project)
   const refreshProject = useProjectStore((state) => state.refreshProject)
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin)
-  const setIsProjectAdmin = useProjectStore((state) => state.setIsProjectAdmin)
+  const _setIsProjectAdmin = useProjectStore((state) => state.setIsProjectAdmin)
   const { switchChainAsync } = useWallet()
   const { changeStepperStep, setIsStepper } = useStepper()
   const { isStaff } = useStaff()
@@ -244,7 +244,6 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
 
               if (alreadyExists) {
                 retries = 0
-                console.log("Redirecting to the primary project")
                 router.push(`/project/${primaryProject?.details?.data?.slug}`)
                 router.refresh()
                 changeStepperStep("indexed")
@@ -262,7 +261,6 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
         }
       })
     } catch (error: any) {
-      console.log(error)
       errorManager(
         `Error creating project pointer`,
         error,
@@ -335,19 +333,17 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
                         ? `The current project is already primary project. Cannot be merged with another project. Please delete existing pointers to enable merging.`
                         : null}
                     </p>
-                    {project && project.symlinks.length == 0 && (
-                      <>
-                        {primaryProject ? (
-                          <div>
-                            <p className="mb-2">Selected Primary Project:</p>
-                            <p className="font-bold text-2xl">{`${primaryProject?.details?.data.title}`}</p>
-                            <p className="text-md">{`/${primaryProject?.details?.data.slug}`}</p>
-                          </div>
-                        ) : (
-                          <div>Select a primary project to merge with.</div>
-                        )}
-                      </>
-                    )}
+                    {project &&
+                      project.symlinks.length === 0 &&
+                      (primaryProject ? (
+                        <div>
+                          <p className="mb-2">Selected Primary Project:</p>
+                          <p className="font-bold text-2xl">{`${primaryProject?.details?.data.title}`}</p>
+                          <p className="text-md">{`/${primaryProject?.details?.data.slug}`}</p>
+                        </div>
+                      ) : (
+                        <div>Select a primary project to merge with.</div>
+                      ))}
 
                     <p className="text-red-500 mb-2">
                       {!validAddress && primaryProject
@@ -363,7 +359,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
                         : null}
                     </p>
                   </div>
-                  {project?.symlinks?.length == 0 && (
+                  {project?.symlinks?.length === 0 && (
                     <SearchProject setPrimaryProject={setPrimaryProject} />
                   )}
                   <div className="flex flex-row gap-4 justify-end">
@@ -374,7 +370,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
                     >
                       Cancel
                     </Button>
-                    {project?.symlinks?.length == 0 && (
+                    {project?.symlinks?.length === 0 && (
                       <Button
                         className="text-white text-lg bg-red-600 border-black  hover:bg-red-600 hover:text-white"
                         onClick={async () => {

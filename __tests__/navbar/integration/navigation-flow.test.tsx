@@ -7,7 +7,6 @@ import { fireEvent, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { Navbar } from "@/src/components/navbar/navbar"
 import { NavbarDesktopNavigation } from "@/src/components/navbar/navbar-desktop-navigation"
-import { NavbarMobileMenu } from "@/src/components/navbar/navbar-mobile-menu"
 import { getAuthFixture } from "../fixtures/auth-fixtures"
 import {
   cleanupAfterEach,
@@ -15,7 +14,6 @@ import {
   createMockRouter,
   createMockUsePrivy,
   renderWithProviders,
-  updateMocks,
 } from "../utils/test-helpers"
 
 describe("Navigation Flow Integration Tests", () => {

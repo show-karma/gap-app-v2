@@ -19,7 +19,7 @@ import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin"
 import { MESSAGES } from "@/utilities/messages"
 import { PAGES } from "@/utilities/pages"
 import { cn } from "@/utilities/tailwind"
-import { type CsvParseResult, CsvPayoutData, PayoutsCsvUpload } from "./PayoutsCsvUpload"
+import { type CsvParseResult, PayoutsCsvUpload } from "./PayoutsCsvUpload"
 
 // Component-specific types
 interface EditableFields {

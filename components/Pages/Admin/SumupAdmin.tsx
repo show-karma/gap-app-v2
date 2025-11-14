@@ -41,7 +41,7 @@ export default function SumupAdminPage() {
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
     try {
       setIsLoading(true)
-      const response = await axios.post(`${envVars.NEXT_PUBLIC_KARMA_API}/sum-up/user/whitelist`, {
+      const _response = await axios.post(`${envVars.NEXT_PUBLIC_KARMA_API}/sum-up/user/whitelist`, {
         identifier: data.addressOrEmail,
       })
       reset()

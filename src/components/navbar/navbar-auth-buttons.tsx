@@ -1,7 +1,5 @@
 "use client"
 
-import { PhoneCall } from "lucide-react"
-import Link from "next/link"
 import { ExternalLink } from "@/components/Utilities/ExternalLink"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/hooks/useAuth"

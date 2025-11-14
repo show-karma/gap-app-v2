@@ -1,6 +1,6 @@
 "use client"
 import type React from "react"
-import { useEffect, useMemo } from "react"
+import { useEffect } from "react"
 import { useENS } from "@/store/ens"
 
 interface Props {
@@ -20,7 +20,7 @@ const EthereumAddressToENSName: React.FC<Props> = ({ address, shouldTruncate = t
   }, [lowerCasedAddress, ensNames, populateEns])
 
   const addressToDisplay = shouldTruncate
-    ? lowerCasedAddress?.slice(0, 6) + "..." + lowerCasedAddress?.slice(-6)
+    ? `${lowerCasedAddress?.slice(0, 6)}...${lowerCasedAddress?.slice(-6)}`
     : lowerCasedAddress
 
   return (

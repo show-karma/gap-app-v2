@@ -73,7 +73,7 @@ const GrantCardContent = ({
   const programId = grant.details?.data?.programId
 
   // Extract the base programId if it includes a chainId suffix (format: programId_chainId)
-  const baseProgramId = programId?.includes("_") ? programId.split("_")[0] : programId
+  const _baseProgramId = programId?.includes("_") ? programId.split("_")[0] : programId
 
   // Check if we have valid track IDs to display
   const hasTrackIds = selectedTrackIds && selectedTrackIds.length > 0
@@ -163,10 +163,8 @@ const GrantCardContent = ({
               <div className="flex w-full flex-row flex-wrap justify-start gap-1">
                 <div className="flex h-max w-max items-center justify-start rounded-full bg-slate-50   dark:bg-slate-700 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">
                   <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
-                    <>
-                      {formatCurrency(grant.milestones?.length)}{" "}
-                      {pluralize("Milestone", grant.milestones?.length)}
-                    </>
+                    {formatCurrency(grant.milestones?.length)}{" "}
+                    {pluralize("Milestone", grant.milestones?.length)}
                   </p>
                 </div>
 

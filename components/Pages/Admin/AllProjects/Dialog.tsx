@@ -1,12 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { Dialog, Transition } from "@headlessui/react"
-import { XMarkIcon } from "@heroicons/react/24/solid"
-import { type FC, Fragment, ReactNode, useState } from "react"
+import { type FC, Fragment, useState } from "react"
 import { Button } from "@/components/Utilities/Button"
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview"
 import { ReadMore } from "@/utilities/ReadMore"
-import { cn } from "@/utilities/tailwind"
 
 type ProjectDescriptionDialogProps = {
   projectName: string

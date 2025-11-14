@@ -39,7 +39,7 @@ if (typeof globalThis.Response === "undefined") {
         })
       }
     }
-  } catch (e) {
+  } catch (_e) {
     // Fallback if class definition fails
   }
 }

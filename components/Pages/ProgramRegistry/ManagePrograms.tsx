@@ -19,7 +19,6 @@ import { Button } from "@/components/Utilities/Button"
 import { errorManager } from "@/components/Utilities/errorManager"
 import Pagination from "@/components/Utilities/Pagination"
 import { useAuth } from "@/hooks/useAuth"
-import { useStepper } from "@/store/modals/txStepper"
 import { useRegistryStore } from "@/store/registry"
 import { isMemberOfProfile } from "@/utilities/allo/isMemberOf"
 import { useSigner } from "@/utilities/eas-wagmi-utils"
@@ -73,7 +72,7 @@ export const ManagePrograms = () => {
   const { address, isConnected } = useAccount()
   const { authenticated: isAuth, login } = useAuth()
 
-  const signer = useSigner()
+  const _signer = useSigner()
 
   const {
     setIsRegistryAdmin,
@@ -111,14 +110,20 @@ export const ManagePrograms = () => {
           `Error while checking if ${address} is a registry admin or pool manager`,
           error
         )
-        console.log(error)
       } finally {
         setIsRegistryAdminLoading(false)
         setIsPoolManagerLoading(false)
       }
     }
     getMemberOf()
-  }, [address])
+  }, [
+    address,
+    isConnected,
+    setIsPoolManager,
+    setIsPoolManagerLoading,
+    setIsRegistryAdmin,
+    setIsRegistryAdminLoading,
+  ])
 
   const [tab, setTab] = useQueryState("tab", {
     defaultValue: defaultTab || "pending",
@@ -127,7 +132,7 @@ export const ManagePrograms = () => {
   const [page, setPage] = useQueryState("page", {
     defaultValue: 1,
     serialize: (value) => value.toString(),
-    parse: (value) => parseInt(value),
+    parse: (value) => parseInt(value, 10),
   })
   const pageSize = 10
 
@@ -217,7 +222,6 @@ export const ManagePrograms = () => {
       }
     } catch (error: any) {
       errorManager(`Error while fetching grant programs`, error)
-      console.log(error)
       return {
         programs: [] as GrantProgram[],
         count: 0,
@@ -291,7 +295,6 @@ export const ManagePrograms = () => {
         isValid: value,
         address,
       })
-      console.log(`Error ${messageDict[value]} program ${program._id.$oid}`)
     }
   }
 

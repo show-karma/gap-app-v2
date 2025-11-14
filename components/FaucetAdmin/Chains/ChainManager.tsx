@@ -1,12 +1,6 @@
 "use client"
 
-import {
-  CheckCircleIcon,
-  PencilIcon,
-  PlusIcon,
-  TrashIcon,
-  XCircleIcon,
-} from "@heroicons/react/24/outline"
+import { PencilIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline"
 import { useState } from "react"
 import { Spinner } from "@/components/Utilities/Spinner"
 import { useChains } from "@/hooks/useFaucetAdmin"

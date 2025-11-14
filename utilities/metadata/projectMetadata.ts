@@ -191,7 +191,6 @@ export const createMetadataFromContext = (
       return generateProjectUpdatesMetadata(project, projectId)
     case "funding":
       return generateProjectFundingMetadata(project, projectId)
-    case "overview":
     default:
       if (customOptions?.title || customOptions?.description) {
         return generateProjectMetadata(project, {
@@ -209,7 +208,7 @@ export const createGrantMetadataFromContext = (
   project: IProjectResponse | null,
   grant: IGrantResponse | null,
   projectId: string,
-  grantUid?: string,
+  _grantUid?: string,
   metadataType: "overview" | "milestones" | "impact-criteria" = "overview"
 ): Metadata => {
   if (!project) {
@@ -230,7 +229,6 @@ export const createGrantMetadataFromContext = (
       return generateGrantMilestonesMetadata(project, grant, projectId)
     case "impact-criteria":
       return generateGrantImpactCriteriaMetadata(project, grant, projectId)
-    case "overview":
     default:
       return generateGrantOverviewMetadata(project, grant, projectId)
   }

@@ -1,4 +1,3 @@
-import { chainIdToNetwork } from "@show-karma/karma-gap-sdk"
 import { useEffect, useState } from "react"
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList"
 import { chainNameDictionary } from "@/utilities/chainNameDictionary"

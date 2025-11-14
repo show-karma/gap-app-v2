@@ -1,17 +1,12 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/solid"
+import { CheckIcon } from "@heroicons/react/24/solid"
 import * as Popover from "@radix-ui/react-popover"
-import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk"
-import Image from "next/image"
-import pluralize from "pluralize"
-import { type FC, useEffect, useState } from "react"
+import { type FC, useState } from "react"
 import { useAccount } from "wagmi"
 import { ChevronDown } from "@/components/Icons/ChevronDown"
 import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
 import { cn } from "@/utilities/tailwind"
 
 const ProgramDropdown: FC<{
@@ -35,7 +30,7 @@ const ProgramDropdown: FC<{
   setSelectedProgram,
 }) => {
   const [open, setOpen] = useState(false)
-  const [adding, setAdding] = useState(false)
+  const [_adding, _setAdding] = useState(false)
   const { address: owner } = useAccount()
 
   return (
@@ -111,7 +106,7 @@ const ProgramDropdown: FC<{
                     className={cn("mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white")}
                     style={{
                       display:
-                        selectedProgram?.metadata?.title == item?.metadata?.title
+                        selectedProgram?.metadata?.title === item?.metadata?.title
                           ? "block"
                           : "none",
                     }}

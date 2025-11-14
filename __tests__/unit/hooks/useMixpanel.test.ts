@@ -68,7 +68,7 @@ describe("useMixpanel", () => {
       process.env.NEXT_PUBLIC_MIXPANEL_KEY = "test-key"
       process.env.NEXT_PUBLIC_ENV = "production"
 
-      mockMixpanel.track = jest.fn((event, props, callback) => {
+      mockMixpanel.track = jest.fn((_event, _props, callback) => {
         if (typeof callback === "function") {
           callback(1)
         }
@@ -96,7 +96,7 @@ describe("useMixpanel", () => {
       process.env.NEXT_PUBLIC_MIXPANEL_KEY = "test-key"
       process.env.NEXT_PUBLIC_ENV = "production"
 
-      mockMixpanel.track = jest.fn((event, props, callback) => {
+      mockMixpanel.track = jest.fn((_event, _props, callback) => {
         if (typeof callback === "function") {
           callback(1)
         }
@@ -119,7 +119,7 @@ describe("useMixpanel", () => {
       process.env.NEXT_PUBLIC_MIXPANEL_KEY = "test-key"
       process.env.NEXT_PUBLIC_ENV = "production"
 
-      mockMixpanel.track = jest.fn((event, props, callback) => {
+      mockMixpanel.track = jest.fn((_event, _props, callback) => {
         if (typeof callback === "function") {
           callback(1)
         }
@@ -142,7 +142,7 @@ describe("useMixpanel", () => {
       process.env.NEXT_PUBLIC_MIXPANEL_KEY = "test-key"
       process.env.NEXT_PUBLIC_ENV = "production"
 
-      mockMixpanel.track = jest.fn((event, props, callback) => {
+      mockMixpanel.track = jest.fn((_event, _props, callback) => {
         if (typeof callback === "function") {
           callback(1)
         }
@@ -166,7 +166,7 @@ describe("useMixpanel", () => {
       process.env.NEXT_PUBLIC_ENV = "production"
 
       const trackError = new Error("Tracking failed")
-      mockMixpanel.track = jest.fn((event, props, callback) => {
+      mockMixpanel.track = jest.fn((_event, _props, callback) => {
         if (typeof callback === "function") {
           callback(trackError as any)
         }
@@ -189,7 +189,7 @@ describe("useMixpanel", () => {
       process.env.NEXT_PUBLIC_MIXPANEL_KEY = "test-key"
       process.env.NEXT_PUBLIC_ENV = "production"
 
-      mockMixpanel.track = jest.fn((event, props, callback) => {
+      mockMixpanel.track = jest.fn((_event, _props, callback) => {
         if (typeof callback === "function") {
           callback(1)
         }
@@ -246,7 +246,7 @@ describe("useMixpanel", () => {
       process.env.NEXT_PUBLIC_MIXPANEL_KEY = "test-key"
       process.env.NEXT_PUBLIC_ENV = "production"
 
-      mockMixpanel.track = jest.fn((event, props, callback) => {
+      mockMixpanel.track = jest.fn((_event, _props, callback) => {
         if (typeof callback === "function") {
           callback(1)
         }
@@ -284,7 +284,7 @@ describe("useMixpanel", () => {
       process.env.NEXT_PUBLIC_MIXPANEL_KEY = "test-key"
       process.env.NEXT_PUBLIC_ENV = "production"
 
-      mockMixpanel.track = jest.fn((event, props, callback) => {
+      mockMixpanel.track = jest.fn((_event, _props, callback) => {
         if (typeof callback === "function") {
           callback(1)
         }
@@ -314,7 +314,7 @@ describe("useMixpanel", () => {
       process.env.NEXT_PUBLIC_MIXPANEL_KEY = "test-key"
       process.env.NEXT_PUBLIC_ENV = "production"
 
-      mockMixpanel.track = jest.fn((event, props, callback) => {
+      mockMixpanel.track = jest.fn((_event, _props, callback) => {
         if (typeof callback === "function") {
           callback(1)
         }

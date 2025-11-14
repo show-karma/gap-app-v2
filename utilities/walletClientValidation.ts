@@ -55,28 +55,17 @@ export async function waitForValidWalletClient(
   maxRetries = 15,
   delayMs = 1000
 ): Promise<WalletClient | null> {
-  console.log(`Waiting for valid wallet client on chain ${expectedChainId}...`)
-
   for (let i = 0; i < maxRetries; i++) {
     const walletClient = getWalletClient()
     const validation = validateWalletClient(walletClient, expectedChainId)
 
     if (validation.isValid && walletClient) {
-      console.log(`✅ Wallet client validated successfully for chain ${expectedChainId}`)
       return walletClient
     }
 
     // If we have a wallet client but wrong chain, it might still be switching
-    if (walletClient && walletClient.account) {
-      console.log(
-        `⏳ Wallet client available but validation pending (attempt ${i + 1}/${maxRetries}):`,
-        validation.issues
-      )
+    if (walletClient?.account) {
     } else {
-      console.log(
-        `❌ Wallet client not available (attempt ${i + 1}/${maxRetries}):`,
-        validation.issues
-      )
     }
 
     // Increase delay for later attempts

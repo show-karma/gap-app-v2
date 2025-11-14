@@ -2,7 +2,6 @@ import { useCallback, useState } from "react"
 import toast from "react-hot-toast"
 import { useAccount } from "wagmi"
 import { UX_CONSTANTS } from "@/constants/donation"
-import type { SupportedToken } from "@/constants/supportedTokens"
 import { useDonationTransfer } from "@/hooks/useDonationTransfer"
 import { useDonationCart } from "@/store/donationCart"
 import {
@@ -119,8 +118,6 @@ export function useDonationCheckout() {
             donations: completedDonations,
             totalProjects: payments.length,
           }
-
-          console.log("Saving completed session:", session)
           cartState.setLastCompletedSession(session)
         } else {
           console.warn("No completed donations to save in session")

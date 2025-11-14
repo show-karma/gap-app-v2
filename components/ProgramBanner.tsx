@@ -1,5 +1,4 @@
 import Image from "next/image"
-import Link from "next/link"
 import { useParams, useSearchParams } from "next/navigation"
 import { useCommunityPrograms } from "@/hooks/usePrograms"
 import { ReadMore } from "@/utilities/ReadMore"

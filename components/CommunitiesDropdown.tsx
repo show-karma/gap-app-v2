@@ -40,7 +40,7 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
     if (triggerRef.current) {
       setTriggerWidth(triggerRef.current.offsetWidth)
     }
-  }, [open])
+  }, [])
 
   const communitiesArray = communities
     .filter((community) => community.details?.data?.name) // Filter out communities without a name

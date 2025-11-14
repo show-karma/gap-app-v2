@@ -6,7 +6,7 @@ import { useState } from "react"
 import toast from "react-hot-toast"
 import { useAccount } from "wagmi"
 import { errorManager } from "@/components/Utilities/errorManager"
-import { getGapClient, useGap } from "@/hooks/useGap"
+import { useGap } from "@/hooks/useGap"
 import { useProjectStore } from "@/store"
 import { useStepper } from "@/store/modals/txStepper"
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils"
@@ -98,7 +98,7 @@ export function useProjectMilestoneForm({
       await newMilestone
         .attest(walletSigner as any, sanitizedData, changeStepperStep)
         .then(async (res) => {
-          const fetchedMilestones = null
+          const _fetchedMilestones = null
           const txHash = res?.tx[0]?.hash
           if (txHash) {
             await fetchData(
@@ -208,7 +208,7 @@ export function useProjectMilestoneForm({
       await milestoneInstance
         .attest(walletSigner as any, sanitizedData, changeStepperStep)
         .then(async (res) => {
-          const fetchedMilestones = null
+          const _fetchedMilestones = null
           const txHash = res?.tx[0]?.hash
 
           if (txHash) {

@@ -37,7 +37,7 @@ export const MemberCard = ({ member }: { member: string }) => {
   const isContractOwner = useOwnerStore((state) => state.isOwner)
   const { address } = useAccount()
   const isAuthorized = isProjectOwner || isContractOwner
-  const isAdminOrAbove = isProjectOwner || isContractOwner || isProjectAdmin
+  const _isAdminOrAbove = isProjectOwner || isContractOwner || isProjectAdmin
   const { project: projectInstance } = useProjectInstance(
     project?.details?.data.slug || project?.uid || ""
   )
@@ -62,7 +62,7 @@ export const MemberCard = ({ member }: { member: string }) => {
     if (member) {
       populateEns([member?.toLowerCase() as string])
     }
-  }, [memberRoles, member])
+  }, [member, populateEns])
 
   return (
     <div className="flex w-full flex-col gap-4 items-start shadow-sm rounded-lg p-4 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700">

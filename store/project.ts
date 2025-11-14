@@ -3,7 +3,6 @@ import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karm
 import { QueryClient } from "@tanstack/react-query"
 import { create } from "zustand"
 import { gapIndexerApi } from "@/utilities/gapIndexerApi"
-import { getContributorProfiles } from "@/utilities/indexer/getContributorProfiles"
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions"
 import { useGrantStore } from "./grant"
 

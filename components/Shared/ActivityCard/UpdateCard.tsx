@@ -16,7 +16,6 @@ import { EditUpdateDialog } from "../../Pages/Project/Updates/EditUpdateDialog"
 import { ProjectActivityBlock } from "../../Pages/Project/Updates/ProjectActivityBlock"
 import { ActivityAttribution } from "./ActivityAttribution"
 import { ActivityMenu } from "./ActivityMenu"
-import { ActivityStatus } from "./ActivityStatus"
 import { ActivityStatusHeader } from "./ActivityStatusHeader"
 import type { ActivityType } from "./ActivityTypes"
 

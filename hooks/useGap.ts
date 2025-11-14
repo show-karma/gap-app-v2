@@ -19,7 +19,7 @@ const ipfsClient = new IpfsStorage({
   token: envVars.IPFS_TOKEN,
 })
 
-const gelatoOpts = {
+const _gelatoOpts = {
   sponsorUrl: envVars.NEXT_PUBLIC_SPONSOR_URL || "/api/sponsored-txn",
   useGasless: false,
 }
@@ -54,7 +54,7 @@ export const getGapClient = (chainID: number): GAP => {
       globalSchemas: false,
       network,
       // uncomment to use the API client
-      ...(apiUrl && apiUrl.trim()
+      ...(apiUrl?.trim()
         ? {
             apiClient: new GapIndexerClient(apiUrl),
           }

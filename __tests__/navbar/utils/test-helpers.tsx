@@ -113,7 +113,7 @@ export const cleanupAfterEach = () => {
 /**
  * Reset all permission mocks to default (extended version)
  */
-const resetAllPermissionMocksExtended = () => {
+const _resetAllPermissionMocksExtended = () => {
   resetPermissionMocks()
 
   // Reset staff
@@ -723,7 +723,7 @@ export const setViewportSize = (width: number, height: number) => {
 /**
  * Helper to simulate click outside
  */
-export const simulateClickOutside = (element: HTMLElement) => {
+export const simulateClickOutside = (_element: HTMLElement) => {
   const event = new MouseEvent("mousedown", {
     bubbles: true,
     cancelable: true,
@@ -787,7 +787,7 @@ export const calculateContrastRatio = (foreground: string, background: string): 
     const rgb = color.match(/\d+/g)
     if (!rgb || rgb.length < 3) return 0
     const [r, g, b] = rgb.map((val) => {
-      const normalized = parseInt(val) / 255
+      const normalized = parseInt(val, 10) / 255
       return normalized <= 0.03928 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4
     })
     return 0.2126 * r + 0.7152 * g + 0.0722 * b

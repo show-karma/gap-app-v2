@@ -1,5 +1,4 @@
 import { Communities } from "@/components/Pages/Home/Communities"
-import { NewFeatureBanner } from "@/components/Pages/Home/NewFeatureBanner"
 import { Presentation } from "@/components/Pages/Home/Presentation"
 import { WhatIsSolving } from "@/components/Pages/Home/WhatIsSolving"
 import { defaultMetadata } from "@/utilities/meta"

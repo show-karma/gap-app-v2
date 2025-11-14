@@ -86,7 +86,7 @@ describe("DonationErrorBoundary", () => {
     })
 
     it("should call errorManager when an error is caught", () => {
-      const testError = new Error("Test error")
+      const _testError = new Error("Test error")
 
       render(
         <DonationErrorBoundary>
@@ -320,8 +320,8 @@ describe("DonationErrorBoundary", () => {
 
   describe("Error Info Storage", () => {
     it("should store error info in state", () => {
-      const testError = new Error("Test error")
-      const testErrorInfo = {
+      const _testError = new Error("Test error")
+      const _testErrorInfo = {
         componentStack: "at Component (test.js:1:1)",
       } as React.ErrorInfo
 

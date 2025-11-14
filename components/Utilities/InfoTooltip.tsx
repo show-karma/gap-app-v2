@@ -1,5 +1,3 @@
-import { InformationCircleIcon, QuestionMarkCircleIcon } from "@heroicons/react/24/outline"
-
 import * as Tooltip from "@radix-ui/react-tooltip"
 import type { ReactNode } from "react"
 import { cn } from "@/utilities/tailwind"

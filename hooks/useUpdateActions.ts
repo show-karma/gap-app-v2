@@ -11,11 +11,10 @@ import toast from "react-hot-toast"
 import { useAccount } from "wagmi"
 import { errorManager } from "@/components/Utilities/errorManager"
 import { queryClient } from "@/components/Utilities/PrivyProviderWrapper"
-import { getGapClient, useGap } from "@/hooks/useGap"
+import { useGap } from "@/hooks/useGap"
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke"
 import { useOwnerStore, useProjectStore } from "@/store"
 import { useStepper } from "@/store/modals/txStepper"
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid"
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils"
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain"
 import fetchData from "@/utilities/fetchData"
@@ -110,7 +109,7 @@ export const useUpdateActions = (update: UpdateType) => {
 
       let findUpdate: any = null
       let deleteMessage = ""
-      let deleteErrorMessage = ""
+      let _deleteErrorMessage = ""
 
       // Handle different update types
       switch (update.type) {
@@ -122,7 +121,7 @@ export const useUpdateActions = (update: UpdateType) => {
           if (!findUpdate) throw new Error("Project update not found")
 
           deleteMessage = MESSAGES.PROJECT_UPDATE_FORM.DELETE.SUCCESS
-          deleteErrorMessage = MESSAGES.PROJECT_UPDATE_FORM.DELETE.ERROR
+          _deleteErrorMessage = MESSAGES.PROJECT_UPDATE_FORM.DELETE.ERROR
           break
         }
 
@@ -134,7 +133,7 @@ export const useUpdateActions = (update: UpdateType) => {
           if (!findUpdate) throw new Error("Project impact not found")
 
           deleteMessage = MESSAGES.PROJECT.IMPACT.REMOVE.SUCCESS
-          deleteErrorMessage = MESSAGES.PROJECT.IMPACT.REMOVE.ERROR
+          _deleteErrorMessage = MESSAGES.PROJECT.IMPACT.REMOVE.ERROR
           break
         }
 
@@ -153,7 +152,7 @@ export const useUpdateActions = (update: UpdateType) => {
           if (!findUpdate) throw new Error("Grant update not found")
 
           deleteMessage = MESSAGES.GRANT.GRANT_UPDATE.UNDO.SUCCESS
-          deleteErrorMessage = MESSAGES.GRANT.GRANT_UPDATE.UNDO.ERROR
+          _deleteErrorMessage = MESSAGES.GRANT.GRANT_UPDATE.UNDO.ERROR
           break
         }
 
@@ -245,7 +244,6 @@ export const useUpdateActions = (update: UpdateType) => {
         }
       }
     } catch (error: any) {
-      console.log(error)
       const errorMessage =
         update.type === "ProjectUpdate"
           ? MESSAGES.PROJECT_UPDATE_FORM.DELETE.ERROR

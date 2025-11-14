@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { Popover } from "@headlessui/react"
-import { CalendarIcon, ChevronDownIcon } from "@heroicons/react/24/outline"
+import { ChevronDownIcon } from "@heroicons/react/24/outline"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Milestone } from "@show-karma/karma-gap-sdk"
 import type {
@@ -11,7 +11,6 @@ import type {
 import { useRouter } from "next/navigation"
 import type { FC } from "react"
 import { useState } from "react"
-import { DayPicker } from "react-day-picker"
 import type { SubmitHandler } from "react-hook-form"
 import { Controller, useForm } from "react-hook-form"
 import toast from "react-hot-toast"
@@ -34,7 +33,6 @@ import { INDEXER } from "@/utilities/indexer"
 import { MESSAGES } from "@/utilities/messages"
 import { PAGES } from "@/utilities/pages"
 import { sanitizeObject } from "@/utilities/sanitize"
-import { privyConfig as config } from "@/utilities/wagmi/privy-config"
 import { safeGetWalletClient } from "@/utilities/wallet-helpers"
 import { errorManager } from "../Utilities/errorManager"
 

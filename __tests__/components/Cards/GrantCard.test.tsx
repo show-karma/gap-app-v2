@@ -74,7 +74,7 @@ jest.mock("@/utilities/formatCurrency", () => ({
 }))
 
 jest.mock("@/utilities/formatDate", () => ({
-  formatDate: jest.fn((date: string | number) => "Jan 1, 2024"),
+  formatDate: jest.fn((_date: string | number) => "Jan 1, 2024"),
 }))
 
 jest.mock("@/utilities/pages", () => ({

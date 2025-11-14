@@ -51,7 +51,7 @@ export function PayoutsCsvUpload({
 
     for (const pattern of patterns) {
       const match = url.match(pattern)
-      if (match && match[1]) {
+      if (match?.[1]) {
         return match[1].trim()
       }
     }
@@ -183,7 +183,7 @@ export function PayoutsCsvUpload({
                 hasError = true
               } else {
                 const numAmount = parseFloat(amount)
-                if (isNaN(numAmount) || numAmount <= 0) {
+                if (Number.isNaN(numAmount) || numAmount <= 0) {
                   rowErrors.push(`Row ${rowNum}: Invalid amount: ${amount}`)
                   hasError = true
                 } else if (!/^\d+(\.\d{0,2})?$/.test(amount)) {
@@ -234,7 +234,7 @@ export function PayoutsCsvUpload({
         },
       })
     },
-    [onDataParsed]
+    [onDataParsed, extractProjectSlug, findColumn]
   )
 
   const handleFileSelect = useCallback(

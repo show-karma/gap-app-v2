@@ -1,4 +1,4 @@
-import { act, renderHook, waitFor } from "@testing-library/react"
+import { act, renderHook } from "@testing-library/react"
 import { type Address, getAddress, parseUnits } from "viem"
 import * as wagmi from "wagmi"
 import type { SupportedToken } from "@/constants/supportedTokens"
@@ -281,7 +281,7 @@ describe("useDonationTransfer", () => {
   })
 
   describe("executeDonations", () => {
-    const getRecipientAddress = jest.fn((projectId: string) => mockRecipientAddress)
+    const getRecipientAddress = jest.fn((_projectId: string) => mockRecipientAddress)
 
     it("should execute donation for native token", async () => {
       const { result } = renderHook(() => useDonationTransfer())
@@ -745,7 +745,7 @@ describe("useDonationTransfer", () => {
             jest.fn(() => mockRecipientAddress)
           )
         })
-      } catch (error) {
+      } catch (_error) {
         // Error expected
       }
 
@@ -941,7 +941,7 @@ describe("useDonationTransfer", () => {
       }
 
       checkTokenAllowances.mockImplementation(
-        (client: any, address: Address, spender: Address, tokens: any[], chainId: number) => {
+        (_client: any, _address: Address, _spender: Address, _tokens: any[], chainId: number) => {
           return Promise.resolve([
             {
               needsApproval: true,

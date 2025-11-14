@@ -46,7 +46,6 @@ jest.mock("@/utilities/auth/api-client", () => {
 // Import the service AFTER all mocks are set up
 import {
   type AddMilestoneReviewerRequest,
-  MilestoneReviewer,
   milestoneReviewersService,
 } from "@/services/milestone-reviewers.service"
 

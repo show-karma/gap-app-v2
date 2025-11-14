@@ -150,7 +150,7 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
         setValidatedRepos((prev) => ({ ...prev, [index]: false }))
         return false
       }
-    } catch (e) {
+    } catch (_e) {
       setValidationErrors((prev) => ({
         ...prev,
         [index]: "Invalid URL format",

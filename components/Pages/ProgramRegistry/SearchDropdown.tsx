@@ -92,7 +92,7 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
         })
       : parsedArray
     setOrderedList(sortedList)
-  }, [list])
+  }, [list, imageDictionary?.[item.toLowerCase()], shouldSort])
 
   const addCustomNetwork = (customNetwork: string) => {
     setAdding(false)

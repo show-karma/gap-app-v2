@@ -32,8 +32,8 @@ export function TransactionStatus({
   if (transfers.length === 0) return null
 
   const hasFailures = transfers.some((t) => t.status === "error")
-  const hasSuccesses = transfers.some((t) => t.status === "success")
-  const hasPending = transfers.some((t) => t.status === "pending")
+  const _hasSuccesses = transfers.some((t) => t.status === "success")
+  const _hasPending = transfers.some((t) => t.status === "pending")
 
   return (
     <div className="rounded-2xl border-2 border-gray-200 bg-white/80 p-5 shadow-sm dark:border-gray-800 dark:bg-zinc-950/70">

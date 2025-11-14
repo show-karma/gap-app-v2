@@ -13,7 +13,7 @@ import { useAccount } from "wagmi"
 import { z } from "zod"
 import { Button } from "@/components/Utilities/Button"
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor"
-import { getGapClient, useGap } from "@/hooks/useGap"
+import { useGap } from "@/hooks/useGap"
 import { useWallet } from "@/hooks/useWallet"
 import { useProjectStore } from "@/store"
 import { useGrantStore } from "@/store/grant"
@@ -48,7 +48,7 @@ const updateSchema = z.object({
   completionPercentage: z.string().refine(
     (value) => {
       const num = Number(value)
-      return !isNaN(num) && num >= 0 && num <= 100
+      return !Number.isNaN(num) && num >= 0 && num <= 100
     },
     {
       message: "Please enter a number between 0 and 100",
@@ -209,7 +209,6 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
         }
       })
     } catch (error) {
-      console.log(error)
       errorManager(
         `Error creating grant update for grant ${grantToUpdate.uid} from project ${project.uid}`,
         error,

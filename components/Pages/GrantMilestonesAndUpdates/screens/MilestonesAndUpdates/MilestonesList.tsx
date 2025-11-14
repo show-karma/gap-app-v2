@@ -1,6 +1,6 @@
 import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
 import pluralize from "pluralize"
-import { type FC, use, useEffect, useMemo, useState } from "react"
+import { type FC, useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/Utilities/Button"
 import { cn } from "@/utilities/tailwind"
 import { GrantUpdate } from "./GrantUpdate"
@@ -89,7 +89,7 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
 
   useEffect(() => {
     getOrderedMerge()
-  }, [updates, milestones, grant.uid])
+  }, [getOrderedMerge])
 
   const getUnsortedMilestones = () => {
     const unsortedCompletedMilestones = generalArray.filter((item) => {
@@ -197,7 +197,7 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
 
   useMemo(() => {
     rearrangeArrayByType()
-  }, [selectedMilestoneType, grant.uid, generalArray])
+  }, [rearrangeArrayByType])
 
   const updatesLength = grant.milestones.filter((i) => i.completed).length + updates.length
   const milestonesCounter = milestones.length

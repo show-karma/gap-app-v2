@@ -35,11 +35,10 @@ export function PermissionsProvider() {
           `Error while checking if ${address} is a registry admin or pool manager`,
           error
         )
-        console.log(error)
       }
     }
     getMemberOf()
-  }, [address, isConnected, chain])
+  }, [address, isConnected, setIsPoolManager, setIsRegistryAdmin])
 
   return null
 }

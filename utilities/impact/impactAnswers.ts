@@ -1,5 +1,4 @@
 import toast from "react-hot-toast"
-import { ImpactIndicatorWithData } from "@/types/impactMeasurement"
 import fetchData from "../fetchData"
 import { INDEXER } from "../indexer"
 import { MESSAGES } from "../messages"

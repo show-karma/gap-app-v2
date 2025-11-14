@@ -85,7 +85,7 @@ if (typeof globalThis.Headers === "undefined") {
 // TransformStream polyfill for MSW
 if (typeof globalThis.TransformStream === "undefined") {
   globalThis.TransformStream = class TransformStream {
-    constructor(transformer = {}) {
+    constructor(_transformer = {}) {
       this.readable = {
         getReader: () => ({
           read: async () => ({ done: true, value: undefined }),
@@ -112,7 +112,7 @@ if (typeof globalThis.BroadcastChannel === "undefined") {
       this.name = name
       this._listeners = []
     }
-    postMessage(message) {
+    postMessage(_message) {
       // No-op for testing
     }
     addEventListener(type, listener) {
@@ -130,7 +130,7 @@ if (typeof globalThis.BroadcastChannel === "undefined") {
 // WritableStream polyfill for MSW
 if (typeof globalThis.WritableStream === "undefined") {
   globalThis.WritableStream = class WritableStream {
-    constructor(underlyingSink = {}) {
+    constructor(_underlyingSink = {}) {
       this._writer = null
     }
     getWriter() {
@@ -150,7 +150,7 @@ if (typeof globalThis.WritableStream === "undefined") {
 // ReadableStream polyfill for MSW
 if (typeof globalThis.ReadableStream === "undefined") {
   globalThis.ReadableStream = class ReadableStream {
-    constructor(underlyingSource = {}) {
+    constructor(_underlyingSource = {}) {
       this._reader = null
     }
     getReader() {

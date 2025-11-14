@@ -15,7 +15,6 @@ export const registryService = {
       return data
     } catch (error: any) {
       errorManager(`Error while searching for program by id`, error)
-      console.log(error)
     }
   },
 }

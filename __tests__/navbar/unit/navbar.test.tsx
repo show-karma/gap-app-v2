@@ -4,7 +4,6 @@
  */
 
 import { screen } from "@testing-library/react"
-import React from "react"
 import { Navbar } from "@/src/components/navbar/navbar"
 import { getAuthFixture } from "../fixtures/auth-fixtures"
 import { renderWithProviders } from "../utils/test-helpers"

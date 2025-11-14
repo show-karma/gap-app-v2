@@ -1,16 +1,6 @@
-import { ChevronRightIcon } from "@heroicons/react/20/solid"
-import Image from "next/image"
-import Link from "next/link"
-import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList"
-import { programService as ProgramService } from "@/services/programs"
 import { registryService } from "@/services/registry.service"
-import { useDonationCart } from "@/store"
-import { CommunityDetailsV2 } from "@/types/community"
-import { communityColors } from "@/utilities/communityColors"
-import { PAGES } from "@/utilities/pages"
 import { pagesOnRoot } from "@/utilities/pagesOnRoot"
 import { getCommunityDetailsV2 } from "@/utilities/queries/getCommunityDataV2"
-import { ReadMore } from "@/utilities/ReadMore"
 import { DonationHeader } from "./header"
 
 type Params = Promise<{
@@ -31,7 +21,7 @@ export default async function Layout(props: { children: React.ReactNode; params:
 
   const programSplitted = programId.split("_")
   const programIsolatedId = programSplitted[0]
-  const programWithoutChain = parseInt(programSplitted[1])
+  const programWithoutChain = parseInt(programSplitted[1], 10)
 
   const program = await registryService.searchProgramById(programIsolatedId, programWithoutChain)
   if (!program) return undefined

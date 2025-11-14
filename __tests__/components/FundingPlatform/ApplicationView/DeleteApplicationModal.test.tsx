@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { fireEvent, render, screen } from "@testing-library/react"
 import DeleteApplicationModal from "@/components/FundingPlatform/ApplicationView/DeleteApplicationModal"
 
 // Mock Headless UI Dialog components
@@ -310,7 +310,7 @@ describe("DeleteApplicationModal", () => {
     })
 
     it("should handle very long reference numbers", () => {
-      const longRefNumber = "APP-" + "X".repeat(100)
+      const longRefNumber = `APP-${"X".repeat(100)}`
       render(<DeleteApplicationModal {...defaultProps} referenceNumber={longRefNumber} />)
 
       expect(screen.getByText(longRefNumber)).toBeInTheDocument()

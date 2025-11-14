@@ -1,4 +1,4 @@
-import React, { type FC, type ReactElement } from "react"
+import type { FC, ReactElement } from "react"
 
 type GenericJSON = Record<string, unknown>
 

@@ -4,7 +4,7 @@ import { Dialog, Transition } from "@headlessui/react"
 import { PlusIcon } from "@heroicons/react/24/solid"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useParams } from "next/navigation"
-import { type FC, Fragment, ReactNode, useState } from "react"
+import { type FC, Fragment, useState } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 import toast from "react-hot-toast"
 import { useAccount } from "wagmi"
@@ -59,7 +59,7 @@ export const CategoryCreationDialog: FC<CategoryCreationDialogProps> = ({ refres
       if (!isAuth) {
         await authenticate()
       }
-      const [request, error] = await fetchData(
+      const [_request, error] = await fetchData(
         INDEXER.CATEGORIES.CREATE(communityId),
         "POST",
         data,
@@ -80,7 +80,6 @@ export const CategoryCreationDialog: FC<CategoryCreationDialogProps> = ({ refres
           error: MESSAGES.CATEGORY.CREATE.ERROR,
         }
       )
-      console.log(error)
     } finally {
       setIsLoading(false)
     }

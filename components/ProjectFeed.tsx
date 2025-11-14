@@ -38,7 +38,7 @@ export const ProjectFeed = ({ initialFeed = [] }: ProjectFeedProps) => {
     const callFeedAPI = async () => {
       setFeedLoading(true)
       try {
-        const [data, error, pageInfo]: any = await fetchData(
+        const [data, _error, _pageInfo]: any = await fetchData(
           `${INDEXER.PROJECT.FEED(projectId as string)}?limit=${itemsPerPage}`
         )
         if (!data || !data.length) return
@@ -59,7 +59,7 @@ export const ProjectFeed = ({ initialFeed = [] }: ProjectFeedProps) => {
       callFeedAPI()
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }
-  }, [projectId, page])
+  }, [projectId, page, feed])
 
   return (
     <div className="w-full flex flex-col gap-2">

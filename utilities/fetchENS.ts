@@ -45,7 +45,6 @@ export const fetchENS = async (addresses: (Hex | string)[]) => {
     errorManager(`Error in fetch ens names`, error, {
       addresses,
     })
-    console.log(error)
     return addresses.map((address) => ({
       name: undefined,
       address,
@@ -94,7 +93,6 @@ export const fetchAddressFromENS = async (ensNames: string[]) => {
     errorManager(`Error in fetch addresses from ENS names`, error, {
       ensNames,
     })
-    console.log(error)
     return ensNames.map((name) => ({
       name,
       address: undefined,

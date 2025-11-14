@@ -14,7 +14,6 @@ import { useOwnerStore, useProjectStore } from "@/store"
 import { useCommunityAdminStore } from "@/store/communityAdmin"
 import fetchData from "@/utilities/fetchData"
 import { INDEXER } from "@/utilities/indexer"
-import { MESSAGES } from "@/utilities/messages"
 
 interface LinkDivviWalletButtonProps {
   buttonClassName?: string
@@ -133,7 +132,15 @@ export const LinkDivviWalletButton: FC<LinkDivviWalletButtonProps> = ({
     } finally {
       setIsLoading(false)
     }
-  }, [project.uid, walletAddress, validateWalletAddress, onClose])
+  }, [
+    project.uid,
+    walletAddress,
+    validateWalletAddress,
+    onClose,
+    address,
+    buttonElement,
+    refreshProject,
+  ])
 
   if (!isAuthorized) {
     return null

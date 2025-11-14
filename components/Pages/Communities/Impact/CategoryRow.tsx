@@ -16,7 +16,7 @@ import { type TimeframeOption, TimeframeSelector, timeframeOptions } from "./Tim
 export const fundedAmountFormatter = (value: string) => {
   const amount = Number(value.includes(" ") ? value.split(" ")[0] : value)
   const formattedAmount = Number(amount.toFixed(2))
-  if (isNaN(formattedAmount)) {
+  if (Number.isNaN(formattedAmount)) {
     return value
   }
   return formattedAmount
@@ -86,13 +86,13 @@ const AggregatedSegmentCard = ({ segment }: { segment: ProgramImpactSegment }) =
 
   // Listen for filter changes to reset timeframe
   const searchParams = useSearchParams()
-  const projectSelected = searchParams.get("projectId")
-  const programSelected = searchParams.get("programId")
+  const _projectSelected = searchParams.get("projectId")
+  const _programSelected = searchParams.get("programId")
 
   useEffect(() => {
     // Reset timeframe to 1 month when filters change
     setSelectedTimeframe("1_month")
-  }, [projectSelected, programSelected])
+  }, [])
 
   const chartData = aggregatedIndicators ? prepareAggregatedChartData(aggregatedIndicators) : []
   const indicatorNames = aggregatedIndicators?.map((ind) => ind.name) || []
@@ -180,7 +180,7 @@ const AggregatedSegmentCard = ({ segment }: { segment: ProgramImpactSegment }) =
                   />
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {aggregatedIndicators.map((indicator, index) => (
+                  {aggregatedIndicators.map((indicator, _index) => (
                     <span
                       key={indicator.id}
                       className="px-2 py-1 text-xs rounded-full bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200"

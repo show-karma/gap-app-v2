@@ -15,7 +15,6 @@ import type { Category, ImpactIndicator, ImpactIndicatorWithData } from "@/types
 import fetchData from "@/utilities/fetchData"
 import { INDEXER } from "@/utilities/indexer"
 import { MESSAGES } from "@/utilities/messages"
-import { ProgramCard } from "./ProgramCard"
 
 // Custom Dropdown Menu Component - copied from CategoryView.tsx
 const DropdownMenu = ({
@@ -148,7 +147,7 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
   }
 
   // Handle indicator creation success
-  const handleIndicatorCreated = (indicator: ImpactIndicatorWithData) => {
+  const handleIndicatorCreated = (_indicator: ImpactIndicatorWithData) => {
     refetchIndicators() // Use the hook's refetch method
 
     if (onRefresh) {
@@ -217,8 +216,7 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
       filteredIndicators = filteredIndicators.filter(
         (indicator) =>
           indicator.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (indicator.description &&
-            indicator.description.toLowerCase().includes(searchQuery.toLowerCase()))
+          indicator.description?.toLowerCase().includes(searchQuery.toLowerCase())
       )
     }
 

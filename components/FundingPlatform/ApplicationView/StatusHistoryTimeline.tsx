@@ -1,7 +1,6 @@
 "use client"
 
 import {
-  ArrowPathIcon,
   CheckCircleIcon,
   ClockIcon,
   ExclamationTriangleIcon,
@@ -57,7 +56,7 @@ const StatusHistoryTimeline: FC<StatusHistoryTimelineProps> = ({ history, curren
 
   return (
     <div className="flow-root">
-      <ul role="list">
+      <ul>
         {sortedHistory.map((entry, idx) => {
           const config =
             statusConfig[entry.status as keyof typeof statusConfig] || statusConfig.pending

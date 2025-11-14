@@ -97,7 +97,7 @@ function getCommunityImage(communitySlug: string): string | null {
  * Renders a metric card displaying a key statistic with optional community logos.
  * Supports showing multiple communities via the communitySlugs array.
  */
-function MetricCardComponent({ card }: { card: MetricCard }) {
+function _MetricCardComponent({ card }: { card: MetricCard }) {
   const communities = card.communitySlugs
     .map((slug) => {
       const community = chosenCommunities(true).find((c) => c.slug === slug)

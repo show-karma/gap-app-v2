@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import toast from "react-hot-toast"
-import { Track, trackService } from "@/services/tracks"
+import { trackService } from "@/services/tracks"
 import { fetchProjectsByTrack, fetchTrackById } from "@/utilities/sdk/tracks"
 
 // Query keys
@@ -184,7 +184,7 @@ export const useRemoveTracksFromProgramBatch = (programId: string, communityUID:
 /**
  * Hook to fetch tracks for a project
  */
-export const useTracksForProject = (projectId: string, communityUID: string) => {
+export const useTracksForProject = (projectId: string, _communityUID: string) => {
   return useQuery({
     queryKey: TRACK_QUERY_KEYS.project(projectId),
     queryFn: () => trackService.getProjectTracks(projectId),

@@ -48,7 +48,7 @@ export const DisbursementStepper: React.FC<DisbursementStepperProps> = ({
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <nav aria-label="Progress">
-        <ol role="list" className="flex items-center justify-between">
+        <ol className="flex items-center justify-between">
           {steps.map((step, stepIdx) => {
             const status = getStepStatus(step.id as DisbursementStep)
 

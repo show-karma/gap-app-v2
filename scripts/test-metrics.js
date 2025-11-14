@@ -12,9 +12,9 @@
  * Note: Uses execSync with hardcoded commands only (no user input)
  */
 
-const fs = require("fs")
-const path = require("path")
-const { execSync } = require("child_process")
+const fs = require("node:fs")
+const path = require("node:path")
+const { execSync } = require("node:child_process")
 
 const METRICS_DIR = path.join(__dirname, "../.test-metrics")
 const COVERAGE_DIR = path.join(__dirname, "../coverage")
@@ -71,8 +71,6 @@ function extractCoverageData() {
  * Run tests and collect execution data
  */
 function collectTestMetrics() {
-  console.log("Running tests and collecting metrics...\n")
-
   const startTime = Date.now()
   const testResultsPath = path.join(METRICS_DIR, "test-results.json")
 
@@ -128,7 +126,7 @@ function collectTestMetrics() {
     // If tests fail, still try to extract whatever data we can
     const coverage = extractCoverageData()
 
-    const failedStats = {
+    const _failedStats = {
       timestamp: new Date().toISOString(),
       executionTime: Math.round((Date.now() - startTime) / 1000),
       coverage,
@@ -210,7 +208,7 @@ function calculateTrends(history) {
 /**
  * Generate coverage badge
  */
-function generateCoverageBadge(coverage) {
+function _generateCoverageBadge(coverage) {
   if (!coverage) return ""
 
   const percentage = coverage.lines
@@ -228,81 +226,24 @@ function generateCoverageBadge(coverage) {
  * Display metrics dashboard
  */
 function displayDashboard(stats, history) {
-  const trends = calculateTrends(history)
-
-  console.log("\n╔═══════════════════════════════════════════════════════════╗")
-  console.log("║          TEST METRICS DASHBOARD                           ║")
-  console.log("╚═══════════════════════════════════════════════════════════╝\n")
-
-  // Coverage
-  console.log("📊 COVERAGE")
-  console.log("─────────────────────────────────────────────────────────────")
+  const _trends = calculateTrends(history)
   if (stats.coverage) {
-    console.log(
-      `  Lines:      ${stats.coverage.lines.toFixed(2)}% ${trends.coverage.direction} (${trends.coverage.change > 0 ? "+" : ""}${trends.coverage.change}%)`
-    )
-    console.log(`  Statements: ${stats.coverage.statements.toFixed(2)}%`)
-    console.log(`  Functions:  ${stats.coverage.functions.toFixed(2)}%`)
-    console.log(`  Branches:   ${stats.coverage.branches.toFixed(2)}%`)
-    console.log(`  Covered:    ${stats.coverage.covered} / ${stats.coverage.total} lines`)
-    console.log(`  Badge:      ${generateCoverageBadge(stats.coverage)}`)
   } else {
-    console.log("  No coverage data available")
   }
-
-  // Test Results
-  console.log("\n✅ TEST RESULTS")
-  console.log("─────────────────────────────────────────────────────────────")
   if (stats.tests) {
-    console.log(
-      `  Total:      ${stats.tests.total} ${trends.testCount.direction} (${trends.testCount.change > 0 ? "+" : ""}${trends.testCount.change})`
-    )
-    console.log(
-      `  Passed:     ${stats.tests.passed} (${((stats.tests.passed / stats.tests.total) * 100).toFixed(1)}%)`
-    )
-    console.log(`  Failed:     ${stats.tests.failed}`)
-    console.log(`  Skipped:    ${stats.tests.skipped} ${stats.tests.skipped > 0 ? "⚠️" : ""}`)
-    console.log(`  Todo:       ${stats.tests.todo}`)
   } else {
-    console.log("  No test data available")
   }
-
-  // Test Suites
-  console.log("\n📦 TEST SUITES")
-  console.log("─────────────────────────────────────────────────────────────")
   if (stats.suites) {
-    console.log(`  Total:      ${stats.suites.total}`)
-    console.log(`  Passed:     ${stats.suites.passed}`)
-    console.log(`  Failed:     ${stats.suites.failed}`)
   } else {
-    console.log("  No suite data available")
   }
-
-  // Performance
-  console.log("\n⚡ PERFORMANCE")
-  console.log("─────────────────────────────────────────────────────────────")
-  console.log(
-    `  Execution:  ${stats.executionTime}s ${trends.executionTime.direction} (${trends.executionTime.change > 0 ? "+" : ""}${trends.executionTime.change}s)`
-  )
-
-  // Historical Data
-  console.log("\n📈 HISTORICAL DATA")
-  console.log("─────────────────────────────────────────────────────────────")
-  console.log(`  Total Runs: ${history.runs.length}`)
 
   if (history.runs.length >= 2) {
-    const coverageHistory = history.runs
+    const _coverageHistory = history.runs
       .filter((r) => r.coverage)
       .slice(-5)
       .map((r) => `${r.coverage.lines.toFixed(1)}%`)
       .join(" → ")
-
-    console.log(`  Coverage:   ${coverageHistory}`)
   }
-
-  // Warnings
-  console.log("\n⚠️  WARNINGS")
-  console.log("─────────────────────────────────────────────────────────────")
 
   const warnings = []
 
@@ -323,12 +264,9 @@ function displayDashboard(stats, history) {
   }
 
   if (warnings.length === 0) {
-    console.log("  None! 🎉")
   } else {
-    warnings.forEach((w) => console.log(w))
+    warnings.forEach((_w) => {})
   }
-
-  console.log("\n─────────────────────────────────────────────────────────────\n")
 }
 
 /**
@@ -488,7 +426,7 @@ function generateHtmlReport(stats, history) {
               (run) => `
             <tr>
               <td>${new Date(run.timestamp).toLocaleDateString()}</td>
-              <td>${run.coverage ? run.coverage.lines.toFixed(1) + "%" : "N/A"}</td>
+              <td>${run.coverage ? `${run.coverage.lines.toFixed(1)}%` : "N/A"}</td>
               <td>${run.tests ? run.tests.total : "N/A"}</td>
               <td>${run.tests ? run.tests.passed : "N/A"}</td>
               <td>${run.tests ? run.tests.failed : "N/A"}</td>
@@ -512,9 +450,6 @@ function generateHtmlReport(stats, history) {
 
   const reportPath = path.join(METRICS_DIR, "dashboard.html")
   fs.writeFileSync(reportPath, html)
-
-  console.log(`\n✅ HTML report generated: ${reportPath}`)
-  console.log(`   Open in browser: file://${reportPath}\n`)
 }
 
 /**
@@ -582,7 +517,6 @@ function main() {
     const history = loadHistory()
 
     if (history.runs.length === 0) {
-      console.log('No metrics data available. Run "npm run test:metrics:collect" first.')
       return
     }
 
@@ -593,24 +527,12 @@ function main() {
     const history = loadHistory()
 
     if (history.runs.length === 0) {
-      console.log('No metrics data available. Run "npm run test:metrics:collect" first.')
       return
     }
 
     const latest = history.runs[history.runs.length - 1]
     generateHtmlReport(latest, history)
   } else {
-    console.log("Test Metrics Dashboard")
-    console.log("")
-    console.log("Commands:")
-    console.log("  collect  - Run tests and collect metrics")
-    console.log("  show     - Display current metrics")
-    console.log("  report   - Generate HTML report")
-    console.log("")
-    console.log("Examples:")
-    console.log("  npm run test:metrics:collect")
-    console.log("  npm run test:metrics:show")
-    console.log("  npm run test:metrics:report")
   }
 }
 

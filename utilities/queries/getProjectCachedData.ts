@@ -15,7 +15,7 @@ export const getProjectCachedData = cache(async (projectId: string): Promise<IPr
     })
 
     project = projectData
-  } catch (error) {
+  } catch (_error) {
     notFound()
   }
 

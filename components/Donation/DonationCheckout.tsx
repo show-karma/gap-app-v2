@@ -8,7 +8,6 @@ import { DonationStepsPreview } from "@/components/DonationStepsPreview"
 import {
   getAllSupportedChains,
   getTokensByChain,
-  SUPPORTED_NETWORKS,
   type SupportedToken,
 } from "@/constants/supportedTokens"
 import { useCrossChainBalances } from "@/hooks/donation/useCrossChainBalances"
@@ -54,7 +53,7 @@ export function DonationCheckout() {
   const { isConnected } = useAuth()
 
   // Get unique chain IDs from cart items
-  const cartChainIds = useMemo(() => {
+  const _cartChainIds = useMemo(() => {
     const chainIds = new Set<number>()
     Object.values(selectedTokens).forEach((token) => {
       if (token) chainIds.add(token.chainId)

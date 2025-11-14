@@ -10,7 +10,7 @@ import { Button } from "@/components/Utilities/Button"
 import { errorManager } from "@/components/Utilities/errorManager"
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor"
 import { useContactInfo } from "@/hooks/useContactInfo"
-import { getGapClient, useGap } from "@/hooks/useGap"
+import { useGap } from "@/hooks/useGap"
 import { useWallet } from "@/hooks/useWallet"
 import { useProjectStore } from "@/store"
 import { useEndorsementStore } from "@/store/modals/endorsement"
@@ -159,7 +159,6 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
       })
       closeModal()
     } catch (error: any) {
-      console.log(error)
       errorManager(`Error of user ${address} endorsing project ${project?.uid}`, error, {
         projectUID: project?.uid,
         address,

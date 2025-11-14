@@ -8,7 +8,7 @@ export const ProjectOverviewLoading = () => {
       <div className="flex flex-col gap-2 w-full min-w-48">
         <div className="font-semibold text-black dark:text-white leading-none">Team</div>
         <div className="flex flex-col divide-y divide-y-zinc-200 border border-zinc-200 rounded-xl">
-          {members?.map((member, index) => (
+          {members?.map((_member, index) => (
             <div key={index} className="flex items-center flex-row gap-3 p-3">
               <Skeleton className="h-8 w-8 rounded-full" />
               <div className="flex flex-col gap-1">
@@ -25,7 +25,7 @@ export const ProjectOverviewLoading = () => {
     )
   }
 
-  const ProjectBlocks = () => {
+  const _ProjectBlocks = () => {
     return (
       <>
         <Skeleton className="h-10 w-full" />

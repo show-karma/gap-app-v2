@@ -50,7 +50,7 @@ export const useInviteLink = (projectIdOrSlug: string | undefined) => {
     mutationFn: async () => {
       if (!projectIdOrSlug) throw new Error("Project ID is required")
 
-      const messageToSign = new Date().getTime()
+      const messageToSign = Date.now()
       const hexedMessage = keccak256(toHex(messageToSign))
 
       const [data, error] = await fetchData(

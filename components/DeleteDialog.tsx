@@ -52,9 +52,7 @@ export const DeleteDialog: FC<DeleteDialogProps> = ({
         afterFunction?.()
       })
       closeModal()
-    } catch (error: any) {
-      console.log(error)
-    }
+    } catch (_error: any) {}
   }
 
   return (

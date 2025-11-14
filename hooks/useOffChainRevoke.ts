@@ -1,8 +1,6 @@
 import toast from "react-hot-toast"
 import fetchData from "@/utilities/fetchData"
 import { INDEXER } from "@/utilities/indexer"
-import { MESSAGES } from "@/utilities/messages"
-import { retryUntilConditionMet } from "@/utilities/retries"
 
 interface UseOffChainRevokeOptions {
   uid: `0x${string}`

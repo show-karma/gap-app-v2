@@ -1,11 +1,8 @@
-/* eslint-disable @next/next/no-img-element */
-import { Grant, GrantDetails, ProjectDetails } from "@show-karma/karma-gap-sdk"
 import Link from "next/link"
 import pluralize from "pluralize"
 import type { ProjectFromList } from "@/types/project"
 import formatCurrency from "@/utilities/formatCurrency"
 import { formatDate } from "@/utilities/formatDate"
-import { formatPercentage } from "@/utilities/formatNumber"
 import { PAGES } from "@/utilities/pages"
 import { MarkdownPreview } from "../../Utilities/MarkdownPreview"
 import { ProfilePicture } from "../../Utilities/ProfilePicture"

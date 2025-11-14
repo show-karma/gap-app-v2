@@ -275,7 +275,7 @@ export const ReadMore = ({
       setIsReadMore(true)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text])
+  }, [text, getMinimumText])
 
   return (
     <div className="w-full max-w-full">
@@ -293,17 +293,15 @@ export const ReadMore = ({
       {text.length - 1 > getMinimumText() ? (
         <div onClick={toggleReadMore} className="read-or-hide mt-2">
           {isReadMore ? (
-            <>
-              <div
-                className="text-sm font-semibold leading-tight text-blue-600 dark:text-blue-300 w-full flex flex-row justify-between"
-                style={{
-                  flexDirection: side === "left" ? "row" : "row-reverse",
-                }}
-              >
-                <span className="cursor-pointer">{readMoreText}</span>
-                {othersideButton}
-              </div>
-            </>
+            <div
+              className="text-sm font-semibold leading-tight text-blue-600 dark:text-blue-300 w-full flex flex-row justify-between"
+              style={{
+                flexDirection: side === "left" ? "row" : "row-reverse",
+              }}
+            >
+              <span className="cursor-pointer">{readMoreText}</span>
+              {othersideButton}
+            </div>
           ) : (
             <div
               className="text-sm font-semibold leading-tight text-blue-600 dark:text-blue-300 w-full flex flex-row justify-between"

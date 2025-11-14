@@ -1,8 +1,7 @@
 "use client"
 
-import { type FC, useEffect, useState } from "react"
+import { type FC, useState } from "react"
 import { useFundingApplications, useProgramConfig } from "@/hooks/useFundingPlatform"
-import { IFormSchema } from "@/types/funding-platform"
 import ApplicationSubmission from "./ApplicationSubmission"
 
 interface IApplicationSubmissionWithAPIProps {

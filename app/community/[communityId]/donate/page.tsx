@@ -173,7 +173,6 @@ export default function DonateProgramSelectPage() {
                 className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 dark:text-zinc-100 transition-colors text-base"
                 onChange={handleProgramSelect}
                 value={selectedProgramId}
-                autoFocus
               >
                 <option value="" disabled>
                   Select a program...

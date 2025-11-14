@@ -128,7 +128,7 @@ export const FilteredOutputsAndOutcomes = ({
         }))
       )
     }
-  }, [filteredAnswers])
+  }, [filteredAnswers, forms.reduce])
 
   const handleSubmit = async (id: string) => {
     const form = forms.find((f) => f.id === id)
@@ -154,7 +154,7 @@ export const FilteredOutputsAndOutcomes = ({
           isEdited: false,
         }))
       )
-    } catch (error) {
+    } catch (_error) {
       // Reset saving state but keep edited state
       setForms((prev) =>
         prev.map((form) => ({
@@ -255,7 +255,7 @@ export const FilteredOutputsAndOutcomes = ({
     if (unitOfMeasure === "int") {
       return !Number.isInteger(Number(value))
     }
-    return isNaN(value) || value === 0
+    return Number.isNaN(value) || value === 0
   }
 
   const isInvalidTimestamp = (id: string, timestamp: string) => {
@@ -327,7 +327,7 @@ export const FilteredOutputsAndOutcomes = ({
                   new Date(a.endDate || new Date().toISOString()).getTime()
               )[0]?.endDate
             const allOutputs = filteredOutputs.find((subItem) => subItem.id === item.id)
-            const outputs = allOutputs?.datapoints.map((datapoint, index) => ({
+            const outputs = allOutputs?.datapoints.map((datapoint, _index) => ({
               value: datapoint.value,
               proof: datapoint.proof,
               timestamp: datapoint.endDate || new Date().toISOString(),

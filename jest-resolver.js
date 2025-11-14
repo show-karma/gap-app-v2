@@ -2,8 +2,8 @@
  * Custom Jest resolver for pnpm workspace
  * Dynamically resolves MSW and @mswjs/interceptors modules
  */
-const path = require("path")
-const fs = require("fs")
+const path = require("node:path")
+const fs = require("node:fs")
 
 // Cache for resolved paths
 const resolvedPaths = new Map()

@@ -51,7 +51,7 @@ export const MilestoneVerificationSection: FC<MilestoneVerificationSectionProps>
 
   useEffect(() => {
     setVerifiedMilestones(getVerifiedMilestones())
-  }, [milestone, initialVerifiedMilestones])
+  }, [getVerifiedMilestones])
 
   // Convert UnifiedMilestone to IMilestoneResponse format for VerifyMilestoneUpdateDialog
   const getMilestoneForDialog = (): IMilestoneResponse | null => {

@@ -4,7 +4,7 @@ import { MagnifyingGlassIcon } from "@heroicons/react/20/solid"
 import type { ISearchResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
 // eslint-disable-next-line import/no-extraneous-dependencies
 import debounce from "lodash.debounce"
-import { type FC, useMemo, useState } from "react"
+import { type FC, useState } from "react"
 import { gapIndexerApi } from "@/utilities/gapIndexerApi"
 import { SearchList } from "./SearchList"
 
@@ -15,7 +15,7 @@ export const Searchbar: FC = () => {
   })
   const [isSearchListOpen, setIsSearchListOpen] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [isSearchListInteracting, setIsSearchListInteracting] = useState<boolean>(false)
+  const [_isSearchListInteracting, setIsSearchListInteracting] = useState<boolean>(false)
 
   const closeSearchList = () => {
     setTimeout(() => {

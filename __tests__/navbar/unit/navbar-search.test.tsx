@@ -3,10 +3,8 @@
  * Tests: Rendering, input behavior, debouncing, API integration, results display, dropdown management
  */
 
-import { act, fireEvent, screen, waitFor, within } from "@testing-library/react"
+import { act, fireEvent, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { HttpResponse, http } from "msw"
-import React from "react"
 import { NavbarSearch } from "@/src/components/navbar/navbar-search"
 import {
   communitiesOnlyResults,
@@ -14,12 +12,8 @@ import {
   largeResultSet,
   mixedResults,
   projectsOnlyResults,
-  searchFixtures,
-  searchQueries,
 } from "../fixtures/search-fixtures"
-import { createCustomSearchHandler, createSearchHandler, scenarioHandlers } from "../mocks/handlers"
-import { server } from "../setup"
-import { renderWithProviders, simulateClickOutside, waitForDebounce } from "../utils/test-helpers"
+import { renderWithProviders } from "../utils/test-helpers"
 
 // Mock gapIndexerApi
 jest.mock("@/utilities/gapIndexerApi", () => ({
@@ -34,7 +28,7 @@ jest.mock("@/utilities/communityHelpers", () => ({
 }))
 
 // Helper to flush timers and promises
-const flushTimersAndPromises = async () => {
+const _flushTimersAndPromises = async () => {
   await act(async () => {
     jest.runAllTimers()
     // Flush promise queue

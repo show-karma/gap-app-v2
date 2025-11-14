@@ -15,7 +15,7 @@ export const LoadingProgramTable = () => {
             <table className="min-w-full divide-y divide-gray-300 h-full">
               <thead>
                 <tr className="">
-                  {emptyArrayHeader.map((row, index) => {
+                  {emptyArrayHeader.map((_row, index) => {
                     return (
                       <th key={index}>
                         <Skeleton className="h-9 w-full max-lg:min-w-40 rounded-lg border-0 my-2" />
@@ -25,10 +25,10 @@ export const LoadingProgramTable = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {emptyArrayRows.map((row, index) => {
+                {emptyArrayRows.map((_row, index) => {
                   return (
                     <tr key={index}>
-                      {emptyArrayHeader.map((row, indexH) => {
+                      {emptyArrayHeader.map((_row, indexH) => {
                         return (
                           <td key={indexH}>
                             <Skeleton className="h-12 w-full max-lg:min-w-40 rounded-lg my-5" />

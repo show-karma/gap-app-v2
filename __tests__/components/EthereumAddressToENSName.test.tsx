@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen } from "@testing-library/react"
 import EthereumAddressToENSName from "@/components/EthereumAddressToENSName"
 import "@testing-library/jest-dom"
 

@@ -12,7 +12,6 @@ import {
 import { format, isValid, parseISO } from "date-fns"
 import pluralize from "pluralize"
 import { type FC, useMemo, useState } from "react"
-import toast from "react-hot-toast"
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview"
 import { Spinner } from "@/components/Utilities/Spinner"
 import type {
@@ -355,11 +354,11 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
         </div>
       ) : (
         <div className="flow-root">
-          <ul role="list" className="">
+          <ul className="">
             {timelineItems.map((item, idx) => {
               const isLast = idx === timelineItems.length - 1
               const isLatestStatus =
-                item.type === "status" && statusHistory.findIndex((s) => s === item.data) === 0
+                item.type === "status" && statusHistory.indexOf(item.data) === 0
 
               // Use a unique key based on the actual data, not index
               const itemKey =

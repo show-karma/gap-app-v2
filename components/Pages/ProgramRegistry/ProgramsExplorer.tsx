@@ -34,11 +34,11 @@ export const ProgramsExplorer = () => {
   const defaultGrantTypes = ((searchParams.get("grantTypes") as string) || "")
     .split(",")
     .filter((grantType) => grantType.trim())
-  const defaultGrantSize = searchParams.get("grantSize")
+  const _defaultGrantSize = searchParams.get("grantSize")
     ? ((searchParams.get("grantSize") as string) || "")
         .split(",")
         .filter((grantType) => grantType.trim())
-        .map((item) => (isNaN(Number(item)) ? 0 : +item))
+        .map((item) => (Number.isNaN(Number(item)) ? 0 : +item))
         .slice(0, 2)
     : registryHelper.grantSizes
 
@@ -52,7 +52,7 @@ export const ProgramsExplorer = () => {
   const [loading, setLoading] = useState(true)
   const pageLimit = 10
 
-  const [selectedCategory, setSelectedCategory] = useQueryState("categories", {
+  const [selectedCategory, _setSelectedCategory] = useQueryState("categories", {
     defaultValue: defaultCategories,
     serialize: (value) => (value.length ? value?.join(",") : ""),
     parse: (value) => (value.length > 0 ? value.split(",") : []),
@@ -63,7 +63,7 @@ export const ProgramsExplorer = () => {
   const [page, setPage] = useQueryState("page", {
     defaultValue: 1,
     serialize: (value) => value.toString(),
-    parse: (value) => parseInt(value),
+    parse: (value) => parseInt(value, 10),
   })
 
   const [searchInput, setSearchInput] = useQueryState("name", {
@@ -163,7 +163,7 @@ export const ProgramsExplorer = () => {
   useEffect(() => {
     const searchProgramById = async (id: string) => {
       try {
-        const [data, error] = await fetchData(
+        const [data, _error] = await fetchData(
           INDEXER.REGISTRY.FIND_BY_ID(id, registryHelper.supportedNetworks)
         )
         if (data) {
@@ -174,7 +174,6 @@ export const ProgramsExplorer = () => {
         }
       } catch (error: any) {
         errorManager(`Error while searching for program by id`, error)
-        console.log(error)
       }
     }
     if (programId) {

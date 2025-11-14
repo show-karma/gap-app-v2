@@ -13,7 +13,6 @@ import {
   createMockUseLogoutFunction,
   createMockUsePrivy,
   renderWithProviders,
-  updateMocks,
 } from "../utils/test-helpers"
 
 // Define what we expect for each permission scenario
@@ -78,7 +77,7 @@ describe("Permission Matrix Integration Tests", () => {
           // For authenticated users, check user menu elements
           if (expected.userMenu) {
             // User avatar should be present on desktop
-            const userAvatar = screen.queryByTestId("user-avatar")
+            const _userAvatar = screen.queryByTestId("user-avatar")
             // Note: may be hidden on mobile viewports
           }
         })

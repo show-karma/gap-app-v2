@@ -1,5 +1,3 @@
-import { cache } from "react"
-
 export function sanitizeInput<T>(input: T): T {
   if (typeof input === "string") {
     return input.trim() as T

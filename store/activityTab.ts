@@ -7,7 +7,7 @@ interface ProjectActivityTabStore {
   setActivityTab: (activityTab: Tab) => void
 }
 
-export const useActivityTabStore = create<ProjectActivityTabStore>((set, get) => ({
+export const useActivityTabStore = create<ProjectActivityTabStore>((set, _get) => ({
   activityTab: "project-feed",
   setActivityTab: (activityTab: Tab) => set({ activityTab }),
 }))

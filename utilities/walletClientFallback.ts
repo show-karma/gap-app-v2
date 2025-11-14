@@ -8,35 +8,23 @@ export async function getWalletClientWithFallback(
   expectedChainId: number,
   refetchWalletClient?: () => Promise<{ data: WalletClient | null | undefined }>
 ): Promise<WalletClient | null> {
-  console.log(`🔄 Getting wallet client for chain ${expectedChainId}...`)
-
   // Step 1: Check if primary wallet client is usable
-  if (primaryWalletClient && primaryWalletClient.account) {
+  if (primaryWalletClient?.account) {
     if (primaryWalletClient.chain?.id === expectedChainId) {
-      console.log(`✅ Primary wallet client is ready for chain ${expectedChainId}`)
       return primaryWalletClient
     } else {
-      console.log(
-        `⚠️ Primary wallet client is on chain ${primaryWalletClient.chain?.id}, expected ${expectedChainId}`
-      )
     }
   } else {
-    console.log(`❌ Primary wallet client not available or no account connected`)
   }
 
   // Step 2: Try to refetch wallet client if available
   if (refetchWalletClient) {
-    console.log(`🔄 Attempting to refetch wallet client...`)
     try {
       const { data: refreshedClient } = await refetchWalletClient()
-      if (refreshedClient && refreshedClient.account) {
+      if (refreshedClient?.account) {
         if (refreshedClient.chain?.id === expectedChainId) {
-          console.log(`✅ Refreshed wallet client is ready for chain ${expectedChainId}`)
           return refreshedClient
         } else {
-          console.log(
-            `⚠️ Refreshed wallet client is on chain ${refreshedClient.chain?.id}, expected ${expectedChainId}`
-          )
         }
       }
     } catch (error) {
@@ -44,14 +32,10 @@ export async function getWalletClientWithFallback(
     }
   }
 
-  // Step 3: Progressive fallback strategy
-  console.log(`🔄 Attempting progressive fallback for chain ${expectedChainId}...`)
-
   // Wait a bit and check primary again
   await new Promise((resolve) => setTimeout(resolve, 2000))
 
-  if (primaryWalletClient && primaryWalletClient.account) {
-    console.log(`⚠️ Using primary wallet client as fallback (may be on wrong chain)`)
+  if (primaryWalletClient?.account) {
     return primaryWalletClient
   }
 
@@ -59,8 +43,7 @@ export async function getWalletClientWithFallback(
   if (refetchWalletClient) {
     try {
       const { data: lastResortClient } = await refetchWalletClient()
-      if (lastResortClient && lastResortClient.account) {
-        console.log(`⚠️ Using last resort wallet client (may be on wrong chain)`)
+      if (lastResortClient?.account) {
         return lastResortClient
       }
     } catch (error) {

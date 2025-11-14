@@ -18,7 +18,6 @@ import { OrganizationIcon } from "@/components/Icons/Organization"
 import { Button } from "@/components/Utilities/Button"
 import { ExternalLink } from "@/components/Utilities/ExternalLink"
 import { formatDate } from "@/utilities/formatDate"
-import { PAGES } from "@/utilities/pages"
 import { ReadMore } from "@/utilities/ReadMore"
 import { registryHelper } from "./helper"
 
@@ -276,7 +275,7 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms, selectProgram
           const restNetworks = grant.metadata?.networks?.slice(4)
           return (
             <div className="w-full max-w-44 flex flex-row flex-wrap gap-1 my-2 items-center">
-              {firstNetworks?.map((network, index) => (
+              {firstNetworks?.map((network, _index) => (
                 <Tooltip.Provider key={network}>
                   <Tooltip.Root delayDuration={0.5}>
                     <Tooltip.Trigger asChild>
@@ -394,7 +393,7 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms, selectProgram
 
           return (
             <div className="w-full flex flex-row flex-wrap gap-1">
-              {grant.metadata?.categories?.map((category, index) => (
+              {grant.metadata?.categories?.map((category, _index) => (
                 <span
                   key={`${category}${grant.programId}`}
                   className="mr-1 inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20"
@@ -511,7 +510,7 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms, selectProgram
         header: () => <div />,
       },
     ],
-    []
+    [selectProgram]
   )
 
   const table = useReactTable({

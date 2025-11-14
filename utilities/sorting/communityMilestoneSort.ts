@@ -5,11 +5,16 @@ type FilterOption = "all" | "pending" | "completed"
 /**
  * Validates if a milestone item has all required fields
  */
-function isValidMilestone(item: any): item is CommunityMilestoneUpdate {
+function isValidMilestone(item: unknown): item is CommunityMilestoneUpdate {
   if (!item || typeof item !== "object") return false
-  if (!item.uid || !item.status) return false
-  if (!item.details?.title) return false
-  if (!item.project?.details?.data?.slug) return false
+  const milestone = item as Record<string, unknown>
+  if (!milestone.uid || !milestone.status) return false
+  const details = milestone.details as Record<string, unknown> | undefined
+  if (!details?.title) return false
+  const project = milestone.project as Record<string, unknown> | undefined
+  const projectDetails = project?.details as Record<string, unknown> | undefined
+  const projectData = projectDetails?.data as Record<string, unknown> | undefined
+  if (!projectData?.slug) return false
   return true
 }
 
@@ -19,7 +24,7 @@ function isValidMilestone(item: any): item is CommunityMilestoneUpdate {
 function getTimestamp(dateString: string | null | undefined, fallback: number): number {
   if (!dateString) return fallback
   const timestamp = new Date(dateString).getTime()
-  return isNaN(timestamp) ? fallback : timestamp
+  return Number.isNaN(timestamp) ? fallback : timestamp
 }
 
 /**

@@ -18,7 +18,7 @@ import { Button } from "@/components/Utilities/Button"
 import { DatePicker } from "@/components/Utilities/DatePicker"
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip"
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor"
-import { getGapClient, useGap } from "@/hooks/useGap"
+import { useGap } from "@/hooks/useGap"
 import { useImpactAnswers } from "@/hooks/useImpactAnswers"
 import { useUnlinkedIndicators } from "@/hooks/useUnlinkedIndicators"
 import { useWallet } from "@/hooks/useWallet"
@@ -111,7 +111,7 @@ const GrantSearchDropdown: FC<{
   const [open, setOpen] = useState(false)
 
   // Create a map to track duplicate titles
-  const titleCount = grants.reduce(
+  const _titleCount = grants.reduce(
     (acc, grant) => {
       acc[grant.title] = (acc[grant.title] || 0) + 1
       return acc
@@ -280,7 +280,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
 
     watchedGrantIds.forEach((grantId) => {
       const grant = grants.find((g) => g.value === grantId)
-      if (grant && grant.communityUID) {
+      if (grant?.communityUID) {
         // Get community name from project grants
         const projectGrant = project?.grants?.find((g) => g.uid === grantId)
         const communityName = projectGrant?.community?.details?.data?.name || "Unknown Community"
@@ -294,7 +294,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   }, [watchedGrantIds, grants, project?.grants])
 
   // Fetch community indicators for all selected communities
-  const communityIndicatorQueries = selectedCommunities.map((community) => ({
+  const _communityIndicatorQueries = selectedCommunities.map((community) => ({
     queryKey: ["communityIndicators", community.uid],
     queryFn: () => getIndicatorsByCommunity(community.uid),
     enabled: !!community.uid,
@@ -400,7 +400,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     }
 
     fetchProjectData()
-  }, [project?.uid, project?.grants?.length])
+  }, [project?.uid, project?.grants?.length, indicatorsData, project, address])
 
   const updateToEdit = project?.updates.find((update) => update.uid === editId)
   // Effect to load edit data
@@ -476,7 +476,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         assignOutputsValues()
       }
     }
-  }, [editId, project, setValue, outputs.length])
+  }, [editId, project, setValue, outputs.length, indicatorsData, updateToEdit, watch])
 
   const { changeStepperStep, setIsStepper } = useStepper()
 
@@ -672,7 +672,6 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
           error: MESSAGES.PROJECT_UPDATE_FORM.ERROR,
         }
       )
-      console.log(error)
     } finally {
       setIsStepper(false)
       setIsLoading(false)

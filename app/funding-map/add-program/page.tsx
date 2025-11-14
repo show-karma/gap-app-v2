@@ -1,4 +1,3 @@
-import React from "react"
 import { AddProgramWrapper } from "@/components/Pages/ProgramRegistry/AddProgramWrapper"
 import { PROJECT_NAME } from "@/constants/brand"
 import { customMetadata } from "@/utilities/meta"

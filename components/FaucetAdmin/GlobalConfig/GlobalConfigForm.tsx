@@ -71,7 +71,7 @@ export function GlobalConfigForm() {
             type="number"
             value={formData.defaultBufferPercentage}
             onChange={(e) =>
-              setFormData({ ...formData, defaultBufferPercentage: parseInt(e.target.value) })
+              setFormData({ ...formData, defaultBufferPercentage: parseInt(e.target.value, 10) })
             }
             className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900 text-gray-900 dark:text-white"
             required
@@ -89,7 +89,7 @@ export function GlobalConfigForm() {
             type="number"
             value={formData.maxChainsPerRequest}
             onChange={(e) =>
-              setFormData({ ...formData, maxChainsPerRequest: parseInt(e.target.value) })
+              setFormData({ ...formData, maxChainsPerRequest: parseInt(e.target.value, 10) })
             }
             className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900 text-gray-900 dark:text-white"
             required

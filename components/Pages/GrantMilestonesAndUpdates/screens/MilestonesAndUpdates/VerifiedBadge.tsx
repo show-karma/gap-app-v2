@@ -6,8 +6,7 @@ import type {
   IMilestoneCompleted,
   IProjectImpactStatus,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import { blo } from "blo"
-import { type FC, useEffect, useMemo, useState } from "react"
+import { type FC, useEffect, useState } from "react"
 import type { Hex } from "viem"
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar"
 import { useENS } from "@/store/ens"
@@ -19,7 +18,7 @@ interface VerifiedBadgeProps {
   title: string
 }
 
-const BlockieTooltip = ({
+const _BlockieTooltip = ({
   address,
   date,
   reason,
@@ -32,7 +31,7 @@ const BlockieTooltip = ({
 
   useEffect(() => {
     populateEns([address])
-  }, [address])
+  }, [address, populateEns])
 
   return (
     <Tooltip.Provider>
@@ -102,7 +101,7 @@ export const VerifiedBadge: FC<VerifiedBadgeProps> = ({ verifications, title }) 
       return 0
     })
     setOrderedSort(sorted)
-  }, [verifications])
+  }, [verifications, getUniqueVerifications])
 
   const openDialog = () => setIsOpenDialog(true)
 

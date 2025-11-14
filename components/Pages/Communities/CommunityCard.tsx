@@ -11,7 +11,7 @@ interface CommunityCardProps {
 
 export const CommunityCard = ({ community }: CommunityCardProps) => {
   const cardRef = useRef<HTMLDivElement>(null)
-  const [cardWidth, setCardWidth] = useState<number>(0)
+  const [_cardWidth, setCardWidth] = useState<number>(0)
 
   useEffect(() => {
     const updateWidth = () => {

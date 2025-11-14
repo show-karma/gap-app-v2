@@ -55,8 +55,8 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
       metadata = {
         ...metadata,
-        title: tabMetadata["overview"]?.title || "",
-        description: tabMetadata["overview"]?.description || "",
+        title: tabMetadata.overview?.title || "",
+        description: tabMetadata.overview?.description || "",
       }
     }
   } else {

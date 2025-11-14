@@ -482,5 +482,5 @@ export const isBatchDonationsSupportedOnChain = (chainId: number): boolean => {
 export const getSupportedBatchDonationsChains = (): number[] => {
   return Object.entries(BATCH_DONATIONS_CONTRACTS)
     .filter(([_, address]) => address !== null)
-    .map(([chainId]) => parseInt(chainId))
+    .map(([chainId]) => parseInt(chainId, 10))
 }

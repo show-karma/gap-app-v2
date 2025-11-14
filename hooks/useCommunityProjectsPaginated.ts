@@ -1,6 +1,6 @@
 "use client"
 import { useInfiniteQuery } from "@tanstack/react-query"
-import type { CommunityProjectsV2Response, ProjectV2 } from "@/types/community"
+import type { CommunityProjectsV2Response } from "@/types/community"
 import { getCommunityProjectsV2 } from "@/utilities/queries/getCommunityDataV2"
 
 interface UseCommunityProjectsPaginatedOptions {

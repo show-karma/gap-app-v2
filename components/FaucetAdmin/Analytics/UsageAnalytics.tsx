@@ -49,7 +49,7 @@ export function UsageAnalytics() {
             <select
               value={selectedChain || ""}
               onChange={(e) => {
-                setSelectedChain(e.target.value ? parseInt(e.target.value) : undefined)
+                setSelectedChain(e.target.value ? parseInt(e.target.value, 10) : undefined)
                 setCurrentPage(1)
               }}
               className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
@@ -89,7 +89,7 @@ export function UsageAnalytics() {
             </label>
             <select
               value={selectedDays}
-              onChange={(e) => setSelectedDays(parseInt(e.target.value))}
+              onChange={(e) => setSelectedDays(parseInt(e.target.value, 10))}
               className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
             >
               <option value={1}>Last 24 hours</option>
@@ -106,7 +106,7 @@ export function UsageAnalytics() {
             <select
               value={pageSize}
               onChange={(e) => {
-                setPageSize(parseInt(e.target.value))
+                setPageSize(parseInt(e.target.value, 10))
                 setCurrentPage(1)
               }}
               className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
@@ -170,7 +170,7 @@ export function UsageAnalytics() {
           )}
         </div>
 
-        {requests && requests?.payload && requests?.payload?.length > 0 ? (
+        {requests?.payload && requests?.payload?.length > 0 ? (
           <>
             <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm overflow-hidden">
               <table className="w-full">

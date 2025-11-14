@@ -1,6 +1,5 @@
 "use client"
 
-import { ChatBubbleLeftIcon } from "@heroicons/react/24/outline"
 import type { FC } from "react"
 import type { IApplicationVersion } from "@/types/funding-platform"
 import CommentsTimeline from "./CommentsTimeline"

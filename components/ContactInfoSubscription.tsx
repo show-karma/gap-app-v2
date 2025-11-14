@@ -9,7 +9,6 @@ import { useContactInfo } from "@/hooks/useContactInfo"
 import { useOwnerStore, useProjectStore } from "@/store"
 import type { Contact } from "@/types/project"
 import fetchData from "@/utilities/fetchData"
-import { generateRandomString } from "@/utilities/generateRandomString"
 import { INDEXER } from "@/utilities/indexer"
 import { Button } from "./Utilities/Button"
 import { errorManager } from "./Utilities/errorManager"
@@ -177,7 +176,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({ cont
           {},
           {},
           true
-        ).then(([res, error]) => {
+        ).then(([_res, error]) => {
           if (!error) {
             toast.success("Contact info created successfully")
             refreshProject()
@@ -199,7 +198,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({ cont
           {},
           {},
           true
-        ).then(([res, error]) => {
+        ).then(([_res, error]) => {
           if (!error) {
             toast.success("Contact info updated successfully")
             refreshProject()
@@ -223,8 +222,6 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({ cont
           error: "Failed to update contact information.",
         }
       )
-
-      console.log(error)
     } finally {
       setIsLoading(false)
     }
@@ -242,7 +239,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({ cont
         {},
         {},
         true
-      ).then(([res, error]) => {
+      ).then(([_res, error]) => {
         if (!error) {
           toast.success("Contact info deleted successfully")
           refreshProject()
@@ -263,7 +260,6 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({ cont
           error: "Failed to delete contact info.",
         }
       )
-      console.log(error)
     } finally {
       setIsDeleteLoading(false)
     }
@@ -275,13 +271,13 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({ cont
     })
     const contact = existingContacts?.find((contact) => contact.id === value)
     setValue("name", contact?.name || "", {
-      shouldValidate: contact ? true : false,
+      shouldValidate: !!contact,
     })
     setValue("email", contact?.email || "", {
-      shouldValidate: contact ? true : false,
+      shouldValidate: !!contact,
     })
     setValue("telegram", contact?.telegram || "", {
-      shouldValidate: contact ? true : false,
+      shouldValidate: !!contact,
     })
   }
 

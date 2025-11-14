@@ -10,7 +10,7 @@
  */
 
 import { PlatformFeatures } from "@/src/features/homepage/components/platform-features"
-import { renderWithProviders, screen, setViewportSize, within } from "../utils/test-helpers"
+import { renderWithProviders, screen, setViewportSize } from "../utils/test-helpers"
 import "@testing-library/jest-dom"
 
 // Define viewports locally

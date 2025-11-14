@@ -1,4 +1,3 @@
-import axios from "axios"
 import type { ApplicationComment } from "@/types/funding-platform"
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client"
 import { envVars } from "@/utilities/enviromentVars"

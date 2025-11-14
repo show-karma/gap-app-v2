@@ -9,13 +9,12 @@ import { useAccount } from "wagmi"
 import { DeleteDialog } from "@/components/DeleteDialog"
 import { ExternalLink } from "@/components/Utilities/ExternalLink"
 import { errorManager } from "@/components/Utilities/errorManager"
-import { getGapClient, useGap } from "@/hooks/useGap"
+import { useGap } from "@/hooks/useGap"
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke"
 import { useWallet } from "@/hooks/useWallet"
 import { useOwnerStore, useProjectStore } from "@/store"
 import { useCommunityAdminStore } from "@/store/communityAdmin"
 import { useStepper } from "@/store/modals/txStepper"
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid"
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils"
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain"
 import fetchData from "@/utilities/fetchData"
@@ -74,7 +73,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
   const { switchChainAsync } = useWallet()
   const refreshProject = useProjectStore((state) => state.refreshProject)
   const [isDeletingGrantUpdate, setIsDeletingGrantUpdate] = useState(false)
-  const selectedProject = useProjectStore((state) => state.project)
+  const _selectedProject = useProjectStore((state) => state.project)
   const { gap } = useGap()
   const { changeStepperStep, setIsStepper } = useStepper()
   const { project, isProjectOwner } = useProjectStore()

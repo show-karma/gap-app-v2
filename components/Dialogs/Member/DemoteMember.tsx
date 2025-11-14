@@ -1,6 +1,5 @@
 import { Dialog, Transition } from "@headlessui/react"
 import { ShieldExclamationIcon } from "@heroicons/react/24/outline"
-import { ArrowDownIcon } from "@heroicons/react/24/solid"
 import * as Tooltip from "@radix-ui/react-tooltip"
 import { type FC, Fragment, useState } from "react"
 import toast from "react-hot-toast"
@@ -127,7 +126,6 @@ export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({ memberAddress 
           error: `Failed to remove member ${memberAddress} as admin.`,
         }
       )
-      console.log(error)
     } finally {
       setIsDemoting(false)
       setIsStepper(false)

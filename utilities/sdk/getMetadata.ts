@@ -33,9 +33,8 @@ export const getMetadata = async <T>(
     }
 
     return undefined
-  } catch (error: any) {
+  } catch (error: unknown) {
     errorManager(`Error getting metadata of ${type}: ${uid}`, error)
-    console.log(error)
     return undefined
   }
 }

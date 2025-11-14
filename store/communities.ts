@@ -1,7 +1,7 @@
 import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
 
 import { create } from "zustand"
-import { createJSONStorage, persist, StateStorage } from "zustand/middleware"
+import { createJSONStorage, persist } from "zustand/middleware"
 
 type PartialCommunity = {
   uid: string
@@ -23,7 +23,7 @@ interface CommunitiesStore {
 
 export const useCommunitiesStore = create(
   persist<CommunitiesStore>(
-    (set, get) => ({
+    (set, _get) => ({
       communities: [],
       setCommunities: (communities: ICommunityResponse[]) =>
         set({ communities: communities.map(mapCommunity) }),

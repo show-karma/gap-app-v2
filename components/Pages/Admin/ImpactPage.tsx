@@ -29,7 +29,6 @@ export default function ProgramImpactPage() {
     const fetchDetails = async () => {
       if (!communityId) return
       setLoading(true)
-      console.log("Fetching community data")
       try {
         const { data: result } = await gapIndexerApi.communityBySlug(communityId)
         if (!result || result.uid === zeroUID) throw new Error("Community not found")
@@ -51,7 +50,7 @@ export default function ProgramImpactPage() {
     }
 
     fetchDetails()
-  }, [communityId])
+  }, [communityId, router.push])
 
   const tabs = [
     { id: "metrics", label: "Output Metrics" },

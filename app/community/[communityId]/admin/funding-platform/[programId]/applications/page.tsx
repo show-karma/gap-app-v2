@@ -24,7 +24,7 @@ import { PAGES } from "@/utilities/pages"
 
 export default function ApplicationsPage() {
   const router = useRouter()
-  const pathname = usePathname()
+  const _pathname = usePathname()
   const searchParams = useSearchParams()
   const { communityId, programId: combinedProgramId } = useParams() as {
     communityId: string
@@ -43,7 +43,7 @@ export default function ApplicationsPage() {
     if (search) filters.search = search
 
     const status = searchParams.get("status")
-    if (status) filters.status = status as any
+    if (status) filters.status = status
 
     const dateFrom = searchParams.get("dateFrom")
     if (dateFrom) filters.dateFrom = dateFrom
@@ -55,10 +55,10 @@ export default function ApplicationsPage() {
     if (page) filters.page = parseInt(page, 10)
 
     const sortBy = searchParams.get("sortBy")
-    if (sortBy) filters.sortBy = sortBy as any
+    if (sortBy) filters.sortBy = sortBy as IApplicationFilters["sortBy"]
 
     const sortOrder = searchParams.get("sortOrder")
-    if (sortOrder) filters.sortOrder = sortOrder as any
+    if (sortOrder) filters.sortOrder = sortOrder as IApplicationFilters["sortOrder"]
 
     return filters
   }, [searchParams])
@@ -100,7 +100,7 @@ export default function ApplicationsPage() {
     router.push(PAGES.ADMIN.FUNDING_PLATFORM(communityId))
   }
 
-  const handleApplicationSelect = (application: IFundingApplication) => {
+  const handleApplicationSelect = (_application: IFundingApplication) => {
     // This function is now called by ApplicationList but we handle opening in new tab there
     // Keep this for compatibility but it won't be directly used
   }

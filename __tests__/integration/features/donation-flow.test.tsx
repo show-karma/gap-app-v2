@@ -21,14 +21,11 @@
 import { act, renderHook, waitFor } from "@testing-library/react"
 import toast from "react-hot-toast"
 import type { Address } from "viem"
-import { useCrossChainBalances } from "@/hooks/donation/useCrossChainBalances"
-import { useDonationCheckout } from "@/hooks/donation/useDonationCheckout"
 import { useDonationTransfer } from "@/hooks/useDonationTransfer"
 import type { DonationPayment } from "@/store/donationCart"
 import { useDonationCart } from "@/store/donationCart"
 import {
   clearDonationMocks,
-  createMockGetFreshWalletClient,
   createMockNativeToken,
   createMockPayment,
   createMockSwitchChain,
@@ -39,7 +36,6 @@ import {
   setupDefaultMocks,
   setupLocalStorageMock,
   setupMockPublicClient,
-  setupMockWalletClient,
 } from "../test-utils"
 
 // Mock dependencies
@@ -135,7 +131,7 @@ describe("Integration: Donation Flow", () => {
     // Setup default toast mocks - track calls instead of silencing them
     ;(toast.error as jest.Mock).mockImplementation((message: string) => {
       // Store error messages for verification in tests
-      const errorCalls = (toast.error as jest.Mock).mock.calls
+      const _errorCalls = (toast.error as jest.Mock).mock.calls
       return `toast-error:${message}`
     })
     ;(toast.success as jest.Mock).mockImplementation((message: string) => {
@@ -170,7 +166,7 @@ describe("Integration: Donation Flow", () => {
       expect(cartHook.result.current.items).toHaveLength(1)
 
       // Setup balances (sufficient balance)
-      const balances = mockTokenBalance("USDC", 10, "1000")
+      const _balances = mockTokenBalance("USDC", 10, "1000")
 
       // Setup approval not needed
       const { checkTokenAllowances } = require("@/utilities/erc20")
@@ -216,7 +212,7 @@ describe("Integration: Donation Flow", () => {
       const transferHook = renderHook(() => useDonationTransfer())
 
       // Setup balances for all tokens
-      const balances = {
+      const _balances = {
         ...mockTokenBalance("USDC", 10, "1000"),
         ...mockTokenBalance("DAI", 10, "500"),
         ...mockTokenBalance("ETH", 10, "10"),
@@ -397,11 +393,11 @@ describe("Integration: Donation Flow", () => {
       const wagmi = require("wagmi")
       ;(wagmi.useChainId as jest.Mock).mockReturnValue(1) // User on Ethereum
 
-      const payment = createMockPayment({ chainId: 10 }) // Payment on Optimism
-      const mockSwitchChain = createMockSwitchChain(true)
-      const balances = mockTokenBalance("USDC", 10, "1000")
+      const _payment = createMockPayment({ chainId: 10 }) // Payment on Optimism
+      const _mockSwitchChain = createMockSwitchChain(true)
+      const _balances = mockTokenBalance("USDC", 10, "1000")
 
-      const transferHook = renderHook(() => useDonationTransfer())
+      const _transferHook = renderHook(() => useDonationTransfer())
 
       // The hook should detect the chain mismatch
       // In a real scenario, the beforeTransfer callback would handle this

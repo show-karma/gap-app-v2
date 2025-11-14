@@ -1,6 +1,5 @@
 import { Dialog, Transition } from "@headlessui/react"
 import { ShieldCheckIcon } from "@heroicons/react/24/outline"
-import { ArrowUpIcon } from "@heroicons/react/24/solid"
 import * as Tooltip from "@radix-ui/react-tooltip"
 import { type FC, Fragment, useState } from "react"
 import toast from "react-hot-toast"
@@ -127,7 +126,6 @@ export const PromoteMemberDialog: FC<PromoteMemberDialogProps> = ({ memberAddres
           error: `Failed to promote member ${memberAddress}.`,
         }
       )
-      console.log(error)
     } finally {
       setIsPromoting(false)
       setIsStepper(false)

@@ -13,7 +13,7 @@ import { Button } from "@/components/Utilities/Button"
 import { DatePicker } from "@/components/Utilities/DatePicker"
 import { errorManager } from "@/components/Utilities/errorManager"
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor"
-import { getGapClient, useGap } from "@/hooks/useGap"
+import { useGap } from "@/hooks/useGap"
 import { useWallet } from "@/hooks/useWallet"
 import { useProjectStore } from "@/store"
 import { useStepper } from "@/store/modals/txStepper"
@@ -191,7 +191,6 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({ onClose, impactId }
         }
       })
     } catch (error: any) {
-      console.log(error)
       errorManager(`Error updating impact ${impactId} from project ${project?.uid}`, error)
       toast.error("There was an error updating the impact. Please try again")
     } finally {

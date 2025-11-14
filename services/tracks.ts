@@ -1,5 +1,4 @@
 import { errorManager } from "@/components/Utilities/errorManager"
-import { envVars } from "@/utilities/enviromentVars"
 import fetchData from "@/utilities/fetchData"
 import { INDEXER } from "@/utilities/indexer"
 

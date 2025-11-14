@@ -251,7 +251,7 @@ export function QuestionBuilder({
       id: `field_${Date.now()}`,
       type: fieldType,
       label: `New ${fieldType} field`,
-      required: fieldType === "email" && !isPostApprovalMode ? true : false, // Email fields are required by default only in main form
+      required: !!(fieldType === "email" && !isPostApprovalMode), // Email fields are required by default only in main form
       private: isPostApprovalMode, // All fields in post-approval mode are private by default
       options: ["select", "radio", "checkbox"].includes(fieldType)
         ? ["Option 1", "Option 2"]

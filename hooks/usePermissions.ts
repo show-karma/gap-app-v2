@@ -7,7 +7,7 @@ import { PermissionsService } from "@/services/permissions.service"
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client"
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions"
 
-const apiClient = createAuthenticatedApiClient()
+const _apiClient = createAuthenticatedApiClient()
 
 /**
  * Options for configuring the usePermissions hook

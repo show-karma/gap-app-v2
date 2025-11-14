@@ -100,7 +100,6 @@ export function useChat(options: UseChatOptions) {
           if (message.trim().startsWith("data: ")) {
             const data = message.slice(5).trim()
             if (data === "[DONE]") {
-              console.log("Stream completed")
               continue
             }
 

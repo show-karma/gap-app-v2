@@ -3,19 +3,18 @@
  * Tests render performance, re-render optimization, memory management, and debouncing efficiency
  */
 
-import { fireEvent, screen, waitFor } from "@testing-library/react"
-import React from "react"
+import { fireEvent, screen } from "@testing-library/react"
 import { Navbar } from "@/src/components/navbar/navbar"
 import { getAuthFixture } from "../fixtures/auth-fixtures"
 import { scenarioHandlers } from "../mocks/handlers"
 import { server } from "../setup"
-import { renderWithProviders, waitForDebounce } from "../utils/test-helpers"
+import { renderWithProviders } from "../utils/test-helpers"
 
 // Mock child components to prevent complex dependency issues
 jest.mock("@/src/components/navbar/navbar-desktop-navigation", () => ({
   NavbarDesktopNavigation: () => (
     <div data-testid="desktop-navigation">
-      <input type="search" role="searchbox" aria-label="Search" />
+      <input type="search" aria-label="Search" />
       <button type="button">Sign in</button>
     </div>
   ),
@@ -30,9 +29,7 @@ jest.mock("@/src/components/navbar/navbar-mobile-menu", () => ({
 }))
 
 jest.mock("@/src/components/navbar/navbar-search", () => ({
-  NavbarSearch: () => (
-    <input type="search" role="searchbox" aria-label="Search" data-testid="navbar-search" />
-  ),
+  NavbarSearch: () => <input type="search" aria-label="Search" data-testid="navbar-search" />,
 }))
 
 jest.mock("@/src/components/navbar/navbar-user-menu", () => ({
@@ -225,7 +222,7 @@ describe("Navbar Performance Tests", () => {
       const initialRenderCount = renderCount
 
       // Update to authenticated state
-      const authenticatedFixture = getAuthFixture("authenticated-basic")
+      const _authenticatedFixture = getAuthFixture("authenticated-basic")
       rerender(<NavbarWithCounter />)
 
       // Should only re-render once for auth change
@@ -295,7 +292,7 @@ describe("Navbar Performance Tests", () => {
       const initialCount = navbarRenderCount
 
       // Change to admin permissions
-      const adminFixture = getAuthFixture("community-admin-single")
+      const _adminFixture = getAuthFixture("community-admin-single")
       rerender(<NavbarWithCounter />)
 
       // Should re-render for permission change, but only once

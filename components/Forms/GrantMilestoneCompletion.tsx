@@ -1,34 +1,13 @@
 "use client"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { GapContract } from "@show-karma/karma-gap-sdk/core/class/contract/GapContract"
-import { Milestone } from "@show-karma/karma-gap-sdk/core/class/entities/Milestone"
-import { MilestoneCompleted } from "@show-karma/karma-gap-sdk/core/class/types/attestations"
-import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
-import toast from "react-hot-toast"
-import { Hex } from "viem"
-import { useAccount } from "wagmi"
 import { z } from "zod"
 import { OutputsSection } from "@/components/Forms/Outputs/OutputsSection"
 import { Button } from "@/components/Utilities/Button"
-import { errorManager } from "@/components/Utilities/errorManager"
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor"
-import { getGapClient, useGap } from "@/hooks/useGap"
 import { useMilestone } from "@/hooks/useMilestone"
-import { useProjectStore } from "@/store"
-import { useStepper } from "@/store/modals/txStepper"
 import type { UnifiedMilestone } from "@/types/roadmap"
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid"
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
-import { MESSAGES } from "@/utilities/messages"
-import { PAGES } from "@/utilities/pages"
-import { urlRegex } from "@/utilities/regexs/urlRegex"
-import { sanitizeObject } from "@/utilities/sanitize"
-import { cn } from "@/utilities/tailwind"
-import { safeGetWalletClient } from "@/utilities/wallet-helpers"
 
 // Create form schema with zod
 const formSchema = z.object({
@@ -43,7 +22,7 @@ const formSchema = z.object({
       (value) => {
         if (!value) return true // Allow empty value
         const num = Number(value)
-        return !isNaN(num) && num >= 0 && num <= 100
+        return !Number.isNaN(num) && num >= 0 && num <= 100
       },
       {
         message: "Please enter a number between 0 and 100",

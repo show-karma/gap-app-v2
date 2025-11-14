@@ -1,18 +1,16 @@
 import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation } from "@tanstack/react-query"
 import Image from "next/image"
 import { type FC, useState } from "react"
 import { useForm } from "react-hook-form"
 import toast from "react-hot-toast"
-import { Hex } from "viem"
 import { useAccount } from "wagmi"
 import { z } from "zod"
 import { Button } from "@/components/Utilities/Button"
 import { errorManager } from "@/components/Utilities/errorManager"
 import { useContactInfo } from "@/hooks/useContactInfo"
 import { useProjectStore } from "@/store"
-import { APIContact, type Contact } from "@/types/project"
+import type { Contact } from "@/types/project"
 import fetchData from "@/utilities/fetchData"
 import { generateRandomString } from "@/utilities/generateRandomString"
 import { INDEXER } from "@/utilities/indexer"
@@ -247,7 +245,7 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
           {},
           {},
           true
-        ).then(([res, error]) => {
+        ).then(([_res, error]) => {
           if (!error) {
             refreshList()
             refreshProject()
@@ -272,7 +270,7 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
           {},
           {},
           true
-        ).then(async ([res, error]) => {
+        ).then(async ([_res, error]) => {
           if (!error) {
             toast.success("Contact info updated successfully")
             clear()
@@ -321,7 +319,7 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
         {},
         {},
         true
-      ).then(([res, error]) => {
+      ).then(([_res, error]) => {
         if (!error) {
           toast.success("Contact info deleted successfully", {
             className: "z-[9999]",
@@ -346,7 +344,6 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
           error: "Failed to delete contact.",
         }
       )
-      console.log(error)
     } finally {
       setIsDeleteLoading(false)
     }
@@ -358,13 +355,13 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
     })
     const contact = existingContacts?.find((contact) => contact.id === value)
     setValue("name", contact?.name || "", {
-      shouldValidate: contact ? true : false,
+      shouldValidate: !!contact,
     })
     setValue("email", contact?.email || "", {
-      shouldValidate: contact ? true : false,
+      shouldValidate: !!contact,
     })
     setValue("telegram", contact?.telegram || "", {
-      shouldValidate: contact ? true : false,
+      shouldValidate: !!contact,
     })
   }
 

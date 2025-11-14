@@ -54,7 +54,7 @@ export const GrantTitleDropdown: FC<{
     if (triggerRef.current) {
       setTriggerWidth(triggerRef.current.offsetWidth)
     }
-  }, [open])
+  }, [])
 
   const addCustom = async (custom: string) => {
     const trimmedCustom = custom.trim()
@@ -83,7 +83,7 @@ export const GrantTitleDropdown: FC<{
         shouldValidate: true,
       })
     } else {
-      const timestamp = new Date().getTime().toString()
+      const timestamp = Date.now().toString()
 
       requestProgram = {
         metadata: {
@@ -262,10 +262,10 @@ export const GrantTitleDropdown: FC<{
                     style={{
                       display:
                         grantToEdit && !selectedProgram
-                          ? grantToEdit?.details?.data?.title == item?.metadata?.title
+                          ? grantToEdit?.details?.data?.title === item?.metadata?.title
                             ? "block"
                             : "none"
-                          : selectedProgram?.metadata?.title == item?.metadata?.title
+                          : selectedProgram?.metadata?.title === item?.metadata?.title
                             ? "block"
                             : "none",
                     }}

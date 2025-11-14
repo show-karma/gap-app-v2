@@ -5,18 +5,15 @@ import type { Community } from "@show-karma/karma-gap-sdk"
 import { useQuery } from "@tanstack/react-query"
 import { blo } from "blo"
 import Link from "next/link"
-import React, { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import { isAddress } from "viem"
 import { useAccount } from "wagmi"
-import { z } from "zod"
 import CommunityStats from "@/components/CommunityStats"
 import { CommunityDialog } from "@/components/Dialogs/CommunityDialog"
 import { AddAdmin } from "@/components/Pages/Admin/AddAdminDialog"
 import { RemoveAdmin } from "@/components/Pages/Admin/RemoveAdminDialog"
 import { errorManager } from "@/components/Utilities/errorManager"
 import { Skeleton } from "@/components/Utilities/Skeleton"
-import { Spinner } from "@/components/Utilities/Spinner"
-import { useAdminCommunities } from "@/hooks/useAdminCommunities"
 import { useGap } from "@/hooks/useGap"
 import { useStaff } from "@/hooks/useStaff"
 import { layoutTheme } from "@/src/helper/theme"
@@ -124,7 +121,6 @@ export default function CommunitiesToAdminPage() {
         setCommunityAdmins(result.data.admins)
       }
     } catch (error: any) {
-      console.log(error)
       errorManager(`Error refetching communities`, error)
     }
     return undefined

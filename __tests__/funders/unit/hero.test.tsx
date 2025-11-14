@@ -11,7 +11,6 @@
  */
 
 import { screen } from "@testing-library/react"
-import userEvent from "@testing-library/user-event"
 import { Hero } from "@/src/features/funders/components/hero"
 import { mockCommunities } from "../fixtures/communities"
 import { mockChosenCommunities } from "../setup"

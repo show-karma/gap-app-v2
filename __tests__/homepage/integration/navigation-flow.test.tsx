@@ -126,7 +126,7 @@ describe("Homepage Navigation Flows", () => {
 
       // All links should be within main
       const links = main?.querySelectorAll("a")
-      expect(links && links.length).toBeGreaterThan(0)
+      expect(links?.length).toBeGreaterThan(0)
     })
 
     it("should have proper link structure for internal navigation", async () => {

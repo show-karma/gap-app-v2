@@ -38,7 +38,7 @@ export default function ReviewerApplicationsPage() {
     if (search) filters.search = search
 
     const status = searchParams.get("status")
-    if (status) filters.status = status as any
+    if (status) filters.status = status
 
     const dateFrom = searchParams.get("dateFrom")
     if (dateFrom) filters.dateFrom = dateFrom
@@ -50,10 +50,10 @@ export default function ReviewerApplicationsPage() {
     if (page) filters.page = parseInt(page, 10)
 
     const sortBy = searchParams.get("sortBy")
-    if (sortBy) filters.sortBy = sortBy as any
+    if (sortBy) filters.sortBy = sortBy as IApplicationFilters["sortBy"]
 
     const sortOrder = searchParams.get("sortOrder")
-    if (sortOrder) filters.sortOrder = sortOrder as any
+    if (sortOrder) filters.sortOrder = sortOrder as IApplicationFilters["sortOrder"]
 
     return filters
   }, [searchParams])

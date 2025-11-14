@@ -31,7 +31,7 @@ export const getExplorerProjects = async (
       pageInfo: pageInfo,
       nextOffset: page + 1,
     }
-  } catch (e) {
+  } catch (_e) {
     return {
       projects: [],
       pageInfo: { totalItems: 0, page: 0, pageLimit: pageSize },

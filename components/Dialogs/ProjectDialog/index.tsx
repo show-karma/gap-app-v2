@@ -214,7 +214,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const [uploadedLogoFile, setUploadedLogoFile] = useState<File | null>(null)
   const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null)
   const [isLogoUploading, setIsLogoUploading] = useState(false)
-  const [logoUploadProgress, setLogoUploadProgress] = useState(0)
+  const [_logoUploadProgress, setLogoUploadProgress] = useState(0)
   const [tempLogoKey, setTempLogoKey] = useState<string | null>(null)
 
   // Modal state management - use edit store or local state based on mode
@@ -240,7 +240,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const { changeStepperStep, setIsStepper } = useStepper()
   const { openSimilarProjectsModal, isSimilarProjectsModalOpen } = useSimilarProjectsModalStore()
   const [walletSigner, setWalletSigner] = useState<any>(null)
-  const [faucetFunded, setFaucetFunded] = useState(false)
+  const [_faucetFunded, setFaucetFunded] = useState(false)
 
   const { register, handleSubmit, reset, watch, setValue, trigger, formState, setError } =
     useForm<SchemaType>({
@@ -396,7 +396,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         setTempLogoKey(null)
       }
     }
-  }, [isOpen, projectToUpdate, previousContacts, reset])
+  }, [isOpen, projectToUpdate, reset, dataToUpdate])
 
   function closeModal() {
     setIsOpen(false)
@@ -411,7 +411,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       closeModal()
       return
     }
-  }, [isOpen, isAuth])
+  }, [isOpen, isAuth, closeModal, login])
 
   const validateCustomLinks = () => {
     return customLinks.some((link) => !link.name.trim() || !link.url.trim())
@@ -599,7 +599,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           if (!promoteError) {
             const { permanentUrl } = promoteData
             finalImageURL = permanentUrl
-            console.log("Logo promoted to permanent before project creation:", permanentUrl)
           } else {
             console.warn("Failed to promote logo to permanent status, using temp URL")
           }
@@ -707,7 +706,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                   throw new Error("GitHub repository is private")
                 }
 
-                const [githubUpdateData, error] = await fetchData(
+                const [_githubUpdateData, error] = await fetchData(
                   INDEXER.PROJECT.EXTERNAL.UPDATE(fetchedProject.uid),
                   "PUT",
                   {
@@ -729,7 +728,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               {},
               {},
               true
-            ).then(([res, error]) => {
+            ).then(([_res, error]) => {
               if (error) {
                 toast.error(
                   "Something went wrong with contact info save. Please try again later.",
@@ -758,7 +757,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       setContacts([])
       setCustomLinks([])
     } catch (error: any) {
-      console.log({ error })
       errorManager(
         MESSAGES.PROJECT.CREATE.ERROR(data.title),
         error,
@@ -841,7 +839,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           if (!promoteError) {
             const { permanentUrl } = promoteData
             finalImageURL = permanentUrl
-            console.log("Logo promoted to permanent before project update:", permanentUrl)
           } else {
             console.warn("Failed to promote logo to permanent status, using temp URL")
           }
@@ -901,7 +898,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
           const ids = (fetchedProject as any).external?.github || []
 
-          const [githubUpdateData, error] = await fetchData(
+          const [_githubUpdateData, error] = await fetchData(
             INDEXER.PROJECT.EXTERNAL.UPDATE(fetchedProject.uid),
             "PUT",
             {
@@ -935,7 +932,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         }
       })
     } catch (error: any) {
-      console.log(error)
       errorManager(
         `Error updating project ${projectToUpdate?.details?.data?.slug || projectToUpdate?.uid}`,
         error,
@@ -967,7 +963,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     if (projectToUpdate) {
       setContacts(contactsInfo || [])
     }
-  }, [contactsInfo])
+  }, [contactsInfo, projectToUpdate])
 
   const tooltipText = () => {
     const errors = hasErrors()
@@ -1008,8 +1004,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         setExistingProjects([])
       }
       return
-    } catch (error) {
-      console.log("error", error)
+    } catch (_error) {
     } finally {
       setIsSearchingProject(false)
     }
@@ -1047,7 +1042,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               ) : (
                 <p className="text-red-500">
                   {errors.title?.message}{" "}
-                  {errors.title?.message && errors.title?.message.includes("similar") ? (
+                  {errors.title?.message?.includes("similar") ? (
                     <>
                       <span>If you need help getting access to your project, message us </span>
                       <ExternalLinkComponent
@@ -1060,7 +1055,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                   ) : null}
                 </p>
               )}
-              {errors.title?.message && errors.title?.message.includes("similar") ? (
+              {errors.title?.message?.includes("similar") ? (
                 <span
                   className="text-blue-500 underline cursor-pointer"
                   style={{
@@ -1337,7 +1332,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 setTempLogoKey(tempKey)
                 setIsLogoUploading(false)
               }}
-              onS3UploadError={(error: string) => {
+              onS3UploadError={(_error: string) => {
                 setUploadedLogoFile(null)
                 setLogoPreviewUrl(null)
                 setValue("profilePicture", "", { shouldValidate: true })

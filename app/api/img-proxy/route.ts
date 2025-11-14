@@ -17,11 +17,11 @@ export async function GET(request: Request) {
 
     return new Response(imageBuffer, {
       headers: {
-        "Content-Type": response.headers.get("Content-Type"),
-        "Content-Length": imageBuffer.byteLength,
-      } as any,
+        "Content-Type": response.headers.get("Content-Type") || "application/octet-stream",
+        "Content-Length": imageBuffer.byteLength.toString(),
+      },
     })
-  } catch (error: any) {
+  } catch (_error: unknown) {
     return NextResponse.json({ error: "Failed to proxy image" }, { status: 500 })
   }
 }

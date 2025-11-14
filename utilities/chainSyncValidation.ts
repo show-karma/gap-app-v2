@@ -9,8 +9,6 @@ export async function validateChainSync(
   expectedChainId: number,
   operation: string = "transaction"
 ): Promise<void> {
-  console.log(`🔍 Validating chain sync for ${operation} on chain ${expectedChainId}...`)
-
   if (!walletClient) {
     throw new Error(
       `Wallet client is not available for ${operation}. Please ensure your wallet is connected.`
@@ -35,10 +33,6 @@ export async function validateChainSync(
         `Please switch to the correct network in your wallet and try again.`
     )
   }
-
-  console.log(
-    `✅ Chain sync validated: wallet client is ready for ${operation} on chain ${expectedChainId}`
-  )
 }
 
 /**
@@ -50,10 +44,6 @@ export async function waitForChainSync(
   maxWaitMs: number = 30000,
   operation: string = "transaction"
 ): Promise<WalletClient> {
-  console.log(
-    `⏳ Waiting for wallet client to sync to chain ${expectedChainId} for ${operation}...`
-  )
-
   const startTime = Date.now()
   let attempt = 0
 
@@ -63,13 +53,9 @@ export async function waitForChainSync(
 
     try {
       await validateChainSync(walletClient, expectedChainId, operation)
-      console.log(`✅ Chain sync completed after ${attempt} attempts for ${operation}`)
       return walletClient!
-    } catch (error) {
+    } catch (_error) {
       if (attempt === 1) {
-        console.log(
-          `⏳ Chain not synced yet, waiting... (${error instanceof Error ? error.message : "Unknown error"})`
-        )
       }
 
       // Exponential backoff: 500ms, 1s, 2s, 4s, etc.

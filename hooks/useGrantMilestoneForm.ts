@@ -2,19 +2,16 @@ import { Milestone } from "@show-karma/karma-gap-sdk"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import toast from "react-hot-toast"
-import { Hex } from "viem"
 import { useAccount } from "wagmi"
 import { errorManager } from "@/components/Utilities/errorManager"
-import { getGapClient, useGap } from "@/hooks/useGap"
+import { useGap } from "@/hooks/useGap"
 import { useOwnerStore, useProjectStore } from "@/store"
 import { useStepper } from "@/store/modals/txStepper"
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid"
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils"
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain"
 import fetchData from "@/utilities/fetchData"
 import { INDEXER } from "@/utilities/indexer"
 import { MESSAGES } from "@/utilities/messages"
-import { PAGES } from "@/utilities/pages"
 import { sanitizeObject } from "@/utilities/sanitize"
 import { safeGetWalletClient } from "@/utilities/wallet-helpers"
 import { useWallet } from "./useWallet"
@@ -41,7 +38,7 @@ export function useGrantMilestoneForm({
   const { address, chain } = useAccount()
   const { project, refreshProject } = useProjectStore()
   const { switchChainAsync } = useWallet()
-  const isOwner = useOwnerStore((state) => state.isOwner)
+  const _isOwner = useOwnerStore((state) => state.isOwner)
 
   const { gap } = useGap()
   const [isLoading, setIsLoading] = useState(false)

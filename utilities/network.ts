@@ -86,12 +86,12 @@ export function getChainIdByName(name: string) {
     case "mainnet":
     case "ethereum":
       return 1
-    case "OP Mainnet":
+    case "op mainnet":
     case "optimism":
       return 10
     case "arbitrum":
     case "arbitrum-one":
-    case "ArbitrumOne":
+    case "arbitrumone":
       return 42161
     case "base":
       return 8453
@@ -101,18 +101,18 @@ export function getChainIdByName(name: string) {
     case "matic":
       return 137
     case "sei":
-    case "Seitrace":
+    case "seitrace":
       return 1329
-    case "optimismGoerli":
-    case "Optimism Goerli":
+    case "optimismgoerli":
+    case "optimism goerli":
     case "optimism-goerli":
       return 420
-    case "Optimism Sepolia":
+    case "optimism sepolia":
     case "optimism-sepolia":
-    case "optimismSepolia":
+    case "optimismsepolia":
       return 11155420
     case "sepolia":
-    case "Sepolia":
+    case "sepolia":
       return 11155111
     case "base-sepolia":
     case "base sepolia":

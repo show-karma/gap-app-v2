@@ -1,14 +1,6 @@
-import { Menu, Transition } from "@headlessui/react"
-import {
-  EllipsisVerticalIcon,
-  PencilSquareIcon,
-  ShareIcon,
-  TrashIcon,
-} from "@heroicons/react/24/outline"
-import { Fragment } from "react"
+import { PencilSquareIcon, ShareIcon, TrashIcon } from "@heroicons/react/24/outline"
 import { DeleteDialog } from "@/components/DeleteDialog"
 import { Button } from "@/components/Utilities/Button"
-import { ExternalLink } from "@/components/Utilities/ExternalLink"
 import { cn } from "@/utilities/tailwind"
 
 interface ActivityMenuProps {

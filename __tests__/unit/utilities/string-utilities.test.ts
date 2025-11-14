@@ -106,7 +106,7 @@ describe("shortAddress", () => {
   })
 
   it("should handle very long addresses", () => {
-    const longAddress = "0x" + "1234567890".repeat(10)
+    const longAddress = `0x${"1234567890".repeat(10)}`
     const result = shortAddress(longAddress)
     expect(result.startsWith("0x1234")).toBe(true)
     expect(result.endsWith("567890")).toBe(true)

@@ -8,8 +8,8 @@ import { getCommunityDetailsV2 } from "../queries/getCommunityDataV2"
 export async function getProgramsImpact(
   communityId: string,
   allCategories?: CategoriesOptions[],
-  programSelected?: string | null,
-  projectSelected?: string | null
+  _programSelected?: string | null,
+  _projectSelected?: string | null
 ): Promise<ProgramImpactData> {
   try {
     // First get the community details to obtain the UID

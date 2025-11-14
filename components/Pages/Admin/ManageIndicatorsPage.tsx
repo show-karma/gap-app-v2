@@ -1,28 +1,17 @@
 "use client"
 import { Disclosure } from "@headlessui/react"
-import {
-  ChevronDownIcon,
-  ChevronLeftIcon,
-  ChevronUpIcon,
-  PlusIcon,
-  TrashIcon,
-} from "@heroicons/react/24/outline"
+import { ChevronDownIcon, ChevronLeftIcon, ChevronUpIcon } from "@heroicons/react/24/outline"
 import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import Image from "next/image"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
-import pluralize from "pluralize"
 import { useEffect, useMemo, useState } from "react"
 import { useAccount } from "wagmi"
-import { pickColor } from "@/components/GrantCard"
-import { IndicatorsHub } from "@/components/Pages/Admin/IndicatorsHub"
-import { ManageCategoriesOutputs } from "@/components/Pages/Admin/ManageCategoriesOutputs"
 import { Button } from "@/components/Utilities/Button"
 import { errorManager } from "@/components/Utilities/errorManager"
 import { Spinner } from "@/components/Utilities/Spinner"
 import { useAuth } from "@/hooks/useAuth"
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin"
-import { type Category, ImpactSegment } from "@/types/impactMeasurement"
+import type { Category } from "@/types/impactMeasurement"
 import { zeroUID } from "@/utilities/commons"
 import { useSigner } from "@/utilities/eas-wagmi-utils"
 import fetchData from "@/utilities/fetchData"
@@ -48,12 +37,14 @@ export default function ManageIndicatorsPage() {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
   const [viewMode, setViewMode] = useState<"category" | "indicators">("category")
   const [viewType, setViewType] = useState<"all" | "output" | "outcome">("all")
-  const [indicatorViewType, setIndicatorViewType] = useState<"all" | "automated" | "manual">("all")
-  const [searchQuery, setSearchQuery] = useState<string>("")
+  const [_indicatorViewType, _setIndicatorViewType] = useState<"all" | "automated" | "manual">(
+    "all"
+  )
+  const [_searchQuery, _setSearchQuery] = useState<string>("")
 
   const [loading, setLoading] = useState<boolean>(true) // Loading state of the API call
   const [community, setCommunity] = useState<ICommunityResponse | undefined>(undefined) // Data returned from the API
-  const signer = useSigner()
+  const _signer = useSigner()
 
   // Check if user is admin of this community
   const { isCommunityAdmin: isAdmin, isLoading: adminLoading } = useIsCommunityAdmin(
@@ -83,7 +74,7 @@ export default function ManageIndicatorsPage() {
     }
 
     fetchDetails()
-  }, [communityId])
+  }, [communityId, router.push])
 
   const getCategories = async (isSilent: boolean = false) => {
     if (!isSilent) {
@@ -147,7 +138,7 @@ export default function ManageIndicatorsPage() {
           setCategories([])
         })
     }
-  }, [community?.uid])
+  }, [community?.uid, getCategories])
 
   return (
     <div className="mt-4 flex gap-8 flex-row max-lg:flex-col w-full mb-10">

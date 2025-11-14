@@ -70,7 +70,7 @@ export const RegionCreationDialog: FC<RegionCreationDialogProps> = ({ refreshReg
         throw new Error("Community ID is not available")
       }
 
-      const [request, error] = await fetchData(
+      const [_request, error] = await fetchData(
         INDEXER.REGIONS.CREATE(communityUID),
         "POST",
         {
@@ -95,7 +95,6 @@ export const RegionCreationDialog: FC<RegionCreationDialogProps> = ({ refreshReg
           error: "Failed to create region. Please try again.",
         }
       )
-      console.log(error)
     } finally {
       setIsLoading(false)
     }

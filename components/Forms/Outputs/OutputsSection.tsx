@@ -18,12 +18,7 @@ import { getIndicatorsByCommunity } from "@/utilities/queries/getIndicatorsByCom
 import { cn } from "@/utilities/tailwind"
 import { DeliverablesTable } from "./DeliverablesTable"
 import { MetricsTable } from "./MetricsTable"
-import {
-  type CategorizedIndicator,
-  type CommunityData,
-  DeliverableData,
-  type OutputData,
-} from "./types"
+import type { CategorizedIndicator, CommunityData, OutputData } from "./types"
 
 interface OutputsSectionProps {
   // Form controls

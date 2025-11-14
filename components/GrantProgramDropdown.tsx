@@ -18,7 +18,6 @@ export function SearchGrantProgram({
       setIsLoading(true)
       const [result, error] = await fetchData(INDEXER.COMMUNITY.PROGRAMS(communityUID))
       if (error) {
-        console.log(error)
       }
       const sortedAlphabetically = result.sort((a: GrantProgram, b: GrantProgram) => {
         const aTitle = a.metadata?.title || ""

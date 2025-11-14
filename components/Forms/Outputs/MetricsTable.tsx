@@ -2,7 +2,6 @@
 
 import { TrashIcon } from "@heroicons/react/24/solid"
 import { useState } from "react"
-import type { UseFormSetValue } from "react-hook-form"
 import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub"
 import { Button } from "@/components/Utilities/Button"
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip"
@@ -25,7 +24,7 @@ interface MetricsTableProps {
   labelStyle: string
 }
 
-const EmptyDiv = () => <div className="h-5 w-1" />
+const _EmptyDiv = () => <div className="h-5 w-1" />
 
 const isInvalidValue = (value: number | string, unitOfMeasure: string) => {
   if (value === "") return true
@@ -33,7 +32,7 @@ const isInvalidValue = (value: number | string, unitOfMeasure: string) => {
   if (unitOfMeasure === "int") {
     return !Number.isInteger(numValue)
   }
-  return isNaN(numValue)
+  return Number.isNaN(numValue)
 }
 
 // CategorizedIndicatorDropdown component (extracted from ProjectUpdate.tsx)
@@ -51,7 +50,7 @@ const CategorizedIndicatorDropdown = ({
   selectedCommunities: CommunityData[]
 }) => {
   // Group indicators by source
-  const projectIndicators = indicators.filter((ind) => ind.source === "project")
+  const _projectIndicators = indicators.filter((ind) => ind.source === "project")
   const selectedCommunityIds = selectedCommunities.map((c) => c.uid)
   const communityIndicators = indicators.filter(
     (ind) =>
@@ -115,7 +114,7 @@ export const MetricsTable = ({
   labelStyle,
 }: MetricsTableProps) => {
   const [isOutputDialogOpen, setIsOutputDialogOpen] = useState(false)
-  const [selectedToCreate, setSelectedToCreate] = useState<number | undefined>(undefined)
+  const [_selectedToCreate, setSelectedToCreate] = useState<number | undefined>(undefined)
 
   const handleOutputChange = (index: number, field: keyof OutputData, value: any) => {
     const newOutputs = [...outputs]

@@ -5,8 +5,7 @@
  * with multiple components and hooks working together.
  */
 
-import { RenderOptions, render, waitFor } from "@testing-library/react"
-import React, { ReactElement } from "react"
+import { waitFor } from "@testing-library/react"
 import type { Address } from "viem"
 import type { SupportedToken } from "@/constants/supportedTokens"
 import type { DonationPayment } from "@/store/donationCart"

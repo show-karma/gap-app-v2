@@ -9,7 +9,6 @@
  * - Layout stability (CLS)
  */
 
-import { render } from "@testing-library/react"
 import FundersPage from "@/app/funders/page"
 import { mockCommunities } from "../fixtures/communities"
 import { mockChosenCommunities } from "../setup"

@@ -1,8 +1,6 @@
 "use client"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone"
-import { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import { useQuery } from "@tanstack/react-query"
 import { useParams, useRouter } from "next/navigation"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
@@ -11,7 +9,7 @@ import { useAccount } from "wagmi"
 import { z } from "zod"
 import { OutputsSection } from "@/components/Forms/Outputs/OutputsSection"
 import { useAllMilestones } from "@/hooks/useAllMilestones"
-import { getGapClient, useGap } from "@/hooks/useGap"
+import { useGap } from "@/hooks/useGap"
 import { useWallet } from "@/hooks/useWallet"
 import { useProjectStore } from "@/store"
 import { useStepper } from "@/store/modals/txStepper"
@@ -27,7 +25,6 @@ import { urlRegex } from "@/utilities/regexs/urlRegex"
 import { sanitizeInput } from "@/utilities/sanitize"
 import { getProjectById } from "@/utilities/sdk"
 import { cn } from "@/utilities/tailwind"
-import { privyConfig as config } from "@/utilities/wagmi/privy-config"
 import { safeGetWalletClient } from "@/utilities/wallet-helpers"
 import { Button } from "../Utilities/Button"
 import { errorManager } from "../Utilities/errorManager"
@@ -186,7 +183,6 @@ export const ProjectObjectiveCompletionForm = ({
           }
         })
     } catch (error: any) {
-      console.log(error)
       errorManager(
         `Error completing milestone ${objectiveUID}`,
         error,

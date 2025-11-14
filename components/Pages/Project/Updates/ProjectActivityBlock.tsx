@@ -1,15 +1,10 @@
-import {
-  IGrantResponse,
-  IProjectResponse,
-  type IProjectUpdate,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
+import type { IProjectUpdate } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
 import { useMemo } from "react"
 import { useAccount } from "wagmi"
 import { ExternalLink } from "@/components/Utilities/ExternalLink"
 import { useImpactAnswers } from "@/hooks/useImpactAnswers"
 import { useOwnerStore, useProjectStore } from "@/store"
 import { useCommunityAdminStore } from "@/store/communityAdmin"
-import { PAGES } from "@/utilities/pages"
 import { FilteredOutputsAndOutcomes, filterIndicators } from "../Impact/FilteredOutputsAndOutcomes"
 
 export const ProjectActivityBlock = ({ activity }: { activity: IProjectUpdate }) => {

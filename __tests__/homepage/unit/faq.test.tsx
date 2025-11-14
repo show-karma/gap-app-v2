@@ -11,16 +11,8 @@
  */
 
 import { FAQ } from "@/src/features/homepage/components/faq"
-import {
-  fireEvent,
-  renderWithProviders,
-  screen,
-  userEvent,
-  waitFor,
-  within,
-} from "../utils/test-helpers"
+import { renderWithProviders, screen, userEvent } from "../utils/test-helpers"
 import "@testing-library/jest-dom"
-import { mockFAQItems } from "../fixtures/faq"
 
 // Mock the SOCIALS utility
 jest.mock("@/utilities/socials", () => ({
@@ -212,7 +204,7 @@ describe("FAQ Component", () => {
       const user = userEvent.setup()
       renderWithProviders(<FAQ />)
 
-      const questions = screen.getAllByTestId(/^faq-question-/)
+      const _questions = screen.getAllByTestId(/^faq-question-/)
 
       // Tab should move through questions
       await user.tab()

@@ -51,7 +51,6 @@ export const getGrants = async (
     return { grants, pageInfo, uniqueProjectCount }
   } catch (error: any) {
     errorManager(`Error getting grants of community: ${uid}`, error)
-    console.log(error)
     return { grants: [], pageInfo: {} }
   }
 }

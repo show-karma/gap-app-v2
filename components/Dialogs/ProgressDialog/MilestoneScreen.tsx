@@ -1,11 +1,9 @@
 "use client"
 import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
 import { useState } from "react"
-import { GrantUpdateForm } from "@/components/Forms/GrantUpdate"
 import { MilestoneForm } from "@/components/Forms/Milestone"
 import { useProjectStore } from "@/store"
 import { useProgressModalStore } from "@/store/modals/progress"
-import { PAGES } from "@/utilities/pages"
 import { Dropdown } from "./Dropdown"
 import { NoGrant } from "./NoGrant"
 

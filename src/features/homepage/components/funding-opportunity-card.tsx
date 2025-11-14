@@ -40,7 +40,7 @@ function getProgramStatus(program: FundingProgram): {
 
   if (endsAt) {
     const daysUntilEnd = Math.ceil(
-      (new Date(endsAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+      (new Date(endsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
     )
     if (daysUntilEnd <= 7 && daysUntilEnd > 0) {
       return { label: "Ends soon", variant: "destructive", endsSoon: true }

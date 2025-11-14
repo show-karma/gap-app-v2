@@ -11,7 +11,7 @@
  */
 
 import { LiveFundingOpportunities } from "@/src/features/homepage/components/live-funding-opportunities"
-import { renderWithProviders, screen, waitFor, within } from "../utils/test-helpers"
+import { renderWithProviders, screen, within } from "../utils/test-helpers"
 import "@testing-library/jest-dom"
 import { mockFundingOpportunities } from "../fixtures/funding-opportunities"
 

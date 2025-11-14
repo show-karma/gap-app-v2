@@ -20,7 +20,7 @@ import { PAGES } from "@/utilities/pages"
  * Allows navigation to specific community reviewer dashboards
  */
 export default function MyReviewPage() {
-  const router = useRouter()
+  const _router = useRouter()
   const { address } = useAccount()
   const { authenticated: isAuth } = useAuth()
 

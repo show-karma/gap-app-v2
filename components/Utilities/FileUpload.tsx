@@ -221,7 +221,7 @@ export function FileUpload({
       setIsDragOver(false)
 
       const files = e.dataTransfer.files
-      if (files && files[0]) {
+      if (files?.[0]) {
         handleFileSelection(files[0])
       }
     },
@@ -231,7 +231,7 @@ export function FileUpload({
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = e.target.files
-      if (files && files[0]) {
+      if (files?.[0]) {
         handleFileSelection(files[0])
       }
     },

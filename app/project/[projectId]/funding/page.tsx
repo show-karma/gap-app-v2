@@ -6,7 +6,6 @@ import { ProjectGrantsOverviewLoading } from "@/components/Pages/Project/Loading
 import { PROJECT_NAME } from "@/constants/brand"
 import { zeroUID } from "@/utilities/commons"
 import { envVars } from "@/utilities/enviromentVars"
-import { gapIndexerApi } from "@/utilities/gapIndexerApi"
 import { cleanMarkdownForPlainText } from "@/utilities/markdown"
 import { defaultMetadata } from "@/utilities/meta"
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData"

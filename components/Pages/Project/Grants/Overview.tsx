@@ -1,13 +1,10 @@
 "use client"
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline"
-import { useRouter } from "next/navigation"
-import { Suspense, useEffect } from "react"
+import { Suspense } from "react"
 import type { Hex } from "viem"
 import { TrackTags } from "@/components/TrackTags"
 import { ExternalLink } from "@/components/Utilities/ExternalLink"
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview"
-import { useProjectPermissions } from "@/hooks/useProjectPermissions"
-import { useProjectStore } from "@/store"
 import { useGrantStore } from "@/store/grant"
 import { useOwnerStore } from "@/store/owner"
 import markdownStyles from "@/styles/markdown.module.css"
@@ -42,10 +39,10 @@ const isValidAmount = (grant?: { amount?: Hex; details?: { data?: { amount?: str
         minimumFractionDigits: 0,
         maximumFractionDigits: 2,
       }).format(+split0)
-      return amountToFormat + " " + split[1]
+      return `${amountToFormat} ${split[1]}`
     }
     // it should format and round to 2 decimal places without use formatCurrency
-    return formatCurrency(+split0) + " " + split[1]
+    return `${formatCurrency(+split0)} ${split[1]}`
   }
   const number = Number(amountToFormat)
   if (Number.isNaN(number)) return amountToFormat
@@ -54,7 +51,7 @@ const isValidAmount = (grant?: { amount?: Hex; details?: { data?: { amount?: str
 }
 export const GrantOverview = () => {
   const { grant, loading, refreshGrant } = useGrantStore()
-  const isOwner = useOwnerStore((state) => state.isOwner)
+  const _isOwner = useOwnerStore((state) => state.isOwner)
 
   const grantData: { stat?: number | string; title: string }[] = [
     {
@@ -82,7 +79,7 @@ export const GrantOverview = () => {
   const programId = grant?.details?.data?.programId
 
   // Extract the base programId if it includes a chainId suffix (format: programId_chainId)
-  const baseProgramId = programId?.includes("_") ? programId.split("_")[0] : programId
+  const _baseProgramId = programId?.includes("_") ? programId.split("_")[0] : programId
 
   // Check if we have valid track IDs to display
   const hasTrackIds = selectedTrackIds && selectedTrackIds.length > 0

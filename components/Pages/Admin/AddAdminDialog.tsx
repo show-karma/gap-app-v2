@@ -18,10 +18,8 @@ import { walletClientToSigner } from "@/utilities/eas-wagmi-utils"
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain"
 import fetchData from "@/utilities/fetchData"
 import { INDEXER } from "@/utilities/indexer"
-import { MESSAGES } from "@/utilities/messages"
 import { sanitizeInput } from "@/utilities/sanitize"
 import { cn } from "@/utilities/tailwind"
-import { privyConfig as config } from "@/utilities/wagmi/privy-config"
 import { safeGetWalletClient } from "@/utilities/wallet-helpers"
 import { Button } from "../../Utilities/Button"
 
@@ -154,9 +152,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
               closeModal() // Close the dialog upon successful submission
               break
             }
-          } catch (error: any) {
-            console.log("Retrying...")
-          }
+          } catch (_error: any) {}
 
           retries -= 1
           // eslint-disable-next-line no-await-in-loop
@@ -168,7 +164,6 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
         community: UUID,
         address: data.address,
       })
-      console.log(error)
     } finally {
       setIsStepper(false)
       setIsLoading(false)
