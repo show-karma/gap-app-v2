@@ -10,6 +10,9 @@ import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ProjectOptionsMenu } from "./ProjectOptionsMenu";
+import { SingleProjectDonateModal } from "@/components/Donation/SingleProject/SingleProjectDonateModal";
+import type { Hex } from "viem";
+import Image from "next/image";
 
 export const ProjectNavigator = ({
   hasContactInfo,
@@ -46,6 +49,7 @@ export const ProjectNavigator = ({
     },
   ];
   const [tabs, setTabs] = useState<typeof publicTabs>(publicTabs);
+  const [isDonateModalOpen, setIsDonateModalOpen] = useState(false);
 
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
@@ -108,8 +112,36 @@ export const ProjectNavigator = ({
             Post an update
           </Button>
         )}
+        {project?.payoutAddress && (
+          <button
+            type="button"
+            onClick={() => setIsDonateModalOpen(true)}
+            className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white justify-center items-center flex flex-row gap-2.5 py-2 px-5 rounded-lg w-max min-w-max transition-all duration-200 shadow-md hover:shadow-lg font-semibold"
+          >
+            <Image
+              src="/icons/coins-stacked.svg"
+              alt="Donate"
+              className="w-5 h-5"
+              width={20}
+              height={20}
+            />
+            <p>Donate</p>
+          </button>
+        )}
         <ProjectOptionsMenu />
       </div>
+      {project?.details && project?.payoutAddress && (
+        <SingleProjectDonateModal
+          isOpen={isDonateModalOpen}
+          onClose={() => setIsDonateModalOpen(false)}
+          project={{
+            uid: project.uid,
+            title: project.details.data.title || "",
+            payoutAddress: project.payoutAddress as Hex,
+            imageURL: project.details?.data.imageURL,
+          }}
+        />
+      )}
     </div>
   );
 };
