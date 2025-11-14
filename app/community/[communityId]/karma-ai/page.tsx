@@ -43,7 +43,8 @@ export async function generateMetadata({
 
   if (programId) {
     const [programsRes, _programsError] = await fetchData(INDEXER.COMMUNITY.PROGRAMS(communityId))
-    const program = programsRes?.find((p: Record<string, unknown>) => p.programId === programId)?.metadata?.title
+    const program = programsRes?.find((p: Record<string, unknown>) => p.programId === programId)
+      ?.metadata?.title
     if (program) {
       dynamicMetadata = {
         ...dynamicMetadata,
