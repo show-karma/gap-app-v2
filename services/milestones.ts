@@ -87,35 +87,23 @@ async function fetchGrantWithCompletedStatus(
   programId: string
 ): Promise<IGrantResponse | null> {
   try {
-    // Use the v2 endpoint that returns grant data to get the grant UID
+    // Step 1: Get grant UID from v2 endpoint
     const grantMilestonesEndpoint = INDEXER.V2.PROJECTS.GRANT_MILESTONES(projectUid, programId);
-    const grantResponse = await fetchData(grantMilestonesEndpoint, "GET");
-    const [grantData, grantError] = grantResponse;
+    const grantResponse = await apiClient.get<{ grant?: { uid: string; chainID: number } }>(
+      grantMilestonesEndpoint
+    );
 
-    if (grantError || !grantData) {
-      return null;
-    }
-
-    const grantWithMilestones = grantData as { grant?: { uid: string; chainID: number } };
-    const grantUID = grantWithMilestones?.grant?.uid;
-
+    const grantUID = grantResponse.data.grant?.uid;
     if (!grantUID) {
       return null;
     }
 
-    // Fetch grant with completed status using v1 endpoint
-    const grantDetailResponse = await fetchData(
-      INDEXER.GRANTS.BY_UID(grantUID),
-      "GET"
+    // Step 2: Fetch grant with completed status from v1 endpoint
+    const grantDetailResponse = await apiClient.get<IGrantResponse>(
+      INDEXER.GRANTS.BY_UID(grantUID)
     );
 
-    const [grantDetailData, grantDetailError] = grantDetailResponse;
-
-    if (grantDetailError || !grantDetailData) {
-      return null;
-    }
-
-    return grantDetailData as IGrantResponse;
+    return grantDetailResponse.data;
   } catch (error) {
     console.error("Error fetching grant with completed status:", error);
     return null;
