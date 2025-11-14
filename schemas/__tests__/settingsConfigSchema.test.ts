@@ -7,6 +7,7 @@ describe('settingsConfigSchema', () => {
         privateApplications: true,
         applicationDeadline: '2024-12-31T23:59',
         donationRound: false,
+        showCommentsOnPublicPage: true,
         successPageContent: '**Review**: Applications reviewed weekly.',
       };
 
@@ -22,6 +23,7 @@ describe('settingsConfigSchema', () => {
         privateApplications: true,
         applicationDeadline: '2024-12-31T23:59',
         donationRound: false,
+        showCommentsOnPublicPage: true,
       };
 
       const result = settingsConfigSchema.safeParse(validData);
@@ -35,6 +37,7 @@ describe('settingsConfigSchema', () => {
       const validData = {
         privateApplications: true,
         donationRound: false,
+        showCommentsOnPublicPage: false,
         successPageContent: '',
       };
 
@@ -49,6 +52,7 @@ describe('settingsConfigSchema', () => {
       const invalidData = {
         privateApplications: true,
         donationRound: false,
+        showCommentsOnPublicPage: true,
         successPageContent: 123, // Invalid type
       };
 
@@ -60,6 +64,7 @@ describe('settingsConfigSchema', () => {
       const invalidData = {
         privateApplications: true,
         donationRound: false,
+        showCommentsOnPublicPage: true,
         successPageContent: { text: 'invalid' },
       };
 
@@ -71,6 +76,7 @@ describe('settingsConfigSchema', () => {
       const invalidData = {
         privateApplications: true,
         donationRound: false,
+        showCommentsOnPublicPage: true,
         successPageContent: ['invalid'],
       };
 
@@ -84,6 +90,7 @@ describe('settingsConfigSchema', () => {
       const validData: SettingsConfigFormData = {
         privateApplications: true,
         donationRound: false,
+        showCommentsOnPublicPage: true,
       };
 
       const result = settingsConfigSchema.safeParse(validData);
@@ -93,6 +100,7 @@ describe('settingsConfigSchema', () => {
     it('should reject if privateApplications is missing', () => {
       const invalidData = {
         donationRound: false,
+        showCommentsOnPublicPage: true,
       };
 
       const result = settingsConfigSchema.safeParse(invalidData);
@@ -102,6 +110,7 @@ describe('settingsConfigSchema', () => {
     it('should reject if donationRound is missing', () => {
       const invalidData = {
         privateApplications: true,
+        showCommentsOnPublicPage: true,
       };
 
       const result = settingsConfigSchema.safeParse(invalidData);
@@ -112,6 +121,7 @@ describe('settingsConfigSchema', () => {
       const invalidData = {
         privateApplications: 'true',
         donationRound: false,
+        showCommentsOnPublicPage: true,
       };
 
       const result = settingsConfigSchema.safeParse(invalidData);
@@ -122,6 +132,7 @@ describe('settingsConfigSchema', () => {
       const invalidData = {
         privateApplications: true,
         donationRound: 'false',
+        showCommentsOnPublicPage: true,
       };
 
       const result = settingsConfigSchema.safeParse(invalidData);
@@ -133,6 +144,7 @@ describe('settingsConfigSchema', () => {
         privateApplications: true,
         applicationDeadline: '2024-12-31T23:59:59',
         donationRound: false,
+        showCommentsOnPublicPage: true,
       };
 
       const result = settingsConfigSchema.safeParse(validData);
@@ -147,6 +159,7 @@ describe('settingsConfigSchema', () => {
         privateApplications: true,
         applicationDeadline: '',
         donationRound: false,
+        showCommentsOnPublicPage: true,
       };
 
       const result = settingsConfigSchema.safeParse(validData);
@@ -158,6 +171,7 @@ describe('settingsConfigSchema', () => {
         privateApplications: true,
         applicationDeadline: 123456789,
         donationRound: false,
+        showCommentsOnPublicPage: true,
       };
 
       const result = settingsConfigSchema.safeParse(invalidData);
@@ -171,6 +185,7 @@ describe('settingsConfigSchema', () => {
         privateApplications: true,
         applicationDeadline: '2024-12-31T23:59',
         donationRound: false,
+        showCommentsOnPublicPage: true,
         successPageContent: '**Important**: Check your email regularly.',
       };
 
@@ -194,6 +209,7 @@ describe('settingsConfigSchema', () => {
         privateApplications: false,
         applicationDeadline: '2025-01-31T23:59',
         donationRound: true,
+        showCommentsOnPublicPage: false,
         successPageContent: markdownContent,
       };
 
@@ -212,6 +228,7 @@ describe('settingsConfigSchema', () => {
       const validData = {
         privateApplications: true,
         donationRound: false,
+        showCommentsOnPublicPage: true,
         successPageContent: contentWithSpecialChars,
       };
 
@@ -229,6 +246,7 @@ describe('settingsConfigSchema', () => {
       const validData = {
         privateApplications: true,
         donationRound: false,
+        showCommentsOnPublicPage: true,
         successPageContent: longContent,
       };
 
@@ -245,6 +263,7 @@ describe('settingsConfigSchema', () => {
       const validData = {
         privateApplications: true,
         donationRound: false,
+        showCommentsOnPublicPage: false,
         successPageContent: multilineContent,
       };
 
@@ -261,10 +280,10 @@ describe('settingsConfigSchema', () => {
   describe('edge cases', () => {
     it('should accept all boolean combinations', () => {
       const combinations = [
-        { privateApplications: true, donationRound: true },
-        { privateApplications: true, donationRound: false },
-        { privateApplications: false, donationRound: true },
-        { privateApplications: false, donationRound: false },
+        { privateApplications: true, donationRound: true, showCommentsOnPublicPage: true },
+        { privateApplications: true, donationRound: false, showCommentsOnPublicPage: false },
+        { privateApplications: false, donationRound: true, showCommentsOnPublicPage: true },
+        { privateApplications: false, donationRound: false, showCommentsOnPublicPage: false },
       ];
 
       combinations.forEach((combo) => {
@@ -277,6 +296,7 @@ describe('settingsConfigSchema', () => {
       const invalidData = {
         privateApplications: true,
         donationRound: false,
+        showCommentsOnPublicPage: true,
         unknownField: 'should not be here',
       };
 
@@ -293,6 +313,7 @@ describe('settingsConfigSchema', () => {
       const invalidData = {
         privateApplications: true,
         donationRound: false,
+        showCommentsOnPublicPage: true,
         successPageContent: null,
       };
 
@@ -304,6 +325,7 @@ describe('settingsConfigSchema', () => {
       const validData = {
         privateApplications: true,
         donationRound: false,
+        showCommentsOnPublicPage: true,
         applicationDeadline: undefined,
         successPageContent: undefined,
       };
@@ -318,6 +340,7 @@ describe('settingsConfigSchema', () => {
       const validData: SettingsConfigFormData = {
         privateApplications: true,
         donationRound: false,
+        showCommentsOnPublicPage: true,
         applicationDeadline: '2024-12-31T23:59',
         successPageContent: '**Test content**',
       };
@@ -325,6 +348,7 @@ describe('settingsConfigSchema', () => {
       // This should compile without errors
       expect(validData.privateApplications).toBeDefined();
       expect(validData.donationRound).toBeDefined();
+      expect(validData.showCommentsOnPublicPage).toBeDefined();
       expect(validData.applicationDeadline).toBeDefined();
       expect(validData.successPageContent).toBeDefined();
     });
@@ -333,6 +357,7 @@ describe('settingsConfigSchema', () => {
       const validData: SettingsConfigFormData = {
         privateApplications: true,
         donationRound: false,
+        showCommentsOnPublicPage: false,
       };
 
       // Optional fields should be allowed to be undefined
