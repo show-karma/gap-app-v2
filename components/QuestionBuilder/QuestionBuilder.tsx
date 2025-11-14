@@ -119,6 +119,7 @@ export function QuestionBuilder({
         submitButtonText: "Submit Application",
         confirmationMessage: "Thank you for your submission!",
         privateApplications: true, // Default to private as requested
+        successPageContent: "", // Empty by default to encourage configuration
       },
     }
   );

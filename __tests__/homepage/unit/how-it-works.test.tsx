@@ -46,17 +46,16 @@ describe("HowItWorks Component", () => {
     expect(screen.getByText("Create project")).toBeInTheDocument();
     expect(screen.getByText("Apply and get funded")).toBeInTheDocument();
     expect(
-      screen.getByText("Add milestones, share updates and metrics")
+      screen.getByText("Add milestones, metrics and updates")
     ).toBeInTheDocument();
   });
 
   it("should render outcome cards", () => {
     renderWithProviders(<HowItWorks />);
 
+    // The rotating outcome stack displays one card at a time
+    // By default, the first outcome "Build reputation" should be visible
     expect(screen.getByText("Build reputation")).toBeInTheDocument();
-    expect(screen.getByText("Get retrofunding")).toBeInTheDocument();
-    expect(screen.getByText("Get donations")).toBeInTheDocument();
-    expect(screen.getByText("Apply for more funding")).toBeInTheDocument();
   });
 
   it("should display check circle icons for steps", () => {
@@ -74,9 +73,9 @@ describe("HowItWorks Component", () => {
     const section = container.querySelector("section");
     expect(section).toBeInTheDocument();
 
-    // Component has 2 h2 headings (dual heading pattern)
+    // Component has 1 h2 heading with two lines
     const headings = screen.getAllByRole("heading", { level: 2 });
-    expect(headings.length).toBeGreaterThanOrEqual(2);
+    expect(headings.length).toBeGreaterThanOrEqual(1);
     expect(headings[0]).toHaveTextContent("One profile.");
   });
 
