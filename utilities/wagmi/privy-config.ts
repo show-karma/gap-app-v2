@@ -1,4 +1,4 @@
-import { http, createConfig, createStorage, cookieStorage } from "@wagmi/core";
+import { http } from "@wagmi/core";
 import {
   arbitrum,
   baseSepolia,
@@ -12,9 +12,8 @@ import {
 } from "@wagmi/core/chains";
 import { appNetwork } from "../network";
 import { envVars } from "../enviromentVars";
+import {createConfig} from '@privy-io/wagmi';
 
-// Create a Wagmi config compatible with Privy
-// This doesn't include connectors as Privy manages wallet connections
 export const privyConfig = createConfig({
   chains: appNetwork,
   transports: {
@@ -28,10 +27,7 @@ export const privyConfig = createConfig({
     [lisk.id]: http(envVars.RPC.LISK),
     [scroll.id]: http(envVars.RPC.SCROLL),
   },
-  ssr: true,
-  storage: createStorage({
-    storage: cookieStorage,
-  }),
+  ssr: true
 });
 
 export function getPrivyWagmiConfig() {
