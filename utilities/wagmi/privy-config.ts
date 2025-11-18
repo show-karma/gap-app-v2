@@ -1,4 +1,4 @@
-import { http } from "@wagmi/core";
+import { http, type Config } from "@wagmi/core";
 import {
   arbitrum,
   baseSepolia,
@@ -14,7 +14,7 @@ import { appNetwork } from "../network";
 import { envVars } from "../enviromentVars";
 import {createConfig} from '@privy-io/wagmi';
 
-export const privyConfig = createConfig({
+export const privyConfig: Config = createConfig({
   chains: appNetwork,
   transports: {
     [optimism.id]: http(envVars.RPC.OPTIMISM),

@@ -15,7 +15,7 @@ export const safeGetWalletClient = async (
   setLoadingState?: (state: boolean) => void
 ) => {
   try {
-    const walletClient = await getWalletClient(config as any, {
+    const walletClient = await getWalletClient(config, {
       chainId,
     });
 

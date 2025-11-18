@@ -80,7 +80,7 @@ export const useAuth = () => {
     if (!ready || !authenticated) return;
 
     // Watch for account changes in the EOA wallet
-    const unwatch = watchAccount(privyConfig as any, {
+    const unwatch = watchAccount(privyConfig, {
       onChange(account) {
         // Get the new address from the wallet
         const newAddress = account.address?.toLowerCase();
