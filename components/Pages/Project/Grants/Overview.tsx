@@ -102,10 +102,10 @@ export const GrantOverview = () => {
   return (
     <Suspense fallback={<ProjectGrantsOverviewLoading />}>
       {/* Completion Summary */}
-      {grant?.completed &&
-        (grant?.completed.data.title ||
-          grant?.completed.data.text ||
-          grant?.completed?.data?.proofOfWork) ? (
+      {grant?.completed?.data &&
+        (grant.completed.data.title ||
+          grant.completed.data.text ||
+          grant.completed.data.proofOfWork) ? (
         <div className="mt-5">
           <GrantCompletionCard completion={grant?.completed} grant={grant} />
         </div>
