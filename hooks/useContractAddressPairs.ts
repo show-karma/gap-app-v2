@@ -2,8 +2,21 @@ import { useCallback, useEffect, useState } from "react";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { NetworkAddressPair } from "@/components/Pages/Project/types";
 
+interface VerifiedContract {
+  network: string;
+  address: string;
+  verified: boolean;
+  verifiedAt?: string;
+  verifiedBy?: string;
+}
+
+interface ProjectExternalData extends Record<string, any> {
+  network_addresses?: string[];
+  network_addresses_verified?: VerifiedContract[];
+}
+
 interface UseContractAddressPairsProps {
-  project: IProjectResponse & { external: Record<string, string[]> };
+  project: IProjectResponse & { external: ProjectExternalData };
 }
 
 export const useContractAddressPairs = ({ project }: UseContractAddressPairsProps) => {
@@ -13,21 +26,66 @@ export const useContractAddressPairs = ({ project }: UseContractAddressPairsProp
 
   // Initialize pairs from project data
   useEffect(() => {
-    if (project?.external?.network_addresses?.length) {
-      const pairs = project.external.network_addresses.map((entry) => {
-        const [network, address] = entry.split(":");
-        return { network, address };
+    const networkAddresses = project?.external?.network_addresses || [];
+    const networkAddressesVerified = project?.external?.network_addresses_verified || [];
+
+    if (networkAddresses.length > 0 || networkAddressesVerified.length > 0) {
+      // Create a map of verified contracts for quick lookup
+      const verifiedMap = new Map<string, { verified: boolean; verifiedAt?: string; verifiedBy?: string }>();
+
+      networkAddressesVerified.forEach((verifiedEntry) => {
+        const key = `${verifiedEntry.network}:${verifiedEntry.address}`.toLowerCase();
+        verifiedMap.set(key, {
+          verified: verifiedEntry.verified || false,
+          verifiedAt: verifiedEntry.verifiedAt,
+          verifiedBy: verifiedEntry.verifiedBy
+        });
       });
+
+      // Create a set to track which contracts we've already processed
+      const processedKeys = new Set<string>();
+
+      // Process network_addresses and merge with verification data
+      const pairs = networkAddresses.map((entry: string) => {
+        const [network, address] = entry.split(":");
+        const key = `${network}:${address}`.toLowerCase();
+        processedKeys.add(key);
+        const verificationInfo = verifiedMap.get(key);
+
+        return {
+          network,
+          address,
+          verified: verificationInfo?.verified || false,
+          verifiedAt: verificationInfo?.verifiedAt,
+          verifiedBy: verificationInfo?.verifiedBy
+        };
+      });
+
+      // Add verified contracts that are NOT in network_addresses
+      // This handles the case where a contract was verified but not yet added to network_addresses
+      networkAddressesVerified.forEach((verifiedEntry) => {
+        const key = `${verifiedEntry.network}:${verifiedEntry.address}`.toLowerCase();
+        if (!processedKeys.has(key)) {
+          pairs.push({
+            network: verifiedEntry.network,
+            address: verifiedEntry.address,
+            verified: verifiedEntry.verified || false,
+            verifiedAt: verifiedEntry.verifiedAt,
+            verifiedBy: verifiedEntry.verifiedBy
+          });
+        }
+      });
+
       setNetworkAddressPairs(pairs);
     } else {
-      setNetworkAddressPairs([{ network: "", address: "" }]);
+      setNetworkAddressPairs([{ network: "", address: "", verified: false }]);
     }
-  }, [project?.external?.network_addresses]);
+  }, [project?.external?.network_addresses, project?.external?.network_addresses_verified]);
 
   const addPair = useCallback(() => {
     setNetworkAddressPairs((prev) => [
       ...prev,
-      { network: "", address: "" },
+      { network: "", address: "", verified: false },
     ]);
   }, []);
 
@@ -36,7 +94,7 @@ export const useContractAddressPairs = ({ project }: UseContractAddressPairsProp
       const newPairs = prev.filter((_, i) => i !== index);
 
       if (newPairs.length === 0) {
-        return [{ network: "", address: "" }];
+        return [{ network: "", address: "", verified: false }];
       }
 
       return newPairs;
