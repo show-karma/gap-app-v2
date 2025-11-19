@@ -81,6 +81,7 @@ export const useGrantCompletionRevoke = ({
           checkIfExists: checkIfCompletionExists,
           onSuccess: () => {
             changeStepperStep("indexed");
+            setIsStepper(false);
           },
           onError: (error) => {
             setIsStepper(false);
@@ -182,6 +183,7 @@ export const useGrantCompletionRevoke = ({
           checkIfExists: checkIfCompletionExists,
           onSuccess: () => {
             changeStepperStep("indexed");
+            setIsStepper(false);
           },
           onError: (error) => {
             setIsStepper(false);
