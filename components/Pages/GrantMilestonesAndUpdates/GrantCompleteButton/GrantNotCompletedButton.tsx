@@ -19,7 +19,7 @@ export const GrantNotCompletedButton: React.FC<
         grantUID,
         "complete-grant"
       )}
-      className="hover:opacity-75 flex flex-row items-center justify-center gap-2 rounded-md  bg-[#17B26A] px-3.5 py-2 text-sm font-semibold text-white hover:bg-[#17B26A]"
+      className="hover:opacity-75 flex flex-row items-center justify-center gap-2 rounded-md bg-green-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-green-700"
     >
       {text}
       <div className="h-5 w-5">
@@ -28,4 +28,3 @@ export const GrantNotCompletedButton: React.FC<
     </Link>
   );
 };
-
