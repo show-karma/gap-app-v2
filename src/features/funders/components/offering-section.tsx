@@ -71,7 +71,7 @@ export function OfferingSection() {
                 {/* Main Heading */}
                 <h2
                     className={cn(
-                        "font-semibold text-[32px] md:text-[40px] leading-9 md:leading-[44px] tracking-[-0.02em] text-left max-w-[768px] w-full"
+                        "section-title text-left max-w-[768px] w-full"
                     )}
                 >
                     <span className="text-muted-foreground">Start where you are,</span><br /> <span className="text-foreground">scale when you&apos;re ready</span>

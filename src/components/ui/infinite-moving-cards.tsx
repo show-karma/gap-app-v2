@@ -98,8 +98,8 @@ export const InfiniteMovingCards = ({
       <ul
         ref={scrollerRef}
         className={cn(
-          "flex w-max min-w-full shrink-0 flex-nowrap py-4",
-          variant === "card" ? "gap-8" : "gap-2",
+          "flex w-max min-w-full shrink-0 flex-nowrap py-2",
+          variant === "card" ? "gap-8" : "gap-4",
           start && "animate-scroll",
           pauseOnHover && "hover:[animation-play-state:paused]",
         )}
@@ -135,12 +135,12 @@ export const InfiniteMovingCards = ({
                 {pillItem.href ? (
                   <Link
                     href={pillItem.href}
-                    className="flex items-center gap-2 px-2.5 py-2 mx-2 rounded-full bg-background border border-border whitespace-nowrap text-sm font-medium text-muted-foreground hover:bg-accent transition-colors"
+                    className="flex items-center gap-2 px-2.5 py-2 rounded-full bg-background border border-border whitespace-nowrap text-sm font-medium text-muted-foreground hover:bg-accent transition-colors"
                   >
                     {content}
                   </Link>
                 ) : (
-                  <div className="flex items-center gap-2 px-2.5 py-2 mx-2 rounded-full bg-background border border-border whitespace-nowrap text-sm font-medium text-muted-foreground">
+                  <div className="flex items-center gap-2 px-2.5 py-2 rounded-full bg-background border border-border whitespace-nowrap text-sm font-medium text-muted-foreground">
                     {content}
                   </div>
                 )}

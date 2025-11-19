@@ -27,7 +27,7 @@ import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Logo } from "../shared/logo";
 
 const menuStyles = {
-    button: 'px-1 font-medium text-muted-foreground flex flex-row gap-1 bg-transparent hover:bg-transparent hover:text-muted-foreground data-[state=open]:bg-transparent data-[state=open]:text-muted-foreground shadow-none h-auto',
+    button: 'px-1 font-medium text-muted-foreground flex flex-row gap-1 hover:bg-transparent hover:text-foreground data-[state=open]:bg-transparent data-[state=open]:text-foreground shadow-none h-auto',
     itemText: 'text-foreground text-sm font-medium',
 };
 
@@ -59,7 +59,7 @@ export function NavbarDesktopNavigation() {
 
     return (
         <div className="hidden xl:flex items-center flex-1 lg:justify-between gap-8">
-            <div className="flex flex-row items-center gap-2 flex-shrink-0">
+            <div className="flex flex-row items-center gap-3 flex-shrink-0">
                 <Logo />
                 <NavigationMenu>
                     <NavigationMenuList>
@@ -90,7 +90,7 @@ export function NavbarDesktopNavigation() {
                 </NavigationMenu>
             </div>
 
-            <div className="flex flex-row items-center gap-4 flex-1 min-w-0">
+            <div className="flex flex-1 justify-center flex-row items-center gap-3">
                 {/* Search */}
                 <NavbarSearch />
                 <NavigationMenu>
@@ -123,7 +123,7 @@ export function NavbarDesktopNavigation() {
                                         <hr className="h-[1px] w-full border-border" />
                                         <div className="flex flex-col items-start justify-start w-full">
                                             <MenuSection title="Follow" variant="desktop" />
-                                            <div className="flex flex-row items-center w-full justify-between gap-4 mt-2">
+                                            <div className="flex flex-row items-center w-full justify-between gap-4 py-2">
                                                 {socialMediaLinks.map((social) => {
                                                     const IconComponent = social.icon;
                                                     return (
@@ -133,7 +133,7 @@ export function NavbarDesktopNavigation() {
                                                             className={cn(menuStyles.itemText, "flex items-center justify-center rounded-full transition-colors")}
                                                             aria-label={social.name}
                                                         >
-                                                            <IconComponent className="w-6 h-6" />
+                                                    <IconComponent className="w-5 h-5" />
                                                         </ExternalLink>
                                                     );
                                                 })}

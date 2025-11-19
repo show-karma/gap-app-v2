@@ -1,6 +1,16 @@
 export interface FormField {
   id: string;
-  type: 'text' | 'textarea' | 'select' | 'radio' | 'checkbox' | 'number' | 'email' | 'url' | 'date' | 'milestone';
+  type:
+    | "text"
+    | "textarea"
+    | "select"
+    | "radio"
+    | "checkbox"
+    | "number"
+    | "email"
+    | "url"
+    | "date"
+    | "milestone";
   label: string;
   placeholder?: string;
   required?: boolean;
@@ -33,6 +43,8 @@ export interface FormSchema {
     privateApplications?: boolean; // Whether this program has private applications
     applicationDeadline?: string; // Application deadline date
     donationRound?: boolean; // Whether this is a donation round
+    successPageContent?: string; // Markdown content for "What happens next?" section on success page
+    showCommentsOnPublicPage?: boolean; // Whether to show comments on public application pages
   };
   // AI configuration for the entire form
   aiConfig?: {
