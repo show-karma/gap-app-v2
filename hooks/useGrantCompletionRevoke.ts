@@ -144,20 +144,18 @@ export const useGrantCompletionRevoke = ({
       }
 
       try {
-        const contract = await GAP.getMulticall(walletSigner);
-
         const revocationPayload = buildRevocationPayload(
           schemaToUse.uid,
           grantInstance.completed.uid
         );
+        
+        const multicallContract = await GAP.getMulticall(walletSigner);
+        const tx = await multicallContract.multiRevoke(revocationPayload);
+        const res = await tx.wait();
 
-        const tx = await contract.multiRevoke(revocationPayload);
+        changeStepperStep("pending");
 
-        changeStepperStep("indexing");
-
-        // Note: multiRevoke returns a transaction object with hash property
-        // If the SDK structure changes to { tx: [{ hash }] }, update accordingly
-        const txHash = tx?.hash || (tx as any)?.tx?.[0]?.hash;
+        const txHash = res?.transactionHash as `0x${string}`;
         if (txHash) {
           await fetchData(
             INDEXER.ATTESTATION_LISTENER(txHash, grantInstance.chainID),
@@ -165,6 +163,7 @@ export const useGrantCompletionRevoke = ({
             {}
           );
         }
+        changeStepperStep("indexing");
 
         await checkIfCompletionExists(() => {
           changeStepperStep("indexed");
