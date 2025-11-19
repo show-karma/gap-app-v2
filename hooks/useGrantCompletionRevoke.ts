@@ -31,6 +31,18 @@ interface UseGrantCompletionRevokeProps {
   project: IProjectResponse;
 }
 
+/**
+ * Hook for revoking grant completion attestations
+ *
+ * @remarks
+ * Supports dual revocation paths:
+ * - On-chain: For project/contract owners via multiRevoke contract
+ * - Off-chain: Fallback for unauthorized users via API
+ *
+ * @param grant - Grant with completion to revoke
+ * @param project - Parent project
+ * @returns Revocation function and loading state
+ */
 export const useGrantCompletionRevoke = ({
   grant,
   project,
