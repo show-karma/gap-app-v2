@@ -3,6 +3,10 @@ import { Hex } from "viem";
 export const INDEXER = {
   ATTESTATION_LISTENER: (hash: Hex | string, chainId: number) =>
     `/attestations/index-by-transaction/${hash}/${chainId}`,
+  ATTESTATIONS: {
+    GET: (uid: string, chainId?: number) =>
+      `/attestations/${uid}${chainId ? `?chainId=${chainId}` : ""}`,
+  },
   PROFILE: {
     GET: (address: string) => `/user/${address}`,
   },
