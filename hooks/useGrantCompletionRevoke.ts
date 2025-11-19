@@ -174,6 +174,8 @@ export const useGrantCompletionRevoke = ({
         // Fallback to off-chain revocation if on-chain fails
         setIsStepper(false); // Reset stepper since we're falling back
 
+        toast("On-chain revocation unavailable. Attempting off-chain revocation...");
+
         const success = await performOffChainRevoke({
           uid: grantInstance.completed.uid as `0x${string}`,
           chainID: chainID,
