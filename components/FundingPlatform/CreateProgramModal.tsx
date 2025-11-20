@@ -156,7 +156,7 @@ export function CreateProgramModal({
         status: "Active",
         type: "program",
         tags: ["karma-gap", "grant-program-registry"],
-        communityRef: [communityId], // Auto-set to current community
+        communityRef: [community.uid], // Use community UID (hex address), not slug
       };
 
       // Use community's chain ID
