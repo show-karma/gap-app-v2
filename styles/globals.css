@@ -432,3 +432,9 @@ body * {
     @apply tracking-tight;
   }
 }
+
+@layer utilities {
+  .section-title {
+    @apply font-semibold text-3xl leading-tight tracking-tight md:text-4xl;
+  }
+}

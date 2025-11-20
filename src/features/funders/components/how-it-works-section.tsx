@@ -60,12 +60,10 @@ export function HowItWorksSection() {
 
                 {/* Main Heading */}
                 <h2 className={cn(
-                    "font-semibold",
-                    "text-[32px] leading-[36px] tracking-[-0.02em]",
-                    "md:text-[40px] md:leading-[44px]",
+                    "section-title",
                     "w-full"
                 )}>
-                    <span className="text-foreground">Launch and fund impact</span>
+                    <span className="text-foreground">Launch and fund impact</span> <br className="hidden md:block" />
                     <span className="text-muted-foreground"> in 48 hours</span>
                 </h2>
             </div>
@@ -144,7 +142,7 @@ export function HowItWorksSection() {
                                         <div className="mt-4">
                                             <Button
                                                 asChild
-                                                className="bg-foreground text-background hover:bg-foreground/90 rounded-md font-medium px-6 py-2.5"
+                                                className="bg-foreground text-background hover:bg-foreground/90 rounded-md font-medium"
                                             >
                                                 <Link href={SOCIALS.PARTNER_FORM} target="_blank" rel="noopener noreferrer">
                                                     Schedule Demo

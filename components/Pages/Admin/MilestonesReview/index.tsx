@@ -13,6 +13,7 @@ import { useFundingApplicationByProjectUID } from "@/hooks/useFundingApplication
 import toast from "react-hot-toast";
 import { CommentsAndActivity } from "./CommentsAndActivity";
 import { MilestoneCard } from "./MilestoneCard";
+import { GrantCompleteButtonForReviewer } from "./GrantCompleteButtonForReviewer";
 import { useAccount } from "wagmi";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { useIsReviewer, useReviewerPrograms } from "@/hooks/usePermissions";
@@ -251,7 +252,12 @@ export function MilestonesReviewPage({
     );
   }
 
-  const { project, grantMilestones } = data;
+  const { project, grantMilestones, grant } = data;
+
+  // Project data for GrantCompleteButtonForReviewer (only needs uid)
+  const projectForButton = {
+    uid: project.uid,
+  };
 
   return (
     <div className="min-h-screen">
@@ -268,7 +274,7 @@ export function MilestonesReviewPage({
                 {backButtonConfig.label}
               </Button>
             </Link>
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1 flex-1">
               <h1 className="text-2xl font-bold text-black dark:text-white">
                 {project.details.title}
               </h1>
@@ -276,6 +282,19 @@ export function MilestonesReviewPage({
                 {grantName} - Review project milestones
               </p>
             </div>
+                 {/* Grant Complete Button for Milestone Reviewers */}
+                 {grant && canVerifyMilestones && (
+                   <div className="max-sm:w-full">
+                     <GrantCompleteButtonForReviewer
+                       project={projectForButton}
+                       grant={grant}
+                       onComplete={() => {
+                         // Refetch data to update the grant completion status
+                         refetch();
+                       }}
+                     />
+                   </div>
+                 )}
           </div>
         </div>
       </div>
