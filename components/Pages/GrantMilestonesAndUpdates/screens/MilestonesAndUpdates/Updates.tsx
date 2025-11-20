@@ -346,8 +346,12 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
                   )}
                   {deliverable.proof && (
                     <ExternalLink
-                      href={deliverable.proof}
-                      className="text-brand-blue hover:underline text-sm break-all"
+                    href={
+                      deliverable.proof.includes("http")
+                        ? deliverable.proof
+                        : `https://${deliverable.proof}`
+                    } 
+                    className="text-brand-blue hover:underline text-sm break-all"
                     >
                       {deliverable.proof}
                     </ExternalLink>
@@ -377,7 +381,11 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
                       </p>
                       {metric.datapoints[0].proof && (
                         <ExternalLink
-                          href={metric.datapoints[0].proof}
+                          href={
+                            metric.datapoints[0].proof.includes("http")
+                              ? metric.datapoints[0].proof
+                              : `https://${metric.datapoints[0].proof}`
+                          }
                           className="text-brand-blue hover:underline text-sm break-all"
                         >
                           {metric.datapoints[0].proof}
