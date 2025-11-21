@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowLeftIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { PencilIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -9,6 +10,8 @@ import ApplicationContent from "@/components/FundingPlatform/ApplicationView/App
 import CommentsSection from "@/components/FundingPlatform/ApplicationView/CommentsSection";
 import PostApprovalData from "@/components/FundingPlatform/ApplicationView/PostApprovalData";
 import DeleteApplicationModal from "@/components/FundingPlatform/ApplicationView/DeleteApplicationModal";
+import EditApplicationModal from "@/components/FundingPlatform/ApplicationView/EditApplicationModal";
+import { IFundingApplication } from "@/types/funding-platform";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import {
@@ -52,6 +55,9 @@ export default function ApplicationDetailPage() {
 
   // Delete modal state
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  // Edit modal state
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Fetch application data
   const {
@@ -135,6 +141,25 @@ export default function ApplicationDetailPage() {
 
   const handleDeleteCancel = () => {
     setIsDeleteModalOpen(false);
+  };
+
+  // Helper function to check if editing is allowed
+  const canEditApplication = (app: IFundingApplication) => {
+    const restrictedStatuses = ['under_review', 'approved'];
+    return !restrictedStatuses.includes(app.status.toLowerCase());
+  };
+
+  // Handle edit application
+  const handleEditClick = () => {
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditClose = () => {
+    setIsEditModalOpen(false);
+  };
+
+  const handleEditSuccess = () => {
+    refetchApplication();
   };
 
   const handleVersionClick = (versionId: string) => {
@@ -227,17 +252,36 @@ export default function ApplicationDetailPage() {
                 </p>
               </div>
             </div>
-            {/* Delete button - Only show for community admins */}
-            {isCommunityAdmin && (
-              <Button
-                onClick={handleDeleteClick}
-                disabled={isDeleting}
-                className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white"
-              >
-                <TrashIcon className="w-4 h-4" />
-                Delete Application
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {/* Edit button - Show for admins */}
+              {hasAccess && application && (
+                <Button
+                  onClick={handleEditClick}
+                  disabled={!canEditApplication(application)}
+                  variant="secondary"
+                  className="flex items-center gap-2"
+                  title={
+                    !canEditApplication(application)
+                      ? "Cannot edit applications with status 'under_review' or 'approved'"
+                      : "Edit application"
+                  }
+                >
+                  <PencilIcon className="w-4 h-4" />
+                  Edit Application
+                </Button>
+              )}
+              {/* Delete button - Only show for community admins */}
+              {isCommunityAdmin && (
+                <Button
+                  onClick={handleDeleteClick}
+                  disabled={isDeleting}
+                  className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white"
+                >
+                  <TrashIcon className="w-4 h-4" />
+                  Delete Application
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -285,6 +329,7 @@ export default function ApplicationDetailPage() {
           <div className="space-y-6">
             <CommentsSection
               applicationId={application.referenceNumber}
+              application={application}
               comments={comments}
               statusHistory={application.statusHistory}
               versionHistory={versions}
@@ -309,6 +354,19 @@ export default function ApplicationDetailPage() {
         referenceNumber={application.referenceNumber}
         isDeleting={isDeleting}
       />
+
+      {/* Edit Application Modal */}
+      {application && program && (
+        <EditApplicationModal
+          isOpen={isEditModalOpen}
+          onClose={handleEditClose}
+          application={application}
+          programId={programId}
+          chainId={parsedChainId}
+          formSchema={program?.applicationConfig?.formSchema}
+          onSuccess={handleEditSuccess}
+        />
+      )}
     </div>
   );
 }

@@ -250,6 +250,7 @@ export default function ReviewerApplicationDetailPage() {
           <div>
             <CommentsSection
               applicationId={application.referenceNumber}
+              application={application}
               comments={comments}
               statusHistory={application.statusHistory}
               versionHistory={versions}

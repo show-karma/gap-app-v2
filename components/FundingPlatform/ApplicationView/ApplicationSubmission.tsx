@@ -17,6 +17,8 @@ interface IApplicationSubmissionProps {
   onSubmit?: (applicationData: Record<string, any>) => Promise<void>;
   onCancel?: () => void;
   isLoading?: boolean;
+  initialData?: Record<string, any>;
+  isEditMode?: boolean;
 }
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
@@ -29,6 +31,8 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
   onSubmit,
   onCancel,
   isLoading = false,
+  initialData,
+  isEditMode = false,
 }) => {
   const { address } = useAccount();
   const [submitting, setSubmitting] = useState(false);
@@ -95,6 +99,35 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
     mode: 'onChange',
   });
 
+  // Pre-fill form when initialData is provided (edit mode)
+  useEffect(() => {
+    if (initialData && formSchema.fields.length > 0) {
+      const formData: Record<string, any> = {};
+      
+      // Map applicationData keys to form field names
+      formSchema.fields.forEach((field) => {
+        const fieldName = field.label.toLowerCase().replace(/\s+/g, '_');
+        
+        // Try to find matching key in initialData
+        // First try exact match with fieldName
+        if (initialData[fieldName] !== undefined) {
+          formData[fieldName] = initialData[fieldName];
+        } else {
+          // Try to find by field label (case-insensitive)
+          const matchingKey = Object.keys(initialData).find(
+            key => key.toLowerCase() === field.label.toLowerCase() || 
+                   key.toLowerCase() === fieldName
+          );
+          if (matchingKey && initialData[matchingKey] !== undefined) {
+            formData[fieldName] = initialData[matchingKey];
+          }
+        }
+      });
+      
+      reset(formData);
+    }
+  }, [initialData, formSchema.fields, reset]);
+
   const handleFormSubmit: SubmitHandler<FormData> = async (data) => {
     if (!address) {
       toast.error('Please connect your wallet to submit an application');
@@ -104,11 +137,18 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
     setSubmitting(true);
     try {
       await onSubmit?.(data);
-      toast.success('Application submitted successfully!');
-      reset();
+      if (!isEditMode) {
+        toast.success('Application submitted successfully!');
+        reset();
+      }
+      // For edit mode, success toast is handled by the parent component
     } catch (error) {
       console.error('Error submitting application:', error);
-      toast.error('Failed to submit application. Please try again.');
+      if (!isEditMode) {
+        toast.error('Failed to submit application. Please try again.');
+      }
+      // For edit mode, error toast is handled by the hook
+      throw error; // Re-throw so parent can handle
     } finally {
       setSubmitting(false);
     }
@@ -310,7 +350,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
             variant="primary"
             className="px-6 py-2"
           >
-            Submit Application
+            {isEditMode ? 'Update Application' : 'Submit Application'}
           </Button>
         </div>
       </form>

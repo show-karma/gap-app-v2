@@ -10,13 +10,17 @@ import {
   XCircleIcon,
   ExclamationTriangleIcon,
   DocumentTextIcon,
-  PencilSquareIcon
+  PencilSquareIcon,
+  UserIcon,
+  ShieldCheckIcon,
+  EyeIcon
 } from '@heroicons/react/24/outline';
 import {
   ApplicationComment,
   IStatusHistoryEntry,
   FundingApplicationStatusV2,
-  IApplicationVersion
+  IApplicationVersion,
+  IFundingApplication
 } from '@/types/funding-platform';
 import { cn } from '@/utilities/tailwind';
 import { Spinner } from '@/components/Utilities/Spinner';
@@ -27,6 +31,7 @@ import { MarkdownPreview } from '@/components/Utilities/MarkdownPreview';
 
 interface CommentsTimelineProps {
   applicationId: string;
+  application: IFundingApplication;
   comments: ApplicationComment[];
   statusHistory: IStatusHistoryEntry[];
   versionHistory?: IApplicationVersion[];
@@ -82,8 +87,30 @@ const labelMap = {
 }
 
 
+// Helper function to determine edit type
+const getEditType = (
+  version: IApplicationVersion,
+  application: IFundingApplication
+): 'applicant' | 'admin' | 'reviewer' => {
+  if (!version.submittedBy || !application.ownerAddress) {
+    return 'applicant'; // Default fallback
+  }
+
+  const submittedByLower = version.submittedBy.toLowerCase();
+  const ownerAddressLower = application.ownerAddress.toLowerCase();
+
+  if (submittedByLower === ownerAddressLower) {
+    return 'applicant';
+  }
+
+  // Note: We can't distinguish admin vs reviewer from just the address
+  // For now, we'll show as 'admin' - backend could add editedByRole field later
+  return 'admin';
+};
+
 const CommentsTimeline: FC<CommentsTimelineProps> = ({
   applicationId: _applicationId, // Unused but kept for interface compatibility
+  application,
   comments = [],
   statusHistory = [],
   versionHistory = [],
@@ -239,32 +266,74 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
 
   const renderVersionItem = (version: IApplicationVersion) => {
     const isInitialVersion = version.versionNumber === 0;
+    const editType = !isInitialVersion ? getEditType(version, application) : null;
+
+    // Edit type configuration
+    const editTypeConfig = {
+      applicant: {
+        label: 'Applicant',
+        icon: UserIcon,
+        color: 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300',
+        badgeColor: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+      },
+      admin: {
+        label: 'Admin',
+        icon: ShieldCheckIcon,
+        color: 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300',
+        badgeColor: 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300',
+      },
+      reviewer: {
+        label: 'Reviewer',
+        icon: EyeIcon,
+        color: 'bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300',
+        badgeColor: 'bg-gray-50 dark:bg-gray-900/30 text-gray-700 dark:text-gray-300',
+      },
+    };
+
+    const config = editType ? editTypeConfig[editType] : null;
+    const EditIcon = config?.icon || PencilSquareIcon;
 
     return (
       <div className="flex space-x-3">
         <div className="flex-shrink-0">
-          <span className="h-8 w-8 rounded-full flex items-center justify-center bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-400">
+          <span className={`h-8 w-8 rounded-full flex items-center justify-center ${
+            isInitialVersion
+              ? 'bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-400'
+              : config?.color || 'bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-400'
+          }`}>
             {isInitialVersion ? (
               <DocumentTextIcon className="h-5 w-5" />
             ) : (
-              <PencilSquareIcon className="h-5 w-5" />
+              <EditIcon className="h-5 w-5" />
             )}
           </span>
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <p className="text-sm font-medium text-gray-900 dark:text-white">
-                {isInitialVersion ? 'Initial application submitted' : 'Application edited'}
-                {version.submittedBy && (
-                  <span className="ml-1 text-gray-600 dark:text-gray-400">
-                    by {version.submittedBy.slice(0, 6)}...{version.submittedBy.slice(-4)}
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  {isInitialVersion ? 'Initial application submitted' : 'Application edited'}
+                </p>
+                {editType && config && (
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${config.badgeColor}`}>
+                    {config.label}
                   </span>
                 )}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {formatDate(version.createdAt)} • Version {version.versionNumber}
-              </p>
+              </div>
+              {version.submittedBy && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {formatDate(version.createdAt)} • Version {version.versionNumber}
+                  <span className="ml-2 text-gray-400 dark:text-gray-500">
+                    by {version.submittedBy.slice(0, 6)}...{version.submittedBy.slice(-4)}
+                  </span>
+                </p>
+              )}
+              {!version.submittedBy && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {formatDate(version.createdAt)} • Version {version.versionNumber}
+                </p>
+              )}
             </div>
             {onVersionClick && (
               <button

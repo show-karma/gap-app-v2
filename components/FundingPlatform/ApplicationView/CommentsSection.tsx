@@ -3,10 +3,11 @@
 import { FC } from "react";
 import { ChatBubbleLeftIcon } from "@heroicons/react/24/outline";
 import CommentsTimeline from "./CommentsTimeline";
-import { IApplicationVersion } from "@/types/funding-platform";
+import { IApplicationVersion, IFundingApplication } from "@/types/funding-platform";
 
 interface CommentsSectionProps {
   applicationId: string;
+  application: IFundingApplication;
   comments: any[];
   statusHistory?: any[];
   versionHistory?: IApplicationVersion[];
@@ -22,6 +23,7 @@ interface CommentsSectionProps {
 
 const CommentsSection: FC<CommentsSectionProps> = ({
   applicationId,
+  application,
   comments,
   statusHistory = [],
   versionHistory = [],
@@ -38,6 +40,7 @@ const CommentsSection: FC<CommentsSectionProps> = ({
     <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
       <CommentsTimeline
         applicationId={applicationId}
+        application={application}
         comments={comments}
         statusHistory={statusHistory}
         versionHistory={versionHistory}
