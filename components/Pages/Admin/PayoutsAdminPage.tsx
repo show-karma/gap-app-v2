@@ -5,6 +5,7 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { useCommunityDetails } from "@/hooks/useCommunityDetails";
 import { useGrants } from "@/hooks/useGrants";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useStaff } from "@/hooks/useStaff";
 import {
   useBatchUpdatePayouts,
   AttestationBatchUpdateItem,
@@ -99,6 +100,7 @@ export default function PayoutsAdminPage() {
   // Check if user is admin of this community
   const { isCommunityAdmin: isAdmin, isLoading: loadingAdmin } =
     useIsCommunityAdmin(community?.uid, address);
+  const { isStaff } = useStaff();
 
   // Extract the actual programId from the composite value (programId_chainId)
   const actualProgramId = selectedProgramId?.split("_")[0] || null;
@@ -446,7 +448,7 @@ export default function PayoutsAdminPage() {
   }
 
   // Not authorized state
-  if (!isAdmin) {
+  if (!isAdmin && !isStaff) {
     return (
       <div className="flex w-full items-center justify-center h-96">
         <p className="text-lg">

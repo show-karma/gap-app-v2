@@ -11,6 +11,9 @@ import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { useAccount } from "wagmi";
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useStaff } from "@/hooks/useStaff";
 import { useEffect, useState } from "react";
 import { OutputMetrics } from "./OutputMetrics";
 import { CommunityImpactCharts } from "@/components/Pages/Communities/Impact/ImpactCharts";
@@ -19,6 +22,7 @@ type Tab = "metrics" | "impact";
 
 export default function ProgramImpactPage() {
   const router = useRouter();
+  const { address } = useAccount();
   const params = useParams();
   const communityId = params.communityId as string;
   const [loading, setLoading] = useState<boolean>(true); // Loading state of the API call
@@ -26,6 +30,11 @@ export default function ProgramImpactPage() {
     undefined
   ); // Data returned from the API
   const [activeTab, setActiveTab] = useState<Tab>("metrics");
+
+  // Check if user is admin of this community
+  const { isCommunityAdmin: isAdmin, isLoading: adminLoading } =
+    useIsCommunityAdmin(community?.uid, address);
+  const { isStaff } = useStaff();
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -68,11 +77,11 @@ export default function ProgramImpactPage() {
 
   return (
     <div className="mt-12 flex flex-row max-lg:flex-col-reverse w-full">
-      {loading ? (
+      {loading || adminLoading ? (
         <div className="flex w-full min-h-screen h-full items-center justify-center">
           <Spinner />
         </div>
-      ) : (
+      ) : isAdmin || isStaff ? (
         <div className="flex w-full flex-1 flex-col items-center gap-8">
           <div className="w-full flex flex-row items-center justify-between max-w-4xl">
             <Link
@@ -123,6 +132,10 @@ export default function ProgramImpactPage() {
               {activeTab === "impact" && <CommunityImpactCharts />}
             </div>
           </div>
+        </div>
+      ) : (
+        <div className="flex w-full items-center justify-center min-h-screen">
+          <p className="text-red-500">You don't have permission to access this page.</p>
         </div>
       )}
     </div>

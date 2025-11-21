@@ -26,6 +26,7 @@ import { IndicatorsHub } from "@/components/Pages/Admin/IndicatorsHub";
 import { ManageCategoriesOutputs } from "@/components/Pages/Admin/ManageCategoriesOutputs";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuth } from "@/hooks/useAuth";
+import { useStaff } from "@/hooks/useStaff";
 import { Category, ImpactSegment } from "@/types/impactMeasurement";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
@@ -67,6 +68,7 @@ export default function ManageIndicatorsPage() {
   // Check if user is admin of this community
   const { isCommunityAdmin: isAdmin, isLoading: adminLoading } =
     useIsCommunityAdmin(community?.uid, address);
+  const { isStaff } = useStaff();
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -175,7 +177,7 @@ export default function ManageIndicatorsPage() {
         <div className="flex w-full min-h-screen h-full items-center justify-center">
           <Spinner />
         </div>
-      ) : isAdmin ? (
+      ) : isAdmin || isStaff ? (
         <div className="flex w-full flex-1 flex-col items-center gap-8">
           <div className="w-full flex flex-row items-center justify-between max-w-full">
             <Link
