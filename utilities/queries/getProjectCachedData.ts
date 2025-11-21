@@ -31,6 +31,9 @@ export const getProjectCachedData = cache(
       redirect(`/project/${canonicalSlug}`);
     }
 
+    // Pointers are not available in v2 API response (excluded from mapper)
+    // Skip pointers check for v2 responses - project merges/redirects handled differently
+    // TODO: Implement alternative mechanism for project redirects if needed
     if (
       project?.pointers?.length &&
       project.pointers[0]?.data?.ogProjectUID &&
