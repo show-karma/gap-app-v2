@@ -31,7 +31,7 @@ import { MarkdownPreview } from '@/components/Utilities/MarkdownPreview';
 
 interface CommentsTimelineProps {
   applicationId: string;
-  application: IFundingApplication;
+  application?: IFundingApplication;
   comments: ApplicationComment[];
   statusHistory: IStatusHistoryEntry[];
   versionHistory?: IApplicationVersion[];
@@ -90,9 +90,9 @@ const labelMap = {
 // Helper function to determine edit type
 const getEditType = (
   version: IApplicationVersion,
-  application: IFundingApplication
+  application?: IFundingApplication
 ): 'applicant' | 'admin' | 'reviewer' => {
-  if (!version.submittedBy || !application.ownerAddress) {
+  if (!version.submittedBy || !application?.ownerAddress) {
     return 'applicant'; // Default fallback
   }
 
@@ -266,7 +266,7 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
 
   const renderVersionItem = (version: IApplicationVersion) => {
     const isInitialVersion = version.versionNumber === 0;
-    const editType = !isInitialVersion ? getEditType(version, application) : null;
+    const editType = !isInitialVersion && application ? getEditType(version, application) : null;
 
     // Edit type configuration
     const editTypeConfig = {

@@ -67,7 +67,7 @@ export default function ApplicationDetailPage() {
   } = useApplication(applicationId);
 
   // Fetch program config
-  const { data: program } = useProgramConfig(programId, parsedChainId);
+  const { data: program, config } = useProgramConfig(programId, parsedChainId);
 
   // Use the application status hook
   const { updateStatusAsync } = useApplicationStatus(programId, parsedChainId);
@@ -356,14 +356,14 @@ export default function ApplicationDetailPage() {
       />
 
       {/* Edit Application Modal */}
-      {application && program && (
+      {application && config?.formSchema && (
         <EditApplicationModal
           isOpen={isEditModalOpen}
           onClose={handleEditClose}
           application={application}
           programId={programId}
           chainId={parsedChainId}
-          formSchema={program?.applicationConfig?.formSchema}
+          formSchema={config.formSchema}
           onSuccess={handleEditSuccess}
         />
       )}

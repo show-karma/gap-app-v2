@@ -7,7 +7,7 @@ import { IApplicationVersion, IFundingApplication } from "@/types/funding-platfo
 
 interface CommentsSectionProps {
   applicationId: string;
-  application: IFundingApplication;
+  application?: IFundingApplication;
   comments: any[];
   statusHistory?: any[];
   versionHistory?: IApplicationVersion[];
