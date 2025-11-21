@@ -22,6 +22,7 @@ import { Skeleton } from "@/components/Utilities/Skeleton";
 import TablePagination from "@/components/Utilities/TablePagination";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useStaff } from "@/hooks/useStaff";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
 import { useOwnerStore } from "@/store";
 import { downloadCommunityReport } from "@/utilities/downloadReports";
@@ -126,6 +127,7 @@ export const ReportMilestonePage = ({
     community?.uid,
     address,
   );
+  const { isStaff } = useStaff();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
 
   // Get milestone reviewer programs for access control
@@ -133,8 +135,8 @@ export const ReportMilestonePage = ({
 
   // Build set of allowed program IDs for milestone reviewers
   const allowedProgramIds = useMemo(() => {
-    // Admins and contract owners can see all programs
-    if (isAdmin || isContractOwner) {
+    // Admins, staff and contract owners can see all programs
+    if (isAdmin || isContractOwner || isStaff) {
       return null; // null means no filtering
     }
 
@@ -149,7 +151,7 @@ export const ReportMilestonePage = ({
     });
 
     return allowedSet.size > 0 ? allowedSet : null;
-  }, [isAdmin, isContractOwner, reviewerPrograms, communityId]);
+  }, [isAdmin, isContractOwner, isStaff, reviewerPrograms, communityId]);
 
   const isAuthorized = useMemo(() => {
     if (!isConnected || !isAuth) {
@@ -157,13 +159,13 @@ export const ReportMilestonePage = ({
     }
 
     // Admins and contract owners have full access
-    if (isAdmin || isContractOwner) {
+    if (isAdmin || isContractOwner || isStaff) {
       return true;
     }
 
     // Milestone reviewers have access if they have programs assigned
     return allowedProgramIds !== null && allowedProgramIds.size > 0;
-  }, [isConnected, isAuth, isAdmin, isContractOwner, allowedProgramIds]);
+  }, [isConnected, isAuth, isAdmin, isContractOwner, isStaff, allowedProgramIds]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState("totalMilestones");

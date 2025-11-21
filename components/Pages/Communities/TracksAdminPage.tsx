@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useStaff } from "@/hooks/useStaff";
 import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -65,6 +66,7 @@ export const TracksAdminPage = ({
     community?.uid,
     address
   );
+  const { isStaff } = useStaff();
 
   // React Query hooks
   const {
@@ -199,7 +201,7 @@ export const TracksAdminPage = ({
     );
   }
 
-  if (!isAdmin) {
+  if (!isAdmin && !isStaff) {
     return (
       <div className="flex flex-col items-center justify-center p-8 bg-gray-50 dark:bg-zinc-800/50 rounded-lg">
         <p className="text-gray-600 dark:text-gray-300 text-center">
