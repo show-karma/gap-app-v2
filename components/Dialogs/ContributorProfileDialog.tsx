@@ -1,6 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 import { Dialog, Transition } from "@headlessui/react";
+import { X } from "lucide-react";
 import { FC, Fragment, useEffect, useState } from "react";
 
 import { Button } from "@/components/Utilities/Button";
@@ -325,16 +326,26 @@ export const ContributorProfileDialog: FC<
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle  transition-all">
-                <Dialog.Title
-                  as="h3"
-                  className="text-xl font-medium leading-6 text-gray-900 dark:text-zinc-100"
-                >
-                  {isEditing
-                    ? "Edit your profile"
-                    : `Accept invite to join ${project?.details?.data.title || "this project"
-                    }`}
-                </Dialog.Title>
+              <Dialog.Panel className="w-full max-w-xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle transition-all">
+                <div className="flex items-start items-center justify-between gap-4">
+                  <Dialog.Title
+                    as="h3"
+                    className="text-xl font-medium leading-6 text-gray-900 dark:text-zinc-100"
+                  >
+                    {isEditing
+                      ? "Edit your profile"
+                      : `Accept invite to join ${project?.details?.data.title || "this project"
+                      }`}
+                  </Dialog.Title>
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="rounded-full p-2 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label="Close"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
                 {isAllowed ? (
                   <form onSubmit={handleSubmit(onSubmit)}>
                     <div className="flex flex-col gap-2 mt-8">
