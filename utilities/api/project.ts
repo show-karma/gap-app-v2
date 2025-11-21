@@ -1,24 +1,36 @@
-import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { envVars } from "../enviromentVars";
+import { IProjectResponse } from '@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types';
+import { envVars } from '../enviromentVars';
+import { projectV2ToV1, ProjectV2Response } from '../adapters/projectV2ToV1';
+import { getProjectGrants } from './projectGrants';
+import { INDEXER } from '../indexer';
 
 export const getProjectData = async (
   projectId: string,
   fetchOptions: RequestInit
 ): Promise<IProjectResponse | undefined> => {
-  const project = await fetch(
-    `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}/projects/${projectId}`,
+  // Fetch v2 project data
+  const projectResponse = await fetch(
+    `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${INDEXER.V2.PROJECTS.GET(projectId)}`,
     {
-      method: "GET",
+      method: 'GET',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json'
       },
-      ...fetchOptions,
+      ...fetchOptions
     }
   );
-  if (!project.ok) {
-    throw new Error(`HTTP error! status: ${project.status}`);
+
+  if (!projectResponse.ok) {
+    throw new Error(`HTTP error! status: ${projectResponse.status}`);
   }
 
-  const data = await project.json();
-  return data;
+  const v2ProjectData: ProjectV2Response = await projectResponse.json();
+
+  // Fetch grants separately (v2 doesn't include grants in project response)
+  const grants = await getProjectGrants(v2ProjectData.uid, fetchOptions);
+
+  // Transform v2 response to v1 format
+  const v1ProjectData = projectV2ToV1(v2ProjectData, grants);
+
+  return v1ProjectData;
 };
