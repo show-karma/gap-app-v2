@@ -67,31 +67,31 @@ export const ContractAddressItem = memo<ContractAddressItemProps>(
 
     return (
       <div className="flex flex-col space-y-2">
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-2">
           <div
-            className={`flex items-center justify-between p-4 rounded-lg flex-grow ${hasError
+            className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-lg flex-grow ${hasError
               ? "bg-red-50 dark:bg-red-900/20 border-2 border-red-500"
               : "bg-gray-100 dark:bg-zinc-700"
               }`}
           >
-            <div className="flex items-center space-x-4 w-full">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full">
               <span className="text-md font-bold capitalize whitespace-nowrap">
                 Contract {index + 1}
               </span>
-              <div className="flex-1 flex space-x-4">
+              <div className="flex-1 flex flex-col sm:flex-row gap-4 w-full">
                 <SearchDropdown
                   onSelectFunction={(value) => onNetworkChange(index, value)}
                   selected={pair.network ? [pair.network] : []}
                   list={[...supportedNetworks]}
                   type="network"
                   prefixUnselected="Select"
-                  buttonClassname="flex-1"
+                  buttonClassname="flex-1 w-full"
                 />
                 <input
                   type="text"
                   value={pair.address}
                   onChange={(e) => onAddressChange(index, e.target.value)}
-                  className={`flex-1 text-sm rounded-md bg-transparent border-b focus:outline-none ${hasError
+                  className={`flex-1 w-full text-sm rounded-md bg-transparent border-b focus:outline-none ${hasError
                     ? "text-red-600 dark:text-red-400 border-red-500 focus:border-red-600"
                     : "text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 focus:border-blue-500"
                     }`}
