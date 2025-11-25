@@ -431,7 +431,7 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
                     ))}
                     <Button
                       onClick={handleAddRepo}
-                      className="flex items-center justify-center text-white gap-2 border border-primary-500 bg-primary-500 hover:bg-primary-600"
+                      className="flex items-center justify-center gap-2 border border-primary-500"
                     >
                       <PlusIcon className="h-5 w-5" />
                       Add Another Repository

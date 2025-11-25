@@ -12,7 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
 import { useAccount } from "wagmi";
 import { Community, nullRef } from "@show-karma/karma-gap-sdk";
-import { Button } from "../Utilities/Button";
+import { Button } from "../ui/button";
 import { MESSAGES } from "@/utilities/messages";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { appNetwork } from "@/utilities/network";
@@ -59,7 +59,7 @@ type ProjectDialogProps = {
 
 export const CommunityDialog: FC<ProjectDialogProps> = ({
   buttonElement = {
-    icon: <PlusIcon className="h-4 w-4 text-white" />,
+    icon: <PlusIcon className="h-4 w-4" />,
     iconSide: "left",
     text: "New Community",
     styleClass: "",
@@ -119,7 +119,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
       }
 
       gapClient = newGapClient;
-      
+
       const newCommunity = new Community({
         data: {
           community: true,
@@ -216,17 +216,16 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
 
   return (
     <>
-      <button
+      <Button
         onClick={openModal}
         className={cn(
-          "flex justify-center min-w-max items-center gap-x-1 rounded-md bg-brand-blue border-2 border-brand-blue px-3 py-2 text-sm font-semibold text-white dark:text-zinc-100 hover:opacity-75 dark:hover:bg-primary-900",
           buttonElement.styleClass
         )}
       >
         {buttonElement.iconSide === "left" && buttonElement.icon}
         {buttonElement.text}
         {buttonElement.iconSide === "right" && buttonElement.icon}
-      </button>
+      </Button>
       <Transition appear show={isOpen} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={closeModal}>
           <Transition.Child

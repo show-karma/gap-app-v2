@@ -5,11 +5,11 @@ import { z } from "zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
-import { Button } from "@/components/Utilities/Button";
-import axios from "axios";
+import { Button } from "@/components/ui/button";
 import { envVars } from "@/utilities/enviromentVars";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MESSAGES } from "@/utilities/messages";
+import fetchData from "@/utilities/fetchData";
 
 const schema = z.object({
   addressOrEmail: z
@@ -43,12 +43,18 @@ export default function SumupAdminPage() {
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
     try {
       setIsLoading(true);
-      const response = await axios.post(
-        `${envVars.NEXT_PUBLIC_KARMA_API}/sum-up/user/whitelist`,
+      const [, error] = await fetchData(
+        "/sum-up/user/whitelist",
+        "POST",
         {
           identifier: data.addressOrEmail,
-        }
+        },
       );
+
+      if (error) {
+        throw new Error(error);
+      }
+
       reset();
       toast.success(MESSAGES.SUMUP_ADMIN.ADD_TO_WHITELIST.SUCCESS);
     } catch (error: any) {
@@ -93,7 +99,6 @@ export default function SumupAdminPage() {
           </div>
           <div className="flex flex-row gap-4 justify-end">
             <Button
-              className="text-white text-lg bg-primary-500 border-black  hover:bg-primary-600 hover:text-white"
               disabled={isLoading}
               isLoading={isLoading}
               type="submit"

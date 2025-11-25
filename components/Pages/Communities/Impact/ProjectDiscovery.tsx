@@ -267,10 +267,9 @@ export const ProjectDiscovery = () => {
                         key={category.id}
                         value={category}
                         className={({ active }) =>
-                          `relative cursor-pointer select-none py-3 pl-4 pr-9 ${
-                            active
-                              ? "bg-primary/5 text-primary"
-                              : "text-gray-900"
+                          `relative cursor-pointer select-none py-3 pl-4 pr-9 ${active
+                            ? "bg-primary/5 text-primary"
+                            : "text-gray-900"
                           }`
                         }
                       >
@@ -305,10 +304,9 @@ export const ProjectDiscovery = () => {
                         key={program.programId}
                         value={program}
                         className={({ active }) =>
-                          `relative cursor-pointer select-none py-3 pl-4 pr-9 ${
-                            active
-                              ? "bg-primary/5 text-primary"
-                              : "text-gray-900"
+                          `relative cursor-pointer select-none py-3 pl-4 pr-9 ${active
+                            ? "bg-primary/5 text-primary"
+                            : "text-gray-900"
                           }`
                         }
                       >
@@ -396,8 +394,8 @@ export const ProjectDiscovery = () => {
                       max={100}
                       step={1}
                     >
-                      <Slider.Track className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-primary-100">
-                        <Slider.Range className="absolute h-full bg-primary-500" />
+                      <Slider.Track className="relative h-1.5 w-full grow overflow-hidden rounded-full">
+                        <Slider.Range className="absolute h-full" />
                       </Slider.Track>
                       <Slider.Thumb className="block h-4 w-4 rounded-full border border-primary/50 bg-white shadow-sm transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-primary/20" />
                     </Slider.Root>
@@ -510,7 +508,7 @@ export const ProjectDiscovery = () => {
                               <span className="text-primary">
                                 {Math.round(
                                   indicatorDistribution[
-                                    impact.impactIndicatorId
+                                  impact.impactIndicatorId
                                   ] * 100
                                 )}
                                 %
@@ -519,9 +517,9 @@ export const ProjectDiscovery = () => {
                               <span className="font-medium text-gray-900">
                                 {formatCurrency(
                                   impact.avgValue *
-                                    indicatorDistribution[
-                                      impact.impactIndicatorId
-                                    ]
+                                  indicatorDistribution[
+                                  impact.impactIndicatorId
+                                  ]
                                 )}
                               </span>
                             </div>

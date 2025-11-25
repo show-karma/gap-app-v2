@@ -207,6 +207,7 @@ export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
                             onClick={() => handleRemoveId(index)}
                             className="p-2 text-red-500 hover:text-red-700 self-end sm:self-auto"
                             aria-label="Remove ID"
+                            variant="outline"
                           >
                             <TrashIcon className="h-5 w-5" />
                           </Button>
@@ -215,7 +216,7 @@ export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
                     ))}
                     <Button
                       onClick={handleAddId}
-                      className="flex items-center justify-center text-white gap-2 border border-primary-500 bg-primary-500 hover:bg-primary-600"
+                      className="flex items-center justify-center text-white gap-2 border border-primary-500"
                     >
                       <PlusIcon className="h-5 w-5" />
                       Add Another ID

@@ -29,7 +29,7 @@ const STATUS_TRANSITIONS: Record<ApplicationStatus, StatusTransition[]> = {
       targetStatus: "under_review",
       label: "Start Review",
       variant: "default",
-      className: "bg-primary-500 text-white hover:bg-primary-600 dark:text-white dark:bg-primary-900 dark:hover:bg-primary-800"
+      className: ""
     }
   ],
   under_review: [
