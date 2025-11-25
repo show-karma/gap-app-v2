@@ -88,13 +88,13 @@ export function NavbarMobileMenu() {
     // Check admin and reviewer permissions
     const { communities } = useCommunitiesStore();
     const { programs: reviewerPrograms } = useReviewerPrograms();
-    const { isStaff } = useStaff();
+    const { isStaff, isLoading: isStaffLoading } = useStaff();
     const isOwner = useOwnerStore((state) => state.isOwner);
     const { isPoolManager, isRegistryAdmin } = useRegistryStore();
 
     const isCommunityAdmin = communities.length !== 0;
     const hasReviewerRole = reviewerPrograms && reviewerPrograms.length > 0;
-    const hasAdminAccess = isStaff || isOwner || isCommunityAdmin;
+    const hasAdminAccess = !isStaffLoading && (isStaff || isOwner || isCommunityAdmin);
     const isRegistryAllowed = (isRegistryAdmin || isPoolManager) && isLoggedIn;
 
     return (

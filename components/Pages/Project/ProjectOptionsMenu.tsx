@@ -109,7 +109,7 @@ export const ProjectOptionsMenu = () => {
   const { data: contactsInfo } = useContactInfo(projectId);
   const { isOwner: isContractOwner } = useOwnerStore();
   const isAuthorized = isProjectOwner || isContractOwner;
-  const { isStaff } = useStaff();
+  const { isStaff, isLoading: isStaffLoading } = useStaff();
 
   // Event handlers to reset state when dialogs close
   const handleLinkContractsDialogClose = () => {
@@ -281,7 +281,7 @@ export const ProjectOptionsMenu = () => {
         </>
       )}
 
-      {(isAuthorized || isStaff) && (
+      {!isStaffLoading && (isAuthorized || isStaff) && (
         <Menu as="div" className={`relative inline-block text-left z-1`}>
           <div>
             <Menu.Button className="w-max bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-100 hover:dark:bg-zinc-800 text-black dark:text-white p-2 rounded-lg">
