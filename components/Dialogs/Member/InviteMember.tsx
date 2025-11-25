@@ -1,6 +1,6 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/button";
 import { useProjectStore } from "@/store";
 import { Dialog, Transition } from "@headlessui/react";
 import * as Tooltip from "@radix-ui/react-tooltip";
@@ -58,7 +58,7 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
         disabled={!isProjectOwner}
         onClick={openModal}
         className={
-          "flex items-center gap-x-1 rounded-md bg-primary-500 dark:bg-primary-900/50 px-3 py-2 text-base font-semibold text-white dark:text-zinc-100  hover:bg-primary-600 dark:hover:bg-primary-900 text-center justify-center"
+          "flex items-center gap-x-1 rounded-md px-3 py-2 text-base font-semibold text-center justify-center"
         }
       >
         Add Team Member

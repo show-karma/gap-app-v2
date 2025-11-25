@@ -9,7 +9,7 @@ export const Communities = () => {
   return (
     <div className="mb-8 mt-[80px] flex w-full flex-col items-center justify-center gap-10">
       <div className="flex flex-col gap-2 items-center justify-center w-full">
-        <div className="flex flex-row gap-2 items-center justify-center bg-primary-200 rounded-full w-fit h-[40px] px-4 mx-auto">
+        <div className="flex flex-row gap-2 items-center justify-center rounded-full w-fit h-[40px] px-4 mx-auto">
           <Image width={24} height={24} src="/icons/impact.png" alt="Rocket icon" />
           <p className="text-primary-700 text-xs sm:text-base font-medium">
             Trusted by the top web3 ecosystems
@@ -18,7 +18,7 @@ export const Communities = () => {
 
         <h1 className="text-4xl sm:text-[72px] font-bold text-black dark:text-white">Communities on Karma</h1>
         <p className="text-black dark:text-white text-sm sm:text-lg max-w-4xl text-center">
-          Explore the ecosystem of DAOs, protocols, and organizations growing their 
+          Explore the ecosystem of DAOs, protocols, and organizations growing their
           communities through transparent funding, accountability, and impact measurement.
         </p>
       </div>

@@ -14,6 +14,7 @@ import { useOwnerStore } from "@/store";
 import { useStaff } from "@/hooks/useStaff";
 import Image from "next/image";
 import { PROJECT_NAME } from "@/constants/brand";
+import { Button } from "@/components/ui/button";
 
 // Responsive breakpoint function
 const getResponsiveColumns = (width: number) => {
@@ -71,21 +72,21 @@ export const CommunitiesPage = () => {
     <div className="flex flex-col gap-8 w-full max-w-full overflow-hidden">
       {/* Page Title */}
       <div className="flex flex-col gap-2 items-center justify-center">
-        <div className="flex flex-row gap-2 items-center justify-center bg-primary-200 rounded-full w-fit h-[40px] px-4 mx-auto">
+        <div className="flex flex-row gap-2 items-center justify-center rounded-full w-fit h-[40px] px-4 mx-auto">
           <Image
             width={24}
             height={24}
             src="/icons/impact.png"
             alt="Rocket icon"
           />
-          <p className="text-primary-700 text-xs sm:text-base font-medium">
+          <p className="text-xs sm:text-base font-medium">
             Trusted by the top web3 ecosystems
           </p>
         </div>
 
         <h1 className="text-4xl sm:text-[72px] font-bold text-black dark:text-white">Communities on Karma</h1>
         <p className="text-black dark:text-white text-sm sm:text-lg max-w-4xl text-center">
-          Explore the ecosystem of DAOs, protocols, and organizations growing their 
+          Explore the ecosystem of DAOs, protocols, and organizations growing their
           communities through transparent funding, accountability, and impact measurement.
         </p>
 
@@ -94,12 +95,11 @@ export const CommunitiesPage = () => {
           target="_blank"
           rel="noreferrer"
         >
-          <button
-            type="button"
-            className="bg-primary-500 text-white text-xs sm:text-base font-bold rounded-sm px-4 py-2 mt-5 w-fit mx-auto hover:bg-primary-600 transition-colors"
+          <Button
+            className="text-xs sm:text-base font-bold rounded-sm px-4 py-2 mt-5 w-fit mx-auto"
           >
             Add your community
-          </button>
+          </Button>
         </a>
       </div>
 
@@ -286,12 +286,12 @@ export const CommunitiesPage = () => {
             rel="noreferrer"
             className="w-fit"
           >
-            <button
+            <Button
               type="button"
-              className="bg-primary-500 text-white font-bold rounded-sm px-4 py-2 mt-5 w-fit mx-auto hover:bg-primary-600 transition-colors"
+              className="font-bold rounded-sm px-4 py-2 mt-5 w-fit mx-auto"
             >
               Add Your Community
-            </button>
+            </Button>
           </a>
         </div>
       </div>
