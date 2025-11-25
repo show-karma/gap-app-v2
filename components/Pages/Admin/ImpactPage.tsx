@@ -135,7 +135,7 @@ export default function ProgramImpactPage() {
         </div>
       ) : (
         <div className="flex w-full items-center justify-center min-h-screen">
-          <p className="text-red-500">You don't have permission to access this page.</p>
+          <p className="text-red-500">You don&apos;t have permission to access this page.</p>
         </div>
       )}
     </div>
