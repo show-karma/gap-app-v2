@@ -369,7 +369,7 @@ export async function signAndProposeDisbursement(
       const executeTxResponse = await safe.executeTransaction(signedTx)
 
       // Try to wait for transaction confirmation if possible
-      let receipt
+      let receipt: any = null
       try {
         if (executeTxResponse.transactionResponse) {
           receipt = await (executeTxResponse.transactionResponse as any).wait?.()

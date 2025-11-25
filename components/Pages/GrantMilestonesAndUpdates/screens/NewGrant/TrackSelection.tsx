@@ -72,14 +72,16 @@ export const TrackSelection: React.FC<TrackSelectionProps> = ({
       </h4>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
         {tracks.map((track: Track) => (
-          <div
+          <button
+            type="button"
             key={track.id}
             onClick={() => handleTrackSelection(track.id)}
+            disabled={disabled}
             className={cn(
-              "p-3 rounded-lg border cursor-pointer flex items-center justify-between transition-all bg-white dark:bg-zinc-900",
+              "w-full p-3 rounded-lg border cursor-pointer flex items-center justify-between transition-all text-left",
               selectedTrackIds.includes(track.id)
                 ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-400"
-                : "border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600",
+                : "border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600 bg-white dark:bg-zinc-900",
               disabled && "opacity-60 cursor-not-allowed"
             )}
           >
@@ -94,7 +96,7 @@ export const TrackSelection: React.FC<TrackSelectionProps> = ({
             {selectedTrackIds.includes(track.id) && (
               <CheckIcon className="h-5 w-5 min-h-5 min-w-5 max-h-5 max-w-5 text-blue-500 dark:text-blue-400" />
             )}
-          </div>
+          </button>
         ))}
       </div>
     </div>

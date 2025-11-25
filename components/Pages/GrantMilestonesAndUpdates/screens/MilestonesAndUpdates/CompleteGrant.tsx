@@ -158,7 +158,7 @@ export const GrantCompletion: FC = () => {
     }
 
     // Step 2: Connect wallet
-    let walletClient
+    let walletClient: any = null
     try {
       const result = await safeGetWalletClient(actualChainId)
       if (result.error || !result.walletClient || !gapClient) {

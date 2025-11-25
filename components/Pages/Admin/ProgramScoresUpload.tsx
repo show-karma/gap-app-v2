@@ -98,7 +98,9 @@ export function ProgramScoresUpload({
         })
 
         if (errors.length > 0) {
-          errors.forEach((error) => toast.error(error))
+          errors.forEach((error) => {
+            toast.error(error)
+          })
         } else {
           toast.success(`Parsed ${rows.length} rows with ${scoreColumns.length} score columns`)
           setIsPreviewExpanded(true)
@@ -167,8 +169,14 @@ export function ProgramScoresUpload({
       <div className="p-6 space-y-6">
         {/* Program Selection */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">Select Program *</label>
+          <label
+            htmlFor="program-scores-program"
+            className="block text-sm font-medium text-foreground mb-2"
+          >
+            Select Program *
+          </label>
           <select
+            id="program-scores-program"
             value={selectedProgram ? `${selectedProgram.programId}_${selectedProgram.chainID}` : ""}
             onChange={(e) => {
               if (e.target.value) {
@@ -204,8 +212,14 @@ export function ProgramScoresUpload({
 
         {/* Chain ID */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">Chain ID *</label>
+          <label
+            htmlFor="program-scores-chain"
+            className="block text-sm font-medium text-foreground mb-2"
+          >
+            Chain ID *
+          </label>
           <input
+            id="program-scores-chain"
             type="number"
             value={chainId}
             onChange={(e) => setChainId(parseInt(e.target.value, 10) || 0)}
@@ -223,9 +237,7 @@ export function ProgramScoresUpload({
 
         {/* File Upload */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
-            Upload CSV File *
-          </label>
+          <div className="block text-sm font-medium text-foreground mb-2">Upload CSV File *</div>
           <FileUpload
             onFileSelect={handleFileSelect}
             acceptedFormats=".csv"

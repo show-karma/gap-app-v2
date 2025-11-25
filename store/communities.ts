@@ -42,8 +42,8 @@ function mapCommunity(community: ICommunityResponse) {
     uid: community.uid,
     details: community.details
       ? {
-          name: community.details.data?.name!,
-          slug: community.details.data?.slug!,
+          name: community.details.data?.name ?? "",
+          slug: community.details.data?.slug ?? "",
           imageURL: community.details.data?.imageURL,
         }
       : undefined,

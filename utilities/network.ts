@@ -112,7 +112,6 @@ export function getChainIdByName(name: string) {
     case "optimismsepolia":
       return 11155420
     case "sepolia":
-    case "sepolia":
       return 11155111
     case "base-sepolia":
     case "base sepolia":

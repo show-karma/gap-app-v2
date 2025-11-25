@@ -1056,8 +1056,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 </p>
               )}
               {errors.title?.message?.includes("similar") ? (
-                <span
-                  className="text-blue-500 underline cursor-pointer"
+                <button
+                  type="button"
+                  className="text-blue-500 underline cursor-pointer bg-transparent border-none p-0"
                   style={{
                     userSelect: "none",
                   }}
@@ -1066,7 +1067,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                   }}
                 >
                   View similar projects
-                </span>
+                </button>
               ) : null}
             </div>
           </div>
@@ -1363,8 +1364,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 <div key={link.id} className="flex w-full flex-col gap-2 mb-4">
                   <div className="flex gap-3">
                     <div className="flex-1 flex flex-col gap-1">
-                      <label className={labelStyle}>Name</label>
+                      <label htmlFor={`custom-link-name-${index}`} className={labelStyle}>
+                        Name
+                      </label>
                       <input
+                        id={`custom-link-name-${index}`}
                         type="text"
                         value={link.name}
                         onChange={(e) => {
@@ -1377,8 +1381,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                       />
                     </div>
                     <div className="flex-1 flex flex-col gap-1">
-                      <label className={labelStyle}>URL</label>
+                      <label htmlFor={`custom-link-url-${index}`} className={labelStyle}>
+                        URL
+                      </label>
                       <input
+                        id={`custom-link-url-${index}`}
                         type="text"
                         value={link.url}
                         onChange={(e) => {

@@ -102,8 +102,14 @@ const EditForm = ({ segment, categoryId, onSave, isLoading, impact_indicators }:
     <form onSubmit={handleSubmit(onSave)} className="space-y-4">
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <label className="text-sm text-gray-600 dark:text-gray-400">Name</label>
+          <label
+            htmlFor="manage-categories-name"
+            className="text-sm text-gray-600 dark:text-gray-400"
+          >
+            Name
+          </label>
           <input
+            id="manage-categories-name"
             {...register("name")}
             placeholder="Enter name"
             className="text-sm p-2 border border-gray-200 dark:border-gray-700 rounded-md 
@@ -112,8 +118,14 @@ const EditForm = ({ segment, categoryId, onSave, isLoading, impact_indicators }:
           {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
         </div>
         <div className="flex flex-col gap-2">
-          <label className="text-sm text-gray-600 dark:text-gray-400">Description</label>
+          <label
+            htmlFor="manage-categories-description"
+            className="text-sm text-gray-600 dark:text-gray-400"
+          >
+            Description
+          </label>
           <textarea
+            id="manage-categories-description"
             {...register("description")}
             placeholder="Enter description"
             rows={3}
@@ -125,8 +137,14 @@ const EditForm = ({ segment, categoryId, onSave, isLoading, impact_indicators }:
           )}
         </div>
         <div className="flex flex-col gap-2">
-          <label className="text-sm text-gray-600 dark:text-gray-400">Type</label>
+          <label
+            htmlFor="manage-categories-type"
+            className="text-sm text-gray-600 dark:text-gray-400"
+          >
+            Type
+          </label>
           <select
+            id="manage-categories-type"
             {...register("type")}
             className="text-sm p-2 border border-gray-200 dark:border-gray-700 rounded-md 
               focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-full"
@@ -320,10 +338,14 @@ export const ManageCategoriesOutputs = ({
       {categories.length ? (
         <div className="space-y-8">
           <div className="flex flex-col gap-4">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label
+              htmlFor="category-selector"
+              className="text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
               Choose a category to define it&apos;s activities and outcomes
             </label>
             <select
+              id="category-selector"
               value={selectedCategoryId}
               onChange={(e) => setSelectedCategoryId(e.target.value)}
               className="w-full p-2 text-sm border bg-gray-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 rounded-md 
@@ -370,7 +392,7 @@ export const ManageCategoriesOutputs = ({
                         </div>
                         <div className="flex items-center gap-2">
                           <ChevronDownIcon className="h-5 w-5 transform transition-transform duration-200 ease-in-out ui-open:rotate-180" />
-                          <div onClick={(e) => e.stopPropagation()}>
+                          <span>
                             <DeleteDialog
                               title={`Are you sure you want to delete ${segment.name}?`}
                               deleteFunction={() =>
@@ -391,7 +413,7 @@ export const ManageCategoriesOutputs = ({
                                   "text-red-500 hover:text-red-700 transition-colors disabled:opacity-50 bg-transparent hover:bg-transparent hover:opacity-75",
                               }}
                             />
-                          </div>
+                          </span>
                         </div>
                       </Accordion.Trigger>
                       <Accordion.Content className="p-4 bg-gray-50 dark:bg-zinc-900">
@@ -428,8 +450,14 @@ export const ManageCategoriesOutputs = ({
                         className="flex flex-col gap-4"
                       >
                         <div className="flex flex-col gap-2">
-                          <label className="text-sm text-gray-600 dark:text-gray-400">Name</label>
+                          <label
+                            htmlFor="edit-activity-name"
+                            className="text-sm text-gray-600 dark:text-gray-400"
+                          >
+                            Name
+                          </label>
                           <input
+                            id="edit-activity-name"
                             {...register("name")}
                             placeholder="Enter Activity/Outcome name"
                             className="text-sm p-2 border border-gray-200 dark:border-gray-700 rounded-md 
@@ -440,10 +468,14 @@ export const ManageCategoriesOutputs = ({
                           )}
                         </div>
                         <div className="flex flex-col gap-2">
-                          <label className="text-sm text-gray-600 dark:text-gray-400">
+                          <label
+                            htmlFor="edit-activity-description"
+                            className="text-sm text-gray-600 dark:text-gray-400"
+                          >
                             Description
                           </label>
                           <textarea
+                            id="edit-activity-description"
                             {...register("description")}
                             placeholder="Enter description"
                             rows={3}
@@ -455,8 +487,14 @@ export const ManageCategoriesOutputs = ({
                           )}
                         </div>
                         <div className="flex flex-col gap-2">
-                          <label className="text-sm text-gray-600 dark:text-gray-400">Type</label>
+                          <label
+                            htmlFor="edit-activity-type"
+                            className="text-sm text-gray-600 dark:text-gray-400"
+                          >
+                            Type
+                          </label>
                           <select
+                            id="edit-activity-type"
                             {...register("type")}
                             className="text-sm p-2 border border-gray-200 dark:border-gray-700 rounded-md 
                               focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-full"
@@ -469,9 +507,9 @@ export const ManageCategoriesOutputs = ({
                           </select>
                         </div>
                         <div className="flex flex-col gap-2">
-                          <label className="text-sm text-gray-600 dark:text-gray-400">
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
                             Assign Indicators
-                          </label>
+                          </div>
                           <SearchWithValueDropdown
                             onSelectFunction={handleNewIndicatorChange}
                             selected={selectedIndicators}

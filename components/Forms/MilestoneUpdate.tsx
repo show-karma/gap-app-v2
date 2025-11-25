@@ -486,7 +486,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
     <form className="flex w-full flex-col" onSubmit={handleSubmit(onSubmit)}>
       <div className="flex w-full flex-col items-start gap-2">
         <div className="flex w-full flex-col items-start gap-2" data-color-mode="light">
-          <label className={labelStyle}>Description (optional)</label>
+          <div className={labelStyle}>Description (optional)</div>
           <div className="w-full" data-color-mode="light">
             <MarkdownEditor
               value={watch("description") || ""}

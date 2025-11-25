@@ -367,7 +367,9 @@ export const UnifiedMilestoneScreen = () => {
             // Generate payload for this grant
             const payload = await grantMilestone.multiAttestPayload()
             // Add each item from payload to allPayloads
-            payload.forEach((item) => allPayloads.push(item))
+            payload.forEach((item) => {
+              allPayloads.push(item)
+            })
           }
 
           // Use the GapContract to submit all attestations in a single transaction
@@ -409,7 +411,9 @@ export const UnifiedMilestoneScreen = () => {
       closeProgressModal()
     } catch (error) {
       errorManager("Error creating grant milestones", error)
-      toastsToRemove.forEach((toastId) => toast.remove(toastId))
+      toastsToRemove.forEach((toastId) => {
+        toast.remove(toastId)
+      })
     } finally {
       setIsSubmitting(false)
       setIsStepper(false)
@@ -477,9 +481,9 @@ export const UnifiedMilestoneScreen = () => {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-4">
-        <label className="text-sm font-bold text-black dark:text-zinc-100">
+        <div className="text-sm font-bold text-black dark:text-zinc-100">
           Select Grant(s) (Optional)
-        </label>
+        </div>
 
         <MultiSelect
           options={grantOptions}
@@ -492,8 +496,14 @@ export const UnifiedMilestoneScreen = () => {
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         {/* Title Field - For Both Types */}
         <div className="flex flex-col gap-2">
-          <label className="text-sm font-bold text-black dark:text-zinc-100">Title *</label>
+          <label
+            htmlFor="milestone-title"
+            className="text-sm font-bold text-black dark:text-zinc-100"
+          >
+            Title *
+          </label>
           <input
+            id="milestone-title"
             className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
             placeholder="Milestone title"
             {...register("title")}
@@ -503,7 +513,7 @@ export const UnifiedMilestoneScreen = () => {
 
         {/* Description Field - For Both Types */}
         <div className="flex flex-col gap-2">
-          <label className="text-sm font-bold text-black dark:text-zinc-100">Description *</label>
+          <div className="text-sm font-bold text-black dark:text-zinc-100">Description *</div>
           <Controller
             name="description"
             control={control}
@@ -524,10 +534,14 @@ export const UnifiedMilestoneScreen = () => {
         {selectedGrantIds.length > 0 && (
           <>
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-bold text-black dark:text-zinc-100">
+              <label
+                htmlFor="milestone-priority"
+                className="text-sm font-bold text-black dark:text-zinc-100"
+              >
                 Priority (Optional)
               </label>
               <select
+                id="milestone-priority"
                 className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
                 {...register("priority", {
                   setValueAs: (value) => parseInt(value, 10),
@@ -544,9 +558,9 @@ export const UnifiedMilestoneScreen = () => {
             </div>
             <div className="flex flex-row gap-8">
               <div className="flex flex-col gap-2">
-                <label className="text-sm font-bold text-black dark:text-zinc-100">
+                <div className="text-sm font-bold text-black dark:text-zinc-100">
                   Start Date (Optional)
-                </label>
+                </div>
                 <Controller
                   control={control}
                   name="dates.startsAt"
@@ -564,9 +578,7 @@ export const UnifiedMilestoneScreen = () => {
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <label className="text-sm font-bold text-black dark:text-zinc-100">
-                  End Date *
-                </label>
+                <div className="text-sm font-bold text-black dark:text-zinc-100">End Date *</div>
                 <Controller
                   control={control}
                   name="dates.endsAt"

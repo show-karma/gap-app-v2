@@ -18,7 +18,7 @@ export const MilestoneScreen = () => {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-bold text-black dark:text-zinc-100">Select Grant</label>
+        <div className="text-sm font-bold text-black dark:text-zinc-100">Select Grant</div>
         <Dropdown
           list={grants.map((grant) => ({
             value: grant.details?.data.title || "",

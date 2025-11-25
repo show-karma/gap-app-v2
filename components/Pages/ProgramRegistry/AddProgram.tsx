@@ -612,7 +612,7 @@ export default function AddProgram({
                     control={control}
                     render={({ field, formState }) => (
                       <div className="flex w-full flex-col gap-2">
-                        <label className={labelStyle}>Start date (optional)</label>
+                        <div className={labelStyle}>Start date (optional)</div>
                         <DatePicker
                           selected={field.value}
                           onSelect={(date) => {
@@ -650,7 +650,7 @@ export default function AddProgram({
                     control={control}
                     render={({ field, formState }) => (
                       <div className="flex w-full flex-col gap-2">
-                        <label className={labelStyle}>End date (optional)</label>
+                        <div className={labelStyle}>End date (optional)</div>
                         <DatePicker
                           selected={field.value}
                           onSelect={(date) => {

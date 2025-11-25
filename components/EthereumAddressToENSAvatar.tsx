@@ -38,7 +38,7 @@ const EthereumAddressToENSAvatar: React.FC<Props> = ({ address, className }) => 
           "h-6 w-6 min-h-6 min-w-6 items-center rounded-full border-1 border-gray-100 dark:border-zinc-900",
           className
         )}
-        alt="Recipient's Profile Picture"
+        alt="Recipient profile"
       />
     </div>
   )

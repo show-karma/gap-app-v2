@@ -856,8 +856,9 @@ function SortableFieldItem({
             </button>
           )}
 
-          <div
-            className="flex-1 cursor-pointer"
+          <button
+            type="button"
+            className="flex-1 cursor-pointer bg-transparent border-none text-left w-full"
             onClick={() => setSelectedFieldId(selectedFieldId === field.id ? null : field.id)}
           >
             <div className="flex items-center justify-between">
@@ -903,7 +904,7 @@ function SortableFieldItem({
                 )}
               </div>
             </div>
-          </div>
+          </button>
         </div>
 
         {/* Field Editor - appears inside the same block when expanded */}

@@ -17,7 +17,7 @@ interface DonationHeaderProps {
 }
 
 export const DonationHeader = ({ community, programId, program }: DonationHeaderProps) => {
-  const { items, toggle } = useDonationCart()
+  const { items, toggle: _toggle } = useDonationCart()
   return (
     <div className="flex flex-row w-full max-w-full px-4 pb-4 sm:px-6 lg:px-8 py-5 border-b border-b-[#DFE1E6]">
       <div className="flex flex-row items-start gap-4 w-full">

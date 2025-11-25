@@ -64,9 +64,11 @@ export function ConnectButtonCustom({ children }: ConnectButtonCustomProps) {
       {/* Chain Selector Modal */}
       {isChainModalOpen && isConnected && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black bg-opacity-50"
+          <button
+            type="button"
+            className="absolute inset-0 bg-black bg-opacity-50 border-none p-0 cursor-pointer"
             onClick={() => setIsChainModalOpen(false)}
+            aria-label="Close network modal"
           />
           <div className="relative bg-white dark:bg-zinc-800 rounded-lg p-6 max-w-sm w-full mx-4">
             <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">

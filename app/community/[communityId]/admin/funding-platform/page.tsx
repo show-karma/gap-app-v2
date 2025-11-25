@@ -282,7 +282,7 @@ export default function FundingPlatformAdminPage() {
     },
   ]
 
-  const _cardStats = (program: Record<string, unknown>) => [
+  const _cardStats = (program: Record<string, any>) => [
     {
       title: "Funding Amount",
       value: formatCurrency(program.totalAmount || program.metadata?.totalAmount || 0) || 0,

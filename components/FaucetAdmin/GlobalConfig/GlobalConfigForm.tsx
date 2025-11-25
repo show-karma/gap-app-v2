@@ -45,10 +45,14 @@ export function GlobalConfigForm() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label
+            htmlFor="global-config-rate-limit"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
             Default Rate Limit (hours)
           </label>
           <input
+            id="global-config-rate-limit"
             type="number"
             step="0.0001"
             value={formData.defaultRateLimitHours}
@@ -64,10 +68,14 @@ export function GlobalConfigForm() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label
+            htmlFor="global-config-buffer"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
             Default Buffer Percentage (%)
           </label>
           <input
+            id="global-config-buffer"
             type="number"
             value={formData.defaultBufferPercentage}
             onChange={(e) =>
@@ -82,10 +90,14 @@ export function GlobalConfigForm() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label
+            htmlFor="global-config-max-chains"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
             Max Chains Per Request
           </label>
           <input
+            id="global-config-max-chains"
             type="number"
             value={formData.maxChainsPerRequest}
             onChange={(e) =>

@@ -62,10 +62,14 @@ export function BlocklistManager() {
           <form onSubmit={handleBlock} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label
+                  htmlFor="blocklist-address"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
                   Wallet Address
                 </label>
                 <input
+                  id="blocklist-address"
                   type="text"
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
@@ -76,10 +80,14 @@ export function BlocklistManager() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label
+                  htmlFor="blocklist-chain"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
                   Chain (optional - leave empty for all chains)
                 </label>
                 <select
+                  id="blocklist-chain"
                   value={formData.chainId}
                   onChange={(e) => setFormData({ ...formData, chainId: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900 text-gray-900 dark:text-white"
@@ -94,10 +102,14 @@ export function BlocklistManager() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label
+                  htmlFor="blocklist-reason"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
                   Reason
                 </label>
                 <input
+                  id="blocklist-reason"
                   type="text"
                   value={formData.reason}
                   onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
@@ -107,10 +119,14 @@ export function BlocklistManager() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label
+                  htmlFor="blocklist-expires"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
                   Expires At (optional)
                 </label>
                 <input
+                  id="blocklist-expires"
                   type="datetime-local"
                   value={formData.expiresAt}
                   onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}

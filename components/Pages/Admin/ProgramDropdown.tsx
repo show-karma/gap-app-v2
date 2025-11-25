@@ -65,11 +65,12 @@ const ProgramDropdown: FC<{
           <CommandGroup>
             {cleanFunction ? (
               <CommandItem>
-                <div
+                <button
+                  type="button"
                   onClick={() => {
                     cleanFunction()
                   }}
-                  className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
+                  className="w-full my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 bg-transparent border-none text-left"
                 >
                   <div className="flex flex-row gap-2 items-center justify-start w-full">
                     <div className="flex flex-row gap-1  items-center justify-start  flex-1">
@@ -84,16 +85,17 @@ const ProgramDropdown: FC<{
                       }}
                     />
                   </div>
-                </div>
+                </button>
               </CommandItem>
             ) : null}
             {list.map((item, index) => (
               <CommandItem key={index}>
-                <div
+                <button
+                  type="button"
                   onClick={() => {
                     setSelectedProgram(item)
                   }}
-                  className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
+                  className="w-full my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 bg-transparent border-none text-left"
                 >
                   <div className="flex flex-row gap-2 items-center justify-start w-full">
                     <div className="flex flex-row gap-1  items-center justify-start  flex-1">
@@ -111,7 +113,7 @@ const ProgramDropdown: FC<{
                           : "none",
                     }}
                   />
-                </div>
+                </button>
               </CommandItem>
             ))}
           </CommandGroup>

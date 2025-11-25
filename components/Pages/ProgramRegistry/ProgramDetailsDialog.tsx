@@ -225,13 +225,13 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                 <div className="flex flex-col gap-4 mb-6 px-6">
                   <div className="whitespace-nowrap pt-2 pb-4 text-sm text-black dark:text-zinc-400 ">
                     <p className="w-full max-w-full text-wrap font-body">
-                      {program.metadata?.description!}
+                      {program.metadata?.description ?? ""}
                     </p>
                   </div>
                   <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-4 py-3">
                     {program.metadata?.categories?.length ? (
                       <div className={cardClassnames.div}>
-                        <label className={cardClassnames.label}>Categories</label>
+                        <div className={cardClassnames.label}>Categories</div>
                         <div className={cardClassnames.list}>
                           {program.metadata?.categories?.map((category) => (
                             <div key={category} className={cardClassnames.pill}>
@@ -244,7 +244,7 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
 
                     {program.metadata?.networks?.length ? (
                       <div className={cardClassnames.div}>
-                        <label className={cardClassnames.label}>Networks</label>
+                        <div className={cardClassnames.label}>Networks</div>
                         <div className={cardClassnames.list}>
                           {program.metadata?.networks?.map((network) => (
                             <div key={network} className={cardClassnames.pill}>
@@ -280,7 +280,7 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                     ) : null}
                     {program.metadata?.ecosystems?.length ? (
                       <div className={cardClassnames.div}>
-                        <label className={cardClassnames.label}>Ecosystems</label>
+                        <div className={cardClassnames.label}>Ecosystems</div>
                         <div className={cardClassnames.list}>
                           {program.metadata?.ecosystems?.map((ecosystem) => (
                             <div key={ecosystem} className={cardClassnames.pill}>
@@ -293,7 +293,7 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
 
                     {program.metadata?.platformsUsed?.length ? (
                       <div className={cardClassnames.div}>
-                        <label className={cardClassnames.label}>Platforms Used</label>
+                        <div className={cardClassnames.label}>Platforms Used</div>
                         <div className={cardClassnames.list}>
                           {program.metadata?.platformsUsed?.map((platform) => (
                             <div key={platform} className={cardClassnames.pill}>
@@ -307,7 +307,7 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                   <div className="grid grid-cols-2 gap-4">
                     {program.metadata?.organizations?.length ? (
                       <div className={cardClassnames.div}>
-                        <label className={cardClassnames.label}>Organizations</label>
+                        <div className={cardClassnames.label}>Organizations</div>
                         <div className={cardClassnames.list}>
                           {program.metadata?.organizations?.map((organization) => (
                             <div key={organization} className={cardClassnames.pill}>
@@ -325,7 +325,7 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                       <div className="flex flex-col gap-1 divide-y divide-y-zinc-200  bg-[#F4F8FF] rounded-xl py-3">
                         {program?.metadata?.programBudget ? (
                           <div className={statsClassnames.div}>
-                            <label className={statsClassnames.label}>Budget</label>
+                            <div className={statsClassnames.label}>Budget</div>
                             <p className={statsClassnames.pill}>
                               {program?.metadata?.programBudget
                                 ? formatCurrency(+program?.metadata?.programBudget) === "NaN"
@@ -337,7 +337,7 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                         ) : null}
                         {program?.metadata?.minGrantSize && program?.metadata?.maxGrantSize ? (
                           <div className={statsClassnames.div}>
-                            <label className={statsClassnames.label}>Grant Size</label>
+                            <div className={statsClassnames.label}>Grant Size</div>
                             <div className={statsClassnames.pill}>
                               {program?.metadata?.minGrantSize && program?.metadata?.maxGrantSize
                                 ? `$${formatCurrency(
@@ -349,9 +349,7 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                         ) : null}
                         {program?.metadata?.amountDistributedToDate ? (
                           <div className={statsClassnames.div}>
-                            <label className={statsClassnames.label}>
-                              Amount Distributed to Date
-                            </label>
+                            <div className={statsClassnames.label}>Amount Distributed to Date</div>
                             <p className={statsClassnames.pill}>
                               {program?.metadata?.amountDistributedToDate
                                 ? formatCurrency(+program?.metadata?.amountDistributedToDate) ===
@@ -366,7 +364,7 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                         ) : null}
                         {program?.metadata?.grantsToDate ? (
                           <div className={statsClassnames.div}>
-                            <label className={statsClassnames.label}>Grants Issued to Date</label>
+                            <div className={statsClassnames.label}>Grants Issued to Date</div>
                             <p className={statsClassnames.pill}>
                               {program?.metadata?.amountDistributedToDate
                                 ? formatCurrency(+program.metadata.amountDistributedToDate)

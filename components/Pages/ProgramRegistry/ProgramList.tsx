@@ -235,7 +235,7 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms, selectProgram
                   side="left"
                   words={50}
                 >
-                  {grant.metadata?.description!}
+                  {grant.metadata?.description ?? ""}
                 </ReadMore>
               </div>
             </div>

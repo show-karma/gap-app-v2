@@ -320,9 +320,9 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
           {/* Role Selector (if multi-role support enabled) */}
           {roleOptions && roleOptions.length > 0 && onRoleChange && selectedRole && (
             <div className="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              <div className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                 Select Type
-              </label>
+              </div>
               <div className="flex flex-wrap gap-4">
                 {roleOptions.map((option) => (
                   <label key={option.value} className="flex items-center cursor-pointer">
@@ -413,9 +413,8 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
       )}
 
       {/* Members List */}
-      <div
+      <section
         className="bg-white dark:bg-gray-900 shadow overflow-hidden sm:rounded-md"
-        role="region"
         aria-label={
           roleOptions && roleOptions.length > 0
             ? "Reviewers list"
@@ -555,7 +554,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
             ))}
           </ul>
         )}
-      </div>
+      </section>
     </div>
   )
 }

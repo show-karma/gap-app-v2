@@ -87,8 +87,10 @@ function SearchProject({
 
   const renderItem = (item: IProjectResponse, _href: string) => {
     return (
-      <div
+      <button
+        type="button"
         key={item.uid}
+        className="w-full text-left p-0 border-none bg-transparent"
         onClick={() => {
           setPrimaryProject(item)
           closeSearchList()
@@ -112,15 +114,12 @@ function SearchProject({
             </div>
           </div>
         </div>
-      </div>
+      </button>
     )
   }
 
   return (
-    <div
-      className="relative mb-20 pb-20 flex flex-row items-center gap-3 rounded-lg h-max w-full bg-zinc-100 px-4 max-2xl:gap-1 max-2xl:px-2 text-gray-600 dark:text-gray-200 dark:bg-zinc-800"
-      onBlur={() => closeSearchList()}
-    >
+    <div className="relative mb-20 pb-20 flex flex-row items-center gap-3 rounded-lg h-max w-full bg-zinc-100 px-4 max-2xl:gap-1 max-2xl:px-2 text-gray-600 dark:text-gray-200 dark:bg-zinc-800">
       <MagnifyingGlassIcon className="h-5 w-5" />
       <input
         type="text"

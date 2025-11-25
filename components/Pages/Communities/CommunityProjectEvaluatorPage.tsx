@@ -183,17 +183,16 @@ function ChatInput({
     <form
       onSubmit={handleSubmit}
       className={`relative w-full ${className}`}
-      role="search"
       aria-label="Chat with Karma AI"
     >
       <input
+        type="search"
         className="w-full p-4 pr-12 text-black dark:text-zinc-200 bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-600 shadow-sm focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
         value={input}
         placeholder={isLoadingProjects ? "Loading projects..." : placeholder}
         onChange={handleInputChange}
         disabled={isLoadingChat || isLoadingProjects}
         aria-label="Chat input"
-        role="searchbox"
         aria-disabled={isLoadingChat || isLoadingProjects}
       />
       <button
@@ -299,28 +298,24 @@ function SuggestionsBlock({
       <div className="p-6">
         <div className="grid grid-cols-3 max-md:grid-cols-1 gap-4">
           {suggestions.map((suggestion, index) => (
-            <div
+            <button
+              type="button"
               key={index}
               onClick={() => handleSuggestionClick(suggestion.query)}
               className={cn(
-                "bg-[#EEF4FF] dark:bg-gray-700 rounded-lg p-4 transition-colors",
+                "bg-[#EEF4FF] dark:bg-gray-700 rounded-lg p-4 transition-colors flex flex-col items-start text-left w-full",
                 isLoadingProjects
                   ? "opacity-50 cursor-not-allowed"
                   : "cursor-pointer hover:opacity-90"
               )}
-              role="button"
-              tabIndex={isLoadingProjects ? -1 : 0}
-              onKeyDown={(e) =>
-                !isLoadingProjects && e.key === "Enter" && handleSuggestionClick(suggestion.query)
-              }
+              disabled={isLoadingProjects}
               aria-label={suggestion.title}
-              aria-disabled={isLoadingProjects}
             >
               <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
                 {suggestion.title}
               </h3>
               <p className="text-sm text-gray-600 dark:text-zinc-400">{suggestion.description}</p>
-            </div>
+            </button>
           ))}
         </div>
       </div>

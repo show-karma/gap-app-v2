@@ -205,7 +205,7 @@ export const ProjectObjectiveCompletionForm = ({
     <form onSubmit={handleSubmit(onSubmit)} className="flex w-full flex-col gap-4">
       <div className="flex w-full flex-col items-start gap-2">
         <div className="flex w-full flex-col items-start gap-2" data-color-mode="light">
-          <label className={labelStyle}>Description (optional)</label>
+          <div className={labelStyle}>Description (optional)</div>
           <div className="w-full" data-color-mode="light">
             <MarkdownEditor
               value={watch("description") || ""}

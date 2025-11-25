@@ -98,9 +98,9 @@ export const GrantMilestoneCompletionForm = ({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 w-full">
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+        <div className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
           Description (optional)
-        </label>
+        </div>
         <MarkdownEditor
           value={watch("description") || ""}
           onChange={(value: string) => setValue("description", value)}

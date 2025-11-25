@@ -182,7 +182,7 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
     if (preSelectedPrograms) {
       return (
         <div className="space-y-2">
-          <label className="block text-sm font-medium mb-1">Selected Programs</label>
+          <div className="block text-sm font-medium mb-1">Selected Programs</div>
           <div className="space-y-1">
             {preSelectedPrograms.map((program) => (
               <div
@@ -222,8 +222,11 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
       }}
     >
       <div>
-        <label className="block text-sm font-medium mb-1">Name</label>
+        <label htmlFor="indicator-name" className="block text-sm font-medium mb-1">
+          Name
+        </label>
         <input
+          id="indicator-name"
           {...register("name")}
           className="w-full p-2 border rounded-md bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-700"
           placeholder="Enter indicator name"
@@ -233,8 +236,11 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">Description</label>
+        <label htmlFor="indicator-description" className="block text-sm font-medium mb-1">
+          Description
+        </label>
         <textarea
+          id="indicator-description"
           {...register("description")}
           className="w-full p-2 border rounded-md bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-700"
           placeholder="Enter indicator description"
@@ -247,7 +253,7 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">Unit Type</label>
+        <div className="block text-sm font-medium mb-1">Unit Type</div>
         <div className="grid grid-cols-2 gap-4">
           {UNIT_TYPES.map((type) => {
             const isSelected = watch("unitOfMeasure") === type

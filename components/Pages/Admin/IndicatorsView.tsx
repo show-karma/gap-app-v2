@@ -496,10 +496,14 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
 
                   {/* Add autosynced indicator selector */}
                   <div className="mb-4">
-                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                    <label
+                      htmlFor="indicators-view-autosynced"
+                      className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
+                    >
                       Select Autosynced Indicator (Optional)
                     </label>
                     <select
+                      id="indicators-view-autosynced"
                       value={selectedAutosynced}
                       onChange={(e) => handleAutosyncedSelect(e.target.value)}
                       className="w-full p-2 border rounded-md bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-700"

@@ -244,7 +244,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
             control={form.control}
             render={({ field, formState, fieldState }) => (
               <div className="flex w-full flex-col gap-2">
-                <label className={labelStyle}>Milestone priority (optional)</label>
+                <div className={labelStyle}>Milestone priority (optional)</div>
                 <div>
                   <Popover className="relative">
                     <Popover.Button className="max-lg:w-full w-max text-sm flex-row flex gap-2 items-center text-black dark:text-white border border-gray-200 bg-white dark:bg-zinc-800 px-4 py-2 rounded-md">
@@ -315,7 +315,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
             control={form.control}
             render={({ field, formState }) => (
               <div className="flex w-full flex-col gap-2">
-                <label className={labelStyle}>Start date (optional)</label>
+                <div className={labelStyle}>Start date (optional)</div>
                 <DatePicker
                   selected={field.value}
                   onSelect={(date) => {
@@ -352,7 +352,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
             control={form.control}
             render={({ field, formState }) => (
               <div className="flex w-full flex-col gap-2">
-                <label className={labelStyle}>End date *</label>
+                <div className={labelStyle}>End date *</div>
                 <DatePicker
                   selected={field.value}
                   onSelect={(date) => {

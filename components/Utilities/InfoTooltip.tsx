@@ -26,8 +26,12 @@ export const InfoTooltip = ({
   arrowClassName,
 }: InfoTooltipProps) => {
   const defaultTrigger = (
-    <div
-      className={cn("rounded-full p-1 hover:bg-gray-100 dark:hover:bg-zinc-800", className)}
+    <button
+      type="button"
+      className={cn(
+        "rounded-full p-1 hover:bg-gray-100 dark:hover:bg-zinc-800 border-none bg-transparent",
+        className
+      )}
       aria-label="More information"
     >
       <svg
@@ -46,7 +50,7 @@ export const InfoTooltip = ({
         <path d="M12 16v-4" />
         <path d="M12 8h.01" />
       </svg>
-    </div>
+    </button>
   )
 
   return (

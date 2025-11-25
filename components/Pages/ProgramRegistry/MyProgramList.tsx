@@ -213,7 +213,7 @@ export const MyProgramList: FC<MyProgramListProps> = ({
                   side="left"
                   words={50}
                 >
-                  {grant.metadata?.description!}
+                  {grant.metadata?.description ?? ""}
                 </ReadMore>
               </div>
             </div>
@@ -364,8 +364,9 @@ export const MyProgramList: FC<MyProgramListProps> = ({
         },
         header: () => (
           <div className="flex items-center gap-1">
-            <div
-              className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64 cursor-pointer"
+            <button
+              type="button"
+              className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64 cursor-pointer bg-transparent border-none"
               onClick={() => {
                 setSortField("createdAt")
                 if (searchParams.get("sortField") === "createdAt") {
@@ -375,7 +376,7 @@ export const MyProgramList: FC<MyProgramListProps> = ({
               }}
             >
               Date Added
-            </div>
+            </button>
             <div className="flex flex-col items-center gap-0.5">
               {searchParams.get("sortField") === "asc" && (
                 <ChevronUpIcon className="w-4 h-4 inline-block" />

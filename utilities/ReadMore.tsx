@@ -56,12 +56,12 @@ export const ReadMore = ({
     // Find all markdown link structures in the text
     const linkMatches: { start: number; end: number }[] = []
     const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g
-    let match
+    const matches = Array.from(text.matchAll(linkRegex))
 
-    while ((match = linkRegex.exec(text)) !== null) {
+    for (const match of matches) {
       linkMatches.push({
-        start: match.index,
-        end: match.index + match[0].length,
+        start: match.index ?? 0,
+        end: (match.index ?? 0) + match[0].length,
       })
     }
 
@@ -291,7 +291,11 @@ export const ReadMore = ({
         <MarkdownPreview className={markdownClass} source={text} />
       )}
       {text.length - 1 > getMinimumText() ? (
-        <div onClick={toggleReadMore} className="read-or-hide mt-2">
+        <button
+          type="button"
+          onClick={toggleReadMore}
+          className="read-or-hide mt-2 bg-transparent border-none p-0 cursor-pointer w-full text-left block"
+        >
           {isReadMore ? (
             <div
               className="text-sm font-semibold leading-tight text-blue-600 dark:text-blue-300 w-full flex flex-row justify-between"
@@ -313,7 +317,7 @@ export const ReadMore = ({
               {othersideButton}
             </div>
           )}
-        </div>
+        </button>
       ) : othersideButton ? (
         <div
           className="text-sm font-semibold leading-tight text-blue-600 dark:text-blue-300 w-full flex flex-row justify-between"

@@ -196,8 +196,14 @@ export const ActivityOutcomeModal = ({
 
                 <form onSubmit={handleSubmit(handleAddOutput)} className="space-y-4">
                   <div className="flex flex-col gap-2">
-                    <label className="text-sm text-gray-600 dark:text-gray-400">Name</label>
+                    <label
+                      htmlFor="activity-outcome-name"
+                      className="text-sm text-gray-600 dark:text-gray-400"
+                    >
+                      Name
+                    </label>
                     <input
+                      id="activity-outcome-name"
                       {...register("name")}
                       placeholder={`Enter activity or outcome name`}
                       className="text-sm p-2 border border-gray-200 dark:border-gray-700 rounded-md 
@@ -207,8 +213,14 @@ export const ActivityOutcomeModal = ({
                   </div>
 
                   <div className="flex flex-col gap-2">
-                    <label className="text-sm text-gray-600 dark:text-gray-400">Description</label>
+                    <label
+                      htmlFor="activity-outcome-description"
+                      className="text-sm text-gray-600 dark:text-gray-400"
+                    >
+                      Description
+                    </label>
                     <textarea
+                      id="activity-outcome-description"
                       {...register("description")}
                       placeholder="Enter description"
                       rows={3}
@@ -221,7 +233,7 @@ export const ActivityOutcomeModal = ({
                   </div>
 
                   <div className="flex flex-col gap-2 mb-2">
-                    <label className="text-sm text-gray-600 dark:text-gray-400">Type</label>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">Type</div>
                     <div className="grid grid-cols-2 gap-4">
                       {OUTPUT_TYPES.map((type) => {
                         const isSelected = watch("type") === type
@@ -292,9 +304,9 @@ export const ActivityOutcomeModal = ({
                   </div>
 
                   <div className="flex flex-col gap-2">
-                    <label className="text-sm text-gray-600 dark:text-gray-400">
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
                       Assign Indicators
-                    </label>
+                    </div>
                     <IndicatorsDropdown
                       selectedIndicators={selectedIndicators}
                       indicators={impact_indicators}

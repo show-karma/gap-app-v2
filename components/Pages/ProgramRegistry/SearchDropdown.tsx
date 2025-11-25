@@ -92,7 +92,7 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
         })
       : parsedArray
     setOrderedList(sortedList)
-  }, [list, imageDictionary?.[item.toLowerCase()], shouldSort])
+  }, [list, imageDictionary, shouldSort])
 
   const addCustomNetwork = (customNetwork: string) => {
     setAdding(false)
@@ -180,11 +180,12 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
           <CommandGroup className={cn(listClassname)}>
             {cleanFunction ? (
               <CommandItem>
-                <div
+                <button
+                  type="button"
                   onClick={() => {
                     cleanFunction()
                   }}
-                  className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
+                  className="w-full my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 bg-transparent border-none text-left"
                 >
                   <div className="flex flex-row gap-2 items-center justify-start w-full">
                     <div className="flex flex-row gap-1  items-center justify-start  flex-1">
@@ -199,17 +200,18 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
                       }}
                     />
                   </div>
-                </div>
+                </button>
               </CommandItem>
             ) : null}
             {orderedList.map((item) => (
               <CommandItem key={item.value}>
-                <div
+                <button
+                  type="button"
                   id={`${item.value}-item`}
                   onClick={() => {
                     onSelectFunction(item.value)
                   }}
-                  className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
+                  className="w-full my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 bg-transparent border-none text-left"
                 >
                   <div className="flex flex-row gap-2 items-center justify-start w-full">
                     {item.image ? (
@@ -240,7 +242,7 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
                       display: selected.includes(item.value) ? "block" : "none",
                     }}
                   />
-                </div>
+                </button>
               </CommandItem>
             ))}
           </CommandGroup>

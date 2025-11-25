@@ -196,7 +196,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
               control={control}
               render={({ field, formState }) => (
                 <div className="flex w-full flex-col gap-2 mr-2">
-                  <label className={labelStyle}>Started at *</label>
+                  <div className={labelStyle}>Started at *</div>
                   <DatePicker
                     selected={field.value}
                     onSelect={(date) => {
@@ -219,7 +219,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
               control={control}
               render={({ field, formState }) => (
                 <div className="flex w-full flex-col gap-2">
-                  <label className={labelStyle}>Completed at *</label>
+                  <div className={labelStyle}>Completed at *</div>
                   <DatePicker
                     selected={field.value}
                     onSelect={(date) => {

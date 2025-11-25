@@ -26,8 +26,12 @@ export const QuestionTooltip = ({
   arrowClassName,
 }: QuestionTooltipProps) => {
   const defaultTrigger = (
-    <div
-      className={cn("rounded-full p-1 hover:bg-gray-100 dark:hover:bg-zinc-800", className)}
+    <button
+      type="button"
+      className={cn(
+        "rounded-full p-1 hover:bg-gray-100 dark:hover:bg-zinc-800 border-none bg-transparent",
+        className
+      )}
       aria-label="More information"
     >
       <svg
@@ -44,7 +48,7 @@ export const QuestionTooltip = ({
           clipRule="evenodd"
         />
       </svg>
-    </div>
+    </button>
   )
 
   return (

@@ -140,10 +140,14 @@ export function FieldEditor({
 
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label
+            htmlFor="field-label"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          >
             Field Label *
           </label>
           <input
+            id="field-label"
             {...register("label")}
             disabled={readOnly}
             className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
@@ -153,10 +157,14 @@ export function FieldEditor({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label
+            htmlFor="field-placeholder"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          >
             Placeholder Text
           </label>
           <input
+            id="field-placeholder"
             {...register("placeholder")}
             disabled={readOnly}
             className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
@@ -165,9 +173,9 @@ export function FieldEditor({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <div className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Description (Help Text)
-          </label>
+          </div>
           <MarkdownEditor
             value={field.description || ""}
             onChange={(value: string) => !readOnly && setValue("description", value)}
@@ -182,23 +190,35 @@ export function FieldEditor({
         <div className="space-y-3">
           <div className="flex items-center">
             <input
+              id="field-required"
               {...register("required")}
               type="checkbox"
               disabled={readOnly}
               className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
             />
-            <label className="ml-2 text-sm text-gray-700 dark:text-gray-300">Required field</label>
+            <label
+              htmlFor="field-required"
+              className="ml-2 text-sm text-gray-700 dark:text-gray-300"
+            >
+              Required field
+            </label>
           </div>
           {/* Private Field Toggle - Hidden in post-approval mode since all fields are automatically private */}
           {!isPostApprovalMode && (
             <div className="flex items-center">
               <input
+                id="field-private"
                 {...register("private")}
                 type="checkbox"
                 disabled={readOnly}
                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
               />
-              <label className="ml-2 text-sm text-gray-700 dark:text-gray-300">Private field</label>
+              <label
+                htmlFor="field-private"
+                className="ml-2 text-sm text-gray-700 dark:text-gray-300"
+              >
+                Private field
+              </label>
               <QuestionTooltip
                 content="This field will be hidden from public application listings"
                 className="ml-2"
@@ -217,12 +237,16 @@ export function FieldEditor({
             <div className="space-y-3">
               <div className="flex items-center">
                 <input
+                  id="field-ai-eval"
                   {...register("aiEvaluation.includeInEvaluation")}
                   type="checkbox"
                   disabled={readOnly}
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
                 />
-                <label className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="field-ai-eval"
+                  className="ml-2 text-sm text-gray-700 dark:text-gray-300"
+                >
                   Include this field in AI evaluation context
                 </label>
               </div>
@@ -237,9 +261,9 @@ export function FieldEditor({
 
         {hasOptions && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <div className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Options
-            </label>
+            </div>
             <div className="space-y-2">
               {watchedOptions.map((option, index) => (
                 <div key={index} className="flex items-center space-x-2">
@@ -276,15 +300,19 @@ export function FieldEditor({
         {/* Milestone-specific validation */}
         {field.type === "milestone" && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <div className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Milestone Limits
-            </label>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
+                <label
+                  htmlFor="min-milestones"
+                  className="block text-xs text-gray-600 dark:text-gray-400 mb-1"
+                >
                   Minimum Milestones
                 </label>
                 <input
+                  id="min-milestones"
                   {...register("validation.minMilestones", { valueAsNumber: true })}
                   type="number"
                   min="0"
@@ -294,10 +322,14 @@ export function FieldEditor({
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
+                <label
+                  htmlFor="max-milestones"
+                  className="block text-xs text-gray-600 dark:text-gray-400 mb-1"
+                >
                   Maximum Milestones
                 </label>
                 <input
+                  id="max-milestones"
                   {...register("validation.maxMilestones", { valueAsNumber: true })}
                   type="number"
                   min="1"

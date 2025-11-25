@@ -111,10 +111,14 @@ export function AIPromptConfiguration({
       <div className="space-y-6">
         {/* AI Model Selection */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label
+            htmlFor="ai-model"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          >
             AI Model *
           </label>
           <select
+            id="ai-model"
             {...register("aiModel")}
             disabled={readOnly}
             className={`w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
@@ -129,10 +133,14 @@ export function AIPromptConfiguration({
 
         {/* Langfuse Prompt Name */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label
+            htmlFor="langfuse-prompt"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          >
             Langfuse Prompt Name
           </label>
           <input
+            id="langfuse-prompt"
             type="text"
             value={displayValue}
             disabled={readOnly}
@@ -159,12 +167,16 @@ export function AIPromptConfiguration({
             <div>
               <div className="flex items-center">
                 <input
+                  id="enable-realtime-eval"
                   {...register("enableRealTimeEvaluation")}
                   type="checkbox"
                   disabled={readOnly}
                   className={`rounded border-gray-300 text-blue-600 focus:ring-blue-500 ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
                 />
-                <label className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="enable-realtime-eval"
+                  className="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
                   Enable Real-time Evaluation
                 </label>
               </div>

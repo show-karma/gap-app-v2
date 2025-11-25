@@ -586,7 +586,8 @@ export const DisbursementForm = () => {
               <label htmlFor="csv-upload" className="block text-sm font-medium text-gray-700 mb-3">
                 📊 Upload CSV File
               </label>
-              <div
+              <section
+                aria-label="CSV file drop zone"
                 className={`flex justify-center rounded-xl border-2 border-dashed px-6 pb-6 pt-5 transition-all duration-200 ${
                   isDragOver
                     ? "border-indigo-400 bg-indigo-50 scale-105"
@@ -637,7 +638,7 @@ export const DisbursementForm = () => {
                     📋 CSV format: address, amount
                   </p>
                 </div>
-              </div>
+              </section>
             </div>
           </Card>
 

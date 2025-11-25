@@ -201,13 +201,13 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({ UUID, chainid, Admin, 
                   <form onSubmit={handleSubmit(onSubmit)}>
                     <div className="w-full px-2 py-4 sm:px-0">
                       <div className="flex w-full flex-col gap-2">
-                        <label className={labelStyle}>Community UUID</label>
+                        <div className={labelStyle}>Community UUID</div>
                         <div>{UUID}</div>
                       </div>
                     </div>
                     <div className="w-full px-2 py-4 sm:px-0">
                       <div className="flex w-full flex-col gap-2">
-                        <label className={labelStyle}>Admin</label>
+                        <div className={labelStyle}>Admin</div>
                         <div>{Admin}</div>
                       </div>
                     </div>

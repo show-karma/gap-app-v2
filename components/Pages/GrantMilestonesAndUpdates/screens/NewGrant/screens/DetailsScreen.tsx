@@ -174,7 +174,7 @@ export const DetailsScreen: React.FC = () => {
           <div className="flex flex-row gap-6 w-full max-md:flex-col">
             {/* Start Date - Required for both flows */}
             <div className="flex flex-col flex-1">
-              <label className={labelStyle}>Start Date *</label>
+              <div className={labelStyle}>Start Date *</div>
               <div className="mt-2">
                 <DatePicker
                   selected={watch("startDate")}

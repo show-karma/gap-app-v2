@@ -135,7 +135,7 @@ export const ProjectDescriptionDialog: FC<ProjectDescriptionDialogProps> = ({
                       {stats.map((stat) =>
                         stat.value ? (
                           <div className="flex flex-col gap-y-2" key={stat.label}>
-                            <label className={labelClass}>{stat.label}</label>
+                            <div className={labelClass}>{stat.label}</div>
                             <ReadMore markdownClass={valueClass}>{stat.value}</ReadMore>
                           </div>
                         ) : null

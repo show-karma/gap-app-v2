@@ -89,12 +89,13 @@ export const MultiSelectDropdown = ({
   return (
     <div className={`relative w-full ${className}`} ref={dropdownRef}>
       {label && (
-        <label className="block text-sm font-bold text-black dark:text-zinc-100 mb-1">
+        <div className="block text-sm font-bold text-black dark:text-zinc-100 mb-1">
           {label} {required && <span className="text-red-500">*</span>}
-        </label>
+        </div>
       )}
 
-      <div
+      <button
+        type="button"
         className={cn(
           "relative flex min-h-[40px] w-full items-center justify-between rounded-lg border border-gray-200 bg-white px-3 py-2 text-left text-sm outline-none transition-all dark:border-zinc-700 dark:bg-zinc-800",
           isOpen && "border-brand-blue dark:border-brand-blue",
@@ -102,6 +103,7 @@ export const MultiSelectDropdown = ({
           disabled && "cursor-not-allowed opacity-50"
         )}
         onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
       >
         <div className="flex flex-wrap gap-1">
           {selectedItems.length > 0 ? (
@@ -136,7 +138,7 @@ export const MultiSelectDropdown = ({
             className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
           />
         </div>
-      </div>
+      </button>
 
       {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
 
@@ -158,10 +160,11 @@ export const MultiSelectDropdown = ({
           <div className="max-h-60 overflow-y-auto p-2">
             {filteredItems.length > 0 ? (
               filteredItems.map((item) => (
-                <div
+                <button
+                  type="button"
                   key={item.id}
                   className={cn(
-                    "flex cursor-pointer items-center justify-between rounded-md px-2 py-1 text-sm hover:bg-gray-100 dark:hover:bg-zinc-700",
+                    "w-full flex cursor-pointer items-center justify-between rounded-md px-2 py-1 text-sm hover:bg-gray-100 dark:hover:bg-zinc-700 bg-transparent border-none text-left",
                     selectedIds.includes(item.id) && "bg-gray-100 dark:bg-zinc-700"
                   )}
                   onClick={() => toggleItem(item.id)}
@@ -170,7 +173,7 @@ export const MultiSelectDropdown = ({
                   {selectedIds.includes(item.id) && (
                     <CheckIcon className="h-4 w-4 text-brand-blue" />
                   )}
-                </div>
+                </button>
               ))
             ) : (
               <div className="px-2 py-1 text-sm text-gray-500 dark:text-zinc-400">

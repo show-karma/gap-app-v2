@@ -158,10 +158,11 @@ const GrantSearchDropdown: FC<{
           >
             <div className="py-1">
               {grants.map((grant) => (
-                <div
+                <button
+                  type="button"
                   key={grant.value}
                   onClick={() => onSelect(grant.value)}
-                  className="w-full cursor-pointer flex flex-row items-center justify-between py-3 px-4 hover:bg-gray-100 dark:hover:bg-zinc-700"
+                  className="w-full cursor-pointer flex flex-row items-center justify-between py-3 px-4 hover:bg-gray-100 dark:hover:bg-zinc-700 bg-transparent border-none text-left"
                 >
                   <div className="flex flex-col flex-1">
                     <p className="text-base font-medium text-gray-900 dark:text-white">
@@ -171,7 +172,7 @@ const GrantSearchDropdown: FC<{
                   {selected.includes(grant.value) && (
                     <CheckIcon className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0 ml-2" />
                   )}
-                </div>
+                </button>
               ))}
             </div>
           </Popover.Content>
@@ -814,7 +815,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
             control={control}
             render={({ field, formState }) => (
               <div className="flex w-full flex-col gap-2">
-                <label className={labelStyle}>Activity Start date (Optional)</label>
+                <div className={labelStyle}>Activity Start date (Optional)</div>
                 <DatePicker
                   selected={field.value}
                   onSelect={(date) => {
@@ -848,7 +849,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
             control={control}
             render={({ field, formState }) => (
               <div className="flex w-full flex-col gap-2">
-                <label className={labelStyle}>Activity End date (Optional)</label>
+                <div className={labelStyle}>Activity End date (Optional)</div>
                 <DatePicker
                   selected={field.value}
                   onSelect={(date) => {

@@ -215,7 +215,7 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
                   side="left"
                   words={50}
                 >
-                  {grant.metadata?.description!}
+                  {grant.metadata?.description ?? ""}
                 </ReadMore>
               </div>
             </div>

@@ -79,9 +79,8 @@ export function DonationExecutor({
 
   return (
     <>
-      <div
+      <section
         className="rounded-2xl border border-gray-200 bg-white/80 p-6 shadow-sm dark:border-gray-800 dark:bg-zinc-950/70 backdrop-blur-sm"
-        role="region"
         aria-label="Donation execution controls"
       >
         <div className="flex flex-col gap-4">
@@ -103,8 +102,7 @@ export function DonationExecutor({
               <div className="flex items-center gap-2">
                 <div
                   className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
-                  role="status"
-                  aria-label="Loading"
+                  aria-hidden="true"
                 />
                 <span>Processing...</span>
               </div>
@@ -151,7 +149,7 @@ export function DonationExecutor({
             </p>
           </div>
         </div>
-      </div>
+      </section>
 
       <ValidationErrors
         validationErrors={validationErrors}

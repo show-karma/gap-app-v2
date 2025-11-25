@@ -33,8 +33,6 @@ const AdminButton = ({ href, label, description, colorClass, icon }: AdminButton
   <a
     href={href}
     className="group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary-500"
-    role="button"
-    tabIndex={0}
   >
     <div
       className={cn(

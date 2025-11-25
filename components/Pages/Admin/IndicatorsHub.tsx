@@ -226,10 +226,11 @@ export const IndicatorsHub = ({ communitySlug, communityId }: IndicatorsHubProps
         <div className="space-y-4">
           {!editingIndicator && (
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label htmlFor="indicators-hub-autosynced" className="block text-sm font-medium mb-1">
                 Select Autosynced Indicator (Optional)
               </label>
               <select
+                id="indicators-hub-autosynced"
                 value={selectedAutosynced}
                 onChange={(e) => handleAutosyncedSelect(e.target.value)}
                 className="w-full p-2 border rounded-md bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-700"

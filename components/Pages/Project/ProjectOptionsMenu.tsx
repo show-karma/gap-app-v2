@@ -143,7 +143,7 @@ export const ProjectOptionsMenu = () => {
 
       const walletSigner = await walletClientToSigner(walletClient)
       const fetchedProject = await getProjectById(projectId)
-      if (!fetchedProject) return
+      if (!fetchedProject || !gap) return
       await deleteProject(fetchedProject, walletSigner, gap, router, changeStepperStep).then(
         async () => {
           toast.success(MESSAGES.PROJECT.DELETE.SUCCESS)

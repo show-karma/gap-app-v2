@@ -92,9 +92,9 @@ export function SettingsConfiguration({
         {/* Browse All Applications URL Setting */}
         {watch("privateApplications") ? null : (
           <div className="flex flex-col space-y-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
               All Applications URL
-            </label>
+            </div>
             <div className="flex flex-row items-center space-x-2">
               <ExternalLink
                 className="underline text-blue-500"
@@ -226,9 +226,9 @@ export function SettingsConfiguration({
                 className={`mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500 ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
               />
               <div className="flex-1">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Private Applications
-                </label>
+                </div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   When enabled, all application data will be hidden from public view. Only program
                   administrators and applicants can see applications.

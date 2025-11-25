@@ -229,7 +229,7 @@ export const ProjectDiscovery = () => {
 
           <div className="flex justify-between gap-4">
             <div className="w-1/2">
-              <label className="block text-sm font-medium text-gray-700">Category</label>
+              <div className="block text-sm font-medium text-gray-700">Category</div>
               <Listbox value={selectedCategory} onChange={setSelectedCategory}>
                 <div className="relative mt-1">
                   <Listbox.Button className="relative w-full cursor-default rounded-lg bg-white py-3 pl-4 pr-10 text-left border border-gray-200 shadow-sm hover:border-primary/50 transition-colors focus:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20">
@@ -260,7 +260,7 @@ export const ProjectDiscovery = () => {
             </div>
 
             <div className="w-1/2">
-              <label className="block text-sm font-medium text-gray-700">Program</label>
+              <div className="block text-sm font-medium text-gray-700">Program</div>
               <Listbox value={selectedProgram} onChange={setSelectedProgram}>
                 <div className="relative mt-1">
                   <Listbox.Button className="relative w-full cursor-default rounded-lg bg-white py-3 pl-4 pr-10 text-left border border-gray-200 shadow-sm hover:border-primary/50 transition-colors focus:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20">
@@ -293,11 +293,15 @@ export const ProjectDiscovery = () => {
 
           <div className="space-y-6">
             <div className="space-y-4">
-              <label className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="trusted-circle-input"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Trusted Circle (Optional)
               </label>
               <div className="flex gap-3">
                 <input
+                  id="trusted-circle-input"
                   type="text"
                   value={endorserInput}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>

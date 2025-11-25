@@ -57,9 +57,9 @@ const ApplicationVersionSelector: FC<ApplicationVersionSelectorProps> = ({
 
   return (
     <div className="w-full">
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+      <div className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
         Select Version
-      </label>
+      </div>
       <Listbox value={selectedVersionId} onChange={handleVersionChange}>
         <div className="relative">
           <Listbox.Button className="relative w-full cursor-pointer rounded-lg bg-white dark:bg-zinc-800 border border-gray-300 dark:border-gray-600 py-2.5 pl-3 pr-10 text-left shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm">

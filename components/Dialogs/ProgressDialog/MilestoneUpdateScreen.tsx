@@ -31,7 +31,7 @@ export const MilestoneUpdateScreen = () => {
   const GrantSelection = () => {
     return (
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-bold text-black dark:text-zinc-100">Select Grant</label>
+        <div className="text-sm font-bold text-black dark:text-zinc-100">Select Grant</div>
         <Dropdown
           list={grants.map((grant) => ({
             value: grant.details?.data.title || "",
@@ -61,7 +61,7 @@ export const MilestoneUpdateScreen = () => {
     const possibleMilestones = selectedGrant?.milestones.filter((milestone) => !milestone.completed)
     return (
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-bold text-black dark:text-zinc-100">Select Milestone</label>
+        <div className="text-sm font-bold text-black dark:text-zinc-100">Select Milestone</div>
         {possibleMilestones?.length ? (
           <Dropdown
             list={possibleMilestones.map((milestone) => ({

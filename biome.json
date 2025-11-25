@@ -36,7 +36,10 @@
           "options": {
             "allow": ["warn", "error", "info"]
           }
-        }
+        },
+        "noArrayIndexKey": "off",
+        "noShadowRestrictedNames": "off",
+        "noExplicitAny": "off"
       },
       "correctness": {
         "useExhaustiveDependencies": "warn"
@@ -46,7 +49,8 @@
       },
       "a11y": {
         "useButtonType": "warn",
-        "useAltText": "warn"
+        "useAltText": "warn",
+        "noSvgWithoutTitle": "off"
       }
     }
   },

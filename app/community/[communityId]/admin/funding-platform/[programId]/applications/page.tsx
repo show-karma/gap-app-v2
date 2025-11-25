@@ -76,14 +76,18 @@ export default function ApplicationsPage() {
     action: "read",
   })
 
-  const { hasPermission: canComment } = usePermissions({
+  const { hasPermission: _canComment } = usePermissions({
     programId,
     chainID: parsedChainId,
     action: "comment",
   })
 
   // Use the funding applications hook to get applications data
-  const { applications } = useFundingApplications(programId, parsedChainId, initialFilters)
+  const { applications: _applications } = useFundingApplications(
+    programId,
+    parsedChainId,
+    initialFilters
+  )
 
   // Prefetch hook for better UX on hover
   const { prefetchApplication } = useApplication(null)

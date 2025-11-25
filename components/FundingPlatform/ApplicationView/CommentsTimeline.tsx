@@ -358,7 +358,8 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
             {timelineItems.map((item, idx) => {
               const isLast = idx === timelineItems.length - 1
               const isLatestStatus =
-                item.type === "status" && statusHistory.indexOf(item.data) === 0
+                item.type === "status" &&
+                statusHistory.indexOf(item.data as IStatusHistoryEntry) === 0
 
               // Use a unique key based on the actual data, not index
               const itemKey =

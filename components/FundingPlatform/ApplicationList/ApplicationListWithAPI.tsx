@@ -278,10 +278,14 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
       <div className="bg-white dark:bg-zinc-800 p-4 rounded-lg border">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="app-list-search"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
               Search
             </label>
             <input
+              id="app-list-search"
               type="text"
               placeholder="Search by email, reference, or project title..."
               value={searchInput}
@@ -291,10 +295,14 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="app-list-status"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
               Status
             </label>
             <select
+              id="app-list-status"
               value={filters.status || ""}
               onChange={(e) => handleFilterChange({ status: e.target.value })}
               className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100"
@@ -310,10 +318,14 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="app-list-date-from"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
               From Date
             </label>
             <input
+              id="app-list-date-from"
               type="date"
               value={filters.dateFrom || ""}
               onChange={(e) => handleFilterChange({ dateFrom: e.target.value })}
@@ -322,10 +334,14 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="app-list-date-to"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
               To Date
             </label>
             <input
+              id="app-list-date-to"
               type="date"
               value={filters.dateTo || ""}
               onChange={(e) => handleFilterChange({ dateTo: e.target.value })}

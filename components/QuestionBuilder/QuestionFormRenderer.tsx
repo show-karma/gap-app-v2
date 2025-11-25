@@ -129,10 +129,10 @@ export function QuestionFormRenderer({
       <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
         {(schema.fields || []).map((field) => (
           <div key={field.id}>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <div className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {field.label}
               {field.required && <span className="text-red-500 ml-1">*</span>}
-            </label>
+            </div>
 
             {field.description && (
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{field.description}</p>

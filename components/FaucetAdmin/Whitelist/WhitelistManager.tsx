@@ -67,10 +67,14 @@ export function WhitelistManager() {
           <form onSubmit={handleAdd} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label
+                  htmlFor="whitelist-chain"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
                   Chain
                 </label>
                 <select
+                  id="whitelist-chain"
                   value={formData.chainId}
                   onChange={(e) => setFormData({ ...formData, chainId: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900 text-gray-900 dark:text-white"
@@ -86,10 +90,14 @@ export function WhitelistManager() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label
+                  htmlFor="whitelist-contract"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
                   Contract Address
                 </label>
                 <input
+                  id="whitelist-contract"
                   type="text"
                   value={formData.contractAddress}
                   onChange={(e) => setFormData({ ...formData, contractAddress: e.target.value })}
@@ -100,10 +108,14 @@ export function WhitelistManager() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label
+                  htmlFor="whitelist-name"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
                   Name
                 </label>
                 <input
+                  id="whitelist-name"
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -113,10 +125,14 @@ export function WhitelistManager() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label
+                  htmlFor="whitelist-gas"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
                   Max Gas Limit (optional)
                 </label>
                 <input
+                  id="whitelist-gas"
                   type="text"
                   value={formData.maxGasLimit}
                   onChange={(e) => setFormData({ ...formData, maxGasLimit: e.target.value })}
@@ -126,10 +142,14 @@ export function WhitelistManager() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <label
+                htmlFor="whitelist-description"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
                 Description (optional)
               </label>
               <textarea
+                id="whitelist-description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={3}

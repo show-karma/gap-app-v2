@@ -64,7 +64,8 @@ export const TypeSelectionScreen: React.FC = () => {
 
         <div className="flex flex-row gap-6 w-full mb-10 max-md:flex-col">
           {options.map((option) => (
-            <div
+            <button
+              type="button"
               key={option.type}
               onClick={() => handleOptionSelect(option.type)}
               className={`flex flex-col p-12 gap-6 border-2 rounded-lg cursor-pointer flex-1 transition-all ${
@@ -84,7 +85,7 @@ export const TypeSelectionScreen: React.FC = () => {
                   {option.description}
                 </p>
               </div>
-            </div>
+            </button>
           ))}
         </div>
 

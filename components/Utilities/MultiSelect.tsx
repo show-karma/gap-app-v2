@@ -65,8 +65,9 @@ export const MultiSelect = ({
   return (
     <div className={cn("relative", className)} ref={containerRef}>
       {/* Selected items display */}
-      <div
-        className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-zinc-800 cursor-pointer min-h-[42px] flex flex-wrap gap-2 items-center"
+      <button
+        type="button"
+        className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-zinc-800 cursor-pointer min-h-[42px] flex flex-wrap gap-2 items-center text-left"
         onClick={() => {
           setIsOpen(!isOpen)
           if (!isOpen && inputRef.current) {
@@ -98,7 +99,7 @@ export const MultiSelect = ({
             </span>
           ))
         )}
-      </div>
+      </button>
 
       {/* Dropdown */}
       {isOpen && (
@@ -130,6 +131,12 @@ export const MultiSelect = ({
                     value.includes(option.value) ? "bg-blue-50 dark:bg-blue-900/20" : ""
                   )}
                   onClick={() => toggleOption(option.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault()
+                      toggleOption(option.value)
+                    }
+                  }}
                 >
                   <span>{option.label}</span>
                   {value.includes(option.value) && (

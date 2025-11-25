@@ -43,10 +43,14 @@ export function UsageAnalytics() {
       <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm p-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label
+              htmlFor="analytics-chain"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
               Chain
             </label>
             <select
+              id="analytics-chain"
               value={selectedChain || ""}
               onChange={(e) => {
                 setSelectedChain(e.target.value ? parseInt(e.target.value, 10) : undefined)
@@ -64,10 +68,14 @@ export function UsageAnalytics() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label
+              htmlFor="analytics-status"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
               Status
             </label>
             <select
+              id="analytics-status"
               value={selectedStatus || ""}
               onChange={(e) => {
                 setSelectedStatus(e.target.value as RequestStatus | undefined)
@@ -84,10 +92,14 @@ export function UsageAnalytics() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label
+              htmlFor="analytics-period"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
               Time Period
             </label>
             <select
+              id="analytics-period"
               value={selectedDays}
               onChange={(e) => setSelectedDays(parseInt(e.target.value, 10))}
               className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
@@ -100,10 +112,14 @@ export function UsageAnalytics() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label
+              htmlFor="analytics-page-size"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
               Page Size
             </label>
             <select
+              id="analytics-page-size"
               value={pageSize}
               onChange={(e) => {
                 setPageSize(parseInt(e.target.value, 10))

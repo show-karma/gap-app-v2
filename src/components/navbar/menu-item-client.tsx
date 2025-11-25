@@ -117,12 +117,13 @@ export function MenuItemClient({
     }
 
     return (
-      <div
-        className="flex flex-col items-start rounded-md cursor-pointer px-2 py-1.5 hover:bg-accent"
+      <button
+        type="button"
+        className="w-full flex flex-col items-start rounded-md cursor-pointer px-2 py-1.5 hover:bg-accent bg-transparent border-none text-left"
         onClick={handleClick}
       >
         {content}
-      </div>
+      </button>
     )
   }
 

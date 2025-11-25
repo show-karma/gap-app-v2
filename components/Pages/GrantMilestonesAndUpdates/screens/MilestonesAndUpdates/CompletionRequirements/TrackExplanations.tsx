@@ -99,9 +99,9 @@ export const TrackExplanations: React.FC<TrackExplanationsProps> = ({
                 key={trackId}
                 className={hasError ? "p-2 rounded-md border-2 border-red-500" : ""}
               >
-                <label className="font-medium text-black dark:text-zinc-100 block mb-2">
+                <div className="font-medium text-black dark:text-zinc-100 block mb-2">
                   {getTrackName(trackId)} <span className="text-red-500">*</span>
-                </label>
+                </div>
                 <div className="w-full bg-transparent" data-color-mode="light">
                   <MarkdownEditor
                     value={explanation}

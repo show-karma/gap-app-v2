@@ -164,9 +164,9 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
       case "checkbox":
         return (
           <div key={index} className="flex w-full flex-col">
-            <label className={labelStyle}>
+            <div className={labelStyle}>
               {field.label} {field.required && <span className="text-red-500">*</span>}
-            </label>
+            </div>
             <div className="mt-2 space-y-2">
               {field.options?.map((option: string, optIndex: number) => (
                 <label key={optIndex} className="flex items-center">
@@ -187,9 +187,9 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
       case "radio":
         return (
           <div key={index} className="flex w-full flex-col">
-            <label className={labelStyle}>
+            <div className={labelStyle}>
               {field.label} {field.required && <span className="text-red-500">*</span>}
-            </label>
+            </div>
             <div className="mt-2 space-y-2">
               {field.options?.map((option: string, optIndex: number) => (
                 <label key={optIndex} className="flex items-center">

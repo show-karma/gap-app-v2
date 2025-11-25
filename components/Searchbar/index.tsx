@@ -37,10 +37,7 @@ export const Searchbar: FC = () => {
   }, 500)
 
   return (
-    <div
-      className="relative flex flex-row items-center gap-3 rounded-lg h-max w-full bg-zinc-100 px-4 max-2xl:gap-1 max-2xl:px-2 text-gray-600 dark:text-gray-200 dark:bg-zinc-800"
-      onBlur={() => closeSearchList()}
-    >
+    <div className="relative flex flex-row items-center gap-3 rounded-lg h-max w-full bg-zinc-100 px-4 max-2xl:gap-1 max-2xl:px-2 text-gray-600 dark:text-gray-200 dark:bg-zinc-800">
       <MagnifyingGlassIcon className="h-5 w-5" />
       <input
         type="text"

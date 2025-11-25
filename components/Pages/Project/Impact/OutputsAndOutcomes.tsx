@@ -771,9 +771,11 @@ export const OutputsAndOutcomes = () => {
       {selectedPoint && (
         <div className="fixed inset-0 flex items-center justify-center z-50">
           {/* Modal backdrop */}
-          <div
-            className="fixed inset-0 bg-black/50 dark:bg-black/70"
+          <button
+            type="button"
+            className="fixed inset-0 bg-black/50 dark:bg-black/70 border-none p-0 cursor-pointer"
             onClick={() => setSelectedPoint(null)}
+            aria-label="Close modal"
           />
 
           {/* Modal content */}
@@ -793,18 +795,14 @@ export const OutputsAndOutcomes = () => {
 
               <div className="space-y-3">
                 <div>
-                  <label className="text-sm font-medium text-gray-500 dark:text-zinc-400">
-                    Value
-                  </label>
+                  <div className="text-sm font-medium text-gray-500 dark:text-zinc-400">Value</div>
                   <p className="text-base text-gray-900 dark:text-zinc-100">
                     {selectedPoint.data.value}
                   </p>
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium text-gray-500 dark:text-zinc-400">
-                    Date
-                  </label>
+                  <div className="text-sm font-medium text-gray-500 dark:text-zinc-400">Date</div>
                   <p className="text-base text-gray-900 dark:text-zinc-100">
                     {selectedPoint.data.date}
                   </p>
@@ -812,9 +810,9 @@ export const OutputsAndOutcomes = () => {
 
                 {selectedPoint.data.proof && (
                   <div>
-                    <label className="text-sm font-medium text-gray-500 dark:text-zinc-400">
+                    <div className="text-sm font-medium text-gray-500 dark:text-zinc-400">
                       Proof
-                    </label>
+                    </div>
                     <div className="mt-1 flex flex-col gap-2">
                       {parseProofUrls(selectedPoint.data.proof).length > 0 ? (
                         parseProofUrls(selectedPoint.data.proof).map((url, index) => (

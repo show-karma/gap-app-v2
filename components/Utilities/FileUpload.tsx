@@ -240,7 +240,8 @@ export function FileUpload({
 
   return (
     <div className={className}>
-      <div
+      <section
+        aria-label="File drop zone"
         className={cn(
           "flex justify-center rounded-xl border-2 border-dashed px-6 pb-6 pt-5 transition-all duration-200",
           isDragOver
@@ -334,7 +335,7 @@ export function FileUpload({
             </div>
           )}
         </div>
-      </div>
+      </section>
     </div>
   )
 }
