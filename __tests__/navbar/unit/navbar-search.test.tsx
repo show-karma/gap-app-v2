@@ -725,6 +725,79 @@ describe("NavbarSearch", () => {
       
       expect(searchInput.value).toBe("");
     });
+
+    it("onSelectItem callback is called when clicking a result", async () => {
+      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
+      gapIndexerApi.search.mockResolvedValue({ data: projectsOnlyResults });
+      
+      const onSelectItemMock = jest.fn();
+      
+      renderWithProviders(<NavbarSearch onSelectItem={onSelectItemMock} />);
+      const searchInput = screen.getByPlaceholderText(/search project\/community/i);
+      
+      fireEvent.change(searchInput, { target: { value: "project" } });
+      act(() => jest.advanceTimersByTime(500));
+      
+      await waitFor(() => {
+        expect(screen.getByText("Awesome Project")).toBeInTheDocument();
+      });
+      
+      // Click on a result
+      const result = screen.getByText("Awesome Project");
+      fireEvent.click(result);
+      
+      // onSelectItem callback should be called
+      expect(onSelectItemMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("onSelectItem callback is called when clicking a community result", async () => {
+      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
+      gapIndexerApi.search.mockResolvedValue({ data: communitiesOnlyResults });
+      
+      const onSelectItemMock = jest.fn();
+      
+      renderWithProviders(<NavbarSearch onSelectItem={onSelectItemMock} />);
+      const searchInput = screen.getByPlaceholderText(/search project\/community/i);
+      
+      fireEvent.change(searchInput, { target: { value: "optimism" } });
+      act(() => jest.advanceTimersByTime(500));
+      
+      await waitFor(() => {
+        expect(screen.getByText("Optimism")).toBeInTheDocument();
+      });
+      
+      // Click on a community result
+      const result = screen.getByText("Optimism");
+      fireEvent.click(result);
+      
+      // onSelectItem callback should be called
+      expect(onSelectItemMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("works without onSelectItem callback (optional prop)", async () => {
+      const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
+      gapIndexerApi.search.mockResolvedValue({ data: projectsOnlyResults });
+      
+      // Render without onSelectItem prop
+      renderWithProviders(<NavbarSearch />);
+      const searchInput = screen.getByPlaceholderText(/search project\/community/i);
+      
+      fireEvent.change(searchInput, { target: { value: "project" } });
+      act(() => jest.advanceTimersByTime(500));
+      
+      await waitFor(() => {
+        expect(screen.getByText("Awesome Project")).toBeInTheDocument();
+      });
+      
+      // Click on a result - should not throw error
+      const result = screen.getByText("Awesome Project");
+      expect(() => fireEvent.click(result)).not.toThrow();
+      
+      // Dropdown should still close
+      await waitFor(() => {
+        expect(screen.queryByText("Cool Dapp")).not.toBeInTheDocument();
+      });
+    });
   });
 
   describe("Dropdown Management Tests", () => {
