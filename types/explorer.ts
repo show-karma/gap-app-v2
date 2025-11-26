@@ -4,6 +4,6 @@ export type ExplorerSortByOptions =
   | "title"
   | "noOfGrants"
   | "noOfProjectMilestones"
-  | "noOfGrantMilestones"
+  | "noOfGrantMilestones";
 
-export type ExplorerSortOrder = "asc" | "desc"
+export type ExplorerSortOrder = "asc" | "desc";

@@ -1,39 +1,39 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { XMarkIcon } from "@heroicons/react/24/solid"
-import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-import { ProjectUpdateForm } from "@/components/Forms/ProjectUpdate"
-import { useProjectStore } from "@/store"
+import { XMarkIcon } from "@heroicons/react/24/solid";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { ProjectUpdateForm } from "@/components/Forms/ProjectUpdate";
+import { useProjectStore } from "@/store";
 
 interface ProjectUpdateFormBlockProps {
-  onClose?: () => void
-  updateId?: string
+  onClose?: () => void;
+  updateId?: string;
 }
 
 export const ProjectUpdateFormBlock = ({ onClose, updateId }: ProjectUpdateFormBlockProps) => {
-  const project = useProjectStore((state) => state.project)
+  const project = useProjectStore((state) => state.project);
   // Maintain state to force fresh render when updateId changes
-  const [currentUpdateId, setCurrentUpdateId] = useState(updateId)
+  const [currentUpdateId, setCurrentUpdateId] = useState(updateId);
   const updateBeingEdited = updateId
     ? project?.updates.find((update) => update.uid === updateId)
-    : null
-  const router = useRouter()
+    : null;
+  const router = useRouter();
 
   // Update the component state when updateId changes
   useEffect(() => {
     if (updateId !== currentUpdateId) {
-      setCurrentUpdateId(updateId)
+      setCurrentUpdateId(updateId);
     }
-  }, [updateId, currentUpdateId])
+  }, [updateId, currentUpdateId]);
 
   // Clean up on success
   const handleSuccess = () => {
-    router.refresh()
+    router.refresh();
     if (onClose) {
-      onClose()
+      onClose();
     }
-  }
+  };
 
   return (
     <div className="flex flex-col w-full gap-4">
@@ -57,5 +57,5 @@ export const ProjectUpdateFormBlock = ({ onClose, updateId }: ProjectUpdateFormB
         editId={currentUpdateId}
       />
     </div>
-  )
-}
+  );
+};

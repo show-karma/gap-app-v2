@@ -1,23 +1,23 @@
-import pluralize from "pluralize"
-import { useProjectImpactIndicators } from "@/hooks/useProjectImpactIndicators"
-import formatCurrency from "@/utilities/formatCurrency"
+import pluralize from "pluralize";
+import { useProjectImpactIndicators } from "@/hooks/useProjectImpactIndicators";
+import formatCurrency from "@/utilities/formatCurrency";
 
 interface ProjectImpactProps {
-  projectId: string
-  range?: number // Optional range parameter (30, 90, 180, 360)
+  projectId: string;
+  range?: number; // Optional range parameter (30, 90, 180, 360)
 }
 
 export const ProjectImpact = ({ projectId, range = 30 }: ProjectImpactProps) => {
-  const { data: impactData } = useProjectImpactIndicators(projectId, range)
+  const { data: impactData } = useProjectImpactIndicators(projectId, range);
 
   const hasAnyImpactIndicators =
-    impactData?.metrics && Object.values(impactData.metrics).some((metric) => metric.value > 0)
+    impactData?.metrics && Object.values(impactData.metrics).some((metric) => metric.value > 0);
 
   if (!hasAnyImpactIndicators) {
-    return null
+    return null;
   }
 
-  const { metrics } = impactData
+  const { metrics } = impactData;
 
   return (
     <div className="flex flex-col gap-2">
@@ -76,5 +76,5 @@ export const ProjectImpact = ({ projectId, range = 30 }: ProjectImpactProps) => 
         )}
       </div>
     </div>
-  )
-}
+  );
+};

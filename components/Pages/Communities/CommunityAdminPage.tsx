@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import {
   ArrowTrendingUpIcon,
   BanknotesIcon,
@@ -9,24 +9,24 @@ import {
   GlobeAltIcon,
   Square2StackIcon,
   TagIcon,
-} from "@heroicons/react/24/outline"
-import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import { useAccount } from "wagmi"
-import { Button } from "@/components/Utilities/Button"
-import { Skeleton } from "@/components/Utilities/Skeleton"
-import { useAuth } from "@/hooks/useAuth"
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin"
-import { useSigner } from "@/utilities/eas-wagmi-utils"
-import { MESSAGES } from "@/utilities/messages"
-import { PAGES } from "@/utilities/pages"
-import { cn } from "@/utilities/tailwind"
+} from "@heroicons/react/24/outline";
+import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useAccount } from "wagmi";
+import { Button } from "@/components/Utilities/Button";
+import { Skeleton } from "@/components/Utilities/Skeleton";
+import { useAuth } from "@/hooks/useAuth";
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
+import { cn } from "@/utilities/tailwind";
 
 interface AdminButtonProps {
-  href: string
-  label: string
-  description: string
-  colorClass: string
-  icon?: React.ReactNode
+  href: string;
+  label: string;
+  description: string;
+  colorClass: string;
+  icon?: React.ReactNode;
 }
 
 const AdminButton = ({ href, label, description, colorClass, icon }: AdminButtonProps) => (
@@ -53,7 +53,7 @@ const AdminButton = ({ href, label, description, colorClass, icon }: AdminButton
       <p className="text-sm text-gray-600 dark:text-gray-300">{description}</p>
     </div>
   </a>
-)
+);
 
 const LoadingSkeleton = () => (
   <div className="flex flex-row flex-wrap gap-8">
@@ -63,25 +63,25 @@ const LoadingSkeleton = () => (
       </div>
     ))}
   </div>
-)
+);
 
 export const CommunityAdminPage = ({
   communityId,
   community,
 }: {
-  communityId: string
-  community: ICommunityResponse
+  communityId: string;
+  community: ICommunityResponse;
 }) => {
-  const { address, isConnected } = useAccount()
-  const { authenticated: isAuth } = useAuth()
+  const { address, isConnected } = useAccount();
+  const { authenticated: isAuth } = useAuth();
 
-  const _signer = useSigner()
+  const _signer = useSigner();
 
   // Check if user is admin of this community
   const { isCommunityAdmin: isAdmin, isLoading: loading } = useIsCommunityAdmin(
     community?.uid,
     address
-  )
+  );
 
   return (
     <div className="max-w-full w-full">
@@ -167,5 +167,5 @@ export const CommunityAdminPage = ({
         </div>
       )}
     </div>
-  )
-}
+  );
+};

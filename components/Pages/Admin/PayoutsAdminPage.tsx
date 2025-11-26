@@ -1,95 +1,98 @@
-"use client"
+"use client";
 
-import { ChevronLeftIcon } from "@heroicons/react/20/solid"
-import Link from "next/link"
-import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation"
-import { useCallback, useEffect, useMemo, useState } from "react"
-import toast from "react-hot-toast"
-import { isAddress } from "viem"
-import { useAccount } from "wagmi"
-import { ProgramFilter } from "@/components/Pages/Communities/Impact/ProgramFilter"
-import { Button } from "@/components/Utilities/Button"
-import { ExternalLink } from "@/components/Utilities/ExternalLink"
-import { Spinner } from "@/components/Utilities/Spinner"
-import TablePagination from "@/components/Utilities/TablePagination"
-import { useCommunityDetails } from "@/hooks/useCommunityDetails"
-import { type AttestationBatchUpdateItem, useBatchUpdatePayouts } from "@/hooks/useCommunityPayouts"
-import { useGrants } from "@/hooks/useGrants"
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin"
-import { MESSAGES } from "@/utilities/messages"
-import { PAGES } from "@/utilities/pages"
-import { cn } from "@/utilities/tailwind"
-import { type CsvParseResult, PayoutsCsvUpload } from "./PayoutsCsvUpload"
+import { ChevronLeftIcon } from "@heroicons/react/20/solid";
+import Link from "next/link";
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
+import { isAddress } from "viem";
+import { useAccount } from "wagmi";
+import { ProgramFilter } from "@/components/Pages/Communities/Impact/ProgramFilter";
+import { Button } from "@/components/Utilities/Button";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { Spinner } from "@/components/Utilities/Spinner";
+import TablePagination from "@/components/Utilities/TablePagination";
+import { useCommunityDetails } from "@/hooks/useCommunityDetails";
+import {
+  type AttestationBatchUpdateItem,
+  useBatchUpdatePayouts,
+} from "@/hooks/useCommunityPayouts";
+import { useGrants } from "@/hooks/useGrants";
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
+import { cn } from "@/utilities/tailwind";
+import { type CsvParseResult, PayoutsCsvUpload } from "./PayoutsCsvUpload";
 
 // Component-specific types
 interface EditableFields {
-  payoutAddress?: string
-  amount?: string
+  payoutAddress?: string;
+  amount?: string;
 }
 
 interface PayoutsTableData {
-  uid: string
-  projectUid: string
-  projectName: string
-  projectSlug: string
-  grantName: string
-  grantProgramId: string
-  grantChainId: number
-  projectChainId: number
-  currentPayoutAddress?: string
-  currentAmount?: string
+  uid: string;
+  projectUid: string;
+  projectName: string;
+  projectSlug: string;
+  grantName: string;
+  grantProgramId: string;
+  grantChainId: number;
+  projectChainId: number;
+  currentPayoutAddress?: string;
+  currentAmount?: string;
 }
 
 export default function PayoutsAdminPage() {
-  const router = useRouter()
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
-  const { address } = useAccount()
-  const params = useParams()
-  const communityId = params.communityId as string
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const { address } = useAccount();
+  const params = useParams();
+  const communityId = params.communityId as string;
 
   // State for tracking edits
-  const [editedFields, setEditedFields] = useState<Record<string, EditableFields>>({})
-  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [editedFields, setEditedFields] = useState<Record<string, EditableFields>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Get values from URL params or use defaults
-  const selectedProgramId = searchParams.get("programId")
-  const itemsPerPage = Number(searchParams.get("limit")) || 200
-  const currentPage = Number(searchParams.get("page")) || 1
+  const selectedProgramId = searchParams.get("programId");
+  const itemsPerPage = Number(searchParams.get("limit")) || 200;
+  const currentPage = Number(searchParams.get("page")) || 1;
 
   // Create URLSearchParams utility function
   const createQueryString = useCallback(
     (params: Record<string, string | null>) => {
-      const newSearchParams = new URLSearchParams(searchParams.toString())
+      const newSearchParams = new URLSearchParams(searchParams.toString());
 
       Object.entries(params).forEach(([key, value]) => {
         if (value === null || value === "") {
-          newSearchParams.delete(key)
+          newSearchParams.delete(key);
         } else {
-          newSearchParams.set(key, value)
+          newSearchParams.set(key, value);
         }
-      })
+      });
 
-      return newSearchParams.toString()
+      return newSearchParams.toString();
     },
     [searchParams]
-  )
+  );
 
   // Fetch community details
   const {
     data: community,
     isLoading: isLoadingCommunity,
     error: communityError,
-  } = useCommunityDetails(communityId)
+  } = useCommunityDetails(communityId);
 
   // Check if user is admin of this community
   const { isCommunityAdmin: isAdmin, isLoading: loadingAdmin } = useIsCommunityAdmin(
     community?.uid,
     address
-  )
+  );
 
   // Extract the actual programId from the composite value (programId_chainId)
-  const actualProgramId = selectedProgramId?.split("_")[0] || null
+  const actualProgramId = selectedProgramId?.split("_")[0] || null;
 
   // Fetch grants data with filter and pagination
   const {
@@ -103,29 +106,29 @@ export default function PayoutsAdminPage() {
       pageLimit: itemsPerPage,
     },
     sortBy: "recent", // Use backend's recent sort option
-  })
+  });
 
-  const grants = grantsData?.grants || []
-  const totalItems = grantsData?.totalItems || 0
+  const grants = grantsData?.grants || [];
+  const totalItems = grantsData?.totalItems || 0;
 
   // Batch update mutation
-  const { mutate: batchUpdate, isPending: isSaving } = useBatchUpdatePayouts()
+  const { mutate: batchUpdate, isPending: isSaving } = useBatchUpdatePayouts();
 
   // Process grants into table data format
   const tableData: PayoutsTableData[] = useMemo(() => {
-    const grantsArray: PayoutsTableData[] = []
+    const grantsArray: PayoutsTableData[] = [];
 
     grants.forEach((grant) => {
       // Extract payout address for this community from the project's payoutAddress dictionary
       // Note: grant.payoutAddress is actually the project's payoutAddress extracted by useGrants hook
-      let currentPayoutAddress = ""
+      let currentPayoutAddress = "";
       if (grant.payoutAddress) {
         if (typeof grant.payoutAddress === "string") {
           // Backward compatibility: if it's still a string, use it directly
-          currentPayoutAddress = grant.payoutAddress
+          currentPayoutAddress = grant.payoutAddress;
         } else if (typeof grant.payoutAddress === "object" && community?.uid) {
           // New structure: extract address for this specific community
-          currentPayoutAddress = grant.payoutAddress[community.uid] || ""
+          currentPayoutAddress = grant.payoutAddress[community.uid] || "";
         }
       }
 
@@ -140,38 +143,38 @@ export default function PayoutsAdminPage() {
         projectChainId: grant.projectChainId,
         currentPayoutAddress: currentPayoutAddress,
         currentAmount: grant.payoutAmount || "",
-      })
-    })
+      });
+    });
 
-    return grantsArray
-  }, [grants, community?.uid])
+    return grantsArray;
+  }, [grants, community?.uid]);
 
   // Since we're now using backend pagination, we don't need to filter or paginate client-side
-  const paginatedData = tableData
+  const paginatedData = tableData;
 
   // URL param update handlers
   const handleProgramChange = (programId: string | null) => {
     const query = createQueryString({
       programId: programId,
       page: "1", // Reset to first page when changing program
-    })
-    router.push(`${pathname}?${query}`)
-  }
+    });
+    router.push(`${pathname}?${query}`);
+  };
 
   const handleItemsPerPageChange = (limit: number) => {
     const query = createQueryString({
       limit: limit.toString(),
       page: "1", // Reset to first page when changing items per page
-    })
-    router.push(`${pathname}?${query}`)
-  }
+    });
+    router.push(`${pathname}?${query}`);
+  };
 
   const handlePageChange = (page: number) => {
     const query = createQueryString({
       page: page.toString(),
-    })
-    router.push(`${pathname}?${query}`)
-  }
+    });
+    router.push(`${pathname}?${query}`);
+  };
 
   // Handle field changes
   const handleFieldChange = (uid: string, field: keyof EditableFields, value: string) => {
@@ -181,15 +184,15 @@ export default function PayoutsAdminPage() {
         ...prev[uid],
         [field]: value,
       },
-    }))
+    }));
 
     // Clear error when user starts typing
     setErrors((prev) => {
-      const newErrors = { ...prev }
-      delete newErrors[`${uid}-${field}`]
-      return newErrors
-    })
-  }
+      const newErrors = { ...prev };
+      delete newErrors[`${uid}-${field}`];
+      return newErrors;
+    });
+  };
 
   // Validate a single field
   const validateField = (uid: string, field: keyof EditableFields, value: string): boolean => {
@@ -198,8 +201,8 @@ export default function PayoutsAdminPage() {
         setErrors((prev) => ({
           ...prev,
           [`${uid}-${field}`]: "Invalid Ethereum address",
-        }))
-        return false
+        }));
+        return false;
       }
     }
 
@@ -208,65 +211,65 @@ export default function PayoutsAdminPage() {
         setErrors((prev) => ({
           ...prev,
           [`${uid}-${field}`]: "Must be a valid number with up to 2 decimal places",
-        }))
-        return false
+        }));
+        return false;
       }
     }
 
-    return true
-  }
+    return true;
+  };
 
   // State to store last CSV result for display
   const [lastCsvResult, setLastCsvResult] = useState<{
-    unmatchedProjects: string[]
-  } | null>(null)
+    unmatchedProjects: string[];
+  } | null>(null);
 
   // Handle CSV data
   const handleCsvData = useCallback(
     (parseResult: CsvParseResult) => {
-      const unmatchedProjects: string[] = []
-      let matchedCount = 0
+      const unmatchedProjects: string[] = [];
+      let matchedCount = 0;
 
       // Clear previous results when new CSV is uploaded
-      setLastCsvResult(null)
+      setLastCsvResult(null);
 
       // Use functional state update to avoid stale closure issues
       setEditedFields((prevEditedFields) => {
-        const newEditedFields = { ...prevEditedFields }
+        const newEditedFields = { ...prevEditedFields };
 
         parseResult.data.forEach((csvRow) => {
           // Find matching project in table data
-          const matchingProject = tableData.find((item) => item.projectSlug === csvRow.projectSlug)
+          const matchingProject = tableData.find((item) => item.projectSlug === csvRow.projectSlug);
 
           if (matchingProject) {
-            matchedCount++
+            matchedCount++;
             newEditedFields[matchingProject.uid] = {
               ...newEditedFields[matchingProject.uid],
               payoutAddress: csvRow.payoutAddress,
               amount: csvRow.amount,
-            }
+            };
           } else {
-            unmatchedProjects.push(csvRow.projectSlug)
+            unmatchedProjects.push(csvRow.projectSlug);
           }
-        })
+        });
 
-        return newEditedFields
-      })
+        return newEditedFields;
+      });
 
       // Store unmatched projects for display
-      setLastCsvResult({ unmatchedProjects })
+      setLastCsvResult({ unmatchedProjects });
 
       // Show feedback about matches
       if (matchedCount > 0) {
-        toast.success(`Matched ${matchedCount} projects`)
+        toast.success(`Matched ${matchedCount} projects`);
       }
 
       if (unmatchedProjects.length > 0) {
-        console.warn("Unmatched projects:", unmatchedProjects)
+        console.warn("Unmatched projects:", unmatchedProjects);
       }
     },
     [tableData]
-  )
+  );
 
   // Handle example CSV download
   const handleDownloadExampleCsv = useCallback(() => {
@@ -275,7 +278,7 @@ export default function PayoutsAdminPage() {
       projectSlug: item.projectSlug,
       payoutAddress: `0x${"1".repeat(40)}`, // Example address
       amount: `${(index + 1) * 100}.00`, // Example amounts: 100.00, 200.00, 300.00
-    }))
+    }));
 
     // If no data available, create generic examples
     if (exampleData.length === 0) {
@@ -295,48 +298,48 @@ export default function PayoutsAdminPage() {
           payoutAddress: "0x3333333333333333333333333333333333333333",
           amount: "300.00",
         }
-      )
+      );
     }
 
     // Convert to CSV format
-    const csvHeader = "Project URL,Wallet Address,Amount\n"
+    const csvHeader = "Project URL,Wallet Address,Amount\n";
     const csvRows = exampleData
       .map((row) => `${row.projectSlug},${row.payoutAddress},${row.amount}`)
-      .join("\n")
-    const csvContent = csvHeader + csvRows
+      .join("\n");
+    const csvContent = csvHeader + csvRows;
 
     // Create and trigger download
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
-    const link = document.createElement("a")
-    const url = URL.createObjectURL(blob)
-    link.setAttribute("href", url)
-    link.setAttribute("download", "payouts-example.csv")
-    link.style.visibility = "hidden"
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-  }, [tableData])
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", "payouts-example.csv");
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, [tableData]);
 
   // Handle save
   const handleSave = async () => {
     // Clear all errors
-    setErrors({})
+    setErrors({});
 
     // Prepare updates
-    const updates: AttestationBatchUpdateItem[] = []
-    let hasValidationError = false
+    const updates: AttestationBatchUpdateItem[] = [];
+    let hasValidationError = false;
 
     Object.entries(editedFields).forEach(([uid, fields]) => {
-      const item = tableData.find((d) => d.uid === uid)
-      if (!item) return
+      const item = tableData.find((d) => d.uid === uid);
+      if (!item) return;
 
       // Validate fields
       if (Object.hasOwn(fields, "payoutAddress")) {
         // Allow empty string to clear the field
         if (fields.payoutAddress && !validateField(uid, "payoutAddress", fields.payoutAddress)) {
-          hasValidationError = true
-          return
+          hasValidationError = true;
+          return;
         }
 
         updates.push({
@@ -344,14 +347,14 @@ export default function PayoutsAdminPage() {
           chainId: item.projectChainId,
           type: "Project",
           payoutAddress: fields.payoutAddress,
-        })
+        });
       }
 
       if (Object.hasOwn(fields, "amount")) {
         // Allow empty string to clear the field
         if (fields.amount && !validateField(uid, "amount", fields.amount)) {
-          hasValidationError = true
-          return
+          hasValidationError = true;
+          return;
         }
 
         updates.push({
@@ -359,18 +362,18 @@ export default function PayoutsAdminPage() {
           chainId: item.grantChainId,
           type: "Grant",
           amount: fields.amount,
-        })
+        });
       }
-    })
+    });
 
     if (hasValidationError) {
-      toast.error("Please fix validation errors before saving")
-      return
+      toast.error("Please fix validation errors before saving");
+      return;
     }
 
     if (updates.length === 0) {
-      toast.error("No changes to save")
-      return
+      toast.error("No changes to save");
+      return;
     }
 
     // Execute batch update
@@ -382,21 +385,21 @@ export default function PayoutsAdminPage() {
       {
         onSuccess: (data) => {
           // Clear edited fields for successful updates
-          const successfulUids = data.success
+          const successfulUids = data.success;
           setEditedFields((prev) => {
-            const newEdited = { ...prev }
+            const newEdited = { ...prev };
             successfulUids.forEach((uid) => {
-              delete newEdited[uid]
-            })
-            return newEdited
-          })
+              delete newEdited[uid];
+            });
+            return newEdited;
+          });
 
           // Refresh grants data
-          refreshGrants()
+          refreshGrants();
         },
       }
-    )
-  }
+    );
+  };
 
   // Handle errors
   useEffect(() => {
@@ -404,9 +407,9 @@ export default function PayoutsAdminPage() {
       communityError?.message === "Community not found" ||
       communityError?.message?.includes("422")
     ) {
-      router.push(PAGES.NOT_FOUND)
+      router.push(PAGES.NOT_FOUND);
     }
-  }, [communityError, router])
+  }, [communityError, router]);
 
   // Loading state
   if (loadingAdmin || isLoadingGrants || isLoadingCommunity) {
@@ -414,7 +417,7 @@ export default function PayoutsAdminPage() {
       <div className="flex w-full items-center justify-center h-96">
         <Spinner />
       </div>
-    )
+    );
   }
 
   // Not authorized state
@@ -423,10 +426,10 @@ export default function PayoutsAdminPage() {
       <div className="flex w-full items-center justify-center h-96">
         <p className="text-lg">{MESSAGES.ADMIN.NOT_AUTHORIZED(community?.uid || "")}</p>
       </div>
-    )
+    );
   }
 
-  const hasChanges = Object.keys(editedFields).length > 0
+  const hasChanges = Object.keys(editedFields).length > 0;
 
   return (
     <div className="my-4 flex gap-8 flex-row max-lg:flex-col-reverse w-full">
@@ -493,9 +496,9 @@ export default function PayoutsAdminPage() {
               </thead>
               <tbody className="px-4 divide-y divide-gray-200 dark:divide-zinc-800">
                 {paginatedData.map((item) => {
-                  const fieldId = item.uid
-                  const payoutError = errors[`${fieldId}-payoutAddress`]
-                  const amountError = errors[`${fieldId}-amount`]
+                  const fieldId = item.uid;
+                  const payoutError = errors[`${fieldId}-payoutAddress`];
+                  const amountError = errors[`${fieldId}-amount`];
 
                   return (
                     <tr
@@ -569,7 +572,7 @@ export default function PayoutsAdminPage() {
                         </div>
                       </td>
                     </tr>
-                  )
+                  );
                 })}
               </tbody>
             </table>
@@ -596,5 +599,5 @@ export default function PayoutsAdminPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

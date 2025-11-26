@@ -20,10 +20,10 @@ export enum DonationErrorCode {
 }
 
 export interface ParsedError {
-  code: DonationErrorCode
-  message: string
-  technicalMessage?: string
-  actionableSteps: string[]
+  code: DonationErrorCode;
+  message: string;
+  technicalMessage?: string;
+  actionableSteps: string[];
 }
 
 /**
@@ -31,7 +31,7 @@ export interface ParsedError {
  */
 export function parseDonationError(error: unknown): ParsedError {
   const errorMessage =
-    error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase()
+    error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
 
   // User rejected transaction
   if (
@@ -47,7 +47,7 @@ export function parseDonationError(error: unknown): ParsedError {
         "Approve the transaction in your wallet to proceed",
         "If you want to cancel, you can close this page",
       ],
-    }
+    };
   }
 
   // Insufficient gas
@@ -65,7 +65,7 @@ export function parseDonationError(error: unknown): ParsedError {
         "Try again when gas prices are lower",
         "Consider using a different network with lower fees",
       ],
-    }
+    };
   }
 
   // Insufficient balance
@@ -83,7 +83,7 @@ export function parseDonationError(error: unknown): ParsedError {
         "Reduce the donation amount",
         "Add more tokens to your wallet",
       ],
-    }
+    };
   }
 
   // Network mismatch
@@ -102,7 +102,7 @@ export function parseDonationError(error: unknown): ParsedError {
         "Confirm the network switch when prompted",
         "Try the transaction again after switching",
       ],
-    }
+    };
   }
 
   // Contract errors (reverts)
@@ -112,8 +112,8 @@ export function parseDonationError(error: unknown): ParsedError {
     errorMessage.includes("contract error")
   ) {
     // Try to extract revert reason
-    const revertReasonMatch = errorMessage.match(/reason: (.+?)(?:\n|$)/)
-    const revertReason = revertReasonMatch ? revertReasonMatch[1] : undefined
+    const revertReasonMatch = errorMessage.match(/reason: (.+?)(?:\n|$)/);
+    const revertReason = revertReasonMatch ? revertReasonMatch[1] : undefined;
 
     return {
       code: DonationErrorCode.CONTRACT_ERROR,
@@ -124,7 +124,7 @@ export function parseDonationError(error: unknown): ParsedError {
         "Verify the recipient address is valid",
         "Contact support if the issue persists",
       ],
-    }
+    };
   }
 
   // Approval errors
@@ -138,7 +138,7 @@ export function parseDonationError(error: unknown): ParsedError {
         "Check your wallet has enough gas for approval",
         "Contact support if approval keeps failing",
       ],
-    }
+    };
   }
 
   // Permit signature errors
@@ -156,7 +156,7 @@ export function parseDonationError(error: unknown): ParsedError {
         "Ensure you're signing the correct message",
         "Try refreshing the page if signature keeps failing",
       ],
-    }
+    };
   }
 
   // Chain sync errors
@@ -174,7 +174,7 @@ export function parseDonationError(error: unknown): ParsedError {
         "Switch to the required network manually",
         "Refresh the page and try again",
       ],
-    }
+    };
   }
 
   // Transaction timeout
@@ -188,7 +188,7 @@ export function parseDonationError(error: unknown): ParsedError {
         "Try again with higher gas price if transaction didn't go through",
         "Contact support if the issue persists",
       ],
-    }
+    };
   }
 
   // Balance fetch errors
@@ -202,7 +202,7 @@ export function parseDonationError(error: unknown): ParsedError {
         "Check your wallet directly for balance information",
         "Refresh the page to try fetching balances again",
       ],
-    }
+    };
   }
 
   // Payout address errors
@@ -216,7 +216,7 @@ export function parseDonationError(error: unknown): ParsedError {
         "Try donating to a different project",
         "Contact support if you believe this is an error",
       ],
-    }
+    };
   }
 
   // Unknown error - return as much info as possible
@@ -229,28 +229,28 @@ export function parseDonationError(error: unknown): ParsedError {
       "Refresh the page and reconnect your wallet",
       "Contact support with the error details below",
     ],
-  }
+  };
 }
 
 /**
  * Get a short, user-friendly error message
  */
 export function getShortErrorMessage(error: unknown): string {
-  return parseDonationError(error).message
+  return parseDonationError(error).message;
 }
 
 /**
  * Get the full parsed error with actionable steps
  */
 export function getDetailedErrorInfo(error: unknown): ParsedError {
-  return parseDonationError(error)
+  return parseDonationError(error);
 }
 
 /**
  * Check if an error is user-recoverable (can retry)
  */
 export function isRecoverableError(error: unknown): boolean {
-  const parsed = parseDonationError(error)
+  const parsed = parseDonationError(error);
   const recoverableCodes = [
     DonationErrorCode.USER_REJECTED,
     DonationErrorCode.NETWORK_MISMATCH,
@@ -258,6 +258,6 @@ export function isRecoverableError(error: unknown): boolean {
     DonationErrorCode.WALLET_CLIENT_ERROR,
     DonationErrorCode.BALANCE_FETCH_ERROR,
     DonationErrorCode.TRANSACTION_TIMEOUT,
-  ]
-  return recoverableCodes.includes(parsed.code)
+  ];
+  return recoverableCodes.includes(parsed.code);
 }

@@ -1,40 +1,40 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { formatEther } from "viem"
-import { Spinner } from "@/components/Utilities/Spinner"
-import { useFaucetHistory, useFaucetStats } from "@/hooks/useFaucet"
-import { useChains, useRequests } from "@/hooks/useFaucetAdmin"
+import { useState } from "react";
+import { formatEther } from "viem";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { useFaucetHistory, useFaucetStats } from "@/hooks/useFaucet";
+import { useChains, useRequests } from "@/hooks/useFaucetAdmin";
 
-type RequestStatus = "PENDING" | "CLAIMED" | "EXPIRED" | "FAILED"
+type RequestStatus = "PENDING" | "CLAIMED" | "EXPIRED" | "FAILED";
 
 export function UsageAnalytics() {
-  const [selectedDays, setSelectedDays] = useState(7)
-  const [selectedChain, setSelectedChain] = useState<number | undefined>(undefined)
-  const [selectedStatus, setSelectedStatus] = useState<RequestStatus | undefined>(undefined)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
-  const { chains } = useChains()
-  const { data: stats, isLoading: statsLoading } = useFaucetStats(selectedChain, selectedDays)
+  const [selectedDays, setSelectedDays] = useState(7);
+  const [selectedChain, setSelectedChain] = useState<number | undefined>(undefined);
+  const [selectedStatus, setSelectedStatus] = useState<RequestStatus | undefined>(undefined);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const { chains } = useChains();
+  const { data: stats, isLoading: statsLoading } = useFaucetStats(selectedChain, selectedDays);
   const { data: requests, isLoading: isRequestsPending } = useRequests({
     page: currentPage,
     limit: pageSize,
     status: selectedStatus,
     chainId: selectedChain,
-  })
+  });
   const { data: recentHistory, isLoading: historyLoading } = useFaucetHistory(
     undefined,
     selectedChain
-  )
+  );
 
-  const isLoading = statsLoading || isRequestsPending || historyLoading
+  const isLoading = statsLoading || isRequestsPending || historyLoading;
 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <Spinner />
       </div>
-    )
+    );
   }
 
   return (
@@ -53,8 +53,8 @@ export function UsageAnalytics() {
               id="analytics-chain"
               value={selectedChain || ""}
               onChange={(e) => {
-                setSelectedChain(e.target.value ? parseInt(e.target.value, 10) : undefined)
-                setCurrentPage(1)
+                setSelectedChain(e.target.value ? parseInt(e.target.value, 10) : undefined);
+                setCurrentPage(1);
               }}
               className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
             >
@@ -78,8 +78,8 @@ export function UsageAnalytics() {
               id="analytics-status"
               value={selectedStatus || ""}
               onChange={(e) => {
-                setSelectedStatus(e.target.value as RequestStatus | undefined)
-                setCurrentPage(1)
+                setSelectedStatus(e.target.value as RequestStatus | undefined);
+                setCurrentPage(1);
               }}
               className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
             >
@@ -122,8 +122,8 @@ export function UsageAnalytics() {
               id="analytics-page-size"
               value={pageSize}
               onChange={(e) => {
-                setPageSize(parseInt(e.target.value, 10))
-                setCurrentPage(1)
+                setPageSize(parseInt(e.target.value, 10));
+                setCurrentPage(1);
               }}
               className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
             >
@@ -269,9 +269,9 @@ export function UsageAnalytics() {
                   {Array.from(
                     { length: Math.min(5, Math.ceil(requests?.pagination.totalCount / pageSize)) },
                     (_, i) => {
-                      const pageNum = currentPage > 3 ? currentPage - 2 + i : i + 1
+                      const pageNum = currentPage > 3 ? currentPage - 2 + i : i + 1;
                       if (pageNum > Math.ceil(requests?.pagination.totalCount / pageSize))
-                        return null
+                        return null;
                       return (
                         <button
                           key={pageNum}
@@ -284,7 +284,7 @@ export function UsageAnalytics() {
                         >
                           {pageNum}
                         </button>
-                      )
+                      );
                     }
                   ).filter(Boolean)}
 
@@ -317,5 +317,5 @@ export function UsageAnalytics() {
         )}
       </div>
     </div>
-  )
+  );
 }

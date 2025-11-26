@@ -1,22 +1,22 @@
-"use client"
+"use client";
 
-import Papa from "papaparse"
-import type React from "react"
-import { useCallback, useEffect, useState } from "react"
-import toast from "react-hot-toast"
-import { isAddress } from "viem"
-import { useAccount, useChainId, useWalletClient } from "wagmi"
-import { useWallet } from "@/hooks/useWallet"
-import type { SupportedChainId } from "../../config/tokens"
-import type { DisbursementRecipient } from "../../types/disbursement"
+import Papa from "papaparse";
+import type React from "react";
+import { useCallback, useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { isAddress } from "viem";
+import { useAccount, useChainId, useWalletClient } from "wagmi";
+import { useWallet } from "@/hooks/useWallet";
+import type { SupportedChainId } from "../../config/tokens";
+import type { DisbursementRecipient } from "../../types/disbursement";
 import {
   getSafeTokenBalance,
   isSafeDeployed,
   isSafeOwner,
   signAndProposeDisbursement,
-} from "../../utilities/safe"
-import { Button } from "./components/Button"
-import { Card } from "./components/Card"
+} from "../../utilities/safe";
+import { Button } from "./components/Button";
+import { Card } from "./components/Card";
 import {
   CheckCircleIcon,
   CheckIcon,
@@ -24,70 +24,70 @@ import {
   DocumentIcon,
   ExternalLinkIcon,
   PlusIcon,
-} from "./components/Icons"
+} from "./components/Icons";
 // Import our new reusable components
-import { StatusAlert } from "./components/StatusAlert"
-import { DisbursementReview } from "./DisbursementReview"
-import { type DisbursementStep, DisbursementStepper } from "./DisbursementStepper"
+import { StatusAlert } from "./components/StatusAlert";
+import { DisbursementReview } from "./DisbursementReview";
+import { type DisbursementStep, DisbursementStepper } from "./DisbursementStepper";
 
 const NETWORK_OPTIONS = [
   { id: 42220, name: "Celo" },
   { id: 42161, name: "Arbitrum" },
   { id: 10, name: "Optimism" },
-]
+];
 
-const TOKEN_OPTIONS = [{ id: "usdc", name: "USDC" }]
+const TOKEN_OPTIONS = [{ id: "usdc", name: "USDC" }];
 
 export const formatNumber = (value: number): string => {
   if (value >= 1_000_000) {
-    return `${(value / 1_000_000).toFixed(1)}M`
+    return `${(value / 1_000_000).toFixed(1)}M`;
   }
   if (value >= 1_000) {
-    return `${(value / 1_000).toFixed(1)}K`
+    return `${(value / 1_000).toFixed(1)}K`;
   }
-  return value.toString()
-}
+  return value.toString();
+};
 
 interface PreflightChecks {
-  isCorrectNetwork: boolean | null
-  isDeployed: boolean | null
-  isOwner: boolean | null
-  hasSufficientBalance: boolean | null
-  safeBalance: string
-  isChecking: boolean
-  error: string | null
+  isCorrectNetwork: boolean | null;
+  isDeployed: boolean | null;
+  isOwner: boolean | null;
+  hasSufficientBalance: boolean | null;
+  safeBalance: string;
+  isChecking: boolean;
+  error: string | null;
 }
 
 interface TransactionState {
-  isProcessing: boolean
-  isComplete: boolean
-  error: string | null
+  isProcessing: boolean;
+  isComplete: boolean;
+  error: string | null;
   result: {
-    txHash: string
-    totalRecipients: number
-    totalAmount: number
-    safeUrl: string
-    createTxUrl?: string
-    transactionData?: any
-    executed?: boolean
-  } | null
+    txHash: string;
+    totalRecipients: number;
+    totalAmount: number;
+    safeUrl: string;
+    createTxUrl?: string;
+    transactionData?: any;
+    executed?: boolean;
+  } | null;
 }
 
 export const DisbursementForm = () => {
-  const { address: userAddress, isConnected } = useAccount()
-  const { data: walletClient } = useWalletClient()
-  const walletChainId = useChainId()
-  const { switchChainAsync, isPending: isSwitchingNetwork } = useWallet()
-  const [recipients, setRecipients] = useState<DisbursementRecipient[]>([])
-  const [file, setFile] = useState<File | null>(null)
-  const [safeAddress, setSafeAddress] = useState("")
-  const [network, setNetwork] = useState<SupportedChainId>(42220)
-  const [token, setToken] = useState<"usdc">("usdc")
-  const [isDragOver, setIsDragOver] = useState(false)
+  const { address: userAddress, isConnected } = useAccount();
+  const { data: walletClient } = useWalletClient();
+  const walletChainId = useChainId();
+  const { switchChainAsync, isPending: isSwitchingNetwork } = useWallet();
+  const [recipients, setRecipients] = useState<DisbursementRecipient[]>([]);
+  const [file, setFile] = useState<File | null>(null);
+  const [safeAddress, setSafeAddress] = useState("");
+  const [network, setNetwork] = useState<SupportedChainId>(42220);
+  const [token, setToken] = useState<"usdc">("usdc");
+  const [isDragOver, setIsDragOver] = useState(false);
 
   // Step management
-  const [currentStep, setCurrentStep] = useState<DisbursementStep>("configure")
-  const [completedSteps, setCompletedSteps] = useState<DisbursementStep[]>([])
+  const [currentStep, setCurrentStep] = useState<DisbursementStep>("configure");
+  const [completedSteps, setCompletedSteps] = useState<DisbursementStep[]>([]);
 
   // Pre-flight checks
   const [preflightChecks, setPreflightChecks] = useState<PreflightChecks>({
@@ -98,7 +98,7 @@ export const DisbursementForm = () => {
     safeBalance: "0",
     isChecking: false,
     error: null,
-  })
+  });
 
   // Transaction state
   const [transactionState, setTransactionState] = useState<TransactionState>({
@@ -106,71 +106,71 @@ export const DisbursementForm = () => {
     isComplete: false,
     error: null,
     result: null,
-  })
+  });
 
   const markStepComplete = (step: DisbursementStep) => {
     if (!completedSteps.includes(step)) {
-      setCompletedSteps([...completedSteps, step])
+      setCompletedSteps([...completedSteps, step]);
     }
-  }
+  };
 
   const handleNetworkChange = async (newNetwork: SupportedChainId) => {
-    setNetwork(newNetwork)
+    setNetwork(newNetwork);
 
     // Auto-switch wallet network if connected and different from selected
     if (isConnected && walletChainId !== newNetwork) {
       try {
-        await switchChainAsync({ chainId: newNetwork })
+        await switchChainAsync({ chainId: newNetwork });
       } catch (error) {
-        console.error("Failed to switch network:", error)
+        console.error("Failed to switch network:", error);
         toast.error(
           "Failed to switch network. Please manually switch to the correct network in your wallet."
-        )
+        );
         setPreflightChecks((prev) => ({
           ...prev,
           isCorrectNetwork: false,
           error: "Network switch failed - please switch manually",
-        }))
+        }));
       }
     }
-  }
+  };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files?.[0]) {
-      const selectedFile = event.target.files[0]
-      processFile(selectedFile)
+      const selectedFile = event.target.files[0];
+      processFile(selectedFile);
     }
-  }
+  };
 
   const processFile = (file: File) => {
-    setFile(file)
-    parseCsv(file)
-    markStepComplete("upload")
-    setCurrentStep("review")
-  }
+    setFile(file);
+    parseCsv(file);
+    markStepComplete("upload");
+    setCurrentStep("review");
+  };
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragOver(true)
-  }, [])
+    e.preventDefault();
+    setIsDragOver(true);
+  }, []);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragOver(false)
-  }, [])
+    e.preventDefault();
+    setIsDragOver(false);
+  }, []);
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
-      e.preventDefault()
-      setIsDragOver(false)
+      e.preventDefault();
+      setIsDragOver(false);
 
-      const files = e.dataTransfer.files
+      const files = e.dataTransfer.files;
       if (files?.[0] && files[0].type === "text/csv") {
-        processFile(files[0])
+        processFile(files[0]);
       }
     },
     [processFile]
-  )
+  );
 
   const parseCsv = (file: File) => {
     Papa.parse(file, {
@@ -178,37 +178,37 @@ export const DisbursementForm = () => {
       skipEmptyLines: true,
       complete: (results) => {
         // Skip the first row (header row)
-        const dataRows = results.data.slice(1)
+        const dataRows = results.data.slice(1);
 
         const parsedData: DisbursementRecipient[] = dataRows.map((row: any) => {
-          const address = row[0]?.trim()
-          const amount = row[1]?.trim()
-          let error: string | undefined
+          const address = row[0]?.trim();
+          const amount = row[1]?.trim();
+          let error: string | undefined;
 
           if (!isAddress(address)) {
-            error = "Invalid address"
+            error = "Invalid address";
           } else if (Number.isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
-            error = "Invalid amount"
+            error = "Invalid amount";
           }
 
-          return { address, amount, error }
-        })
-        setRecipients(parsedData)
+          return { address, amount, error };
+        });
+        setRecipients(parsedData);
       },
-    })
-  }
+    });
+  };
 
   // Run pre-flight checks
   const runPreflightChecks = useCallback(async () => {
     if (!safeAddress || !userAddress || !isConnected || recipients.length === 0) {
-      return
+      return;
     }
 
-    setPreflightChecks((prev) => ({ ...prev, isChecking: true, error: null }))
+    setPreflightChecks((prev) => ({ ...prev, isChecking: true, error: null }));
 
     try {
       // First check if wallet is on correct network
-      const isCorrectNetwork = walletChainId === network
+      const isCorrectNetwork = walletChainId === network;
 
       if (!isCorrectNetwork) {
         setPreflightChecks({
@@ -221,12 +221,12 @@ export const DisbursementForm = () => {
           error: `Please switch your wallet to ${
             NETWORK_OPTIONS.find((n) => n.id === network)?.name
           } network.`,
-        })
-        return
+        });
+        return;
       }
 
       // Check if Safe is deployed on this network
-      const isDeployed = await isSafeDeployed(safeAddress, network)
+      const isDeployed = await isSafeDeployed(safeAddress, network);
 
       if (!isDeployed) {
         setPreflightChecks({
@@ -239,25 +239,25 @@ export const DisbursementForm = () => {
           error: `Safe is not deployed on ${
             NETWORK_OPTIONS.find((n) => n.id === network)?.name
           }. Please check the address and network.`,
-        })
-        return
+        });
+        return;
       }
 
       // Check if user is owner of the Safe
-      const isOwner = await isSafeOwner(safeAddress, userAddress, network)
+      const isOwner = await isSafeOwner(safeAddress, userAddress, network);
 
       // Get Safe token balance
-      const balanceInfo = await getSafeTokenBalance(safeAddress, token, network)
+      const balanceInfo = await getSafeTokenBalance(safeAddress, token, network);
 
       // Calculate total amount needed
       const totalAmount = recipients.reduce((sum, r) => {
         if (!r.error) {
-          return sum + parseFloat(r.amount)
+          return sum + parseFloat(r.amount);
         }
-        return sum
-      }, 0)
+        return sum;
+      }, 0);
 
-      const hasSufficientBalance = parseFloat(balanceInfo.balanceFormatted) >= totalAmount
+      const hasSufficientBalance = parseFloat(balanceInfo.balanceFormatted) >= totalAmount;
 
       setPreflightChecks({
         isCorrectNetwork: true,
@@ -267,21 +267,21 @@ export const DisbursementForm = () => {
         safeBalance: balanceInfo.balanceFormatted,
         isChecking: false,
         error: null,
-      })
+      });
     } catch (error) {
-      console.error("Pre-flight check failed:", error)
+      console.error("Pre-flight check failed:", error);
       setPreflightChecks((prev) => ({
         ...prev,
         isChecking: false,
         error: "Failed to verify Safe. Please check the address and network.",
-      }))
+      }));
     }
-  }, [safeAddress, userAddress, isConnected, recipients, network, token, walletChainId])
+  }, [safeAddress, userAddress, isConnected, recipients, network, token, walletChainId]);
 
   // Handle disbursement execution
   const handleDisbursement = async () => {
     if (!walletClient || !safeAddress || !userAddress) {
-      return
+      return;
     }
 
     setTransactionState({
@@ -289,7 +289,7 @@ export const DisbursementForm = () => {
       isComplete: false,
       error: null,
       result: null,
-    })
+    });
 
     try {
       const result = await signAndProposeDisbursement(
@@ -298,41 +298,41 @@ export const DisbursementForm = () => {
         token,
         network,
         walletClient
-      )
+      );
 
       setTransactionState({
         isProcessing: false,
         isComplete: true,
         error: null,
         result,
-      })
+      });
     } catch (error) {
-      console.error("Disbursement failed:", error)
+      console.error("Disbursement failed:", error);
       setTransactionState({
         isProcessing: false,
         isComplete: false,
         error: error instanceof Error ? error.message : "Transaction failed",
         result: null,
-      })
+      });
     }
-  }
+  };
 
   // Trigger pre-flight checks when relevant data changes
   useEffect(() => {
     if (safeAddress && userAddress && isConnected && recipients.length > 0) {
-      runPreflightChecks()
+      runPreflightChecks();
     }
-  }, [runPreflightChecks, safeAddress, userAddress, isConnected, recipients])
+  }, [runPreflightChecks, safeAddress, userAddress, isConnected, recipients]);
 
   // Update step based on form completion
   useEffect(() => {
     if (safeAddress && !completedSteps.includes("configure")) {
-      markStepComplete("configure")
-      setCurrentStep("upload")
+      markStepComplete("configure");
+      setCurrentStep("upload");
     }
-  }, [safeAddress, completedSteps, markStepComplete])
+  }, [safeAddress, completedSteps, markStepComplete]);
 
-  const hasErrors = recipients.some((r) => r.error)
+  const hasErrors = recipients.some((r) => r.error);
   const canDisburse =
     recipients.length > 0 &&
     !hasErrors &&
@@ -343,14 +343,14 @@ export const DisbursementForm = () => {
     preflightChecks.isOwner === true &&
     preflightChecks.hasSufficientBalance === true &&
     !preflightChecks.isChecking &&
-    !transactionState.isProcessing
+    !transactionState.isProcessing;
 
   const totalAmount = recipients.reduce((sum, r) => {
     if (!r.error) {
-      return sum + parseFloat(r.amount)
+      return sum + parseFloat(r.amount);
     }
-    return sum
-  }, 0)
+    return sum;
+  }, 0);
 
   // Don't show form if transaction is complete
   if (transactionState.isComplete && transactionState.result) {
@@ -448,12 +448,12 @@ export const DisbursementForm = () => {
                       isComplete: false,
                       error: null,
                       result: null,
-                    })
-                    setRecipients([])
-                    setFile(null)
-                    setSafeAddress("")
-                    setCurrentStep("configure")
-                    setCompletedSteps([])
+                    });
+                    setRecipients([]);
+                    setFile(null);
+                    setSafeAddress("");
+                    setCurrentStep("configure");
+                    setCompletedSteps([]);
                   }}
                 >
                   Start New Disbursement
@@ -463,7 +463,7 @@ export const DisbursementForm = () => {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -873,5 +873,5 @@ export const DisbursementForm = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

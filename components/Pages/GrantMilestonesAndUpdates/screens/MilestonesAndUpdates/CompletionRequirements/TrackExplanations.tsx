@@ -1,24 +1,24 @@
-"use client"
-import type React from "react"
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor"
-import { useTracksForProgram } from "@/hooks/useTracks"
-import type { Track } from "@/services/tracks"
-import { TrackSelection } from "../../NewGrant/TrackSelection"
+"use client";
+import type React from "react";
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { useTracksForProgram } from "@/hooks/useTracks";
+import type { Track } from "@/services/tracks";
+import { TrackSelection } from "../../NewGrant/TrackSelection";
 
-const labelStyle = "text-sm font-bold text-black dark:text-zinc-100"
+const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 
 interface TrackExplanation {
-  trackUID: string
-  explanation: string
+  trackUID: string;
+  explanation: string;
 }
 
 interface TrackExplanationsProps {
-  programId?: string
-  trackExplanations: TrackExplanation[]
-  onTrackExplanationsChange: (explanations: TrackExplanation[]) => void
+  programId?: string;
+  trackExplanations: TrackExplanation[];
+  onTrackExplanationsChange: (explanations: TrackExplanation[]) => void;
   errors?: {
-    trackExplanations?: boolean
-  }
+    trackExplanations?: boolean;
+  };
 }
 
 export const TrackExplanations: React.FC<TrackExplanationsProps> = ({
@@ -27,43 +27,43 @@ export const TrackExplanations: React.FC<TrackExplanationsProps> = ({
   onTrackExplanationsChange,
   errors = {},
 }) => {
-  const { data: tracks = [] } = useTracksForProgram(programId as string)
+  const { data: tracks = [] } = useTracksForProgram(programId as string);
 
-  const selectedTrackIds = trackExplanations.map((te) => te.trackUID)
+  const selectedTrackIds = trackExplanations.map((te) => te.trackUID);
 
   const handleTrackSelectionChange = (trackIds: string[]) => {
     // Update track explanations based on selection
     const currentExplanations = new Map(
       trackExplanations.map((te) => [te.trackUID, te.explanation])
-    )
+    );
 
     const newExplanations = trackIds.map((trackId) => ({
       trackUID: trackId,
       explanation: currentExplanations.get(trackId) || "",
-    }))
+    }));
 
-    onTrackExplanationsChange(newExplanations)
-  }
+    onTrackExplanationsChange(newExplanations);
+  };
 
   const handleExplanationChange = (trackUID: string, explanation: string) => {
     const updated = trackExplanations.map((te) =>
       te.trackUID === trackUID ? { ...te, explanation } : te
-    )
-    onTrackExplanationsChange(updated)
-  }
+    );
+    onTrackExplanationsChange(updated);
+  };
 
   const getExplanation = (trackUID: string): string => {
-    const trackExplanation = trackExplanations.find((te) => te.trackUID === trackUID)
-    return trackExplanation?.explanation || ""
-  }
+    const trackExplanation = trackExplanations.find((te) => te.trackUID === trackUID);
+    return trackExplanation?.explanation || "";
+  };
 
   const getTrackName = (trackId: string): string => {
-    const track = tracks.find((t: Track) => t.id === trackId)
-    return track?.name || "Track"
-  }
+    const track = tracks.find((t: Track) => t.id === trackId);
+    return track?.name || "Track";
+  };
 
   if (!programId || tracks.length === 0) {
-    return null
+    return null;
   }
 
   return (
@@ -91,8 +91,9 @@ export const TrackExplanations: React.FC<TrackExplanationsProps> = ({
             </p>
           )}
           {selectedTrackIds.map((trackId) => {
-            const explanation = getExplanation(trackId)
-            const hasError = errors.trackExplanations && (!explanation || explanation.trim() === "")
+            const explanation = getExplanation(trackId);
+            const hasError =
+              errors.trackExplanations && (!explanation || explanation.trim() === "");
 
             return (
               <div
@@ -115,10 +116,10 @@ export const TrackExplanations: React.FC<TrackExplanationsProps> = ({
                   <p className="text-xs text-red-500 mt-1">This explanation is required</p>
                 )}
               </div>
-            )
+            );
           })}
         </div>
       )}
     </div>
-  )
-}
+  );
+};

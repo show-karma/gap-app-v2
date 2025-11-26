@@ -1,10 +1,10 @@
-import type { FC } from "react"
-import { cn } from "@/utilities/tailwind"
+import type { FC } from "react";
+import { cn } from "@/utilities/tailwind";
 
 interface StarIconProps {
-  strokeColor?: string
-  fillColor?: string
-  pathProps?: React.SVGProps<SVGPathElement>
+  strokeColor?: string;
+  fillColor?: string;
+  pathProps?: React.SVGProps<SVGPathElement>;
 }
 
 export const StarIcon: FC<StarIconProps> = ({
@@ -25,5 +25,5 @@ export const StarIcon: FC<StarIconProps> = ({
         {...pathProps}
       />
     </svg>
-  )
-}
+  );
+};

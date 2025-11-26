@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import { Dialog, Transition } from "@headlessui/react"
-import { ExclamationTriangleIcon, XMarkIcon } from "@heroicons/react/24/outline"
-import { type FC, Fragment, useState } from "react"
-import { Button } from "@/components/Utilities/Button"
+import { Dialog, Transition } from "@headlessui/react";
+import { ExclamationTriangleIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { type FC, Fragment, useState } from "react";
+import { Button } from "@/components/Utilities/Button";
 
 interface StatusChangeModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onConfirm: (reason?: string) => void
-  status: string
-  isSubmitting?: boolean
-  isReasonRequired?: boolean
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: (reason?: string) => void;
+  status: string;
+  isSubmitting?: boolean;
+  isReasonRequired?: boolean;
 }
 
 const statusLabels: Record<string, string> = {
@@ -19,14 +19,14 @@ const statusLabels: Record<string, string> = {
   approved: "Approve",
   rejected: "Reject",
   pending: "Set as Pending",
-}
+};
 
 const statusDescriptions: Record<string, string> = {
   revision_requested: "Request the applicant to revise their application",
   approved: "Approve this application",
   rejected: "Reject this application",
   pending: "Set this application back to pending",
-}
+};
 
 const StatusChangeModal: FC<StatusChangeModalProps> = ({
   isOpen,
@@ -36,27 +36,27 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
   isSubmitting = false,
   isReasonRequired = false,
 }) => {
-  const [reason, setReason] = useState("")
+  const [reason, setReason] = useState("");
 
   // Make reason required for revision_requested and rejected statuses
   const isReasonActuallyRequired =
-    isReasonRequired || status === "revision_requested" || status === "rejected"
+    isReasonRequired || status === "revision_requested" || status === "rejected";
 
   const handleConfirm = () => {
     // If reason is required but not provided, don't proceed
     if (isReasonActuallyRequired && !reason.trim()) {
-      return
+      return;
     }
-    onConfirm(reason || undefined)
-    setReason("")
-  }
+    onConfirm(reason || undefined);
+    setReason("");
+  };
 
   const handleClose = () => {
     if (!isSubmitting) {
-      setReason("")
-      onClose()
+      setReason("");
+      onClose();
     }
-  }
+  };
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>
@@ -199,7 +199,7 @@ const StatusChangeModal: FC<StatusChangeModalProps> = ({
         </div>
       </Dialog>
     </Transition.Root>
-  )
-}
+  );
+};
 
-export default StatusChangeModal
+export default StatusChangeModal;

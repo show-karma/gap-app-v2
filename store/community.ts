@@ -1,19 +1,19 @@
-import { create } from "zustand"
+import { create } from "zustand";
 
 interface CommunityStore {
-  totalProjects: number
-  totalGrants: number
-  totalMilestones: number
-  isLoadingFilters: boolean
-  setTotalProjects: (totalProjects: number) => void
-  setTotalGrants: (totalGrants: number) => void
-  setTotalMilestones: (totalMilestones: number) => void
+  totalProjects: number;
+  totalGrants: number;
+  totalMilestones: number;
+  isLoadingFilters: boolean;
+  setTotalProjects: (totalProjects: number) => void;
+  setTotalGrants: (totalGrants: number) => void;
+  setTotalMilestones: (totalMilestones: number) => void;
   setFilteredStats: (stats: {
-    totalProjects?: number
-    totalGrants?: number
-    totalMilestones?: number
-  }) => void
-  setIsLoadingFilters: (isLoading: boolean) => void
+    totalProjects?: number;
+    totalGrants?: number;
+    totalMilestones?: number;
+  }) => void;
+  setIsLoadingFilters: (isLoading: boolean) => void;
 }
 
 export const useCommunityStore = create<CommunityStore>((set, _get) => ({
@@ -31,4 +31,4 @@ export const useCommunityStore = create<CommunityStore>((set, _get) => ({
       totalMilestones: stats.totalMilestones ?? state.totalMilestones,
     })),
   setIsLoadingFilters: (isLoadingFilters) => set({ isLoadingFilters }),
-}))
+}));

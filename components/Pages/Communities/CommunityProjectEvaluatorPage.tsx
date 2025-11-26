@@ -1,29 +1,29 @@
-"use client"
+"use client";
 
-import { ShareIcon } from "@heroicons/react/24/outline"
+import { ShareIcon } from "@heroicons/react/24/outline";
 import {
   ChevronRightIcon,
   MagnifyingGlassIcon,
   PaperAirplaneIcon,
   XMarkIcon,
-} from "@heroicons/react/24/solid"
-import Image from "next/image"
-import { useParams, useRouter, useSearchParams } from "next/navigation"
-import pluralize from "pluralize"
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar"
-import { ExternalLink } from "@/components/Utilities/ExternalLink"
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview"
-import { ProfilePicture } from "@/components/Utilities/ProfilePicture"
-import { PROJECT_NAME } from "@/constants/brand"
-import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
-import fetchData from "@/utilities/fetchData"
-import { formatDate } from "@/utilities/formatDate"
-import { INDEXER } from "@/utilities/indexer"
-import { PAGES } from "@/utilities/pages"
-import { cn } from "@/utilities/tailwind"
-import { SearchDropdown } from "../ProgramRegistry/SearchDropdown"
-import { useChat } from "./useChat"
+} from "@heroicons/react/24/solid";
+import Image from "next/image";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import pluralize from "pluralize";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
+import { PROJECT_NAME } from "@/constants/brand";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import fetchData from "@/utilities/fetchData";
+import { formatDate } from "@/utilities/formatDate";
+import { INDEXER } from "@/utilities/indexer";
+import { PAGES } from "@/utilities/pages";
+import { cn } from "@/utilities/tailwind";
+import { SearchDropdown } from "../ProgramRegistry/SearchDropdown";
+import { useChat } from "./useChat";
 
 const sanitizeMarkdown = (text: string) => {
   return (
@@ -53,73 +53,73 @@ const sanitizeMarkdown = (text: string) => {
       // Remove extra whitespace
       .replace(/\s+/g, " ")
       .trim()
-  )
-}
+  );
+};
 
 interface Program {
-  programId: string
-  name: string
-  chainID: string
+  programId: string;
+  name: string;
+  chainID: string;
 }
 
 interface ProjectMilestone {
-  description: string
-  title: string
-  endsAt: string
-  startsAt: string
+  description: string;
+  title: string;
+  endsAt: string;
+  startsAt: string;
   status: {
-    approved: boolean
-    completed: boolean
-    rejected: boolean
-  }
+    approved: boolean;
+    completed: boolean;
+    rejected: boolean;
+  };
 }
 
 interface ProjectProgram {
-  programId: string
-  name: string
-  description: string
+  programId: string;
+  name: string;
+  description: string;
 }
 
 interface ProjectUpdate {
-  title: string
-  text: string
-  type: string
+  title: string;
+  text: string;
+  type: string;
 }
 
 interface ProjectDetails {
-  uid: string
+  uid: string;
   data: {
-    title: string
-    description?: string
-    problem: string
-    missionSummary: string
-    locationOfImpact: string
-    imageURL: string
-    links: any // Define specific type if known
-    slug: string
-    tags: string[]
-    businessModel: string
-    stageInLife: string
-    raisedMoney: string
-    createdAt: string
-  }
+    title: string;
+    description?: string;
+    problem: string;
+    missionSummary: string;
+    locationOfImpact: string;
+    imageURL: string;
+    links: any; // Define specific type if known
+    slug: string;
+    tags: string[];
+    businessModel: string;
+    stageInLife: string;
+    raisedMoney: string;
+    createdAt: string;
+  };
 }
 
 interface ProjectInProgram {
-  projectUID: string
-  grantUID: string
-  milestone_count: number
-  milestones: ProjectMilestone[]
-  program: ProjectProgram[]
-  updates: ProjectUpdate[]
-  projectDetails: ProjectDetails
-  project_categories: string[]
-  impacts: any // Define specific type if known
-  external: any // Define specific type if known
+  projectUID: string;
+  grantUID: string;
+  milestone_count: number;
+  milestones: ProjectMilestone[];
+  program: ProjectProgram[];
+  updates: ProjectUpdate[];
+  projectDetails: ProjectDetails;
+  project_categories: string[];
+  impacts: any; // Define specific type if known
+  external: any; // Define specific type if known
 }
 
 // Update the Project interface to use the new type
-export type Project = ProjectInProgram
+export type Project = ProjectInProgram;
 
 const cardColors = [
   "#5FE9D0",
@@ -132,7 +132,7 @@ const cardColors = [
   "#EE46BC",
   "#EEAAFD",
   "#67E3F9",
-] as const
+] as const;
 
 function MessageSkeleton() {
   return (
@@ -159,7 +159,7 @@ function MessageSkeleton() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function ChatInput({
@@ -171,13 +171,13 @@ function ChatInput({
   className = "",
   isLoadingProjects = false,
 }: {
-  input: string
-  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-  handleSubmit: (e: React.FormEvent) => void
-  isLoadingChat: boolean
-  placeholder?: string
-  className?: string
-  isLoadingProjects?: boolean
+  input: string;
+  handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleSubmit: (e: React.FormEvent) => void;
+  isLoadingChat: boolean;
+  placeholder?: string;
+  className?: string;
+  isLoadingProjects?: boolean;
 }) {
   return (
     <form
@@ -204,7 +204,7 @@ function ChatInput({
         <PaperAirplaneIcon className="h-5 w-5" aria-hidden="true" />
       </button>
     </form>
-  )
+  );
 }
 
 function SuggestionsBlock({
@@ -214,41 +214,41 @@ function SuggestionsBlock({
   chatHook,
   isLoadingProjects,
 }: {
-  projects: Project[]
-  selectedProgram: Program
-  onClose: () => void
-  chatHook: ReturnType<typeof useChat>
-  isLoadingProjects: boolean
+  projects: Project[];
+  selectedProgram: Program;
+  onClose: () => void;
+  chatHook: ReturnType<typeof useChat>;
+  isLoadingProjects: boolean;
 }) {
-  const { input, handleInputChange, handleSubmit, isLoading: isLoadingChat } = chatHook
-  const router = useRouter()
-  const searchParams = useSearchParams()
+  const { input, handleInputChange, handleSubmit, isLoading: isLoadingChat } = chatHook;
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const handleClose = () => {
     // Remove programId from URL
-    const newSearchParams = new URLSearchParams(searchParams)
-    newSearchParams.delete("programId")
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.delete("programId");
     router.push(
       `${window.location.pathname}${
         newSearchParams.toString() ? `?${newSearchParams.toString()}` : ""
       }`
-    )
+    );
 
-    onClose()
-  }
+    onClose();
+  };
 
   const handleSuggestionClick = (suggestion: string) => {
-    if (isLoadingProjects) return
+    if (isLoadingProjects) return;
 
     const fakeEvent = {
       target: { value: suggestion },
       preventDefault: () => {},
-    }
-    handleInputChange(fakeEvent as any)
+    };
+    handleInputChange(fakeEvent as any);
     setTimeout(() => {
-      handleSubmit(new Event("submit") as any)
-    }, 0)
-  }
+      handleSubmit(new Event("submit") as any);
+    }, 0);
+  };
 
   const suggestions = [
     {
@@ -273,7 +273,7 @@ function SuggestionsBlock({
       hoverColor: "hover:bg-teal-100",
       query: "Can you show me the milestone progress for all projects?",
     },
-  ]
+  ];
 
   return (
     <div className="max-w-3xl mx-auto w-full border border-gray-200 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900 shadow-sm">
@@ -338,20 +338,20 @@ function SuggestionsBlock({
         </div>
       )}
     </div>
-  )
+  );
 }
 
 interface ChatMessageProps {
   message: {
-    id: string
-    role: "user" | "assistant" | "tool" | "system"
-    content: string
-    timestamp?: string
-    sender?: string
-  }
-  isLastAssistantMessage: boolean
-  isLastUserMessage: boolean
-  isLastInSequence: boolean
+    id: string;
+    role: "user" | "assistant" | "tool" | "system";
+    content: string;
+    timestamp?: string;
+    sender?: string;
+  };
+  isLastAssistantMessage: boolean;
+  isLastUserMessage: boolean;
+  isLastInSequence: boolean;
 }
 
 const ChatMessage = React.memo(
@@ -438,15 +438,15 @@ const ChatMessage = React.memo(
           </div>
         </div>
       </div>
-    )
+    );
   }
-)
+);
 
-ChatMessage.displayName = "ChatMessage"
+ChatMessage.displayName = "ChatMessage";
 
 const DateSeparator = ({ firstMessageDate }: { firstMessageDate: Date }) => {
-  const formattedDate = formatDate(firstMessageDate.toISOString(), "local", "DDD, MMM DD")
-  const [dayName, restOfDate] = formattedDate.split(",")
+  const formattedDate = formatDate(firstMessageDate.toISOString(), "local", "DDD, MMM DD");
+  const [dayName, restOfDate] = formattedDate.split(",");
 
   return (
     <div className="flex items-center justify-center my-4">
@@ -456,17 +456,17 @@ const DateSeparator = ({ firstMessageDate }: { firstMessageDate: Date }) => {
         </p>
       </div>
     </div>
-  )
-}
+  );
+};
 
 function ChatWithKarmaCoPilot({
   projects,
   chatHook,
   isLoadingProjects,
 }: {
-  projects: any[]
-  chatHook: ReturnType<typeof useChat>
-  isLoadingProjects: boolean
+  projects: any[];
+  chatHook: ReturnType<typeof useChat>;
+  isLoadingProjects: boolean;
 }) {
   const {
     messages,
@@ -475,83 +475,83 @@ function ChatWithKarmaCoPilot({
     handleSubmit,
     isLoading: isLoadingChat,
     isStreaming,
-  } = chatHook
+  } = chatHook;
 
-  const messageContainerRef = useRef<HTMLDivElement>(null)
+  const messageContainerRef = useRef<HTMLDivElement>(null);
 
   // Scroll to bottom whenever messages change or when streaming
   useEffect(() => {
     if (messageContainerRef.current) {
-      messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight
+      messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
     }
-  }, []) // Added input to dependencies
+  }, []); // Added input to dependencies
 
   // Modified handleInputChange to include scrolling
   const handleLocalInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    handleInputChange(e)
+    handleInputChange(e);
     // Scroll after a short delay to ensure the DOM has updated
     setTimeout(() => {
       if (messageContainerRef.current) {
-        messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight
+        messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
       }
-    }, 0)
-  }
+    }, 0);
+  };
 
-  const hasMessages = messages.length > 0
+  const hasMessages = messages.length > 0;
 
   // Find the last assistant message
   const lastAssistantMessageId = useMemo(() => {
-    const assistantMessages = messages.filter((m) => m.role === "assistant" && m.content)
-    return assistantMessages[assistantMessages.length - 1]?.id
-  }, [messages])
+    const assistantMessages = messages.filter((m) => m.role === "assistant" && m.content);
+    return assistantMessages[assistantMessages.length - 1]?.id;
+  }, [messages]);
 
   // Find the last user message
   const lastUserMessageId = useMemo(() => {
-    const userMessages = messages.filter((m) => m.role === "user" && m.content)
-    return userMessages[userMessages.length - 1]?.id
-  }, [messages])
+    const userMessages = messages.filter((m) => m.role === "user" && m.content);
+    return userMessages[userMessages.length - 1]?.id;
+  }, [messages]);
 
   // Group messages by date
   const groupedMessages = useMemo(() => {
     const filteredMessages = messages.filter(
       (m) => (m.role === "user" || m.role === "assistant") && m.content
-    )
+    );
 
     const groups: {
-      [key: string]: { messages: typeof messages; firstMessageDate: Date }
-    } = {}
+      [key: string]: { messages: typeof messages; firstMessageDate: Date };
+    } = {};
 
     filteredMessages.forEach((message) => {
       if (message.timestamp) {
-        const date = new Date(message.timestamp)
-        const dateKey = date.toISOString().split("T")[0]
+        const date = new Date(message.timestamp);
+        const dateKey = date.toISOString().split("T")[0];
         if (!groups[dateKey]) {
           groups[dateKey] = {
             messages: [],
             firstMessageDate: date,
-          }
+          };
         }
-        groups[dateKey].messages.push(message)
+        groups[dateKey].messages.push(message);
       }
-    })
+    });
 
-    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b))
-  }, [messages])
+    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
+  }, [messages]);
 
   // Helper function to determine if a message is last in its sequence
   const isLastInSequence = (messages: typeof chatHook.messages, index: number) => {
-    if (index === messages.length - 1) return true
-    const currentMessage = messages[index]
-    const nextMessage = messages[index + 1]
-    return currentMessage.role !== nextMessage.role
-  }
+    if (index === messages.length - 1) return true;
+    const currentMessage = messages[index];
+    const nextMessage = messages[index + 1];
+    return currentMessage.role !== nextMessage.role;
+  };
 
   useEffect(() => {
     // Only scroll when streaming is complete and there are messages
     if (!isStreaming && messages.length > 0 && messageContainerRef.current) {
-      messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight
+      messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
     }
-  }, [messages, isStreaming])
+  }, [messages, isStreaming]);
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-zinc-800">
@@ -594,7 +594,7 @@ function ChatWithKarmaCoPilot({
         />
       </div>
     </div>
-  )
+  );
 }
 
 function _ProjectCardSkeleton() {
@@ -617,15 +617,15 @@ function _ProjectCardSkeleton() {
         <div className="h-8 w-32 bg-gray-200 dark:bg-zinc-800 rounded-full animate-pulse" />
       </div>
     </div>
-  )
+  );
 }
 
 function ProjectCard({ project, index }: { project: Project; index: number }) {
   const pickColor = useCallback((index: number) => {
-    return cardColors[index % cardColors.length]
-  }, [])
+    return cardColors[index % cardColors.length];
+  }, []);
 
-  const cardColor = useMemo(() => pickColor(index), [pickColor, index])
+  const cardColor = useMemo(() => pickColor(index), [pickColor, index]);
 
   return (
     <ExternalLink
@@ -712,15 +712,15 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
         </button>
       </div>
     </ExternalLink>
-  )
+  );
 }
 
-const MemoizedProjectCard = React.memo(ProjectCard)
+const MemoizedProjectCard = React.memo(ProjectCard);
 
 interface ProjectsSidebarProps {
-  projects: Project[]
-  isLoadingProjects: boolean
-  programName: string
+  projects: Project[];
+  isLoadingProjects: boolean;
+  programName: string;
 }
 
 function ProjectsSidebar({ projects, isLoadingProjects, programName }: ProjectsSidebarProps) {
@@ -739,7 +739,7 @@ function ProjectsSidebar({ projects, isLoadingProjects, programName }: ProjectsS
         ))
       )}
     </div>
-  )
+  );
 }
 
 function ChatScreen({
@@ -748,13 +748,13 @@ function ChatScreen({
   selectedProgram,
   setSelectedProgram,
 }: {
-  projects: Project[]
-  isLoadingProjects: boolean
-  selectedProgram: Program
-  setSelectedProgram: (program: Program | null) => void
+  projects: Project[];
+  isLoadingProjects: boolean;
+  selectedProgram: Program;
+  setSelectedProgram: (program: Program | null) => void;
 }) {
-  const [, copy] = useCopyToClipboard()
-  const chatScreenRef = useRef<HTMLDivElement>(null)
+  const [, copy] = useCopyToClipboard();
+  const chatScreenRef = useRef<HTMLDivElement>(null);
   const chatHook = useChat({
     body: {
       projects: projects,
@@ -766,7 +766,7 @@ function ChatScreen({
       chainId: selectedProgram.chainID.toString(),
       communityId: useParams().communityId as string,
     },
-  })
+  });
 
   const {
     messages,
@@ -776,27 +776,27 @@ function ChatScreen({
     handleSubmit,
     isLoading: isLoadingChat,
     isStreaming,
-  } = chatHook
+  } = chatHook;
 
   const _handleProjectClick = useCallback(
     (title: string) => {
       setInput((currentInput) => {
-        if (!currentInput) return title
-        return `${currentInput.trim()} ${title}`
-      })
+        if (!currentInput) return title;
+        return `${currentInput.trim()} ${title}`;
+      });
     },
     [setInput]
-  )
+  );
 
   const handleShare = () => {
-    copy(window.location.href, "Link copied to clipboard!")
-  }
+    copy(window.location.href, "Link copied to clipboard!");
+  };
 
   useEffect(() => {
     if (messages.length === 1) {
-      chatScreenRef.current?.scrollIntoView({ behavior: "smooth" })
+      chatScreenRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages.length])
+  }, [messages.length]);
 
   if (messages.length === 0) {
     return (
@@ -817,7 +817,7 @@ function ChatScreen({
           />
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -868,90 +868,90 @@ function ChatScreen({
         </div>
       )}
     </div>
-  )
+  );
 }
 
 export const CommunityProjectEvaluatorPage = () => {
-  const params = useParams()
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const communityId = params.communityId as string
-  const programId = searchParams.get("programId")
+  const params = useParams();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const communityId = params.communityId as string;
+  const programId = searchParams.get("programId");
 
-  const [isLoading, setIsLoading] = useState(true)
-  const [isLoadingProjects, setIsLoadingProjects] = useState(false)
-  const [programs, setPrograms] = useState<Program[]>([])
-  const [selectedProgram, setSelectedProgram] = useState<Program | null>(null)
-  const [projects, setProjects] = useState<Project[]>([])
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingProjects, setIsLoadingProjects] = useState(false);
+  const [programs, setPrograms] = useState<Program[]>([]);
+  const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
 
   useEffect(() => {
     const fetchInitialData = async () => {
-      setIsLoading(true)
+      setIsLoading(true);
       try {
         const [[programsRes, programsError]] = await Promise.all([
           fetchData(INDEXER.COMMUNITY.PROGRAMS(communityId)),
-        ])
+        ]);
         if (programsError) {
-          console.error("Error fetching programs:", programsError)
+          console.error("Error fetching programs:", programsError);
         }
-        setPrograms(programsRes)
+        setPrograms(programsRes);
 
         // If we have a programId in the URL, find and select that program
         if (programId && programsRes) {
-          const program = programsRes.find((p: Program) => p.programId === programId)
+          const program = programsRes.find((p: Program) => p.programId === programId);
           if (program) {
-            setSelectedProgram(program)
+            setSelectedProgram(program);
           }
         }
       } catch (error) {
-        console.error("Error fetching initial data:", error)
+        console.error("Error fetching initial data:", error);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
-    fetchInitialData()
-  }, [communityId, programId])
+    };
+    fetchInitialData();
+  }, [communityId, programId]);
 
   async function getProjectsByProgram(programId: string, chainId: number, communityId: string) {
     try {
-      setIsLoadingProjects(true)
+      setIsLoadingProjects(true);
       const [projects, error] = (await fetchData(
         INDEXER.PROJECTS.BY_PROGRAM(programId, chainId, communityId)
-      )) as [Project[], Error | null]
+      )) as [Project[], Error | null];
       if (error) {
-        console.error("Error fetching projects:", error)
-        return
+        console.error("Error fetching projects:", error);
+        return;
       }
 
-      setProjects(projects)
+      setProjects(projects);
     } catch (error) {
-      console.error("Error fetching projects:", error)
+      console.error("Error fetching projects:", error);
     } finally {
-      setIsLoadingProjects(false)
+      setIsLoadingProjects(false);
     }
   }
 
   useEffect(() => {
     if (selectedProgram) {
-      setProjects([])
-      setIsLoading(true)
-      getProjectsByProgram(selectedProgram.programId, Number(selectedProgram.chainID), communityId)
-      setIsLoading(false)
+      setProjects([]);
+      setIsLoading(true);
+      getProjectsByProgram(selectedProgram.programId, Number(selectedProgram.chainID), communityId);
+      setIsLoading(false);
     }
-  }, [selectedProgram, communityId, getProjectsByProgram])
+  }, [selectedProgram, communityId, getProjectsByProgram]);
 
   // Function to handle program selection
   const handleProgramSelect = (program: Program) => {
-    setSelectedProgram(program)
-    setProjects([]) // Clear previous projects
+    setSelectedProgram(program);
+    setProjects([]); // Clear previous projects
 
     // Update URL with the selected program ID
-    const newSearchParams = new URLSearchParams(searchParams)
-    newSearchParams.set("programId", program.programId)
-    router.push(`${window.location.pathname}?${newSearchParams.toString()}`)
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.set("programId", program.programId);
+    router.push(`${window.location.pathname}?${newSearchParams.toString()}`);
 
-    getProjectsByProgram(program.programId, Number(program.chainID), communityId)
-  }
+    getProjectsByProgram(program.programId, Number(program.chainID), communityId);
+  };
 
   return (
     <div className="flex flex-col w-full h-full min-h-screen">
@@ -986,9 +986,9 @@ export const CommunityProjectEvaluatorPage = () => {
                   <div className="w-full flex flex-col justify-center items-center">
                     <SearchDropdown
                       onSelectFunction={(value) => {
-                        const program = programs.find((p: Program) => p.name === value)
+                        const program = programs.find((p: Program) => p.name === value);
                         if (program) {
-                          handleProgramSelect(program)
+                          handleProgramSelect(program);
                         }
                       }}
                       selected={selectedProgram ? [(selectedProgram as Program).name] : []}
@@ -1029,5 +1029,5 @@ export const CommunityProjectEvaluatorPage = () => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};

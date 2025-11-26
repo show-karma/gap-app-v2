@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import Link from "next/link"
-import { cn } from "@/utilities/tailwind"
+import Image from "next/image";
+import Link from "next/link";
+import { cn } from "@/utilities/tailwind";
 
 interface LogoProps {
-  className?: string
-  href?: string
+  className?: string;
+  href?: string;
 }
 
 export function Logo({ className, href = "/" }: LogoProps) {
@@ -30,5 +30,5 @@ export function Logo({ className, href = "/" }: LogoProps) {
         priority={true}
       />
     </Link>
-  )
+  );
 }

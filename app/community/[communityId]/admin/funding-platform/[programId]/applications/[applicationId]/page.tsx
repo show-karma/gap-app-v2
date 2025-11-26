@@ -1,15 +1,15 @@
-"use client"
+"use client";
 
-import { ArrowLeftIcon, TrashIcon } from "@heroicons/react/24/solid"
-import Link from "next/link"
-import { useParams, useRouter } from "next/navigation"
-import { useMemo, useState } from "react"
-import { useAccount } from "wagmi"
-import ApplicationContent from "@/components/FundingPlatform/ApplicationView/ApplicationContent"
-import CommentsSection from "@/components/FundingPlatform/ApplicationView/CommentsSection"
-import DeleteApplicationModal from "@/components/FundingPlatform/ApplicationView/DeleteApplicationModal"
-import { Button } from "@/components/Utilities/Button"
-import { Spinner } from "@/components/Utilities/Spinner"
+import { ArrowLeftIcon, TrashIcon } from "@heroicons/react/24/solid";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
+import { useAccount } from "wagmi";
+import ApplicationContent from "@/components/FundingPlatform/ApplicationView/ApplicationContent";
+import CommentsSection from "@/components/FundingPlatform/ApplicationView/CommentsSection";
+import DeleteApplicationModal from "@/components/FundingPlatform/ApplicationView/DeleteApplicationModal";
+import { Button } from "@/components/Utilities/Button";
+import { Spinner } from "@/components/Utilities/Spinner";
 import {
   useApplication,
   useApplicationComments,
@@ -17,57 +17,57 @@ import {
   useApplicationVersions,
   useDeleteApplication,
   useProgramConfig,
-} from "@/hooks/useFundingPlatform"
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin"
-import { useStaff } from "@/hooks/useStaff"
-import { layoutTheme } from "@/src/helper/theme"
-import { useOwnerStore } from "@/store"
-import { useApplicationVersionsStore } from "@/store/applicationVersions"
-import { MESSAGES } from "@/utilities/messages"
-import { PAGES } from "@/utilities/pages"
+} from "@/hooks/useFundingPlatform";
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useStaff } from "@/hooks/useStaff";
+import { layoutTheme } from "@/src/helper/theme";
+import { useOwnerStore } from "@/store";
+import { useApplicationVersionsStore } from "@/store/applicationVersions";
+import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
 
 export default function ApplicationDetailPage() {
-  const router = useRouter()
+  const router = useRouter();
   const {
     communityId,
     programId: combinedProgramId,
     applicationId,
   } = useParams() as {
-    communityId: string
-    programId: string
-    applicationId: string
-  }
+    communityId: string;
+    programId: string;
+    applicationId: string;
+  };
 
   // Extract programId and chainId from the combined format (e.g., "777_11155111")
-  const [programId, chainId] = combinedProgramId.split("_")
-  const parsedChainId = parseInt(chainId, 10)
+  const [programId, chainId] = combinedProgramId.split("_");
+  const parsedChainId = parseInt(chainId, 10);
 
-  const { isCommunityAdmin, isLoading: isLoadingAdmin } = useIsCommunityAdmin(communityId)
-  const isOwner = useOwnerStore((state) => state.isOwner)
-  const { isStaff } = useStaff()
-  const hasAccess = isCommunityAdmin || isOwner || isStaff
+  const { isCommunityAdmin, isLoading: isLoadingAdmin } = useIsCommunityAdmin(communityId);
+  const isOwner = useOwnerStore((state) => state.isOwner);
+  const { isStaff } = useStaff();
+  const hasAccess = isCommunityAdmin || isOwner || isStaff;
 
   // Get current user address
-  const { address: currentUserAddress } = useAccount()
+  const { address: currentUserAddress } = useAccount();
 
   // View mode state for ApplicationContent
-  const [applicationViewMode, setApplicationViewMode] = useState<"details" | "changes">("details")
+  const [applicationViewMode, setApplicationViewMode] = useState<"details" | "changes">("details");
 
   // Delete modal state
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   // Fetch application data
   const {
     application,
     isLoading: isLoadingApplication,
     refetch: refetchApplication,
-  } = useApplication(applicationId)
+  } = useApplication(applicationId);
 
   // Fetch program config
-  const { data: program } = useProgramConfig(programId, parsedChainId)
+  const { data: program } = useProgramConfig(programId, parsedChainId);
 
   // Use the application status hook
-  const { updateStatusAsync } = useApplicationStatus(programId, parsedChainId)
+  const { updateStatusAsync } = useApplicationStatus(programId, parsedChainId);
 
   // Use the comments hook
   const {
@@ -76,94 +76,94 @@ export default function ApplicationDetailPage() {
     createCommentAsync,
     editCommentAsync,
     deleteCommentAsync,
-  } = useApplicationComments(applicationId, hasAccess)
+  } = useApplicationComments(applicationId, hasAccess);
 
   // Use the delete application hook
-  const { deleteApplicationAsync, isDeleting } = useDeleteApplication()
+  const { deleteApplicationAsync, isDeleting } = useDeleteApplication();
 
   // Get application identifier for fetching versions
-  const applicationIdentifier = application?.referenceNumber || application?.id || applicationId
+  const applicationIdentifier = application?.referenceNumber || application?.id || applicationId;
 
   // Fetch versions using React Query
-  const { versions } = useApplicationVersions(applicationIdentifier)
+  const { versions } = useApplicationVersions(applicationIdentifier);
 
   // Get version selection from store
-  const { selectVersion } = useApplicationVersionsStore()
+  const { selectVersion } = useApplicationVersionsStore();
 
   // Handle status change
   const handleStatusChange = async (status: string, note?: string) => {
-    if (!application) return
+    if (!application) return;
     await updateStatusAsync({
       applicationId: application.referenceNumber,
       status,
       note,
-    })
-  }
+    });
+  };
 
   // Handle comment operations
   const handleCommentAdd = async (content: string) => {
-    if (!applicationId) return
-    await createCommentAsync({ content })
-  }
+    if (!applicationId) return;
+    await createCommentAsync({ content });
+  };
 
   const handleCommentEdit = async (commentId: string, content: string) => {
-    await editCommentAsync({ commentId, content })
-  }
+    await editCommentAsync({ commentId, content });
+  };
 
   const handleCommentDelete = async (commentId: string) => {
-    await deleteCommentAsync(commentId)
-  }
+    await deleteCommentAsync(commentId);
+  };
 
   // Handle delete application
   const handleDeleteClick = () => {
-    setIsDeleteModalOpen(true)
-  }
+    setIsDeleteModalOpen(true);
+  };
 
   const handleDeleteConfirm = async () => {
-    if (!application) return
+    if (!application) return;
 
     try {
-      await deleteApplicationAsync(application.referenceNumber)
+      await deleteApplicationAsync(application.referenceNumber);
       // Only close modal and navigate on success
-      setIsDeleteModalOpen(false)
-      router.push(`${PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, combinedProgramId)}`)
+      setIsDeleteModalOpen(false);
+      router.push(`${PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, combinedProgramId)}`);
     } catch (error) {
       // Error is handled by the hook (shows toast with specific message and logs to Sentry)
       // Modal stays open to allow user to retry or cancel
-      console.error("Failed to delete application:", error)
+      console.error("Failed to delete application:", error);
     }
-  }
+  };
 
   const handleDeleteCancel = () => {
-    setIsDeleteModalOpen(false)
-  }
+    setIsDeleteModalOpen(false);
+  };
 
   const handleVersionClick = (versionId: string) => {
     // Select the version to view
-    selectVersion(versionId, versions)
+    selectVersion(versionId, versions);
     // Switch to Changes view to show the selected version
-    setApplicationViewMode("changes")
+    setApplicationViewMode("changes");
 
     // Scroll to the Application Details section
     setTimeout(() => {
-      const element = document.getElementById("application-details")
+      const element = document.getElementById("application-details");
       if (element) {
-        element.scrollIntoView({ behavior: "smooth", block: "start" })
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
       }
-    }, 100) // Small delay to ensure the view mode has changed
-  }
+    }, 100); // Small delay to ensure the view mode has changed
+  };
 
   const handleBackClick = () => {
-    router.push(`${PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, combinedProgramId)}`)
-  }
+    router.push(`${PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, combinedProgramId)}`);
+  };
 
   // Memoized milestone review URL - only returns URL if approved and has projectUID
   const milestoneReviewUrl = useMemo(() => {
     if (application?.status?.toLowerCase() === "approved" && application?.projectUID) {
-      return `${PAGES.ADMIN.PROJECT_MILESTONES(communityId, application.projectUID, combinedProgramId)}&from=application`
+      return `${PAGES.ADMIN.PROJECT_MILESTONES(communityId, application.projectUID, combinedProgramId)}&from=application`;
     }
-    return null
-  }, [application?.status, application?.projectUID, communityId, combinedProgramId])
+    return null;
+  }, [application?.status, application?.projectUID, communityId, combinedProgramId]);
 
   // Check loading states
   if (isLoadingAdmin || isLoadingApplication) {
@@ -171,7 +171,7 @@ export default function ApplicationDetailPage() {
       <div className="flex w-full items-center justify-center min-h-screen">
         <Spinner />
       </div>
-    )
+    );
   }
 
   // Check access
@@ -180,7 +180,7 @@ export default function ApplicationDetailPage() {
       <div className={layoutTheme.padding}>
         <p className="text-red-500">{MESSAGES.REVIEWS.NOT_ADMIN}</p>
       </div>
-    )
+    );
   }
 
   // Check if application exists
@@ -195,7 +195,7 @@ export default function ApplicationDetailPage() {
           <p className="text-gray-500">Application not found.</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -300,5 +300,5 @@ export default function ApplicationDetailPage() {
         isDeleting={isDeleting}
       />
     </div>
-  )
+  );
 }

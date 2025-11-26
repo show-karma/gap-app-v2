@@ -1,11 +1,11 @@
-import React, { useCallback } from "react"
-import { cn } from "@/utilities/tailwind"
-import { useGrantFormStore } from "./store"
+import React, { useCallback } from "react";
+import { cn } from "@/utilities/tailwind";
+import { useGrantFormStore } from "./store";
 
 interface StepBlockProps {
-  currentStep: number
-  title?: string
-  children: React.ReactNode
+  currentStep: number;
+  title?: string;
+  children: React.ReactNode;
 }
 
 export const StepBlock: React.FC<StepBlockProps> = ({
@@ -13,28 +13,28 @@ export const StepBlock: React.FC<StepBlockProps> = ({
   title = "Add New Funding",
   children,
 }) => {
-  const { flowType } = useGrantFormStore()
+  const { flowType } = useGrantFormStore();
   const getTotalSteps = useCallback(() => {
-    return flowType === "program" ? 3 : 4
-  }, [flowType])
-  const totalSteps = getTotalSteps()
+    return flowType === "program" ? 3 : 4;
+  }, [flowType]);
+  const totalSteps = getTotalSteps();
 
   // Helper function to get step label based on index and flow type
   const getStepLabel = (index: number) => {
-    if (index === 0) return "Type"
-    if (index === 1) return "Community"
+    if (index === 0) return "Type";
+    if (index === 1) return "Community";
 
     if (flowType === "program") {
       // For funding programs (3 steps): Type, Community, Milestones
-      if (index === 2) return "Milestones"
+      if (index === 2) return "Milestones";
     } else {
       // For grants (4 steps): Type, Community, Details, Milestones
-      if (index === 2) return "Details"
-      if (index === 3) return "Milestones"
+      if (index === 2) return "Details";
+      if (index === 3) return "Milestones";
     }
 
-    return "" // Fallback
-  }
+    return ""; // Fallback
+  };
 
   return (
     <div className="flex w-full flex-col items-center justify-center mb-8 rounded-lg p-3 flex-1">
@@ -81,5 +81,5 @@ export const StepBlock: React.FC<StepBlockProps> = ({
       </div>
       <div className="w-full">{children}</div>
     </div>
-  )
-}
+  );
+};

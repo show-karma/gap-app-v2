@@ -1,5 +1,5 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import type React from "react"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type React from "react";
 
 /**
  * Test Providers Utility
@@ -22,8 +22,8 @@ import type React from "react"
  * ```
  */
 export function createQueryClientWrapper(options?: {
-  disableRetry?: boolean
-  defaultStaleTime?: number
+  disableRetry?: boolean;
+  defaultStaleTime?: number;
 }) {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -37,15 +37,15 @@ export function createQueryClientWrapper(options?: {
         retry: false,
       },
     },
-  })
+  });
 
   const Wrapper = ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-  )
+  );
 
-  Wrapper.displayName = "QueryClientWrapper"
+  Wrapper.displayName = "QueryClientWrapper";
 
-  return Wrapper
+  return Wrapper;
 }
 
 /**
@@ -60,6 +60,6 @@ export function createQueryClientWrapper(options?: {
  * ```
  */
 export function withTestProviders(ui: React.ReactElement) {
-  const QueryWrapper = createQueryClientWrapper()
-  return <QueryWrapper>{ui}</QueryWrapper>
+  const QueryWrapper = createQueryClientWrapper();
+  return <QueryWrapper>{ui}</QueryWrapper>;
 }

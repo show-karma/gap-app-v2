@@ -1,33 +1,33 @@
-"use client"
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import { useQuery } from "@tanstack/react-query"
-import dynamic from "next/dynamic"
-import Link from "next/link"
-import { useTheme } from "next-themes"
-import pluralize from "pluralize"
-import { useState } from "react"
-import { useAccount } from "wagmi"
+"use client";
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useQuery } from "@tanstack/react-query";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { useTheme } from "next-themes";
+import pluralize from "pluralize";
+import { useState } from "react";
+import { useAccount } from "wagmi";
 /* eslint-disable @next/next/no-img-element */
-import { Button } from "@/components/Utilities/Button"
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview"
-import Pagination from "@/components/Utilities/Pagination"
-import { ProfilePicture } from "@/components/Utilities/ProfilePicture"
-import { PROJECT_NAME } from "@/constants/brand"
-import { useAuth } from "@/hooks/useAuth"
-import { useMixpanel } from "@/hooks/useMixpanel"
-import { layoutTheme } from "@/src/helper/theme"
-import { useOnboarding } from "@/store/modals/onboarding"
-import formatCurrency from "@/utilities/formatCurrency"
-import { formatDate } from "@/utilities/formatDate"
-import { MESSAGES } from "@/utilities/messages"
-import { PAGES } from "@/utilities/pages"
-import { fetchMyProjects } from "@/utilities/sdk/projects/fetchMyProjects"
-import { LoadingCard } from "./LoadingCard"
+import { Button } from "@/components/Utilities/Button";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import Pagination from "@/components/Utilities/Pagination";
+import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
+import { PROJECT_NAME } from "@/constants/brand";
+import { useAuth } from "@/hooks/useAuth";
+import { useMixpanel } from "@/hooks/useMixpanel";
+import { layoutTheme } from "@/src/helper/theme";
+import { useOnboarding } from "@/store/modals/onboarding";
+import formatCurrency from "@/utilities/formatCurrency";
+import { formatDate } from "@/utilities/formatDate";
+import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
+import { fetchMyProjects } from "@/utilities/sdk/projects/fetchMyProjects";
+import { LoadingCard } from "./LoadingCard";
 
 const ProjectDialog = dynamic(
   () => import("@/components/Dialogs/ProjectDialog/index").then((mod) => mod.ProjectDialog),
   { ssr: false }
-)
+);
 
 const pickColor = (index: number) => {
   const cardColors = [
@@ -41,43 +41,43 @@ const pickColor = (index: number) => {
     "#EE46BC",
     "#EEAAFD",
     "#67E3F9",
-  ]
-  return cardColors[index % cardColors.length]
-}
+  ];
+  return cardColors[index % cardColors.length];
+};
 
 const OnboardingButton = () => {
-  const { setIsOnboarding } = useOnboarding()
-  const { mixpanel } = useMixpanel()
-  const { address } = useAccount()
+  const { setIsOnboarding } = useOnboarding();
+  const { mixpanel } = useMixpanel();
+  const { address } = useAccount();
 
   return (
     <Button
       onClick={() => {
-        setIsOnboarding(true)
+        setIsOnboarding(true);
         if (address) {
           mixpanel.reportEvent({
             event: "onboarding:popup",
             properties: { address },
-          })
+          });
           mixpanel.reportEvent({
             event: "onboarding:navigation",
             properties: { address, id: "welcome" },
-          })
+          });
         }
       }}
       className="w-max h-max bg-transparent dark:bg-transparent hover:bg-transparent text-black border border-black"
     >
       {PROJECT_NAME} Platform Walkthrough
     </Button>
-  )
-}
+  );
+};
 
 export default function MyProjects() {
-  const { isConnected, address } = useAccount()
-  const { authenticated: isAuth } = useAuth()
-  const { theme: currentTheme } = useTheme()
-  const itemsPerPage = 12
-  const [page, setPage] = useState<number>(1)
+  const { isConnected, address } = useAccount();
+  const { authenticated: isAuth } = useAuth();
+  const { theme: currentTheme } = useTheme();
+  const itemsPerPage = 12;
+  const [page, setPage] = useState<number>(1);
 
   const {
     data: projects,
@@ -87,14 +87,14 @@ export default function MyProjects() {
     queryKey: ["totalProjects", address],
     queryFn: () => fetchMyProjects(address as `0x${string}` | undefined),
     enabled: Boolean(address),
-  })
+  });
 
-  const totalProjects: number = projects?.length || 0
+  const totalProjects: number = projects?.length || 0;
   const myProjects: IProjectResponse[] =
-    projects?.slice(itemsPerPage * (page - 1), itemsPerPage * page) || []
+    projects?.slice(itemsPerPage * (page - 1), itemsPerPage * page) || [];
 
   // do a empty array of 12
-  const loadingArray = Array.from({ length: 12 }, (_, index) => index)
+  const loadingArray = Array.from({ length: 12 }, (_, index) => index);
 
   return (
     <div className={layoutTheme.padding}>
@@ -113,15 +113,15 @@ export default function MyProjects() {
               <div className="flex flex-col gap-4 justify-start">
                 <div className="grid grid-cols-4 gap-7 pb-4 max-xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1">
                   {myProjects.map((card, index) => {
-                    let active = 0
-                    const total = card.grants?.length || 0
+                    let active = 0;
+                    const total = card.grants?.length || 0;
                     card.grants?.forEach((grant) => {
-                      if (grant.completed) return
+                      if (grant.completed) return;
                       const hasActive = grant.milestones.find(
                         (milestone: any) => !milestone.completed
-                      )
-                      if (hasActive) active += 1
-                    })
+                      );
+                      if (hasActive) active += 1;
+                    });
                     return (
                       <div
                         key={index}
@@ -198,7 +198,7 @@ export default function MyProjects() {
                           </div>
                         </Link>
                       </div>
-                    )
+                    );
                   })}
                 </div>
                 {totalProjects && totalProjects > itemsPerPage ? (
@@ -207,7 +207,7 @@ export default function MyProjects() {
                     postsPerPage={itemsPerPage}
                     totalPosts={totalProjects}
                     setCurrentPage={(newPage) => {
-                      setPage(newPage)
+                      setPage(newPage);
                     }}
                   />
                 ) : null}
@@ -245,5 +245,5 @@ export default function MyProjects() {
         )}
       </div>
     </div>
-  )
+  );
 }

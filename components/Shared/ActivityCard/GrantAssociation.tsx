@@ -1,20 +1,20 @@
 import type {
   IGrantUpdate,
   IProjectUpdate,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import Image from "next/image"
-import { ExternalLink } from "@/components/Utilities/ExternalLink"
-import { useProjectStore } from "@/store"
-import type { UnifiedMilestone } from "@/types/roadmap"
-import { PAGES } from "@/utilities/pages"
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import Image from "next/image";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { useProjectStore } from "@/store";
+import type { UnifiedMilestone } from "@/types/roadmap";
+import { PAGES } from "@/utilities/pages";
 
 // Shared UI component for rendering grant items
 interface GrantItemProps {
-  href: string
-  title: string
-  communityImage?: string
-  communityName?: string
-  keyPrefix: string
+  href: string;
+  title: string;
+  communityImage?: string;
+  communityName?: string;
+  keyPrefix: string;
 }
 
 const GrantItem = ({ href, title, communityImage, communityName, keyPrefix }: GrantItemProps) => (
@@ -30,19 +30,19 @@ const GrantItem = ({ href, title, communityImage, communityName, keyPrefix }: Gr
     ) : null}
     <span className="font-medium">{title}</span>
   </ExternalLink>
-)
+);
 
 // Props for the flexible grant association component
 interface GrantAssociationProps {
   // For updates (existing functionality)
-  update?: IProjectUpdate | IGrantUpdate | any
-  index?: number
+  update?: IProjectUpdate | IGrantUpdate | any;
+  index?: number;
 
   // For milestones (new functionality)
-  milestone?: UnifiedMilestone
+  milestone?: UnifiedMilestone;
 
   // Styling options
-  className?: string
+  className?: string;
 }
 
 export const GrantAssociation = ({
@@ -51,25 +51,25 @@ export const GrantAssociation = ({
   milestone,
   className = "",
 }: GrantAssociationProps) => {
-  const containerClass = `flex flex-row w-max flex-wrap gap-2 ${className}`
-  const { project } = useProjectStore()
+  const containerClass = `flex flex-row w-max flex-wrap gap-2 ${className}`;
+  const { project } = useProjectStore();
 
   // Handle milestone data
   if (milestone) {
-    const { type } = milestone
+    const { type } = milestone;
 
     // Only show for grant milestones
     if (type !== "grant") {
-      return null
+      return null;
     }
 
-    const grantMilestone = milestone.source.grantMilestone
-    const grantTitle = grantMilestone?.grant.details?.data.title
-    const programId = grantMilestone?.grant.details?.data.programId
-    const communityData = grantMilestone?.grant.community?.details?.data
+    const grantMilestone = milestone.source.grantMilestone;
+    const grantTitle = grantMilestone?.grant.details?.data.title;
+    const programId = grantMilestone?.grant.details?.data.programId;
+    const communityData = grantMilestone?.grant.community?.details?.data;
 
     if (!grantTitle && (!milestone.mergedGrants || milestone.mergedGrants.length === 0)) {
-      return null
+      return null;
     }
 
     return (
@@ -79,9 +79,9 @@ export const GrantAssociation = ({
             // Display all merged grants with their images
             [...milestone.mergedGrants]
               .sort((a, b) => {
-                const titleA = a.grantTitle || "Untitled Grant"
-                const titleB = b.grantTitle || "Untitled Grant"
-                return titleA.localeCompare(titleB)
+                const titleA = a.grantTitle || "Untitled Grant";
+                const titleB = b.grantTitle || "Untitled Grant";
+                return titleA.localeCompare(titleB);
               })
               .map((grant, idx) => (
                 <GrantItem
@@ -105,12 +105,12 @@ export const GrantAssociation = ({
           ) : null}
         </div>
       </div>
-    )
+    );
   }
 
   // Handle update data (existing functionality)
   if (!update || !index) {
-    return null
+    return null;
   }
 
   // Don't show grant associations for certain types
@@ -119,20 +119,20 @@ export const GrantAssociation = ({
     update.type === "ProjectMilestone" ||
     update.type === "Milestone"
   ) {
-    return null
+    return null;
   }
 
   const grant = project?.grants?.find(
     (grant) => grant.uid?.toLowerCase() === update.refUID?.toLowerCase()
-  )
+  );
 
   const multipleGrants = project?.grants.filter((grant) =>
     (update as IProjectUpdate)?.data?.grants?.some(
       (grantId: string) => grantId.toLowerCase() === grant.uid.toLowerCase()
     )
-  )
+  );
 
-  if (!grant && !multipleGrants?.length) return null
+  if (!grant && !multipleGrants?.length) return null;
 
   return (
     <div className={containerClass}>
@@ -163,5 +163,5 @@ export const GrantAssociation = ({
         />
       ) : null}
     </div>
-  )
-}
+  );
+};

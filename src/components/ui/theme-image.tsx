@@ -1,5 +1,5 @@
-import Image, { type ImageProps } from "next/image"
-import { cn } from "@/utilities/tailwind"
+import Image, { type ImageProps } from "next/image";
+import { cn } from "@/utilities/tailwind";
 
 interface ThemeImageProps extends Omit<ImageProps, "src"> {
   /**
@@ -8,17 +8,17 @@ interface ThemeImageProps extends Omit<ImageProps, "src"> {
    * Dark mode version will be automatically found by adding -drk before .png
    * Example: "/images/homepage/builder-hero-drk.png"
    */
-  src: string
+  src: string;
   /**
    * Optional: Explicit dark mode image path
    * If not provided, will automatically derive from src by inserting -drk before file extension
    */
-  darkSrc?: string
+  darkSrc?: string;
   /**
    * Optional: Force disable dark mode switching
    * When true, only the light image will be rendered
    */
-  disableDarkMode?: boolean
+  disableDarkMode?: boolean;
 }
 
 /**
@@ -48,25 +48,25 @@ export function ThemeImage({
   ...props
 }: ThemeImageProps) {
   const getDarkSrc = () => {
-    if (darkSrc) return darkSrc
-    if (disableDarkMode) return null
+    if (darkSrc) return darkSrc;
+    if (disableDarkMode) return null;
 
-    const lastDotIndex = src.lastIndexOf(".")
-    if (lastDotIndex === -1) return null
+    const lastDotIndex = src.lastIndexOf(".");
+    if (lastDotIndex === -1) return null;
 
-    const basePath = src.substring(0, lastDotIndex)
-    const extension = src.substring(lastDotIndex)
-    return `${basePath}-drk${extension}`
-  }
+    const basePath = src.substring(0, lastDotIndex);
+    const extension = src.substring(lastDotIndex);
+    return `${basePath}-drk${extension}`;
+  };
 
-  const darkImageSrc = getDarkSrc()
+  const darkImageSrc = getDarkSrc();
 
   if (disableDarkMode || !darkImageSrc) {
-    return <Image src={src} alt={alt || ""} className={cn(className)} {...props} />
+    return <Image src={src} alt={alt || ""} className={cn(className)} {...props} />;
   }
 
-  const hasFill = "fill" in props && props.fill === true
-  const Wrapper = hasFill ? "div" : "span"
+  const hasFill = "fill" in props && props.fill === true;
+  const Wrapper = hasFill ? "div" : "span";
 
   return (
     <Wrapper className={cn("relative", hasFill ? "w-full h-full" : "inline-block")}>
@@ -92,5 +92,5 @@ export function ThemeImage({
         {...props}
       />
     </Wrapper>
-  )
+  );
 }

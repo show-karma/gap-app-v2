@@ -3,8 +3,8 @@
  * https://jestjs.io/docs/configuration
  */
 
-import type { Config } from "jest"
-import nextJest from "next/jest.js"
+import type { Config } from "jest";
+import nextJest from "next/jest.js";
 
 const config: Config = {
   // Automatically clear mock calls, instances, contexts and results before every test
@@ -70,14 +70,14 @@ const config: Config = {
       statements: 50,
     },
   },
-}
+};
 
 const createJestConfig = nextJest({
   // Provide the path to your Next.js app to load next.config.js and .env files in your test environment
   dir: "./",
-})
+});
 
 // Create the async config function and ensure transformIgnorePatterns are preserved
-const jestConfig = createJestConfig(config)
+const jestConfig = createJestConfig(config);
 
-export default jestConfig
+export default jestConfig;

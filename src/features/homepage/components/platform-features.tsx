@@ -1,20 +1,20 @@
-import { SquareCheckBig } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent } from "@/components/ui/card"
-import { ThemeImage } from "@/src/components/ui/theme-image"
-import { marketingLayoutTheme } from "@/src/helper/theme"
-import { cn } from "@/utilities/tailwind"
+import { SquareCheckBig } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { ThemeImage } from "@/src/components/ui/theme-image";
+import { marketingLayoutTheme } from "@/src/helper/theme";
+import { cn } from "@/utilities/tailwind";
 
 interface FeatureCardProps {
-  title: string
-  description: string
-  image: string
-  checklist?: string[]
-  size?: "default" | "double"
-  imageSize?: "small" | "medium" | "large"
-  imageWidth?: number
-  imageHeight?: number
-  imagePosition?: "top" | "bottom"
+  title: string;
+  description: string;
+  image: string;
+  checklist?: string[];
+  size?: "default" | "double";
+  imageSize?: "small" | "medium" | "large";
+  imageWidth?: number;
+  imageHeight?: number;
+  imagePosition?: "top" | "bottom";
 }
 
 function FeatureCard({
@@ -28,19 +28,21 @@ function FeatureCard({
   imageHeight,
   imagePosition = "top",
 }: FeatureCardProps) {
-  const hasChecklist = checklist && checklist.length > 0
-  const isDouble = size === "double"
+  const hasChecklist = checklist && checklist.length > 0;
+  const isDouble = size === "double";
 
   // Different image heights based on imageSize prop - reduced heights
   const imageHeightClasses = {
     small: "h-[120px] lg:h-[140px]",
     medium: "h-[160px] lg:h-[180px]",
     large: "h-[200px] lg:h-[220px]",
-  }
+  };
 
   // Use custom dimensions if provided, otherwise use imageSize classes
   const imageStyle =
-    imageWidth && imageHeight ? { width: `${imageWidth}px`, height: `${imageHeight}px` } : undefined
+    imageWidth && imageHeight
+      ? { width: `${imageWidth}px`, height: `${imageHeight}px` }
+      : undefined;
 
   return (
     <Card
@@ -161,7 +163,7 @@ function FeatureCard({
         )}
       </CardContent>
     </Card>
-  )
+  );
 }
 
 const features = [
@@ -222,7 +224,7 @@ const features = [
     imageSize: "medium" as const,
     size: "default" as const,
   },
-]
+];
 
 export function PlatformFeatures() {
   return (
@@ -258,5 +260,5 @@ export function PlatformFeatures() {
         ))}
       </div>
     </section>
-  )
+  );
 }

@@ -1,17 +1,17 @@
-import * as Tooltip from "@radix-ui/react-tooltip"
-import type { ReactNode } from "react"
-import { cn } from "@/utilities/tailwind"
+import * as Tooltip from "@radix-ui/react-tooltip";
+import type { ReactNode } from "react";
+import { cn } from "@/utilities/tailwind";
 
 interface InfoTooltipProps {
-  content: ReactNode
-  children?: ReactNode
-  side?: "top" | "right" | "bottom" | "left"
-  align?: "start" | "center" | "end"
-  delayDuration?: number
-  triggerAsChild?: boolean
-  className?: string
-  contentClassName?: string
-  arrowClassName?: string
+  content: ReactNode;
+  children?: ReactNode;
+  side?: "top" | "right" | "bottom" | "left";
+  align?: "start" | "center" | "end";
+  delayDuration?: number;
+  triggerAsChild?: boolean;
+  className?: string;
+  contentClassName?: string;
+  arrowClassName?: string;
 }
 
 export const InfoTooltip = ({
@@ -51,7 +51,7 @@ export const InfoTooltip = ({
         <path d="M12 8h.01" />
       </svg>
     </button>
-  )
+  );
 
   return (
     <Tooltip.Provider>
@@ -75,5 +75,5 @@ export const InfoTooltip = ({
         </Tooltip.Portal>
       </Tooltip.Root>
     </Tooltip.Provider>
-  )
-}
+  );
+};

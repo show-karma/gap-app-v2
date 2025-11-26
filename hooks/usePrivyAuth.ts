@@ -1,31 +1,31 @@
-"use client"
+"use client";
 
-import { usePrivy, useWallets } from "@privy-io/react-auth"
-import { useEffect, useMemo } from "react"
-import { useAccount, useDisconnect } from "wagmi"
-import { TokenManager } from "@/utilities/auth/token-manager"
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { useEffect, useMemo } from "react";
+import { useAccount, useDisconnect } from "wagmi";
+import { TokenManager } from "@/utilities/auth/token-manager";
 
 interface UsePrivyAuthReturn {
   // Authentication state
-  isAuthenticated: boolean
-  isReady: boolean
+  isAuthenticated: boolean;
+  isReady: boolean;
 
   // User data
-  user: any | null
-  address: string | undefined
+  user: any | null;
+  address: string | undefined;
 
   // Wallet state
-  isConnected: boolean
-  wallets: any[]
+  isConnected: boolean;
+  wallets: any[];
 
   // Actions
-  login: () => void
-  logout: () => Promise<void>
-  connectWallet: () => void
-  disconnectWallet: () => void
+  login: () => void;
+  logout: () => Promise<void>;
+  connectWallet: () => void;
+  disconnectWallet: () => void;
 
   // Token management
-  getAccessToken: () => Promise<string | null>
+  getAccessToken: () => Promise<string | null>;
 }
 
 /**
@@ -42,11 +42,11 @@ export function usePrivyAuth(): UsePrivyAuthReturn {
     logout: privyLogout,
     getAccessToken: privyGetAccessToken,
     connectWallet: privyConnectWallet,
-  } = usePrivy()
+  } = usePrivy();
 
-  const { wallets } = useWallets()
-  const { address, isConnected } = useAccount()
-  const { disconnect } = useDisconnect()
+  const { wallets } = useWallets();
+  const { address, isConnected } = useAccount();
+  const { disconnect } = useDisconnect();
 
   // Set Privy instance for TokenManager when it's ready
   useEffect(() => {
@@ -54,60 +54,60 @@ export function usePrivyAuth(): UsePrivyAuthReturn {
       TokenManager.setPrivyInstance({
         getAccessToken: privyGetAccessToken,
         logout: privyLogout,
-      })
+      });
     }
-  }, [privyReady, authenticated, privyGetAccessToken, privyLogout])
+  }, [privyReady, authenticated, privyGetAccessToken, privyLogout]);
 
   // Get the primary wallet address
   const primaryAddress = useMemo(() => {
-    if (address) return address
+    if (address) return address;
     if (wallets && wallets.length > 0) {
       // Find the active wallet or the first one
-      const activeWallet = wallets.find((w: any) => w.connected) || wallets[0]
-      return activeWallet?.address
+      const activeWallet = wallets.find((w: any) => w.connected) || wallets[0];
+      return activeWallet?.address;
     }
-    return undefined
-  }, [address, wallets])
+    return undefined;
+  }, [address, wallets]);
 
   const handleLogin = () => {
-    privyLogin()
-  }
+    privyLogin();
+  };
 
   const handleLogout = async () => {
     // Disconnect wallet first if connected
     if (isConnected) {
-      disconnect()
+      disconnect();
     }
     // Then logout from Privy
-    await privyLogout()
+    await privyLogout();
     // Clear token manager
-    TokenManager.setPrivyInstance(null)
-  }
+    TokenManager.setPrivyInstance(null);
+  };
 
   const handleConnectWallet = () => {
     if (!authenticated) {
       // If not authenticated, trigger login flow
-      privyLogin()
+      privyLogin();
     } else {
       // If authenticated, connect additional wallet
-      privyConnectWallet()
+      privyConnectWallet();
     }
-  }
+  };
 
   const handleDisconnectWallet = () => {
-    disconnect()
-  }
+    disconnect();
+  };
 
   const getAccessToken = async (): Promise<string | null> => {
-    if (!authenticated) return null
+    if (!authenticated) return null;
     try {
-      const token = await privyGetAccessToken()
-      return token
+      const token = await privyGetAccessToken();
+      return token;
     } catch (error) {
-      console.error("Failed to get access token:", error)
-      return null
+      console.error("Failed to get access token:", error);
+      return null;
     }
-  }
+  };
 
   return {
     // Authentication state
@@ -130,5 +130,5 @@ export function usePrivyAuth(): UsePrivyAuthReturn {
 
     // Token management
     getAccessToken,
-  }
+  };
 }

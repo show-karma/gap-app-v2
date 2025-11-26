@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/skeleton"
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function NavbarUserSkeleton() {
   return (
@@ -8,7 +8,7 @@ export function NavbarUserSkeleton() {
         <Skeleton className="h-8 w-8 rounded-full" />
       </div>
     </div>
-  )
+  );
 }
 
 export function NavbarAuthButtonsSkeleton() {
@@ -17,7 +17,7 @@ export function NavbarAuthButtonsSkeleton() {
       <Skeleton className="h-9 w-20 rounded-md" />
       <Skeleton className="h-9 w-32 rounded-md" />
     </div>
-  )
+  );
 }
 
 export function NavbarLoggedInButtonsSkeleton() {
@@ -27,5 +27,5 @@ export function NavbarLoggedInButtonsSkeleton() {
       <Skeleton className="h-9 w-20 rounded-lg" />
       <Skeleton className="h-9 w-20 rounded-lg" />
     </div>
-  )
+  );
 }

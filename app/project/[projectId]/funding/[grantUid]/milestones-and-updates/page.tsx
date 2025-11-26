@@ -1,28 +1,28 @@
-import type { Metadata } from "next"
-import { notFound } from "next/navigation"
-import { Suspense } from "react"
-import MilestonesAndUpdates from "@/components/Pages/Grants/MilestonesAndUpdates"
-import { ProjectGrantsMilestonesAndUpdatesLoading } from "@/components/Pages/Project/Loading/Grants/MilestonesAndUpdate"
-import { PROJECT_NAME } from "@/constants/brand"
-import { zeroUID } from "@/utilities/commons"
-import { envVars } from "@/utilities/enviromentVars"
-import { gapIndexerApi } from "@/utilities/gapIndexerApi"
-import { cleanMarkdownForPlainText } from "@/utilities/markdown"
-import { defaultMetadata } from "@/utilities/meta"
-import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData"
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { Suspense } from "react";
+import MilestonesAndUpdates from "@/components/Pages/Grants/MilestonesAndUpdates";
+import { ProjectGrantsMilestonesAndUpdatesLoading } from "@/components/Pages/Project/Loading/Grants/MilestonesAndUpdate";
+import { PROJECT_NAME } from "@/constants/brand";
+import { zeroUID } from "@/utilities/commons";
+import { envVars } from "@/utilities/enviromentVars";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { cleanMarkdownForPlainText } from "@/utilities/markdown";
+import { defaultMetadata } from "@/utilities/meta";
+import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
 
 type Params = Promise<{
-  projectId: string
-  grantUid: string
-}>
+  projectId: string;
+  grantUid: string;
+}>;
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
-  const { projectId, grantUid } = await params
+  const { projectId, grantUid } = await params;
 
-  const projectInfo = await getProjectCachedData(projectId)
+  const projectInfo = await getProjectCachedData(projectId);
 
   if (projectInfo?.uid === zeroUID || !projectInfo) {
-    notFound()
+    notFound();
   }
   let metadata = {
     title: defaultMetadata.title,
@@ -30,23 +30,23 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
     twitter: defaultMetadata.twitter,
     openGraph: defaultMetadata.openGraph,
     icons: defaultMetadata.icons,
-  }
+  };
   if (grantUid) {
     const grantInfo = await gapIndexerApi
       .grantBySlug(grantUid as `0x${string}`)
       .then((res) => res.data)
-      .catch(() => notFound())
+      .catch(() => notFound());
     if (grantInfo) {
       const pageMetadata = {
         title: `${projectInfo?.details?.data?.title} - Milestones and Updates for ${grantInfo?.details?.data.title} | ${PROJECT_NAME}`,
         description: `View all milestones and updates by ${projectInfo?.details?.data?.title} for ${grantInfo?.details?.data.title} grant.`,
-      }
+      };
 
       metadata = {
         ...metadata,
         title: pageMetadata?.title || pageMetadata?.title || "",
         description: pageMetadata?.description || pageMetadata?.description || "",
-      }
+      };
     }
   } else {
     metadata = {
@@ -54,7 +54,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
       title: `${projectInfo?.details?.data?.title} | ${PROJECT_NAME}`,
       description:
         cleanMarkdownForPlainText(projectInfo?.details?.data?.description || "", 80) || "",
-    }
+    };
   }
 
   return {
@@ -84,14 +84,14 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
       // site_name: defaultMetadata.openGraph.siteName,
     },
     icons: metadata.icons,
-  }
+  };
 }
 const Page = () => {
   return (
     <Suspense fallback={<ProjectGrantsMilestonesAndUpdatesLoading />}>
       <MilestonesAndUpdates />
     </Suspense>
-  )
-}
+  );
+};
 
-export default Page
+export default Page;

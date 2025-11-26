@@ -3,58 +3,58 @@
  * Provides all permission combinations for comprehensive testing
  */
 
-import type { FundingProgram } from "@/services/fundingPlatformService"
+import type { FundingProgram } from "@/services/fundingPlatformService";
 
 export interface MockAuthState {
-  ready: boolean
-  authenticated: boolean
-  isConnected: boolean
-  address?: string
+  ready: boolean;
+  authenticated: boolean;
+  isConnected: boolean;
+  address?: string;
   user?: {
-    id: string
+    id: string;
     wallet?: {
-      address: string
-    }
-  }
+      address: string;
+    };
+  };
 }
 
 export interface MockPermissionsState {
   // Communities Store
   communities: Array<{
-    uid: string
+    uid: string;
     details?: {
-      name: string
-      imageURL: string
-    }
-  }>
+      name: string;
+      imageURL: string;
+    };
+  }>;
 
   // Reviewer Programs
-  reviewerPrograms: FundingProgram[]
+  reviewerPrograms: FundingProgram[];
 
   // Staff & Owner
-  isStaff: boolean
-  isOwner: boolean
+  isStaff: boolean;
+  isOwner: boolean;
 
   // Registry
-  isPoolManager: boolean
-  isRegistryAdmin: boolean
+  isPoolManager: boolean;
+  isRegistryAdmin: boolean;
 }
 
 export interface AuthFixture {
-  name: string
-  description: string
-  authState: MockAuthState
-  permissions: MockPermissionsState
+  name: string;
+  description: string;
+  authState: MockAuthState;
+  permissions: MockPermissionsState;
   expectedElements: {
-    signIn: boolean
-    contactSales: boolean
-    resources: boolean
-    userMenu: boolean
-    myProjects: boolean
-    review: boolean
-    admin: boolean
-    managePrograms: boolean
-  }
+    signIn: boolean;
+    contactSales: boolean;
+    resources: boolean;
+    userMenu: boolean;
+    myProjects: boolean;
+    review: boolean;
+    admin: boolean;
+    managePrograms: boolean;
+  };
 }
 
 // Helper: Create mock funding program
@@ -68,7 +68,7 @@ export const createMockProgram = (overrides: any = {}): any => ({
   chainID: overrides.chainID || 42161,
   status: "active",
   ...overrides,
-})
+});
 
 // Helper: Create mock community
 export const createMockCommunity = (uid: string, name: string) => ({
@@ -77,7 +77,7 @@ export const createMockCommunity = (uid: string, name: string) => ({
     name,
     imageURL: `https://example.com/${uid}.png`,
   },
-})
+});
 
 /**
  * All authentication and permission scenarios
@@ -553,36 +553,36 @@ export const authFixtures: AuthFixture[] = [
       managePrograms: false,
     },
   },
-]
+];
 
 /**
  * Get a specific fixture by name
  */
 export const getAuthFixture = (name: string): AuthFixture => {
-  const fixture = authFixtures.find((f) => f.name === name)
+  const fixture = authFixtures.find((f) => f.name === name);
   if (!fixture) {
-    throw new Error(`Auth fixture "${name}" not found`)
+    throw new Error(`Auth fixture "${name}" not found`);
   }
-  return fixture
-}
+  return fixture;
+};
 
 /**
  * Get all fixtures matching certain criteria
  */
 export const getAuthFixturesBy = (predicate: (fixture: AuthFixture) => boolean): AuthFixture[] => {
-  return authFixtures.filter(predicate)
-}
+  return authFixtures.filter(predicate);
+};
 
 /**
  * Helper: Get authenticated fixtures
  */
 export const getAuthenticatedFixtures = (): AuthFixture[] => {
-  return getAuthFixturesBy((f) => f.authState.authenticated)
-}
+  return getAuthFixturesBy((f) => f.authState.authenticated);
+};
 
 /**
  * Helper: Get unauthenticated fixtures
  */
 export const getUnauthenticatedFixtures = (): AuthFixture[] => {
-  return getAuthFixturesBy((f) => !f.authState.authenticated)
-}
+  return getAuthFixturesBy((f) => !f.authState.authenticated);
+};

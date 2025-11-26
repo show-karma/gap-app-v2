@@ -1,11 +1,11 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { Suspense } from "react"
-import SumupAdminPage from "@/components/Pages/Admin/SumupAdmin"
-import { Spinner } from "@/components/Utilities/Spinner"
-import { defaultMetadata } from "@/utilities/meta"
+import { Suspense } from "react";
+import SumupAdminPage from "@/components/Pages/Admin/SumupAdmin";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { defaultMetadata } from "@/utilities/meta";
 
-export const metadata = defaultMetadata
+export const metadata = defaultMetadata;
 
 export default function Page() {
   return (
@@ -18,5 +18,5 @@ export default function Page() {
     >
       <SumupAdminPage />
     </Suspense>
-  )
+  );
 }

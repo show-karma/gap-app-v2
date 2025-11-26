@@ -1,19 +1,19 @@
-import { useQuery } from "@tanstack/react-query"
-import { errorManager } from "@/components/Utilities/errorManager"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
+import { useQuery } from "@tanstack/react-query";
+import { errorManager } from "@/components/Utilities/errorManager";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 interface CommunityStatsResponse {
-  activeCommunities: number
-  totalProjectUpdates: number
-  totalProjects: number
-  totalGrants: number
+  activeCommunities: number;
+  totalProjectUpdates: number;
+  totalProjects: number;
+  totalGrants: number;
 }
 
 interface SummaryStats {
-  title: string
-  value: string | number
-  shouldRound?: boolean
+  title: string;
+  value: string | number;
+  shouldRound?: boolean;
 }
 
 export const useCommunityStats = () => {
@@ -21,18 +21,18 @@ export const useCommunityStats = () => {
     queryKey: ["community-stats"],
     queryFn: async (): Promise<SummaryStats[]> => {
       try {
-        const endpoint = INDEXER.COMMUNITY.GLOBAL_STATS()
-        const [response, error] = await fetchData(endpoint, "GET", {}, {}, {}, false)
+        const endpoint = INDEXER.COMMUNITY.GLOBAL_STATS();
+        const [response, error] = await fetchData(endpoint, "GET", {}, {}, {}, false);
 
         if (error) {
-          throw new Error(error)
+          throw new Error(error);
         }
 
         if (!response) {
-          throw new Error("No response received")
+          throw new Error("No response received");
         }
 
-        const data = response as CommunityStatsResponse
+        const data = response as CommunityStatsResponse;
 
         // Transform the API response to match the expected format
         return [
@@ -56,10 +56,10 @@ export const useCommunityStats = () => {
             value: data.totalProjectUpdates,
             shouldRound: true,
           },
-        ]
+        ];
       } catch (error: any) {
-        errorManager("Error fetching community stats", error)
-        throw error
+        errorManager("Error fetching community stats", error);
+        throw error;
       }
     },
     staleTime: 60 * 60 * 1000, // 1 hour
@@ -68,7 +68,7 @@ export const useCommunityStats = () => {
     refetchOnMount: true,
     refetchOnReconnect: false,
     retry: 2,
-  })
-}
+  });
+};
 
-export type { CommunityStatsResponse, SummaryStats }
+export type { CommunityStatsResponse, SummaryStats };

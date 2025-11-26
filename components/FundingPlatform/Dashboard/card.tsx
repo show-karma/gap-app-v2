@@ -1,14 +1,14 @@
-import type React from "react"
-import { cn } from "@/utilities/tailwind"
+import type React from "react";
+import { cn } from "@/utilities/tailwind";
 
 interface FundingPlatformStatsCardProps {
-  title: string
-  value: number | string
-  bgColor: string
-  color: string
-  icon: React.ReactNode
-  titleClassname?: string
-  valueClassname?: string
+  title: string;
+  value: number | string;
+  bgColor: string;
+  color: string;
+  icon: React.ReactNode;
+  titleClassname?: string;
+  valueClassname?: string;
 }
 
 export const FundingPlatformStatsCard = ({
@@ -41,5 +41,5 @@ export const FundingPlatformStatsCard = ({
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

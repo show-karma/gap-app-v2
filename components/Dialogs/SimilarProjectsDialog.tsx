@@ -1,24 +1,24 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { Dialog, Transition } from "@headlessui/react"
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import { type FC, Fragment } from "react"
-import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects"
-import { PAGES } from "@/utilities/pages"
-import { Button } from "../Utilities/Button"
-import { ExternalLink } from "../Utilities/ExternalLink"
+import { Dialog, Transition } from "@headlessui/react";
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { type FC, Fragment } from "react";
+import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
+import { PAGES } from "@/utilities/pages";
+import { Button } from "../Utilities/Button";
+import { ExternalLink } from "../Utilities/ExternalLink";
 
 type SimilarProjectsProps = {
-  similarProjects: IProjectResponse[]
-  projectName: string
-}
+  similarProjects: IProjectResponse[];
+  projectName: string;
+};
 
 export const SimilarProjectsDialog: FC<SimilarProjectsProps> = ({
   similarProjects,
   projectName,
 }) => {
   const { isSimilarProjectsModalOpen: isOpen, closeSimilarProjectsModal: closeModal } =
-    useSimilarProjectsModalStore()
+    useSimilarProjectsModalStore();
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -100,5 +100,5 @@ export const SimilarProjectsDialog: FC<SimilarProjectsProps> = ({
         </div>
       </Dialog>
     </Transition>
-  )
-}
+  );
+};

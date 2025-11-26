@@ -1,5 +1,5 @@
 interface Props {
-  className?: string
+  className?: string;
 }
 
 export const Telegram2Icon = ({ className }: Props) => (
@@ -16,4 +16,4 @@ export const Telegram2Icon = ({ className }: Props) => (
       fill="currentColor"
     />
   </svg>
-)
+);

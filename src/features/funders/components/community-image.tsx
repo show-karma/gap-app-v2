@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import Image from "next/image"
-import { useState } from "react"
+import Image from "next/image";
+import { useState } from "react";
 
 /**
  * Component for rendering a community logo with error fallback.
  */
 export function CommunityImage({ src, alt }: { src: string; alt: string }) {
-  const [error, setError] = useState(false)
+  const [error, setError] = useState(false);
 
   if (error) {
     return (
@@ -16,12 +16,12 @@ export function CommunityImage({ src, alt }: { src: string; alt: string }) {
           {alt.slice(0, 2).toUpperCase()}
         </span>
       </div>
-    )
+    );
   }
 
   return (
     <div className="relative w-6 h-6 rounded-full overflow-hidden flex-shrink-0">
       <Image src={src} alt={alt} fill className="object-cover" onError={() => setError(true)} />
     </div>
-  )
+  );
 }

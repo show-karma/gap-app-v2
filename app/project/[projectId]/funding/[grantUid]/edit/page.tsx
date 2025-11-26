@@ -1,7 +1,7 @@
-"use client"
-import dynamic from "next/dynamic"
-import { DefaultLoading } from "@/components/Utilities/DefaultLoading"
-import { useGrantStore } from "@/store/grant"
+"use client";
+import dynamic from "next/dynamic";
+import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
+import { useGrantStore } from "@/store/grant";
 
 const NewGrant = dynamic(
   () =>
@@ -11,9 +11,9 @@ const NewGrant = dynamic(
   {
     loading: () => <DefaultLoading />,
   }
-)
+);
 export default function Page() {
-  const { grant } = useGrantStore()
+  const { grant } = useGrantStore();
 
-  return <NewGrant grantToEdit={grant} />
+  return <NewGrant grantToEdit={grant} />;
 }

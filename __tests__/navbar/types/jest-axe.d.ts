@@ -4,19 +4,19 @@
  */
 
 declare module "jest-axe" {
-  import { AxeResults } from "axe-core"
+  import { AxeResults } from "axe-core";
 
-  export function axe(element: Element | Document, options?: any): Promise<AxeResults>
+  export function axe(element: Element | Document, options?: any): Promise<AxeResults>;
 
-  export const toHaveNoViolations: jest.ExpectExtendMap
+  export const toHaveNoViolations: jest.ExpectExtendMap;
 
-  export function configureAxe(options?: any): typeof axe
+  export function configureAxe(options?: any): typeof axe;
 }
 
 declare global {
   namespace jest {
     interface Matchers<R> {
-      toHaveNoViolations(): R
+      toHaveNoViolations(): R;
     }
   }
 }

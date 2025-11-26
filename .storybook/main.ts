@@ -1,5 +1,5 @@
-import path from "node:path"
-import type { StorybookConfig } from "@storybook/nextjs"
+import path from "node:path";
+import type { StorybookConfig } from "@storybook/nextjs";
 
 const config: StorybookConfig = {
   stories: ["../components/**/*.stories.@(js|jsx|ts|tsx)", "../app/**/*.stories.@(js|jsx|ts|tsx)"],
@@ -20,10 +20,10 @@ const config: StorybookConfig = {
       config.resolve.alias = {
         ...config.resolve.alias,
         "@": path.resolve(__dirname, "../"),
-      }
+      };
     }
-    return config
+    return config;
   },
-}
+};
 
-export default config
+export default config;

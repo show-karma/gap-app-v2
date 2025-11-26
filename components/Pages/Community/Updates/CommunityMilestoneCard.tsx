@@ -1,23 +1,23 @@
-import { CheckCircleIcon, ClockIcon } from "@heroicons/react/24/outline"
-import Link from "next/link"
-import { type FC, memo } from "react"
-import { containerClassName } from "@/components/Shared/ActivityCard"
-import { ActivityAttribution } from "@/components/Shared/ActivityCard/ActivityAttribution"
-import type { CommunityMilestoneUpdate } from "@/types/community-updates"
-import { formatDate } from "@/utilities/formatDate"
-import { ReadMore } from "@/utilities/ReadMore"
-import { cn } from "@/utilities/tailwind"
-import { MilestoneCompletionInfo } from "./MilestoneCompletionInfo"
+import { CheckCircleIcon, ClockIcon } from "@heroicons/react/24/outline";
+import Link from "next/link";
+import { type FC, memo } from "react";
+import { containerClassName } from "@/components/Shared/ActivityCard";
+import { ActivityAttribution } from "@/components/Shared/ActivityCard/ActivityAttribution";
+import type { CommunityMilestoneUpdate } from "@/types/community-updates";
+import { formatDate } from "@/utilities/formatDate";
+import { ReadMore } from "@/utilities/ReadMore";
+import { cn } from "@/utilities/tailwind";
+import { MilestoneCompletionInfo } from "./MilestoneCompletionInfo";
 
 interface CommunityMilestoneCardProps {
-  milestone: CommunityMilestoneUpdate
+  milestone: CommunityMilestoneUpdate;
 }
 
 const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({ milestone }) => {
-  const isCompleted = milestone.status === "completed"
-  const projectSlug = milestone.project.details.data.slug
-  const projectTitle = milestone.project.details.data.title
-  const grantTitle = milestone.grant?.details?.data?.title || "Project Milestone"
+  const isCompleted = milestone.status === "completed";
+  const projectSlug = milestone.project.details.data.slug;
+  const projectTitle = milestone.project.details.data.title;
+  const grantTitle = milestone.grant?.details?.data?.title || "Project Milestone";
 
   return (
     <div className="flex flex-col w-full gap-2.5 md:gap-5">
@@ -117,8 +117,8 @@ const CommunityMilestoneCardComponent: FC<CommunityMilestoneCardProps> = ({ mile
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
 // Memoize the component to prevent unnecessary re-renders
-export const CommunityMilestoneCard = memo(CommunityMilestoneCardComponent)
+export const CommunityMilestoneCard = memo(CommunityMilestoneCardComponent);

@@ -1,14 +1,14 @@
-"use client"
-import { Spinner } from "@/components/Utilities/Spinner"
-import { useImpactCommunityAggregate } from "@/hooks/useImpactCommunityAggregate"
-import { AggregateCategoryRow } from "./AggregateCategoryRow"
+"use client";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { useImpactCommunityAggregate } from "@/hooks/useImpactCommunityAggregate";
+import { AggregateCategoryRow } from "./AggregateCategoryRow";
 
 export const CommunityImpactAggregateCharts = () => {
-  const { data, isLoading } = useImpactCommunityAggregate()
+  const { data, isLoading } = useImpactCommunityAggregate();
 
-  const outputs = data?.data
+  const outputs = data?.data;
 
-  const orderedData = outputs?.sort((a, b) => a.categoryName.localeCompare(b.categoryName))
+  const orderedData = outputs?.sort((a, b) => a.categoryName.localeCompare(b.categoryName));
 
   return (
     <div className="flex flex-col gap-4 flex-1 mb-10">
@@ -33,5 +33,5 @@ export const CommunityImpactAggregateCharts = () => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};

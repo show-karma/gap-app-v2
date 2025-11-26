@@ -15,4 +15,4 @@ export const SimpleSpinner = () => (
       fill="currentColor"
     />
   </svg>
-)
+);

@@ -1,7 +1,7 @@
-"use client"
-import { Card } from "@tremor/react"
-import Image from "next/image"
-import { cn } from "@/utilities/tailwind"
+"use client";
+import { Card } from "@tremor/react";
+import Image from "next/image";
+import { cn } from "@/utilities/tailwind";
 
 export const SegmentSkeleton = ({
   segmentType,
@@ -9,10 +9,10 @@ export const SegmentSkeleton = ({
   segmentDescription,
   indicatorCount,
 }: {
-  segmentType: "output" | "outcome"
-  segmentName: string
-  segmentDescription: string
-  indicatorCount: number
+  segmentType: "output" | "outcome";
+  segmentName: string;
+  segmentDescription: string;
+  indicatorCount: number;
 }) => {
   return (
     <div className="flex flex-col w-full bg-[#F9FAFB] dark:bg-zinc-800 rounded mb-4">
@@ -73,5 +73,5 @@ export const SegmentSkeleton = ({
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

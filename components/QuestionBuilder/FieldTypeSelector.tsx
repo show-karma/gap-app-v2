@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import type { FormField } from "@/types/question-builder"
+import type { FormField } from "@/types/question-builder";
 
 interface FieldTypeSelectorProps {
-  onFieldAdd: (fieldType: FormField["type"]) => void
-  isPostApprovalMode?: boolean
+  onFieldAdd: (fieldType: FormField["type"]) => void;
+  isPostApprovalMode?: boolean;
 }
 
 export const fieldTypes = [
@@ -68,7 +68,7 @@ export const fieldTypes = [
     icon: "🎯",
     description: "Dynamic milestone management with title, description, and due dates",
   },
-]
+];
 
 export function FieldTypeSelector({
   onFieldAdd,
@@ -107,5 +107,5 @@ export function FieldTypeSelector({
         ))}
       </div>
     </div>
-  )
+  );
 }

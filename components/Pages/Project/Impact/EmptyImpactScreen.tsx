@@ -1,16 +1,16 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { useQueryState } from "nuqs"
-import type { FC } from "react"
-import { useOwnerStore, useProjectStore } from "@/store"
-import { MESSAGES } from "@/utilities/messages"
+import { useQueryState } from "nuqs";
+import type { FC } from "react";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { MESSAGES } from "@/utilities/messages";
 
 export const EmptyImpactScreen: FC = () => {
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin)
-  const isOwner = useOwnerStore((state) => state.isOwner)
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const isOwner = useOwnerStore((state) => state.isOwner);
 
-  const isAuthorized = isProjectAdmin || isOwner
-  const [, changeTab] = useQueryState("tab")
+  const isAuthorized = isProjectAdmin || isOwner;
+  const [, changeTab] = useQueryState("tab");
   if (!isAuthorized) {
     return (
       <div className="flex h-max flex-1 items-center justify-center rounded border border-gray-200 px-6 py-10">
@@ -26,7 +26,7 @@ export const EmptyImpactScreen: FC = () => {
           </div>
         </div>
       </div>
-    )
+    );
   }
   return (
     <div className="flex h-max flex-1 flex-row max-lg:flex-col gap-6">
@@ -42,7 +42,7 @@ export const EmptyImpactScreen: FC = () => {
         <button
           className="items-center flex flex-row justify-center gap-2 rounded border border-blue-600 bg-blue-600 px-4 py-2.5 text-base font-semibold text-white hover:bg-blue-600"
           onClick={() => {
-            changeTab("add-impact")
+            changeTab("add-impact");
           }}
         >
           <img src="/icons/plus.svg" alt="Add" className="relative h-5 w-5" />
@@ -63,5 +63,5 @@ export const EmptyImpactScreen: FC = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

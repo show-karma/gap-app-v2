@@ -20,7 +20,7 @@ const networks = [
   "Tezos",
   "Tron",
   "zCash",
-]
+];
 
 const organizations = [
   "3327",
@@ -382,13 +382,13 @@ const organizations = [
   "Zebec Protocol",
   "ZetaChain",
   "Zilliqa",
-]
+];
 
 const networkImages: Record<
   string,
   {
-    light: string
-    dark: string
+    light: string;
+    dark: string;
   }
 > = {
   aleo: {
@@ -476,7 +476,7 @@ const networkImages: Record<
     light: "/images/networks/zcash.svg",
     dark: "/images/networks/zcash.svg",
   },
-}
+};
 
 const ecosystems = [
   "Aave",
@@ -573,7 +573,7 @@ const ecosystems = [
   "zCash",
   "ZetaChain",
   "Zilliqa",
-]
+];
 const categories = [
   "AI",
   "DEX",
@@ -587,7 +587,7 @@ const categories = [
   "Yield Farming",
   "Infrastructure",
   "DeSci",
-]
+];
 const grantTypes = [
   "Direct Grants",
   "Bounties",
@@ -595,14 +595,14 @@ const grantTypes = [
   "Quadratic Funding",
   "Hackathons",
   "Accelerators",
-]
-const platformsUsed = ["Gitcoin", "Questbook", "Charmverse", "GitHub", "Notion", "Custom"]
+];
+const platformsUsed = ["Gitcoin", "Questbook", "Charmverse", "GitHub", "Notion", "Custom"];
 
-const status = ["Active", "Inactive"]
+const status = ["Active", "Inactive"];
 
-const grantSizes = [0, 250000]
+const grantSizes = [0, 250000];
 
-const supportedNetworks = process.env.NEXT_PUBLIC_ENV === "production" ? 42161 : 11155111
+const supportedNetworks = process.env.NEXT_PUBLIC_ENV === "production" ? 42161 : 11155111;
 
 export const registryHelper = {
   networks,
@@ -615,4 +615,4 @@ export const registryHelper = {
   platformsUsed,
   status,
   supportedNetworks,
-}
+};

@@ -1,10 +1,10 @@
-import type { GAP } from "@show-karma/karma-gap-sdk"
-import type { Hex } from "viem"
+import type { GAP } from "@show-karma/karma-gap-sdk";
+import type { Hex } from "viem";
 
 interface FetchGrantInstanceParams {
-  gapClient: GAP
-  projectUid: string
-  grantUid: string
+  gapClient: GAP;
+  projectUid: string;
+  grantUid: string;
 }
 
 /**
@@ -32,30 +32,30 @@ export const fetchGrantInstance = async ({
   projectUid,
   grantUid,
 }: FetchGrantInstanceParams) => {
-  const fetchedProject = await gapClient.fetch.projectById(projectUid as Hex)
+  const fetchedProject = await gapClient.fetch.projectById(projectUid as Hex);
 
   if (!fetchedProject) {
     throw new Error(
       "Failed to fetch project data. The project may have been deleted or you may not have permission to access it."
-    )
+    );
   }
 
   const grantInstance = fetchedProject.grants.find(
     (g) => g.uid.toLowerCase() === grantUid.toLowerCase()
-  )
+  );
 
   if (!grantInstance) {
-    throw new Error("Grant not found in project. Please refresh the page and try again.")
+    throw new Error("Grant not found in project. Please refresh the page and try again.");
   }
 
-  return grantInstance
-}
+  return grantInstance;
+};
 
 interface FetchMilestoneInstanceParams {
-  gapClient: GAP
-  projectUid: string
-  programId: string
-  milestoneUid: string
+  gapClient: GAP;
+  projectUid: string;
+  programId: string;
+  milestoneUid: string;
 }
 
 /**
@@ -85,31 +85,31 @@ export const fetchMilestoneInstance = async ({
   programId,
   milestoneUid,
 }: FetchMilestoneInstanceParams) => {
-  const fetchedProject = await gapClient.fetch.projectById(projectUid)
+  const fetchedProject = await gapClient.fetch.projectById(projectUid);
   if (!fetchedProject) {
-    throw new Error("Failed to fetch project data")
+    throw new Error("Failed to fetch project data");
   }
 
-  const grantInstance = fetchedProject.grants.find((g) => g.details?.programId === programId)
+  const grantInstance = fetchedProject.grants.find((g) => g.details?.programId === programId);
 
   if (!grantInstance) {
-    throw new Error("Grant not found")
+    throw new Error("Grant not found");
   }
 
   const milestoneInstance = grantInstance.milestones?.find(
     (m) => m.uid.toLowerCase() === milestoneUid.toLowerCase()
-  )
+  );
 
   if (!milestoneInstance) {
-    throw new Error("Milestone not found")
+    throw new Error("Milestone not found");
   }
 
   // Extract communityUID from grant data
-  const communityUID = grantInstance.data?.communityUID || ""
+  const communityUID = grantInstance.data?.communityUID || "";
 
   return {
     milestoneInstance,
     communityUID,
     grantInstance,
-  }
-}
+  };
+};

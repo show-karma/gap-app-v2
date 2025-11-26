@@ -1,18 +1,18 @@
-import { useMutation, useQuery } from "@tanstack/react-query"
-import toast from "react-hot-toast"
-import { keccak256, toHex } from "viem"
-import { errorManager } from "@/components/Utilities/errorManager"
-import { queryClient } from "@/components/Utilities/PrivyProviderWrapper"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
-import { defaultQueryOptions } from "@/utilities/queries/defaultOptions"
+import { useMutation, useQuery } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+import { keccak256, toHex } from "viem";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 
 interface InviteCode {
-  id: string
-  hash: string
-  signature: string
-  createdAt: string
-  updatedAt: string
+  id: string;
+  hash: string;
+  signature: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 /**
@@ -29,29 +29,31 @@ export const useInviteLink = (projectIdOrSlug: string | undefined) => {
   const query = useQuery<InviteCode | null>({
     queryKey: ["invite-code", projectIdOrSlug],
     queryFn: async () => {
-      if (!projectIdOrSlug) return null
+      if (!projectIdOrSlug) return null;
 
       try {
-        const [data, error] = await fetchData(INDEXER.PROJECT.INVITATION.GET_LINKS(projectIdOrSlug))
-        if (error) throw error
-        if (!data || data.length === 0) return null
-        return data[0] as InviteCode
+        const [data, error] = await fetchData(
+          INDEXER.PROJECT.INVITATION.GET_LINKS(projectIdOrSlug)
+        );
+        if (error) throw error;
+        if (!data || data.length === 0) return null;
+        return data[0] as InviteCode;
       } catch (e) {
-        errorManager("Failed to get current invite code", e)
-        return null
+        errorManager("Failed to get current invite code", e);
+        return null;
       }
     },
     enabled: !!projectIdOrSlug,
     ...defaultQueryOptions,
-  })
+  });
 
   // Mutation for generating new invite code
   const generateMutation = useMutation({
     mutationFn: async () => {
-      if (!projectIdOrSlug) throw new Error("Project ID is required")
+      if (!projectIdOrSlug) throw new Error("Project ID is required");
 
-      const messageToSign = Date.now()
-      const hexedMessage = keccak256(toHex(messageToSign))
+      const messageToSign = Date.now();
+      const hexedMessage = keccak256(toHex(messageToSign));
 
       const [data, error] = await fetchData(
         INDEXER.PROJECT.INVITATION.NEW_CODE(projectIdOrSlug),
@@ -59,46 +61,46 @@ export const useInviteLink = (projectIdOrSlug: string | undefined) => {
         {
           hash: hexedMessage,
         }
-      )
+      );
 
-      if (error) throw error
-      return data
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["invite-code", projectIdOrSlug],
-      })
+      });
     },
     onError: (error) => {
       errorManager("Failed to generate invite code", error, {
         projectId: projectIdOrSlug,
-      })
+      });
     },
-  })
+  });
 
   // Mutation for revoking invite code
   const revokeMutation = useMutation({
     mutationFn: async (inviteId: string) => {
-      if (!projectIdOrSlug) throw new Error("Project ID is required")
+      if (!projectIdOrSlug) throw new Error("Project ID is required");
 
       const [response, error] = await fetchData(
         INDEXER.PROJECT.INVITATION.REVOKE_CODE(projectIdOrSlug, inviteId),
         "PUT"
-      )
+      );
 
-      if (error) throw error
-      return response
+      if (error) throw error;
+      return response;
     },
     onSuccess: () => {
-      toast.success("Invite code revoked successfully")
+      toast.success("Invite code revoked successfully");
       queryClient.invalidateQueries({
         queryKey: ["invite-code", projectIdOrSlug],
-      })
+      });
     },
     onError: (error) => {
-      errorManager("Failed to revoke invite code", error)
+      errorManager("Failed to revoke invite code", error);
     },
-  })
+  });
 
   return {
     // Invite code data
@@ -120,8 +122,8 @@ export const useInviteLink = (projectIdOrSlug: string | undefined) => {
 
     // Query state
     isSuccess: query.isSuccess,
-  }
-}
+  };
+};
 
 /**
  * Helper hook to build the invite URL
@@ -130,11 +132,11 @@ export const useInviteUrl = (
   project: { uid?: string; details?: { data: { slug?: string } } } | undefined,
   inviteCode: string | undefined
 ) => {
-  if (!project || !inviteCode) return null
+  if (!project || !inviteCode) return null;
 
-  const isDev = process.env.NEXT_PUBLIC_ENV === "dev" || process.env.NODE_ENV === "development"
-  const baseUrl = isDev ? "staging.karmahq.xyz" : "karmahq.xyz"
-  const projectIdentifier = project.details?.data.slug || project.uid
+  const isDev = process.env.NEXT_PUBLIC_ENV === "dev" || process.env.NODE_ENV === "development";
+  const baseUrl = isDev ? "staging.karmahq.xyz" : "karmahq.xyz";
+  const projectIdentifier = project.details?.data.slug || project.uid;
 
-  return `https://${baseUrl}/project/${projectIdentifier}/?invite-code=${inviteCode}`
-}
+  return `https://${baseUrl}/project/${projectIdentifier}/?invite-code=${inviteCode}`;
+};

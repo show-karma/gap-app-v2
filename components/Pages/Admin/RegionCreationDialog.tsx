@@ -16,25 +16,24 @@ import { useCommunityDetails } from "@/hooks/useCommunityDetails";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
-
 type RegionCreationDialogProps = {
-  refreshRegions: () => Promise<void>
-}
+  refreshRegions: () => Promise<void>;
+};
 
 const schema = z.object({
   name: z.string().min(3, { message: "Region name must be at least 3 characters" }),
-})
+});
 
-type SchemaType = z.infer<typeof schema>
+type SchemaType = z.infer<typeof schema>;
 
 export const RegionCreationDialog: FC<RegionCreationDialogProps> = ({ refreshRegions }) => {
-  const [isOpen, setIsOpen] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const { address } = useAccount()
-  const params = useParams()
-  const communityId = params.communityId as string
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { address } = useAccount();
+  const params = useParams();
+  const communityId = params.communityId as string;
 
-  const { data: community } = useCommunityDetails(communityId)
+  const { data: community } = useCommunityDetails(communityId);
 
   const {
     register,
@@ -45,30 +44,30 @@ export const RegionCreationDialog: FC<RegionCreationDialogProps> = ({ refreshReg
     resolver: zodResolver(schema),
     reValidateMode: "onChange",
     mode: "onChange",
-  })
+  });
 
   function closeModal() {
-    setIsOpen(false)
-    reset()
+    setIsOpen(false);
+    reset();
   }
 
   function openModal() {
-    setIsOpen(true)
+    setIsOpen(true);
   }
 
-  const { authenticated: isAuth } = useAuth()
-  const { authenticate } = useAuth()
+  const { authenticated: isAuth } = useAuth();
+  const { authenticate } = useAuth();
 
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
     try {
-      setIsLoading(true)
+      setIsLoading(true);
       if (!isAuth) {
-        await authenticate()
+        await authenticate();
       }
 
-      const communityUID = community?.uid || communityId
+      const communityUID = community?.uid || communityId;
       if (!communityUID) {
-        throw new Error("Community ID is not available")
+        throw new Error("Community ID is not available");
       }
 
       const [_request, error] = await fetchData(
@@ -80,13 +79,13 @@ export const RegionCreationDialog: FC<RegionCreationDialogProps> = ({ refreshReg
         {},
         {},
         true
-      )
+      );
 
-      if (error) throw new Error("An error occurred while creating the region")
+      if (error) throw new Error("An error occurred while creating the region");
 
-      toast.success("Region created successfully")
-      refreshRegions()
-      closeModal()
+      toast.success("Region created successfully");
+      refreshRegions();
+      closeModal();
     } catch (error: any) {
       errorManager(
         "Error creating region",
@@ -95,11 +94,11 @@ export const RegionCreationDialog: FC<RegionCreationDialogProps> = ({ refreshReg
         {
           error: "Failed to create region. Please try again.",
         }
-      )
+      );
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <>
@@ -154,18 +153,10 @@ export const RegionCreationDialog: FC<RegionCreationDialogProps> = ({ refreshReg
                       <p className="text-base text-red-400">{errors.name?.message}</p>
                     </div>
                     <div className="flex flex-row gap-4 justify-end">
-                      <Button
-                        onClick={closeModal}
-                        disabled={isLoading}
-                        variant="outline"
-                      >
+                      <Button onClick={closeModal} disabled={isLoading} variant="outline">
                         Cancel
                       </Button>
-                      <Button
-                        disabled={isLoading || !isValid}
-                        isLoading={isLoading}
-                        type="submit"
-                      >
+                      <Button disabled={isLoading || !isValid} isLoading={isLoading} type="submit">
                         Create
                       </Button>
                     </div>
@@ -177,5 +168,5 @@ export const RegionCreationDialog: FC<RegionCreationDialogProps> = ({ refreshReg
         </Dialog>
       </Transition>
     </>
-  )
-}
+  );
+};

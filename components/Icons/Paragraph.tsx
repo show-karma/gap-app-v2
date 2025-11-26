@@ -1,5 +1,5 @@
 interface Props {
-  className?: string
+  className?: string;
 }
 export const ParagraphIcon = ({ className }: Props) => {
   return (
@@ -64,5 +64,5 @@ export const ParagraphIcon = ({ className }: Props) => {
         />
       </g>
     </svg>
-  )
-}
+  );
+};

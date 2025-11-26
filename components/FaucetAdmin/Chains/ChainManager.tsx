@@ -1,37 +1,37 @@
-"use client"
+"use client";
 
-import { PencilIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline"
-import { useState } from "react"
-import { Spinner } from "@/components/Utilities/Spinner"
-import { useChains } from "@/hooks/useFaucetAdmin"
-import { ChainForm } from "./ChainForm"
+import { PencilIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { useState } from "react";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { useChains } from "@/hooks/useFaucetAdmin";
+import { ChainForm } from "./ChainForm";
 
 export function ChainManager() {
-  const { chains, isLoading, createChain, updateChain, deleteChain, isUpdating } = useChains()
-  const [showAddForm, setShowAddForm] = useState(false)
-  const [editingChain, setEditingChain] = useState<any>(null)
-  const [searchTerm, setSearchTerm] = useState("")
+  const { chains, isLoading, createChain, updateChain, deleteChain, isUpdating } = useChains();
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingChain, setEditingChain] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <Spinner />
       </div>
-    )
+    );
   }
 
   const handleCreateChain = async (chainData: any) => {
-    createChain(chainData)
-    setShowAddForm(false)
-  }
+    createChain(chainData);
+    setShowAddForm(false);
+  };
 
   const handleUpdateChain = async (chainData: any) => {
     if (editingChain) {
-      const { chainId, ...updates } = chainData
-      updateChain({ chainId, updates })
-      setEditingChain(null)
+      const { chainId, ...updates } = chainData;
+      updateChain({ chainId, updates });
+      setEditingChain(null);
     }
-  }
+  };
 
   const handleDeleteChain = async (chainId: number) => {
     if (
@@ -39,18 +39,18 @@ export function ChainManager() {
         "Are you sure you want to delete this chain configuration? This action cannot be undone."
       )
     ) {
-      deleteChain(chainId)
+      deleteChain(chainId);
     }
-  }
+  };
 
   const filteredChains = chains.filter((chain: any) => {
-    const searchLower = searchTerm.toLowerCase()
+    const searchLower = searchTerm.toLowerCase();
     return (
       chain.name?.toLowerCase().includes(searchLower) ||
       chain.symbol?.toLowerCase().includes(searchLower) ||
       chain.chainId?.toString().includes(searchTerm)
-    )
-  })
+    );
+  });
 
   return (
     <div className="space-y-6">
@@ -207,5 +207,5 @@ export function ChainManager() {
         </div>
       )}
     </div>
-  )
+  );
 }

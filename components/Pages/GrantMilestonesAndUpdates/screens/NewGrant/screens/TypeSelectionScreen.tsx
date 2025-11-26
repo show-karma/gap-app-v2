@@ -1,24 +1,24 @@
-import Image from "next/image"
-import { useRouter } from "next/navigation"
-import type React from "react"
-import { useProjectStore } from "@/store"
-import { PAGES } from "@/utilities/pages"
-import { StepBlock } from "../StepBlock"
-import { useGrantFormStore } from "../store"
-import { CancelButton } from "./buttons/CancelButton"
-import { NextButton } from "./buttons/NextButton"
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import type React from "react";
+import { useProjectStore } from "@/store";
+import { PAGES } from "@/utilities/pages";
+import { StepBlock } from "../StepBlock";
+import { useGrantFormStore } from "../store";
+import { CancelButton } from "./buttons/CancelButton";
+import { NextButton } from "./buttons/NextButton";
 
 interface TypeOption {
-  icon: string
-  type: "grant" | "program"
-  title: string
-  description: string
+  icon: string;
+  type: "grant" | "program";
+  title: string;
+  description: string;
 }
 
 export const TypeSelectionScreen: React.FC = () => {
-  const { setCurrentStep, setFlowType, flowType, updateFormData } = useGrantFormStore()
-  const selectedProject = useProjectStore((state) => state.project)
-  const router = useRouter()
+  const { setCurrentStep, setFlowType, flowType, updateFormData } = useGrantFormStore();
+  const selectedProject = useProjectStore((state) => state.project);
+  const router = useRouter();
 
   const options: TypeOption[] = [
     {
@@ -35,25 +35,25 @@ export const TypeSelectionScreen: React.FC = () => {
       description:
         "Apply to participate in available funding programs to access new financial opportunities for your work.",
     },
-  ]
+  ];
 
   const handleOptionSelect = (type: "grant" | "program") => {
-    setFlowType(type)
-  }
+    setFlowType(type);
+  };
 
   const handleNext = () => {
-    setCurrentStep(2)
+    setCurrentStep(2);
     updateFormData({
       community: undefined,
       programId: undefined,
       title: undefined,
-    })
-  }
+    });
+  };
 
   const handleCancel = () => {
-    if (!selectedProject) return
-    router.push(PAGES.PROJECT.GRANTS(selectedProject.details?.data?.slug || selectedProject?.uid))
-  }
+    if (!selectedProject) return;
+    router.push(PAGES.PROJECT.GRANTS(selectedProject.details?.data?.slug || selectedProject?.uid));
+  };
 
   return (
     <StepBlock currentStep={1}>
@@ -95,5 +95,5 @@ export const TypeSelectionScreen: React.FC = () => {
         </div>
       </div>
     </StepBlock>
-  )
-}
+  );
+};

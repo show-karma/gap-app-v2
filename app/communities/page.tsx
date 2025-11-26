@@ -1,9 +1,9 @@
-import { CommunitiesPage } from "@/components/Pages/Communities/CommunitiesPage"
-import { layoutTheme } from "@/src/helper/theme"
-import { defaultMetadata } from "@/utilities/meta"
-import { cn } from "@/utilities/tailwind"
+import { CommunitiesPage } from "@/components/Pages/Communities/CommunitiesPage";
+import { layoutTheme } from "@/src/helper/theme";
+import { defaultMetadata } from "@/utilities/meta";
+import { cn } from "@/utilities/tailwind";
 
-export const metadata = defaultMetadata
+export const metadata = defaultMetadata;
 
 export default function Communities() {
   return (
@@ -19,5 +19,5 @@ export default function Communities() {
         </div>
       </div>
     </main>
-  )
+  );
 }

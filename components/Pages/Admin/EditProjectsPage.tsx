@@ -1,42 +1,42 @@
-"use client"
-import { ChevronLeftIcon } from "@heroicons/react/20/solid"
-import Link from "next/link"
-import { useParams, useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-import toast from "react-hot-toast"
-import { useAccount } from "wagmi"
-import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown"
-import { Button } from "@/components/Utilities/Button"
-import { errorManager } from "@/components/Utilities/errorManager"
-import { Spinner } from "@/components/Utilities/Spinner"
-import TablePagination from "@/components/Utilities/TablePagination"
-import { useAuth } from "@/hooks/useAuth"
-import { useCommunityDetails } from "@/hooks/useCommunityDetails"
-import { useCommunityGrants } from "@/hooks/useCommunityGrants"
-import { useCommunityProjectsV2 } from "@/hooks/useCommunityProjectsV2"
-import { useCommunityRegions } from "@/hooks/useCommunityRegions"
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin"
-import type { ProjectV2 } from "@/types/community"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
-import { MESSAGES } from "@/utilities/messages"
-import { defaultMetadata } from "@/utilities/meta"
-import { PAGES } from "@/utilities/pages"
-import { ProgramFilter } from "./ProgramFilter"
-import { RegionCreationDialog } from "./RegionCreationDialog"
-export const metadata = defaultMetadata
+"use client";
+import { ChevronLeftIcon } from "@heroicons/react/20/solid";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown";
+import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { Spinner } from "@/components/Utilities/Spinner";
+import TablePagination from "@/components/Utilities/TablePagination";
+import { useAuth } from "@/hooks/useAuth";
+import { useCommunityDetails } from "@/hooks/useCommunityDetails";
+import { useCommunityGrants } from "@/hooks/useCommunityGrants";
+import { useCommunityProjectsV2 } from "@/hooks/useCommunityProjectsV2";
+import { useCommunityRegions } from "@/hooks/useCommunityRegions";
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import type { ProjectV2 } from "@/types/community";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { defaultMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
+import { ProgramFilter } from "./ProgramFilter";
+import { RegionCreationDialog } from "./RegionCreationDialog";
+export const metadata = defaultMetadata;
 
 interface ProjectsTableProps {
-  projects: ProjectV2[]
-  regions: any[]
-  selectedRegions: Record<string, string>
-  optimisticRegions: Record<string, string>
-  onRegionChange: (uid: string, region: string) => void
-  currentPage: number
-  totalItems: number
-  itemsPerPage: number
-  onPageChange: (page: number) => void
-  isSaving: boolean
+  projects: ProjectV2[];
+  regions: any[];
+  selectedRegions: Record<string, string>;
+  optimisticRegions: Record<string, string>;
+  onRegionChange: (uid: string, region: string) => void;
+  currentPage: number;
+  totalItems: number;
+  itemsPerPage: number;
+  onPageChange: (page: number) => void;
+  isSaving: boolean;
 }
 
 const ProjectsTable: React.FC<ProjectsTableProps> = ({
@@ -76,26 +76,26 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({
         <tbody className="px-4 divide-y divide-gray-200 dark:divide-zinc-800">
           {projects.map((project) => {
             // Check for optimistic update first
-            const optimisticRegion = optimisticRegions[project.uid]
+            const optimisticRegion = optimisticRegions[project.uid];
 
             // Get the current region from the project's regions array
-            const projectRegions = project.regions || []
-            const currentRegionName = projectRegions.length > 0 ? projectRegions[0] : ""
+            const projectRegions = project.regions || [];
+            const currentRegionName = projectRegions.length > 0 ? projectRegions[0] : "";
 
             // Find the region ID from the name
             const currentRegionId = currentRegionName
               ? regions.find((r) => r.name === currentRegionName)?.id || ""
-              : ""
+              : "";
 
             // Use optimistic update if available, otherwise use current region
             const displayRegionId =
-              optimisticRegion !== undefined ? optimisticRegion : currentRegionId
+              optimisticRegion !== undefined ? optimisticRegion : currentRegionId;
 
             // Get the display name for current region (considering optimistic updates)
             const displayRegionName =
               optimisticRegion !== undefined
                 ? regions.find((r) => r.id === optimisticRegion)?.name || "None"
-                : currentRegionName || "None"
+                : currentRegionName || "None";
 
             return (
               <tr key={project.uid} className="dark:text-zinc-300 text-gray-900 px-4 py-4">
@@ -131,7 +131,7 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({
                       })),
                     ]}
                     onSelectFunction={(value) => {
-                      onRegionChange(project.uid, value)
+                      onRegionChange(project.uid, value);
                     }}
                     selected={displayRegionId ? [displayRegionId] : []}
                     type="Region"
@@ -141,7 +141,7 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({
                   />
                 </td>
               </tr>
-            )
+            );
           })}
         </tbody>
       </table>
@@ -156,43 +156,43 @@ const ProjectsTable: React.FC<ProjectsTableProps> = ({
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 export default function EditProjectsPage() {
-  const router = useRouter()
-  const { address, isConnected } = useAccount()
-  const { authenticated: isAuth } = useAuth()
-  const params = useParams()
-  const communityId = params.communityId as string
-  const [selectedRegions, _setSelectedRegions] = useState<Record<string, string>>({})
-  const [optimisticRegions, setOptimisticRegions] = useState<Record<string, string>>({})
-  const [isSaving, setIsSaving] = useState<boolean>(false)
+  const router = useRouter();
+  const { address, isConnected } = useAccount();
+  const { authenticated: isAuth } = useAuth();
+  const params = useParams();
+  const communityId = params.communityId as string;
+  const [selectedRegions, _setSelectedRegions] = useState<Record<string, string>>({});
+  const [optimisticRegions, setOptimisticRegions] = useState<Record<string, string>>({});
+  const [isSaving, setIsSaving] = useState<boolean>(false);
 
   const {
     data: community,
     isLoading: isLoadingCommunity,
     error: communityError,
-  } = useCommunityDetails(communityId)
+  } = useCommunityDetails(communityId);
 
   // Check if user is admin of this community
   const { isCommunityAdmin: isAdmin, isLoading: loading } = useIsCommunityAdmin(
     community?.uid,
     address
-  )
+  );
 
   useEffect(() => {
     if (
       communityError?.message === "Community not found" ||
       communityError?.message?.includes("422")
     ) {
-      router.push(PAGES.NOT_FOUND)
+      router.push(PAGES.NOT_FOUND);
     }
-  }, [communityError, router.push])
+  }, [communityError, router.push]);
 
   // Simple state management for pagination since we're using the v2 endpoint
-  const [currentPage, setCurrentPage] = useState(1)
-  const [selectedProgramId, setSelectedProgramId] = useState<string>("")
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedProgramId, setSelectedProgramId] = useState<string>("");
 
   // Fetch projects data using the V2 endpoint with server-side filtering
   const {
@@ -203,56 +203,56 @@ export default function EditProjectsPage() {
     page: currentPage,
     limit: 12,
     selectedProgramId: selectedProgramId || undefined,
-  })
+  });
 
   // Fetch all grants for the filter dropdown
-  const { data: grants = [] } = useCommunityGrants(community?.details?.data?.slug || communityId)
+  const { data: grants = [] } = useCommunityGrants(community?.details?.data?.slug || communityId);
 
-  const projects = projectsData?.payload || []
-  const totalItems = projectsData?.pagination?.totalCount || 0
+  const projects = projectsData?.payload || [];
+  const totalItems = projectsData?.pagination?.totalCount || 0;
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page)
-  }
+    setCurrentPage(page);
+  };
 
   const handleProgramChange = (programId: string | null) => {
-    setSelectedProgramId(programId || "")
-    setCurrentPage(1) // Reset to first page when filter changes
-  }
+    setSelectedProgramId(programId || "");
+    setCurrentPage(1); // Reset to first page when filter changes
+  };
 
   const { data: regionsOptions = [], refetch: refreshRegions } = useCommunityRegions(
     community?.uid || ""
-  )
+  );
 
   const handleRegionChange = async (uid: string, newRegion: string) => {
     // Store the previous region for rollback if needed
     const previousRegion =
-      optimisticRegions[uid] || projects?.find((p) => p.uid === uid)?.regions?.[0] || ""
+      optimisticRegions[uid] || projects?.find((p) => p.uid === uid)?.regions?.[0] || "";
 
     // Optimistic update - immediately update the UI
     setOptimisticRegions((prev) => ({
       ...prev,
       [uid]: newRegion,
-    }))
+    }));
 
     // Auto-save when region is selected
-    setIsSaving(true)
+    setIsSaving(true);
     try {
       await fetchData(INDEXER.PROJECT.REGIONS.UPDATE(uid), "PUT", {
         regions: newRegion ? [newRegion] : [],
         communityUID: community?.uid,
-      })
-      toast.success("Region updated successfully.")
+      });
+      toast.success("Region updated successfully.");
 
       // Update the actual data in the background
-      await refreshProjects()
+      await refreshProjects();
 
       // Clear the optimistic update since the real data is now updated
       setOptimisticRegions((prev) => {
-        const newState = { ...prev }
-        delete newState[uid]
-        return newState
-      })
+        const newState = { ...prev };
+        delete newState[uid];
+        return newState;
+      });
     } catch (error: any) {
       errorManager(
         `Error updating region for project ${uid}`,
@@ -264,26 +264,26 @@ export default function EditProjectsPage() {
           newRegion,
         },
         { error: "Failed to update region. Please try again." }
-      )
+      );
 
       // Revert to previous region on error
       setOptimisticRegions((prev) => ({
         ...prev,
         [uid]: previousRegion,
-      }))
+      }));
 
       // Clear the optimistic update after a short delay
       setTimeout(() => {
         setOptimisticRegions((prev) => {
-          const newState = { ...prev }
-          delete newState[uid]
-          return newState
-        })
-      }, 2000)
+          const newState = { ...prev };
+          delete newState[uid];
+          return newState;
+        });
+      }, 2000);
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
-  }
+  };
 
   // Auto-save implemented in handleRegionChange, no need for separate save function
 
@@ -292,7 +292,7 @@ export default function EditProjectsPage() {
       <div className="flex w-full items-center justify-center">
         <Spinner />
       </div>
-    )
+    );
   }
 
   if (!isAdmin) {
@@ -300,7 +300,7 @@ export default function EditProjectsPage() {
       <div className="flex w-full items-center justify-center">
         <p>{MESSAGES.ADMIN.NOT_AUTHORIZED(community?.uid || "")}</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -325,7 +325,7 @@ export default function EditProjectsPage() {
             ) : null}
             <RegionCreationDialog
               refreshRegions={async () => {
-                refreshRegions()
+                refreshRegions();
               }}
             />
           </div>
@@ -344,5 +344,5 @@ export default function EditProjectsPage() {
         />
       </div>
     </div>
-  )
+  );
 }

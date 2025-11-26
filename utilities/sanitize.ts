@@ -1,30 +1,30 @@
 export function sanitizeInput<T>(input: T): T {
   if (typeof input === "string") {
-    return input.trim() as T
+    return input.trim() as T;
   }
-  return input
+  return input;
 }
 
 export function sanitizeObject(obj: any): any {
   if (typeof obj !== "object" || obj === null) {
-    return sanitizeInput(obj)
+    return sanitizeInput(obj);
   }
 
   if (Array.isArray(obj)) {
-    return obj.map((item) => sanitizeObject(item))
+    return obj.map((item) => sanitizeObject(item));
   }
 
-  const sanitizedObj: any = {}
+  const sanitizedObj: any = {};
 
   if (obj instanceof Date) {
-    return obj
+    return obj;
   }
 
   for (const [key, value] of Object.entries(obj)) {
-    sanitizedObj[key] = sanitizeObject(value)
+    sanitizedObj[key] = sanitizeObject(value);
   }
 
-  return sanitizedObj
+  return sanitizedObj;
 }
 
 /**
@@ -34,7 +34,7 @@ export function sanitizeObject(obj: any): any {
  * @returns The sanitized slug
  */
 export function sanitizeCommunitySlug(slug: string): string {
-  return slug.replace(/[,.\s]+$/g, "").trim()
+  return slug.replace(/[,.\s]+$/g, "").trim();
 }
 
 /**
@@ -43,5 +43,5 @@ export function sanitizeCommunitySlug(slug: string): string {
  * @returns True if the slug contains forbidden trailing characters
  */
 export function hasForbiddenChars(slug: string): boolean {
-  return /[,.\s]+$/.test(slug)
+  return /[,.\s]+$/.test(slug);
 }

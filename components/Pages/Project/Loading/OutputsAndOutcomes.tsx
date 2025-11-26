@@ -1,4 +1,4 @@
-import { Card } from "@tremor/react"
+import { Card } from "@tremor/react";
 
 export const OutputsAndOutcomesLoading = () => {
   return (
@@ -79,5 +79,5 @@ export const OutputsAndOutcomesLoading = () => {
         ))}
       </div>
     </div>
-  )
-}
+  );
+};

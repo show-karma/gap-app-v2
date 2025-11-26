@@ -1,13 +1,13 @@
-import type { FC } from "react"
-import type { FieldError, UseFormRegister } from "react-hook-form"
-import type { FormField } from "@/types/question-builder"
+import type { FC } from "react";
+import type { FieldError, UseFormRegister } from "react-hook-form";
+import type { FormField } from "@/types/question-builder";
 
 interface TextFieldProps {
-  field: FormField
-  register: UseFormRegister<any>
-  error?: FieldError
-  className?: string
-  disabled?: boolean
+  field: FormField;
+  register: UseFormRegister<any>;
+  error?: FieldError;
+  className?: string;
+  disabled?: boolean;
 }
 
 export const TextField: FC<TextFieldProps> = ({
@@ -74,5 +74,5 @@ export const TextField: FC<TextFieldProps> = ({
         </p>
       )}
     </div>
-  )
-}
+  );
+};

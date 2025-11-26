@@ -40,4 +40,4 @@ $roundId: String!
     roundId: roundId,
     applicationId: applicationId,
   },
-})
+});

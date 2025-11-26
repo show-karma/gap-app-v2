@@ -12,17 +12,17 @@
  * Note: Uses execSync with hardcoded commands only (no user input)
  */
 
-const fs = require("node:fs")
-const path = require("node:path")
-const { execSync } = require("node:child_process")
+const fs = require("node:fs");
+const path = require("node:path");
+const { execSync } = require("node:child_process");
 
-const METRICS_DIR = path.join(__dirname, "../.test-metrics")
-const COVERAGE_DIR = path.join(__dirname, "../coverage")
-const HISTORY_FILE = path.join(METRICS_DIR, "history.json")
+const METRICS_DIR = path.join(__dirname, "../.test-metrics");
+const COVERAGE_DIR = path.join(__dirname, "../coverage");
+const HISTORY_FILE = path.join(METRICS_DIR, "history.json");
 
 // Ensure metrics directory exists
 if (!fs.existsSync(METRICS_DIR)) {
-  fs.mkdirSync(METRICS_DIR, { recursive: true })
+  fs.mkdirSync(METRICS_DIR, { recursive: true });
 }
 
 /**
@@ -30,32 +30,32 @@ if (!fs.existsSync(METRICS_DIR)) {
  */
 function loadHistory() {
   if (fs.existsSync(HISTORY_FILE)) {
-    const content = fs.readFileSync(HISTORY_FILE, "utf-8")
-    return JSON.parse(content)
+    const content = fs.readFileSync(HISTORY_FILE, "utf-8");
+    return JSON.parse(content);
   }
-  return { runs: [] }
+  return { runs: [] };
 }
 
 /**
  * Save metrics to history
  */
 function saveHistory(history) {
-  fs.writeFileSync(HISTORY_FILE, JSON.stringify(history, null, 2))
+  fs.writeFileSync(HISTORY_FILE, JSON.stringify(history, null, 2));
 }
 
 /**
  * Extract coverage data from Jest coverage report
  */
 function extractCoverageData() {
-  const coverageSummaryPath = path.join(COVERAGE_DIR, "coverage-summary.json")
+  const coverageSummaryPath = path.join(COVERAGE_DIR, "coverage-summary.json");
 
   if (!fs.existsSync(coverageSummaryPath)) {
-    console.warn('No coverage summary found. Run "npm run test:coverage" first.')
-    return null
+    console.warn('No coverage summary found. Run "npm run test:coverage" first.');
+    return null;
   }
 
-  const coverageData = JSON.parse(fs.readFileSync(coverageSummaryPath, "utf-8"))
-  const total = coverageData.total
+  const coverageData = JSON.parse(fs.readFileSync(coverageSummaryPath, "utf-8"));
+  const total = coverageData.total;
 
   return {
     lines: total.lines.pct,
@@ -64,21 +64,21 @@ function extractCoverageData() {
     branches: total.branches.pct,
     covered: total.lines.covered,
     total: total.lines.total,
-  }
+  };
 }
 
 /**
  * Run tests and collect execution data
  */
 function collectTestMetrics() {
-  const startTime = Date.now()
-  const testResultsPath = path.join(METRICS_DIR, "test-results.json")
+  const startTime = Date.now();
+  const testResultsPath = path.join(METRICS_DIR, "test-results.json");
 
   // Add validation before use to prevent directory traversal attacks
-  const resolvedTestResultsPath = path.resolve(testResultsPath)
-  const resolvedMetricsDir = path.resolve(METRICS_DIR)
+  const resolvedTestResultsPath = path.resolve(testResultsPath);
+  const resolvedMetricsDir = path.resolve(METRICS_DIR);
   if (!resolvedTestResultsPath.startsWith(resolvedMetricsDir)) {
-    throw new Error("Invalid test results path: path traversal detected")
+    throw new Error("Invalid test results path: path traversal detected");
   }
 
   try {
@@ -86,16 +86,16 @@ function collectTestMetrics() {
     execSync(`npm run test:coverage -- --json --outputFile=${resolvedTestResultsPath}`, {
       encoding: "utf-8",
       stdio: ["inherit", "pipe", "pipe"],
-    })
+    });
 
-    const endTime = Date.now()
-    const executionTime = endTime - startTime
+    const endTime = Date.now();
+    const executionTime = endTime - startTime;
 
     // Parse test results
-    const testResults = JSON.parse(fs.readFileSync(resolvedTestResultsPath, "utf-8"))
+    const testResults = JSON.parse(fs.readFileSync(resolvedTestResultsPath, "utf-8"));
 
     // Extract coverage data
-    const coverage = extractCoverageData()
+    const coverage = extractCoverageData();
 
     // Calculate test statistics
     const stats = {
@@ -114,17 +114,17 @@ function collectTestMetrics() {
         passed: testResults.numPassedTestSuites,
         failed: testResults.numFailedTestSuites,
       },
-    }
+    };
 
-    return stats
+    return stats;
   } catch (error) {
-    console.error("Error running tests:", error.message)
+    console.error("Error running tests:", error.message);
     console.error(
       "⚠️  Tests failed - metrics collection will continue but script will exit with error code"
-    )
+    );
 
     // If tests fail, still try to extract whatever data we can
-    const coverage = extractCoverageData()
+    const coverage = extractCoverageData();
 
     const _failedStats = {
       timestamp: new Date().toISOString(),
@@ -143,10 +143,10 @@ function collectTestMetrics() {
         passed: 0,
         failed: 0,
       },
-    }
+    };
 
     // Store failed stats for tracking but throw to exit with error code
-    throw new Error(`Tests failed: ${error.message}`)
+    throw new Error(`Tests failed: ${error.message}`);
   }
 }
 
@@ -159,11 +159,11 @@ function calculateTrends(history) {
       coverage: { change: "N/A", direction: "→" },
       executionTime: { change: 0, direction: "→" },
       testCount: { change: 0, direction: "→" },
-    }
+    };
   }
 
-  const recent = history.runs[history.runs.length - 1]
-  const previous = history.runs[history.runs.length - 2]
+  const recent = history.runs[history.runs.length - 1];
+  const previous = history.runs[history.runs.length - 2];
 
   const trends = {
     coverage: {
@@ -200,33 +200,33 @@ function calculateTrends(history) {
               : "→"
           : "→",
     },
-  }
+  };
 
-  return trends
+  return trends;
 }
 
 /**
  * Generate coverage badge
  */
 function _generateCoverageBadge(coverage) {
-  if (!coverage) return ""
+  if (!coverage) return "";
 
-  const percentage = coverage.lines
-  let color = "red"
+  const percentage = coverage.lines;
+  let color = "red";
 
-  if (percentage >= 80) color = "brightgreen"
-  else if (percentage >= 70) color = "green"
-  else if (percentage >= 60) color = "yellow"
-  else if (percentage >= 50) color = "orange"
+  if (percentage >= 80) color = "brightgreen";
+  else if (percentage >= 70) color = "green";
+  else if (percentage >= 60) color = "yellow";
+  else if (percentage >= 50) color = "orange";
 
-  return `![Coverage](https://img.shields.io/badge/coverage-${percentage}%25-${color})`
+  return `![Coverage](https://img.shields.io/badge/coverage-${percentage}%25-${color})`;
 }
 
 /**
  * Display metrics dashboard
  */
 function displayDashboard(stats, history) {
-  const _trends = calculateTrends(history)
+  const _trends = calculateTrends(history);
   if (stats.coverage) {
   } else {
   }
@@ -242,30 +242,30 @@ function displayDashboard(stats, history) {
       .filter((r) => r.coverage)
       .slice(-5)
       .map((r) => `${r.coverage.lines.toFixed(1)}%`)
-      .join(" → ")
+      .join(" → ");
   }
 
-  const warnings = []
+  const warnings = [];
 
   if (stats.tests && stats.tests.skipped > 0) {
-    warnings.push(`  ${stats.tests.skipped} skipped tests need review`)
+    warnings.push(`  ${stats.tests.skipped} skipped tests need review`);
   }
 
   if (stats.tests && stats.tests.failed > 0) {
-    warnings.push(`  ${stats.tests.failed} failing tests need attention`)
+    warnings.push(`  ${stats.tests.failed} failing tests need attention`);
   }
 
   if (stats.coverage && stats.coverage.lines < 50) {
-    warnings.push(`  Coverage is below 50% threshold`)
+    warnings.push(`  Coverage is below 50% threshold`);
   }
 
   if (stats.executionTime > 120) {
-    warnings.push(`  Test execution time is over 2 minutes`)
+    warnings.push(`  Test execution time is over 2 minutes`);
   }
 
   if (warnings.length === 0) {
   } else {
-    warnings.forEach((_w) => {})
+    warnings.forEach((_w) => {});
   }
 }
 
@@ -273,7 +273,7 @@ function displayDashboard(stats, history) {
  * Generate HTML report
  */
 function generateHtmlReport(stats, history) {
-  const trends = calculateTrends(history)
+  const trends = calculateTrends(history);
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -446,33 +446,33 @@ function generateHtmlReport(stats, history) {
     <p class="timestamp">Generated on ${new Date().toLocaleString()}</p>
   </div>
 </body>
-</html>`
+</html>`;
 
-  const reportPath = path.join(METRICS_DIR, "dashboard.html")
-  fs.writeFileSync(reportPath, html)
+  const reportPath = path.join(METRICS_DIR, "dashboard.html");
+  fs.writeFileSync(reportPath, html);
 }
 
 /**
  * Main function
  */
 function main() {
-  const args = process.argv.slice(2)
-  const command = args[0]
+  const args = process.argv.slice(2);
+  const command = args[0];
 
   if (command === "collect") {
     // Collect new metrics
-    let stats
-    let testFailed = false
+    let stats;
+    let testFailed = false;
 
     try {
-      stats = collectTestMetrics()
+      stats = collectTestMetrics();
     } catch (error) {
-      testFailed = true
-      console.error("\n❌ Test execution failed:", error.message)
-      console.error("⚠️  Attempting to collect partial metrics...\n")
+      testFailed = true;
+      console.error("\n❌ Test execution failed:", error.message);
+      console.error("⚠️  Attempting to collect partial metrics...\n");
 
       // Try to extract coverage even if tests failed
-      const coverage = extractCoverageData()
+      const coverage = extractCoverageData();
       stats = {
         timestamp: new Date().toISOString(),
         executionTime: 0,
@@ -490,50 +490,50 @@ function main() {
           passed: 0,
           failed: 0,
         },
-      }
+      };
     }
 
-    const history = loadHistory()
+    const history = loadHistory();
 
-    history.runs.push(stats)
+    history.runs.push(stats);
 
     // Keep only last 100 runs
     if (history.runs.length > 100) {
-      history.runs = history.runs.slice(-100)
+      history.runs = history.runs.slice(-100);
     }
 
-    saveHistory(history)
+    saveHistory(history);
 
-    displayDashboard(stats, history)
-    generateHtmlReport(stats, history)
+    displayDashboard(stats, history);
+    generateHtmlReport(stats, history);
 
     // Exit with error code if tests failed
     if (testFailed) {
-      console.error("\n❌ Exiting with error code due to test failures")
-      process.exit(1)
+      console.error("\n❌ Exiting with error code due to test failures");
+      process.exit(1);
     }
   } else if (command === "show") {
     // Show current metrics without running tests
-    const history = loadHistory()
+    const history = loadHistory();
 
     if (history.runs.length === 0) {
-      return
+      return;
     }
 
-    const latest = history.runs[history.runs.length - 1]
-    displayDashboard(latest, history)
+    const latest = history.runs[history.runs.length - 1];
+    displayDashboard(latest, history);
   } else if (command === "report") {
     // Generate HTML report only
-    const history = loadHistory()
+    const history = loadHistory();
 
     if (history.runs.length === 0) {
-      return
+      return;
     }
 
-    const latest = history.runs[history.runs.length - 1]
-    generateHtmlReport(latest, history)
+    const latest = history.runs[history.runs.length - 1];
+    generateHtmlReport(latest, history);
   } else {
   }
 }
 
-main()
+main();

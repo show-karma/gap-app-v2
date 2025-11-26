@@ -41,6 +41,6 @@ export const SUPPORTED_CONTRACT_NETWORKS = [
   "unichain",
   "sophon",
   "apechain",
-] as const
+] as const;
 
-export type SupportedContractNetwork = (typeof SUPPORTED_CONTRACT_NETWORKS)[number]
+export type SupportedContractNetwork = (typeof SUPPORTED_CONTRACT_NETWORKS)[number];

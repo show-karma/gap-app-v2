@@ -1,25 +1,25 @@
-"use client"
-import { CheckIcon } from "@heroicons/react/24/solid"
-import * as Popover from "@radix-ui/react-popover"
-import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk"
-import pluralize from "pluralize"
+"use client";
+import { CheckIcon } from "@heroicons/react/24/solid";
+import * as Popover from "@radix-ui/react-popover";
+import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk";
+import pluralize from "pluralize";
 /* eslint-disable @next/next/no-img-element */
-import { type FC, useState } from "react"
-import { ChevronDown } from "@/components/Icons/ChevronDown"
-import { chainImgDictionary } from "@/utilities/chainImgDictionary"
-import { chainNameDictionary } from "@/utilities/chainNameDictionary"
-import { shortAddress } from "@/utilities/shortAddress"
-import { cn } from "@/utilities/tailwind"
+import { type FC, useState } from "react";
+import { ChevronDown } from "@/components/Icons/ChevronDown";
+import { chainImgDictionary } from "@/utilities/chainImgDictionary";
+import { chainNameDictionary } from "@/utilities/chainNameDictionary";
+import { shortAddress } from "@/utilities/shortAddress";
+import { cn } from "@/utilities/tailwind";
 
 interface CommunitiesSelectProps {
-  onSelectFunction: (value: ICommunityResponse) => void
-  selected: string[]
-  list: ICommunityResponse[]
-  type: string
-  buttonClassname?: string
-  shouldSort?: boolean
-  canSearch?: boolean
+  onSelectFunction: (value: ICommunityResponse) => void;
+  selected: string[];
+  list: ICommunityResponse[];
+  type: string;
+  buttonClassname?: string;
+  shouldSort?: boolean;
+  canSearch?: boolean;
 }
 export const CommunitiesSelect: FC<CommunitiesSelectProps> = ({
   onSelectFunction,
@@ -28,7 +28,7 @@ export const CommunitiesSelect: FC<CommunitiesSelectProps> = ({
   type = "community",
   buttonClassname,
 }) => {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false);
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
@@ -62,7 +62,7 @@ export const CommunitiesSelect: FC<CommunitiesSelectProps> = ({
               <CommandItem
                 key={community.uid}
                 onSelect={() => {
-                  onSelectFunction(community)
+                  onSelectFunction(community);
                 }}
                 className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
               >
@@ -101,5 +101,5 @@ export const CommunitiesSelect: FC<CommunitiesSelectProps> = ({
         </Command>
       </Popover.Content>
     </Popover.Root>
-  )
-}
+  );
+};

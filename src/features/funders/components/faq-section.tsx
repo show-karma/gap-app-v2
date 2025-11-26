@@ -1,6 +1,6 @@
-import { FAQAccordion } from "@/src/components/shared/faq-accordion"
-import { marketingLayoutTheme } from "@/src/helper/theme"
-import { cn } from "@/utilities/tailwind"
+import { FAQAccordion } from "@/src/components/shared/faq-accordion";
+import { marketingLayoutTheme } from "@/src/helper/theme";
+import { cn } from "@/utilities/tailwind";
 
 const faqItems = [
   {
@@ -52,7 +52,7 @@ You’re free to **mix and match modules** and expand as your program evolves.`,
     question: "Can we launch a whitelabel version of Karma for our ecosystem?",
     answer: `Yes. Many ecosystems and grant programs use a **custom-branded instance of Karma** with their own domain, theme, and workflows. This allows you to maintain your brand identity while leveraging Karma’s infrastructure for funding, evaluation, and reporting.`,
   },
-]
+];
 
 export function FAQSection() {
   return (
@@ -68,5 +68,5 @@ export function FAQSection() {
         <FAQAccordion items={faqItems} />
       </div>
     </section>
-  )
+  );
 }

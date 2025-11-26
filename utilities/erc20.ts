@@ -1,4 +1,4 @@
-import type { Address, PublicClient, WalletClient } from "viem"
+import type { Address, PublicClient, WalletClient } from "viem";
 
 // Standard ERC20 ABI for allowance and approve functions
 export const ERC20_ABI = [
@@ -36,23 +36,23 @@ export const ERC20_ABI = [
     stateMutability: "view",
     type: "function",
   },
-] as const
+] as const;
 
 export interface TokenApprovalInfo {
-  tokenAddress: Address
-  tokenSymbol: string
-  currentAllowance: bigint
-  requiredAmount: bigint
-  needsApproval: boolean
-  chainId: number
+  tokenAddress: Address;
+  tokenSymbol: string;
+  currentAllowance: bigint;
+  requiredAmount: bigint;
+  needsApproval: boolean;
+  chainId: number;
 }
 
 export interface ApprovalTransaction {
-  tokenAddress: Address
-  tokenSymbol: string
-  amount: bigint
-  hash?: string
-  status: "pending" | "confirmed" | "failed"
+  tokenAddress: Address;
+  tokenSymbol: string;
+  amount: bigint;
+  hash?: string;
+  status: "pending" | "confirmed" | "failed";
 }
 
 /**
@@ -70,12 +70,12 @@ export async function checkTokenAllowance(
       abi: ERC20_ABI,
       functionName: "allowance",
       args: [ownerAddress, spenderAddress],
-    })
+    });
 
-    return allowance as bigint
+    return allowance as bigint;
   } catch (error) {
-    console.error(`Failed to check allowance for token ${tokenAddress}:`, error)
-    return 0n
+    console.error(`Failed to check allowance for token ${tokenAddress}:`, error);
+    return 0n;
   }
 }
 
@@ -87,10 +87,10 @@ export async function checkTokenAllowances(
   ownerAddress: Address,
   spenderAddress: Address,
   tokenRequirements: Array<{
-    tokenAddress: Address
-    tokenSymbol: string
-    requiredAmount: bigint
-    chainId?: number
+    tokenAddress: Address;
+    tokenSymbol: string;
+    requiredAmount: bigint;
+    chainId?: number;
   }>,
   chainId?: number
 ): Promise<TokenApprovalInfo[]> {
@@ -100,7 +100,7 @@ export async function checkTokenAllowances(
       req.tokenAddress,
       ownerAddress,
       spenderAddress
-    )
+    );
 
     return {
       tokenAddress: req.tokenAddress,
@@ -109,10 +109,10 @@ export async function checkTokenAllowances(
       requiredAmount: req.requiredAmount,
       needsApproval: currentAllowance < req.requiredAmount,
       chainId: req.chainId ?? chainId ?? publicClient.chain?.id ?? 0,
-    }
-  })
+    };
+  });
 
-  return Promise.all(allowanceChecks)
+  return Promise.all(allowanceChecks);
 }
 
 /**
@@ -132,9 +132,9 @@ export async function approveToken(
     args: [spenderAddress, amount],
     account,
     chain: null,
-  })
+  });
 
-  return hash
+  return hash;
 }
 
 /**
@@ -146,13 +146,13 @@ export async function executeApprovals(
   account: Address,
   spenderAddress: Address,
   approvals: Array<{
-    tokenAddress: Address
-    tokenSymbol: string
-    amount: bigint
+    tokenAddress: Address;
+    tokenSymbol: string;
+    amount: bigint;
   }>,
   onProgress?: (progress: ApprovalTransaction[]) => void
 ): Promise<ApprovalTransaction[]> {
-  const results: ApprovalTransaction[] = []
+  const results: ApprovalTransaction[] = [];
 
   for (const approval of approvals) {
     try {
@@ -163,7 +163,7 @@ export async function executeApprovals(
         spenderAddress,
         approval.amount,
         account
-      )
+      );
 
       const transaction: ApprovalTransaction = {
         tokenAddress: approval.tokenAddress,
@@ -171,41 +171,41 @@ export async function executeApprovals(
         amount: approval.amount,
         hash,
         status: "pending",
-      }
+      };
 
-      results.push(transaction)
-      onProgress?.(results)
+      results.push(transaction);
+      onProgress?.(results);
 
       // Wait for transaction confirmation
       const receipt = await publicClient.waitForTransactionReceipt({
         hash: hash as `0x${string}`,
-      })
+      });
 
       // Update status based on receipt
-      transaction.status = receipt.status === "success" ? "confirmed" : "failed"
-      onProgress?.(results)
+      transaction.status = receipt.status === "success" ? "confirmed" : "failed";
+      onProgress?.(results);
 
       if (receipt.status !== "success") {
-        throw new Error(`Approval transaction failed for ${approval.tokenSymbol}`)
+        throw new Error(`Approval transaction failed for ${approval.tokenSymbol}`);
       }
     } catch (error) {
-      console.error(`Failed to approve ${approval.tokenSymbol}:`, error)
+      console.error(`Failed to approve ${approval.tokenSymbol}:`, error);
 
       const failedTransaction: ApprovalTransaction = {
         tokenAddress: approval.tokenAddress,
         tokenSymbol: approval.tokenSymbol,
         amount: approval.amount,
         status: "failed",
-      }
+      };
 
-      results.push(failedTransaction)
-      onProgress?.(results)
+      results.push(failedTransaction);
+      onProgress?.(results);
 
-      throw error
+      throw error;
     }
   }
 
-  return results
+  return results;
 }
 
 /**
@@ -221,7 +221,7 @@ export async function executeApprovals(
  *
  * Alternative: Set useExactAmount=true to approve only the required amount (worse UX, requires approval for each transaction)
  */
-export const MAX_UINT256 = 2n ** 256n - 1n
+export const MAX_UINT256 = 2n ** 256n - 1n;
 
 /**
  * Helper to determine approval amount strategy
@@ -230,5 +230,5 @@ export const MAX_UINT256 = 2n ** 256n - 1n
  * @returns The approval amount to use
  */
 export function getApprovalAmount(requiredAmount: bigint, useExactAmount = false): bigint {
-  return useExactAmount ? requiredAmount : MAX_UINT256
+  return useExactAmount ? requiredAmount : MAX_UINT256;
 }

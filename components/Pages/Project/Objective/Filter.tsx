@@ -1,43 +1,43 @@
-"use client"
+"use client";
 
-import { Listbox, Transition } from "@headlessui/react"
-import { CheckIcon } from "@heroicons/react/20/solid"
-import { ChevronDownIcon } from "@heroicons/react/24/solid"
-import { useParams } from "next/navigation"
-import { useQueryState } from "nuqs"
-import { Fragment } from "react"
-import { queryClient } from "@/components/Utilities/PrivyProviderWrapper"
-import { useAllMilestones } from "@/hooks/useAllMilestones"
-import type { StatusOptions } from "@/utilities/gapIndexerApi/getProjectObjectives"
-import { cn } from "@/utilities/tailwind"
+import { Listbox, Transition } from "@headlessui/react";
+import { CheckIcon } from "@heroicons/react/20/solid";
+import { ChevronDownIcon } from "@heroicons/react/24/solid";
+import { useParams } from "next/navigation";
+import { useQueryState } from "nuqs";
+import { Fragment } from "react";
+import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
+import { useAllMilestones } from "@/hooks/useAllMilestones";
+import type { StatusOptions } from "@/utilities/gapIndexerApi/getProjectObjectives";
+import { cn } from "@/utilities/tailwind";
 
 const statuses: Record<StatusOptions, string> = {
   all: "All",
   completed: "Completed",
   pending: "Pending",
-}
+};
 
 export const ObjectiveFilter = () => {
-  const projectId = useParams().projectId as string
+  const projectId = useParams().projectId as string;
   const [selectedStatus, changeStatus] = useQueryState<StatusOptions>("status", {
     defaultValue: "all",
     serialize: (value) => value,
     parse: (value) => (value ? (value as StatusOptions) : ("all" as StatusOptions)),
-  })
+  });
 
-  const { milestones } = useAllMilestones(projectId)
+  const { milestones } = useAllMilestones(projectId);
 
-  if (!milestones?.length || !milestones) return null
+  if (!milestones?.length || !milestones) return null;
 
   return (
     <div className="flex flex-row gap-6 justify-center items-center">
       <Listbox
         value={selectedStatus}
         onChange={(value) => {
-          changeStatus(value)
+          changeStatus(value);
           queryClient.invalidateQueries({
             queryKey: ["all-milestones", projectId],
-          })
+          });
         }}
       >
         {({ open }) => (
@@ -106,5 +106,5 @@ export const ObjectiveFilter = () => {
         )}
       </Listbox>
     </div>
-  )
-}
+  );
+};

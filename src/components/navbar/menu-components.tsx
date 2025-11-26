@@ -1,41 +1,41 @@
-import { ArrowUpRight } from "lucide-react"
-import Image from "next/image"
-import { ExternalLink } from "@/components/Utilities/ExternalLink"
-import { cn } from "@/utilities/tailwind"
-import { MenuItemClient } from "./menu-item-client"
-import { exploreItems, forBuildersItems, forFundersItems, resourcesItems } from "./menu-items"
-import { SimpleMenuItemClient } from "./simple-menu-item-client"
+import { ArrowUpRight } from "lucide-react";
+import Image from "next/image";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { cn } from "@/utilities/tailwind";
+import { MenuItemClient } from "./menu-item-client";
+import { exploreItems, forBuildersItems, forFundersItems, resourcesItems } from "./menu-items";
+import { SimpleMenuItemClient } from "./simple-menu-item-client";
 
 const menuStyles = {
   itemIcon: "text-muted-foreground w-4 h-4",
   itemText: "text-foreground text-sm font-medium",
   itemDescription: "text-muted-foreground text-sm font-normal",
-}
+};
 
 // Re-export MenuItemClient as MenuItem for backward compatibility
-export const MenuItem = MenuItemClient
+export const MenuItem = MenuItemClient;
 
 // Re-export SimpleMenuItemClient as SimpleMenuItem for backward compatibility
-export const SimpleMenuItem = SimpleMenuItemClient
+export const SimpleMenuItem = SimpleMenuItemClient;
 
 interface MenuSectionProps {
-  title: string
-  variant?: "desktop" | "mobile"
-  className?: string
+  title: string;
+  variant?: "desktop" | "mobile";
+  className?: string;
 }
 
 export function MenuSection({ title, variant = "desktop", className }: MenuSectionProps) {
   if (variant === "mobile") {
-    return <h3 className={cn(menuStyles.itemDescription, "mb-2", className)}>{title}</h3>
+    return <h3 className={cn(menuStyles.itemDescription, "mb-2", className)}>{title}</h3>;
   }
 
-  return <p className={cn(menuStyles.itemDescription, "mb-2", className)}>{title}</p>
+  return <p className={cn(menuStyles.itemDescription, "mb-2", className)}>{title}</p>;
 }
 
 // For Builders Section
 interface ForBuildersContentProps {
-  variant?: "desktop" | "mobile"
-  onClose?: () => void
+  variant?: "desktop" | "mobile";
+  onClose?: () => void;
 }
 
 export function ForBuildersContent({ variant = "desktop", onClose }: ForBuildersContentProps) {
@@ -46,7 +46,7 @@ export function ForBuildersContent({ variant = "desktop", onClose }: ForBuilders
           <MenuItem key={item.href} {...item} variant="mobile" onClick={onClose} />
         ))}
       </>
-    )
+    );
   }
 
   return (
@@ -58,13 +58,13 @@ export function ForBuildersContent({ variant = "desktop", onClose }: ForBuilders
       </div>
       <Image src="/images/homepage/nav-builder.png" alt="For Builders" width={170} height={132} />
     </div>
-  )
+  );
 }
 
 // For Funders Section
 interface ForFundersContentProps {
-  variant?: "desktop" | "mobile"
-  onClose?: () => void
+  variant?: "desktop" | "mobile";
+  onClose?: () => void;
 }
 
 export function ForFundersContent({ variant = "desktop", onClose }: ForFundersContentProps) {
@@ -76,7 +76,7 @@ export function ForFundersContent({ variant = "desktop", onClose }: ForFundersCo
           <MenuItem key={item.href} {...item} variant="mobile" onClick={onClose} />
         ))}
       </>
-    )
+    );
   }
 
   return (
@@ -98,13 +98,13 @@ export function ForFundersContent({ variant = "desktop", onClose }: ForFundersCo
         height={170}
       />
     </div>
-  )
+  );
 }
 
 // Explore Section
 interface ExploreContentProps {
-  variant?: "desktop" | "mobile"
-  onClose?: () => void
+  variant?: "desktop" | "mobile";
+  onClose?: () => void;
 }
 
 export function ExploreContent({ variant = "desktop", onClose }: ExploreContentProps) {
@@ -120,7 +120,7 @@ export function ExploreContent({ variant = "desktop", onClose }: ExploreContentP
           <SimpleMenuItem key={item.href} {...item} variant="mobile" onClick={onClose} />
         ))}
       </div>
-    )
+    );
   }
 
   return (
@@ -139,13 +139,13 @@ export function ExploreContent({ variant = "desktop", onClose }: ExploreContentP
         ))}
       </div>
     </div>
-  )
+  );
 }
 
 // Resources Section
 interface ResourcesContentProps {
-  variant?: "desktop" | "mobile"
-  onClose?: () => void
+  variant?: "desktop" | "mobile";
+  onClose?: () => void;
 }
 
 export function ResourcesContent({ variant = "desktop", onClose }: ResourcesContentProps) {
@@ -167,7 +167,7 @@ export function ResourcesContent({ variant = "desktop", onClose }: ResourcesCont
           </ExternalLink>
         ))}
       </>
-    )
+    );
   }
 
   return (
@@ -176,5 +176,5 @@ export function ResourcesContent({ variant = "desktop", onClose }: ResourcesCont
         <SimpleMenuItem key={item.href} {...item} variant="desktop" />
       ))}
     </div>
-  )
+  );
 }

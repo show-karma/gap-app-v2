@@ -1,78 +1,78 @@
-"use client"
-import { ChevronLeftIcon, MagnifyingGlassIcon } from "@heroicons/react/24/solid"
-import { useQuery } from "@tanstack/react-query"
-import debounce from "lodash.debounce"
-import Link from "next/link"
-import { useSearchParams } from "next/navigation"
-import { useQueryState } from "nuqs"
-import type React from "react"
-import { type Dispatch, useEffect, useState } from "react"
-import toast from "react-hot-toast"
-import { useAccount } from "wagmi"
-import AddProgram from "@/components/Pages/ProgramRegistry/AddProgram"
-import { registryHelper } from "@/components/Pages/ProgramRegistry/helper"
-import { ManageProgramList } from "@/components/Pages/ProgramRegistry/ManageProgramList"
-import { MyProgramList } from "@/components/Pages/ProgramRegistry/MyProgramList"
-import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog"
-import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList"
-import { Button } from "@/components/Utilities/Button"
-import { errorManager } from "@/components/Utilities/errorManager"
-import Pagination from "@/components/Utilities/Pagination"
-import { useAuth } from "@/hooks/useAuth"
-import { useRegistryStore } from "@/store/registry"
-import { isMemberOfProfile } from "@/utilities/allo/isMemberOf"
-import { useSigner } from "@/utilities/eas-wagmi-utils"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
-import { PAGES } from "@/utilities/pages"
-import { checkIsPoolManager } from "@/utilities/registry/checkIsPoolManager"
-import { LoadingProgramTable } from "./Loading/Programs"
-import { SearchDropdown } from "./SearchDropdown"
+"use client";
+import { ChevronLeftIcon, MagnifyingGlassIcon } from "@heroicons/react/24/solid";
+import { useQuery } from "@tanstack/react-query";
+import debounce from "lodash.debounce";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useQueryState } from "nuqs";
+import type React from "react";
+import { type Dispatch, useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import AddProgram from "@/components/Pages/ProgramRegistry/AddProgram";
+import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
+import { ManageProgramList } from "@/components/Pages/ProgramRegistry/ManageProgramList";
+import { MyProgramList } from "@/components/Pages/ProgramRegistry/MyProgramList";
+import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
+import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
+import Pagination from "@/components/Utilities/Pagination";
+import { useAuth } from "@/hooks/useAuth";
+import { useRegistryStore } from "@/store/registry";
+import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { PAGES } from "@/utilities/pages";
+import { checkIsPoolManager } from "@/utilities/registry/checkIsPoolManager";
+import { LoadingProgramTable } from "./Loading/Programs";
+import { SearchDropdown } from "./SearchDropdown";
 
 export const ManagePrograms = () => {
-  const searchParams = useSearchParams()
-  const defaultTab = searchParams.get("tab") || ""
-  const defaultName = searchParams.get("name") || ""
-  const defaultSort = searchParams.get("sortField") || "updatedAt"
-  const defaultSortOrder = searchParams.get("sortOrder") || "desc"
+  const searchParams = useSearchParams();
+  const defaultTab = searchParams.get("tab") || "";
+  const defaultName = searchParams.get("name") || "";
+  const defaultSort = searchParams.get("sortField") || "updatedAt";
+  const defaultSortOrder = searchParams.get("sortOrder") || "desc";
 
-  const defaultProgramId = searchParams.get("programId") || ""
+  const defaultProgramId = searchParams.get("programId") || "";
   const defaultNetworks = ((searchParams.get("networks") as string) || "")
     .split(",")
-    .filter((category) => category.trim())
+    .filter((category) => category.trim());
 
   const defaultEcosystems = ((searchParams.get("ecosystems") as string) || "")
     .split(",")
-    .filter((ecosystems) => ecosystems.trim())
+    .filter((ecosystems) => ecosystems.trim());
   const defaultGrantTypes = ((searchParams.get("grantTypes") as string) || "")
     .split(",")
-    .filter((grantType) => grantType.trim())
+    .filter((grantType) => grantType.trim());
 
   const [selectedNetworks, setSelectedNetworks] = useQueryState("networks", {
     defaultValue: defaultNetworks,
     serialize: (value) => (value.length ? value?.join(",") : ""),
     parse: (value) => (value.length > 0 ? value.split(",") : []),
-  })
+  });
 
   const [selectedEcosystems, setSelectedEcosystems] = useQueryState("ecosystems", {
     defaultValue: defaultEcosystems,
     serialize: (value) => (value.length ? value?.join(",") : ""),
     parse: (value) => (value.length > 0 ? value.split(",") : []),
-  })
+  });
 
   const [selectedGrantTypes, setSelectedGrantTypes] = useQueryState("grantTypes", {
     defaultValue: defaultGrantTypes,
     serialize: (value) => (value.length ? value?.join(",") : ""),
     parse: (value) => (value.length > 0 ? value.split(",") : []),
-  })
+  });
 
-  const [isEditing, setIsEditing] = useState(false)
-  const [programToEdit, setProgramToEdit] = useState<GrantProgram | null>(null)
+  const [isEditing, setIsEditing] = useState(false);
+  const [programToEdit, setProgramToEdit] = useState<GrantProgram | null>(null);
 
-  const { address, isConnected } = useAccount()
-  const { authenticated: isAuth, login } = useAuth()
+  const { address, isConnected } = useAccount();
+  const { authenticated: isAuth, login } = useAuth();
 
-  const _signer = useSigner()
+  const _signer = useSigner();
 
   const {
     setIsRegistryAdmin,
@@ -83,39 +83,39 @@ export const ManagePrograms = () => {
     isRegistryAdminLoading,
     isPoolManagerLoading,
     setIsPoolManagerLoading,
-  } = useRegistryStore()
+  } = useRegistryStore();
 
-  const isAllowed = address && (isRegistryAdmin || isPoolManager) && isAuth
+  const isAllowed = address && (isRegistryAdmin || isPoolManager) && isAuth;
 
   useEffect(() => {
     if (!address || !isConnected) {
-      setIsRegistryAdmin(false)
-      setIsRegistryAdminLoading(false)
-      setIsPoolManagerLoading(false)
-      return
+      setIsRegistryAdmin(false);
+      setIsRegistryAdminLoading(false);
+      setIsPoolManagerLoading(false);
+      return;
     }
 
     const getMemberOf = async () => {
-      setIsRegistryAdminLoading(true)
-      setIsPoolManagerLoading(true)
+      setIsRegistryAdminLoading(true);
+      setIsPoolManagerLoading(true);
       try {
-        const call = await isMemberOfProfile(address)
-        setIsRegistryAdmin(call)
+        const call = await isMemberOfProfile(address);
+        setIsRegistryAdmin(call);
         if (!call) {
-          const isManager = await checkIsPoolManager(address)
-          setIsPoolManager(isManager)
+          const isManager = await checkIsPoolManager(address);
+          setIsPoolManager(isManager);
         }
       } catch (error: any) {
         errorManager(
           `Error while checking if ${address} is a registry admin or pool manager`,
           error
-        )
+        );
       } finally {
-        setIsRegistryAdminLoading(false)
-        setIsPoolManagerLoading(false)
+        setIsRegistryAdminLoading(false);
+        setIsPoolManagerLoading(false);
       }
-    }
-    getMemberOf()
+    };
+    getMemberOf();
   }, [
     address,
     isConnected,
@@ -123,115 +123,115 @@ export const ManagePrograms = () => {
     setIsPoolManagerLoading,
     setIsRegistryAdmin,
     setIsRegistryAdminLoading,
-  ])
+  ]);
 
   const [tab, setTab] = useQueryState("tab", {
     defaultValue: defaultTab || "pending",
-  })
+  });
 
   const [page, setPage] = useQueryState("page", {
     defaultValue: 1,
     serialize: (value) => value.toString(),
     parse: (value) => parseInt(value, 10),
-  })
-  const pageSize = 10
+  });
+  const pageSize = 10;
 
   const [searchInput, setSearchInput] = useQueryState("name", {
     defaultValue: defaultName,
     throttleMs: 500,
-  })
+  });
 
   const [programId, setProgramId] = useQueryState("programId", {
     defaultValue: defaultProgramId,
     throttleMs: 500,
-  })
+  });
 
   const [sortField, setSortField] = useQueryState("sortField", {
     defaultValue: defaultSort,
-  })
+  });
 
   const [sortOrder, setSortOrder] = useQueryState("sortOrder", {
     defaultValue: defaultSortOrder,
-  })
+  });
 
-  const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(null)
+  const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(null);
 
   useEffect(() => {
     const searchProgramById = async (id: string) => {
       try {
         const [data, error] = await fetchData(
           INDEXER.REGISTRY.FIND_BY_ID(id, registryHelper.supportedNetworks)
-        )
-        if (error) throw Error(error)
+        );
+        if (error) throw Error(error);
         if (data) {
           data.forEach((program: GrantProgram) => {
             if (typeof program.metadata?.grantTypes === "string") {
-              program.metadata.grantTypes = [program.metadata.grantTypes]
+              program.metadata.grantTypes = [program.metadata.grantTypes];
             }
-          })
-          setSelectedProgram(data)
+          });
+          setSelectedProgram(data);
         }
       } catch (error: any) {
-        errorManager(`Error while searching for program by id`, error)
+        errorManager(`Error while searching for program by id`, error);
       }
-    }
+    };
     if (programId) {
-      searchProgramById(programId)
+      searchProgramById(programId);
     }
-  }, [programId])
+  }, [programId]);
 
   const debouncedSearch = debounce((value: string) => {
-    setPage(1)
-    setSearchInput(value)
-  }, 500)
+    setPage(1);
+    setSearchInput(value);
+  }, 500);
 
   const getGrantPrograms = async () => {
     try {
-      const baseUrl = INDEXER.REGISTRY.GET_ALL
-      const queryParams = `?isValid=${tab}&limit=${pageSize}&offset=${(page - 1) * pageSize}`
-      const searchParam = searchInput ? `&name=${searchInput}` : ""
-      const networkParam = selectedNetworks.length ? `&networks=${selectedNetworks.join(",")}` : ""
+      const baseUrl = INDEXER.REGISTRY.GET_ALL;
+      const queryParams = `?isValid=${tab}&limit=${pageSize}&offset=${(page - 1) * pageSize}`;
+      const searchParam = searchInput ? `&name=${searchInput}` : "";
+      const networkParam = selectedNetworks.length ? `&networks=${selectedNetworks.join(",")}` : "";
       const ecosystemParam = selectedEcosystems.length
         ? `&ecosystems=${selectedEcosystems.join(",")}`
-        : ""
+        : "";
 
       const grantTypeParam = selectedGrantTypes.length
         ? `&grantTypes=${selectedGrantTypes.join(",")}`
-        : ""
+        : "";
 
-      const sortParams = `&sortField=${sortField}&sortOrder=${sortOrder}`
-      const filterParams = networkParam + ecosystemParam + grantTypeParam + sortParams
-      const ownerParam = address && !isRegistryAdmin ? `&owners=${address}` : ""
+      const sortParams = `&sortField=${sortField}&sortOrder=${sortOrder}`;
+      const filterParams = networkParam + ecosystemParam + grantTypeParam + sortParams;
+      const ownerParam = address && !isRegistryAdmin ? `&owners=${address}` : "";
       const url = isRegistryAdmin
         ? `${baseUrl}${queryParams}${searchParam}${filterParams}`
-        : `${baseUrl}${queryParams}${ownerParam}${searchParam}${filterParams}`
+        : `${baseUrl}${queryParams}${ownerParam}${searchParam}${filterParams}`;
 
-      const [res, error] = await fetchData(url)
+      const [res, error] = await fetchData(url);
       if (!error && res) {
         res.programs.forEach((program: GrantProgram) => {
           if (typeof program.metadata?.grantTypes === "string") {
-            program.metadata.grantTypes = [program.metadata.grantTypes]
+            program.metadata.grantTypes = [program.metadata.grantTypes];
           }
-        })
+        });
         return {
           programs: res.programs as GrantProgram[],
           count: res.count as number,
-        }
+        };
       } else {
-        throw Error(error)
+        throw Error(error);
       }
     } catch (error: any) {
-      errorManager(`Error while fetching grant programs`, error)
+      errorManager(`Error while fetching grant programs`, error);
       return {
         programs: [] as GrantProgram[],
         count: 0,
-      }
+      };
     }
-  }
+  };
 
   const { data, isLoading, refetch } = useQuery<{
-    programs: GrantProgram[]
-    count: number
+    programs: GrantProgram[];
+    count: number;
   }>({
     queryKey: [
       "grantPrograms",
@@ -248,13 +248,13 @@ export const ManagePrograms = () => {
     ],
     queryFn: () => getGrantPrograms(),
     enabled: !isRegistryAdminLoading || !isPoolManagerLoading,
-  })
-  const grantPrograms = data?.programs || []
-  const totalPrograms = data?.count || 0
+  });
+  const grantPrograms = data?.programs || [];
+  const totalPrograms = data?.count || 0;
 
   const refreshPrograms = async () => {
-    await refetch()
-  }
+    await refetch();
+  };
 
   const approveOrReject = async (
     program: GrantProgram,
@@ -264,9 +264,9 @@ export const ManagePrograms = () => {
       accepted: "approving",
       rejected: "rejecting",
       pending: "pending",
-    }
+    };
     try {
-      const id = program._id.$oid
+      const id = program._id.$oid;
 
       const request = fetchData(
         INDEXER.REGISTRY.APPROVE,
@@ -279,41 +279,41 @@ export const ManagePrograms = () => {
         {},
         true
       ).then(([res, error]) => {
-        if (error) throw Error(error)
-        return res
-      })
+        if (error) throw Error(error);
+        return res;
+      });
       await toast.promise(request, {
         loading: `Changing program ${program.metadata?.title} to ${value}...`,
         success: `Program changed to ${value} successfully`,
         error: `Error while changing program ${program.metadata?.title} to ${value}.`,
-      })
+      });
 
-      await refreshPrograms()
+      await refreshPrograms();
     } catch (error: any) {
       errorManager(`Error ${messageDict[value]} program ${program._id.$oid}`, error, {
         program: program._id.$oid,
         isValid: value,
         address,
-      })
+      });
     }
-  }
+  };
 
   const onChangeGeneric = (
     value: string,
     setToChange: Dispatch<React.SetStateAction<string[]>>
   ) => {
     setToChange((oldArray) => {
-      setPage(1)
-      const newArray = [...oldArray]
+      setPage(1);
+      const newArray = [...oldArray];
       if (newArray.includes(value)) {
-        const filteredArray = newArray.filter((item) => item !== value)
-        return filteredArray
+        const filteredArray = newArray.filter((item) => item !== value);
+        return filteredArray;
       } else {
-        newArray.push(value)
+        newArray.push(value);
       }
-      return newArray
-    })
-  }
+      return newArray;
+    });
+  };
 
   const NotAllowedCases = () => {
     if (!address || !isAuth || !isConnected) {
@@ -323,16 +323,16 @@ export const ManagePrograms = () => {
           <Button
             className="w-max"
             onClick={() => {
-              login?.()
+              login?.();
             }}
           >
             Login
           </Button>
         </div>
-      )
+      );
     }
-    return <p>Seems like you do not have programs to manage.</p>
-  }
+    return <p>Seems like you do not have programs to manage.</p>;
+  };
 
   return (
     <>
@@ -341,8 +341,8 @@ export const ManagePrograms = () => {
           program={selectedProgram}
           isOpen={selectedProgram !== null}
           closeModal={() => {
-            setProgramId(null)
-            setSelectedProgram(null)
+            setProgramId(null);
+            setSelectedProgram(null);
           }}
         />
       ) : null}
@@ -363,8 +363,8 @@ export const ManagePrograms = () => {
               <AddProgram
                 programToEdit={programToEdit}
                 backTo={() => {
-                  setIsEditing(false)
-                  setProgramToEdit(null)
+                  setIsEditing(false);
+                  setProgramToEdit(null);
                 }}
                 refreshPrograms={refreshPrograms}
               />
@@ -383,8 +383,8 @@ export const ManagePrograms = () => {
                   <Button
                     className="bg-transparent text-black"
                     onClick={() => {
-                      setPage(1)
-                      setTab("pending")
+                      setPage(1);
+                      setTab("pending");
                     }}
                     style={{
                       backgroundColor: tab === "pending" ? "white" : "transparent",
@@ -396,8 +396,8 @@ export const ManagePrograms = () => {
                   <Button
                     className="bg-transparent text-black"
                     onClick={() => {
-                      setPage(1)
-                      setTab("accepted")
+                      setPage(1);
+                      setTab("accepted");
                     }}
                     style={{
                       backgroundColor: tab === "accepted" ? "white" : "transparent",
@@ -409,8 +409,8 @@ export const ManagePrograms = () => {
                   <Button
                     className="bg-transparent text-black"
                     onClick={() => {
-                      setPage(1)
-                      setTab("rejected")
+                      setPage(1);
+                      setTab("rejected");
                     }}
                     style={{
                       backgroundColor: tab === "rejected" ? "white" : "transparent",
@@ -450,7 +450,7 @@ export const ManagePrograms = () => {
                         onChangeGeneric(value, setSelectedNetworks)
                       }
                       cleanFunction={() => {
-                        setSelectedNetworks([])
+                        setSelectedNetworks([]);
                       }}
                       type={"Networks"}
                       selected={selectedNetworks}
@@ -463,7 +463,7 @@ export const ManagePrograms = () => {
                         onChangeGeneric(value, setSelectedEcosystems)
                       }
                       cleanFunction={() => {
-                        setSelectedEcosystems([])
+                        setSelectedEcosystems([]);
                       }}
                       type={"Ecosystems"}
                       selected={selectedEcosystems}
@@ -475,7 +475,7 @@ export const ManagePrograms = () => {
                         onChangeGeneric(value, setSelectedGrantTypes)
                       }
                       cleanFunction={() => {
-                        setSelectedGrantTypes([])
+                        setSelectedGrantTypes([]);
                       }}
                       type={"Funding Mechanisms"}
                       selected={selectedGrantTypes}
@@ -494,12 +494,12 @@ export const ManagePrograms = () => {
                               grantPrograms={grantPrograms}
                               tab={tab as "pending" | "accepted" | "rejected"}
                               editFn={(program: GrantProgram) => {
-                                setIsEditing(true)
-                                setProgramToEdit(program)
+                                setIsEditing(true);
+                                setProgramToEdit(program);
                               }}
                               selectProgram={(program: GrantProgram) => {
-                                setProgramId(program._id.$oid || program.programId || "")
-                                setSelectedProgram(program)
+                                setProgramId(program._id.$oid || program.programId || "");
+                                setSelectedProgram(program);
                               }}
                               isAllowed={isAllowed}
                             />
@@ -508,12 +508,12 @@ export const ManagePrograms = () => {
                               grantPrograms={grantPrograms}
                               tab={tab as "pending" | "accepted" | "rejected"}
                               editFn={(program: GrantProgram) => {
-                                setIsEditing(true)
-                                setProgramToEdit(program)
+                                setIsEditing(true);
+                                setProgramToEdit(program);
                               }}
                               selectProgram={(program: GrantProgram) => {
-                                setProgramId(program._id.$oid || program.programId || "")
-                                setSelectedProgram(program)
+                                setProgramId(program._id.$oid || program.programId || "");
+                                setSelectedProgram(program);
                               }}
                               isAllowed={isAllowed}
                               setSortField={setSortField}
@@ -549,5 +549,5 @@ export const ManagePrograms = () => {
         )}
       </section>
     </>
-  )
-}
+  );
+};

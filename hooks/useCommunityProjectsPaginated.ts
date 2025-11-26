@@ -1,12 +1,12 @@
-"use client"
-import { useInfiniteQuery } from "@tanstack/react-query"
-import type { CommunityProjectsV2Response } from "@/types/community"
-import { getCommunityProjectsV2 } from "@/utilities/queries/getCommunityDataV2"
+"use client";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import type { CommunityProjectsV2Response } from "@/types/community";
+import { getCommunityProjectsV2 } from "@/utilities/queries/getCommunityDataV2";
 
 interface UseCommunityProjectsPaginatedOptions {
-  communityId: string
-  programId?: string
-  itemsPerPage?: number
+  communityId: string;
+  programId?: string;
+  itemsPerPage?: number;
 }
 
 export function useCommunityProjectsPaginated({
@@ -25,10 +25,10 @@ export function useCommunityProjectsPaginated({
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => {
       if (lastPage.pagination.hasNextPage) {
-        return allPages.length + 1
+        return allPages.length + 1;
       }
-      return undefined
+      return undefined;
     },
     enabled: !!communityId && !!programId,
-  })
+  });
 }

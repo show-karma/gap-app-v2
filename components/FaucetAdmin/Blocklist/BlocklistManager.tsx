@@ -1,47 +1,47 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Spinner } from "@/components/Utilities/Spinner"
-import { useBlockedAddresses, useChains } from "@/hooks/useFaucetAdmin"
+import { useState } from "react";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { useBlockedAddresses, useChains } from "@/hooks/useFaucetAdmin";
 
 export function BlocklistManager() {
-  const { addresses, isLoading, blockAddress, unblockAddress } = useBlockedAddresses()
-  const [showAddForm, setShowAddForm] = useState(false)
+  const { addresses, isLoading, blockAddress, unblockAddress } = useBlockedAddresses();
+  const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState({
     address: "",
     reason: "",
     chainId: "",
     expiresAt: "",
-  })
-  const { chains } = useChains()
+  });
+  const { chains } = useChains();
   const handleBlock = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     blockAddress({
       address: formData.address,
       chainId: formData.chainId ? parseInt(formData.chainId, 10) : undefined,
       expiresAt: formData.expiresAt || undefined,
       reason: formData.reason,
-    })
+    });
     setFormData({
       address: "",
       reason: "",
       chainId: "",
       expiresAt: "",
-    })
-    setShowAddForm(false)
-  }
+    });
+    setShowAddForm(false);
+  };
 
   const getChainName = (chainId?: number) => {
-    if (!chainId) return "All Chains"
-    return chains?.find((n) => n.chainId === chainId)?.name || `Chain ${chainId}`
-  }
+    if (!chainId) return "All Chains";
+    return chains?.find((n) => n.chainId === chainId)?.name || `Chain ${chainId}`;
+  };
 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <Spinner />
       </div>
-    )
+    );
   }
 
   return (
@@ -197,7 +197,7 @@ export function BlocklistManager() {
                         unblockAddress({
                           address: blocked.address,
                           chainId: blocked.chainId,
-                        })
+                        });
                       }
                     }}
                     className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
@@ -217,5 +217,5 @@ export function BlocklistManager() {
         )}
       </div>
     </div>
-  )
+  );
 }

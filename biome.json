@@ -57,7 +57,7 @@
   "javascript": {
     "formatter": {
       "quoteStyle": "double",
-      "semicolons": "asNeeded",
+      "semicolons": "always",
       "trailingCommas": "es5",
       "arrowParentheses": "always"
     }

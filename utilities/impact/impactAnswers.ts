@@ -1,7 +1,7 @@
-import toast from "react-hot-toast"
-import fetchData from "../fetchData"
-import { INDEXER } from "../indexer"
-import { MESSAGES } from "../messages"
+import toast from "react-hot-toast";
+import fetchData from "../fetchData";
+import { INDEXER } from "../indexer";
+import { MESSAGES } from "../messages";
 
 /**
  * Sends impact indicator data for a project
@@ -17,10 +17,10 @@ export const sendImpactAnswers = async (
   projectIdentifier: string,
   indicatorId: string,
   datapoints: {
-    value: number | string
-    proof: string
-    startDate: string
-    endDate: string
+    value: number | string;
+    proof: string;
+    startDate: string;
+    endDate: string;
   }[],
   onSuccess?: () => void,
   onError?: (error: string) => void
@@ -38,29 +38,29 @@ export const sendImpactAnswers = async (
           endDate: item.endDate,
         })),
       }
-    )
+    );
 
     if (error) {
       if (onError) {
-        onError(error)
+        onError(error);
       } else {
-        toast.error(MESSAGES.GRANT.OUTPUTS.ERROR)
+        toast.error(MESSAGES.GRANT.OUTPUTS.ERROR);
       }
-      return false
+      return false;
     } else {
       if (onSuccess) {
-        onSuccess()
+        onSuccess();
       } else {
-        toast.success(MESSAGES.GRANT.OUTPUTS.SUCCESS)
+        toast.success(MESSAGES.GRANT.OUTPUTS.SUCCESS);
       }
-      return true
+      return true;
     }
   } catch (error) {
     if (onError) {
-      onError(error instanceof Error ? error.message : String(error))
+      onError(error instanceof Error ? error.message : String(error));
     } else {
-      toast.error(MESSAGES.GRANT.OUTPUTS.ERROR)
+      toast.error(MESSAGES.GRANT.OUTPUTS.ERROR);
     }
-    return false
+    return false;
   }
-}
+};

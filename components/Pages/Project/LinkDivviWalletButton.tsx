@@ -14,7 +14,6 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { MESSAGES } from "@/utilities/messages";
 
 interface LinkDivviWalletButtonProps {
   buttonClassName?: string;
@@ -36,9 +35,7 @@ export const LinkDivviWalletButton: FC<LinkDivviWalletButtonProps> = ({
 }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isCommunityAdmin = useCommunityAdminStore(
-    (state) => state.isCommunityAdmin
-  );
+  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
   const { address } = useAccount();
   const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
 
@@ -101,14 +98,10 @@ export const LinkDivviWalletButton: FC<LinkDivviWalletButtonProps> = ({
     setIsLoading(true);
     const ids = walletAddress.trim() ? [walletAddress.trim()] : [];
     try {
-      const [data, error] = await fetchData(
-        INDEXER.PROJECT.EXTERNAL.UPDATE(project.uid),
-        "PUT",
-        {
-          target: "divvi_wallets",
-          ids: ids,
-        }
-      );
+      const [data, error] = await fetchData(INDEXER.PROJECT.EXTERNAL.UPDATE(project.uid), "PUT", {
+        target: "divvi_wallets",
+        ids: ids,
+      });
 
       if (data) {
         toast.success("Divvi identifier successfully linked to project");
@@ -139,7 +132,15 @@ export const LinkDivviWalletButton: FC<LinkDivviWalletButtonProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [project.uid, walletAddress, validateWalletAddress, onClose]);
+  }, [
+    project.uid,
+    walletAddress,
+    validateWalletAddress,
+    onClose,
+    address,
+    buttonElement,
+    refreshProject,
+  ]);
 
   if (!isAuthorized) {
     return null;
@@ -183,13 +184,8 @@ export const LinkDivviWalletButton: FC<LinkDivviWalletButtonProps> = ({
                 leaveTo="opacity-0 scale-95"
               >
                 <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-4 sm:p-6 text-left align-middle transition-all ease-in-out duration-300">
-                  <Dialog.Title
-                    as="h3"
-                    className="text-gray-900 dark:text-zinc-100"
-                  >
-                    <h2 className="text-2xl font-bold leading-6">
-                      Link Divvi Identifier
-                    </h2>
+                  <Dialog.Title as="h3" className="text-gray-900 dark:text-zinc-100">
+                    <h2 className="text-2xl font-bold leading-6">Link Divvi Identifier</h2>
                     <span className="text-md text-gray-500 dark:text-gray-400 mt-2">
                       Add your Divvi wallet address (Divvi Identifier) from{" "}
                       <ExternalLink
@@ -217,25 +213,15 @@ export const LinkDivviWalletButton: FC<LinkDivviWalletButtonProps> = ({
                       </div>
                     </div>
                     {validationError && (
-                      <p className="text-red-500 mt-2 text-sm">
-                        {validationError}
-                      </p>
+                      <p className="text-red-500 mt-2 text-sm">{validationError}</p>
                     )}
                     {error && <p className="text-red-500 mt-4">{error}</p>}
                   </div>
                   <div className="flex flex-col sm:flex-row gap-4 mt-10 justify-end">
-                    <Button
-                      onClick={handleSave}
-                      disabled={isLoading}
-                      className="w-full sm:w-auto"
-                    >
+                    <Button onClick={handleSave} disabled={isLoading} className="w-full sm:w-auto">
                       {isLoading ? "Saving..." : "Save"}
                     </Button>
-                    <Button
-                      variant="secondary"
-                      className="w-full sm:w-auto"
-                      onClick={handleClose}
-                    >
+                    <Button variant="secondary" className="w-full sm:w-auto" onClick={handleClose}>
                       Close
                     </Button>
                   </div>

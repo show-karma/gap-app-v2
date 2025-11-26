@@ -1,70 +1,72 @@
-"use client"
-import type { Community } from "@show-karma/karma-gap-sdk"
-import { blo } from "blo"
-import React, { useEffect, useState } from "react"
-import { Spinner } from "@/components/Utilities/Spinner"
-import { useGap } from "@/hooks/useGap"
-import { layoutTheme } from "@/src/helper/theme"
-import { useOwnerStore } from "@/store/owner"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
-import { MESSAGES } from "@/utilities/messages"
+"use client";
+import type { Community } from "@show-karma/karma-gap-sdk";
+import { blo } from "blo";
+import React, { useEffect, useState } from "react";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { useGap } from "@/hooks/useGap";
+import { layoutTheme } from "@/src/helper/theme";
+import { useOwnerStore } from "@/store/owner";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
 
 interface CommunityStatsData {
-  projects: number
-  projectEdits: number
-  endorsements: number
-  impacts: number
-  impactVerifications: number
-  grants: number
-  grantEdits: number
-  grantUpdates: number
-  grantUpdateStatusPosts: number
-  grantsCompleted: number
-  milestones: number
-  milestonesCompleted: number
-  milestonesVerifications: number
-  membersAdded: number
-  totalAttestations: number
+  projects: number;
+  projectEdits: number;
+  endorsements: number;
+  impacts: number;
+  impactVerifications: number;
+  grants: number;
+  grantEdits: number;
+  grantUpdates: number;
+  grantUpdateStatusPosts: number;
+  grantsCompleted: number;
+  milestones: number;
+  milestonesCompleted: number;
+  milestonesVerifications: number;
+  membersAdded: number;
+  totalAttestations: number;
 }
 
 export default function CommunityStats() {
-  const [allCommunities, setAllCommunities] = useState<Community[]>([])
-  const [communityStats, setCommunityStats] = useState<Record<string, CommunityStatsData>>({})
-  const [isLoading, setIsLoading] = useState(true)
-  const isOwner = useOwnerStore((state) => state.isOwner)
-  const { gap } = useGap()
+  const [allCommunities, setAllCommunities] = useState<Community[]>([]);
+  const [communityStats, setCommunityStats] = useState<Record<string, CommunityStatsData>>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const isOwner = useOwnerStore((state) => state.isOwner);
+  const { gap } = useGap();
 
   const fetchCommunities = async () => {
     try {
-      if (!gap) throw new Error("Gap not initialized")
-      setIsLoading(true)
-      const result = await gap.fetch.communities()
-      result.sort((a, b) => (a.details?.name || a.uid).localeCompare(b.details?.name || b.uid))
-      setAllCommunities(result)
-      return result
+      if (!gap) throw new Error("Gap not initialized");
+      setIsLoading(true);
+      const result = await gap.fetch.communities();
+      result.sort((a, b) => (a.details?.name || a.uid).localeCompare(b.details?.name || b.uid));
+      setAllCommunities(result);
+      return result;
     } catch (_error) {
-      setAllCommunities([])
-      return undefined
+      setAllCommunities([]);
+      return undefined;
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const fetchCommunityStats = async (communities: Community[]) => {
     try {
       const statsPromises = communities.map(async (community) => {
-        const [data, error]: any = await fetchData(INDEXER.COMMUNITY.STATS(community.uid as string))
+        const [data, error]: any = await fetchData(
+          INDEXER.COMMUNITY.STATS(community.uid as string)
+        );
         if (error) {
-          console.error(`Failed to fetch stats for ${community.uid}`, error)
-          return { uid: community.uid, stats: {} }
+          console.error(`Failed to fetch stats for ${community.uid}`, error);
+          return { uid: community.uid, stats: {} };
         }
-        return { uid: community.uid, stats: data }
-      })
+        return { uid: community.uid, stats: data };
+      });
 
-      const statsResults = await Promise.all(statsPromises)
+      const statsResults = await Promise.all(statsPromises);
 
-      const statsMap: Record<string, CommunityStatsData> = {}
+      const statsMap: Record<string, CommunityStatsData> = {};
       statsResults.forEach(({ uid, stats }) => {
         statsMap[uid] = {
           projects: stats?.projects || 0,
@@ -96,19 +98,19 @@ export default function CommunityStats() {
               (stats?.GrantUpdateStatuses || 0) +
               (stats?.GrantEdits || 0) +
               (stats?.ProjectEdits || 0) || 0,
-        }
-      })
-      setCommunityStats(statsMap)
+        };
+      });
+      setCommunityStats(statsMap);
     } catch (_error) {}
-  }
+  };
 
   useEffect(() => {
     fetchCommunities().then((communities) => {
       if (communities) {
-        fetchCommunityStats(communities)
+        fetchCommunityStats(communities);
       }
-    })
-  }, [fetchCommunities, fetchCommunityStats])
+    });
+  }, [fetchCommunities, fetchCommunityStats]);
 
   return (
     <div className={layoutTheme.padding}>
@@ -158,7 +160,7 @@ export default function CommunityStats() {
                   </thead>
                   <tbody className="divide-y divide-x">
                     {allCommunities.map((community) => {
-                      const stats = communityStats[community.uid] || {}
+                      const stats = communityStats[community.uid] || {};
                       return (
                         <React.Fragment key={community.uid}>
                           <tr className="divide-x">
@@ -197,7 +199,7 @@ export default function CommunityStats() {
                             </td>
                           </tr>
                         </React.Fragment>
-                      )
+                      );
                     })}
                   </tbody>
                 </table>
@@ -209,5 +211,5 @@ export default function CommunityStats() {
         <p>{MESSAGES.REVIEWS.NOT_ADMIN}</p>
       )}
     </div>
-  )
+  );
 }

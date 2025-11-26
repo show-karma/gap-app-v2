@@ -1,4 +1,4 @@
-import type { Hex } from "viem"
+import type { Hex } from "viem";
 
 export const INDEXER = {
   ATTESTATION_LISTENER: (hash: Hex | string, chainId: number) =>
@@ -160,14 +160,14 @@ export const INDEXER = {
           const params = new URLSearchParams({
             indicatorIds,
             communityUID,
-          })
+          });
 
-          if (programId) params.append("programId", programId)
-          if (projectUID) params.append("projectUID", projectUID)
-          if (startDate) params.append("startDate", startDate)
-          if (endDate) params.append("endDate", endDate)
+          if (programId) params.append("programId", programId);
+          if (projectUID) params.append("projectUID", projectUID);
+          if (startDate) params.append("startDate", startDate);
+          if (endDate) params.append("endDate", endDate);
 
-          return `/v2/indicators/aggregate?${params.toString()}`
+          return `/v2/indicators/aggregate?${params.toString()}`;
         },
       },
       PROJECTS: (
@@ -181,25 +181,25 @@ export const INDEXER = {
           selectedProgramId,
           selectedTrackIds,
         }: {
-          page?: number
-          limit?: number
-          sortBy?: string
-          categories?: string
-          status?: string
-          selectedProgramId?: string
-          selectedTrackIds?: string[]
+          page?: number;
+          limit?: number;
+          sortBy?: string;
+          categories?: string;
+          status?: string;
+          selectedProgramId?: string;
+          selectedTrackIds?: string[];
         } = {}
       ) => {
-        const params = new URLSearchParams()
-        if (page !== undefined) params.set("page", page.toString())
-        if (limit !== undefined) params.set("limit", limit.toString())
-        if (sortBy) params.set("sortBy", sortBy)
-        if (categories) params.set("categories", categories)
-        if (status) params.set("status", status)
-        if (selectedProgramId) params.set("programIds", selectedProgramId)
-        if (selectedTrackIds?.length) params.set("trackIds", selectedTrackIds.join(","))
-        const queryString = params.toString()
-        return `/v2/communities/${slug}/projects${queryString ? `?${queryString}` : ""}`
+        const params = new URLSearchParams();
+        if (page !== undefined) params.set("page", page.toString());
+        if (limit !== undefined) params.set("limit", limit.toString());
+        if (sortBy) params.set("sortBy", sortBy);
+        if (categories) params.set("categories", categories);
+        if (status) params.set("status", status);
+        if (selectedProgramId) params.set("programIds", selectedProgramId);
+        if (selectedTrackIds?.length) params.set("trackIds", selectedTrackIds.join(","));
+        const queryString = params.toString();
+        return `/v2/communities/${slug}/projects${queryString ? `?${queryString}` : ""}`;
       },
     },
     SUBSCRIBE: {
@@ -236,14 +236,14 @@ export const INDEXER = {
         download,
         selectedTrackIds,
       }: {
-        page?: number
-        pageLimit?: number
-        status?: string
-        sort?: string
-        categories?: string
-        selectedProgramId?: string
-        download?: boolean
-        selectedTrackIds?: string[]
+        page?: number;
+        pageLimit?: number;
+        status?: string;
+        sort?: string;
+        categories?: string;
+        selectedProgramId?: string;
+        download?: boolean;
+        selectedTrackIds?: string[];
       }
     ) =>
       `/communities/${communityIdOrSlug}/grants?${
@@ -298,4 +298,4 @@ export const INDEXER = {
       `/projects/${idOrSlug}/update/contact/${contactId}`,
     DELETE: (idOrSlug: string) => `/projects/${idOrSlug}/delete/contact`,
   },
-}
+};

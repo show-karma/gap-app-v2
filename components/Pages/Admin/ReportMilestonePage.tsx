@@ -1,85 +1,85 @@
-"use client"
-import { ChevronLeftIcon } from "@heroicons/react/20/solid"
-import { ArrowDownTrayIcon } from "@heroicons/react/24/outline"
-import { ChevronDownIcon, ChevronUpDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid"
-import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import { useQuery } from "@tanstack/react-query"
-import Link from "next/link"
-import { useParams } from "next/navigation"
-import { useQueryState } from "nuqs"
-import { useCallback, useEffect, useMemo, useState } from "react"
-import { toast } from "react-hot-toast"
-import { useAccount } from "wagmi"
-import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList"
-import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown"
-import { Button } from "@/components/Utilities/Button"
-import { ExternalLink } from "@/components/Utilities/ExternalLink"
-import { Skeleton } from "@/components/Utilities/Skeleton"
-import TablePagination from "@/components/Utilities/TablePagination"
-import { useAuth } from "@/hooks/useAuth"
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin"
-import { useReviewerPrograms } from "@/hooks/usePermissions"
-import { useOwnerStore } from "@/store"
-import { downloadCommunityReport } from "@/utilities/downloadReports"
-import { useSigner } from "@/utilities/eas-wagmi-utils"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
-import { MESSAGES } from "@/utilities/messages"
-import { defaultMetadata } from "@/utilities/meta"
-import { PAGES } from "@/utilities/pages"
-import { validateProgramIdentifiers } from "@/utilities/validators"
+"use client";
+import { ChevronLeftIcon } from "@heroicons/react/20/solid";
+import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
+import { ChevronDownIcon, ChevronUpDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
+import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useQueryState } from "nuqs";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "react-hot-toast";
+import { useAccount } from "wagmi";
+import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
+import { Button } from "@/components/Utilities/Button";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { Skeleton } from "@/components/Utilities/Skeleton";
+import TablePagination from "@/components/Utilities/TablePagination";
+import { useAuth } from "@/hooks/useAuth";
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useReviewerPrograms } from "@/hooks/usePermissions";
+import { useOwnerStore } from "@/store";
+import { downloadCommunityReport } from "@/utilities/downloadReports";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { defaultMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
+import { validateProgramIdentifiers } from "@/utilities/validators";
 
 interface Report {
   _id: {
-    $oid: string
-  }
-  grantUid: string
-  grantTitle: string
-  projectUid: string
-  projectTitle: string
-  programId?: string
-  totalMilestones: number
-  pendingMilestones: number
-  completedMilestones: number
-  isGrantCompleted?: boolean
-  proofOfWorkLinks: string[]
-  evaluations: Evaluation[] | null | undefined
-  projectSlug: string
+    $oid: string;
+  };
+  grantUid: string;
+  grantTitle: string;
+  projectUid: string;
+  projectTitle: string;
+  programId?: string;
+  totalMilestones: number;
+  pendingMilestones: number;
+  completedMilestones: number;
+  isGrantCompleted?: boolean;
+  proofOfWorkLinks: string[];
+  evaluations: Evaluation[] | null | undefined;
+  projectSlug: string;
 }
 
 interface Evaluation {
-  _id: string
-  rating: number
-  reasons: string[]
+  _id: string;
+  rating: number;
+  reasons: string[];
 }
 
 type MilestoneCompletion = Pick<
   Report,
   "totalMilestones" | "pendingMilestones" | "completedMilestones" | "isGrantCompleted"
->
+>;
 
 interface ReportAPIResponse {
-  data: Report[]
+  data: Report[];
   pageInfo: {
-    totalItems: number
-    page: number
-    pageLimit: number
-  }
-  uniqueProjectCount: number
+    totalItems: number;
+    page: number;
+    pageLimit: number;
+  };
+  uniqueProjectCount: number;
   stats: {
-    totalGrants: number
-    totalProjectsWithMilestones: number
-    totalMilestones: number
-    totalCompletedMilestones: number
-    totalPendingMilestones: number
-    percentageProjectsWithMilestones: number
-    percentageCompletedMilestones: number
-    percentagePendingMilestones: number
-    proofOfWorkLinks: string[]
-  }
+    totalGrants: number;
+    totalProjectsWithMilestones: number;
+    totalMilestones: number;
+    totalCompletedMilestones: number;
+    totalPendingMilestones: number;
+    percentageProjectsWithMilestones: number;
+    percentageCompletedMilestones: number;
+    percentagePendingMilestones: number;
+    proofOfWorkLinks: string[];
+  };
 }
 
-export const metadata = defaultMetadata
+export const metadata = defaultMetadata;
 
 const fetchReports = async (
   communityId: string,
@@ -89,149 +89,149 @@ const fetchReports = async (
   sortOrder = "desc",
   selectedProgramIds: string[] = []
 ) => {
-  const queryProgramIds = selectedProgramIds.join(",")
-  const encodedProgramIds = encodeURIComponent(queryProgramIds)
+  const queryProgramIds = selectedProgramIds.join(",");
+  const encodedProgramIds = encodeURIComponent(queryProgramIds);
   const [data]: any = await fetchData(
     `${INDEXER.COMMUNITY.REPORT.GET(
       communityId as string
     )}?limit=${pageLimit}&page=${page}&sort=${sortBy}&sortOrder=${sortOrder}${
       queryProgramIds ? `&programIds=${encodedProgramIds}` : ""
     }`
-  )
-  return data || []
-}
+  );
+  return data || [];
+};
 
-const itemsPerPage = 50
+const itemsPerPage = 50;
 
-const skeletonArray = Array.from({ length: 12 }, (_, index) => index)
+const skeletonArray = Array.from({ length: 12 }, (_, index) => index);
 
 interface ReportMilestonePageProps {
-  community: ICommunityResponse
-  grantPrograms: GrantProgram[]
+  community: ICommunityResponse;
+  grantPrograms: GrantProgram[];
 }
 
 export const ReportMilestonePage = ({ community, grantPrograms }: ReportMilestonePageProps) => {
-  const params = useParams()
-  const communityId = params.communityId as string
-  const { address, isConnected } = useAccount()
-  const { authenticated: isAuth } = useAuth()
-  const { isCommunityAdmin: isAdmin } = useIsCommunityAdmin(community?.uid, address)
-  const isContractOwner = useOwnerStore((state) => state.isOwner)
+  const params = useParams();
+  const communityId = params.communityId as string;
+  const { address, isConnected } = useAccount();
+  const { authenticated: isAuth } = useAuth();
+  const { isCommunityAdmin: isAdmin } = useIsCommunityAdmin(community?.uid, address);
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
 
   // Get milestone reviewer programs for access control
-  const { programs: reviewerPrograms } = useReviewerPrograms()
+  const { programs: reviewerPrograms } = useReviewerPrograms();
 
   // Build set of allowed program IDs for milestone reviewers
   const allowedProgramIds = useMemo(() => {
     // Admins and contract owners can see all programs
     if (isAdmin || isContractOwner) {
-      return null // null means no filtering
+      return null; // null means no filtering
     }
 
     // Build set of programs where user is a milestone reviewer
-    const allowedSet = new Set<string>()
+    const allowedSet = new Set<string>();
     reviewerPrograms?.forEach((program) => {
       // Filter to programs in this community that user is milestone reviewer for
-      const programCommunityId = program.communitySlug || program.communityUID
+      const programCommunityId = program.communitySlug || program.communityUID;
       if (programCommunityId === communityId && program.isMilestoneReviewer) {
-        allowedSet.add(`${program.programId}_${program.chainID}`)
+        allowedSet.add(`${program.programId}_${program.chainID}`);
       }
-    })
+    });
 
-    return allowedSet.size > 0 ? allowedSet : null
-  }, [isAdmin, isContractOwner, reviewerPrograms, communityId])
+    return allowedSet.size > 0 ? allowedSet : null;
+  }, [isAdmin, isContractOwner, reviewerPrograms, communityId]);
 
   const isAuthorized = useMemo(() => {
     if (!isConnected || !isAuth) {
-      return false
+      return false;
     }
 
     // Admins and contract owners have full access
     if (isAdmin || isContractOwner) {
-      return true
+      return true;
     }
 
     // Milestone reviewers have access if they have programs assigned
-    return allowedProgramIds !== null && allowedProgramIds.size > 0
-  }, [isConnected, isAuth, isAdmin, isContractOwner, allowedProgramIds])
+    return allowedProgramIds !== null && allowedProgramIds.size > 0;
+  }, [isConnected, isAuth, isAdmin, isContractOwner, allowedProgramIds]);
 
-  const [currentPage, setCurrentPage] = useState(1)
-  const [sortBy, setSortBy] = useState("totalMilestones")
-  const [sortOrder, setSortOrder] = useState("desc")
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortBy, setSortBy] = useState("totalMilestones");
+  const [sortOrder, setSortOrder] = useState("desc");
   const [selectedProgramIds, setSelectedProgramIds] = useQueryState("programIds", {
     defaultValue: [] as string[],
     serialize: (value) => value?.join(","),
     parse: (value) => (value ? value.split(",") : null),
-  })
+  });
 
   const programOptions = useMemo(() => {
     const allPrograms = grantPrograms
       .filter((program) => program.programId && program.chainID !== undefined)
       .map((program) => {
-        const value = `${program.programId}_${program.chainID}`
-        const title = program.metadata?.title?.trim()
-        const label = title ? `${title} (${value})` : value
-        return { value, label }
-      })
+        const value = `${program.programId}_${program.chainID}`;
+        const title = program.metadata?.title?.trim();
+        const label = title ? `${title} (${value})` : value;
+        return { value, label };
+      });
 
     // Filter programs based on milestone reviewer permissions
     if (allowedProgramIds) {
-      return allPrograms.filter((option) => allowedProgramIds.has(option.value))
+      return allPrograms.filter((option) => allowedProgramIds.has(option.value));
     }
 
-    return allPrograms
-  }, [grantPrograms, allowedProgramIds])
+    return allPrograms;
+  }, [grantPrograms, allowedProgramIds]);
 
   const valueToLabelMap = useMemo(() => {
-    return new Map(programOptions.map(({ value, label }) => [value, label]))
-  }, [programOptions])
+    return new Map(programOptions.map(({ value, label }) => [value, label]));
+  }, [programOptions]);
 
   const labelToValueMap = useMemo(() => {
-    return new Map(programOptions.map(({ value, label }) => [label, value]))
-  }, [programOptions])
+    return new Map(programOptions.map(({ value, label }) => [label, value]));
+  }, [programOptions]);
 
   // Validate and sanitize program IDs from query parameters
   const normalizedProgramIds = useMemo(() => {
-    const ids = selectedProgramIds ?? []
+    const ids = selectedProgramIds ?? [];
 
     if (ids.length === 0) {
-      return []
+      return [];
     }
 
     // Validate all program IDs
-    const validation = validateProgramIdentifiers(ids)
+    const validation = validateProgramIdentifiers(ids);
 
     // Log errors if any invalid IDs found
     if (validation.errors.length > 0) {
-      console.error("Invalid program IDs detected:", validation.errors)
+      console.error("Invalid program IDs detected:", validation.errors);
       // Show a warning to the user about invalid IDs
       validation.errors.forEach(({ id, error }) => {
-        console.warn(`Invalid program ID '${id}': ${error}`)
-      })
+        console.warn(`Invalid program ID '${id}': ${error}`);
+      });
     }
 
     // Only return valid IDs (reconstruct from validated components)
-    return validation.validIds.map(({ programId, chainID }) => `${programId}_${chainID}`)
-  }, [selectedProgramIds])
+    return validation.validIds.map(({ programId, chainID }) => `${programId}_${chainID}`);
+  }, [selectedProgramIds]);
 
   // Show warning when invalid program IDs are detected
   useEffect(() => {
-    const ids = selectedProgramIds ?? []
+    const ids = selectedProgramIds ?? [];
     if (ids.length > 0) {
-      const validation = validateProgramIdentifiers(ids)
+      const validation = validateProgramIdentifiers(ids);
       if (validation.errors.length > 0) {
         toast.error(`Invalid program IDs detected and filtered out. Please check the URL.`, {
           duration: 5000,
-        })
+        });
       }
     }
-  }, [selectedProgramIds])
+  }, [selectedProgramIds]);
 
   const selectedProgramLabels = useMemo(() => {
-    return normalizedProgramIds.map((id) => valueToLabelMap.get(id) ?? id)
-  }, [normalizedProgramIds, valueToLabelMap])
+    return normalizedProgramIds.map((id) => valueToLabelMap.get(id) ?? id);
+  }, [normalizedProgramIds, valueToLabelMap]);
 
-  const programLabels = useMemo(() => programOptions.map(({ label }) => label), [programOptions])
+  const programLabels = useMemo(() => programOptions.map(({ label }) => label), [programOptions]);
 
   const { data, isLoading } = useQuery<ReportAPIResponse>({
     queryKey: [
@@ -245,43 +245,43 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
     queryFn: async () =>
       fetchReports(communityId, currentPage, itemsPerPage, sortBy, sortOrder, normalizedProgramIds),
     enabled: Boolean(communityId) && isAuthorized,
-  })
+  });
 
-  const pageInfo = data?.pageInfo
-  const reports = data?.data
+  const pageInfo = data?.pageInfo;
+  const reports = data?.data;
 
-  const totalItems: any = pageInfo?.totalItems || 0
+  const totalItems: any = pageInfo?.totalItems || 0;
 
-  const _signer = useSigner()
+  const _signer = useSigner();
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page)
-  }
+    setCurrentPage(page);
+  };
 
   const handleSort = (newSort: string) => {
     if (newSort === sortBy) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
-      setSortBy(newSort)
-      setSortOrder("desc")
+      setSortBy(newSort);
+      setSortOrder("desc");
     }
-    setCurrentPage(1)
-  }
+    setCurrentPage(1);
+  };
 
   const isFullyCompleted = useCallback((report: MilestoneCompletion) => {
     const allMilestonesComplete =
       report.totalMilestones > 0 &&
       report.pendingMilestones === 0 &&
-      report.completedMilestones === report.totalMilestones
+      report.completedMilestones === report.totalMilestones;
 
-    const grantCompleted = report.isGrantCompleted === true
+    const grantCompleted = report.isGrantCompleted === true;
 
-    return allMilestonesComplete || grantCompleted
-  }, [])
+    return allMilestonesComplete || grantCompleted;
+  }, []);
 
   interface StatCardProps {
-    title: string
-    value: string
+    title: string;
+    value: string;
   }
 
   function StatCard({ title, value }: StatCardProps) {
@@ -290,7 +290,7 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
         <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{title}</h3>
         <p className="text-2xl font-semibold text-blue-600 dark:text-blue-400">{value}</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -317,7 +317,7 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
                       sortBy,
                       selectedProgramIds:
                         normalizedProgramIds.length > 0 ? normalizedProgramIds : undefined,
-                    })
+                    });
                   }}
                   className="flex items-center gap-2 py-3"
                 >
@@ -328,18 +328,18 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
                   list={programLabels}
                   onSelectFunction={(label: string) =>
                     setSelectedProgramIds((previous) => {
-                      setCurrentPage(1)
-                      const programId = labelToValueMap.get(label) ?? label
-                      const current = Array.isArray(previous) ? [...previous] : []
+                      setCurrentPage(1);
+                      const programId = labelToValueMap.get(label) ?? label;
+                      const current = Array.isArray(previous) ? [...previous] : [];
                       if (current.includes(programId)) {
-                        return current.filter((item) => item !== programId)
+                        return current.filter((item) => item !== programId);
                       }
-                      current.push(programId)
-                      return current
+                      current.push(programId);
+                      return current;
                     })
                   }
                   cleanFunction={() => {
-                    setSelectedProgramIds([])
+                    setSelectedProgramIds([]);
                   }}
                   prefixUnselected="All"
                   type={"Grant Programs"}
@@ -508,7 +508,7 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
                             <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4 w-20" />
                           </td>
                         </tr>
-                      )
+                      );
                     })
                   : reports?.map((report, index) => {
                       return (
@@ -590,7 +590,7 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
                             )}
                           </td>
                         </tr>
-                      )
+                      );
                     })}
               </tbody>
             </table>
@@ -614,5 +614,5 @@ export const ReportMilestonePage = ({ community, grantPrograms }: ReportMileston
         </div>
       )}
     </div>
-  )
-}
+  );
+};

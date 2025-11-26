@@ -1,26 +1,26 @@
-"use client"
-import { AtSymbolIcon } from "@heroicons/react/24/solid"
-import { type FC, useState } from "react"
-import { TelegramIcon } from "@/components/Icons"
-import { ExternalLink } from "@/components/Utilities/ExternalLink"
-import type { Contact } from "@/types/project"
-import { cn } from "@/utilities/tailwind"
+"use client";
+import { AtSymbolIcon } from "@heroicons/react/24/solid";
+import { type FC, useState } from "react";
+import { TelegramIcon } from "@/components/Icons";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import type { Contact } from "@/types/project";
+import { cn } from "@/utilities/tailwind";
 
 interface ContactsProps {
-  contacts: Contact[]
+  contacts: Contact[];
 }
 
 const rowClass =
-  "text-normal  text-zinc-800 dark:text-zinc-200 text-base break-normal line-clamp-2 w-full max-w-[320px] px-0 py-0"
+  "text-normal  text-zinc-800 dark:text-zinc-200 text-base break-normal line-clamp-2 w-full max-w-[320px] px-0 py-0";
 
 const ContactLine = ({ contact }: { contact: Contact }) => {
   const isLink = (link?: string) => {
-    if (!link) return false
+    if (!link) return false;
     if (link.includes("http://") || link.includes("https://") || link.includes("www.")) {
-      return true
+      return true;
     }
-    return false
-  }
+    return false;
+  };
   return (
     <div key={contact.id + contact.name + contact.email} className="flex flex-col gap-1 my-2">
       <p className={cn(rowClass, "pb-0 font-semibold")}>{contact?.name}</p>
@@ -57,11 +57,11 @@ const ContactLine = ({ contact }: { contact: Contact }) => {
         ) : null}
       </div>
     </div>
-  )
-}
+  );
+};
 
 export const ProjectContacts: FC<ContactsProps> = ({ contacts }) => {
-  const [isContactExpanded, setIsContactExpanded] = useState(false)
+  const [isContactExpanded, setIsContactExpanded] = useState(false);
 
   return (
     <div className="flex flex-col gap-1 w-full">
@@ -79,5 +79,5 @@ export const ProjectContacts: FC<ContactsProps> = ({ contacts }) => {
         </div>
       ) : null}
     </div>
-  )
-}
+  );
+};

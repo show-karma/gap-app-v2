@@ -1,8 +1,8 @@
-"use client"
-import Link from "next/link"
-import { useEffect } from "react"
-import { errorManager } from "@/components/Utilities/errorManager"
-import { getDetailedErrorInfo } from "@/utilities/donations/errorMessages"
+"use client";
+import Link from "next/link";
+import { useEffect } from "react";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { getDetailedErrorInfo } from "@/utilities/donations/errorMessages";
 
 /**
  * Next.js App Router error page for donation checkout route
@@ -12,18 +12,18 @@ export default function DonationCheckoutError({
   error,
   reset,
 }: {
-  error: Error & { digest?: string }
-  reset: () => void
+  error: Error & { digest?: string };
+  reset: () => void;
 }) {
   // Log error to Sentry using errorManager
   useEffect(() => {
     errorManager("Donation checkout error", error, {
       digest: error.digest,
       route: "checkout",
-    })
-  }, [error])
+    });
+  }, [error]);
 
-  const parsedError = getDetailedErrorInfo(error)
+  const parsedError = getDetailedErrorInfo(error);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
@@ -118,5 +118,5 @@ export default function DonationCheckoutError({
         </div>
       </div>
     </div>
-  )
+  );
 }

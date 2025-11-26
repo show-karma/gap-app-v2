@@ -1,8 +1,8 @@
-import type { ReactNode } from "react"
-import { Skeleton } from "@/components/Utilities/Skeleton"
+import type { ReactNode } from "react";
+import { Skeleton } from "@/components/Utilities/Skeleton";
 
 export const ProjectGrantsLayoutLoading = ({ children }: { children?: ReactNode }) => {
-  const emptyArray = Array.from({ length: 3 }, (_, index) => index)
+  const emptyArray = Array.from({ length: 3 }, (_, index) => index);
   return (
     <div className="flex max-lg:flex-col">
       <div className="w-full max-w-[320px] max-lg:max-w-full py-5 border-none max-lg:w-full max-lg:px-0">
@@ -76,5 +76,5 @@ export const ProjectGrantsLayoutLoading = ({ children }: { children?: ReactNode 
         {children}
       </div>
     </div>
-  )
-}
+  );
+};

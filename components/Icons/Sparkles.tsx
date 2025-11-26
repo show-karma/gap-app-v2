@@ -1,5 +1,5 @@
 interface Props {
-  className?: string
+  className?: string;
 }
 
 export const SparklesIcon = ({ className }: Props) => {
@@ -25,5 +25,5 @@ export const SparklesIcon = ({ className }: Props) => {
         fill="currentColor"
       />
     </svg>
-  )
-}
+  );
+};

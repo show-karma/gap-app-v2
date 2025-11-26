@@ -1,7 +1,7 @@
-import axios, { type Method } from "axios"
-import { TokenManager } from "@/utilities/auth/token-manager"
-import { envVars } from "./enviromentVars"
-import { sanitizeObject } from "./sanitize"
+import axios, { type Method } from "axios";
+import { TokenManager } from "@/utilities/auth/token-manager";
+import { envVars } from "./enviromentVars";
+import { sanitizeObject } from "./sanitize";
 
 /**
  * Fetch data utility that uses Privy's TokenManager for authentication
@@ -20,8 +20,8 @@ export default async function fetchData(
   baseUrl: string = envVars.NEXT_PUBLIC_GAP_INDEXER_URL
 ) {
   try {
-    const sanitizedData = sanitizeObject(axiosData)
-    const isIndexerUrl = baseUrl === envVars.NEXT_PUBLIC_GAP_INDEXER_URL
+    const sanitizedData = sanitizeObject(axiosData);
+    const isIndexerUrl = baseUrl === envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
 
     const requestConfig: any = {
       url: isIndexerUrl
@@ -35,31 +35,31 @@ export default async function fetchData(
       headers: {
         ...headers,
       },
-    }
+    };
 
     // Add authorization header if needed
     if (isIndexerUrl && isAuthorized) {
       // Get token from TokenManager (which uses Privy)
-      const token = await TokenManager.getToken()
+      const token = await TokenManager.getToken();
 
       if (token) {
-        requestConfig.headers.Authorization = `Bearer ${token}`
+        requestConfig.headers.Authorization = `Bearer ${token}`;
       }
 
-      requestConfig.timeout = 360000
+      requestConfig.timeout = 360000;
     }
 
-    const res = await axios.request(requestConfig)
-    const resData = res.data
-    const pageInfo = res.data.pageInfo || null
-    return [resData, null, pageInfo]
+    const res = await axios.request(requestConfig);
+    const resData = res.data;
+    const pageInfo = res.data.pageInfo || null;
+    return [resData, null, pageInfo];
   } catch (err: any) {
-    let error = ""
+    let error = "";
     if (!err.response) {
-      error = err
+      error = err;
     } else {
-      error = err.response.data.message || err.message
+      error = err.response.data.message || err.message;
     }
-    return [null, error]
+    return [null, error];
   }
 }

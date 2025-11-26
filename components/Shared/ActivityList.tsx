@@ -4,22 +4,22 @@ import type {
   IProjectImpact,
   IProjectMilestoneResponse,
   IProjectUpdate,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import type { FC } from "react"
-import type { UnifiedMilestone } from "@/types/roadmap"
-import { ActivityCard } from "./ActivityCard"
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { FC } from "react";
+import type { UnifiedMilestone } from "@/types/roadmap";
+import { ActivityCard } from "./ActivityCard";
 
 type UpdateType =
   | IProjectUpdate
   | IGrantUpdate
   | IMilestoneResponse
   | IProjectImpact
-  | IProjectMilestoneResponse
+  | IProjectMilestoneResponse;
 
 interface ActivityListProps {
-  updates?: UpdateType[]
-  milestones?: UnifiedMilestone[]
-  isAuthorized?: boolean
+  updates?: UpdateType[];
+  milestones?: UnifiedMilestone[];
+  isAuthorized?: boolean;
 }
 
 export const ActivityList: FC<ActivityListProps> = ({
@@ -40,7 +40,7 @@ export const ActivityList: FC<ActivityListProps> = ({
       data: milestone,
       date: new Date(milestone.createdAt).getTime(),
     })),
-  ].sort((a, b) => b.date - a.date)
+  ].sort((a, b) => b.date - a.date);
 
   return (
     <div className="flex flex-col gap-4">
@@ -58,5 +58,5 @@ export const ActivityList: FC<ActivityListProps> = ({
         </div>
       )}
     </div>
-  )
-}
+  );
+};

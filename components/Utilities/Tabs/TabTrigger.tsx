@@ -1,16 +1,16 @@
-import type { ReactNode } from "react"
-import { cn } from "@/utilities/tailwind"
+import type { ReactNode } from "react";
+import { cn } from "@/utilities/tailwind";
 
-import { Button } from "../Button"
-import { useTabsContext } from "./Tabs"
+import { Button } from "../Button";
+import { useTabsContext } from "./Tabs";
 
 type TabTriggerProps = {
-  value: string
-  className?: string
-  disabled?: boolean
-  icon?: ReactNode
-  children: ReactNode
-}
+  value: string;
+  className?: string;
+  disabled?: boolean;
+  icon?: ReactNode;
+  children: ReactNode;
+};
 
 export const TabTrigger = ({
   value,
@@ -19,9 +19,9 @@ export const TabTrigger = ({
   children,
   disabled = false,
 }: TabTriggerProps) => {
-  const { activeTab, setActiveTab } = useTabsContext()
+  const { activeTab, setActiveTab } = useTabsContext();
 
-  const isActive = activeTab === value
+  const isActive = activeTab === value;
 
   return (
     <Button
@@ -45,5 +45,5 @@ export const TabTrigger = ({
         </p>
       ) : null}
     </Button>
-  )
-}
+  );
+};

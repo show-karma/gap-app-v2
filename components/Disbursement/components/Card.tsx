@@ -1,17 +1,17 @@
-import type React from "react"
+import type React from "react";
 
 interface CardProps {
-  children: React.ReactNode
-  className?: string
-  title?: string
-  titleIcon?: React.ReactNode
-  titleEmoji?: string
+  children: React.ReactNode;
+  className?: string;
+  title?: string;
+  titleIcon?: React.ReactNode;
+  titleEmoji?: string;
 }
 
 interface CardHeaderProps {
-  title: string
-  icon?: React.ReactNode
-  emoji?: string
+  title: string;
+  icon?: React.ReactNode;
+  emoji?: string;
 }
 
 const CardHeader: React.FC<CardHeaderProps> = ({ title, icon, emoji }) => (
@@ -22,7 +22,7 @@ const CardHeader: React.FC<CardHeaderProps> = ({ title, icon, emoji }) => (
       {title}
     </h2>
   </div>
-)
+);
 
 export const Card: React.FC<CardProps> = ({
   children,
@@ -36,5 +36,5 @@ export const Card: React.FC<CardProps> = ({
       {title && <CardHeader title={title} icon={titleIcon} emoji={titleEmoji} />}
       {children}
     </div>
-  )
-}
+  );
+};

@@ -1,17 +1,17 @@
 import type {
   IMilestoneCompleted,
   IMilestoneResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import { type FC, useEffect, useState } from "react"
-import { VerifiedBadge } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/VerifiedBadge"
-import { VerifyMilestoneUpdateDialog } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/VerifyMilestoneUpdateDialog"
-import type { UnifiedMilestone } from "@/types/roadmap"
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { type FC, useEffect, useState } from "react";
+import { VerifiedBadge } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/VerifiedBadge";
+import { VerifyMilestoneUpdateDialog } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/VerifyMilestoneUpdateDialog";
+import type { UnifiedMilestone } from "@/types/roadmap";
 
 interface MilestoneVerificationSectionProps {
-  milestone: IMilestoneResponse | UnifiedMilestone
-  title: string
-  verifiedMilestones?: IMilestoneCompleted[]
-  onVerificationAdded?: (newVerified: IMilestoneCompleted) => void
+  milestone: IMilestoneResponse | UnifiedMilestone;
+  title: string;
+  verifiedMilestones?: IMilestoneCompleted[];
+  onVerificationAdded?: (newVerified: IMilestoneCompleted) => void;
 }
 
 export const MilestoneVerificationSection: FC<MilestoneVerificationSectionProps> = ({
@@ -20,56 +20,56 @@ export const MilestoneVerificationSection: FC<MilestoneVerificationSectionProps>
   verifiedMilestones: initialVerifiedMilestones,
   onVerificationAdded,
 }) => {
-  const [verifiedMilestones, setVerifiedMilestones] = useState<IMilestoneCompleted[]>([])
+  const [verifiedMilestones, setVerifiedMilestones] = useState<IMilestoneCompleted[]>([]);
 
   // Handle different milestone types
   const getVerifiedMilestones = () => {
     if (initialVerifiedMilestones) {
-      return initialVerifiedMilestones
+      return initialVerifiedMilestones;
     }
 
     // For IMilestoneResponse
     if ("verified" in milestone) {
-      return milestone.verified || []
+      return milestone.verified || [];
     }
 
     // For UnifiedMilestone
     if ("source" in milestone) {
-      const grantMilestone = milestone.source.grantMilestone
+      const grantMilestone = milestone.source.grantMilestone;
       if (grantMilestone) {
-        return grantMilestone.milestone.verified || []
+        return grantMilestone.milestone.verified || [];
       }
     }
 
-    return []
-  }
+    return [];
+  };
 
   const addVerifiedMilestone = (newVerified: IMilestoneCompleted) => {
-    setVerifiedMilestones((prev) => [...prev, newVerified])
-    onVerificationAdded?.(newVerified)
-  }
+    setVerifiedMilestones((prev) => [...prev, newVerified]);
+    onVerificationAdded?.(newVerified);
+  };
 
   useEffect(() => {
-    setVerifiedMilestones(getVerifiedMilestones())
-  }, [getVerifiedMilestones])
+    setVerifiedMilestones(getVerifiedMilestones());
+  }, [getVerifiedMilestones]);
 
   // Convert UnifiedMilestone to IMilestoneResponse format for VerifyMilestoneUpdateDialog
   const getMilestoneForDialog = (): IMilestoneResponse | null => {
     if ("verified" in milestone) {
-      return milestone as IMilestoneResponse
+      return milestone as IMilestoneResponse;
     }
 
     if ("source" in milestone) {
-      const grantMilestone = milestone.source.grantMilestone
+      const grantMilestone = milestone.source.grantMilestone;
       if (grantMilestone) {
-        return grantMilestone.milestone
+        return grantMilestone.milestone;
       }
     }
 
-    return null
-  }
+    return null;
+  };
 
-  const milestoneForDialog = getMilestoneForDialog()
+  const milestoneForDialog = getMilestoneForDialog();
 
   return (
     <div className="flex flex-row gap-4 items-center flex-wrap w-max max-w-full">
@@ -83,5 +83,5 @@ export const MilestoneVerificationSection: FC<MilestoneVerificationSectionProps>
         />
       )}
     </div>
-  )
-}
+  );
+};

@@ -1,20 +1,20 @@
-import type { FC } from "react"
-import { useState } from "react"
-import { StarIcon } from "@/components/Icons/Star"
+import type { FC } from "react";
+import { useState } from "react";
+import { StarIcon } from "@/components/Icons/Star";
 
 interface DynamicStarsProps {
-  totalStars?: number
-  rating?: number | undefined
-  setRating: (rating: number | undefined) => void
+  totalStars?: number;
+  rating?: number | undefined;
+  setRating: (rating: number | undefined) => void;
 }
 
 export const DynamicStars: FC<DynamicStarsProps> = ({ totalStars = 10, rating, setRating }) => {
-  const [hover, setHover] = useState<number | null>(null)
+  const [hover, setHover] = useState<number | null>(null);
 
   return (
     <div className={"DynamicStars flex flex-row gap-2"}>
       {[...Array(totalStars)].map((star, index) => {
-        const currentRating = index + 1
+        const currentRating = index + 1;
 
         return (
           <label key={+index}>
@@ -39,8 +39,8 @@ export const DynamicStars: FC<DynamicStarsProps> = ({ totalStars = 10, rating, s
               }}
             />
           </label>
-        )
+        );
       })}
     </div>
-  )
-}
+  );
+};

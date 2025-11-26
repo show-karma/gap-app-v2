@@ -1,14 +1,14 @@
-import { useRouter } from "next/navigation"
-import { useProjectStore } from "@/store"
-import { useProgressModalStore } from "@/store/modals/progress"
-import { PAGES } from "@/utilities/pages"
+import { useRouter } from "next/navigation";
+import { useProjectStore } from "@/store";
+import { useProgressModalStore } from "@/store/modals/progress";
+import { PAGES } from "@/utilities/pages";
 
 export const NoGrant = () => {
-  const { project } = useProjectStore()
-  const router = useRouter()
-  const { closeProgressModal } = useProgressModalStore()
+  const { project } = useProjectStore();
+  const router = useRouter();
+  const { closeProgressModal } = useProgressModalStore();
 
-  if (!project) return null
+  if (!project) return null;
 
   return (
     <div
@@ -24,14 +24,14 @@ export const NoGrant = () => {
         type="button"
         className="items-center flex flex-row justify-center gap-2 rounded border border-blue-600 bg-blue-600 px-4 py-2.5 text-base font-semibold text-white hover:bg-blue-600"
         onClick={() => {
-          router.push(PAGES.PROJECT.SCREENS.NEW_GRANT(project.details?.data.slug || project.uid))
-          router.refresh()
-          closeProgressModal()
+          router.push(PAGES.PROJECT.SCREENS.NEW_GRANT(project.details?.data.slug || project.uid));
+          router.refresh();
+          closeProgressModal();
         }}
       >
         <img src="/icons/plus.svg" alt="Add" className="relative h-5 w-5" />
         Add Funding
       </button>
     </div>
-  )
-}
+  );
+};

@@ -1,11 +1,11 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import toast from "react-hot-toast"
-import { getImpactAnswers, sendImpactAnswers } from "@/services/impactService"
-import { MESSAGES } from "@/utilities/messages"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+import { getImpactAnswers, sendImpactAnswers } from "@/services/impactService";
+import { MESSAGES } from "@/utilities/messages";
 
 interface UseImpactAnswersProps {
-  projectIdentifier?: string
-  enabled?: boolean
+  projectIdentifier?: string;
+  enabled?: boolean;
 }
 
 /**
@@ -15,9 +15,9 @@ export const useImpactAnswers = ({
   projectIdentifier,
   enabled = true,
 }: UseImpactAnswersProps = {}) => {
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
 
-  const queryKey = ["impactAnswers", projectIdentifier]
+  const queryKey = ["impactAnswers", projectIdentifier];
 
   const {
     data = [],
@@ -29,30 +29,30 @@ export const useImpactAnswers = ({
     queryKey,
     queryFn: () => getImpactAnswers(projectIdentifier as string),
     enabled: !!projectIdentifier && enabled,
-  })
+  });
 
   const { mutate: submitImpactAnswer, isPending: isSubmitting } = useMutation({
     mutationFn: ({
       indicatorId,
       datapoints,
     }: {
-      indicatorId: string
+      indicatorId: string;
       datapoints: {
-        value: number | string
-        proof: string
-        startDate: string
-        endDate: string
-      }[]
+        value: number | string;
+        proof: string;
+        startDate: string;
+        endDate: string;
+      }[];
     }) => sendImpactAnswers(projectIdentifier as string, indicatorId, datapoints),
     onSuccess: () => {
-      toast.success(MESSAGES.GRANT.OUTPUTS.SUCCESS)
-      queryClient.invalidateQueries({ queryKey })
+      toast.success(MESSAGES.GRANT.OUTPUTS.SUCCESS);
+      queryClient.invalidateQueries({ queryKey });
     },
     onError: (error) => {
-      toast.error(MESSAGES.GRANT.OUTPUTS.ERROR)
-      console.error("Error submitting impact answer:", error)
+      toast.error(MESSAGES.GRANT.OUTPUTS.ERROR);
+      console.error("Error submitting impact answer:", error);
     },
-  })
+  });
 
   return {
     data,
@@ -62,5 +62,5 @@ export const useImpactAnswers = ({
     refetch,
     submitImpactAnswer,
     isSubmitting,
-  }
-}
+  };
+};

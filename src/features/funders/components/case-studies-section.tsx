@@ -1,49 +1,49 @@
-import { ExternalLink } from "@/components/Utilities/ExternalLink"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { marketingLayoutTheme } from "@/src/helper/theme"
-import { chosenCommunities } from "@/utilities/chosenCommunities"
-import { cn } from "@/utilities/tailwind"
-import { CommunityImage } from "./community-image"
-import { CustomerAvatar } from "./customer-avatar"
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { marketingLayoutTheme } from "@/src/helper/theme";
+import { chosenCommunities } from "@/utilities/chosenCommunities";
+import { cn } from "@/utilities/tailwind";
+import { CommunityImage } from "./community-image";
+import { CustomerAvatar } from "./customer-avatar";
 
 /**
  * Metric card displaying a key statistic with optional community logos.
  */
 export interface MetricCard {
-  readonly type: "metric"
-  readonly metric: string
-  readonly description: string
-  readonly communitySlugs: readonly string[]
+  readonly type: "metric";
+  readonly metric: string;
+  readonly description: string;
+  readonly communitySlugs: readonly string[];
 }
 
 /**
  * Testimonial card featuring a quote from a community leader with optional avatar.
  */
 export interface TestimonialCard {
-  readonly type: "testimonial"
-  readonly text: string
-  readonly author: string
-  readonly authorRole: string
-  readonly communitySlug: string
-  readonly link?: string
-  readonly avatar?: string
+  readonly type: "testimonial";
+  readonly text: string;
+  readonly author: string;
+  readonly authorRole: string;
+  readonly communitySlug: string;
+  readonly link?: string;
+  readonly avatar?: string;
 }
 
 /**
  * Case study card highlighting a specific customer success story.
  */
 export interface CaseStudyCard {
-  readonly type: "case-study"
-  readonly headline: string
-  readonly description: string
-  readonly communitySlug: string
-  readonly link?: string
-  readonly author?: string
-  readonly authorRole?: string
+  readonly type: "case-study";
+  readonly headline: string;
+  readonly description: string;
+  readonly communitySlug: string;
+  readonly link?: string;
+  readonly author?: string;
+  readonly authorRole?: string;
 }
 
-export type CaseStudyCardType = MetricCard | TestimonialCard | CaseStudyCard
+export type CaseStudyCardType = MetricCard | TestimonialCard | CaseStudyCard;
 
 const caseStudyCards: CaseStudyCardType[] = [
   {
@@ -77,7 +77,7 @@ const caseStudyCards: CaseStudyCardType[] = [
     communitySlug: "celo",
     avatar: "/images/homepage/sophia-dew.png",
   },
-]
+];
 
 /**
  * Retrieves the light theme image URL for a community by its slug.
@@ -85,12 +85,12 @@ const caseStudyCards: CaseStudyCardType[] = [
  * @returns The light theme image URL if found, null otherwise
  */
 function getCommunityImage(communitySlug: string): string | null {
-  const communities = chosenCommunities(true)
-  const community = communities.find((c) => c.slug === communitySlug)
+  const communities = chosenCommunities(true);
+  const community = communities.find((c) => c.slug === communitySlug);
   if (community) {
-    return community.imageURL.light
+    return community.imageURL.light;
   }
-  return null
+  return null;
 }
 
 /**
@@ -100,23 +100,23 @@ function getCommunityImage(communitySlug: string): string | null {
 function _MetricCardComponent({ card }: { card: MetricCard }) {
   const communities = card.communitySlugs
     .map((slug) => {
-      const community = chosenCommunities(true).find((c) => c.slug === slug)
-      const imageUrl = getCommunityImage(slug)
+      const community = chosenCommunities(true).find((c) => c.slug === slug);
+      const imageUrl = getCommunityImage(slug);
 
       if (!community || !imageUrl) {
-        return null
+        return null;
       }
 
-      return { community, imageUrl } as const
+      return { community, imageUrl } as const;
     })
     .filter(
       (
         item
       ): item is {
-        community: NonNullable<ReturnType<typeof chosenCommunities>[number]>
-        imageUrl: string
+        community: NonNullable<ReturnType<typeof chosenCommunities>[number]>;
+        imageUrl: string;
       } => item !== null
-    )
+    );
 
   return (
     <div
@@ -148,7 +148,7 @@ function _MetricCardComponent({ card }: { card: MetricCard }) {
         </div>
       )}
     </div>
-  )
+  );
 }
 
 /**
@@ -198,7 +198,7 @@ function TestimonialCardComponent({ card }: { card: TestimonialCard }) {
         )}
       </div>
     </div>
-  )
+  );
 }
 
 /**
@@ -206,8 +206,8 @@ function TestimonialCardComponent({ card }: { card: TestimonialCard }) {
  * Displays headline, description, optional author attribution, community badge, and external link.
  */
 function CaseStudyCardComponent({ card }: { card: CaseStudyCard }) {
-  const community = chosenCommunities(true).find((c) => c.slug === card.communitySlug)
-  const imageUrl = getCommunityImage(card.communitySlug)
+  const community = chosenCommunities(true).find((c) => c.slug === card.communitySlug);
+  const imageUrl = getCommunityImage(card.communitySlug);
 
   return (
     <div
@@ -278,7 +278,7 @@ function CaseStudyCardComponent({ card }: { card: CaseStudyCard }) {
         ) : null}
       </div>
     </div>
-  )
+  );
 }
 
 /**
@@ -335,5 +335,5 @@ export function CaseStudiesSection() {
         </div>
       </div>
     </section>
-  )
+  );
 }

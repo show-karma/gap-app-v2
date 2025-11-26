@@ -1,16 +1,16 @@
-"use client"
+"use client";
 
-import { ExternalLink } from "@/components/Utilities/ExternalLink"
-import { Button } from "@/components/ui/button"
-import { useAuth } from "@/hooks/useAuth"
-import { SOCIALS } from "@/utilities/socials"
-import { NavbarAuthButtonsSkeleton } from "./navbar-user-skeleton"
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import { SOCIALS } from "@/utilities/socials";
+import { NavbarAuthButtonsSkeleton } from "./navbar-user-skeleton";
 
 export function NavbarAuthButtons() {
-  const { authenticate: login, ready } = useAuth()
+  const { authenticate: login, ready } = useAuth();
 
   if (!ready) {
-    return <NavbarAuthButtonsSkeleton />
+    return <NavbarAuthButtonsSkeleton />;
   }
 
   return (
@@ -27,5 +27,5 @@ export function NavbarAuthButtons() {
         <ExternalLink href={SOCIALS.PARTNER_FORM}>Contact sales</ExternalLink>
       </Button>
     </div>
-  )
+  );
 }

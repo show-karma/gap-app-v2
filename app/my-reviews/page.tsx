@@ -1,18 +1,18 @@
-"use client"
-import { BuildingOfficeIcon, DocumentTextIcon, EyeIcon } from "@heroicons/react/24/outline"
-import { ArrowRightIcon } from "@heroicons/react/24/solid"
-import Image from "next/image"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useMemo } from "react"
-import { useAccount } from "wagmi"
-import { Button } from "@/components/Utilities/Button"
-import { Spinner } from "@/components/Utilities/Spinner"
-import { useAuth } from "@/hooks/useAuth"
-import { useReviewerPrograms } from "@/hooks/usePermissions"
-import type { FundingProgram } from "@/services/fundingPlatformService"
-import { layoutTheme } from "@/src/helper/theme"
-import { PAGES } from "@/utilities/pages"
+"use client";
+import { BuildingOfficeIcon, DocumentTextIcon, EyeIcon } from "@heroicons/react/24/outline";
+import { ArrowRightIcon } from "@heroicons/react/24/solid";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useMemo } from "react";
+import { useAccount } from "wagmi";
+import { Button } from "@/components/Utilities/Button";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { useAuth } from "@/hooks/useAuth";
+import { useReviewerPrograms } from "@/hooks/usePermissions";
+import type { FundingProgram } from "@/services/fundingPlatformService";
+import { layoutTheme } from "@/src/helper/theme";
+import { PAGES } from "@/utilities/pages";
 
 /**
  * My Review page
@@ -20,30 +20,30 @@ import { PAGES } from "@/utilities/pages"
  * Allows navigation to specific community reviewer dashboards
  */
 export default function MyReviewPage() {
-  const _router = useRouter()
-  const { address } = useAccount()
-  const { authenticated: isAuth } = useAuth()
+  const _router = useRouter();
+  const { address } = useAccount();
+  const { authenticated: isAuth } = useAuth();
 
   // Get all programs where user is a reviewer
-  const { programs: reviewerPrograms, isLoading } = useReviewerPrograms()
+  const { programs: reviewerPrograms, isLoading } = useReviewerPrograms();
 
   // Group programs by community
   const communitiesWithPrograms = useMemo(() => {
-    if (!reviewerPrograms || reviewerPrograms.length === 0) return []
+    if (!reviewerPrograms || reviewerPrograms.length === 0) return [];
 
     const communityMap = new Map<
       string,
       FundingProgram & {
-        programCount: number
-        totalApplications: number
-        milestoneReviewerPrograms: Array<{ programId: string; chainID: number }>
+        programCount: number;
+        totalApplications: number;
+        milestoneReviewerPrograms: Array<{ programId: string; chainID: number }>;
       }
-    >()
+    >();
 
     reviewerPrograms.forEach((program) => {
-      const communityId: string = program?.communitySlug || program.communityUID || ""
-      const communityName = program?.communityName
-      const communityLogo = program?.communityImage
+      const communityId: string = program?.communitySlug || program.communityUID || "";
+      const communityName = program?.communityName;
+      const communityLogo = program?.communityImage;
 
       if (!communityMap.has(communityId)) {
         communityMap.set(communityId, {
@@ -54,26 +54,26 @@ export default function MyReviewPage() {
           totalApplications: 0,
           milestoneReviewerPrograms: [],
           ...program,
-        })
+        });
       }
 
-      const community = communityMap.get(communityId)!
-      community.programCount += 1
-      community.totalApplications += program.metrics?.totalApplications || 0
+      const community = communityMap.get(communityId)!;
+      community.programCount += 1;
+      community.totalApplications += program.metrics?.totalApplications || 0;
 
       // Track which programs user is a milestone reviewer for
       if (program.isMilestoneReviewer) {
         community.milestoneReviewerPrograms.push({
           programId: program.programId,
           chainID: program.chainID,
-        })
+        });
       }
-    })
+    });
 
     return Array.from(communityMap.values()).sort(
       (a, b) => a.communityName?.localeCompare(b.communityName || "") || 0
-    )
-  }, [reviewerPrograms])
+    );
+  }, [reviewerPrograms]);
 
   // Check if user is authenticated
   if (!address || !isAuth) {
@@ -90,7 +90,7 @@ export default function MyReviewPage() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   if (isLoading) {
@@ -98,7 +98,7 @@ export default function MyReviewPage() {
       <div className="flex w-full items-center justify-center min-h-[600px]">
         <Spinner />
       </div>
-    )
+    );
   }
 
   if (!communitiesWithPrograms || communitiesWithPrograms.length === 0) {
@@ -121,7 +121,7 @@ export default function MyReviewPage() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -250,5 +250,5 @@ export default function MyReviewPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

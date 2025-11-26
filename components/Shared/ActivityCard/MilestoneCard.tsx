@@ -3,28 +3,28 @@ import {
   PencilSquareIcon,
   ShareIcon,
   TrashIcon,
-} from "@heroicons/react/24/outline"
-import dynamic from "next/dynamic"
-import { useParams } from "next/navigation"
-import type { FC } from "react"
-import { MilestoneVerificationSection } from "@/components/Shared/MilestoneVerification"
-import { Button } from "@/components/Utilities/Button"
-import { ExternalLink } from "@/components/Utilities/ExternalLink"
-import { queryClient } from "@/components/Utilities/PrivyProviderWrapper"
-import { useAllMilestones } from "@/hooks/useAllMilestones"
-import { useMilestone } from "@/hooks/useMilestone"
-import { useMilestoneActions } from "@/hooks/useMilestoneActions"
-import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers"
-import { useProjectStore } from "@/store"
-import type { UnifiedMilestone } from "@/types/roadmap"
-import { formatDate } from "@/utilities/formatDate"
-import { ReadMore } from "@/utilities/ReadMore"
-import { shareOnX } from "@/utilities/share/shareOnX"
-import { SHARE_TEXTS } from "@/utilities/share/text"
-import { cn } from "@/utilities/tailwind"
-import { containerClassName } from "../ActivityCard"
-import { ActivityAttribution } from "./ActivityAttribution"
-import { ActivityStatusHeader } from "./ActivityStatusHeader"
+} from "@heroicons/react/24/outline";
+import dynamic from "next/dynamic";
+import { useParams } from "next/navigation";
+import type { FC } from "react";
+import { MilestoneVerificationSection } from "@/components/Shared/MilestoneVerification";
+import { Button } from "@/components/Utilities/Button";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
+import { useAllMilestones } from "@/hooks/useAllMilestones";
+import { useMilestone } from "@/hooks/useMilestone";
+import { useMilestoneActions } from "@/hooks/useMilestoneActions";
+import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
+import { useProjectStore } from "@/store";
+import type { UnifiedMilestone } from "@/types/roadmap";
+import { formatDate } from "@/utilities/formatDate";
+import { ReadMore } from "@/utilities/ReadMore";
+import { shareOnX } from "@/utilities/share/shareOnX";
+import { SHARE_TEXTS } from "@/utilities/share/text";
+import { cn } from "@/utilities/tailwind";
+import { containerClassName } from "../ActivityCard";
+import { ActivityAttribution } from "./ActivityAttribution";
+import { ActivityStatusHeader } from "./ActivityStatusHeader";
 
 const ProjectObjectiveCompletion = dynamic(
   () =>
@@ -34,7 +34,7 @@ const ProjectObjectiveCompletion = dynamic(
   {
     ssr: false,
   }
-)
+);
 
 const ObjectiveSimpleOptionsMenu = dynamic(
   () =>
@@ -44,7 +44,7 @@ const ObjectiveSimpleOptionsMenu = dynamic(
   {
     ssr: false,
   }
-)
+);
 
 const GrantMilestoneSimpleOptionsMenu = dynamic(
   () =>
@@ -54,7 +54,7 @@ const GrantMilestoneSimpleOptionsMenu = dynamic(
   {
     ssr: false,
   }
-)
+);
 
 const GrantMilestoneCompletion = dynamic(
   () =>
@@ -64,7 +64,7 @@ const GrantMilestoneCompletion = dynamic(
   {
     ssr: false,
   }
-)
+);
 
 // Dynamic import for editing milestone completion form
 const MilestoneUpdateForm = dynamic(
@@ -72,54 +72,54 @@ const MilestoneUpdateForm = dynamic(
   {
     ssr: false,
   }
-)
+);
 
 interface MilestoneCardProps {
-  milestone: UnifiedMilestone
-  isAuthorized: boolean
+  milestone: UnifiedMilestone;
+  isAuthorized: boolean;
 }
 
 export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized }) => {
-  const { isCompleting, handleCompleting, isEditing, handleEditing } = useMilestoneActions()
-  const { multiGrantUndoCompletion } = useMilestone()
-  const { title, description, completed, type } = milestone
-  const { project } = useProjectStore()
-  const { projectId } = useParams()
-  const { refetch } = useAllMilestones(projectId as string)
+  const { isCompleting, handleCompleting, isEditing, handleEditing } = useMilestoneActions();
+  const { multiGrantUndoCompletion } = useMilestone();
+  const { title, description, completed, type } = milestone;
+  const { project } = useProjectStore();
+  const { projectId } = useParams();
+  const { refetch } = useAllMilestones(projectId as string);
 
   // Fetch milestone impact data (outputs/metrics) if milestone is completed
   const { data: milestoneImpactData } = useMilestoneImpactAnswers({
     milestoneUID: completed ? milestone.uid : undefined,
-  })
+  });
 
   // project milestone-specific properties
-  const projectMilestone = milestone.source.projectMilestone
+  const projectMilestone = milestone.source.projectMilestone;
   const attester =
-    projectMilestone?.attester || milestone.source.grantMilestone?.milestone.attester || ""
-  const createdAt = milestone.createdAt
+    projectMilestone?.attester || milestone.source.grantMilestone?.milestone.attester || "";
+  const createdAt = milestone.createdAt;
 
   // grant milestone-specific properties
-  const grantMilestone = milestone.source.grantMilestone
-  const grantTitle = grantMilestone?.grant.details?.data.title
-  const _programId = grantMilestone?.grant.details?.data.programId
-  const _communityData = grantMilestone?.grant.community?.details?.data
-  const endsAt = milestone.endsAt
+  const grantMilestone = milestone.source.grantMilestone;
+  const grantTitle = grantMilestone?.grant.details?.data.title;
+  const _programId = grantMilestone?.grant.details?.data.programId;
+  const _communityData = grantMilestone?.grant.community?.details?.data;
+  const endsAt = milestone.endsAt;
 
   // completion information
   const completionReason =
-    projectMilestone?.completed?.data?.reason || grantMilestone?.milestone.completed?.data?.reason
+    projectMilestone?.completed?.data?.reason || grantMilestone?.milestone.completed?.data?.reason;
   const completionProof =
     projectMilestone?.completed?.data?.proofOfWork ||
-    grantMilestone?.milestone.completed?.data?.proofOfWork
+    grantMilestone?.milestone.completed?.data?.proofOfWork;
   const completionDate =
-    projectMilestone?.completed?.createdAt || grantMilestone?.milestone.completed?.createdAt
+    projectMilestone?.completed?.createdAt || grantMilestone?.milestone.completed?.createdAt;
   const completionAttester =
-    projectMilestone?.completed?.attester || grantMilestone?.milestone.completed?.attester
+    projectMilestone?.completed?.attester || grantMilestone?.milestone.completed?.attester;
   const _verifiedMilestones =
-    projectMilestone?.verified?.length || grantMilestone?.milestone.verified?.length
+    projectMilestone?.verified?.length || grantMilestone?.milestone.verified?.length;
   const completionDeliverables =
     (projectMilestone?.completed?.data as any)?.deliverables ||
-    (grantMilestone?.milestone.completed?.data as any)?.deliverables
+    (grantMilestone?.milestone.completed?.data as any)?.deliverables;
 
   // Function to render project milestone completion form or details
   const renderMilestoneCompletion = () => {
@@ -130,11 +130,11 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
             objectiveUID={projectMilestone.uid}
             handleCompleting={handleCompleting}
           />
-        )
+        );
       } else if (type === "grant") {
         return (
           <GrantMilestoneCompletion milestone={milestone} handleCompleting={handleCompleting} />
-        )
+        );
       }
     }
 
@@ -146,7 +146,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
           isEditing={true}
           previousData={grantMilestone.milestone.completed?.data}
           cancelEditing={async (editing: boolean) => {
-            handleEditing(editing)
+            handleEditing(editing);
             // Refresh the activities list after successful editing
             if (!editing) {
               // Invalidate all relevant caches
@@ -158,11 +158,11 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
                   queryKey: ["projectMilestones", project?.uid],
                 }),
                 refetch(),
-              ])
+              ]);
             }
           }}
         />
-      )
+      );
     }
 
     if (isEditing && type === "milestone") {
@@ -175,7 +175,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
           <Button
             className="w-max bg-transparent border border-gray-300 text-gray-600 hover:bg-gray-50"
             onClick={async () => {
-              handleEditing(false)
+              handleEditing(false);
               // Refresh the activities list when canceling editing
               await Promise.all([
                 queryClient.invalidateQueries({
@@ -185,13 +185,13 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
                   queryKey: ["projectMilestones", project?.uid],
                 }),
                 refetch(),
-              ])
+              ]);
             }}
           >
             Cancel
           </Button>
         </div>
-      )
+      );
     }
 
     return (
@@ -348,8 +348,8 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
           isCompleted
         />
       </div>
-    )
-  }
+    );
+  };
 
   return (
     <div className="flex flex-col w-full  gap-2.5 md:gap-5">
@@ -413,5 +413,5 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
         <div className="flex flex-col w-full pl-8 md:pl-[120px]">{renderMilestoneCompletion()}</div>
       ) : null}
     </div>
-  )
-}
+  );
+};

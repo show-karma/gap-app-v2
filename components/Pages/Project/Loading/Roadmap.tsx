@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/Utilities/Skeleton"
+import { Skeleton } from "@/components/Utilities/Skeleton";
 
 const CardSkeleton = () => {
   return (
@@ -27,19 +27,19 @@ const CardSkeleton = () => {
         <Skeleton className="w-20 h-8 rounded-full" />
       </div>
     </div>
-  )
-}
+  );
+};
 
 export const RoadmapListLoading = () => {
-  const emptyArray = Array.from({ length: 5 }, (_, index) => index)
+  const emptyArray = Array.from({ length: 5 }, (_, index) => index);
   return (
     <div className="flex w-full flex-col gap-6 px-6 py-10 bg-[#F9FAFB] dark:bg-zinc-900 rounded-xl max-lg:px-2 max-lg:py-4">
       {emptyArray.map((item) => (
         <CardSkeleton key={item} />
       ))}
     </div>
-  )
-}
+  );
+};
 
 export const ProjectRoadmapLoading = () => {
   return (
@@ -61,5 +61,5 @@ export const ProjectRoadmapLoading = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

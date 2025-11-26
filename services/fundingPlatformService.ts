@@ -11,23 +11,23 @@ import type {
   IFundingApplication,
   IFundingProgramConfig,
   IPaginatedApplicationsResponse,
-} from "@/types/funding-platform"
-import { createAuthenticatedApiClient } from "@/utilities/auth/api-client"
-import { envVars } from "@/utilities/enviromentVars"
+} from "@/types/funding-platform";
+import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
+import { envVars } from "@/utilities/enviromentVars";
 
 // Base API configuration
-const API_BASE = envVars.NEXT_PUBLIC_GAP_INDEXER_URL || "http://localhost:4000"
+const API_BASE = envVars.NEXT_PUBLIC_GAP_INDEXER_URL || "http://localhost:4000";
 
-const apiClient = createAuthenticatedApiClient(API_BASE, 30000)
+const apiClient = createAuthenticatedApiClient(API_BASE, 30000);
 
 export interface IApplicationFilters {
-  status?: FundingApplicationStatusV2 | string // Allow string for backward compatibility
-  search?: string
-  page?: number
-  limit?: number
+  status?: FundingApplicationStatusV2 | string; // Allow string for backward compatibility
+  search?: string;
+  page?: number;
+  limit?: number;
   // Backward compatibility
-  dateFrom?: string
-  dateTo?: string
+  dateFrom?: string;
+  dateTo?: string;
   // Sorting parameters
   sortBy?:
     | "createdAt"
@@ -36,72 +36,72 @@ export interface IApplicationFilters {
     | "applicantEmail"
     | "referenceNumber"
     | "projectTitle"
-    | "aiEvaluationScore"
-  sortOrder?: "asc" | "desc"
+    | "aiEvaluationScore";
+  sortOrder?: "asc" | "desc";
 }
 
 export type FundingProgram = {
-  programId: string
-  chainID: number
-  name: string
+  programId: string;
+  chainID: number;
+  name: string;
   metadata: {
-    tags?: string[]
-    type?: string
-    title?: string
-    logoImg?: string
-    website?: string
-    startsAt?: string
-    endsAt?: string
+    tags?: string[];
+    type?: string;
+    title?: string;
+    logoImg?: string;
+    website?: string;
+    startsAt?: string;
+    endsAt?: string;
     socialLinks?: {
-      blog?: string
-      forum?: string
-      twitter?: string
-      discord?: string
-      website?: string
-      orgWebsite?: string
-      grantsSite?: string
-      telegram?: string
-    }
-    bugBounty?: string
-    bounties?: string[]
-    bannerImg?: string
-    createdAt?: number
-    minGrantSize?: string
-    maxGrantSize?: string
-    categories?: string[]
-    ecosystems?: string[]
-    organizations?: string[]
-    networks?: string[]
-    grantTypes?: string[]
-    credentials?: {}
-    description?: string
-    logoImgData?: string
-    grantsToDate?: number
-    bannerImgData?: string
-    programBudget?: string
-    projectTwitter?: string
-    applicantsNumber?: number
-    amountDistributedToDate?: string
-    platformsUsed?: string[]
-    status: string
-    communityRef?: string[]
-  }
-  applicationConfig: IFundingProgramConfig
-  communitySlug?: string
-  communityName?: string
-  communityImage?: string
-  communityUID?: string
+      blog?: string;
+      forum?: string;
+      twitter?: string;
+      discord?: string;
+      website?: string;
+      orgWebsite?: string;
+      grantsSite?: string;
+      telegram?: string;
+    };
+    bugBounty?: string;
+    bounties?: string[];
+    bannerImg?: string;
+    createdAt?: number;
+    minGrantSize?: string;
+    maxGrantSize?: string;
+    categories?: string[];
+    ecosystems?: string[];
+    organizations?: string[];
+    networks?: string[];
+    grantTypes?: string[];
+    credentials?: {};
+    description?: string;
+    logoImgData?: string;
+    grantsToDate?: number;
+    bannerImgData?: string;
+    programBudget?: string;
+    projectTwitter?: string;
+    applicantsNumber?: number;
+    amountDistributedToDate?: string;
+    platformsUsed?: string[];
+    status: string;
+    communityRef?: string[];
+  };
+  applicationConfig: IFundingProgramConfig;
+  communitySlug?: string;
+  communityName?: string;
+  communityImage?: string;
+  communityUID?: string;
   metrics?: {
-    totalApplications: number
-    pendingApplications: number
-    approvedApplications: number
-    rejectedApplications: number
-    revisionRequestedApplications?: number
-    underReviewApplications?: number
-  }
-  isProgramReviewer?: boolean
-  isMilestoneReviewer?: boolean
-}
+    totalApplications: number;
+    pendingApplications: number;
+    approvedApplications: number;
+    rejectedApplications: number;
+    revisionRequestedApplications?: number;
+    underReviewApplications?: number;
+  };
+  isProgramReviewer?: boolean;
+  isMilestoneReviewer?: boolean;
+};
 
 // Funding Programs API (V2)
 export const fundingProgramsAPI = {
@@ -113,9 +113,9 @@ export const fundingProgramsAPI = {
     const configs = await apiClient
       .get<FundingProgram[]>(`/v2/funding-program-configs/community/${communityId}`)
       .catch((error) => {
-        console.error("API Error:", error.response?.data || error.message)
-        throw error
-      })
+        console.error("API Error:", error.response?.data || error.message);
+        throw error;
+      });
 
     // Transform to FundingProgram format for backward compatibility
     const programs = await Promise.all(
@@ -123,17 +123,17 @@ export const fundingProgramsAPI = {
         // Check if stats already exist from backend
         if (config.metrics) {
           // Stats already provided by backend, no need to fetch separately
-          return config
+          return config;
         }
 
         return {
           ...config,
           // stats,
-        }
+        };
       })
-    )
+    );
 
-    return programs
+    return programs;
   },
 
   /**
@@ -145,25 +145,25 @@ export const fundingProgramsAPI = {
   ): Promise<FundingProgram | null> {
     const response = await apiClient.get(
       `/v2/funding-program-configs/${programId}/${chainId.toString()}`
-    )
-    return response.data
+    );
+    return response.data;
   },
 
   /**
    * Get all program configurations with optional community filter
    */
   async getAllProgramConfigs(community?: string): Promise<IFundingProgramConfig[]> {
-    const params = community ? `?community=${community}` : ""
-    const response = await apiClient.get(`/v2/funding-program-configs${params}`)
-    return response.data
+    const params = community ? `?community=${community}` : "";
+    const response = await apiClient.get(`/v2/funding-program-configs${params}`);
+    return response.data;
   },
 
   /**
    * Get only enabled programs
    */
   async getEnabledPrograms(): Promise<IFundingProgramConfig[]> {
-    const response = await apiClient.get("/v2/funding-program-configs/enabled")
-    return response.data
+    const response = await apiClient.get("/v2/funding-program-configs/enabled");
+    return response.data;
   },
 
   /**
@@ -171,21 +171,21 @@ export const fundingProgramsAPI = {
    * Use this in server components for optimal performance
    */
   async getEnabledProgramsServer(): Promise<FundingProgram[]> {
-    const baseURL = API_BASE
+    const baseURL = API_BASE;
     const response = await fetch(`${baseURL}/v2/funding-program-configs/enabled`, {
       next: { revalidate: 300 }, // Revalidate every 5 minutes
       headers: {
         "Content-Type": "application/json",
       },
-    })
+    });
 
     if (!response.ok) {
-      console.error("Failed to fetch enabled programs:", response.statusText)
-      return []
+      console.error("Failed to fetch enabled programs:", response.statusText);
+      return [];
     }
 
-    const programs = (await response.json()) as any[]
-    return programs as FundingProgram[]
+    const programs = (await response.json()) as any[];
+    return programs as FundingProgram[];
   },
 
   /**
@@ -200,8 +200,8 @@ export const fundingProgramsAPI = {
     const response = await apiClient.post(
       `/v2/funding-program-configs/${programId}/${chainId.toString()}`,
       config
-    )
-    return response.data
+    );
+    return response.data;
   },
 
   /**
@@ -216,8 +216,8 @@ export const fundingProgramsAPI = {
     const response = await apiClient.put(
       `/v2/funding-program-configs/${programId}/${chainId.toString()}`,
       config
-    )
-    return response.data
+    );
+    return response.data;
   },
 
   /**
@@ -229,22 +229,22 @@ export const fundingProgramsAPI = {
     formSchema: IFormSchema
   ): Promise<IFundingProgramConfig> {
     try {
-      const existingConfig = await this.getProgramConfiguration(programId, chainId)
+      const existingConfig = await this.getProgramConfiguration(programId, chainId);
       const updatedConfig = {
         ...existingConfig,
         formSchema: formSchema,
-      }
+      };
 
       // Use updateProgramConfiguration which handles POST/PUT logic
-      return this.updateProgramConfiguration(programId, chainId, updatedConfig)
+      return this.updateProgramConfiguration(programId, chainId, updatedConfig);
     } catch (error: any) {
       // If config doesn't exist, create new one with formSchema
       if (error.response?.status === 404 || !error.response) {
         return this.updateProgramConfiguration(programId, chainId, {
           formSchema,
-        })
+        });
       }
-      throw error
+      throw error;
     }
   },
 
@@ -257,19 +257,19 @@ export const fundingProgramsAPI = {
     enabled: boolean
   ): Promise<IFundingProgramConfig> {
     try {
-      const existingConfig = await this.getProgramConfiguration(programId, chainId)
+      const existingConfig = await this.getProgramConfiguration(programId, chainId);
       return this.updateProgramConfiguration(programId, chainId, {
         ...existingConfig,
         isEnabled: enabled,
-      })
+      });
     } catch (error: any) {
       // If config doesn't exist, create new one with enabled status
       if (error.response?.status === 404 || !error.response) {
         return this.updateProgramConfiguration(programId, chainId, {
           isEnabled: enabled,
-        })
+        });
       }
-      throw error
+      throw error;
     }
   },
 
@@ -278,10 +278,10 @@ export const fundingProgramsAPI = {
    */
   async getProgramStats(programId: string, chainId: number): Promise<IApplicationStatistics> {
     try {
-      const stats = await fundingApplicationsAPI.getApplicationStatistics(programId, chainId)
-      return stats
+      const stats = await fundingApplicationsAPI.getApplicationStatistics(programId, chainId);
+      return stats;
     } catch (error) {
-      console.warn(`Failed to fetch stats for program ${programId}:`, error)
+      console.warn(`Failed to fetch stats for program ${programId}:`, error);
       return {
         totalApplications: 0,
         pendingApplications: 0,
@@ -289,10 +289,10 @@ export const fundingProgramsAPI = {
         rejectedApplications: 0,
         revisionRequestedApplications: 0,
         underReviewApplications: 0,
-      }
+      };
     }
   },
-}
+};
 
 // Funding Applications API (V2)
 export const fundingApplicationsAPI = {
@@ -303,8 +303,8 @@ export const fundingApplicationsAPI = {
     const response = await apiClient.post(
       `/v2/funding-applications/${request.programId}/${request.chainID.toString()}`,
       request
-    )
-    return response.data
+    );
+    return response.data;
   },
 
   /**
@@ -314,8 +314,8 @@ export const fundingApplicationsAPI = {
     applicationId: string,
     request: IApplicationUpdateRequest
   ): Promise<IFundingApplication> {
-    const response = await apiClient.put(`/v2/funding-applications/${applicationId}`, request)
-    return response.data
+    const response = await apiClient.put(`/v2/funding-applications/${applicationId}`, request);
+    return response.data;
   },
 
   /**
@@ -328,8 +328,8 @@ export const fundingApplicationsAPI = {
     const response = await apiClient.put(
       `/v2/funding-applications/${applicationId}/status`,
       request
-    )
-    return response.data
+    );
+    return response.data;
   },
 
   /**
@@ -340,46 +340,46 @@ export const fundingApplicationsAPI = {
     chainId: number,
     filters: IApplicationFilters = {}
   ): Promise<IPaginatedApplicationsResponse> {
-    const params = new URLSearchParams()
+    const params = new URLSearchParams();
 
-    if (filters.status) params.append("status", filters.status)
-    if (filters.search) params.append("search", filters.search)
-    if (filters.page) params.append("page", filters.page.toString())
-    if (filters.limit) params.append("limit", filters.limit.toString())
-    if (filters.dateFrom) params.append("dateFrom", filters.dateFrom)
-    if (filters.dateTo) params.append("dateTo", filters.dateTo)
-    if (filters.sortBy) params.append("sortBy", filters.sortBy)
-    if (filters.sortOrder) params.append("sortOrder", filters.sortOrder)
+    if (filters.status) params.append("status", filters.status);
+    if (filters.search) params.append("search", filters.search);
+    if (filters.page) params.append("page", filters.page.toString());
+    if (filters.limit) params.append("limit", filters.limit.toString());
+    if (filters.dateFrom) params.append("dateFrom", filters.dateFrom);
+    if (filters.dateTo) params.append("dateTo", filters.dateTo);
+    if (filters.sortBy) params.append("sortBy", filters.sortBy);
+    if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
 
     const response = await apiClient.get(
       `/v2/funding-applications/program/${programId}/${chainId.toString()}?${params}`
-    )
+    );
     if (!response.data.applications) {
-      response.data.applications = []
+      response.data.applications = [];
       response.data.pagination = {
         page: filters.page || 1,
         limit: filters.limit || 25,
         total: 0,
         totalPages: 0,
-      }
+      };
     }
-    return response.data
+    return response.data;
   },
 
   /**
    * Get a specific application by ID
    */
   async getApplication(applicationId: string): Promise<IFundingApplication> {
-    const response = await apiClient.get(`/v2/funding-applications/${applicationId}`)
-    return response.data
+    const response = await apiClient.get(`/v2/funding-applications/${applicationId}`);
+    return response.data;
   },
 
   /**
    * Get application by reference number
    */
   async getApplicationByReference(referenceNumber: string): Promise<IFundingApplication> {
-    const response = await apiClient.get(`/v2/funding-applications/${referenceNumber}`)
-    return response.data
+    const response = await apiClient.get(`/v2/funding-applications/${referenceNumber}`);
+    return response.data;
   },
 
   /**
@@ -395,13 +395,13 @@ export const fundingApplicationsAPI = {
         `/v2/funding-applications/program/${programId}/${chainId.toString()}/by-email?email=${encodeURIComponent(
           email
         )}`
-      )
-      return response.data
+      );
+      return response.data;
     } catch (error: any) {
       if (error.response?.status === 404) {
-        return null
+        return null;
       }
-      throw error
+      throw error;
     }
   },
 
@@ -414,9 +414,9 @@ export const fundingApplicationsAPI = {
   ): Promise<IApplicationStatistics> {
     const response = await apiClient.get(
       `/v2/funding-applications/program/${programId}/${chainId.toString()}/statistics`
-    )
+    );
 
-    return response.data
+    return response.data;
   },
 
   /**
@@ -428,35 +428,35 @@ export const fundingApplicationsAPI = {
     format: ExportFormat = "json",
     filters: IApplicationFilters = {}
   ): Promise<{ data: any; filename?: string }> {
-    const params = new URLSearchParams()
-    params.append("format", format)
+    const params = new URLSearchParams();
+    params.append("format", format);
 
-    if (filters.status) params.append("status", filters.status)
-    if (filters.search) params.append("search", filters.search)
-    if (filters.dateFrom) params.append("dateFrom", filters.dateFrom)
-    if (filters.dateTo) params.append("dateTo", filters.dateTo)
-    if (filters.sortBy) params.append("sortBy", filters.sortBy)
-    if (filters.sortOrder) params.append("sortOrder", filters.sortOrder)
+    if (filters.status) params.append("status", filters.status);
+    if (filters.search) params.append("search", filters.search);
+    if (filters.dateFrom) params.append("dateFrom", filters.dateFrom);
+    if (filters.dateTo) params.append("dateTo", filters.dateTo);
+    if (filters.sortBy) params.append("sortBy", filters.sortBy);
+    if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
 
     const response = await apiClient.get(
       `/v2/funding-applications/program/${programId}/${chainId.toString()}/export?${params}`,
       {
         responseType: format === "csv" ? "blob" : "json",
       }
-    )
+    );
 
     // Extract filename from Content-Disposition header if available
-    const contentDisposition = response.headers["content-disposition"]
-    let filename: string | undefined
+    const contentDisposition = response.headers["content-disposition"];
+    let filename: string | undefined;
 
     if (contentDisposition) {
-      const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/)
+      const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
       if (filenameMatch?.[1]) {
-        filename = filenameMatch[1].replace(/['"]/g, "")
+        filename = filenameMatch[1].replace(/['"]/g, "");
       }
     }
 
-    return { data: response.data, filename }
+    return { data: response.data, filename };
   },
 
   /**
@@ -468,34 +468,34 @@ export const fundingApplicationsAPI = {
     format: ExportFormat = "json",
     filters: IApplicationFilters = {}
   ): Promise<{ data: any; filename?: string }> {
-    const params = new URLSearchParams()
-    params.append("format", format)
+    const params = new URLSearchParams();
+    params.append("format", format);
 
-    if (filters.status) params.append("status", filters.status)
-    if (filters.search) params.append("search", filters.search)
-    if (filters.dateFrom) params.append("dateFrom", filters.dateFrom)
-    if (filters.dateTo) params.append("dateTo", filters.dateTo)
-    if (filters.sortBy) params.append("sortBy", filters.sortBy)
-    if (filters.sortOrder) params.append("sortOrder", filters.sortOrder)
+    if (filters.status) params.append("status", filters.status);
+    if (filters.search) params.append("search", filters.search);
+    if (filters.dateFrom) params.append("dateFrom", filters.dateFrom);
+    if (filters.dateTo) params.append("dateTo", filters.dateTo);
+    if (filters.sortBy) params.append("sortBy", filters.sortBy);
+    if (filters.sortOrder) params.append("sortOrder", filters.sortOrder);
 
     const response = await apiClient.get(
       `/v2/funding-applications/admin/${programId}/${chainId.toString()}/export?${params}`,
       {
         responseType: format === "csv" ? "blob" : "json",
       }
-    )
+    );
 
-    const contentDisposition = response.headers["content-disposition"]
-    let filename: string | undefined
+    const contentDisposition = response.headers["content-disposition"];
+    let filename: string | undefined;
 
     if (contentDisposition) {
-      const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/)
+      const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
       if (filenameMatch?.[1]) {
-        filename = filenameMatch[1].replace(/['"]/g, "")
+        filename = filenameMatch[1].replace(/['"]/g, "");
       }
     }
 
-    return { data: response.data, filename }
+    return { data: response.data, filename };
   },
 
   /**
@@ -505,8 +505,8 @@ export const fundingApplicationsAPI = {
   async getApplicationVersionsTimeline(referenceNumber: string): Promise<IApplicationVersion[]> {
     const response = await apiClient.get<IApplicationVersionTimeline>(
       `/v2/funding-applications/${referenceNumber}/versions/timeline`
-    )
-    return response.data.timeline
+    );
+    return response.data.timeline;
   },
 
   /**
@@ -516,16 +516,16 @@ export const fundingApplicationsAPI = {
   async getApplicationVersions(applicationIdOrReference: string): Promise<IApplicationVersion[]> {
     // If it looks like a reference number (APP-XXXXX-XXXXX), use it directly
     if (applicationIdOrReference.startsWith("APP-")) {
-      return this.getApplicationVersionsTimeline(applicationIdOrReference)
+      return this.getApplicationVersionsTimeline(applicationIdOrReference);
     }
 
     // Otherwise, fetch the application to get its reference number
     try {
-      const application = await this.getApplication(applicationIdOrReference)
-      return this.getApplicationVersionsTimeline(application.referenceNumber)
+      const application = await this.getApplication(applicationIdOrReference);
+      return this.getApplicationVersionsTimeline(application.referenceNumber);
     } catch (error) {
-      console.error("Failed to fetch application versions:", error)
-      throw error
+      console.error("Failed to fetch application versions:", error);
+      throw error;
     }
   },
 
@@ -533,21 +533,21 @@ export const fundingApplicationsAPI = {
    * Run AI evaluation on an existing application by reference number (Admin only)
    */
   async runAIEvaluation(referenceNumber: string): Promise<{
-    success: boolean
-    referenceNumber: string
-    evaluation: string
-    promptId: string
-    updatedAt: string
+    success: boolean;
+    referenceNumber: string;
+    evaluation: string;
+    promptId: string;
+    updatedAt: string;
   }> {
-    const response = await apiClient.post(`/v2/funding-applications/${referenceNumber}/evaluate`)
-    return response.data
+    const response = await apiClient.post(`/v2/funding-applications/${referenceNumber}/evaluate`);
+    return response.data;
   },
-}
+};
 
 // Combined service for easy import
 export const fundingPlatformService = {
   programs: fundingProgramsAPI,
   applications: fundingApplicationsAPI,
-}
+};
 
-export default fundingPlatformService
+export default fundingPlatformService;

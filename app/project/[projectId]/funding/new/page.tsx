@@ -1,5 +1,5 @@
-import { NewGrant } from "@/components/Pages/GrantMilestonesAndUpdates/screens/NewGrant"
+import { NewGrant } from "@/components/Pages/GrantMilestonesAndUpdates/screens/NewGrant";
 
 export default function Page() {
-  return <NewGrant />
+  return <NewGrant />;
 }

@@ -1,16 +1,16 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { DiscordIcon, TelegramIcon, TwitterIcon } from "@/components/Icons"
-import { ParagraphIcon } from "@/components/Icons/Paragraph"
-import { ExternalLink } from "@/components/Utilities/ExternalLink"
-import { layoutTheme } from "@/src/helper/theme"
-import { karmaLinks } from "@/utilities/karma/karma"
-import { PAGES } from "@/utilities/pages"
-import { SOCIALS } from "@/utilities/socials"
-import { cn } from "@/utilities/tailwind"
-import { Logo } from "../shared/logo"
-import { Newsletter } from "./newsletter"
+import Link from "next/link";
+import { DiscordIcon, TelegramIcon, TwitterIcon } from "@/components/Icons";
+import { ParagraphIcon } from "@/components/Icons/Paragraph";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { layoutTheme } from "@/src/helper/theme";
+import { karmaLinks } from "@/utilities/karma/karma";
+import { PAGES } from "@/utilities/pages";
+import { SOCIALS } from "@/utilities/socials";
+import { cn } from "@/utilities/tailwind";
+import { Logo } from "../shared/logo";
+import { Newsletter } from "./newsletter";
 
 const navigationLinks = [
   { label: "For Builders", href: PAGES.HOME },
@@ -19,7 +19,7 @@ const navigationLinks = [
   { label: "Guide", href: SOCIALS.DOCS },
   { label: "SDK Docs", href: karmaLinks.githubSDK },
   { label: "Governance", href: karmaLinks.website },
-]
+];
 
 const socialMediaLinks = [
   {
@@ -42,15 +42,15 @@ const socialMediaLinks = [
     href: SOCIALS.PARAGRAPH,
     icon: ParagraphIcon,
   },
-]
+];
 
 const legalLinks = [
   { label: "Terms", href: PAGES.TERMS_AND_CONDITIONS },
   { label: "Privacy", href: PAGES.PRIVACY_POLICY },
-]
+];
 
 export function Footer() {
-  const currentYear = new Date().getFullYear()
+  const currentYear = new Date().getFullYear();
 
   return (
     <footer className={cn("w-full bg-background flex flex-col items-center justify-center")}>
@@ -65,9 +65,9 @@ export function Footer() {
               {/* Navigation Links */}
               <nav className="flex flex-col md:flex-row md:flex-wrap gap-x-6 gap-y-2">
                 {navigationLinks.map((link) => {
-                  const isExternal = link.href.startsWith("http")
-                  const LinkComponent = isExternal ? ExternalLink : Link
-                  const linkProps = isExternal ? { href: link.href } : { href: link.href }
+                  const isExternal = link.href.startsWith("http");
+                  const LinkComponent = isExternal ? ExternalLink : Link;
+                  const linkProps = isExternal ? { href: link.href } : { href: link.href };
 
                   return (
                     <LinkComponent
@@ -80,14 +80,14 @@ export function Footer() {
                     >
                       {link.label}
                     </LinkComponent>
-                  )
+                  );
                 })}
               </nav>
 
               {/* Social Media Icons */}
               <div className="flex flex-row items-center gap-4">
                 {socialMediaLinks.map((social) => {
-                  const IconComponent = social.icon
+                  const IconComponent = social.icon;
                   return (
                     <ExternalLink
                       key={social.name}
@@ -97,7 +97,7 @@ export function Footer() {
                     >
                       <IconComponent className="w-6 h-6" />
                     </ExternalLink>
-                  )
+                  );
                 })}
               </div>
             </div>
@@ -117,9 +117,9 @@ export function Footer() {
             {/* Legal Links */}
             <div className="flex flex-wrap gap-x-6 gap-y-2">
               {legalLinks.map((link) => {
-                const isExternal = link.href.startsWith("http")
-                const LinkComponent = isExternal ? ExternalLink : Link
-                const linkProps = { href: link.href }
+                const isExternal = link.href.startsWith("http");
+                const LinkComponent = isExternal ? ExternalLink : Link;
+                const linkProps = { href: link.href };
 
                 return (
                   <LinkComponent
@@ -132,7 +132,7 @@ export function Footer() {
                   >
                     {link.label}
                   </LinkComponent>
-                )
+                );
               })}
             </div>
 
@@ -144,5 +144,5 @@ export function Footer() {
         </div>
       </div>
     </footer>
-  )
+  );
 }

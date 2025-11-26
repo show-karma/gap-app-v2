@@ -1,57 +1,57 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { Dialog, Transition } from "@headlessui/react"
-import { TrashIcon, XMarkIcon } from "@heroicons/react/24/solid"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { GAP } from "@show-karma/karma-gap-sdk"
-import { type FC, Fragment, useState } from "react"
-import { useForm } from "react-hook-form"
-import toast from "react-hot-toast"
-import { useAccount } from "wagmi"
-import { z } from "zod"
-import { errorManager } from "@/components/Utilities/errorManager"
-import { useWallet } from "@/hooks/useWallet"
-import { useStepper } from "@/store/modals/txStepper"
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils"
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
-import { MESSAGES } from "@/utilities/messages"
-import { safeGetWalletClient } from "@/utilities/wallet-helpers"
-import { Button } from "../../Utilities/Button"
+import { Dialog, Transition } from "@headlessui/react";
+import { TrashIcon, XMarkIcon } from "@heroicons/react/24/solid";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { GAP } from "@show-karma/karma-gap-sdk";
+import { type FC, Fragment, useState } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { z } from "zod";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { useWallet } from "@/hooks/useWallet";
+import { useStepper } from "@/store/modals/txStepper";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { Button } from "../../Utilities/Button";
 
-const _inputStyle = "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900"
-const labelStyle = "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200"
+const _inputStyle = "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
+const labelStyle = "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
 
 const schema = z.object({
   address: z
     .string()
     .min(3, { message: MESSAGES.COMMUNITY_FORM.TITLE.MIN })
     .max(50, { message: MESSAGES.COMMUNITY_FORM.TITLE.MAX }),
-})
+});
 
-type SchemaType = z.infer<typeof schema>
+type SchemaType = z.infer<typeof schema>;
 interface CommunityAdmin {
-  id: string
-  admins: { user: { id: string } }[]
+  id: string;
+  admins: { user: { id: string } }[];
 }
 
 type RemoveAdminDialogProps = {
-  UUID: `0x${string}`
-  chainid: number
-  Admin: `0x${string}`
-  fetchAdmins: () => void
-}
+  UUID: `0x${string}`;
+  chainid: number;
+  Admin: `0x${string}`;
+  fetchAdmins: () => void;
+};
 
 export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({ UUID, chainid, Admin, fetchAdmins }) => {
-  const [isOpen, setIsOpen] = useState(false)
-  const { address } = useAccount()
+  const [isOpen, setIsOpen] = useState(false);
+  const { address } = useAccount();
   function closeModal() {
-    setIsOpen(false)
+    setIsOpen(false);
   }
 
   function openModal() {
-    setIsOpen(true)
+    setIsOpen(true);
   }
 
   const {
@@ -60,48 +60,48 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({ UUID, chainid, Admin, 
   } = useForm<SchemaType>({
     resolver: zodResolver(schema),
     mode: "onChange",
-  })
+  });
 
-  const [isLoading, setIsLoading] = useState(false)
-  const { chain } = useAccount()
-  const { switchChainAsync } = useWallet()
+  const [isLoading, setIsLoading] = useState(false);
+  const { chain } = useAccount();
+  const { switchChainAsync } = useWallet();
 
-  const { changeStepperStep, setIsStepper } = useStepper()
+  const { changeStepperStep, setIsStepper } = useStepper();
 
   const onSubmit = async () => {
-    setIsLoading(true) // Set loading state to true
+    setIsLoading(true); // Set loading state to true
     const { success, chainId: actualChainId } = await ensureCorrectChain({
       targetChainId: chainid,
       currentChainId: chain?.id,
       switchChainAsync,
-    })
+    });
 
     if (!success) {
-      setIsLoading(false)
-      return
+      setIsLoading(false);
+      return;
     }
 
-    const { walletClient, error } = await safeGetWalletClient(actualChainId)
+    const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
     if (error || !walletClient) {
-      throw new Error("Failed to connect to wallet", { cause: error })
+      throw new Error("Failed to connect to wallet", { cause: error });
     }
-    if (!walletClient) return
-    const walletSigner = await walletClientToSigner(walletClient)
+    if (!walletClient) return;
+    const walletSigner = await walletClientToSigner(walletClient);
     try {
-      const communityResolver = (await GAP.getCommunityResolver(walletSigner)) as any
-      changeStepperStep("preparing")
-      const communityResponse = await communityResolver.delist(UUID, Admin)
+      const communityResolver = (await GAP.getCommunityResolver(walletSigner)) as any;
+      changeStepperStep("preparing");
+      const communityResponse = await communityResolver.delist(UUID, Admin);
 
-      changeStepperStep("pending")
-      const { hash } = communityResponse
+      changeStepperStep("pending");
+      const { hash } = communityResponse;
       await communityResponse.wait().then(async () => {
         if (hash) {
-          await fetchData(INDEXER.ATTESTATION_LISTENER(hash, chainid), "POST", {})
+          await fetchData(INDEXER.ATTESTATION_LISTENER(hash, chainid), "POST", {});
         }
-        changeStepperStep("indexing")
-        let retries = 1000
-        let addressRemoved = false
+        changeStepperStep("indexing");
+        let retries = 1000;
+        let addressRemoved = false;
         while (retries > 0) {
           try {
             const [response, error] = await fetchData(
@@ -111,40 +111,40 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({ UUID, chainid, Admin, 
               {},
               {},
               false
-            )
+            );
             if (!response || error) {
-              throw new Error(`Error fetching admins for community ${UUID}`)
+              throw new Error(`Error fetching admins for community ${UUID}`);
             }
 
             addressRemoved = !response.admins.some(
               (admin: any) => admin.user.id.toLowerCase() === Admin.toLowerCase()
-            )
+            );
 
             if (addressRemoved) {
-              await fetchAdmins()
-              changeStepperStep("indexed")
-              toast.success("Admin removed successfully!")
-              closeModal() // Close the dialog upon successful submission
-              break
+              await fetchAdmins();
+              changeStepperStep("indexed");
+              toast.success("Admin removed successfully!");
+              closeModal(); // Close the dialog upon successful submission
+              break;
             }
           } catch (_error: any) {}
 
-          retries -= 1
+          retries -= 1;
           // eslint-disable-next-line no-await-in-loop
-          await new Promise((resolve) => setTimeout(resolve, 1500))
+          await new Promise((resolve) => setTimeout(resolve, 1500));
         }
-      })
+      });
     } catch (error: any) {
       errorManager(`Error removing admin of ${UUID}`, error, {
         removingAdmin: Admin,
         community: UUID,
         address,
-      })
+      });
     } finally {
-      setIsStepper(false)
-      setIsLoading(false)
+      setIsStepper(false);
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <>
@@ -240,5 +240,5 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({ UUID, chainid, Admin, 
         </Dialog>
       </Transition>
     </>
-  )
-}
+  );
+};

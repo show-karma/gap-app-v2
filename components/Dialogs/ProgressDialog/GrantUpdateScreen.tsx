@@ -1,19 +1,19 @@
-"use client"
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import { useState } from "react"
-import { GrantUpdateForm } from "@/components/Forms/GrantUpdate"
-import { useProjectStore } from "@/store"
-import { useProgressModalStore } from "@/store/modals/progress"
-import { Dropdown } from "./Dropdown"
-import { NoGrant } from "./NoGrant"
+"use client";
+import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useState } from "react";
+import { GrantUpdateForm } from "@/components/Forms/GrantUpdate";
+import { useProjectStore } from "@/store";
+import { useProgressModalStore } from "@/store/modals/progress";
+import { Dropdown } from "./Dropdown";
+import { NoGrant } from "./NoGrant";
 
 export const GrantUpdateScreen = () => {
-  const { project } = useProjectStore()
-  const { closeProgressModal } = useProgressModalStore()
-  const [selectedGrant, setSelectedGrant] = useState<IGrantResponse | undefined>()
-  const grants: IGrantResponse[] = project?.grants || []
+  const { project } = useProjectStore();
+  const { closeProgressModal } = useProgressModalStore();
+  const [selectedGrant, setSelectedGrant] = useState<IGrantResponse | undefined>();
+  const grants: IGrantResponse[] = project?.grants || [];
   if (!grants.length && project) {
-    return <NoGrant />
+    return <NoGrant />;
   }
   return (
     <div className="flex flex-col gap-2">
@@ -26,8 +26,8 @@ export const GrantUpdateScreen = () => {
             timestamp: grant.createdAt,
           }))}
           onSelectFunction={(value: string) => {
-            const newGrant = grants.find((grant) => grant.uid === value)
-            setSelectedGrant(newGrant)
+            const newGrant = grants.find((grant) => grant.uid === value);
+            setSelectedGrant(newGrant);
           }}
           type={"Grants"}
           selected={selectedGrant?.uid || ""}
@@ -38,11 +38,11 @@ export const GrantUpdateScreen = () => {
           <GrantUpdateForm
             grant={selectedGrant}
             afterSubmit={() => {
-              closeProgressModal()
+              closeProgressModal();
             }}
           />
         ) : null}
       </div>
     </div>
-  )
-}
+  );
+};

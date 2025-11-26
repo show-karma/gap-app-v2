@@ -1,45 +1,45 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { Dialog, Transition } from "@headlessui/react"
+import { Dialog, Transition } from "@headlessui/react";
 /* eslint-disable @next/next/no-img-element */
-import { type FC, Fragment, useEffect, useState } from "react"
-import toast from "react-hot-toast"
-import { useProjectStore } from "@/store"
-import { useGrantGenieModalStore } from "@/store/modals/genie"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
-import { Button } from "../Utilities/Button"
-import { Spinner } from "../Utilities/Spinner"
+import { type FC, Fragment, useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { useProjectStore } from "@/store";
+import { useGrantGenieModalStore } from "@/store/modals/genie";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { Button } from "../Utilities/Button";
+import { Spinner } from "../Utilities/Spinner";
 
-type Props = {}
+type Props = {};
 
 function GrantGenieRecommendations({ projectId }: { projectId: string }) {
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(false);
   const [recommendations, setRecommendations] = useState<
     {
-      name: string
-      description: string
-      title: string
-      score: number
-      recommendation: string
+      name: string;
+      description: string;
+      title: string;
+      score: number;
+      recommendation: string;
     }[]
-  >([])
+  >([]);
 
   useEffect(() => {
-    setIsLoading(true)
+    setIsLoading(true);
     fetchData(INDEXER.PROJECT.GRANTS_GENIE(projectId), "GET", {}, {}, {}, undefined).then(
       ([res, error]) => {
-        setIsLoading(false)
-        setError(error)
+        setIsLoading(false);
+        setError(error);
         if (error) {
-          toast.error("Failed to fetch recommendations")
-          return
+          toast.error("Failed to fetch recommendations");
+          return;
         }
-        setRecommendations(res?.grants)
+        setRecommendations(res?.grants);
       }
-    )
-  }, [projectId])
+    );
+  }, [projectId]);
 
   return (
     <section className="grid grid-cols-1 gap-4 mt-3 h-[60vh] overflow-y-scroll">
@@ -65,7 +65,7 @@ function GrantGenieRecommendations({ projectId }: { projectId: string }) {
         ))
       )}
     </section>
-  )
+  );
 }
 
 export const GrantsGenieDialog: FC<Props> = () => {
@@ -73,10 +73,10 @@ export const GrantsGenieDialog: FC<Props> = () => {
     isGrantGenieModalOpen: isOpen,
     closeGrantGenieModal: closeModal,
     openGrantGenieModal: openModal,
-  } = useGrantGenieModalStore()
-  const project = useProjectStore((state) => state.project)
-  const _isProjectAdmin = useProjectStore((state) => state.isProjectAdmin)
-  const [isLoading, _setIsLoading] = useState(false)
+  } = useGrantGenieModalStore();
+  const project = useProjectStore((state) => state.project);
+  const _isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const [isLoading, _setIsLoading] = useState(false);
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -129,5 +129,5 @@ export const GrantsGenieDialog: FC<Props> = () => {
         </div>
       </Dialog>
     </Transition>
-  )
-}
+  );
+};

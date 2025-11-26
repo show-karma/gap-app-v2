@@ -1,25 +1,25 @@
-"use client"
+"use client";
 
-import { Listbox, Transition } from "@headlessui/react"
-import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/outline"
-import { useQueryState } from "nuqs"
-import { Fragment, useEffect, useState } from "react"
-import { errorManager } from "@/components/Utilities/errorManager"
-import { Spinner } from "@/components/Utilities/Spinner"
-import { PROJECT_NAME } from "@/constants/brand"
-import type { IAttestationStatsNames, StatChartData, StatPeriod } from "@/types"
-import { fillDateRangeWithValues } from "@/utilities/fillDateRangeWithValues"
-import { formatDate } from "@/utilities/formatDate"
-import { getGAPStats } from "@/utilities/indexer/stats"
-import { cn } from "@/utilities/tailwind"
-import { GlobalCount } from "./GlobalCount"
-import { LineChart } from "./LineChart"
-import { WeeklyActiveUsersChart } from "./WeeklyActiveUsersChart"
+import { Listbox, Transition } from "@headlessui/react";
+import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/outline";
+import { useQueryState } from "nuqs";
+import { Fragment, useEffect, useState } from "react";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { PROJECT_NAME } from "@/constants/brand";
+import type { IAttestationStatsNames, StatChartData, StatPeriod } from "@/types";
+import { fillDateRangeWithValues } from "@/utilities/fillDateRangeWithValues";
+import { formatDate } from "@/utilities/formatDate";
+import { getGAPStats } from "@/utilities/indexer/stats";
+import { cn } from "@/utilities/tailwind";
+import { GlobalCount } from "./GlobalCount";
+import { LineChart } from "./LineChart";
+import { WeeklyActiveUsersChart } from "./WeeklyActiveUsersChart";
 
 type DictionaryValue = {
-  title: string
-  hint: string
-}
+  title: string;
+  hint: string;
+};
 const dataNameDictionary: Record<IAttestationStatsNames, DictionaryValue> = {
   totals: { title: "Total attestations by ", hint: "Attestations" },
   projects: {
@@ -48,61 +48,61 @@ const dataNameDictionary: Record<IAttestationStatsNames, DictionaryValue> = {
     title: "Total communities created by ",
     hint: "Communities created",
   },
-}
+};
 
-const allPeriods: StatPeriod[] = ["Days", "Weeks", "Months", "Years"]
+const allPeriods: StatPeriod[] = ["Days", "Weeks", "Months", "Years"];
 
 export const Stats = () => {
-  const [data, setData] = useState<StatChartData[]>([])
-  const [isLoading, setIsLoading] = useState(false)
+  const [data, setData] = useState<StatChartData[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [period, setPeriod] = useQueryState("period", {
     shallow: false,
     defaultValue: "Days",
-  })
+  });
 
   const getData = async () => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const fetchedStats = await getGAPStats()
+      const fetchedStats = await getGAPStats();
       if (!fetchedStats) {
-        throw new Error("No stats fetched")
+        throw new Error("No stats fetched");
       }
       const cleanStats = fetchedStats.filter(
         (item: { name: IAttestationStatsNames; data: any }) =>
           item.name !== "communities" && dataNameDictionary[item.name]
-      )
+      );
       const filledStats = cleanStats.map((item) => {
         return {
           name: item.name,
           data: fillDateRangeWithValues(item.data),
-        }
-      })
+        };
+      });
       const stats = filledStats.map((item) => {
         const dataMap = item.data
           .map((dataItem) => {
             return {
               Date: formatDate(dataItem.date, "UTC"),
               [dataNameDictionary[item.name].hint]: dataItem.value,
-            }
+            };
           })
-          .sort((a, b) => new Date(a.Date).getTime() - new Date(b.Date).getTime())
+          .sort((a, b) => new Date(a.Date).getTime() - new Date(b.Date).getTime());
         return {
           name: item.name,
           data: dataMap,
-        }
-      })
-      setData(stats)
+        };
+      });
+      setData(stats);
     } catch (error: any) {
-      errorManager(`Error fetching ${PROJECT_NAME} stats`, error)
+      errorManager(`Error fetching ${PROJECT_NAME} stats`, error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    getData()
-  }, [getData])
+    getData();
+  }, [getData]);
 
   return (
     <div className="mb-10 mt-4  flex w-full flex-col items-center justify-center px-12 max-xl:px-12 max-md:px-4">
@@ -119,7 +119,7 @@ export const Stats = () => {
               <Listbox
                 value={period}
                 onChange={(value) => {
-                  setPeriod(value)
+                  setPeriod(value);
                 }}
               >
                 {({ open }) => (
@@ -211,5 +211,5 @@ export const Stats = () => {
         )}
       </div>
     </div>
-  )
-}
+  );
+};

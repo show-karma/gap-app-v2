@@ -1,17 +1,17 @@
-import { SUPPORTED_NETWORKS, type SupportedToken } from "@/constants/supportedTokens"
-import { getDetailedErrorInfo } from "@/utilities/donations/errorMessages"
+import { SUPPORTED_NETWORKS, type SupportedToken } from "@/constants/supportedTokens";
+import { getDetailedErrorInfo } from "@/utilities/donations/errorMessages";
 
 interface TransferResult {
-  projectId: string
-  status: "pending" | "success" | "error"
-  hash?: string
-  error?: string
+  projectId: string;
+  status: "pending" | "success" | "error";
+  hash?: string;
+  error?: string;
 }
 
 interface TransactionStatusItemProps {
-  transfer: TransferResult
-  projectTitle?: string
-  token?: SupportedToken
+  transfer: TransferResult;
+  projectTitle?: string;
+  token?: SupportedToken;
 }
 
 export function TransactionStatusItem({
@@ -21,26 +21,26 @@ export function TransactionStatusItem({
 }: TransactionStatusItemProps) {
   const explorer = token
     ? `${SUPPORTED_NETWORKS[token.chainId]?.blockExplorer}/tx/${transfer.hash}`
-    : undefined
+    : undefined;
 
   const statusClasses =
     transfer.status === "success"
       ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200"
       : transfer.status === "error"
         ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-200"
-        : "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200"
+        : "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200";
 
   const statusLabel =
     transfer.status === "pending"
       ? "Awaiting confirmation"
       : transfer.status === "success"
         ? "Confirmed"
-        : "Failed"
+        : "Failed";
 
   // Parse error for better messaging
-  let errorInfo = null
+  let errorInfo = null;
   if (transfer.status === "error" && transfer.error) {
-    errorInfo = getDetailedErrorInfo(transfer.error)
+    errorInfo = getDetailedErrorInfo(transfer.error);
   }
 
   return (
@@ -119,5 +119,5 @@ export function TransactionStatusItem({
         )}
       </div>
     </div>
-  )
+  );
 }

@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import { XMarkIcon } from "@heroicons/react/24/solid"
-import * as Dialog from "@radix-ui/react-dialog"
-import type { FC } from "react"
-import { IndicatorForm } from "@/components/Forms/IndicatorForm"
-import type { ImpactIndicatorWithData } from "@/types/impactMeasurement"
+import { XMarkIcon } from "@heroicons/react/24/solid";
+import * as Dialog from "@radix-ui/react-dialog";
+import type { FC } from "react";
+import { IndicatorForm } from "@/components/Forms/IndicatorForm";
+import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 
 interface OutputDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  selectedPrograms: { programId: string; title: string; chainID: number }[]
-  onSuccess: (indicator: ImpactIndicatorWithData) => void
-  onError: () => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  selectedPrograms: { programId: string; title: string; chainID: number }[];
+  onSuccess: (indicator: ImpactIndicatorWithData) => void;
+  onError: () => void;
 }
 
 export const OutputDialog: FC<OutputDialogProps> = ({
@@ -47,4 +47,4 @@ export const OutputDialog: FC<OutputDialogProps> = ({
       </Dialog.Content>
     </Dialog.Portal>
   </Dialog.Root>
-)
+);

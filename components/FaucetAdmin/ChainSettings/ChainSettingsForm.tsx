@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { formatEther, parseEther } from "viem"
-import { useChains } from "@/hooks/useFaucetAdmin"
-import type { FaucetChainSettings } from "@/utilities/faucet/faucetService"
+import { useState } from "react";
+import { formatEther, parseEther } from "viem";
+import { useChains } from "@/hooks/useFaucetAdmin";
+import type { FaucetChainSettings } from "@/utilities/faucet/faucetService";
 
 interface ChainSettingsFormProps {
-  settings?: FaucetChainSettings
-  onSave: (settings: Partial<FaucetChainSettings>) => void
-  onCancel: () => void
+  settings?: FaucetChainSettings;
+  onSave: (settings: Partial<FaucetChainSettings>) => void;
+  onCancel: () => void;
 }
 
 export function ChainSettingsForm({ settings, onSave, onCancel }: ChainSettingsFormProps) {
@@ -19,33 +19,33 @@ export function ChainSettingsForm({ settings, onSave, onCancel }: ChainSettingsF
     bufferPercentage: settings?.bufferPercentage?.toString() || "",
     lowBalanceThreshold: settings ? formatEther(BigInt(settings.lowBalanceThreshold)) : "0.1",
     enabled: settings?.enabled ?? true,
-  })
-  const { chains } = useChains()
+  });
+  const { chains } = useChains();
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     const payload: any = {
       maxAmountPerRequest: parseEther(formData.maxAmountPerRequest).toString(),
       lowBalanceThreshold: parseEther(formData.lowBalanceThreshold).toString(),
       enabled: formData.enabled,
-    }
+    };
 
     // Only include if not creating new settings
     if (!settings) {
-      payload.chainId = parseInt(formData.chainId.toString(), 10)
+      payload.chainId = parseInt(formData.chainId.toString(), 10);
     }
 
     // Only include if values are provided
     if (formData.rateLimitHours) {
-      payload.rateLimitHours = parseFloat(formData.rateLimitHours)
+      payload.rateLimitHours = parseFloat(formData.rateLimitHours);
     }
     if (formData.bufferPercentage) {
-      payload.bufferPercentage = parseInt(formData.bufferPercentage, 10)
+      payload.bufferPercentage = parseInt(formData.bufferPercentage, 10);
     }
 
-    onSave(payload)
-  }
+    onSave(payload);
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -177,5 +177,5 @@ export function ChainSettingsForm({ settings, onSave, onCancel }: ChainSettingsF
         </button>
       </div>
     </form>
-  )
+  );
 }

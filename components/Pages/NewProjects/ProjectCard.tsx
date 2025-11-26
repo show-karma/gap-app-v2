@@ -1,15 +1,15 @@
-import Link from "next/link"
-import pluralize from "pluralize"
-import type { ProjectFromList } from "@/types/project"
-import formatCurrency from "@/utilities/formatCurrency"
-import { formatDate } from "@/utilities/formatDate"
-import { PAGES } from "@/utilities/pages"
-import { MarkdownPreview } from "../../Utilities/MarkdownPreview"
-import { ProfilePicture } from "../../Utilities/ProfilePicture"
+import Link from "next/link";
+import pluralize from "pluralize";
+import type { ProjectFromList } from "@/types/project";
+import formatCurrency from "@/utilities/formatCurrency";
+import { formatDate } from "@/utilities/formatDate";
+import { PAGES } from "@/utilities/pages";
+import { MarkdownPreview } from "../../Utilities/MarkdownPreview";
+import { ProfilePicture } from "../../Utilities/ProfilePicture";
 
 interface ProjectCardProps {
-  project: ProjectFromList
-  index: number
+  project: ProjectFromList;
+  index: number;
 }
 
 const pickColor = (index: number) => {
@@ -24,9 +24,9 @@ const pickColor = (index: number) => {
     "#EE46BC",
     "#EEAAFD",
     "#67E3F9",
-  ]
-  return cardColors[index % cardColors.length]
-}
+  ];
+  return cardColors[index % cardColors.length];
+};
 
 export const ProjectCard = ({ project, index }: ProjectCardProps) => {
   return (
@@ -96,5 +96,5 @@ export const ProjectCard = ({ project, index }: ProjectCardProps) => {
         </div>
       </div>
     </Link>
-  )
-}
+  );
+};

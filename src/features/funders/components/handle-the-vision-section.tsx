@@ -1,8 +1,8 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { marketingLayoutTheme } from "@/src/helper/theme"
-import { SOCIALS } from "@/utilities/socials"
-import { cn } from "@/utilities/tailwind"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { marketingLayoutTheme } from "@/src/helper/theme";
+import { SOCIALS } from "@/utilities/socials";
+import { cn } from "@/utilities/tailwind";
 
 export function HandleTheVisionSection() {
   return (
@@ -24,5 +24,5 @@ export function HandleTheVisionSection() {
         </div>
       </div>
     </section>
-  )
+  );
 }

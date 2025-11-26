@@ -1,4 +1,4 @@
-import { errorManager } from "@/components/Utilities/errorManager"
+import { errorManager } from "@/components/Utilities/errorManager";
 
 /**
  * Retries a function with exponential backoff
@@ -15,26 +15,26 @@ export async function retry<T>(
   maxDelay: number = 30000,
   backoff: number = 1
 ): Promise<T> {
-  let retries = 0
-  let delay = initialDelay
+  let retries = 0;
+  let delay = initialDelay;
 
   while (retries < maxRetries) {
     try {
-      return await operation()
+      return await operation();
     } catch (error) {
-      retries++
+      retries++;
       if (retries >= maxRetries) {
-        errorManager(`Operation failed after ${maxRetries} retries`, error)
-        throw error
+        errorManager(`Operation failed after ${maxRetries} retries`, error);
+        throw error;
       }
 
       // Calculate next delay with exponential backoff
-      delay = Math.min(delay * backoff, maxDelay)
-      await new Promise((resolve) => setTimeout(resolve, delay))
+      delay = Math.min(delay * backoff, maxDelay);
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 
-  throw new Error("Unexpected end of retry loop")
+  throw new Error("Unexpected end of retry loop");
 }
 
 export const retryUntilConditionMet = async (
@@ -43,18 +43,18 @@ export const retryUntilConditionMet = async (
   maxRetries: number = 1000,
   delay: number = 1500
 ) => {
-  let retries = maxRetries
+  let retries = maxRetries;
   while (retries > 0) {
     try {
-      const conditionMet = await conditionFn().catch(() => false)
+      const conditionMet = await conditionFn().catch(() => false);
       if (conditionMet) {
-        callbackFn?.()
-        return
+        callbackFn?.();
+        return;
       }
     } catch (error) {
-      console.error("Error checking condition:", error)
+      console.error("Error checking condition:", error);
     }
-    retries -= 1
-    await new Promise((resolve) => setTimeout(resolve, delay))
+    retries -= 1;
+    await new Promise((resolve) => setTimeout(resolve, delay));
   }
-}
+};

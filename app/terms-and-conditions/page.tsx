@@ -1,5 +1,5 @@
-import { PROJECT_NAME } from "@/constants/brand"
-import { PAGES } from "@/utilities/pages"
+import { PROJECT_NAME } from "@/constants/brand";
+import { PAGES } from "@/utilities/pages";
 
 const styles = {
   h1: "text-2xl font-bold text-start text-black dark:text-white",
@@ -7,7 +7,7 @@ const styles = {
   p: "text-base text-start mb-2 text-black dark:text-white",
   i: "text-sm text-start text-black dark:text-white mb-3",
   a: "text-base text-start underline text-blue-500 dark:text-blue-500",
-}
+};
 
 export default function TermsAndConditions() {
   return (
@@ -81,5 +81,5 @@ export default function TermsAndConditions() {
         </span>
       </div>
     </div>
-  )
+  );
 }

@@ -1,9 +1,9 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { marketingLayoutTheme } from "@/src/helper/theme"
-import { PAGES } from "@/utilities/pages"
-import { cn } from "@/utilities/tailwind"
-import { CreateProjectButton } from "./create-project-button"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { marketingLayoutTheme } from "@/src/helper/theme";
+import { PAGES } from "@/utilities/pages";
+import { cn } from "@/utilities/tailwind";
+import { CreateProjectButton } from "./create-project-button";
 
 export function WhereBuildersGrow() {
   return (
@@ -25,5 +25,5 @@ export function WhereBuildersGrow() {
         </div>
       </div>
     </section>
-  )
+  );
 }

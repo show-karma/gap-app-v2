@@ -5,8 +5,8 @@
  * Following the pattern established in homepage tests to avoid global conflicts.
  */
 
-import "@testing-library/jest-dom"
-import React from "react"
+import "@testing-library/jest-dom";
+import React from "react";
 
 // Mock window.matchMedia
 Object.defineProperty(window, "matchMedia", {
@@ -21,41 +21,41 @@ Object.defineProperty(window, "matchMedia", {
     removeEventListener: jest.fn(),
     dispatchEvent: jest.fn(),
   })),
-})
+});
 
 // Mock IntersectionObserver
 global.IntersectionObserver = class IntersectionObserver {
   disconnect() {}
   observe() {}
   takeRecords() {
-    return []
+    return [];
   }
   unobserve() {}
-} as any
+} as any;
 
 // Mock ResizeObserver
 global.ResizeObserver = class ResizeObserver {
   disconnect() {}
   observe() {}
   unobserve() {}
-} as any
+} as any;
 
 // Mock next/image
 jest.mock("next/image", () => ({
   __esModule: true,
   default: (props: any) => {
     // eslint-disable-next-line jsx-a11y/alt-text
-    return React.createElement("img", props)
+    return React.createElement("img", props);
   },
-}))
+}));
 
 // Mock next/link
 jest.mock("next/link", () => ({
   __esModule: true,
   default: ({ children, href, ...props }: any) => {
-    return React.createElement("a", { href, ...props }, children)
+    return React.createElement("a", { href, ...props }, children);
   },
-}))
+}));
 
 // Mock InfiniteMovingCards component
 jest.mock("@/src/components/ui/infinite-moving-cards", () => ({
@@ -71,7 +71,7 @@ jest.mock("@/src/components/ui/infinite-moving-cards", () => ({
         )
       )
     ),
-}))
+}));
 
 // Mock ThemeImage component (renders light version for tests)
 jest.mock("@/src/components/ui/theme-image", () => ({
@@ -81,15 +81,15 @@ jest.mock("@/src/components/ui/theme-image", () => ({
       src,
       alt,
       className,
-    })
+    });
   },
-}))
+}));
 
 // Mock chosenCommunities
-export const mockChosenCommunities = jest.fn()
+export const mockChosenCommunities = jest.fn();
 jest.mock("@/utilities/chosenCommunities", () => ({
   chosenCommunities: (includeAll?: boolean) => mockChosenCommunities(includeAll),
-}))
+}));
 
 // Mock CustomerAvatar component
 jest.mock("@/src/features/funders/components/customer-avatar", () => ({
@@ -100,7 +100,7 @@ jest.mock("@/src/features/funders/components/customer-avatar", () => ({
       alt,
       className: "customer-avatar",
     }),
-}))
+}));
 
 // Mock CommunityImage component
 jest.mock("@/src/features/funders/components/community-image", () => ({
@@ -111,7 +111,7 @@ jest.mock("@/src/features/funders/components/community-image", () => ({
       alt,
       className: "community-image",
     }),
-}))
+}));
 
 // Mock FAQAccordion component
 jest.mock("@/src/components/shared/faq-accordion", () => ({
@@ -123,7 +123,7 @@ jest.mock("@/src/components/shared/faq-accordion", () => ({
         React.createElement("div", { key: idx, "data-testid": `faq-item-${idx}` }, item.question)
       )
     ),
-}))
+}));
 
 // Mock lucide-react icons
 jest.mock("lucide-react", () => ({
@@ -133,7 +133,7 @@ jest.mock("lucide-react", () => ({
     React.createElement("svg", { ...props, "data-testid": "barchart-icon" }),
   SquareCheckBig: (props: any) =>
     React.createElement("svg", { ...props, "data-testid": "check-icon" }),
-}))
+}));
 
 // Mock useAuth hook
 export const mockAuthState = {
@@ -144,11 +144,11 @@ export const mockAuthState = {
     login: jest.fn(),
     logout: jest.fn(),
   },
-}
+};
 
 jest.mock("@/hooks/useAuth", () => ({
   useAuth: () => mockAuthState.current,
-}))
+}));
 
 // Mock useTheme hook
 export const mockThemeState = {
@@ -157,26 +157,26 @@ export const mockThemeState = {
     setTheme: jest.fn(),
     resolvedTheme: "light",
   },
-}
+};
 
 jest.mock("next-themes", () => ({
   useTheme: () => mockThemeState.current,
-}))
+}));
 
 // Mock Zustand stores (only the ones actually used by funders page)
 jest.mock("@/store/owner", () => ({
   useOwnerStore: (selector?: any) => {
-    const state = { isOwner: false }
-    return selector ? selector(state) : state
+    const state = { isOwner: false };
+    return selector ? selector(state) : state;
   },
-}))
+}));
 
 jest.mock("@/store/communities", () => ({
   useCommunitiesStore: () => ({
     communities: [],
     setCommunities: jest.fn(),
   }),
-}))
+}));
 
 // Export reset functions for test cleanup
 export const resetMockAuthState = () => {
@@ -186,17 +186,17 @@ export const resetMockAuthState = () => {
     user: null,
     login: jest.fn(),
     logout: jest.fn(),
-  }
-}
+  };
+};
 
 export const resetMockThemeState = () => {
   mockThemeState.current = {
     theme: "light",
     setTheme: jest.fn(),
     resolvedTheme: "light",
-  }
-}
+  };
+};
 
 export const resetMockChosenCommunities = () => {
-  mockChosenCommunities.mockReset()
-}
+  mockChosenCommunities.mockReset();
+};

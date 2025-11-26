@@ -1,12 +1,12 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { ImageResponse } from "next/og"
-import type { NextRequest } from "next/server"
-import pluralize from "pluralize"
-import { PROJECT_NAME } from "@/constants/brand"
-import { gapIndexerApi } from "@/utilities/gapIndexerApi"
-import { getTotalProjects } from "@/utilities/karma/totalProjects"
-import { getGrants } from "@/utilities/sdk"
+import { ImageResponse } from "next/og";
+import type { NextRequest } from "next/server";
+import pluralize from "pluralize";
+import { PROJECT_NAME } from "@/constants/brand";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { getTotalProjects } from "@/utilities/karma/totalProjects";
+import { getGrants } from "@/utilities/sdk";
 // App router includes @vercel/og.
 // No need to install it.
 
@@ -14,7 +14,7 @@ export async function GET(
   _request: NextRequest,
   context: { params: Promise<{ communityId: string }> }
 ) {
-  const communityId = (await context.params).communityId
+  const communityId = (await context.params).communityId;
   const [community, grantsData, projects] = await Promise.all([
     gapIndexerApi
       .communityBySlug(communityId)
@@ -33,13 +33,13 @@ export async function GET(
       }
     ),
     getTotalProjects(communityId),
-  ])
+  ]);
 
   if (!community) {
-    return new Response("Not found", { status: 404 })
+    return new Response("Not found", { status: 404 });
   }
 
-  const grants = grantsData.pageInfo?.totalItems || 0
+  const grants = grantsData.pageInfo?.totalItems || 0;
 
   const stats = [
     {
@@ -52,7 +52,7 @@ export async function GET(
       value: projects || 0,
       icon: "https://karmahq.xyz/icons/projects.png",
     },
-  ]
+  ];
 
   return new ImageResponse(
     <div
@@ -129,5 +129,5 @@ export async function GET(
       width: 1200,
       height: 630,
     }
-  )
+  );
 }

@@ -2,11 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 import { Dialog, Transition } from "@headlessui/react";
-import {
-  ArrowPathIcon,
-  CheckIcon,
-  ClipboardDocumentIcon,
-} from "@heroicons/react/24/outline";
+import { ArrowPathIcon, CheckIcon, ClipboardDocumentIcon } from "@heroicons/react/24/outline";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { type FC, Fragment, useEffect, useState } from "react";
 import { useAccount } from "wagmi";
@@ -25,15 +21,8 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
   const project = useProjectStore((state) => state.project);
   const [, copyToClipboard] = useCopyToClipboard();
 
-  const {
-    inviteCode,
-    isLoading,
-    isGenerating,
-    isRevoking,
-    generateCode,
-    revokeCode,
-    isSuccess,
-  } = useInviteLink(project?.uid);
+  const { inviteCode, isLoading, isGenerating, isRevoking, generateCode, revokeCode, isSuccess } =
+    useInviteLink(project?.uid);
 
   const { address } = useAccount();
   const code = inviteCode?.hash;
@@ -99,8 +88,7 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
                     {code ? (
                       <div className="flex flex-col gap-2 h-full">
                         <p className="text-zinc-800 dark:text-zinc-100">
-                          Share this invite link with your team member to join
-                          your project.
+                          Share this invite link with your team member to join your project.
                         </p>
                         <div className=" items-center flex flex-row gap-2 h-max max-h-40">
                           <Button
@@ -179,9 +167,7 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
                         </div>
                       </div>
                     ) : isLoading || isGenerating ? (
-                      <p className="text-black dark:text-zinc-200 text-base">
-                        Generating code...
-                      </p>
+                      <p className="text-black dark:text-zinc-200 text-base">Generating code...</p>
                     ) : (
                       <Spinner />
                     )}

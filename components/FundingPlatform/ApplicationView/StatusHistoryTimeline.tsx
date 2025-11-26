@@ -1,19 +1,19 @@
-"use client"
+"use client";
 
 import {
   CheckCircleIcon,
   ClockIcon,
   ExclamationTriangleIcon,
   XCircleIcon,
-} from "@heroicons/react/24/outline"
-import { format, isValid, parseISO } from "date-fns"
-import type { FC } from "react"
-import type { IStatusHistoryEntry } from "@/types/funding-platform"
-import { cn } from "@/utilities/tailwind"
+} from "@heroicons/react/24/outline";
+import { format, isValid, parseISO } from "date-fns";
+import type { FC } from "react";
+import type { IStatusHistoryEntry } from "@/types/funding-platform";
+import { cn } from "@/utilities/tailwind";
 
 interface StatusHistoryTimelineProps {
-  history: IStatusHistoryEntry[]
-  currentStatus: string
+  history: IStatusHistoryEntry[];
+  currentStatus: string;
 }
 
 const statusConfig = {
@@ -37,33 +37,33 @@ const statusConfig = {
     color: "text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900",
     label: "Rejected",
   },
-}
+};
 
 const StatusHistoryTimeline: FC<StatusHistoryTimelineProps> = ({ history, currentStatus }) => {
   const sortedHistory = [...history].sort(
     (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-  )
+  );
 
   const formatDate = (dateString: string) => {
     try {
-      const date = parseISO(dateString)
-      if (!isValid(date)) return "Invalid date"
-      return format(date, "MMM dd, yyyy HH:mm")
+      const date = parseISO(dateString);
+      if (!isValid(date)) return "Invalid date";
+      return format(date, "MMM dd, yyyy HH:mm");
     } catch {
-      return "Invalid date"
+      return "Invalid date";
     }
-  }
+  };
 
   return (
     <div className="flow-root">
       <ul>
         {sortedHistory.map((entry, idx) => {
           const config =
-            statusConfig[entry.status as keyof typeof statusConfig] || statusConfig.pending
-          const StatusIcon = config.icon
-          const isLatest = idx === 0
-          const isCurrent = entry.status === currentStatus && isLatest
-          const isLast = idx === sortedHistory.length - 1
+            statusConfig[entry.status as keyof typeof statusConfig] || statusConfig.pending;
+          const StatusIcon = config.icon;
+          const isLatest = idx === 0;
+          const isCurrent = entry.status === currentStatus && isLatest;
+          const isLast = idx === sortedHistory.length - 1;
 
           return (
             <li key={idx}>
@@ -134,11 +134,11 @@ const StatusHistoryTimeline: FC<StatusHistoryTimelineProps> = ({ history, curren
                 </div>
               </div>
             </li>
-          )
+          );
         })}
       </ul>
     </div>
-  )
-}
+  );
+};
 
-export default StatusHistoryTimeline
+export default StatusHistoryTimeline;

@@ -1,13 +1,13 @@
-import { ArrowRightIcon } from "@heroicons/react/20/solid"
-import Link from "next/link"
-import { marketingLayoutTheme } from "@/src/helper/theme"
-import { getLiveFundingOpportunities } from "@/src/services/funding/getLiveFundingOpportunities"
-import { PAGES } from "@/utilities/pages"
-import { cn } from "@/utilities/tailwind"
-import { LiveFundingOpportunitiesCarousel } from "./live-funding-opportunities-carousel"
+import { ArrowRightIcon } from "@heroicons/react/20/solid";
+import Link from "next/link";
+import { marketingLayoutTheme } from "@/src/helper/theme";
+import { getLiveFundingOpportunities } from "@/src/services/funding/getLiveFundingOpportunities";
+import { PAGES } from "@/utilities/pages";
+import { cn } from "@/utilities/tailwind";
+import { LiveFundingOpportunitiesCarousel } from "./live-funding-opportunities-carousel";
 
 export async function LiveFundingOpportunities() {
-  const programs = await getLiveFundingOpportunities()
+  const programs = await getLiveFundingOpportunities();
 
   return (
     <section
@@ -31,5 +31,5 @@ export async function LiveFundingOpportunities() {
       {/* Client component for interactive carousel */}
       <LiveFundingOpportunitiesCarousel programs={programs} />
     </section>
-  )
+  );
 }

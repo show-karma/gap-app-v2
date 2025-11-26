@@ -1,14 +1,14 @@
 /* eslint-disable react/jsx-key */
 
-import { ArrowLeftIcon, ArrowRightIcon } from "@heroicons/react/24/outline"
-import type React from "react"
-import { DOTS, usePagination } from "@/hooks/usePagination"
+import { ArrowLeftIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
+import type React from "react";
+import { DOTS, usePagination } from "@/hooks/usePagination";
 
 interface Props {
-  currentPage: number
-  totalPosts: number
-  setCurrentPage: React.Dispatch<React.SetStateAction<number>>
-  postsPerPage: number
+  currentPage: number;
+  totalPosts: number;
+  setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
+  postsPerPage: number;
 }
 
 export default function Pagination({
@@ -21,15 +21,15 @@ export default function Pagination({
     currentPage,
     totalPosts,
     postsPerPage,
-  })
+  });
 
-  const lastPage = paginationRange?.[paginationRange.length - 1]
+  const lastPage = paginationRange?.[paginationRange.length - 1];
 
   function handlePageChange(page: number | string) {
     if (page === currentPage) {
-      return `z-10 bg-background border-brand-blue text-primary relative inline-flex items-center px-4 py-2 max-sm:px-3 max-sm:py-1 border text-sm font-medium`
+      return `z-10 bg-background border-brand-blue text-primary relative inline-flex items-center px-4 py-2 max-sm:px-3 max-sm:py-1 border text-sm font-medium`;
     } else {
-      return "bg-background border-gray-300 dark:border-zinc-800 text-primary hover:bg-gray-50 relative inline-flex items-center px-4 py-2 max-sm:px-3 max-sm:py-1 border text-sm font-medium duration-200 ease-in-out"
+      return "bg-background border-gray-300 dark:border-zinc-800 text-primary hover:bg-gray-50 relative inline-flex items-center px-4 py-2 max-sm:px-3 max-sm:py-1 border text-sm font-medium duration-200 ease-in-out";
     }
   }
 
@@ -56,7 +56,7 @@ export default function Pagination({
           <nav className="relative z-0 inline-flex rounded-md  -space-x-px" aria-label="Pagination">
             <button
               onClick={() => {
-                setCurrentPage(currentPage - 1)
+                setCurrentPage(currentPage - 1);
               }}
               disabled={currentPage === 1}
               className={`relative inline-flex items-center p-2 rounded-l-md border border-gray-300 dark:border-zinc-800 hover:bg-gray-50 text-sm font-medium duration-200 ease-in-out ${
@@ -77,7 +77,7 @@ export default function Pagination({
                   >
                     {DOTS}
                   </button>
-                )
+                );
               }
               return (
                 <button
@@ -85,16 +85,16 @@ export default function Pagination({
                   key={`${page}-${index}`}
                   className={handlePageChange(page)}
                   onClick={() => {
-                    setCurrentPage(Number(page))
+                    setCurrentPage(Number(page));
                   }}
                 >
                   {page}
                 </button>
-              )
+              );
             })}
             <button
               onClick={() => {
-                setCurrentPage(currentPage + 1)
+                setCurrentPage(currentPage + 1);
               }}
               disabled={currentPage === lastPage || lastPage === undefined}
               className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-zinc-800 text-sm font-medium hover:bg-gray-50 duration-200 ease-in-out ${
@@ -110,5 +110,5 @@ export default function Pagination({
         </div>
       </div>
     </div>
-  )
+  );
 }

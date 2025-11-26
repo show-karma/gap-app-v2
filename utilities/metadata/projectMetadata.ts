@@ -1,33 +1,33 @@
 import type {
   IGrantResponse,
   IProjectResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import type { Metadata } from "next"
-import { PROJECT_NAME } from "@/constants/brand"
-import { envVars } from "../enviromentVars"
-import { cleanMarkdownForPlainText } from "../markdown"
-import { defaultMetadata } from "../meta"
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { Metadata } from "next";
+import { PROJECT_NAME } from "@/constants/brand";
+import { envVars } from "../enviromentVars";
+import { cleanMarkdownForPlainText } from "../markdown";
+import { defaultMetadata } from "../meta";
 
 // Base project metadata generator
 export const generateProjectMetadata = (
   project: IProjectResponse,
   options: {
-    title?: string
-    description?: string
-    pageName?: string
-    projectId: string
+    title?: string;
+    description?: string;
+    pageName?: string;
+    projectId: string;
   }
 ): Metadata => {
   const title =
     options.title ||
     (options.pageName
       ? `${project.details?.data?.title} ${options.pageName} | ${PROJECT_NAME}`
-      : `${project.details?.data?.title} | ${PROJECT_NAME}`)
+      : `${project.details?.data?.title} | ${PROJECT_NAME}`);
 
   const description =
     options.description ||
     cleanMarkdownForPlainText(project.details?.data?.description || "", 160) ||
-    defaultMetadata.description
+    defaultMetadata.description;
 
   return {
     title,
@@ -55,8 +55,8 @@ export const generateProjectMetadata = (
       ],
     },
     icons: defaultMetadata.icons,
-  }
-}
+  };
+};
 
 // Specific metadata generators for different page types
 export const generateProjectOverviewMetadata = (
@@ -67,8 +67,8 @@ export const generateProjectOverviewMetadata = (
     projectId,
     title: `${project.details?.data?.title} | ${PROJECT_NAME}`,
     description: cleanMarkdownForPlainText(project.details?.data?.description || "", 80),
-  })
-}
+  });
+};
 
 export const generateProjectTeamMetadata = (
   project: IProjectResponse,
@@ -78,8 +78,8 @@ export const generateProjectTeamMetadata = (
     projectId,
     pageName: "Team",
     description: `Meet the team behind ${project.details?.data?.title} and their contributions to the project.`,
-  })
-}
+  });
+};
 
 export const generateProjectImpactMetadata = (
   project: IProjectResponse,
@@ -89,8 +89,8 @@ export const generateProjectImpactMetadata = (
     projectId,
     title: `Impact of ${project.details?.data?.title} | ${PROJECT_NAME}`,
     description: `Explore the impact and outcomes of ${project.details?.data?.title} on ${PROJECT_NAME}.`,
-  })
-}
+  });
+};
 
 export const generateProjectContactMetadata = (
   project: IProjectResponse,
@@ -100,8 +100,8 @@ export const generateProjectContactMetadata = (
     projectId,
     pageName: "Contact",
     description: `Contact information for ${project.details?.data?.title} project team.`,
-  })
-}
+  });
+};
 
 export const generateProjectUpdatesMetadata = (
   project: IProjectResponse,
@@ -111,8 +111,8 @@ export const generateProjectUpdatesMetadata = (
     projectId,
     title: `${project.details?.data?.title} Updates | ${PROJECT_NAME}`,
     description: `Explore the updates of ${project.details?.data?.title} on ${PROJECT_NAME}.`,
-  })
-}
+  });
+};
 
 export const generateProjectFundingMetadata = (
   project: IProjectResponse,
@@ -122,8 +122,8 @@ export const generateProjectFundingMetadata = (
     projectId,
     title: `${project.details?.data?.title} Grants | ${PROJECT_NAME}`,
     description: `View funding and grants for ${project.details?.data?.title} on ${PROJECT_NAME}.`,
-  })
-}
+  });
+};
 
 // Grant-specific metadata generators
 export const generateGrantOverviewMetadata = (
@@ -135,8 +135,8 @@ export const generateGrantOverviewMetadata = (
     projectId,
     title: `${grant.details?.data?.title} Grant Overview | ${project.details?.data?.title} | ${PROJECT_NAME}`,
     description: cleanMarkdownForPlainText(grant.details?.data?.description || "", 160),
-  })
-}
+  });
+};
 
 export const generateGrantMilestonesMetadata = (
   project: IProjectResponse,
@@ -147,8 +147,8 @@ export const generateGrantMilestonesMetadata = (
     projectId,
     title: `${project.details?.data?.title} - Milestones and Updates for ${grant.details?.data?.title} | ${PROJECT_NAME}`,
     description: `View all milestones and updates by ${project.details?.data?.title} for ${grant.details?.data?.title} grant.`,
-  })
-}
+  });
+};
 
 export const generateGrantImpactCriteriaMetadata = (
   project: IProjectResponse,
@@ -159,8 +159,8 @@ export const generateGrantImpactCriteriaMetadata = (
     projectId,
     title: `Impact Criteria for ${grant.details?.data?.title} Grant | ${project.details?.data?.title} | ${PROJECT_NAME}`,
     description: `Impact criteria defined by ${project.details?.data?.title} for ${grant.details?.data?.title} grant.`,
-  })
-}
+  });
+};
 
 // Enhanced metadata composition functions
 export const createMetadataFromContext = (
@@ -168,8 +168,8 @@ export const createMetadataFromContext = (
   projectId: string,
   metadataType: "overview" | "team" | "impact" | "contact" | "updates" | "funding",
   customOptions?: {
-    title?: string
-    description?: string
+    title?: string;
+    description?: string;
   }
 ): Metadata => {
   if (!project) {
@@ -177,31 +177,31 @@ export const createMetadataFromContext = (
       title: `Project Not Found | ${PROJECT_NAME}`,
       description: "The requested project could not be found.",
       icons: defaultMetadata.icons,
-    }
+    };
   }
 
   switch (metadataType) {
     case "team":
-      return generateProjectTeamMetadata(project, projectId)
+      return generateProjectTeamMetadata(project, projectId);
     case "impact":
-      return generateProjectImpactMetadata(project, projectId)
+      return generateProjectImpactMetadata(project, projectId);
     case "contact":
-      return generateProjectContactMetadata(project, projectId)
+      return generateProjectContactMetadata(project, projectId);
     case "updates":
-      return generateProjectUpdatesMetadata(project, projectId)
+      return generateProjectUpdatesMetadata(project, projectId);
     case "funding":
-      return generateProjectFundingMetadata(project, projectId)
+      return generateProjectFundingMetadata(project, projectId);
     default:
       if (customOptions?.title || customOptions?.description) {
         return generateProjectMetadata(project, {
           projectId,
           title: customOptions.title,
           description: customOptions.description,
-        })
+        });
       }
-      return generateProjectOverviewMetadata(project, projectId)
+      return generateProjectOverviewMetadata(project, projectId);
   }
-}
+};
 
 // Grant-specific metadata composition functions
 export const createGrantMetadataFromContext = (
@@ -216,20 +216,20 @@ export const createGrantMetadataFromContext = (
       title: `Project Not Found | ${PROJECT_NAME}`,
       description: "The requested project could not be found.",
       icons: defaultMetadata.icons,
-    }
+    };
   }
 
   if (!grant) {
     // If no specific grant, return funding overview
-    return generateProjectFundingMetadata(project, projectId)
+    return generateProjectFundingMetadata(project, projectId);
   }
 
   switch (metadataType) {
     case "milestones":
-      return generateGrantMilestonesMetadata(project, grant, projectId)
+      return generateGrantMilestonesMetadata(project, grant, projectId);
     case "impact-criteria":
-      return generateGrantImpactCriteriaMetadata(project, grant, projectId)
+      return generateGrantImpactCriteriaMetadata(project, grant, projectId);
     default:
-      return generateGrantOverviewMetadata(project, grant, projectId)
+      return generateGrantOverviewMetadata(project, grant, projectId);
   }
-}
+};

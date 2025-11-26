@@ -1,40 +1,40 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { CheckIcon } from "@heroicons/react/24/solid"
-import * as Popover from "@radix-ui/react-popover"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk"
-import Image from "next/image"
-import pluralize from "pluralize"
-import { type FC, useEffect, useState } from "react"
-import { ChevronDown } from "@/components/Icons/ChevronDown"
-import { cn } from "@/utilities/tailwind"
+import { CheckIcon } from "@heroicons/react/24/solid";
+import * as Popover from "@radix-ui/react-popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk";
+import Image from "next/image";
+import pluralize from "pluralize";
+import { type FC, useEffect, useState } from "react";
+import { ChevronDown } from "@/components/Icons/ChevronDown";
+import { cn } from "@/utilities/tailwind";
 
 interface SearchDropdownProps {
-  onSelectFunction: (value: string) => void
-  selected: string[]
-  list: string[]
+  onSelectFunction: (value: string) => void;
+  selected: string[];
+  list: string[];
   imageDictionary?: Record<
     string,
     {
-      light: string
-      dark: string
+      light: string;
+      dark: string;
     }
-  >
-  type: string
-  cleanFunction?: () => void
-  prefixUnselected?: string
-  buttonClassname?: string
-  listClassname?: string
-  canAdd?: boolean
-  shouldSort?: boolean
-  canSearch?: boolean
-  id?: string
-  leftIcon?: React.ReactNode
-  paragraphClassname?: string
-  rightIcon?: React.ReactNode
-  customAddButton?: React.ReactNode
-  placeholderText?: string
-  showCount?: boolean
+  >;
+  type: string;
+  cleanFunction?: () => void;
+  prefixUnselected?: string;
+  buttonClassname?: string;
+  listClassname?: string;
+  canAdd?: boolean;
+  shouldSort?: boolean;
+  canSearch?: boolean;
+  id?: string;
+  leftIcon?: React.ReactNode;
+  paragraphClassname?: string;
+  rightIcon?: React.ReactNode;
+  customAddButton?: React.ReactNode;
+  placeholderText?: string;
+  showCount?: boolean;
 }
 export const SearchDropdown: FC<SearchDropdownProps> = ({
   onSelectFunction,
@@ -57,72 +57,72 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
   placeholderText = `Search ${type}...`,
   showCount = false,
 }) => {
-  const [open, setOpen] = useState(false)
-  const [adding, setAdding] = useState(false)
-  const [title, setTitle] = useState("")
-  const [search, setSearch] = useState("")
+  const [open, setOpen] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [title, setTitle] = useState("");
+  const [search, setSearch] = useState("");
 
   const [orderedList, setOrderedList] = useState<
     {
-      value: string
+      value: string;
       image:
         | {
-            light: string
-            dark: string
+            light: string;
+            dark: string;
           }
-        | undefined
+        | undefined;
     }[]
-  >([])
+  >([]);
 
   useEffect(() => {
     const parsedArray = list.map((item) => ({
       value: item,
       image: imageDictionary?.[item.toLowerCase()],
-    }))
+    }));
 
     const sortedList = shouldSort
       ? parsedArray.sort((a, b) => {
           if (a.value < b.value) {
-            return -1
+            return -1;
           }
           if (a.value > b.value) {
-            return 1
+            return 1;
           }
-          return 0
+          return 0;
         })
-      : parsedArray
-    setOrderedList(sortedList)
-  }, [list, imageDictionary, shouldSort])
+      : parsedArray;
+    setOrderedList(sortedList);
+  }, [list, imageDictionary, shouldSort]);
 
   const addCustomNetwork = (customNetwork: string) => {
-    setAdding(false)
+    setAdding(false);
     if (!customNetwork) {
-      return
+      return;
     }
-    const lowercasedList = list.map((item) => item.toLowerCase())
+    const lowercasedList = list.map((item) => item.toLowerCase());
     if (!lowercasedList.includes(customNetwork.toLowerCase())) {
-      onSelectFunction(customNetwork)
-      list.push(customNetwork)
+      onSelectFunction(customNetwork);
+      list.push(customNetwork);
       orderedList.push({
         value: customNetwork,
         image: imageDictionary?.[customNetwork.toLowerCase()],
-      })
+      });
       if (search.length) {
         new Promise<void>((resolve) => {
-          setSearch("")
-          resolve()
+          setSearch("");
+          resolve();
         }).then(() => {
-          setSearch(customNetwork)
-        })
+          setSearch(customNetwork);
+        });
       }
 
-      setTitle("")
+      setTitle("");
     } else {
       if (!selected.includes(customNetwork)) {
-        onSelectFunction(customNetwork)
+        onSelectFunction(customNetwork);
       }
     }
-  }
+  };
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
@@ -170,7 +170,7 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
                 placeholder={placeholderText}
                 value={search}
                 onValueChange={(value) => {
-                  setSearch(value)
+                  setSearch(value);
                 }}
               />
             </div>
@@ -183,7 +183,7 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
                 <button
                   type="button"
                   onClick={() => {
-                    cleanFunction()
+                    cleanFunction();
                   }}
                   className="w-full my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 bg-transparent border-none text-left"
                 >
@@ -209,7 +209,7 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
                   type="button"
                   id={`${item.value}-item`}
                   onClick={() => {
-                    onSelectFunction(item.value)
+                    onSelectFunction(item.value);
                   }}
                   className="w-full my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 bg-transparent border-none text-left"
                 >
@@ -255,12 +255,12 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
                   // on enter key press, add the network
                   onKeyDown={(e: any) => {
                     if (e.key === "Enter") {
-                      addCustomNetwork(e.target?.value)
+                      addCustomNetwork(e.target?.value);
                     }
                   }}
                   value={title}
                   onChange={(e) => {
-                    setTitle(e.target.value)
+                    setTitle(e.target.value);
                   }}
                 />
               </div>
@@ -271,11 +271,11 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
                 <button
                   className="px-3 py-2 text-sm rounded-md bg-zinc-600 dark:bg-zinc-900 text-white dark:text-white w-full"
                   onClick={(e) => {
-                    e?.preventDefault?.()
+                    e?.preventDefault?.();
                     if (search.length) {
-                      addCustomNetwork(search)
+                      addCustomNetwork(search);
                     } else {
-                      setAdding(true)
+                      setAdding(true);
                     }
                   }}
                 >
@@ -287,5 +287,5 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
         </Command>
       </Popover.Content>
     </Popover.Root>
-  )
-}
+  );
+};

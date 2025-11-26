@@ -2,7 +2,7 @@
  * Mock platform card data for funders page tests
  */
 
-import type { PlatformCard } from "@/src/features/funders/components/platform-section"
+import type { PlatformCard } from "@/src/features/funders/components/platform-section";
 
 export const mockPlatformCards: PlatformCard[] = [
   {
@@ -33,7 +33,7 @@ export const mockPlatformCards: PlatformCard[] = [
       "Support projects smarter: issue direct grants with AI-driven evaluations and milestone-based funding, then scale impact with our retro funding platform.",
     image: "/images/homepage/funder-benefit-04.png",
   },
-]
+];
 
 /**
  * Factory function to create a mock platform card with custom properties
@@ -45,5 +45,5 @@ export function createMockPlatformCard(overrides: Partial<PlatformCard> = {}): P
     description: "A test platform feature for unit testing.",
     image: "/images/test-feature.png",
     ...overrides,
-  }
+  };
 }

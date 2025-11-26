@@ -1,11 +1,11 @@
-import { ArrowRightIcon } from "@heroicons/react/20/solid"
-import Link from "next/link"
-import { Card, CardContent } from "@/components/ui/card"
-import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel"
-import { Skeleton } from "@/components/ui/skeleton"
-import { marketingLayoutTheme } from "@/src/helper/theme"
-import { PAGES } from "@/utilities/pages"
-import { cn } from "@/utilities/tailwind"
+import { ArrowRightIcon } from "@heroicons/react/20/solid";
+import Link from "next/link";
+import { Card, CardContent } from "@/components/ui/card";
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
+import { Skeleton } from "@/components/ui/skeleton";
+import { marketingLayoutTheme } from "@/src/helper/theme";
+import { PAGES } from "@/utilities/pages";
+import { cn } from "@/utilities/tailwind";
 
 function FundingOpportunityCardSkeleton() {
   return (
@@ -36,7 +36,7 @@ function FundingOpportunityCardSkeleton() {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 export function LiveFundingOpportunitiesSkeleton() {
@@ -83,5 +83,5 @@ export function LiveFundingOpportunitiesSkeleton() {
         <Skeleton className="h-10 w-40 rounded-md" />
       </div>
     </section>
-  )
+  );
 }

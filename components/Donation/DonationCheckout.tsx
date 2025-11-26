@@ -1,29 +1,29 @@
-"use client"
-import { InformationCircleIcon } from "@heroicons/react/24/outline"
-import { useParams, useRouter } from "next/navigation"
-import { useCallback, useMemo } from "react"
-import { useAccount } from "wagmi"
-import { DonationApprovalStatus } from "@/components/DonationApprovalStatus"
-import { DonationStepsPreview } from "@/components/DonationStepsPreview"
+"use client";
+import { InformationCircleIcon } from "@heroicons/react/24/outline";
+import { useParams, useRouter } from "next/navigation";
+import { useCallback, useMemo } from "react";
+import { useAccount } from "wagmi";
+import { DonationApprovalStatus } from "@/components/DonationApprovalStatus";
+import { DonationStepsPreview } from "@/components/DonationStepsPreview";
 import {
   getAllSupportedChains,
   getTokensByChain,
   type SupportedToken,
-} from "@/constants/supportedTokens"
-import { useCrossChainBalances } from "@/hooks/donation/useCrossChainBalances"
-import { useDonationCheckout } from "@/hooks/donation/useDonationCheckout"
-import { usePayoutAddressManager } from "@/hooks/donation/usePayoutAddressManager"
-import { useAuth } from "@/hooks/useAuth"
-import { useNetworkSwitching } from "@/hooks/useNetworkSwitching"
-import { useDonationCart } from "@/store"
-import { CartItemList } from "./CartItemList"
-import { CheckoutHeader } from "./CheckoutHeader"
-import { CompletedDonations } from "./CompletedDonations"
-import { DonationAlerts } from "./DonationAlerts"
-import { DonationExecutor } from "./DonationExecutor"
-import { DonationSummary } from "./DonationSummary"
-import { EmptyCart } from "./EmptyCart"
-import { NetworkSwitchPreview } from "./NetworkSwitchPreview"
+} from "@/constants/supportedTokens";
+import { useCrossChainBalances } from "@/hooks/donation/useCrossChainBalances";
+import { useDonationCheckout } from "@/hooks/donation/useDonationCheckout";
+import { usePayoutAddressManager } from "@/hooks/donation/usePayoutAddressManager";
+import { useAuth } from "@/hooks/useAuth";
+import { useNetworkSwitching } from "@/hooks/useNetworkSwitching";
+import { useDonationCart } from "@/store";
+import { CartItemList } from "./CartItemList";
+import { CheckoutHeader } from "./CheckoutHeader";
+import { CompletedDonations } from "./CompletedDonations";
+import { DonationAlerts } from "./DonationAlerts";
+import { DonationExecutor } from "./DonationExecutor";
+import { DonationSummary } from "./DonationSummary";
+import { EmptyCart } from "./EmptyCart";
+import { NetworkSwitchPreview } from "./NetworkSwitchPreview";
 
 export function DonationCheckout() {
   const {
@@ -38,40 +38,40 @@ export function DonationCheckout() {
     payments,
     lastCompletedSession,
     clearLastCompletedSession,
-  } = useDonationCart()
-  const router = useRouter()
-  const params = useParams()
-  const communityId = params?.communityId as string | undefined
+  } = useDonationCart();
+  const router = useRouter();
+  const params = useParams();
+  const communityId = params?.communityId as string | undefined;
   const {
     currentChainId,
     isCurrentNetworkSupported,
     switchToNetwork,
     isSwitching,
     getFreshWalletClient,
-  } = useNetworkSwitching()
-  const { address } = useAccount()
-  const { isConnected } = useAuth()
+  } = useNetworkSwitching();
+  const { address } = useAccount();
+  const { isConnected } = useAuth();
 
   // Get unique chain IDs from cart items
   const _cartChainIds = useMemo(() => {
-    const chainIds = new Set<number>()
+    const chainIds = new Set<number>();
     Object.values(selectedTokens).forEach((token) => {
-      if (token) chainIds.add(token.chainId)
-    })
-    return Array.from(chainIds)
-  }, [selectedTokens])
+      if (token) chainIds.add(token.chainId);
+    });
+    return Array.from(chainIds);
+  }, [selectedTokens]);
 
   // Always fetch balances for all supported chains when authenticated
   // This ensures users can see all available tokens even on unsupported networks
   const chainsToFetch = useMemo(() => {
-    return isConnected ? getAllSupportedChains() : []
-  }, [isConnected])
+    return isConnected ? getAllSupportedChains() : [];
+  }, [isConnected]);
 
   // Custom hooks for business logic
   const { balanceByTokenKey, isFetchingCrossChainBalances } = useCrossChainBalances(
     currentChainId,
     chainsToFetch
-  )
+  );
 
   const {
     payoutAddresses,
@@ -80,7 +80,7 @@ export function DonationCheckout() {
     payoutStatusByProject,
     formatAddress,
     setMissingPayouts,
-  } = usePayoutAddressManager(items, communityId)
+  } = usePayoutAddressManager(items, communityId);
 
   const {
     transfers,
@@ -92,87 +92,87 @@ export function DonationCheckout() {
     setShowStepsPreview,
     handleExecuteDonations,
     handleProceedWithDonations,
-  } = useDonationCheckout()
+  } = useDonationCheckout();
 
-  const totalItems = items.length
-  const hasAmounts = Object.values(amounts).some((amount) => amount && parseFloat(amount) > 0)
-  const hasSelectedTokens = Object.keys(selectedTokens).length > 0
+  const totalItems = items.length;
+  const hasAmounts = Object.values(amounts).some((amount) => amount && parseFloat(amount) > 0);
+  const hasSelectedTokens = Object.keys(selectedTokens).length > 0;
 
   // SECURITY: Block donations if any payout addresses are missing
   // This prevents donations from being sent to undefined/zero addresses
-  const hasAllPayoutAddresses = missingPayouts.length === 0
+  const hasAllPayoutAddresses = missingPayouts.length === 0;
 
-  const canProceed = hasAmounts && hasSelectedTokens && hasAllPayoutAddresses && !isFetchingPayouts
+  const canProceed = hasAmounts && hasSelectedTokens && hasAllPayoutAddresses && !isFetchingPayouts;
 
   // Get tokens to show in dropdown - only show tokens with positive balances
   const allAvailableTokens = useMemo(() => {
     if (!isConnected) {
-      return []
+      return [];
     }
 
     // Show only tokens with positive balances across all chains
-    const tokensWithBalance: SupportedToken[] = []
-    const allSupportedChainIds = getAllSupportedChains()
+    const tokensWithBalance: SupportedToken[] = [];
+    const allSupportedChainIds = getAllSupportedChains();
 
     allSupportedChainIds.forEach((chainId) => {
-      const chainTokens = getTokensByChain(chainId)
+      const chainTokens = getTokensByChain(chainId);
       chainTokens.forEach((token) => {
-        const balanceKey = `${token.symbol}-${token.chainId}`
-        const balance = balanceByTokenKey[balanceKey]
+        const balanceKey = `${token.symbol}-${token.chainId}`;
+        const balance = balanceByTokenKey[balanceKey];
         // Only include tokens with positive balance
         if (balance && parseFloat(balance) > 0) {
-          tokensWithBalance.push(token)
+          tokensWithBalance.push(token);
         }
-      })
-    })
+      });
+    });
 
-    return tokensWithBalance
-  }, [balanceByTokenKey, isConnected])
+    return tokensWithBalance;
+  }, [balanceByTokenKey, isConnected]);
 
   const handleTokenSelect = useCallback(
     (projectId: string, token: SupportedToken) => {
-      setSelectedToken(projectId, token)
+      setSelectedToken(projectId, token);
 
       if (token.chainId !== currentChainId) {
-        switchToNetwork(token.chainId)
+        switchToNetwork(token.chainId);
       }
     },
     [setSelectedToken, currentChainId, switchToNetwork]
-  )
+  );
 
   const executeButtonLabel = useMemo(() => {
     if (isSwitching) {
-      return "Switching Network..."
+      return "Switching Network...";
     }
     if (isFetchingPayouts) {
-      return "Loading payout addresses..."
+      return "Loading payout addresses...";
     }
     if (isFetchingCrossChainBalances) {
-      return "Loading cross-chain balances..."
+      return "Loading cross-chain balances...";
     }
     if (isExecuting) {
       switch (executionState.phase) {
         case "checking":
-          return "Checking token approvals..."
+          return "Checking token approvals...";
         case "approving": {
-          const progress = executionState.approvalProgress || 0
-          return `Approving tokens... (${Math.round(progress)}%)`
+          const progress = executionState.approvalProgress || 0;
+          return `Approving tokens... (${Math.round(progress)}%)`;
         }
         case "donating":
-          return "Submitting donations..."
+          return "Submitting donations...";
         default:
-          return "Processing..."
+          return "Processing...";
       }
     }
     if (!canProceed) {
-      return "Select tokens and amounts"
+      return "Select tokens and amounts";
     }
     // If on unsupported network, prompt to switch
     if (!isCurrentNetworkSupported) {
-      return "Switch Chain"
+      return "Switch Chain";
     }
 
-    return "Review & Send Donations"
+    return "Review & Send Donations";
   }, [
     isSwitching,
     isFetchingPayouts,
@@ -182,11 +182,11 @@ export function DonationCheckout() {
     executionState.phase,
     executionState.approvalProgress,
     isCurrentNetworkSupported,
-  ])
+  ]);
 
   const onExecute = useCallback(async () => {
-    await handleExecuteDonations(payments)
-  }, [handleExecuteDonations, payments])
+    await handleExecuteDonations(payments);
+  }, [handleExecuteDonations, payments]);
 
   const onProceed = useCallback(async () => {
     await handleProceedWithDonations(
@@ -197,7 +197,7 @@ export function DonationCheckout() {
       switchToNetwork,
       getFreshWalletClient,
       setMissingPayouts
-    )
+    );
   }, [
     handleProceedWithDonations,
     payments,
@@ -207,7 +207,7 @@ export function DonationCheckout() {
     switchToNetwork,
     getFreshWalletClient,
     setMissingPayouts,
-  ])
+  ]);
 
   // Early return after all hooks have been called
   // If cart is empty, check if we have a completed session to show
@@ -217,13 +217,13 @@ export function DonationCheckout() {
         <CompletedDonations
           session={lastCompletedSession}
           onStartNewDonation={() => {
-            clearLastCompletedSession()
-            router.back()
+            clearLastCompletedSession();
+            router.back();
           }}
         />
-      )
+      );
     }
-    return <EmptyCart onBrowseProjects={() => router.back()} />
+    return <EmptyCart onBrowseProjects={() => router.back()} />;
   }
 
   return (
@@ -314,5 +314,5 @@ export function DonationCheckout() {
         )}
       </div>
     </div>
-  )
+  );
 }

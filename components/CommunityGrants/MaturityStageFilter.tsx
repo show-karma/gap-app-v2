@@ -1,10 +1,10 @@
-"use client"
-import { Listbox, Transition } from "@headlessui/react"
-import { CheckIcon } from "@heroicons/react/20/solid"
-import { ChevronDownIcon } from "@heroicons/react/24/solid"
-import { Fragment } from "react"
-import type { MaturityStageOptions } from "@/types"
-import { cn } from "@/utilities/tailwind"
+"use client";
+import { Listbox, Transition } from "@headlessui/react";
+import { CheckIcon } from "@heroicons/react/20/solid";
+import { ChevronDownIcon } from "@heroicons/react/24/solid";
+import { Fragment } from "react";
+import type { MaturityStageOptions } from "@/types";
+import { cn } from "@/utilities/tailwind";
 
 const maturityStages: Record<MaturityStageOptions, string> = {
   all: "All Stages",
@@ -13,11 +13,11 @@ const maturityStages: Record<MaturityStageOptions, string> = {
   "2": "Stage 2",
   "3": "Stage 3",
   "4": "Stage 4",
-}
+};
 
 interface MaturityStageFilterProps {
-  selectedMaturityStage: MaturityStageOptions
-  onChange: (stage: MaturityStageOptions) => void
+  selectedMaturityStage: MaturityStageOptions;
+  onChange: (stage: MaturityStageOptions) => void;
 }
 
 export function MaturityStageFilter({ selectedMaturityStage, onChange }: MaturityStageFilterProps) {
@@ -87,5 +87,5 @@ export function MaturityStageFilter({ selectedMaturityStage, onChange }: Maturit
         </div>
       )}
     </Listbox>
-  )
+  );
 }

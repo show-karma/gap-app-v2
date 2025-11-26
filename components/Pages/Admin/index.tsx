@@ -1,34 +1,34 @@
-"use client"
-import { LinkIcon } from "@heroicons/react/24/solid"
-import type { Community } from "@show-karma/karma-gap-sdk"
-import { blo } from "blo"
-import debounce from "lodash.debounce"
-import Link from "next/link"
+"use client";
+import { LinkIcon } from "@heroicons/react/24/solid";
+import type { Community } from "@show-karma/karma-gap-sdk";
+import { blo } from "blo";
+import debounce from "lodash.debounce";
+import Link from "next/link";
 /* eslint-disable @next/next/no-img-element */
-import type React from "react"
-import { useEffect, useState } from "react"
-import CommunityStats from "@/components/CommunityStats"
-import { Spinner } from "@/components/Utilities/Spinner"
-import { useAllCommunitiesWithAdmins } from "@/hooks/useAllCommunitiesWithAdmins"
-import { useCommunityConfig, useCommunityConfigMutation } from "@/hooks/useCommunityConfig"
-import { layoutTheme } from "@/src/helper/theme"
-import { useCommunitiesStore } from "@/store/communities"
-import { useOwnerStore } from "@/store/owner"
-import { chainImgDictionary } from "@/utilities/chainImgDictionary"
-import { chainNameDictionary } from "@/utilities/chainNameDictionary"
-import { formatDate } from "@/utilities/formatDate"
-import { MESSAGES } from "@/utilities/messages"
-import { PAGES } from "@/utilities/pages"
-import { AddAdmin } from "./AddAdminDialog"
-import { RemoveAdmin } from "./RemoveAdminDialog"
+import type React from "react";
+import { useEffect, useState } from "react";
+import CommunityStats from "@/components/CommunityStats";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { useAllCommunitiesWithAdmins } from "@/hooks/useAllCommunitiesWithAdmins";
+import { useCommunityConfig, useCommunityConfigMutation } from "@/hooks/useCommunityConfig";
+import { layoutTheme } from "@/src/helper/theme";
+import { useCommunitiesStore } from "@/store/communities";
+import { useOwnerStore } from "@/store/owner";
+import { chainImgDictionary } from "@/utilities/chainImgDictionary";
+import { chainNameDictionary } from "@/utilities/chainNameDictionary";
+import { formatDate } from "@/utilities/formatDate";
+import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
+import { AddAdmin } from "./AddAdminDialog";
+import { RemoveAdmin } from "./RemoveAdminDialog";
 
 export const CommunitiesToAdmin = () => {
-  const { communities: communitiesToAdmin, isLoading } = useCommunitiesStore()
-  const { isOwner } = useOwnerStore()
-  const { data, isLoading: isLoadingCommunities, refetch } = useAllCommunitiesWithAdmins()
+  const { communities: communitiesToAdmin, isLoading } = useCommunitiesStore();
+  const { isOwner } = useOwnerStore();
+  const { data, isLoading: isLoadingCommunities, refetch } = useAllCommunitiesWithAdmins();
 
-  const communities = data?.communities ?? []
-  const communityAdmins = data?.communityAdmins ?? []
+  const communities = data?.communities ?? [];
+  const communityAdmins = data?.communityAdmins ?? [];
 
   return (
     <div className={layoutTheme.padding}>
@@ -67,15 +67,15 @@ export const CommunitiesToAdmin = () => {
                     {communities.map((community) => {
                       const isCommunityAdmin = communitiesToAdmin.some(
                         (adminOfCommunity) => adminOfCommunity.uid === community.uid
-                      )
+                      );
 
-                      if (!isCommunityAdmin && !isOwner) return null
+                      if (!isCommunityAdmin && !isOwner) return null;
 
                       const matchingCommunityAdmin = communityAdmins.find(
                         (admin: any) => admin.id === community.uid
-                      )
+                      );
 
-                      const slug = community.details?.slug || community.uid
+                      const slug = community.details?.slug || community.uid;
 
                       return (
                         <CommunityRowWithConfig
@@ -87,7 +87,7 @@ export const CommunitiesToAdmin = () => {
                           isOwner={isOwner}
                           isCommunityAdmin={isCommunityAdmin}
                         />
-                      )
+                      );
                     })}
                   </tbody>
                 </table>
@@ -103,16 +103,16 @@ export const CommunitiesToAdmin = () => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
 interface CommunityRowWithConfigProps {
-  community: Community
-  slug: string
-  matchingCommunityAdmin: any
-  refetchCommunities: () => void
-  isOwner: boolean
-  isCommunityAdmin: boolean
+  community: Community;
+  slug: string;
+  matchingCommunityAdmin: any;
+  refetchCommunities: () => void;
+  isOwner: boolean;
+  isCommunityAdmin: boolean;
 }
 
 const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
@@ -123,23 +123,23 @@ const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
   isOwner,
   isCommunityAdmin,
 }) => {
-  const updateConfigMutation = useCommunityConfigMutation()
-  const { data: config, isLoading: configLoading } = useCommunityConfig(slug, isOwner)
-  const [localRank, setLocalRank] = useState<number>(0)
+  const updateConfigMutation = useCommunityConfigMutation();
+  const { data: config, isLoading: configLoading } = useCommunityConfig(slug, isOwner);
+  const [localRank, setLocalRank] = useState<number>(0);
 
   function shortenHex(hexString: string) {
-    const firstPart = hexString.substring(0, 6)
-    const lastPart = hexString.substring(hexString.length - 6)
+    const firstPart = hexString.substring(0, 6);
+    const lastPart = hexString.substring(hexString.length - 6);
 
-    return `${firstPart}...${lastPart}`
+    return `${firstPart}...${lastPart}`;
   }
 
-  const isPublic = config?.public === true || config?.public === undefined
-  const rank = config?.rank || 0
+  const isPublic = config?.public === true || config?.public === undefined;
+  const rank = config?.rank || 0;
 
   useEffect(() => {
-    setLocalRank(rank)
-  }, [rank])
+    setLocalRank(rank);
+  }, [rank]);
 
   const handlePublicChange = (checked: boolean) => {
     updateConfigMutation.mutate({
@@ -148,8 +148,8 @@ const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
         public: checked,
         rank: config?.rank,
       },
-    })
-  }
+    });
+  };
 
   useEffect(() => {
     const handler = debounce(() => {
@@ -160,21 +160,21 @@ const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
             public: config?.public,
             rank: localRank,
           },
-        })
+        });
       }
-    }, 1000)
+    }, 1000);
 
-    handler()
+    handler();
 
-    return () => handler.cancel()
-  }, [localRank, rank, slug, config?.public, updateConfigMutation])
+    return () => handler.cancel();
+  }, [localRank, rank, slug, config?.public, updateConfigMutation]);
 
   const handleRankInputChange = (value: string) => {
-    const numValue = parseInt(value, 10) || 0
+    const numValue = parseInt(value, 10) || 0;
     if (numValue >= 0) {
-      setLocalRank(numValue)
+      setLocalRank(numValue);
     }
-  }
+  };
 
   return (
     <tr className="divide-x">
@@ -298,5 +298,5 @@ const CommunityRowWithConfig: React.FC<CommunityRowWithConfigProps> = ({
         </td>
       )}
     </tr>
-  )
-}
+  );
+};

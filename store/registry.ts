@@ -1,14 +1,14 @@
-import { create } from "zustand"
+import { create } from "zustand";
 
 interface RegistryStore {
-  isPoolManager: boolean
-  setIsPoolManager: (isPoolManager: boolean) => void
-  isPoolManagerLoading: boolean
-  setIsPoolManagerLoading: (loading: boolean) => void
-  isRegistryAdmin: boolean
-  setIsRegistryAdmin: (isRegistryAdmin: boolean) => void
-  isRegistryAdminLoading: boolean
-  setIsRegistryAdminLoading: (loading: boolean) => void
+  isPoolManager: boolean;
+  setIsPoolManager: (isPoolManager: boolean) => void;
+  isPoolManagerLoading: boolean;
+  setIsPoolManagerLoading: (loading: boolean) => void;
+  isRegistryAdmin: boolean;
+  setIsRegistryAdmin: (isRegistryAdmin: boolean) => void;
+  isRegistryAdminLoading: boolean;
+  setIsRegistryAdminLoading: (loading: boolean) => void;
 }
 
 export const useRegistryStore = create<RegistryStore>((set, _get) => ({
@@ -20,4 +20,4 @@ export const useRegistryStore = create<RegistryStore>((set, _get) => ({
   setIsRegistryAdmin: (isRegistryAdmin: boolean) => set({ isRegistryAdmin }),
   isRegistryAdminLoading: true,
   setIsRegistryAdminLoading: (isRegistryAdminLoading: boolean) => set({ isRegistryAdminLoading }),
-}))
+}));

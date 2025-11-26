@@ -1,18 +1,18 @@
-import { Listbox, Transition } from "@headlessui/react"
-import { CheckIcon } from "@heroicons/react/20/solid"
-import { type Dispatch, type FC, Fragment } from "react"
-import { ChevronDown } from "../Icons/ChevronDown"
+import { Listbox, Transition } from "@headlessui/react";
+import { CheckIcon } from "@heroicons/react/20/solid";
+import { type Dispatch, type FC, Fragment } from "react";
+import { ChevronDown } from "../Icons/ChevronDown";
 
 function classNames(...classes: any[]) {
-  return classes.filter(Boolean).join(" ")
+  return classes.filter(Boolean).join(" ");
 }
 
 interface DropdownProps {
-  list: string[]
-  onChangeListener: (value: string, setToChange: Dispatch<React.SetStateAction<string[]>>) => void
-  setToChange: Dispatch<React.SetStateAction<string[]>>
-  unselectedText: string
-  selected: string[]
+  list: string[];
+  onChangeListener: (value: string, setToChange: Dispatch<React.SetStateAction<string[]>>) => void;
+  setToChange: Dispatch<React.SetStateAction<string[]>>;
+  unselectedText: string;
+  selected: string[];
 }
 
 export const Dropdown: FC<DropdownProps> = ({
@@ -56,7 +56,7 @@ export const Dropdown: FC<DropdownProps> = ({
                   }
                   value={"All"}
                   onClick={() => {
-                    setToChange([])
+                    setToChange([]);
                   }}
                 >
                   <div className="flex flex-row gap-3">
@@ -114,5 +114,5 @@ export const Dropdown: FC<DropdownProps> = ({
         </>
       )}
     </Listbox>
-  )
-}
+  );
+};

@@ -1,24 +1,24 @@
-"use client"
-import { XMarkIcon } from "@heroicons/react/24/solid"
-import dynamic from "next/dynamic"
-import Link from "next/link"
-import { DefaultLoading } from "@/components/Utilities/DefaultLoading"
-import { useProjectStore } from "@/store"
-import { useGrantStore } from "@/store/grant"
-import { PAGES } from "@/utilities/pages"
+"use client";
+import { XMarkIcon } from "@heroicons/react/24/solid";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
+import { useProjectStore } from "@/store";
+import { useGrantStore } from "@/store/grant";
+import { PAGES } from "@/utilities/pages";
 
 const MilestoneForm = dynamic(
   () => import("@/components/Forms/Milestone").then((mod) => mod.MilestoneForm),
   {
     loading: () => <DefaultLoading />,
   }
-)
+);
 export default function Page() {
-  const { grant } = useGrantStore()
-  const project = useProjectStore((state) => state.project)
+  const { grant } = useGrantStore();
+  const project = useProjectStore((state) => state.project);
 
   if (!grant) {
-    return null
+    return null;
   }
   return (
     <div className="flex flex-row gap-2 items-center">
@@ -41,5 +41,5 @@ export default function Page() {
         </div>
       </div>
     </div>
-  )
+  );
 }

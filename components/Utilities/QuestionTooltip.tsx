@@ -1,17 +1,17 @@
-import * as Tooltip from "@radix-ui/react-tooltip"
-import type { ReactNode } from "react"
-import { cn } from "@/utilities/tailwind"
+import * as Tooltip from "@radix-ui/react-tooltip";
+import type { ReactNode } from "react";
+import { cn } from "@/utilities/tailwind";
 
 interface QuestionTooltipProps {
-  content: ReactNode
-  children?: ReactNode
-  side?: "top" | "right" | "bottom" | "left"
-  align?: "start" | "center" | "end"
-  delayDuration?: number
-  triggerAsChild?: boolean
-  className?: string
-  contentClassName?: string
-  arrowClassName?: string
+  content: ReactNode;
+  children?: ReactNode;
+  side?: "top" | "right" | "bottom" | "left";
+  align?: "start" | "center" | "end";
+  delayDuration?: number;
+  triggerAsChild?: boolean;
+  className?: string;
+  contentClassName?: string;
+  arrowClassName?: string;
 }
 
 export const QuestionTooltip = ({
@@ -49,7 +49,7 @@ export const QuestionTooltip = ({
         />
       </svg>
     </button>
-  )
+  );
 
   return (
     <Tooltip.Provider>
@@ -73,5 +73,5 @@ export const QuestionTooltip = ({
         </Tooltip.Portal>
       </Tooltip.Root>
     </Tooltip.Provider>
-  )
-}
+  );
+};

@@ -1,8 +1,8 @@
-import CommunityStats from "@/components/Pages/Admin/CommunityStats"
-import { defaultMetadata } from "@/utilities/meta"
+import CommunityStats from "@/components/Pages/Admin/CommunityStats";
+import { defaultMetadata } from "@/utilities/meta";
 
-export const metadata = defaultMetadata
+export const metadata = defaultMetadata;
 
 export default function Page() {
-  return <CommunityStats />
+  return <CommunityStats />;
 }

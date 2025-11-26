@@ -1,8 +1,8 @@
-"use client"
-import { Dialog, Transition } from "@headlessui/react"
-import { XMarkIcon } from "@heroicons/react/24/solid"
-import Image from "next/image"
-import { type FC, Fragment } from "react"
+"use client";
+import { Dialog, Transition } from "@headlessui/react";
+import { XMarkIcon } from "@heroicons/react/24/solid";
+import Image from "next/image";
+import { type FC, Fragment } from "react";
 /* eslint-disable @next/next/no-img-element */
 import {
   BlogIcon,
@@ -11,38 +11,38 @@ import {
   OrganizationIcon,
   Telegram2Icon,
   Twitter2Icon,
-} from "@/components/Icons"
-import { Button } from "@/components/Utilities/Button"
-import { ExternalLink } from "@/components/Utilities/ExternalLink"
-import formatCurrency from "@/utilities/formatCurrency"
-import { cn } from "@/utilities/tailwind"
-import { registryHelper } from "./helper"
-import type { GrantProgram } from "./ProgramList"
+} from "@/components/Icons";
+import { Button } from "@/components/Utilities/Button";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import formatCurrency from "@/utilities/formatCurrency";
+import { cn } from "@/utilities/tailwind";
+import { registryHelper } from "./helper";
+import type { GrantProgram } from "./ProgramList";
 
 type ProgramDetailsDialogProps = {
-  program: GrantProgram
-  isOpen: boolean
-  closeModal: () => void
-}
+  program: GrantProgram;
+  isOpen: boolean;
+  closeModal: () => void;
+};
 
 const cardClassnames = {
   div: "flex flex-col gap-2 bg-[#F4F8FF] dark:bg-zinc-600 rounded-xl py-3 px-4",
   label: "text-base text-gray-900 font-body dark:text-zinc-100 font-semibold",
   list: "flex flex-row gap-2 flex-wrap",
   pill: "rounded-full font-body flex flex-row gap-2 bg-white px-2 py-1 text-sm text-[#155EEF] font-medium dark:bg-zinc-700 dark:text-zinc-100",
-}
+};
 
 const statsClassnames = {
   div: "flex flex-row justify-between gap-2 items-center px-4 py-0.5",
   label: "text-base font-body font-normal text-gray-900 dark:text-zinc-100",
   pill: "text-base font-body text-zinc-600 font-semibold dark:text-zinc-300",
-}
+};
 
 const iconsClassnames = {
   light: "text-black dark:text-white dark:hidden",
   dark: "text-black dark:text-white hidden dark:block",
   general: "w-6 h-6 text-black dark:text-white",
-}
+};
 
 export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
   program,
@@ -54,7 +54,7 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
       label: "Budget",
       component: <p>{program?.metadata?.programBudget}</p>,
     },
-  ]
+  ];
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -422,5 +422,5 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
         </div>
       </Dialog>
     </Transition>
-  )
-}
+  );
+};

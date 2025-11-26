@@ -1,30 +1,30 @@
-import { PlusIcon } from "@heroicons/react/24/outline"
-import { Grant, GrantDetails, Milestone as MilestoneSDK, nullRef } from "@show-karma/karma-gap-sdk"
-import { useQueryClient } from "@tanstack/react-query"
-import { usePathname, useRouter } from "next/navigation"
-import toast from "react-hot-toast"
-import type { Hex } from "viem"
-import { useAccount } from "wagmi"
-import { Button } from "@/components/Utilities/Button"
-import { errorManager } from "@/components/Utilities/errorManager"
-import { useAuth } from "@/hooks/useAuth"
-import { useGap } from "@/hooks/useGap"
-import { useWallet } from "@/hooks/useWallet"
-import { useProjectStore } from "@/store"
-import { useStepper } from "@/store/modals/txStepper"
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils"
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
-import { MESSAGES } from "@/utilities/messages"
-import { PAGES } from "@/utilities/pages"
-import { sanitizeObject } from "@/utilities/sanitize"
-import { safeGetWalletClient } from "@/utilities/wallet-helpers"
-import { Milestone } from "../Milestone"
-import { StepBlock } from "../StepBlock"
-import { useGrantFormStore } from "../store"
-import { CancelButton } from "./buttons/CancelButton"
-import { NextButton } from "./buttons/NextButton"
+import { PlusIcon } from "@heroicons/react/24/outline";
+import { Grant, GrantDetails, Milestone as MilestoneSDK, nullRef } from "@show-karma/karma-gap-sdk";
+import { useQueryClient } from "@tanstack/react-query";
+import { usePathname, useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+import type { Hex } from "viem";
+import { useAccount } from "wagmi";
+import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { useAuth } from "@/hooks/useAuth";
+import { useGap } from "@/hooks/useGap";
+import { useWallet } from "@/hooks/useWallet";
+import { useProjectStore } from "@/store";
+import { useStepper } from "@/store/modals/txStepper";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
+import { sanitizeObject } from "@/utilities/sanitize";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { Milestone } from "../Milestone";
+import { StepBlock } from "../StepBlock";
+import { useGrantFormStore } from "../store";
+import { CancelButton } from "./buttons/CancelButton";
+import { NextButton } from "./buttons/NextButton";
 
 export const MilestonesScreen: React.FC = () => {
   const {
@@ -40,54 +40,54 @@ export const MilestonesScreen: React.FC = () => {
     resetFormData,
     setFlowType,
     communityNetworkId,
-  } = useGrantFormStore()
-  const { switchChainAsync } = useWallet()
-  const selectedProject = useProjectStore((state) => state.project)
-  const refreshProject = useProjectStore((state) => state.refreshProject)
-  const router = useRouter()
-  const { address, isConnected, connector, chain } = useAccount()
-  const { authenticated: isAuth } = useAuth()
-  const { gap } = useGap()
-  const { changeStepperStep, setIsStepper } = useStepper()
-  const queryClient = useQueryClient()
+  } = useGrantFormStore();
+  const { switchChainAsync } = useWallet();
+  const selectedProject = useProjectStore((state) => state.project);
+  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const router = useRouter();
+  const { address, isConnected, connector, chain } = useAccount();
+  const { authenticated: isAuth } = useAuth();
+  const { gap } = useGap();
+  const { changeStepperStep, setIsStepper } = useStepper();
+  const queryClient = useQueryClient();
 
-  const pathname = usePathname()
-  const isEditing = pathname.includes("edit")
+  const pathname = usePathname();
+  const isEditing = pathname.includes("edit");
 
   const handleBack = () => {
     if (flowType === "program") {
-      setCurrentStep(2)
+      setCurrentStep(2);
     } else {
-      setCurrentStep(3)
+      setCurrentStep(3);
     }
-  }
+  };
 
   const handleCancel = () => {
-    if (!selectedProject) return
-    router.push(PAGES.PROJECT.GRANTS(selectedProject.details?.data?.slug || selectedProject?.uid))
-  }
+    if (!selectedProject) return;
+    router.push(PAGES.PROJECT.GRANTS(selectedProject.details?.data?.slug || selectedProject?.uid));
+  };
 
   // Check if all milestones are valid
-  const allMilestonesValidated = milestonesForms.every((milestone) => milestone.isValid === true)
+  const allMilestonesValidated = milestonesForms.every((milestone) => milestone.isValid === true);
 
   const saveAllMilestones = () => {
     milestonesForms.forEach((milestone, index) => {
-      const { data, isValid } = milestone
+      const { data, isValid } = milestone;
       if (isValid) {
-        saveMilestone(data, index)
+        saveMilestone(data, index);
       }
-    })
-  }
+    });
+  };
 
   const createNewGrant = async () => {
-    if (!address || !selectedProject || !gap) return
+    if (!address || !selectedProject || !gap) return;
 
     try {
-      let gapClient = gap
-      if (!isConnected || !isAuth) return
+      let gapClient = gap;
+      if (!isConnected || !isAuth) return;
 
       // Check if we need to switch chains
-      const chainId = await connector?.getChainId()
+      const chainId = await connector?.getChainId();
       const {
         success,
         chainId: actualChainId,
@@ -96,19 +96,19 @@ export const MilestonesScreen: React.FC = () => {
         targetChainId: communityNetworkId,
         currentChainId: chainId,
         switchChainAsync,
-      })
+      });
 
       if (!success) {
-        return
+        return;
       }
 
-      gapClient = newGapClient
+      gapClient = newGapClient;
 
       // Save all milestones
-      saveAllMilestones()
+      saveAllMilestones();
 
       // Get milestone data
-      const milestonesData = milestonesForms.map((item) => item.data)
+      const milestonesData = milestonesForms.map((item) => item.data);
 
       // Create grant data
       const newGrantData = {
@@ -123,7 +123,7 @@ export const MilestonesScreen: React.FC = () => {
         programId: formData.programId,
         questions: formData.questions || [],
         selectedTrackIds: formData.selectedTrackIds || [],
-      }
+      };
 
       // Create grant instance
       const grant = new Grant({
@@ -134,7 +134,7 @@ export const MilestonesScreen: React.FC = () => {
         schema: gapClient.findSchema("Grant"),
         recipient: (newGrantData.recipient as Hex) || address,
         uid: nullRef,
-      })
+      });
 
       // Create grant details
       const sanitizedDetails = sanitizeObject({
@@ -149,7 +149,7 @@ export const MilestonesScreen: React.FC = () => {
           (flowType === "program"
             ? `I am applying to participate in the ${newGrantData.title}`
             : ""),
-      })
+      });
 
       grant.details = new GrantDetails({
         data: sanitizedDetails,
@@ -157,7 +157,7 @@ export const MilestonesScreen: React.FC = () => {
         schema: gapClient.findSchema("GrantDetails"),
         recipient: grant.recipient,
         uid: nullRef,
-      })
+      });
 
       // Create milestones
       grant.milestones =
@@ -169,7 +169,7 @@ export const MilestonesScreen: React.FC = () => {
                 endsAt: milestone.endsAt,
                 startsAt: milestone.startsAt,
                 priority: milestone.priority,
-              })
+              });
 
               return new MilestoneSDK({
                 data: sanitizedMilestone,
@@ -177,61 +177,61 @@ export const MilestonesScreen: React.FC = () => {
                 schema: gapClient.findSchema("Milestone"),
                 recipient: grant.recipient,
                 uid: nullRef,
-              })
+              });
             })
-          : []
+          : [];
 
       // Get wallet client
-      const { walletClient, error } = await safeGetWalletClient(actualChainId)
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
       if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error })
+        throw new Error("Failed to connect to wallet", { cause: error });
       }
 
       // Get wallet signer
-      const walletSigner = await walletClientToSigner(walletClient)
+      const walletSigner = await walletClientToSigner(walletClient);
 
       // Attest grant
-      setIsStepper(true)
+      setIsStepper(true);
       await grant
         .attest(walletSigner as any, selectedProject.chainID, changeStepperStep)
         .then(async (res) => {
-          let retries = 1000
-          changeStepperStep("indexing")
-          let fetchedProject = null
-          const txHash = res?.tx[0]?.hash
+          let retries = 1000;
+          changeStepperStep("indexing");
+          let fetchedProject = null;
+          const txHash = res?.tx[0]?.hash;
 
           if (txHash) {
-            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, grant.chainID), "POST", {})
+            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, grant.chainID), "POST", {});
           }
 
           while (retries > 0) {
             fetchedProject = await gapClient.fetch
               .projectById(selectedProject.uid as Hex)
-              .catch(() => null)
+              .catch(() => null);
 
             if (fetchedProject?.grants?.find((oldGrant) => oldGrant.uid === grant.uid)) {
-              clearMilestonesForms()
-              retries = 0
+              clearMilestonesForms();
+              retries = 0;
               toast.success(
                 flowType === "grant"
                   ? MESSAGES.GRANT.CREATE.SUCCESS
                   : "Successfully applied to funding program!"
-              )
-              changeStepperStep("indexed")
+              );
+              changeStepperStep("indexed");
 
               // Invalidate duplicate grant check query to refresh data
               if (!isEditing) {
                 await queryClient.invalidateQueries({
                   queryKey: ["duplicate-grant-check"],
-                })
+                });
               }
 
               // Reset form data and go back to step 1 for a new grant
-              resetFormData()
-              clearMilestonesForms()
-              setFormPriorities([])
-              setCurrentStep(1)
-              setFlowType("grant") // Reset to default flow type
+              resetFormData();
+              clearMilestonesForms();
+              setFormPriorities([]);
+              setCurrentStep(1);
+              setFlowType("grant"); // Reset to default flow type
 
               // Redirect to grants page instead of specific grant
               if (
@@ -241,34 +241,34 @@ export const MilestonesScreen: React.FC = () => {
                 newGrantData.programId
               ) {
                 try {
-                  const programIdParts = newGrantData.programId.split("_")
-                  const programId = programIdParts[0]
-                  const _chainID = parseInt(programIdParts[1] || communityNetworkId.toString(), 10)
+                  const programIdParts = newGrantData.programId.split("_");
+                  const programId = programIdParts[0];
+                  const _chainID = parseInt(programIdParts[1] || communityNetworkId.toString(), 10);
 
                   await fetchData(INDEXER.PROJECTS.TRACKS(selectedProject.uid), "POST", {
                     communityUID: newGrantData.community,
                     trackIds: newGrantData.selectedTrackIds,
                     programId,
-                  })
+                  });
                 } catch (trackError) {
-                  console.error("Error assigning tracks to project:", trackError)
+                  console.error("Error assigning tracks to project:", trackError);
                 }
               }
 
-              await refreshProject()
+              await refreshProject();
               router.push(
                 PAGES.PROJECT.GRANT(
                   selectedProject.details?.data.slug || selectedProject.uid,
                   grant.uid
                 )
-              )
+              );
             }
 
-            retries -= 1
+            retries -= 1;
             // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-            await new Promise((resolve) => setTimeout(resolve, 1500))
+            await new Promise((resolve) => setTimeout(resolve, 1500));
           }
-        })
+        });
     } catch (error: any) {
       errorManager(
         MESSAGES.GRANT.CREATE.ERROR(formData.title),
@@ -284,11 +284,11 @@ export const MilestonesScreen: React.FC = () => {
               ? MESSAGES.GRANT.CREATE.ERROR(formData.title)
               : "Error applying to funding program",
         }
-      )
+      );
     } finally {
-      setIsStepper(false)
+      setIsStepper(false);
     }
-  }
+  };
 
   return (
     <StepBlock currentStep={4}>
@@ -349,5 +349,5 @@ export const MilestonesScreen: React.FC = () => {
         </div>
       </div>
     </StepBlock>
-  )
-}
+  );
+};

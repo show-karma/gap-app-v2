@@ -1,13 +1,13 @@
-import { Badge } from "@/components/ui/badge"
-import { ThemeImage } from "@/src/components/ui/theme-image"
-import { marketingLayoutTheme } from "@/src/helper/theme"
-import { cn } from "@/utilities/tailwind"
+import { Badge } from "@/components/ui/badge";
+import { ThemeImage } from "@/src/components/ui/theme-image";
+import { marketingLayoutTheme } from "@/src/helper/theme";
+import { cn } from "@/utilities/tailwind";
 
 export interface PlatformCard {
-  subtitle: string
-  title: string
-  description: string
-  image: string
+  subtitle: string;
+  title: string;
+  description: string;
+  image: string;
 }
 
 const platformCards: PlatformCard[] = [
@@ -39,7 +39,7 @@ const platformCards: PlatformCard[] = [
       "Support projects smarter: issue direct grants with AI-driven evaluations and milestone-based funding, then scale impact with our retro funding platform.",
     image: "/images/homepage/funder-benefit-04.png",
   },
-]
+];
 
 export function PlatformSection() {
   return (
@@ -137,5 +137,5 @@ export function PlatformSection() {
         ))}
       </div>
     </section>
-  )
+  );
 }

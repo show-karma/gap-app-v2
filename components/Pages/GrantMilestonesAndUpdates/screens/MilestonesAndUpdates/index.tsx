@@ -1,19 +1,19 @@
-"use client"
+"use client";
 import type {
   IGrantResponse,
   IProjectResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import dynamic from "next/dynamic"
-import Link from "next/link"
-import { GrantCompletionCard } from "@/components/Pages/Grants/MilestonesAndUpdates"
-import { DefaultLoading } from "@/components/Utilities/DefaultLoading"
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { GrantCompletionCard } from "@/components/Pages/Grants/MilestonesAndUpdates";
+import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
 /* eslint-disable @next/next/no-img-element */
-import { useOwnerStore, useProjectStore } from "@/store"
+import { useOwnerStore, useProjectStore } from "@/store";
 // import { MilestonesList } from "./MilestonesList";
-import { useCommunityAdminStore } from "@/store/communityAdmin"
-import { useGrantStore } from "@/store/grant"
-import { MESSAGES } from "@/utilities/messages"
-import { PAGES } from "@/utilities/pages"
+import { useCommunityAdminStore } from "@/store/communityAdmin";
+import { useGrantStore } from "@/store/grant";
+import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
 
 const MilestonesList = dynamic(
   () =>
@@ -23,20 +23,20 @@ const MilestonesList = dynamic(
   {
     loading: () => <DefaultLoading />,
   }
-)
+);
 
 export const EmptyMilestone = ({
   grant,
   project,
 }: {
-  grant?: IGrantResponse
-  project?: IProjectResponse
+  grant?: IGrantResponse;
+  project?: IProjectResponse;
 }) => {
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin)
-  const isContractOwner = useOwnerStore((state) => state.isOwner)
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin)
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
+  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
 
-  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin
+  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
 
   if (!isAuthorized) {
     return (
@@ -53,7 +53,7 @@ export const EmptyMilestone = ({
           </div>
         </div>
       </div>
-    )
+    );
   }
   return (
     <div className="flex w-full items-center justify-center rounded-md border border-gray-200 px-6 py-10">
@@ -79,18 +79,18 @@ export const EmptyMilestone = ({
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 export const MilestonesAndUpdates = () => {
-  const { grant } = useGrantStore()
-  const project = useProjectStore((state) => state.project)
+  const { grant } = useGrantStore();
+  const project = useProjectStore((state) => state.project);
 
-  const hasMilestonesOrUpdates = grant?.milestones?.length || grant?.updates?.length
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin)
-  const isContractOwner = useOwnerStore((state) => state.isOwner)
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin)
-  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin
+  const hasMilestonesOrUpdates = grant?.milestones?.length || grant?.updates?.length;
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
+  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
+  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
 
   return (
     <div className="space-y-5">
@@ -133,5 +133,5 @@ export const MilestonesAndUpdates = () => {
         <EmptyMilestone grant={grant} project={project} />
       )}
     </div>
-  )
-}
+  );
+};

@@ -1,10 +1,10 @@
-import { Skeleton } from "@/components/Utilities/Skeleton"
-import { cn } from "@/utilities/tailwind"
+import { Skeleton } from "@/components/Utilities/Skeleton";
+import { cn } from "@/utilities/tailwind";
 
 const headClasses =
-  "text-black dark:text-white text-xs font-medium uppercase text-left px-6 py-3 font-body"
+  "text-black dark:text-white text-xs font-medium uppercase text-left px-6 py-3 font-body";
 const cellClasses =
-  "py-4 border-t border-t-black dark:border-t-white pr-6 px-6 max-w-[420px] max-sm:min-w-[200px]"
+  "py-4 border-t border-t-black dark:border-t-white pr-6 px-6 max-w-[420px] max-sm:min-w-[200px]";
 
 const SkeletonRow = () => {
   return (
@@ -28,11 +28,11 @@ const SkeletonRow = () => {
         <Skeleton className="w-full h-4" />
       </td>
     </tr>
-  )
-}
+  );
+};
 
 export const ProjectImpactLoading = () => {
-  const emptyArray = Array.from({ length: 5 }, (_, index) => index)
+  const emptyArray = Array.from({ length: 5 }, (_, index) => index);
   return (
     <table className="overflow-x-auto w-full">
       <thead>
@@ -51,5 +51,5 @@ export const ProjectImpactLoading = () => {
         ))}
       </tbody>
     </table>
-  )
-}
+  );
+};

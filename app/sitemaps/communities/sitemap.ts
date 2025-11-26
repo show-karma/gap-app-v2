@@ -1,5 +1,5 @@
-import type { MetadataRoute } from "next"
-import { chosenCommunities } from "@/utilities/chosenCommunities"
+import type { MetadataRoute } from "next";
+import { chosenCommunities } from "@/utilities/chosenCommunities";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return chosenCommunities().map((community) => ({
@@ -7,5 +7,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: new Date().toISOString(),
     changeFrequency: "hourly",
     priority: 1,
-  }))
+  }));
 }

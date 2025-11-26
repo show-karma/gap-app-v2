@@ -1,40 +1,40 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { Dialog, Transition } from "@headlessui/react"
-import { XMarkIcon } from "@heroicons/react/24/solid"
+import { Dialog, Transition } from "@headlessui/react";
+import { XMarkIcon } from "@heroicons/react/24/solid";
 import type {
   IGrantUpdateStatus,
   IMilestoneCompleted,
   IProjectImpactStatus,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import { type FC, Fragment, useEffect, useMemo, useState } from "react"
-import type { Hex } from "viem"
-import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar"
-import { useGrant } from "@/components/Pages/GrantMilestonesAndUpdates/GrantContext"
-import { TabContent, Tabs, TabTrigger } from "@/components/Utilities/Tabs"
-import { useENS } from "@/store/ens"
-import { useProjectStore } from "@/store/project"
-import { formatDate } from "@/utilities/formatDate"
-import { gapIndexerApi } from "@/utilities/gapIndexerApi"
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { type FC, Fragment, useEffect, useMemo, useState } from "react";
+import type { Hex } from "viem";
+import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import { useGrant } from "@/components/Pages/GrantMilestonesAndUpdates/GrantContext";
+import { TabContent, Tabs, TabTrigger } from "@/components/Utilities/Tabs";
+import { useENS } from "@/store/ens";
+import { useProjectStore } from "@/store/project";
+import { formatDate } from "@/utilities/formatDate";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 
 interface VerificationsDialogProps {
-  verifications: (IMilestoneCompleted | IGrantUpdateStatus | IProjectImpactStatus)[]
-  isOpen: boolean
-  closeDialog: () => void
-  title: string
+  verifications: (IMilestoneCompleted | IGrantUpdateStatus | IProjectImpactStatus)[];
+  isOpen: boolean;
+  closeDialog: () => void;
+  title: string;
 }
 
 interface VerificationsItemProps {
-  verification: IMilestoneCompleted | IGrantUpdateStatus | IProjectImpactStatus
+  verification: IMilestoneCompleted | IGrantUpdateStatus | IProjectImpactStatus;
 }
 
 const VerificationItem = ({ verification }: VerificationsItemProps) => {
-  const { ensData } = useENS()
-  const populateEns = useENS((state) => state.populateEns)
+  const { ensData } = useENS();
+  const populateEns = useENS((state) => state.populateEns);
 
   useEffect(() => {
-    populateEns([verification.attester])
-  }, [verification.attester, populateEns])
+    populateEns([verification.attester]);
+  }, [verification.attester, populateEns]);
 
   return (
     <div className="flex flex-col items-start gap-1.5 p-4">
@@ -54,8 +54,8 @@ const VerificationItem = ({ verification }: VerificationsItemProps) => {
         {verification.data?.reason}
       </p>
     </div>
-  )
-}
+  );
+};
 
 export const VerificationsDialog: FC<VerificationsDialogProps> = ({
   verifications,
@@ -63,37 +63,37 @@ export const VerificationsDialog: FC<VerificationsDialogProps> = ({
   closeDialog,
   title,
 }) => {
-  const _project = useProjectStore((state) => state.project)
-  const grant = useGrant()
+  const _project = useProjectStore((state) => state.project);
+  const grant = useGrant();
 
-  const communityUid = useMemo(() => grant?.data.communityUID, [grant])
-  const [communityAdmins, setCommunityAdmins] = useState<string[]>()
+  const communityUid = useMemo(() => grant?.data.communityUID, [grant]);
+  const [communityAdmins, setCommunityAdmins] = useState<string[]>();
 
-  const { populateEns } = useENS()
+  const { populateEns } = useENS();
   useEffect(() => {
-    populateEns(verifications.map((v) => v.attester as string))
-  }, [verifications, populateEns])
+    populateEns(verifications.map((v) => v.attester as string));
+  }, [verifications, populateEns]);
 
   useEffect(() => {
     if (communityUid) {
       gapIndexerApi
         .communityAdmins(communityUid)
         .then((data) => {
-          setCommunityAdmins(data.data.admins.map((admin) => admin.user.id.toLowerCase()))
+          setCommunityAdmins(data.data.admins.map((admin) => admin.user.id.toLowerCase()));
         })
-        .catch(() => null)
+        .catch(() => null);
     }
-  }, [communityUid])
+  }, [communityUid]);
 
   const adminVerifications = verifications.filter((item) =>
     communityAdmins?.includes(item.attester?.toLowerCase() as string)
-  )
+  );
   const memberVerifications = verifications.filter(
     (item) => !communityAdmins?.includes(item.attester?.toLowerCase() as string)
-  )
+  );
 
   const defaultTab =
-    adminVerifications.length === 0 && memberVerifications.length > 0 ? "members" : "admins"
+    adminVerifications.length === 0 && memberVerifications.length > 0 ? "members" : "admins";
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -175,5 +175,5 @@ export const VerificationsDialog: FC<VerificationsDialogProps> = ({
         </div>
       </Dialog>
     </Transition>
-  )
-}
+  );
+};

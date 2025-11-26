@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { Tab } from "@headlessui/react"
+import { Tab } from "@headlessui/react";
 import {
   BanknotesIcon,
   ChartBarIcon,
@@ -9,16 +9,16 @@ import {
   LinkIcon,
   ShieldCheckIcon,
   ShieldExclamationIcon,
-} from "@heroicons/react/24/outline"
-import { useState } from "react"
-import { cn } from "@/utilities/tailwind"
-import { UsageAnalytics } from "./Analytics/UsageAnalytics"
-import { ChainBalances } from "./Balances/ChainBalances"
-import { BlocklistManager } from "./Blocklist/BlocklistManager"
-import { ChainSettingsManager } from "./ChainSettings/ChainSettingsManager"
-import { ChainManager } from "./Chains/ChainManager"
-import { GlobalConfigForm } from "./GlobalConfig/GlobalConfigForm"
-import { WhitelistManager } from "./Whitelist/WhitelistManager"
+} from "@heroicons/react/24/outline";
+import { useState } from "react";
+import { cn } from "@/utilities/tailwind";
+import { UsageAnalytics } from "./Analytics/UsageAnalytics";
+import { ChainBalances } from "./Balances/ChainBalances";
+import { BlocklistManager } from "./Blocklist/BlocklistManager";
+import { ChainSettingsManager } from "./ChainSettings/ChainSettingsManager";
+import { ChainManager } from "./Chains/ChainManager";
+import { GlobalConfigForm } from "./GlobalConfig/GlobalConfigForm";
+import { WhitelistManager } from "./Whitelist/WhitelistManager";
 
 const tabs = [
   { name: "Overview", icon: ChartBarIcon },
@@ -28,10 +28,10 @@ const tabs = [
   { name: "Whitelist", icon: ShieldCheckIcon },
   { name: "Blocklist", icon: ShieldExclamationIcon },
   { name: "Balances", icon: BanknotesIcon },
-]
+];
 
 export function FaucetAdminDashboard() {
-  const [selectedIndex, setSelectedIndex] = useState(0)
+  const [selectedIndex, setSelectedIndex] = useState(0);
 
   return (
     <div className="min-h-screen">
@@ -110,5 +110,5 @@ export function FaucetAdminDashboard() {
         </Tab.Group>
       </div>
     </div>
-  )
+  );
 }

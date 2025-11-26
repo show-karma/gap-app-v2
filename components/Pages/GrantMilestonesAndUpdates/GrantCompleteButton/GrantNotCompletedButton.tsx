@@ -1,12 +1,12 @@
-import { CheckCircleIcon } from "@heroicons/react/24/outline"
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import Link from "next/link"
-import { PAGES } from "@/utilities/pages"
+import { CheckCircleIcon } from "@heroicons/react/24/outline";
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import Link from "next/link";
+import { PAGES } from "@/utilities/pages";
 
 interface GrantNotCompletedButtonProps {
-  project: IProjectResponse
-  grantUID: string
-  text?: string
+  project: IProjectResponse;
+  grantUID: string;
+  text?: string;
 }
 
 export const GrantNotCompletedButton: React.FC<GrantNotCompletedButtonProps> = ({
@@ -28,5 +28,5 @@ export const GrantNotCompletedButton: React.FC<GrantNotCompletedButtonProps> = (
         <CheckCircleIcon className="h-5 w-5" />
       </div>
     </Link>
-  )
-}
+  );
+};

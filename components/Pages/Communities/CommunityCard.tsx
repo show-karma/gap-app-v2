@@ -1,44 +1,44 @@
-import { ChevronRightIcon } from "@heroicons/react/24/solid"
-import Link from "next/link"
-import { useEffect, useRef, useState } from "react"
-import { ProfilePicture } from "@/components/Utilities/ProfilePicture"
-import type { CommunityWithStats } from "@/hooks/useCommunities"
-import { PAGES } from "@/utilities/pages"
+import { ChevronRightIcon } from "@heroicons/react/24/solid";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
+import type { CommunityWithStats } from "@/hooks/useCommunities";
+import { PAGES } from "@/utilities/pages";
 
 interface CommunityCardProps {
-  community: CommunityWithStats
+  community: CommunityWithStats;
 }
 
 export const CommunityCard = ({ community }: CommunityCardProps) => {
-  const cardRef = useRef<HTMLDivElement>(null)
-  const [_cardWidth, setCardWidth] = useState<number>(0)
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [_cardWidth, setCardWidth] = useState<number>(0);
 
   useEffect(() => {
     const updateWidth = () => {
       if (cardRef.current) {
-        setCardWidth(cardRef.current.offsetWidth)
+        setCardWidth(cardRef.current.offsetWidth);
       }
-    }
+    };
 
-    updateWidth()
+    updateWidth();
 
-    const resizeObserver = new ResizeObserver(updateWidth)
+    const resizeObserver = new ResizeObserver(updateWidth);
     if (cardRef.current) {
-      resizeObserver.observe(cardRef.current)
+      resizeObserver.observe(cardRef.current);
     }
 
-    return () => resizeObserver.disconnect()
-  }, [])
+    return () => resizeObserver.disconnect();
+  }, []);
 
   // Extract data from the API response structure
-  const name = community.details?.name || community.uid
-  const slug = community.details?.slug
-  const imageURL = community.details?.logoUrl
+  const name = community.details?.name || community.uid;
+  const slug = community.details?.slug;
+  const imageURL = community.details?.logoUrl;
   const stats = {
     grants: community.stats?.totalGrants || 0,
     projects: community.stats?.totalProjects || 0,
     members: community.stats?.totalMembers || 0,
-  }
+  };
 
   return (
     <div
@@ -99,5 +99,5 @@ export const CommunityCard = ({ community }: CommunityCardProps) => {
         </Link>
       </div>
     </div>
-  )
-}
+  );
+};

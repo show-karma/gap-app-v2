@@ -1,7 +1,7 @@
-import { cn } from "@/utilities/tailwind"
-import { layoutTheme } from "../../helper/theme"
-import { NavbarDesktopNavigation } from "./navbar-desktop-navigation"
-import { NavbarMobileMenu } from "./navbar-mobile-menu"
+import { cn } from "@/utilities/tailwind";
+import { layoutTheme } from "../../helper/theme";
+import { NavbarDesktopNavigation } from "./navbar-desktop-navigation";
+import { NavbarMobileMenu } from "./navbar-mobile-menu";
 
 export function Navbar() {
   return (
@@ -20,5 +20,5 @@ export function Navbar() {
         <NavbarMobileMenu />
       </div>
     </nav>
-  )
+  );
 }

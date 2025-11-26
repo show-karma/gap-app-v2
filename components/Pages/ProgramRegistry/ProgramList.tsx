@@ -1,95 +1,95 @@
-"use client"
-import * as Tooltip from "@radix-ui/react-tooltip"
+"use client";
+import * as Tooltip from "@radix-ui/react-tooltip";
 import {
   type ColumnDef,
   flexRender,
   getCoreRowModel,
   type Row,
   useReactTable,
-} from "@tanstack/react-table"
-import { useVirtualizer } from "@tanstack/react-virtual"
-import Image from "next/image"
-import Link from "next/link"
-import { type FC, useMemo, useRef } from "react"
-import { Discord2Icon, Telegram2Icon, Twitter2Icon } from "@/components/Icons"
-import { BlogIcon } from "@/components/Icons/Blog"
-import { DiscussionIcon } from "@/components/Icons/Discussion"
-import { OrganizationIcon } from "@/components/Icons/Organization"
-import { Button } from "@/components/Utilities/Button"
-import { ExternalLink } from "@/components/Utilities/ExternalLink"
-import { formatDate } from "@/utilities/formatDate"
-import { ReadMore } from "@/utilities/ReadMore"
-import { registryHelper } from "./helper"
+} from "@tanstack/react-table";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import Image from "next/image";
+import Link from "next/link";
+import { type FC, useMemo, useRef } from "react";
+import { Discord2Icon, Telegram2Icon, Twitter2Icon } from "@/components/Icons";
+import { BlogIcon } from "@/components/Icons/Blog";
+import { DiscussionIcon } from "@/components/Icons/Discussion";
+import { OrganizationIcon } from "@/components/Icons/Organization";
+import { Button } from "@/components/Utilities/Button";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { formatDate } from "@/utilities/formatDate";
+import { ReadMore } from "@/utilities/ReadMore";
+import { registryHelper } from "./helper";
 
 export type GrantProgram = {
   _id: {
-    $oid: string
-  }
-  id?: string
-  createdAtBlock?: string
-  createdByAddress?: string
-  trackedProjects?: number
+    $oid: string;
+  };
+  id?: string;
+  createdAtBlock?: string;
+  createdByAddress?: string;
+  trackedProjects?: number;
   metadata?: {
-    tags?: string[]
-    type?: string
-    title?: string
-    logoImg?: string
-    website?: string
-    startsAt?: string
-    endsAt?: string
+    tags?: string[];
+    type?: string;
+    title?: string;
+    logoImg?: string;
+    website?: string;
+    startsAt?: string;
+    endsAt?: string;
     socialLinks?: {
-      blog?: string
-      forum?: string
-      twitter?: string
-      discord?: string
-      website?: string
-      orgWebsite?: string
-      grantsSite?: string
-      telegram?: string
-    }
-    bugBounty?: string
-    bounties?: string[]
-    bannerImg?: string
-    createdAt?: number
-    minGrantSize?: string
-    maxGrantSize?: string
-    categories?: string[]
-    ecosystems?: string[]
-    organizations?: string[]
-    networks?: string[]
-    grantTypes?: string[]
-    credentials?: {}
-    description?: string
-    logoImgData?: string
-    grantsToDate?: number
-    bannerImgData?: string
-    programBudget?: string
-    projectTwitter?: string
-    applicantsNumber?: number
-    amountDistributedToDate?: string
-    platformsUsed?: string[]
-    status: string
-    communityRef?: string[]
-  }
-  tags?: string[]
-  updatedAtBlock?: string
-  projectNumber?: null
-  projectType?: string
-  registryAddress?: string
-  anchorAddress?: string
-  programId?: string
-  chainID?: number
-  isValid?: boolean
-  txHash?: string
-  createdAt: string
-  updatedAt: string
-  admins?: string[]
-  langfusePromptId?: string
-}
+      blog?: string;
+      forum?: string;
+      twitter?: string;
+      discord?: string;
+      website?: string;
+      orgWebsite?: string;
+      grantsSite?: string;
+      telegram?: string;
+    };
+    bugBounty?: string;
+    bounties?: string[];
+    bannerImg?: string;
+    createdAt?: number;
+    minGrantSize?: string;
+    maxGrantSize?: string;
+    categories?: string[];
+    ecosystems?: string[];
+    organizations?: string[];
+    networks?: string[];
+    grantTypes?: string[];
+    credentials?: {};
+    description?: string;
+    logoImgData?: string;
+    grantsToDate?: number;
+    bannerImgData?: string;
+    programBudget?: string;
+    projectTwitter?: string;
+    applicantsNumber?: number;
+    amountDistributedToDate?: string;
+    platformsUsed?: string[];
+    status: string;
+    communityRef?: string[];
+  };
+  tags?: string[];
+  updatedAtBlock?: string;
+  projectNumber?: null;
+  projectType?: string;
+  registryAddress?: string;
+  anchorAddress?: string;
+  programId?: string;
+  chainID?: number;
+  isValid?: boolean;
+  txHash?: string;
+  createdAt: string;
+  updatedAt: string;
+  admins?: string[];
+  langfusePromptId?: string;
+};
 
 interface ProgramListProps {
-  grantPrograms: GrantProgram[]
-  selectProgram: (program: GrantProgram) => void
+  grantPrograms: GrantProgram[];
+  selectProgram: (program: GrantProgram) => void;
 }
 
 export const ProgramList: FC<ProgramListProps> = ({ grantPrograms, selectProgram }) => {
@@ -99,7 +99,7 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms, selectProgram
         accessorFn: (row) => row,
         id: "Name",
         cell: (info) => {
-          const grant = info.row.original
+          const grant = info.row.original;
           return (
             <div className="flex flex-1 w-full whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300 text-wrap max-w-[285px]">
               <div className="flex flex-col gap-1 w-max max-w-full">
@@ -213,7 +213,7 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms, selectProgram
                 </div>
               </div>
             </div>
-          )
+          );
         },
         header: () => (
           <div className="py-3.5 px-3 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 font-body">
@@ -225,7 +225,7 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms, selectProgram
         accessorFn: (row) => row,
         id: "Description",
         cell: (info) => {
-          const grant = info.row.original
+          const grant = info.row.original;
           return (
             <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-400 max-w-[285px]">
               <div className="w-[420px] max-w-[420px] text-wrap pr-8" data-color-mode="light">
@@ -239,7 +239,7 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms, selectProgram
                 </ReadMore>
               </div>
             </div>
-          )
+          );
         },
         header: () => (
           <div className="px-3 py-3.5 text-left w-[420px] text-sm font-bold text-gray-900 dark:text-zinc-100 font-body">
@@ -251,13 +251,13 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms, selectProgram
         accessorFn: (row) => row,
         id: "End date",
         cell: (info) => {
-          const program = info.row.original
-          const endsAt = program.metadata?.endsAt
+          const program = info.row.original;
+          const endsAt = program.metadata?.endsAt;
           return (
             <div className="w-full flex flex-row flex-wrap gap-1 my-2 items-center">
               {endsAt ? formatDate(endsAt) : null}
             </div>
-          )
+          );
         },
         header: () => (
           <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64">
@@ -270,9 +270,9 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms, selectProgram
         accessorFn: (row) => row,
         id: "Networks",
         cell: (info) => {
-          const grant = info.row.original
-          const firstNetworks = grant.metadata?.networks?.slice(0, 4)
-          const restNetworks = grant.metadata?.networks?.slice(4)
+          const grant = info.row.original;
+          const firstNetworks = grant.metadata?.networks?.slice(0, 4);
+          const restNetworks = grant.metadata?.networks?.slice(4);
           return (
             <div className="w-full max-w-44 flex flex-row flex-wrap gap-1 my-2 items-center">
               {firstNetworks?.map((network, _index) => (
@@ -376,7 +376,7 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms, selectProgram
                 </Tooltip.Provider>
               ) : null}
             </div>
-          )
+          );
         },
         header: () => (
           <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64">
@@ -389,7 +389,7 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms, selectProgram
         id: "Categories",
         accessorKey: "metadata.categories",
         cell: (info) => {
-          const grant = info.row.original
+          const grant = info.row.original;
 
           return (
             <div className="w-full flex flex-row flex-wrap gap-1">
@@ -402,7 +402,7 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms, selectProgram
                 </span>
               ))}
             </div>
-          )
+          );
         },
         header: () => (
           <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64">
@@ -414,7 +414,7 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms, selectProgram
         accessorFn: (row) => row,
         id: "Types",
         cell: (info) => {
-          const grant = info.row.original
+          const grant = info.row.original;
 
           return (
             <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
@@ -427,7 +427,7 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms, selectProgram
                 </span>
               ))}
             </div>
-          )
+          );
         },
         header: () => (
           <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64">
@@ -439,8 +439,8 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms, selectProgram
         accessorFn: (row) => row,
         id: "Tracked Projects",
         cell: (info) => {
-          const program = info.row.original
-          const data = program?.trackedProjects || 0
+          const program = info.row.original;
+          const data = program?.trackedProjects || 0;
           return (
             <Link
               href={""}
@@ -449,7 +449,7 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms, selectProgram
             >
               {data}
             </Link>
-          )
+          );
         },
         header: () => (
           <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64">
@@ -461,16 +461,16 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms, selectProgram
         accessorFn: (row) => row,
         id: "Apply",
         cell: (info) => {
-          const grant = info.row.original
+          const grant = info.row.original;
 
           const isDisabled = () => {
-            const endsAt = grant?.metadata?.endsAt
-            const status = grant?.metadata?.status?.toLowerCase()
-            const hasEnded = endsAt && new Date(endsAt) < new Date()
-            const isActive = status === "active"
+            const endsAt = grant?.metadata?.endsAt;
+            const status = grant?.metadata?.status?.toLowerCase();
+            const hasEnded = endsAt && new Date(endsAt) < new Date();
+            const isActive = status === "active";
 
-            return (!endsAt && !isActive) || hasEnded
-          }
+            return (!endsAt && !isActive) || hasEnded;
+          };
 
           return (
             <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
@@ -478,7 +478,7 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms, selectProgram
                 <ExternalLink
                   onClick={(event) => {
                     if (isDisabled()) {
-                      event.preventDefault()
+                      event.preventDefault();
                     }
                   }}
                   href={
@@ -505,29 +505,29 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms, selectProgram
                 </ExternalLink>
               ) : null}
             </div>
-          )
+          );
         },
         header: () => <div />,
       },
     ],
     [selectProgram]
-  )
+  );
 
   const table = useReactTable({
     data: grantPrograms,
     columns: columns as any,
     getCoreRowModel: getCoreRowModel(),
-  })
+  });
 
-  const { rows } = table.getRowModel()
+  const { rows } = table.getRowModel();
 
   const virtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => 120,
-  })
+  });
 
-  const parentRef = useRef(null)
+  const parentRef = useRef(null);
 
   return (
     <div ref={parentRef} className="w-full">
@@ -553,14 +553,14 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms, selectProgram
                         <div>{flexRender(header.column.columnDef.header, header.getContext())}</div>
                       )}
                     </th>
-                  )
+                  );
                 })}
               </tr>
             ))}
           </thead>
           <tbody className="divide-y divide-gray-200 ">
             {virtualizer.getVirtualItems().map((virtualRow, index) => {
-              const row = rows[virtualRow.index] as Row<GrantProgram>
+              const row = rows[virtualRow.index] as Row<GrantProgram>;
               return (
                 <tr
                   id="grant-program-row"
@@ -575,14 +575,14 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms, selectProgram
                       <td key={cell.id}>
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
-                    )
+                    );
                   })}
                 </tr>
-              )
+              );
             })}
           </tbody>
         </table>
       </div>
     </div>
-  )
-}
+  );
+};

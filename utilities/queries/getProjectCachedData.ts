@@ -1,33 +1,33 @@
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import { notFound, redirect } from "next/navigation"
-import { cache } from "react"
-import { zeroUID } from "@/utilities/commons"
-import { gapIndexerApi } from "@/utilities/gapIndexerApi"
-import { getProjectData } from "../api/project"
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { notFound, redirect } from "next/navigation";
+import { cache } from "react";
+import { zeroUID } from "@/utilities/commons";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { getProjectData } from "../api/project";
 
 export const getProjectCachedData = cache(async (projectId: string): Promise<IProjectResponse> => {
-  let project: IProjectResponse | undefined
+  let project: IProjectResponse | undefined;
 
   try {
     const projectData = await getProjectData(projectId, {
       cache: "reload",
       next: { revalidate: 60 },
-    })
+    });
 
-    project = projectData
+    project = projectData;
   } catch (_error) {
-    notFound()
+    notFound();
   }
 
   if (!project || project.uid === zeroUID) {
-    notFound()
+    notFound();
   }
 
-  const isUid = /^0x[0-9a-fA-F]{64}$/.test(projectId)
-  const canonicalSlug = project?.details?.data?.slug
+  const isUid = /^0x[0-9a-fA-F]{64}$/.test(projectId);
+  const canonicalSlug = project?.details?.data?.slug;
 
   if (!isUid && canonicalSlug && canonicalSlug.toLowerCase() !== projectId.toLowerCase()) {
-    redirect(`/project/${canonicalSlug}`)
+    redirect(`/project/${canonicalSlug}`);
   }
 
   if (
@@ -38,14 +38,14 @@ export const getProjectCachedData = cache(async (projectId: string): Promise<IPr
     const original = await gapIndexerApi
       .projectBySlug(project.pointers[0].data.ogProjectUID)
       .then((res) => res.data)
-      .catch(() => null)
+      .catch(() => null);
 
-    const originalSlug = original?.details?.data?.slug
+    const originalSlug = original?.details?.data?.slug;
 
     if (original && originalSlug && originalSlug !== projectId) {
-      redirect(`/project/${originalSlug}`)
+      redirect(`/project/${originalSlug}`);
     }
   }
 
-  return project
-})
+  return project;
+});

@@ -1,54 +1,54 @@
-"use client"
-import { ChevronLeftIcon } from "@heroicons/react/24/solid"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { AlloBase } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/Allo"
-import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-import type { SubmitHandler } from "react-hook-form"
-import { Controller, useForm } from "react-hook-form"
-import toast from "react-hot-toast"
-import { useAccount } from "wagmi"
-import { z } from "zod"
-import { CommunitiesSelect } from "@/components/CommunitiesSelect"
-import { Telegram2Icon, WebsiteIcon } from "@/components/Icons"
-import { BlogIcon } from "@/components/Icons/Blog"
-import { Discord2Icon } from "@/components/Icons/Discord2"
-import { DiscussionIcon } from "@/components/Icons/Discussion"
-import { OrganizationIcon } from "@/components/Icons/Organization"
-import { Twitter2Icon } from "@/components/Icons/Twitter2"
-import { Button } from "@/components/Utilities/Button"
-import { DatePicker } from "@/components/Utilities/DatePicker"
-import { errorManager } from "@/components/Utilities/errorManager"
-import { useAuth } from "@/hooks/useAuth"
-import { useGap } from "@/hooks/useGap"
-import { useWallet } from "@/hooks/useWallet"
-import { useStepper } from "@/store/modals/txStepper"
-import { useRegistryStore } from "@/store/registry"
-import { chainImgDictionary } from "@/utilities/chainImgDictionary"
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils"
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain"
-import { envVars } from "@/utilities/enviromentVars"
-import fetchData from "@/utilities/fetchData"
-import { formatDate } from "@/utilities/formatDate"
-import { gapIndexerApi } from "@/utilities/gapIndexerApi"
-import { INDEXER } from "@/utilities/indexer"
-import { MESSAGES } from "@/utilities/messages"
-import { appNetwork } from "@/utilities/network"
-import { PAGES } from "@/utilities/pages"
-import { urlRegex } from "@/utilities/regexs/urlRegex"
-import { sanitizeObject } from "@/utilities/sanitize"
-import { cn } from "@/utilities/tailwind"
-import { safeGetWalletClient } from "@/utilities/wallet-helpers"
-import { registryHelper } from "./helper"
-import type { GrantProgram } from "./ProgramList"
-import { SearchDropdown } from "./SearchDropdown"
-import { StatusDropdown } from "./StatusDropdown"
+"use client";
+import { ChevronLeftIcon } from "@heroicons/react/24/solid";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { AlloBase } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/Allo";
+import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import type { SubmitHandler } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { z } from "zod";
+import { CommunitiesSelect } from "@/components/CommunitiesSelect";
+import { Telegram2Icon, WebsiteIcon } from "@/components/Icons";
+import { BlogIcon } from "@/components/Icons/Blog";
+import { Discord2Icon } from "@/components/Icons/Discord2";
+import { DiscussionIcon } from "@/components/Icons/Discussion";
+import { OrganizationIcon } from "@/components/Icons/Organization";
+import { Twitter2Icon } from "@/components/Icons/Twitter2";
+import { Button } from "@/components/Utilities/Button";
+import { DatePicker } from "@/components/Utilities/DatePicker";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { useAuth } from "@/hooks/useAuth";
+import { useGap } from "@/hooks/useGap";
+import { useWallet } from "@/hooks/useWallet";
+import { useStepper } from "@/store/modals/txStepper";
+import { useRegistryStore } from "@/store/registry";
+import { chainImgDictionary } from "@/utilities/chainImgDictionary";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import { envVars } from "@/utilities/enviromentVars";
+import fetchData from "@/utilities/fetchData";
+import { formatDate } from "@/utilities/formatDate";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { appNetwork } from "@/utilities/network";
+import { PAGES } from "@/utilities/pages";
+import { urlRegex } from "@/utilities/regexs/urlRegex";
+import { sanitizeObject } from "@/utilities/sanitize";
+import { cn } from "@/utilities/tailwind";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { registryHelper } from "./helper";
+import type { GrantProgram } from "./ProgramList";
+import { SearchDropdown } from "./SearchDropdown";
+import { StatusDropdown } from "./StatusDropdown";
 
-const labelStyle = "text-sm font-bold text-brand-gray dark:text-zinc-100"
+const labelStyle = "text-sm font-bold text-brand-gray dark:text-zinc-100";
 const inputStyle =
-  "mt-1 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100"
+  "mt-1 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100";
 
 const createProgramSchema = z.object({
   name: z
@@ -62,10 +62,10 @@ const createProgramSchema = z.object({
     })
     .refine(
       (data) => {
-        if (!data.endsAt || !data.startsAt) return true
-        const endsAt = data.endsAt.getTime() / 1000
-        const startsAt = data.startsAt.getTime() / 1000
-        return startsAt ? startsAt <= endsAt : true
+        if (!data.endsAt || !data.startsAt) return true;
+        const endsAt = data.endsAt.getTime() / 1000;
+        const startsAt = data.startsAt.getTime() / 1000;
+        return startsAt ? startsAt <= endsAt : true;
       },
       {
         message: "Start date must be before the end date",
@@ -152,51 +152,51 @@ const createProgramSchema = z.object({
   platformsUsed: z.array(z.string()),
   communityRef: z.array(z.string()),
   status: z.string().optional().or(z.literal("Active")),
-})
+});
 
-type CreateProgramType = z.infer<typeof createProgramSchema>
+type CreateProgramType = z.infer<typeof createProgramSchema>;
 
 export default function AddProgram({
   programToEdit,
   backTo,
   refreshPrograms,
 }: {
-  programToEdit?: GrantProgram | null
-  backTo?: () => void
-  refreshPrograms?: () => Promise<void>
+  programToEdit?: GrantProgram | null;
+  backTo?: () => void;
+  refreshPrograms?: () => Promise<void>;
 }) {
-  const router = useRouter()
+  const router = useRouter();
   const _supportedChains = appNetwork
     .filter((chain) => {
-      const support = [10, 42161, 11155111]
-      return support.includes(chain.id)
+      const support = [10, 42161, 11155111];
+      return support.includes(chain.id);
     })
     .map((chain) => {
       return {
         label: chain.name,
         value: chain.id,
         img: chainImgDictionary(chain.id),
-      }
-    })
-  const { gap } = useGap()
+      };
+    });
+  const { gap } = useGap();
 
-  const [allCommunities, setAllCommunities] = useState<ICommunityResponse[]>([])
+  const [allCommunities, setAllCommunities] = useState<ICommunityResponse[]>([]);
 
   useEffect(() => {
     const fetchCommunities = async () => {
       try {
-        if (!gap || !gapIndexerApi) throw new Error("Gap not initialized")
-        const result = await gapIndexerApi.communities()
-        setAllCommunities(result.data)
-        return result
+        if (!gap || !gapIndexerApi) throw new Error("Gap not initialized");
+        const result = await gapIndexerApi.communities();
+        setAllCommunities(result.data);
+        return result;
       } catch (_error: any) {
-        setAllCommunities([])
-        return undefined
+        setAllCommunities([]);
+        return undefined;
       }
-    }
+    };
 
-    if (allCommunities.length === 0) fetchCommunities()
-  }, [allCommunities, gap])
+    if (allCommunities.length === 0) fetchCommunities();
+  }, [allCommunities, gap]);
 
   const {
     register,
@@ -248,7 +248,7 @@ export default function AddProgram({
       communityRef: programToEdit?.metadata?.communityRef || [],
       status: programToEdit?.metadata?.status || "Active",
     },
-  })
+  });
 
   const onChangeGeneric = (
     value: string,
@@ -261,40 +261,40 @@ export default function AddProgram({
       | "platformsUsed"
       | "communityRef"
   ) => {
-    const oldArray = watch(fieldName)
-    const newArray = [...oldArray]
+    const oldArray = watch(fieldName);
+    const newArray = [...oldArray];
     if (newArray.includes(value)) {
-      const filtered = newArray.filter((item) => item !== value)
+      const filtered = newArray.filter((item) => item !== value);
       setValue(fieldName, filtered, {
         shouldValidate: true,
-      })
-      return
+      });
+      return;
     } else {
-      newArray.push(value)
+      newArray.push(value);
     }
     setValue(fieldName, newArray, {
       shouldValidate: true,
-    })
-  }
+    });
+  };
 
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
 
-  const { address, isConnected } = useAccount()
-  const { authenticated: isAuth, login } = useAuth()
-  const { chain } = useAccount()
-  const { switchChainAsync } = useWallet()
-  const { changeStepperStep, setIsStepper } = useStepper()
+  const { address, isConnected } = useAccount();
+  const { authenticated: isAuth, login } = useAuth();
+  const { chain } = useAccount();
+  const { switchChainAsync } = useWallet();
+  const { changeStepperStep, setIsStepper } = useStepper();
 
-  const { isRegistryAdmin } = useRegistryStore()
+  const { isRegistryAdmin } = useRegistryStore();
 
   const createProgram = async (data: CreateProgramType) => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
       if (!isConnected || !isAuth) {
-        login?.()
-        return
+        login?.();
+        return;
       }
-      const chainSelected = data.networkToCreate
+      const chainSelected = data.networkToCreate;
 
       const metadata = {
         title: data.name,
@@ -334,7 +334,7 @@ export default function AddProgram({
         type: "program",
         tags: ["karma-gap", "grant-program-registry"],
         communityRef: data.communityRef,
-      }
+      };
 
       const [_request, error] = await fetchData(
         INDEXER.REGISTRY.CREATE,
@@ -347,9 +347,9 @@ export default function AddProgram({
         {},
         {},
         true
-      )
+      );
       if (error) {
-        throw new Error(error)
+        throw new Error(error);
       }
       toast.success(
         <p className="text-left">
@@ -360,12 +360,12 @@ export default function AddProgram({
         {
           duration: 20000,
         }
-      )
-      router.push(PAGES.REGISTRY.ROOT)
+      );
+      router.push(PAGES.REGISTRY.ROOT);
     } catch (error: any) {
-      const errorMessage = error.message
+      const errorMessage = error.message;
       if (errorMessage?.includes("already exists")) {
-        toast.error("A program with this name already exists")
+        toast.error("A program with this name already exists");
       } else {
         errorManager(
           MESSAGES.PROGRAM_REGISTRY.CREATE.ERROR(data.name),
@@ -377,38 +377,38 @@ export default function AddProgram({
           {
             error: MESSAGES.PROGRAM_REGISTRY.CREATE.ERROR(data.name),
           }
-        )
+        );
       }
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const editProgram = async (data: CreateProgramType) => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
       if (!isConnected || !isAuth || !address) {
-        login?.()
-        return
+        login?.();
+        return;
       }
-      const chainSelected = data.networkToCreate
+      const chainSelected = data.networkToCreate;
       const { success, chainId: actualChainId } = await ensureCorrectChain({
         targetChainId: chainSelected as number,
         currentChainId: chain?.id,
         switchChainAsync,
-      })
+      });
 
       if (!success) {
-        setIsLoading(false)
-        return
+        setIsLoading(false);
+        return;
       }
 
-      const { walletClient, error } = await safeGetWalletClient(actualChainId)
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient) {
-        throw new Error("Failed to connect to wallet", { cause: error })
+        throw new Error("Failed to connect to wallet", { cause: error });
       }
-      const walletSigner = await walletClientToSigner(walletClient)
+      const walletSigner = await walletClientToSigner(walletClient);
 
       const metadata = sanitizeObject({
         title: data.name,
@@ -448,52 +448,52 @@ export default function AddProgram({
         tags: ["karma-gap", "grant-program-registry"],
         status: data.status,
         communityRef: data.communityRef,
-      })
+      });
 
       const isSameAddress =
-        programToEdit?.createdByAddress?.toLowerCase() === address?.toLowerCase()
-      const lowercasedAdmins = programToEdit?.admins?.map((item) => item.toLowerCase())
+        programToEdit?.createdByAddress?.toLowerCase() === address?.toLowerCase();
+      const lowercasedAdmins = programToEdit?.admins?.map((item) => item.toLowerCase());
       const permissionToEditOnChain = !!(
         programToEdit?.txHash &&
         (isSameAddress || isRegistryAdmin) &&
         lowercasedAdmins?.includes(address?.toLowerCase())
-      )
+      );
       if (permissionToEditOnChain) {
-        const allo = new AlloBase(walletSigner as any, envVars.IPFS_TOKEN, chainSelected as number)
+        const allo = new AlloBase(walletSigner as any, envVars.IPFS_TOKEN, chainSelected as number);
         const hasRegistry = await allo
           .updatePoolMetadata(programToEdit?.programId as string, metadata, changeStepperStep)
           .then(async (res) => {
-            let retries = 1000
-            changeStepperStep("indexing")
+            let retries = 1000;
+            changeStepperStep("indexing");
             while (retries > 0) {
               await fetchData(`${INDEXER.REGISTRY.GET_ALL}?programId=${programToEdit?.programId}`)
                 .then(async ([res]) => {
                   const hasUpdated =
                     new Date(programToEdit?.updatedAt) <
-                    new Date((res?.programs?.[0] as GrantProgram)?.updatedAt)
+                    new Date((res?.programs?.[0] as GrantProgram)?.updatedAt);
 
                   if (hasUpdated) {
-                    retries = 0
-                    changeStepperStep("indexed")
+                    retries = 0;
+                    changeStepperStep("indexed");
                   }
-                  retries -= 1
+                  retries -= 1;
                   // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                  await new Promise((resolve) => setTimeout(resolve, 1500))
+                  await new Promise((resolve) => setTimeout(resolve, 1500));
                 })
                 .catch(async () => {
-                  retries -= 1
+                  retries -= 1;
                   // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                  await new Promise((resolve) => setTimeout(resolve, 1500))
-                })
+                  await new Promise((resolve) => setTimeout(resolve, 1500));
+                });
             }
-            return res
+            return res;
           })
           .catch((error) => {
-            throw new Error(error)
-          })
+            throw new Error(error);
+          });
 
         if (!hasRegistry) {
-          throw new Error("Error editing program")
+          throw new Error("Error editing program");
         }
       } else {
         const [_request, error] = await fetchData(
@@ -505,13 +505,13 @@ export default function AddProgram({
           {},
           {},
           true
-        )
-        if (error) throw new Error(error)
+        );
+        if (error) throw new Error(error);
       }
-      toast.success("Program updated successfully!")
+      toast.success("Program updated successfully!");
       await refreshPrograms?.().then(() => {
-        backTo?.()
-      })
+        backTo?.();
+      });
     } catch (error: any) {
       errorManager(
         MESSAGES.PROGRAM_REGISTRY.EDIT.ERROR(data.name),
@@ -521,25 +521,25 @@ export default function AddProgram({
           data,
         },
         { error: MESSAGES.PROGRAM_REGISTRY.EDIT.ERROR(data.name) }
-      )
+      );
     } finally {
-      setIsLoading(false)
-      setIsStepper(false)
+      setIsLoading(false);
+      setIsStepper(false);
     }
-  }
+  };
 
   const onSubmit: SubmitHandler<CreateProgramType> = async (data, event) => {
-    event?.preventDefault()
-    event?.stopPropagation()
+    event?.preventDefault();
+    event?.stopPropagation();
 
-    data.networkToCreate = registryHelper.supportedNetworks
+    data.networkToCreate = registryHelper.supportedNetworks;
 
     if (programToEdit) {
-      await editProgram(data)
+      await editProgram(data);
     } else {
-      await createProgram(data)
+      await createProgram(data);
     }
-  }
+  };
 
   return (
     <div className="my-10 flex w-full max-w-full flex-col justify-between items-center gap-6 px-12 pb-7 max-2xl:px-8 max-md:px-4">
@@ -619,13 +619,13 @@ export default function AddProgram({
                             if (formatDate(date) === formatDate(watch("dates.startsAt") || "")) {
                               setValue("dates.startsAt", undefined, {
                                 shouldValidate: true,
-                              })
-                              field.onChange(undefined)
+                              });
+                              field.onChange(undefined);
                             } else {
                               setValue("dates.startsAt", date, {
                                 shouldValidate: true,
-                              })
-                              field.onChange(date)
+                              });
+                              field.onChange(date);
                             }
                           }}
                           placeholder="Pick a date"
@@ -633,8 +633,8 @@ export default function AddProgram({
                           clearButtonFn={() => {
                             setValue("dates.startsAt", undefined, {
                               shouldValidate: true,
-                            })
-                            field.onChange(undefined)
+                            });
+                            field.onChange(undefined);
                           }}
                         />
                         <p className="text-base text-red-400">
@@ -657,13 +657,13 @@ export default function AddProgram({
                             if (formatDate(date) === formatDate(watch("dates.endsAt") || "")) {
                               setValue("dates.endsAt", undefined, {
                                 shouldValidate: true,
-                              })
-                              field.onChange(undefined)
+                              });
+                              field.onChange(undefined);
                             } else {
                               setValue("dates.endsAt", date, {
                                 shouldValidate: true,
-                              })
-                              field.onChange(date)
+                              });
+                              field.onChange(date);
                             }
                           }}
                           minDate={watch("dates.startsAt")}
@@ -672,8 +672,8 @@ export default function AddProgram({
                           clearButtonFn={() => {
                             setValue("dates.endsAt", undefined, {
                               shouldValidate: true,
-                            })
-                            field.onChange(undefined)
+                            });
+                            field.onChange(undefined);
                           }}
                         />
                         <p className="text-base text-red-400">
@@ -798,7 +798,7 @@ export default function AddProgram({
                   </label>
                   <CommunitiesSelect
                     onSelectFunction={(community: ICommunityResponse) => {
-                      onChangeGeneric(community?.uid, "communityRef")
+                      onChangeGeneric(community?.uid, "communityRef");
                     }}
                     list={allCommunities}
                     selected={watch("communityRef")}
@@ -814,7 +814,7 @@ export default function AddProgram({
                     </label>
                     <StatusDropdown
                       onSelectFunction={(value: string) => {
-                        setValue("status", value)
+                        setValue("status", value);
                       }}
                       list={registryHelper.status}
                       previousValue={watch("status")}
@@ -1035,5 +1035,5 @@ export default function AddProgram({
         </form>
       </div>
     </div>
-  )
+  );
 }

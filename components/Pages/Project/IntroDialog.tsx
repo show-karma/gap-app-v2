@@ -1,23 +1,23 @@
-"use client"
-import { Dialog, Transition } from "@headlessui/react"
-import { zodResolver } from "@hookform/resolvers/zod"
+"use client";
+import { Dialog, Transition } from "@headlessui/react";
+import { zodResolver } from "@hookform/resolvers/zod";
 /* eslint-disable @next/next/no-img-element */
-import { type FC, Fragment, useState } from "react"
-import { useForm } from "react-hook-form"
-import toast from "react-hot-toast"
-import { useAccount } from "wagmi"
-import { z } from "zod"
-import { Button } from "@/components/Utilities/Button"
-import { errorManager } from "@/components/Utilities/errorManager"
-import { useContactInfo } from "@/hooks/useContactInfo"
-import { useProjectStore } from "@/store"
-import { useIntroModalStore } from "@/store/modals/intro"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
-import { MESSAGES } from "@/utilities/messages"
-import { shortAddress } from "@/utilities/shortAddress"
+import { type FC, Fragment, useState } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { z } from "zod";
+import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { useContactInfo } from "@/hooks/useContactInfo";
+import { useProjectStore } from "@/store";
+import { useIntroModalStore } from "@/store/modals/intro";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { shortAddress } from "@/utilities/shortAddress";
 
-type IntroDialogProps = {}
+type IntroDialogProps = {};
 
 const schema = z.object({
   email: z.string().email({ message: MESSAGES.PROJECT.INTRO.EMAIL }).min(3, {
@@ -28,21 +28,21 @@ const schema = z.object({
     .string()
     .describe(MESSAGES.PROJECT.INTRO.MESSAGE)
     .min(3, MESSAGES.PROJECT.INTRO.MESSAGE),
-})
+});
 
-type SchemaType = z.infer<typeof schema>
+type SchemaType = z.infer<typeof schema>;
 
-const inputStyle = "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900"
-const labelStyle = "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200"
+const inputStyle = "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
+const labelStyle = "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
 
 export const IntroDialog: FC<IntroDialogProps> = () => {
-  const [isLoading, setIsLoading] = useState(false)
-  const { address } = useAccount()
+  const [isLoading, setIsLoading] = useState(false);
+  const { address } = useAccount();
 
-  const { isIntroModalOpen: isOpen, setIsIntroModalOpen: setIsOpen } = useIntroModalStore()
+  const { isIntroModalOpen: isOpen, setIsIntroModalOpen: setIsOpen } = useIntroModalStore();
 
-  const project = useProjectStore((state) => state.project)
-  const { data: contactsInfo } = useContactInfo(project?.uid)
+  const project = useProjectStore((state) => state.project);
+  const { data: contactsInfo } = useContactInfo(project?.uid);
 
   const {
     register,
@@ -51,21 +51,21 @@ export const IntroDialog: FC<IntroDialogProps> = () => {
   } = useForm<SchemaType>({
     resolver: zodResolver(schema),
     mode: "onChange",
-  })
+  });
 
   function closeModal() {
-    setIsOpen(false)
+    setIsOpen(false);
   }
 
   const handleFunction = async (data: SchemaType) => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
       if ((contactsInfo?.length as number) < 1) {
-        toast.error("No contact info found")
-        return
+        toast.error("No contact info found");
+        return;
       }
 
-      if (!project || !data.email || !data.message) return
+      if (!project || !data.email || !data.message) return;
 
       const [response, error] = await fetchData(
         INDEXER.PROJECT.REQUEST_INTRO(project.details?.data.slug as string),
@@ -78,12 +78,12 @@ export const IntroDialog: FC<IntroDialogProps> = () => {
         {},
         {},
         false
-      )
+      );
       if (!response || error) {
-        toast.error(`Error requesting intro: ${error}`)
+        toast.error(`Error requesting intro: ${error}`);
       }
-      closeModal()
-      toast.success("Successfully requested intro!")
+      closeModal();
+      toast.success("Successfully requested intro!");
     } catch (error: any) {
       errorManager(
         MESSAGES.REQUEST_INTRO.ERROR,
@@ -93,11 +93,11 @@ export const IntroDialog: FC<IntroDialogProps> = () => {
           address,
         },
         { error: MESSAGES.REQUEST_INTRO.ERROR }
-      )
+      );
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -202,5 +202,5 @@ export const IntroDialog: FC<IntroDialogProps> = () => {
         </div>
       </Dialog>
     </Transition>
-  )
-}
+  );
+};

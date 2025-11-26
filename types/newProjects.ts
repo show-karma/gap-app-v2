@@ -3,9 +3,9 @@ export type SortByOptions =
   | "updatedAt"
   | "title"
   | "noOfGrants"
-  | "noOfProjectMilestones"
+  | "noOfProjectMilestones";
 
-export type SortOrder = "asc" | "desc"
+export type SortOrder = "asc" | "desc";
 
 export const sortOptions: Record<SortByOptions, string> = {
   createdAt: "Recently Added",
@@ -13,4 +13,4 @@ export const sortOptions: Record<SortByOptions, string> = {
   title: "Title",
   noOfGrants: "No. of Grants",
   noOfProjectMilestones: "No. of Roadmap items",
-}
+};

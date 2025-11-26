@@ -1,21 +1,21 @@
-"use client"
+"use client";
 
-import { useCallback, useMemo } from "react"
-import CommentsTimeline from "@/components/FundingPlatform/ApplicationView/CommentsTimeline"
-import { useApplicationComments, useApplicationVersions } from "@/hooks/useFundingPlatform"
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin"
-import { useOwnerStore } from "@/store"
-import type { FundingApplicationStatusV2, IStatusHistoryEntry } from "@/types/funding-platform"
+import { useCallback, useMemo } from "react";
+import CommentsTimeline from "@/components/FundingPlatform/ApplicationView/CommentsTimeline";
+import { useApplicationComments, useApplicationVersions } from "@/hooks/useFundingPlatform";
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useOwnerStore } from "@/store";
+import type { FundingApplicationStatusV2, IStatusHistoryEntry } from "@/types/funding-platform";
 
 interface CommentsAndActivityProps {
-  referenceNumber: string
+  referenceNumber: string;
   statusHistory: Array<{
-    status: string
-    timestamp: string
-    reason?: string
-  }>
-  communityId: string
-  currentUserAddress?: string
+    status: string;
+    timestamp: string;
+    reason?: string;
+  }>;
+  communityId: string;
+  currentUserAddress?: string;
 }
 
 export function CommentsAndActivity({
@@ -25,10 +25,10 @@ export function CommentsAndActivity({
   currentUserAddress,
 }: CommentsAndActivityProps) {
   const { comments, isLoading, createCommentAsync, editCommentAsync, deleteCommentAsync } =
-    useApplicationComments(referenceNumber)
-  const { versions } = useApplicationVersions(referenceNumber)
-  const { isCommunityAdmin } = useIsCommunityAdmin(communityId)
-  const isContractOwner = useOwnerStore((state) => state.isOwner)
+    useApplicationComments(referenceNumber);
+  const { versions } = useApplicationVersions(referenceNumber);
+  const { isCommunityAdmin } = useIsCommunityAdmin(communityId);
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
 
   // Map status history to IStatusHistoryEntry format
   const mappedStatusHistory = useMemo<IStatusHistoryEntry[]>(() => {
@@ -36,37 +36,37 @@ export function CommentsAndActivity({
       status: item.status as FundingApplicationStatusV2,
       timestamp: item.timestamp,
       reason: item.reason,
-    }))
-  }, [statusHistory])
+    }));
+  }, [statusHistory]);
 
   const isAdmin = useMemo(
     () => isCommunityAdmin || isContractOwner,
     [isCommunityAdmin, isContractOwner]
-  )
+  );
 
   // Handler for adding a new comment
   const handleCommentAdd = useCallback(
     async (content: string) => {
-      await createCommentAsync({ content })
+      await createCommentAsync({ content });
     },
     [createCommentAsync]
-  )
+  );
 
   // Handler for editing an existing comment
   const handleCommentEdit = useCallback(
     async (commentId: string, content: string) => {
-      await editCommentAsync({ commentId, content })
+      await editCommentAsync({ commentId, content });
     },
     [editCommentAsync]
-  )
+  );
 
   // Handler for deleting a comment
   const handleCommentDelete = useCallback(
     async (commentId: string) => {
-      await deleteCommentAsync(commentId)
+      await deleteCommentAsync(commentId);
     },
     [deleteCommentAsync]
-  )
+  );
 
   return (
     <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-sm px-4 py-4 border border-gray-200 dark:border-gray-700">
@@ -85,5 +85,5 @@ export function CommentsAndActivity({
         onVersionClick={undefined}
       />
     </div>
-  )
+  );
 }

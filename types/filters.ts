@@ -1,4 +1,4 @@
-export type SortByOptions = "recent" | "completed" | "milestones" | "txnCount"
+export type SortByOptions = "recent" | "completed" | "milestones" | "txnCount";
 export type StatusOptions =
   | "all"
   | "to-complete"
@@ -8,9 +8,9 @@ export type StatusOptions =
   | "maturity-stage-1"
   | "maturity-stage-2"
   | "maturity-stage-3"
-  | "maturity-stage-4"
-export type MaturityStageOptions = "all" | "0" | "1" | "2" | "3" | "4"
+  | "maturity-stage-4";
+export type MaturityStageOptions = "all" | "0" | "1" | "2" | "3" | "4";
 export type Category = {
-  id: number
-  name: string
-}
+  id: number;
+  name: string;
+};

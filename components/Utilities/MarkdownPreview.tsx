@@ -1,19 +1,19 @@
-"use client"
-import dynamic from "next/dynamic"
-import { useTheme } from "next-themes"
-import rehypeExternalLinks from "rehype-external-links"
-import rehypeSanitize from "rehype-sanitize"
-import remarkBreaks from "remark-breaks"
-import remarkGfm from "remark-gfm"
-import styles from "@/styles/markdown.module.css"
-import { cn } from "@/utilities/tailwind"
+"use client";
+import dynamic from "next/dynamic";
+import { useTheme } from "next-themes";
+import rehypeExternalLinks from "rehype-external-links";
+import rehypeSanitize from "rehype-sanitize";
+import remarkBreaks from "remark-breaks";
+import remarkGfm from "remark-gfm";
+import styles from "@/styles/markdown.module.css";
+import { cn } from "@/utilities/tailwind";
 
 const Preview = dynamic(() => import("@uiw/react-markdown-preview"), {
   ssr: false,
-})
+});
 
 export const MarkdownPreview: typeof Preview = (props) => {
-  const { theme: currentTheme } = useTheme()
+  const { theme: currentTheme } = useTheme();
   return (
     <div className="preview w-full max-w-full" data-color-mode={currentTheme}>
       <Preview
@@ -49,5 +49,5 @@ export const MarkdownPreview: typeof Preview = (props) => {
         {...props}
       />
     </div>
-  )
-}
+  );
+};

@@ -1,13 +1,13 @@
-"use client"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useState } from "react"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { OutputsSection } from "@/components/Forms/Outputs/OutputsSection"
-import { Button } from "@/components/Utilities/Button"
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor"
-import { useMilestone } from "@/hooks/useMilestone"
-import type { UnifiedMilestone } from "@/types/roadmap"
+"use client";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { OutputsSection } from "@/components/Forms/Outputs/OutputsSection";
+import { Button } from "@/components/Utilities/Button";
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { useMilestone } from "@/hooks/useMilestone";
+import type { UnifiedMilestone } from "@/types/roadmap";
 
 // Create form schema with zod
 const formSchema = z.object({
@@ -20,9 +20,9 @@ const formSchema = z.object({
     .string()
     .refine(
       (value) => {
-        if (!value) return true // Allow empty value
-        const num = Number(value)
-        return !Number.isNaN(num) && num >= 0 && num <= 100
+        if (!value) return true; // Allow empty value
+        const num = Number(value);
+        return !Number.isNaN(num) && num >= 0 && num <= 100;
       },
       {
         message: "Please enter a number between 0 and 100",
@@ -45,21 +45,21 @@ const formSchema = z.object({
       description: z.string().optional(),
     })
   ),
-})
+});
 
-export type MilestoneCompletedFormData = z.infer<typeof formSchema>
+export type MilestoneCompletedFormData = z.infer<typeof formSchema>;
 
 interface GrantMilestoneCompletionFormProps {
-  milestone: UnifiedMilestone
-  handleCompleting: (isCompleting: boolean) => void
+  milestone: UnifiedMilestone;
+  handleCompleting: (isCompleting: boolean) => void;
 }
 
 export const GrantMilestoneCompletionForm = ({
   milestone,
   handleCompleting,
 }: GrantMilestoneCompletionFormProps) => {
-  const [isCompleting, setIsCompleting] = useState(false)
-  const { completeMilestone } = useMilestone()
+  const [isCompleting, setIsCompleting] = useState(false);
+  const { completeMilestone } = useMilestone();
 
   const {
     register,
@@ -76,24 +76,24 @@ export const GrantMilestoneCompletionForm = ({
       outputs: [],
       deliverables: [],
     },
-  })
+  });
 
   const onSubmit = async (data: MilestoneCompletedFormData) => {
-    setIsCompleting(true)
+    setIsCompleting(true);
     try {
       await completeMilestone(milestone, {
         ...data,
         noProofCheckbox: true, // Always set to true since we removed the proof section
-      })
+      });
       // Close the form after successful completion
-      handleCompleting(false)
+      handleCompleting(false);
     } catch (error) {
       // Don't close the form if there was an error
-      console.error("Error completing milestone:", error)
+      console.error("Error completing milestone:", error);
     } finally {
-      setIsCompleting(false)
+      setIsCompleting(false);
     }
-  }
+  };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 w-full">
@@ -169,5 +169,5 @@ export const GrantMilestoneCompletionForm = ({
         </Button>
       </div>
     </form>
-  )
-}
+  );
+};

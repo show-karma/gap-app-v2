@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/solid"
+import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/solid";
 import {
   CheckCircle2,
   ChevronRight,
@@ -12,15 +12,15 @@ import {
   ShieldCheck,
   ToggleLeft,
   ToggleRight,
-} from "lucide-react"
-import Link from "next/link"
-import { useTheme } from "next-themes"
-import { useState } from "react"
-import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar"
-import { DiscordIcon, TelegramIcon, TwitterIcon } from "@/components/Icons"
-import { ParagraphIcon } from "@/components/Icons/Paragraph"
-import { ExternalLink } from "@/components/Utilities/ExternalLink"
-import { Button } from "@/components/ui/button"
+} from "lucide-react";
+import Link from "next/link";
+import { useTheme } from "next-themes";
+import { useState } from "react";
+import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import { DiscordIcon, TelegramIcon, TwitterIcon } from "@/components/Icons";
+import { ParagraphIcon } from "@/components/Icons/Paragraph";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { Button } from "@/components/ui/button";
 import {
   Drawer,
   DrawerClose,
@@ -28,30 +28,30 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
-} from "@/components/ui/drawer"
-import { useAuth } from "@/hooks/useAuth"
-import { useReviewerPrograms } from "@/hooks/usePermissions"
-import { useStaff } from "@/hooks/useStaff"
-import { useOwnerStore } from "@/store"
-import { useCommunitiesStore } from "@/store/communities"
-import { useContributorProfileModalStore } from "@/store/modals/contributorProfile"
-import { useRegistryStore } from "@/store/registry"
-import { PAGES } from "@/utilities/pages"
-import { SOCIALS } from "@/utilities/socials"
-import { Logo } from "../shared/logo"
+} from "@/components/ui/drawer";
+import { useAuth } from "@/hooks/useAuth";
+import { useReviewerPrograms } from "@/hooks/usePermissions";
+import { useStaff } from "@/hooks/useStaff";
+import { useOwnerStore } from "@/store";
+import { useCommunitiesStore } from "@/store/communities";
+import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
+import { useRegistryStore } from "@/store/registry";
+import { PAGES } from "@/utilities/pages";
+import { SOCIALS } from "@/utilities/socials";
+import { Logo } from "../shared/logo";
 import {
   ExploreContent,
   ForBuildersContent,
   ForFundersContent,
   MenuSection,
   ResourcesContent,
-} from "./menu-components"
-import { NavbarSearch } from "./navbar-search"
+} from "./menu-components";
+import { NavbarSearch } from "./navbar-search";
 
 const menuStyles = {
   itemText: "text-foreground text-sm font-medium",
   itemIcon: "text-muted-foreground w-4 h-4",
-}
+};
 
 const socialMediaLinks = [
   {
@@ -74,39 +74,39 @@ const socialMediaLinks = [
     href: SOCIALS.PARAGRAPH,
     icon: ParagraphIcon,
   },
-]
+];
 
 const formatAddress = (addr: string) => {
-  return `${addr.slice(0, 6)}...${addr.slice(-4)}`
-}
+  return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+};
 
 export function NavbarMobileMenu() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const { authenticated: isLoggedIn, authenticate: login, logout, address } = useAuth()
-  const { theme: currentTheme, setTheme: changeCurrentTheme } = useTheme()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { authenticated: isLoggedIn, authenticate: login, logout, address } = useAuth();
+  const { theme: currentTheme, setTheme: changeCurrentTheme } = useTheme();
   const toggleTheme = () => {
-    changeCurrentTheme(currentTheme === "light" ? "dark" : "light")
-  }
+    changeCurrentTheme(currentTheme === "light" ? "dark" : "light");
+  };
 
-  const { openModal: openProfileModal } = useContributorProfileModalStore()
+  const { openModal: openProfileModal } = useContributorProfileModalStore();
   const account = address
     ? {
         address,
         displayName: formatAddress(address),
       }
-    : undefined
+    : undefined;
 
   // Check admin and reviewer permissions
-  const { communities } = useCommunitiesStore()
-  const { programs: reviewerPrograms } = useReviewerPrograms()
-  const { isStaff } = useStaff()
-  const isOwner = useOwnerStore((state) => state.isOwner)
-  const { isPoolManager, isRegistryAdmin } = useRegistryStore()
+  const { communities } = useCommunitiesStore();
+  const { programs: reviewerPrograms } = useReviewerPrograms();
+  const { isStaff } = useStaff();
+  const isOwner = useOwnerStore((state) => state.isOwner);
+  const { isPoolManager, isRegistryAdmin } = useRegistryStore();
 
-  const isCommunityAdmin = communities.length !== 0
-  const hasReviewerRole = reviewerPrograms && reviewerPrograms.length > 0
-  const hasAdminAccess = isStaff || isOwner || isCommunityAdmin
-  const isRegistryAllowed = (isRegistryAdmin || isPoolManager) && isLoggedIn
+  const isCommunityAdmin = communities.length !== 0;
+  const hasReviewerRole = reviewerPrograms && reviewerPrograms.length > 0;
+  const hasAdminAccess = isStaff || isOwner || isCommunityAdmin;
+  const isRegistryAllowed = (isRegistryAdmin || isPoolManager) && isLoggedIn;
 
   return (
     <div className="xl:hidden flex flex-row items-center gap-4 w-full justify-between">
@@ -159,7 +159,7 @@ export function NavbarMobileMenu() {
                   <MenuSection title="Follow" variant="mobile" className="mb-4" />
                   <div className="flex items-center gap-2">
                     {socialMediaLinks.map((social) => {
-                      const IconComponent = social.icon
+                      const IconComponent = social.icon;
                       return (
                         <ExternalLink
                           key={social.name}
@@ -169,7 +169,7 @@ export function NavbarMobileMenu() {
                         >
                           <IconComponent className="w-8 h-8 text-muted-foreground" />
                         </ExternalLink>
-                      )
+                      );
                     })}
                   </div>
                 </div>
@@ -182,8 +182,8 @@ export function NavbarMobileMenu() {
                 <button
                   className="w-full flex items-center justify-between py-3 rounded-md hover:bg-accent text-left"
                   onClick={() => {
-                    openProfileModal()
-                    setMobileMenuOpen(false)
+                    openProfileModal();
+                    setMobileMenuOpen(false);
                   }}
                 >
                   <div className="flex items-center gap-3">
@@ -258,8 +258,8 @@ export function NavbarMobileMenu() {
                 <button
                   className="w-full flex items-center gap-3 rounded-md hover:bg-accent text-left mt-4"
                   onClick={() => {
-                    logout()
-                    setMobileMenuOpen(false)
+                    logout();
+                    setMobileMenuOpen(false);
                   }}
                 >
                   <LogOutIcon className={menuStyles.itemIcon} />
@@ -269,7 +269,7 @@ export function NavbarMobileMenu() {
                   <MenuSection title="Follow" variant="mobile" className="mb-4" />
                   <div className="flex items-center gap-2">
                     {socialMediaLinks.map((social) => {
-                      const IconComponent = social.icon
+                      const IconComponent = social.icon;
                       return (
                         <ExternalLink
                           key={social.name}
@@ -279,7 +279,7 @@ export function NavbarMobileMenu() {
                         >
                           <IconComponent className="w-8 h-8 text-muted-foreground" />
                         </ExternalLink>
-                      )
+                      );
                     })}
                   </div>
                 </div>
@@ -291,8 +291,8 @@ export function NavbarMobileMenu() {
                   className="w-full bg-secondary border-none rounded px-3 py-2 text-sm font-medium text-secondary-foreground hover:text-muted-foreground transition-colors"
                   size="lg"
                   onClick={() => {
-                    login()
-                    setMobileMenuOpen(false)
+                    login();
+                    setMobileMenuOpen(false);
                   }}
                 >
                   Sign in
@@ -314,5 +314,5 @@ export function NavbarMobileMenu() {
         </DrawerContent>
       </Drawer>
     </div>
-  )
+  );
 }

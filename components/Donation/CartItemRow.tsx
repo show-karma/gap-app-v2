@@ -1,37 +1,37 @@
-"use client"
-import { TrashIcon } from "@heroicons/react/24/outline"
-import Link from "next/link"
-import { ProfilePicture } from "@/components/Utilities/ProfilePicture"
-import type { SupportedToken } from "@/constants/supportedTokens"
-import { PAGES } from "@/utilities/pages"
-import { BalanceDisplay } from "./BalanceDisplay"
-import { PayoutAddressDisplay } from "./PayoutAddressDisplay"
-import { TokenSelector } from "./TokenSelector"
+"use client";
+import { TrashIcon } from "@heroicons/react/24/outline";
+import Link from "next/link";
+import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
+import type { SupportedToken } from "@/constants/supportedTokens";
+import { PAGES } from "@/utilities/pages";
+import { BalanceDisplay } from "./BalanceDisplay";
+import { PayoutAddressDisplay } from "./PayoutAddressDisplay";
+import { TokenSelector } from "./TokenSelector";
 
 interface CartItem {
-  uid: string
-  slug?: string
-  title: string
-  imageURL?: string
+  uid: string;
+  slug?: string;
+  title: string;
+  imageURL?: string;
 }
 
 interface PayoutInfo {
-  address?: string
-  isLoading: boolean
-  isMissing: boolean
+  address?: string;
+  isLoading: boolean;
+  isMissing: boolean;
 }
 
 interface CartItemRowProps {
-  item: CartItem
-  selectedToken?: SupportedToken
-  currentAmount: string
-  payoutInfo?: PayoutInfo
-  tokenOptions: SupportedToken[]
-  balanceByTokenKey: Record<string, string>
-  formatAddress: (address?: string) => string
-  onTokenSelect: (token: SupportedToken) => void
-  onAmountChange: (amount: string) => void
-  onRemove: () => void
+  item: CartItem;
+  selectedToken?: SupportedToken;
+  currentAmount: string;
+  payoutInfo?: PayoutInfo;
+  tokenOptions: SupportedToken[];
+  balanceByTokenKey: Record<string, string>;
+  formatAddress: (address?: string) => string;
+  onTokenSelect: (token: SupportedToken) => void;
+  onAmountChange: (amount: string) => void;
+  onRemove: () => void;
 }
 
 export function CartItemRow({
@@ -140,5 +140,5 @@ export function CartItemRow({
         </div>
       </div>
     </div>
-  )
+  );
 }

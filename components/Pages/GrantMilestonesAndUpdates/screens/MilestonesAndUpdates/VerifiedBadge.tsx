@@ -1,21 +1,21 @@
 /* eslint-disable @next/next/no-img-element */
 
-import * as Tooltip from "@radix-ui/react-tooltip"
+import * as Tooltip from "@radix-ui/react-tooltip";
 import type {
   IGrantUpdateStatus,
   IMilestoneCompleted,
   IProjectImpactStatus,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import { type FC, useEffect, useState } from "react"
-import type { Hex } from "viem"
-import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar"
-import { useENS } from "@/store/ens"
-import { formatDate } from "@/utilities/formatDate"
-import { VerificationsDialog } from "./VerificationsDialog"
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { type FC, useEffect, useState } from "react";
+import type { Hex } from "viem";
+import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import { useENS } from "@/store/ens";
+import { formatDate } from "@/utilities/formatDate";
+import { VerificationsDialog } from "./VerificationsDialog";
 
 interface VerifiedBadgeProps {
-  verifications: IMilestoneCompleted[] | IGrantUpdateStatus[] | IProjectImpactStatus[]
-  title: string
+  verifications: IMilestoneCompleted[] | IGrantUpdateStatus[] | IProjectImpactStatus[];
+  title: string;
 }
 
 const _BlockieTooltip = ({
@@ -23,15 +23,15 @@ const _BlockieTooltip = ({
   date,
   reason,
 }: {
-  address: Hex
-  date: Date
-  reason?: string
+  address: Hex;
+  date: Date;
+  reason?: string;
 }) => {
-  const { ensData, populateEns } = useENS()
+  const { ensData, populateEns } = useENS();
 
   useEffect(() => {
-    populateEns([address])
-  }, [address, populateEns])
+    populateEns([address]);
+  }, [address, populateEns]);
 
   return (
     <Tooltip.Provider>
@@ -62,13 +62,13 @@ const _BlockieTooltip = ({
         </Tooltip.Portal>
       </Tooltip.Root>
     </Tooltip.Provider>
-  )
-}
+  );
+};
 
 export const VerifiedBadge: FC<VerifiedBadgeProps> = ({ verifications, title }) => {
   const [orderedSort, setOrderedSort] = useState<
     (IMilestoneCompleted | IGrantUpdateStatus | IProjectImpactStatus)[]
-  >([])
+  >([]);
 
   const getUniqueVerifications = (
     verifications: IMilestoneCompleted[] | IGrantUpdateStatus[] | IProjectImpactStatus[]
@@ -77,37 +77,37 @@ export const VerifiedBadge: FC<VerifiedBadgeProps> = ({ verifications, title }) 
     const uniqueVerifications: Record<
       Hex,
       IMilestoneCompleted | IGrantUpdateStatus | IProjectImpactStatus
-    > = {}
+    > = {};
     verifications.forEach((verification) => {
-      if (!verification.attester) return
+      if (!verification.attester) return;
       if (!uniqueVerifications[verification.attester]) {
-        uniqueVerifications[verification.attester] = verification
+        uniqueVerifications[verification.attester] = verification;
       } else if (uniqueVerifications[verification.attester].createdAt < verification.createdAt) {
-        uniqueVerifications[verification.attester] = verification
+        uniqueVerifications[verification.attester] = verification;
       }
-    })
-    return Object.values(uniqueVerifications)
-  }
+    });
+    return Object.values(uniqueVerifications);
+  };
 
-  const [isOpenDialog, setIsOpenDialog] = useState(false)
+  const [isOpenDialog, setIsOpenDialog] = useState(false);
 
   useEffect(() => {
-    const uniques = getUniqueVerifications(verifications)
+    const uniques = getUniqueVerifications(verifications);
 
     // order by date
     const sorted = uniques.sort((a, b) => {
-      if (new Date(a.createdAt).getTime() < new Date(b.createdAt).getTime()) return 1
-      if (new Date(a.createdAt).getTime() > new Date(b.createdAt).getTime()) return -1
-      return 0
-    })
-    setOrderedSort(sorted)
-  }, [verifications, getUniqueVerifications])
+      if (new Date(a.createdAt).getTime() < new Date(b.createdAt).getTime()) return 1;
+      if (new Date(a.createdAt).getTime() > new Date(b.createdAt).getTime()) return -1;
+      return 0;
+    });
+    setOrderedSort(sorted);
+  }, [verifications, getUniqueVerifications]);
 
-  const openDialog = () => setIsOpenDialog(true)
+  const openDialog = () => setIsOpenDialog(true);
 
-  const closeDialog = () => setIsOpenDialog(false)
+  const closeDialog = () => setIsOpenDialog(false);
 
-  const hasMore = orderedSort.length > 4
+  const hasMore = orderedSort.length > 4;
 
   return (
     <div className="flex flex-row items-center gap-2 flex-1">
@@ -134,5 +134,5 @@ export const VerifiedBadge: FC<VerifiedBadgeProps> = ({ verifications, title }) 
         ) : null}
       </button>
     </div>
-  )
-}
+  );
+};

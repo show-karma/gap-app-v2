@@ -1,90 +1,90 @@
-"use client"
-import { Disclosure } from "@headlessui/react"
-import { ChevronDownIcon, ChevronLeftIcon, ChevronUpIcon } from "@heroicons/react/24/outline"
-import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import Link from "next/link"
-import { useParams, useRouter } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
-import { useAccount } from "wagmi"
-import { Button } from "@/components/Utilities/Button"
-import { errorManager } from "@/components/Utilities/errorManager"
-import { Spinner } from "@/components/Utilities/Spinner"
-import { useAuth } from "@/hooks/useAuth"
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin"
-import type { Category } from "@/types/impactMeasurement"
-import { zeroUID } from "@/utilities/commons"
-import { useSigner } from "@/utilities/eas-wagmi-utils"
-import fetchData from "@/utilities/fetchData"
-import { gapIndexerApi } from "@/utilities/gapIndexerApi"
-import { INDEXER } from "@/utilities/indexer"
-import { MESSAGES } from "@/utilities/messages"
-import { defaultMetadata } from "@/utilities/meta"
-import { PAGES } from "@/utilities/pages"
-import { cn } from "@/utilities/tailwind"
-import { CategoryView } from "./CategoryView"
-import { IndicatorsView } from "./IndicatorsView"
+"use client";
+import { Disclosure } from "@headlessui/react";
+import { ChevronDownIcon, ChevronLeftIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
+import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { useAccount } from "wagmi";
+import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { useAuth } from "@/hooks/useAuth";
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import type { Category } from "@/types/impactMeasurement";
+import { zeroUID } from "@/utilities/commons";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import fetchData from "@/utilities/fetchData";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { defaultMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
+import { cn } from "@/utilities/tailwind";
+import { CategoryView } from "./CategoryView";
+import { IndicatorsView } from "./IndicatorsView";
 
-export const metadata = defaultMetadata
+export const metadata = defaultMetadata;
 
 export default function ManageIndicatorsPage() {
-  const router = useRouter()
-  const { address, isConnected } = useAccount()
-  const { authenticated: isAuth } = useAuth()
-  const params = useParams()
-  const communityId = params.communityId as string
+  const router = useRouter();
+  const { address, isConnected } = useAccount();
+  const { authenticated: isAuth } = useAuth();
+  const params = useParams();
+  const communityId = params.communityId as string;
   // Call API
-  const [categories, setCategories] = useState<Category[]>([])
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
-  const [viewMode, setViewMode] = useState<"category" | "indicators">("category")
-  const [viewType, setViewType] = useState<"all" | "output" | "outcome">("all")
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [viewMode, setViewMode] = useState<"category" | "indicators">("category");
+  const [viewType, setViewType] = useState<"all" | "output" | "outcome">("all");
   const [_indicatorViewType, _setIndicatorViewType] = useState<"all" | "automated" | "manual">(
     "all"
-  )
-  const [_searchQuery, _setSearchQuery] = useState<string>("")
+  );
+  const [_searchQuery, _setSearchQuery] = useState<string>("");
 
-  const [loading, setLoading] = useState<boolean>(true) // Loading state of the API call
-  const [community, setCommunity] = useState<ICommunityResponse | undefined>(undefined) // Data returned from the API
-  const _signer = useSigner()
+  const [loading, setLoading] = useState<boolean>(true); // Loading state of the API call
+  const [community, setCommunity] = useState<ICommunityResponse | undefined>(undefined); // Data returned from the API
+  const _signer = useSigner();
 
   // Check if user is admin of this community
   const { isCommunityAdmin: isAdmin, isLoading: adminLoading } = useIsCommunityAdmin(
     community?.uid,
     address
-  )
+  );
 
   useEffect(() => {
     const fetchDetails = async () => {
-      if (!communityId) return
-      setLoading(true)
+      if (!communityId) return;
+      setLoading(true);
       try {
-        const { data: result } = await gapIndexerApi.communityBySlug(communityId)
-        if (!result || result.uid === zeroUID) throw new Error("Community not found")
-        setCommunity(result)
+        const { data: result } = await gapIndexerApi.communityBySlug(communityId);
+        if (!result || result.uid === zeroUID) throw new Error("Community not found");
+        setCommunity(result);
       } catch (error: any) {
         errorManager(`Error fetching community ${communityId}`, error, {
           community: communityId,
-        })
-        console.error("Error fetching data:", error)
+        });
+        console.error("Error fetching data:", error);
         if (error.message === "Community not found" || error.message.includes("422")) {
-          router.push(PAGES.NOT_FOUND)
+          router.push(PAGES.NOT_FOUND);
         }
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchDetails()
-  }, [communityId, router.push])
+    fetchDetails();
+  }, [communityId, router.push]);
 
   const getCategories = async (isSilent: boolean = false) => {
     if (!isSilent) {
-      setLoading(true)
+      setLoading(true);
     }
 
     try {
       const [data] = await fetchData(
         INDEXER.COMMUNITY.CATEGORIES((community?.details?.data?.slug || community?.uid) as string)
-      )
+      );
       if (data) {
         const categoriesWithoutOutputs = data.map((category: Category) => {
           const outputsNotDuplicated = category.outputs?.filter(
@@ -92,7 +92,7 @@ export default function ManageIndicatorsPage() {
               !category.impact_segments?.some(
                 (segment) => segment.id === output.id || segment.name === output.name
               )
-          )
+          );
           return {
             ...category,
             impact_segments: [
@@ -104,41 +104,41 @@ export default function ManageIndicatorsPage() {
                   description: output.description,
                   impact_indicators: [],
                   type: output.type,
-                }
+                };
               }),
             ],
-          }
-        })
-        return categoriesWithoutOutputs
+          };
+        });
+        return categoriesWithoutOutputs;
       }
     } catch (error: any) {
       errorManager(`Error fetching categories of community ${communityId}`, error, {
         community: communityId,
-      })
-      console.error(error)
-      return []
+      });
+      console.error(error);
+      return [];
     } finally {
       if (!isSilent) {
-        setLoading(false)
+        setLoading(false);
       }
     }
-  }
+  };
 
   useMemo(() => {
     if (community?.uid) {
-      setLoading(true)
+      setLoading(true);
       getCategories()
         .then((res) => {
-          setCategories(res)
+          setCategories(res);
           if (res && res.length > 0) {
-            setSelectedCategory(res[0])
+            setSelectedCategory(res[0]);
           }
         })
         .catch(() => {
-          setCategories([])
-        })
+          setCategories([]);
+        });
     }
-  }, [community?.uid, getCategories])
+  }, [community?.uid, getCategories]);
 
   return (
     <div className="mt-4 flex gap-8 flex-row max-lg:flex-col w-full mb-10">
@@ -172,8 +172,8 @@ export default function ManageIndicatorsPage() {
                     <button
                       key={category.id}
                       onClick={() => {
-                        setSelectedCategory(category)
-                        setViewMode("category")
+                        setSelectedCategory(category);
+                        setViewMode("category");
                       }}
                       className={`text-left p-3 rounded-md transition-all ${
                         selectedCategory?.id === category.id && viewMode === "category"
@@ -208,8 +208,8 @@ export default function ManageIndicatorsPage() {
                             <button
                               key={category.id}
                               onClick={() => {
-                                setSelectedCategory(category)
-                                setViewMode("category")
+                                setSelectedCategory(category);
+                                setViewMode("category");
                               }}
                               className={`text-left p-3 transition-all ${
                                 selectedCategory?.id === category.id && viewMode === "category"
@@ -289,23 +289,23 @@ export default function ManageIndicatorsPage() {
                   viewType={viewType}
                   setViewType={setViewType}
                   onRefreshCategory={() => {
-                    setLoading(true)
+                    setLoading(true);
                     getCategories()
                       .then((res) => {
-                        setCategories(res)
+                        setCategories(res);
                         if (res && res.length > 0) {
                           const currentCategory = res.find(
                             (c: Category) => c.id === selectedCategory.id
-                          )
-                          setSelectedCategory(currentCategory || res[0])
+                          );
+                          setSelectedCategory(currentCategory || res[0]);
                         }
                       })
                       .catch(() => {
-                        setCategories([])
+                        setCategories([]);
                       })
                       .finally(() => {
-                        setLoading(false)
-                      })
+                        setLoading(false);
+                      });
                   }}
                   communityId={community?.uid as string}
                 />
@@ -321,5 +321,5 @@ export default function ManageIndicatorsPage() {
         </div>
       )}
     </div>
-  )
+  );
 }

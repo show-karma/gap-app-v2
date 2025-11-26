@@ -1,23 +1,23 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import { type FC, useState } from "react"
-import { useForm } from "react-hook-form"
-import toast from "react-hot-toast"
-import { useAccount } from "wagmi"
-import { z } from "zod"
-import { Button } from "@/components/Utilities/Button"
-import { errorManager } from "@/components/Utilities/errorManager"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
-import { MESSAGES } from "@/utilities/messages"
-import { cn } from "@/utilities/tailwind"
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { type FC, useState } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { z } from "zod";
+import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { cn } from "@/utilities/tailwind";
 
 const inputStyle =
-  "bg-transparent bg-white dark:bg-zinc-900  w-full text-black dark:text-zinc-200 placeholder:text-zinc-400  dark:placeholder:text-zinc-200"
+  "bg-transparent bg-white dark:bg-zinc-900  w-full text-black dark:text-zinc-200 placeholder:text-zinc-400  dark:placeholder:text-zinc-200";
 
-const _labelStyle = "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200"
+const _labelStyle = "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
 
 const schema = z.object({
   name: z.string().max(50, { message: MESSAGES.PROJECT.SUBSCRIPTION.NAME.MAX }).optional(),
@@ -27,17 +27,17 @@ const schema = z.object({
       message: "Invalid email address. Please enter a valid email address.",
     })
     .min(3, { message: MESSAGES.PROJECT.SUBSCRIPTION.EMAIL }),
-})
+});
 
-type SchemaType = z.infer<typeof schema>
+type SchemaType = z.infer<typeof schema>;
 
 interface ProjectSubscriptionProps {
-  project: IProjectResponse
+  project: IProjectResponse;
 }
 
 export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({ project }) => {
-  const [isLoading, setIsLoading] = useState(false)
-  const { address } = useAccount()
+  const [isLoading, setIsLoading] = useState(false);
+  const { address } = useAccount();
   const {
     register,
     handleSubmit,
@@ -46,30 +46,30 @@ export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({ project }) =
   } = useForm<SchemaType>({
     resolver: zodResolver(schema),
     mode: "onChange",
-  })
+  });
 
   const onSubmit = async (data: SchemaType) => {
     try {
-      setIsLoading(true)
+      setIsLoading(true);
       const [_res, error] = await fetchData(
         INDEXER.PROJECT.SUBSCRIBE(project?.uid as `0x${string}`),
         "POST",
         data
-      )
-      if (error) throw error
+      );
+      if (error) throw error;
       toast.success(
         `You have successfully subscribed to ${project?.details?.data?.title || "this project"}.`
-      )
+      );
     } catch (error: any) {
-      const isAlreadySubscribed = error?.includes("422")
+      const isAlreadySubscribed = error?.includes("422");
       if (isAlreadySubscribed) {
         setError("email", {
           type: "manual",
           message: `You have already subscribed to this project.`,
-        })
+        });
         toast.error(
           `User already subscribed to ${project?.details?.data?.title || "this project"}.`
-        )
+        );
       } else {
         errorManager(
           `Error subscribing to ${project?.details?.data?.title || "this project"}`,
@@ -80,12 +80,12 @@ export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({ project }) =
               project?.details?.data?.title || "this project"
             ),
           }
-        )
+        );
       }
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <form
@@ -126,5 +126,5 @@ export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({ project }) =
         <p className="text-red-500">{errors.email?.message}</p>
       </div>
     </form>
-  )
-}
+  );
+};

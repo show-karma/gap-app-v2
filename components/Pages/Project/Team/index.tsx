@@ -1,15 +1,15 @@
-"use client"
+"use client";
 
-import { useQuery } from "@tanstack/react-query"
-import { ContributorProfileDialog } from "@/components/Dialogs/ContributorProfileDialog"
-import { InviteMemberDialog } from "@/components/Dialogs/Member/InviteMember"
-import { useProjectInstance } from "@/hooks/useProjectInstance"
-import { useOwnerStore, useProjectStore } from "@/store"
-import { getProjectMemberRoles, type Member } from "@/utilities/getProjectMemberRoles"
-import { MemberCard } from "./MemberCard"
+import { useQuery } from "@tanstack/react-query";
+import { ContributorProfileDialog } from "@/components/Dialogs/ContributorProfileDialog";
+import { InviteMemberDialog } from "@/components/Dialogs/Member/InviteMember";
+import { useProjectInstance } from "@/hooks/useProjectInstance";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { getProjectMemberRoles, type Member } from "@/utilities/getProjectMemberRoles";
+import { MemberCard } from "./MemberCard";
 
 export const Team = () => {
-  const project = useProjectStore((state) => state.project)
+  const project = useProjectStore((state) => state.project);
 
   //   check if it have some duplicated
   const members = project
@@ -19,14 +19,14 @@ export const Team = () => {
           ...(project?.members?.map((member) => member.recipient) || []),
         ])
       )
-    : []
+    : [];
 
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner)
-  const isContractOwner = useOwnerStore((state) => state.isOwner)
-  const isAuthorized = isProjectOwner || isContractOwner
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
+  const isAuthorized = isProjectOwner || isContractOwner;
   const { project: projectInstance } = useProjectInstance(
     project?.details?.data.slug || project?.uid || ""
-  )
+  );
 
   const {
     data: memberRoles,
@@ -38,20 +38,20 @@ export const Team = () => {
       project && projectInstance ? getProjectMemberRoles(project, projectInstance) : {},
     enabled: !!project && !!projectInstance,
     staleTime: 1000 * 60 * 5,
-  })
+  });
 
   const sortedMembers = members.sort((a, b) => {
-    const roleA = memberRoles?.[a] || "Member"
-    const roleB = memberRoles?.[b] || "Member"
+    const roleA = memberRoles?.[a] || "Member";
+    const roleB = memberRoles?.[b] || "Member";
 
     const roleOrder = {
       Owner: 0,
       Admin: 1,
       Member: 2,
-    }
+    };
 
-    return roleOrder[roleA] - roleOrder[roleB]
-  })
+    return roleOrder[roleA] - roleOrder[roleB];
+  });
 
   return (
     <div className="pt-5 pb-20 flex flex-col items-start gap-4">
@@ -65,5 +65,5 @@ export const Team = () => {
           : null}
       </div>
     </div>
-  )
-}
+  );
+};

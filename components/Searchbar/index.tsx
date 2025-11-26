@@ -1,40 +1,40 @@
-"use client"
+"use client";
 
-import { MagnifyingGlassIcon } from "@heroicons/react/20/solid"
-import type { ISearchResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
+import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
+import type { ISearchResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 // eslint-disable-next-line import/no-extraneous-dependencies
-import debounce from "lodash.debounce"
-import { type FC, useState } from "react"
-import { gapIndexerApi } from "@/utilities/gapIndexerApi"
-import { SearchList } from "./SearchList"
+import debounce from "lodash.debounce";
+import { type FC, useState } from "react";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { SearchList } from "./SearchList";
 
 export const Searchbar: FC = () => {
   const [results, setResults] = useState<ISearchResponse>({
     communities: [],
     projects: [],
-  })
-  const [isSearchListOpen, setIsSearchListOpen] = useState<boolean>(false)
-  const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [_isSearchListInteracting, setIsSearchListInteracting] = useState<boolean>(false)
+  });
+  const [isSearchListOpen, setIsSearchListOpen] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [_isSearchListInteracting, setIsSearchListInteracting] = useState<boolean>(false);
 
   const closeSearchList = () => {
     setTimeout(() => {
-      setIsSearchListOpen(false)
-    }, 300)
-  }
+      setIsSearchListOpen(false);
+    }, 300);
+  };
 
   const debouncedSearch = debounce(async (value: string) => {
     if (value.length < 3) {
-      setResults({ communities: [], projects: [] })
-      return setIsSearchListOpen(false)
+      setResults({ communities: [], projects: [] });
+      return setIsSearchListOpen(false);
     }
 
-    setIsLoading(true)
-    setIsSearchListOpen(true)
-    const result = await gapIndexerApi.search(value)
-    setResults(result.data)
-    return setIsLoading(false)
-  }, 500)
+    setIsLoading(true);
+    setIsSearchListOpen(true);
+    const result = await gapIndexerApi.search(value);
+    setResults(result.data);
+    return setIsLoading(false);
+  }, 500);
 
   return (
     <div className="relative flex flex-row items-center gap-3 rounded-lg h-max w-full bg-zinc-100 px-4 max-2xl:gap-1 max-2xl:px-2 text-gray-600 dark:text-gray-200 dark:bg-zinc-800">
@@ -57,5 +57,5 @@ export const Searchbar: FC = () => {
         onInteractionEnd={() => setIsSearchListInteracting(false)}
       />
     </div>
-  )
-}
+  );
+};

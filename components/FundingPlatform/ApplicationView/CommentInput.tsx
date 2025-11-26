@@ -1,16 +1,16 @@
-"use client"
+"use client";
 
-import { PaperAirplaneIcon } from "@heroicons/react/24/outline"
-import { type FC, useState } from "react"
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor"
-import { Spinner } from "@/components/Utilities/Spinner"
-import { cn } from "@/utilities/tailwind"
+import { PaperAirplaneIcon } from "@heroicons/react/24/outline";
+import { type FC, useState } from "react";
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { cn } from "@/utilities/tailwind";
 
 interface CommentInputProps {
-  onSubmit: (content: string) => Promise<void>
-  placeholder?: string
-  disabled?: boolean
-  className?: string
+  onSubmit: (content: string) => Promise<void>;
+  placeholder?: string;
+  disabled?: boolean;
+  className?: string;
 }
 
 const CommentInput: FC<CommentInputProps> = ({
@@ -19,24 +19,24 @@ const CommentInput: FC<CommentInputProps> = ({
   disabled = false,
   className = "",
 }) => {
-  const [content, setContent] = useState("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [content, setContent] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
-    if (!content.trim() || isSubmitting) return
+    if (!content.trim() || isSubmitting) return;
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
-      await onSubmit(content.trim())
-      setContent("")
+      await onSubmit(content.trim());
+      setContent("");
     } catch (error) {
-      console.error("Failed to submit comment:", error)
+      console.error("Failed to submit comment:", error);
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <form onSubmit={handleSubmit} className={cn("relative", className)}>
@@ -82,7 +82,7 @@ const CommentInput: FC<CommentInputProps> = ({
         </div>
       </div>
     </form>
-  )
-}
+  );
+};
 
-export default CommentInput
+export default CommentInput;

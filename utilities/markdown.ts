@@ -1,23 +1,23 @@
-import Dompurify from "dompurify"
-import MarkdownIt from "markdown-it"
+import Dompurify from "dompurify";
+import MarkdownIt from "markdown-it";
 
 const markdownIt = new MarkdownIt({
   linkify: true,
   html: false,
-})
+});
 
 const defaultLinkOpen =
   markdownIt.renderer.rules.link_open ||
   function defaultLinkOpen(tokens, idx, options, _env, self) {
-    return self.renderToken(tokens, idx, options)
-  }
+    return self.renderToken(tokens, idx, options);
+  };
 
 // Open all links in a new tab and instruct search engines not to follow them
 markdownIt.renderer.rules.link_open = function linkOpen(tokens, idx, options, env, self) {
-  tokens[idx].attrPush(["target", "_blank"])
-  tokens[idx].attrPush(["rel", "nofollow noopener noreferrer"])
-  return defaultLinkOpen(tokens, idx, options, env, self)
-}
+  tokens[idx].attrPush(["target", "_blank"]);
+  tokens[idx].attrPush(["rel", "nofollow noopener noreferrer"]);
+  return defaultLinkOpen(tokens, idx, options, env, self);
+};
 
 /**
  * Takes a markdown string as input, and ouputs a HTMl string with the markdown
@@ -31,7 +31,7 @@ markdownIt.renderer.rules.link_open = function linkOpen(tokens, idx, options, en
 export function renderToHTML(markdownSourceText: string) {
   return Dompurify.sanitize(markdownIt.render(markdownSourceText), {
     ADD_ATTR: ["target"],
-  })
+  });
 }
 
 /**
@@ -44,14 +44,14 @@ export function renderToHTML(markdownSourceText: string) {
 export function renderToPlainText(markdownSourceText: string) {
   return Dompurify.sanitize(renderToHTML(markdownSourceText), {
     USE_PROFILES: { html: false },
-  })
+  });
 }
 
 export function truncateDescription(description: string, maxLength: number) {
   if (description.length > maxLength) {
-    return `${description.slice(0, maxLength)}...`
+    return `${description.slice(0, maxLength)}...`;
   } else {
-    return description
+    return description;
   }
 }
 
@@ -68,66 +68,66 @@ export function truncateDescription(description: string, maxLength: number) {
  * @returns Plain text with markdown syntax removed
  */
 export function cleanMarkdownForPlainText(markdownText: string, maxLength?: number): string {
-  if (!markdownText) return ""
+  if (!markdownText) return "";
 
-  let text = markdownText
+  let text = markdownText;
 
   // Remove link syntax but keep the text: [link text](url) -> link text
-  text = text.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+  text = text.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
 
   // Remove image syntax: ![alt text](url) -> alt text
-  text = text.replace(/!\[([^\]]+)\]\([^)]+\)/g, "$1")
+  text = text.replace(/!\[([^\]]+)\]\([^)]+\)/g, "$1");
 
   // Remove bold and italic syntax
-  text = text.replace(/(\*\*|__)(.*?)\1/g, "$2") // Bold: **text** or __text__
-  text = text.replace(/(\*|_)(.*?)\1/g, "$2") // Italic: *text* or _text_
+  text = text.replace(/(\*\*|__)(.*?)\1/g, "$2"); // Bold: **text** or __text__
+  text = text.replace(/(\*|_)(.*?)\1/g, "$2"); // Italic: *text* or _text_
 
   // Remove code blocks and inline code
-  text = text.replace(/```[\s\S]*?```/g, "") // Code blocks: ```code```
-  text = text.replace(/`([^`]+)`/g, "$1") // Inline code: `code`
+  text = text.replace(/```[\s\S]*?```/g, ""); // Code blocks: ```code```
+  text = text.replace(/`([^`]+)`/g, "$1"); // Inline code: `code`
 
   // Remove blockquotes
-  text = text.replace(/^>\s+/gm, "")
+  text = text.replace(/^>\s+/gm, "");
 
   // Remove headings
-  text = text.replace(/^#{1,6}\s+/gm, "")
+  text = text.replace(/^#{1,6}\s+/gm, "");
 
   // Remove horizontal rules
-  text = text.replace(/^(?:[-*_]){3,}$/gm, "")
+  text = text.replace(/^(?:[-*_]){3,}$/gm, "");
 
   // Remove HTML tags
-  text = text.replace(/<[^>]*>/g, "")
+  text = text.replace(/<[^>]*>/g, "");
 
   // Handle lists - replace bullet points with a space
-  text = text.replace(/^\s*[-+*]\s+/gm, "")
-  text = text.replace(/^\s*\d+\.\s+/gm, "")
+  text = text.replace(/^\s*[-+*]\s+/gm, "");
+  text = text.replace(/^\s*\d+\.\s+/gm, "");
 
   // Collapse multiple newlines and spaces
-  text = text.replace(/\n{2,}/g, " ")
-  text = text.replace(/\s{2,}/g, " ")
+  text = text.replace(/\n{2,}/g, " ");
+  text = text.replace(/\s{2,}/g, " ");
 
   // Trim any whitespace
-  text = text.trim()
+  text = text.trim();
 
   // If maxLength is provided, truncate to that length
   if (maxLength && text.length > maxLength) {
     // Find the last space before maxLength to avoid cutting words
-    const lastSpace = text.lastIndexOf(" ", maxLength)
+    const lastSpace = text.lastIndexOf(" ", maxLength);
     if (lastSpace > 0 && maxLength - lastSpace < 20) {
       // Only use lastSpace if it's within a reasonable distance from maxLength
-      text = text.substring(0, lastSpace)
+      text = text.substring(0, lastSpace);
     } else {
       // Otherwise just cut at maxLength
-      text = text.substring(0, maxLength)
+      text = text.substring(0, maxLength);
     }
 
     // Add ellipsis if truncated
     if (text.length < markdownText.length) {
-      text += "..."
+      text += "...";
     }
   }
 
-  return text
+  return text;
 }
 
 /**
@@ -139,24 +139,24 @@ export function cleanMarkdownForPlainText(markdownText: string, maxLength?: numb
  * @returns Truncated and markdown-free text
  */
 export function truncateAndCleanMarkdown(text: string, maxLength: number): string {
-  return cleanMarkdownForPlainText(text, maxLength)
+  return cleanMarkdownForPlainText(text, maxLength);
 }
 
 // Rehype rewrite utilities
-export type RehypeRewrite = (node: unknown, index?: number, parent?: unknown) => void
+export type RehypeRewrite = (node: unknown, index?: number, parent?: unknown) => void;
 
 type HastElement = {
-  type: string
-  tagName: string
-  properties?: Record<string, unknown>
-}
+  type: string;
+  tagName: string;
+  properties?: Record<string, unknown>;
+};
 const isHastElement = (node: unknown): node is HastElement =>
   !!node &&
   typeof node === "object" &&
   "type" in (node as object) &&
   (node as any).type === "element" &&
   "tagName" in (node as object) &&
-  typeof (node as any).tagName === "string"
+  typeof (node as any).tagName === "string";
 
 /**
  * Creates a rehype rewrite callback that converts specified heading levels to a target level.
@@ -166,17 +166,19 @@ export function rewriteHeadingsToLevel(
   targetLevel: number,
   fromLevels: number[] = [1, 2, 3, 4, 5]
 ): RehypeRewrite {
-  const toTag = `h${Math.min(Math.max(targetLevel, 1), 6)}`
-  const fromTags = new Set(fromLevels.filter((lvl) => lvl >= 1 && lvl <= 6).map((lvl) => `h${lvl}`))
+  const toTag = `h${Math.min(Math.max(targetLevel, 1), 6)}`;
+  const fromTags = new Set(
+    fromLevels.filter((lvl) => lvl >= 1 && lvl <= 6).map((lvl) => `h${lvl}`)
+  );
 
   return (node: unknown) => {
     if (isHastElement(node)) {
-      const tagName = node.tagName.toLowerCase()
+      const tagName = node.tagName.toLowerCase();
       if (fromTags.has(tagName)) {
-        node.tagName = toTag
+        node.tagName = toTag;
       }
     }
-  }
+  };
 }
 
-export default { renderToHTML, renderToPlainText }
+export default { renderToHTML, renderToPlainText };

@@ -1,8 +1,8 @@
-"use client"
-import { Dialog, Transition } from "@headlessui/react"
-import { ChevronRightIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/solid"
-import { zodResolver } from "@hookform/resolvers/zod"
-import * as Tooltip from "@radix-ui/react-tooltip"
+"use client";
+import { Dialog, Transition } from "@headlessui/react";
+import { ChevronRightIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/solid";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as Tooltip from "@radix-ui/react-tooltip";
 import {
   type ExternalCustomLink,
   type ExternalLink,
@@ -11,61 +11,67 @@ import {
   nullRef,
   Project,
   ProjectDetails,
-} from "@show-karma/karma-gap-sdk"
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import debounce from "lodash.debounce"
-import { useRouter } from "next/navigation"
-import { type FC, Fragment, type ReactNode, useEffect, useMemo, useState } from "react"
-import { useForm } from "react-hook-form"
-import toast from "react-hot-toast"
-import { type Hex, isAddress, zeroHash } from "viem"
-import { useAccount } from "wagmi"
-import { z } from "zod"
+} from "@show-karma/karma-gap-sdk";
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import debounce from "lodash.debounce";
+import { useRouter } from "next/navigation";
+import { type FC, Fragment, type ReactNode, useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { type Hex, isAddress, zeroHash } from "viem";
+import { useAccount } from "wagmi";
+import { z } from "zod";
 /* eslint-disable @next/next/no-img-element */
-import { DiscordIcon, GithubIcon, LinkedInIcon, TwitterIcon, WebsiteIcon } from "@/components/Icons"
-import { DeckIcon } from "@/components/Icons/Deck"
-import { FarcasterIcon } from "@/components/Icons/Farcaster"
-import { VideoIcon } from "@/components/Icons/Video"
-import { ExternalLink as ExternalLinkComponent } from "@/components/Utilities/ExternalLink"
-import { errorManager } from "@/components/Utilities/errorManager"
-import { FileUpload } from "@/components/Utilities/FileUpload"
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor"
-import { Skeleton } from "@/components/Utilities/Skeleton"
-import { Button } from "@/components/ui/button"
-import { useAuth } from "@/hooks/useAuth"
-import { useContactInfo } from "@/hooks/useContactInfo"
-import { useGap } from "@/hooks/useGap"
-import { useWallet } from "@/hooks/useWallet"
-import { useProjectStore } from "@/store"
-import { useProjectEditModalStore } from "@/store/modals/projectEdit"
-import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects"
-import { useStepper } from "@/store/modals/txStepper"
-import { useOwnerStore } from "@/store/owner"
-import type { Contact } from "@/types/project"
-import { type CustomLink, isCustomLink } from "@/utilities/customLink"
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils"
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain"
-import fetchData from "@/utilities/fetchData"
-import { gapIndexerApi } from "@/utilities/gapIndexerApi"
-import { INDEXER } from "@/utilities/indexer"
-import { MESSAGES } from "@/utilities/messages"
-import { gapSupportedNetworks } from "@/utilities/network"
-import { PAGES } from "@/utilities/pages"
-import { sanitizeObject } from "@/utilities/sanitize"
-import { getProjectById } from "@/utilities/sdk"
-import { updateProject } from "@/utilities/sdk/projects/editProject"
-import { SOCIALS } from "@/utilities/socials"
-import { cn } from "@/utilities/tailwind"
-import { safeGetWalletClient } from "@/utilities/wallet-helpers"
-import { SimilarProjectsDialog } from "../SimilarProjectsDialog"
-import { ContactInfoSection } from "./ContactInfoSection"
-import { FaucetSection } from "./FaucetSection"
-import { NetworkDropdown } from "./NetworkDropdown"
+import {
+  DiscordIcon,
+  GithubIcon,
+  LinkedInIcon,
+  TwitterIcon,
+  WebsiteIcon,
+} from "@/components/Icons";
+import { DeckIcon } from "@/components/Icons/Deck";
+import { FarcasterIcon } from "@/components/Icons/Farcaster";
+import { VideoIcon } from "@/components/Icons/Video";
+import { ExternalLink as ExternalLinkComponent } from "@/components/Utilities/ExternalLink";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { FileUpload } from "@/components/Utilities/FileUpload";
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { Skeleton } from "@/components/Utilities/Skeleton";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import { useContactInfo } from "@/hooks/useContactInfo";
+import { useGap } from "@/hooks/useGap";
+import { useWallet } from "@/hooks/useWallet";
+import { useProjectStore } from "@/store";
+import { useProjectEditModalStore } from "@/store/modals/projectEdit";
+import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
+import { useStepper } from "@/store/modals/txStepper";
+import { useOwnerStore } from "@/store/owner";
+import type { Contact } from "@/types/project";
+import { type CustomLink, isCustomLink } from "@/utilities/customLink";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import fetchData from "@/utilities/fetchData";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { gapSupportedNetworks } from "@/utilities/network";
+import { PAGES } from "@/utilities/pages";
+import { sanitizeObject } from "@/utilities/sanitize";
+import { getProjectById } from "@/utilities/sdk";
+import { updateProject } from "@/utilities/sdk/projects/editProject";
+import { SOCIALS } from "@/utilities/socials";
+import { cn } from "@/utilities/tailwind";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { SimilarProjectsDialog } from "../SimilarProjectsDialog";
+import { ContactInfoSection } from "./ContactInfoSection";
+import { FaucetSection } from "./FaucetSection";
+import { NetworkDropdown } from "./NetworkDropdown";
 
-const inputStyle = "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900"
+const inputStyle = "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
 const socialMediaInputStyle =
-  "bg-transparent border-0 flex flex-1 p-2 focus:outline-none outline-none focus-visible:outline-none dark:bg-zinc-900 dark:text-white text-sm rounded-md"
-const labelStyle = "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200"
+  "bg-transparent border-0 flex flex-1 p-2 focus:outline-none outline-none focus-visible:outline-none dark:bg-zinc-900 dark:text-white text-sm rounded-md";
+const labelStyle = "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
 
 export const projectSchema = z.object({
   title: z
@@ -135,21 +141,21 @@ export const projectSchema = z.object({
   stageIn: z.string().optional(),
   raisedMoney: z.string().optional(),
   pathToTake: z.string().optional(),
-})
+});
 
-type SchemaType = z.infer<typeof projectSchema>
+type SchemaType = z.infer<typeof projectSchema>;
 
 type ProjectDialogProps = {
   buttonElement?: {
-    text?: string
-    icon?: ReactNode
-    iconSide?: "left" | "right"
-    styleClass: string
-  } | null
-  projectToUpdate?: IProjectResponse
-  previousContacts?: Contact[]
-  useEditModalStore?: boolean // New prop to control which modal state to use
-}
+    text?: string;
+    icon?: ReactNode;
+    iconSide?: "left" | "right";
+    styleClass: string;
+  } | null;
+  projectToUpdate?: IProjectResponse;
+  previousContacts?: Contact[];
+  useEditModalStore?: boolean; // New prop to control which modal state to use
+};
 
 export const ProjectDialog: FC<ProjectDialogProps> = ({
   buttonElement = {
@@ -195,9 +201,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         raisedMoney: projectToUpdate?.details?.data?.raisedMoney,
         pathToTake: projectToUpdate?.details?.data?.pathToTake,
       }
-    : undefined
+    : undefined;
 
-  const [contacts, setContacts] = useState<Contact[]>(previousContacts || [])
+  const [contacts, setContacts] = useState<Contact[]>(previousContacts || []);
   const [customLinks, setCustomLinks] = useState<CustomLink[]>(() => {
     // Initialize custom links from project data if editing
     if (projectToUpdate?.details?.data?.links) {
@@ -205,42 +211,42 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         id: `custom-${index}`,
         name: link.name || "",
         url: link.url,
-      }))
+      }));
     }
-    return []
-  })
+    return [];
+  });
 
   // Logo upload state management
-  const [uploadedLogoFile, setUploadedLogoFile] = useState<File | null>(null)
-  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null)
-  const [isLogoUploading, setIsLogoUploading] = useState(false)
-  const [_logoUploadProgress, setLogoUploadProgress] = useState(0)
-  const [tempLogoKey, setTempLogoKey] = useState<string | null>(null)
+  const [uploadedLogoFile, setUploadedLogoFile] = useState<File | null>(null);
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
+  const [isLogoUploading, setIsLogoUploading] = useState(false);
+  const [_logoUploadProgress, setLogoUploadProgress] = useState(0);
+  const [tempLogoKey, setTempLogoKey] = useState<string | null>(null);
 
   // Modal state management - use edit store or local state based on mode
-  const { isProjectEditModalOpen, setIsProjectEditModalOpen } = useProjectEditModalStore()
+  const { isProjectEditModalOpen, setIsProjectEditModalOpen } = useProjectEditModalStore();
 
-  const [localIsOpen, setLocalIsOpen] = useState(false)
+  const [localIsOpen, setLocalIsOpen] = useState(false);
 
   // Determine which modal state to use
-  const isOpen = useEditModalStore ? isProjectEditModalOpen : localIsOpen
-  const setIsOpen = useEditModalStore ? setIsProjectEditModalOpen : setLocalIsOpen
+  const isOpen = useEditModalStore ? isProjectEditModalOpen : localIsOpen;
+  const setIsOpen = useEditModalStore ? setIsProjectEditModalOpen : setLocalIsOpen;
 
-  const refreshProject = useProjectStore((state) => state.refreshProject)
-  const [step, setStep] = useState(0)
-  const isOwner = useOwnerStore((state) => state.isOwner)
-  const { isConnected, address } = useAccount()
-  const { authenticated: isAuth, login } = useAuth()
-  const { chain } = useAccount()
-  const { switchChainAsync } = useWallet()
-  const [isLoading, setIsLoading] = useState(false)
-  const [isChangingNetwork, setIsChangingNetwork] = useState(false)
-  const router = useRouter()
-  const { gap } = useGap()
-  const { changeStepperStep, setIsStepper } = useStepper()
-  const { openSimilarProjectsModal, isSimilarProjectsModalOpen } = useSimilarProjectsModalStore()
-  const [walletSigner, setWalletSigner] = useState<any>(null)
-  const [_faucetFunded, setFaucetFunded] = useState(false)
+  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const [step, setStep] = useState(0);
+  const isOwner = useOwnerStore((state) => state.isOwner);
+  const { isConnected, address } = useAccount();
+  const { authenticated: isAuth, login } = useAuth();
+  const { chain } = useAccount();
+  const { switchChainAsync } = useWallet();
+  const [isLoading, setIsLoading] = useState(false);
+  const [isChangingNetwork, setIsChangingNetwork] = useState(false);
+  const router = useRouter();
+  const { gap } = useGap();
+  const { changeStepperStep, setIsStepper } = useStepper();
+  const { openSimilarProjectsModal, isSimilarProjectsModalOpen } = useSimilarProjectsModalStore();
+  const [walletSigner, setWalletSigner] = useState<any>(null);
+  const [_faucetFunded, setFaucetFunded] = useState(false);
 
   const { register, handleSubmit, reset, watch, setValue, trigger, formState, setError } =
     useForm<SchemaType>({
@@ -248,47 +254,47 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       reValidateMode: "onChange",
       mode: "onChange",
       defaultValues: dataToUpdate,
-    })
-  const { errors, isValid } = formState
+    });
+  const { errors, isValid } = formState;
 
   // Watch the chainID value for the useEffect
-  const chainIDValue = watch("chainID")
+  const chainIDValue = watch("chainID");
 
   // Handle network change and chain switching
   const handleNetworkChange = async (networkId: number) => {
     if (!isConnected || !address) {
-      return
+      return;
     }
 
-    setIsChangingNetwork(true)
+    setIsChangingNetwork(true);
 
     try {
       // If we're not on the selected network, switch to it
       if (chain?.id !== networkId) {
-        await switchChainAsync({ chainId: networkId })
+        await switchChainAsync({ chainId: networkId });
         // Wait a bit for the chain switch to complete
-        await new Promise((resolve) => setTimeout(resolve, 1000))
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
 
       // Now get the wallet client for the new chain
-      const { walletClient, error } = await safeGetWalletClient(networkId)
+      const { walletClient, error } = await safeGetWalletClient(networkId);
 
       if (!error && walletClient) {
-        const signer = await walletClientToSigner(walletClient)
-        setWalletSigner(signer)
+        const signer = await walletClientToSigner(walletClient);
+        setWalletSigner(signer);
       } else {
-        setWalletSigner(null)
-        toast.error("Failed to connect to the selected network")
+        setWalletSigner(null);
+        toast.error("Failed to connect to the selected network");
       }
     } catch (error) {
-      console.error("Failed to switch network:", error)
-      toast.error("Failed to switch network. Please try again.")
-      setWalletSigner(null)
-      throw error // Re-throw to let NetworkDropdown handle it
+      console.error("Failed to switch network:", error);
+      toast.error("Failed to switch network. Please try again.");
+      setWalletSigner(null);
+      throw error; // Re-throw to let NetworkDropdown handle it
     } finally {
-      setIsChangingNetwork(false)
+      setIsChangingNetwork(false);
     }
-  }
+  };
 
   // Prepare wallet signer when wallet is connected and chain is selected
   useEffect(() => {
@@ -298,29 +304,29 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           // Check if we're on the correct chain
           if (chain?.id === chainIDValue) {
             // Get wallet client for the current chain
-            const { walletClient, error } = await safeGetWalletClient(chainIDValue)
+            const { walletClient, error } = await safeGetWalletClient(chainIDValue);
 
             if (!error && walletClient) {
-              const signer = await walletClientToSigner(walletClient)
-              setWalletSigner(signer)
+              const signer = await walletClientToSigner(walletClient);
+              setWalletSigner(signer);
             } else {
-              setWalletSigner(null)
+              setWalletSigner(null);
             }
           } else {
             // Chain mismatch, signer will be set after chain switch
-            setWalletSigner(null)
+            setWalletSigner(null);
           }
         } catch (error) {
-          console.error("Failed to prepare wallet signer:", error)
-          setWalletSigner(null)
+          console.error("Failed to prepare wallet signer:", error);
+          setWalletSigner(null);
         }
       } else {
-        setWalletSigner(null)
+        setWalletSigner(null);
       }
-    }
+    };
 
-    prepareSigner()
-  }, [isConnected, address, chainIDValue, chain?.id])
+    prepareSigner();
+  }, [isConnected, address, chainIDValue, chain?.id]);
 
   // Reset form when switching between create/edit modes or when modal opens
   useEffect(() => {
@@ -348,18 +354,18 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           raisedMoney: "",
           pathToTake: "",
           recipient: "",
-        }
-        reset(updateData)
+        };
+        reset(updateData);
         // Reset logo state to project's existing logo
         if (projectToUpdate.details?.data?.imageURL) {
-          setLogoPreviewUrl(projectToUpdate.details.data.imageURL)
+          setLogoPreviewUrl(projectToUpdate.details.data.imageURL);
         } else {
-          setLogoPreviewUrl(null)
+          setLogoPreviewUrl(null);
         }
-        setUploadedLogoFile(null)
-        setIsLogoUploading(false)
-        setLogoUploadProgress(0)
-        setTempLogoKey(null)
+        setUploadedLogoFile(null);
+        setIsLogoUploading(false);
+        setLogoUploadProgress(0);
+        setTempLogoKey(null);
       } else {
         // Create mode - reset to empty form
         reset({
@@ -383,39 +389,39 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           raisedMoney: "",
           pathToTake: "",
           recipient: "",
-        })
-        setContacts([])
-        setCustomLinks([])
-        setStep(0)
-        setFaucetFunded(false)
+        });
+        setContacts([]);
+        setCustomLinks([]);
+        setStep(0);
+        setFaucetFunded(false);
         // Clear all logo state in create mode
-        setUploadedLogoFile(null)
-        setLogoPreviewUrl(null)
-        setIsLogoUploading(false)
-        setLogoUploadProgress(0)
-        setTempLogoKey(null)
+        setUploadedLogoFile(null);
+        setLogoPreviewUrl(null);
+        setIsLogoUploading(false);
+        setLogoUploadProgress(0);
+        setTempLogoKey(null);
       }
     }
-  }, [isOpen, projectToUpdate, reset, dataToUpdate])
+  }, [isOpen, projectToUpdate, reset, dataToUpdate]);
 
   function closeModal() {
-    setIsOpen(false)
+    setIsOpen(false);
   }
   function openModal() {
-    setIsOpen(true)
+    setIsOpen(true);
   }
 
   useMemo(() => {
     if (isOpen && !isAuth) {
-      login?.()
-      closeModal()
-      return
+      login?.();
+      closeModal();
+      return;
     }
-  }, [isOpen, isAuth, closeModal, login])
+  }, [isOpen, isAuth, closeModal, login]);
 
   const validateCustomLinks = () => {
-    return customLinks.some((link) => !link.name.trim() || !link.url.trim())
-  }
+    return customLinks.some((link) => !link.name.trim() || !link.url.trim());
+  };
 
   const hasErrors = () => {
     if (step === 0) {
@@ -432,7 +438,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         !watch("problem") ||
         !watch("solution") ||
         !watch("missionSummary")
-      )
+      );
     }
     if (step === 1) {
       return (
@@ -446,14 +452,14 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         !!errors?.farcaster ||
         !!errors?.profilePicture ||
         validateCustomLinks()
-      )
+      );
     }
     if (step === 3) {
-      return !contacts.length || !!errors?.chainID || !watch("chainID")
+      return !contacts.length || !!errors?.chainID || !watch("chainID");
     }
 
-    return false
-  }
+    return false;
+  };
 
   const checkFormAndTriggerErrors = async (callback?: () => void) => {
     const stepsToValidate: Record<number, (keyof SchemaType)[]> = {
@@ -478,42 +484,42 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         "profilePicture",
       ],
       3: ["chainID"],
-    }
+    };
 
     if (stepsToValidate[step]) {
       const triggerResult = await trigger(stepsToValidate[step], {
         shouldFocus: true,
-      })
-      if (!triggerResult) return
+      });
+      if (!triggerResult) return;
     }
     if (step === 3) {
-      if (!contacts.length) return
+      if (!contacts.length) return;
     }
-    callback?.()
-  }
+    callback?.();
+  };
 
   const createProject = async (data: SchemaType): Promise<void> => {
     try {
-      setIsLoading(true)
+      setIsLoading(true);
       if (!isConnected || !isAuth) {
-        login?.()
-        return
+        login?.();
+        return;
       }
-      if (!address) return
-      if (!gap) return
+      if (!address) return;
+      if (!gap) return;
 
-      const chainSelected = data.chainID
+      const chainSelected = data.chainID;
 
       // Ensure we're on the correct chain
       const { success, chainId, gapClient } = await ensureCorrectChain({
         targetChainId: chainSelected,
         currentChainId: chain?.id,
         switchChainAsync,
-      })
+      });
 
       if (!success) {
-        setIsLoading(false)
-        return
+        setIsLoading(false);
+        return;
       }
 
       const project = new Project({
@@ -523,15 +529,15 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         schema: gapClient.findSchema("Project"),
         recipient: (data.recipient || address) as Hex,
         uid: nullRef,
-      })
+      });
 
       interface NewProjectData extends IProjectDetails {
         // tags?: Tag[];
-        members?: Hex[]
-        links: Array<ExternalLink[0] | ExternalCustomLink>
-        recipient?: string
+        members?: Hex[];
+        links: Array<ExternalLink[0] | ExternalCustomLink>;
+        recipient?: string;
       }
-      const { chainID, ...rest } = data
+      const { chainID, ...rest } = data;
       const newProjectInfo: NewProjectData = {
         ...rest,
         members: [(data.recipient || address) as Hex],
@@ -575,17 +581,17 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           })) || []),
         ],
         imageURL: data.profilePicture || "",
-      }
+      };
 
-      if (!gapClient) return
+      if (!gapClient) return;
 
-      const slug = await gapClient.generateSlug(newProjectInfo.title)
+      const slug = await gapClient.generateSlug(newProjectInfo.title);
 
       // Promote temporary logo to permanent before project creation
-      let finalImageURL = data.profilePicture || ""
+      let finalImageURL = data.profilePicture || "";
       if (tempLogoKey) {
         try {
-          const projectIdentifier = `${slug}-${chainSelected}`
+          const projectIdentifier = `${slug}-${chainSelected}`;
 
           const [promoteData, promoteError] = await fetchData(
             INDEXER.PROJECT.LOGOS.PROMOTE_TO_PERMANENT(),
@@ -594,21 +600,21 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               tempKey: tempLogoKey,
               projectId: projectIdentifier,
             }
-          )
+          );
 
           if (!promoteError) {
-            const { permanentUrl } = promoteData
-            finalImageURL = permanentUrl
+            const { permanentUrl } = promoteData;
+            finalImageURL = permanentUrl;
           } else {
-            console.warn("Failed to promote logo to permanent status, using temp URL")
+            console.warn("Failed to promote logo to permanent status, using temp URL");
           }
         } catch (error) {
-          console.warn("Error promoting logo before project creation:", error)
+          console.warn("Error promoting logo before project creation:", error);
           // Continue with temp URL if promotion fails
         }
       }
 
-      newProjectInfo.imageURL = finalImageURL
+      newProjectInfo.imageURL = finalImageURL;
 
       // eslint-disable-next-line no-param-reassign
       project.details = new ProjectDetails({
@@ -634,13 +640,13 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         schema: gapClient.findSchema("ProjectDetails"),
         recipient: project.recipient,
         uid: nullRef,
-      })
+      });
 
       if (newProjectInfo.tags) {
         // eslint-disable-next-line no-param-reassign
         project.details.tags = newProjectInfo.tags?.map((t) => ({
           name: t.name,
-        }))
+        }));
       }
 
       if (newProjectInfo.members) {
@@ -656,54 +662,54 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 memberOf: true,
               },
             })
-        )
+        );
       }
 
       // Use chainId from ensureCorrectChain result to ensure we're using the correct chain
-      const { walletClient, error } = await safeGetWalletClient(chainId)
+      const { walletClient, error } = await safeGetWalletClient(chainId);
 
       if (error || !walletClient) {
-        throw new Error("Failed to connect to wallet", { cause: error })
+        throw new Error("Failed to connect to wallet", { cause: error });
       }
-      const walletSigner = await walletClientToSigner(walletClient)
-      closeModal()
-      changeStepperStep("preparing")
+      const walletSigner = await walletClientToSigner(walletClient);
+      closeModal();
+      changeStepperStep("preparing");
       await project.attest(walletSigner, changeStepperStep).then(async (res) => {
-        let retries = 1000
-        const txHash = res?.tx[0]?.hash
+        let retries = 1000;
+        const txHash = res?.tx[0]?.hash;
         if (txHash) {
-          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, chainId), "POST", {})
+          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, chainId), "POST", {});
         }
-        let fetchedProject: Project | null = null
-        changeStepperStep("indexing")
+        let fetchedProject: Project | null = null;
+        changeStepperStep("indexing");
         while (retries > 0) {
           // eslint-disable-next-line no-await-in-loop
           fetchedProject = await (slug
             ? gapClient.fetch.projectBySlug(slug)
             : gapClient.fetch.projectById(project.uid as Hex)
-          ).catch(() => null)
+          ).catch(() => null);
           if (fetchedProject?.uid && fetchedProject.uid !== zeroHash) {
             if (data.github) {
               const githubFromField = data.github.includes("http")
                 ? data.github
-                : `https://${data.github}`
-              const repoUrl = new URL(githubFromField)
-              const pathParts = repoUrl.pathname.split("/").filter(Boolean)
+                : `https://${data.github}`;
+              const repoUrl = new URL(githubFromField);
+              const pathParts = repoUrl.pathname.split("/").filter(Boolean);
               if (repoUrl.hostname.includes("github.com") && pathParts.length >= 2) {
-                const owner = pathParts[0]
-                const repoName = pathParts[1]
+                const owner = pathParts[0];
+                const repoName = pathParts[1];
 
-                const response = await fetch(`https://api.github.com/repos/${owner}/${repoName}`)
+                const response = await fetch(`https://api.github.com/repos/${owner}/${repoName}`);
 
                 if (!response.ok) {
-                  toast.error("Failed to fetch GitHub repository")
-                  throw new Error("Failed to fetch GitHub repository")
+                  toast.error("Failed to fetch GitHub repository");
+                  throw new Error("Failed to fetch GitHub repository");
                 }
 
-                const repoData = await response.json()
+                const repoData = await response.json();
                 if (repoData.private) {
-                  toast.error("GitHub repository is private")
-                  throw new Error("GitHub repository is private")
+                  toast.error("GitHub repository is private");
+                  throw new Error("GitHub repository is private");
                 }
 
                 const [_githubUpdateData, error] = await fetchData(
@@ -713,10 +719,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                     target: "github",
                     ids: [repoUrl.href],
                   }
-                )
+                );
                 if (error) {
-                  toast.error("Failed to update GitHub repository")
-                  throw new Error("Failed to update GitHub repository")
+                  toast.error("Failed to update GitHub repository");
+                  throw new Error("Failed to update GitHub repository");
                 }
               }
             }
@@ -735,27 +741,27 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                   {
                     className: "z-[9999]",
                   }
-                )
+                );
               }
-              retries = 0
-              toast.success(MESSAGES.PROJECT.CREATE.SUCCESS)
-              router.push(PAGES.PROJECT.SCREENS.NEW_GRANT(slug || project.uid))
-              router.refresh()
-              changeStepperStep("indexed")
-              return
-            })
+              retries = 0;
+              toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
+              router.push(PAGES.PROJECT.SCREENS.NEW_GRANT(slug || project.uid));
+              router.refresh();
+              changeStepperStep("indexed");
+              return;
+            });
           }
-          retries -= 1
+          retries -= 1;
           // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-          await new Promise((resolve) => setTimeout(resolve, 1500))
+          await new Promise((resolve) => setTimeout(resolve, 1500));
         }
-      })
+      });
 
-      reset()
-      setStep(0)
-      setIsStepper(false)
-      setContacts([])
-      setCustomLinks([])
+      reset();
+      setStep(0);
+      setIsStepper(false);
+      setContacts([]);
+      setCustomLinks([]);
     } catch (error: any) {
       errorManager(
         MESSAGES.PROJECT.CREATE.ERROR(data.title),
@@ -767,64 +773,64 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         {
           error: MESSAGES.PROJECT.CREATE.ERROR(data.title),
         }
-      )
-      setIsStepper(false)
+      );
+      setIsStepper(false);
       // Don't reset form on error - keep user's data
-      openModal()
+      openModal();
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const updateThisProject = async (data: SchemaType): Promise<void> => {
     try {
-      setIsLoading(true)
+      setIsLoading(true);
       if (!isConnected || !isAuth) {
-        login?.()
-        return
+        login?.();
+        return;
       }
       if (!address) {
-        throw new Error("Address not found")
+        throw new Error("Address not found");
       }
       if (!projectToUpdate) {
-        throw new Error("Project to update not found")
+        throw new Error("Project to update not found");
       }
       if (!dataToUpdate) {
-        throw new Error("Data to update not found")
+        throw new Error("Data to update not found");
       }
       if (!gap) {
-        throw new Error("Gap client not found")
+        throw new Error("Gap client not found");
       }
 
-      const targetChainId = projectToUpdate.chainID
+      const targetChainId = projectToUpdate.chainID;
 
       // Ensure we're on the correct chain
       const { success, chainId, gapClient } = await ensureCorrectChain({
         targetChainId,
         currentChainId: chain?.id,
         switchChainAsync,
-      })
+      });
 
       if (!success) {
-        setIsLoading(false)
-        return
+        setIsLoading(false);
+        return;
       }
 
-      const shouldRefresh = dataToUpdate.title === data.title
+      const shouldRefresh = dataToUpdate.title === data.title;
 
       // Use chainId from ensureCorrectChain result
-      const { walletClient, error } = await safeGetWalletClient(chainId)
+      const { walletClient, error } = await safeGetWalletClient(chainId);
 
       if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error })
+        throw new Error("Failed to connect to wallet", { cause: error });
       }
-      const walletSigner = await walletClientToSigner(walletClient)
-      const fetchedProject = await getProjectById(projectToUpdate.uid)
-      if (!fetchedProject) return
-      changeStepperStep("preparing")
+      const walletSigner = await walletClientToSigner(walletClient);
+      const fetchedProject = await getProjectById(projectToUpdate.uid);
+      if (!fetchedProject) return;
+      changeStepperStep("preparing");
 
       // Promote temporary logo to permanent before project update
-      let finalImageURL = data.profilePicture || ""
+      let finalImageURL = data.profilePicture || "";
       if (tempLogoKey) {
         try {
           const [promoteData, promoteError] = await fetchData(
@@ -834,16 +840,16 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               tempKey: tempLogoKey,
               projectId: fetchedProject.uid,
             }
-          )
+          );
 
           if (!promoteError) {
-            const { permanentUrl } = promoteData
-            finalImageURL = permanentUrl
+            const { permanentUrl } = promoteData;
+            finalImageURL = permanentUrl;
           } else {
-            console.warn("Failed to promote logo to permanent status, using temp URL")
+            console.warn("Failed to promote logo to permanent status, using temp URL");
           }
         } catch (error) {
-          console.warn("Error promoting logo before project update:", error)
+          console.warn("Error promoting logo before project update:", error);
           // Continue with temp URL if promotion fails
         }
       }
@@ -861,7 +867,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         raisedMoney: data.raisedMoney,
         pathToTake: data.pathToTake,
         imageURL: finalImageURL,
-      }
+      };
       const socialData = {
         discord: data.discord,
         github: data.github,
@@ -872,31 +878,31 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         demoVideo: data.demoVideo,
         farcaster: data.farcaster,
         customLinks,
-      }
+      };
 
       // Handle GitHub repository update if changed
       if (data.github && !(projectToUpdate as any).external?.github?.includes(data.github)) {
         const githubFromField = data.github.includes("http")
           ? data.github
-          : `https://${data.github}`
-        const repoUrl = new URL(githubFromField)
-        const pathParts = repoUrl.pathname.split("/").filter(Boolean)
+          : `https://${data.github}`;
+        const repoUrl = new URL(githubFromField);
+        const pathParts = repoUrl.pathname.split("/").filter(Boolean);
         if (repoUrl.hostname.includes("github.com") && pathParts.length >= 2) {
-          const owner = pathParts[0]
-          const repoName = pathParts[1]
+          const owner = pathParts[0];
+          const repoName = pathParts[1];
 
-          const response = await fetch(`https://api.github.com/repos/${owner}/${repoName}`)
+          const response = await fetch(`https://api.github.com/repos/${owner}/${repoName}`);
 
           if (!response.ok) {
-            throw new Error("Failed to fetch GitHub repository")
+            throw new Error("Failed to fetch GitHub repository");
           }
 
-          const repoData = await response.json()
+          const repoData = await response.json();
           if (repoData.private) {
-            throw new Error("GitHub repository is private")
+            throw new Error("GitHub repository is private");
           }
 
-          const ids = (fetchedProject as any).external?.github || []
+          const ids = (fetchedProject as any).external?.github || [];
 
           const [_githubUpdateData, error] = await fetchData(
             INDEXER.PROJECT.EXTERNAL.UPDATE(fetchedProject.uid),
@@ -905,9 +911,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               target: "github",
               ids: [...ids, repoUrl.href],
             }
-          )
+          );
           if (error) {
-            throw new Error("Failed to update GitHub repository")
+            throw new Error("Failed to update GitHub repository");
           }
         }
       }
@@ -921,16 +927,16 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         changeStepperStep,
         closeModal
       ).then(async (res) => {
-        toast.success(MESSAGES.PROJECT.UPDATE.SUCCESS)
-        setStep(0)
+        toast.success(MESSAGES.PROJECT.UPDATE.SUCCESS);
+        setStep(0);
         if (shouldRefresh) {
-          refreshProject()
+          refreshProject();
         } else {
-          const project = res.details?.slug || res.uid
-          router.push(PAGES.PROJECT.OVERVIEW(project))
-          router.refresh()
+          const project = res.details?.slug || res.uid;
+          router.push(PAGES.PROJECT.OVERVIEW(project));
+          router.refresh();
         }
-      })
+      });
     } catch (error: any) {
       errorManager(
         `Error updating project ${projectToUpdate?.details?.data?.slug || projectToUpdate?.uid}`,
@@ -939,46 +945,46 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         {
           error: MESSAGES.PROJECT.UPDATE.ERROR,
         }
-      )
-      openModal()
+      );
+      openModal();
     } finally {
-      setIsLoading(false)
-      setIsStepper(false)
-      setCustomLinks([])
+      setIsLoading(false);
+      setIsStepper(false);
+      setCustomLinks([]);
     }
-  }
+  };
 
   const onSubmit = async (data: SchemaType) => {
-    const sanitizedData = sanitizeObject(data)
+    const sanitizedData = sanitizeObject(data);
     if (projectToUpdate) {
-      updateThisProject(sanitizedData)
+      updateThisProject(sanitizedData);
     } else {
-      createProject(sanitizedData)
+      createProject(sanitizedData);
     }
-  }
+  };
 
-  const { data: contactsInfo } = useContactInfo(projectToUpdate?.uid)
+  const { data: contactsInfo } = useContactInfo(projectToUpdate?.uid);
 
   useMemo(() => {
     if (projectToUpdate) {
-      setContacts(contactsInfo || [])
+      setContacts(contactsInfo || []);
     }
-  }, [contactsInfo, projectToUpdate])
+  }, [contactsInfo, projectToUpdate]);
 
   const tooltipText = () => {
-    const errors = hasErrors()
+    const errors = hasErrors();
     if (isLoading) {
-      return <p>Loading...</p>
+      return <p>Loading...</p>;
     }
     if (!errors) {
-      return
+      return;
     }
 
-    return <p>Please fill all the required fields</p>
-  }
+    return <p>Please fill all the required fields</p>;
+  };
 
-  const [isSearchingProject, setIsSearchingProject] = useState(false)
-  const [existingProjects, setExistingProjects] = useState<IProjectResponse[]>([])
+  const [isSearchingProject, setIsSearchingProject] = useState(false);
+  const [existingProjects, setExistingProjects] = useState<IProjectResponse[]>([]);
 
   const searchByExistingName = debounce(async (value: string) => {
     if (
@@ -986,29 +992,29 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       (projectToUpdate &&
         value.toLowerCase() === projectToUpdate?.details?.data?.title?.toLowerCase())
     ) {
-      return
+      return;
     }
     try {
-      setIsSearchingProject(true)
-      const result = await gapIndexerApi.searchProjects(value).then((res) => res.data)
+      setIsSearchingProject(true);
+      const result = await gapIndexerApi.searchProjects(value).then((res) => res.data);
       const hasEqualTitle =
         result.filter((item) => item.details?.data.title.toLowerCase() === value.toLowerCase())
-          .length > 0
+          .length > 0;
       if (hasEqualTitle) {
-        setExistingProjects(result)
+        setExistingProjects(result);
         setError("title", {
           message:
             "We found a project with similar name. Please double check to make sure you don't already have a project in our platform.",
-        })
+        });
       } else {
-        setExistingProjects([])
+        setExistingProjects([]);
       }
-      return
+      return;
     } catch (_error) {
     } finally {
-      setIsSearchingProject(false)
+      setIsSearchingProject(false);
     }
-  }, 500)
+  }, 500);
 
   const categories = [
     {
@@ -1033,7 +1039,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               placeholder='e.g. "My awesome project"'
               {...register("title")}
               onBlur={() => {
-                searchByExistingName(watch("title"))
+                searchByExistingName(watch("title"));
               }}
             />
             <div className="flex flex-col gap-1 justify-start items-start">
@@ -1063,7 +1069,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                     userSelect: "none",
                   }}
                   onClick={() => {
-                    openSimilarProjectsModal()
+                    openSimilarProjectsModal();
                   }}
                 >
                   View similar projects
@@ -1081,7 +1087,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               onChange={(newValue: string) => {
                 setValue("description", newValue || "", {
                   shouldValidate: true,
-                })
+                });
               }}
             />
             <p className="text-red-500">{errors.description?.message}</p>
@@ -1097,7 +1103,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               onChange={(newValue: string) => {
                 setValue("problem", newValue || "", {
                   shouldValidate: true,
-                })
+                });
               }}
             />
             <p className="text-red-500">{errors.problem?.message}</p>
@@ -1112,7 +1118,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               onChange={(newValue: string) => {
                 setValue("solution", newValue || "", {
                   shouldValidate: true,
-                })
+                });
               }}
             />
             <p className="text-red-500">{errors.solution?.message}</p>
@@ -1127,7 +1133,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               onChange={(newValue: string) => {
                 setValue("missionSummary", newValue || "", {
                   shouldValidate: true,
-                })
+                });
               }}
             />
             <p className="text-red-500">{errors.missionSummary?.message}</p>
@@ -1311,10 +1317,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 <button
                   type="button"
                   onClick={() => {
-                    setUploadedLogoFile(null)
-                    setLogoPreviewUrl(null)
-                    setValue("profilePicture", "", { shouldValidate: true })
-                    setTempLogoKey(null)
+                    setUploadedLogoFile(null);
+                    setLogoPreviewUrl(null);
+                    setValue("profilePicture", "", { shouldValidate: true });
+                    setTempLogoKey(null);
                   }}
                   className="text-sm text-red-600 hover:text-red-800 self-start"
                 >
@@ -1325,24 +1331,24 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
             <FileUpload
               useS3Upload={true}
               onFileSelect={(file: File) => {
-                setUploadedLogoFile(file)
+                setUploadedLogoFile(file);
               }}
               onS3UploadComplete={(finalUrl: string, tempKey: string) => {
-                setValue("profilePicture", finalUrl, { shouldValidate: true })
-                setLogoPreviewUrl(finalUrl)
-                setTempLogoKey(tempKey)
-                setIsLogoUploading(false)
+                setValue("profilePicture", finalUrl, { shouldValidate: true });
+                setLogoPreviewUrl(finalUrl);
+                setTempLogoKey(tempKey);
+                setIsLogoUploading(false);
               }}
               onS3UploadError={(_error: string) => {
-                setUploadedLogoFile(null)
-                setLogoPreviewUrl(null)
-                setValue("profilePicture", "", { shouldValidate: true })
-                setIsLogoUploading(false)
-                setTempLogoKey(null)
+                setUploadedLogoFile(null);
+                setLogoPreviewUrl(null);
+                setValue("profilePicture", "", { shouldValidate: true });
+                setIsLogoUploading(false);
+                setTempLogoKey(null);
               }}
               onUploadProgress={(progress: number) => {
-                setLogoUploadProgress(progress)
-                setIsLogoUploading(progress > 0 && progress < 100)
+                setLogoUploadProgress(progress);
+                setIsLogoUploading(progress > 0 && progress < 100);
               }}
               acceptedFormats="image/*"
               uploadedFile={uploadedLogoFile}
@@ -1372,9 +1378,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                         type="text"
                         value={link.name}
                         onChange={(e) => {
-                          const updatedLinks = [...customLinks]
-                          updatedLinks[index].name = e.target.value
-                          setCustomLinks(updatedLinks)
+                          const updatedLinks = [...customLinks];
+                          updatedLinks[index].name = e.target.value;
+                          setCustomLinks(updatedLinks);
                         }}
                         className={inputStyle}
                         placeholder="e.g., Documentation, Blog"
@@ -1389,9 +1395,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                         type="text"
                         value={link.url}
                         onChange={(e) => {
-                          const updatedLinks = [...customLinks]
-                          updatedLinks[index].url = e.target.value
-                          setCustomLinks(updatedLinks)
+                          const updatedLinks = [...customLinks];
+                          updatedLinks[index].url = e.target.value;
+                          setCustomLinks(updatedLinks);
                         }}
                         className={inputStyle}
                         placeholder="https://example.com"
@@ -1401,8 +1407,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                       <button
                         type="button"
                         onClick={() => {
-                          const updatedLinks = customLinks.filter((_, i) => i !== index)
-                          setCustomLinks(updatedLinks)
+                          const updatedLinks = customLinks.filter((_, i) => i !== index);
+                          setCustomLinks(updatedLinks);
                         }}
                         className="px-3 py-2 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
                       >
@@ -1419,9 +1425,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                     id: `custom-${Date.now()}`,
                     name: "",
                     url: "",
-                  }
-                  const updatedLinks = [...customLinks, newLink]
-                  setCustomLinks(updatedLinks)
+                  };
+                  const updatedLinks = [...customLinks, newLink];
+                  setCustomLinks(updatedLinks);
                 }}
                 className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 border border-blue-300 dark:border-blue-600 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/20"
               >
@@ -1490,7 +1496,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               className={inputStyle}
               value={watch("pathToTake") || "none"}
               onChange={(e) => {
-                setValue("pathToTake", e.target.value)
+                setValue("pathToTake", e.target.value);
               }}
             >
               <option className="font-body" disabled key="None" value="none">
@@ -1520,8 +1526,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
             existingContacts={contacts}
             isEditing={!!projectToUpdate}
             addContact={(contact) => {
-              const withoutContact = contacts.filter((c) => c.id !== contact.id)
-              setContacts([...withoutContact, contact])
+              const withoutContact = contacts.filter((c) => c.id !== contact.id);
+              setContacts([...withoutContact, contact]);
             }}
             removeContact={(contact) => setContacts(contacts.filter((c) => c.id !== contact.id))}
           />
@@ -1534,9 +1540,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 onSelectFunction={(networkId) => {
                   setValue("chainID", networkId, {
                     shouldValidate: true,
-                  })
+                  });
                   // Reset faucet funding status when network changes
-                  setFaucetFunded(false)
+                  setFaucetFunded(false);
                 }}
                 onNetworkChange={handleNetworkChange}
                 isChangingNetwork={isChangingNetwork}
@@ -1585,22 +1591,22 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                   walletSigner={walletSigner}
                   recipient={(watch("recipient") || address) as Hex}
                   onFundsReceived={async () => {
-                    setFaucetFunded(true)
-                    toast.success("Wallet funded! You can now create your project.")
+                    setFaucetFunded(true);
+                    toast.success("Wallet funded! You can now create your project.");
 
                     // Refresh wallet signer after funding
                     try {
-                      await new Promise((resolve) => setTimeout(resolve, 2000)) // Wait for blockchain state
-                      const chainId = watch("chainID")
+                      await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait for blockchain state
+                      const chainId = watch("chainID");
                       if (chainId) {
-                        const { walletClient, error } = await safeGetWalletClient(chainId)
+                        const { walletClient, error } = await safeGetWalletClient(chainId);
                         if (!error && walletClient) {
-                          const signer = await walletClientToSigner(walletClient)
-                          setWalletSigner(signer)
+                          const signer = await walletClientToSigner(walletClient);
+                          setWalletSigner(signer);
                         }
                       }
                     } catch (error) {
-                      console.error("Failed to refresh wallet signer after funding:", error)
+                      console.error("Failed to refresh wallet signer after funding:", error);
                     }
                   }}
                 />
@@ -1610,7 +1616,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         </div>
       ),
     },
-  ]
+  ];
 
   return (
     <>
@@ -1713,9 +1719,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                           className="border-border"
                           onClick={() => {
                             if (step === 0) {
-                              closeModal()
+                              closeModal();
                             } else {
-                              setStep((oldStep) => (oldStep > 0 ? oldStep - 1 : oldStep))
+                              setStep((oldStep) => (oldStep > 0 ? oldStep - 1 : oldStep));
                             }
                           }}
                           disabled={isLoading}
@@ -1741,8 +1747,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                                       const nextStep = () =>
                                         setStep((oldStep) =>
                                           oldStep >= categories.length - 1 ? oldStep : oldStep + 1
-                                        )
-                                      checkFormAndTriggerErrors(nextStep)
+                                        );
+                                      checkFormAndTriggerErrors(nextStep);
                                     }}
                                     disabled={hasErrors() || isLoading}
                                   >
@@ -1809,5 +1815,5 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         </Transition>
       )}
     </>
-  )
-}
+  );
+};

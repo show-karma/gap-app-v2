@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   CheckCircleIcon,
@@ -6,22 +6,22 @@ import {
   ExclamationTriangleIcon,
   SunIcon,
   XMarkIcon,
-} from "@heroicons/react/24/outline"
-import type { JSX } from "react"
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview"
-import { cn } from "@/utilities/tailwind"
+} from "@heroicons/react/24/outline";
+import type { JSX } from "react";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { cn } from "@/utilities/tailwind";
 
-export type AIEvaluationData = string
+export type AIEvaluationData = string;
 
-type GenericJSON = Record<string, unknown>
+type GenericJSON = Record<string, unknown>;
 
 interface AIEvaluationDisplayProps {
-  evaluation: AIEvaluationData | null
-  isLoading: boolean
-  isEnabled: boolean
-  className?: string
-  hasError?: boolean
-  programName?: string
+  evaluation: AIEvaluationData | null;
+  isLoading: boolean;
+  isEnabled: boolean;
+  className?: string;
+  hasError?: boolean;
+  programName?: string;
 }
 
 // Small component for score display
@@ -31,16 +31,16 @@ function ScoreDisplay({
   getScoreIcon,
   getScoreColor,
 }: {
-  score: number
-  isGrowthGrants: boolean
-  getScoreIcon: (score: number) => JSX.Element
-  getScoreColor: (score: number) => string
+  score: number;
+  isGrowthGrants: boolean;
+  getScoreIcon: (score: number) => JSX.Element;
+  getScoreColor: (score: number) => string;
 }) {
   const getProbabilityLevel = (score: number) => {
-    if (score > 7) return "High"
-    if (score >= 4) return "Medium"
-    return "Low"
-  }
+    if (score > 7) return "High";
+    if (score >= 4) return "Medium";
+    return "Low";
+  };
 
   return (
     <div className="space-y-2">
@@ -74,7 +74,7 @@ function ScoreDisplay({
         </div>
       )}
     </div>
-  )
+  );
 }
 
 // Component for decision display
@@ -82,13 +82,13 @@ function DecisionDisplay({
   decision,
   isAuditGrants,
 }: {
-  decision: string
-  isAuditGrants: boolean
+  decision: string;
+  isAuditGrants: boolean;
 }) {
   const getDecisionColor = (value: string) => {
-    const val = value.toLowerCase()
+    const val = value.toLowerCase();
     if (val === "reject" || val === "rejected" || val === "low")
-      return "text-red-600 dark:text-red-400"
+      return "text-red-600 dark:text-red-400";
     if (
       val === "accept" ||
       val === "accepted" ||
@@ -96,24 +96,24 @@ function DecisionDisplay({
       val === "approved" ||
       val === "high"
     )
-      return "text-green-600 dark:text-green-400"
+      return "text-green-600 dark:text-green-400";
     if (val === "pending" || val === "review" || val === "medium")
-      return "text-yellow-600 dark:text-yellow-400"
-    return "text-gray-700 dark:text-gray-300"
-  }
+      return "text-yellow-600 dark:text-yellow-400";
+    return "text-gray-700 dark:text-gray-300";
+  };
 
   const getDecisionDisplay = (value: string) => {
-    if (!isAuditGrants) return value.toUpperCase()
+    if (!isAuditGrants) return value.toUpperCase();
 
     const decisionMap: Record<string, string> = {
       PASS: "High",
       NO_PASS: "Medium",
       REJECT: "Low",
-    }
+    };
 
-    const upperValue = value.toUpperCase()
-    return decisionMap[upperValue] || upperValue
-  }
+    const upperValue = value.toUpperCase();
+    return decisionMap[upperValue] || upperValue;
+  };
 
   return (
     <div className="pb-3 border-b border-zinc-200 dark:border-zinc-700">
@@ -124,7 +124,7 @@ function DecisionDisplay({
         {getDecisionDisplay(decision)}
       </p>
     </div>
-  )
+  );
 }
 
 // Component for disqualification reason
@@ -138,7 +138,7 @@ function DisqualificationReason({ reason }: { reason: string }) {
         <MarkdownPreview source={reason} />
       </div>
     </div>
-  )
+  );
 }
 
 // Component for evaluation summary
@@ -146,10 +146,10 @@ function EvaluationSummary({
   summary,
 }: {
   summary: {
-    strengths?: string[]
-    concerns?: string[]
-    risk_factors?: string[]
-  }
+    strengths?: string[];
+    concerns?: string[];
+    risk_factors?: string[];
+  };
 }) {
   return (
     <div className="space-y-3">
@@ -209,7 +209,7 @@ function EvaluationSummary({
         </div>
       )}
     </div>
-  )
+  );
 }
 
 // Component for improvement recommendations
@@ -218,11 +218,11 @@ function ImprovementRecommendations({
   getPriorityColor,
 }: {
   recommendations: Array<{
-    priority?: string
-    recommendation?: string
-    impact?: string
-  }>
-  getPriorityColor: (priority: string) => string
+    priority?: string;
+    recommendation?: string;
+    impact?: string;
+  }>;
+  getPriorityColor: (priority: string) => string;
 }) {
   return (
     <div>
@@ -259,7 +259,7 @@ function ImprovementRecommendations({
         ))}
       </div>
     </div>
-  )
+  );
 }
 
 // Component for additional notes
@@ -271,7 +271,7 @@ function AdditionalNotes({ notes }: { notes: string }) {
         <MarkdownPreview source={notes} />
       </div>
     </div>
-  )
+  );
 }
 
 // Component for status chip
@@ -279,24 +279,24 @@ function StatusChip({
   status,
   getStatusColor,
 }: {
-  status: string
-  getStatusColor: (status: string) => string
+  status: string;
+  getStatusColor: (status: string) => string;
 }) {
   return (
     <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", getStatusColor(status))}>
       {status?.charAt(0).toUpperCase() + status?.slice(1)}
     </span>
-  )
+  );
 }
 
 interface EvaluationContentProps {
-  evaluation: string
-  parseEvaluation: (evaluationStr: string) => GenericJSON | null
-  getScoreIcon: (score: number) => JSX.Element
-  getStatusColor: (status: string) => string
-  getScoreColor: (score: number) => string
-  getPriorityColor: (priority: string) => string
-  programName?: string
+  evaluation: string;
+  parseEvaluation: (evaluationStr: string) => GenericJSON | null;
+  getScoreIcon: (score: number) => JSX.Element;
+  getStatusColor: (status: string) => string;
+  getScoreColor: (score: number) => string;
+  getPriorityColor: (priority: string) => string;
+  programName?: string;
 }
 
 // Component to render evaluation data
@@ -308,21 +308,21 @@ function EvaluationDisplay({
   getScoreColor,
   getPriorityColor,
 }: {
-  data: GenericJSON
-  programName?: string
-  getScoreIcon: (score: number) => JSX.Element
-  getStatusColor: (status: string) => string
-  getScoreColor: (score: number) => string
-  getPriorityColor: (priority: string) => string
+  data: GenericJSON;
+  programName?: string;
+  getScoreIcon: (score: number) => JSX.Element;
+  getStatusColor: (status: string) => string;
+  getScoreColor: (score: number) => string;
+  getPriorityColor: (priority: string) => string;
 }) {
   // Check if program is audit grants or growth grants
-  const isAuditGrants = false
-  const isGrowthGrants = false
+  const isAuditGrants = false;
+  const isGrowthGrants = false;
 
   // Helper to render generic values
   const renderValue = (value: unknown, depth = 0): JSX.Element => {
     if (value === null || value === undefined) {
-      return <span className="text-gray-400 dark:text-gray-500">null</span>
+      return <span className="text-gray-400 dark:text-gray-500">null</span>;
     }
 
     if (typeof value === "string") {
@@ -330,16 +330,16 @@ function EvaluationDisplay({
         <div className="text-gray-700 dark:text-gray-300">
           <MarkdownPreview source={value} />
         </div>
-      )
+      );
     }
 
     if (typeof value === "number" || typeof value === "boolean") {
-      return <span className="text-blue-600 dark:text-blue-400">{String(value)}</span>
+      return <span className="text-blue-600 dark:text-blue-400">{String(value)}</span>;
     }
 
     if (Array.isArray(value)) {
       if (value.length === 0) {
-        return <span className="text-gray-400 dark:text-gray-500">[]</span>
+        return <span className="text-gray-400 dark:text-gray-500">[]</span>;
       }
       return (
         <div className={depth > 0 ? "ml-4" : ""}>
@@ -350,13 +350,13 @@ function EvaluationDisplay({
             </div>
           ))}
         </div>
-      )
+      );
     }
 
     if (typeof value === "object") {
-      const entries = Object.entries(value as Record<string, unknown>)
+      const entries = Object.entries(value as Record<string, unknown>);
       if (entries.length === 0) {
-        return <span className="text-gray-400 dark:text-gray-500">{"{}"}</span>
+        return <span className="text-gray-400 dark:text-gray-500">{"{}"}</span>;
       }
       return (
         <div className={depth > 0 ? "ml-4" : ""}>
@@ -369,14 +369,14 @@ function EvaluationDisplay({
             </div>
           ))}
         </div>
-      )
+      );
     }
 
-    return <span className="text-gray-500 dark:text-gray-400">{String(value)}</span>
-  }
+    return <span className="text-gray-500 dark:text-gray-400">{String(value)}</span>;
+  };
 
-  const evalData = data as any
-  const renderedFields = new Set<string>()
+  const evalData = data as any;
+  const renderedFields = new Set<string>();
 
   return (
     <div className="space-y-4">
@@ -395,10 +395,10 @@ function EvaluationDisplay({
             </div>
           )}
           {(() => {
-            renderedFields.add("final_score")
-            renderedFields.add("score")
-            renderedFields.add("evaluation_status")
-            return null
+            renderedFields.add("final_score");
+            renderedFields.add("score");
+            renderedFields.add("evaluation_status");
+            return null;
           })()}
         </>
       )}
@@ -408,8 +408,8 @@ function EvaluationDisplay({
         <>
           <DecisionDisplay decision={evalData.decision} isAuditGrants={isAuditGrants || false} />
           {(() => {
-            renderedFields.add("decision")
-            return null
+            renderedFields.add("decision");
+            return null;
           })()}
         </>
       )}
@@ -419,8 +419,8 @@ function EvaluationDisplay({
         <>
           <DisqualificationReason reason={evalData.disqualification_reason} />
           {(() => {
-            renderedFields.add("disqualification_reason")
-            return null
+            renderedFields.add("disqualification_reason");
+            return null;
           })()}
         </>
       )}
@@ -430,8 +430,8 @@ function EvaluationDisplay({
         <>
           <EvaluationSummary summary={evalData.evaluation_summary} />
           {(() => {
-            renderedFields.add("evaluation_summary")
-            return null
+            renderedFields.add("evaluation_summary");
+            return null;
           })()}
         </>
       )}
@@ -444,8 +444,8 @@ function EvaluationDisplay({
             getPriorityColor={getPriorityColor}
           />
           {(() => {
-            renderedFields.add("improvement_recommendations")
-            return null
+            renderedFields.add("improvement_recommendations");
+            return null;
           })()}
         </>
       )}
@@ -455,8 +455,8 @@ function EvaluationDisplay({
         <>
           <AdditionalNotes notes={evalData.additional_notes} />
           {(() => {
-            renderedFields.add("additional_notes")
-            return null
+            renderedFields.add("additional_notes");
+            return null;
           })()}
         </>
       )}
@@ -470,8 +470,8 @@ function EvaluationDisplay({
               evalData.reviewer_confidence?.slice(1)}
           </p>
           {(() => {
-            renderedFields.add("reviewer_confidence")
-            return null
+            renderedFields.add("reviewer_confidence");
+            return null;
           })()}
         </>
       )}
@@ -480,7 +480,7 @@ function EvaluationDisplay({
       <div className="space-y-2">
         {Object.entries(evalData).map(([key, value]) => {
           // Skip already rendered fields
-          if (renderedFields.has(key)) return null
+          if (renderedFields.has(key)) return null;
 
           return (
             <div key={key} className="py-2">
@@ -489,7 +489,7 @@ function EvaluationDisplay({
               </h5>
               <div className="text-sm">{value ? renderValue(value) : "Not available"}</div>
             </div>
-          )
+          );
         })}
       </div>
 
@@ -500,7 +500,7 @@ function EvaluationDisplay({
         </p>
       </div>
     </div>
-  )
+  );
 }
 
 function EvaluationContent({
@@ -512,7 +512,7 @@ function EvaluationContent({
   getPriorityColor,
   programName,
 }: EvaluationContentProps) {
-  const parsedEvaluation = parseEvaluation(evaluation)
+  const parsedEvaluation = parseEvaluation(evaluation);
 
   if (!parsedEvaluation) {
     return (
@@ -521,7 +521,7 @@ function EvaluationContent({
           Failed to parse evaluation data. Please try again.
         </p>
       </div>
-    )
+    );
   }
 
   // Use the evaluation display component for all evaluation data
@@ -534,7 +534,7 @@ function EvaluationContent({
       getScoreColor={getScoreColor}
       getPriorityColor={getPriorityColor}
     />
-  )
+  );
 }
 
 export function AIEvaluationDisplay({
@@ -546,55 +546,55 @@ export function AIEvaluationDisplay({
   programName,
 }: AIEvaluationDisplayProps) {
   if (!isEnabled) {
-    return null
+    return null;
   }
 
   const parseEvaluation = (evaluationStr: string): GenericJSON | null => {
     try {
-      return JSON.parse(evaluationStr)
+      return JSON.parse(evaluationStr);
     } catch (error) {
-      console.error("Failed to parse evaluation JSON:", error)
-      return null
+      console.error("Failed to parse evaluation JSON:", error);
+      return null;
     }
-  }
+  };
 
   const getScoreColor = (score: number): string => {
-    if (score > 7) return "bg-green-500"
-    if (score >= 4) return "bg-yellow-500"
-    return "bg-red-500"
-  }
+    if (score > 7) return "bg-green-500";
+    if (score >= 4) return "bg-yellow-500";
+    return "bg-red-500";
+  };
 
   const getScoreIcon = (score: number): JSX.Element => {
-    if (score > 7) return <CheckCircleIcon className="w-5 h-5 text-green-500" />
-    if (score >= 4) return <ExclamationTriangleIcon className="w-5 h-5 text-blue-500" />
-    return <XMarkIcon className="w-5 h-5 text-red-500" />
-  }
+    if (score > 7) return <CheckCircleIcon className="w-5 h-5 text-green-500" />;
+    if (score >= 4) return <ExclamationTriangleIcon className="w-5 h-5 text-blue-500" />;
+    return <XMarkIcon className="w-5 h-5 text-red-500" />;
+  };
 
   const getPriorityColor = (priority: string): string => {
-    const defaultColor = "bg-zinc-100 dark:bg-zinc-700 text-gray-800 dark:text-gray-200"
-    if (!priority) return defaultColor
+    const defaultColor = "bg-zinc-100 dark:bg-zinc-700 text-gray-800 dark:text-gray-200";
+    if (!priority) return defaultColor;
 
     const colorMap: Record<string, string> = {
       high: "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300",
       medium: "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300",
       low: "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300",
-    }
+    };
 
-    return colorMap[priority.toLowerCase()] || defaultColor
-  }
+    return colorMap[priority.toLowerCase()] || defaultColor;
+  };
 
   const getStatusColor = (status: string): string => {
-    const defaultColor = "bg-zinc-100 dark:bg-zinc-700 text-gray-800 dark:text-gray-200"
-    if (!status) return defaultColor
+    const defaultColor = "bg-zinc-100 dark:bg-zinc-700 text-gray-800 dark:text-gray-200";
+    if (!status) return defaultColor;
 
     const colorMap: Record<string, string> = {
       complete: "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300",
       incomplete: "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300",
       rejected: "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300",
-    }
+    };
 
-    return colorMap[status.toLowerCase()] || defaultColor
-  }
+    return colorMap[status.toLowerCase()] || defaultColor;
+  };
 
   return (
     <div className={`${className}`}>
@@ -630,5 +630,5 @@ export function AIEvaluationDisplay({
         )}
       </div>
     </div>
-  )
+  );
 }

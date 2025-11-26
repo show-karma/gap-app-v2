@@ -1,10 +1,10 @@
-import { create } from "zustand"
+import { create } from "zustand";
 
 interface AdminTransferOwnershipStore {
-  isAdminTransferOwnershipModalOpen: boolean
-  setIsAdminTransferOwnershipModalOpen: (isAdminTransferOwnershipModalOpen: boolean) => void
-  openAdminTransferOwnershipModal: () => void
-  closeAdminTransferOwnershipModal: () => void
+  isAdminTransferOwnershipModalOpen: boolean;
+  setIsAdminTransferOwnershipModalOpen: (isAdminTransferOwnershipModalOpen: boolean) => void;
+  openAdminTransferOwnershipModal: () => void;
+  closeAdminTransferOwnershipModal: () => void;
 }
 
 export const useAdminTransferOwnershipModalStore = create<AdminTransferOwnershipStore>((set) => ({
@@ -15,4 +15,4 @@ export const useAdminTransferOwnershipModalStore = create<AdminTransferOwnership
     }),
   openAdminTransferOwnershipModal: () => set({ isAdminTransferOwnershipModalOpen: true }),
   closeAdminTransferOwnershipModal: () => set({ isAdminTransferOwnershipModalOpen: false }),
-}))
+}));

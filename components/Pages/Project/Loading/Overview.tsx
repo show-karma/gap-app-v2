@@ -1,9 +1,9 @@
-import { Skeleton } from "@/components/Utilities/Skeleton"
+import { Skeleton } from "@/components/Utilities/Skeleton";
 
 export const ProjectOverviewLoading = () => {
   const Team = () => {
     // empty array of 3 elements
-    const members = Array(3).fill({})
+    const members = Array(3).fill({});
     return (
       <div className="flex flex-col gap-2 w-full min-w-48">
         <div className="font-semibold text-black dark:text-white leading-none">Team</div>
@@ -22,8 +22,8 @@ export const ProjectOverviewLoading = () => {
           ))}
         </div>
       </div>
-    )
-  }
+    );
+  };
 
   const _ProjectBlocks = () => {
     return (
@@ -32,8 +32,8 @@ export const ProjectOverviewLoading = () => {
         <Skeleton className="h-10 w-full" />
         <Skeleton className="h-10 w-full" />
       </>
-    )
-  }
+    );
+  };
 
   return (
     <div className="flex flex-row max-lg:flex-col gap-6 max-md:gap-4 py-5 mb-20">
@@ -118,5 +118,5 @@ export const ProjectOverviewLoading = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

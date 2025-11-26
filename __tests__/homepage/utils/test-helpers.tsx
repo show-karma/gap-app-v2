@@ -4,21 +4,21 @@
  */
 
 // Import homepage setup to ensure mocks are loaded
-import "../setup"
+import "../setup";
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { type RenderOptions, type RenderResult, render } from "@testing-library/react"
-import type React from "react"
-import { mockAuthState } from "../setup"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { type RenderOptions, type RenderResult, render } from "@testing-library/react";
+import type React from "react";
+import { mockAuthState } from "../setup";
 
 /**
  * Custom render options
  */
 export interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
-  queryClient?: QueryClient
-  mockUseAuth?: any
-  mockRouter?: any
-  initialRoute?: string
+  queryClient?: QueryClient;
+  mockUseAuth?: any;
+  mockRouter?: any;
+  initialRoute?: string;
 }
 
 /**
@@ -37,19 +37,19 @@ export const createTestQueryClient = () =>
       warn: () => {},
       error: () => {},
     },
-  })
+  });
 
 /**
  * Wrapper component with all providers
  */
 const AllProviders: React.FC<{
-  children: React.ReactNode
-  queryClient?: QueryClient
+  children: React.ReactNode;
+  queryClient?: QueryClient;
 }> = ({ children, queryClient }) => {
-  const testQueryClient = queryClient || createTestQueryClient()
+  const testQueryClient = queryClient || createTestQueryClient();
 
-  return <QueryClientProvider client={testQueryClient}>{children}</QueryClientProvider>
-}
+  return <QueryClientProvider client={testQueryClient}>{children}</QueryClientProvider>;
+};
 
 /**
  * Enhanced render function with providers
@@ -58,45 +58,45 @@ export const renderWithProviders = (
   ui: React.ReactElement,
   options: CustomRenderOptions = {}
 ): RenderResult => {
-  const { queryClient, mockUseAuth, mockRouter, ...renderOptions } = options
+  const { queryClient, mockUseAuth, mockRouter, ...renderOptions } = options;
 
   // Setup mocks if provided
   if (mockUseAuth) {
-    mockAuthState.current = mockUseAuth
+    mockAuthState.current = mockUseAuth;
   }
 
   if (mockRouter) {
-    const navigationModule = require("next/navigation")
+    const navigationModule = require("next/navigation");
     if (navigationModule.useRouter && jest.isMockFunction(navigationModule.useRouter)) {
-      navigationModule.useRouter.mockReturnValue(mockRouter)
+      navigationModule.useRouter.mockReturnValue(mockRouter);
     }
   }
 
   const Wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     <AllProviders queryClient={queryClient}>{children}</AllProviders>
-  )
+  );
 
-  const renderResult = render(ui, { wrapper: Wrapper, ...renderOptions })
+  const renderResult = render(ui, { wrapper: Wrapper, ...renderOptions });
 
   // Create custom rerender that accepts options
   const customRerender = (ui: React.ReactElement, options?: Partial<CustomRenderOptions>) => {
     if (options?.mockUseAuth) {
-      mockAuthState.current = options.mockUseAuth
+      mockAuthState.current = options.mockUseAuth;
     }
     if (options?.mockRouter) {
-      const navigationModule = require("next/navigation")
+      const navigationModule = require("next/navigation");
       if (navigationModule.useRouter && jest.isMockFunction(navigationModule.useRouter)) {
-        navigationModule.useRouter.mockReturnValue(options.mockRouter)
+        navigationModule.useRouter.mockReturnValue(options.mockRouter);
       }
     }
-    return renderResult.rerender(ui)
-  }
+    return renderResult.rerender(ui);
+  };
 
   return {
     ...renderResult,
     rerender: customRerender,
-  }
-}
+  };
+};
 
 /**
  * Create mock auth state
@@ -113,7 +113,7 @@ export const createMockAuth = (overrides: any = {}) => ({
   disconnect: jest.fn(),
   getAccessToken: jest.fn().mockResolvedValue("mock-token"),
   ...overrides,
-})
+});
 
 /**
  * Create mock router
@@ -127,7 +127,7 @@ export const createMockRouter = (overrides: any = {}) => ({
   pathname: "/",
   query: {},
   ...overrides,
-})
+});
 
 /**
  * Reset mock auth state
@@ -144,14 +144,14 @@ export const resetMockAuthState = () => {
     logout: jest.fn(),
     disconnect: jest.fn(),
     getAccessToken: jest.fn().mockResolvedValue("mock-token"),
-  }
-}
+  };
+};
 
 /**
  * Wait for debounce (useful for search/input interactions)
  */
 export const waitForDebounce = (ms: number = 600) =>
-  new Promise((resolve) => setTimeout(resolve, ms))
+  new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * Set viewport size for responsive testing
@@ -161,24 +161,24 @@ export const setViewportSize = (width: number, height: number) => {
     writable: true,
     configurable: true,
     value: width,
-  })
+  });
   Object.defineProperty(window, "innerHeight", {
     writable: true,
     configurable: true,
     value: height,
-  })
+  });
 
-  window.dispatchEvent(new Event("resize"))
-}
+  window.dispatchEvent(new Event("resize"));
+};
 
 /**
  * Accessibility helper: check for axe violations
  */
 export const expectNoA11yViolations = async (container: HTMLElement) => {
-  const { axe } = await import("jest-axe")
-  const results = await axe(container)
-  expect(results).toHaveNoViolations()
-}
+  const { axe } = await import("jest-axe");
+  const results = await axe(container);
+  expect(results).toHaveNoViolations();
+};
 
 /**
  * Re-export commonly used testing utilities
@@ -190,6 +190,6 @@ export {
   screen,
   waitFor,
   within,
-} from "@testing-library/react"
+} from "@testing-library/react";
 
-export { default as userEvent } from "@testing-library/user-event"
+export { default as userEvent } from "@testing-library/user-event";

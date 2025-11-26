@@ -1,15 +1,15 @@
-"use client"
-import { useQuery } from "@tanstack/react-query"
-import { useParams, usePathname } from "next/navigation"
-import { InfoTooltip } from "@/components/Utilities/InfoTooltip"
-import { Skeleton } from "@/components/Utilities/Skeleton"
-import { useImpactMeasurement } from "@/hooks/useImpactMeasurement"
-import { useCommunityStore } from "@/store/community"
-import formatCurrency from "@/utilities/formatCurrency"
-import { getCommunityStatsV2 } from "@/utilities/queries/getCommunityDataV2"
+"use client";
+import { useQuery } from "@tanstack/react-query";
+import { useParams, usePathname } from "next/navigation";
+import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
+import { Skeleton } from "@/components/Utilities/Skeleton";
+import { useImpactMeasurement } from "@/hooks/useImpactMeasurement";
+import { useCommunityStore } from "@/store/community";
+import formatCurrency from "@/utilities/formatCurrency";
+import { getCommunityStatsV2 } from "@/utilities/queries/getCommunityDataV2";
 
 export const ImpactStatCards = () => {
-  const { data, isLoading } = useImpactMeasurement()
+  const { data, isLoading } = useImpactMeasurement();
 
   const stats = [
     {
@@ -36,7 +36,7 @@ export const ImpactStatCards = () => {
           : "-",
       color: "#A6EF67",
     },
-  ]
+  ];
 
   return stats.map((item) => (
     <div
@@ -64,23 +64,23 @@ export const ImpactStatCards = () => {
         )}
       </div>
     </div>
-  ))
-}
+  ));
+};
 
 export const CommunityStatCards = () => {
-  const params = useParams()
-  const communityId = params.communityId as string
+  const params = useParams();
+  const communityId = params.communityId as string;
   const {
     totalProjects: filteredProjectsCount,
     totalGrants: filteredGrantsCount,
     totalMilestones: filteredMilestonesCount,
     isLoadingFilters,
-  } = useCommunityStore()
+  } = useCommunityStore();
   const { data, isLoading } = useQuery({
     queryKey: ["community-stats", communityId],
     queryFn: () => getCommunityStatsV2(communityId),
     enabled: !!communityId,
-  })
+  });
 
   const stats = [
     {
@@ -149,7 +149,7 @@ export const CommunityStatCards = () => {
         </div>
       ) : null,
     },
-  ]
+  ];
   return stats.map((item) => (
     <div
       key={item.title}
@@ -186,16 +186,16 @@ export const CommunityStatCards = () => {
         )}
       </div>
     </div>
-  ))
-}
+  ));
+};
 
 export const CommunityImpactStatCards = () => {
-  const pathname = usePathname()
-  const isImpactPage = pathname.includes("/impact")
+  const pathname = usePathname();
+  const isImpactPage = pathname.includes("/impact");
 
   return (
     <div className="flex flex-1 gap-6 flex-row max-sm:flex-col py-2">
       {isImpactPage ? <ImpactStatCards /> : <CommunityStatCards />}
     </div>
-  )
-}
+  );
+};

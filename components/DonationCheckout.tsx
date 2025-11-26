@@ -1,1 +1,1 @@
-export { DonationCheckout as default } from "./Donation/DonationCheckout"
+export { DonationCheckout as default } from "./Donation/DonationCheckout";

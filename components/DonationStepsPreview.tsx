@@ -1,21 +1,21 @@
-"use client"
-import { useMemo } from "react"
-import { SUPPORTED_NETWORKS } from "@/constants/supportedTokens"
-import type { DonationPayment } from "@/store/donationCart"
+"use client";
+import { useMemo } from "react";
+import { SUPPORTED_NETWORKS } from "@/constants/supportedTokens";
+import type { DonationPayment } from "@/store/donationCart";
 
 interface DonationStepsPreviewProps {
-  payments: DonationPayment[]
-  onProceed: () => void
-  onCancel: () => void
-  isLoading?: boolean
+  payments: DonationPayment[];
+  onProceed: () => void;
+  onCancel: () => void;
+  isLoading?: boolean;
 }
 
 interface TransactionStep {
-  type: "network_switch" | "approvals" | "donation"
-  chainId: number
-  chainName: string
-  details: string[]
-  estimatedTime: string
+  type: "network_switch" | "approvals" | "donation";
+  chainId: number;
+  chainName: string;
+  details: string[];
+  estimatedTime: string;
 }
 
 export function DonationStepsPreview({
@@ -25,32 +25,32 @@ export function DonationStepsPreview({
   isLoading,
 }: DonationStepsPreviewProps) {
   const steps = useMemo(() => {
-    const stepsList: TransactionStep[] = []
-    const chainMap = new Map<number, { approvals: string[]; donations: number }>()
+    const stepsList: TransactionStep[] = [];
+    const chainMap = new Map<number, { approvals: string[]; donations: number }>();
 
     // Group payments by chain
     payments.forEach((payment) => {
       if (!chainMap.has(payment.chainId)) {
-        chainMap.set(payment.chainId, { approvals: [], donations: 0 })
+        chainMap.set(payment.chainId, { approvals: [], donations: 0 });
       }
 
-      const chainData = chainMap.get(payment.chainId)!
+      const chainData = chainMap.get(payment.chainId)!;
 
       // Add approval if token is not native
       if (!payment.token.isNative) {
-        const approvalKey = `${payment.token.symbol} approval`
+        const approvalKey = `${payment.token.symbol} approval`;
         if (!chainData.approvals.includes(approvalKey)) {
-          chainData.approvals.push(approvalKey)
+          chainData.approvals.push(approvalKey);
         }
       }
 
-      chainData.donations += 1
-    })
+      chainData.donations += 1;
+    });
 
     // Convert to steps
     chainMap.forEach((data, chainId) => {
-      const network = SUPPORTED_NETWORKS[chainId]
-      const chainName = network?.chainName || `Chain ${chainId}`
+      const network = SUPPORTED_NETWORKS[chainId];
+      const chainName = network?.chainName || `Chain ${chainId}`;
 
       // Add network switch step (except for first chain)
       if (stepsList.length > 0) {
@@ -60,7 +60,7 @@ export function DonationStepsPreview({
           chainName,
           details: [`Switch to ${chainName}`],
           estimatedTime: "5-10s",
-        })
+        });
       }
 
       // Add approvals step if needed
@@ -74,7 +74,7 @@ export function DonationStepsPreview({
             data.approvals.length === 1
               ? "10-15s"
               : `${10 + data.approvals.length * 5}-${15 + data.approvals.length * 10}s`,
-        })
+        });
       }
 
       // Add donation step
@@ -84,33 +84,33 @@ export function DonationStepsPreview({
         chainName,
         details: [`Execute ${data.donations} donation${data.donations > 1 ? "s" : ""}`],
         estimatedTime: "15-30s",
-      })
-    })
+      });
+    });
 
-    return stepsList
-  }, [payments])
+    return stepsList;
+  }, [payments]);
 
   const totalEstimatedTime = useMemo(() => {
     const totalSeconds = steps.reduce((acc, step) => {
-      const [min, max] = step.estimatedTime.split("-").map((t) => parseInt(t.replace("s", ""), 10))
-      return acc + (min + max) / 2
-    }, 0)
+      const [min, max] = step.estimatedTime.split("-").map((t) => parseInt(t.replace("s", ""), 10));
+      return acc + (min + max) / 2;
+    }, 0);
 
     if (totalSeconds < 60) {
-      return `${Math.round(totalSeconds)}s`
+      return `${Math.round(totalSeconds)}s`;
     } else {
-      const minutes = Math.round(totalSeconds / 60)
-      return `${minutes}m`
+      const minutes = Math.round(totalSeconds / 60);
+      return `${minutes}m`;
     }
-  }, [steps])
+  }, [steps]);
 
   const uniqueChains = useMemo(() => {
-    const chains = new Set(payments.map((p) => p.chainId))
+    const chains = new Set(payments.map((p) => p.chainId));
     return Array.from(chains).map((chainId) => ({
       chainId,
       name: SUPPORTED_NETWORKS[chainId]?.chainName || `Chain ${chainId}`,
-    }))
-  }, [payments])
+    }));
+  }, [payments]);
 
   const getStepIcon = (type: TransactionStep["type"]) => {
     switch (type) {
@@ -128,7 +128,7 @@ export function DonationStepsPreview({
               <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
             </svg>
           </div>
-        )
+        );
       case "approvals":
         return (
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-200">
@@ -145,7 +145,7 @@ export function DonationStepsPreview({
               <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3" />
             </svg>
           </div>
-        )
+        );
       case "donation":
         return (
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-200">
@@ -162,9 +162,9 @@ export function DonationStepsPreview({
               <path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z" />
             </svg>
           </div>
-        )
+        );
     }
-  }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -301,5 +301,5 @@ export function DonationStepsPreview({
         </div>
       </div>
     </div>
-  )
+  );
 }

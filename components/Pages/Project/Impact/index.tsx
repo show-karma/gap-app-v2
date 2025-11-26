@@ -1,22 +1,22 @@
-"use client"
-import { useSearchParams } from "next/navigation"
-import type { FC } from "react"
-import { OutputsAndOutcomes } from "@/components/Pages/Project/Impact/OutputsAndOutcomes"
-import { useOwnerStore, useProjectStore } from "@/store"
-import { AddImpactScreen } from "./AddImpactScreen"
+"use client";
+import { useSearchParams } from "next/navigation";
+import type { FC } from "react";
+import { OutputsAndOutcomes } from "@/components/Pages/Project/Impact/OutputsAndOutcomes";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { AddImpactScreen } from "./AddImpactScreen";
 
-type ImpactComponentProps = {}
+type ImpactComponentProps = {};
 
 export const ImpactComponent: FC<ImpactComponentProps> = () => {
-  const isOwner = useOwnerStore((state) => state.isOwner)
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin)
-  const isAuthorized = isOwner || isProjectAdmin
+  const isOwner = useOwnerStore((state) => state.isOwner);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const isAuthorized = isOwner || isProjectAdmin;
 
-  const searchParams = useSearchParams()
-  const grantScreen = searchParams?.get("tab")
+  const searchParams = useSearchParams();
+  const grantScreen = searchParams?.get("tab");
 
   if (grantScreen === "add-impact" && isAuthorized) {
-    return <AddImpactScreen />
+    return <AddImpactScreen />;
   }
 
   return (
@@ -28,5 +28,5 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
         <OutputsAndOutcomes />
       </div>
     </section>
-  )
-}
+  );
+};

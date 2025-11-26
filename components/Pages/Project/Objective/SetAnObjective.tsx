@@ -1,16 +1,16 @@
-"use client"
-import { useParams } from "next/navigation"
-import { Button } from "@/components/Utilities/Button"
-import { useProgressModalStore } from "@/store/modals/progress"
+"use client";
+import { useParams } from "next/navigation";
+import { Button } from "@/components/Utilities/Button";
+import { useProgressModalStore } from "@/store/modals/progress";
 
 export const SetAnObjective = ({ hasObjectives }: { hasObjectives: boolean }) => {
-  const { projectId } = useParams()
-  const { setIsProgressModalOpen, setProgressModalScreen } = useProgressModalStore()
+  const { projectId } = useParams();
+  const { setIsProgressModalOpen, setProgressModalScreen } = useProgressModalStore();
 
   const handleCreateMilestone = () => {
-    setProgressModalScreen("unified_milestone")
-    setIsProgressModalOpen(true)
-  }
+    setProgressModalScreen("unified_milestone");
+    setIsProgressModalOpen(true);
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -33,5 +33,5 @@ export const SetAnObjective = ({ hasObjectives }: { hasObjectives: boolean }) =>
         </Button>
       </div>
     </div>
-  )
-}
+  );
+};

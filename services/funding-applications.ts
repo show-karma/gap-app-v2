@@ -1,10 +1,10 @@
-import type { IFundingApplication } from "@/types/funding-platform"
-import { createAuthenticatedApiClient } from "@/utilities/auth/api-client"
-import { envVars } from "@/utilities/enviromentVars"
-import { INDEXER } from "@/utilities/indexer"
+import type { IFundingApplication } from "@/types/funding-platform";
+import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
+import { envVars } from "@/utilities/enviromentVars";
+import { INDEXER } from "@/utilities/indexer";
 
-const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL
-const apiClient = createAuthenticatedApiClient(API_URL, 30000)
+const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
+const apiClient = createAuthenticatedApiClient(API_URL, 30000);
 
 export async function fetchApplicationByProjectUID(
   projectUID: string
@@ -12,19 +12,19 @@ export async function fetchApplicationByProjectUID(
   try {
     const response = await apiClient.get<IFundingApplication>(
       INDEXER.V2.APPLICATIONS.BY_PROJECT_UID(projectUID)
-    )
-    return response.data
+    );
+    return response.data;
   } catch (error: any) {
     if (error.response?.status === 404) {
-      return null
+      return null;
     }
-    throw error
+    throw error;
   }
 }
 
 export async function deleteApplication(referenceNumber: string): Promise<void> {
   try {
-    await apiClient.delete(INDEXER.V2.APPLICATIONS.DELETE(referenceNumber))
+    await apiClient.delete(INDEXER.V2.APPLICATIONS.DELETE(referenceNumber));
   } catch (error: any) {
     // Log error with context before re-throwing for hook to handle
     console.error("Service layer: Failed to delete application", {
@@ -33,7 +33,7 @@ export async function deleteApplication(referenceNumber: string): Promise<void> 
       statusText: error?.response?.statusText,
       errorMessage: error?.response?.data?.message || error?.message,
       timestamp: new Date().toISOString(),
-    })
-    throw error
+    });
+    throw error;
   }
 }

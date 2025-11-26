@@ -5,41 +5,41 @@ import {
   nullRef,
   Project,
   ProjectDetails,
-} from "@show-karma/karma-gap-sdk"
-import type { Hex } from "viem"
+} from "@show-karma/karma-gap-sdk";
+import type { Hex } from "viem";
 
 // import type { GAP } from "@show-karma/karma-gap-sdk/core/class/GAP";
 
 interface ProjectFormData {
-  title: string
-  description: string
-  problem?: string
-  solution?: string
-  missionSummary?: string
-  locationOfImpact?: string
-  profilePicture?: string
-  imageURL?: string
-  twitter?: string
-  github?: string
-  discord?: string
-  website?: string
-  linkedin?: string
-  pitchDeck?: string
-  demoVideo?: string
-  farcaster?: string
-  recipient?: string
-  businessModel?: string
-  stageIn?: string
-  raisedMoney?: string
-  pathToTake?: string
-  customLinks?: Array<{ name: string; url: string }>
+  title: string;
+  description: string;
+  problem?: string;
+  solution?: string;
+  missionSummary?: string;
+  locationOfImpact?: string;
+  profilePicture?: string;
+  imageURL?: string;
+  twitter?: string;
+  github?: string;
+  discord?: string;
+  website?: string;
+  linkedin?: string;
+  pitchDeck?: string;
+  demoVideo?: string;
+  farcaster?: string;
+  recipient?: string;
+  businessModel?: string;
+  stageIn?: string;
+  raisedMoney?: string;
+  pathToTake?: string;
+  customLinks?: Array<{ name: string; url: string }>;
 }
 
 export interface AttestationTransaction {
-  to: string
-  data: string
-  value: string
-  from?: string
+  to: string;
+  data: string;
+  value: string;
+  from?: string;
 }
 
 /**
@@ -61,10 +61,10 @@ export async function buildProjectAttestationTransaction(
       schema: gapClient.findSchema("Project"),
       recipient: recipient,
       uid: nullRef,
-    })
+    });
 
     // Generate slug for the project
-    const slug = await gapClient.generateSlug(projectData.title)
+    const slug = await gapClient.generateSlug(projectData.title);
 
     // Prepare project details data
     const projectDetailsData: IProjectDetails = {
@@ -95,7 +95,7 @@ export async function buildProjectAttestationTransaction(
           url: link.url,
         })) || []),
       ],
-    }
+    };
 
     // Create ProjectDetails attestation
     project.details = new ProjectDetails({
@@ -104,7 +104,7 @@ export async function buildProjectAttestationTransaction(
       schema: gapClient.findSchema("ProjectDetails"),
       recipient: project.recipient,
       uid: nullRef,
-    })
+    });
 
     // Add member (the creator)
     const member = new MemberOf({
@@ -115,32 +115,32 @@ export async function buildProjectAttestationTransaction(
       schema: gapClient.findSchema("MemberOf"),
       recipient: recipient,
       uid: nullRef,
-    })
-    project.members = [member]
+    });
+    project.members = [member];
 
     // Build the multi-attestation payload
-    const payload = await project.multiAttestPayload()
+    const payload = await project.multiAttestPayload();
 
     // Get the MultiAttester contract
-    const contract = await GAP.getMulticall(walletSigner)
+    const contract = await GAP.getMulticall(walletSigner);
 
     // Populate the transaction without executing it
     const populatedTx = await contract.multiSequentialAttest.populateTransaction(
       payload.map((p: { payload: any }[]) => p[1].payload)
-    )
+    );
 
     // Get the contract address
-    const contractAddress = await contract.getAddress()
-    const signerAddress = await walletSigner.getAddress()
+    const contractAddress = await contract.getAddress();
+    const signerAddress = await walletSigner.getAddress();
 
     return {
       to: contractAddress,
       data: populatedTx.data || "0x",
       value: "0",
       from: signerAddress,
-    }
+    };
   } catch (error) {
-    console.error("Failed to build attestation transaction:", error)
-    throw error
+    console.error("Failed to build attestation transaction:", error);
+    throw error;
   }
 }

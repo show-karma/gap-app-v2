@@ -1,9 +1,9 @@
-"use client"
-import { useOwnerStore } from "@/store"
-import { PAGES } from "@/utilities/pages"
+"use client";
+import { useOwnerStore } from "@/store";
+import { PAGES } from "@/utilities/pages";
 
 export default function SuperAdminPage() {
-  const isOwner = useOwnerStore((state) => state.isOwner)
+  const isOwner = useOwnerStore((state) => state.isOwner);
   return isOwner ? (
     <div className="m-12 flex gap-8 flex-row max-lg:flex-col-reverse w-full ">
       <div className="flex flex-row flex-wrap gap-8">
@@ -33,5 +33,5 @@ export default function SuperAdminPage() {
     <div className="flex w-full items-center justify-center m-12">
       <p>You are account isnt super admin.Only Super admin can view this page</p>
     </div>
-  )
+  );
 }

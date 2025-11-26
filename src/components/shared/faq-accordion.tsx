@@ -1,22 +1,22 @@
-"use client"
+"use client";
 
-import { MinusCircle, PlusCircle } from "lucide-react"
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview"
+import { MinusCircle, PlusCircle } from "lucide-react";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion"
+} from "@/components/ui/accordion";
 
 export interface FAQItem {
-  id: string
-  question: string
-  answer: string
+  id: string;
+  question: string;
+  answer: string;
 }
 
 interface FAQAccordionProps {
-  items: FAQItem[]
+  items: FAQItem[];
 }
 
 export function FAQAccordion({ items }: FAQAccordionProps) {
@@ -46,5 +46,5 @@ export function FAQAccordion({ items }: FAQAccordionProps) {
         </AccordionItem>
       ))}
     </Accordion>
-  )
+  );
 }

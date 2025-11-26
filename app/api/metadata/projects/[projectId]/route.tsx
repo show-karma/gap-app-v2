@@ -1,32 +1,32 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { ImageResponse } from "next/og"
-import type { NextRequest } from "next/server"
-import pluralize from "pluralize"
-import { PROJECT_NAME } from "@/constants/brand"
-import { cleanMarkdownForPlainText } from "@/utilities/markdown"
-import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData"
+import { ImageResponse } from "next/og";
+import type { NextRequest } from "next/server";
+import pluralize from "pluralize";
+import { PROJECT_NAME } from "@/constants/brand";
+import { cleanMarkdownForPlainText } from "@/utilities/markdown";
+import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
 
 export async function GET(
   _request: NextRequest,
   context: { params: Promise<{ projectId: string }> }
 ) {
-  const projectId = (await context.params).projectId
-  const project = await getProjectCachedData(projectId)
+  const projectId = (await context.params).projectId;
+  const project = await getProjectCachedData(projectId);
   if (!project) {
-    return new Response("Not found", { status: 404 })
+    return new Response("Not found", { status: 404 });
   }
 
   const title =
     project?.details?.data.title && project?.details?.data.title.length > 30
       ? `${project?.details?.data.title.substring(0, 30)}...`
-      : project?.details?.data.title
+      : project?.details?.data.title;
 
-  const description = cleanMarkdownForPlainText(project?.details?.data?.description || "", 200)
+  const description = cleanMarkdownForPlainText(project?.details?.data?.description || "", 200);
 
   const milestonesCompleted = project.grants.reduce((acc, grant) => {
-    return acc + grant.milestones.filter((milestone) => milestone.completed).length
-  }, 0)
+    return acc + grant.milestones.filter((milestone) => milestone.completed).length;
+  }, 0);
 
   const stats = [
     {
@@ -44,7 +44,7 @@ export async function GET(
       value: project?.endorsements.length || 0,
       icon: "https://karmahq.xyz/icons/endorsements-lg.png",
     },
-  ]
+  ];
 
   return new ImageResponse(
     <div
@@ -105,5 +105,5 @@ export async function GET(
       width: 1200,
       height: 630,
     }
-  )
+  );
 }

@@ -1,78 +1,78 @@
-"use client"
-import { AreaChart, Card } from "@tremor/react"
-import Image from "next/image"
-import { useSearchParams } from "next/navigation"
-import pluralize from "pluralize"
-import { useEffect, useState } from "react"
-import { Spinner } from "@/components/Utilities/Spinner"
-import { useAggregatedIndicators } from "@/hooks/useAggregatedIndicators"
-import { useIntersectionObserver } from "@/hooks/useIntersectionObserver"
-import type { ProgramImpactDataResponse, ProgramImpactSegment } from "@/types/programs"
-import formatCurrency from "@/utilities/formatCurrency"
-import { cn } from "@/utilities/tailwind"
-import { SegmentSkeleton } from "./SegmentSkeleton"
-import { type TimeframeOption, TimeframeSelector, timeframeOptions } from "./TimeframeSelector"
+"use client";
+import { AreaChart, Card } from "@tremor/react";
+import Image from "next/image";
+import { useSearchParams } from "next/navigation";
+import pluralize from "pluralize";
+import { useEffect, useState } from "react";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { useAggregatedIndicators } from "@/hooks/useAggregatedIndicators";
+import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
+import type { ProgramImpactDataResponse, ProgramImpactSegment } from "@/types/programs";
+import formatCurrency from "@/utilities/formatCurrency";
+import { cn } from "@/utilities/tailwind";
+import { SegmentSkeleton } from "./SegmentSkeleton";
+import { type TimeframeOption, TimeframeSelector, timeframeOptions } from "./TimeframeSelector";
 
 export const fundedAmountFormatter = (value: string) => {
-  const amount = Number(value.includes(" ") ? value.split(" ")[0] : value)
-  const formattedAmount = Number(amount.toFixed(2))
+  const amount = Number(value.includes(" ") ? value.split(" ")[0] : value);
+  const formattedAmount = Number(amount.toFixed(2));
   if (Number.isNaN(formattedAmount)) {
-    return value
+    return value;
   }
-  return formattedAmount
-}
+  return formattedAmount;
+};
 
 const prepareAggregatedChartData = (indicators: any[]) => {
-  if (!indicators.length) return []
+  if (!indicators.length) return [];
 
   // Combine all datapoints from all indicators into a single timeline
-  const allDatapoints: any[] = []
+  const allDatapoints: any[] = [];
 
   indicators.forEach((indicator) => {
     indicator.aggregatedData.forEach((datapoint: any) => {
-      const existingIndex = allDatapoints.findIndex((dp) => dp.date === datapoint.timestamp)
+      const existingIndex = allDatapoints.findIndex((dp) => dp.date === datapoint.timestamp);
       if (existingIndex >= 0) {
         // Add this indicator's value to existing timestamp
-        allDatapoints[existingIndex][indicator.name] = datapoint.value
+        allDatapoints[existingIndex][indicator.name] = datapoint.value;
       } else {
         // Create new datapoint entry
-        const newDatapoint: any = { date: datapoint.timestamp }
-        newDatapoint[indicator.name] = datapoint.value
-        allDatapoints.push(newDatapoint)
+        const newDatapoint: any = { date: datapoint.timestamp };
+        newDatapoint[indicator.name] = datapoint.value;
+        allDatapoints.push(newDatapoint);
       }
-    })
-  })
+    });
+  });
 
   // Sort by date and fill missing values with 0
   const sortedData = allDatapoints.sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-  )
-  const indicatorNames = indicators.map((ind) => ind.name)
+  );
+  const indicatorNames = indicators.map((ind) => ind.name);
 
   return sortedData.map((datapoint) => {
-    const filledDatapoint = { ...datapoint }
+    const filledDatapoint = { ...datapoint };
     indicatorNames.forEach((name) => {
       if (!(name in filledDatapoint)) {
-        filledDatapoint[name] = 0
+        filledDatapoint[name] = 0;
       }
-    })
-    return filledDatapoint
-  })
-}
+    });
+    return filledDatapoint;
+  });
+};
 
 const AggregatedSegmentCard = ({ segment }: { segment: ProgramImpactSegment }) => {
-  const [selectedTimeframe, setSelectedTimeframe] = useState<TimeframeOption>("1_month")
+  const [selectedTimeframe, setSelectedTimeframe] = useState<TimeframeOption>("1_month");
 
   const { isVisible, ref } = useIntersectionObserver({
     threshold: 0.1,
     rootMargin: "200px", // Start loading 200px before segment comes into view
     triggerOnce: true, // Once loaded, don't unload
-  })
+  });
 
   const selectedTimeframeConfig = timeframeOptions.find(
     (option) => option.value === selectedTimeframe
-  )
-  const timeframeMonths = selectedTimeframeConfig?.months || 1
+  );
+  const timeframeMonths = selectedTimeframeConfig?.months || 1;
 
   const {
     data: aggregatedIndicators,
@@ -82,21 +82,21 @@ const AggregatedSegmentCard = ({ segment }: { segment: ProgramImpactSegment }) =
     segment.impactIndicatorIds,
     isVisible && segment.impactIndicatorIds.length > 0,
     timeframeMonths
-  )
+  );
 
   // Listen for filter changes to reset timeframe
-  const searchParams = useSearchParams()
-  const _projectSelected = searchParams.get("projectId")
-  const _programSelected = searchParams.get("programId")
+  const searchParams = useSearchParams();
+  const _projectSelected = searchParams.get("projectId");
+  const _programSelected = searchParams.get("programId");
 
   useEffect(() => {
     // Reset timeframe to 1 month when filters change
-    setSelectedTimeframe("1_month")
-  }, [])
+    setSelectedTimeframe("1_month");
+  }, []);
 
-  const chartData = aggregatedIndicators ? prepareAggregatedChartData(aggregatedIndicators) : []
-  const indicatorNames = aggregatedIndicators?.map((ind) => ind.name) || []
-  const colors = ["blue", "green", "yellow", "purple", "red", "pink"]
+  const chartData = aggregatedIndicators ? prepareAggregatedChartData(aggregatedIndicators) : [];
+  const indicatorNames = aggregatedIndicators?.map((ind) => ind.name) || [];
+  const colors = ["blue", "green", "yellow", "purple", "red", "pink"];
 
   // If not visible yet, show skeleton
   if (!isVisible) {
@@ -109,7 +109,7 @@ const AggregatedSegmentCard = ({ segment }: { segment: ProgramImpactSegment }) =
           indicatorCount={segment.impactIndicatorIds.length}
         />
       </div>
-    )
+    );
   }
 
   return (
@@ -214,15 +214,15 @@ const AggregatedSegmentCard = ({ segment }: { segment: ProgramImpactSegment }) =
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 export const EmptySegment = ({
   type,
   category,
 }: {
-  type: "output" | "outcome"
-  category: string
+  type: "output" | "outcome";
+  category: string;
 }) => {
   return (
     <div className="p-6 bg-[#f8f9fb] dark:bg-zinc-800 flex flex-col justify-center items-center w-full h-full">
@@ -243,17 +243,17 @@ export const EmptySegment = ({
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 const CategoryBlocks = ({ category }: { category: ProgramImpactDataResponse }) => {
   const outputSegments = category.impacts
     .filter((impact) => impact?.impactSegmentType === "output")
-    .sort((a, b) => a.impactSegmentName.localeCompare(b.impactSegmentName))
+    .sort((a, b) => a.impactSegmentName.localeCompare(b.impactSegmentName));
 
   const outcomeSegments = category.impacts
     .filter((impact) => impact?.impactSegmentType === "outcome")
-    .sort((a, b) => a.impactSegmentName.localeCompare(b.impactSegmentName))
+    .sort((a, b) => a.impactSegmentName.localeCompare(b.impactSegmentName));
 
   return (
     <div className={`grid grid-cols-2 gap-6 max-md:flex max-md:flex-col`}>
@@ -285,16 +285,16 @@ const CategoryBlocks = ({ category }: { category: ProgramImpactDataResponse }) =
         )}
       </div>
     </div>
-  )
-}
+  );
+};
 
 export const CategoryRow = ({ category }: { category: ProgramImpactDataResponse }) => {
-  const searchParams = useSearchParams()
-  const projectSelected = searchParams.get("projectId")
+  const searchParams = useSearchParams();
+  const projectSelected = searchParams.get("projectId");
 
   // Calculate total number of projects based on unique indicator IDs across all segments
-  const allIndicatorIds = category.impacts.flatMap((impact) => impact.impactIndicatorIds || [])
-  const uniqueIndicatorCount = new Set(allIndicatorIds).size
+  const allIndicatorIds = category.impacts.flatMap((impact) => impact.impactIndicatorIds || []);
+  const uniqueIndicatorCount = new Set(allIndicatorIds).size;
 
   return (
     <div className="flex flex-col gap-4">
@@ -310,5 +310,5 @@ export const CategoryRow = ({ category }: { category: ProgramImpactDataResponse 
       </div>
       <CategoryBlocks category={category} />
     </div>
-  )
-}
+  );
+};

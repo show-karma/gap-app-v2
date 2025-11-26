@@ -1,16 +1,16 @@
-import { CheckIcon } from "@heroicons/react/24/solid"
-import type React from "react"
-import { errorManager } from "@/components/Utilities/errorManager"
-import { Spinner } from "@/components/Utilities/Spinner"
-import { useTracksForProgram } from "@/hooks/useTracks"
-import type { Track } from "@/services/tracks"
-import { cn } from "@/utilities/tailwind/index"
+import { CheckIcon } from "@heroicons/react/24/solid";
+import type React from "react";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { useTracksForProgram } from "@/hooks/useTracks";
+import type { Track } from "@/services/tracks";
+import { cn } from "@/utilities/tailwind/index";
 
 interface TrackSelectionProps {
-  programId?: string
-  selectedTrackIds: string[]
-  onTrackSelectionChange: (trackIds: string[]) => void
-  disabled?: boolean
+  programId?: string;
+  selectedTrackIds: string[];
+  onTrackSelectionChange: (trackIds: string[]) => void;
+  disabled?: boolean;
 }
 
 export const TrackSelection: React.FC<TrackSelectionProps> = ({
@@ -19,34 +19,34 @@ export const TrackSelection: React.FC<TrackSelectionProps> = ({
   onTrackSelectionChange,
   disabled = false,
 }) => {
-  const { data: tracks = [], isLoading, isError, error } = useTracksForProgram(programId as string)
+  const { data: tracks = [], isLoading, isError, error } = useTracksForProgram(programId as string);
 
   const handleTrackSelection = (trackId: string) => {
-    if (disabled) return
+    if (disabled) return;
 
-    const newSelectedTrackIds = [...selectedTrackIds]
-    const trackIndex = newSelectedTrackIds.indexOf(trackId)
+    const newSelectedTrackIds = [...selectedTrackIds];
+    const trackIndex = newSelectedTrackIds.indexOf(trackId);
 
     if (trackIndex === -1) {
-      newSelectedTrackIds.push(trackId)
+      newSelectedTrackIds.push(trackId);
     } else {
-      newSelectedTrackIds.splice(trackIndex, 1)
+      newSelectedTrackIds.splice(trackIndex, 1);
     }
 
-    onTrackSelectionChange(newSelectedTrackIds)
-  }
+    onTrackSelectionChange(newSelectedTrackIds);
+  };
 
   if (isLoading) {
     return (
       <div className="mt-4 p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-lg flex justify-center">
         <Spinner />
       </div>
-    )
+    );
   }
 
   if (isError) {
     // Log error to Sentry for monitoring
-    errorManager("Failed to load tracks for program", error, { programId })
+    errorManager("Failed to load tracks for program", error, { programId });
 
     return (
       <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
@@ -54,15 +54,15 @@ export const TrackSelection: React.FC<TrackSelectionProps> = ({
           {error instanceof Error ? error.message : "Failed to load tracks for this program"}
         </p>
       </div>
-    )
+    );
   }
 
   if (!programId) {
-    return null
+    return null;
   }
 
   if (tracks.length === 0) {
-    return null
+    return null;
   }
 
   return (
@@ -100,5 +100,5 @@ export const TrackSelection: React.FC<TrackSelectionProps> = ({
         ))}
       </div>
     </div>
-  )
-}
+  );
+};

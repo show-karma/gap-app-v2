@@ -1,8 +1,8 @@
-import MyProjects from "@/components/Pages/MyProjects"
-import { defaultMetadata } from "@/utilities/meta"
+import MyProjects from "@/components/Pages/MyProjects";
+import { defaultMetadata } from "@/utilities/meta";
 
-export const metadata = defaultMetadata
+export const metadata = defaultMetadata;
 
 export default function Page() {
-  return <MyProjects />
+  return <MyProjects />;
 }

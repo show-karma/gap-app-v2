@@ -1,16 +1,16 @@
-"use client"
-import dynamic from "next/dynamic"
-import Image from "next/image"
-import { useState } from "react"
-import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar"
-import EthereumAddressToENSName from "@/components/EthereumAddressToENSName"
-import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers"
-import type { UnifiedMilestone } from "@/types/roadmap"
-import { formatDate } from "@/utilities/formatDate"
-import { PAGES } from "@/utilities/pages"
-import { ReadMore } from "@/utilities/ReadMore"
-import { cn } from "@/utilities/tailwind"
-import { ExternalLink } from "../Utilities/ExternalLink"
+"use client";
+import dynamic from "next/dynamic";
+import Image from "next/image";
+import { useState } from "react";
+import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
+import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
+import type { UnifiedMilestone } from "@/types/roadmap";
+import { formatDate } from "@/utilities/formatDate";
+import { PAGES } from "@/utilities/pages";
+import { ReadMore } from "@/utilities/ReadMore";
+import { cn } from "@/utilities/tailwind";
+import { ExternalLink } from "../Utilities/ExternalLink";
 
 const ProjectObjectiveCompletion = dynamic(
   () =>
@@ -20,7 +20,7 @@ const ProjectObjectiveCompletion = dynamic(
   {
     ssr: false,
   }
-)
+);
 
 const ObjectiveOptionsMenu = dynamic(
   () =>
@@ -28,14 +28,14 @@ const ObjectiveOptionsMenu = dynamic(
   {
     ssr: false,
   }
-)
+);
 
 const GrantMilestoneOptionsMenu = dynamic(
   () => import("./GrantMilestoneOptionsMenu").then((mod) => mod.GrantMilestoneOptionsMenu),
   {
     ssr: false,
   }
-)
+);
 
 const GrantMilestoneCompletion = dynamic(
   () =>
@@ -45,78 +45,78 @@ const GrantMilestoneCompletion = dynamic(
   {
     ssr: false,
   }
-)
+);
 
 interface MilestoneCardProps {
-  milestone: UnifiedMilestone
-  isAuthorized: boolean
+  milestone: UnifiedMilestone;
+  isAuthorized: boolean;
 }
 
 export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) => {
-  const [isCompleting, setIsCompleting] = useState(false)
+  const [isCompleting, setIsCompleting] = useState(false);
 
   const handleCompleting = (isCompleting: boolean) => {
-    setIsCompleting(isCompleting)
-  }
+    setIsCompleting(isCompleting);
+  };
 
-  const { title, description, completed, type } = milestone
+  const { title, description, completed, type } = milestone;
 
   // Fetch milestone impact data (outputs/metrics) if milestone is completed
   const { data: milestoneImpactData } = useMilestoneImpactAnswers({
     milestoneUID: completed ? milestone.uid : undefined,
-  })
+  });
 
   // project milestone-specific properties
-  const projectMilestone = milestone.source.projectMilestone
+  const projectMilestone = milestone.source.projectMilestone;
   const attester =
-    projectMilestone?.attester || milestone.source.grantMilestone?.milestone.attester || ""
-  const createdAt = milestone.createdAt
+    projectMilestone?.attester || milestone.source.grantMilestone?.milestone.attester || "";
+  const createdAt = milestone.createdAt;
 
   // grant milestone-specific properties
-  const grantMilestone = milestone.source.grantMilestone
-  const grantTitle = grantMilestone?.grant.details?.data.title
-  const programId = grantMilestone?.grant.details?.data.programId
-  const communityData = grantMilestone?.grant.community?.details?.data
-  const endsAt = milestone.endsAt
+  const grantMilestone = milestone.source.grantMilestone;
+  const grantTitle = grantMilestone?.grant.details?.data.title;
+  const programId = grantMilestone?.grant.details?.data.programId;
+  const communityData = grantMilestone?.grant.community?.details?.data;
+  const endsAt = milestone.endsAt;
 
   // completion information
   const completionReason =
-    projectMilestone?.completed?.data?.reason || grantMilestone?.milestone.completed?.data?.reason
+    projectMilestone?.completed?.data?.reason || grantMilestone?.milestone.completed?.data?.reason;
   const completionProof =
     projectMilestone?.completed?.data?.proofOfWork ||
-    grantMilestone?.milestone.completed?.data?.proofOfWork
+    grantMilestone?.milestone.completed?.data?.proofOfWork;
   const completionDeliverables =
     (projectMilestone?.completed?.data as any)?.deliverables ||
-    (grantMilestone?.milestone.completed?.data as any)?.deliverables
+    (grantMilestone?.milestone.completed?.data as any)?.deliverables;
 
   // Determine border color and tag based on milestone type and status
   const getBorderColor = () => {
-    if (completed) return "border-brand-blue"
-    return "border-gray-300 dark:border-zinc-400"
-  }
+    if (completed) return "border-brand-blue";
+    return "border-gray-300 dark:border-zinc-400";
+  };
 
   const _getLeftBorderColor = () => {
-    if (completed) return "#2ED3B7"
-    return "#FDB022"
-  }
+    if (completed) return "#2ED3B7";
+    return "#FDB022";
+  };
 
   const getStatusColor = () => {
-    if (completed) return "bg-brand-blue text-white"
-    return "bg-[#FFFAEB] text-[#B54708] dark:bg-[#FFFAEB]/10 dark:text-orange-100"
-  }
+    if (completed) return "bg-brand-blue text-white";
+    return "bg-[#FFFAEB] text-[#B54708] dark:bg-[#FFFAEB]/10 dark:text-orange-100";
+  };
 
   const getStatusBorder = () => {
-    if (completed) return ""
-    return "border border-[#FEDF89]"
-  }
+    if (completed) return "";
+    return "border border-[#FEDF89]";
+  };
 
   const getStatusText = () => {
-    return completed ? "Completed" : "Pending"
-  }
+    return completed ? "Completed" : "Pending";
+  };
 
   // Function to handle completion for project milestones
   const handleProjectMilestoneCompletion = () => {
-    if (!projectMilestone) return null
+    if (!projectMilestone) return null;
 
     return (
       <div className="w-full flex-col flex gap-2 px-4 py-2 bg-[#F8F9FC] dark:bg-zinc-700 rounded-lg">
@@ -150,8 +150,8 @@ export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) =
           </>
         )}
       </div>
-    )
-  }
+    );
+  };
 
   // Simple function to determine content of milestone card
   const renderMilestoneContent = () => {
@@ -330,8 +330,8 @@ export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) =
           )
         ) : null}
       </>
-    )
-  }
+    );
+  };
 
   return (
     <div
@@ -358,9 +358,9 @@ export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) =
               [...milestone.mergedGrants]
                 .sort((a, b) => {
                   // Sort alphabetically by grant title
-                  const titleA = a.grantTitle || "Untitled Grant"
-                  const titleB = b.grantTitle || "Untitled Grant"
-                  return titleA.localeCompare(titleB)
+                  const titleA = a.grantTitle || "Untitled Grant";
+                  const titleB = b.grantTitle || "Untitled Grant";
+                  return titleA.localeCompare(titleB);
                 })
                 .map((grant, index) => (
                   <ExternalLink
@@ -406,5 +406,5 @@ export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) =
       {/* Use the extracted render function for the main content */}
       {renderMilestoneContent()}
     </div>
-  )
-}
+  );
+};

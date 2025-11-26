@@ -442,13 +442,13 @@ export const BatchDonationsABI = [
     stateMutability: "payable",
     type: "constructor",
   },
-] as const
+] as const;
 
-export type BatchDonationsAbi = typeof BatchDonationsABI
+export type BatchDonationsAbi = typeof BatchDonationsABI;
 
-export const PERMIT2_ADDRESS = "0x000000000022D473030F116dDEE9F6B43aC78BA3" as const
+export const PERMIT2_ADDRESS = "0x000000000022D473030F116dDEE9F6B43aC78BA3" as const;
 
-type HexAddress = `0x${string}`
+type HexAddress = `0x${string}`;
 
 export const BATCH_DONATIONS_CONTRACTS: Record<number, HexAddress | null> = {
   1: "0x5f4A21e16b04f9944229DF6CD2724088e3457B0e", // Ethereum Mainnet
@@ -460,10 +460,10 @@ export const BATCH_DONATIONS_CONTRACTS: Record<number, HexAddress | null> = {
   11155111: "0x5f4A21e16b04f9944229DF6CD2724088e3457B0e", // Sepolia
   11155420: "0x5f4A21e16b04f9944229DF6CD2724088e3457B0e", // Optimism Sepolia
   84532: "0x5f4A21e16b04f9944229DF6CD2724088e3457B0e", // Base Sepolia
-}
+};
 
 export const getBatchDonationsContractAddress = (chainId: number): HexAddress | null =>
-  BATCH_DONATIONS_CONTRACTS[chainId] ?? null
+  BATCH_DONATIONS_CONTRACTS[chainId] ?? null;
 
 /**
  * Check if batch donations are supported on a given chain
@@ -471,9 +471,9 @@ export const getBatchDonationsContractAddress = (chainId: number): HexAddress | 
  * @returns true if batch donations contract is deployed on this chain
  */
 export const isBatchDonationsSupportedOnChain = (chainId: number): boolean => {
-  const address = BATCH_DONATIONS_CONTRACTS[chainId]
-  return address !== null && address !== undefined
-}
+  const address = BATCH_DONATIONS_CONTRACTS[chainId];
+  return address !== null && address !== undefined;
+};
 
 /**
  * Get list of chain IDs where batch donations are currently deployed
@@ -482,5 +482,5 @@ export const isBatchDonationsSupportedOnChain = (chainId: number): boolean => {
 export const getSupportedBatchDonationsChains = (): number[] => {
   return Object.entries(BATCH_DONATIONS_CONTRACTS)
     .filter(([_, address]) => address !== null)
-    .map(([chainId]) => parseInt(chainId, 10))
-}
+    .map(([chainId]) => parseInt(chainId, 10));
+};

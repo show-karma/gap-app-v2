@@ -32,8 +32,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
   buttonElement = {
     icon: <PlusIcon className="h-4 w-4 text-primary-600" />,
     text: "Transfer Ownership",
-    styleClass:
-      "flex items-center gap-x-1 rounded-md  px-3 py-2 text-sm font-semibold",
+    styleClass: "flex items-center gap-x-1 rounded-md  px-3 py-2 text-sm font-semibold",
   },
 }) => {
   const {
@@ -73,9 +72,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
         return;
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        actualChainId
-      );
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
@@ -85,21 +82,13 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
       const fetchedProject = await getProjectById(project.uid);
       if (!fetchedProject) return;
       await fetchedProject
-        .transferOwnership(
-          walletSigner,
-          sanitizeInput(newOwner),
-          changeStepperStep
-        )
+        .transferOwnership(walletSigner, sanitizeInput(newOwner), changeStepperStep)
         .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, project.chainID),
-              "POST",
-              {}
-            );
+            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), "POST", {});
           }
           while (retries > 0) {
             const isTransfered = await isOwnershipTransfered(
@@ -149,11 +138,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
   return (
     <>
       {buttonElement ? (
-        <Button
-          disabled={!isProjectAdmin}
-          onClick={openModal}
-          className={buttonElement.styleClass}
-        >
+        <Button disabled={!isProjectAdmin} onClick={openModal} className={buttonElement.styleClass}>
           {buttonElement.icon}
           {buttonElement.text}
         </Button>

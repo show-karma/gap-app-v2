@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   BookOpenIcon,
@@ -8,25 +8,25 @@ import {
   InformationCircleIcon,
   ShieldCheckIcon,
   XMarkIcon,
-} from "@heroicons/react/24/outline"
-import type React from "react"
-import { useState } from "react"
-import { Button } from "@/components/Utilities/Button"
-import { cn } from "@/utilities/tailwind"
+} from "@heroicons/react/24/outline";
+import type React from "react";
+import { useState } from "react";
+import { Button } from "@/components/Utilities/Button";
+import { cn } from "@/utilities/tailwind";
 
 interface OnboardingStep {
-  id: string
-  title: string
-  description: string
-  icon: React.ComponentType<{ className?: string }>
-  content: React.ReactNode
+  id: string;
+  title: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+  content: React.ReactNode;
 }
 
 interface ReviewerOnboardingProps {
-  onComplete?: () => void
-  onDismiss?: () => void
-  programName?: string
-  className?: string
+  onComplete?: () => void;
+  onDismiss?: () => void;
+  programName?: string;
+  className?: string;
 }
 
 /**
@@ -39,9 +39,9 @@ export const ReviewerOnboarding: React.FC<ReviewerOnboardingProps> = ({
   programName,
   className,
 }) => {
-  const [currentStep, setCurrentStep] = useState(0)
-  const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set())
-  const [showQuickGuide, setShowQuickGuide] = useState(false)
+  const [currentStep, setCurrentStep] = useState(0);
+  const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
+  const [showQuickGuide, setShowQuickGuide] = useState(false);
 
   const steps: OnboardingStep[] = [
     {
@@ -308,30 +308,30 @@ export const ReviewerOnboarding: React.FC<ReviewerOnboardingProps> = ({
         </div>
       ),
     },
-  ]
+  ];
 
   const handleNext = () => {
-    const currentStepId = steps[currentStep].id
-    setCompletedSteps((prev) => new Set(prev).add(currentStepId))
+    const currentStepId = steps[currentStep].id;
+    setCompletedSteps((prev) => new Set(prev).add(currentStepId));
 
     if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1)
+      setCurrentStep(currentStep + 1);
     } else {
-      onComplete?.()
+      onComplete?.();
     }
-  }
+  };
 
   const handlePrevious = () => {
     if (currentStep > 0) {
-      setCurrentStep(currentStep - 1)
+      setCurrentStep(currentStep - 1);
     }
-  }
+  };
 
   const handleSkip = () => {
-    onComplete?.()
-  }
+    onComplete?.();
+  };
 
-  const CurrentIcon = steps[currentStep].icon
+  const CurrentIcon = steps[currentStep].icon;
 
   return (
     <div
@@ -437,14 +437,14 @@ export const ReviewerOnboarding: React.FC<ReviewerOnboardingProps> = ({
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 /**
  * Compact version of the onboarding for returning users
  */
 export const ReviewerQuickReminder: React.FC<{
-  onDismiss: () => void
+  onDismiss: () => void;
 }> = ({ onDismiss }) => {
   return (
     <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 mb-6">
@@ -471,5 +471,5 @@ export const ReviewerQuickReminder: React.FC<{
         </button>
       </div>
     </div>
-  )
-}
+  );
+};

@@ -1,28 +1,28 @@
-"use client"
+"use client";
 
-import { TrashIcon } from "@heroicons/react/24/solid"
-import type { FieldErrors, UseFormRegister } from "react-hook-form"
-import { Button } from "@/components/Utilities/Button"
-import { InfoTooltip } from "@/components/Utilities/InfoTooltip"
-import { cn } from "@/utilities/tailwind"
+import { TrashIcon } from "@heroicons/react/24/solid";
+import type { FieldErrors, UseFormRegister } from "react-hook-form";
+import { Button } from "@/components/Utilities/Button";
+import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
+import { cn } from "@/utilities/tailwind";
 
 interface DeliverableField {
-  id: string
-  name?: string
-  proof?: string
-  description?: string
+  id: string;
+  name?: string;
+  proof?: string;
+  description?: string;
 }
 
 interface DeliverablesTableProps {
-  fields: Record<"id", string>[]
-  register: UseFormRegister<any>
-  errors: FieldErrors<any>
-  onAdd: () => void
-  onRemove: (index: number) => void
-  labelStyle: string
+  fields: Record<"id", string>[];
+  register: UseFormRegister<any>;
+  errors: FieldErrors<any>;
+  onAdd: () => void;
+  onRemove: (index: number) => void;
+  labelStyle: string;
 }
 
-const EmptyDiv = () => <div className="h-5 w-1" />
+const EmptyDiv = () => <div className="h-5 w-1" />;
 
 export const DeliverablesTable = ({
   fields,
@@ -152,5 +152,5 @@ export const DeliverablesTable = ({
         </div>
       )}
     </div>
-  )
-}
+  );
+};

@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   ChatBubbleLeftRightIcon,
@@ -8,42 +8,42 @@ import {
   ExclamationTriangleIcon,
   PencilSquareIcon,
   XCircleIcon,
-} from "@heroicons/react/24/outline"
-import { format, isValid, parseISO } from "date-fns"
-import pluralize from "pluralize"
-import { type FC, useMemo, useState } from "react"
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview"
-import { Spinner } from "@/components/Utilities/Spinner"
+} from "@heroicons/react/24/outline";
+import { format, isValid, parseISO } from "date-fns";
+import pluralize from "pluralize";
+import { type FC, useMemo, useState } from "react";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { Spinner } from "@/components/Utilities/Spinner";
 import type {
   ApplicationComment,
   FundingApplicationStatusV2,
   IApplicationVersion,
   IStatusHistoryEntry,
-} from "@/types/funding-platform"
-import { cn } from "@/utilities/tailwind"
-import CommentInput from "./CommentInput"
-import CommentItem from "./CommentItem"
+} from "@/types/funding-platform";
+import { cn } from "@/utilities/tailwind";
+import CommentInput from "./CommentInput";
+import CommentItem from "./CommentItem";
 
 interface CommentsTimelineProps {
-  applicationId: string
-  comments: ApplicationComment[]
-  statusHistory: IStatusHistoryEntry[]
-  versionHistory?: IApplicationVersion[]
-  currentStatus: FundingApplicationStatusV2
-  isAdmin: boolean
-  currentUserAddress?: string
-  onCommentAdd?: (content: string) => Promise<void>
-  onCommentEdit?: (commentId: string, content: string) => Promise<void>
-  onCommentDelete?: (commentId: string) => Promise<void>
-  onVersionClick?: (versionId: string) => void
-  isLoading?: boolean
+  applicationId: string;
+  comments: ApplicationComment[];
+  statusHistory: IStatusHistoryEntry[];
+  versionHistory?: IApplicationVersion[];
+  currentStatus: FundingApplicationStatusV2;
+  isAdmin: boolean;
+  currentUserAddress?: string;
+  onCommentAdd?: (content: string) => Promise<void>;
+  onCommentEdit?: (commentId: string, content: string) => Promise<void>;
+  onCommentDelete?: (commentId: string) => Promise<void>;
+  onVersionClick?: (versionId: string) => void;
+  isLoading?: boolean;
 }
 
 type TimelineItem = {
-  type: "comment" | "status" | "version"
-  timestamp: Date
-  data: ApplicationComment | IStatusHistoryEntry | IApplicationVersion
-}
+  type: "comment" | "status" | "version";
+  timestamp: Date;
+  data: ApplicationComment | IStatusHistoryEntry | IApplicationVersion;
+};
 
 const statusConfig = {
   pending: {
@@ -71,14 +71,14 @@ const statusConfig = {
     color: "text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900",
     label: "Rejected",
   },
-}
+};
 const labelMap = {
   pending: "Pending Review",
   under_review: "Under Review",
   revision_requested: "Revision Requested",
   approved: "Approved",
   rejected: "Rejected",
-}
+};
 
 const CommentsTimeline: FC<CommentsTimelineProps> = ({
   applicationId: _applicationId, // Unused but kept for interface compatibility
@@ -94,102 +94,102 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
   onVersionClick,
   isLoading = false,
 }) => {
-  const [isAddingComment, setIsAddingComment] = useState(false)
+  const [isAddingComment, setIsAddingComment] = useState(false);
 
   // Combine comments, status history, and version history into a unified timeline
   const timelineItems = useMemo(() => {
-    const items: TimelineItem[] = []
+    const items: TimelineItem[] = [];
 
     // Add comments
     comments.forEach((comment) => {
       const timestamp =
         typeof comment.createdAt === "string"
           ? parseISO(comment.createdAt)
-          : (comment.createdAt as Date)
+          : (comment.createdAt as Date);
 
       if (isValid(timestamp)) {
         items.push({
           type: "comment",
           timestamp,
           data: comment,
-        })
+        });
       }
-    })
+    });
 
     // Add status history
     statusHistory.forEach((status) => {
       const timestamp =
         typeof status.timestamp === "string"
           ? parseISO(status.timestamp)
-          : (status.timestamp as Date)
+          : (status.timestamp as Date);
 
       if (isValid(timestamp)) {
         items.push({
           type: "status",
           timestamp,
           data: status,
-        })
+        });
       }
-    })
+    });
 
     // Add version history (including version 1 for initial submission)
     versionHistory.forEach((version) => {
       const timestamp =
         typeof version.createdAt === "string"
           ? parseISO(version.createdAt)
-          : (version.createdAt as Date)
+          : (version.createdAt as Date);
 
       if (isValid(timestamp)) {
         items.push({
           type: "version",
           timestamp,
           data: version,
-        })
+        });
       }
-    })
+    });
 
     // Sort by timestamp (newest first)
-    return items.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
-  }, [comments, statusHistory, versionHistory])
+    return items.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+  }, [comments, statusHistory, versionHistory]);
 
   const handleAddComment = async (content: string) => {
-    if (!onCommentAdd) return
+    if (!onCommentAdd) return;
 
-    setIsAddingComment(true)
+    setIsAddingComment(true);
     try {
-      await onCommentAdd(content)
+      await onCommentAdd(content);
     } catch (error) {
-      console.error("Failed to add comment:", error)
+      console.error("Failed to add comment:", error);
     } finally {
-      setIsAddingComment(false)
+      setIsAddingComment(false);
     }
-  }
+  };
 
   const handleEditComment = async (commentId: string, content: string) => {
-    if (!onCommentEdit) return
-    await onCommentEdit(commentId, content)
-  }
+    if (!onCommentEdit) return;
+    await onCommentEdit(commentId, content);
+  };
 
   const handleDeleteComment = async (commentId: string) => {
-    if (!onCommentDelete) return
+    if (!onCommentDelete) return;
 
-    await onCommentDelete(commentId)
-  }
+    await onCommentDelete(commentId);
+  };
 
   const formatDate = (dateString: string | Date) => {
     try {
-      const date = typeof dateString === "string" ? parseISO(dateString) : dateString
-      if (!isValid(date)) return "Invalid date"
-      return format(date, "MMM dd, yyyy HH:mm")
+      const date = typeof dateString === "string" ? parseISO(dateString) : dateString;
+      if (!isValid(date)) return "Invalid date";
+      return format(date, "MMM dd, yyyy HH:mm");
     } catch {
-      return "Invalid date"
+      return "Invalid date";
     }
-  }
+  };
 
   const renderStatusItem = (status: IStatusHistoryEntry, isLatest: boolean) => {
-    const config = statusConfig[status.status as keyof typeof statusConfig] || statusConfig.pending
-    const StatusIcon = config.icon
-    const isCurrent = status.status === currentStatus && isLatest
+    const config = statusConfig[status.status as keyof typeof statusConfig] || statusConfig.pending;
+    const StatusIcon = config.icon;
+    const isCurrent = status.status === currentStatus && isLatest;
 
     return (
       <div className="flex space-x-3">
@@ -239,11 +239,11 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
           )}
         </div>
       </div>
-    )
-  }
+    );
+  };
 
   const renderVersionItem = (version: IApplicationVersion) => {
-    const isInitialVersion = version.versionNumber === 0
+    const isInitialVersion = version.versionNumber === 0;
 
     return (
       <div className="flex space-x-3">
@@ -302,15 +302,15 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
           )}
         </div>
       </div>
-    )
-  }
+    );
+  };
 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-12">
         <Spinner className="h-8 w-8" />
       </div>
-    )
+    );
   }
 
   return (
@@ -356,10 +356,10 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
         <div className="flow-root">
           <ul className="">
             {timelineItems.map((item, idx) => {
-              const isLast = idx === timelineItems.length - 1
+              const isLast = idx === timelineItems.length - 1;
               const isLatestStatus =
                 item.type === "status" &&
-                statusHistory.indexOf(item.data as IStatusHistoryEntry) === 0
+                statusHistory.indexOf(item.data as IStatusHistoryEntry) === 0;
 
               // Use a unique key based on the actual data, not index
               const itemKey =
@@ -367,7 +367,7 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
                   ? `comment-${(item.data as ApplicationComment).id}`
                   : item.type === "version"
                     ? `version-${(item.data as IApplicationVersion).id}`
-                    : `status-${idx}-${(item.data as any).timestamp}`
+                    : `status-${idx}-${(item.data as any).timestamp}`;
 
               return (
                 <li key={itemKey}>
@@ -393,13 +393,13 @@ const CommentsTimeline: FC<CommentsTimelineProps> = ({
                     )}
                   </div>
                 </li>
-              )
+              );
             })}
           </ul>
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default CommentsTimeline
+export default CommentsTimeline;

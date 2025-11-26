@@ -1,26 +1,26 @@
-import { ArrowRightIcon } from "@heroicons/react/20/solid"
-import Image from "next/image"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { InfiniteMovingCards } from "@/src/components/ui/infinite-moving-cards"
-import { ThemeImage } from "@/src/components/ui/theme-image"
-import { marketingLayoutTheme } from "@/src/helper/theme"
-import { chosenCommunities } from "@/utilities/chosenCommunities"
-import { PAGES } from "@/utilities/pages"
-import { cn } from "@/utilities/tailwind"
-import { CreateProjectButton } from "./create-project-button"
+import { ArrowRightIcon } from "@heroicons/react/20/solid";
+import Image from "next/image";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { InfiniteMovingCards } from "@/src/components/ui/infinite-moving-cards";
+import { ThemeImage } from "@/src/components/ui/theme-image";
+import { marketingLayoutTheme } from "@/src/helper/theme";
+import { chosenCommunities } from "@/utilities/chosenCommunities";
+import { PAGES } from "@/utilities/pages";
+import { cn } from "@/utilities/tailwind";
+import { CreateProjectButton } from "./create-project-button";
 
 const users = [
   "/images/homepage/user1.jpg",
   "/images/homepage/user2.png",
   "/images/homepage/user3.png",
-]
+];
 
 const items = chosenCommunities(true).map((community) => ({
   text: community.name,
   image: community.imageURL,
   href: PAGES.COMMUNITY.ALL_GRANTS(community.slug),
-}))
+}));
 
 export function Hero() {
   return (
@@ -57,7 +57,7 @@ export function Hero() {
                   0: "z-[4]",
                   1: "z-[5]",
                   2: "z-[6]",
-                } as Record<number, string>
+                } as Record<number, string>;
 
                 return (
                   <Image
@@ -72,7 +72,7 @@ export function Hero() {
                       zIndexClasses[index]
                     )}
                   />
-                )
+                );
               })}
             </div>
             <div className="flex flex-row items-center flex-wrap justify-start gap-1 md:gap-3">
@@ -121,5 +121,5 @@ export function Hero() {
         </div>
       </div>
     </section>
-  )
+  );
 }

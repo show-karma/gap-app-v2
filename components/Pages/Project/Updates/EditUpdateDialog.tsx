@@ -1,20 +1,20 @@
-import { Dialog, Transition } from "@headlessui/react"
-import dynamic from "next/dynamic"
-import { Fragment, useEffect, useState } from "react"
-import { cn } from "@/utilities/tailwind"
-import { ProjectUpdateFormBlock } from "./ProjectUpdateFormBlock"
+import { Dialog, Transition } from "@headlessui/react";
+import dynamic from "next/dynamic";
+import { Fragment, useEffect, useState } from "react";
+import { cn } from "@/utilities/tailwind";
+import { ProjectUpdateFormBlock } from "./ProjectUpdateFormBlock";
 
 // Dynamic import for the EditImpactFormBlock with proper typing
 const EditImpactFormBlock = dynamic(() => import("./EditImpactFormBlock"), {
   ssr: false,
-})
+});
 
 interface EditUpdateDialogProps {
-  isOpen: boolean
-  onClose: () => void
-  projectId: string
-  updateId: string
-  updateType?: "ProjectUpdate" | "ProjectImpact"
+  isOpen: boolean;
+  onClose: () => void;
+  projectId: string;
+  updateId: string;
+  updateType?: "ProjectUpdate" | "ProjectImpact";
 }
 
 export const EditUpdateDialog = ({
@@ -25,13 +25,13 @@ export const EditUpdateDialog = ({
   updateType = "ProjectUpdate",
 }: EditUpdateDialogProps) => {
   // Keep track of current update ID to force remount when changed
-  const [currentUpdateId, setCurrentUpdateId] = useState(updateId)
+  const [currentUpdateId, setCurrentUpdateId] = useState(updateId);
 
   useEffect(() => {
     if (isOpen && updateId !== currentUpdateId) {
-      setCurrentUpdateId(updateId)
+      setCurrentUpdateId(updateId);
     }
-  }, [isOpen, updateId, currentUpdateId])
+  }, [isOpen, updateId, currentUpdateId]);
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -84,5 +84,5 @@ export const EditUpdateDialog = ({
         </div>
       </Dialog>
     </Transition>
-  )
-}
+  );
+};

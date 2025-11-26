@@ -1,30 +1,30 @@
-"use client"
-import { Dialog, Transition } from "@headlessui/react"
-import { ArrowPathIcon, ChartBarSquareIcon } from "@heroicons/react/24/solid"
-import { Fragment, useState } from "react"
-import { Button } from "@/components/Utilities/Button"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
+"use client";
+import { Dialog, Transition } from "@headlessui/react";
+import { ArrowPathIcon, ChartBarSquareIcon } from "@heroicons/react/24/solid";
+import { Fragment, useState } from "react";
+import { Button } from "@/components/Utilities/Button";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
-import { errorManager } from "./Utilities/errorManager"
+import { errorManager } from "./Utilities/errorManager";
 
 interface CommunityStatsProps {
-  communityId: string
+  communityId: string;
 }
 
 export default function CommunityStats({ communityId }: CommunityStatsProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [stats, setStats] = useState<any>({})
-  const [error, setError] = useState<any>("")
-  const [loading, setLoading] = useState<boolean>(true)
+  const [isOpen, setIsOpen] = useState(false);
+  const [stats, setStats] = useState<any>({});
+  const [error, setError] = useState<any>("");
+  const [loading, setLoading] = useState<boolean>(true);
 
   async function fetchStats() {
-    setLoading(true)
+    setLoading(true);
     try {
-      const [data, error]: any = await fetchData(INDEXER.COMMUNITY.STATS(communityId as string))
+      const [data, error]: any = await fetchData(INDEXER.COMMUNITY.STATS(communityId as string));
       if (error) {
-        console.error("Error fetching data:", error)
-        setError(error)
+        console.error("Error fetching data:", error);
+        setError(error);
       } else {
         if (data?.projects) {
           setStats({
@@ -57,32 +57,32 @@ export default function CommunityStats({ communityId }: CommunityStatsProps) {
               data?.GrantUpdateStatuses +
               data?.GrantEdits +
               data?.ProjectEdits,
-          })
+          });
 
-          setError("")
+          setError("");
         } else {
-          console.error("No stats found for community:", communityId)
-          setError("No stats found for community")
+          console.error("No stats found for community:", communityId);
+          setError("No stats found for community");
         }
       }
     } catch (error: any) {
-      console.error("Error fetching stats:", error)
+      console.error("Error fetching stats:", error);
       errorManager(`Error fetching stats: ${error}`, error, {
         communityId,
-      })
-      setError(error)
+      });
+      setError(error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   function closeModal() {
-    setIsOpen(false)
+    setIsOpen(false);
   }
 
   async function openModal() {
-    setIsOpen(true)
-    await fetchStats()
+    setIsOpen(true);
+    await fetchStats();
   }
 
   return (
@@ -147,5 +147,5 @@ export default function CommunityStats({ communityId }: CommunityStatsProps) {
         </Dialog>
       </Transition>
     </>
-  )
+  );
 }

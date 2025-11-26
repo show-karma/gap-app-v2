@@ -1,6 +1,6 @@
-"use client"
-import dynamic from "next/dynamic"
-import { Spinner } from "@/components/Utilities/Spinner"
+"use client";
+import dynamic from "next/dynamic";
+import { Spinner } from "@/components/Utilities/Spinner";
 
 const AddProgram = dynamic(
   () => import("@/components/Pages/ProgramRegistry/AddProgram").then((mod) => mod.default),
@@ -11,7 +11,7 @@ const AddProgram = dynamic(
       </div>
     ),
   }
-)
+);
 export const AddProgramWrapper = () => {
-  return <AddProgram />
-}
+  return <AddProgram />;
+};

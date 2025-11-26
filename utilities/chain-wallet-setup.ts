@@ -1,19 +1,19 @@
-import type { GAP } from "@show-karma/karma-gap-sdk"
-import type { Signer } from "ethers"
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils"
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain"
-import { safeGetWalletClient } from "@/utilities/wallet-helpers"
+import type { GAP } from "@show-karma/karma-gap-sdk";
+import type { Signer } from "ethers";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 interface SetupChainAndWalletParams {
-  targetChainId: number
-  currentChainId?: number
-  switchChainAsync: any
+  targetChainId: number;
+  currentChainId?: number;
+  switchChainAsync: any;
 }
 
 interface SetupChainAndWalletResult {
-  gapClient: GAP
-  walletSigner: Signer
-  chainId: number
+  gapClient: GAP;
+  walletSigner: Signer;
+  chainId: number;
 }
 
 /**
@@ -50,23 +50,23 @@ export const setupChainAndWallet = async ({
     targetChainId,
     currentChainId,
     switchChainAsync,
-  })
+  });
 
   if (!success || !gapClient) {
-    return null
+    return null;
   }
 
   // Step 2: Get wallet client
-  const { walletClient, error: walletError } = await safeGetWalletClient(chainId)
+  const { walletClient, error: walletError } = await safeGetWalletClient(chainId);
   if (walletError || !walletClient) {
-    throw new Error("Failed to connect to wallet", { cause: walletError })
+    throw new Error("Failed to connect to wallet", { cause: walletError });
   }
 
   // Step 3: Create signer
-  const walletSigner = await walletClientToSigner(walletClient)
+  const walletSigner = await walletClientToSigner(walletClient);
   if (!walletSigner) {
-    throw new Error("Failed to create wallet signer")
+    throw new Error("Failed to create wallet signer");
   }
 
-  return { gapClient, walletSigner, chainId }
-}
+  return { gapClient, walletSigner, chainId };
+};

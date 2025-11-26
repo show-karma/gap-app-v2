@@ -1,7 +1,7 @@
-"use client"
+"use client";
 /* eslint-disable @next/next/no-img-element */
-import dynamic from "next/dynamic"
-import { LoadingManagePrograms } from "@/components/Pages/ProgramRegistry/Loading/ManagePrograms"
+import dynamic from "next/dynamic";
+import { LoadingManagePrograms } from "@/components/Pages/ProgramRegistry/Loading/ManagePrograms";
 
 const ManagePrograms = dynamic(
   () =>
@@ -9,10 +9,10 @@ const ManagePrograms = dynamic(
   {
     loading: () => <LoadingManagePrograms />,
   }
-)
+);
 
 const ManageProgramsWrapper = () => {
-  return <ManagePrograms />
-}
+  return <ManagePrograms />;
+};
 
-export default ManageProgramsWrapper
+export default ManageProgramsWrapper;

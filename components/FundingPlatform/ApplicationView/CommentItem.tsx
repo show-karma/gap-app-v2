@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   ChatBubbleLeftIcon,
@@ -7,21 +7,21 @@ import {
   TrashIcon,
   UserCircleIcon,
   XMarkIcon,
-} from "@heroicons/react/24/outline"
-import { format, isValid, parseISO } from "date-fns"
-import React, { type FC, useState } from "react"
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor"
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview"
-import { Spinner } from "@/components/Utilities/Spinner"
-import type { ApplicationComment } from "@/types/funding-platform"
-import { cn } from "@/utilities/tailwind"
+} from "@heroicons/react/24/outline";
+import { format, isValid, parseISO } from "date-fns";
+import React, { type FC, useState } from "react";
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { Spinner } from "@/components/Utilities/Spinner";
+import type { ApplicationComment } from "@/types/funding-platform";
+import { cn } from "@/utilities/tailwind";
 
 interface CommentItemProps {
-  comment: ApplicationComment
-  isAdmin: boolean
-  currentUserAddress?: string
-  onEdit?: (commentId: string, newContent: string) => Promise<void>
-  onDelete?: (commentId: string) => Promise<void>
+  comment: ApplicationComment;
+  isAdmin: boolean;
+  currentUserAddress?: string;
+  onEdit?: (commentId: string, newContent: string) => Promise<void>;
+  onDelete?: (commentId: string) => Promise<void>;
 }
 
 const CommentItem: FC<CommentItemProps> = ({
@@ -31,89 +31,89 @@ const CommentItem: FC<CommentItemProps> = ({
   onEdit,
   onDelete,
 }) => {
-  const [isEditing, setIsEditing] = useState(false)
-  const [editContent, setEditContent] = useState(comment.content)
-  const [isUpdating, setIsUpdating] = useState(false)
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(comment.content);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Update editContent when comment changes to handle optimistic updates
   React.useEffect(() => {
-    setEditContent(comment.content)
-  }, [comment.content])
+    setEditContent(comment.content);
+  }, [comment.content]);
 
   // Users can edit their own comments (if not deleted)
-  const isAuthor = currentUserAddress?.toLowerCase() === comment.authorAddress?.toLowerCase()
-  const canEdit = !comment.isDeleted && isAuthor
+  const isAuthor = currentUserAddress?.toLowerCase() === comment.authorAddress?.toLowerCase();
+  const canEdit = !comment.isDeleted && isAuthor;
 
   // Users can delete their own comments, admins can delete any comment
-  const canDelete = !comment.isDeleted && (isAuthor || isAdmin)
+  const canDelete = !comment.isDeleted && (isAuthor || isAdmin);
 
   const formatDate = (dateString: string | Date) => {
     try {
-      const date = typeof dateString === "string" ? parseISO(dateString) : dateString
-      if (!isValid(date)) return "Invalid date"
-      return format(date, "MMM dd, yyyy HH:mm")
+      const date = typeof dateString === "string" ? parseISO(dateString) : dateString;
+      if (!isValid(date)) return "Invalid date";
+      return format(date, "MMM dd, yyyy HH:mm");
     } catch {
-      return "Invalid date"
+      return "Invalid date";
     }
-  }
+  };
 
   const handleSaveEdit = async () => {
     if (!onEdit || editContent.trim() === comment.content) {
-      setIsEditing(false)
-      return
+      setIsEditing(false);
+      return;
     }
 
-    setIsUpdating(true)
+    setIsUpdating(true);
     try {
-      await onEdit(comment.id, editContent.trim())
-      setIsEditing(false)
+      await onEdit(comment.id, editContent.trim());
+      setIsEditing(false);
     } catch (error) {
-      console.error("Failed to edit comment:", error)
+      console.error("Failed to edit comment:", error);
       // Reset content on error
-      setEditContent(comment.content)
+      setEditContent(comment.content);
     } finally {
-      setIsUpdating(false)
+      setIsUpdating(false);
     }
-  }
+  };
 
   const handleDelete = async () => {
-    if (!onDelete) return
+    if (!onDelete) return;
 
     // Different confirmation messages for admins vs regular users
     const confirmMessage =
       isAdmin && !isAuthor
         ? "Are you sure you want to delete this comment? This action will mark it as deleted but preserve it for audit purposes."
-        : "Are you sure you want to delete your comment? This action cannot be undone."
+        : "Are you sure you want to delete your comment? This action cannot be undone.";
 
-    if (!confirm(confirmMessage)) return
+    if (!confirm(confirmMessage)) return;
 
-    setIsUpdating(true)
+    setIsUpdating(true);
     try {
-      await onDelete(comment.id)
+      await onDelete(comment.id);
     } catch (error) {
-      console.error("Failed to delete comment:", error)
+      console.error("Failed to delete comment:", error);
     } finally {
-      setIsUpdating(false)
+      setIsUpdating(false);
     }
-  }
+  };
 
   const handleCancelEdit = () => {
-    setEditContent(comment.content)
-    setIsEditing(false)
-  }
+    setEditContent(comment.content);
+    setIsEditing(false);
+  };
 
   const getRoleColor = (role: string) => {
     switch (role) {
       case "admin":
-        return "text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900"
+        return "text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900";
       case "reviewer":
-        return "text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900"
+        return "text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900";
       case "applicant":
-        return "text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900"
+        return "text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900";
       default:
-        return "text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700"
+        return "text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700";
     }
-  }
+  };
 
   return (
     <div className={cn("group relative", comment.isDeleted && "opacity-60")}>
@@ -166,8 +166,8 @@ const CommentItem: FC<CommentItemProps> = ({
                 {canEdit && (
                   <button
                     onClick={() => {
-                      setEditContent(comment.content) // Ensure we have the current content
-                      setIsEditing(true)
+                      setEditContent(comment.content); // Ensure we have the current content
+                      setIsEditing(true);
                     }}
                     disabled={isUpdating}
                     className={cn(
@@ -280,7 +280,7 @@ const CommentItem: FC<CommentItemProps> = ({
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default CommentItem
+export default CommentItem;

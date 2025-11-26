@@ -1,35 +1,35 @@
-"use client"
+"use client";
 
-import { DiscordIcon, TelegramIcon, TwitterIcon } from "@/components/Icons"
-import { ParagraphIcon } from "@/components/Icons/Paragraph"
-import { ExternalLink } from "@/components/Utilities/ExternalLink"
+import { DiscordIcon, TelegramIcon, TwitterIcon } from "@/components/Icons";
+import { ParagraphIcon } from "@/components/Icons/Paragraph";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import {
   NavigationMenu,
   NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuList,
   NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu"
-import { useAuth } from "@/hooks/useAuth"
-import { SOCIALS } from "@/utilities/socials"
-import { cn } from "@/utilities/tailwind"
-import { Logo } from "../shared/logo"
+} from "@/components/ui/navigation-menu";
+import { useAuth } from "@/hooks/useAuth";
+import { SOCIALS } from "@/utilities/socials";
+import { cn } from "@/utilities/tailwind";
+import { Logo } from "../shared/logo";
 import {
   ExploreContent,
   ForBuildersContent,
   ForFundersContent,
   MenuSection,
   ResourcesContent,
-} from "./menu-components"
-import { NavbarAuthButtons } from "./navbar-auth-buttons"
-import { NavbarSearch } from "./navbar-search"
-import { NavbarUserMenu } from "./navbar-user-menu"
+} from "./menu-components";
+import { NavbarAuthButtons } from "./navbar-auth-buttons";
+import { NavbarSearch } from "./navbar-search";
+import { NavbarUserMenu } from "./navbar-user-menu";
 
 const menuStyles = {
   button:
     "px-1 font-medium text-muted-foreground flex flex-row gap-1 hover:bg-transparent hover:text-foreground data-[state=open]:bg-transparent data-[state=open]:text-foreground shadow-none h-auto",
   itemText: "text-foreground text-sm font-medium",
-}
+};
 
 const socialMediaLinks = [
   {
@@ -52,10 +52,10 @@ const socialMediaLinks = [
     href: SOCIALS.PARAGRAPH,
     icon: ParagraphIcon,
   },
-]
+];
 
 export function NavbarDesktopNavigation() {
-  const { authenticated: isLoggedIn } = useAuth()
+  const { authenticated: isLoggedIn } = useAuth();
 
   return (
     <div className="hidden xl:flex items-center flex-1 lg:justify-between gap-8">
@@ -125,7 +125,7 @@ export function NavbarDesktopNavigation() {
                       <MenuSection title="Follow" variant="desktop" />
                       <div className="flex flex-row items-center w-full justify-between gap-4 py-2">
                         {socialMediaLinks.map((social) => {
-                          const IconComponent = social.icon
+                          const IconComponent = social.icon;
                           return (
                             <ExternalLink
                               key={social.name}
@@ -138,7 +138,7 @@ export function NavbarDesktopNavigation() {
                             >
                               <IconComponent className="w-5 h-5" />
                             </ExternalLink>
-                          )
+                          );
                         })}
                       </div>
                     </div>
@@ -156,5 +156,5 @@ export function NavbarDesktopNavigation() {
       {/* Right Side - Social Media & User Profile (Only when logged in) */}
       {isLoggedIn && <NavbarUserMenu />}
     </div>
-  )
+  );
 }

@@ -1,17 +1,17 @@
-"use client"
-import { ArrowLeftIcon, EyeIcon } from "@heroicons/react/24/solid"
-import Link from "next/link"
-import { useParams, useRouter, useSearchParams } from "next/navigation"
-import { useMemo } from "react"
-import { ApplicationListWithAPI } from "@/components/FundingPlatform"
-import { Button } from "@/components/Utilities/Button"
-import { Spinner } from "@/components/Utilities/Spinner"
-import { useApplication, useApplicationStatus } from "@/hooks/useFundingPlatform"
-import { usePermissions } from "@/hooks/usePermissions"
-import type { IApplicationFilters } from "@/services/fundingPlatformService"
-import { layoutTheme } from "@/src/helper/theme"
-import type { IFundingApplication } from "@/types/funding-platform"
-import { PAGES } from "@/utilities/pages"
+"use client";
+import { ArrowLeftIcon, EyeIcon } from "@heroicons/react/24/solid";
+import Link from "next/link";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useMemo } from "react";
+import { ApplicationListWithAPI } from "@/components/FundingPlatform";
+import { Button } from "@/components/Utilities/Button";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { useApplication, useApplicationStatus } from "@/hooks/useFundingPlatform";
+import { usePermissions } from "@/hooks/usePermissions";
+import type { IApplicationFilters } from "@/services/fundingPlatformService";
+import { layoutTheme } from "@/src/helper/theme";
+import type { IFundingApplication } from "@/types/funding-platform";
+import { PAGES } from "@/utilities/pages";
 
 /**
  * Reviewer Applications Page
@@ -19,51 +19,51 @@ import { PAGES } from "@/utilities/pages"
  * Reuses the ApplicationListWithAPI component with reviewer permissions
  */
 export default function ReviewerApplicationsPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { communityId, programId: combinedProgramId } = useParams() as {
-    communityId: string
-    programId: string
-  }
+    communityId: string;
+    programId: string;
+  };
 
   // Extract programId and chainId from the combined format (e.g., "777_11155111")
-  const [programId, chainId] = combinedProgramId.split("_")
-  const parsedChainId = parseInt(chainId, 10)
+  const [programId, chainId] = combinedProgramId.split("_");
+  const parsedChainId = parseInt(chainId, 10);
 
   // Parse initial filters from URL
   const initialFilters = useMemo((): IApplicationFilters => {
-    const filters: IApplicationFilters = {}
+    const filters: IApplicationFilters = {};
 
-    const search = searchParams.get("search")
-    if (search) filters.search = search
+    const search = searchParams.get("search");
+    if (search) filters.search = search;
 
-    const status = searchParams.get("status")
-    if (status) filters.status = status
+    const status = searchParams.get("status");
+    if (status) filters.status = status;
 
-    const dateFrom = searchParams.get("dateFrom")
-    if (dateFrom) filters.dateFrom = dateFrom
+    const dateFrom = searchParams.get("dateFrom");
+    if (dateFrom) filters.dateFrom = dateFrom;
 
-    const dateTo = searchParams.get("dateTo")
-    if (dateTo) filters.dateTo = dateTo
+    const dateTo = searchParams.get("dateTo");
+    if (dateTo) filters.dateTo = dateTo;
 
-    const page = searchParams.get("page")
-    if (page) filters.page = parseInt(page, 10)
+    const page = searchParams.get("page");
+    if (page) filters.page = parseInt(page, 10);
 
-    const sortBy = searchParams.get("sortBy")
-    if (sortBy) filters.sortBy = sortBy as IApplicationFilters["sortBy"]
+    const sortBy = searchParams.get("sortBy");
+    if (sortBy) filters.sortBy = sortBy as IApplicationFilters["sortBy"];
 
-    const sortOrder = searchParams.get("sortOrder")
-    if (sortOrder) filters.sortOrder = sortOrder as IApplicationFilters["sortOrder"]
+    const sortOrder = searchParams.get("sortOrder");
+    if (sortOrder) filters.sortOrder = sortOrder as IApplicationFilters["sortOrder"];
 
-    return filters
-  }, [searchParams])
+    return filters;
+  }, [searchParams]);
 
   // Check if user is a reviewer for this program
   const { hasPermission: canView, isLoading: isLoadingPermission } = usePermissions({
     programId,
     chainID: parsedChainId,
     action: "read",
-  })
+  });
 
   // Reviewers with view permission can comment (used in ApplicationListWithAPI internally)
   // const canComment = canView; // Not directly used here but reviewers can comment in the application detail view
@@ -72,37 +72,37 @@ export default function ReviewerApplicationsPage() {
   // We don't need to fetch it here as it would be redundant
 
   // Prefetch hook for better UX on hover
-  const { prefetchApplication } = useApplication(null)
+  const { prefetchApplication } = useApplication(null);
 
   // Use the custom application status hook (needed for component compatibility)
   // Destructure but don't use - this avoids the unused variable warning
-  useApplicationStatus(programId, parsedChainId)
+  useApplicationStatus(programId, parsedChainId);
 
   const handleBackClick = () => {
-    router.push(`/community/${communityId}/reviewer/funding-platform`)
-  }
+    router.push(`/community/${communityId}/reviewer/funding-platform`);
+  };
 
   const handleApplicationSelect = (_application: IFundingApplication) => {
     // This opens in a new tab (handled by ApplicationList component)
-  }
+  };
 
   // Prefetch application on hover for better UX
   const handleApplicationHover = (applicationId: string) => {
-    prefetchApplication(applicationId)
-  }
+    prefetchApplication(applicationId);
+  };
 
   // Handle status change - reviewers cannot change status but the component expects this prop
   const handleStatusChange = async (_applicationId: string, _status: string, _note?: string) => {
     // This shouldn't be called for reviewers as showStatusActions is false
-    return Promise.reject(new Error("Reviewers cannot change application status"))
-  }
+    return Promise.reject(new Error("Reviewers cannot change application status"));
+  };
 
   if (isLoadingPermission) {
     return (
       <div className="flex w-full items-center justify-center min-h-[600px]">
         <Spinner />
       </div>
-    )
+    );
   }
 
   if (!canView) {
@@ -118,7 +118,7 @@ export default function ReviewerApplicationsPage() {
           </Button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -178,5 +178,5 @@ export default function ReviewerApplicationsPage() {
         />
       </div>
     </div>
-  )
+  );
 }

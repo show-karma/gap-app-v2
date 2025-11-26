@@ -1,12 +1,12 @@
-import type { GAP } from "@show-karma/karma-gap-sdk"
-import { retryUntilConditionMet } from "@/utilities/retries"
+import type { GAP } from "@show-karma/karma-gap-sdk";
+import { retryUntilConditionMet } from "@/utilities/retries";
 
 interface PollForGrantCompletionParams {
-  gapClient: GAP
-  projectUid: string
-  grantUid: string
-  maxRetries?: number
-  retryDelayMs?: number
+  gapClient: GAP;
+  projectUid: string;
+  grantUid: string;
+  maxRetries?: number;
+  retryDelayMs?: number;
 }
 
 /**
@@ -35,30 +35,30 @@ export const pollForGrantCompletion = async ({
 }: PollForGrantCompletionParams): Promise<void> => {
   await retryUntilConditionMet(
     async () => {
-      const updatedProject = await gapClient.fetch.projectById(projectUid)
-      if (!updatedProject) return false
+      const updatedProject = await gapClient.fetch.projectById(projectUid);
+      if (!updatedProject) return false;
 
       const completedGrant = updatedProject.grants?.find(
         (g) => g.uid.toLowerCase() === grantUid.toLowerCase()
-      )
+      );
 
-      return !!completedGrant?.completed
+      return !!completedGrant?.completed;
     },
     undefined,
     maxRetries,
     retryDelayMs
-  )
-}
+  );
+};
 
 interface PollForMilestoneStatusParams {
-  gapClient: GAP
-  projectUid: string
-  programId: string
-  milestoneUid: string
-  checkCompletion: boolean
-  userAddress: string
-  maxRetries?: number
-  retryDelayMs?: number
+  gapClient: GAP;
+  projectUid: string;
+  programId: string;
+  milestoneUid: string;
+  checkCompletion: boolean;
+  userAddress: string;
+  maxRetries?: number;
+  retryDelayMs?: number;
 }
 
 /**
@@ -103,30 +103,30 @@ export const pollForMilestoneStatus = async ({
 }: PollForMilestoneStatusParams): Promise<void> => {
   await retryUntilConditionMet(
     async () => {
-      const updatedProject = await gapClient.fetch.projectById(projectUid)
-      if (!updatedProject) return false
+      const updatedProject = await gapClient.fetch.projectById(projectUid);
+      if (!updatedProject) return false;
 
-      const updatedGrant = updatedProject.grants.find((g) => g.details?.programId === programId)
-      if (!updatedGrant) return false
+      const updatedGrant = updatedProject.grants.find((g) => g.details?.programId === programId);
+      if (!updatedGrant) return false;
 
-      const updatedMilestone = updatedGrant.milestones?.find((m) => m.uid === milestoneUid)
-      if (!updatedMilestone) return false
+      const updatedMilestone = updatedGrant.milestones?.find((m) => m.uid === milestoneUid);
+      if (!updatedMilestone) return false;
 
       const isVerified = updatedMilestone.verified?.find(
         (v) => v.attester?.toLowerCase() === userAddress.toLowerCase()
-      )
+      );
 
       // If checking completion, ensure both are indexed
       if (checkCompletion) {
-        const isCompleted = updatedMilestone.completed
-        return !!(isCompleted && isVerified)
+        const isCompleted = updatedMilestone.completed;
+        return !!(isCompleted && isVerified);
       }
 
       // Otherwise just check verification
-      return !!isVerified
+      return !!isVerified;
     },
     undefined,
     maxRetries,
     retryDelayMs
-  )
-}
+  );
+};

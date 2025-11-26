@@ -1,12 +1,12 @@
-import { type QueryKey, type QueryOptions, useQuery } from "@tanstack/react-query"
+import { type QueryKey, type QueryOptions, useQuery } from "@tanstack/react-query";
 import {
   type GroupedIndicators,
   getGroupedIndicatorsByCommunity,
-} from "@/utilities/queries/getIndicatorsByCommunity"
+} from "@/utilities/queries/getIndicatorsByCommunity";
 
 interface UseGroupedIndicatorsProps {
-  communityId: string
-  queryOptions?: QueryOptions<GroupedIndicators, Error, GroupedIndicators, QueryKey>
+  communityId: string;
+  queryOptions?: QueryOptions<GroupedIndicators, Error, GroupedIndicators, QueryKey>;
 }
 
 export const useGroupedIndicators = ({ communityId, queryOptions }: UseGroupedIndicatorsProps) => {
@@ -15,5 +15,5 @@ export const useGroupedIndicators = ({ communityId, queryOptions }: UseGroupedIn
     queryFn: () => getGroupedIndicatorsByCommunity(communityId),
     enabled: !!communityId,
     ...queryOptions,
-  })
-}
+  });
+};

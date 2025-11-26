@@ -1,11 +1,11 @@
-"use client"
-import { SUPPORTED_NETWORKS, type SupportedToken } from "@/constants/supportedTokens"
+"use client";
+import { SUPPORTED_NETWORKS, type SupportedToken } from "@/constants/supportedTokens";
 
 interface TokenSelectorProps {
-  selectedToken?: SupportedToken
-  tokenOptions: SupportedToken[]
-  balanceByTokenKey: Record<string, string>
-  onTokenSelect: (token: SupportedToken) => void
+  selectedToken?: SupportedToken;
+  tokenOptions: SupportedToken[];
+  balanceByTokenKey: Record<string, string>;
+  onTokenSelect: (token: SupportedToken) => void;
 }
 
 export function TokenSelector({
@@ -16,9 +16,9 @@ export function TokenSelector({
 }: TokenSelectorProps) {
   const networkName = selectedToken
     ? SUPPORTED_NETWORKS[selectedToken.chainId]?.chainName || selectedToken.chainName
-    : undefined
+    : undefined;
 
-  const selectId = `token-selector-${Math.random().toString(36).substr(2, 9)}`
+  const selectId = `token-selector-${Math.random().toString(36).substr(2, 9)}`;
 
   return (
     <div className="col-span-4">
@@ -31,12 +31,12 @@ export function TokenSelector({
           id={selectId}
           value={selectedToken ? `${selectedToken.symbol}-${selectedToken.chainId}` : ""}
           onChange={(e) => {
-            const [symbol, chainId] = e.target.value.split("-")
+            const [symbol, chainId] = e.target.value.split("-");
             const token = tokenOptions.find(
               (t) => t.symbol === symbol && t.chainId === Number(chainId)
-            )
+            );
             if (token) {
-              onTokenSelect(token)
+              onTokenSelect(token);
             }
           }}
           className="w-full appearance-none rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium shadow-sm transition focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
@@ -45,15 +45,15 @@ export function TokenSelector({
         >
           <option value="">Choose token…</option>
           {tokenOptions.map((token) => {
-            const key = `${token.symbol}-${token.chainId}`
-            const balanceValue = balanceByTokenKey[key]
-            const balanceDisplay = balanceValue ? parseFloat(balanceValue).toFixed(6) : "0"
-            const networkName = SUPPORTED_NETWORKS[token.chainId]?.chainName || token.chainName
+            const key = `${token.symbol}-${token.chainId}`;
+            const balanceValue = balanceByTokenKey[key];
+            const balanceDisplay = balanceValue ? parseFloat(balanceValue).toFixed(6) : "0";
+            const networkName = SUPPORTED_NETWORKS[token.chainId]?.chainName || token.chainName;
             return (
               <option key={key} value={key}>
                 {token.symbol} on {networkName} (Balance: {balanceDisplay})
               </option>
-            )
+            );
           })}
         </select>
       </div>
@@ -69,5 +69,5 @@ export function TokenSelector({
         </div>
       )}
     </div>
-  )
+  );
 }

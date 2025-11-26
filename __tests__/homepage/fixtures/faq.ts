@@ -2,7 +2,7 @@
  * Mock FAQ Data for Homepage Tests
  */
 
-import type { FAQItem } from "@/src/components/shared/faq-accordion"
+import type { FAQItem } from "@/src/components/shared/faq-accordion";
 
 export const mockFAQItems: FAQItem[] = [
   {
@@ -53,7 +53,7 @@ export const mockFAQItems: FAQItem[] = [
     answer:
       "**Yes, for now.** Since all project data is stored onchain, you'll need to pay a small gas fee when updating your project or posting progress. We're actively working on **gasless transactions**, so soon you'll be able to update your project **without paying gas or holding crypto** in your wallet.",
   },
-]
+];
 
 /**
  * Create a mock FAQ item
@@ -62,18 +62,18 @@ export const createMockFAQItem = (overrides: Partial<FAQItem> = {}): FAQItem => 
   id: overrides.id || `faq-${Math.random().toString(36).substr(2, 9)}`,
   question: overrides.question || "Test FAQ question?",
   answer: overrides.answer || "Test FAQ answer with some details.",
-})
+});
 
 /**
  * Get a specific number of FAQ items
  */
 export const getMockFAQItems = (count: number): FAQItem[] => {
-  return mockFAQItems.slice(0, count)
-}
+  return mockFAQItems.slice(0, count);
+};
 
 /**
  * Get FAQ item by ID
  */
 export const getFAQItemById = (id: string): FAQItem | undefined => {
-  return mockFAQItems.find((item) => item.id === id)
-}
+  return mockFAQItems.find((item) => item.id === id);
+};

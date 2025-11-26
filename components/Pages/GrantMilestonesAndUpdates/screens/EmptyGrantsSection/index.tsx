@@ -1,34 +1,34 @@
 /* eslint-disable @next/next/no-img-element */
 
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { type FC, useEffect } from "react"
-import { useOwnerStore, useProjectStore } from "@/store"
-import { useCommunitiesStore } from "@/store/communities"
-import { useCommunityAdminStore } from "@/store/communityAdmin"
-import { MESSAGES } from "@/utilities/messages"
-import { PAGES } from "@/utilities/pages"
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { type FC, useEffect } from "react";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useCommunitiesStore } from "@/store/communities";
+import { useCommunityAdminStore } from "@/store/communityAdmin";
+import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
 
 export const EmptyGrantsSection: FC = () => {
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin)
-  const _isProjectOwner = useProjectStore((state) => state.isProjectOwner)
-  const isOwner = useOwnerStore((state) => state.isOwner)
-  const project = useProjectStore((state) => state.project)
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin)
-  const { communities } = useCommunitiesStore()
-  const isCommunityAdminOfSome = communities.length !== 0
-  const isAuthorized = isProjectAdmin || isOwner || isCommunityAdmin || isCommunityAdminOfSome
-  const router = useRouter()
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const _isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isOwner = useOwnerStore((state) => state.isOwner);
+  const project = useProjectStore((state) => state.project);
+  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
+  const { communities } = useCommunitiesStore();
+  const isCommunityAdminOfSome = communities.length !== 0;
+  const isAuthorized = isProjectAdmin || isOwner || isCommunityAdmin || isCommunityAdminOfSome;
+  const router = useRouter();
 
   useEffect(() => {
     if (project?.grants?.length === 0) {
       if (isAuthorized) {
         router.push(
           PAGES.PROJECT.SCREENS.NEW_GRANT((project?.details?.data?.slug || project?.uid) as string)
-        )
+        );
       }
     }
-  }, [isAuthorized, project, router])
+  }, [isAuthorized, project, router]);
 
   if (!isAuthorized) {
     return (
@@ -45,7 +45,7 @@ export const EmptyGrantsSection: FC = () => {
           </div>
         </div>
       </div>
-    )
+    );
   }
   return (
     <div className="flex flex-1 flex-row max-lg:flex-col gap-6">
@@ -80,5 +80,5 @@ export const EmptyGrantsSection: FC = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

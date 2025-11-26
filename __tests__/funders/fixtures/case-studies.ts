@@ -2,7 +2,7 @@
  * Mock case study data for funders page tests
  */
 
-import type { CaseStudyCardType } from "@/src/features/funders/components/case-studies-section"
+import type { CaseStudyCardType } from "@/src/features/funders/components/case-studies-section";
 
 export const mockCaseStudyCards: CaseStudyCardType[] = [
   {
@@ -36,4 +36,4 @@ export const mockCaseStudyCards: CaseStudyCardType[] = [
     communitySlug: "celo",
     avatar: "/images/homepage/sophia-dew.png",
   },
-]
+];

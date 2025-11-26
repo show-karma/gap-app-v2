@@ -1,17 +1,17 @@
-"use client"
-import { useMemo } from "react"
-import { estimateDonationTime, formatEstimatedTime } from "@/constants/donation"
+"use client";
+import { useMemo } from "react";
+import { estimateDonationTime, formatEstimatedTime } from "@/constants/donation";
 import {
   countNetworkSwitches,
   type DonationPayment,
   getDonationSummaryByNetwork,
-} from "@/utilities/donations/helpers"
-import { NetworkSwitchItem } from "./NetworkSwitchItem"
+} from "@/utilities/donations/helpers";
+import { NetworkSwitchItem } from "./NetworkSwitchItem";
 
 interface NetworkSwitchPreviewProps {
-  payments: DonationPayment[]
-  currentChainId: number | null
-  className?: string
+  payments: DonationPayment[];
+  currentChainId: number | null;
+  className?: string;
 }
 
 /**
@@ -32,23 +32,23 @@ export function NetworkSwitchPreview({
   className = "",
 }: NetworkSwitchPreviewProps) {
   const networkSummary = useMemo(() => {
-    return getDonationSummaryByNetwork(payments, currentChainId)
-  }, [payments, currentChainId])
+    return getDonationSummaryByNetwork(payments, currentChainId);
+  }, [payments, currentChainId]);
 
   const switchCount = useMemo(() => {
-    return countNetworkSwitches(payments, currentChainId)
-  }, [payments, currentChainId])
+    return countNetworkSwitches(payments, currentChainId);
+  }, [payments, currentChainId]);
 
   const estimatedTime = useMemo(() => {
-    const approvalCount = payments.filter((p) => !p.token.isNative).length
-    const donationCount = payments.length
-    const totalSeconds = estimateDonationTime(switchCount, approvalCount, donationCount)
-    return formatEstimatedTime(totalSeconds)
-  }, [switchCount, payments])
+    const approvalCount = payments.filter((p) => !p.token.isNative).length;
+    const donationCount = payments.length;
+    const totalSeconds = estimateDonationTime(switchCount, approvalCount, donationCount);
+    return formatEstimatedTime(totalSeconds);
+  }, [switchCount, payments]);
 
   // Don't show if only one network or no payments
   if (networkSummary.length <= 1 || payments.length === 0) {
-    return null
+    return null;
   }
 
   return (
@@ -110,5 +110,5 @@ export function NetworkSwitchPreview({
         </div>
       </div>
     </div>
-  )
+  );
 }

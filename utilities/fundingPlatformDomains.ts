@@ -19,4 +19,4 @@ export const fundingPlatformDomains = {
     dev: "https://testapp.karmahq.xyz",
     prod: "https://app.karmahq.xyz",
   },
-}
+};

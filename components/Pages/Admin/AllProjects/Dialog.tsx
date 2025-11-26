@@ -1,27 +1,27 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { Dialog, Transition } from "@headlessui/react"
-import { type FC, Fragment, useState } from "react"
-import { Button } from "@/components/Utilities/Button"
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview"
-import { ReadMore } from "@/utilities/ReadMore"
+import { Dialog, Transition } from "@headlessui/react";
+import { type FC, Fragment, useState } from "react";
+import { Button } from "@/components/Utilities/Button";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { ReadMore } from "@/utilities/ReadMore";
 
 type ProjectDescriptionDialogProps = {
-  projectName: string
-  description: string
-  mission?: string
-  problem?: string
-  solution?: string
-  missionSummary?: string
-  locationOfImpact?: string
-  businessModel?: string
-  stageIn?: string
-  raisedMoney?: string
-  fundingPath?: string
-}
+  projectName: string;
+  description: string;
+  mission?: string;
+  problem?: string;
+  solution?: string;
+  missionSummary?: string;
+  locationOfImpact?: string;
+  businessModel?: string;
+  stageIn?: string;
+  raisedMoney?: string;
+  fundingPath?: string;
+};
 
-const labelClass = "text-lg font-bold leading-6 text-gray-900 dark:text-zinc-100"
-const valueClass = "text-sm text-gray-600 dark:text-zinc-300"
+const labelClass = "text-lg font-bold leading-6 text-gray-900 dark:text-zinc-100";
+const valueClass = "text-sm text-gray-600 dark:text-zinc-300";
 
 export const ProjectDescriptionDialog: FC<ProjectDescriptionDialogProps> = ({
   projectName,
@@ -36,14 +36,14 @@ export const ProjectDescriptionDialog: FC<ProjectDescriptionDialogProps> = ({
   raisedMoney,
   fundingPath,
 }) => {
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
 
   function closeModal() {
-    setIsOpen(false)
+    setIsOpen(false);
   }
 
   function openModal() {
-    setIsOpen(true)
+    setIsOpen(true);
   }
 
   const stats = [
@@ -87,7 +87,7 @@ export const ProjectDescriptionDialog: FC<ProjectDescriptionDialogProps> = ({
       label: "Funding Path",
       value: fundingPath,
     },
-  ]
+  ];
 
   return (
     <>
@@ -149,5 +149,5 @@ export const ProjectDescriptionDialog: FC<ProjectDescriptionDialogProps> = ({
         </Transition>
       ) : null}
     </>
-  )
-}
+  );
+};

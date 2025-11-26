@@ -1,10 +1,10 @@
-import { create } from "zustand"
+import { create } from "zustand";
 
 interface GrantGenieModalStore {
-  isGrantGenieModalOpen: boolean
-  setIsGrantGenieModalOpen: (isGrantGenieModalOpen: boolean) => void
-  openGrantGenieModal: () => void
-  closeGrantGenieModal: () => void
+  isGrantGenieModalOpen: boolean;
+  setIsGrantGenieModalOpen: (isGrantGenieModalOpen: boolean) => void;
+  openGrantGenieModal: () => void;
+  closeGrantGenieModal: () => void;
 }
 
 export const useGrantGenieModalStore = create<GrantGenieModalStore>((set, _get) => ({
@@ -12,4 +12,4 @@ export const useGrantGenieModalStore = create<GrantGenieModalStore>((set, _get) 
   setIsGrantGenieModalOpen: (isGrantGenieModalOpen: boolean) => set({ isGrantGenieModalOpen }),
   openGrantGenieModal: () => set({ isGrantGenieModalOpen: true }),
   closeGrantGenieModal: () => set({ isGrantGenieModalOpen: false }),
-}))
+}));

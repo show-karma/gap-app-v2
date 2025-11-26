@@ -1,12 +1,12 @@
-import { Dialog, Transition } from "@headlessui/react"
-import { XMarkIcon } from "@heroicons/react/24/solid"
-import JSConfetti from "js-confetti"
-import { type FC, Fragment, useEffect } from "react"
-import { TwitterIcon } from "@/components/Icons"
-import { Button } from "@/components/Utilities/Button"
-import { ExternalLink } from "@/components/Utilities/ExternalLink"
-import { useShareDialogStore } from "@/store/modals/shareDialog"
-import { shareOnX } from "@/utilities/share/shareOnX"
+import { Dialog, Transition } from "@headlessui/react";
+import { XMarkIcon } from "@heroicons/react/24/solid";
+import JSConfetti from "js-confetti";
+import { type FC, Fragment, useEffect } from "react";
+import { TwitterIcon } from "@/components/Icons";
+import { Button } from "@/components/Utilities/Button";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { useShareDialogStore } from "@/store/modals/shareDialog";
+import { shareOnX } from "@/utilities/share/shareOnX";
 
 export const ShareDialog: FC = () => {
   const {
@@ -16,20 +16,20 @@ export const ShareDialog: FC = () => {
     shareText,
     modalShareSecondText,
     closeShareDialog,
-  } = useShareDialogStore()
+  } = useShareDialogStore();
 
   useEffect(() => {
     if (isOpen) {
-      const jsConfetti = new JSConfetti()
+      const jsConfetti = new JSConfetti();
 
       jsConfetti.addConfetti({
         confettiRadius: 3,
         confettiNumber: 500,
-      })
+      });
     }
-  }, [isOpen])
+  }, [isOpen]);
 
-  const shareURI = shareOnX(shareText)
+  const shareURI = shareOnX(shareText);
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -92,5 +92,5 @@ export const ShareDialog: FC = () => {
         </div>
       </Dialog>
     </Transition>
-  )
-}
+  );
+};

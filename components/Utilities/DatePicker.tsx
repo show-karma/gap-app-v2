@@ -1,21 +1,21 @@
-"use client"
+"use client";
 
-import { CalendarIcon } from "@heroicons/react/24/solid"
-import * as Popover from "@radix-ui/react-popover"
-import { DayPicker } from "react-day-picker"
-import { formatDate } from "@/utilities/formatDate"
-import { cn } from "@/utilities/tailwind"
+import { CalendarIcon } from "@heroicons/react/24/solid";
+import * as Popover from "@radix-ui/react-popover";
+import { DayPicker } from "react-day-picker";
+import { formatDate } from "@/utilities/formatDate";
+import { cn } from "@/utilities/tailwind";
 
 interface DatePickerProps {
-  selected?: Date
-  onSelect: (date: Date) => void
-  minDate?: Date
-  maxDate?: Date
-  placeholder?: string
-  className?: string
-  buttonClassName?: string
-  clearButtonClassName?: string
-  clearButtonFn?: () => void
+  selected?: Date;
+  onSelect: (date: Date) => void;
+  minDate?: Date;
+  maxDate?: Date;
+  placeholder?: string;
+  className?: string;
+  buttonClassName?: string;
+  clearButtonClassName?: string;
+  clearButtonFn?: () => void;
 }
 
 export const DatePicker = ({
@@ -50,10 +50,10 @@ export const DatePicker = ({
               selected={selected}
               onDayClick={onSelect}
               disabled={(date) => {
-                if (minDate === date) return false
-                if (minDate && date < minDate) return true
-                if (maxDate && date > maxDate) return true
-                return false
+                if (minDate === date) return false;
+                if (minDate && date < minDate) return true;
+                if (maxDate && date > maxDate) return true;
+                return false;
               }}
               initialFocus
             />
@@ -74,5 +74,5 @@ export const DatePicker = ({
         </Popover.Portal>
       </Popover.Root>
     </div>
-  )
-}
+  );
+};

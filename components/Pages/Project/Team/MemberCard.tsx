@@ -1,47 +1,47 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { PencilIcon } from "@heroicons/react/24/outline"
-import { useQuery } from "@tanstack/react-query"
-import { useEffect } from "react"
-import type { Hex } from "viem"
-import { useAccount } from "wagmi"
-import { DeleteMemberDialog } from "@/components/Dialogs/Member/DeleteMember"
-import { DemoteMemberDialog } from "@/components/Dialogs/Member/DemoteMember"
-import { PromoteMemberDialog } from "@/components/Dialogs/Member/PromoteMember"
-import { GithubIcon, LinkedInIcon, Twitter2Icon } from "@/components/Icons"
-import { FarcasterIcon } from "@/components/Icons/Farcaster"
-import { ExternalLink } from "@/components/Utilities/ExternalLink"
-import { Skeleton } from "@/components/Utilities/Skeleton"
-import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
-import { useProjectInstance } from "@/hooks/useProjectInstance"
-import { useTeamProfiles } from "@/hooks/useTeamProfiles"
-import { useOwnerStore, useProjectStore } from "@/store"
-import { useENS } from "@/store/ens"
-import { useContributorProfileModalStore } from "@/store/modals/contributorProfile"
-import { formatFarcasterLink } from "@/utilities/farcaster"
-import { getProjectMemberRoles, type Member } from "@/utilities/getProjectMemberRoles"
+import { PencilIcon } from "@heroicons/react/24/outline";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import type { Hex } from "viem";
+import { useAccount } from "wagmi";
+import { DeleteMemberDialog } from "@/components/Dialogs/Member/DeleteMember";
+import { DemoteMemberDialog } from "@/components/Dialogs/Member/DemoteMember";
+import { PromoteMemberDialog } from "@/components/Dialogs/Member/PromoteMember";
+import { GithubIcon, LinkedInIcon, Twitter2Icon } from "@/components/Icons";
+import { FarcasterIcon } from "@/components/Icons/Farcaster";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { Skeleton } from "@/components/Utilities/Skeleton";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { useProjectInstance } from "@/hooks/useProjectInstance";
+import { useTeamProfiles } from "@/hooks/useTeamProfiles";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useENS } from "@/store/ens";
+import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
+import { formatFarcasterLink } from "@/utilities/farcaster";
+import { getProjectMemberRoles, type Member } from "@/utilities/getProjectMemberRoles";
 
 const iconsClassnames = {
   general: "w-6 h-6 text-zinc-400 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-300",
-}
+};
 
 export const MemberCard = ({ member }: { member: string }) => {
-  const project = useProjectStore((state) => state.project)
-  const { teamProfiles } = useTeamProfiles(project)
+  const project = useProjectStore((state) => state.project);
+  const { teamProfiles } = useTeamProfiles(project);
   const profile = teamProfiles?.find(
     (item) => item.recipient.toLowerCase() === member.toLowerCase()
-  )
-  const [, copy] = useCopyToClipboard()
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner)
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin)
-  const isContractOwner = useOwnerStore((state) => state.isOwner)
-  const { address } = useAccount()
-  const isAuthorized = isProjectOwner || isContractOwner
-  const _isAdminOrAbove = isProjectOwner || isContractOwner || isProjectAdmin
+  );
+  const [, copy] = useCopyToClipboard();
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
+  const { address } = useAccount();
+  const isAuthorized = isProjectOwner || isContractOwner;
+  const _isAdminOrAbove = isProjectOwner || isContractOwner || isProjectAdmin;
   const { project: projectInstance } = useProjectInstance(
     project?.details?.data.slug || project?.uid || ""
-  )
-  const { openModal } = useContributorProfileModalStore()
+  );
+  const { openModal } = useContributorProfileModalStore();
 
   const {
     data: memberRoles,
@@ -53,16 +53,16 @@ export const MemberCard = ({ member }: { member: string }) => {
       project && projectInstance ? getProjectMemberRoles(project, projectInstance) : {},
     enabled: !!project && !!projectInstance,
     staleTime: 1000 * 60 * 5,
-  })
+  });
 
-  const ensNames = useENS((state) => state.ensData)
-  const populateEns = useENS((state) => state.populateEns)
+  const ensNames = useENS((state) => state.ensData);
+  const populateEns = useENS((state) => state.populateEns);
 
   useEffect(() => {
     if (member) {
-      populateEns([member?.toLowerCase() as string])
+      populateEns([member?.toLowerCase() as string]);
     }
-  }, [member, populateEns])
+  }, [member, populateEns]);
 
   return (
     <div className="flex w-full flex-col gap-4 items-start shadow-sm rounded-lg p-4 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700">
@@ -177,5 +177,5 @@ export const MemberCard = ({ member }: { member: string }) => {
         </div>
       ) : null}
     </div>
-  )
-}
+  );
+};

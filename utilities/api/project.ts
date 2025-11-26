@@ -1,5 +1,5 @@
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import { envVars } from "../enviromentVars"
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { envVars } from "../enviromentVars";
 
 export const getProjectData = async (
   projectId: string,
@@ -11,11 +11,11 @@ export const getProjectData = async (
       "Content-Type": "application/json",
     },
     ...fetchOptions,
-  })
+  });
   if (!project.ok) {
-    throw new Error(`HTTP error! status: ${project.status}`)
+    throw new Error(`HTTP error! status: ${project.status}`);
   }
 
-  const data = await project.json()
-  return data
-}
+  const data = await project.json();
+  return data;
+};

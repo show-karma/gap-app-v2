@@ -1,11 +1,11 @@
-import type { FC, ReactNode } from "react"
+import type { FC, ReactNode } from "react";
 
 interface MetricCardProps {
-  title: string
-  value: string | number
-  icon: ReactNode
-  tooltip?: string
-  className?: string
+  title: string;
+  value: string | number;
+  icon: ReactNode;
+  tooltip?: string;
+  className?: string;
 }
 
 export const MetricCard: FC<MetricCardProps> = ({
@@ -32,5 +32,5 @@ export const MetricCard: FC<MetricCardProps> = ({
         </div>
       )}
     </div>
-  )
-}
+  );
+};

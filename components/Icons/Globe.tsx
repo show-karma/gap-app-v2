@@ -1,5 +1,5 @@
 interface Props {
-  className?: string
+  className?: string;
 }
 
 export const Globe = ({ className }: Props) => (
@@ -26,4 +26,4 @@ export const Globe = ({ className }: Props) => (
       strokeLinejoin="round"
     />
   </svg>
-)
+);

@@ -1,12 +1,12 @@
-"use client"
-import { useGrantStore } from "@/store/grant"
-import { MESSAGES } from "@/utilities/messages"
-import { ProjectGrantsImpactLoading } from "../../Project/Loading/Grants/Impact"
+"use client";
+import { useGrantStore } from "@/store/grant";
+import { MESSAGES } from "@/utilities/messages";
+import { ProjectGrantsImpactLoading } from "../../Project/Loading/Grants/Impact";
 
 export const GrantImpactCriteria = () => {
-  const { grant } = useGrantStore()
-  if (!grant) return <ProjectGrantsImpactLoading />
-  const questions = grant?.details?.data.questions
+  const { grant } = useGrantStore();
+  if (!grant) return <ProjectGrantsImpactLoading />;
+  const questions = grant?.details?.data.questions;
   return (
     <div className="space-y-5 max-w-prose">
       {questions && questions?.length > 0 ? (
@@ -25,5 +25,5 @@ export const GrantImpactCriteria = () => {
         <p className="text-black dark:text-zinc-100">{MESSAGES.GRANT.IMPACT_CRITERIA.EMPTY}</p>
       )}
     </div>
-  )
-}
+  );
+};

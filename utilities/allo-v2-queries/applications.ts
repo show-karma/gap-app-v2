@@ -47,4 +47,4 @@ applications(
     applicationId: applicationId,
     roundId: roundId,
   },
-})
+});

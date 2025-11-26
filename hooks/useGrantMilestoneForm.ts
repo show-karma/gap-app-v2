@@ -1,62 +1,62 @@
-import { Milestone } from "@show-karma/karma-gap-sdk"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
-import toast from "react-hot-toast"
-import { useAccount } from "wagmi"
-import { errorManager } from "@/components/Utilities/errorManager"
-import { useGap } from "@/hooks/useGap"
-import { useOwnerStore, useProjectStore } from "@/store"
-import { useStepper } from "@/store/modals/txStepper"
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils"
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
-import { MESSAGES } from "@/utilities/messages"
-import { sanitizeObject } from "@/utilities/sanitize"
-import { safeGetWalletClient } from "@/utilities/wallet-helpers"
-import { useWallet } from "./useWallet"
+import { Milestone } from "@show-karma/karma-gap-sdk";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { useGap } from "@/hooks/useGap";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useStepper } from "@/store/modals/txStepper";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { sanitizeObject } from "@/utilities/sanitize";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { useWallet } from "./useWallet";
 
 export interface GrantMilestoneFormData {
-  title: string
-  description?: string
-  priority?: number
+  title: string;
+  description?: string;
+  priority?: number;
   dates: {
-    endsAt: Date
-    startsAt?: Date
-  }
+    endsAt: Date;
+    startsAt?: Date;
+  };
 }
 
 interface UseGrantMilestoneFormProps {
-  onSuccess?: () => void
-  destinationPath?: string // Where to redirect after success
+  onSuccess?: () => void;
+  destinationPath?: string; // Where to redirect after success
 }
 
 export function useGrantMilestoneForm({
   onSuccess,
   destinationPath,
 }: UseGrantMilestoneFormProps = {}) {
-  const { address, chain } = useAccount()
-  const { project, refreshProject } = useProjectStore()
-  const { switchChainAsync } = useWallet()
-  const _isOwner = useOwnerStore((state) => state.isOwner)
+  const { address, chain } = useAccount();
+  const { project, refreshProject } = useProjectStore();
+  const { switchChainAsync } = useWallet();
+  const _isOwner = useOwnerStore((state) => state.isOwner);
 
-  const { gap } = useGap()
-  const [isLoading, setIsLoading] = useState(false)
-  const { changeStepperStep, setIsStepper } = useStepper()
-  const router = useRouter()
+  const { gap } = useGap();
+  const [isLoading, setIsLoading] = useState(false);
+  const { changeStepperStep, setIsStepper } = useStepper();
+  const router = useRouter();
 
   const createMilestoneForGrants = async (data: GrantMilestoneFormData, grantUIDs: string[]) => {
-    if (!gap || !address || grantUIDs.length === 0) return
-    setIsLoading(true)
+    if (!gap || !address || grantUIDs.length === 0) return;
+    setIsLoading(true);
 
     try {
       // Process each grant UID
       for (const grantUID of grantUIDs) {
         // Get the current grant's chain ID from the project's grants
-        const grant = project?.grants.find((g) => g.uid === grantUID)
-        if (!grant) continue
+        const grant = project?.grants.find((g) => g.uid === grantUID);
+        if (!grant) continue;
 
-        const chainID = grant.chainID
+        const chainID = grant.chainID;
 
         // Switch chain if needed
         const {
@@ -67,11 +67,11 @@ export function useGrantMilestoneForm({
           targetChainId: chainID,
           currentChainId: chain?.id,
           switchChainAsync,
-        })
+        });
 
         if (!success) {
-          setIsLoading(false)
-          return
+          setIsLoading(false);
+          return;
         }
 
         // Prepare milestone data
@@ -81,96 +81,96 @@ export function useGrantMilestoneForm({
           endsAt: data.dates.endsAt.getTime() / 1000,
           startsAt: data.dates.startsAt ? data.dates.startsAt.getTime() / 1000 : undefined,
           priority: data.priority,
-        })
+        });
 
         const milestoneToAttest = new Milestone({
           refUID: grantUID as `0x${string}`,
           schema: gapClient.findSchema("Milestone"),
           recipient: address as `0x${string}`,
           data: milestone,
-        })
+        });
 
         // Get wallet client safely
-        const { walletClient, error } = await safeGetWalletClient(actualChainId)
+        const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
         if (error || !walletClient || !gapClient) {
-          throw new Error("Failed to connect to wallet", { cause: error })
+          throw new Error("Failed to connect to wallet", { cause: error });
         }
 
-        const walletSigner = await walletClientToSigner(walletClient)
+        const walletSigner = await walletClientToSigner(walletClient);
 
         // Attest the milestone
         await milestoneToAttest.attest(walletSigner as any, changeStepperStep).then(async (res) => {
-          let retries = 1000
-          const txHash = res?.tx[0]?.hash
+          let retries = 1000;
+          const txHash = res?.tx[0]?.hash;
 
           if (txHash) {
             await fetchData(
               INDEXER.ATTESTATION_LISTENER(txHash, milestoneToAttest.chainID),
               "POST",
               {}
-            )
+            );
           }
 
-          changeStepperStep("indexing")
+          changeStepperStep("indexing");
 
           while (retries > 0) {
             await refreshProject()
               .then(async (fetchedProject) => {
-                const fetchedGrant = fetchedProject?.grants.find((g) => g.uid === grantUID)
+                const fetchedGrant = fetchedProject?.grants.find((g) => g.uid === grantUID);
 
                 const milestoneExists = fetchedGrant?.milestones.find(
                   (g: any) => g.uid === milestoneToAttest.uid
-                )
+                );
 
                 if (milestoneExists) {
-                  retries = 0
-                  changeStepperStep("indexed")
-                  toast.success(MESSAGES.MILESTONES.CREATE.SUCCESS)
+                  retries = 0;
+                  changeStepperStep("indexed");
+                  toast.success(MESSAGES.MILESTONES.CREATE.SUCCESS);
 
                   // Only navigate on the last grant milestone creation
                   if (grantUID === grantUIDs[grantUIDs.length - 1] && destinationPath) {
-                    router.push(destinationPath)
-                    router.refresh()
+                    router.push(destinationPath);
+                    router.refresh();
                   }
                 }
 
-                retries -= 1
+                retries -= 1;
                 // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500))
+                await new Promise((resolve) => setTimeout(resolve, 1500));
               })
               .catch(async () => {
-                retries -= 1
+                retries -= 1;
                 // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500))
-              })
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+              });
           }
-        })
+        });
       }
 
       // Call onSuccess after all grant milestones are created
-      onSuccess?.()
+      onSuccess?.();
     } catch (error) {
       errorManager(MESSAGES.MILESTONES.CREATE.ERROR(data.title), error, {
         data,
         address,
         grantUIDs,
-      })
-      toast.error(MESSAGES.MILESTONES.CREATE.ERROR(data.title))
+      });
+      toast.error(MESSAGES.MILESTONES.CREATE.ERROR(data.title));
     } finally {
-      setIsLoading(false)
-      setIsStepper(false)
+      setIsLoading(false);
+      setIsStepper(false);
     }
-  }
+  };
 
   // Simplified version for single grant
   const createMilestone = async (data: GrantMilestoneFormData, grantUID: string) => {
-    return createMilestoneForGrants(data, [grantUID])
-  }
+    return createMilestoneForGrants(data, [grantUID]);
+  };
 
   return {
     createMilestone,
     createMilestoneForGrants,
     isLoading,
-  }
+  };
 }

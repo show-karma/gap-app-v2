@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import { TrashIcon } from "@heroicons/react/24/solid"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useEffect } from "react"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { Button } from "@/components/Utilities/Button"
-import { QuestionTooltip } from "@/components/Utilities/QuestionTooltip"
-import type { FormField } from "@/types/question-builder"
-import { MarkdownEditor } from "../Utilities/MarkdownEditor"
+import { TrashIcon } from "@heroicons/react/24/solid";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { Button } from "@/components/Utilities/Button";
+import { QuestionTooltip } from "@/components/Utilities/QuestionTooltip";
+import type { FormField } from "@/types/question-builder";
+import { MarkdownEditor } from "../Utilities/MarkdownEditor";
 
 const fieldSchema = z.object({
   label: z.string().min(1, "Label is required"),
@@ -33,18 +33,18 @@ const fieldSchema = z.object({
       includeInEvaluation: z.boolean().optional(),
     })
     .optional(),
-})
+});
 
-type FieldFormData = z.infer<typeof fieldSchema>
+type FieldFormData = z.infer<typeof fieldSchema>;
 
 interface FieldEditorProps {
-  field: FormField
-  onUpdate: (field: FormField) => void
-  onDelete: (fieldId: string) => void
-  onMoveUp?: (fieldId: string) => void
-  onMoveDown?: (fieldId: string) => void
-  isPostApprovalMode?: boolean
-  readOnly?: boolean
+  field: FormField;
+  onUpdate: (field: FormField) => void;
+  onDelete: (fieldId: string) => void;
+  onMoveUp?: (fieldId: string) => void;
+  onMoveDown?: (fieldId: string) => void;
+  isPostApprovalMode?: boolean;
+  readOnly?: boolean;
 }
 
 export function FieldEditor({
@@ -75,10 +75,10 @@ export function FieldEditor({
         includeInEvaluation: field.aiEvaluation?.includeInEvaluation ?? true,
       },
     },
-  })
+  });
 
-  const watchedOptions = watch("options") || []
-  const hasOptions = ["select", "radio", "checkbox"].includes(field.type)
+  const watchedOptions = watch("options") || [];
+  const hasOptions = ["select", "radio", "checkbox"].includes(field.type);
 
   useEffect(() => {
     const subscription = watch((data) => {
@@ -98,29 +98,29 @@ export function FieldEditor({
             : undefined,
           validation: data.validation || {},
           aiEvaluation: data.aiEvaluation || {},
-        }
-        onUpdate(updatedField)
+        };
+        onUpdate(updatedField);
       }
-    })
+    });
 
-    return () => subscription.unsubscribe()
-  }, [watch, onUpdate, field, hasOptions, isPostApprovalMode])
+    return () => subscription.unsubscribe();
+  }, [watch, onUpdate, field, hasOptions, isPostApprovalMode]);
 
   const updateOption = (index: number, value: string) => {
-    const newOptions = [...watchedOptions]
-    newOptions[index] = value
-    setValue("options", newOptions)
-  }
+    const newOptions = [...watchedOptions];
+    newOptions[index] = value;
+    setValue("options", newOptions);
+  };
 
   const addOption = () => {
-    const newOptions = [...watchedOptions, ""]
-    setValue("options", newOptions)
-  }
+    const newOptions = [...watchedOptions, ""];
+    setValue("options", newOptions);
+  };
 
   const removeOption = (index: number) => {
-    const newOptions = watchedOptions.filter((_, i) => i !== index)
-    setValue("options", newOptions)
-  }
+    const newOptions = watchedOptions.filter((_, i) => i !== index);
+    setValue("options", newOptions);
+  };
 
   return (
     <div className="p-6">
@@ -346,5 +346,5 @@ export function FieldEditor({
         )}
       </div>
     </div>
-  )
+  );
 }

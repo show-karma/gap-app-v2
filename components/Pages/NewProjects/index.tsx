@@ -1,20 +1,20 @@
-"use client"
-import { Listbox, Transition } from "@headlessui/react"
-import { CheckIcon } from "@heroicons/react/20/solid"
-import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/24/solid"
-import { useInfiniteQuery } from "@tanstack/react-query"
-import { useQueryState } from "nuqs"
-import { Fragment } from "react"
-import InfiniteScroll from "react-infinite-scroll-component"
-import { AutoSizer, Grid } from "react-virtualized"
-import { queryClient } from "@/components/Utilities/PrivyProviderWrapper"
-import { PROJECT_NAME } from "@/constants/brand"
-import { layoutTheme } from "@/src/helper/theme"
-import type { ExplorerSortByOptions, ExplorerSortOrder } from "@/types/explorer"
-import { getExplorerProjects } from "@/utilities/indexer/getExplorerProjects"
-import { cn } from "@/utilities/tailwind"
-import { ProjectCardListSkeleton } from "./Loading"
-import { ProjectCard } from "./ProjectCard"
+"use client";
+import { Listbox, Transition } from "@headlessui/react";
+import { CheckIcon } from "@heroicons/react/20/solid";
+import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/24/solid";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { useQueryState } from "nuqs";
+import { Fragment } from "react";
+import InfiniteScroll from "react-infinite-scroll-component";
+import { AutoSizer, Grid } from "react-virtualized";
+import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
+import { PROJECT_NAME } from "@/constants/brand";
+import { layoutTheme } from "@/src/helper/theme";
+import type { ExplorerSortByOptions, ExplorerSortOrder } from "@/types/explorer";
+import { getExplorerProjects } from "@/utilities/indexer/getExplorerProjects";
+import { cn } from "@/utilities/tailwind";
+import { ProjectCardListSkeleton } from "./Loading";
+import { ProjectCard } from "./ProjectCard";
 
 const sortOptions: Record<ExplorerSortByOptions, string> = {
   createdAt: "Recently Added",
@@ -23,7 +23,7 @@ const sortOptions: Record<ExplorerSortByOptions, string> = {
   noOfGrants: "No. of Grants",
   noOfProjectMilestones: "No. of Roadmap items",
   noOfGrantMilestones: "No. of Milestones",
-}
+};
 
 export const NewProjectsPage = () => {
   const [selectedSort, changeSortQuery] = useQueryState("sortBy", {
@@ -31,12 +31,12 @@ export const NewProjectsPage = () => {
     serialize: (value) => value,
     parse: (value) =>
       value ? (value as ExplorerSortByOptions) : ("updatedAt" as ExplorerSortByOptions),
-  })
+  });
   const [selectedSortOrder, changeSortOrderQuery] = useQueryState("sortOrder", {
     defaultValue: "desc",
     serialize: (value) => value,
     parse: (value) => (value ? (value as ExplorerSortOrder) : ("desc" as ExplorerSortOrder)),
-  })
+  });
   const {
     data,
     isFetching,
@@ -55,24 +55,24 @@ export const NewProjectsPage = () => {
       ),
     getNextPageParam: (lastGroup) => lastGroup.nextOffset,
     initialPageParam: 0,
-  })
-  const projects = data?.pages.flatMap((page) => page.projects)
+  });
+  const projects = data?.pages.flatMap((page) => page.projects);
 
-  const commonWidth = 359
+  const commonWidth = 359;
 
   const changeSort = async (newValue: ExplorerSortByOptions) => {
     if (newValue === selectedSort) {
-      changeSortOrderQuery(selectedSortOrder === "asc" ? "desc" : "asc")
+      changeSortOrderQuery(selectedSortOrder === "asc" ? "desc" : "asc");
     } else {
-      changeSortQuery(newValue)
-      changeSortOrderQuery("desc")
+      changeSortQuery(newValue);
+      changeSortOrderQuery("desc");
     }
 
     queryClient.removeQueries({
       queryKey: ["new-projects"],
       exact: true,
-    })
-  }
+    });
+  };
 
   return (
     <div
@@ -91,7 +91,7 @@ export const NewProjectsPage = () => {
             <Listbox
               value={selectedSort}
               onChange={(value) => {
-                changeSort(value as ExplorerSortByOptions)
+                changeSort(value as ExplorerSortByOptions);
               }}
             >
               {({ open }) => (
@@ -186,11 +186,11 @@ export const NewProjectsPage = () => {
             >
               <AutoSizer disableHeight>
                 {({ width }) => {
-                  const columns = Math.floor(width / commonWidth)
-                  const columnCounter = columns ? (columns > 4 ? 4 : columns) : 1
-                  const columnWidth = Math.floor(width / columnCounter)
-                  const gutterSize = 20
-                  const height = Math.ceil(projects.length / columnCounter) * 260
+                  const columns = Math.floor(width / commonWidth);
+                  const columnCounter = columns ? (columns > 4 ? 4 : columns) : 1;
+                  const columnWidth = Math.floor(width / columnCounter);
+                  const gutterSize = 20;
+                  const height = Math.ceil(projects.length / columnCounter) * 260;
 
                   return (
                     <Grid
@@ -201,7 +201,7 @@ export const NewProjectsPage = () => {
                       columnWidth={columnWidth}
                       columnCount={columnCounter}
                       cellRenderer={({ columnIndex, key, rowIndex, style }) => {
-                        const project = projects[rowIndex * columnCounter + columnIndex]
+                        const project = projects[rowIndex * columnCounter + columnIndex];
                         return (
                           <div
                             key={key}
@@ -232,10 +232,10 @@ export const NewProjectsPage = () => {
                               </div>
                             )}
                           </div>
-                        )
+                        );
                       }}
                     />
-                  )
+                  );
                 }}
               </AutoSizer>
             </InfiniteScroll>
@@ -248,5 +248,5 @@ export const NewProjectsPage = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

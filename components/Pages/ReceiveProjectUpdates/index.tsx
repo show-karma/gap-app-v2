@@ -1,32 +1,32 @@
-"use client"
-import { zodResolver } from "@hookform/resolvers/zod"
-import Image from "next/image"
-import { useState } from "react"
-import { type SubmitHandler, useForm } from "react-hook-form"
-import toast from "react-hot-toast"
-import { isAddress } from "viem"
-import { z } from "zod"
-import { Button } from "@/components/Utilities/Button"
-import { ExternalLink } from "@/components/Utilities/ExternalLink"
-import { errorManager } from "@/components/Utilities/errorManager"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
+"use client";
+import { zodResolver } from "@hookform/resolvers/zod";
+import Image from "next/image";
+import { useState } from "react";
+import { type SubmitHandler, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { isAddress } from "viem";
+import { z } from "zod";
+import { Button } from "@/components/Utilities/Button";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { errorManager } from "@/components/Utilities/errorManager";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 const lookupSchema = z.object({
   address: z.string().refine((str) => isAddress(str), {
     message: "This address is not valid",
   }),
-})
+});
 const subscribeSchema = z.object({
   email: z.string().email(),
-})
+});
 
-type LookupFormType = z.infer<typeof lookupSchema>
-type SubscribeFormType = z.infer<typeof subscribeSchema>
+type LookupFormType = z.infer<typeof lookupSchema>;
+type SubscribeFormType = z.infer<typeof subscribeSchema>;
 
 interface SubscribeFormProps {
-  address: string
-  changeIsSubscribed: (value: boolean) => void
+  address: string;
+  changeIsSubscribed: (value: boolean) => void;
 }
 
 const SubscribeForm = ({ address, changeIsSubscribed }: SubscribeFormProps) => {
@@ -40,23 +40,23 @@ const SubscribeForm = ({ address, changeIsSubscribed }: SubscribeFormProps) => {
     resolver: zodResolver(subscribeSchema),
     reValidateMode: "onChange",
     mode: "onChange",
-  })
-  const [isLoading, setIsLoading] = useState(false)
+  });
+  const [isLoading, setIsLoading] = useState(false);
 
   const onSubmit: SubmitHandler<SubscribeFormType> = async (data) => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
       const [_res, error] = await fetchData(INDEXER.COMMUNITY.SUBSCRIBE.BULK, "POST", {
         publicAddress: address.toLowerCase(),
         email: data.email,
-      })
+      });
       if (error) {
-        throw error
+        throw error;
       }
-      changeIsSubscribed(true)
-      toast.success("You have subscribed to all the projects funded by your wallet")
+      changeIsSubscribed(true);
+      toast.success("You have subscribed to all the projects funded by your wallet");
     } catch (error: any) {
-      console.error(error)
+      console.error(error);
       errorManager(
         `Error of user ${address}/${data.email} subscribing to all projects funded by his wallet`,
         error,
@@ -64,13 +64,13 @@ const SubscribeForm = ({ address, changeIsSubscribed }: SubscribeFormProps) => {
           address,
           email: data.email,
         }
-      )
-      toast.error("An error occurred while subscribing, try again later.")
-      changeIsSubscribed(false)
+      );
+      toast.error("An error occurred while subscribing, try again later.");
+      changeIsSubscribed(false);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="flex flex-col gap-8">
@@ -93,12 +93,12 @@ const SubscribeForm = ({ address, changeIsSubscribed }: SubscribeFormProps) => {
         </Button>
       </form>
     </div>
-  )
-}
+  );
+};
 
 interface StepNavigatorProps {
-  step: "lookup" | "subscribe"
-  setStep: (step: "lookup" | "subscribe") => void
+  step: "lookup" | "subscribe";
+  setStep: (step: "lookup" | "subscribe") => void;
 }
 
 export const ReceiveProjectUpdates = ({ communityName }: { communityName: string }) => {
@@ -111,43 +111,43 @@ export const ReceiveProjectUpdates = ({ communityName }: { communityName: string
     resolver: zodResolver(lookupSchema),
     reValidateMode: "onChange",
     mode: "onChange",
-  })
-  const [isLoading, setIsLoading] = useState(false)
-  const [projectsFunded, setProjectsFunded] = useState(0)
-  const [addressSearched, setAddressSearched] = useState<string | null>(null)
-  const [subscribed, setSubscribed] = useState(false)
-  const [step, setStep] = useState<"lookup" | "subscribe">("lookup")
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [projectsFunded, setProjectsFunded] = useState(0);
+  const [addressSearched, setAddressSearched] = useState<string | null>(null);
+  const [subscribed, setSubscribed] = useState(false);
+  const [step, setStep] = useState<"lookup" | "subscribe">("lookup");
 
   const changeIsSubscribed = (value: boolean) => {
-    setSubscribed(value)
-  }
+    setSubscribed(value);
+  };
 
   const onSubmit: SubmitHandler<LookupFormType> = async (data) => {
-    setAddressSearched(data.address)
-    setIsLoading(true)
-    changeIsSubscribed(false)
+    setAddressSearched(data.address);
+    setIsLoading(true);
+    changeIsSubscribed(false);
     try {
-      const [res, error] = await fetchData(INDEXER.PROJECT.FUNDEDBY(data.address.toLowerCase()))
+      const [res, error] = await fetchData(INDEXER.PROJECT.FUNDEDBY(data.address.toLowerCase()));
       if (error) {
-        throw error
+        throw error;
       }
       if (res.length > 0) {
-        setProjectsFunded(res.length)
-        setStep("subscribe")
+        setProjectsFunded(res.length);
+        setStep("subscribe");
       } else {
         setError("address", {
           message: "No projects funded by this wallet",
-        })
-        setStep("lookup")
+        });
+        setStep("lookup");
       }
     } catch (error: any) {
-      console.error(error)
-      setProjectsFunded(0)
-      setStep("lookup")
+      console.error(error);
+      setProjectsFunded(0);
+      setStep("lookup");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
   return (
     <div className="flex flex-col gap-4  max-w-xl w-full bg-[#EEF4FF] dark:bg-zinc-800 p-5 rounded-lg max-lg:max-w-full">
       {step === "lookup" ? (
@@ -229,5 +229,5 @@ export const ReceiveProjectUpdates = ({ communityName }: { communityName: string
         />
       </div>
     </div>
-  )
-}
+  );
+};

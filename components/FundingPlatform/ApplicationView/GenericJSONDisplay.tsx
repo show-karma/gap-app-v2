@@ -1,9 +1,9 @@
-import type { FC, ReactElement } from "react"
+import type { FC, ReactElement } from "react";
 
-type GenericJSON = Record<string, unknown>
+type GenericJSON = Record<string, unknown>;
 
 interface GenericJSONDisplayProps {
-  data: GenericJSON
+  data: GenericJSON;
 }
 
 // Component to render generic JSON in a readable format
@@ -11,20 +11,20 @@ const GenericJSONDisplay: FC<GenericJSONDisplayProps> = ({ data }) => {
   const renderValue = (value: unknown, depth = 0): ReactElement => {
     // Handle different value types
     if (value === null || value === undefined) {
-      return <span className="text-gray-400 dark:text-gray-500">null</span>
+      return <span className="text-gray-400 dark:text-gray-500">null</span>;
     }
 
     if (typeof value === "string") {
-      return <span className="text-gray-700 dark:text-gray-300">{value}</span>
+      return <span className="text-gray-700 dark:text-gray-300">{value}</span>;
     }
 
     if (typeof value === "number" || typeof value === "boolean") {
-      return <span className="text-blue-600 dark:text-blue-400">{String(value)}</span>
+      return <span className="text-blue-600 dark:text-blue-400">{String(value)}</span>;
     }
 
     if (Array.isArray(value)) {
       if (value.length === 0) {
-        return <span className="text-gray-400 dark:text-gray-500">[]</span>
+        return <span className="text-gray-400 dark:text-gray-500">[]</span>;
       }
       return (
         <div className={depth > 0 ? "ml-4" : ""}>
@@ -35,13 +35,13 @@ const GenericJSONDisplay: FC<GenericJSONDisplayProps> = ({ data }) => {
             </div>
           ))}
         </div>
-      )
+      );
     }
 
     if (typeof value === "object") {
-      const entries = Object.entries(value as Record<string, unknown>)
+      const entries = Object.entries(value as Record<string, unknown>);
       if (entries.length === 0) {
-        return <span className="text-gray-400 dark:text-gray-500">{"{}"}</span>
+        return <span className="text-gray-400 dark:text-gray-500">{"{}"}</span>;
       }
       return (
         <div className={depth > 0 ? "ml-4" : ""}>
@@ -54,25 +54,25 @@ const GenericJSONDisplay: FC<GenericJSONDisplayProps> = ({ data }) => {
             </div>
           ))}
         </div>
-      )
+      );
     }
 
-    return <span className="text-gray-500 dark:text-gray-400">{String(value)}</span>
-  }
+    return <span className="text-gray-500 dark:text-gray-400">{String(value)}</span>;
+  };
 
   // Special handling for common evaluation fields
   const getDecisionColor = (decision: string) => {
-    const dec = decision.toLowerCase()
-    if (dec === "reject" || dec === "rejected") return "text-red-600 dark:text-red-400"
+    const dec = decision.toLowerCase();
+    if (dec === "reject" || dec === "rejected") return "text-red-600 dark:text-red-400";
     if (dec === "accept" || dec === "accepted" || dec === "approve" || dec === "approved")
-      return "text-green-600 dark:text-green-400"
-    if (dec === "pending" || dec === "review") return "text-yellow-600 dark:text-yellow-400"
-    return "text-gray-700 dark:text-gray-300"
-  }
+      return "text-green-600 dark:text-green-400";
+    if (dec === "pending" || dec === "review") return "text-yellow-600 dark:text-yellow-400";
+    return "text-gray-700 dark:text-gray-300";
+  };
 
   // Check if it has a decision field for special formatting
-  const hasDecision = "decision" in data
-  const decision = hasDecision ? String(data?.decision) : null
+  const hasDecision = "decision" in data;
+  const decision = hasDecision ? String(data?.decision) : null;
 
   return (
     <div className="space-y-3">
@@ -88,7 +88,7 @@ const GenericJSONDisplay: FC<GenericJSONDisplayProps> = ({ data }) => {
       <div className="space-y-2">
         {Object.entries(data).map(([key, value]) => {
           // Skip decision if already displayed
-          if (key === "decision" && hasDecision) return null
+          if (key === "decision" && hasDecision) return null;
 
           return (
             <div key={key} className="py-2">
@@ -97,11 +97,11 @@ const GenericJSONDisplay: FC<GenericJSONDisplayProps> = ({ data }) => {
               </h5>
               <div className="text-sm">{renderValue(value)}</div>
             </div>
-          )
+          );
         })}
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default GenericJSONDisplay
+export default GenericJSONDisplay;

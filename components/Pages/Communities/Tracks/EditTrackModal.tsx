@@ -1,17 +1,17 @@
-import { Dialog, Transition } from "@headlessui/react"
-import { XMarkIcon } from "@heroicons/react/24/outline"
-import { Fragment } from "react"
-import { Button } from "@/components/Utilities/Button"
-import { Spinner } from "@/components/Utilities/Spinner"
-import type { Track } from "@/services/tracks"
+import { Dialog, Transition } from "@headlessui/react";
+import { XMarkIcon } from "@heroicons/react/24/outline";
+import { Fragment } from "react";
+import { Button } from "@/components/Utilities/Button";
+import { Spinner } from "@/components/Utilities/Spinner";
+import type { Track } from "@/services/tracks";
 
 interface EditTrackModalProps {
-  show: boolean
-  onClose: () => void
-  selectedTrack: Track | null
-  setSelectedTrack: (track: Track) => void
-  onSubmit: () => void
-  isSubmitting: boolean
+  show: boolean;
+  onClose: () => void;
+  selectedTrack: Track | null;
+  setSelectedTrack: (track: Track) => void;
+  onSubmit: () => void;
+  isSubmitting: boolean;
 }
 
 export const EditTrackModal = ({
@@ -120,5 +120,5 @@ export const EditTrackModal = ({
         </div>
       </Dialog>
     </Transition>
-  )
-}
+  );
+};

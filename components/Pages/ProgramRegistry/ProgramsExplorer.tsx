@@ -1,122 +1,122 @@
-"use client"
-import { MagnifyingGlassIcon } from "@heroicons/react/20/solid"
-import { CheckIcon } from "@heroicons/react/24/solid"
-import { useQuery } from "@tanstack/react-query"
-import debounce from "lodash.debounce"
-import { useSearchParams } from "next/navigation"
-import { useQueryState } from "nuqs"
-import type React from "react"
-import { type Dispatch, useEffect, useState } from "react"
+"use client";
+import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
+import { CheckIcon } from "@heroicons/react/24/solid";
+import { useQuery } from "@tanstack/react-query";
+import debounce from "lodash.debounce";
+import { useSearchParams } from "next/navigation";
+import { useQueryState } from "nuqs";
+import type React from "react";
+import { type Dispatch, useEffect, useState } from "react";
 /* eslint-disable @next/next/no-img-element */
-import { registryHelper } from "@/components/Pages/ProgramRegistry/helper"
-import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog"
-import { type GrantProgram, ProgramList } from "@/components/Pages/ProgramRegistry/ProgramList"
-import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown"
-import { errorManager } from "@/components/Utilities/errorManager"
-import Pagination from "@/components/Utilities/Pagination"
-import { layoutTheme } from "@/src/helper/theme"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
-import { cn } from "@/utilities/tailwind"
-import { LoadingProgramTable } from "./Loading/Programs"
-import { ProgramHeader } from "./ProgramHeader"
+import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
+import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
+import { type GrantProgram, ProgramList } from "@/components/Pages/ProgramRegistry/ProgramList";
+import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
+import { errorManager } from "@/components/Utilities/errorManager";
+import Pagination from "@/components/Utilities/Pagination";
+import { layoutTheme } from "@/src/helper/theme";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { cn } from "@/utilities/tailwind";
+import { LoadingProgramTable } from "./Loading/Programs";
+import { ProgramHeader } from "./ProgramHeader";
 
-const statuses = ["Active", "Inactive"]
+const statuses = ["Active", "Inactive"];
 
 export const ProgramsExplorer = () => {
-  const searchParams = useSearchParams()
+  const searchParams = useSearchParams();
   const defaultNetworks = ((searchParams.get("networks") as string) || "")
     .split(",")
-    .filter((category) => category.trim())
+    .filter((category) => category.trim());
   const defaultEcosystems = ((searchParams.get("ecosystems") as string) || "")
     .split(",")
-    .filter((ecosystem) => ecosystem.trim())
+    .filter((ecosystem) => ecosystem.trim());
   const defaultGrantTypes = ((searchParams.get("grantTypes") as string) || "")
     .split(",")
-    .filter((grantType) => grantType.trim())
+    .filter((grantType) => grantType.trim());
   const _defaultGrantSize = searchParams.get("grantSize")
     ? ((searchParams.get("grantSize") as string) || "")
         .split(",")
         .filter((grantType) => grantType.trim())
         .map((item) => (Number.isNaN(Number(item)) ? 0 : +item))
         .slice(0, 2)
-    : registryHelper.grantSizes
+    : registryHelper.grantSizes;
 
   const defaultCategories = ((searchParams.get("categories") as string) || "")
     .split(",")
-    .filter((category) => category.trim())
-  const defaultStatuses = (searchParams.get("status") as string) || ""
-  const defaultName = (searchParams.get("name") as string) || ""
-  const defaultProgramId = (searchParams.get("programId") as string) || ""
+    .filter((category) => category.trim());
+  const defaultStatuses = (searchParams.get("status") as string) || "";
+  const defaultName = (searchParams.get("name") as string) || "";
+  const defaultProgramId = (searchParams.get("programId") as string) || "";
 
-  const [loading, setLoading] = useState(true)
-  const pageLimit = 10
+  const [loading, setLoading] = useState(true);
+  const pageLimit = 10;
 
   const [selectedCategory, _setSelectedCategory] = useQueryState("categories", {
     defaultValue: defaultCategories,
     serialize: (value) => (value.length ? value?.join(",") : ""),
     parse: (value) => (value.length > 0 ? value.split(",") : []),
-  })
+  });
   const [status, setStatus] = useQueryState("status", {
     defaultValue: defaultStatuses || "Active",
-  })
+  });
   const [page, setPage] = useQueryState("page", {
     defaultValue: 1,
     serialize: (value) => value.toString(),
     parse: (value) => parseInt(value, 10),
-  })
+  });
 
   const [searchInput, setSearchInput] = useQueryState("name", {
     defaultValue: defaultName,
     throttleMs: 500,
-  })
+  });
 
   const [selectedNetworks, setSelectedNetworks] = useQueryState("networks", {
     defaultValue: defaultNetworks,
     serialize: (value) => (value.length ? value?.join(",") : ""),
     parse: (value) => (value.length > 0 ? value.split(",") : []),
-  })
+  });
   const [selectedEcosystems, setSelectedEcosystems] = useQueryState("ecosystems", {
     defaultValue: defaultEcosystems,
     serialize: (value) => (value.length ? value?.join(",") : ""),
     parse: (value) => (value.length > 0 ? value.split(",") : []),
-  })
+  });
   const [selectedGrantTypes, setSelectedGrantTypes] = useQueryState("grantTypes", {
     defaultValue: defaultGrantTypes,
     serialize: (value) => (value.length ? value?.join(",") : ""),
     parse: (value) => (value.length > 0 ? value.split(",") : []),
-  })
+  });
 
   const [programId, setProgramId] = useQueryState("programId", {
     defaultValue: defaultProgramId,
     throttleMs: 500,
-  })
+  });
 
-  const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(null)
+  const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(null);
 
   const debouncedSearch = debounce((value: string) => {
-    setPage(1)
-    setSearchInput(value)
-  }, 500)
+    setPage(1);
+    setSearchInput(value);
+  }, 500);
 
   const onChangeGeneric = (
     value: string,
     setToChange: Dispatch<React.SetStateAction<string[]>>
   ) => {
     setToChange((oldArray) => {
-      setPage(1)
-      const newArray = [...oldArray]
+      setPage(1);
+      const newArray = [...oldArray];
       if (newArray.includes(value)) {
-        const filteredArray = newArray.filter((item) => item !== value)
-        return filteredArray
+        const filteredArray = newArray.filter((item) => item !== value);
+        return filteredArray;
       } else {
-        newArray.push(value)
+        newArray.push(value);
       }
-      return newArray
-    })
-  }
+      return newArray;
+    });
+  };
 
-  const pageSize = 10
+  const pageSize = 10;
 
   const { data, isLoading } = useQuery({
     queryKey: [
@@ -141,45 +141,45 @@ export const ProgramsExplorer = () => {
           }${selectedEcosystems.length ? `&ecosystems=${selectedEcosystems.join(",")}` : ""}${
             selectedCategory.length ? `&categories=${selectedCategory.join(",")}` : ""
           }`
-      )
+      );
       if (error) {
-        throw new Error(error)
+        throw new Error(error);
       }
       res.programs.forEach((program: GrantProgram) => {
         if (typeof program.metadata?.grantTypes === "string") {
-          program.metadata.grantTypes = [program.metadata.grantTypes]
+          program.metadata.grantTypes = [program.metadata.grantTypes];
         }
-      })
-      return res
+      });
+      return res;
     },
-  })
-  const grantPrograms = data?.programs || []
-  const totalPrograms = data?.count || 0
+  });
+  const grantPrograms = data?.programs || [];
+  const totalPrograms = data?.count || 0;
 
   useEffect(() => {
-    setLoading(isLoading)
-  }, [isLoading])
+    setLoading(isLoading);
+  }, [isLoading]);
 
   useEffect(() => {
     const searchProgramById = async (id: string) => {
       try {
         const [data, _error] = await fetchData(
           INDEXER.REGISTRY.FIND_BY_ID(id, registryHelper.supportedNetworks)
-        )
+        );
         if (data) {
-          setSelectedProgram(data)
+          setSelectedProgram(data);
           if (typeof data.metadata?.grantTypes === "string") {
-            data.metadata.grantTypes = [data.metadata.grantTypes]
+            data.metadata.grantTypes = [data.metadata.grantTypes];
           }
         }
       } catch (error: any) {
-        errorManager(`Error while searching for program by id`, error)
+        errorManager(`Error while searching for program by id`, error);
       }
-    }
+    };
     if (programId) {
-      searchProgramById(programId)
+      searchProgramById(programId);
     }
-  }, [programId])
+  }, [programId]);
 
   return (
     <>
@@ -188,8 +188,8 @@ export const ProgramsExplorer = () => {
           program={selectedProgram}
           isOpen={selectedProgram !== null}
           closeModal={() => {
-            setProgramId(null)
-            setSelectedProgram(null)
+            setProgramId(null);
+            setSelectedProgram(null);
           }}
         />
       ) : null}
@@ -263,7 +263,7 @@ export const ProgramsExplorer = () => {
                 list={registryHelper.networks}
                 onSelectFunction={(value: string) => onChangeGeneric(value, setSelectedNetworks)}
                 cleanFunction={() => {
-                  setSelectedNetworks([])
+                  setSelectedNetworks([]);
                 }}
                 type={"Networks"}
                 selected={selectedNetworks}
@@ -274,7 +274,7 @@ export const ProgramsExplorer = () => {
                 list={registryHelper.ecosystems}
                 onSelectFunction={(value: string) => onChangeGeneric(value, setSelectedEcosystems)}
                 cleanFunction={() => {
-                  setSelectedEcosystems([])
+                  setSelectedEcosystems([]);
                 }}
                 type={"Ecosystems"}
                 selected={selectedEcosystems}
@@ -285,7 +285,7 @@ export const ProgramsExplorer = () => {
                 list={registryHelper.grantTypes}
                 onSelectFunction={(value: string) => onChangeGeneric(value, setSelectedGrantTypes)}
                 cleanFunction={() => {
-                  setSelectedGrantTypes([])
+                  setSelectedGrantTypes([]);
                 }}
                 type={"Funding Mechanisms"}
                 selected={selectedGrantTypes}
@@ -307,8 +307,8 @@ export const ProgramsExplorer = () => {
                       <ProgramList
                         grantPrograms={grantPrograms}
                         selectProgram={(program) => {
-                          setSelectedProgram(program)
-                          setProgramId(program._id.$oid || program.programId || "")
+                          setSelectedProgram(program);
+                          setProgramId(program._id.$oid || program.programId || "");
                         }}
                       />
                     </div>
@@ -334,5 +334,5 @@ export const ProgramsExplorer = () => {
         </div>
       </section>
     </>
-  )
-}
+  );
+};

@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import { ArrowRightIcon } from "@heroicons/react/20/solid"
-import { FolderOpen } from "lucide-react"
-import Link from "next/link"
-import pluralize from "pluralize"
-import { useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
+import { ArrowRightIcon } from "@heroicons/react/20/solid";
+import { FolderOpen } from "lucide-react";
+import Link from "next/link";
+import pluralize from "pluralize";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Carousel,
   type CarouselApi,
@@ -13,37 +13,37 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from "@/components/ui/carousel"
-import type { FundingProgram } from "@/services/fundingPlatformService"
-import { PAGES } from "@/utilities/pages"
-import { FundingOpportunityCard } from "./funding-opportunity-card"
+} from "@/components/ui/carousel";
+import type { FundingProgram } from "@/services/fundingPlatformService";
+import { PAGES } from "@/utilities/pages";
+import { FundingOpportunityCard } from "./funding-opportunity-card";
 
 interface LiveFundingOpportunitiesCarouselProps {
-  programs: FundingProgram[]
+  programs: FundingProgram[];
 }
 
 export function LiveFundingOpportunitiesCarousel({
   programs,
 }: LiveFundingOpportunitiesCarouselProps) {
-  const [api, setApi] = useState<CarouselApi>()
-  const [current, setCurrent] = useState(0)
-  const [totalSlides, setTotalSlides] = useState(0)
+  const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
+  const [totalSlides, setTotalSlides] = useState(0);
 
   useEffect(() => {
     if (!api) {
-      return
+      return;
     }
 
     // Get the total number of carousel slides/pages
-    setTotalSlides(api.scrollSnapList().length)
+    setTotalSlides(api.scrollSnapList().length);
     // Set initial current slide (1-indexed)
-    setCurrent(api.selectedScrollSnap() + 1)
+    setCurrent(api.selectedScrollSnap() + 1);
 
     // Listen for carousel slide changes and update current slide
     api.on("select", () => {
-      setCurrent(api.selectedScrollSnap() + 1)
-    })
-  }, [api])
+      setCurrent(api.selectedScrollSnap() + 1);
+    });
+  }, [api]);
 
   // Empty state when there are no programs
   if (programs.length === 0) {
@@ -67,7 +67,7 @@ export function LiveFundingOpportunitiesCarousel({
           <Link href={PAGES.FUNDERS}>Run a funding program</Link>
         </Button>
       </div>
-    )
+    );
   }
 
   return (
@@ -133,5 +133,5 @@ export function LiveFundingOpportunitiesCarousel({
         </Button>
       </div>
     </>
-  )
+  );
 }

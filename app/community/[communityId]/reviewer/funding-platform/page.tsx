@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import {
   CalendarIcon,
   CheckCircleIcon,
@@ -8,29 +8,29 @@ import {
   MagnifyingGlassIcon,
   UsersIcon,
   XCircleIcon,
-} from "@heroicons/react/24/outline"
+} from "@heroicons/react/24/outline";
 import {
   ArrowLeftIcon,
   ArrowTrendingUpIcon,
   ChevronDownIcon,
   Cog6ToothIcon,
   EyeIcon,
-} from "@heroicons/react/24/solid"
-import { Line } from "@rc-component/progress"
-import Link from "next/link"
-import { useParams, useRouter, useSearchParams } from "next/navigation"
-import pluralize from "pluralize"
-import { useEffect, useMemo, useState } from "react"
-import { Button } from "@/components/Utilities/Button"
-import { Spinner } from "@/components/Utilities/Spinner"
-import { useFundingPrograms } from "@/hooks/useFundingPlatform"
-import { useReviewerPrograms } from "@/hooks/usePermissions"
-import type { FundingProgram } from "@/services/fundingPlatformService"
-import { layoutTheme } from "@/src/helper/theme"
-import formatCurrency from "@/utilities/formatCurrency"
-import { formatDate } from "@/utilities/formatDate"
-import { PAGES } from "@/utilities/pages"
-import { cn } from "@/utilities/tailwind"
+} from "@heroicons/react/24/solid";
+import { Line } from "@rc-component/progress";
+import Link from "next/link";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import pluralize from "pluralize";
+import { useEffect, useMemo, useState } from "react";
+import { Button } from "@/components/Utilities/Button";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { useFundingPrograms } from "@/hooks/useFundingPlatform";
+import { useReviewerPrograms } from "@/hooks/usePermissions";
+import type { FundingProgram } from "@/services/fundingPlatformService";
+import { layoutTheme } from "@/src/helper/theme";
+import formatCurrency from "@/utilities/formatCurrency";
+import { formatDate } from "@/utilities/formatDate";
+import { PAGES } from "@/utilities/pages";
+import { cn } from "@/utilities/tailwind";
 
 /**
  * Reviewer funding platform page
@@ -38,49 +38,49 @@ import { cn } from "@/utilities/tailwind"
  * Shows only programs the reviewer has access to
  */
 export default function ReviewerFundingPlatformPage() {
-  const { communityId } = useParams() as { communityId: string }
-  const router = useRouter()
-  const searchParams = useSearchParams()
+  const { communityId } = useParams() as { communityId: string };
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Get reviewer programs and filter by community
-  const { programs: reviewerPrograms, isLoading: isLoadingReviewer } = useReviewerPrograms()
+  const { programs: reviewerPrograms, isLoading: isLoadingReviewer } = useReviewerPrograms();
 
   // Get all programs for the community
   const {
     programs: allPrograms,
     isLoading: isLoadingPrograms,
     error: programsError,
-  } = useFundingPrograms(communityId)
+  } = useFundingPrograms(communityId);
 
   // Filter programs to only show those the reviewer has access to
   const programs = useMemo(() => {
-    if (!allPrograms || !reviewerPrograms) return []
+    if (!allPrograms || !reviewerPrograms) return [];
 
     // Create a Set of program keys for quick lookup
-    const reviewerProgramKeys = new Set(reviewerPrograms.map((p) => `${p.programId}_${p.chainID}`))
+    const reviewerProgramKeys = new Set(reviewerPrograms.map((p) => `${p.programId}_${p.chainID}`));
 
     // Filter all programs to only include those in reviewer programs
     return allPrograms.filter((program) =>
       reviewerProgramKeys.has(`${program.programId}_${program.chainID}`)
-    )
-  }, [allPrograms, reviewerPrograms])
+    );
+  }, [allPrograms, reviewerPrograms]);
 
   // Initialize from URL params
-  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "")
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [enabledFilter, setEnabledFilter] = useState<"all" | "enabled" | "disabled">(
     (searchParams.get("status") as "all" | "enabled" | "disabled") || "all"
-  )
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  );
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   // Calculate statistics from programs
   const statistics: {
-    totalPrograms: number
-    totalApplications: number
-    approved: number
-    rejected: number
-    pending: number
-    revisionRequested: number
-    underReview: number
+    totalPrograms: number;
+    totalApplications: number;
+    approved: number;
+    rejected: number;
+    pending: number;
+    revisionRequested: number;
+    underReview: number;
   } = useMemo(() => {
     if (!programs || programs.length === 0) {
       return {
@@ -91,12 +91,12 @@ export default function ReviewerFundingPlatformPage() {
         pending: 0,
         revisionRequested: 0,
         underReview: 0,
-      }
+      };
     }
 
     const stats = programs.reduce(
       (acc, program) => {
-        const programStats = program.metrics || undefined
+        const programStats = program.metrics || undefined;
         return {
           totalPrograms: acc.totalPrograms + 1,
           totalApplications: acc.totalApplications + (programStats?.totalApplications || 0),
@@ -106,7 +106,7 @@ export default function ReviewerFundingPlatformPage() {
           revisionRequested:
             acc.revisionRequested + (programStats?.revisionRequestedApplications || 0),
           underReview: acc.underReview + (programStats?.underReviewApplications || 0),
-        }
+        };
       },
       {
         totalPrograms: 0,
@@ -117,62 +117,62 @@ export default function ReviewerFundingPlatformPage() {
         revisionRequested: 0,
         underReview: 0,
       }
-    )
+    );
 
-    return stats
-  }, [programs])
+    return stats;
+  }, [programs]);
 
   // Filter programs based on search term and enabled status
   const filteredPrograms = useMemo(() => {
-    if (!programs) return []
+    if (!programs) return [];
 
     return programs.filter((program) => {
       // Search filter
-      const searchLower = searchTerm.toLowerCase()
+      const searchLower = searchTerm.toLowerCase();
       const matchesSearch =
         searchTerm === "" ||
         program.name?.toLowerCase().includes(searchLower) ||
         program.metadata?.title?.toLowerCase().includes(searchLower) ||
         program.metadata?.description?.toLowerCase().includes(searchLower) ||
-        program.programId?.toLowerCase().includes(searchLower)
+        program.programId?.toLowerCase().includes(searchLower);
 
       // Enabled/Disabled filter
-      let matchesEnabled = true
+      let matchesEnabled = true;
       if (enabledFilter !== "all") {
-        const isEnabled = program.applicationConfig?.isEnabled || false
-        matchesEnabled = enabledFilter === "enabled" ? isEnabled : !isEnabled
+        const isEnabled = program.applicationConfig?.isEnabled || false;
+        matchesEnabled = enabledFilter === "enabled" ? isEnabled : !isEnabled;
       }
 
-      return matchesSearch && matchesEnabled
-    })
-  }, [programs, searchTerm, enabledFilter])
+      return matchesSearch && matchesEnabled;
+    });
+  }, [programs, searchTerm, enabledFilter]);
 
   // Update URL when filters change
   useEffect(() => {
-    const params = new URLSearchParams()
+    const params = new URLSearchParams();
 
     if (searchTerm) {
-      params.set("search", searchTerm)
+      params.set("search", searchTerm);
     }
 
     if (enabledFilter !== "all") {
-      params.set("status", enabledFilter)
+      params.set("status", enabledFilter);
     }
 
-    const queryString = params.toString()
+    const queryString = params.toString();
     const newUrl = queryString
       ? `/community/${communityId}/reviewer/funding-platform?${queryString}`
-      : `/community/${communityId}/reviewer/funding-platform`
+      : `/community/${communityId}/reviewer/funding-platform`;
 
-    router.push(newUrl, { scroll: false })
-  }, [searchTerm, enabledFilter, communityId, router])
+    router.push(newUrl, { scroll: false });
+  }, [searchTerm, enabledFilter, communityId, router]);
 
   if (isLoadingReviewer || isLoadingPrograms) {
     return (
       <div className="flex w-full items-center justify-center min-h-[400px]">
         <Spinner />
       </div>
-    )
+    );
   }
 
   if (programsError) {
@@ -184,7 +184,7 @@ export default function ReviewerFundingPlatformPage() {
           </p>
         </div>
       </div>
-    )
+    );
   }
 
   const _stats = [
@@ -237,7 +237,7 @@ export default function ReviewerFundingPlatformPage() {
       bgColor: "bg-indigo-50 dark:bg-indigo-900",
       icon: <MagnifyingGlassIcon className="h-5 w-5 text-indigo-700 dark:text-indigo-100" />,
     },
-  ]
+  ];
 
   const cardStats = (program: any) => [
     {
@@ -255,21 +255,21 @@ export default function ReviewerFundingPlatformPage() {
       ),
       icon: <UsersIcon className="w-5 h-5 text-blue-700 dark:text-blue-100" />,
     },
-  ]
+  ];
 
   const applicationProgressPct = (program: FundingProgram) => {
-    const totalApplications = program.metrics?.totalApplications || 0
-    const approvedApplications = program.metrics?.approvedApplications || 0
+    const totalApplications = program.metrics?.totalApplications || 0;
+    const approvedApplications = program.metrics?.approvedApplications || 0;
 
-    return Number(((approvedApplications / totalApplications) * 100).toFixed(2)) || 0
-  }
+    return Number(((approvedApplications / totalApplications) * 100).toFixed(2)) || 0;
+  };
 
   const applicationProgress = (program: FundingProgram) => {
-    const approvedApplications = program.metrics?.approvedApplications || 0
-    const rejectedApplications = program.metrics?.rejectedApplications || 0
-    const pendingApplications = program.metrics?.pendingApplications || 0
-    const revisionRequestedApplications = program.metrics?.revisionRequestedApplications || 0
-    const underReviewApplications = program.metrics?.underReviewApplications || 0
+    const approvedApplications = program.metrics?.approvedApplications || 0;
+    const rejectedApplications = program.metrics?.rejectedApplications || 0;
+    const pendingApplications = program.metrics?.pendingApplications || 0;
+    const revisionRequestedApplications = program.metrics?.revisionRequestedApplications || 0;
+    const underReviewApplications = program.metrics?.underReviewApplications || 0;
 
     return [
       {
@@ -302,8 +302,8 @@ export default function ReviewerFundingPlatformPage() {
         color: "text-indigo-600",
         bgColor: "bg-indigo-500",
       },
-    ]
-  }
+    ];
+  };
 
   return (
     <div className="sm:px-3 md:px-4 px-6 py-2 flex flex-col gap-4">
@@ -378,8 +378,8 @@ export default function ReviewerFundingPlatformPage() {
                   <button
                     key={status}
                     onClick={() => {
-                      setEnabledFilter(status as typeof enabledFilter)
-                      setIsDropdownOpen(false)
+                      setEnabledFilter(status as typeof enabledFilter);
+                      setIsDropdownOpen(false);
                     }}
                     className={cn(
                       "block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700",
@@ -611,5 +611,5 @@ export default function ReviewerFundingPlatformPage() {
         </div>
       )}
     </div>
-  )
+  );
 }

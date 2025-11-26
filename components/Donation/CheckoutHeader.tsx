@@ -1,15 +1,15 @@
-"use client"
+"use client";
 
-import { useRouter } from "next/navigation"
+import { useRouter } from "next/navigation";
 
 interface CheckoutHeaderProps {
-  communityId?: string
-  totalItems: number
-  onClear: () => void
+  communityId?: string;
+  totalItems: number;
+  onClear: () => void;
 }
 
 export function CheckoutHeader({ communityId, totalItems, onClear }: CheckoutHeaderProps) {
-  const router = useRouter()
+  const router = useRouter();
   return (
     <div className="mb-4 -mt-3">
       <div className="flex items-center justify-between">
@@ -35,5 +35,5 @@ export function CheckoutHeader({ communityId, totalItems, onClear }: CheckoutHea
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -1,13 +1,13 @@
-import type React from "react"
-import { Button } from "@/components/Utilities/Button"
-import { cn } from "@/utilities/tailwind"
+import type React from "react";
+import { Button } from "@/components/Utilities/Button";
+import { cn } from "@/utilities/tailwind";
 
 interface CancelButtonProps {
-  onClick: () => void
-  disabled?: boolean
-  isLoading?: boolean
-  text?: string
-  className?: string
+  onClick: () => void;
+  disabled?: boolean;
+  isLoading?: boolean;
+  text?: string;
+  className?: string;
 }
 
 export const CancelButton: React.FC<CancelButtonProps> = ({
@@ -27,5 +27,5 @@ export const CancelButton: React.FC<CancelButtonProps> = ({
     >
       {text}
     </Button>
-  )
-}
+  );
+};

@@ -1,44 +1,44 @@
-import { Listbox, Transition } from "@headlessui/react"
-import { CheckIcon } from "@heroicons/react/20/solid"
-import { ChevronDownIcon } from "@heroicons/react/24/solid"
-import { useSearchParams } from "next/navigation"
-import pluralize from "pluralize"
-import type React from "react"
-import { Fragment, useEffect, useState } from "react"
-import { useTracksForProgram } from "@/hooks/useTracks"
-import type { Track } from "@/services/tracks"
-import { cn } from "@/utilities/tailwind"
+import { Listbox, Transition } from "@headlessui/react";
+import { CheckIcon } from "@heroicons/react/20/solid";
+import { ChevronDownIcon } from "@heroicons/react/24/solid";
+import { useSearchParams } from "next/navigation";
+import pluralize from "pluralize";
+import type React from "react";
+import { Fragment, useEffect, useState } from "react";
+import { useTracksForProgram } from "@/hooks/useTracks";
+import type { Track } from "@/services/tracks";
+import { cn } from "@/utilities/tailwind";
 
 interface TrackFilterProps {
-  onChange: (trackIds: string[] | null) => void
-  selectedTrackIds?: string[]
-  communityUid: string
+  onChange: (trackIds: string[] | null) => void;
+  selectedTrackIds?: string[];
+  communityUid: string;
 }
 
 export const TrackFilter: React.FC<TrackFilterProps> = ({ onChange, selectedTrackIds = [] }) => {
-  const [initialLoad, setInitialLoad] = useState(true)
-  const params = useSearchParams()
-  const programIdParam = params.get("programId")
-  const { data: tracks = [], isLoading, isError } = useTracksForProgram(programIdParam as string)
+  const [initialLoad, setInitialLoad] = useState(true);
+  const params = useSearchParams();
+  const programIdParam = params.get("programId");
+  const { data: tracks = [], isLoading, isError } = useTracksForProgram(programIdParam as string);
 
   useEffect(() => {
     // Skip the initial change trigger to avoid overriding URL params
     if (initialLoad && tracks.length > 0) {
-      setInitialLoad(false)
+      setInitialLoad(false);
     }
-  }, [tracks, initialLoad])
+  }, [tracks, initialLoad]);
 
   if (isError || (!isLoading && tracks.length === 0)) {
-    return null
+    return null;
   }
 
   const handleChange = (newTrackIds: string[]) => {
     if (newTrackIds.length === 0) {
-      onChange(null)
+      onChange(null);
     } else {
-      onChange(newTrackIds)
+      onChange(newTrackIds);
     }
-  }
+  };
 
   return (
     <Listbox value={selectedTrackIds} onChange={handleChange} multiple>
@@ -120,5 +120,5 @@ export const TrackFilter: React.FC<TrackFilterProps> = ({ onChange, selectedTrac
         </div>
       )}
     </Listbox>
-  )
-}
+  );
+};

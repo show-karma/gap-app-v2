@@ -4,18 +4,18 @@
  * @returns Formatted Farcaster URL
  */
 export function formatFarcasterLink(farcasterInput: string): string {
-  if (!farcasterInput) return ""
+  if (!farcasterInput) return "";
 
   // If it already includes http/https, return as is
   if (farcasterInput.includes("http")) {
-    return farcasterInput
+    return farcasterInput;
   }
 
   // If it includes warpcast.com or farcaster.xyz, just prepend https://
   if (farcasterInput.includes("warpcast.com") || farcasterInput.includes("farcaster.xyz")) {
-    return `https://${farcasterInput}`
+    return `https://${farcasterInput}`;
   }
 
   // Default to warpcast.com for usernames
-  return `https://warpcast.com/${farcasterInput}`
+  return `https://warpcast.com/${farcasterInput}`;
 }

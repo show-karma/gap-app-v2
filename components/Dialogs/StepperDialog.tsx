@@ -1,8 +1,8 @@
-"use client"
-import { Dialog, Transition } from "@headlessui/react"
-import { XMarkIcon } from "@heroicons/react/24/solid"
-import { Fragment } from "react"
-import { type TxStepperSteps, useStepper } from "@/store/modals/txStepper"
+"use client";
+import { Dialog, Transition } from "@headlessui/react";
+import { XMarkIcon } from "@heroicons/react/24/solid";
+import { Fragment } from "react";
+import { type TxStepperSteps, useStepper } from "@/store/modals/txStepper";
 
 const StepNumberDictionary: Record<TxStepperSteps, number> = {
   preparing: 1,
@@ -10,26 +10,26 @@ const StepNumberDictionary: Record<TxStepperSteps, number> = {
   confirmed: 3,
   indexing: 4,
   indexed: 5,
-}
+};
 const StepTextDictionary: Record<TxStepperSteps, string> = {
   preparing: "Preparing to write to blockchain",
   pending: "Executing the onchain transaction",
   confirmed: "Waiting for confirmation",
   indexing: "Indexing the blockchain data",
   indexed: "Indexing complete",
-}
+};
 const Step = ({
   step,
   isActive,
   stepNumber,
   activeNumber,
 }: {
-  step: TxStepperSteps
-  isActive: boolean
-  stepNumber: number
-  activeNumber: number
+  step: TxStepperSteps;
+  isActive: boolean;
+  stepNumber: number;
+  activeNumber: number;
 }) => {
-  const lastSteps = Object.values(StepNumberDictionary).filter((item) => activeNumber >= item)
+  const lastSteps = Object.values(StepNumberDictionary).filter((item) => activeNumber >= item);
   return (
     <div className="flex flex-col gap-1">
       <div className="flex flex-row gap-3 items-center">
@@ -60,17 +60,17 @@ const Step = ({
         )}
       </div>
     </div>
-  )
-}
+  );
+};
 
 export const StepperDialog = () => {
-  const { isStepperOpen: isOpen, stepperStep, setIsStepper } = useStepper()
+  const { isStepperOpen: isOpen, stepperStep, setIsStepper } = useStepper();
 
   const closeModal = () => {
-    setIsStepper(false)
-  }
+    setIsStepper(false);
+  };
 
-  const stepCounter = Object.keys(StepNumberDictionary)
+  const stepCounter = Object.keys(StepNumberDictionary);
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -129,5 +129,5 @@ export const StepperDialog = () => {
         </div>
       </Dialog>
     </Transition>
-  )
-}
+  );
+};

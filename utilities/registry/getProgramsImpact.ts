@@ -1,9 +1,9 @@
-import type { CategoriesOptions } from "@/components/Pages/Admin/EditCategoriesPage"
-import { errorManager } from "@/components/Utilities/errorManager"
-import type { ProgramImpactData, ProgramImpactDataResponse } from "@/types/programs"
-import fetchData from "../fetchData"
-import { INDEXER } from "../indexer"
-import { getCommunityDetailsV2 } from "../queries/getCommunityDataV2"
+import type { CategoriesOptions } from "@/components/Pages/Admin/EditCategoriesPage";
+import { errorManager } from "@/components/Utilities/errorManager";
+import type { ProgramImpactData, ProgramImpactDataResponse } from "@/types/programs";
+import fetchData from "../fetchData";
+import { INDEXER } from "../indexer";
+import { getCommunityDetailsV2 } from "../queries/getCommunityDataV2";
 
 export async function getProgramsImpact(
   communityId: string,
@@ -13,7 +13,7 @@ export async function getProgramsImpact(
 ): Promise<ProgramImpactData> {
   try {
     // First get the community details to obtain the UID
-    const communityDetails = await getCommunityDetailsV2(communityId)
+    const communityDetails = await getCommunityDetailsV2(communityId);
 
     if (!communityDetails) {
       return {
@@ -23,28 +23,28 @@ export async function getProgramsImpact(
           totalProjects: 0,
           totalFundingAllocated: "0",
         },
-      }
+      };
     }
 
     // Use the new V2 impact-segments endpoint with community UID
     const [data, error] = await fetchData(
       INDEXER.COMMUNITY.V2.IMPACT_SEGMENTS(communityDetails.uid)
-    )
+    );
     if (error) {
-      throw error
+      throw error;
     }
 
     // Transform the new API response to match the expected ProgramImpactData structure
-    const impactSegments = data || []
+    const impactSegments = data || [];
 
     // Group impact segments by categoryName (using the actual category names from API)
     const groupedByCategory = impactSegments.reduce((acc: any, segment: any) => {
-      const categoryName = segment.categoryName || "Unknown Category"
+      const categoryName = segment.categoryName || "Unknown Category";
       if (!acc[categoryName]) {
         acc[categoryName] = {
           categoryName: categoryName,
           impacts: [],
-        }
+        };
       }
 
       acc[categoryName].impacts.push({
@@ -55,12 +55,12 @@ export async function getProgramsImpact(
         impactSegmentType: segment.type, // "output" or "outcome"
         impactIndicatorIds: segment.impactIndicatorIds || [], // Current structure
         indicators: [], // Empty array for backward compatibility
-      })
+      });
 
-      return acc
-    }, {})
+      return acc;
+    }, {});
 
-    const transformedData: ProgramImpactDataResponse[] = Object.values(groupedByCategory)
+    const transformedData: ProgramImpactDataResponse[] = Object.values(groupedByCategory);
 
     const impactData: ProgramImpactData = {
       stats: {
@@ -69,11 +69,11 @@ export async function getProgramsImpact(
         totalFundingAllocated: "0", // Can't determine from current API
       },
       data: transformedData,
-    }
+    };
 
     // If allCategories is provided, ensure all categories are included
     if (allCategories?.length) {
-      const existingCategoryNames = new Set(impactData.data.map((item) => item.categoryName))
+      const existingCategoryNames = new Set(impactData.data.map((item) => item.categoryName));
 
       // Add missing categories with empty impacts array
       const missingCategories = allCategories
@@ -81,21 +81,21 @@ export async function getProgramsImpact(
         .map((category) => ({
           categoryName: category.name,
           impacts: [],
-        }))
+        }));
 
       return {
         data: [...impactData.data, ...missingCategories],
         stats: impactData.stats,
-      }
+      };
     }
 
     return {
       data: impactData.data,
       stats: impactData.stats,
-    }
+    };
   } catch (error) {
-    console.error("Error fetching program impact:", error)
-    errorManager("Error fetching program impact", error)
+    console.error("Error fetching program impact:", error);
+    errorManager("Error fetching program impact", error);
     return {
       data: [],
       stats: {
@@ -103,6 +103,6 @@ export async function getProgramsImpact(
         totalProjects: 0,
         totalFundingAllocated: "0",
       },
-    }
+    };
   }
 }

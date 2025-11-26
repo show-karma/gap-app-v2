@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import { Check } from "lucide-react"
-import { useCallback, useEffect, useRef, useState } from "react"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { marketingLayoutTheme } from "@/src/helper/theme"
-import { cn } from "@/utilities/tailwind"
+import { Check } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { marketingLayoutTheme } from "@/src/helper/theme";
+import { cn } from "@/utilities/tailwind";
 
 interface StepCardProps {
-  text: string
-  size: 1 | 2 | 3
-  showIcon?: boolean
+  text: string;
+  size: 1 | 2 | 3;
+  showIcon?: boolean;
 }
 
 function StepCard({ text, size, showIcon = true }: StepCardProps) {
@@ -20,7 +20,7 @@ function StepCard({ text, size, showIcon = true }: StepCardProps) {
     1: "", // hug content - natural height
     2: "lg:h-[160px]", // fixed height on desktop only
     3: "lg:h-[200px]", // fixed height on desktop only
-  }
+  };
 
   return (
     <Card
@@ -47,27 +47,27 @@ function StepCard({ text, size, showIcon = true }: StepCardProps) {
         </p>
       </CardContent>
     </Card>
-  )
+  );
 }
 
-const ROTATION_INTERVAL = 2000
-const TRANSITION_DURATION = 450
-const STACK_LAYERS = 3
-const STACK_CARD_HEIGHT = 240
-const STACK_GAP = 16
+const ROTATION_INTERVAL = 2000;
+const TRANSITION_DURATION = 450;
+const STACK_LAYERS = 3;
+const STACK_CARD_HEIGHT = 240;
+const STACK_GAP = 16;
 
 interface AnimatedOutcomeCardProps {
-  text: string
-  duration: number
+  text: string;
+  duration: number;
 }
 
 function ActiveOutcomeCard({ text, duration }: AnimatedOutcomeCardProps) {
-  const [visible, setVisible] = useState(false)
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const raf = requestAnimationFrame(() => setVisible(true))
-    return () => cancelAnimationFrame(raf)
-  }, [])
+    const raf = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
   return (
     <div
@@ -84,25 +84,25 @@ function ActiveOutcomeCard({ text, duration }: AnimatedOutcomeCardProps) {
         {text}
       </p>
     </div>
-  )
+  );
 }
 
 interface ExitingOutcomeCardProps extends AnimatedOutcomeCardProps {
-  onExited: () => void
+  onExited: () => void;
 }
 
 function ExitingOutcomeCard({ text, duration, onExited }: ExitingOutcomeCardProps) {
-  const [leaving, setLeaving] = useState(false)
+  const [leaving, setLeaving] = useState(false);
 
   useEffect(() => {
-    const raf = requestAnimationFrame(() => setLeaving(true))
-    const timeout = window.setTimeout(onExited, duration)
+    const raf = requestAnimationFrame(() => setLeaving(true));
+    const timeout = window.setTimeout(onExited, duration);
 
     return () => {
-      cancelAnimationFrame(raf)
-      window.clearTimeout(timeout)
-    }
-  }, [duration, onExited])
+      cancelAnimationFrame(raf);
+      window.clearTimeout(timeout);
+    };
+  }, [duration, onExited]);
 
   return (
     <div
@@ -119,67 +119,67 @@ function ExitingOutcomeCard({ text, duration, onExited }: ExitingOutcomeCardProp
         {text}
       </p>
     </div>
-  )
+  );
 }
 
 interface RotatingOutcomeStackProps {
-  items: string[]
+  items: string[];
 }
 
 function RotatingOutcomeStack({ items }: RotatingOutcomeStackProps) {
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [previousIndex, setPreviousIndex] = useState<number | null>(null)
-  const intervalRef = useRef<number | null>(null)
-  const hasMultipleItems = items.length > 1
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [previousIndex, setPreviousIndex] = useState<number | null>(null);
+  const intervalRef = useRef<number | null>(null);
+  const hasMultipleItems = items.length > 1;
   const [stackOrder, setStackOrder] = useState<number[]>(() =>
     Array.from({ length: STACK_LAYERS }, (_, idx) => idx)
-  )
+  );
 
   const resetStackOrder = useCallback(() => {
-    setStackOrder(Array.from({ length: STACK_LAYERS }, (_, idx) => idx))
-  }, [])
+    setStackOrder(Array.from({ length: STACK_LAYERS }, (_, idx) => idx));
+  }, []);
 
   const rotateStackOrderForward = useCallback((order: number[]) => {
     if (order.length <= 1) {
-      return order
+      return order;
     }
-    const next = [...order]
-    const first = next.shift()!
-    next.push(first)
-    return next
-  }, [])
+    const next = [...order];
+    const first = next.shift()!;
+    next.push(first);
+    return next;
+  }, []);
 
   useEffect(() => {
-    resetStackOrder()
-  }, [resetStackOrder])
+    resetStackOrder();
+  }, [resetStackOrder]);
 
   useEffect(() => {
     if (!hasMultipleItems) {
-      return undefined
+      return undefined;
     }
 
     intervalRef.current = window.setInterval(() => {
       setCurrentIndex((prevIndex) => {
-        const nextIndex = (prevIndex + 1) % items.length
-        setPreviousIndex(prevIndex)
-        setStackOrder((prevOrder) => rotateStackOrderForward(prevOrder))
-        return nextIndex
-      })
-    }, ROTATION_INTERVAL)
+        const nextIndex = (prevIndex + 1) % items.length;
+        setPreviousIndex(prevIndex);
+        setStackOrder((prevOrder) => rotateStackOrderForward(prevOrder));
+        return nextIndex;
+      });
+    }, ROTATION_INTERVAL);
 
     return () => {
       if (intervalRef.current) {
-        window.clearInterval(intervalRef.current)
-        intervalRef.current = null
+        window.clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
-    }
-  }, [hasMultipleItems, items.length, rotateStackOrderForward])
+    };
+  }, [hasMultipleItems, items.length, rotateStackOrderForward]);
 
   const handleExitComplete = useCallback(() => {
-    setPreviousIndex(null)
-  }, [])
+    setPreviousIndex(null);
+  }, []);
 
-  const activeText = items[currentIndex] ?? ""
+  const activeText = items[currentIndex] ?? "";
 
   return (
     <div
@@ -187,11 +187,11 @@ function RotatingOutcomeStack({ items }: RotatingOutcomeStackProps) {
       style={{ height: STACK_CARD_HEIGHT + STACK_GAP * STACK_LAYERS }}
     >
       {stackOrder.map((position, index) => {
-        const layerIndex = position + 1
-        const bottomOffset = layerIndex * STACK_GAP
-        const scaleValue = 1 - layerIndex * 0.05
-        const opacityValue = 1 - layerIndex * 0.35
-        const zIndexValue = STACK_LAYERS - position
+        const layerIndex = position + 1;
+        const bottomOffset = layerIndex * STACK_GAP;
+        const scaleValue = 1 - layerIndex * 0.05;
+        const opacityValue = 1 - layerIndex * 0.35;
+        const zIndexValue = STACK_LAYERS - position;
 
         return (
           <div
@@ -210,7 +210,7 @@ function RotatingOutcomeStack({ items }: RotatingOutcomeStackProps) {
               <div className="h-full w-full rounded-xl border-2 border-border bg-background" />
             </div>
           </div>
-        )
+        );
       })}
 
       {previousIndex !== null && items[previousIndex] !== undefined && (
@@ -228,7 +228,7 @@ function RotatingOutcomeStack({ items }: RotatingOutcomeStackProps) {
         duration={TRANSITION_DURATION}
       />
     </div>
-  )
+  );
 }
 
 function RotatingOutcomeCard({ items }: { items: string[] }) {
@@ -236,7 +236,7 @@ function RotatingOutcomeCard({ items }: { items: string[] }) {
     <div className="relative w-full flex-1 basis-full lg:flex-[0_0_25%] lg:h-[300px] overflow-visible">
       <RotatingOutcomeStack items={items} />
     </div>
-  )
+  );
 }
 
 export function HowItWorks() {
@@ -244,14 +244,14 @@ export function HowItWorks() {
     { text: "Create project", size: 1 as const },
     { text: "Apply and get funded", size: 2 as const },
     { text: "Add milestones, metrics and updates", size: 3 as const },
-  ]
+  ];
 
   const outcomes = [
     "Build reputation",
     "Get retrofunding",
     "Get donations",
     "Apply for more funding",
-  ]
+  ];
 
   return (
     <section className={cn(marketingLayoutTheme.padding, "py-16 w-full")}>
@@ -286,5 +286,5 @@ export function HowItWorks() {
         <Button>Create Project</Button>
       </div>
     </section>
-  )
+  );
 }

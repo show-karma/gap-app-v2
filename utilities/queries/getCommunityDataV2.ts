@@ -1,35 +1,35 @@
-import { cache } from "react"
+import { cache } from "react";
 import type {
   CommunityDetailsV2,
   CommunityProjectsV2Response,
   CommunityStatsV2,
-} from "@/types/community"
-import { zeroUID } from "@/utilities/commons"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
+} from "@/types/community";
+import { zeroUID } from "@/utilities/commons";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 export const getCommunityDetailsV2 = cache(
   async (slug: string): Promise<CommunityDetailsV2 | null> => {
     try {
-      const [data] = await fetchData(INDEXER.COMMUNITY.V2.GET(slug))
+      const [data] = await fetchData(INDEXER.COMMUNITY.V2.GET(slug));
 
       if (!data || data?.uid === zeroUID || !data?.details?.name) {
-        return null
+        return null;
       }
 
-      return data as CommunityDetailsV2
+      return data as CommunityDetailsV2;
     } catch (_error) {
-      return null
+      return null;
     }
   }
-)
+);
 
 export const getCommunityStatsV2 = cache(async (slug: string): Promise<CommunityStatsV2> => {
   try {
-    const [data] = await fetchData(INDEXER.COMMUNITY.V2.STATS(slug))
+    const [data] = await fetchData(INDEXER.COMMUNITY.V2.STATS(slug));
 
     if (data) {
-      return data as CommunityStatsV2
+      return data as CommunityStatsV2;
     }
 
     return {
@@ -47,7 +47,7 @@ export const getCommunityStatsV2 = cache(async (slug: string): Promise<Community
       },
       totalTransactions: 0,
       averageCompletion: 0,
-    }
+    };
   } catch (_error) {
     return {
       totalProjects: 0,
@@ -64,27 +64,27 @@ export const getCommunityStatsV2 = cache(async (slug: string): Promise<Community
       },
       totalTransactions: 0,
       averageCompletion: 0,
-    }
+    };
   }
-})
+});
 
 export const getCommunityProjectsV2 = async (
   slug: string,
   options: {
-    page?: number
-    limit?: number
-    sortBy?: string
-    categories?: string
-    status?: string
-    selectedProgramId?: string
-    selectedTrackIds?: string[]
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    categories?: string;
+    status?: string;
+    selectedProgramId?: string;
+    selectedTrackIds?: string[];
   } = {}
 ): Promise<CommunityProjectsV2Response> => {
   try {
-    const [data] = await fetchData(INDEXER.COMMUNITY.V2.PROJECTS(slug, options))
+    const [data] = await fetchData(INDEXER.COMMUNITY.V2.PROJECTS(slug, options));
 
     if (data) {
-      return data as CommunityProjectsV2Response
+      return data as CommunityProjectsV2Response;
     }
 
     return {
@@ -99,7 +99,7 @@ export const getCommunityProjectsV2 = async (
         hasNextPage: false,
         hasPrevPage: false,
       },
-    }
+    };
   } catch (_error) {
     return {
       payload: [],
@@ -113,6 +113,6 @@ export const getCommunityProjectsV2 = async (
         hasNextPage: false,
         hasPrevPage: false,
       },
-    }
+    };
   }
-}
+};

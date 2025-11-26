@@ -1,23 +1,23 @@
-"use client"
-import { ChevronRightIcon } from "@heroicons/react/20/solid"
-import Image from "next/image"
-import Link from "next/link"
-import pluralize from "pluralize"
-import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList"
-import { useDonationCart } from "@/store"
-import type { CommunityDetailsV2 } from "@/types/community"
-import { communityColors } from "@/utilities/communityColors"
-import { PAGES } from "@/utilities/pages"
-import { ReadMore } from "@/utilities/ReadMore"
+"use client";
+import { ChevronRightIcon } from "@heroicons/react/20/solid";
+import Image from "next/image";
+import Link from "next/link";
+import pluralize from "pluralize";
+import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import { useDonationCart } from "@/store";
+import type { CommunityDetailsV2 } from "@/types/community";
+import { communityColors } from "@/utilities/communityColors";
+import { PAGES } from "@/utilities/pages";
+import { ReadMore } from "@/utilities/ReadMore";
 
 interface DonationHeaderProps {
-  community: CommunityDetailsV2
-  programId: string
-  program: GrantProgram
+  community: CommunityDetailsV2;
+  programId: string;
+  program: GrantProgram;
 }
 
 export const DonationHeader = ({ community, programId, program }: DonationHeaderProps) => {
-  const { items, toggle: _toggle } = useDonationCart()
+  const { items, toggle: _toggle } = useDonationCart();
   return (
     <div className="flex flex-row w-full max-w-full px-4 pb-4 sm:px-6 lg:px-8 py-5 border-b border-b-[#DFE1E6]">
       <div className="flex flex-row items-start gap-4 w-full">
@@ -63,5 +63,5 @@ export const DonationHeader = ({ community, programId, program }: DonationHeader
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

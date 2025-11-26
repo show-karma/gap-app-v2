@@ -1,4 +1,4 @@
-import { appNetwork } from "./network"
+import { appNetwork } from "./network";
 
 export const checkNetworkIsValid = (networkId?: number) =>
-  networkId && (appNetwork.map((a) => a.id) as number[]).includes(networkId)
+  networkId && (appNetwork.map((a) => a.id) as number[]).includes(networkId);

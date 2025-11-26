@@ -1,27 +1,27 @@
-import { SpeedInsights } from "@vercel/speed-insights/next"
-import { defaultMetadata } from "@/utilities/meta"
-import "@/styles/globals.css"
-import "@/styles/index.scss"
-import "@/components/Utilities/DynamicStars/styles.css"
-import "rc-slider/assets/index.css"
-import "react-day-picker/dist/style.css"
-import "@uiw/react-markdown-preview/markdown.css"
-import { GoogleAnalytics } from "@next/third-parties/google"
-import { Analytics } from "@vercel/analytics/react"
-import { ThemeProvider } from "next-themes"
-import { Suspense } from "react"
-import { Toaster } from "react-hot-toast"
-import { ContributorProfileDialog } from "@/components/Dialogs/ContributorProfileDialog"
-import { OnboardingDialog } from "@/components/Dialogs/OnboardingDialog"
-import { StepperDialog } from "@/components/Dialogs/StepperDialog"
-import { ProgressBarWrapper } from "@/components/ProgressBarWrapper"
-import HotjarAnalytics from "@/components/Utilities/HotjarAnalytics"
-import { PermissionsProvider } from "@/components/Utilities/PermissionsProvider"
-import PrivyProviderWrapper from "@/components/Utilities/PrivyProviderWrapper"
-import { Footer } from "@/src/components/footer/footer"
-import { Navbar } from "@/src/components/navbar/navbar"
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { defaultMetadata } from "@/utilities/meta";
+import "@/styles/globals.css";
+import "@/styles/index.scss";
+import "@/components/Utilities/DynamicStars/styles.css";
+import "rc-slider/assets/index.css";
+import "react-day-picker/dist/style.css";
+import "@uiw/react-markdown-preview/markdown.css";
+import { GoogleAnalytics } from "@next/third-parties/google";
+import { Analytics } from "@vercel/analytics/react";
+import { ThemeProvider } from "next-themes";
+import { Suspense } from "react";
+import { Toaster } from "react-hot-toast";
+import { ContributorProfileDialog } from "@/components/Dialogs/ContributorProfileDialog";
+import { OnboardingDialog } from "@/components/Dialogs/OnboardingDialog";
+import { StepperDialog } from "@/components/Dialogs/StepperDialog";
+import { ProgressBarWrapper } from "@/components/ProgressBarWrapper";
+import HotjarAnalytics from "@/components/Utilities/HotjarAnalytics";
+import { PermissionsProvider } from "@/components/Utilities/PermissionsProvider";
+import PrivyProviderWrapper from "@/components/Utilities/PrivyProviderWrapper";
+import { Footer } from "@/src/components/footer/footer";
+import { Navbar } from "@/src/components/navbar/navbar";
 
-export const metadata = defaultMetadata
+export const metadata = defaultMetadata;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -62,5 +62,5 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </ThemeProvider>
       </body>
     </html>
-  )
+  );
 }

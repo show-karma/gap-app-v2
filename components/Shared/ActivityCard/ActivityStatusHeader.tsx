@@ -1,30 +1,30 @@
 import type {
   IGrantUpdate,
   IProjectUpdate,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import type { FC } from "react"
-import type { UnifiedMilestone } from "@/types/roadmap"
-import { ActivityStatus } from "./ActivityStatus"
-import type { ActivityType } from "./ActivityTypes"
-import { GrantAssociation } from "./GrantAssociation"
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { FC } from "react";
+import type { UnifiedMilestone } from "@/types/roadmap";
+import { ActivityStatus } from "./ActivityStatus";
+import type { ActivityType } from "./ActivityTypes";
+import { GrantAssociation } from "./GrantAssociation";
 
 interface ActivityStatusHeaderProps {
   /** The activity type to display in the left status pill */
-  activityType: ActivityType
+  activityType: ActivityType;
   /** Optional due date to display on the right */
-  dueDate?: string | null
+  dueDate?: string | null;
   /** Whether to show completion status for milestones */
-  showCompletionStatus?: boolean
+  showCompletionStatus?: boolean;
   /** Whether the milestone/activity is completed */
-  completed?: boolean
+  completed?: boolean;
   /** Additional className for the completion status pill */
-  completionStatusClassName?: string
+  completionStatusClassName?: string;
   /** Update data for grant association */
-  update?: IProjectUpdate | IGrantUpdate | any
+  update?: IProjectUpdate | IGrantUpdate | any;
   /** Index for update data */
-  index?: number
+  index?: number;
   /** Milestone data for grant association */
-  milestone?: UnifiedMilestone
+  milestone?: UnifiedMilestone;
   /** Whether to show grant association */
 }
 
@@ -60,5 +60,5 @@ export const ActivityStatusHeader: FC<ActivityStatusHeaderProps> = ({
         )}
       </div>
     </div>
-  )
-}
+  );
+};

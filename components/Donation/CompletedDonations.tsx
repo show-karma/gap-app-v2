@@ -1,49 +1,49 @@
-"use client"
-import Link from "next/link"
-import { useParams } from "next/navigation"
-import { useMemo } from "react"
-import type { DonationSession } from "@/store/donationCart"
-import { getExplorerUrl } from "@/utilities/network"
+"use client";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useMemo } from "react";
+import type { DonationSession } from "@/store/donationCart";
+import { getExplorerUrl } from "@/utilities/network";
 
 interface CompletedDonationsProps {
-  session: DonationSession
-  onStartNewDonation: () => void
+  session: DonationSession;
+  onStartNewDonation: () => void;
 }
 
 export function CompletedDonations({ session, onStartNewDonation }: CompletedDonationsProps) {
-  const params = useParams()
-  const communityId = params.communityId as string
+  const params = useParams();
+  const communityId = params.communityId as string;
 
   const successfulDonations = useMemo(
     () => session.donations.filter((d) => d.status === "success"),
     [session.donations]
-  )
+  );
 
   const failedDonations = useMemo(
     () => session.donations.filter((d) => d.status === "failed"),
     [session.donations]
-  )
+  );
 
   const totalAmount = useMemo(() => {
-    const byToken: Record<string, { amount: number; symbol: string }> = {}
+    const byToken: Record<string, { amount: number; symbol: string }> = {};
 
     successfulDonations.forEach((donation) => {
-      const key = `${donation.token.symbol}-${donation.chainId}`
+      const key = `${donation.token.symbol}-${donation.chainId}`;
       if (!byToken[key]) {
         byToken[key] = {
           amount: 0,
           symbol: donation.token.symbol,
-        }
+        };
       }
       // donation.amount is a decimal string like "0.5" or "100"
-      byToken[key].amount += parseFloat(donation.amount || "0")
-    })
+      byToken[key].amount += parseFloat(donation.amount || "0");
+    });
 
     return Object.values(byToken).map((token) => ({
       amount: token.amount.toString(),
       symbol: token.symbol,
-    }))
-  }, [successfulDonations])
+    }));
+  }, [successfulDonations]);
 
   // Safety check
   if (!session || !session.donations || session.donations.length === 0) {
@@ -59,7 +59,7 @@ export function CompletedDonations({ session, onStartNewDonation }: CompletedDon
           </button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -250,5 +250,5 @@ export function CompletedDonations({ session, onStartNewDonation }: CompletedDon
         </div>
       </div>
     </div>
-  )
+  );
 }

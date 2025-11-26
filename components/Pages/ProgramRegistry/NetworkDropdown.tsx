@@ -1,39 +1,39 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { CheckIcon } from "@heroicons/react/24/solid"
-import * as Popover from "@radix-ui/react-popover"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk"
-import { type FC, useState } from "react"
-import { ChevronDown } from "@/components/Icons/ChevronDown"
-import { cn } from "@/utilities/tailwind"
+import { CheckIcon } from "@heroicons/react/24/solid";
+import * as Popover from "@radix-ui/react-popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk";
+import { type FC, useState } from "react";
+import { ChevronDown } from "@/components/Icons/ChevronDown";
+import { cn } from "@/utilities/tailwind";
 
 interface Items {
-  value: number
-  img: string
-  label: string
+  value: number;
+  img: string;
+  label: string;
 }
 
 interface NetworkDropdownProps {
-  onSelectFunction: (value: number) => void
-  previousValue?: number
-  list: Items[]
+  onSelectFunction: (value: number) => void;
+  previousValue?: number;
+  list: Items[];
 }
 export const NetworkDropdown: FC<NetworkDropdownProps> = ({
   onSelectFunction,
   previousValue,
   list,
 }) => {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false);
 
   const sortedList = list.sort((a, b) => {
     if (a.label < b.label) {
-      return -1
+      return -1;
     }
     if (a.label > b.label) {
-      return 1
+      return 1;
     }
-    return 0
-  })
+    return 0;
+  });
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
@@ -64,8 +64,8 @@ export const NetworkDropdown: FC<NetworkDropdownProps> = ({
               <CommandItem
                 key={item.value}
                 onSelect={() => {
-                  setOpen(false)
-                  onSelectFunction(item.value)
+                  setOpen(false);
+                  onSelectFunction(item.value);
                 }}
                 className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
               >
@@ -91,5 +91,5 @@ export const NetworkDropdown: FC<NetworkDropdownProps> = ({
         </Command>
       </Popover.Content>
     </Popover.Root>
-  )
-}
+  );
+};

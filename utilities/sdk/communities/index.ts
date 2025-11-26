@@ -1,3 +1,3 @@
-export * from "./getGrants"
-export * from "./grants"
-export * from "./isCommunityAdmin"
+export * from "./getGrants";
+export * from "./grants";
+export * from "./isCommunityAdmin";

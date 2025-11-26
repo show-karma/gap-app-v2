@@ -1,18 +1,18 @@
-"use client"
-import { AreaChart, Card } from "@tremor/react"
-import Image from "next/image"
-import pluralize from "pluralize"
-import { useState } from "react"
-import { Carousel, CarouselItem } from "@/components/SnapCarousel"
+"use client";
+import { AreaChart, Card } from "@tremor/react";
+import Image from "next/image";
+import pluralize from "pluralize";
+import { useState } from "react";
+import { Carousel, CarouselItem } from "@/components/SnapCarousel";
 import type {
   ImpactAggregateData,
   ImpactAggregateIndicator,
   ImpactAggregateSegment,
-} from "@/types/programs"
-import formatCurrency from "@/utilities/formatCurrency"
-import { formatDate } from "@/utilities/formatDate"
-import { cn } from "@/utilities/tailwind"
-import { EmptySegment, fundedAmountFormatter } from "./CategoryRow"
+} from "@/types/programs";
+import formatCurrency from "@/utilities/formatCurrency";
+import { formatDate } from "@/utilities/formatDate";
+import { cn } from "@/utilities/tailwind";
+import { EmptySegment, fundedAmountFormatter } from "./CategoryRow";
 
 export const prepareChartData = (
   timestamps: string[],
@@ -29,11 +29,11 @@ export const prepareChartData = (
         Total: Number(total_values[index]) || 0,
         Min: Number(min_values[index]) || 0,
         Max: Number(max_values[index]) || 0,
-      }
+      };
     })
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-  return timestampsData
-}
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  return timestampsData;
+};
 
 // Create a reusable card component to reduce duplication
 const AggregateMetricCard = ({
@@ -41,9 +41,9 @@ const AggregateMetricCard = ({
   index,
   maxItems,
 }: {
-  item: ImpactAggregateIndicator
-  index: number
-  maxItems: number
+  item: ImpactAggregateIndicator;
+  index: number;
+  maxItems: number;
 }) => (
   <Card className="rounded-lg bg-white dark:bg-zinc-800 flex-1">
     <div className="flex justify-between items-start w-full">
@@ -89,15 +89,15 @@ const AggregateMetricCard = ({
       noDataText="Awaiting grantees to submit values"
     />
   </Card>
-)
+);
 
 const AggregateSegmentCard = ({ segmentsByType }: { segmentsByType: ImpactAggregateSegment[] }) => {
   const [selectedSegment, setSelectedSegment] = useState<ImpactAggregateSegment | null>(
     segmentsByType[0]
-  )
+  );
   const orderedSegments = segmentsByType.sort((a, b) => {
-    return a.impactSegmentName.localeCompare(b.impactSegmentName)
-  })
+    return a.impactSegmentName.localeCompare(b.impactSegmentName);
+  });
   return (
     <div className={"flex flex-col w-full bg-[#F9FAFB] dark:bg-zinc-800 rounded"}>
       {orderedSegments.length > 1 ? (
@@ -175,20 +175,20 @@ const AggregateSegmentCard = ({ segmentsByType }: { segmentsByType: ImpactAggreg
         ) : null}
       </div>
     </div>
-  )
-}
+  );
+};
 
 const AggregateCategoryBlocks = ({ category }: { category: ImpactAggregateData }) => {
   const outputsById = category.impacts.filter(
     (impact) =>
       impact?.impactSegmentType === "output" ||
       impact?.indicators?.[0]?.impactSegmentType === "output"
-  )
+  );
   const outcomesById = category.impacts.filter(
     (impact) =>
       impact?.impactSegmentType === "outcome" ||
       impact?.indicators?.[0]?.impactSegmentType === "outcome"
-  )
+  );
   return (
     <div className={`grid grid-cols-2 gap-6 max-md:flex max-md:flex-col`}>
       {/* Outputs Column */}
@@ -209,8 +209,8 @@ const AggregateCategoryBlocks = ({ category }: { category: ImpactAggregateData }
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
 export const AggregateCategoryRow = ({ program }: { program: ImpactAggregateData }) => {
   return (
@@ -235,5 +235,5 @@ export const AggregateCategoryRow = ({ program }: { program: ImpactAggregateData
         </div>
       )}
     </div>
-  )
-}
+  );
+};

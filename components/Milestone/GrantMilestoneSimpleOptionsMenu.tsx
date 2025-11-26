@@ -1,26 +1,26 @@
-"use client"
-import { TrashIcon } from "@heroicons/react/24/outline"
-import { DeleteDialog } from "@/components/DeleteDialog"
-import { useMilestone } from "@/hooks/useMilestone"
-import type { UnifiedMilestone } from "@/types/roadmap"
-import { cn } from "@/utilities/tailwind"
+"use client";
+import { TrashIcon } from "@heroicons/react/24/outline";
+import { DeleteDialog } from "@/components/DeleteDialog";
+import { useMilestone } from "@/hooks/useMilestone";
+import type { UnifiedMilestone } from "@/types/roadmap";
+import { cn } from "@/utilities/tailwind";
 
 // Common button styling
-const buttonClassName = `group border-none ring-none font-normal bg-transparent dark:bg-transparent text-gray-900 dark:text-zinc-100 hover:bg-white dark:hover:bg-zinc-800 dark:hover:opacity-75 hover:opacity-75 flex w-full items-start justify-start rounded-md px-2 py-2 text-sm flex-row gap-2`
+const buttonClassName = `group border-none ring-none font-normal bg-transparent dark:bg-transparent text-gray-900 dark:text-zinc-100 hover:bg-white dark:hover:bg-zinc-800 dark:hover:opacity-75 hover:opacity-75 flex w-full items-start justify-start rounded-md px-2 py-2 text-sm flex-row gap-2`;
 
 interface GrantMilestoneSimpleOptionsMenuProps {
-  milestone: UnifiedMilestone
+  milestone: UnifiedMilestone;
 }
 
 export const GrantMilestoneSimpleOptionsMenu = ({
   milestone,
 }: GrantMilestoneSimpleOptionsMenuProps) => {
-  const { isDeleting, multiGrantDelete } = useMilestone()
+  const { isDeleting, multiGrantDelete } = useMilestone();
 
   // Wrap the multiGrantDelete function to ensure it returns void
   const handleDelete = async () => {
-    await multiGrantDelete(milestone)
-  }
+    await multiGrantDelete(milestone);
+  };
 
   return (
     <DeleteDialog
@@ -39,7 +39,7 @@ export const GrantMilestoneSimpleOptionsMenu = ({
         styleClass: cn(buttonClassName, "text-[#D92D20] dark:text-red-500 w-max p-0"),
       }}
     />
-  )
+  );
 
   // return (
   //   <>
@@ -92,4 +92,4 @@ export const GrantMilestoneSimpleOptionsMenu = ({
   //     </Menu>
   //   </>
   // );
-}
+};

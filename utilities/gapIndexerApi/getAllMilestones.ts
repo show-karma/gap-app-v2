@@ -1,10 +1,10 @@
 import type {
   IGrantResponse,
   IMilestoneResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import { errorManager } from "@/components/Utilities/errorManager"
-import type { UnifiedMilestone } from "@/types/roadmap"
-import { getProjectObjectives } from "./getProjectObjectives"
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { errorManager } from "@/components/Utilities/errorManager";
+import type { UnifiedMilestone } from "@/types/roadmap";
+import { getProjectObjectives } from "./getProjectObjectives";
 
 export async function getAllMilestones(
   projectId: string,
@@ -12,21 +12,21 @@ export async function getAllMilestones(
 ): Promise<UnifiedMilestone[]> {
   try {
     // Fetch both types of milestones in parallel
-    const projectMilestones = await getProjectObjectives(projectId)
+    const projectMilestones = await getProjectObjectives(projectId);
     const grantMilestonesWithGrants: {
-      milestone: IMilestoneResponse
-      grant: IGrantResponse
-    }[] = []
+      milestone: IMilestoneResponse;
+      grant: IGrantResponse;
+    }[] = [];
     projectGrants.forEach((grant) => {
       if (grant.milestones && grant.milestones.length > 0) {
         grant.milestones.forEach((milestone) => {
           grantMilestonesWithGrants.push({
             milestone,
             grant,
-          })
-        })
+          });
+        });
       }
-    })
+    });
 
     // Transform project milestones to unified format
     const unifiedProjectMilestones: UnifiedMilestone[] = projectMilestones.map((milestone) => ({
@@ -43,7 +43,7 @@ export async function getAllMilestones(
       source: {
         projectMilestone: milestone,
       },
-    }))
+    }));
 
     // Transform grant milestones to unified format
     const unifiedGrantMilestones: UnifiedMilestone[] = grantMilestonesWithGrants.map(
@@ -64,16 +64,16 @@ export async function getAllMilestones(
           },
         },
       })
-    )
+    );
 
     // Combine both types of milestones
-    const allMilestones = [...unifiedProjectMilestones, ...unifiedGrantMilestones]
+    const allMilestones = [...unifiedProjectMilestones, ...unifiedGrantMilestones];
 
-    return allMilestones
+    return allMilestones;
   } catch (error) {
     errorManager("Error fetching all milestones", error, {
       projectId,
-    })
-    return []
+    });
+    return [];
   }
 }

@@ -1,60 +1,60 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { PencilSquareIcon, ShareIcon, TrashIcon } from "@heroicons/react/24/outline"
+import { PencilSquareIcon, ShareIcon, TrashIcon } from "@heroicons/react/24/outline";
 import type {
   IMilestoneCompleted,
   IMilestoneResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import { type FC, useEffect, useState } from "react"
-import toast from "react-hot-toast"
-import { useAccount } from "wagmi"
-import { MilestoneVerificationSection } from "@/components/Shared/MilestoneVerification"
-import { Button } from "@/components/Utilities/Button"
-import { ExternalLink } from "@/components/Utilities/ExternalLink"
-import { errorManager } from "@/components/Utilities/errorManager"
-import { useGap } from "@/hooks/useGap"
-import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers"
-import { useOffChainRevoke } from "@/hooks/useOffChainRevoke"
-import { useWallet } from "@/hooks/useWallet"
-import { useOwnerStore, useProjectStore } from "@/store"
-import { useCommunityAdminStore } from "@/store/communityAdmin"
-import { useStepper } from "@/store/modals/txStepper"
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils"
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain"
-import fetchData from "@/utilities/fetchData"
-import { formatDate } from "@/utilities/formatDate"
-import { INDEXER } from "@/utilities/indexer"
-import { MESSAGES } from "@/utilities/messages"
-import { ReadMore } from "@/utilities/ReadMore"
-import { retryUntilConditionMet } from "@/utilities/retries"
-import { shareOnX } from "@/utilities/share/shareOnX"
-import { SHARE_TEXTS } from "@/utilities/share/text"
-import { safeGetWalletClient } from "@/utilities/wallet-helpers"
-import { UpdateMilestone } from "./UpdateMilestone"
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { type FC, useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { MilestoneVerificationSection } from "@/components/Shared/MilestoneVerification";
+import { Button } from "@/components/Utilities/Button";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { useGap } from "@/hooks/useGap";
+import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
+import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
+import { useWallet } from "@/hooks/useWallet";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useCommunityAdminStore } from "@/store/communityAdmin";
+import { useStepper } from "@/store/modals/txStepper";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import fetchData from "@/utilities/fetchData";
+import { formatDate } from "@/utilities/formatDate";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { ReadMore } from "@/utilities/ReadMore";
+import { retryUntilConditionMet } from "@/utilities/retries";
+import { shareOnX } from "@/utilities/share/shareOnX";
+import { SHARE_TEXTS } from "@/utilities/share/text";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { UpdateMilestone } from "./UpdateMilestone";
 
 interface UpdatesProps {
-  milestone: IMilestoneResponse
+  milestone: IMilestoneResponse;
 }
 
 export const Updates: FC<UpdatesProps> = ({ milestone }) => {
-  const [isEditing, setIsEditing] = useState(false)
+  const [isEditing, setIsEditing] = useState(false);
 
   const handleEditing = (value: boolean) => {
-    setIsEditing(value)
-  }
-  const { chain, address } = useAccount()
-  const { switchChainAsync } = useWallet()
-  const refreshProject = useProjectStore((state) => state.refreshProject)
+    setIsEditing(value);
+  };
+  const { chain, address } = useAccount();
+  const { switchChainAsync } = useWallet();
+  const refreshProject = useProjectStore((state) => state.refreshProject);
 
-  const { changeStepperStep, setIsStepper } = useStepper()
-  const { gap } = useGap()
-  const { project, isProjectOwner } = useProjectStore()
-  const { isOwner: isContractOwner } = useOwnerStore()
-  const isOnChainAuthorized = isProjectOwner || isContractOwner
-  const { performOffChainRevoke } = useOffChainRevoke()
+  const { changeStepperStep, setIsStepper } = useStepper();
+  const { gap } = useGap();
+  const { project, isProjectOwner } = useProjectStore();
+  const { isOwner: isContractOwner } = useOwnerStore();
+  const isOnChainAuthorized = isProjectOwner || isContractOwner;
+  const { performOffChainRevoke } = useOffChainRevoke();
 
   const undoMilestoneCompletion = async (milestone: IMilestoneResponse) => {
-    let gapClient = gap
+    let gapClient = gap;
     try {
       const {
         success,
@@ -64,46 +64,46 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
         targetChainId: milestone.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
-      })
+      });
 
       if (!success) {
-        return
+        return;
       }
 
-      gapClient = newGapClient
+      gapClient = newGapClient;
 
-      const { walletClient, error } = await safeGetWalletClient(actualChainId)
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error })
+        throw new Error("Failed to connect to wallet", { cause: error });
       }
-      if (!walletClient || !gapClient) return
-      const walletSigner = await walletClientToSigner(walletClient)
+      if (!walletClient || !gapClient) return;
+      const walletSigner = await walletClientToSigner(walletClient);
 
-      const instanceProject = await gapClient.fetch.projectById(project?.uid)
+      const instanceProject = await gapClient.fetch.projectById(project?.uid);
       const findGrant = instanceProject?.grants.find(
         (item) => item.uid.toLowerCase() === milestone.refUID.toLowerCase()
-      )
+      );
       const instanceMilestone = findGrant?.milestones.find(
         (item) => item.uid.toLowerCase() === milestone.uid.toLowerCase()
-      )
-      if (!instanceMilestone) return
+      );
+      if (!instanceMilestone) return;
 
       const checkIfAttestationExists = async (callbackFn?: () => void) => {
         await retryUntilConditionMet(
           async () => {
-            const fetchedProject = await refreshProject()
-            const foundGrant = fetchedProject?.grants.find((g) => g.uid === milestone.refUID)
+            const fetchedProject = await refreshProject();
+            const foundGrant = fetchedProject?.grants.find((g) => g.uid === milestone.refUID);
             const fetchedMilestone = foundGrant?.milestones.find(
               (u: any) => u.uid === milestone.uid
-            )
-            return !fetchedMilestone?.completed
+            );
+            return !fetchedMilestone?.completed;
           },
           () => {
-            callbackFn?.()
+            callbackFn?.();
           }
-        )
-      }
+        );
+      };
 
       if (!isOnChainAuthorized) {
         await performOffChainRevoke({
@@ -114,29 +114,29 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
             success: MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS,
             loading: MESSAGES.MILESTONES.COMPLETE.UNDO.LOADING,
           },
-        })
+        });
       } else {
         try {
           const res = await instanceMilestone.revokeCompletion(
             walletSigner as any,
             changeStepperStep
-          )
-          changeStepperStep("indexing")
-          const txHash = res?.tx[0]?.hash
+          );
+          changeStepperStep("indexing");
+          const txHash = res?.tx[0]?.hash;
           if (txHash) {
             await fetchData(
               INDEXER.ATTESTATION_LISTENER(txHash, instanceMilestone.chainID),
               "POST",
               {}
-            )
+            );
           }
           await checkIfAttestationExists(() => {
-            changeStepperStep("indexed")
-          })
-          toast.success(MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS)
+            changeStepperStep("indexed");
+          });
+          toast.success(MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS);
         } catch (onChainError: any) {
           // Silently fallback to off-chain revoke
-          setIsStepper(false) // Reset stepper since we're falling back
+          setIsStepper(false); // Reset stepper since we're falling back
 
           const success = await performOffChainRevoke({
             uid: milestone.completed?.uid as `0x${string}`,
@@ -146,11 +146,11 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
               success: MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS,
               loading: MESSAGES.MILESTONES.COMPLETE.UNDO.LOADING,
             },
-          })
+          });
 
           if (!success) {
             // Both methods failed - throw the original error to maintain expected behavior
-            throw onChainError
+            throw onChainError;
           }
         }
       }
@@ -164,47 +164,47 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
           address,
         },
         { error: MESSAGES.MILESTONES.COMPLETE.UNDO.ERROR }
-      )
+      );
     } finally {
-      setIsStepper(false)
+      setIsStepper(false);
     }
-  }
+  };
 
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin)
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin)
-  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
+  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
 
   const [verifiedMilestones, setVerifiedMilestones] = useState<IMilestoneCompleted[]>(
     milestone?.verified || []
-  )
+  );
 
   const addVerifiedMilestone = (newVerified: IMilestoneCompleted) => {
-    setVerifiedMilestones([...verifiedMilestones, newVerified])
-  }
+    setVerifiedMilestones([...verifiedMilestones, newVerified]);
+  };
 
   useEffect(() => {
-    setVerifiedMilestones(milestone?.verified || [])
-  }, [milestone])
+    setVerifiedMilestones(milestone?.verified || []);
+  }, [milestone]);
 
   /*
    * Check if the milestone completion was created after the launch date of the feature
    * @returns {boolean}
    */
   const checkProofLaunch = () => {
-    return new Date("2024-08-30") <= new Date(milestone?.completed?.createdAt)
-  }
+    return new Date("2024-08-30") <= new Date(milestone?.completed?.createdAt);
+  };
 
-  const isAfterProofLaunch = checkProofLaunch()
+  const isAfterProofLaunch = checkProofLaunch();
 
-  const grant = project?.grants.find((g) => g.uid.toLowerCase() === milestone.refUID.toLowerCase())
+  const grant = project?.grants.find((g) => g.uid.toLowerCase() === milestone.refUID.toLowerCase());
 
   // Fetch milestone impact data (outputs/metrics) if milestone is completed
   const { data: milestoneImpactData } = useMilestoneImpactAnswers({
     milestoneUID: milestone.completed ? milestone.uid : undefined,
-  })
+  });
 
   // Get deliverables from milestone completion data
-  const completionDeliverables = (milestone.completed?.data as any)?.deliverables
+  const completionDeliverables = (milestone.completed?.data as any)?.deliverables;
 
   if (
     !isEditing &&
@@ -371,7 +371,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
           </div>
         ) : null}
       </div>
-    )
+    );
   }
 
   return (
@@ -381,5 +381,5 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
       previousData={milestone.completed?.data}
       cancelEditing={handleEditing}
     />
-  )
-}
+  );
+};

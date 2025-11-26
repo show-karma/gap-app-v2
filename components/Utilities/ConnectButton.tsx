@@ -1,18 +1,18 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useAccount, useChainId, useSwitchChain } from "wagmi"
-import { useAuth } from "@/hooks/useAuth"
-import { appNetwork } from "@/utilities/network"
+import { useState } from "react";
+import { useAccount, useChainId, useSwitchChain } from "wagmi";
+import { useAuth } from "@/hooks/useAuth";
+import { appNetwork } from "@/utilities/network";
 
 interface ConnectButtonCustomProps {
   children: (props: {
-    account: { address: string; displayName: string } | undefined
-    chain: { id: number; name?: string } | undefined
-    authenticationStatus: "authenticated" | "unauthenticated" | "loading"
-    mounted: boolean
-    login: () => void
-  }) => React.ReactNode
+    account: { address: string; displayName: string } | undefined;
+    chain: { id: number; name?: string } | undefined;
+    authenticationStatus: "authenticated" | "unauthenticated" | "loading";
+    mounted: boolean;
+    login: () => void;
+  }) => React.ReactNode;
 }
 
 /**
@@ -20,36 +20,36 @@ interface ConnectButtonCustomProps {
  * but uses Privy for authentication
  */
 export function ConnectButtonCustom({ children }: ConnectButtonCustomProps) {
-  const { ready, authenticated, login } = useAuth()
-  const { address, isConnected, chain: currentChain } = useAccount()
-  const chainId = useChainId()
-  const { switchChain } = useSwitchChain()
-  const [isChainModalOpen, setIsChainModalOpen] = useState(false)
+  const { ready, authenticated, login } = useAuth();
+  const { address, isConnected, chain: currentChain } = useAccount();
+  const chainId = useChainId();
+  const { switchChain } = useSwitchChain();
+  const [isChainModalOpen, setIsChainModalOpen] = useState(false);
 
   // Format address for display
   const formatAddress = (addr: string) => {
-    return `${addr.slice(0, 6)}...${addr.slice(-4)}`
-  }
+    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+  };
 
   const account = address
     ? {
         address,
         displayName: formatAddress(address),
       }
-    : undefined
+    : undefined;
 
   const chain = currentChain
     ? {
         id: currentChain.id,
         name: currentChain.name,
       }
-    : undefined
+    : undefined;
 
   const authenticationStatus = !ready
     ? "loading"
     : authenticated
       ? "authenticated"
-      : "unauthenticated"
+      : "unauthenticated";
 
   return (
     <>
@@ -79,8 +79,8 @@ export function ConnectButtonCustom({ children }: ConnectButtonCustomProps) {
                 <button
                   key={network.id}
                   onClick={() => {
-                    switchChain({ chainId: network.id })
-                    setIsChainModalOpen(false)
+                    switchChain({ chainId: network.id });
+                    setIsChainModalOpen(false);
                   }}
                   className={`w-full text-left px-4 py-2 rounded-md transition-colors ${
                     chainId === network.id
@@ -102,10 +102,10 @@ export function ConnectButtonCustom({ children }: ConnectButtonCustomProps) {
         </div>
       )}
     </>
-  )
+  );
 }
 
 // Wrapper to maintain compatibility with existing code
 export const ConnectButton = {
   Custom: ConnectButtonCustom,
-}
+};

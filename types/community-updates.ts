@@ -1,52 +1,52 @@
 export interface MilestoneDetails {
-  title: string
-  description: string
-  dueDate: string | null
-  completionDate?: string
-  completionReason?: string
-  completedBy?: string
+  title: string;
+  description: string;
+  dueDate: string | null;
+  completionDate?: string;
+  completionReason?: string;
+  completedBy?: string;
 }
 
 export interface ProjectInfo {
-  uid: string
+  uid: string;
   details: {
     data: {
-      title: string
-      slug: string
-    }
-  }
+      title: string;
+      slug: string;
+    };
+  };
 }
 
 export interface GrantInfo {
-  uid: string
+  uid: string;
   details: {
     data: {
-      title: string
-    }
-  }
+      title: string;
+    };
+  };
 }
 
 export interface CommunityMilestoneUpdate {
-  uid: string
-  communityUID: string
-  status: "pending" | "completed"
-  details: MilestoneDetails
-  project: ProjectInfo
-  grant?: GrantInfo
-  createdAt: string
-  updatedAt: string
+  uid: string;
+  communityUID: string;
+  status: "pending" | "completed";
+  details: MilestoneDetails;
+  project: ProjectInfo;
+  grant?: GrantInfo;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CommunityUpdatesResponse {
-  payload: CommunityMilestoneUpdate[]
+  payload: CommunityMilestoneUpdate[];
   pagination: {
-    totalCount: number
-    page: number
-    limit: number
-    totalPages: number
-    nextPage: number | null
-    prevPage: number | null
-    hasNextPage: boolean
-    hasPrevPage: boolean
-  }
+    totalCount: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    nextPage: number | null;
+    prevPage: number | null;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
 }

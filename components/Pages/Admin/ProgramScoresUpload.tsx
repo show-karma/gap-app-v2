@@ -1,43 +1,43 @@
-"use client"
+"use client";
 
 import {
   CheckCircleIcon,
   ChevronDownIcon,
   ChevronUpIcon,
   ExclamationCircleIcon,
-} from "@heroicons/react/24/outline"
-import Papa from "papaparse"
-import { useCallback, useState } from "react"
-import toast from "react-hot-toast"
-import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList"
-import { errorManager } from "@/components/Utilities/errorManager"
-import { FileUpload } from "@/components/Utilities/FileUpload"
-import { Button } from "@/components/ui/button"
+} from "@heroicons/react/24/outline";
+import Papa from "papaparse";
+import { useCallback, useState } from "react";
+import toast from "react-hot-toast";
+import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { FileUpload } from "@/components/Utilities/FileUpload";
+import { Button } from "@/components/ui/button";
 import {
   type ProgramScoreUploadRequest,
   type ProgramScoreUploadResult,
   programScoresService,
-} from "@/services/programScoresService"
-import { cn } from "@/utilities/tailwind"
+} from "@/services/programScoresService";
+import { cn } from "@/utilities/tailwind";
 
 interface ProgramScoresUploadProps {
-  communityUID: string
-  programs: GrantProgram[]
-  defaultChainId?: number
+  communityUID: string;
+  programs: GrantProgram[];
+  defaultChainId?: number;
 }
 
 interface CsvRow {
-  projectTitle: string
-  projectProfile: string
-  [key: string]: any // Dynamic score columns
+  projectTitle: string;
+  projectProfile: string;
+  [key: string]: any; // Dynamic score columns
 }
 
 interface ParsedCsvData {
-  rows: CsvRow[]
-  scoreColumns: string[]
-  totalRows: number
-  hasRequiredColumns: boolean
-  errors: string[]
+  rows: CsvRow[];
+  scoreColumns: string[];
+  totalRows: number;
+  hasRequiredColumns: boolean;
+  errors: string[];
 }
 
 export function ProgramScoresUpload({
@@ -45,49 +45,49 @@ export function ProgramScoresUpload({
   programs,
   defaultChainId,
 }: ProgramScoresUploadProps) {
-  const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(null)
-  const [chainId, setChainId] = useState<number>(defaultChainId || 42220) // Use community chainId or default to Celo
-  const [csvFile, setCsvFile] = useState<File | null>(null)
-  const [parsedData, setParsedData] = useState<ParsedCsvData | null>(null)
-  const [isPreviewExpanded, setIsPreviewExpanded] = useState(false)
-  const [isUploading, setIsUploading] = useState(false)
-  const [uploadResult, setUploadResult] = useState<ProgramScoreUploadResult | null>(null)
+  const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(null);
+  const [chainId, setChainId] = useState<number>(defaultChainId || 42220); // Use community chainId or default to Celo
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [parsedData, setParsedData] = useState<ParsedCsvData | null>(null);
+  const [isPreviewExpanded, setIsPreviewExpanded] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadResult, setUploadResult] = useState<ProgramScoreUploadResult | null>(null);
 
   const handleFileSelect = useCallback((file: File) => {
     // Check file size - max 10MB
-    const maxSize = 10 * 1024 * 1024 // 10MB in bytes
+    const maxSize = 10 * 1024 * 1024; // 10MB in bytes
     if (file.size > maxSize) {
-      toast.error("File size exceeds 10MB limit. Please upload a smaller file.")
-      setCsvFile(null)
-      setParsedData(null)
-      return
+      toast.error("File size exceeds 10MB limit. Please upload a smaller file.");
+      setCsvFile(null);
+      setParsedData(null);
+      return;
     }
 
-    setCsvFile(file)
-    setUploadResult(null)
+    setCsvFile(file);
+    setUploadResult(null);
 
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
-        const rows = results.data as CsvRow[]
-        const errors: string[] = []
+        const rows = results.data as CsvRow[];
+        const errors: string[] = [];
 
         // Check for required columns
-        const headers = Object.keys(rows[0] || {})
-        const hasProjectTitle = headers.includes("projectTitle")
-        const hasProjectProfile = headers.includes("projectProfile")
-        const hasRequiredColumns = hasProjectTitle && hasProjectProfile
+        const headers = Object.keys(rows[0] || {});
+        const hasProjectTitle = headers.includes("projectTitle");
+        const hasProjectProfile = headers.includes("projectProfile");
+        const hasRequiredColumns = hasProjectTitle && hasProjectProfile;
 
         if (!hasRequiredColumns) {
-          if (!hasProjectTitle) errors.push("Missing required column: 'projectTitle'")
-          if (!hasProjectProfile) errors.push("Missing required column: 'projectProfile'")
+          if (!hasProjectTitle) errors.push("Missing required column: 'projectTitle'");
+          if (!hasProjectProfile) errors.push("Missing required column: 'projectProfile'");
         }
 
         // Identify score columns (all columns except projectTitle and projectProfile)
         const scoreColumns = headers.filter(
           (header) => header !== "projectTitle" && header !== "projectProfile"
-        )
+        );
 
         setParsedData({
           rows,
@@ -95,31 +95,31 @@ export function ProgramScoresUpload({
           totalRows: rows.length,
           hasRequiredColumns,
           errors,
-        })
+        });
 
         if (errors.length > 0) {
           errors.forEach((error) => {
-            toast.error(error)
-          })
+            toast.error(error);
+          });
         } else {
-          toast.success(`Parsed ${rows.length} rows with ${scoreColumns.length} score columns`)
-          setIsPreviewExpanded(true)
+          toast.success(`Parsed ${rows.length} rows with ${scoreColumns.length} score columns`);
+          setIsPreviewExpanded(true);
         }
       },
       error: (error) => {
-        toast.error(`CSV parsing error: ${error.message}`)
-        setParsedData(null)
+        toast.error(`CSV parsing error: ${error.message}`);
+        setParsedData(null);
       },
-    })
-  }, [])
+    });
+  }, []);
 
   const handleUpload = async () => {
     if (!selectedProgram || !parsedData || !parsedData.hasRequiredColumns) {
-      toast.error("Please select a program and upload a valid CSV file")
-      return
+      toast.error("Please select a program and upload a valid CSV file");
+      return;
     }
 
-    setIsUploading(true)
+    setIsUploading(true);
 
     try {
       const request: ProgramScoreUploadRequest = {
@@ -127,23 +127,23 @@ export function ProgramScoresUpload({
         programId: selectedProgram.programId || "",
         chainId: selectedProgram.chainID || chainId,
         csvData: parsedData.rows,
-      }
-      const result = await programScoresService.uploadProgramScores(request)
+      };
+      const result = await programScoresService.uploadProgramScores(request);
 
-      setUploadResult(result)
+      setUploadResult(result);
 
       if (result.failed.length > 0) {
         toast.success(
           `Uploaded ${result.successful} scores. ${result.failed.length} failed to match.`
-        )
+        );
       } else {
-        toast.success(`Successfully uploaded all ${result.successful} program scores!`)
+        toast.success(`Successfully uploaded all ${result.successful} program scores!`);
       }
 
       // Reset form
-      setCsvFile(null)
-      setParsedData(null)
-      setIsPreviewExpanded(false)
+      setCsvFile(null);
+      setParsedData(null);
+      setIsPreviewExpanded(false);
     } catch (error) {
       errorManager(
         `Error uploading program scores: ${error}`,
@@ -155,14 +155,14 @@ export function ProgramScoresUpload({
           chainId: selectedProgram.chainID || chainId,
         },
         { error: "Failed to upload program scores" }
-      )
-      toast.error(error instanceof Error ? error.message : "Failed to upload program scores")
+      );
+      toast.error(error instanceof Error ? error.message : "Failed to upload program scores");
     } finally {
-      setIsUploading(false)
+      setIsUploading(false);
     }
-  }
+  };
 
-  const canUpload = selectedProgram && parsedData && parsedData.hasRequiredColumns && !isUploading
+  const canUpload = selectedProgram && parsedData && parsedData.hasRequiredColumns && !isUploading;
 
   return (
     <div className="bg-secondary rounded-lg border border-gray-200 shadow-sm">
@@ -180,16 +180,16 @@ export function ProgramScoresUpload({
             value={selectedProgram ? `${selectedProgram.programId}_${selectedProgram.chainID}` : ""}
             onChange={(e) => {
               if (e.target.value) {
-                const [progId, chain] = e.target.value.split("_")
+                const [progId, chain] = e.target.value.split("_");
                 const program = programs.find(
                   (p) => p.programId === progId && p.chainID === parseInt(chain, 10)
-                )
-                setSelectedProgram(program || null)
+                );
+                setSelectedProgram(program || null);
                 if (program?.chainID) {
-                  setChainId(program.chainID)
+                  setChainId(program.chainID);
                 }
               } else {
-                setSelectedProgram(null)
+                setSelectedProgram(null);
               }
             }}
             className="bg-background text-foreground w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -409,5 +409,5 @@ export function ProgramScoresUpload({
         )}
       </div>
     </div>
-  )
+  );
 }

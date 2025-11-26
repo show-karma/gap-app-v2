@@ -1,16 +1,16 @@
-"use client"
+"use client";
 
-import { Dialog, Transition } from "@headlessui/react"
-import { ExclamationTriangleIcon, XMarkIcon } from "@heroicons/react/24/outline"
-import { type FC, Fragment } from "react"
-import { Button } from "@/components/Utilities/Button"
+import { Dialog, Transition } from "@headlessui/react";
+import { ExclamationTriangleIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { type FC, Fragment } from "react";
+import { Button } from "@/components/Utilities/Button";
 
 interface DeleteApplicationModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onConfirm: () => void
-  referenceNumber: string
-  isDeleting?: boolean
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  referenceNumber: string;
+  isDeleting?: boolean;
 }
 
 const DeleteApplicationModal: FC<DeleteApplicationModalProps> = ({
@@ -22,9 +22,9 @@ const DeleteApplicationModal: FC<DeleteApplicationModalProps> = ({
 }) => {
   const handleClose = () => {
     if (!isDeleting) {
-      onClose()
+      onClose();
     }
-  }
+  };
 
   return (
     <Transition.Root show={isOpen} as={Fragment}>
@@ -117,7 +117,7 @@ const DeleteApplicationModal: FC<DeleteApplicationModalProps> = ({
         </div>
       </Dialog>
     </Transition.Root>
-  )
-}
+  );
+};
 
-export default DeleteApplicationModal
+export default DeleteApplicationModal;

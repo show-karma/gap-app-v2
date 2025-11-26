@@ -1,9 +1,9 @@
-import roundNumberWithPlus from "@/utilities/roundNumberWithPlus"
+import roundNumberWithPlus from "@/utilities/roundNumberWithPlus";
 
 interface StatsCardProps {
-  title: string
-  value: string | number
-  shouldRound?: boolean
+  title: string;
+  value: string | number;
+  shouldRound?: boolean;
 }
 
 export const StatsCard = ({ title, value, shouldRound = false }: StatsCardProps) => {
@@ -14,5 +14,5 @@ export const StatsCard = ({ title, value, shouldRound = false }: StatsCardProps)
       </div>
       <div className="text-lg font-semibold text-black dark:text-white text-center">{title}</div>
     </div>
-  )
-}
+  );
+};

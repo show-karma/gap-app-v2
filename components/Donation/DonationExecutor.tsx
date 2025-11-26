@@ -1,40 +1,40 @@
-"use client"
-import type { SupportedToken } from "@/constants/supportedTokens"
-import { TransactionStatus } from "./TransactionStatus"
-import { ValidationErrors } from "./ValidationErrors"
+"use client";
+import type { SupportedToken } from "@/constants/supportedTokens";
+import { TransactionStatus } from "./TransactionStatus";
+import { ValidationErrors } from "./ValidationErrors";
 
 interface TransferResult {
-  projectId: string
-  status: "pending" | "success" | "error"
-  hash?: string
-  error?: string
+  projectId: string;
+  status: "pending" | "success" | "error";
+  hash?: string;
+  error?: string;
 }
 
 interface CartItem {
-  uid: string
-  title: string
+  uid: string;
+  title: string;
 }
 
 interface DonationExecutorProps {
-  transfers: TransferResult[]
-  items: CartItem[]
-  selectedTokens: Record<string, SupportedToken>
-  validationErrors: string[]
-  missingPayouts: string[]
-  isExecuting: boolean
-  isSwitching: boolean
-  isFetchingPayouts: boolean
-  isFetchingCrossChainBalances: boolean
-  isConnected: boolean
-  address?: string
-  canProceed: boolean
-  isCurrentNetworkSupported: boolean
+  transfers: TransferResult[];
+  items: CartItem[];
+  selectedTokens: Record<string, SupportedToken>;
+  validationErrors: string[];
+  missingPayouts: string[];
+  isExecuting: boolean;
+  isSwitching: boolean;
+  isFetchingPayouts: boolean;
+  isFetchingCrossChainBalances: boolean;
+  isConnected: boolean;
+  address?: string;
+  canProceed: boolean;
+  isCurrentNetworkSupported: boolean;
   executionState: {
-    phase: string
-    approvalProgress?: number
-  }
-  executeButtonLabel: string
-  onExecute: () => void
+    phase: string;
+    approvalProgress?: number;
+  };
+  executeButtonLabel: string;
+  onExecute: () => void;
 }
 
 export function DonationExecutor({
@@ -62,20 +62,20 @@ export function DonationExecutor({
     isFetchingPayouts ||
     isFetchingCrossChainBalances ||
     !isConnected ||
-    !address
+    !address;
 
   // Generate descriptive aria-label for the execute button
   const getAriaLabel = () => {
-    if (isExecuting) return "Processing donations, please wait"
-    if (!isConnected) return "Connect wallet to proceed with donations"
-    if (!address) return "Wallet address required to proceed"
-    if (!isCurrentNetworkSupported) return "Switch to a supported network to proceed"
-    if (isSwitching) return "Network is switching, please wait"
-    if (isFetchingPayouts) return "Loading payout addresses, please wait"
-    if (isFetchingCrossChainBalances) return "Loading token balances, please wait"
-    if (!canProceed) return "Select tokens and amounts before proceeding"
-    return "Review and send donations to selected projects"
-  }
+    if (isExecuting) return "Processing donations, please wait";
+    if (!isConnected) return "Connect wallet to proceed with donations";
+    if (!address) return "Wallet address required to proceed";
+    if (!isCurrentNetworkSupported) return "Switch to a supported network to proceed";
+    if (isSwitching) return "Network is switching, please wait";
+    if (isFetchingPayouts) return "Loading payout addresses, please wait";
+    if (isFetchingCrossChainBalances) return "Loading token balances, please wait";
+    if (!canProceed) return "Select tokens and amounts before proceeding";
+    return "Review and send donations to selected projects";
+  };
 
   return (
     <>
@@ -159,5 +159,5 @@ export function DonationExecutor({
 
       <TransactionStatus transfers={transfers} items={items} selectedTokens={selectedTokens} />
     </>
-  )
+  );
 }

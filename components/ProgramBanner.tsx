@@ -1,18 +1,18 @@
-import Image from "next/image"
-import { useParams, useSearchParams } from "next/navigation"
-import { useCommunityPrograms } from "@/hooks/usePrograms"
-import { ReadMore } from "@/utilities/ReadMore"
-import { ArrowInIcon } from "./Icons/ArrowIn"
-import { ExternalLink } from "./Utilities/ExternalLink"
+import Image from "next/image";
+import { useParams, useSearchParams } from "next/navigation";
+import { useCommunityPrograms } from "@/hooks/usePrograms";
+import { ReadMore } from "@/utilities/ReadMore";
+import { ArrowInIcon } from "./Icons/ArrowIn";
+import { ExternalLink } from "./Utilities/ExternalLink";
 
 export const ProgramBanner = () => {
-  const searchParams = useSearchParams()
-  const { communityId } = useParams()
-  const { data, isLoading } = useCommunityPrograms(communityId as string)
-  const programId = searchParams.get("programId")
-  const program = data?.find((program) => `${program.programId}_${program.chainID}` === programId)
+  const searchParams = useSearchParams();
+  const { communityId } = useParams();
+  const { data, isLoading } = useCommunityPrograms(communityId as string);
+  const programId = searchParams.get("programId");
+  const program = data?.find((program) => `${program.programId}_${program.chainID}` === programId);
 
-  if (!programId || !program) return null
+  if (!programId || !program) return null;
   return (
     <div className="flex flex-row gap-5 bg-brand-lightblue rounded-xl  px-4 py-4">
       <div className="h-full items-start">
@@ -49,5 +49,5 @@ export const ProgramBanner = () => {
         ) : null}
       </div>
     </div>
-  )
-}
+  );
+};

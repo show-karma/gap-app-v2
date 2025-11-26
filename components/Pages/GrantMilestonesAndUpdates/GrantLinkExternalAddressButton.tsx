@@ -9,7 +9,6 @@ import { Button } from "@/components/Utilities/Button";
 import { PROJECT_NAME } from "@/constants/brand";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
-import { envVars } from "@/utilities/enviromentVars";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
@@ -17,17 +16,14 @@ interface GrantLinkExternalAddressButtonProps {
   grant: IGrantResponse & { external: Record<string, string[]> };
 }
 
-export const GrantLinkExternalAddressButton: FC<
-  GrantLinkExternalAddressButtonProps
-> = ({ grant }) => {
+export const GrantLinkExternalAddressButton: FC<GrantLinkExternalAddressButtonProps> = ({
+  grant,
+}) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isCommunityAdmin = useCommunityAdminStore(
-    (state) => state.isCommunityAdmin
-  );
+  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
   const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
-  const isEnabledForCommunity =
-    grant.community?.details?.data?.slug === "octant";
+  const isEnabledForCommunity = grant.community?.details?.data?.slug === "octant";
   const [isOpen, setIsOpen] = useState(false);
   const [editedAddress, setEditedAddress] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -84,11 +80,7 @@ export const GrantLinkExternalAddressButton: FC<
         </div>
       </Button>
       <Transition appear show={isOpen} as={Fragment}>
-        <Dialog
-          as="div"
-          className="relative z-10"
-          onClose={() => setIsOpen(false)}
-        >
+        <Dialog as="div" className="relative z-10" onClose={() => setIsOpen(false)}>
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -113,32 +105,23 @@ export const GrantLinkExternalAddressButton: FC<
                 leaveTo="opacity-0 scale-95"
               >
                 <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle transition-all ease-in-out duration-300">
-                  <Dialog.Title
-                    as="h3"
-                    className=" text-gray-900 dark:text-zinc-100"
-                  >
-                    <h2 className="text-2xl font-bold leading-6">
-                      Link Octant Address
-                    </h2>
+                  <Dialog.Title as="h3" className=" text-gray-900 dark:text-zinc-100">
+                    <h2 className="text-2xl font-bold leading-6">Link Octant Address</h2>
                     <p className="text-md text-gray-500 dark:text-gray-400 mt-2">
-                      Please add the Ethereum account address you used for the
-                      &quot;{grant.details?.data?.title}&quot; in Octant. This
-                      will enable Octant to retrieve your {PROJECT_NAME} profile data and
-                      display it within the Octant app.
+                      Please add the Ethereum account address you used for the &quot;
+                      {grant.details?.data?.title}&quot; in Octant. This will enable Octant to
+                      retrieve your {PROJECT_NAME} profile data and display it within the Octant
+                      app.
                     </p>
                   </Dialog.Title>
                   <div className="max-h-[60vh] flex flex-col gap-2 mt-8 overflow-y-auto">
                     <div className="space-y-4">
                       <div className="flex items-center justify-between p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg">
                         <div className="flex items-center space-x-4 w-full">
-                          <span className="text-md font-bold capitalize">
-                            Octant
-                          </span>
+                          <span className="text-md font-bold capitalize">Octant</span>
                           <input
                             type="text"
-                            value={
-                              editedAddress || grant?.external?.octant?.[0]
-                            }
+                            value={editedAddress || grant?.external?.octant?.[0]}
                             onChange={(e) => setEditedAddress(e.target.value)}
                             className="text-sm rounded-md w-full text-gray-600 dark:text-gray-300 bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none focus:border-blue-500"
                           />

@@ -1,11 +1,11 @@
-import { MessageCircleMore } from "lucide-react"
-import Image from "next/image"
-import { ExternalLink } from "@/components/Utilities/ExternalLink"
-import { Button } from "@/components/ui/button"
-import { FAQAccordion } from "@/src/components/shared/faq-accordion"
-import { marketingLayoutTheme } from "@/src/helper/theme"
-import { SOCIALS } from "@/utilities/socials"
-import { cn } from "@/utilities/tailwind"
+import { MessageCircleMore } from "lucide-react";
+import Image from "next/image";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { Button } from "@/components/ui/button";
+import { FAQAccordion } from "@/src/components/shared/faq-accordion";
+import { marketingLayoutTheme } from "@/src/helper/theme";
+import { SOCIALS } from "@/utilities/socials";
+import { cn } from "@/utilities/tailwind";
 
 const faqItems = [
   {
@@ -70,7 +70,7 @@ The more complete your profile, the easier it is for funders and collaborators t
 <br />
 We’re actively working on **gasless transactions**, so soon you’ll be able to update your project **without paying gas or holding crypto** in your wallet.`,
   },
-]
+];
 
 export function FAQ() {
   return (
@@ -150,5 +150,5 @@ export function FAQ() {
         </div>
       </div>
     </section>
-  )
+  );
 }

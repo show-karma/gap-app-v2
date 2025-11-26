@@ -1,5 +1,5 @@
-import { CommunityImpactFilterRow } from "@/components/Pages/Communities/Impact/FilterRow"
-import { ImpactTabNavigator } from "@/components/Pages/Communities/Impact/ImpactTabNavigator"
+import { CommunityImpactFilterRow } from "@/components/Pages/Communities/Impact/FilterRow";
+import { ImpactTabNavigator } from "@/components/Pages/Communities/Impact/ImpactTabNavigator";
 
 export default function ImpactLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -8,5 +8,5 @@ export default function ImpactLayout({ children }: { children: React.ReactNode }
       <CommunityImpactFilterRow />
       {children}
     </div>
-  )
+  );
 }

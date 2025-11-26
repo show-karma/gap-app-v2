@@ -1,19 +1,19 @@
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import React from "react"
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import React from "react";
 
 interface Member {
-  uid: string
-  recipient: string
+  uid: string;
+  recipient: string;
   details?: {
-    name?: string
-  }
+    name?: string;
+  };
 }
 
 export const useProjectMembers = (project?: IProjectResponse): Member[] => {
   return React.useMemo(() => {
-    if (!project) return []
+    if (!project) return [];
 
-    const members: Member[] = []
+    const members: Member[] = [];
 
     if (project.members) {
       project.members.forEach((member: any) => {
@@ -23,21 +23,21 @@ export const useProjectMembers = (project?: IProjectResponse): Member[] => {
           details: {
             name: member?.details?.name,
           },
-        })
-      })
+        });
+      });
     }
 
     const alreadyHasOwner = project.members?.find(
       (member: any) => member.recipient === project.recipient
-    )
+    );
 
     if (!alreadyHasOwner) {
       members.push({
         uid: project.recipient || "",
         recipient: project.recipient || "",
-      })
+      });
     }
 
-    return members
-  }, [project])
-}
+    return members;
+  }, [project]);
+};

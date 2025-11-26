@@ -1,35 +1,35 @@
-"use client"
-import { ArrowLeftIcon } from "@heroicons/react/24/solid"
-import { useParams, useRouter } from "next/navigation"
-import FormBuilderErrorBoundary from "@/components/ErrorBoundary/FormBuilderErrorBoundary"
-import { QuestionBuilder } from "@/components/QuestionBuilder"
-import { Button } from "@/components/Utilities/Button"
-import { Spinner } from "@/components/Utilities/Spinner"
-import { useProgramConfig } from "@/hooks/useFundingPlatform"
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin"
-import { usePostApprovalSchema, useQuestionBuilderSchema } from "@/hooks/useQuestionBuilder"
-import { useStaff } from "@/hooks/useStaff"
-import { layoutTheme } from "@/src/helper/theme"
-import { useOwnerStore } from "@/store"
-import type { FormSchema } from "@/types/question-builder"
-import { MESSAGES } from "@/utilities/messages"
+"use client";
+import { ArrowLeftIcon } from "@heroicons/react/24/solid";
+import { useParams, useRouter } from "next/navigation";
+import FormBuilderErrorBoundary from "@/components/ErrorBoundary/FormBuilderErrorBoundary";
+import { QuestionBuilder } from "@/components/QuestionBuilder";
+import { Button } from "@/components/Utilities/Button";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { useProgramConfig } from "@/hooks/useFundingPlatform";
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { usePostApprovalSchema, useQuestionBuilderSchema } from "@/hooks/useQuestionBuilder";
+import { useStaff } from "@/hooks/useStaff";
+import { layoutTheme } from "@/src/helper/theme";
+import { useOwnerStore } from "@/store";
+import type { FormSchema } from "@/types/question-builder";
+import { MESSAGES } from "@/utilities/messages";
 
 export default function QuestionBuilderPage() {
-  const router = useRouter()
+  const router = useRouter();
   const { communityId, programId: combinedProgramId } = useParams() as {
-    communityId: string
-    programId: string
-  }
+    communityId: string;
+    programId: string;
+  };
 
   // Extract programId and chainId from the combined format (e.g., "777_11155111")
-  const [programId, chainId] = combinedProgramId.split("_")
-  const parsedChainId = parseInt(chainId, 10)
+  const [programId, chainId] = combinedProgramId.split("_");
+  const parsedChainId = parseInt(chainId, 10);
 
-  const { isCommunityAdmin, isLoading: isLoadingAdmin } = useIsCommunityAdmin(communityId)
-  const isOwner = useOwnerStore((state) => state.isOwner)
-  const { isStaff } = useStaff()
+  const { isCommunityAdmin, isLoading: isLoadingAdmin } = useIsCommunityAdmin(communityId);
+  const isOwner = useOwnerStore((state) => state.isOwner);
+  const { isStaff } = useStaff();
 
-  const hasAccess = isCommunityAdmin || isOwner || isStaff
+  const hasAccess = isCommunityAdmin || isOwner || isStaff;
 
   const {
     schema: existingSchema,
@@ -37,7 +37,7 @@ export default function QuestionBuilderPage() {
     error: schemaError,
     updateSchema,
     isUpdating,
-  } = useQuestionBuilderSchema(programId, parsedChainId)
+  } = useQuestionBuilderSchema(programId, parsedChainId);
 
   const {
     schema: existingPostApprovalSchema,
@@ -45,28 +45,28 @@ export default function QuestionBuilderPage() {
     error: postApprovalSchemaError,
     updateSchema: updatePostApprovalSchema,
     isUpdating: isUpdatingPostApproval,
-  } = usePostApprovalSchema(programId, parsedChainId)
+  } = usePostApprovalSchema(programId, parsedChainId);
 
-  const { config: existingConfig } = useProgramConfig(programId, parsedChainId)
+  const { config: existingConfig } = useProgramConfig(programId, parsedChainId);
 
   const handleSchemaChange = (schema: FormSchema) => {
-    updateSchema({ schema, existingConfig: existingConfig || null })
-  }
+    updateSchema({ schema, existingConfig: existingConfig || null });
+  };
 
   const handlePostApprovalSchemaChange = (schema: FormSchema) => {
-    updatePostApprovalSchema({ schema, existingConfig: existingConfig || null })
-  }
+    updatePostApprovalSchema({ schema, existingConfig: existingConfig || null });
+  };
 
   const handleBackClick = () => {
-    router.push(`/community/${communityId}/admin/funding-platform`)
-  }
+    router.push(`/community/${communityId}/admin/funding-platform`);
+  };
 
   if (isLoadingAdmin || isLoadingSchema || isLoadingPostApprovalSchema) {
     return (
       <div className="flex w-full items-center justify-center min-h-[600px]">
         <Spinner />
       </div>
-    )
+    );
   }
 
   if (!hasAccess) {
@@ -74,7 +74,7 @@ export default function QuestionBuilderPage() {
       <div className={layoutTheme.padding}>
         <p className="text-red-500">{MESSAGES.REVIEWS.NOT_ADMIN}</p>
       </div>
-    )
+    );
   }
 
   if (schemaError || postApprovalSchemaError) {
@@ -102,7 +102,7 @@ export default function QuestionBuilderPage() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -156,5 +156,5 @@ export default function QuestionBuilderPage() {
         />
       </FormBuilderErrorBoundary>
     </div>
-  )
+  );
 }

@@ -1,31 +1,31 @@
-"use client"
+"use client";
 
-import { useCallback, useEffect, useRef, useState } from "react"
-import toast from "react-hot-toast"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
-import { cn } from "@/utilities/tailwind"
+import { useCallback, useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { cn } from "@/utilities/tailwind";
 
 interface FileUploadProps {
-  onFileSelect: (file: File) => void
-  acceptedFormats?: string
-  disabled?: boolean
-  className?: string
-  uploadedFile?: File | null
-  description?: string
+  onFileSelect: (file: File) => void;
+  acceptedFormats?: string;
+  disabled?: boolean;
+  className?: string;
+  uploadedFile?: File | null;
+  description?: string;
   // S3 upload props (opt-in)
-  useS3Upload?: boolean
-  onS3UploadComplete?: (finalUrl: string, tempKey: string) => void
-  onS3UploadError?: (error: string) => void
-  onUploadProgress?: (progress: number) => void
+  useS3Upload?: boolean;
+  onS3UploadComplete?: (finalUrl: string, tempKey: string) => void;
+  onS3UploadError?: (error: string) => void;
+  onUploadProgress?: (progress: number) => void;
   // Validation props
-  maxFileSize?: number // Maximum file size in bytes
-  allowedFileTypes?: string[] // Array of allowed MIME types
+  maxFileSize?: number; // Maximum file size in bytes
+  allowedFileTypes?: string[]; // Array of allowed MIME types
 }
 
 interface ImageDimensions {
-  width: number
-  height: number
+  width: number;
+  height: number;
 }
 
 export function FileUpload({
@@ -42,68 +42,68 @@ export function FileUpload({
   maxFileSize,
   allowedFileTypes,
 }: FileUploadProps) {
-  const [isDragOver, setIsDragOver] = useState(false)
-  const [isUploading, setIsUploading] = useState(false)
-  const [uploadProgress, setUploadProgress] = useState(0)
-  const [validationError, setValidationError] = useState<string | null>(null)
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   // Add ref for file input
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Clear file input when uploadedFile becomes null
   useEffect(() => {
     if (!uploadedFile && fileInputRef.current) {
-      fileInputRef.current.value = ""
+      fileInputRef.current.value = "";
     }
-  }, [uploadedFile])
+  }, [uploadedFile]);
 
   // Function to get image dimensions
   const getImageDimensions = useCallback((file: File): Promise<ImageDimensions> => {
     return new Promise((resolve, reject) => {
-      const img = new Image()
-      const url = URL.createObjectURL(file)
+      const img = new Image();
+      const url = URL.createObjectURL(file);
 
       img.onload = () => {
-        URL.revokeObjectURL(url)
+        URL.revokeObjectURL(url);
         resolve({
           width: img.naturalWidth,
           height: img.naturalHeight,
-        })
-      }
+        });
+      };
 
       img.onerror = () => {
-        URL.revokeObjectURL(url)
-        reject(new Error("Failed to load image"))
-      }
+        URL.revokeObjectURL(url);
+        reject(new Error("Failed to load image"));
+      };
 
-      img.src = url
-    })
-  }, [])
+      img.src = url;
+    });
+  }, []);
 
   // S3 upload function
   const uploadToS3 = useCallback(
     async (file: File) => {
       try {
-        setIsUploading(true)
-        setUploadProgress(0)
-        setValidationError(null)
-        onUploadProgress?.(0)
+        setIsUploading(true);
+        setUploadProgress(0);
+        setValidationError(null);
+        onUploadProgress?.(0);
 
         // Get image dimensions for validation
-        const dimensions = await getImageDimensions(file)
+        const dimensions = await getImageDimensions(file);
 
         // Validate square aspect ratio
         if (dimensions.width !== dimensions.height) {
-          const error = "Image must have a square aspect ratio (1:1)"
-          setValidationError(error)
-          toast.error(error)
-          onS3UploadError?.(error)
-          return
+          const error = "Image must have a square aspect ratio (1:1)";
+          setValidationError(error);
+          toast.error(error);
+          onS3UploadError?.(error);
+          return;
         }
 
         // Step 1: Get presigned URL
-        setUploadProgress(10)
-        onUploadProgress?.(10)
+        setUploadProgress(10);
+        onUploadProgress?.(10);
 
         const [data, error] = await fetchData(INDEXER.PROJECT.LOGOS.PRESIGNED_URL(), "POST", {
           fileName: file.name,
@@ -111,17 +111,17 @@ export function FileUpload({
           fileSize: file.size,
           width: dimensions.width,
           height: dimensions.height,
-        })
+        });
 
         if (error) {
-          throw new Error(error || "Failed to get upload URL")
+          throw new Error(error || "Failed to get upload URL");
         }
 
-        const { uploadUrl, finalUrl, key } = data
+        const { uploadUrl, finalUrl, key } = data;
 
         // Step 2: Upload directly to S3 with progress tracking
-        setUploadProgress(20)
-        onUploadProgress?.(20)
+        setUploadProgress(20);
+        onUploadProgress?.(20);
 
         const uploadResponse = await fetch(uploadUrl, {
           method: "PUT",
@@ -129,114 +129,114 @@ export function FileUpload({
           headers: {
             "Content-Type": file.type,
           },
-        })
+        });
 
         if (!uploadResponse.ok) {
-          throw new Error("Failed to upload file to S3")
+          throw new Error("Failed to upload file to S3");
         }
 
         // Complete upload
-        setUploadProgress(100)
-        onUploadProgress?.(100)
+        setUploadProgress(100);
+        onUploadProgress?.(100);
 
-        toast.success("Image uploaded successfully!")
-        onS3UploadComplete?.(finalUrl, key)
+        toast.success("Image uploaded successfully!");
+        onS3UploadComplete?.(finalUrl, key);
       } catch (error: any) {
-        console.error("Upload error:", error)
-        const errorMessage = error.message || "Failed to upload image"
-        setValidationError(errorMessage)
-        toast.error(errorMessage)
-        onS3UploadError?.(errorMessage)
+        console.error("Upload error:", error);
+        const errorMessage = error.message || "Failed to upload image";
+        setValidationError(errorMessage);
+        toast.error(errorMessage);
+        onS3UploadError?.(errorMessage);
       } finally {
-        setIsUploading(false)
-        setUploadProgress(0)
-        onUploadProgress?.(0)
+        setIsUploading(false);
+        setUploadProgress(0);
+        onUploadProgress?.(0);
       }
     },
     [getImageDimensions, onUploadProgress, onS3UploadComplete, onS3UploadError]
-  )
+  );
 
   const handleFileSelection = useCallback(
     (file: File) => {
-      setValidationError(null)
+      setValidationError(null);
 
       // File size validation (only if maxFileSize is provided)
       if (maxFileSize && file.size > maxFileSize) {
-        const error = `File size must be less than ${(maxFileSize / 1024 / 1024).toFixed(1)}MB`
-        setValidationError(error)
-        toast.error(error)
-        return
+        const error = `File size must be less than ${(maxFileSize / 1024 / 1024).toFixed(1)}MB`;
+        setValidationError(error);
+        toast.error(error);
+        return;
       }
 
       // File type validation (only if allowedFileTypes is provided)
       if (allowedFileTypes && !allowedFileTypes.includes(file.type)) {
         const fileTypeNames = allowedFileTypes
           .map((type) => {
-            if (type === "image/jpeg") return "JPEG"
-            if (type === "image/png") return "PNG"
-            if (type === "image/webp") return "WebP"
-            return type.split("/")[1]?.toUpperCase() || type
+            if (type === "image/jpeg") return "JPEG";
+            if (type === "image/png") return "PNG";
+            if (type === "image/webp") return "WebP";
+            return type.split("/")[1]?.toUpperCase() || type;
           })
-          .join(", ")
-        const error = `Only ${fileTypeNames} files are allowed`
-        setValidationError(error)
-        toast.error(error)
-        return
+          .join(", ");
+        const error = `Only ${fileTypeNames} files are allowed`;
+        setValidationError(error);
+        toast.error(error);
+        return;
       }
 
       // Call the original onFileSelect
-      onFileSelect(file)
+      onFileSelect(file);
 
       // If S3 upload is enabled, start the upload process
       if (useS3Upload) {
-        uploadToS3(file)
+        uploadToS3(file);
       }
     },
     [onFileSelect, useS3Upload, uploadToS3, maxFileSize, allowedFileTypes]
-  )
+  );
 
   // Retry upload function
   const retryUpload = useCallback(() => {
     if (uploadedFile && useS3Upload) {
-      uploadToS3(uploadedFile)
+      uploadToS3(uploadedFile);
     }
-  }, [uploadedFile, useS3Upload, uploadToS3])
+  }, [uploadedFile, useS3Upload, uploadToS3]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDragOver(true)
-  }, [])
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  }, []);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDragOver(false)
-  }, [])
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  }, []);
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
-      e.preventDefault()
-      e.stopPropagation()
-      setIsDragOver(false)
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragOver(false);
 
-      const files = e.dataTransfer.files
+      const files = e.dataTransfer.files;
       if (files?.[0]) {
-        handleFileSelection(files[0])
+        handleFileSelection(files[0]);
       }
     },
     [handleFileSelection]
-  )
+  );
 
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const files = e.target.files
+      const files = e.target.files;
       if (files?.[0]) {
-        handleFileSelection(files[0])
+        handleFileSelection(files[0]);
       }
     },
     [handleFileSelection]
-  )
+  );
 
   return (
     <div className={className}>
@@ -337,5 +337,5 @@ export function FileUpload({
         </div>
       </section>
     </div>
-  )
+  );
 }

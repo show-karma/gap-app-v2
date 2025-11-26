@@ -1,4 +1,4 @@
-import Image from "next/image"
+import Image from "next/image";
 
 export function WhatIsSolving() {
   return (
@@ -77,5 +77,5 @@ export function WhatIsSolving() {
         </div>
       </div>
     </div>
-  )
+  );
 }

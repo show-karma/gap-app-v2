@@ -1,34 +1,34 @@
-import { Dialog, Transition } from "@headlessui/react"
-import type { ContributorProfile } from "@show-karma/karma-gap-sdk"
-import { type FC, Fragment, useState } from "react"
-import { GithubIcon, LinkedInIcon } from "@/components/Icons"
-import { FarcasterIcon } from "@/components/Icons/Farcaster"
-import { Twitter2Icon } from "@/components/Icons/Twitter2"
-import { Button } from "@/components/Utilities/Button"
-import { ExternalLink } from "@/components/Utilities/ExternalLink"
-import { formatFarcasterLink } from "@/utilities/farcaster"
+import { Dialog, Transition } from "@headlessui/react";
+import type { ContributorProfile } from "@show-karma/karma-gap-sdk";
+import { type FC, Fragment, useState } from "react";
+import { GithubIcon, LinkedInIcon } from "@/components/Icons";
+import { FarcasterIcon } from "@/components/Icons/Farcaster";
+import { Twitter2Icon } from "@/components/Icons/Twitter2";
+import { Button } from "@/components/Utilities/Button";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { formatFarcasterLink } from "@/utilities/farcaster";
 
 interface MemberDialogProps {
-  profile: ContributorProfile
-  buttonText: string
-  buttonClassName?: string
+  profile: ContributorProfile;
+  buttonText: string;
+  buttonClassName?: string;
 }
 
 const iconsClassnames = {
   light: "text-black dark:text-white dark:hidden ",
   dark: "text-black dark:text-white hidden dark:block ",
   general: "w-6 h-6 text-black dark:text-white  hover:text-zinc-400 dark:hover:text-zinc-400",
-}
+};
 
 export const MemberDialog: FC<MemberDialogProps> = ({ profile, buttonText, buttonClassName }) => {
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
 
   function closeModal() {
-    setIsOpen(false)
+    setIsOpen(false);
   }
 
   function openModal() {
-    setIsOpen(true)
+    setIsOpen(true);
   }
 
   const data = [
@@ -40,7 +40,7 @@ export const MemberDialog: FC<MemberDialogProps> = ({ profile, buttonText, butto
       title: "About me",
       value: profile?.data.aboutMe,
     },
-  ]
+  ];
 
   return (
     <>
@@ -162,5 +162,5 @@ export const MemberDialog: FC<MemberDialogProps> = ({ profile, buttonText, butto
         </Transition>
       ) : null}
     </>
-  )
-}
+  );
+};

@@ -1,6 +1,6 @@
-import { Skeleton } from "@/components/Utilities/Skeleton"
-import { layoutTheme } from "@/src/helper/theme"
-import { cn } from "@/utilities/tailwind"
+import { Skeleton } from "@/components/Utilities/Skeleton";
+import { layoutTheme } from "@/src/helper/theme";
+import { cn } from "@/utilities/tailwind";
 
 export default function ProjectHeaderLoading() {
   return (
@@ -28,5 +28,5 @@ export default function ProjectHeaderLoading() {
         </div>
       </div>
     </div>
-  )
+  );
 }

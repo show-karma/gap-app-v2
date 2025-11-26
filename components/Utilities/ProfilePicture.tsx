@@ -1,25 +1,25 @@
-"use client"
+"use client";
 
-import Avatar from "boring-avatars"
-import { cn } from "@/utilities/tailwind"
+import Avatar from "boring-avatars";
+import { cn } from "@/utilities/tailwind";
 
 interface ProfilePictureProps {
-  imageURL?: string
-  name: string
-  size?: string
-  className?: string
-  alt?: string
+  imageURL?: string;
+  name: string;
+  size?: string;
+  className?: string;
+  alt?: string;
 }
 
 const isValidUrl = (url?: string): boolean => {
-  if (!url) return false
+  if (!url) return false;
   try {
-    new URL(url)
-    return true
+    new URL(url);
+    return true;
   } catch {
-    return false
+    return false;
   }
-}
+};
 
 export const ProfilePicture = ({
   imageURL,
@@ -28,7 +28,7 @@ export const ProfilePicture = ({
   className,
   alt,
 }: ProfilePictureProps) => {
-  const isValid = isValidUrl(imageURL)
+  const isValid = isValidUrl(imageURL);
 
   if (isValid && imageURL) {
     return (
@@ -38,7 +38,7 @@ export const ProfilePicture = ({
         src={imageURL}
         className={cn("rounded-full object-cover", className)}
       />
-    )
+    );
   }
 
   return (
@@ -50,5 +50,5 @@ export const ProfilePicture = ({
         colors={["#92A1C6", "#146A7C", "#F0AB3D", "#C271B4", "#C20D90"]}
       />
     </div>
-  )
-}
+  );
+};

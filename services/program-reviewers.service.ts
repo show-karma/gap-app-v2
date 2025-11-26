@@ -1,72 +1,72 @@
-import axios from "axios"
-import { createAuthenticatedApiClient } from "@/utilities/auth/api-client"
-import { envVars } from "@/utilities/enviromentVars"
+import axios from "axios";
+import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
+import { envVars } from "@/utilities/enviromentVars";
 import {
   validateEmail,
   validateReviewerData as validateReviewerDataUtil,
   validateTelegram,
   validateWalletAddress,
-} from "@/utilities/validators"
+} from "@/utilities/validators";
 
-const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL
+const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
 
 // Create axios instance with authentication
-const apiClient = createAuthenticatedApiClient(API_URL, 30000)
+const apiClient = createAuthenticatedApiClient(API_URL, 30000);
 
 // Add response interceptor for error handling
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.error("Program Reviewers API Error:", error.response?.data || error.message)
-    throw error
+    console.error("Program Reviewers API Error:", error.response?.data || error.message);
+    throw error;
   }
-)
+);
 
 /**
  * User profile information
  */
 export interface UserProfile {
-  id: string
-  publicAddress: string
-  name: string
-  email: string
-  telegram?: string
-  createdAt: string
-  updatedAt: string
+  id: string;
+  publicAddress: string;
+  name: string;
+  email: string;
+  telegram?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 /**
  * Reviewer information from API
  */
 export interface ProgramReviewerResponse {
-  publicAddress: string
-  programId: string
-  chainID: number
-  userProfile: UserProfile
-  assignedAt: string
-  assignedBy?: string
+  publicAddress: string;
+  programId: string;
+  chainID: number;
+  userProfile: UserProfile;
+  assignedAt: string;
+  assignedBy?: string;
 }
 
 /**
  * Reviewer information for UI
  */
 export interface ProgramReviewer {
-  publicAddress: string
-  name: string
-  email: string
-  telegram?: string
-  assignedAt: string
-  assignedBy?: string
+  publicAddress: string;
+  name: string;
+  email: string;
+  telegram?: string;
+  assignedAt: string;
+  assignedBy?: string;
 }
 
 /**
  * Add reviewer request
  */
 export interface AddReviewerRequest {
-  publicAddress: string
-  name: string
-  email: string
-  telegram?: string
+  publicAddress: string;
+  name: string;
+  email: string;
+  telegram?: string;
 }
 
 /**
@@ -80,7 +80,7 @@ export const programReviewersService = {
     try {
       const response = await apiClient.get<{ reviewers: ProgramReviewerResponse[] }>(
         `/v2/funding-program-configs/${programId}/${chainID}/reviewers`
-      )
+      );
 
       // Map the API response to the expected format
       return (response.data.reviewers || []).map((reviewer) => ({
@@ -90,20 +90,20 @@ export const programReviewersService = {
         telegram: reviewer.userProfile?.telegram || "",
         assignedAt: reviewer.assignedAt,
         assignedBy: reviewer.assignedBy,
-      }))
+      }));
     } catch (error) {
       // Handle "No reviewers found" as an empty list, not an error
       if (error && typeof error === "object" && "response" in error) {
-        const apiError = error as { response?: { data?: { error?: string; message?: string } } }
+        const apiError = error as { response?: { data?: { error?: string; message?: string } } };
         if (
           apiError.response?.data?.error === "Program Reviewer Not Found" ||
           apiError.response?.data?.message?.includes("No reviewers found")
         ) {
-          return []
+          return [];
         }
       }
       // Re-throw other errors
-      throw error
+      throw error;
     }
   },
 
@@ -118,10 +118,10 @@ export const programReviewersService = {
     const response = await apiClient.post<{ reviewer?: ProgramReviewerResponse }>(
       `/v2/funding-program-configs/${programId}/${chainID}/reviewers`,
       reviewerData
-    )
+    );
 
     // Map the API response to the expected format
-    const reviewer = response.data?.reviewer
+    const reviewer = response.data?.reviewer;
 
     // Handle case where reviewer might be undefined or API returns success without data
     if (!reviewer) {
@@ -133,7 +133,7 @@ export const programReviewersService = {
         telegram: reviewerData.telegram,
         assignedAt: new Date().toISOString(),
         assignedBy: undefined,
-      }
+      };
     }
 
     return {
@@ -143,7 +143,7 @@ export const programReviewersService = {
       telegram: reviewer.userProfile?.telegram || reviewerData.telegram,
       assignedAt: reviewer.assignedAt,
       assignedBy: reviewer.assignedBy,
-    }
+    };
   },
 
   /**
@@ -152,7 +152,7 @@ export const programReviewersService = {
   async removeReviewer(programId: string, chainID: number, publicAddress: string): Promise<void> {
     await apiClient.delete(
       `/v2/funding-program-configs/${programId}/${chainID}/reviewers/${publicAddress}`
-    )
+    );
   },
 
   /**
@@ -163,39 +163,39 @@ export const programReviewersService = {
     chainID: number,
     reviewers: AddReviewerRequest[]
   ): Promise<{
-    added: ProgramReviewer[]
-    errors: Array<{ reviewer: AddReviewerRequest; error: string }>
+    added: ProgramReviewer[];
+    errors: Array<{ reviewer: AddReviewerRequest; error: string }>;
   }> {
-    const addedReviewers: ProgramReviewer[] = []
-    const errors: Array<{ reviewer: AddReviewerRequest; error: string }> = []
+    const addedReviewers: ProgramReviewer[] = [];
+    const errors: Array<{ reviewer: AddReviewerRequest; error: string }> = [];
 
     for (const reviewer of reviewers) {
       try {
-        const added = await this.addReviewer(programId, chainID, reviewer)
-        addedReviewers.push(added)
+        const added = await this.addReviewer(programId, chainID, reviewer);
+        addedReviewers.push(added);
       } catch (error) {
-        let errorMessage = "Failed to add reviewer"
+        let errorMessage = "Failed to add reviewer";
 
         if (axios.isAxiosError(error)) {
-          errorMessage = error.response?.data?.message || error.message
+          errorMessage = error.response?.data?.message || error.message;
         } else if (error instanceof Error) {
-          errorMessage = error.message
+          errorMessage = error.message;
         } else if (typeof error === "string") {
-          errorMessage = error
+          errorMessage = error;
         }
 
         errors.push({
           reviewer,
           error: errorMessage,
-        })
+        });
       }
     }
 
     if (errors.length > 0) {
-      console.error("Errors adding reviewers:", errors)
+      console.error("Errors adding reviewers:", errors);
     }
 
-    return { added: addedReviewers, errors }
+    return { added: addedReviewers, errors };
   },
 
   /**
@@ -203,7 +203,7 @@ export const programReviewersService = {
    * @deprecated Use validateWalletAddress from @/utilities/validators instead
    */
   validateWalletAddress(address: string): boolean {
-    return validateWalletAddress(address)
+    return validateWalletAddress(address);
   },
 
   /**
@@ -211,7 +211,7 @@ export const programReviewersService = {
    * @deprecated Use validateEmail from @/utilities/validators instead
    */
   validateEmail(email: string): boolean {
-    return validateEmail(email)
+    return validateEmail(email);
   },
 
   /**
@@ -219,7 +219,7 @@ export const programReviewersService = {
    * @deprecated Use validateTelegram from @/utilities/validators instead
    */
   validateTelegram(telegram: string): boolean {
-    return validateTelegram(telegram)
+    return validateTelegram(telegram);
   },
 
   /**
@@ -227,6 +227,6 @@ export const programReviewersService = {
    * Uses shared validation utilities for consistency
    */
   validateReviewerData(data: AddReviewerRequest): { valid: boolean; errors: string[] } {
-    return validateReviewerDataUtil(data)
+    return validateReviewerDataUtil(data);
   },
-}
+};

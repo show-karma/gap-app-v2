@@ -1,5 +1,5 @@
-import { AutoSizer, Grid } from "react-virtualized"
-import { Skeleton } from "@/components/Utilities/Skeleton"
+import { AutoSizer, Grid } from "react-virtualized";
+import { Skeleton } from "@/components/Utilities/Skeleton";
 
 const pickColor = (index: number) => {
   const cardColors = [
@@ -13,23 +13,23 @@ const pickColor = (index: number) => {
     "#EE46BC",
     "#EEAAFD",
     "#67E3F9",
-  ]
-  return cardColors[index % cardColors.length]
-}
+  ];
+  return cardColors[index % cardColors.length];
+};
 
 // Responsive breakpoint function (same as CommunitiesPage)
 const getResponsiveColumns = (width: number) => {
-  if (width >= 1200) return 4 // 4 columns for large screens
-  if (width >= 768) return 2 // 2 columns for medium screens
-  return 1 // 1 column for small screens
-}
+  if (width >= 1200) return 4; // 4 columns for large screens
+  if (width >= 768) return 2; // 2 columns for medium screens
+  return 1; // 1 column for small screens
+};
 
 const StatsSkeleton = () => (
   <div className="flex flex-col items-center justify-center p-6 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-sm animate-pulse">
     <div className="h-9 w-16 bg-gray-300 dark:bg-gray-600 rounded mb-2"></div>
     <div className="h-5 w-24 bg-gray-300 dark:bg-gray-600 rounded"></div>
   </div>
-)
+);
 
 const CommunityCardSkeleton = () => (
   <div
@@ -73,7 +73,7 @@ const CommunityCardSkeleton = () => (
       <div className="w-20 h-10 bg-gray-300 dark:bg-gray-600 rounded"></div>
     </div>
   </div>
-)
+);
 
 const CardSkeleton = ({ index }: { index: number }) => {
   return (
@@ -112,11 +112,11 @@ const CardSkeleton = ({ index }: { index: number }) => {
       </div>
       <div className="h-1" />
     </div>
-  )
-}
+  );
+};
 
 export const CardListSkeleton = () => {
-  const cardArray = Array.from({ length: 16 }, (_, index) => index)
+  const cardArray = Array.from({ length: 16 }, (_, index) => index);
 
   return (
     <div className="grid w-full gap-4 grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(360px,1fr))] xl:grid-cols-3">
@@ -124,25 +124,25 @@ export const CardListSkeleton = () => {
         <CardSkeleton key={index} index={index} />
       ))}
     </div>
-  )
-}
+  );
+};
 
 export const FilterByProgramsSkeleton = () => {
-  const programsArray = Array.from({ length: 6 }, (_, index) => index)
+  const programsArray = Array.from({ length: 6 }, (_, index) => index);
   return (
     <div className="flex flex-col gap-2 w-full">
       {programsArray.map((_, index) => (
         <Skeleton key={index} className={"h-7 w-full"} />
       ))}
     </div>
-  )
-}
+  );
+};
 
 export const CommunitiesSkeleton = () => {
   // Mock 4 summary stats (same as real component)
-  const summaryStats = Array(4).fill(null)
+  const summaryStats = Array(4).fill(null);
   // Mock 12 community cards for skeleton
-  const communities = Array(12).fill(null)
+  const communities = Array(12).fill(null);
 
   return (
     <div className="flex flex-col gap-8 w-full max-w-full overflow-hidden">
@@ -158,12 +158,12 @@ export const CommunitiesSkeleton = () => {
       <div className="w-full overflow-hidden">
         <AutoSizer disableHeight>
           {({ width }) => {
-            const columns = getResponsiveColumns(width)
-            const gap = 24
-            const actualCardWidth = Math.floor((width - (columns - 1) * gap) / columns)
-            const rowHeight = 113 + gap
-            const rowCount = Math.ceil(summaryStats.length / columns)
-            const height = rowHeight * rowCount
+            const columns = getResponsiveColumns(width);
+            const gap = 24;
+            const actualCardWidth = Math.floor((width - (columns - 1) * gap) / columns);
+            const rowHeight = 113 + gap;
+            const rowCount = Math.ceil(summaryStats.length / columns);
+            const height = rowHeight * rowCount;
 
             return (
               <Grid
@@ -176,10 +176,10 @@ export const CommunitiesSkeleton = () => {
                 columnCount={columns}
                 style={{ overflow: "visible" }}
                 cellRenderer={({ columnIndex, key, rowIndex, style }) => {
-                  const itemIndex = rowIndex * columns + columnIndex
-                  const stat = summaryStats[itemIndex]
+                  const itemIndex = rowIndex * columns + columnIndex;
+                  const stat = summaryStats[itemIndex];
 
-                  if (stat === undefined) return null
+                  if (stat === undefined) return null;
 
                   return (
                     <div
@@ -194,10 +194,10 @@ export const CommunitiesSkeleton = () => {
                     >
                       <StatsSkeleton />
                     </div>
-                  )
+                  );
                 }}
               />
-            )
+            );
           }}
         </AutoSizer>
       </div>
@@ -206,12 +206,12 @@ export const CommunitiesSkeleton = () => {
       <div className="w-full overflow-hidden">
         <AutoSizer disableHeight>
           {({ width }) => {
-            const columns = getResponsiveColumns(width)
-            const gap = 24
-            const actualCardWidth = Math.floor((width - (columns - 1) * gap) / columns)
-            const rowHeight = 318 + gap // Card height + gap
-            const rowCount = Math.ceil(communities.length / columns)
-            const height = rowCount * rowHeight
+            const columns = getResponsiveColumns(width);
+            const gap = 24;
+            const actualCardWidth = Math.floor((width - (columns - 1) * gap) / columns);
+            const rowHeight = 318 + gap; // Card height + gap
+            const rowCount = Math.ceil(communities.length / columns);
+            const height = rowCount * rowHeight;
 
             return (
               <Grid
@@ -224,10 +224,10 @@ export const CommunitiesSkeleton = () => {
                 columnCount={columns}
                 style={{ overflow: "visible" }}
                 cellRenderer={({ columnIndex, key, rowIndex, style }) => {
-                  const itemIndex = rowIndex * columns + columnIndex
-                  const community = communities[itemIndex]
+                  const itemIndex = rowIndex * columns + columnIndex;
+                  const community = communities[itemIndex];
 
-                  if (community === undefined) return null
+                  if (community === undefined) return null;
 
                   return (
                     <div
@@ -242,16 +242,16 @@ export const CommunitiesSkeleton = () => {
                     >
                       <CommunityCardSkeleton />
                     </div>
-                  )
+                  );
                 }}
               />
-            )
+            );
           }}
         </AutoSizer>
       </div>
     </div>
-  )
-}
+  );
+};
 
 export const CommunitiesLoading = () => {
   return (
@@ -312,5 +312,5 @@ export const CommunitiesLoading = () => {
         <Skeleton className={"h-[360px] w-full"} />
       </div>
     </div>
-  )
-}
+  );
+};

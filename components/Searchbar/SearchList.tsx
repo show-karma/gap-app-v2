@@ -1,29 +1,29 @@
-"use client"
+"use client";
 import type {
   ICommunityResponse,
   IProjectResponse,
   ISearchResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-import { useAccount } from "wagmi"
-import { useAuth } from "@/hooks/useAuth"
-import { useMobileStore } from "@/store/mobile"
-import { groupSimilarCommunities } from "@/utilities/communityHelpers" // You'll need to create this utility function
-import { PAGES } from "@/utilities/pages"
-import { ProfilePicture } from "../Utilities/ProfilePicture"
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useAccount } from "wagmi";
+import { useAuth } from "@/hooks/useAuth";
+import { useMobileStore } from "@/store/mobile";
+import { groupSimilarCommunities } from "@/utilities/communityHelpers"; // You'll need to create this utility function
+import { PAGES } from "@/utilities/pages";
+import { ProfilePicture } from "../Utilities/ProfilePicture";
 /* eslint-disable @next/next/no-img-element */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
-import { Spinner } from "../Utilities/Spinner"
+import { Spinner } from "../Utilities/Spinner";
 
 interface Props {
-  data: ISearchResponse // Will be modular in the future
-  isOpen: boolean
-  isLoading: boolean
-  closeSearchList: () => void
-  onInteractionStart?: () => void
-  onInteractionEnd?: () => void
+  data: ISearchResponse; // Will be modular in the future
+  isOpen: boolean;
+  isLoading: boolean;
+  closeSearchList: () => void;
+  onInteractionStart?: () => void;
+  onInteractionEnd?: () => void;
 }
 
 export const SearchList: React.FC<Props> = ({
@@ -34,49 +34,49 @@ export const SearchList: React.FC<Props> = ({
   onInteractionStart,
   onInteractionEnd,
 }) => {
-  const { isConnected } = useAccount()
-  const { authenticated: isAuth, login } = useAuth()
-  const [shouldOpen, setShouldOpen] = useState(false)
-  const router = useRouter()
+  const { isConnected } = useAccount();
+  const { authenticated: isAuth, login } = useAuth();
+  const [shouldOpen, setShouldOpen] = useState(false);
+  const router = useRouter();
 
   const handleItemClick = (e: React.MouseEvent, href: string) => {
-    e.preventDefault()
-    closeSearchList()
-    setIsMobileMenuOpen(false)
+    e.preventDefault();
+    closeSearchList();
+    setIsMobileMenuOpen(false);
     // Use setTimeout to ensure state updates complete before navigation
     setTimeout(() => {
       if (e.currentTarget instanceof HTMLAnchorElement) {
-        window.location.href = e.currentTarget.href
+        window.location.href = e.currentTarget.href;
       }
-    }, 0)
-    router.push(href)
-  }
+    }, 0);
+    router.push(href);
+  };
 
   const handleCreateProject = (e: React.MouseEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!isConnected || !isAuth) {
-      closeSearchList()
-      setIsMobileMenuOpen(false)
-      login?.()
-      setShouldOpen(true)
-      return
+      closeSearchList();
+      setIsMobileMenuOpen(false);
+      login?.();
+      setShouldOpen(true);
+      return;
     }
-    const el = document?.getElementById("new-project-button")
+    const el = document?.getElementById("new-project-button");
     if (el) {
-      closeSearchList()
-      setIsMobileMenuOpen(false)
-      el.click()
+      closeSearchList();
+      setIsMobileMenuOpen(false);
+      el.click();
     }
-  }
+  };
 
   useEffect(() => {
     if (shouldOpen && isAuth && isConnected) {
-      const el = document?.getElementById("new-project-button")
-      if (el) el.click()
-      setShouldOpen(false)
+      const el = document?.getElementById("new-project-button");
+      if (el) el.click();
+      setShouldOpen(false);
     }
-  }, [isAuth, isConnected, shouldOpen])
-  const { isMobileMenuOpen, setIsMobileMenuOpen } = useMobileStore()
+  }, [isAuth, isConnected, shouldOpen]);
+  const { isMobileMenuOpen, setIsMobileMenuOpen } = useMobileStore();
 
   const renderItem = (
     item: IProjectResponse | ICommunityResponse,
@@ -87,7 +87,7 @@ export const SearchList: React.FC<Props> = ({
     const imageURL =
       type === "project"
         ? (item as IProjectResponse).details?.data?.imageURL
-        : (item as ICommunityResponse).details?.data?.imageURL
+        : (item as ICommunityResponse).details?.data?.imageURL;
 
     return (
       <button
@@ -120,10 +120,10 @@ export const SearchList: React.FC<Props> = ({
           </div>
         </div>
       </button>
-    )
-  }
+    );
+  };
 
-  const groupedCommunities = groupSimilarCommunities(data.communities)
+  const groupedCommunities = groupSimilarCommunities(data.communities);
 
   return (
     isOpen && (
@@ -174,5 +174,5 @@ export const SearchList: React.FC<Props> = ({
         )}
       </div>
     )
-  )
-}
+  );
+};

@@ -1,64 +1,64 @@
-"use client"
-import { Dialog, Transition } from "@headlessui/react"
-import { type Project, ProjectEndorsement } from "@show-karma/karma-gap-sdk"
-import { useRouter } from "next/navigation"
-import { type FC, Fragment, useState } from "react"
-import type { Hex } from "viem"
-import { useAccount } from "wagmi"
+"use client";
+import { Dialog, Transition } from "@headlessui/react";
+import { type Project, ProjectEndorsement } from "@show-karma/karma-gap-sdk";
+import { useRouter } from "next/navigation";
+import { type FC, Fragment, useState } from "react";
+import type { Hex } from "viem";
+import { useAccount } from "wagmi";
 /* eslint-disable @next/next/no-img-element */
-import { Button } from "@/components/Utilities/Button"
-import { errorManager } from "@/components/Utilities/errorManager"
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor"
-import { useContactInfo } from "@/hooks/useContactInfo"
-import { useGap } from "@/hooks/useGap"
-import { useWallet } from "@/hooks/useWallet"
-import { useProjectStore } from "@/store"
-import { useEndorsementStore } from "@/store/modals/endorsement"
-import { useShareDialogStore } from "@/store/modals/shareDialog"
-import { useStepper } from "@/store/modals/txStepper"
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils"
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
-import { PAGES } from "@/utilities/pages"
-import { sanitizeObject } from "@/utilities/sanitize"
-import { SHARE_TEXTS } from "@/utilities/share/text"
-import { shortAddress } from "@/utilities/shortAddress"
-import { safeGetWalletClient } from "@/utilities/wallet-helpers"
+import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { useContactInfo } from "@/hooks/useContactInfo";
+import { useGap } from "@/hooks/useGap";
+import { useWallet } from "@/hooks/useWallet";
+import { useProjectStore } from "@/store";
+import { useEndorsementStore } from "@/store/modals/endorsement";
+import { useShareDialogStore } from "@/store/modals/shareDialog";
+import { useStepper } from "@/store/modals/txStepper";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { PAGES } from "@/utilities/pages";
+import { sanitizeObject } from "@/utilities/sanitize";
+import { SHARE_TEXTS } from "@/utilities/share/text";
+import { shortAddress } from "@/utilities/shortAddress";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
-type EndorsementDialogProps = {}
+type EndorsementDialogProps = {};
 
 export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false);
 
-  const { isEndorsementOpen: isOpen, setIsEndorsementOpen: setIsOpen } = useEndorsementStore()
-  const [comment, setComment] = useState<string>("")
-  const project = useProjectStore((state) => state.project)
-  const { switchChainAsync } = useWallet()
-  const { gap } = useGap()
-  const { chain } = useAccount()
-  const { address } = useAccount()
-  const refreshProject = useProjectStore((state) => state.refreshProject)
-  const router = useRouter()
-  const { data: contactsInfo } = useContactInfo(project?.uid, true)
+  const { isEndorsementOpen: isOpen, setIsEndorsementOpen: setIsOpen } = useEndorsementStore();
+  const [comment, setComment] = useState<string>("");
+  const project = useProjectStore((state) => state.project);
+  const { switchChainAsync } = useWallet();
+  const { gap } = useGap();
+  const { chain } = useAccount();
+  const { address } = useAccount();
+  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const router = useRouter();
+  const { data: contactsInfo } = useContactInfo(project?.uid, true);
 
   function closeModal() {
-    setIsOpen(false)
+    setIsOpen(false);
   }
 
-  const { changeStepperStep, setIsStepper } = useStepper()
+  const { changeStepperStep, setIsStepper } = useStepper();
 
-  const { openShareDialog } = useShareDialogStore()
+  const { openShareDialog } = useShareDialogStore();
 
   const notifyProjectOwner = async (endorsement: ProjectEndorsement) => {
     try {
       if (!contactsInfo?.length || !project) {
-        return
+        return;
       }
 
       for (const contact of contactsInfo) {
         if (!contact.email) {
-          continue
+          continue;
         }
 
         const [_, error] = await fetchData(
@@ -74,22 +74,22 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
             projectTitle: project.details?.data?.title || project.uid,
             comment: comment || undefined,
           }
-        )
+        );
 
         if (error) {
-          console.error("Failed to send notification to", contact.email, ":", error)
+          console.error("Failed to send notification to", contact.email, ":", error);
         }
       }
     } catch (error) {
-      console.error("Failed to send endorsement notification:", error)
+      console.error("Failed to send endorsement notification:", error);
     }
-  }
+  };
 
   const handleFunction = async () => {
-    let gapClient = gap
-    setIsLoading(true)
+    let gapClient = gap;
+    setIsLoading(true);
     try {
-      if (!project) return
+      if (!project) return;
       const {
         success,
         chainId: actualChainId,
@@ -98,22 +98,22 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
         targetChainId: project.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
-      })
+      });
 
       if (!success) {
-        setIsLoading(false)
-        return
+        setIsLoading(false);
+        return;
       }
 
-      gapClient = newGapClient
+      gapClient = newGapClient;
 
-      const { walletClient, error } = await safeGetWalletClient(actualChainId)
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient || !gapClient || !address) {
-        throw new Error("Failed to connect to wallet", { cause: error })
+        throw new Error("Failed to connect to wallet", { cause: error });
       }
 
-      const walletSigner = await walletClientToSigner(walletClient)
+      const walletSigner = await walletClientToSigner(walletClient);
       const endorsement = new ProjectEndorsement({
         data: sanitizeObject({
           comment,
@@ -121,27 +121,27 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
         schema: gapClient!.findSchema("ProjectEndorsement"),
         refUID: project?.uid,
         recipient: address as `0x${string}`,
-      })
+      });
       await endorsement.attest(walletSigner, changeStepperStep).then(async (res) => {
-        const txHash = res?.tx[0]?.hash
+        const txHash = res?.tx[0]?.hash;
         if (txHash) {
-          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, endorsement.chainID), "POST", {})
+          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, endorsement.chainID), "POST", {});
         }
-        let retries = 1000
-        refreshProject()
-        let fetchedProject: Project | null = null
-        changeStepperStep("indexing")
+        let retries = 1000;
+        refreshProject();
+        let fetchedProject: Project | null = null;
+        changeStepperStep("indexing");
         while (retries > 0) {
-          fetchedProject = await gapClient!.fetch.projectById(project.uid as Hex).catch(() => null)
+          fetchedProject = await gapClient!.fetch.projectById(project.uid as Hex).catch(() => null);
           if (fetchedProject?.endorsements?.find((end) => end.uid === endorsement.uid)) {
-            retries = 0
-            changeStepperStep("indexed")
+            retries = 0;
+            changeStepperStep("indexed");
 
-            await notifyProjectOwner(endorsement)
+            await notifyProjectOwner(endorsement);
 
             router.push(
               PAGES.PROJECT.OVERVIEW((project.details?.data?.slug || project?.uid) as string)
-            )
+            );
             openShareDialog({
               modalShareText: `Well played! Project ${project?.details?.data?.title} now has your epic endorsement 🎯🐉!`,
               shareText: SHARE_TEXTS.PROJECT_ENDORSEMENT(
@@ -149,25 +149,25 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
                 project?.uid as string
               ),
               modalShareSecondText: ` `,
-            })
-            router.refresh()
+            });
+            router.refresh();
           }
-          retries -= 1
+          retries -= 1;
           // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-          await new Promise((resolve) => setTimeout(resolve, 1500))
+          await new Promise((resolve) => setTimeout(resolve, 1500));
         }
-      })
-      closeModal()
+      });
+      closeModal();
     } catch (error: any) {
       errorManager(`Error of user ${address} endorsing project ${project?.uid}`, error, {
         projectUID: project?.uid,
         address,
-      })
+      });
     } finally {
-      setIsLoading(false)
-      setIsStepper(false)
+      setIsLoading(false);
+      setIsStepper(false);
     }
-  }
+  };
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -212,7 +212,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
                     placeholderText="I'm endorsing this project because..."
                     value={comment}
                     onChange={(newValue: string) => {
-                      setComment(newValue || "")
+                      setComment(newValue || "");
                     }}
                   />
                 </div>
@@ -239,5 +239,5 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
         </div>
       </Dialog>
     </Transition>
-  )
-}
+  );
+};

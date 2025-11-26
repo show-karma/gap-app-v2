@@ -1,23 +1,23 @@
-"use client"
+"use client";
 
-import { ArrowUpRight, type LucideIcon } from "lucide-react"
-import Link from "next/link"
-import { ExternalLink } from "@/components/Utilities/ExternalLink"
-import { cn } from "@/utilities/tailwind"
+import { ArrowUpRight, type LucideIcon } from "lucide-react";
+import Link from "next/link";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { cn } from "@/utilities/tailwind";
 
 const menuStyles = {
   itemIcon: "text-muted-foreground w-4 h-4",
   itemText: "text-foreground text-sm font-medium",
-}
+};
 
 interface SimpleMenuItemClientProps {
-  href: string
-  icon: LucideIcon
-  title: string
-  external?: boolean
-  showArrow?: boolean
-  onClick?: () => void
-  variant?: "desktop" | "mobile"
+  href: string;
+  icon: LucideIcon;
+  title: string;
+  external?: boolean;
+  showArrow?: boolean;
+  onClick?: () => void;
+  variant?: "desktop" | "mobile";
 }
 
 export function SimpleMenuItemClient({
@@ -35,7 +35,7 @@ export function SimpleMenuItemClient({
       <span className={menuStyles.itemText}>{title}</span>
       {showArrow && <ArrowUpRight className={cn(menuStyles.itemIcon, "ml-auto")} />}
     </div>
-  )
+  );
 
   if (variant === "mobile") {
     if (external) {
@@ -47,7 +47,7 @@ export function SimpleMenuItemClient({
         >
           {content}
         </ExternalLink>
-      )
+      );
     }
     return (
       <Link
@@ -57,7 +57,7 @@ export function SimpleMenuItemClient({
       >
         {content}
       </Link>
-    )
+    );
   }
 
   if (external) {
@@ -67,7 +67,7 @@ export function SimpleMenuItemClient({
           {content}
         </div>
       </ExternalLink>
-    )
+    );
   }
 
   return (
@@ -76,5 +76,5 @@ export function SimpleMenuItemClient({
         {content}
       </div>
     </Link>
-  )
+  );
 }

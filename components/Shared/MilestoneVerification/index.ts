@@ -1,1 +1,1 @@
-export { MilestoneVerificationSection } from "./MilestoneVerificationSection"
+export { MilestoneVerificationSection } from "./MilestoneVerificationSection";

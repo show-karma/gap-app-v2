@@ -1,42 +1,42 @@
-import { useQuery } from "@tanstack/react-query"
-import axios from "axios"
-import { useAccount } from "wagmi"
-import { useAuth } from "@/hooks/useAuth"
-import type { FundingProgram } from "@/services/fundingPlatformService"
-import { PermissionsService } from "@/services/permissions.service"
-import { createAuthenticatedApiClient } from "@/utilities/auth/api-client"
-import { defaultQueryOptions } from "@/utilities/queries/defaultOptions"
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
+import { useAccount } from "wagmi";
+import { useAuth } from "@/hooks/useAuth";
+import type { FundingProgram } from "@/services/fundingPlatformService";
+import { PermissionsService } from "@/services/permissions.service";
+import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
+import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 
-const _apiClient = createAuthenticatedApiClient()
+const _apiClient = createAuthenticatedApiClient();
 
 /**
  * Options for configuring the usePermissions hook
  */
 export interface PermissionOptions {
   /** Program ID to check permissions for */
-  programId?: string
+  programId?: string;
   /** Chain ID for the program */
-  chainID?: number
+  chainID?: number;
   /** Specific action to check permission for (e.g., 'comment', 'view', 'edit') */
-  action?: string
+  action?: string;
   /** Role to check (e.g., 'reviewer', 'admin') */
-  role?: string
+  role?: string;
   /** Whether the query should be enabled. Defaults to true when prerequisites are met */
-  enabled?: boolean
+  enabled?: boolean;
 }
 
 /**
  * Permission check response
  */
 interface PermissionCheckResponse {
-  hasPermission: boolean
-  permissions: string[]
+  hasPermission: boolean;
+  permissions: string[];
 }
 
 /**
  * Reviewer programs response
  */
-type ReviewerProgramsResponse = FundingProgram[]
+type ReviewerProgramsResponse = FundingProgram[];
 
 /**
  * Generic hook for checking permissions and roles
@@ -73,9 +73,9 @@ type ReviewerProgramsResponse = FundingProgram[]
  * ```
  */
 export const usePermissions = (options: PermissionOptions = {}) => {
-  const { address: wagmiAddress } = useAccount()
-  const { authenticated: isAuth, getAccessToken: getToken, ready } = useAuth()
-  const { programId, chainID, action, role, enabled = true } = options
+  const { address: wagmiAddress } = useAccount();
+  const { authenticated: isAuth, getAccessToken: getToken, ready } = useAuth();
+  const { programId, chainID, action, role, enabled = true } = options;
 
   const query = useQuery({
     queryKey: ["permissions", programId, chainID, action, role, wagmiAddress, isAuth],
@@ -85,81 +85,81 @@ export const usePermissions = (options: PermissionOptions = {}) => {
           hasPermission: false,
           permissions: [],
           programs: [],
-        }
+        };
       }
 
-      const permissionsService = new PermissionsService()
+      const permissionsService = new PermissionsService();
 
       // Check specific program permission
       if (programId && chainID) {
         try {
-          const params = new URLSearchParams()
-          if (action) params.append("action", action)
+          const params = new URLSearchParams();
+          if (action) params.append("action", action);
 
-          const response = await permissionsService.checkPermission({ programId, chainID, action })
+          const response = await permissionsService.checkPermission({ programId, chainID, action });
 
           return {
             hasPermission: response.hasPermission,
             permissions: response.permissions || [],
             programs: [],
-          }
+          };
         } catch (error) {
           if (axios.isAxiosError(error)) {
             if (error.response?.status === 401) {
-              console.error("Authentication error: Please reconnect your wallet")
+              console.error("Authentication error: Please reconnect your wallet");
             } else if (error.response?.status === 403) {
-              console.error("Permission denied: You don't have access to this resource")
+              console.error("Permission denied: You don't have access to this resource");
             } else if (error.code === "ECONNABORTED") {
-              console.error("Request timeout: Please check your connection and try again")
+              console.error("Request timeout: Please check your connection and try again");
             } else {
               console.error(
                 `Error checking permission (${error.response?.status || "network error"}): ${error.message}`
-              )
+              );
             }
           } else {
-            console.error("Error checking permission:", error)
+            console.error("Error checking permission:", error);
           }
           return {
             hasPermission: false,
             permissions: [],
             programs: [],
-          }
+          };
         }
       }
 
       // Get user's reviewer programs
       if (role === "reviewer") {
         try {
-          const programs = (await permissionsService.getReviewerPrograms()) || []
+          const programs = (await permissionsService.getReviewerPrograms()) || [];
 
           return {
             hasPermission: programs.length > 0,
             permissions: ["read", "comment"],
             programs,
-          }
+          };
         } catch (error) {
           if (axios.isAxiosError(error)) {
             if (error.response?.status === 401) {
               console.error(
                 "Authentication error: Please reconnect your wallet to view reviewer programs"
-              )
+              );
             } else if (error.response?.status === 403) {
-              console.error("Access denied: You don't have permission to view reviewer programs")
+              console.error("Access denied: You don't have permission to view reviewer programs");
             } else if (error.code === "ECONNABORTED") {
-              console.error("Request timeout: Unable to fetch reviewer programs. Please try again")
+              console.error("Request timeout: Unable to fetch reviewer programs. Please try again");
             } else {
               console.error(
                 `Error fetching reviewer programs (${error.response?.status || "network error"}): ${error.message}`
-              )
+              );
             }
           } else {
-            console.error("Error fetching reviewer programs:", error)
+            console.error("Error fetching reviewer programs:", error);
           }
           return {
             hasPermission: false,
             permissions: [],
             programs: [],
-          }
+          };
         }
       }
 
@@ -168,7 +168,7 @@ export const usePermissions = (options: PermissionOptions = {}) => {
         hasPermission: false,
         permissions: [],
         programs: [],
-      }
+      };
     },
     ...defaultQueryOptions,
     enabled: enabled && !!isAuth && !!wagmiAddress,
@@ -176,11 +176,11 @@ export const usePermissions = (options: PermissionOptions = {}) => {
     retry: (failureCount, error) => {
       // Retry only network errors, not auth issues
       if (axios.isAxiosError(error) && error.response?.status === 401) {
-        return false
+        return false;
       }
-      return failureCount < 3
+      return failureCount < 3;
     },
-  })
+  });
 
   return {
     hasPermission: query.data?.hasPermission ?? false,
@@ -191,8 +191,8 @@ export const usePermissions = (options: PermissionOptions = {}) => {
     error: query.error,
     refetch: query.refetch,
     isError: query.isError,
-  }
-}
+  };
+};
 
 /**
  * Convenience hook for checking reviewer role
@@ -213,7 +213,7 @@ export const useIsReviewer = (programId?: string, chainID?: number) => {
     role: "reviewer",
     programId,
     chainID,
-  })
+  });
 
   return {
     isReviewer: result.hasRole,
@@ -221,8 +221,8 @@ export const useIsReviewer = (programId?: string, chainID?: number) => {
     permissions: result.permissions,
     error: result.error,
     refetch: result.refetch,
-  }
-}
+  };
+};
 
 /**
  * Hook to get all programs where the user is a reviewer
@@ -236,7 +236,7 @@ export const useIsReviewer = (programId?: string, chainID?: number) => {
  * ```
  */
 export const useReviewerPrograms = () => {
-  const result = usePermissions({ role: "reviewer" })
+  const result = usePermissions({ role: "reviewer" });
 
   return {
     programs: result.programs,
@@ -244,5 +244,5 @@ export const useReviewerPrograms = () => {
     hasPrograms: result.hasPermission,
     error: result.error,
     refetch: result.refetch,
-  }
-}
+  };
+};

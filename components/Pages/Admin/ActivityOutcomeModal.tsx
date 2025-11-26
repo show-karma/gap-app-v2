@@ -1,26 +1,26 @@
-import { Dialog, Transition } from "@headlessui/react"
-import { XMarkIcon } from "@heroicons/react/24/outline"
-import { zodResolver } from "@hookform/resolvers/zod"
-import Image from "next/image"
-import { Fragment, useEffect, useState } from "react"
-import { useForm } from "react-hook-form"
-import toast from "react-hot-toast"
-import { useAccount } from "wagmi"
-import { z } from "zod"
-import { Button } from "@/components/Utilities/Button"
-import { errorManager } from "@/components/Utilities/errorManager"
-import type { Category, ImpactIndicator, ImpactSegment } from "@/types/impactMeasurement"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
-import { IndicatorsDropdown } from "./IndicatorsDropdown"
+import { Dialog, Transition } from "@headlessui/react";
+import { XMarkIcon } from "@heroicons/react/24/outline";
+import { zodResolver } from "@hookform/resolvers/zod";
+import Image from "next/image";
+import { Fragment, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { z } from "zod";
+import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
+import type { Category, ImpactIndicator, ImpactSegment } from "@/types/impactMeasurement";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { IndicatorsDropdown } from "./IndicatorsDropdown";
 
-const OUTPUT_TYPES = ["output", "outcome"] as const
-type OutputType = (typeof OUTPUT_TYPES)[number]
+const OUTPUT_TYPES = ["output", "outcome"] as const;
+type OutputType = (typeof OUTPUT_TYPES)[number];
 
 const OUTPUT_TYPE_DISPLAY = {
   output: "Activity",
   outcome: "Outcome",
-} as const
+} as const;
 
 // Schema definition for the form data
 const impactSegmentSchema = z.object({
@@ -34,20 +34,20 @@ const impactSegmentSchema = z.object({
     .max(500, "Description must be less than 500 characters"),
   type: z.enum(OUTPUT_TYPES),
   impact_indicators: z.array(z.string()).optional(),
-})
+});
 
-type ImpactSegmentFormData = z.infer<typeof impactSegmentSchema>
+type ImpactSegmentFormData = z.infer<typeof impactSegmentSchema>;
 
 interface ActivityOutcomeModalProps {
-  isOpen: boolean
-  onClose: () => void
-  category: Category
-  impact_indicators: ImpactIndicator[]
-  onSuccess: () => void
-  initialType?: OutputType
-  communityId?: string
-  editingSegment?: ImpactSegment | null
-  isLoadingIndicators?: boolean
+  isOpen: boolean;
+  onClose: () => void;
+  category: Category;
+  impact_indicators: ImpactIndicator[];
+  onSuccess: () => void;
+  initialType?: OutputType;
+  communityId?: string;
+  editingSegment?: ImpactSegment | null;
+  isLoadingIndicators?: boolean;
 }
 
 export const ActivityOutcomeModal = ({
@@ -61,8 +61,8 @@ export const ActivityOutcomeModal = ({
   editingSegment = null,
   isLoadingIndicators = false,
 }: ActivityOutcomeModalProps) => {
-  const [isSaving, setIsSaving] = useState(false)
-  const { address } = useAccount()
+  const [isSaving, setIsSaving] = useState(false);
+  const { address } = useAccount();
 
   const {
     register,
@@ -80,7 +80,7 @@ export const ActivityOutcomeModal = ({
       impact_indicators: editingSegment?.impact_indicators?.map((ind) => ind.id) || [],
     },
     mode: "onChange",
-  })
+  });
 
   useEffect(() => {
     if (isOpen) {
@@ -89,32 +89,32 @@ export const ActivityOutcomeModal = ({
         name: editingSegment ? editingSegment.name : "",
         description: editingSegment ? editingSegment.description : "",
         impact_indicators: editingSegment?.impact_indicators?.map((ind) => ind.id) || [],
-      })
+      });
     }
-  }, [editingSegment, isOpen, initialType, reset])
+  }, [editingSegment, isOpen, initialType, reset]);
 
-  const selectedIndicators = watch("impact_indicators") || []
-  const _selectedType = watch("type")
+  const selectedIndicators = watch("impact_indicators") || [];
+  const _selectedType = watch("type");
 
   const handleClose = () => {
-    reset()
-    onClose()
-  }
+    reset();
+    onClose();
+  };
 
   const handleIndicatorChange = (value: string) => {
-    const current = selectedIndicators
+    const current = selectedIndicators;
     const updated = current.includes(value)
       ? current.filter((id) => id !== value)
-      : [...current, value]
+      : [...current, value];
     setValue("impact_indicators", updated, {
       shouldValidate: true,
       shouldDirty: true,
-    })
-  }
+    });
+  };
 
   const handleAddOutput = async (data: ImpactSegmentFormData) => {
     try {
-      setIsSaving(true)
+      setIsSaving(true);
       const [, error] = await fetchData(
         INDEXER.CATEGORIES.IMPACT_SEGMENTS.CREATE_OR_UPDATE(category.id),
         "POST",
@@ -125,17 +125,17 @@ export const ActivityOutcomeModal = ({
           description: data.description,
           impactIndicators: data.impact_indicators,
         }
-      )
+      );
 
-      if (error) throw error
+      if (error) throw error;
 
-      const action = editingSegment ? "updated" : "created"
-      toast.success(`${OUTPUT_TYPE_DISPLAY[data.type]} ${action} successfully`)
-      reset()
-      onSuccess()
-      handleClose()
+      const action = editingSegment ? "updated" : "created";
+      toast.success(`${OUTPUT_TYPE_DISPLAY[data.type]} ${action} successfully`);
+      reset();
+      onSuccess();
+      handleClose();
     } catch (error) {
-      const action = editingSegment ? "update" : "create"
+      const action = editingSegment ? "update" : "create";
       errorManager(
         `Failed to ${action} impact segment`,
         error,
@@ -146,11 +146,11 @@ export const ActivityOutcomeModal = ({
         {
           error: `Failed to ${action} ${OUTPUT_TYPE_DISPLAY[data.type].toLowerCase()}`,
         }
-      )
+      );
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
-  }
+  };
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -236,7 +236,7 @@ export const ActivityOutcomeModal = ({
                     <div className="text-sm text-gray-600 dark:text-gray-400">Type</div>
                     <div className="grid grid-cols-2 gap-4">
                       {OUTPUT_TYPES.map((type) => {
-                        const isSelected = watch("type") === type
+                        const isSelected = watch("type") === type;
                         return (
                           <label
                             key={type}
@@ -298,7 +298,7 @@ export const ActivityOutcomeModal = ({
                               </div>
                             </div>
                           </label>
-                        )
+                        );
                       })}
                     </div>
                   </div>
@@ -314,7 +314,7 @@ export const ActivityOutcomeModal = ({
                       communityId={communityId}
                       isLoading={isLoadingIndicators}
                       onIndicatorCreated={(_newIndicator) => {
-                        toast.success("Indicator created successfully")
+                        toast.success("Indicator created successfully");
                       }}
                     />
                   </div>
@@ -345,5 +345,5 @@ export const ActivityOutcomeModal = ({
         </div>
       </Dialog>
     </Transition>
-  )
-}
+  );
+};

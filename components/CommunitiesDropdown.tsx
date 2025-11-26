@@ -1,25 +1,25 @@
-"use client"
-import { ChevronUpDownIcon } from "@heroicons/react/24/outline"
-import { CheckIcon } from "@heroicons/react/24/solid"
-import * as Popover from "@radix-ui/react-popover"
-import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk"
+"use client";
+import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
+import { CheckIcon } from "@heroicons/react/24/solid";
+import * as Popover from "@radix-ui/react-popover";
+import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk";
 /* eslint-disable @next/next/no-img-element */
-import { createElement, type ElementType, type FC, useEffect, useRef, useState } from "react"
-import { chainImgDictionary } from "@/utilities/chainImgDictionary"
-import { chainNameDictionary } from "@/utilities/chainNameDictionary"
-import { shortAddress } from "@/utilities/shortAddress"
-import { cn } from "@/utilities/tailwind"
+import { createElement, type ElementType, type FC, useEffect, useRef, useState } from "react";
+import { chainImgDictionary } from "@/utilities/chainImgDictionary";
+import { chainNameDictionary } from "@/utilities/chainNameDictionary";
+import { shortAddress } from "@/utilities/shortAddress";
+import { cn } from "@/utilities/tailwind";
 
 interface CommunitiesDropdownProps {
-  onSelectFunction: (value: string, networkId: number) => void
-  previousValue?: string
-  communities: ICommunityResponse[]
-  triggerClassName?: string
-  RightIcon?: ElementType
-  rightIconClassName?: string
-  LeftIcon?: ElementType
-  leftIconClassName?: string
+  onSelectFunction: (value: string, networkId: number) => void;
+  previousValue?: string;
+  communities: ICommunityResponse[];
+  triggerClassName?: string;
+  RightIcon?: ElementType;
+  rightIconClassName?: string;
+  LeftIcon?: ElementType;
+  leftIconClassName?: string;
 }
 export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
   onSelectFunction,
@@ -31,16 +31,16 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
   rightIconClassName,
   leftIconClassName,
 }) => {
-  const [open, setOpen] = useState(false)
-  const [value, setValue] = useState(previousValue || "")
-  const triggerRef = useRef<HTMLButtonElement>(null)
-  const [triggerWidth, setTriggerWidth] = useState<number | null>(null)
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState(previousValue || "");
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [triggerWidth, setTriggerWidth] = useState<number | null>(null);
 
   useEffect(() => {
     if (triggerRef.current) {
-      setTriggerWidth(triggerRef.current.offsetWidth)
+      setTriggerWidth(triggerRef.current.offsetWidth);
     }
-  }, [])
+  }, []);
 
   const communitiesArray = communities
     .filter((community) => community.details?.data?.name) // Filter out communities without a name
@@ -49,18 +49,18 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
       label: community.details?.data?.name || shortAddress(community.uid),
       networkId: community.chainID,
       logo: community.details?.data?.imageURL,
-    }))
+    }));
 
   // sort communities by name alphabetically
   const sortedCommunities = communitiesArray.sort((a, b) => {
     if (a.label < b.label) {
-      return -1
+      return -1;
     }
     if (a.label > b.label) {
-      return 1
+      return 1;
     }
-    return 0
-  })
+    return 0;
+  });
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
@@ -124,9 +124,9 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
               <CommandItem
                 key={community.value}
                 onSelect={() => {
-                  setValue(community.value)
-                  setOpen(false)
-                  onSelectFunction(community.value, community.networkId)
+                  setValue(community.value);
+                  setOpen(false);
+                  onSelectFunction(community.value, community.networkId);
                 }}
                 className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
               >
@@ -165,5 +165,5 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
         </Command>
       </Popover.Content>
     </Popover.Root>
-  )
-}
+  );
+};

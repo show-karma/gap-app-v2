@@ -1,75 +1,75 @@
-"use client"
-import { ChevronLeftIcon } from "@heroicons/react/20/solid"
-import Link from "next/link"
-import { useParams, useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-import toast from "react-hot-toast"
-import { useAccount } from "wagmi"
-import { Button } from "@/components/Utilities/Button"
-import { errorManager } from "@/components/Utilities/errorManager"
-import { Spinner } from "@/components/Utilities/Spinner"
-import { useAuth } from "@/hooks/useAuth"
-import { useCategories } from "@/hooks/useCategories"
-import { useCommunityDetails } from "@/hooks/useCommunityDetails"
-import { useCommunityGrants } from "@/hooks/useCommunityGrants"
-import { type SimplifiedGrant, useGrants } from "@/hooks/useGrants"
-import { useGrantsTable } from "@/hooks/useGrantsTable"
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin"
-import { useSigner } from "@/utilities/eas-wagmi-utils"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
-import { MESSAGES } from "@/utilities/messages"
-import { defaultMetadata } from "@/utilities/meta"
-import { PAGES } from "@/utilities/pages"
-import { CategoryCreationDialog } from "./CategoryCreationDialog"
-import { GrantsTable } from "./GrantsTable"
-import { ProgramFilter } from "./ProgramFilter"
+"use client";
+import { ChevronLeftIcon } from "@heroicons/react/20/solid";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { useAuth } from "@/hooks/useAuth";
+import { useCategories } from "@/hooks/useCategories";
+import { useCommunityDetails } from "@/hooks/useCommunityDetails";
+import { useCommunityGrants } from "@/hooks/useCommunityGrants";
+import { type SimplifiedGrant, useGrants } from "@/hooks/useGrants";
+import { useGrantsTable } from "@/hooks/useGrantsTable";
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { defaultMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
+import { CategoryCreationDialog } from "./CategoryCreationDialog";
+import { GrantsTable } from "./GrantsTable";
+import { ProgramFilter } from "./ProgramFilter";
 
-export const metadata = defaultMetadata
+export const metadata = defaultMetadata;
 
 export interface CategoriesOptions {
-  id: number
-  name: string
+  id: number;
+  name: string;
 }
 
 export default function EditCategoriesPage() {
-  const router = useRouter()
-  const { address, isConnected } = useAccount()
-  const { authenticated: isAuth } = useAuth()
-  const params = useParams()
-  const communityId = params.communityId as string
-  const [selectedCategories, setSelectedCategories] = useState<Record<string, string[]>>({})
-  const [isSaving, setIsSaving] = useState<boolean>(false)
-  const _signer = useSigner()
+  const router = useRouter();
+  const { address, isConnected } = useAccount();
+  const { authenticated: isAuth } = useAuth();
+  const params = useParams();
+  const communityId = params.communityId as string;
+  const [selectedCategories, setSelectedCategories] = useState<Record<string, string[]>>({});
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const _signer = useSigner();
 
   const {
     data: community,
     isLoading: isLoadingCommunity,
     error: communityError,
-  } = useCommunityDetails(communityId)
+  } = useCommunityDetails(communityId);
 
   // Check if user is admin of this community
   const { isCommunityAdmin: isAdmin, isLoading: loading } = useIsCommunityAdmin(
     community?.uid,
     address
-  )
+  );
 
   useEffect(() => {
     if (
       communityError?.message === "Community not found" ||
       communityError?.message?.includes("422")
     ) {
-      router.push(PAGES.NOT_FOUND)
+      router.push(PAGES.NOT_FOUND);
     }
-  }, [communityError, router.push])
+  }, [communityError, router.push]);
 
   // Fetch grants data
-  const { data, isLoading: isLoadingGrants, refetch: refreshGrants } = useGrants(communityId)
+  const { data, isLoading: isLoadingGrants, refetch: refreshGrants } = useGrants(communityId);
 
   // Fetch all grants for the filter dropdown
   const { data: communityGrants = [] } = useCommunityGrants(
     community?.details?.data?.slug || communityId
-  )
+  );
 
   // Table state management
   const {
@@ -85,41 +85,41 @@ export default function EditCategoriesPage() {
   } = useGrantsTable({
     grants: (data?.grants as SimplifiedGrant[]) || [],
     itemsPerPage: 12,
-  })
+  });
 
-  const { data: categoriesOptions = [], refetch: refreshCategories } = useCategories(communityId)
+  const { data: categoriesOptions = [], refetch: refreshCategories } = useCategories(communityId);
 
   const handleCategoryChange = (uid: string, newCategories: string[]) => {
     setSelectedCategories((prev) => ({
       ...prev,
       [uid]: newCategories,
-    }))
-  }
+    }));
+  };
 
   const saveEdits = async () => {
-    setIsSaving(true)
+    setIsSaving(true);
     try {
-      let hasError = false
+      let hasError = false;
       const promises = Object.entries(selectedCategories).map(([uid, categories]) => {
         return fetchData(INDEXER.PROJECT.CATEGORIES.UPDATE(uid), "PUT", {
           categories,
           communityUID: community?.uid,
         })
           .then(() => {
-            refreshGrants()
+            refreshGrants();
           })
           .catch((error) => {
-            console.error(error)
-            hasError = true
-          })
-      })
-      await Promise.all(promises)
+            console.error(error);
+            hasError = true;
+          });
+      });
+      await Promise.all(promises);
 
       if (hasError) {
-        throw new Error("Error updating categories")
+        throw new Error("Error updating categories");
       }
 
-      toast.success("Categories updated successfully.")
+      toast.success("Categories updated successfully.");
     } catch (error: any) {
       errorManager(
         `Error updating categories of ${communityId}`,
@@ -130,18 +130,18 @@ export default function EditCategoriesPage() {
           selectedCategories,
         },
         { error: MESSAGES.CATEGORY.UPDATE.ERROR }
-      )
+      );
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
-  }
+  };
 
   if (loading || isLoadingGrants) {
     return (
       <div className="flex w-full items-center justify-center">
         <Spinner />
       </div>
-    )
+    );
   }
 
   if (!isAdmin) {
@@ -149,7 +149,7 @@ export default function EditCategoriesPage() {
       <div className="flex w-full items-center justify-center">
         <p>{MESSAGES.ADMIN.NOT_AUTHORIZED(community?.uid || "")}</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -172,7 +172,7 @@ export default function EditCategoriesPage() {
             />
             <CategoryCreationDialog
               refreshCategories={async () => {
-                refreshCategories()
+                refreshCategories();
               }}
             />
           </div>
@@ -193,5 +193,5 @@ export default function EditCategoriesPage() {
         />
       </div>
     </div>
-  )
+  );
 }

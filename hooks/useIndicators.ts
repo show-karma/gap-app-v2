@@ -1,13 +1,13 @@
-import { type QueryKey, type QueryOptions, useQuery } from "@tanstack/react-query"
+import { type QueryKey, type QueryOptions, useQuery } from "@tanstack/react-query";
 import {
   getIndicatorsByCommunity,
   type Indicator,
-} from "@/utilities/queries/getIndicatorsByCommunity"
+} from "@/utilities/queries/getIndicatorsByCommunity";
 
 interface UseIndicatorsProps {
-  communityId: string
-  getBy?: "community" | "category"
-  queryOptions?: QueryOptions<Indicator[], Error, Indicator[], QueryKey>
+  communityId: string;
+  getBy?: "community" | "category";
+  queryOptions?: QueryOptions<Indicator[], Error, Indicator[], QueryKey>;
 }
 
 export const useIndicators = ({
@@ -20,5 +20,5 @@ export const useIndicators = ({
     queryFn: () => getIndicatorsByCommunity(communityId),
     enabled: !!communityId,
     ...queryOptions,
-  })
-}
+  });
+};

@@ -1,8 +1,8 @@
 interface NetworkSwitchItemProps {
-  index: number
-  chainName: string
-  projectCount: number
-  needsSwitch: boolean
+  index: number;
+  chainName: string;
+  projectCount: number;
+  needsSwitch: boolean;
 }
 
 export function NetworkSwitchItem({
@@ -39,5 +39,5 @@ export function NetworkSwitchItem({
         {projectCount} {projectCount === 1 ? "project" : "projects"}
       </span>
     </li>
-  )
+  );
 }

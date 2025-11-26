@@ -1,8 +1,8 @@
-import type React from "react"
-import { cn } from "@/utilities/tailwind"
+import type React from "react";
+import { cn } from "@/utilities/tailwind";
 
 interface LogOutIconProps {
-  className?: string
+  className?: string;
 }
 
 export const LogOutIcon: React.FC<LogOutIconProps> = ({ className }) => {
@@ -23,5 +23,5 @@ export const LogOutIcon: React.FC<LogOutIconProps> = ({ className }) => {
       <polyline points="16 17 21 12 16 7" />
       <line x1="21" y1="12" x2="9" y2="12" />
     </svg>
-  )
-}
+  );
+};

@@ -1,17 +1,17 @@
-"use client"
-import type React from "react"
+"use client";
+import type React from "react";
 
-const labelStyle = "text-sm font-bold text-black dark:text-zinc-100"
+const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 
 interface FundingProgramFieldsProps {
-  pitchDeckLink: string
-  demoVideoLink: string
-  onPitchDeckChange: (value: string) => void
-  onDemoVideoChange: (value: string) => void
+  pitchDeckLink: string;
+  demoVideoLink: string;
+  onPitchDeckChange: (value: string) => void;
+  onDemoVideoChange: (value: string) => void;
   errors?: {
-    pitchDeckLink?: boolean
-    demoVideoLink?: boolean
-  }
+    pitchDeckLink?: boolean;
+    demoVideoLink?: boolean;
+  };
 }
 
 export const FundingProgramFields: React.FC<FundingProgramFieldsProps> = ({
@@ -23,12 +23,12 @@ export const FundingProgramFields: React.FC<FundingProgramFieldsProps> = ({
 }) => {
   const getInputStyle = (hasError: boolean) => {
     const baseStyle =
-      "w-full px-3 py-2 bg-white dark:bg-zinc-900 rounded-md focus:outline-none focus:ring-2 dark:text-zinc-100"
+      "w-full px-3 py-2 bg-white dark:bg-zinc-900 rounded-md focus:outline-none focus:ring-2 dark:text-zinc-100";
     const borderStyle = hasError
       ? "border-2 border-red-500 focus:ring-red-500"
-      : "border border-gray-300 dark:border-zinc-700 focus:ring-blue-500"
-    return `${baseStyle} ${borderStyle}`
-  }
+      : "border border-gray-300 dark:border-zinc-700 focus:ring-blue-500";
+    return `${baseStyle} ${borderStyle}`;
+  };
   return (
     <>
       <div className="flex w-full flex-col gap-2">
@@ -40,7 +40,7 @@ export const FundingProgramFields: React.FC<FundingProgramFieldsProps> = ({
           type="url"
           value={pitchDeckLink}
           onChange={(e) => {
-            onPitchDeckChange(e.target.value)
+            onPitchDeckChange(e.target.value);
           }}
           placeholder="https://example.com/pitch-deck"
           className={getInputStyle(!!errors.pitchDeckLink)}
@@ -60,7 +60,7 @@ export const FundingProgramFields: React.FC<FundingProgramFieldsProps> = ({
           type="url"
           value={demoVideoLink}
           onChange={(e) => {
-            onDemoVideoChange(e.target.value)
+            onDemoVideoChange(e.target.value);
           }}
           placeholder="https://example.com/demo-video"
           className={getInputStyle(!!errors.demoVideoLink)}
@@ -71,5 +71,5 @@ export const FundingProgramFields: React.FC<FundingProgramFieldsProps> = ({
         )}
       </div>
     </>
-  )
-}
+  );
+};

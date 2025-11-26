@@ -1,27 +1,27 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { CheckIcon } from "@heroicons/react/24/solid"
-import * as Popover from "@radix-ui/react-popover"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk"
-import pluralize from "pluralize"
-import { type FC, useEffect, useState } from "react"
-import { ChevronDown } from "@/components/Icons/ChevronDown"
-import { cn } from "@/utilities/tailwind"
+import { CheckIcon } from "@heroicons/react/24/solid";
+import * as Popover from "@radix-ui/react-popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk";
+import pluralize from "pluralize";
+import { type FC, useEffect, useState } from "react";
+import { ChevronDown } from "@/components/Icons/ChevronDown";
+import { cn } from "@/utilities/tailwind";
 
 interface DropdownItem {
-  value: string
-  id: string
-  timestamp?: string
+  value: string;
+  id: string;
+  timestamp?: string;
 }
 interface DropdownProps {
-  onSelectFunction: (value: string) => void
-  selected: string | undefined
-  list: DropdownItem[]
-  type: string
-  prefixUnselected?: string
-  buttonClassname?: string
-  shouldSort?: boolean
-  canSearch?: boolean
+  onSelectFunction: (value: string) => void;
+  selected: string | undefined;
+  list: DropdownItem[];
+  type: string;
+  prefixUnselected?: string;
+  buttonClassname?: string;
+  shouldSort?: boolean;
+  canSearch?: boolean;
 }
 export const Dropdown: FC<DropdownProps> = ({
   onSelectFunction,
@@ -33,26 +33,26 @@ export const Dropdown: FC<DropdownProps> = ({
   shouldSort = true,
   canSearch = true,
 }) => {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false);
 
-  const [orderedList, setOrderedList] = useState<DropdownItem[]>([])
+  const [orderedList, setOrderedList] = useState<DropdownItem[]>([]);
 
   useEffect(() => {
     const sortedList = shouldSort
       ? list.sort((a, b) => {
-          const aTimestamp = a.timestamp ? new Date(a.timestamp).getTime() : 0
-          const bTimestamp = b.timestamp ? new Date(b.timestamp).getTime() : 0
+          const aTimestamp = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+          const bTimestamp = b.timestamp ? new Date(b.timestamp).getTime() : 0;
           if (aTimestamp > bTimestamp) {
-            return -1
+            return -1;
           }
           if (aTimestamp < bTimestamp) {
-            return 1
+            return 1;
           }
-          return 0
+          return 0;
         })
-      : list
-    setOrderedList(sortedList)
-  }, [list, shouldSort])
+      : list;
+    setOrderedList(sortedList);
+  }, [list, shouldSort]);
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
@@ -95,8 +95,8 @@ export const Dropdown: FC<DropdownProps> = ({
                   <button
                     type="button"
                     onClick={() => {
-                      onSelectFunction(item.id)
-                      setOpen(false)
+                      onSelectFunction(item.id);
+                      setOpen(false);
                     }}
                     className="w-full my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 bg-transparent border-none text-left"
                   >
@@ -119,5 +119,5 @@ export const Dropdown: FC<DropdownProps> = ({
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>
-  )
-}
+  );
+};

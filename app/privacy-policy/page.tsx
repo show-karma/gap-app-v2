@@ -1,5 +1,5 @@
-import { PROJECT_NAME } from "@/constants/brand"
-import { PAGES } from "@/utilities/pages"
+import { PROJECT_NAME } from "@/constants/brand";
+import { PAGES } from "@/utilities/pages";
 
 const styles = {
   h1: "text-2xl font-bold text-start text-black dark:text-white",
@@ -10,7 +10,7 @@ const styles = {
   block: "flex flex-col items-start justify-start mb-3",
   ul: "list-inside",
   li: "text-base text-start mb-2 text-zinc-700 dark:text-zinc-300",
-}
+};
 
 export default function PrivacyPolicy() {
   return (
@@ -147,5 +147,5 @@ export default function PrivacyPolicy() {
         </div>
       </div>
     </div>
-  )
+  );
 }

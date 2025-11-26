@@ -1,27 +1,27 @@
 /* eslint-disable @next/next/no-img-element */
-"use client"
+"use client";
 
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import Link, { useLinkStatus } from "next/link"
-import pluralize from "pluralize"
-import formatCurrency from "@/utilities/formatCurrency"
-import { formatDate } from "@/utilities/formatDate"
-import { rewriteHeadingsToLevel } from "@/utilities/markdown"
-import { PAGES } from "@/utilities/pages"
-import { cn } from "@/utilities/tailwind"
-import { GrantPercentage } from "./Pages/Project/Grants/components/GrantPercentage"
-import { TrackTags } from "./TrackTags"
-import { MarkdownPreview } from "./Utilities/MarkdownPreview"
-import { ProfilePicture } from "./Utilities/ProfilePicture"
-import { Spinner } from "./Utilities/Spinner"
+import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import Link, { useLinkStatus } from "next/link";
+import pluralize from "pluralize";
+import formatCurrency from "@/utilities/formatCurrency";
+import { formatDate } from "@/utilities/formatDate";
+import { rewriteHeadingsToLevel } from "@/utilities/markdown";
+import { PAGES } from "@/utilities/pages";
+import { cn } from "@/utilities/tailwind";
+import { GrantPercentage } from "./Pages/Project/Grants/components/GrantPercentage";
+import { TrackTags } from "./TrackTags";
+import { MarkdownPreview } from "./Utilities/MarkdownPreview";
+import { ProfilePicture } from "./Utilities/ProfilePicture";
+import { Spinner } from "./Utilities/Spinner";
 
 interface GrantCardProps {
-  grant: IGrantResponse
-  index: number
-  hideStats?: boolean
-  hideCategories?: boolean
-  actionSlot?: React.ReactNode
-  cardClassName?: string
+  grant: IGrantResponse;
+  index: number;
+  hideStats?: boolean;
+  hideCategories?: boolean;
+  actionSlot?: React.ReactNode;
+  cardClassName?: string;
 }
 
 export const pickColor = (index: number) => {
@@ -36,18 +36,18 @@ export const pickColor = (index: number) => {
     "#EE46BC",
     "#EEAAFD",
     "#67E3F9",
-  ]
-  return cardColors[index % cardColors.length]
-}
+  ];
+  return cardColors[index % cardColors.length];
+};
 
 const updatesLength = (milestones: IGrantResponse["milestones"], updatesLength: number) =>
-  milestones.filter((milestone) => milestone.completed).length + updatesLength
+  milestones.filter((milestone) => milestone.completed).length + updatesLength;
 
 // Loading indicator component that uses useLinkStatus
 const LoadingIndicator = () => {
-  const { pending } = useLinkStatus()
+  const { pending } = useLinkStatus();
 
-  if (!pending) return null
+  if (!pending) return null;
 
   return (
     <div className="absolute inset-0 z-10 flex items-center justify-center bg-gradient-to-br from-blue-50/90 to-purple-50/90 dark:from-blue-950/90 dark:to-purple-950/90 rounded-2xl backdrop-blur-sm">
@@ -55,8 +55,8 @@ const LoadingIndicator = () => {
         <Spinner />
       </div>
     </div>
-  )
-}
+  );
+};
 
 // Card content component that uses useLinkStatus for styling
 const GrantCardContent = ({
@@ -66,19 +66,19 @@ const GrantCardContent = ({
   hideCategories,
   actionSlot,
 }: GrantCardProps) => {
-  const { pending } = useLinkStatus()
+  const { pending } = useLinkStatus();
 
-  const selectedTrackIds = grant.details?.data?.selectedTrackIds as string[] | undefined
-  const communityId = grant.data?.communityUID
-  const programId = grant.details?.data?.programId
+  const selectedTrackIds = grant.details?.data?.selectedTrackIds as string[] | undefined;
+  const communityId = grant.data?.communityUID;
+  const programId = grant.details?.data?.programId;
 
   // Extract the base programId if it includes a chainId suffix (format: programId_chainId)
-  const _baseProgramId = programId?.includes("_") ? programId.split("_")[0] : programId
+  const _baseProgramId = programId?.includes("_") ? programId.split("_")[0] : programId;
 
   // Check if we have valid track IDs to display
-  const hasTrackIds = selectedTrackIds && selectedTrackIds.length > 0
+  const hasTrackIds = selectedTrackIds && selectedTrackIds.length > 0;
 
-  const demoteAllHeadings = rewriteHeadingsToLevel(4)
+  const demoteAllHeadings = rewriteHeadingsToLevel(4);
 
   return (
     <div
@@ -143,7 +143,7 @@ const GrantCardContent = ({
                 source={grant.project?.details?.data?.description?.slice(0, 100)}
                 allowElement={(element) => {
                   // Prevent rendering links to avoid nested <a> tags
-                  return element.tagName !== "a"
+                  return element.tagName !== "a";
                 }}
                 rehypeRewrite={(node) => demoteAllHeadings(node)}
               />
@@ -153,10 +153,10 @@ const GrantCardContent = ({
       </div>
 
       {(() => {
-        const showStats = !hideStats
-        const hasCategories = (grant.categories?.length || 0) > 0
-        const showCategories = !hideCategories && hasCategories
-        if (!showStats && !showCategories) return null
+        const showStats = !hideStats;
+        const hasCategories = (grant.categories?.length || 0) > 0;
+        const showCategories = !hideCategories && hasCategories;
+        if (!showStats && !showCategories) return null;
         return (
           <div className="w-full flex flex-col gap-2 my-2">
             {showStats && (
@@ -199,11 +199,11 @@ const GrantCardContent = ({
               </div>
             )}
           </div>
-        )
+        );
       })()}
     </div>
-  )
-}
+  );
+};
 
 export const GrantCard = ({
   grant,
@@ -213,7 +213,7 @@ export const GrantCard = ({
   actionSlot,
   cardClassName,
 }: GrantCardProps) => {
-  const href = PAGES.PROJECT.OVERVIEW(grant.project?.details?.data?.slug || grant.refUID || "")
+  const href = PAGES.PROJECT.OVERVIEW(grant.project?.details?.data?.slug || grant.refUID || "");
 
   return (
     <Link
@@ -232,5 +232,5 @@ export const GrantCard = ({
         actionSlot={actionSlot}
       />
     </Link>
-  )
-}
+  );
+};

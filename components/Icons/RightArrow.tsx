@@ -5,4 +5,4 @@ export const RightArrowIcon = () => (
       fill="currentColor"
     />
   </svg>
-)
+);

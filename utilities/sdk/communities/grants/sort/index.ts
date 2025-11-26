@@ -1,3 +1,3 @@
-export * from "./sortGrantByCompletePercentage"
-export * from "./sortGrantByMilestones"
-export * from "./sortGrantByMostRecent"
+export * from "./sortGrantByCompletePercentage";
+export * from "./sortGrantByMilestones";
+export * from "./sortGrantByMostRecent";

@@ -1,34 +1,34 @@
-import { Menu, Transition } from "@headlessui/react"
+import { Menu, Transition } from "@headlessui/react";
 import {
   ChevronDownIcon,
   EllipsisVerticalIcon,
   PlusIcon,
   TrashIcon,
-} from "@heroicons/react/24/outline"
-import { PencilSquareIcon } from "@heroicons/react/24/solid"
-import Image from "next/image"
-import pluralize from "pluralize"
-import { Fragment, useEffect, useMemo, useRef, useState } from "react"
-import toast from "react-hot-toast"
-import { useAccount } from "wagmi"
-import { DeleteDialog } from "@/components/DeleteDialog"
-import { pickColor } from "@/components/GrantCard"
-import { Button } from "@/components/Utilities/Button"
-import { errorManager } from "@/components/Utilities/errorManager"
-import { useGroupedIndicators } from "@/hooks/useGroupedIndicators"
-import type { Category, ImpactSegment } from "@/types/impactMeasurement"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
-import { MESSAGES } from "@/utilities/messages"
-import { cn } from "@/utilities/tailwind"
-import { ActivityOutcomeModal } from "./ActivityOutcomeModal"
+} from "@heroicons/react/24/outline";
+import { PencilSquareIcon } from "@heroicons/react/24/solid";
+import Image from "next/image";
+import pluralize from "pluralize";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { DeleteDialog } from "@/components/DeleteDialog";
+import { pickColor } from "@/components/GrantCard";
+import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { useGroupedIndicators } from "@/hooks/useGroupedIndicators";
+import type { Category, ImpactSegment } from "@/types/impactMeasurement";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { cn } from "@/utilities/tailwind";
+import { ActivityOutcomeModal } from "./ActivityOutcomeModal";
 
 interface CategoryViewProps {
-  selectedCategory: Category
-  viewType: "all" | "output" | "outcome"
-  setViewType: (value: "all" | "output" | "outcome") => void
-  onRefreshCategory?: () => void
-  communityId: string
+  selectedCategory: Category;
+  viewType: "all" | "output" | "outcome";
+  setViewType: (value: "all" | "output" | "outcome") => void;
+  onRefreshCategory?: () => void;
+  communityId: string;
 }
 
 // Custom Dropdown Menu Component
@@ -37,28 +37,28 @@ const DropdownMenu = ({
   onChange,
   options,
 }: {
-  value: string
-  onChange: (value: string) => void
-  options: { value: string; label: string }[]
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
 }) => {
-  const [isOpen, setIsOpen] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
+        setIsOpen(false);
       }
-    }
+    };
 
-    document.addEventListener("mousedown", handleClickOutside)
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [])
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
-  const selectedOption = options.find((option) => option.value === value)
+  const selectedOption = options.find((option) => option.value === value);
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -80,8 +80,8 @@ const DropdownMenu = ({
               <button
                 key={option.value}
                 onClick={() => {
-                  onChange(option.value)
-                  setIsOpen(false)
+                  onChange(option.value);
+                  setIsOpen(false);
                 }}
                 className={`block w-full text-left px-4 py-2 text-sm ${
                   value === option.value
@@ -96,8 +96,8 @@ const DropdownMenu = ({
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
 export const CategoryView = ({
   selectedCategory,
@@ -106,91 +106,91 @@ export const CategoryView = ({
   onRefreshCategory,
   communityId,
 }: CategoryViewProps) => {
-  const { address } = useAccount()
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [initialModalType, setInitialModalType] = useState<"output" | "outcome">("output")
-  const [editingSegment, setEditingSegment] = useState<ImpactSegment | null>(null)
-  const [isDeletingSegment, setIsDeletingSegment] = useState<string | null>(null)
+  const { address } = useAccount();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [initialModalType, setInitialModalType] = useState<"output" | "outcome">("output");
+  const [editingSegment, setEditingSegment] = useState<ImpactSegment | null>(null);
+  const [isDeletingSegment, setIsDeletingSegment] = useState<string | null>(null);
 
   const {
     data: groupedIndicators = { communityAdminCreated: [], projectOwnerCreated: [] },
     isLoading: isLoadingIndicators,
   } = useGroupedIndicators({
     communityId: communityId,
-  })
+  });
 
   const impact_indicators = useMemo(
     () => [...groupedIndicators.communityAdminCreated, ...groupedIndicators.projectOwnerCreated],
     [groupedIndicators.communityAdminCreated, groupedIndicators.projectOwnerCreated]
-  )
+  );
 
   // Count activities and outcomes for a category
   const getCategoryStats = (category: Category) => {
     const outputs =
-      category.impact_segments?.filter((segment) => segment.type === "output")?.length || 0
+      category.impact_segments?.filter((segment) => segment.type === "output")?.length || 0;
     const outcomes =
-      category.impact_segments?.filter((segment) => segment.type === "outcome")?.length || 0
-    return { outputs, outcomes }
-  }
+      category.impact_segments?.filter((segment) => segment.type === "outcome")?.length || 0;
+    return { outputs, outcomes };
+  };
 
   // Filter segments based on view type
   const getFilteredSegments = () => {
-    if (!selectedCategory) return []
+    if (!selectedCategory) return [];
 
     return (
       selectedCategory.impact_segments?.filter((segment) => {
-        if (viewType === "all") return true
-        return segment.type === viewType
+        if (viewType === "all") return true;
+        return segment.type === viewType;
       }) || []
-    )
-  }
+    );
+  };
 
   const hasSegments =
-    selectedCategory?.impact_segments && selectedCategory.impact_segments.length > 0
-  const filteredSegments = getFilteredSegments()
-  const hasFilteredSegments = filteredSegments.length > 0
+    selectedCategory?.impact_segments && selectedCategory.impact_segments.length > 0;
+  const filteredSegments = getFilteredSegments();
+  const hasFilteredSegments = filteredSegments.length > 0;
 
   // Options for the dropdown
   const filterOptions = [
     { value: "all", label: "All" },
     { value: "output", label: "Activities" },
     { value: "outcome", label: "Outcomes" },
-  ]
+  ];
 
   // Open modal with specific initial type
   const openModalWithType = (type: "output" | "outcome") => {
-    setInitialModalType(type)
-    setIsModalOpen(true)
-  }
+    setInitialModalType(type);
+    setIsModalOpen(true);
+  };
 
   // Handle button click based on context
   const handleCreateButtonClick = () => {
     if (viewType === "output") {
-      openModalWithType("output")
+      openModalWithType("output");
     } else if (viewType === "outcome") {
-      openModalWithType("outcome")
+      openModalWithType("outcome");
     } else {
-      setIsModalOpen(true)
+      setIsModalOpen(true);
     }
-  }
+  };
 
   const handleDeleteSegment = async (segmentId: string) => {
     try {
-      setIsDeletingSegment(segmentId)
+      setIsDeletingSegment(segmentId);
       const [, error] = await fetchData(
         INDEXER.CATEGORIES.IMPACT_SEGMENTS.DELETE(selectedCategory.id),
         "DELETE",
         {
           segmentId,
         }
-      )
+      );
 
-      if (error) throw error
+      if (error) throw error;
 
-      toast.success("Activity/Outcome deleted successfully")
+      toast.success("Activity/Outcome deleted successfully");
 
       if (onRefreshCategory) {
-        onRefreshCategory()
+        onRefreshCategory();
       }
     } catch (error) {
       errorManager(
@@ -202,11 +202,11 @@ export const CategoryView = ({
           categoryId: selectedCategory.id,
         },
         { error: MESSAGES.ACTIVITY_OUTCOME.DELETE.ERROR }
-      )
+      );
     } finally {
-      setIsDeletingSegment(null)
+      setIsDeletingSegment(null);
     }
-  }
+  };
 
   return (
     <div className="w-full flex flex-col gap-0 flex-1">
@@ -343,8 +343,8 @@ export const CategoryView = ({
                                 active ? "bg-gray-100 dark:bg-zinc-700" : ""
                               } w-full px-4 py-2 text-left flex items-center text-sm`}
                               onClick={() => {
-                                setEditingSegment(segment)
-                                setIsModalOpen(true)
+                                setEditingSegment(segment);
+                                setIsModalOpen(true);
                               }}
                             >
                               <PencilSquareIcon className="h-4 w-4 mr-2" />
@@ -429,8 +429,8 @@ export const CategoryView = ({
       <ActivityOutcomeModal
         isOpen={isModalOpen}
         onClose={() => {
-          setIsModalOpen(false)
-          setEditingSegment(null)
+          setIsModalOpen(false);
+          setEditingSegment(null);
         }}
         category={selectedCategory}
         impact_indicators={impact_indicators}
@@ -438,13 +438,13 @@ export const CategoryView = ({
         isLoadingIndicators={isLoadingIndicators}
         onSuccess={() => {
           if (onRefreshCategory) {
-            onRefreshCategory()
+            onRefreshCategory();
           }
-          setEditingSegment(null)
+          setEditingSegment(null);
         }}
         initialType={initialModalType}
         editingSegment={editingSegment}
       />
     </div>
-  )
-}
+  );
+};

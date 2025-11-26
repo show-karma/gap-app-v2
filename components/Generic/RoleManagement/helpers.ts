@@ -1,4 +1,4 @@
-import type { ReviewerRole, RoleMember } from "./types"
+import type { ReviewerRole, RoleMember } from "./types";
 
 /**
  * Helper utilities for role management
@@ -10,7 +10,7 @@ import type { ReviewerRole, RoleMember } from "./types"
  * @returns The role if present, undefined otherwise
  */
 export function getMemberRole(member: RoleMember | undefined | null): ReviewerRole | undefined {
-  return member?.role
+  return member?.role;
 }
 
 /**
@@ -19,9 +19,9 @@ export function getMemberRole(member: RoleMember | undefined | null): ReviewerRo
  * @returns The display label for the role
  */
 export function getRoleLabel(role: ReviewerRole | undefined): string {
-  if (!role) return ""
+  if (!role) return "";
 
-  return role === "program" ? "Program Reviewer" : "Milestone Reviewer"
+  return role === "program" ? "Program Reviewer" : "Milestone Reviewer";
 }
 
 /**
@@ -30,7 +30,7 @@ export function getRoleLabel(role: ReviewerRole | undefined): string {
  * @returns The short display label for the role
  */
 export function getRoleShortLabel(role: ReviewerRole | undefined): string {
-  if (!role) return ""
+  if (!role) return "";
 
-  return role === "program" ? "Program" : "Milestone"
+  return role === "program" ? "Program" : "Milestone";
 }

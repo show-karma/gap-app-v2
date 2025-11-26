@@ -1,20 +1,20 @@
-"use client"
-import { Menu, Transition } from "@headlessui/react"
-import { CheckCircleIcon, EllipsisVerticalIcon, TrashIcon } from "@heroicons/react/24/outline"
-import { Fragment } from "react"
-import { DeleteDialog } from "@/components/DeleteDialog"
-import { Button } from "@/components/Utilities/Button"
-import { useMilestone } from "@/hooks/useMilestone"
-import type { UnifiedMilestone } from "@/types/roadmap"
-import { cn } from "@/utilities/tailwind"
+"use client";
+import { Menu, Transition } from "@headlessui/react";
+import { CheckCircleIcon, EllipsisVerticalIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { Fragment } from "react";
+import { DeleteDialog } from "@/components/DeleteDialog";
+import { Button } from "@/components/Utilities/Button";
+import { useMilestone } from "@/hooks/useMilestone";
+import type { UnifiedMilestone } from "@/types/roadmap";
+import { cn } from "@/utilities/tailwind";
 
 // Common button styling
-const buttonClassName = `group border-none ring-none font-normal bg-transparent dark:bg-transparent text-gray-900 dark:text-zinc-100 hover:bg-white dark:hover:bg-zinc-800 dark:hover:opacity-75 hover:opacity-75 flex w-full items-start justify-start rounded-md px-2 py-2 text-sm flex-row gap-2`
+const buttonClassName = `group border-none ring-none font-normal bg-transparent dark:bg-transparent text-gray-900 dark:text-zinc-100 hover:bg-white dark:hover:bg-zinc-800 dark:hover:opacity-75 hover:opacity-75 flex w-full items-start justify-start rounded-md px-2 py-2 text-sm flex-row gap-2`;
 
 interface GrantMilestoneOptionsMenuProps {
-  milestone: UnifiedMilestone
-  completeFn: (completeState: boolean) => void
-  alreadyCompleted: boolean
+  milestone: UnifiedMilestone;
+  completeFn: (completeState: boolean) => void;
+  alreadyCompleted: boolean;
 }
 
 export const GrantMilestoneOptionsMenu = ({
@@ -22,12 +22,12 @@ export const GrantMilestoneOptionsMenu = ({
   completeFn,
   alreadyCompleted,
 }: GrantMilestoneOptionsMenuProps) => {
-  const { isDeleting, multiGrantDelete } = useMilestone()
+  const { isDeleting, multiGrantDelete } = useMilestone();
 
   // Wrap the multiGrantDelete function to ensure it returns void
   const handleDelete = async () => {
-    await multiGrantDelete(milestone)
-  }
+    await multiGrantDelete(milestone);
+  };
 
   return (
     <Menu as="div" className="relative inline-block text-left">
@@ -83,5 +83,5 @@ export const GrantMilestoneOptionsMenu = ({
         </Menu.Items>
       </Transition>
     </Menu>
-  )
-}
+  );
+};

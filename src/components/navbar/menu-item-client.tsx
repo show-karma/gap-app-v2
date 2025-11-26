@@ -1,28 +1,28 @@
-"use client"
+"use client";
 
-import { ArrowUpRight, type LucideIcon } from "lucide-react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { ExternalLink } from "@/components/Utilities/ExternalLink"
-import { cn } from "@/utilities/tailwind"
+import { ArrowUpRight, type LucideIcon } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { cn } from "@/utilities/tailwind";
 
 const menuStyles = {
   itemIcon: "text-muted-foreground w-4 h-4",
   itemText: "text-foreground text-sm font-medium",
   itemDescription: "text-muted-foreground text-sm font-normal",
-}
+};
 
 interface MenuItemClientProps {
-  href: string
-  icon: LucideIcon
-  title: string
-  description?: string
-  external?: boolean
-  showArrow?: boolean
-  onClick?: () => void
-  variant?: "desktop" | "mobile"
-  openModal?: boolean
-  anchor?: string
+  href: string;
+  icon: LucideIcon;
+  title: string;
+  description?: string;
+  external?: boolean;
+  showArrow?: boolean;
+  onClick?: () => void;
+  variant?: "desktop" | "mobile";
+  openModal?: boolean;
+  anchor?: string;
 }
 
 export function MenuItemClient({
@@ -37,7 +37,7 @@ export function MenuItemClient({
   openModal,
   anchor,
 }: MenuItemClientProps) {
-  const router = useRouter()
+  const router = useRouter();
 
   const content = (
     <>
@@ -48,59 +48,59 @@ export function MenuItemClient({
       </div>
       {description && <p className={menuStyles.itemDescription}>{description}</p>}
     </>
-  )
+  );
 
   const handleClick = (e: React.MouseEvent) => {
     if (onClick) {
-      onClick()
+      onClick();
     }
 
     if (openModal) {
-      e.preventDefault()
-      const modalButton = document.getElementById("new-project-button")
+      e.preventDefault();
+      const modalButton = document.getElementById("new-project-button");
       if (modalButton) {
-        modalButton.click()
+        modalButton.click();
       } else {
         // If button doesn't exist, navigate to MY_PROJECTS where it should exist
-        router.push(href)
+        router.push(href);
         // Try to click the button after navigation
         setTimeout(() => {
-          const button = document.getElementById("new-project-button")
+          const button = document.getElementById("new-project-button");
           if (button) {
-            button.click()
+            button.click();
           }
-        }, 500)
+        }, 500);
       }
-      return
+      return;
     }
 
     if (anchor) {
-      e.preventDefault()
+      e.preventDefault();
 
       // Check if we're already on the target page
-      const currentPath = window.location.pathname
+      const currentPath = window.location.pathname;
       if (currentPath === href) {
         // Already on the page, just scroll
         setTimeout(() => {
-          const element = document.getElementById(anchor)
+          const element = document.getElementById(anchor);
           if (element) {
-            element.scrollIntoView({ behavior: "smooth", block: "start" })
+            element.scrollIntoView({ behavior: "smooth", block: "start" });
           }
-        }, 50)
+        }, 50);
       } else {
         // Navigate first, then scroll
-        router.push(`${href}#${anchor}`)
+        router.push(`${href}#${anchor}`);
         // Wait for navigation and DOM update
         setTimeout(() => {
-          const element = document.getElementById(anchor)
+          const element = document.getElementById(anchor);
           if (element) {
-            element.scrollIntoView({ behavior: "smooth", block: "start" })
+            element.scrollIntoView({ behavior: "smooth", block: "start" });
           }
-        }, 300)
+        }, 300);
       }
-      return
+      return;
     }
-  }
+  };
 
   // If openModal is true, render as button instead of Link to prevent navigation
   if (openModal) {
@@ -113,7 +113,7 @@ export function MenuItemClient({
         >
           {content}
         </button>
-      )
+      );
     }
 
     return (
@@ -124,7 +124,7 @@ export function MenuItemClient({
       >
         {content}
       </button>
-    )
+    );
   }
 
   if (variant === "mobile") {
@@ -137,7 +137,7 @@ export function MenuItemClient({
         >
           {content}
         </ExternalLink>
-      )
+      );
     }
     return (
       <Link
@@ -147,7 +147,7 @@ export function MenuItemClient({
       >
         {content}
       </Link>
-    )
+    );
   }
 
   if (external) {
@@ -161,7 +161,7 @@ export function MenuItemClient({
           {content}
         </div>
       </ExternalLink>
-    )
+    );
   }
 
   return (
@@ -170,5 +170,5 @@ export function MenuItemClient({
         {content}
       </div>
     </Link>
-  )
+  );
 }

@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import type { FC } from "react"
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview"
-import type { IApplicationVersion } from "@/types/funding-platform"
-import { formatDate } from "@/utilities/formatDate"
-import { cn } from "@/utilities/tailwind"
+import type { FC } from "react";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import type { IApplicationVersion } from "@/types/funding-platform";
+import { formatDate } from "@/utilities/formatDate";
+import { cn } from "@/utilities/tailwind";
 
 interface ApplicationVersionViewerProps {
-  version: IApplicationVersion
-  className?: string
+  version: IApplicationVersion;
+  className?: string;
 }
 
 // Function to render field value
@@ -17,12 +17,12 @@ const renderFieldValue = (
   className?: string
 ): React.ReactElement => {
   if (value === null || value === undefined || value === "") {
-    return <span className={cn("text-gray-400 italic", className)}>Empty</span>
+    return <span className={cn("text-gray-400 italic", className)}>Empty</span>;
   }
 
   // Check if the value looks like JSON
   try {
-    const parsed = JSON.parse(value)
+    const parsed = JSON.parse(value);
     if (typeof parsed === "object") {
       // Check if it's an array of milestones
       if (
@@ -63,7 +63,7 @@ const renderFieldValue = (
               </div>
             ))}
           </div>
-        )
+        );
       }
       // For other arrays or objects, display as JSON
       return (
@@ -75,7 +75,7 @@ const renderFieldValue = (
         >
           {JSON.stringify(parsed, null, 2)}
         </pre>
-      )
+      );
     }
   } catch {
     // Not JSON, continue with regular rendering
@@ -98,24 +98,24 @@ const renderFieldValue = (
           }}
         />
       </div>
-    )
+    );
   }
 
-  return <span className={className}>{value}</span>
-}
+  return <span className={className}>{value}</span>;
+};
 
 const ApplicationVersionViewer: FC<ApplicationVersionViewerProps> = ({ version, className }) => {
   // Get application data from the version
   const getApplicationData = () => {
     // If version has changes, reconstruct the full application data from changedFields
     if (version.diffFromPrevious?.changedFields) {
-      const fields = version.diffFromPrevious.changedFields
-      return fields
+      const fields = version.diffFromPrevious.changedFields;
+      return fields;
     }
-    return []
-  }
+    return [];
+  };
 
-  const applicationFields = getApplicationData()
+  const applicationFields = getApplicationData();
 
   // Check if there's data to display
   if (!applicationFields || applicationFields.length === 0) {
@@ -125,7 +125,7 @@ const ApplicationVersionViewer: FC<ApplicationVersionViewerProps> = ({ version, 
           ? "Initial version data"
           : "No application data available for this version"}
       </div>
-    )
+    );
   }
 
   return (
@@ -156,7 +156,7 @@ const ApplicationVersionViewer: FC<ApplicationVersionViewerProps> = ({ version, 
         </div>
       ))}
     </div>
-  )
-}
+  );
+};
 
-export default ApplicationVersionViewer
+export default ApplicationVersionViewer;

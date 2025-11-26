@@ -1,18 +1,18 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { InfiniteMovingCards } from "@/src/components/ui/infinite-moving-cards"
-import { marketingLayoutTheme } from "@/src/helper/theme"
-import { chosenCommunities } from "@/utilities/chosenCommunities"
-import { PAGES } from "@/utilities/pages"
-import { SOCIALS } from "@/utilities/socials"
-import { cn } from "@/utilities/tailwind"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { InfiniteMovingCards } from "@/src/components/ui/infinite-moving-cards";
+import { marketingLayoutTheme } from "@/src/helper/theme";
+import { chosenCommunities } from "@/utilities/chosenCommunities";
+import { PAGES } from "@/utilities/pages";
+import { SOCIALS } from "@/utilities/socials";
+import { cn } from "@/utilities/tailwind";
 
 export function Hero() {
   const communityItems = chosenCommunities(true).map((community) => ({
     text: community.name,
     image: community.imageURL,
     href: PAGES.COMMUNITY.ALL_GRANTS(community.slug),
-  }))
+  }));
 
   return (
     <section
@@ -77,5 +77,5 @@ export function Hero() {
         </p>
       </div>
     </section>
-  )
+  );
 }

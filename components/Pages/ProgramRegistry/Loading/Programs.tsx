@@ -1,12 +1,12 @@
-import { MagnifyingGlassIcon } from "@heroicons/react/24/outline"
-import { Skeleton } from "@/components/Utilities/Skeleton"
-import { layoutTheme } from "@/src/helper/theme"
-import { cn } from "@/utilities/tailwind"
-import { ProgramHeader } from "../ProgramHeader"
+import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { Skeleton } from "@/components/Utilities/Skeleton";
+import { layoutTheme } from "@/src/helper/theme";
+import { cn } from "@/utilities/tailwind";
+import { ProgramHeader } from "../ProgramHeader";
 
 export const LoadingProgramTable = () => {
-  const emptyArrayHeader = Array.from({ length: 7 })
-  const emptyArrayRows = Array.from({ length: 12 })
+  const emptyArrayHeader = Array.from({ length: 7 });
+  const emptyArrayRows = Array.from({ length: 12 });
   return (
     <div className="w-full flex flex-col">
       <div className="mt-8 flow-root">
@@ -20,7 +20,7 @@ export const LoadingProgramTable = () => {
                       <th key={index}>
                         <Skeleton className="h-9 w-full max-lg:min-w-40 rounded-lg border-0 my-2" />
                       </th>
-                    )
+                    );
                   })}
                 </tr>
               </thead>
@@ -33,10 +33,10 @@ export const LoadingProgramTable = () => {
                           <td key={indexH}>
                             <Skeleton className="h-12 w-full max-lg:min-w-40 rounded-lg my-5" />
                           </td>
-                        )
+                        );
                       })}
                     </tr>
-                  )
+                  );
                 })}
               </tbody>
             </table>
@@ -44,8 +44,8 @@ export const LoadingProgramTable = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 export const LoadingPrograms = () => {
   return (
@@ -89,5 +89,5 @@ export const LoadingPrograms = () => {
         <LoadingProgramTable />
       </div>
     </section>
-  )
-}
+  );
+};

@@ -1,19 +1,19 @@
-"use client"
+"use client";
 
-import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline"
-import type { FC } from "react"
-import { cn } from "@/utilities/tailwind"
+import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
+import type { FC } from "react";
+import { cn } from "@/utilities/tailwind";
 
-export type SortDirection = "asc" | "desc" | null
+export type SortDirection = "asc" | "desc" | null;
 
 interface ISortableTableHeaderProps {
-  label: string
-  sortKey?: string
-  currentSortKey?: string | null
-  currentSortDirection?: SortDirection
-  onSort?: (key: string) => void
-  className?: string
-  sortable?: boolean
+  label: string;
+  sortKey?: string;
+  currentSortKey?: string | null;
+  currentSortDirection?: SortDirection;
+  onSort?: (key: string) => void;
+  className?: string;
+  sortable?: boolean;
 }
 
 const SortableTableHeader: FC<ISortableTableHeaderProps> = ({
@@ -25,13 +25,13 @@ const SortableTableHeader: FC<ISortableTableHeaderProps> = ({
   className,
   sortable = true,
 }) => {
-  const isActive = sortKey === currentSortKey
+  const isActive = sortKey === currentSortKey;
 
   const handleClick = () => {
     if (sortable && sortKey && onSort) {
-      onSort(sortKey)
+      onSort(sortKey);
     }
-  }
+  };
 
   return (
     <th
@@ -70,7 +70,7 @@ const SortableTableHeader: FC<ISortableTableHeaderProps> = ({
         )}
       </div>
     </th>
-  )
-}
+  );
+};
 
-export default SortableTableHeader
+export default SortableTableHeader;

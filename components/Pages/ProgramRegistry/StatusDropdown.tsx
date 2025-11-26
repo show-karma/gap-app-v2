@@ -1,23 +1,23 @@
 /* eslint-disable @next/next/no-img-element */
 
-import * as Popover from "@radix-ui/react-popover"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk"
-import { type FC, useState } from "react"
-import { ChevronDown } from "@/components/Icons/ChevronDown"
+import * as Popover from "@radix-ui/react-popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk";
+import { type FC, useState } from "react";
+import { ChevronDown } from "@/components/Icons/ChevronDown";
 
 interface StatusDropdownProps {
-  onSelectFunction: (value: string) => void
-  previousValue?: string
-  list: string[]
+  onSelectFunction: (value: string) => void;
+  previousValue?: string;
+  list: string[];
 }
 export const StatusDropdown: FC<StatusDropdownProps> = ({
   onSelectFunction,
   previousValue,
   list,
 }) => {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false);
 
-  const sortedList = list
+  const sortedList = list;
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
@@ -43,8 +43,8 @@ export const StatusDropdown: FC<StatusDropdownProps> = ({
               <CommandItem
                 key={item}
                 onSelect={() => {
-                  setOpen(false)
-                  onSelectFunction(item)
+                  setOpen(false);
+                  onSelectFunction(item);
                 }}
                 className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
               >
@@ -58,5 +58,5 @@ export const StatusDropdown: FC<StatusDropdownProps> = ({
         </Command>
       </Popover.Content>
     </Popover.Root>
-  )
-}
+  );
+};

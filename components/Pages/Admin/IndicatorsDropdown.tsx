@@ -1,20 +1,20 @@
-import { Dialog, Switch, Transition } from "@headlessui/react"
-import { ChevronDownIcon, MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/outline"
-import * as Popover from "@radix-ui/react-popover"
-import { type FC, Fragment, useEffect, useState } from "react"
-import { LoadingSpinner } from "@/components/Disbursement/components/LoadingSpinner"
-import { IndicatorForm } from "@/components/Forms/IndicatorForm"
-import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub"
-import { Button } from "@/components/Utilities/Button"
-import type { ImpactIndicator } from "@/types/impactMeasurement"
+import { Dialog, Switch, Transition } from "@headlessui/react";
+import { ChevronDownIcon, MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import * as Popover from "@radix-ui/react-popover";
+import { type FC, Fragment, useEffect, useState } from "react";
+import { LoadingSpinner } from "@/components/Disbursement/components/LoadingSpinner";
+import { IndicatorForm } from "@/components/Forms/IndicatorForm";
+import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
+import { Button } from "@/components/Utilities/Button";
+import type { ImpactIndicator } from "@/types/impactMeasurement";
 
 interface IndicatorsDropdownProps {
-  selectedIndicators: string[]
-  indicators: ImpactIndicator[]
-  onIndicatorChange: (value: string) => void
-  communityId?: string
-  onIndicatorCreated?: (indicator: any) => void
-  isLoading?: boolean
+  selectedIndicators: string[];
+  indicators: ImpactIndicator[];
+  onIndicatorChange: (value: string) => void;
+  communityId?: string;
+  onIndicatorCreated?: (indicator: any) => void;
+  isLoading?: boolean;
 }
 
 export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
@@ -25,32 +25,32 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
   onIndicatorCreated,
   isLoading = false,
 }) => {
-  const [open, setOpen] = useState(false)
-  const [search, setSearch] = useState("")
-  const [isFormModalOpen, setIsFormModalOpen] = useState(false)
-  const [newIndicators, setNewIndicators] = useState<ImpactIndicator[]>([])
-  const [selectedAutosynced, setSelectedAutosynced] = useState<string>("")
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [newIndicators, setNewIndicators] = useState<ImpactIndicator[]>([]);
+  const [selectedAutosynced, setSelectedAutosynced] = useState<string>("");
   const [formDefaultValues, setFormDefaultValues] = useState<Partial<any>>({
     name: "",
     description: "",
     unitOfMeasure: "int",
     programs: [],
-  })
+  });
 
   // Combine the original indicators with any newly created ones
-  const allIndicators = [...indicators, ...newIndicators]
+  const allIndicators = [...indicators, ...newIndicators];
 
   // Sort all indicators alphabetically by name
   const sortedIndicators = [...allIndicators].sort((a, b) =>
     a.name.toLowerCase().localeCompare(b.name.toLowerCase())
-  )
+  );
 
   // Filter indicators based on search - use sorted indicators now
   const filteredIndicators = sortedIndicators.filter(
     (indicator) =>
       indicator.name.toLowerCase().includes(search.toLowerCase()) ||
       indicator.unitOfMeasure?.toLowerCase().includes(search.toLowerCase())
-  )
+  );
 
   // Handle autosynced indicator selection
   const handleAutosyncedSelect = (name: string) => {
@@ -60,29 +60,29 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
         description: "",
         unitOfMeasure: "int",
         programs: [],
-      })
-      setSelectedAutosynced("")
-      return
+      });
+      setSelectedAutosynced("");
+      return;
     }
 
-    const selectedIndicator = autosyncedIndicators.find((i) => i.name === name)
+    const selectedIndicator = autosyncedIndicators.find((i) => i.name === name);
     if (selectedIndicator) {
       setFormDefaultValues({
         name: selectedIndicator.name,
         description: selectedIndicator.description,
         unitOfMeasure: selectedIndicator.unitOfMeasure as "float" | "int",
         programs: [],
-      })
-      setSelectedAutosynced(name)
+      });
+      setSelectedAutosynced(name);
     }
-  }
+  };
 
   // Clear search when dropdown closes
   useEffect(() => {
     if (!open) {
-      setSearch("")
+      setSearch("");
     }
-  }, [open])
+  }, [open]);
 
   return (
     <div className="flex flex-col gap-2 w-full">
@@ -159,8 +159,8 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
                   <p>No indicators found</p>
                   <Button
                     onClick={() => {
-                      setOpen(false)
-                      setIsFormModalOpen(true)
+                      setOpen(false);
+                      setIsFormModalOpen(true);
                     }}
                     variant="secondary"
                     className="mt-3 text-xs py-1 px-3"
@@ -211,15 +211,15 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
           as="div"
           className="relative z-50"
           onClose={() => {
-            setIsFormModalOpen(false)
+            setIsFormModalOpen(false);
             // Reset form values and selected autosynced when closing modal
             setFormDefaultValues({
               name: "",
               description: "",
               unitOfMeasure: "int",
               programs: [],
-            })
-            setSelectedAutosynced("")
+            });
+            setSelectedAutosynced("");
           }}
         >
           <Transition.Child
@@ -255,14 +255,14 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
                     </Dialog.Title>
                     <button
                       onClick={() => {
-                        setIsFormModalOpen(false)
+                        setIsFormModalOpen(false);
                         setFormDefaultValues({
                           name: "",
                           description: "",
                           unitOfMeasure: "int",
                           programs: [],
-                        })
-                        setSelectedAutosynced("")
+                        });
+                        setSelectedAutosynced("");
                       }}
                       className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                     >
@@ -304,12 +304,12 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
                     onSuccess={(indicator) => {
                       // Prevent event bubbling if any
                       if (event) {
-                        event.preventDefault()
-                        event.stopPropagation()
+                        event.preventDefault();
+                        event.stopPropagation();
                       }
 
                       // Add the new indicator to our local state
-                      setNewIndicators((prev) => [...prev, indicator])
+                      setNewIndicators((prev) => [...prev, indicator]);
 
                       // Reset form values and selected autosynced
                       setFormDefaultValues({
@@ -317,24 +317,24 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
                         description: "",
                         unitOfMeasure: "int",
                         programs: [],
-                      })
-                      setSelectedAutosynced("")
+                      });
+                      setSelectedAutosynced("");
 
                       // Only notify parent of new indicator without causing form submission
                       if (onIndicatorCreated) {
                         // Use setTimeout to break the event chain
                         setTimeout(() => {
-                          onIndicatorCreated(indicator)
-                        }, 0)
+                          onIndicatorCreated(indicator);
+                        }, 0);
                       }
 
                       // Close the form modal
-                      setIsFormModalOpen(false)
+                      setIsFormModalOpen(false);
 
                       // Keep dropdown open
                       setTimeout(() => {
-                        setOpen(true)
-                      }, 10)
+                        setOpen(true);
+                      }, 10);
                     }}
                     onError={() => {
                       // Handle error
@@ -348,5 +348,5 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
         </Dialog>
       </Transition>
     </div>
-  )
-}
+  );
+};

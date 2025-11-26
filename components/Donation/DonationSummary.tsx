@@ -1,16 +1,16 @@
-"use client"
-import { useMemo } from "react"
-import { SUPPORTED_NETWORKS, type SupportedToken } from "@/constants/supportedTokens"
+"use client";
+import { useMemo } from "react";
+import { SUPPORTED_NETWORKS, type SupportedToken } from "@/constants/supportedTokens";
 
 interface DonationPayment {
-  projectId: string
-  amount: string
-  token: SupportedToken
-  chainId: number
+  projectId: string;
+  amount: string;
+  token: SupportedToken;
+  chainId: number;
 }
 
 interface DonationSummaryProps {
-  payments: DonationPayment[]
+  payments: DonationPayment[];
 }
 
 const CoinIcon = ({ className }: { className: string }) => {
@@ -28,26 +28,26 @@ const CoinIcon = ({ className }: { className: string }) => {
         fill="currentColor"
       />
     </svg>
-  )
-}
+  );
+};
 
 export function DonationSummary({ payments }: DonationSummaryProps) {
   const totalsByToken = useMemo(() => {
     const totals = payments.reduce(
       (acc, payment) => {
-        const key = `${payment.token.symbol}-${payment.token.chainId}`
-        const amount = parseFloat(payment.amount || "0")
+        const key = `${payment.token.symbol}-${payment.token.chainId}`;
+        const amount = parseFloat(payment.amount || "0");
         if (!acc[key]) {
-          acc[key] = { token: payment.token, total: 0 }
+          acc[key] = { token: payment.token, total: 0 };
         }
-        acc[key].total += amount
-        return acc
+        acc[key].total += amount;
+        return acc;
       },
       {} as Record<string, { token: SupportedToken; total: number }>
-    )
+    );
 
-    return Object.values(totals).sort((a, b) => a.token.chainId - b.token.chainId)
-  }, [payments])
+    return Object.values(totals).sort((a, b) => a.token.chainId - b.token.chainId);
+  }, [payments]);
 
   return (
     <div className="rounded-2xl border border-neutral-300 bg-white/90 p-6 shadow-sm backdrop-blur-sm dark:border-gray-800/60 dark:bg-gray-900/90">
@@ -102,5 +102,5 @@ export function DonationSummary({ payments }: DonationSummaryProps) {
         </div>
       )}
     </div>
-  )
+  );
 }

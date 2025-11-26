@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
 interface EmptyCartProps {
-  onBrowseProjects: () => void
+  onBrowseProjects: () => void;
 }
 
 export function EmptyCart({ onBrowseProjects }: EmptyCartProps) {
@@ -36,5 +36,5 @@ export function EmptyCart({ onBrowseProjects }: EmptyCartProps) {
         </button>
       </div>
     </div>
-  )
+  );
 }

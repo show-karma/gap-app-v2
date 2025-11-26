@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useState } from "react"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 const chainSchema = z.object({
   chainId: z.number().min(1, "Chain ID must be positive"),
@@ -12,19 +12,19 @@ const chainSchema = z.object({
   rpcUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
   explorerUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
   decimals: z.number().min(0).max(18),
-})
+});
 
-type ChainFormData = z.infer<typeof chainSchema>
+type ChainFormData = z.infer<typeof chainSchema>;
 
 interface ChainFormProps {
-  chain?: any
-  onSave: (data: ChainFormData) => void
-  onCancel: () => void
-  isLoading?: boolean
+  chain?: any;
+  onSave: (data: ChainFormData) => void;
+  onCancel: () => void;
+  isLoading?: boolean;
 }
 
 export function ChainForm({ chain, onSave, onCancel, isLoading }: ChainFormProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     register,
@@ -41,22 +41,22 @@ export function ChainForm({ chain, onSave, onCancel, isLoading }: ChainFormProps
       explorerUrl: chain?.explorerUrl || "",
       decimals: chain?.decimals || 18,
     },
-  })
+  });
 
   const onSubmit = async (data: ChainFormData) => {
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
       // Clean up optional URLs
       const cleanedData = {
         ...data,
         rpcUrl: data.rpcUrl || undefined,
         explorerUrl: data.explorerUrl || undefined,
-      }
-      await onSave(cleanedData)
+      };
+      await onSave(cleanedData);
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -195,5 +195,5 @@ export function ChainForm({ chain, onSave, onCancel, isLoading }: ChainFormProps
         </button>
       </div>
     </form>
-  )
+  );
 }

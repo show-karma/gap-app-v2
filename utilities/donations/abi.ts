@@ -257,4 +257,4 @@ export const DonationsABI = [
     stateMutability: "nonpayable",
     type: "function",
   },
-]
+];

@@ -1,19 +1,19 @@
 /* eslint-disable @next/next/no-img-element */
-"use client"
-import { CheckIcon } from "@heroicons/react/24/outline"
-import dynamic from "next/dynamic"
-import Link from "next/link"
-import { TypedLoading } from "@/components/Pages/Home/ReactTypedWrap"
-import { Button } from "@/components/Utilities/Button"
-import { PROJECT_NAME } from "@/constants/brand"
-import { PAGES } from "@/utilities/pages"
+"use client";
+import { CheckIcon } from "@heroicons/react/24/outline";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { TypedLoading } from "@/components/Pages/Home/ReactTypedWrap";
+import { Button } from "@/components/Utilities/Button";
+import { PROJECT_NAME } from "@/constants/brand";
+import { PAGES } from "@/utilities/pages";
 
 // import { ProjectDialog } from "@/components/Dialogs/ProjectDialog";
 
 const ReactTypedWrapper = dynamic(
   () => import("@/components/Pages/Home/ReactTypedWrap").then((mod) => mod.ReactTypedWrapper),
   { ssr: false, loading: () => <TypedLoading /> }
-)
+);
 
 const ProjectDialog = dynamic(
   () => import("@/components/Dialogs/ProjectDialog/index").then((mod) => mod.ProjectDialog),
@@ -26,7 +26,7 @@ const ProjectDialog = dynamic(
       </Button>
     ),
   }
-)
+);
 export const Presentation = () => {
   return (
     <div className="flex flex-1 items-end gap-8 max-2xl:gap-4">
@@ -139,5 +139,5 @@ export const Presentation = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

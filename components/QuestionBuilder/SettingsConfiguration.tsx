@@ -1,37 +1,37 @@
-"use client"
+"use client";
 
-import { LinkIcon } from "@heroicons/react/24/outline"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useParams } from "next/navigation"
-import { useEffect } from "react"
-import { useForm } from "react-hook-form"
-import { type SettingsConfigFormData, settingsConfigSchema } from "@/schemas/settingsConfigSchema"
-import type { FormSchema } from "@/types/question-builder"
-import { envVars } from "@/utilities/enviromentVars"
-import { fundingPlatformDomains } from "@/utilities/fundingPlatformDomains"
-import { ExternalLink } from "../Utilities/ExternalLink"
-import { MarkdownEditor } from "../Utilities/MarkdownEditor"
+import { LinkIcon } from "@heroicons/react/24/outline";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useParams } from "next/navigation";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { type SettingsConfigFormData, settingsConfigSchema } from "@/schemas/settingsConfigSchema";
+import type { FormSchema } from "@/types/question-builder";
+import { envVars } from "@/utilities/enviromentVars";
+import { fundingPlatformDomains } from "@/utilities/fundingPlatformDomains";
+import { ExternalLink } from "../Utilities/ExternalLink";
+import { MarkdownEditor } from "../Utilities/MarkdownEditor";
 
 interface SettingsConfigurationProps {
-  schema: FormSchema
-  onUpdate?: (updatedSchema: FormSchema) => void
-  className?: string
-  programId?: string
-  readOnly?: boolean
+  schema: FormSchema;
+  onUpdate?: (updatedSchema: FormSchema) => void;
+  className?: string;
+  programId?: string;
+  readOnly?: boolean;
 }
 
 const getApplyUrlByCommunityId = (communityId: string, programId: string) => {
   if (communityId in fundingPlatformDomains) {
-    const domain = fundingPlatformDomains[communityId as keyof typeof fundingPlatformDomains]
+    const domain = fundingPlatformDomains[communityId as keyof typeof fundingPlatformDomains];
     return envVars.isDev
       ? `${domain.dev}/browse-applications?programId=${programId}`
-      : `${domain.prod}/browse-applications?programId=${programId}`
+      : `${domain.prod}/browse-applications?programId=${programId}`;
   } else {
     return envVars.isDev
       ? `${fundingPlatformDomains.shared.dev}/${communityId}/browse-applications?programId=${programId}`
-      : `${fundingPlatformDomains.shared.prod}/${communityId}/browse-applications?programId=${programId}`
+      : `${fundingPlatformDomains.shared.prod}/${communityId}/browse-applications?programId=${programId}`;
   }
-}
+};
 
 export function SettingsConfiguration({
   schema,
@@ -40,7 +40,7 @@ export function SettingsConfiguration({
   programId,
   readOnly = false,
 }: SettingsConfigurationProps) {
-  const { communityId } = useParams() as { communityId: string }
+  const { communityId } = useParams() as { communityId: string };
   const {
     register,
     watch,
@@ -55,11 +55,11 @@ export function SettingsConfiguration({
       successPageContent: schema.settings?.successPageContent ?? "",
       showCommentsOnPublicPage: schema.settings?.showCommentsOnPublicPage ?? false,
     },
-  })
+  });
 
   // Watch for changes and auto-update
   useEffect(() => {
-    if (readOnly || !onUpdate) return // Don't update in read-only mode
+    if (readOnly || !onUpdate) return; // Don't update in read-only mode
 
     const subscription = watch((data) => {
       const updatedSchema: FormSchema = {
@@ -75,16 +75,16 @@ export function SettingsConfiguration({
           successPageContent: data.successPageContent,
           showCommentsOnPublicPage: data.showCommentsOnPublicPage ?? false,
         },
-      }
+      };
 
-      onUpdate(updatedSchema)
-    })
+      onUpdate(updatedSchema);
+    });
 
-    return () => subscription.unsubscribe()
-  }, [watch, onUpdate, schema, readOnly])
+    return () => subscription.unsubscribe();
+  }, [watch, onUpdate, schema, readOnly]);
 
-  const privateApplicationsValue = watch("privateApplications")
-  const privateFieldsCount = schema.fields?.filter((field) => field.private).length || 0
+  const privateApplicationsValue = watch("privateApplications");
+  const privateFieldsCount = schema.fields?.filter((field) => field.private).length || 0;
 
   return (
     <div className={`space-y-6 ${className}`}>
@@ -171,7 +171,7 @@ export function SettingsConfiguration({
                 onChange={(newValue: string) => {
                   setValue("successPageContent", newValue || "", {
                     shouldValidate: true,
-                  })
+                  });
                 }}
                 placeholderText="**Review Process:** Your application will be carefully reviewed by the Grants Council.
 
@@ -327,5 +327,5 @@ export function SettingsConfiguration({
         </div>
       </div>
     </div>
-  )
+  );
 }

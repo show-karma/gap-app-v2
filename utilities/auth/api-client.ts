@@ -1,6 +1,6 @@
-import axios, { type AxiosInstance } from "axios"
-import { envVars } from "../enviromentVars"
-import { TokenManager } from "./token-manager"
+import axios, { type AxiosInstance } from "axios";
+import { envVars } from "../enviromentVars";
+import { TokenManager } from "./token-manager";
 
 /**
  * Creates an authenticated axios instance for API calls
@@ -17,17 +17,17 @@ export function createAuthenticatedApiClient(
     headers: {
       "Content-Type": "application/json",
     },
-  })
+  });
 
   // Add request interceptor for authentication
   apiClient.interceptors.request.use(async (config) => {
     // Get auth token from store
-    const token = await TokenManager.getToken()
+    const token = await TokenManager.getToken();
     if (token) {
-      config.headers.Authorization = token
+      config.headers.Authorization = token;
     }
-    return config
-  })
+    return config;
+  });
 
-  return apiClient
+  return apiClient;
 }

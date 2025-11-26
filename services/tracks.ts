@@ -1,17 +1,17 @@
-import { errorManager } from "@/components/Utilities/errorManager"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
+import { errorManager } from "@/components/Utilities/errorManager";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 export interface Track {
-  id: string
-  name: string
-  description?: string
-  communityUID: string
-  isArchived: boolean
-  createdAt: string | Date
-  updatedAt: string | Date
-  programId?: string
-  isActive?: boolean
+  id: string;
+  name: string;
+  description?: string;
+  communityUID: string;
+  isArchived: boolean;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+  programId?: string;
+  isActive?: boolean;
 }
 
 export const trackService = {
@@ -29,20 +29,20 @@ export const trackService = {
         {},
         true,
         false
-      )
+      );
 
       if (error) {
-        throw new Error(error)
+        throw new Error(error);
       }
 
       return data.map((track: any) => ({
         ...track,
         createdAt: new Date(track.createdAt),
         updatedAt: new Date(track.updatedAt),
-      }))
+      }));
     } catch (error: any) {
-      errorManager("Error fetching tracks", error)
-      throw error
+      errorManager("Error fetching tracks", error);
+      throw error;
     }
   },
 
@@ -57,21 +57,21 @@ export const trackService = {
         {},
         true,
         false
-      )
+      );
 
       if (error) {
-        throw new Error(error)
+        throw new Error(error);
       }
 
       const mappedTracks = data.map((track: any) => ({
         ...track,
         createdAt: new Date(track.createdAt),
         updatedAt: new Date(track.updatedAt),
-      }))
-      return mappedTracks
+      }));
+      return mappedTracks;
     } catch (error: any) {
-      errorManager(`Error fetching tracks for program ${programId}`, error)
-      throw error
+      errorManager(`Error fetching tracks for program ${programId}`, error);
+      throw error;
     }
   },
 
@@ -90,20 +90,20 @@ export const trackService = {
         {},
         true,
         false
-      )
+      );
 
       if (error) {
-        throw new Error(error)
+        throw new Error(error);
       }
 
       return {
         ...data,
         createdAt: new Date(data.createdAt),
         updatedAt: new Date(data.updatedAt),
-      }
+      };
     } catch (error: any) {
-      errorManager("Error creating track", error)
-      throw error
+      errorManager("Error creating track", error);
+      throw error;
     }
   },
 
@@ -127,20 +127,20 @@ export const trackService = {
         {},
         true,
         false
-      )
+      );
 
       if (error) {
-        throw new Error(error)
+        throw new Error(error);
       }
 
       return {
         ...data,
         createdAt: new Date(data.createdAt),
         updatedAt: new Date(data.updatedAt),
-      }
+      };
     } catch (error: any) {
-      errorManager("Error updating track", error)
-      throw error
+      errorManager("Error updating track", error);
+      throw error;
     }
   },
 
@@ -155,14 +155,14 @@ export const trackService = {
         {},
         true,
         false
-      )
+      );
 
       if (error) {
-        throw new Error(error)
+        throw new Error(error);
       }
     } catch (error: any) {
-      errorManager("Error archiving track", error)
-      throw error
+      errorManager("Error archiving track", error);
+      throw error;
     }
   },
 
@@ -181,14 +181,14 @@ export const trackService = {
         {},
         true,
         false
-      )
+      );
 
       if (error) {
-        throw new Error(error)
+        throw new Error(error);
       }
     } catch (error: any) {
-      errorManager("Error assigning tracks to program", error)
-      throw error
+      errorManager("Error assigning tracks to program", error);
+      throw error;
     }
   },
 
@@ -207,14 +207,14 @@ export const trackService = {
         {},
         true,
         false
-      )
+      );
 
       if (error) {
-        throw new Error(error)
+        throw new Error(error);
       }
     } catch (error: any) {
-      errorManager("Error removing track from program", error)
-      throw error
+      errorManager("Error removing track from program", error);
+      throw error;
     }
   },
 
@@ -233,14 +233,14 @@ export const trackService = {
         {},
         true,
         false
-      )
+      );
 
       if (error) {
-        throw new Error(error)
+        throw new Error(error);
       }
     } catch (error: any) {
-      errorManager("Error removing tracks from program in batch", error)
-      throw error
+      errorManager("Error removing tracks from program in batch", error);
+      throw error;
     }
   },
 
@@ -255,16 +255,16 @@ export const trackService = {
         {},
         true,
         false
-      )
+      );
 
       if (error) {
-        throw new Error(error)
+        throw new Error(error);
       }
 
-      return data.data || []
+      return data.data || [];
     } catch (error: any) {
-      errorManager(`Error fetching tracks for project ${projectId}`, error)
-      throw error
+      errorManager(`Error fetching tracks for project ${projectId}`, error);
+      throw error;
     }
   },
 
@@ -284,14 +284,14 @@ export const trackService = {
         {},
         true,
         false
-      )
+      );
 
       if (error) {
-        throw new Error(error)
+        throw new Error(error);
       }
     } catch (error: any) {
-      errorManager("Error assigning tracks to project", error)
-      throw error
+      errorManager("Error assigning tracks to project", error);
+      throw error;
     }
   },
-}
+};

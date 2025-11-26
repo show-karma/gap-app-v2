@@ -1,27 +1,27 @@
-"use client"
+"use client";
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { type FC, useCallback, useState } from "react"
-import { type SubmitHandler, useForm } from "react-hook-form"
-import toast from "react-hot-toast"
-import { useAccount } from "wagmi"
-import { z } from "zod"
-import { Button } from "@/components/Utilities/Button"
-import type { IFormSchema } from "@/types/funding-platform"
-import { cn } from "@/utilities/tailwind"
+import { zodResolver } from "@hookform/resolvers/zod";
+import { type FC, useCallback, useState } from "react";
+import { type SubmitHandler, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { z } from "zod";
+import { Button } from "@/components/Utilities/Button";
+import type { IFormSchema } from "@/types/funding-platform";
+import { cn } from "@/utilities/tailwind";
 
 interface IApplicationSubmissionProps {
-  programId: string
-  chainId: number
-  formSchema: IFormSchema
-  onSubmit?: (applicationData: Record<string, any>) => Promise<void>
-  onCancel?: () => void
-  isLoading?: boolean
+  programId: string;
+  chainId: number;
+  formSchema: IFormSchema;
+  onSubmit?: (applicationData: Record<string, any>) => Promise<void>;
+  onCancel?: () => void;
+  isLoading?: boolean;
 }
 
-const labelStyle = "text-sm font-bold text-black dark:text-zinc-100"
+const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
-  "mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300"
+  "mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300";
 
 const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
   programId,
@@ -31,31 +31,31 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
   onCancel,
   isLoading = false,
 }) => {
-  const { address } = useAccount()
-  const [submitting, setSubmitting] = useState(false)
+  const { address } = useAccount();
+  const [submitting, setSubmitting] = useState(false);
 
   // Generate dynamic Zod schema based on form schema
   const generateValidationSchema = useCallback((schema: IFormSchema) => {
-    const schemaObject: Record<string, any> = {}
+    const schemaObject: Record<string, any> = {};
 
     schema.fields.forEach((field) => {
-      let fieldSchema: any
+      let fieldSchema: any;
 
       switch (field.type) {
         case "email":
-          fieldSchema = z.string().email("Please enter a valid email address")
-          break
+          fieldSchema = z.string().email("Please enter a valid email address");
+          break;
         case "url":
-          fieldSchema = z.string().url("Please enter a valid URL")
-          break
+          fieldSchema = z.string().url("Please enter a valid URL");
+          break;
         case "number":
           fieldSchema = z.string().refine((val) => !Number.isNaN(Number(val)), {
             message: "Please enter a valid number",
-          })
-          break
+          });
+          break;
         default:
-          fieldSchema = z.string()
-          break
+          fieldSchema = z.string();
+          break;
       }
 
       // Apply validation rules
@@ -63,30 +63,30 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
         fieldSchema = fieldSchema.min(
           field.validation.min,
           `Minimum ${field.validation.min} characters required`
-        )
+        );
       }
       if (field.validation?.max) {
         fieldSchema = fieldSchema.max(
           field.validation.max,
           `Maximum ${field.validation.max} characters allowed`
-        )
+        );
       }
 
       // Apply required validation
       if (field.required) {
-        fieldSchema = fieldSchema.min(1, `${field.label} is required`)
+        fieldSchema = fieldSchema.min(1, `${field.label} is required`);
       } else {
-        fieldSchema = fieldSchema.optional().or(z.literal(""))
+        fieldSchema = fieldSchema.optional().or(z.literal(""));
       }
 
-      schemaObject[field.label.toLowerCase().replace(/\s+/g, "_")] = fieldSchema
-    })
+      schemaObject[field.label.toLowerCase().replace(/\s+/g, "_")] = fieldSchema;
+    });
 
-    return z.object(schemaObject)
-  }, [])
+    return z.object(schemaObject);
+  }, []);
 
-  const validationSchema = generateValidationSchema(formSchema)
-  type FormData = z.infer<typeof validationSchema>
+  const validationSchema = generateValidationSchema(formSchema);
+  type FormData = z.infer<typeof validationSchema>;
 
   const {
     register,
@@ -96,31 +96,31 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
   } = useForm<FormData>({
     resolver: zodResolver(validationSchema),
     mode: "onChange",
-  })
+  });
 
   const handleFormSubmit: SubmitHandler<FormData> = async (data) => {
     if (!address) {
-      toast.error("Please connect your wallet to submit an application")
-      return
+      toast.error("Please connect your wallet to submit an application");
+      return;
     }
 
-    setSubmitting(true)
+    setSubmitting(true);
     try {
-      await onSubmit?.(data)
-      toast.success("Application submitted successfully!")
-      reset()
+      await onSubmit?.(data);
+      toast.success("Application submitted successfully!");
+      reset();
     } catch (error) {
-      console.error("Error submitting application:", error)
-      toast.error("Failed to submit application. Please try again.")
+      console.error("Error submitting application:", error);
+      toast.error("Failed to submit application. Please try again.");
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-  }
+  };
 
   const renderField = (field: any, index: number) => {
-    const fieldName = field.label.toLowerCase().replace(/\s+/g, "_")
-    const error = errors[fieldName as keyof FormData]
-    const errorMessage = error?.message || error
+    const fieldName = field.label.toLowerCase().replace(/\s+/g, "_");
+    const error = errors[fieldName as keyof FormData];
+    const errorMessage = error?.message || error;
 
     switch (field.type) {
       case "textarea":
@@ -137,7 +137,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
             />
             {error && <p className="text-sm text-red-400 mt-1">{String(errorMessage)}</p>}
           </div>
-        )
+        );
 
       case "select":
         return (
@@ -159,7 +159,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
             </select>
             {error && <p className="text-sm text-red-400 mt-1">{String(errorMessage)}</p>}
           </div>
-        )
+        );
 
       case "checkbox":
         return (
@@ -182,7 +182,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
             </div>
             {error && <p className="text-sm text-red-400 mt-1">{String(errorMessage)}</p>}
           </div>
-        )
+        );
 
       case "radio":
         return (
@@ -205,7 +205,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
             </div>
             {error && <p className="text-sm text-red-400 mt-1">{String(errorMessage)}</p>}
           </div>
-        )
+        );
 
       case "number":
         return (
@@ -222,7 +222,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
             />
             {error && <p className="text-sm text-red-400 mt-1">{String(errorMessage)}</p>}
           </div>
-        )
+        );
       default:
         return (
           <div key={index} className="flex w-full flex-col">
@@ -238,9 +238,9 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
             />
             {error && <p className="text-sm text-red-400 mt-1">{String(errorMessage)}</p>}
           </div>
-        )
+        );
     }
-  }
+  };
 
   if (!address) {
     return (
@@ -252,7 +252,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
           Please connect your wallet to submit a grant application.
         </p>
       </div>
-    )
+    );
   }
 
   return (
@@ -297,7 +297,7 @@ const ApplicationSubmission: FC<IApplicationSubmissionProps> = ({
       {/* Connected Wallet Info */}
       <div className="text-xs text-gray-500 dark:text-gray-400">Submitting as: {address}</div>
     </div>
-  )
-}
+  );
+};
 
-export default ApplicationSubmission
+export default ApplicationSubmission;

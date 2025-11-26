@@ -2,7 +2,7 @@
  * Mock FAQ data for funders page tests
  */
 
-import type { FAQItem } from "@/src/components/shared/faq-accordion"
+import type { FAQItem } from "@/src/components/shared/faq-accordion";
 
 export const mockFAQItems: FAQItem[] = [
   {
@@ -23,4 +23,4 @@ export const mockFAQItems: FAQItem[] = [
     answer:
       "Absolutely. Just [reach out to us](https://tally.so/r/3NKZEl) and we can help you get started right away.",
   },
-]
+];

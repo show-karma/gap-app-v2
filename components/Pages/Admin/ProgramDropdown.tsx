@@ -1,24 +1,24 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { CheckIcon } from "@heroicons/react/24/solid"
-import * as Popover from "@radix-ui/react-popover"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk"
-import { type FC, useState } from "react"
-import { useAccount } from "wagmi"
-import { ChevronDown } from "@/components/Icons/ChevronDown"
-import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList"
-import { cn } from "@/utilities/tailwind"
+import { CheckIcon } from "@heroicons/react/24/solid";
+import * as Popover from "@radix-ui/react-popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk";
+import { type FC, useState } from "react";
+import { useAccount } from "wagmi";
+import { ChevronDown } from "@/components/Icons/ChevronDown";
+import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import { cn } from "@/utilities/tailwind";
 
 const ProgramDropdown: FC<{
-  selectedProgram: GrantProgram | null
+  selectedProgram: GrantProgram | null;
 
-  list: GrantProgram[]
+  list: GrantProgram[];
 
-  cleanFunction?: () => void
-  prefixUnselected?: string
-  buttonClassname?: string
+  cleanFunction?: () => void;
+  prefixUnselected?: string;
+  buttonClassname?: string;
 
-  setSelectedProgram: (program: GrantProgram) => void
+  setSelectedProgram: (program: GrantProgram) => void;
 }> = ({
   selectedProgram,
   list,
@@ -29,9 +29,9 @@ const ProgramDropdown: FC<{
 
   setSelectedProgram,
 }) => {
-  const [open, setOpen] = useState(false)
-  const [_adding, _setAdding] = useState(false)
-  const { address: owner } = useAccount()
+  const [open, setOpen] = useState(false);
+  const [_adding, _setAdding] = useState(false);
+  const { address: owner } = useAccount();
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
@@ -68,7 +68,7 @@ const ProgramDropdown: FC<{
                 <button
                   type="button"
                   onClick={() => {
-                    cleanFunction()
+                    cleanFunction();
                   }}
                   className="w-full my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 bg-transparent border-none text-left"
                 >
@@ -93,7 +93,7 @@ const ProgramDropdown: FC<{
                 <button
                   type="button"
                   onClick={() => {
-                    setSelectedProgram(item)
+                    setSelectedProgram(item);
                   }}
                   className="w-full my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 bg-transparent border-none text-left"
                 >
@@ -120,7 +120,7 @@ const ProgramDropdown: FC<{
         </Command>
       </Popover.Content>
     </Popover.Root>
-  )
-}
+  );
+};
 
-export default ProgramDropdown
+export default ProgramDropdown;

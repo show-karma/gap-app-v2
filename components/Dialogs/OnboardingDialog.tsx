@@ -1,17 +1,17 @@
-"use client"
-import { Dialog, Transition } from "@headlessui/react"
-import { ChevronLeftIcon, ChevronRightIcon, XMarkIcon } from "@heroicons/react/24/solid"
+"use client";
+import { Dialog, Transition } from "@headlessui/react";
+import { ChevronLeftIcon, ChevronRightIcon, XMarkIcon } from "@heroicons/react/24/solid";
 /* eslint-disable @next/next/no-img-element */
-import { type FC, Fragment } from "react"
-import type { Hex } from "viem"
-import { useAccount } from "wagmi"
-import { PROJECT_NAME } from "@/constants/brand"
-import { useOnboarding } from "@/store/modals/onboarding"
-import { Button } from "../Utilities/Button"
+import { type FC, Fragment } from "react";
+import type { Hex } from "viem";
+import { useAccount } from "wagmi";
+import { PROJECT_NAME } from "@/constants/brand";
+import { useOnboarding } from "@/store/modals/onboarding";
+import { Button } from "../Utilities/Button";
 
 const WelcomeStep = () => {
-  const { address } = useAccount()
-  const { changeOnboardingStep, isOnboardingOpen } = useOnboarding()
+  const { address } = useAccount();
+  const { changeOnboardingStep, isOnboardingOpen } = useOnboarding();
 
   return (
     <div className="flex flex-row gap-6 items-center">
@@ -40,11 +40,11 @@ const WelcomeStep = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 const FirstStep = () => {
-  const { changeOnboardingStep } = useOnboarding()
-  const { address } = useAccount()
+  const { changeOnboardingStep } = useOnboarding();
+  const { address } = useAccount();
   return (
     <div className="flex flex-row gap-6 items-center">
       <img
@@ -81,11 +81,11 @@ You do this just once!`}</p>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 const GrantStep = () => {
-  const { changeOnboardingStep } = useOnboarding()
-  const { address } = useAccount()
+  const { changeOnboardingStep } = useOnboarding();
+  const { address } = useAccount();
 
   return (
     <div className="flex flex-row gap-6 items-start pt-6">
@@ -120,12 +120,12 @@ const GrantStep = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 const UpdatesStep = () => {
-  const { changeOnboardingStep } = useOnboarding()
+  const { changeOnboardingStep } = useOnboarding();
 
-  const { address } = useAccount()
+  const { address } = useAccount();
 
   return (
     <div className="flex flex-col">
@@ -164,12 +164,12 @@ const UpdatesStep = () => {
         </Button>
       </div>
     </div>
-  )
-}
+  );
+};
 const StructureStep = () => {
-  const { changeOnboardingStep, setIsOnboarding } = useOnboarding()
+  const { changeOnboardingStep, setIsOnboarding } = useOnboarding();
 
-  const { address } = useAccount()
+  const { address } = useAccount();
 
   return (
     <div className="flex flex-col">
@@ -199,32 +199,32 @@ const StructureStep = () => {
         </Button>
       </div>
     </div>
-  )
-}
+  );
+};
 
 export const OnboardingDialog: FC = () => {
-  const { isOnboardingOpen: isOpen, setIsOnboarding, onboardingStep } = useOnboarding()
+  const { isOnboardingOpen: isOpen, setIsOnboarding, onboardingStep } = useOnboarding();
 
   const closeModal = () => {
-    setIsOnboarding(false)
-  }
+    setIsOnboarding(false);
+  };
 
   const handleRender = () => {
     switch (onboardingStep) {
       case "welcome":
-        return <WelcomeStep />
+        return <WelcomeStep />;
       case "project":
-        return <FirstStep />
+        return <FirstStep />;
       case "grants":
-        return <GrantStep />
+        return <GrantStep />;
       case "updates-milestones":
-        return <UpdatesStep />
+        return <UpdatesStep />;
       case "structure":
-        return <StructureStep />
+        return <StructureStep />;
       default:
-        return <WelcomeStep />
+        return <WelcomeStep />;
     }
-  }
+  };
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -266,5 +266,5 @@ export const OnboardingDialog: FC = () => {
         </div>
       </Dialog>
     </Transition>
-  )
-}
+  );
+};

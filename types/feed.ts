@@ -1,9 +1,9 @@
-import type { Hex } from "@show-karma/karma-gap-sdk"
+import type { Hex } from "@show-karma/karma-gap-sdk";
 
 export interface Feed {
-  attester: Hex | string
-  timestamp: number
-  uid: string
+  attester: Hex | string;
+  timestamp: number;
+  uid: string;
   event:
     | "revoked"
     | "created"
@@ -13,9 +13,9 @@ export interface Feed {
     | "milestone-completed"
     | "milestone-rejected"
     | "milestone-approved"
-    | "grant-completed"
-  type: "project" | "milestone" | "grant" | "community" | "member"
-  message: string
-  projectUID?: Hex
-  grantUID?: Hex
+    | "grant-completed";
+  type: "project" | "milestone" | "grant" | "community" | "member";
+  message: string;
+  projectUID?: Hex;
+  grantUID?: Hex;
 }

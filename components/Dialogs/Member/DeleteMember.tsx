@@ -1,50 +1,50 @@
-import { Dialog, Transition } from "@headlessui/react"
-import { TrashIcon } from "@heroicons/react/24/outline"
-import * as Tooltip from "@radix-ui/react-tooltip"
-import dynamic from "next/dynamic"
-import { type FC, Fragment, useState } from "react"
-import toast from "react-hot-toast"
-import { useAccount } from "wagmi"
-import { Button } from "@/components/Utilities/Button"
-import { errorManager } from "@/components/Utilities/errorManager"
-import { queryClient } from "@/components/Utilities/PrivyProviderWrapper"
-import { useGap } from "@/hooks/useGap"
-import { useOffChainRevoke } from "@/hooks/useOffChainRevoke"
-import { useWallet } from "@/hooks/useWallet"
-import { useProjectStore } from "@/store"
-import { useStepper } from "@/store/modals/txStepper"
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils"
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
-import { getProjectById } from "@/utilities/sdk"
-import { safeGetWalletClient } from "@/utilities/wallet-helpers"
+import { Dialog, Transition } from "@headlessui/react";
+import { TrashIcon } from "@heroicons/react/24/outline";
+import * as Tooltip from "@radix-ui/react-tooltip";
+import dynamic from "next/dynamic";
+import { type FC, Fragment, useState } from "react";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
+import { useGap } from "@/hooks/useGap";
+import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
+import { useWallet } from "@/hooks/useWallet";
+import { useProjectStore } from "@/store";
+import { useStepper } from "@/store/modals/txStepper";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { getProjectById } from "@/utilities/sdk";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 const _DeleteDialog = dynamic(() =>
   import("@/components/DeleteDialog").then((mod) => mod.DeleteDialog)
-)
+);
 
 interface DeleteMemberDialogProps {
-  memberAddress: string
+  memberAddress: string;
 }
 
 export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress }) => {
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [isOpen, setIsOpen] = useState(false)
-  const { gap } = useGap()
-  const { address, chain } = useAccount()
-  const { project } = useProjectStore()
-  const { changeStepperStep, setIsStepper } = useStepper()
-  const { switchChainAsync } = useWallet()
-  const refreshProject = useProjectStore((state) => state.refreshProject)
-  const { performOffChainRevoke } = useOffChainRevoke()
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const { gap } = useGap();
+  const { address, chain } = useAccount();
+  const { project } = useProjectStore();
+  const { changeStepperStep, setIsStepper } = useStepper();
+  const { switchChainAsync } = useWallet();
+  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { performOffChainRevoke } = useOffChainRevoke();
 
   const deleteMember = async () => {
     // await deleteMemberFromProject(memberAddress);
-    let gapClient = gap
-    if (!address || !project) return
+    let gapClient = gap;
+    if (!address || !project) return;
     try {
-      setIsDeleting(true)
+      setIsDeleting(true);
       const {
         success,
         chainId: actualChainId,
@@ -53,79 +53,79 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress 
         targetChainId: project.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
-      })
+      });
 
       if (!success) {
-        setIsDeleting(false)
-        return
+        setIsDeleting(false);
+        return;
       }
 
-      gapClient = newGapClient
+      gapClient = newGapClient;
       // Replace direct getWalletClient call with safeGetWalletClient
 
-      const { walletClient, error } = await safeGetWalletClient(actualChainId)
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error })
+        throw new Error("Failed to connect to wallet", { cause: error });
       }
-      const walletSigner = await walletClientToSigner(walletClient)
-      const fetchedProject = await getProjectById(project.uid)
-      if (!fetchedProject) throw new Error("Project not found")
+      const walletSigner = await walletClientToSigner(walletClient);
+      const fetchedProject = await getProjectById(project.uid);
+      if (!fetchedProject) throw new Error("Project not found");
       const member = fetchedProject.members.find(
         (item) => item.recipient.toLowerCase() === memberAddress.toLowerCase()
-      )
-      if (!member) throw new Error("Member not found")
+      );
+      if (!member) throw new Error("Member not found");
       // Helper function to check if member was removed
       const checkIfMemberRemoved = async () => {
-        let retries = 1000
+        let retries = 1000;
         while (retries > 0) {
-          const refreshedProject = await refreshProject()
+          const refreshedProject = await refreshProject();
           const currentMember = refreshedProject?.members.find(
             (item) => item.recipient.toLowerCase() === memberAddress.toLowerCase()
-          )
+          );
           queryClient.invalidateQueries({
             queryKey: ["memberRoles", project?.uid],
-          })
+          });
           if (!currentMember) {
-            return
+            return;
           }
-          retries -= 1
-          await new Promise((resolve) => setTimeout(resolve, 1500))
+          retries -= 1;
+          await new Promise((resolve) => setTimeout(resolve, 1500));
         }
-        throw new Error("Member removal timed out")
-      }
+        throw new Error("Member removal timed out");
+      };
 
       try {
-        const res = await member.revoke(walletSigner as any, changeStepperStep)
-        changeStepperStep("indexing")
-        const txHash = res?.tx[0]?.hash
+        const res = await member.revoke(walletSigner as any, changeStepperStep);
+        changeStepperStep("indexing");
+        const txHash = res?.tx[0]?.hash;
         if (txHash) {
-          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), "POST", {})
+          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), "POST", {});
         }
-        await checkIfMemberRemoved()
-        changeStepperStep("indexed")
-        toast.success("Member removed successfully")
-        closeModal()
+        await checkIfMemberRemoved();
+        changeStepperStep("indexed");
+        toast.success("Member removed successfully");
+        closeModal();
       } catch (onChainError: any) {
         // Silently fallback to off-chain revoke
-        setIsStepper(false) // Reset stepper since we're falling back
+        setIsStepper(false); // Reset stepper since we're falling back
 
         const success = await performOffChainRevoke({
           uid: member.uid as `0x${string}`,
           chainID: member.chainID,
           checkIfExists: checkIfMemberRemoved,
           onSuccess: () => {
-            closeModal()
+            closeModal();
           },
           toastMessages: {
             success: "Member removed successfully",
             loading: "Removing member...",
           },
-        })
+        });
 
         if (!success) {
           // Both methods failed - throw the original error to maintain expected behavior
-          throw onChainError
+          throw onChainError;
         }
       }
     } catch (error: any) {
@@ -140,18 +140,18 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress 
         {
           error: `Failed to remove member ${memberAddress}.`,
         }
-      )
+      );
     } finally {
-      setIsDeleting(false)
-      setIsStepper(false)
+      setIsDeleting(false);
+      setIsStepper(false);
     }
-  }
+  };
 
   function closeModal() {
-    setIsOpen(false)
+    setIsOpen(false);
   }
   function openModal() {
-    setIsOpen(true)
+    setIsOpen(true);
   }
 
   return (
@@ -239,5 +239,5 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({ memberAddress 
         </Transition>
       ) : null}
     </>
-  )
-}
+  );
+};

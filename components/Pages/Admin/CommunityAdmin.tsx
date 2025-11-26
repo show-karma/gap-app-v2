@@ -1,66 +1,66 @@
 /* eslint-disable @next/next/no-img-element */
-"use client"
-import { LinkIcon } from "@heroicons/react/24/solid"
-import type { Community } from "@show-karma/karma-gap-sdk"
-import { useQuery } from "@tanstack/react-query"
-import { blo } from "blo"
-import Link from "next/link"
-import { useCallback, useMemo, useState } from "react"
-import { isAddress } from "viem"
-import { useAccount } from "wagmi"
-import CommunityStats from "@/components/CommunityStats"
-import { CommunityDialog } from "@/components/Dialogs/CommunityDialog"
-import { AddAdmin } from "@/components/Pages/Admin/AddAdminDialog"
-import { RemoveAdmin } from "@/components/Pages/Admin/RemoveAdminDialog"
-import { errorManager } from "@/components/Utilities/errorManager"
-import { Skeleton } from "@/components/Utilities/Skeleton"
-import { useGap } from "@/hooks/useGap"
-import { useStaff } from "@/hooks/useStaff"
-import { layoutTheme } from "@/src/helper/theme"
-import { useOwnerStore } from "@/store"
-import { useCommunitiesStore } from "@/store/communities"
-import { chainImgDictionary } from "@/utilities/chainImgDictionary"
-import { chainNameDictionary } from "@/utilities/chainNameDictionary"
-import fetchData from "@/utilities/fetchData"
-import { formatDate } from "@/utilities/formatDate"
-import { INDEXER } from "@/utilities/indexer"
-import { MESSAGES } from "@/utilities/messages"
-import { PAGES } from "@/utilities/pages"
+"use client";
+import { LinkIcon } from "@heroicons/react/24/solid";
+import type { Community } from "@show-karma/karma-gap-sdk";
+import { useQuery } from "@tanstack/react-query";
+import { blo } from "blo";
+import Link from "next/link";
+import { useCallback, useMemo, useState } from "react";
+import { isAddress } from "viem";
+import { useAccount } from "wagmi";
+import CommunityStats from "@/components/CommunityStats";
+import { CommunityDialog } from "@/components/Dialogs/CommunityDialog";
+import { AddAdmin } from "@/components/Pages/Admin/AddAdminDialog";
+import { RemoveAdmin } from "@/components/Pages/Admin/RemoveAdminDialog";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { Skeleton } from "@/components/Utilities/Skeleton";
+import { useGap } from "@/hooks/useGap";
+import { useStaff } from "@/hooks/useStaff";
+import { layoutTheme } from "@/src/helper/theme";
+import { useOwnerStore } from "@/store";
+import { useCommunitiesStore } from "@/store/communities";
+import { chainImgDictionary } from "@/utilities/chainImgDictionary";
+import { chainNameDictionary } from "@/utilities/chainNameDictionary";
+import fetchData from "@/utilities/fetchData";
+import { formatDate } from "@/utilities/formatDate";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
 
 interface CommunityAdmin {
-  id: string
+  id: string;
   admins: Array<{
     user: {
-      id: string
-    }
-  }>
+      id: string;
+    };
+  }>;
 }
 
 interface CommunitiesData {
-  communities: Community[]
-  admins: CommunityAdmin[]
+  communities: Community[];
+  admins: CommunityAdmin[];
 }
 
 export default function CommunitiesToAdminPage() {
-  const [allCommunities, setAllCommunities] = useState<Community[]>([])
-  const [communityAdmins, setCommunityAdmins] = useState<CommunityAdmin[]>([])
+  const [allCommunities, setAllCommunities] = useState<Community[]>([]);
+  const [communityAdmins, setCommunityAdmins] = useState<CommunityAdmin[]>([]);
 
-  const { gap } = useGap()
-  const { address } = useAccount()
-  const isOwner = useOwnerStore((state) => state.isOwner)
-  const { isStaff } = useStaff()
+  const { gap } = useGap();
+  const { address } = useAccount();
+  const isOwner = useOwnerStore((state) => state.isOwner);
+  const { isStaff } = useStaff();
   const { communities: userAdminCommunities, isLoading: isLoadingUserCommunities } =
-    useCommunitiesStore()
+    useCommunitiesStore();
 
-  const isStaffOrOwner = isOwner || isStaff
-  const hasAdminCommunities = userAdminCommunities.length > 0
-  const hasAccess = isStaffOrOwner || hasAdminCommunities
+  const isStaffOrOwner = isOwner || isStaff;
+  const hasAdminCommunities = userAdminCommunities.length > 0;
+  const hasAccess = isStaffOrOwner || hasAdminCommunities;
 
   const fetchCommunitiesData = useCallback(async (): Promise<CommunitiesData> => {
-    if (!gap) throw new Error("Gap not initialized")
+    if (!gap) throw new Error("Gap not initialized");
 
-    const result = await gap.fetch.communities()
-    result.sort((a, b) => (a.details?.name || a.uid).localeCompare(b.details?.name || b.uid))
+    const result = await gap.fetch.communities();
+    result.sort((a, b) => (a.details?.name || a.uid).localeCompare(b.details?.name || b.uid));
 
     const fetchPromises = result.map(async (community) => {
       try {
@@ -71,21 +71,21 @@ export default function CommunitiesToAdminPage() {
           {},
           {},
           false
-        )
+        );
 
-        if (!data) return { id: community.uid, admins: [] }
-        if (error) throw Error(error)
+        if (!data) return { id: community.uid, admins: [] };
+        if (error) throw Error(error);
 
-        return data
+        return data;
       } catch {
-        return { id: community.uid, admins: [] }
+        return { id: community.uid, admins: [] };
       }
-    })
-    const communityAdmins = await Promise.all(fetchPromises)
-    setAllCommunities(result || [])
-    setCommunityAdmins(communityAdmins || [])
-    return { communities: result, admins: communityAdmins }
-  }, [gap])
+    });
+    const communityAdmins = await Promise.all(fetchPromises);
+    setAllCommunities(result || []);
+    setCommunityAdmins(communityAdmins || []);
+    return { communities: result, admins: communityAdmins };
+  }, [gap]);
 
   const { isLoading, refetch } = useQuery({
     queryKey: ["communities", "admins"],
@@ -96,53 +96,53 @@ export default function CommunitiesToAdminPage() {
     refetchOnMount: false,
     refetchOnReconnect: false,
     retry: 1,
-  })
+  });
 
   // Filter communities based on user role
   const displayedCommunities = useMemo(() => {
     if (isStaffOrOwner) {
       // Staff/Owner sees all communities
-      return allCommunities
+      return allCommunities;
     } else if (hasAdminCommunities) {
       // Regular admin sees only their communities
-      const userAdminUids = new Set(userAdminCommunities.map((c) => c.uid))
-      return allCommunities.filter((c) => userAdminUids.has(c.uid))
+      const userAdminUids = new Set(userAdminCommunities.map((c) => c.uid));
+      return allCommunities.filter((c) => userAdminUids.has(c.uid));
     }
-    return []
-  }, [allCommunities, isStaffOrOwner, hasAdminCommunities, userAdminCommunities])
+    return [];
+  }, [allCommunities, isStaffOrOwner, hasAdminCommunities, userAdminCommunities]);
 
-  const isLoadingData = isLoading || (!isStaffOrOwner && isLoadingUserCommunities)
+  const isLoadingData = isLoading || (!isStaffOrOwner && isLoadingUserCommunities);
 
   const handleRefetch = useCallback(async () => {
     try {
-      const result = await refetch()
+      const result = await refetch();
       if (result.data) {
-        setAllCommunities(result.data.communities)
-        setCommunityAdmins(result.data.admins)
+        setAllCommunities(result.data.communities);
+        setCommunityAdmins(result.data.admins);
       }
     } catch (error: any) {
-      errorManager(`Error refetching communities`, error)
+      errorManager(`Error refetching communities`, error);
     }
-    return undefined
-  }, [refetch])
+    return undefined;
+  }, [refetch]);
 
   // Ensure address has 0x prefix
   const formatAdminAddress = (address: any): `0x${string}` => {
     if (isAddress(address)) {
-      return address as `0x${string}`
+      return address as `0x${string}`;
     }
     if (address.startsWith("0x") && address.length === 42) {
-      return address as `0x${string}`
+      return address as `0x${string}`;
     }
     // Return a default format if not a valid address (should not happen)
-    return `0x${address.replace("0x", "")}` as `0x${string}`
-  }
+    return `0x${address.replace("0x", "")}` as `0x${string}`;
+  };
 
   function shortenHex(hexString: string) {
-    const firstPart = hexString.substring(0, 6)
-    const lastPart = hexString.substring(hexString.length - 6)
+    const firstPart = hexString.substring(0, 6);
+    const lastPart = hexString.substring(hexString.length - 6);
 
-    return `${firstPart}...${lastPart}`
+    return `${firstPart}...${lastPart}`;
   }
 
   const LoadingSkeleton = () => (
@@ -200,7 +200,7 @@ export default function CommunitiesToAdminPage() {
         </div>
       ))}
     </div>
-  )
+  );
 
   return (
     <div className={layoutTheme.padding}>
@@ -229,16 +229,16 @@ export default function CommunitiesToAdminPage() {
                 {displayedCommunities.map((community) => {
                   const matchingCommunityAdmin = communityAdmins.find(
                     (admin) => admin.id === community.uid
-                  )
+                  );
                   // TypeScript workaround for the 0x string format
-                  const communityId = community.uid as unknown as `0x${string}`
+                  const communityId = community.uid as unknown as `0x${string}`;
 
                   // Check if user is admin of this specific community
                   const isAdminOfThisCommunity = userAdminCommunities.some(
                     (userCommunity) => userCommunity.uid === community.uid
-                  )
+                  );
 
-                  const canManageAdmins = isStaffOrOwner || isAdminOfThisCommunity
+                  const canManageAdmins = isStaffOrOwner || isAdminOfThisCommunity;
 
                   return (
                     <div
@@ -350,7 +350,7 @@ export default function CommunitiesToAdminPage() {
                         </div>
                       </div>
                     </div>
-                  )
+                  );
                 })}
               </div>
             ) : (
@@ -368,5 +368,5 @@ export default function CommunitiesToAdminPage() {
         </div>
       )}
     </div>
-  )
+  );
 }

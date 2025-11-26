@@ -1,49 +1,49 @@
-"use client"
+"use client";
 
-import { useParams, useRouter } from "next/navigation"
-import { useMemo } from "react"
-import { useCommunityPrograms } from "@/hooks/usePrograms"
+import { useParams, useRouter } from "next/navigation";
+import { useMemo } from "react";
+import { useCommunityPrograms } from "@/hooks/usePrograms";
 
 export function DonationProgramDropdown() {
-  const params = useParams()
-  const router = useRouter()
-  const communityId = params.communityId as string
-  const programId = params.programId as string // Format: programId_chainId
+  const params = useParams();
+  const router = useRouter();
+  const communityId = params.communityId as string;
+  const programId = params.programId as string; // Format: programId_chainId
 
-  const { data: programs, isLoading } = useCommunityPrograms(communityId)
+  const { data: programs, isLoading } = useCommunityPrograms(communityId);
 
   // Sort programs alphabetically by title
   const sortedPrograms = useMemo(() => {
-    if (!programs) return []
+    if (!programs) return [];
     return [...programs].sort((a, b) => {
-      const aTitle = a.metadata?.title || ""
-      const bTitle = b.metadata?.title || ""
-      return aTitle.localeCompare(bTitle)
-    })
-  }, [programs])
+      const aTitle = a.metadata?.title || "";
+      const bTitle = b.metadata?.title || "";
+      return aTitle.localeCompare(bTitle);
+    });
+  }, [programs]);
 
   const handleProgramChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedCombinedId = e.target.value
+    const selectedCombinedId = e.target.value;
     if (selectedCombinedId) {
-      router.push(`/community/${communityId}/donate/${selectedCombinedId}`)
+      router.push(`/community/${communityId}/donate/${selectedCombinedId}`);
     }
-  }
+  };
 
   if (isLoading) {
     return (
       <div className="w-full max-w-md">
         <div className="bg-zinc-100 dark:bg-zinc-800 rounded-lg p-3 text-sm animate-pulse h-[42px]" />
       </div>
-    )
+    );
   }
 
   if (!programs || programs.length === 0) {
-    return null
+    return null;
   }
 
   // Don't show dropdown if there's only one program
   if (programs.length === 1) {
-    return null
+    return null;
   }
 
   return (
@@ -65,15 +65,15 @@ export function DonationProgramDropdown() {
           const combinedId =
             program.programId && program.chainID
               ? `${program.programId}_${program.chainID}`
-              : program.programId || ""
+              : program.programId || "";
 
           return (
             <option key={program.programId} value={combinedId}>
               {program.metadata?.title || "Untitled Program"}
             </option>
-          )
+          );
         })}
       </select>
     </div>
-  )
+  );
 }

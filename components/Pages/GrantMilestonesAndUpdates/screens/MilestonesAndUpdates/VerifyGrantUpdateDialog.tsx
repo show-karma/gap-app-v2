@@ -1,49 +1,49 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { Dialog, Transition } from "@headlessui/react"
-import { ArrowRightIcon } from "@heroicons/react/24/solid"
-import { zodResolver } from "@hookform/resolvers/zod"
+import { Dialog, Transition } from "@headlessui/react";
+import { ArrowRightIcon } from "@heroicons/react/24/solid";
+import { zodResolver } from "@hookform/resolvers/zod";
 import type {
   IGrantUpdate,
   IGrantUpdateStatus,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import { type FC, Fragment, useState } from "react"
-import { type SubmitHandler, useForm } from "react-hook-form"
-import toast from "react-hot-toast"
-import { useAccount } from "wagmi"
-import { z } from "zod"
-import { Button } from "@/components/Utilities/Button"
-import { errorManager } from "@/components/Utilities/errorManager"
-import { useAuth } from "@/hooks/useAuth"
-import { useGap } from "@/hooks/useGap"
-import { useWallet } from "@/hooks/useWallet"
-import { useOwnerStore, useProjectStore } from "@/store"
-import { useStepper } from "@/store/modals/txStepper"
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils"
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
-import { MESSAGES } from "@/utilities/messages"
-import { sanitizeObject } from "@/utilities/sanitize"
-import { safeGetWalletClient } from "@/utilities/wallet-helpers"
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { type FC, Fragment, useState } from "react";
+import { type SubmitHandler, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { z } from "zod";
+import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { useAuth } from "@/hooks/useAuth";
+import { useGap } from "@/hooks/useGap";
+import { useWallet } from "@/hooks/useWallet";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useStepper } from "@/store/modals/txStepper";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { sanitizeObject } from "@/utilities/sanitize";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 type VerifyGrantUpdateDialogProps = {
-  grantUpdate: IGrantUpdate
-  addVerifiedUpdate: (newVerified: IGrantUpdateStatus) => void
-}
+  grantUpdate: IGrantUpdate;
+  addVerifiedUpdate: (newVerified: IGrantUpdateStatus) => void;
+};
 
 const schema = z.object({
   comment: z.string(),
-})
+});
 
-type SchemaType = z.infer<typeof schema>
+type SchemaType = z.infer<typeof schema>;
 
 export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
   grantUpdate,
   addVerifiedUpdate,
 }) => {
-  const [isOpen, setIsOpen] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const {
     register,
@@ -53,30 +53,30 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
     resolver: zodResolver(schema),
     reValidateMode: "onChange",
     mode: "onChange",
-  })
+  });
 
   function closeModal() {
-    setIsOpen(false)
+    setIsOpen(false);
   }
   function openModal() {
-    setIsOpen(true)
+    setIsOpen(true);
   }
-  const { address, isConnected, chain } = useAccount()
+  const { address, isConnected, chain } = useAccount();
 
   const hasVerifiedThis = grantUpdate?.verified?.find(
     (v) => v.attester?.toLowerCase() === address?.toLowerCase()
-  )
-  const { switchChainAsync } = useWallet()
-  const { gap } = useGap()
-  const project = useProjectStore((state) => state.project)
-  const refreshProject = useProjectStore((state) => state.refreshProject)
-  const { changeStepperStep, setIsStepper } = useStepper()
+  );
+  const { switchChainAsync } = useWallet();
+  const { gap } = useGap();
+  const project = useProjectStore((state) => state.project);
+  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { changeStepperStep, setIsStepper } = useStepper();
 
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
-    let gapClient = gap
-    if (!gap) throw new Error("Please, connect a wallet")
+    let gapClient = gap;
+    if (!gap) throw new Error("Please, connect a wallet");
     try {
-      setIsLoading(true)
+      setIsLoading(true);
       const {
         success,
         chainId: actualChainId,
@@ -85,32 +85,32 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
         targetChainId: grantUpdate.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
-      })
+      });
 
       if (!success) {
-        setIsLoading(false)
-        return
+        setIsLoading(false);
+        return;
       }
 
-      gapClient = newGapClient
+      gapClient = newGapClient;
 
-      const { walletClient, error } = await safeGetWalletClient(actualChainId)
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error })
+        throw new Error("Failed to connect to wallet", { cause: error });
       }
-      const walletSigner = await walletClientToSigner(walletClient)
+      const walletSigner = await walletClientToSigner(walletClient);
 
-      const fetchedProject = await gapClient.fetch.projectById(project?.uid)
-      if (!fetchedProject) return
+      const fetchedProject = await gapClient.fetch.projectById(project?.uid);
+      if (!fetchedProject) return;
       const grantInstance = fetchedProject.grants.find(
         (g) => g.uid.toLowerCase() === grantUpdate.refUID.toLowerCase()
-      )
-      if (!grantInstance) return
+      );
+      if (!grantInstance) return;
       const grantUpdateInstance = grantInstance.updates.find(
         (u) => u.uid.toLowerCase() === grantUpdate.uid.toLowerCase()
-      )
-      if (!grantUpdateInstance) return
+      );
+      if (!grantUpdateInstance) return;
       await grantUpdateInstance
         .verify(
           walletSigner,
@@ -120,46 +120,46 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
           changeStepperStep
         )
         .then(async (res) => {
-          let retries = 1000
-          changeStepperStep("indexing")
-          const txHash = res?.tx[0]?.hash
+          let retries = 1000;
+          changeStepperStep("indexing");
+          const txHash = res?.tx[0]?.hash;
           if (txHash) {
             await fetchData(
               INDEXER.ATTESTATION_LISTENER(txHash, grantUpdateInstance.chainID),
               "POST",
               {}
-            )
+            );
           }
           while (retries > 0) {
             await refreshProject()
               .then(async (fetchedProject) => {
-                const foundGrant = fetchedProject?.grants.find((g) => g.uid === grantUpdate.refUID)
+                const foundGrant = fetchedProject?.grants.find((g) => g.uid === grantUpdate.refUID);
 
                 const fetchedGrantUpdate = foundGrant?.updates.find(
                   (u: any) => u.uid === grantUpdate.uid
-                )
+                );
 
                 const alreadyExists = fetchedGrantUpdate?.verified?.find(
                   (v: any) => v.attester?.toLowerCase() === address?.toLowerCase()
-                )
+                );
 
                 if (alreadyExists) {
-                  retries = 0
-                  changeStepperStep("indexed")
-                  toast.success(MESSAGES.GRANT.GRANT_UPDATE.VERIFY.SUCCESS)
+                  retries = 0;
+                  changeStepperStep("indexed");
+                  toast.success(MESSAGES.GRANT.GRANT_UPDATE.VERIFY.SUCCESS);
                 }
-                retries -= 1
+                retries -= 1;
                 // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500))
+                await new Promise((resolve) => setTimeout(resolve, 1500));
               })
               .catch(async () => {
-                retries -= 1
+                retries -= 1;
                 // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500))
-              })
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+              });
           }
-        })
-      closeModal()
+        });
+      closeModal();
     } catch (error: any) {
       errorManager(
         MESSAGES.GRANT.GRANT_UPDATE.VERIFY.ERROR,
@@ -170,21 +170,21 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
           address,
         },
         { error: MESSAGES.GRANT.GRANT_UPDATE.VERIFY.ERROR }
-      )
+      );
     } finally {
-      setIsLoading(false)
-      setIsStepper(false)
+      setIsLoading(false);
+      setIsStepper(false);
     }
-  }
-  const { authenticated: isAuth } = useAuth()
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin)
-  const isContractOwner = useOwnerStore((state) => state.isOwner)
+  };
+  const { authenticated: isAuth } = useAuth();
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
   const verifyPermission = () => {
-    if (!isAuth) return false
-    return isContractOwner || !isProjectAdmin
-  }
-  const ableToVerify = verifyPermission()
-  if (hasVerifiedThis || !ableToVerify) return null
+    if (!isAuth) return false;
+    return isContractOwner || !isProjectAdmin;
+  };
+  const ableToVerify = verifyPermission();
+  if (hasVerifiedThis || !ableToVerify) return null;
 
   return (
     <>
@@ -261,5 +261,5 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
         </Dialog>
       </Transition>
     </>
-  )
-}
+  );
+};

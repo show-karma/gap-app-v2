@@ -1,30 +1,30 @@
-"use client"
+"use client";
 import {
   CheckIcon,
   ChevronDownIcon,
   MagnifyingGlassIcon,
   XMarkIcon,
-} from "@heroicons/react/24/solid"
-import { useEffect, useRef, useState } from "react"
-import { cn } from "@/utilities/tailwind"
+} from "@heroicons/react/24/solid";
+import { useEffect, useRef, useState } from "react";
+import { cn } from "@/utilities/tailwind";
 
 export interface DropdownItem {
-  id: string
-  label: string
-  value?: any
+  id: string;
+  label: string;
+  value?: any;
 }
 
 interface MultiSelectDropdownProps {
-  items: DropdownItem[]
-  selectedIds: string[]
-  onChange: (selectedIds: string[]) => void
-  placeholder?: string
-  searchPlaceholder?: string
-  className?: string
-  label?: string
-  disabled?: boolean
-  required?: boolean
-  error?: string
+  items: DropdownItem[];
+  selectedIds: string[];
+  onChange: (selectedIds: string[]) => void;
+  placeholder?: string;
+  searchPlaceholder?: string;
+  className?: string;
+  label?: string;
+  disabled?: boolean;
+  required?: boolean;
+  error?: string;
 }
 
 export const MultiSelectDropdown = ({
@@ -39,52 +39,52 @@ export const MultiSelectDropdown = ({
   required = false,
   error,
 }: MultiSelectDropdownProps) => {
-  const [isOpen, setIsOpen] = useState(false)
-  const [searchTerm, setSearchTerm] = useState("")
-  const dropdownRef = useRef<HTMLDivElement>(null)
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Filter items based on search term
   const filteredItems = items.filter((item) =>
     item.label.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  );
 
   // Handle clicking outside the dropdown to close it
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
+        setIsOpen(false);
       }
-    }
+    };
 
-    document.addEventListener("mousedown", handleClickOutside)
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [])
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // Toggle an item selection
   const toggleItem = (id: string) => {
     if (selectedIds.includes(id)) {
-      onChange(selectedIds.filter((selectedId) => selectedId !== id))
+      onChange(selectedIds.filter((selectedId) => selectedId !== id));
     } else {
-      onChange([...selectedIds, id])
+      onChange([...selectedIds, id]);
     }
-  }
+  };
 
   // Remove a selected item
   const removeItem = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation()
-    onChange(selectedIds.filter((selectedId) => selectedId !== id))
-  }
+    e.stopPropagation();
+    onChange(selectedIds.filter((selectedId) => selectedId !== id));
+  };
 
   // Clear all selected items
   const clearAll = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    onChange([])
-  }
+    e.stopPropagation();
+    onChange([]);
+  };
 
   // Get selected item labels for display
-  const selectedItems = items.filter((item) => selectedIds.includes(item.id))
+  const selectedItems = items.filter((item) => selectedIds.includes(item.id));
 
   return (
     <div className={`relative w-full ${className}`} ref={dropdownRef}>
@@ -184,5 +184,5 @@ export const MultiSelectDropdown = ({
         </div>
       )}
     </div>
-  )
-}
+  );
+};

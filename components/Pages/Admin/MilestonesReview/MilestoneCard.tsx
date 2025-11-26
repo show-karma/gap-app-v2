@@ -1,26 +1,26 @@
-"use client"
+"use client";
 
-import { CheckCircleIcon } from "@heroicons/react/20/solid"
-import { useMemo } from "react"
-import { Button } from "@/components/Utilities/Button"
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview"
-import type { GrantMilestoneWithCompletion } from "@/services/milestones"
-import { formatDate } from "@/utilities/formatDate"
-import { shortAddress } from "@/utilities/shortAddress"
+import { CheckCircleIcon } from "@heroicons/react/20/solid";
+import { useMemo } from "react";
+import { Button } from "@/components/Utilities/Button";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import type { GrantMilestoneWithCompletion } from "@/services/milestones";
+import { formatDate } from "@/utilities/formatDate";
+import { shortAddress } from "@/utilities/shortAddress";
 
 interface MilestoneCardProps {
-  milestone: GrantMilestoneWithCompletion
-  index: number
-  verifyingMilestoneId: string | null
-  verificationComment: string
-  isVerifying: boolean
-  isSyncing: boolean
-  canVerifyMilestones: boolean
-  onVerifyClick: (uid: string) => void
-  onCancelVerification: () => void
-  onVerificationCommentChange: (comment: string) => void
-  onSubmitVerification: (milestone: GrantMilestoneWithCompletion) => void
-  onSyncVerification: (milestone: GrantMilestoneWithCompletion) => void
+  milestone: GrantMilestoneWithCompletion;
+  index: number;
+  verifyingMilestoneId: string | null;
+  verificationComment: string;
+  isVerifying: boolean;
+  isSyncing: boolean;
+  canVerifyMilestones: boolean;
+  onVerifyClick: (uid: string) => void;
+  onCancelVerification: () => void;
+  onVerificationCommentChange: (comment: string) => void;
+  onSubmitVerification: (milestone: GrantMilestoneWithCompletion) => void;
+  onSyncVerification: (milestone: GrantMilestoneWithCompletion) => void;
 }
 
 export function MilestoneCard({
@@ -41,26 +41,26 @@ export function MilestoneCard({
   const useOnChainData = useMemo(
     () => !!milestone.completionDetails?.description,
     [milestone.completionDetails?.description]
-  )
+  );
 
   const completionData = useMemo(
     () => (useOnChainData ? milestone.completionDetails : milestone.fundingApplicationCompletion),
     [useOnChainData, milestone.completionDetails, milestone.fundingApplicationCompletion]
-  )
+  );
 
-  const hasCompletion = useMemo(() => completionData !== null, [completionData])
+  const hasCompletion = useMemo(() => completionData !== null, [completionData]);
   const isVerified = useMemo(
     () => milestone.verificationDetails !== null,
     [milestone.verificationDetails]
-  )
+  );
   const hasOnChainCompletion = useMemo(
     () => milestone.completionDetails !== null,
     [milestone.completionDetails]
-  )
+  );
   const hasFundingAppCompletion = useMemo(
     () => milestone.fundingApplicationCompletion !== null,
     [milestone.fundingApplicationCompletion]
-  )
+  );
 
   // Memoized status tree-decision
   const statusInfo = useMemo(() => {
@@ -68,23 +68,23 @@ export function MilestoneCard({
       return {
         status: "Verified",
         statusColor: "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300",
-      }
+      };
     } else if (hasOnChainCompletion) {
       return {
         status: "Pending Verification",
         statusColor: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
-      }
+      };
     } else if (hasFundingAppCompletion) {
       return {
         status: "Pending Completion and Verification",
         statusColor: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300",
-      }
+      };
     }
     return {
       status: "Not Started",
       statusColor: "bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300",
-    }
-  }, [isVerified, hasOnChainCompletion, hasFundingAppCompletion])
+    };
+  }, [isVerified, hasOnChainCompletion, hasFundingAppCompletion]);
 
   return (
     <div
@@ -224,5 +224,5 @@ export function MilestoneCard({
         </span>
       </div>
     </div>
-  )
+  );
 }

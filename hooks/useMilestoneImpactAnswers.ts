@@ -1,9 +1,9 @@
-import { useQuery } from "@tanstack/react-query"
-import type { ImpactIndicatorWithData } from "@/types/impactMeasurement"
-import { getMilestoneImpactAnswers } from "@/utilities/impact"
+import { useQuery } from "@tanstack/react-query";
+import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
+import { getMilestoneImpactAnswers } from "@/utilities/impact";
 
 interface UseMilestoneImpactAnswersProps {
-  milestoneUID?: string
+  milestoneUID?: string;
 }
 
 /**
@@ -14,12 +14,12 @@ export const useMilestoneImpactAnswers = ({ milestoneUID }: UseMilestoneImpactAn
     queryKey: ["milestoneImpactAnswers", milestoneUID],
     queryFn: () => {
       if (!milestoneUID) {
-        throw new Error("Milestone UID is required")
+        throw new Error("Milestone UID is required");
       }
-      return getMilestoneImpactAnswers(milestoneUID)
+      return getMilestoneImpactAnswers(milestoneUID);
     },
     enabled: !!milestoneUID,
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchOnWindowFocus: false,
-  })
-}
+  });
+};

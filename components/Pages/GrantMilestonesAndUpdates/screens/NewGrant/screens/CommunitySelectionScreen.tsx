@@ -1,23 +1,23 @@
-import { ChevronDownIcon } from "@heroicons/react/24/solid"
-import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import { useParams, usePathname, useRouter } from "next/navigation"
-import type React from "react"
-import { useEffect, useMemo, useState } from "react"
-import { CommunitiesDropdown } from "@/components/CommunitiesDropdown"
-import { useDuplicateGrantCheck } from "@/hooks/useDuplicateGrantCheck"
-import { useGrant } from "@/hooks/useGrant"
-import { useProjectStore } from "@/store"
+import { ChevronDownIcon } from "@heroicons/react/24/solid";
+import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useParams, usePathname, useRouter } from "next/navigation";
+import type React from "react";
+import { useEffect, useMemo, useState } from "react";
+import { CommunitiesDropdown } from "@/components/CommunitiesDropdown";
+import { useDuplicateGrantCheck } from "@/hooks/useDuplicateGrantCheck";
+import { useGrant } from "@/hooks/useGrant";
+import { useProjectStore } from "@/store";
 import {
   FUNDING_PROGRAM_GRANT_NAMES,
   isFundingProgramCommunity,
-} from "@/utilities/funding-programs"
-import { gapIndexerApi } from "@/utilities/gapIndexerApi"
-import { PAGES } from "@/utilities/pages"
-import { SearchGrantProgram } from "../index"
-import { StepBlock } from "../StepBlock"
-import { useGrantFormStore } from "../store"
-import { CancelButton } from "./buttons/CancelButton"
-import { NextButton } from "./buttons/NextButton"
+} from "@/utilities/funding-programs";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { PAGES } from "@/utilities/pages";
+import { SearchGrantProgram } from "../index";
+import { StepBlock } from "../StepBlock";
+import { useGrantFormStore } from "../store";
+import { CancelButton } from "./buttons/CancelButton";
+import { NextButton } from "./buttons/NextButton";
 
 export const CommunitySelectionScreen: React.FC = () => {
   const {
@@ -27,14 +27,14 @@ export const CommunitySelectionScreen: React.FC = () => {
     updateFormData,
     communityNetworkId,
     setCommunityNetworkId,
-  } = useGrantFormStore()
-  const selectedProject = useProjectStore((state) => state.project)
-  const router = useRouter()
-  const pathname = usePathname()
-  const params = useParams()
-  const grantUid = params.grantUid as string
-  const isEditing = pathname.includes("/edit")
-  const { updateGrant } = useGrant()
+  } = useGrantFormStore();
+  const selectedProject = useProjectStore((state) => state.project);
+  const router = useRouter();
+  const pathname = usePathname();
+  const params = useParams();
+  const grantUid = params.grantUid as string;
+  const isEditing = pathname.includes("/edit");
+  const { updateGrant } = useGrant();
   const { checkForDuplicateGrantInProject, isCheckingGrantDuplicate, isGrantDuplicateInProject } =
     useDuplicateGrantCheck(
       {
@@ -43,55 +43,55 @@ export const CommunitySelectionScreen: React.FC = () => {
         title: formData.title,
       },
       { enabled: false } // Only run manually via refetch
-    )
-  const [allCommunities, setAllCommunities] = useState<ICommunityResponse[]>([])
+    );
+  const [allCommunities, setAllCommunities] = useState<ICommunityResponse[]>([]);
 
   // For funding program flow, we only show Celo community
   useEffect(() => {
     const fetchCommunities = async () => {
       try {
-        const result = await gapIndexerApi.communities()
+        const result = await gapIndexerApi.communities();
 
         if (flowType === "program") {
           const filteredCommunities = result.data.filter((community) =>
             isFundingProgramCommunity(community.details?.data?.name)
-          )
-          setAllCommunities(filteredCommunities.length > 0 ? filteredCommunities : [])
+          );
+          setAllCommunities(filteredCommunities.length > 0 ? filteredCommunities : []);
         } else {
-          setAllCommunities(result.data)
+          setAllCommunities(result.data);
         }
       } catch (error) {
-        console.error(error)
-        setAllCommunities([])
+        console.error(error);
+        setAllCommunities([]);
       }
-    }
+    };
 
-    fetchCommunities()
-  }, [flowType])
+    fetchCommunities();
+  }, [flowType]);
 
   // Note: React Query automatically handles cache invalidation when params change
   // No need for manual reset
 
   const setCommunityValue = (value: string, networkId: number) => {
-    setCommunityNetworkId(networkId)
-    updateFormData({ community: value })
-  }
+    setCommunityNetworkId(networkId);
+    updateFormData({ community: value });
+  };
 
   const handleNext = async () => {
     // Check for duplicate grant in project before proceeding
     if (!isEditing) {
-      const { data: duplicate } = await checkForDuplicateGrantInProject()
+      const { data: duplicate } = await checkForDuplicateGrantInProject();
 
       if (duplicate) {
         // Duplicate grant detected in fresh project data, don't proceed
-        return
+        return;
       }
     }
 
     if (isEditing && flowType === "program") {
       const grantToUpdate = selectedProject?.grants?.find(
         (g) => g.uid.toLowerCase() === grantUid?.toLowerCase()
-      )
+      );
 
       if (grantToUpdate) {
         const updateData = {
@@ -99,55 +99,55 @@ export const CommunitySelectionScreen: React.FC = () => {
           programId: formData.programId,
           title: formData.title,
           selectedTrackIds: formData.selectedTrackIds || [],
-        }
+        };
 
-        updateGrant(grantToUpdate, updateData)
+        updateGrant(grantToUpdate, updateData);
       }
     } else {
       if (flowType === "program") {
-        setCurrentStep(4) // Go directly to milestones screen
+        setCurrentStep(4); // Go directly to milestones screen
       } else {
-        setCurrentStep(3) // Go to details screen for grants
+        setCurrentStep(3); // Go to details screen for grants
       }
     }
-  }
+  };
 
   const handleBack = () => {
-    setCurrentStep(1)
-  }
+    setCurrentStep(1);
+  };
 
   const handleCancel = () => {
-    if (!selectedProject) return
-    router.push(PAGES.PROJECT.GRANTS(selectedProject.details?.data?.slug || selectedProject?.uid))
-  }
+    if (!selectedProject) return;
+    router.push(PAGES.PROJECT.GRANTS(selectedProject.details?.data?.slug || selectedProject?.uid));
+  };
 
   const isProjectAlreadyInProgram = useMemo(() => {
-    if (!selectedProject?.grants || isEditing) return false
+    if (!selectedProject?.grants || isEditing) return false;
 
     return selectedProject.grants.some((grant) => {
       if (formData.programId) {
         // For program grants: match by programId (base part before underscore)
-        const existingProgramId = grant.details?.data?.programId
-        if (!existingProgramId) return false
+        const existingProgramId = grant.details?.data?.programId;
+        if (!existingProgramId) return false;
 
-        const selectedProgramId = formData.programId.split("_")[0]
-        const existingProgramIdBase = existingProgramId.split("_")[0]
+        const selectedProgramId = formData.programId.split("_")[0];
+        const existingProgramIdBase = existingProgramId.split("_")[0];
 
-        return existingProgramIdBase === selectedProgramId
+        return existingProgramIdBase === selectedProgramId;
       } else if (formData.title) {
         // For regular grants: match by community AND title
-        const existingCommunity = grant.data?.communityUID
-        const existingTitle = grant.details?.data?.title
+        const existingCommunity = grant.data?.communityUID;
+        const existingTitle = grant.details?.data?.title;
 
         return (
           existingCommunity === formData.community &&
           existingTitle?.toLowerCase().trim() === formData.title?.toLowerCase().trim()
-        )
+        );
       }
 
-      return false
-    })
-  }, [formData.programId, formData.community, formData.title, selectedProject?.grants, isEditing])
+      return false;
+    });
+  }, [formData.programId, formData.community, formData.title, selectedProject?.grants, isEditing]);
 
   const canProceed = useMemo(() => {
     return (
@@ -155,14 +155,14 @@ export const CommunitySelectionScreen: React.FC = () => {
       (!!formData.programId || !!formData.title) &&
       !isProjectAlreadyInProgram &&
       !isGrantDuplicateInProject
-    )
+    );
   }, [
     formData.community,
     formData.programId,
     formData.title,
     isProjectAlreadyInProgram,
     isGrantDuplicateInProject,
-  ])
+  ]);
 
   return (
     <StepBlock currentStep={2}>
@@ -177,12 +177,12 @@ export const CommunitySelectionScreen: React.FC = () => {
           <CommunitiesDropdown
             onSelectFunction={(value, networkId) => {
               if (!isEditing) {
-                setCommunityValue(value, networkId)
+                setCommunityValue(value, networkId);
                 updateFormData({
                   programId: undefined,
                   title: "",
                   selectedTrackIds: [],
-                })
+                });
               }
             }}
             previousValue={formData.community}
@@ -213,9 +213,9 @@ export const CommunitySelectionScreen: React.FC = () => {
               canAdd={flowType === "grant"}
               setValue={(field: string, value?: string, _options?: { shouldValidate: boolean }) => {
                 if (field === "programId" && !isEditing) {
-                  updateFormData({ programId: value })
+                  updateFormData({ programId: value });
                 } else if (field === "title" && !isEditing) {
-                  updateFormData({ title: value || "" })
+                  updateFormData({ title: value || "" });
                 }
               }}
               watch={(field: string) => formData[field as keyof typeof formData] || ""}
@@ -241,7 +241,7 @@ export const CommunitySelectionScreen: React.FC = () => {
               disabled={isEditing}
               onClick={() => {
                 if (!isEditing) {
-                  handleBack()
+                  handleBack();
                 }
               }}
             />
@@ -255,5 +255,5 @@ export const CommunitySelectionScreen: React.FC = () => {
         </div>
       </div>
     </StepBlock>
-  )
-}
+  );
+};

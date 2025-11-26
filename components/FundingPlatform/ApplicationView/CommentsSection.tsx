@@ -1,22 +1,22 @@
-"use client"
+"use client";
 
-import type { FC } from "react"
-import type { IApplicationVersion } from "@/types/funding-platform"
-import CommentsTimeline from "./CommentsTimeline"
+import type { FC } from "react";
+import type { IApplicationVersion } from "@/types/funding-platform";
+import CommentsTimeline from "./CommentsTimeline";
 
 interface CommentsSectionProps {
-  applicationId: string
-  comments: any[]
-  statusHistory?: any[]
-  versionHistory?: IApplicationVersion[]
-  currentStatus: any
-  isAdmin: boolean
-  currentUserAddress?: string
-  onCommentAdd: (content: string) => Promise<void>
-  onCommentEdit: (commentId: string, content: string) => Promise<void>
-  onCommentDelete: (commentId: string) => Promise<void>
-  onVersionClick?: (versionId: string) => void
-  isLoading: boolean
+  applicationId: string;
+  comments: any[];
+  statusHistory?: any[];
+  versionHistory?: IApplicationVersion[];
+  currentStatus: any;
+  isAdmin: boolean;
+  currentUserAddress?: string;
+  onCommentAdd: (content: string) => Promise<void>;
+  onCommentEdit: (commentId: string, content: string) => Promise<void>;
+  onCommentDelete: (commentId: string) => Promise<void>;
+  onVersionClick?: (versionId: string) => void;
+  isLoading: boolean;
 }
 
 const CommentsSection: FC<CommentsSectionProps> = ({
@@ -50,7 +50,7 @@ const CommentsSection: FC<CommentsSectionProps> = ({
         isLoading={isLoading}
       />
     </div>
-  )
-}
+  );
+};
 
-export default CommentsSection
+export default CommentsSection;

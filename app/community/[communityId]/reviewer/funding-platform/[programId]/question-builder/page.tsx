@@ -1,13 +1,13 @@
-"use client"
-import { ArrowLeftIcon, EyeIcon } from "@heroicons/react/24/solid"
-import { useParams, useRouter } from "next/navigation"
-import { QuestionBuilder } from "@/components/QuestionBuilder"
-import { Button } from "@/components/Utilities/Button"
-import { Spinner } from "@/components/Utilities/Spinner"
-import { usePermissions } from "@/hooks/usePermissions"
-import { usePostApprovalSchema, useQuestionBuilderSchema } from "@/hooks/useQuestionBuilder"
-import { layoutTheme } from "@/src/helper/theme"
-import { PAGES } from "@/utilities/pages"
+"use client";
+import { ArrowLeftIcon, EyeIcon } from "@heroicons/react/24/solid";
+import { useParams, useRouter } from "next/navigation";
+import { QuestionBuilder } from "@/components/QuestionBuilder";
+import { Button } from "@/components/Utilities/Button";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { usePermissions } from "@/hooks/usePermissions";
+import { usePostApprovalSchema, useQuestionBuilderSchema } from "@/hooks/useQuestionBuilder";
+import { layoutTheme } from "@/src/helper/theme";
+import { PAGES } from "@/utilities/pages";
 
 /**
  * Reviewer Question Builder Page
@@ -15,50 +15,50 @@ import { PAGES } from "@/utilities/pages"
  * Reuses the QuestionBuilder component with all interactions disabled
  */
 export default function ReviewerQuestionBuilderPage() {
-  const router = useRouter()
+  const router = useRouter();
   const { communityId, programId: combinedProgramId } = useParams() as {
-    communityId: string
-    programId: string
-  }
+    communityId: string;
+    programId: string;
+  };
 
   // Extract programId and chainId from the combined format (e.g., "777_11155111")
-  const [programId, chainId] = combinedProgramId.split("_")
-  const parsedChainId = parseInt(chainId, 10)
+  const [programId, chainId] = combinedProgramId.split("_");
+  const parsedChainId = parseInt(chainId, 10);
 
   // Check if user is a reviewer for this program
   const { hasPermission: canView, isLoading: isLoadingPermission } = usePermissions({
     programId,
     chainID: parsedChainId,
     action: "read",
-  })
+  });
 
   // Load the existing schema
   const {
     schema: existingSchema,
     isLoading: isLoadingSchema,
     error: schemaError,
-  } = useQuestionBuilderSchema(programId, parsedChainId)
+  } = useQuestionBuilderSchema(programId, parsedChainId);
 
   const {
     schema: existingPostApprovalSchema,
     isLoading: isLoadingPostApprovalSchema,
     error: postApprovalSchemaError,
-  } = usePostApprovalSchema(programId, parsedChainId)
+  } = usePostApprovalSchema(programId, parsedChainId);
 
   const handleBackClick = () => {
-    router.push(PAGES.REVIEWER.DASHBOARD(communityId))
-  }
+    router.push(PAGES.REVIEWER.DASHBOARD(communityId));
+  };
 
   const handleViewApplications = () => {
-    router.push(PAGES.REVIEWER.APPLICATIONS(communityId, programId, parsedChainId))
-  }
+    router.push(PAGES.REVIEWER.APPLICATIONS(communityId, programId, parsedChainId));
+  };
 
   if (isLoadingPermission || isLoadingSchema || isLoadingPostApprovalSchema) {
     return (
       <div className="flex w-full items-center justify-center min-h-[600px]">
         <Spinner />
       </div>
-    )
+    );
   }
 
   if (!canView) {
@@ -74,7 +74,7 @@ export default function ReviewerQuestionBuilderPage() {
           </Button>
         </div>
       </div>
-    )
+    );
   }
 
   if (schemaError || !existingSchema || postApprovalSchemaError) {
@@ -103,7 +103,7 @@ export default function ReviewerQuestionBuilderPage() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -162,5 +162,5 @@ export default function ReviewerQuestionBuilderPage() {
         />
       </div>
     </div>
-  )
+  );
 }

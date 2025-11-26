@@ -1,13 +1,13 @@
-import * as Popover from "@radix-ui/react-popover"
-import Slider from "rc-slider"
-import type { FC } from "react"
-import formatCurrency from "@/utilities/formatCurrency"
-import { ChevronDown } from "./Icons/ChevronDown"
-import { registryHelper } from "./Pages/ProgramRegistry/helper"
+import * as Popover from "@radix-ui/react-popover";
+import Slider from "rc-slider";
+import type { FC } from "react";
+import formatCurrency from "@/utilities/formatCurrency";
+import { ChevronDown } from "./Icons/ChevronDown";
+import { registryHelper } from "./Pages/ProgramRegistry/helper";
 
 interface SliderProps {
-  value: number[]
-  onChangeListener: (value: number[]) => void
+  value: number[];
+  onChangeListener: (value: number[]) => void;
 }
 
 export const GrantSizeSlider: FC<SliderProps> = ({ value, onChangeListener }) => {
@@ -37,5 +37,5 @@ export const GrantSizeSlider: FC<SliderProps> = ({ value, onChangeListener }) =>
         </div>
       </Popover.Content>
     </Popover.Root>
-  )
-}
+  );
+};

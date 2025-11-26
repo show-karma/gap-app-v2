@@ -30,10 +30,10 @@ export const QUERY_KEYS = {
   },
   GRANTS: {
     DUPLICATE_CHECK: (params: {
-      projectUid?: string
-      programId?: string
-      community: string
-      title: string
+      projectUid?: string;
+      programId?: string;
+      community: string;
+      title: string;
     }) => ["duplicate-grant-check", params] as const,
   },
-}
+};

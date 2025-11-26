@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import { useForm } from "react-hook-form"
-import { Button } from "@/components/Utilities/Button"
-import type { FormSchema } from "@/types/question-builder"
+import { useForm } from "react-hook-form";
+import { Button } from "@/components/Utilities/Button";
+import type { FormSchema } from "@/types/question-builder";
 
 interface QuestionFormRendererProps {
-  schema: FormSchema
-  onSubmit?: (data: Record<string, any>) => void
-  className?: string
-  isSubmitting?: boolean
+  schema: FormSchema;
+  onSubmit?: (data: Record<string, any>) => void;
+  className?: string;
+  isSubmitting?: boolean;
 }
 
 export function QuestionFormRenderer({
@@ -21,11 +21,11 @@ export function QuestionFormRenderer({
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm()
+  } = useForm();
 
   const onFormSubmit = (data: Record<string, any>) => {
-    onSubmit?.(data)
-  }
+    onSubmit?.(data);
+  };
 
   const renderField = (field: any) => {
     const commonProps = {
@@ -36,13 +36,13 @@ export function QuestionFormRenderer({
         "w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300",
       placeholder: field.placeholder,
       disabled: isSubmitting,
-    }
+    };
 
     switch (field.type) {
       case "text":
       case "email":
       case "url":
-        return <input {...commonProps} type={field.type} />
+        return <input {...commonProps} type={field.type} />;
 
       case "number":
         return (
@@ -52,13 +52,13 @@ export function QuestionFormRenderer({
             min={field.validation?.min}
             max={field.validation?.max}
           />
-        )
+        );
 
       case "date":
-        return <input {...commonProps} type="date" />
+        return <input {...commonProps} type="date" />;
 
       case "textarea":
-        return <textarea {...commonProps} rows={4} />
+        return <textarea {...commonProps} rows={4} />;
 
       case "select":
         return (
@@ -70,7 +70,7 @@ export function QuestionFormRenderer({
               </option>
             ))}
           </select>
-        )
+        );
 
       case "radio":
         return (
@@ -90,7 +90,7 @@ export function QuestionFormRenderer({
               </label>
             ))}
           </div>
-        )
+        );
 
       case "checkbox":
         return (
@@ -108,12 +108,12 @@ export function QuestionFormRenderer({
               </label>
             ))}
           </div>
-        )
+        );
 
       default:
-        return <div>Unsupported field type: {field.type}</div>
+        return <div>Unsupported field type: {field.type}</div>;
     }
-  }
+  };
 
   return (
     <div
@@ -151,5 +151,5 @@ export function QuestionFormRenderer({
         </Button>
       </form>
     </div>
-  )
+  );
 }

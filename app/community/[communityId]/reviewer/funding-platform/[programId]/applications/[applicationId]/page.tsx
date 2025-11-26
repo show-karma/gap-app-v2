@@ -1,25 +1,25 @@
-"use client"
+"use client";
 
-import { ArrowLeftIcon, EyeIcon } from "@heroicons/react/24/solid"
-import Link from "next/link"
-import { useParams } from "next/navigation"
-import { useMemo, useState } from "react"
-import { useAccount } from "wagmi"
-import ApplicationContent from "@/components/FundingPlatform/ApplicationView/ApplicationContent"
-import CommentsSection from "@/components/FundingPlatform/ApplicationView/CommentsSection"
-import { Button } from "@/components/Utilities/Button"
-import { Spinner } from "@/components/Utilities/Spinner"
+import { ArrowLeftIcon, EyeIcon } from "@heroicons/react/24/solid";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useMemo, useState } from "react";
+import { useAccount } from "wagmi";
+import ApplicationContent from "@/components/FundingPlatform/ApplicationView/ApplicationContent";
+import CommentsSection from "@/components/FundingPlatform/ApplicationView/CommentsSection";
+import { Button } from "@/components/Utilities/Button";
+import { Spinner } from "@/components/Utilities/Spinner";
 import {
   useApplication,
   useApplicationComments,
   useApplicationStatus,
   useApplicationVersions,
   useProgramConfig,
-} from "@/hooks/useFundingPlatform"
-import { usePermissions } from "@/hooks/usePermissions"
-import { layoutTheme } from "@/src/helper/theme"
-import { useApplicationVersionsStore } from "@/store/applicationVersions"
-import { PAGES } from "@/utilities/pages"
+} from "@/hooks/useFundingPlatform";
+import { usePermissions } from "@/hooks/usePermissions";
+import { layoutTheme } from "@/src/helper/theme";
+import { useApplicationVersionsStore } from "@/store/applicationVersions";
+import { PAGES } from "@/utilities/pages";
 
 /**
  * Reviewer Application Detail Page
@@ -32,41 +32,41 @@ export default function ReviewerApplicationDetailPage() {
     programId: combinedProgramId,
     applicationId,
   } = useParams() as {
-    communityId: string
-    programId: string
-    applicationId: string
-  }
+    communityId: string;
+    programId: string;
+    applicationId: string;
+  };
 
   // Extract programId and chainId from the combined format (e.g., "777_11155111")
-  const [programId, chainId] = combinedProgramId.split("_")
-  const parsedChainId = parseInt(chainId, 10)
+  const [programId, chainId] = combinedProgramId.split("_");
+  const parsedChainId = parseInt(chainId, 10);
 
   // Check if user is a reviewer for this program
   const { hasPermission: canView, isLoading: isLoadingPermission } = usePermissions({
     programId,
     chainID: parsedChainId,
     action: "read",
-  })
+  });
 
   // Get current user address for comments
-  const { address: currentUserAddress } = useAccount()
+  const { address: currentUserAddress } = useAccount();
 
   // View mode state for ApplicationContent
-  const [applicationViewMode, setApplicationViewMode] = useState<"details" | "changes">("details")
+  const [applicationViewMode, setApplicationViewMode] = useState<"details" | "changes">("details");
 
   // Fetch application data
   const {
     application,
     isLoading: isLoadingApplication,
     refetch: refetchApplication,
-  } = useApplication(applicationId)
+  } = useApplication(applicationId);
 
   // Fetch program config
-  const { data: program } = useProgramConfig(programId, parsedChainId)
+  const { data: program } = useProgramConfig(programId, parsedChainId);
 
   // Use the application status hook (reviewers won't use this but needed for component)
   // Using the hook even though reviewers don't change status to avoid breaking component expectations
-  useApplicationStatus(programId, parsedChainId)
+  useApplicationStatus(programId, parsedChainId);
 
   // Use the comments hook - reviewers can view and add comments
   const {
@@ -75,59 +75,59 @@ export default function ReviewerApplicationDetailPage() {
     createCommentAsync,
     editCommentAsync,
     deleteCommentAsync,
-  } = useApplicationComments(applicationId, false) // false = not admin
+  } = useApplicationComments(applicationId, false); // false = not admin
 
   // Get application identifier for fetching versions
-  const applicationIdentifier = application?.referenceNumber || application?.id || applicationId
+  const applicationIdentifier = application?.referenceNumber || application?.id || applicationId;
 
   // Fetch versions using React Query
-  const { versions } = useApplicationVersions(applicationIdentifier)
+  const { versions } = useApplicationVersions(applicationIdentifier);
 
   // Get version selection from store
-  const { selectVersion } = useApplicationVersionsStore()
+  const { selectVersion } = useApplicationVersionsStore();
 
   // Handle status change - reviewers cannot change status
   const handleStatusChange = async (_status: string, _note?: string) => {
     // Reviewers cannot change status
-    return Promise.reject(new Error("Reviewers cannot change application status"))
-  }
+    return Promise.reject(new Error("Reviewers cannot change application status"));
+  };
 
   // Handle comment operations - reviewers can add and edit their own comments
   const handleCommentAdd = async (content: string) => {
-    if (!applicationId) return
-    await createCommentAsync({ content })
-  }
+    if (!applicationId) return;
+    await createCommentAsync({ content });
+  };
 
   const handleCommentEdit = async (commentId: string, content: string) => {
-    await editCommentAsync({ commentId, content })
-  }
+    await editCommentAsync({ commentId, content });
+  };
 
   const handleCommentDelete = async (commentId: string) => {
-    await deleteCommentAsync(commentId)
-  }
+    await deleteCommentAsync(commentId);
+  };
 
   const handleVersionClick = (versionId: string) => {
     // Select the version to view
-    selectVersion(versionId, versions)
+    selectVersion(versionId, versions);
     // Switch to Changes view to show the selected version
-    setApplicationViewMode("changes")
+    setApplicationViewMode("changes");
 
     // Scroll to the Application Details section
     setTimeout(() => {
-      const element = document.getElementById("application-details")
+      const element = document.getElementById("application-details");
       if (element) {
-        element.scrollIntoView({ behavior: "smooth", block: "start" })
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
       }
-    }, 100)
-  }
+    }, 100);
+  };
 
   // Memoized milestone review URL - only returns URL if approved and has projectUID
   const milestoneReviewUrl = useMemo(() => {
     if (application?.status?.toLowerCase() === "approved" && application?.projectUID) {
-      return `${PAGES.ADMIN.PROJECT_MILESTONES(communityId, application.projectUID, combinedProgramId)}&from=application`
+      return `${PAGES.ADMIN.PROJECT_MILESTONES(communityId, application.projectUID, combinedProgramId)}&from=application`;
     }
-    return null
-  }, [application?.status, application?.projectUID, communityId, combinedProgramId])
+    return null;
+  }, [application?.status, application?.projectUID, communityId, combinedProgramId]);
 
   // Check loading states
   if (isLoadingPermission || isLoadingApplication) {
@@ -135,7 +135,7 @@ export default function ReviewerApplicationDetailPage() {
       <div className="flex w-full items-center justify-center min-h-screen">
         <Spinner />
       </div>
-    )
+    );
   }
 
   // Check access
@@ -155,7 +155,7 @@ export default function ReviewerApplicationDetailPage() {
           </Link>
         </div>
       </div>
-    )
+    );
   }
 
   // Check if application exists
@@ -173,7 +173,7 @@ export default function ReviewerApplicationDetailPage() {
           <p className="text-gray-500">Application not found.</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -269,5 +269,5 @@ export default function ReviewerApplicationDetailPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

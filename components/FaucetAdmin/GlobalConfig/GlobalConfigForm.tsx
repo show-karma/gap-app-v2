@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { Spinner } from "@/components/Utilities/Spinner"
-import { useFaucetConfig } from "@/hooks/useFaucetAdmin"
+import { useEffect, useState } from "react";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { useFaucetConfig } from "@/hooks/useFaucetAdmin";
 
 export function GlobalConfigForm() {
-  const { config, isLoading, updateGlobalConfig } = useFaucetConfig()
+  const { config, isLoading, updateGlobalConfig } = useFaucetConfig();
   const [formData, setFormData] = useState({
     defaultRateLimitHours: 1,
     defaultBufferPercentage: 20,
     maxChainsPerRequest: 1,
     globalEnabled: true,
-  })
+  });
 
   useEffect(() => {
     if (config?.configurations.global) {
@@ -20,21 +20,21 @@ export function GlobalConfigForm() {
         defaultBufferPercentage: config.configurations.global.defaultBufferPercentage,
         maxChainsPerRequest: config.configurations.global.maxChainsPerRequest,
         globalEnabled: config.configurations.global.globalEnabled,
-      })
+      });
     }
-  }, [config])
+  }, [config]);
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    updateGlobalConfig(formData)
-  }
+    e.preventDefault();
+    updateGlobalConfig(formData);
+  };
 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <Spinner />
       </div>
-    )
+    );
   }
 
   return (
@@ -146,5 +146,5 @@ export function GlobalConfigForm() {
         </div>
       </form>
     </div>
-  )
+  );
 }

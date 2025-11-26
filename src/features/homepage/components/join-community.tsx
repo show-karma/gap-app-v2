@@ -1,7 +1,7 @@
-import { marketingLayoutTheme } from "@/src/helper/theme"
-import { cn } from "@/utilities/tailwind"
-import { CreateProfileButton } from "./create-profile-button"
-import { JoinDiscordButton } from "./join-discord-button"
+import { marketingLayoutTheme } from "@/src/helper/theme";
+import { cn } from "@/utilities/tailwind";
+import { CreateProfileButton } from "./create-profile-button";
+import { JoinDiscordButton } from "./join-discord-button";
 
 const _testimonials = [
   {
@@ -35,7 +35,7 @@ const _testimonials = [
     name: "Natali Craig",
     avatar: "/images/homepage/user3.png",
   },
-]
+];
 
 export function JoinCommunity() {
   return (
@@ -68,5 +68,5 @@ export function JoinCommunity() {
                 />
             </div> */}
     </section>
-  )
+  );
 }

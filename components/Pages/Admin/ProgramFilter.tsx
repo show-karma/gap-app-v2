@@ -1,15 +1,15 @@
-import { Listbox, Transition } from "@headlessui/react"
-import { CheckIcon, ChevronUpDownIcon, XMarkIcon } from "@heroicons/react/20/solid"
-import { Fragment } from "react"
-import { cn } from "@/utilities/tailwind"
+import { Listbox, Transition } from "@headlessui/react";
+import { CheckIcon, ChevronUpDownIcon, XMarkIcon } from "@heroicons/react/20/solid";
+import { Fragment } from "react";
+import { cn } from "@/utilities/tailwind";
 
 interface ProgramFilterProps {
   programs: {
-    programId: string
-    title: string
-  }[]
-  selectedProgramId: string | null
-  onChange: (programId: string | null) => void
+    programId: string;
+    title: string;
+  }[];
+  selectedProgramId: string | null;
+  onChange: (programId: string | null) => void;
 }
 
 export const ProgramFilter = ({
@@ -23,7 +23,7 @@ export const ProgramFilter = ({
     .filter(
       (program, index, self) => index === self.findIndex((p) => p.programId === program.programId)
     )
-    .sort((a, b) => a.title.localeCompare(b.title)) // Sort alphabetically by title
+    .sort((a, b) => a.title.localeCompare(b.title)); // Sort alphabetically by title
 
   return (
     <div className="relative w-64">
@@ -32,9 +32,9 @@ export const ProgramFilter = ({
         onChange={(value) => {
           // Allow deselecting by clicking the same item
           if (value === selectedProgramId) {
-            onChange(null)
+            onChange(null);
           } else {
-            onChange(value)
+            onChange(value);
           }
         }}
       >
@@ -52,8 +52,8 @@ export const ProgramFilter = ({
                   className="h-5 w-5 text-gray-400 hover:text-gray-700 cursor-pointer"
                   aria-hidden="true"
                   onClick={(e) => {
-                    e.stopPropagation()
-                    onChange(null)
+                    e.stopPropagation();
+                    onChange(null);
                   }}
                 />
               ) : (
@@ -110,5 +110,5 @@ export const ProgramFilter = ({
         </div>
       </Listbox>
     </div>
-  )
-}
+  );
+};

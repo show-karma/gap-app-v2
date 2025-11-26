@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 export function Newsletter() {
   return (
@@ -27,5 +27,5 @@ export function Newsletter() {
         ></iframe>
       </div>
     </div>
-  )
+  );
 }

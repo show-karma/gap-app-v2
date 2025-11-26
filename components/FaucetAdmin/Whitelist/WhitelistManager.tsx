@@ -1,50 +1,51 @@
-"use client"
+"use client";
 
-import { TrashIcon } from "@heroicons/react/24/outline"
-import { useState } from "react"
-import { Spinner } from "@/components/Utilities/Spinner"
-import { useChains, useWhitelistedContracts } from "@/hooks/useFaucetAdmin"
+import { TrashIcon } from "@heroicons/react/24/outline";
+import { useState } from "react";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { useChains, useWhitelistedContracts } from "@/hooks/useFaucetAdmin";
 
 export function WhitelistManager() {
-  const { contracts, isLoading, whitelistContract, removeFromWhitelist } = useWhitelistedContracts()
-  const [showAddForm, setShowAddForm] = useState(false)
+  const { contracts, isLoading, whitelistContract, removeFromWhitelist } =
+    useWhitelistedContracts();
+  const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState({
     chainId: "",
     contractAddress: "",
     name: "",
     description: "",
     maxGasLimit: "",
-  })
-  const { chains } = useChains()
+  });
+  const { chains } = useChains();
   const handleAdd = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     whitelistContract({
       chainId: parseInt(formData.chainId, 10),
       contractAddress: formData.contractAddress,
       name: formData.name,
       description: formData.description,
       maxGasLimit: formData.maxGasLimit || undefined,
-    })
+    });
     setFormData({
       chainId: "",
       contractAddress: "",
       name: "",
       description: "",
       maxGasLimit: "",
-    })
-    setShowAddForm(false)
-  }
+    });
+    setShowAddForm(false);
+  };
 
   const getChainName = (chainId: number) => {
-    return chains?.find((n) => n.chainId === chainId)?.name || `Chain ${chainId}`
-  }
+    return chains?.find((n) => n.chainId === chainId)?.name || `Chain ${chainId}`;
+  };
 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <Spinner />
       </div>
-    )
+    );
   }
 
   return (
@@ -229,7 +230,7 @@ export function WhitelistManager() {
                         removeFromWhitelist({
                           chainId: contract.chainId,
                           address: contract.contractAddress,
-                        })
+                        });
                       }
                     }}
                     className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
@@ -249,5 +250,5 @@ export function WhitelistManager() {
         )}
       </div>
     </div>
-  )
+  );
 }

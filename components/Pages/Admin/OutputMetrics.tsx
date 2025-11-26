@@ -1,21 +1,21 @@
-import { Field, Label, Radio, RadioGroup } from "@headlessui/react"
-import { AreaChart, Card, Grid, Metric, Text, Title } from "@tremor/react"
-import axios from "axios"
-import { useEffect, useState } from "react"
-import { envVars } from "@/utilities/enviromentVars"
-import { cn } from "@/utilities/tailwind"
+import { Field, Label, Radio, RadioGroup } from "@headlessui/react";
+import { AreaChart, Card, Grid, Metric, Text, Title } from "@tremor/react";
+import axios from "axios";
+import { useEffect, useState } from "react";
+import { envVars } from "@/utilities/enviromentVars";
+import { cn } from "@/utilities/tailwind";
 
 type MetricDataPoint = {
   _id: {
-    metric_name: string
-    year: number
-    month: number
-  }
-  min_amount: number
-  max_amount: number
-  total_amount: number
-  avg_amount: number
-}
+    metric_name: string;
+    year: number;
+    month: number;
+  };
+  min_amount: number;
+  max_amount: number;
+  total_amount: number;
+  avg_amount: number;
+};
 
 const metricNames = [
   "fulltime_developers",
@@ -37,51 +37,51 @@ const metricNames = [
   "PULL_REQUEST_OPENED",
   "CONTRACT_INVOCATION_DAILY_COUNT",
   "PULL_REQUEST_REOPENED",
-] as const
+] as const;
 
-type MetricName = (typeof metricNames)[number]
+type MetricName = (typeof metricNames)[number];
 
 const formatMetricName = (name: string) => {
   return name
     .split("_")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(" ")
-}
+    .join(" ");
+};
 
 export const OutputMetrics = ({ communitySlug }: { communitySlug: string }) => {
-  const [selectedMetric, setSelectedMetric] = useState<MetricName>("active_developers")
-  const [metricData, setMetricData] = useState<MetricDataPoint[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [selectedMetric, setSelectedMetric] = useState<MetricName>("active_developers");
+  const [metricData, setMetricData] = useState<MetricDataPoint[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchMetricData = async (metricName: MetricName) => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
       const response = await axios.get(
         `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}/communities/${communitySlug}/output-metrics/${metricName}`
-      )
-      setMetricData(response.data)
+      );
+      setMetricData(response.data);
     } catch (error) {
-      console.error("Error fetching metric data:", error)
+      console.error("Error fetching metric data:", error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchMetricData(selectedMetric)
-  }, [selectedMetric, fetchMetricData])
+    fetchMetricData(selectedMetric);
+  }, [selectedMetric, fetchMetricData]);
 
   const chartData = metricData.map((point) => ({
     date: `${point._id.year}-${String(point._id.month).padStart(2, "0")}`,
     "Daily Average": point.avg_amount,
     "Daily Maximum": point.max_amount,
     "Daily Minimum": point.min_amount,
-  }))
+  }));
 
   const chartDataTotal = metricData.map((point) => ({
     date: `${point._id.year}-${String(point._id.month).padStart(2, "0")}`,
     "Daily Total": point.total_amount,
-  }))
+  }));
 
   // Calculate overall statistics
   const overallStats = metricData.reduce(
@@ -92,7 +92,7 @@ export const OutputMetrics = ({ communitySlug }: { communitySlug: string }) => {
       totalDays: acc.totalDays + 1,
     }),
     { maxValue: -Infinity, minValue: Infinity, avgValue: 0, totalDays: 0 }
-  )
+  );
 
   return (
     <div className="space-y-6">
@@ -197,7 +197,7 @@ export const OutputMetrics = ({ communitySlug }: { communitySlug: string }) => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default OutputMetrics
+export default OutputMetrics;

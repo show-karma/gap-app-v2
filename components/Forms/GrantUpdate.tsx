@@ -1,36 +1,36 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { GrantUpdate } from "@show-karma/karma-gap-sdk"
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import { useRouter } from "next/navigation"
-import type { FC } from "react"
-import { useState } from "react"
-import type { SubmitHandler } from "react-hook-form"
-import { useForm } from "react-hook-form"
-import toast from "react-hot-toast"
-import { useAccount } from "wagmi"
-import { z } from "zod"
-import { Button } from "@/components/Utilities/Button"
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor"
-import { useGap } from "@/hooks/useGap"
-import { useWallet } from "@/hooks/useWallet"
-import { useProjectStore } from "@/store"
-import { useGrantStore } from "@/store/grant"
-import { useShareDialogStore } from "@/store/modals/shareDialog"
-import { useStepper } from "@/store/modals/txStepper"
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils"
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
-import { MESSAGES } from "@/utilities/messages"
-import { PAGES } from "@/utilities/pages"
-import { urlRegex } from "@/utilities/regexs/urlRegex"
-import { sanitizeObject } from "@/utilities/sanitize"
-import { SHARE_TEXTS } from "@/utilities/share/text"
-import { cn } from "@/utilities/tailwind"
-import { safeGetWalletClient } from "@/utilities/wallet-helpers"
-import { errorManager } from "../Utilities/errorManager"
+import { zodResolver } from "@hookform/resolvers/zod";
+import { GrantUpdate } from "@show-karma/karma-gap-sdk";
+import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useRouter } from "next/navigation";
+import type { FC } from "react";
+import { useState } from "react";
+import type { SubmitHandler } from "react-hook-form";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { z } from "zod";
+import { Button } from "@/components/Utilities/Button";
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { useGap } from "@/hooks/useGap";
+import { useWallet } from "@/hooks/useWallet";
+import { useProjectStore } from "@/store";
+import { useGrantStore } from "@/store/grant";
+import { useShareDialogStore } from "@/store/modals/shareDialog";
+import { useStepper } from "@/store/modals/txStepper";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
+import { urlRegex } from "@/utilities/regexs/urlRegex";
+import { sanitizeObject } from "@/utilities/sanitize";
+import { SHARE_TEXTS } from "@/utilities/share/text";
+import { cn } from "@/utilities/tailwind";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { errorManager } from "../Utilities/errorManager";
 
 const updateSchema = z.object({
   title: z
@@ -47,26 +47,26 @@ const updateSchema = z.object({
     .or(z.literal("")),
   completionPercentage: z.string().refine(
     (value) => {
-      const num = Number(value)
-      return !Number.isNaN(num) && num >= 0 && num <= 100
+      const num = Number(value);
+      return !Number.isNaN(num) && num >= 0 && num <= 100;
     },
     {
       message: "Please enter a number between 0 and 100",
     }
   ),
-})
+});
 
-const labelStyleDefault = "text-sm font-bold text-black dark:text-zinc-100"
+const labelStyleDefault = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyleDefault =
-  "mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300"
+  "mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300";
 
-type UpdateType = z.infer<typeof updateSchema>
+type UpdateType = z.infer<typeof updateSchema>;
 
 interface GrantUpdateFormProps {
-  grant: IGrantResponse
-  labelStyleProps?: string
-  inputStyleProps?: string
-  afterSubmit?: () => void
+  grant: IGrantResponse;
+  labelStyleProps?: string;
+  inputStyleProps?: string;
+  afterSubmit?: () => void;
 }
 
 export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
@@ -75,16 +75,16 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
   inputStyleProps = inputStyleDefault,
   afterSubmit,
 }) => {
-  const labelStyle = cn(labelStyleDefault, labelStyleProps)
-  const inputStyle = cn(inputStyleDefault, inputStyleProps)
-  const { setGrant } = useGrantStore((state) => state)
+  const labelStyle = cn(labelStyleDefault, labelStyleProps);
+  const inputStyle = cn(inputStyleDefault, inputStyleProps);
+  const { setGrant } = useGrantStore((state) => state);
 
-  const { address } = useAccount()
-  const { chain } = useAccount()
-  const { switchChainAsync } = useWallet()
-  const project = useProjectStore((state) => state.project)
-  const refreshProject = useProjectStore((state) => state.refreshProject)
-  const [noProofCheckbox, setNoProofCheckbox] = useState(false)
+  const { address } = useAccount();
+  const { chain } = useAccount();
+  const { switchChainAsync } = useWallet();
+  const project = useProjectStore((state) => state.project);
+  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const [noProofCheckbox, setNoProofCheckbox] = useState(false);
 
   const {
     register,
@@ -96,29 +96,29 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
     resolver: zodResolver(updateSchema),
     reValidateMode: "onChange",
     mode: "onChange",
-  })
-  const [isLoading, setIsLoading] = useState(false)
+  });
+  const [isLoading, setIsLoading] = useState(false);
 
   const onSubmit: SubmitHandler<UpdateType> = async (data, event) => {
-    event?.preventDefault()
-    event?.stopPropagation()
-    setIsLoading(true)
+    event?.preventDefault();
+    event?.stopPropagation();
+    setIsLoading(true);
     await createGrantUpdate(grant, data).finally(() => {
-      setIsLoading(false)
-    })
-  }
+      setIsLoading(false);
+    });
+  };
 
-  const { changeStepperStep, setIsStepper } = useStepper()
+  const { changeStepperStep, setIsStepper } = useStepper();
 
-  const { gap } = useGap()
+  const { gap } = useGap();
 
-  const { openShareDialog } = useShareDialogStore()
+  const { openShareDialog } = useShareDialogStore();
 
-  const router = useRouter()
+  const router = useRouter();
 
   const createGrantUpdate = async (grantToUpdate: IGrantResponse, data: UpdateType) => {
-    let gapClient = gap
-    if (!address || !project) return
+    let gapClient = gap;
+    if (!address || !project) return;
     try {
       const {
         success,
@@ -128,22 +128,22 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
         targetChainId: grantToUpdate.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
-      })
+      });
 
       if (!success) {
-        setIsLoading(false)
-        return
+        setIsLoading(false);
+        return;
       }
 
-      gapClient = newGapClient
+      gapClient = newGapClient;
 
-      const { walletClient, error } = await safeGetWalletClient(actualChainId)
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error })
+        throw new Error("Failed to connect to wallet", { cause: error });
       }
-      if (!walletClient || !gapClient) return
-      const walletSigner = await walletClientToSigner(walletClient)
+      if (!walletClient || !gapClient) return;
+      const walletSigner = await walletClientToSigner(walletClient);
 
       const sanitizedGrantUpdate = sanitizeObject({
         text: data.description,
@@ -151,40 +151,40 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
         proofOfWork: data.proofOfWork,
         completionPercentage: data.completionPercentage,
         type: "grant-update",
-      })
+      });
       const grantUpdate = new GrantUpdate({
         data: sanitizedGrantUpdate,
         recipient: grantToUpdate.recipient,
         refUID: grantToUpdate.uid,
         schema: gapClient.findSchema("GrantDetails"),
-      })
+      });
 
       await grantUpdate.attest(walletSigner as any, changeStepperStep).then(async (res) => {
-        let retries = 1000
-        const txHash = res?.tx[0]?.hash
+        let retries = 1000;
+        const txHash = res?.tx[0]?.hash;
         if (txHash) {
-          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, grantToUpdate.chainID), "POST", {})
+          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, grantToUpdate.chainID), "POST", {});
         }
-        changeStepperStep("indexing")
+        changeStepperStep("indexing");
         while (retries > 0) {
           await refreshProject()
             .then(async (fetchedProject) => {
-              const attestUID = grantUpdate.uid
-              const updatedGrant = fetchedProject?.grants.find((g) => g.uid === grantToUpdate.uid)
+              const attestUID = grantUpdate.uid;
+              const updatedGrant = fetchedProject?.grants.find((g) => g.uid === grantToUpdate.uid);
 
-              const alreadyExists = updatedGrant?.updates.find((u: any) => u.uid === attestUID)
+              const alreadyExists = updatedGrant?.updates.find((u: any) => u.uid === attestUID);
               if (alreadyExists) {
-                retries = 0
-                changeStepperStep("indexed")
-                afterSubmit?.()
-                toast.success(MESSAGES.GRANT.GRANT_UPDATE.SUCCESS)
+                retries = 0;
+                changeStepperStep("indexed");
+                afterSubmit?.();
+                toast.success(MESSAGES.GRANT.GRANT_UPDATE.SUCCESS);
                 router.push(
                   PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
                     project.uid,
                     grantToUpdate.uid,
                     "milestones-and-updates"
                   )
-                )
+                );
                 openShareDialog({
                   modalShareText: `🎉 Update posted for your ${grant.details?.data?.title}!`,
                   modalShareSecondText: `Your progress is now onchain. Every update builds your reputation and brings your vision closer to reality. Keep building—we’re here for it. 💪`,
@@ -193,21 +193,21 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
                     project.uid,
                     grantToUpdate.uid
                   ),
-                })
+                });
 
-                router.refresh()
+                router.refresh();
               }
-              retries -= 1
+              retries -= 1;
               // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-              await new Promise((resolve) => setTimeout(resolve, 1500))
+              await new Promise((resolve) => setTimeout(resolve, 1500));
             })
             .catch(async () => {
-              retries -= 1
+              retries -= 1;
               // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-              await new Promise((resolve) => setTimeout(resolve, 1500))
-            })
+              await new Promise((resolve) => setTimeout(resolve, 1500));
+            });
         }
-      })
+      });
     } catch (error) {
       errorManager(
         `Error creating grant update for grant ${grantToUpdate.uid} from project ${project.uid}`,
@@ -226,11 +226,11 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
         {
           error: MESSAGES.GRANT.GRANT_UPDATE.ERROR,
         }
-      )
+      );
     } finally {
-      setIsStepper(false)
+      setIsStepper(false);
     }
-  }
+  };
 
   return (
     <div className="flex flex-1">
@@ -259,7 +259,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
               onChange={(newValue: string) => {
                 setValue("description", newValue || "", {
                   shouldValidate: true,
-                })
+                });
               }}
               placeholderText="Conducted user research and published a report, worked with our developers, added new features, etc."
             />
@@ -280,10 +280,10 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
               className="rounded-sm w-5 h-5 bg-white fill-black"
               checked={noProofCheckbox}
               onChange={() => {
-                setNoProofCheckbox((oldValue) => !oldValue)
+                setNoProofCheckbox((oldValue) => !oldValue);
                 setValue("proofOfWork", "", {
                   shouldValidate: true,
-                })
+                });
               }}
             />
             <p className="text-base text-zinc-900 dark:text-zinc-100">{`I don't have any output to show for this milestone`}</p>
@@ -326,5 +326,5 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
         </div>
       </form>
     </div>
-  )
-}
+  );
+};

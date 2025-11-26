@@ -1,19 +1,19 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { CheckCircleIcon, ExclamationTriangleIcon, MapPinIcon } from "@heroicons/react/24/outline"
-import { Bars4Icon } from "@heroicons/react/24/solid"
-import type { FC } from "react"
-import { BusinessModelIcon } from "@/components/Icons/BusinessModel"
-import { FundsRaisedIcon } from "@/components/Icons/FundsRaised"
-import { PathIcon } from "@/components/Icons/PathIcon"
-import { StageIcon } from "@/components/Icons/StageIcon"
-import { TargetIcon } from "@/components/Icons/Target"
-import { useProjectStore } from "@/store"
-import { ReadMore } from "@/utilities/ReadMore"
-import { ProjectBlocks } from "./ProjectBlocks"
+import { CheckCircleIcon, ExclamationTriangleIcon, MapPinIcon } from "@heroicons/react/24/outline";
+import { Bars4Icon } from "@heroicons/react/24/solid";
+import type { FC } from "react";
+import { BusinessModelIcon } from "@/components/Icons/BusinessModel";
+import { FundsRaisedIcon } from "@/components/Icons/FundsRaised";
+import { PathIcon } from "@/components/Icons/PathIcon";
+import { StageIcon } from "@/components/Icons/StageIcon";
+import { TargetIcon } from "@/components/Icons/Target";
+import { useProjectStore } from "@/store";
+import { ReadMore } from "@/utilities/ReadMore";
+import { ProjectBlocks } from "./ProjectBlocks";
 
 export const InformationBlock: FC = () => {
-  const { project } = useProjectStore()
+  const { project } = useProjectStore();
   return (
     <div id="information-tab" className="flex flex-col gap-6 max-sm:gap-4 flex-1 w-full">
       <ProjectBlocks />
@@ -167,5 +167,5 @@ export const InformationBlock: FC = () => {
         </div>
       ) : null}
     </div>
-  )
-}
+  );
+};

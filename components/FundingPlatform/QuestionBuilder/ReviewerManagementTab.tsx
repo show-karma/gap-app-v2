@@ -1,45 +1,45 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useCallback, useMemo, useState } from "react"
-import { toast } from "react-hot-toast"
-import { RoleManagementTab } from "@/components/Generic/RoleManagement/RoleManagementTab"
+import type React from "react";
+import { useCallback, useMemo, useState } from "react";
+import { toast } from "react-hot-toast";
+import { RoleManagementTab } from "@/components/Generic/RoleManagement/RoleManagementTab";
 import type {
   RoleManagementConfig,
   RoleMember,
   RoleOption,
-} from "@/components/Generic/RoleManagement/types"
-import { Spinner } from "@/components/Utilities/Spinner"
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin"
-import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers"
-import { useProgramReviewers } from "@/hooks/useProgramReviewers"
+} from "@/components/Generic/RoleManagement/types";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useMilestoneReviewers } from "@/hooks/useMilestoneReviewers";
+import { useProgramReviewers } from "@/hooks/useProgramReviewers";
 import {
   parseReviewerMemberId,
   validateEmail,
   validateTelegram,
   validateWalletAddress,
-} from "@/utilities/validators"
+} from "@/utilities/validators";
 
 /**
  * Props for ReviewerManagementTab
  */
 interface ReviewerManagementTabProps {
-  programId: string
-  chainID: number
-  communityId: string
-  readOnly?: boolean
+  programId: string;
+  chainID: number;
+  communityId: string;
+  readOnly?: boolean;
 }
 
 /**
  * Reviewer role type
  */
-type ReviewerRole = "program" | "milestone"
+type ReviewerRole = "program" | "milestone";
 
 /**
  * Extended role member with role type
  */
 interface ReviewerMemberWithRole extends RoleMember {
-  role: ReviewerRole
+  role: ReviewerRole;
 }
 
 /**
@@ -51,8 +51,8 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
   communityId,
   readOnly = false,
 }) => {
-  const { isCommunityAdmin, isLoading: isLoadingAdmin } = useIsCommunityAdmin(communityId)
-  const [selectedRole, setSelectedRole] = useState<ReviewerRole>("program")
+  const { isCommunityAdmin, isLoading: isLoadingAdmin } = useIsCommunityAdmin(communityId);
+  const [selectedRole, setSelectedRole] = useState<ReviewerRole>("program");
 
   // Fetch program reviewers with mutations
   const {
@@ -61,7 +61,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
     refetch: refetchProgramReviewers,
     addReviewer: addProgramReviewer,
     removeReviewer: removeProgramReviewer,
-  } = useProgramReviewers(programId, chainID)
+  } = useProgramReviewers(programId, chainID);
 
   // Fetch milestone reviewers with mutations
   const {
@@ -70,7 +70,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
     refetch: refetchMilestoneReviewers,
     addReviewer: addMilestoneReviewer,
     removeReviewer: removeMilestoneReviewer,
-  } = useMilestoneReviewers(programId, chainID)
+  } = useMilestoneReviewers(programId, chainID);
 
   // Common field configuration for both roles
   const commonFields: RoleManagementConfig["fields"] = useMemo(
@@ -83,9 +83,9 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
         required: true,
         validation: (value: string) => {
           if (!validateWalletAddress(value)) {
-            return "Please enter a valid Ethereum wallet address"
+            return "Please enter a valid Ethereum wallet address";
           }
-          return true
+          return true;
         },
       },
       {
@@ -96,9 +96,9 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
         required: true,
         validation: (value: string) => {
           if (!value || value.trim().length === 0) {
-            return "Name is required"
+            return "Name is required";
           }
-          return true
+          return true;
         },
       },
       {
@@ -109,12 +109,12 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
         required: true,
         validation: (value: string) => {
           if (!value) {
-            return "Email is required"
+            return "Email is required";
           }
           if (!validateEmail(value)) {
-            return "Please enter a valid email address"
+            return "Please enter a valid email address";
           }
-          return true
+          return true;
         },
       },
       {
@@ -125,14 +125,14 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
         required: false,
         validation: (value: string) => {
           if (value && !validateTelegram(value)) {
-            return "Please enter a valid Telegram username (5-32 characters)"
+            return "Please enter a valid Telegram username (5-32 characters)";
           }
-          return true
+          return true;
         },
       },
     ],
     []
-  )
+  );
 
   // Configuration for program reviewer role
   const programReviewerConfig: RoleManagementConfig = useMemo(
@@ -144,7 +144,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
       canAddMultiple: true,
     }),
     [commonFields, programId, chainID]
-  )
+  );
 
   // Configuration for milestone reviewer role
   const milestoneReviewerConfig: RoleManagementConfig = useMemo(
@@ -156,7 +156,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
       canAddMultiple: true,
     }),
     [commonFields, programId, chainID]
-  )
+  );
 
   // Role options for the role selector
   const roleOptions: RoleOption[] = useMemo(
@@ -173,7 +173,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
       },
     ],
     [programReviewerConfig, milestoneReviewerConfig]
-  )
+  );
 
   // Merge reviewers from both types with role information
   const members: ReviewerMemberWithRole[] = useMemo(() => {
@@ -185,7 +185,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
       telegram: reviewer.telegram || "",
       assignedAt: reviewer.assignedAt,
       role: "program" as ReviewerRole,
-    }))
+    }));
 
     const milestoneMembers: ReviewerMemberWithRole[] = milestoneReviewers.map((reviewer) => ({
       id: `milestone-${reviewer.publicAddress}`,
@@ -195,73 +195,73 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
       telegram: reviewer.telegram || "",
       assignedAt: reviewer.assignedAt,
       role: "milestone" as ReviewerRole,
-    }))
+    }));
 
-    return [...programMembers, ...milestoneMembers]
-  }, [programReviewers, milestoneReviewers])
+    return [...programMembers, ...milestoneMembers];
+  }, [programReviewers, milestoneReviewers]);
 
   const handleAdd = useCallback(
     async (data: Record<string, string>) => {
       if (selectedRole === "program") {
-        await addProgramReviewer(data)
+        await addProgramReviewer(data);
       } else {
-        await addMilestoneReviewer(data)
+        await addMilestoneReviewer(data);
       }
     },
     [selectedRole, addProgramReviewer, addMilestoneReviewer]
-  )
+  );
 
   const handleRemove = useCallback(
     async (memberId: string) => {
       // Parse and validate member ID using robust parser
-      const parsed = parseReviewerMemberId(memberId)
+      const parsed = parseReviewerMemberId(memberId);
 
       if (!parsed.valid) {
-        console.error("Invalid member ID:", parsed.error)
-        toast.error(parsed.error || "Invalid reviewer ID format")
-        return
+        console.error("Invalid member ID:", parsed.error);
+        toast.error(parsed.error || "Invalid reviewer ID format");
+        return;
       }
 
       // Type guard ensures we have the required properties
       if (!parsed.role || !parsed.publicAddress) {
-        console.error("Missing role or publicAddress in parsed member ID")
-        toast.error("Failed to remove reviewer: Invalid ID")
-        return
+        console.error("Missing role or publicAddress in parsed member ID");
+        toast.error("Failed to remove reviewer: Invalid ID");
+        return;
       }
 
       try {
         if (parsed.role === "program") {
-          await removeProgramReviewer(parsed.publicAddress)
+          await removeProgramReviewer(parsed.publicAddress);
         } else if (parsed.role === "milestone") {
-          await removeMilestoneReviewer(parsed.publicAddress)
+          await removeMilestoneReviewer(parsed.publicAddress);
         } else {
-          toast.error(`Unknown reviewer role: ${parsed.role}`)
+          toast.error(`Unknown reviewer role: ${parsed.role}`);
         }
       } catch (error) {
         // Error handling is already done in the mutations, but we catch here
         // to prevent unhandled promise rejections
-        console.error("Error in handleRemove:", error)
+        console.error("Error in handleRemove:", error);
       }
     },
     [removeProgramReviewer, removeMilestoneReviewer]
-  )
+  );
 
   const handleRefresh = useCallback(() => {
-    refetchProgramReviewers()
-    refetchMilestoneReviewers()
-  }, [refetchProgramReviewers, refetchMilestoneReviewers])
+    refetchProgramReviewers();
+    refetchMilestoneReviewers();
+  }, [refetchProgramReviewers, refetchMilestoneReviewers]);
 
   const isLoadingReviewers = useMemo(
     () => isLoadingProgramReviewers || isLoadingMilestoneReviewers,
     [isLoadingProgramReviewers, isLoadingMilestoneReviewers]
-  )
+  );
 
   if (isLoadingAdmin) {
     return (
       <div className="flex items-center justify-center py-12">
         <Spinner className="h-8 w-8" />
       </div>
-    )
+    );
   }
 
   if (!isCommunityAdmin && !readOnly) {
@@ -271,7 +271,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
           You don{"'"}t have permission to manage reviewers for this program.
         </p>
       </div>
-    )
+    );
   }
 
   return (
@@ -287,5 +287,5 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
       selectedRole={selectedRole}
       onRoleChange={(role) => setSelectedRole(role as ReviewerRole)}
     />
-  )
-}
+  );
+};

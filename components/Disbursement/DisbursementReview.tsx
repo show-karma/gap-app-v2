@@ -1,15 +1,15 @@
-"use client"
+"use client";
 
-import type React from "react"
-import type { DisbursementRecipient } from "../../types/disbursement"
+import type React from "react";
+import type { DisbursementRecipient } from "../../types/disbursement";
 
 interface DisbursementReviewProps {
-  recipients: DisbursementRecipient[]
+  recipients: DisbursementRecipient[];
 }
 
 export const DisbursementReview: React.FC<DisbursementReviewProps> = ({ recipients }) => {
   if (recipients.length === 0) {
-    return null
+    return null;
   }
 
   return (
@@ -78,5 +78,5 @@ export const DisbursementReview: React.FC<DisbursementReviewProps> = ({ recipien
         </table>
       </div>
     </div>
-  )
-}
+  );
+};

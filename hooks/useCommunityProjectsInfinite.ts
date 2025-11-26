@@ -1,13 +1,13 @@
-"use client"
-import { useInfiniteQuery } from "@tanstack/react-query"
-import type { MaturityStageOptions, SortByOptions, StatusOptions } from "@/types"
-import type { CommunityProjectsV2Response } from "@/types/community"
-import { getCommunityProjectsV2 } from "@/utilities/queries/getCommunityDataV2"
+"use client";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import type { MaturityStageOptions, SortByOptions, StatusOptions } from "@/types";
+import type { CommunityProjectsV2Response } from "@/types/community";
+import { getCommunityProjectsV2 } from "@/utilities/queries/getCommunityDataV2";
 
 const getStatusFromMaturityStage = (stage: MaturityStageOptions): StatusOptions | undefined => {
-  if (stage === "all") return undefined
-  return `maturity-stage-${stage}` as StatusOptions
-}
+  if (stage === "all") return undefined;
+  return `maturity-stage-${stage}` as StatusOptions;
+};
 
 const mapSortToApiValue = (sortOption: SortByOptions): string => {
   const sortMappings: Record<SortByOptions, string> = {
@@ -15,19 +15,19 @@ const mapSortToApiValue = (sortOption: SortByOptions): string => {
     completed: "completed",
     milestones: "milestones",
     txnCount: "transactions_desc",
-  }
-  return sortMappings[sortOption]
-}
+  };
+  return sortMappings[sortOption];
+};
 
 interface UseInfiniteCommunityProjectsOptions {
-  communityId: string
-  sortBy: SortByOptions
-  categories: string[]
-  maturityStage: MaturityStageOptions
-  programId: string | null
-  trackIds: string[] | null
-  limit?: number
-  enabled?: boolean
+  communityId: string;
+  sortBy: SortByOptions;
+  categories: string[];
+  maturityStage: MaturityStageOptions;
+  programId: string | null;
+  trackIds: string[] | null;
+  limit?: number;
+  enabled?: boolean;
 }
 
 export function useCommunityProjectsInfinite({
@@ -48,7 +48,7 @@ export function useCommunityProjectsInfinite({
     maturityStage,
     programId,
     trackIds,
-  ]
+  ];
 
   return useInfiniteQuery<CommunityProjectsV2Response, Error>({
     queryKey,
@@ -61,17 +61,17 @@ export function useCommunityProjectsInfinite({
         categories: categories.filter(Boolean).join(","),
         selectedProgramId: programId || undefined,
         selectedTrackIds: trackIds || undefined,
-      })
+      });
 
-      return response
+      return response;
     },
     getNextPageParam: (lastPage) => {
-      return lastPage.pagination.hasNextPage ? lastPage.pagination.page + 1 : undefined
+      return lastPage.pagination.hasNextPage ? lastPage.pagination.page + 1 : undefined;
     },
     initialPageParam: 1,
     enabled: enabled && !!communityId,
     staleTime: 0, // Always consider data stale when filters change
     gcTime: 1000 * 60 * 10, // 10 minutes (formerly cacheTime)
     refetchOnMount: "always", // Always refetch when component mounts
-  })
+  });
 }

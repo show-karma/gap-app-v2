@@ -1,16 +1,16 @@
-import { CaseStudiesSection } from "@/src/features/funders/components/case-studies-section"
-import { FAQSection } from "@/src/features/funders/components/faq-section"
-import { HandleTheVisionSection } from "@/src/features/funders/components/handle-the-vision-section"
-import { Hero } from "@/src/features/funders/components/hero"
-import { HowItWorksSection } from "@/src/features/funders/components/how-it-works-section"
-import { NumbersSection } from "@/src/features/funders/components/numbers-section"
-import { OfferingSection } from "@/src/features/funders/components/offering-section"
-import { PlatformSection } from "@/src/features/funders/components/platform-section"
-import { cn } from "@/utilities/tailwind"
+import { CaseStudiesSection } from "@/src/features/funders/components/case-studies-section";
+import { FAQSection } from "@/src/features/funders/components/faq-section";
+import { HandleTheVisionSection } from "@/src/features/funders/components/handle-the-vision-section";
+import { Hero } from "@/src/features/funders/components/hero";
+import { HowItWorksSection } from "@/src/features/funders/components/how-it-works-section";
+import { NumbersSection } from "@/src/features/funders/components/numbers-section";
+import { OfferingSection } from "@/src/features/funders/components/offering-section";
+import { PlatformSection } from "@/src/features/funders/components/platform-section";
+import { cn } from "@/utilities/tailwind";
 
 const HorizontalLine = ({ className }: { className?: string }) => {
-  return <hr className={cn("w-full h-[1px] bg-border max-w-[75%]", className)} />
-}
+  return <hr className={cn("w-full h-[1px] bg-border max-w-[75%]", className)} />;
+};
 
 export default function FundersPage() {
   return (
@@ -32,5 +32,5 @@ export default function FundersPage() {
         <HandleTheVisionSection />
       </div>
     </main>
-  )
+  );
 }

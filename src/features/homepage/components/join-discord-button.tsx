@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { SOCIALS } from "@/utilities/socials"
+import { Button } from "@/components/ui/button";
+import { SOCIALS } from "@/utilities/socials";
 
 export function JoinDiscordButton() {
   return (
@@ -10,5 +10,5 @@ export function JoinDiscordButton() {
         Join Discord
       </Button>
     </a>
-  )
+  );
 }

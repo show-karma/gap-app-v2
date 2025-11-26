@@ -1,11 +1,11 @@
-import { ChevronDownIcon } from "@heroicons/react/24/solid"
-import * as Accordion from "@radix-ui/react-accordion"
-import { ExternalLink } from "@/components/Utilities/ExternalLink"
-import "./styles.css"
+import { ChevronDownIcon } from "@heroicons/react/24/solid";
+import * as Accordion from "@radix-ui/react-accordion";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import "./styles.css";
 
 const rounds: {
-  title: string
-  url: string
+  title: string;
+  url: string;
 }[] = [
   {
     title: "Thriving Arbitrum Summer Round",
@@ -55,7 +55,7 @@ const rounds: {
     title: "Sei Creator Fund: Round #2",
     url: "https://explorer.gitcoin.co/#/round/1329/9",
   },
-]
+];
 
 export const RecentRounds = () => {
   return (
@@ -73,8 +73,8 @@ export const RecentRounds = () => {
         ))}
       </div>
     </div>
-  )
-}
+  );
+};
 
 export const RecentRoundsMobile = () => {
   return (
@@ -104,5 +104,5 @@ export const RecentRoundsMobile = () => {
         </Accordion.AccordionContent>
       </Accordion.Item>
     </Accordion.Root>
-  )
-}
+  );
+};

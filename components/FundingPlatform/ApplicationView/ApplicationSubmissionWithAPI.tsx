@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import { type FC, useState } from "react"
-import { useFundingApplications, useProgramConfig } from "@/hooks/useFundingPlatform"
-import ApplicationSubmission from "./ApplicationSubmission"
+import { type FC, useState } from "react";
+import { useFundingApplications, useProgramConfig } from "@/hooks/useFundingPlatform";
+import ApplicationSubmission from "./ApplicationSubmission";
 
 interface IApplicationSubmissionWithAPIProps {
-  programId: string
-  chainId: number
-  onSubmissionSuccess?: (applicationId: string) => void
-  onCancel?: () => void
+  programId: string;
+  chainId: number;
+  onSubmissionSuccess?: (applicationId: string) => void;
+  onCancel?: () => void;
 }
 
 const ApplicationSubmissionWithAPI: FC<IApplicationSubmissionWithAPIProps> = ({
@@ -21,22 +21,22 @@ const ApplicationSubmissionWithAPI: FC<IApplicationSubmissionWithAPIProps> = ({
     config,
     isLoading: isLoadingConfig,
     error: configError,
-  } = useProgramConfig(programId, chainId)
-  const { submitApplication, isSubmitting } = useFundingApplications(programId, chainId)
-  const [submissionError, setSubmissionError] = useState<string | null>(null)
+  } = useProgramConfig(programId, chainId);
+  const { submitApplication, isSubmitting } = useFundingApplications(programId, chainId);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
 
   const handleSubmit = async (applicationData: Record<string, any>) => {
     try {
-      setSubmissionError(null)
-      await submitApplication(applicationData)
+      setSubmissionError(null);
+      await submitApplication(applicationData);
       // The mutation handles success notifications via toast
-      onSubmissionSuccess?.("submitted")
+      onSubmissionSuccess?.("submitted");
     } catch (error) {
-      console.error("Submission failed:", error)
-      setSubmissionError("Failed to submit application. Please try again.")
-      throw error
+      console.error("Submission failed:", error);
+      setSubmissionError("Failed to submit application. Please try again.");
+      throw error;
     }
-  }
+  };
 
   // Show loading state while fetching form schema
   if (isLoadingConfig) {
@@ -47,7 +47,7 @@ const ApplicationSubmissionWithAPI: FC<IApplicationSubmissionWithAPIProps> = ({
           <p className="text-gray-600 dark:text-gray-400">Loading application form...</p>
         </div>
       </div>
-    )
+    );
   }
 
   // Show error if form schema couldn't be loaded
@@ -72,7 +72,7 @@ const ApplicationSubmissionWithAPI: FC<IApplicationSubmissionWithAPIProps> = ({
           )}
         </div>
       </div>
-    )
+    );
   }
 
   // Show message if program is disabled
@@ -97,7 +97,7 @@ const ApplicationSubmissionWithAPI: FC<IApplicationSubmissionWithAPIProps> = ({
           )}
         </div>
       </div>
-    )
+    );
   }
 
   // Show message if no form schema is configured
@@ -123,7 +123,7 @@ const ApplicationSubmissionWithAPI: FC<IApplicationSubmissionWithAPIProps> = ({
           )}
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -153,7 +153,7 @@ const ApplicationSubmissionWithAPI: FC<IApplicationSubmissionWithAPIProps> = ({
         isLoading={isSubmitting}
       />
     </div>
-  )
-}
+  );
+};
 
-export default ApplicationSubmissionWithAPI
+export default ApplicationSubmissionWithAPI;

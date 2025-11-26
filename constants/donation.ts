@@ -20,7 +20,7 @@ export const DONATION_CONSTANTS = {
 
   /** Maximum number of donations that can be processed in a single batch */
   MAX_BATCH_SIZE: 20,
-} as const
+} as const;
 
 /**
  * Performance and Caching Constants
@@ -34,7 +34,7 @@ export const BALANCE_CONSTANTS = {
 
   /** Show "slow fetch" warning after this threshold (5 seconds) */
   SLOW_FETCH_WARNING_THRESHOLD_MS: 5_000,
-} as const
+} as const;
 
 /**
  * Network Switching and Retry Logic
@@ -51,7 +51,7 @@ export const NETWORK_CONSTANTS = {
 
   /** Delay between wallet sync attempts (1 second) */
   WALLET_SYNC_DELAY_MS: 1_000,
-} as const
+} as const;
 
 /**
  * User Experience Constants
@@ -74,7 +74,7 @@ export const UX_CONSTANTS = {
 
   /** Estimated time per donation transaction (in seconds) */
   ESTIMATED_DONATION_TIME_SECONDS: 15,
-} as const
+} as const;
 
 /**
  * Transaction Confirmation Constants
@@ -82,7 +82,7 @@ export const UX_CONSTANTS = {
 export const TRANSACTION_CONSTANTS = {
   /** Number of block confirmations required before considering a transaction final */
   REQUIRED_CONFIRMATIONS: 3,
-} as const
+} as const;
 
 /**
  * Validation Constants
@@ -99,7 +99,7 @@ export const VALIDATION_CONSTANTS = {
 
   /** Number of decimal places for balance checks */
   BALANCE_CHECK_DECIMALS: 6,
-} as const
+} as const;
 
 /**
  * Helper Functions
@@ -117,7 +117,7 @@ export function estimateDonationTime(
     networkSwitchCount * UX_CONSTANTS.ESTIMATED_NETWORK_SWITCH_TIME_SECONDS +
     approvalCount * UX_CONSTANTS.ESTIMATED_APPROVAL_TIME_SECONDS +
     donationCount * UX_CONSTANTS.ESTIMATED_DONATION_TIME_SECONDS
-  )
+  );
 }
 
 /**
@@ -125,43 +125,43 @@ export function estimateDonationTime(
  */
 export function formatEstimatedTime(seconds: number): string {
   if (seconds < 60) {
-    return `~${seconds} seconds`
+    return `~${seconds} seconds`;
   }
 
-  const minutes = Math.ceil(seconds / 60)
-  return `~${minutes} minute${minutes > 1 ? "s" : ""}`
+  const minutes = Math.ceil(seconds / 60);
+  return `~${minutes} minute${minutes > 1 ? "s" : ""}`;
 }
 
 /**
  * Check if cart size is approaching the limit
  */
 export function isCartSizeWarning(cartSize: number): boolean {
-  return cartSize >= DONATION_CONSTANTS.CART_SIZE_WARNING_THRESHOLD
+  return cartSize >= DONATION_CONSTANTS.CART_SIZE_WARNING_THRESHOLD;
 }
 
 /**
  * Check if cart is at maximum capacity
  */
 export function isCartFull(cartSize: number): boolean {
-  return cartSize >= DONATION_CONSTANTS.MAX_CART_SIZE
+  return cartSize >= DONATION_CONSTANTS.MAX_CART_SIZE;
 }
 
 /**
  * Get the retry delay for a given attempt number
  */
 export function getRetryDelay(attemptNumber: number): number {
-  const delays = NETWORK_CONSTANTS.RETRY_DELAYS_MS
+  const delays = NETWORK_CONSTANTS.RETRY_DELAYS_MS;
 
   if (attemptNumber >= delays.length) {
-    return delays[delays.length - 1]
+    return delays[delays.length - 1];
   }
 
-  return delays[attemptNumber]
+  return delays[attemptNumber];
 }
 
 /**
  * Check if balance cache is still valid
  */
 export function isCacheValid(timestamp: number): boolean {
-  return Date.now() - timestamp < BALANCE_CONSTANTS.CACHE_TTL_MS
+  return Date.now() - timestamp < BALANCE_CONSTANTS.CACHE_TTL_MS;
 }

@@ -1,42 +1,42 @@
 /* eslint-disable @next/next/no-img-element */
-"use client"
+"use client";
 
-import { PencilIcon } from "@heroicons/react/24/outline"
-import { ChevronRightIcon } from "@heroicons/react/24/solid"
-import * as Tooltip from "@radix-ui/react-tooltip"
-import dynamic from "next/dynamic"
-import Link from "next/link"
-import { useParams, useSearchParams } from "next/navigation"
-import pluralize from "pluralize"
-import { useEffect } from "react"
-import type { Hex } from "viem"
-import { useAccount } from "wagmi"
-import { MemberDialog } from "@/components/Dialogs/Member"
-import { DeleteMemberDialog } from "@/components/Dialogs/Member/DeleteMember"
-import { DemoteMemberDialog } from "@/components/Dialogs/Member/DemoteMember"
-import { InviteMemberDialog } from "@/components/Dialogs/Member/InviteMember"
-import { PromoteMemberDialog } from "@/components/Dialogs/Member/PromoteMember"
-import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar"
-import { errorManager } from "@/components/Utilities/errorManager"
-import { Skeleton } from "@/components/Utilities/Skeleton"
-import { useCopyToClipboard } from "@/hooks/useCopyToClipboard"
-import { useMemberRoles } from "@/hooks/useMemberRoles"
-import { useProjectInstance } from "@/hooks/useProjectInstance"
-import { useTeamProfiles } from "@/hooks/useTeamProfiles"
-import { useOwnerStore, useProjectStore } from "@/store"
-import { useActivityTabStore } from "@/store/activityTab"
-import { useENS } from "@/store/ens"
-import { useContributorProfileModalStore } from "@/store/modals/contributorProfile"
-import fetchData from "@/utilities/fetchData"
-import formatCurrency from "@/utilities/formatCurrency"
-import type { Member } from "@/utilities/getProjectMemberRoles"
-import { INDEXER } from "@/utilities/indexer"
-import { PAGES } from "@/utilities/pages"
-import { shortAddress } from "@/utilities/shortAddress"
-import { ProjectSubscription } from "../ProjectSubscription"
-import { ProjectSubTabs } from "../ProjectSubTabs"
-import { InformationBlock } from "./ProjectBodyTabs"
-import { ProjectImpact } from "./ProjectImpact"
+import { PencilIcon } from "@heroicons/react/24/outline";
+import { ChevronRightIcon } from "@heroicons/react/24/solid";
+import * as Tooltip from "@radix-ui/react-tooltip";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { useParams, useSearchParams } from "next/navigation";
+import pluralize from "pluralize";
+import { useEffect } from "react";
+import type { Hex } from "viem";
+import { useAccount } from "wagmi";
+import { MemberDialog } from "@/components/Dialogs/Member";
+import { DeleteMemberDialog } from "@/components/Dialogs/Member/DeleteMember";
+import { DemoteMemberDialog } from "@/components/Dialogs/Member/DemoteMember";
+import { InviteMemberDialog } from "@/components/Dialogs/Member/InviteMember";
+import { PromoteMemberDialog } from "@/components/Dialogs/Member/PromoteMember";
+import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { Skeleton } from "@/components/Utilities/Skeleton";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { useMemberRoles } from "@/hooks/useMemberRoles";
+import { useProjectInstance } from "@/hooks/useProjectInstance";
+import { useTeamProfiles } from "@/hooks/useTeamProfiles";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useActivityTabStore } from "@/store/activityTab";
+import { useENS } from "@/store/ens";
+import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
+import fetchData from "@/utilities/fetchData";
+import formatCurrency from "@/utilities/formatCurrency";
+import type { Member } from "@/utilities/getProjectMemberRoles";
+import { INDEXER } from "@/utilities/indexer";
+import { PAGES } from "@/utilities/pages";
+import { shortAddress } from "@/utilities/shortAddress";
+import { ProjectSubscription } from "../ProjectSubscription";
+import { ProjectSubTabs } from "../ProjectSubTabs";
+import { InformationBlock } from "./ProjectBodyTabs";
+import { ProjectImpact } from "./ProjectImpact";
 
 const ContributorProfileDialog = dynamic(
   () =>
@@ -46,42 +46,42 @@ const ContributorProfileDialog = dynamic(
   {
     ssr: false,
   }
-)
+);
 
 function ProjectPage() {
-  const project = useProjectStore((state) => state.project)
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner)
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin)
-  const isContractOwner = useOwnerStore((state) => state.isOwner)
-  const isAuthorized = isProjectOwner || isContractOwner
-  const _isAdminOrAbove = isProjectOwner || isContractOwner || isProjectAdmin
+  const project = useProjectStore((state) => state.project);
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
+  const isAuthorized = isProjectOwner || isContractOwner;
+  const _isAdminOrAbove = isProjectOwner || isContractOwner || isProjectAdmin;
   const { project: projectInstance } = useProjectInstance(
     project?.details?.data.slug || project?.uid || ""
-  )
-  const { teamProfiles } = useTeamProfiles(project)
-  const { address } = useAccount()
-  const { openModal } = useContributorProfileModalStore()
-  const inviteCodeParam = useSearchParams().get("invite-code")
-  const params = useParams()
-  const projectId = params.projectId as string
-  const { populateEns, ensData } = useENS()
+  );
+  const { teamProfiles } = useTeamProfiles(project);
+  const { address } = useAccount();
+  const { openModal } = useContributorProfileModalStore();
+  const inviteCodeParam = useSearchParams().get("invite-code");
+  const params = useParams();
+  const projectId = params.projectId as string;
+  const { populateEns, ensData } = useENS();
 
   const {
     data: memberRoles,
     isLoading: isLoadingRoles,
     isFetching: isFetchingRoles,
-  } = useMemberRoles()
+  } = useMemberRoles();
 
   useEffect(() => {
     if (project?.members) {
-      populateEns(project?.members?.map((v) => v.recipient))
+      populateEns(project?.members?.map((v) => v.recipient));
     }
-  }, [project?.members, populateEns])
+  }, [project?.members, populateEns]);
 
-  const [, copy] = useCopyToClipboard()
+  const [, copy] = useCopyToClipboard();
 
   const mountMembers = () => {
-    const members: Member[] = []
+    const members: Member[] = [];
     if (project?.members) {
       project.members.forEach((member) => {
         if (!members.find((m) => m.recipient === member.recipient)) {
@@ -91,40 +91,40 @@ function ProjectPage() {
             details: {
               name: member?.details?.name,
             },
-          })
+          });
         }
-      })
+      });
     }
     const alreadyHasOwner = project?.members.find(
       (member) => member.recipient.toLowerCase() === project.recipient.toLowerCase()
-    )
+    );
     if (!alreadyHasOwner) {
       members.push({
         uid: project?.recipient || "",
         recipient: project?.recipient || "",
-      })
+      });
     }
     // sort by owner
     members.sort((a, _b) => {
-      return a.recipient.toLowerCase() === project?.recipient?.toLowerCase() ? -1 : 1
-    })
-    return members
-  }
+      return a.recipient.toLowerCase() === project?.recipient?.toLowerCase() ? -1 : 1;
+    });
+    return members;
+  };
 
   const members = mountMembers().sort((a, b) => {
-    const roleA = memberRoles?.[a.recipient] || "Member"
-    const roleB = memberRoles?.[b.recipient] || "Member"
+    const roleA = memberRoles?.[a.recipient] || "Member";
+    const roleB = memberRoles?.[b.recipient] || "Member";
 
     const roleOrder = {
       Owner: 0,
       Admin: 1,
       Member: 2,
-    }
+    };
 
-    return roleOrder[roleA] - roleOrder[roleB]
-  })
+    return roleOrder[roleA] - roleOrder[roleB];
+  });
 
-  const { setActivityTab } = useActivityTabStore()
+  const { setActivityTab } = useActivityTabStore();
 
   const Team = () => {
     return members.length ? (
@@ -137,7 +137,7 @@ function ProjectPage() {
             {members?.map((member) => {
               const profile = teamProfiles?.find(
                 (profile) => profile.recipient.toLowerCase() === member.recipient.toLowerCase()
-              )
+              );
               return (
                 <div key={member.uid} className="flex items-center flex-row gap-3 justify-between">
                   <div className="flex items-center flex-row gap-3 p-3">
@@ -234,46 +234,46 @@ function ProjectPage() {
                     ) : null}
                   </div>
                 </div>
-              )
+              );
             })}
           </div>
         </div>
         {isAuthorized ? <InviteMemberDialog /> : null}
       </div>
-    ) : null
-  }
+    ) : null;
+  };
 
   const checkCodeValidation = async () => {
-    if (!inviteCodeParam) return
+    if (!inviteCodeParam) return;
     try {
       const [data, error] = await fetchData(
         INDEXER.PROJECT.INVITATION.CHECK_CODE(projectId, inviteCodeParam)
-      )
-      if (error) throw error
-      if (data.message === "Valid") return true
-      return false
+      );
+      if (error) throw error;
+      if (data.message === "Valid") return true;
+      return false;
     } catch (error) {
       errorManager("Failed to check code validation", error, {
         projectId,
         code: inviteCodeParam,
         address,
-      })
+      });
     }
-  }
+  };
 
   useEffect(() => {
     const isAlreadyMember = project?.members.some(
       (member) => member.recipient.toLowerCase() === address?.toLowerCase()
-    )
-    if (isAlreadyMember) return
+    );
+    if (isAlreadyMember) return;
     checkCodeValidation().then((isValid) => {
       if (isValid) {
         openModal({
           isGlobal: false,
-        })
+        });
       }
-    })
-  }, [project, address, checkCodeValidation, openModal])
+    });
+  }, [project, address, checkCodeValidation, openModal]);
 
   return (
     <div className="flex flex-row max-lg:flex-col gap-6 max-md:gap-4 py-5 mb-20">
@@ -345,7 +345,7 @@ function ProjectPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default ProjectPage
+export default ProjectPage;

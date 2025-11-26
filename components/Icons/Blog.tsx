@@ -1,5 +1,5 @@
 interface Props {
-  className?: string
+  className?: string;
 }
 
 export const BlogIcon = ({ className }: Props) => (
@@ -16,4 +16,4 @@ export const BlogIcon = ({ className }: Props) => (
       fill="currentColor"
     />
   </svg>
-)
+);

@@ -1,56 +1,56 @@
-import type { IProjectUpdate } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import { useMemo } from "react"
-import { useAccount } from "wagmi"
-import { ExternalLink } from "@/components/Utilities/ExternalLink"
-import { useImpactAnswers } from "@/hooks/useImpactAnswers"
-import { useOwnerStore, useProjectStore } from "@/store"
-import { useCommunityAdminStore } from "@/store/communityAdmin"
-import { PAGES } from "@/utilities/pages"
-import { FilteredOutputsAndOutcomes, filterIndicators } from "../Impact/FilteredOutputsAndOutcomes"
+import type { IProjectUpdate } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useMemo } from "react";
+import { useAccount } from "wagmi";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { useImpactAnswers } from "@/hooks/useImpactAnswers";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useCommunityAdminStore } from "@/store/communityAdmin";
+import { PAGES } from "@/utilities/pages";
+import { FilteredOutputsAndOutcomes, filterIndicators } from "../Impact/FilteredOutputsAndOutcomes";
 
 export const ProjectActivityBlock = ({ activity }: { activity: IProjectUpdate }) => {
-  const { project, isProjectOwner } = useProjectStore()
+  const { project, isProjectOwner } = useProjectStore();
 
-  const isContractOwner = useOwnerStore((state) => state.isOwner)
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin)
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
+  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
 
-  const indicatorIds = activity.data?.indicators?.map((indicator) => indicator.indicatorId)
+  const indicatorIds = activity.data?.indicators?.map((indicator) => indicator.indicatorId);
 
-  const indicatorNames = activity.data?.indicators?.map((indicator) => indicator.name)
+  const indicatorNames = activity.data?.indicators?.map((indicator) => indicator.name);
 
-  const { isConnected } = useAccount()
-  const isAuthorized = isConnected && (isProjectOwner || isContractOwner || isCommunityAdmin)
+  const { isConnected } = useAccount();
+  const isAuthorized = isConnected && (isProjectOwner || isContractOwner || isCommunityAdmin);
 
   const { data: impactAnswers = [], isLoading: isLoadingImpactAnswers } = useImpactAnswers({
     projectIdentifier: project?.uid as string,
     enabled: !!project?.uid && !!indicatorIds?.length && !!indicatorNames?.length,
-  })
+  });
 
   // Filter indicators based on IDs and names
   const filteredAnswers = useMemo(() => {
-    return filterIndicators(impactAnswers, indicatorIds, indicatorNames)
-  }, [impactAnswers, indicatorIds, indicatorNames])
+    return filterIndicators(impactAnswers, indicatorIds, indicatorNames);
+  }, [impactAnswers, indicatorIds, indicatorNames]);
 
   // Filter outputs based on authorization
   const filteredOutputs = isAuthorized
     ? filteredAnswers
-    : filteredAnswers.filter((item) => item.datapoints?.length)
+    : filteredAnswers.filter((item) => item.datapoints?.length);
 
   const relatedGrants = useMemo(() => {
-    if (!project || !activity?.data?.grants || activity?.data?.grants?.length === 0) return []
+    if (!project || !activity?.data?.grants || activity?.data?.grants?.length === 0) return [];
 
     // Find grants that match the activity's grants
     return project.grants.filter((grant) =>
       activity?.data?.grants?.some((grantId) => grantId.toLowerCase() === grant.uid.toLowerCase())
-    )
-  }, [project, activity?.data?.grants])
+    );
+  }, [project, activity?.data?.grants]);
 
   if (
     !activity.data?.deliverables?.length &&
     !isLoadingImpactAnswers &&
     filteredOutputs.length === 0
   )
-    return null
+    return null;
 
   return (
     <div className="flex flex-col gap-6 max-sm:gap-4">
@@ -167,5 +167,5 @@ export const ProjectActivityBlock = ({ activity }: { activity: IProjectUpdate })
         </div>
       ) : null}
     </div>
-  )
-}
+  );
+};

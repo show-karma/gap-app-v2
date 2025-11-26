@@ -1,37 +1,37 @@
-import { useQuery } from "@tanstack/react-query"
-import type { Hex } from "viem"
-import { errorManager } from "@/components/Utilities/errorManager"
-import { reduceText } from "@/utilities/reduceText"
-import { type GrantsFilter, getGrants } from "@/utilities/sdk/communities/getGrants"
+import { useQuery } from "@tanstack/react-query";
+import type { Hex } from "viem";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { reduceText } from "@/utilities/reduceText";
+import { type GrantsFilter, getGrants } from "@/utilities/sdk/communities/getGrants";
 
 export type SimplifiedGrant = {
-  grant: string
-  project: string
-  description: string
-  createdOn: string
-  categories: string[]
-  grantChainId: number
-  uid: string
-  projectUid: string
-  projectSlug: string
-  projectChainId: number
-  programId: string
-  payoutAddress?: string
-  payoutAmount?: string
-}
+  grant: string;
+  project: string;
+  description: string;
+  createdOn: string;
+  categories: string[];
+  grantChainId: number;
+  uid: string;
+  projectUid: string;
+  projectSlug: string;
+  projectChainId: number;
+  programId: string;
+  payoutAddress?: string;
+  payoutAmount?: string;
+};
 
 interface UseGrantsOptions {
-  filter?: GrantsFilter
+  filter?: GrantsFilter;
   paginationOps?: {
-    page: number
-    pageLimit: number
-  }
-  sortBy?: string
+    page: number;
+    pageLimit: number;
+  };
+  sortBy?: string;
 }
 
 interface UseGrantsResult {
-  grants: SimplifiedGrant[]
-  totalItems: number
+  grants: SimplifiedGrant[];
+  totalItems: number;
 }
 
 export const useGrants = (communityId: string, options?: UseGrantsOptions) => {
@@ -43,7 +43,7 @@ export const useGrants = (communityId: string, options?: UseGrantsOptions) => {
           communityId as Hex,
           { ...options?.filter, sortBy: options?.sortBy as any },
           options?.paginationOps
-        )
+        );
         if (fetchedGrants) {
           const grants = fetchedGrants.map((grant) => ({
             grant: grant.details?.data?.title || grant.uid || "",
@@ -61,20 +61,20 @@ export const useGrants = (communityId: string, options?: UseGrantsOptions) => {
             payoutAmount: grant.amount,
             grantChainId: grant.chainID,
             projectChainId: grant.project?.chainID,
-          }))
+          }));
           return {
             grants,
             totalItems: pageInfo?.totalItems || 0,
-          }
+          };
         }
-        return { grants: [], totalItems: 0 }
+        return { grants: [], totalItems: 0 };
       } catch (error: any) {
         errorManager(`Error fetching grants of ${communityId}`, error, {
           communityUID: communityId,
-        })
-        return { grants: [], totalItems: 0 }
+        });
+        return { grants: [], totalItems: 0 };
       }
     },
     enabled: !!communityId && communityId !== "0x0",
-  })
-}
+  });
+};

@@ -1,12 +1,12 @@
-import { queryClient } from "@/components/Utilities/PrivyProviderWrapper"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
-import { QUERY_KEYS } from "@/utilities/queryKeys"
+import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 interface NotifyIndexerParams {
-  txHash: string | undefined
-  chainId: number
-  invalidateQueries?: () => Promise<void>
+  txHash: string | undefined;
+  chainId: number;
+  invalidateQueries?: () => Promise<void>;
 }
 
 /**
@@ -32,14 +32,14 @@ export const notifyIndexer = async ({
   invalidateQueries,
 }: NotifyIndexerParams): Promise<void> => {
   if (txHash) {
-    await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, chainId), "POST", {})
+    await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, chainId), "POST", {});
   }
 
   // Optional: caller can provide custom cache invalidation
   if (invalidateQueries) {
-    await invalidateQueries()
+    await invalidateQueries();
   }
-}
+};
 
 /**
  * Notify indexer and invalidate grant-related queries
@@ -69,17 +69,17 @@ export const notifyIndexerForGrant = async (
       // Invalidate project queries
       await queryClient.invalidateQueries({
         queryKey: ["project", projectUid],
-      })
+      });
 
       // Invalidate grant milestones if programId provided
       if (programId) {
         await queryClient.invalidateQueries({
           queryKey: QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES(projectUid, programId),
-        })
+        });
       }
     },
-  })
-}
+  });
+};
 
 /**
  * Notify indexer and invalidate milestone-related queries
@@ -116,13 +116,13 @@ export const notifyIndexerForMilestone = async (
     invalidateQueries: async () => {
       await queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES(projectUid, programId),
-      })
+      });
 
       if (communityUID) {
         await queryClient.invalidateQueries({
           queryKey: ["reportMilestones", communityUID],
-        })
+        });
       }
     },
-  })
-}
+  });
+};

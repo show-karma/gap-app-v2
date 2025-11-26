@@ -1,28 +1,28 @@
-"use client"
+"use client";
 
-import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline"
-import { useState } from "react"
-import toast from "react-hot-toast"
-import { useAccount } from "wagmi"
-import { DeleteDialog } from "@/components/DeleteDialog"
-import { IndicatorForm, type IndicatorFormData } from "@/components/Forms/IndicatorForm"
-import { Button } from "@/components/Utilities/Button"
-import { errorManager } from "@/components/Utilities/errorManager"
-import { useIndicators } from "@/hooks/useIndicators"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
-import { MESSAGES } from "@/utilities/messages"
-import type { Indicator } from "@/utilities/queries/getIndicatorsByCommunity"
-import { ProgramCard } from "./ProgramCard"
+import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { DeleteDialog } from "@/components/DeleteDialog";
+import { IndicatorForm, type IndicatorFormData } from "@/components/Forms/IndicatorForm";
+import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { useIndicators } from "@/hooks/useIndicators";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import type { Indicator } from "@/utilities/queries/getIndicatorsByCommunity";
+import { ProgramCard } from "./ProgramCard";
 
 interface Program {
-  programId: string
-  chainID: number
+  programId: string;
+  chainID: number;
 }
 
 type IndicatorWithPrograms = Indicator & {
-  programs?: Program[]
-}
+  programs?: Program[];
+};
 
 export const autosyncedIndicators: IndicatorWithPrograms[] = [
   {
@@ -103,30 +103,30 @@ export const autosyncedIndicators: IndicatorWithPrograms[] = [
     description: "No. of contributors (*oso)",
     unitOfMeasure: "int",
   },
-]
+];
 
 interface IndicatorsHubProps {
-  communitySlug: string
-  communityId: string
+  communitySlug: string;
+  communityId: string;
 }
 
 export const IndicatorsHub = ({ communitySlug, communityId }: IndicatorsHubProps) => {
-  const { address } = useAccount()
-  const [isLoading, _setIsLoading] = useState(false)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [editingIndicator, setEditingIndicator] = useState<IndicatorWithPrograms | null>(null)
-  const [selectedAutosynced, setSelectedAutosynced] = useState<string>("")
+  const { address } = useAccount();
+  const [isLoading, _setIsLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editingIndicator, setEditingIndicator] = useState<IndicatorWithPrograms | null>(null);
+  const [selectedAutosynced, setSelectedAutosynced] = useState<string>("");
   const [formDefaultValues, setFormDefaultValues] = useState<Partial<IndicatorFormData>>({
     name: "",
     description: "",
     unitOfMeasure: "int",
     programs: [],
-  })
+  });
   const { data: rawIndicators = [], refetch } = useIndicators({
     communityId,
-  })
+  });
 
-  const indicators = rawIndicators as IndicatorWithPrograms[]
+  const indicators = rawIndicators as IndicatorWithPrograms[];
 
   const handleAutosyncedSelect = (name: string) => {
     if (!name) {
@@ -135,73 +135,73 @@ export const IndicatorsHub = ({ communitySlug, communityId }: IndicatorsHubProps
         description: "",
         unitOfMeasure: "int",
         programs: [],
-      })
-      setSelectedAutosynced("")
-      return
+      });
+      setSelectedAutosynced("");
+      return;
     }
 
-    const selectedIndicator = autosyncedIndicators.find((i) => i.name === name)
+    const selectedIndicator = autosyncedIndicators.find((i) => i.name === name);
     if (selectedIndicator) {
       setFormDefaultValues({
         name: selectedIndicator.name,
         description: selectedIndicator.description,
         unitOfMeasure: selectedIndicator.unitOfMeasure as "float" | "int",
         programs: [],
-      })
-      setSelectedAutosynced(name)
+      });
+      setSelectedAutosynced(name);
     }
-  }
+  };
 
   const handleSuccess = async () => {
-    await refetch()
-    toast.success("Indicator created successfully")
+    await refetch();
+    toast.success("Indicator created successfully");
     setFormDefaultValues({
       name: "",
       description: "",
       unitOfMeasure: "int",
       programs: [],
-    })
-    setSelectedAutosynced("")
-  }
+    });
+    setSelectedAutosynced("");
+  };
 
   const handleError = () => {
-    toast.error("Failed to create indicator")
-  }
+    toast.error("Failed to create indicator");
+  };
 
   const handleEditSuccess = async () => {
-    await refetch()
-    toast.success("Indicator updated successfully")
-    setEditingIndicator(null)
+    await refetch();
+    toast.success("Indicator updated successfully");
+    setEditingIndicator(null);
     setFormDefaultValues({
       name: "",
       description: "",
       unitOfMeasure: "int",
       programs: [],
-    })
-  }
+    });
+  };
 
   const handleEditError = () => {
-    toast.error("Failed to update indicator")
-  }
+    toast.error("Failed to update indicator");
+  };
 
   const handleEditClick = (indicator: IndicatorWithPrograms) => {
-    setEditingIndicator(indicator)
+    setEditingIndicator(indicator);
     setFormDefaultValues({
       name: indicator.name,
       description: indicator.description,
       unitOfMeasure: indicator.unitOfMeasure as "float" | "int",
       programs: indicator.programs || [],
-    })
-  }
+    });
+  };
 
   const handleDelete = async (id: string) => {
     try {
-      setDeletingId(id)
-      const [, error] = await fetchData(INDEXER.INDICATORS.DELETE(id), "DELETE")
-      if (error) throw error
+      setDeletingId(id);
+      const [, error] = await fetchData(INDEXER.INDICATORS.DELETE(id), "DELETE");
+      if (error) throw error;
 
-      refetch()
-      toast.success("Indicator deleted successfully")
+      refetch();
+      toast.success("Indicator deleted successfully");
     } catch (error) {
       errorManager(
         "Failed to delete indicator",
@@ -211,11 +211,11 @@ export const IndicatorsHub = ({ communitySlug, communityId }: IndicatorsHubProps
           address,
         },
         { error: MESSAGES.INDICATOR.DELETE.ERROR }
-      )
+      );
     } finally {
-      setDeletingId(null)
+      setDeletingId(null);
     }
-  }
+  };
 
   return (
     <div className="w-full h-max max-h-full flex flex-col">
@@ -272,13 +272,13 @@ export const IndicatorsHub = ({ communitySlug, communityId }: IndicatorsHubProps
             <div className="flex justify-end mt-4">
               <Button
                 onClick={() => {
-                  setEditingIndicator(null)
+                  setEditingIndicator(null);
                   setFormDefaultValues({
                     name: "",
                     description: "",
                     unitOfMeasure: "int",
                     programs: [],
-                  })
+                  });
                 }}
                 className="bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-zinc-700 dark:hover:bg-zinc-600 dark:text-gray-100"
               >
@@ -362,5 +362,5 @@ export const IndicatorsHub = ({ communitySlug, communityId }: IndicatorsHubProps
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

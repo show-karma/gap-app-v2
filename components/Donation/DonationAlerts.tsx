@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { useAuth } from "@/hooks/useAuth"
-import { Button } from "../Utilities/Button"
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "../Utilities/Button";
 
 interface DonationAlertsProps {
-  isConnected: boolean
-  address?: string
-  isCurrentNetworkSupported: boolean
+  isConnected: boolean;
+  address?: string;
+  isCurrentNetworkSupported: boolean;
 }
 
 export function DonationAlerts({
@@ -14,7 +14,7 @@ export function DonationAlerts({
   address,
   isCurrentNetworkSupported,
 }: DonationAlertsProps) {
-  const { login } = useAuth()
+  const { login } = useAuth();
   return (
     <>
       {/* Wallet Connection Alert */}
@@ -74,5 +74,5 @@ export function DonationAlerts({
         </div>
       )}
     </>
-  )
+  );
 }

@@ -1,12 +1,12 @@
-import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar"
-import EthereumAddressToENSName from "@/components/EthereumAddressToENSName"
-import { formatDate } from "@/utilities/formatDate"
+import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
+import { formatDate } from "@/utilities/formatDate";
 
 interface ActivityAttributionProps {
-  date: number | string
-  attester?: string
-  actions?: React.ReactNode
-  isCompleted?: boolean
+  date: number | string;
+  attester?: string;
+  actions?: React.ReactNode;
+  isCompleted?: boolean;
 }
 
 export const ActivityAttribution = ({
@@ -42,5 +42,5 @@ export const ActivityAttribution = ({
         {actions && <div className="flex flex-row gap-2">{actions}</div>}
       </div>
     </div>
-  )
-}
+  );
+};

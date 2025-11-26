@@ -1,11 +1,11 @@
-import { Badge } from "@/components/ui/badge"
-import { marketingLayoutTheme } from "@/src/helper/theme"
-import { cn } from "@/utilities/tailwind"
+import { Badge } from "@/components/ui/badge";
+import { marketingLayoutTheme } from "@/src/helper/theme";
+import { cn } from "@/utilities/tailwind";
 
 export interface Statistic {
-  number: string
-  title: string
-  description: string
+  number: string;
+  title: string;
+  description: string;
 }
 
 const statistics: Statistic[] = [
@@ -31,7 +31,7 @@ const statistics: Statistic[] = [
     description:
       "Ecosystems go from idea to live funding in under 48 hours with our modular infrastructure",
   },
-]
+];
 
 export function NumbersSection() {
   return (
@@ -141,5 +141,5 @@ export function NumbersSection() {
         </div>
       </div>
     </section>
-  )
+  );
 }

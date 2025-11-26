@@ -9,7 +9,7 @@ export const TOKEN_ADDRESSES = {
     // Optimism
     10: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85" as const,
   },
-} as const
+} as const;
 
 // Network information
 export const NETWORKS = {
@@ -31,7 +31,7 @@ export const NETWORKS = {
     rpcUrl: "https://mainnet.optimism.io",
     blockExplorer: "https://optimistic.etherscan.io",
   },
-} as const
+} as const;
 
 // Token information
 export const TOKENS = {
@@ -40,7 +40,7 @@ export const TOKENS = {
     symbol: "USDC",
     decimals: 6,
   },
-} as const
+} as const;
 
-export type SupportedChainId = keyof typeof NETWORKS
-export type SupportedToken = keyof typeof TOKEN_ADDRESSES
+export type SupportedChainId = keyof typeof NETWORKS;
+export type SupportedToken = keyof typeof TOKEN_ADDRESSES;

@@ -1,61 +1,61 @@
-"use client"
-import { ChevronLeftIcon } from "@heroicons/react/24/outline"
-import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import Link from "next/link"
-import { useParams, useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-import { CommunityImpactCharts } from "@/components/Pages/Communities/Impact/ImpactCharts"
-import { Button } from "@/components/Utilities/Button"
-import { errorManager } from "@/components/Utilities/errorManager"
-import { Spinner } from "@/components/Utilities/Spinner"
-import { zeroUID } from "@/utilities/commons"
-import { gapIndexerApi } from "@/utilities/gapIndexerApi"
-import { defaultMetadata } from "@/utilities/meta"
-import { PAGES } from "@/utilities/pages"
-import { cn } from "@/utilities/tailwind"
-import { OutputMetrics } from "./OutputMetrics"
+"use client";
+import { ChevronLeftIcon } from "@heroicons/react/24/outline";
+import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { CommunityImpactCharts } from "@/components/Pages/Communities/Impact/ImpactCharts";
+import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { zeroUID } from "@/utilities/commons";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { defaultMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
+import { cn } from "@/utilities/tailwind";
+import { OutputMetrics } from "./OutputMetrics";
 
-type Tab = "metrics" | "impact"
+type Tab = "metrics" | "impact";
 
 export default function ProgramImpactPage() {
-  const router = useRouter()
-  const params = useParams()
-  const communityId = params.communityId as string
-  const [loading, setLoading] = useState<boolean>(true) // Loading state of the API call
-  const [community, setCommunity] = useState<ICommunityResponse | undefined>(undefined) // Data returned from the API
-  const [activeTab, setActiveTab] = useState<Tab>("metrics")
+  const router = useRouter();
+  const params = useParams();
+  const communityId = params.communityId as string;
+  const [loading, setLoading] = useState<boolean>(true); // Loading state of the API call
+  const [community, setCommunity] = useState<ICommunityResponse | undefined>(undefined); // Data returned from the API
+  const [activeTab, setActiveTab] = useState<Tab>("metrics");
 
   useEffect(() => {
     const fetchDetails = async () => {
-      if (!communityId) return
-      setLoading(true)
+      if (!communityId) return;
+      setLoading(true);
       try {
-        const { data: result } = await gapIndexerApi.communityBySlug(communityId)
-        if (!result || result.uid === zeroUID) throw new Error("Community not found")
-        setCommunity(result)
+        const { data: result } = await gapIndexerApi.communityBySlug(communityId);
+        if (!result || result.uid === zeroUID) throw new Error("Community not found");
+        setCommunity(result);
 
-        setLoading(false)
+        setLoading(false);
       } catch (error: any) {
-        setLoading(false)
+        setLoading(false);
         errorManager(`Error fetching community ${communityId}`, error, {
           community: communityId,
-        })
-        console.error("Error fetching data:", error)
+        });
+        console.error("Error fetching data:", error);
         if (error.message === "Community not found" || error.message.includes("422")) {
-          router.push(PAGES.NOT_FOUND)
+          router.push(PAGES.NOT_FOUND);
         }
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchDetails()
-  }, [communityId, router.push])
+    fetchDetails();
+  }, [communityId, router.push]);
 
   const tabs = [
     { id: "metrics", label: "Output Metrics" },
     { id: "impact", label: "Program Impact" },
-  ]
+  ];
 
   return (
     <div className="mt-12 flex flex-row max-lg:flex-col-reverse w-full">
@@ -113,7 +113,7 @@ export default function ProgramImpactPage() {
         </div>
       )}
     </div>
-  )
+  );
 }
 
-export const metadata = defaultMetadata
+export const metadata = defaultMetadata;

@@ -1,89 +1,89 @@
-"use client"
+"use client";
 
-import { MagnifyingGlassIcon } from "@heroicons/react/24/solid"
-import type { ISearchResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import debounce from "lodash.debounce"
-import Link from "next/link"
-import { useEffect, useMemo, useRef, useState } from "react"
-import { errorManager } from "@/components/Utilities/errorManager"
-import { ProfilePicture } from "@/components/Utilities/ProfilePicture"
-import { groupSimilarCommunities } from "@/utilities/communityHelpers"
-import { gapIndexerApi } from "@/utilities/gapIndexerApi"
-import { PAGES } from "@/utilities/pages"
+import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
+import type { ISearchResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import debounce from "lodash.debounce";
+import Link from "next/link";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
+import { groupSimilarCommunities } from "@/utilities/communityHelpers";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { PAGES } from "@/utilities/pages";
 
 export function NavbarSearch() {
   const [results, setResults] = useState<ISearchResponse>({
     communities: [],
     projects: [],
-  })
-  const [isSearchListOpen, setIsSearchListOpen] = useState<boolean>(false)
-  const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [searchValue, setSearchValue] = useState<string>("")
-  const searchRef = useRef<HTMLDivElement>(null)
+  });
+  const [isSearchListOpen, setIsSearchListOpen] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [searchValue, setSearchValue] = useState<string>("");
+  const searchRef = useRef<HTMLDivElement>(null);
 
   // Click outside to close search
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-        setIsSearchListOpen(false)
+        setIsSearchListOpen(false);
       }
-    }
+    };
 
     if (isSearchListOpen) {
-      document.addEventListener("mousedown", handleClickOutside)
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [isSearchListOpen])
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isSearchListOpen]);
 
   // Create debounced search function only once using useMemo
   const debouncedSearch = useMemo(
     () =>
       debounce(async (value: string) => {
         if (value.length < 3) {
-          setResults({ communities: [], projects: [] })
-          setIsSearchListOpen(false)
-          setIsLoading(false)
-          return
+          setResults({ communities: [], projects: [] });
+          setIsSearchListOpen(false);
+          setIsLoading(false);
+          return;
         }
 
-        setIsLoading(true)
-        setIsSearchListOpen(true)
+        setIsLoading(true);
+        setIsSearchListOpen(true);
         try {
-          const result = await gapIndexerApi.search(value)
-          setResults(result.data)
+          const result = await gapIndexerApi.search(value);
+          setResults(result.data);
         } catch (error) {
-          errorManager(`Error searching: ${error}`, error)
-          setResults({ communities: [], projects: [] })
+          errorManager(`Error searching: ${error}`, error);
+          setResults({ communities: [], projects: [] });
         } finally {
-          setIsLoading(false)
+          setIsLoading(false);
         }
       }, 500),
     []
-  )
+  );
 
   // Cleanup debounced function on unmount
   useEffect(() => {
     return () => {
-      debouncedSearch.cancel()
-    }
-  }, [debouncedSearch])
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
 
   const handleInputChange = (value: string) => {
-    setSearchValue(value)
-    debouncedSearch(value)
-  }
+    setSearchValue(value);
+    debouncedSearch(value);
+  };
 
   const handleSelectItem = () => {
-    setIsSearchListOpen(false)
-    setSearchValue("")
-    setResults({ communities: [], projects: [] })
-  }
+    setIsSearchListOpen(false);
+    setSearchValue("");
+    setResults({ communities: [], projects: [] });
+  };
 
-  const groupedCommunities = groupSimilarCommunities(results.communities)
-  const totalResults = results.projects.length + groupedCommunities.length
+  const groupedCommunities = groupSimilarCommunities(results.communities);
+  const totalResults = results.projects.length + groupedCommunities.length;
 
   return (
     <div className="relative flex-1 min-w-20 max-w-[240px]" ref={searchRef}>
@@ -97,7 +97,7 @@ export function NavbarSearch() {
           onChange={(e) => handleInputChange(e.target.value)}
           onFocus={() => {
             if (totalResults > 0) {
-              setIsSearchListOpen(true)
+              setIsSearchListOpen(true);
             }
           }}
         />
@@ -121,9 +121,9 @@ export function NavbarSearch() {
                 style={{ maxWidth: "100%", boxSizing: "border-box" }}
               >
                 {groupedCommunities.map((community) => {
-                  const name = community.details?.data?.name || "Untitled Community"
-                  const imageURL = community.details?.data?.imageURL
-                  const slug = community.details?.data?.slug || community.uid
+                  const name = community.details?.data?.name || "Untitled Community";
+                  const imageURL = community.details?.data?.imageURL;
+                  const slug = community.details?.data?.slug || community.uid;
 
                   return (
                     <Link
@@ -145,12 +145,12 @@ export function NavbarSearch() {
                         Community
                       </span>
                     </Link>
-                  )
+                  );
                 })}
                 {results.projects.map((project) => {
-                  const title = project.details?.data?.title || "Untitled Project"
-                  const imageURL = project.details?.data?.imageURL
-                  const slug = project.details?.data?.slug || project.uid
+                  const title = project.details?.data?.title || "Untitled Project";
+                  const imageURL = project.details?.data?.imageURL;
+                  const slug = project.details?.data?.slug || project.uid;
 
                   return (
                     <Link
@@ -169,7 +169,7 @@ export function NavbarSearch() {
                         {title}
                       </span>
                     </Link>
-                  )
+                  );
                 })}
               </div>
             </div>
@@ -177,5 +177,5 @@ export function NavbarSearch() {
         </div>
       )}
     </div>
-  )
+  );
 }

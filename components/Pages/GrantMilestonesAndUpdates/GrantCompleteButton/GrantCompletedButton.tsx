@@ -1,11 +1,11 @@
-import { CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline"
-import { Spinner } from "@/components/ui/spinner"
+import { CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/outline";
+import { Spinner } from "@/components/ui/spinner";
 
 interface GrantCompletedButtonProps {
-  onClick: () => void
-  disabled: boolean
-  isRevoking: boolean
-  isAuthorized: boolean
+  onClick: () => void;
+  disabled: boolean;
+  isRevoking: boolean;
+  isAuthorized: boolean;
 }
 
 export const GrantCompletedButton: React.FC<GrantCompletedButtonProps> = ({
@@ -40,5 +40,5 @@ export const GrantCompletedButton: React.FC<GrantCompletedButtonProps> = ({
         </>
       )}
     </button>
-  )
-}
+  );
+};

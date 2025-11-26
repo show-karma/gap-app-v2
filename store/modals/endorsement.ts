@@ -1,11 +1,11 @@
-import { create } from "zustand"
+import { create } from "zustand";
 
 interface EndorsementStore {
-  isEndorsementOpen: boolean
-  setIsEndorsementOpen: (isEndorsementOpen: boolean) => void
+  isEndorsementOpen: boolean;
+  setIsEndorsementOpen: (isEndorsementOpen: boolean) => void;
 }
 
 export const useEndorsementStore = create<EndorsementStore>((set, _get) => ({
   isEndorsementOpen: false,
   setIsEndorsementOpen: (isEndorsementOpen: boolean) => set({ isEndorsementOpen }),
-}))
+}));

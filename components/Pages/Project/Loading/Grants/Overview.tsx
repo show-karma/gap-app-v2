@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/Utilities/Skeleton"
+import { Skeleton } from "@/components/Utilities/Skeleton";
 
 export const ProjectGrantsOverviewLoading = () => {
   const grantData: { stat?: number | string; title: string }[] = [
@@ -18,7 +18,7 @@ export const ProjectGrantsOverviewLoading = () => {
     //   stat: grant?.details?.cycle,
     //   title: "Cycle",
     // },
-  ]
+  ];
   return (
     <div className="flex flex-row gap-4 w-full">
       <div className="mt-5 flex flex-row max-lg:flex-col-reverse gap-4 w-full">
@@ -86,5 +86,5 @@ export const ProjectGrantsOverviewLoading = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};

@@ -1,35 +1,35 @@
-"use client"
+"use client";
 
-import { PrivyProvider } from "@privy-io/react-auth"
-import { WagmiProvider } from "@privy-io/wagmi"
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { PROJECT_NAME } from "@/constants/brand"
-import { envVars } from "@/utilities/enviromentVars"
-import { appNetwork } from "@/utilities/network"
-import { defaultQueryOptions } from "@/utilities/queries/defaultOptions"
-import { privyConfig } from "@/utilities/wagmi/privy-config"
+import { PrivyProvider } from "@privy-io/react-auth";
+import { WagmiProvider } from "@privy-io/wagmi";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { PROJECT_NAME } from "@/constants/brand";
+import { envVars } from "@/utilities/enviromentVars";
+import { appNetwork } from "@/utilities/network";
+import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
+import { privyConfig } from "@/utilities/wagmi/privy-config";
 
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: defaultQueryOptions,
   },
-})
+});
 
 interface PrivyProviderWrapperProps {
-  children: React.ReactNode
+  children: React.ReactNode;
 }
 
 export default function PrivyProviderWrapper({ children }: PrivyProviderWrapperProps) {
-  const privyAppId = envVars.PRIVY_APP_ID
+  const privyAppId = envVars.PRIVY_APP_ID;
 
   if (!privyAppId) {
     throw new Error(
       "NEXT_PUBLIC_PRIVY_APP_ID is not defined. Please set it in your environment variables."
-    )
+    );
   }
 
   // Determine the default chain based on environment
-  const defaultChain = appNetwork[0]
+  const defaultChain = appNetwork[0];
 
   return (
     <PrivyProvider
@@ -65,5 +65,5 @@ export default function PrivyProviderWrapper({ children }: PrivyProviderWrapperP
         <WagmiProvider config={privyConfig}>{children}</WagmiProvider>
       </QueryClientProvider>
     </PrivyProvider>
-  )
+  );
 }

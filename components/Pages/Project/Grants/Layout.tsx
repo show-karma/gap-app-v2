@@ -1,43 +1,43 @@
 /* eslint-disable @next/next/no-img-element */
-"use client"
+"use client";
 
-import { CheckCircleIcon, PlusIcon } from "@heroicons/react/20/solid"
-import { PencilSquareIcon } from "@heroicons/react/24/outline"
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import Link from "next/link"
-import { useParams, usePathname, useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-import { useAccount } from "wagmi"
-import { GrantsAccordion } from "@/components/GrantsAccordion"
-import { Button } from "@/components/Utilities/Button"
-import { useGrantCommunityAdmin } from "@/hooks/useIsCommunityAdmin"
-import { useProjectPermissions } from "@/hooks/useProjectPermissions"
-import { useOwnerStore, useProjectStore } from "@/store"
-import { useCommunitiesStore } from "@/store/communities"
-import { useCommunityAdminStore } from "@/store/communityAdmin"
-import { useGrantStore } from "@/store/grant"
-import type { GrantScreen } from "@/types"
-import { PAGES } from "@/utilities/pages"
-import { cn } from "@/utilities/tailwind"
-import { GrantCompleteButton } from "../../GrantMilestonesAndUpdates/GrantCompleteButton"
-import { GrantContext } from "../../GrantMilestonesAndUpdates/GrantContext"
-import { GrantDelete } from "../../GrantMilestonesAndUpdates/GrantDelete"
-import { GrantLinkExternalAddressButton } from "../../GrantMilestonesAndUpdates/GrantLinkExternalAddressButton"
-import { EmptyGrantsSection } from "../../GrantMilestonesAndUpdates/screens/EmptyGrantsSection"
-import { ProjectGrantsLayoutLoading } from "../Loading/Grants/Layout"
+import { CheckCircleIcon, PlusIcon } from "@heroicons/react/20/solid";
+import { PencilSquareIcon } from "@heroicons/react/24/outline";
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import Link from "next/link";
+import { useParams, usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useAccount } from "wagmi";
+import { GrantsAccordion } from "@/components/GrantsAccordion";
+import { Button } from "@/components/Utilities/Button";
+import { useGrantCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useCommunitiesStore } from "@/store/communities";
+import { useCommunityAdminStore } from "@/store/communityAdmin";
+import { useGrantStore } from "@/store/grant";
+import type { GrantScreen } from "@/types";
+import { PAGES } from "@/utilities/pages";
+import { cn } from "@/utilities/tailwind";
+import { GrantCompleteButton } from "../../GrantMilestonesAndUpdates/GrantCompleteButton";
+import { GrantContext } from "../../GrantMilestonesAndUpdates/GrantContext";
+import { GrantDelete } from "../../GrantMilestonesAndUpdates/GrantDelete";
+import { GrantLinkExternalAddressButton } from "../../GrantMilestonesAndUpdates/GrantLinkExternalAddressButton";
+import { EmptyGrantsSection } from "../../GrantMilestonesAndUpdates/screens/EmptyGrantsSection";
+import { ProjectGrantsLayoutLoading } from "../Loading/Grants/Layout";
 
 interface GrantsLayoutProps {
-  children: React.ReactNode
-  fetchedProject?: IProjectResponse
+  children: React.ReactNode;
+  fetchedProject?: IProjectResponse;
 }
 
 interface Tab {
-  name: string
-  tabName: string
-  current: boolean
+  name: string;
+  tabName: string;
+  current: boolean;
 }
 
-const authorizedViews: GrantScreen[] = ["create-milestone", "new", "edit", "complete-grant"]
+const authorizedViews: GrantScreen[] = ["create-milestone", "new", "edit", "complete-grant"];
 
 const allViews: GrantScreen[] = [
   "milestones-and-updates",
@@ -48,81 +48,81 @@ const allViews: GrantScreen[] = [
   "outputs",
   "overview",
   "complete-grant",
-]
+];
 
 const getScreen = (pathname: string): GrantScreen | undefined => {
-  const screen: GrantScreen = pathname.split("/")[5] as GrantScreen
+  const screen: GrantScreen = pathname.split("/")[5] as GrantScreen;
   if (screen && allViews.includes(screen)) {
-    return screen
+    return screen;
   }
   if (pathname.split("/")[4] && allViews.includes(pathname.split("/")[4] as GrantScreen)) {
-    return pathname.split("/")[4] as GrantScreen
+    return pathname.split("/")[4] as GrantScreen;
   }
-  return "overview"
-}
+  return "overview";
+};
 
 export const GrantsLayout = ({ children, fetchedProject }: GrantsLayoutProps) => {
-  const pathname = usePathname()
-  const screen = getScreen(pathname)
-  const grantIdFromQueryParam = useParams().grantUid as string
-  const [currentTab, setCurrentTab] = useState("overview")
-  const { grant, setGrant, loading, setLoading } = useGrantStore()
-  const { project: storedProject } = useProjectStore()
-  const router = useRouter()
-  const { isProjectAdmin, isProjectOwner } = useProjectPermissions()
+  const pathname = usePathname();
+  const screen = getScreen(pathname);
+  const grantIdFromQueryParam = useParams().grantUid as string;
+  const [currentTab, setCurrentTab] = useState("overview");
+  const { grant, setGrant, loading, setLoading } = useGrantStore();
+  const { project: storedProject } = useProjectStore();
+  const router = useRouter();
+  const { isProjectAdmin, isProjectOwner } = useProjectPermissions();
 
-  const isContractOwner = useOwnerStore((state) => state.isOwner)
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin)
-  const { communities } = useCommunitiesStore()
-  const isCommunityAdminOfSome = communities.length !== 0
-  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin
-  const { address } = useAccount()
-  const setIsCommunityAdmin = useCommunityAdminStore((state) => state.setIsCommunityAdmin)
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
+  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
+  const { communities } = useCommunitiesStore();
+  const isCommunityAdminOfSome = communities.length !== 0;
+  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
+  const { address } = useAccount();
+  const setIsCommunityAdmin = useCommunityAdminStore((state) => state.setIsCommunityAdmin);
 
   // Use React Query hook to check admin status with Zustand sync
   useGrantCommunityAdmin(grant?.community?.uid || grant?.data?.communityUID, address, {
     setIsCommunityAdmin,
-  })
+  });
 
-  const zustandProject = useProjectStore((state) => state.project)
+  const zustandProject = useProjectStore((state) => state.project);
 
-  const project = storedProject || fetchedProject || zustandProject
+  const project = storedProject || fetchedProject || zustandProject;
 
   useEffect(() => {
-    if (!project || !screen) return
+    if (!project || !screen) return;
 
     if (!(isAuthorized || isCommunityAdminOfSome) && authorizedViews.includes(screen)) {
-      router.replace(PAGES.PROJECT.GRANTS(project.details?.data.slug || project.uid || ""))
-      setCurrentTab("overview")
-      return
+      router.replace(PAGES.PROJECT.GRANTS(project.details?.data.slug || project.uid || ""));
+      setCurrentTab("overview");
+      return;
     }
 
     if (currentTab !== screen) {
-      setCurrentTab(screen)
+      setCurrentTab(screen);
     }
-  }, [screen, isAuthorized, isCommunityAdminOfSome, project, currentTab, router])
+  }, [screen, isAuthorized, isCommunityAdminOfSome, project, currentTab, router]);
 
   useEffect(() => {
     if (project) {
-      setLoading(true)
+      setLoading(true);
       if (grantIdFromQueryParam) {
         const grantFound = project?.grants?.find(
           (grant) => grant.uid?.toLowerCase() === grantIdFromQueryParam?.toLowerCase()
-        )
+        );
         if (grantFound) {
-          setGrant(grantFound)
-          setLoading(false)
-          return
+          setGrant(grantFound);
+          setLoading(false);
+          return;
         }
       }
-      setGrant(project?.grants?.[0])
-      setLoading(false)
+      setGrant(project?.grants?.[0]);
+      setLoading(false);
     }
-  }, [project, grantIdFromQueryParam, setGrant, setLoading])
+  }, [project, grantIdFromQueryParam, setGrant, setLoading]);
 
   // If no project data is available, show loading
   if (!project) {
-    return <ProjectGrantsLayoutLoading>{children}</ProjectGrantsLayoutLoading>
+    return <ProjectGrantsLayoutLoading>{children}</ProjectGrantsLayoutLoading>;
   }
 
   const navigation =
@@ -133,12 +133,12 @@ export const GrantsLayout = ({ children, fetchedProject }: GrantsLayoutProps) =>
       icon: item.community?.details?.data?.imageURL || "",
       current: item.uid === grantIdFromQueryParam || item.uid === grant?.uid,
       completed: item.completed,
-    })) || []
+    })) || [];
 
   const defaultTabs: {
-    name: string
-    tabName: GrantScreen
-    current: boolean
+    name: string;
+    tabName: GrantScreen;
+    current: boolean;
   }[] = [
     {
       name: "Overview",
@@ -160,12 +160,12 @@ export const GrantsLayout = ({ children, fetchedProject }: GrantsLayoutProps) =>
       tabName: "impact-criteria",
       current: false,
     },
-  ]
+  ];
 
-  const tabs: Tab[] = defaultTabs
+  const tabs: Tab[] = defaultTabs;
 
   if (loading || (!grant && project.grants?.length > 0)) {
-    return <ProjectGrantsLayoutLoading>{children}</ProjectGrantsLayoutLoading>
+    return <ProjectGrantsLayoutLoading>{children}</ProjectGrantsLayoutLoading>;
   }
 
   return (
@@ -248,8 +248,8 @@ export const GrantsLayout = ({ children, fetchedProject }: GrantsLayoutProps) =>
                     if (project) {
                       router.push(
                         PAGES.PROJECT.SCREENS.NEW_GRANT(project.details?.data.slug || project.uid)
-                      )
-                      router.refresh()
+                      );
+                      router.refresh();
                     }
                   }}
                   className="flex h-max w-max  flex-row items-center  hover:opacity-75 justify-center gap-3 rounded border border-[#155EEF] bg-[#155EEF] px-3 py-2 text-sm font-semibold text-white   max-sm:w-full"
@@ -375,5 +375,5 @@ export const GrantsLayout = ({ children, fetchedProject }: GrantsLayoutProps) =>
         )}
       </div>
     </div>
-  )
-}
+  );
+};

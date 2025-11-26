@@ -1,26 +1,26 @@
-import type { Metadata } from "next"
-import { notFound } from "next/navigation"
-import { Suspense } from "react"
-import { GrantOverview } from "@/components/Pages/Project/Grants/Overview"
-import { ProjectGrantsOverviewLoading } from "@/components/Pages/Project/Loading/Grants/Overview"
-import { PROJECT_NAME } from "@/constants/brand"
-import { zeroUID } from "@/utilities/commons"
-import { envVars } from "@/utilities/enviromentVars"
-import { cleanMarkdownForPlainText } from "@/utilities/markdown"
-import { defaultMetadata } from "@/utilities/meta"
-import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData"
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { Suspense } from "react";
+import { GrantOverview } from "@/components/Pages/Project/Grants/Overview";
+import { ProjectGrantsOverviewLoading } from "@/components/Pages/Project/Loading/Grants/Overview";
+import { PROJECT_NAME } from "@/constants/brand";
+import { zeroUID } from "@/utilities/commons";
+import { envVars } from "@/utilities/enviromentVars";
+import { cleanMarkdownForPlainText } from "@/utilities/markdown";
+import { defaultMetadata } from "@/utilities/meta";
+import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
 
 type Params = Promise<{
-  projectId: string
-}>
+  projectId: string;
+}>;
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
-  const { projectId } = await params
+  const { projectId } = await params;
 
-  const projectInfo = await getProjectCachedData(projectId)
+  const projectInfo = await getProjectCachedData(projectId);
 
   if (projectInfo?.uid === zeroUID || !projectInfo) {
-    notFound()
+    notFound();
   }
   const metadata = {
     title: `${projectInfo?.details?.data?.title} Grants | ${PROJECT_NAME}`,
@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
     twitter: defaultMetadata.twitter,
     openGraph: defaultMetadata.openGraph,
     icons: defaultMetadata.icons,
-  }
+  };
 
   return {
     title: metadata.title,
@@ -56,14 +56,14 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
       ],
     },
     icons: metadata.icons,
-  }
+  };
 }
 const Page = () => {
   return (
     <Suspense fallback={<ProjectGrantsOverviewLoading />}>
       <GrantOverview />
     </Suspense>
-  )
-}
+  );
+};
 
-export default Page
+export default Page;

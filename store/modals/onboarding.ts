@@ -1,23 +1,23 @@
-import type { Hex } from "viem"
-import { create } from "zustand"
-import { mixpanelEvent } from "@/utilities/mixpanelEvent"
+import type { Hex } from "viem";
+import { create } from "zustand";
+import { mixpanelEvent } from "@/utilities/mixpanelEvent";
 
-export type OnboardingSteps = "welcome" | "project" | "grants" | "updates-milestones" | "structure"
+export type OnboardingSteps = "welcome" | "project" | "grants" | "updates-milestones" | "structure";
 
 interface OnboardingStore {
-  isOnboardingOpen: boolean
-  setIsOnboarding: (isOnboardingOpen: boolean) => void
-  onboardingStep: OnboardingSteps
-  changeOnboardingStep: (onboardingStep: OnboardingSteps, address: Hex) => void
+  isOnboardingOpen: boolean;
+  setIsOnboarding: (isOnboardingOpen: boolean) => void;
+  onboardingStep: OnboardingSteps;
+  changeOnboardingStep: (onboardingStep: OnboardingSteps, address: Hex) => void;
 }
 
 export const useOnboarding = create<OnboardingStore>((set, get) => ({
   isOnboardingOpen: false,
   setIsOnboarding: (isOnboardingOpen: boolean) => {
-    set({ isOnboardingOpen })
+    set({ isOnboardingOpen });
     setTimeout(() => {
-      set({ onboardingStep: "welcome" })
-    }, 200)
+      set({ onboardingStep: "welcome" });
+    }, 200);
   },
   onboardingStep: "welcome",
   changeOnboardingStep: (onboardingStep: OnboardingSteps, address: string) => {
@@ -25,8 +25,8 @@ export const useOnboarding = create<OnboardingStore>((set, get) => ({
       mixpanelEvent({
         event: "onboarding:navigation",
         properties: { address, id: onboardingStep },
-      })
+      });
     }
-    set({ onboardingStep })
+    set({ onboardingStep });
   },
-}))
+}));

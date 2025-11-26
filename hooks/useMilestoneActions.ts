@@ -1,21 +1,21 @@
-import { useState } from "react"
+import { useState } from "react";
 
 export const useMilestoneActions = () => {
-  const [isCompleting, setIsCompleting] = useState(false)
-  const [isEditing, setIsEditing] = useState(false)
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   const handleCompleting = (completing: boolean) => {
-    setIsCompleting(completing)
-  }
+    setIsCompleting(completing);
+  };
 
   const handleEditing = (editing: boolean) => {
-    setIsEditing(editing)
-  }
+    setIsEditing(editing);
+  };
 
   return {
     isCompleting,
     handleCompleting,
     isEditing,
     handleEditing,
-  }
-}
+  };
+};

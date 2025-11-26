@@ -11,4 +11,4 @@ module.exports = {
       "https://karmahq.xyz/sitemaps/communities/sitemap.xml",
     ],
   },
-}
+};

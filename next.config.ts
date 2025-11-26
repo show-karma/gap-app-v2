@@ -1,17 +1,17 @@
-import type { NextConfig } from "next"
+import type { NextConfig } from "next";
 
 const withBundleAnalyzer = require("@next/bundle-analyzer")({
   enabled: process.env.ANALYZE === "true",
-})
+});
 
 const securityHeaders = [
   {
     key: "X-Frame-Options",
     value: "SAMEORIGIN",
   },
-]
+];
 
-const removeImports = require("next-remove-imports")()
+const removeImports = require("next-remove-imports")();
 
 /** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
@@ -45,11 +45,11 @@ const nextConfig: NextConfig = {
         url: false,
         buffer: false,
         util: false,
-      }
+      };
     }
 
     // Add external modules that should not be bundled
-    config.externals.push("pino-pretty", "lokijs", "encoding")
+    config.externals.push("pino-pretty", "lokijs", "encoding");
 
     // Ignore dynamic requires in browserslist
     config.plugins.push(
@@ -57,16 +57,16 @@ const nextConfig: NextConfig = {
         resourceRegExp: /^\.\/locale$/,
         contextRegExp: /moment$/,
       })
-    )
+    );
 
     // Exclude Storybook story files from the build
     config.plugins.push(
       new webpack.IgnorePlugin({
         resourceRegExp: /\.stories\.(tsx?|jsx?)$/,
       })
-    )
+    );
 
-    return config
+    return config;
   },
   transpilePackages: ["@show-karma/karma-gap-sdk"],
   images: {
@@ -83,15 +83,15 @@ const nextConfig: NextConfig = {
         source: "/(.*)",
         headers: securityHeaders,
       },
-    ]
+    ];
   },
-}
+};
 
-const bundleAnalyzer = withBundleAnalyzer(removeImports(nextConfig))
+const bundleAnalyzer = withBundleAnalyzer(removeImports(nextConfig));
 
 // Injected content via Sentry wizard below
 
-const { withSentryConfig } = require("@sentry/nextjs")
+const { withSentryConfig } = require("@sentry/nextjs");
 
 const withSentry = withSentryConfig(
   bundleAnalyzer,
@@ -134,6 +134,6 @@ const withSentry = withSentryConfig(
     // https://vercel.com/docs/cron-jobs
     automaticVercelMonitors: true,
   }
-)
+);
 
-export default withSentry
+export default withSentry;

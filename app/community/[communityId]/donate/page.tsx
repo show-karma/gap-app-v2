@@ -1,26 +1,26 @@
-"use client"
+"use client";
 
-import { useQuery } from "@tanstack/react-query"
-import Image from "next/image"
-import { useParams, useRouter } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
-import { useCommunityPrograms } from "@/hooks/usePrograms"
-import type { CommunityDetailsV2 } from "@/types/community"
-import { getCommunityDetailsV2 } from "@/utilities/queries/getCommunityDataV2"
+import { useQuery } from "@tanstack/react-query";
+import Image from "next/image";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { useCommunityPrograms } from "@/hooks/usePrograms";
+import type { CommunityDetailsV2 } from "@/types/community";
+import { getCommunityDetailsV2 } from "@/utilities/queries/getCommunityDataV2";
 
 export default function DonateProgramSelectPage() {
-  const params = useParams()
-  const router = useRouter()
-  const communityId = params.communityId as string
+  const params = useParams();
+  const router = useRouter();
+  const communityId = params.communityId as string;
 
-  const [selectedProgramId, setSelectedProgramId] = useState<string>("")
+  const [selectedProgramId, setSelectedProgramId] = useState<string>("");
 
   // Use React Query hooks
   const {
     data: programs,
     isLoading: programsLoading,
     error: programsError,
-  } = useCommunityPrograms(communityId)
+  } = useCommunityPrograms(communityId);
   const {
     data: community,
     isLoading: communityLoading,
@@ -29,37 +29,37 @@ export default function DonateProgramSelectPage() {
     queryKey: ["communityDetailsV2", communityId],
     queryFn: () => getCommunityDetailsV2(communityId),
     enabled: !!communityId,
-  })
+  });
 
   // Combine loading and error states
-  const loading = programsLoading || communityLoading
-  const error = programsError || communityError
+  const loading = programsLoading || communityLoading;
+  const error = programsError || communityError;
 
   // Sort programs alphabetically by title
   const sortedPrograms = useMemo(() => {
-    if (!programs) return []
+    if (!programs) return [];
     return [...programs].sort((a, b) => {
-      const aTitle = a.metadata?.title || ""
-      const bTitle = b.metadata?.title || ""
-      return aTitle.localeCompare(bTitle)
-    })
-  }, [programs])
+      const aTitle = a.metadata?.title || "";
+      const bTitle = b.metadata?.title || "";
+      return aTitle.localeCompare(bTitle);
+    });
+  }, [programs]);
 
   // Auto-redirect if only one program exists
   useEffect(() => {
     if (sortedPrograms.length === 1 && sortedPrograms[0].programId && sortedPrograms[0].chainID) {
-      const combinedId = `${sortedPrograms[0].programId}_${sortedPrograms[0].chainID}`
-      router.push(`/community/${communityId}/donate/${combinedId}`)
+      const combinedId = `${sortedPrograms[0].programId}_${sortedPrograms[0].chainID}`;
+      router.push(`/community/${communityId}/donate/${combinedId}`);
     }
-  }, [sortedPrograms, communityId, router])
+  }, [sortedPrograms, communityId, router]);
 
   const handleProgramSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const combinedId = e.target.value // Format: programId_chainId
-    setSelectedProgramId(combinedId)
+    const combinedId = e.target.value; // Format: programId_chainId
+    setSelectedProgramId(combinedId);
     if (combinedId) {
-      router.push(`/community/${communityId}/donate/${combinedId}`)
+      router.push(`/community/${communityId}/donate/${combinedId}`);
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -67,12 +67,12 @@ export default function DonateProgramSelectPage() {
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         <p className="text-gray-600 dark:text-gray-400">Loading programs...</p>
       </div>
-    )
+    );
   }
 
   if (error) {
     const errorMessage =
-      error instanceof Error ? error.message : "Failed to load data. Please try again."
+      error instanceof Error ? error.message : "Failed to load data. Please try again.";
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 max-w-md text-center">
@@ -93,7 +93,7 @@ export default function DonateProgramSelectPage() {
           <p className="text-red-700 dark:text-red-300">{errorMessage}</p>
         </div>
       </div>
-    )
+    );
   }
 
   if (sortedPrograms.length === 0 && !loading) {
@@ -121,7 +121,7 @@ export default function DonateProgramSelectPage() {
           </p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -182,13 +182,13 @@ export default function DonateProgramSelectPage() {
                   const combinedId =
                     program.programId && program.chainID
                       ? `${program.programId}_${program.chainID}`
-                      : program.programId || ""
+                      : program.programId || "";
 
                   return (
                     <option key={program.programId} value={combinedId}>
                       {program.metadata?.title || "Untitled Program"}
                     </option>
-                  )
+                  );
                 })}
               </select>
             </div>
@@ -228,5 +228,5 @@ export default function DonateProgramSelectPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

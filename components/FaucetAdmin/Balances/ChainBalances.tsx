@@ -1,19 +1,19 @@
-"use client"
+"use client";
 
-import { CheckCircleIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline"
-import { formatEther } from "viem"
-import { Spinner } from "@/components/Utilities/Spinner"
-import { useAllFaucetBalances } from "@/hooks/useFaucet"
+import { CheckCircleIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import { formatEther } from "viem";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { useAllFaucetBalances } from "@/hooks/useFaucet";
 
 export function ChainBalances() {
-  const { data, isLoading, error, refetch } = useAllFaucetBalances()
+  const { data, isLoading, error, refetch } = useAllFaucetBalances();
 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <Spinner />
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -27,10 +27,10 @@ export function ChainBalances() {
           Retry
         </button>
       </div>
-    )
+    );
   }
 
-  const balances = data?.balances || []
+  const balances = data?.balances || [];
 
   return (
     <div className="space-y-6">
@@ -108,5 +108,5 @@ export function ChainBalances() {
         </div>
       )}
     </div>
-  )
+  );
 }

@@ -1,41 +1,41 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { formatEther } from "viem"
-import { Spinner } from "@/components/Utilities/Spinner"
-import { useFaucetConfig, useFaucetEmergency } from "@/hooks/useFaucetAdmin"
-import type { FaucetChainSettings } from "@/utilities/faucet/faucetService"
-import { appNetwork } from "@/utilities/network"
-import { ChainSettingsForm } from "./ChainSettingsForm"
-import { EmergencyControls } from "./EmergencyControls"
+import { useState } from "react";
+import { formatEther } from "viem";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { useFaucetConfig, useFaucetEmergency } from "@/hooks/useFaucetAdmin";
+import type { FaucetChainSettings } from "@/utilities/faucet/faucetService";
+import { appNetwork } from "@/utilities/network";
+import { ChainSettingsForm } from "./ChainSettingsForm";
+import { EmergencyControls } from "./EmergencyControls";
 
 export function ChainSettingsManager() {
   const { config, isLoading, updateChainSettings, createChainSettings, deleteChainSettings } =
-    useFaucetConfig()
-  const { emergencyStop, resumeOperations } = useFaucetEmergency()
-  const [editingChain, setEditingChain] = useState<number | null>(null)
-  const [showAddForm, setShowAddForm] = useState(false)
+    useFaucetConfig();
+  const { emergencyStop, resumeOperations } = useFaucetEmergency();
+  const [editingChain, setEditingChain] = useState<number | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <Spinner />
       </div>
-    )
+    );
   }
 
   const handleSaveSettings = (chainId: number, settings: Partial<FaucetChainSettings>) => {
-    updateChainSettings({ chainId, settings })
-    setEditingChain(null)
-  }
+    updateChainSettings({ chainId, settings });
+    setEditingChain(null);
+  };
 
   const handleCreateSettings = (settings: FaucetChainSettings) => {
-    createChainSettings(settings)
-    setShowAddForm(false)
-  }
+    createChainSettings(settings);
+    setShowAddForm(false);
+  };
 
   const getChainName = (chainId: number) => {
-    return appNetwork.find((n) => n.id === chainId)?.name || `Chain ${chainId}`
-  }
+    return appNetwork.find((n) => n.id === chainId)?.name || `Chain ${chainId}`;
+  };
 
   return (
     <div className="space-y-6">
@@ -92,7 +92,7 @@ export function ChainSettingsManager() {
                 <button
                   onClick={() => {
                     if (confirm("Are you sure you want to delete these settings?")) {
-                      deleteChainSettings(settings.chainId)
+                      deleteChainSettings(settings.chainId);
                     }
                   }}
                   className="px-3 py-1 text-sm bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded hover:bg-red-200 dark:hover:bg-red-900/30"
@@ -167,5 +167,5 @@ export function ChainSettingsManager() {
           )}
       </div>
     </div>
-  )
+  );
 }

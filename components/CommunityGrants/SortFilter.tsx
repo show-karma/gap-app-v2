@@ -1,21 +1,21 @@
-"use client"
-import { Listbox, Transition } from "@headlessui/react"
-import { CheckIcon } from "@heroicons/react/20/solid"
-import { ChevronDownIcon } from "@heroicons/react/24/solid"
-import { Fragment } from "react"
-import type { SortByOptions } from "@/types"
-import { cn } from "@/utilities/tailwind"
+"use client";
+import { Listbox, Transition } from "@headlessui/react";
+import { CheckIcon } from "@heroicons/react/20/solid";
+import { ChevronDownIcon } from "@heroicons/react/24/solid";
+import { Fragment } from "react";
+import type { SortByOptions } from "@/types";
+import { cn } from "@/utilities/tailwind";
 
 const sortOptions: Record<SortByOptions, string> = {
   recent: "Recent",
   completed: "Completed",
   milestones: "Milestones",
   txnCount: "No. of Txns",
-}
+};
 
 interface SortFilterProps {
-  selectedSort: SortByOptions
-  onChange: (sort: SortByOptions) => void
+  selectedSort: SortByOptions;
+  onChange: (sort: SortByOptions) => void;
 }
 
 export function SortFilter({ selectedSort, onChange }: SortFilterProps) {
@@ -85,5 +85,5 @@ export function SortFilter({ selectedSort, onChange }: SortFilterProps) {
         </div>
       )}
     </Listbox>
-  )
+  );
 }

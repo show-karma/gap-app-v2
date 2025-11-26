@@ -6,4 +6,4 @@ export const MegaphoneIcon = () => (
       fill="#1DE9B6"
     />
   </svg>
-)
+);

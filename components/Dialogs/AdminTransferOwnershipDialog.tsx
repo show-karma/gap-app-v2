@@ -1,19 +1,19 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { Dialog, Transition } from "@headlessui/react"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { type FC, Fragment, useEffect } from "react"
-import { useForm } from "react-hook-form"
-import toast from "react-hot-toast"
-import { isAddress } from "viem"
-import { useAccount } from "wagmi"
-import { z } from "zod"
-import { useProjectStore } from "@/store"
-import { useAdminTransferOwnershipModalStore } from "@/store/modals/adminTransferOwnership"
-import fetchData from "@/utilities/fetchData"
-import { sanitizeInput } from "@/utilities/sanitize"
-import { Button } from "../Utilities/Button"
-import { errorManager } from "../Utilities/errorManager"
+import { Dialog, Transition } from "@headlessui/react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { type FC, Fragment, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { isAddress } from "viem";
+import { useAccount } from "wagmi";
+import { z } from "zod";
+import { useProjectStore } from "@/store";
+import { useAdminTransferOwnershipModalStore } from "@/store/modals/adminTransferOwnership";
+import fetchData from "@/utilities/fetchData";
+import { sanitizeInput } from "@/utilities/sanitize";
+import { Button } from "../Utilities/Button";
+import { errorManager } from "../Utilities/errorManager";
 
 const schema = z.object({
   newOwner: z
@@ -22,23 +22,23 @@ const schema = z.object({
     .refine((value) => isAddress(value), {
       message: "Invalid address. Address should be a valid Ethereum address.",
     }),
-})
+});
 
-type FormData = z.infer<typeof schema>
+type FormData = z.infer<typeof schema>;
 
 const inputStyle =
-  "rounded border border-zinc-300 dark:bg-zinc-800 px-2 py-1 text-black dark:text-white w-full"
-const labelStyle = "text-sm font-bold text-black dark:text-zinc-100"
+  "rounded border border-zinc-300 dark:bg-zinc-800 px-2 py-1 text-black dark:text-white w-full";
+const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 
 export const AdminTransferOwnershipDialog: FC = () => {
   const {
     isAdminTransferOwnershipModalOpen: isOpen,
     closeAdminTransferOwnershipModal: closeModal,
-  } = useAdminTransferOwnershipModalStore()
+  } = useAdminTransferOwnershipModalStore();
 
-  const project = useProjectStore((state) => state.project)
-  const refreshProject = useProjectStore((state) => state.refreshProject)
-  const { address } = useAccount()
+  const project = useProjectStore((state) => state.project);
+  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { address } = useAccount();
 
   const {
     register,
@@ -48,34 +48,34 @@ export const AdminTransferOwnershipDialog: FC = () => {
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     mode: "onChange",
-  })
+  });
 
   useEffect(() => {
     if (!isOpen) {
-      reset()
+      reset();
     }
-  }, [isOpen, reset])
+  }, [isOpen, reset]);
 
   const onSubmit = async (data: FormData) => {
-    if (!project) return
+    if (!project) return;
     try {
-      const sanitizedAddress = sanitizeInput(data.newOwner)
+      const sanitizedAddress = sanitizeInput(data.newOwner);
 
       const [_, error] = await fetchData(
         `/attestations/transfer-ownership/${project.uid}/${project.chainID}/${sanitizedAddress}`,
         "POST",
         {}
-      )
+      );
 
       if (error) {
-        throw error
+        throw error;
       }
 
-      await refreshProject()
+      await refreshProject();
       toast.success(
         "Transfer ownership request submitted successfully. It can take few minutes to reflect."
-      )
-      closeModal()
+      );
+      closeModal();
     } catch (error: any) {
       errorManager(
         `Error requesting ownership transfer from ${project.recipient} to ${data.newOwner}`,
@@ -89,10 +89,10 @@ export const AdminTransferOwnershipDialog: FC = () => {
         {
           error: "Failed to request ownership transfer.",
         }
-      )
-      console.error(error)
+      );
+      console.error(error);
     }
-  }
+  };
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -167,5 +167,5 @@ export const AdminTransferOwnershipDialog: FC = () => {
         </div>
       </Dialog>
     </Transition>
-  )
-}
+  );
+};

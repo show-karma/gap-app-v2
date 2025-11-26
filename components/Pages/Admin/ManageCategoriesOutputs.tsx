@@ -1,32 +1,32 @@
-import { ChevronDownIcon, TrashIcon } from "@heroicons/react/24/outline"
-import { zodResolver } from "@hookform/resolvers/zod"
-import * as Accordion from "@radix-ui/react-accordion"
-import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import Link from "next/link"
-import { useState } from "react"
-import { useForm } from "react-hook-form"
-import toast from "react-hot-toast"
-import { useAccount } from "wagmi"
-import { z } from "zod"
-import { DeleteDialog } from "@/components/DeleteDialog"
-import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown"
-import { Button } from "@/components/Utilities/Button"
-import { errorManager } from "@/components/Utilities/errorManager"
-import { useIndicators } from "@/hooks/useIndicators"
-import type { Category, ImpactIndicator, ImpactSegment } from "@/types/impactMeasurement"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
-import { MESSAGES } from "@/utilities/messages"
-import { PAGES } from "@/utilities/pages"
-import { cn } from "@/utilities/tailwind"
+import { ChevronDownIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as Accordion from "@radix-ui/react-accordion";
+import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import Link from "next/link";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { z } from "zod";
+import { DeleteDialog } from "@/components/DeleteDialog";
+import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown";
+import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { useIndicators } from "@/hooks/useIndicators";
+import type { Category, ImpactIndicator, ImpactSegment } from "@/types/impactMeasurement";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
+import { cn } from "@/utilities/tailwind";
 
-const OUTPUT_TYPES = ["output", "outcome"] as const
-type OutputType = (typeof OUTPUT_TYPES)[number]
+const OUTPUT_TYPES = ["output", "outcome"] as const;
+type OutputType = (typeof OUTPUT_TYPES)[number];
 
 const OUTPUT_TYPE_DISPLAY = {
   output: "Activity",
   outcome: "Outcome",
-} as const
+} as const;
 
 const impactSegmentSchema = z.object({
   name: z
@@ -39,32 +39,32 @@ const impactSegmentSchema = z.object({
     .max(500, "Description must be less than 500 characters"),
   type: z.enum(OUTPUT_TYPES),
   impact_indicators: z.array(z.string()).optional(),
-})
+});
 
-type ImpactSegmentFormData = z.infer<typeof impactSegmentSchema>
+type ImpactSegmentFormData = z.infer<typeof impactSegmentSchema>;
 
 interface Output {
-  id: string
-  name: string
-  categoryId: string
-  type: OutputType
-  description?: string
-  impact_indicators?: string[] // Array of indicator IDs
+  id: string;
+  name: string;
+  categoryId: string;
+  type: OutputType;
+  description?: string;
+  impact_indicators?: string[]; // Array of indicator IDs
 }
 
 interface ManageCategoriesOutputsProps {
-  categories: Category[]
-  setCategories: (categories: Category[]) => void
-  community: ICommunityResponse | undefined
-  refreshCategories: (isSilent?: boolean) => Promise<any>
+  categories: Category[];
+  setCategories: (categories: Category[]) => void;
+  community: ICommunityResponse | undefined;
+  refreshCategories: (isSilent?: boolean) => Promise<any>;
 }
 
 interface EditFormProps {
-  segment: ImpactSegment
-  categoryId: string
-  onSave: (data: ImpactSegmentFormData) => void
-  isLoading: boolean
-  impact_indicators: ImpactIndicator[]
+  segment: ImpactSegment;
+  categoryId: string;
+  onSave: (data: ImpactSegmentFormData) => void;
+  isLoading: boolean;
+  impact_indicators: ImpactIndicator[];
 }
 
 const EditForm = ({ segment, categoryId, onSave, isLoading, impact_indicators }: EditFormProps) => {
@@ -83,20 +83,20 @@ const EditForm = ({ segment, categoryId, onSave, isLoading, impact_indicators }:
       impact_indicators: segment.impact_indicators?.map((item) => item.id) || [],
     },
     mode: "onChange",
-  })
+  });
 
-  const selectedIndicators = watch("impact_indicators") || []
+  const selectedIndicators = watch("impact_indicators") || [];
 
   const handleIndicatorChange = (value: string) => {
-    const current = selectedIndicators
+    const current = selectedIndicators;
     const updated = current.includes(value)
       ? current.filter((id) => id !== value)
-      : [...current, value]
+      : [...current, value];
     setValue("impact_indicators", updated, {
       shouldValidate: true,
       shouldDirty: true,
-    })
-  }
+    });
+  };
 
   return (
     <form onSubmit={handleSubmit(onSave)} className="space-y-4">
@@ -183,8 +183,8 @@ const EditForm = ({ segment, categoryId, onSave, isLoading, impact_indicators }:
         </Button>
       </div>
     </form>
-  )
-}
+  );
+};
 
 export const ManageCategoriesOutputs = ({
   categories,
@@ -192,15 +192,15 @@ export const ManageCategoriesOutputs = ({
   community,
   refreshCategories,
 }: ManageCategoriesOutputsProps) => {
-  const { address } = useAccount()
-  const [isSavingOutput, setIsSavingOutput] = useState<string>("")
-  const [isDeletingOutput, setIsDeletingOutput] = useState<string>("")
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("")
-  const selectedCategory = categories.find((cat) => cat.id === selectedCategoryId)
+  const { address } = useAccount();
+  const [isSavingOutput, setIsSavingOutput] = useState<string>("");
+  const [isDeletingOutput, setIsDeletingOutput] = useState<string>("");
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
+  const selectedCategory = categories.find((cat) => cat.id === selectedCategoryId);
 
   const { data: impact_indicators = [] } = useIndicators({
     communityId: community?.uid || "",
-  })
+  });
 
   const {
     register,
@@ -215,13 +215,13 @@ export const ManageCategoriesOutputs = ({
       type: "output",
       impact_indicators: [],
     },
-  })
+  });
 
-  const selectedIndicators = watch("impact_indicators") || []
+  const selectedIndicators = watch("impact_indicators") || [];
 
   const handleAddOutput = async (data: ImpactSegmentFormData, categoryId: string) => {
     try {
-      setIsSavingOutput("new")
+      setIsSavingOutput("new");
       const [, error] = await fetchData(
         INDEXER.CATEGORIES.IMPACT_SEGMENTS.CREATE_OR_UPDATE(categoryId),
         "POST",
@@ -231,14 +231,14 @@ export const ManageCategoriesOutputs = ({
           description: data.description,
           impactIndicators: data.impact_indicators,
         }
-      )
-      if (error) throw error
+      );
+      if (error) throw error;
 
       refreshCategories(true).then((refreshedCategories) => {
-        setCategories(refreshedCategories)
-      })
-      reset()
-      toast.success(MESSAGES.ACTIVITY_OUTCOME.CREATE.SUCCESS)
+        setCategories(refreshedCategories);
+      });
+      reset();
+      toast.success(MESSAGES.ACTIVITY_OUTCOME.CREATE.SUCCESS);
     } catch (error) {
       errorManager(
         MESSAGES.ACTIVITY_OUTCOME.CREATE.ERROR,
@@ -249,28 +249,28 @@ export const ManageCategoriesOutputs = ({
           address,
         },
         { error: MESSAGES.ACTIVITY_OUTCOME.CREATE.ERROR }
-      )
+      );
     } finally {
-      setIsSavingOutput("")
+      setIsSavingOutput("");
     }
-  }
+  };
 
   const handleRemoveOutput = async (categoryId: string, segmentId: string) => {
     try {
-      setIsDeletingOutput(segmentId)
+      setIsDeletingOutput(segmentId);
       const [, error] = await fetchData(
         INDEXER.CATEGORIES.IMPACT_SEGMENTS.DELETE(categoryId),
         "DELETE",
         {
           segmentId,
         }
-      )
-      if (error) throw error
+      );
+      if (error) throw error;
 
       refreshCategories(true).then((refreshedCategories) => {
-        setCategories(refreshedCategories)
-      })
-      toast.success(MESSAGES.ACTIVITY_OUTCOME.DELETE.SUCCESS)
+        setCategories(refreshedCategories);
+      });
+      toast.success(MESSAGES.ACTIVITY_OUTCOME.DELETE.SUCCESS);
     } catch (error) {
       errorManager(
         MESSAGES.ACTIVITY_OUTCOME.DELETE.ERROR,
@@ -281,23 +281,23 @@ export const ManageCategoriesOutputs = ({
           address,
         },
         { error: MESSAGES.ACTIVITY_OUTCOME.DELETE.ERROR }
-      )
+      );
     } finally {
-      setIsDeletingOutput("")
+      setIsDeletingOutput("");
     }
-  }
+  };
 
   const handleNewIndicatorChange = (value: string) => {
-    const current = selectedIndicators
+    const current = selectedIndicators;
     const updated = current.includes(value)
       ? current.filter((id) => id !== value)
-      : [...current, value]
-    setValue("impact_indicators", updated)
-  }
+      : [...current, value];
+    setValue("impact_indicators", updated);
+  };
 
   const saveOutput = async (data: ImpactSegmentFormData, categoryId: string, outputId: string) => {
     try {
-      setIsSavingOutput(outputId)
+      setIsSavingOutput(outputId);
       const [, error] = await fetchData(
         INDEXER.CATEGORIES.IMPACT_SEGMENTS.CREATE_OR_UPDATE(categoryId),
         "POST",
@@ -307,14 +307,14 @@ export const ManageCategoriesOutputs = ({
           description: data.description,
           impactIndicators: data.impact_indicators,
         }
-      )
-      if (error) throw error
+      );
+      if (error) throw error;
 
       refreshCategories(true).then((refreshedCategories) => {
-        setCategories(refreshedCategories)
-      })
+        setCategories(refreshedCategories);
+      });
 
-      toast.success(MESSAGES.ACTIVITY_OUTCOME.UPDATE.SUCCESS)
+      toast.success(MESSAGES.ACTIVITY_OUTCOME.UPDATE.SUCCESS);
     } catch (error) {
       errorManager(
         MESSAGES.ACTIVITY_OUTCOME.UPDATE.ERROR,
@@ -326,11 +326,11 @@ export const ManageCategoriesOutputs = ({
           address,
         },
         { error: MESSAGES.ACTIVITY_OUTCOME.UPDATE.ERROR }
-      )
+      );
     } finally {
-      setIsSavingOutput("")
+      setIsSavingOutput("");
     }
-  }
+  };
 
   return (
     <div className="bg-white dark:bg-zinc-800 rounded-lg p-8 border border-gray-100 dark:border-zinc-700 w-full">
@@ -556,5 +556,5 @@ export const ManageCategoriesOutputs = ({
         </div>
       )}
     </div>
-  )
-}
+  );
+};

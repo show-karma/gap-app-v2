@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import { CheckIcon } from "@heroicons/react/24/solid"
-import type React from "react"
+import { CheckIcon } from "@heroicons/react/24/solid";
+import type React from "react";
 
-export type DisbursementStep = "configure" | "upload" | "review"
+export type DisbursementStep = "configure" | "upload" | "review";
 
 interface DisbursementStepperProps {
-  currentStep: DisbursementStep
-  completedSteps: DisbursementStep[]
+  currentStep: DisbursementStep;
+  completedSteps: DisbursementStep[];
 }
 
 const steps = [
@@ -29,7 +29,7 @@ const steps = [
     description: "Review and execute",
     icon: "🚀",
   },
-]
+];
 
 export const DisbursementStepper: React.FC<DisbursementStepperProps> = ({
   currentStep,
@@ -37,20 +37,20 @@ export const DisbursementStepper: React.FC<DisbursementStepperProps> = ({
 }) => {
   const getStepStatus = (stepId: DisbursementStep) => {
     if (completedSteps.includes(stepId)) {
-      return "completed"
+      return "completed";
     } else if (stepId === currentStep) {
-      return "current"
+      return "current";
     } else {
-      return "upcoming"
+      return "upcoming";
     }
-  }
+  };
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <nav aria-label="Progress">
         <ol className="flex items-center justify-between">
           {steps.map((step, stepIdx) => {
-            const status = getStepStatus(step.id as DisbursementStep)
+            const status = getStepStatus(step.id as DisbursementStep);
 
             return (
               <li key={step.name} className="relative flex-1">
@@ -120,10 +120,10 @@ export const DisbursementStepper: React.FC<DisbursementStepperProps> = ({
                   </div>
                 </div>
               </li>
-            )
+            );
           })}
         </ol>
       </nav>
     </div>
-  )
-}
+  );
+};

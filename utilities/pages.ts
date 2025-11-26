@@ -96,4 +96,4 @@ export const PAGES = {
     APPLY: (communitySlug: string, programId: string) =>
       `${PAGES.FUNDING_APP}/${communitySlug}/programs/${programId}/apply`,
   },
-}
+};

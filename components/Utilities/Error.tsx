@@ -1,5 +1,5 @@
 interface Props {
-  message?: string
+  message?: string;
 }
 
 export function Error({ message = "" }: Props) {
@@ -9,5 +9,5 @@ export function Error({ message = "" }: Props) {
         <h1 className="dark:text-slate-100">{message}</h1>
       </div>
     </div>
-  )
+  );
 }

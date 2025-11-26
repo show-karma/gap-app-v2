@@ -1,18 +1,18 @@
-import { PencilSquareIcon, ShareIcon, TrashIcon } from "@heroicons/react/24/outline"
-import { DeleteDialog } from "@/components/DeleteDialog"
-import { Button } from "@/components/Utilities/Button"
-import { cn } from "@/utilities/tailwind"
+import { PencilSquareIcon, ShareIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { DeleteDialog } from "@/components/DeleteDialog";
+import { Button } from "@/components/Utilities/Button";
+import { cn } from "@/utilities/tailwind";
 
 interface ActivityMenuProps {
-  onShare?: () => void
-  onEdit?: () => void
-  onDelete?: () => Promise<void>
-  canShare?: boolean
-  canEdit?: boolean
-  canDelete?: boolean
-  isDeleting?: boolean
-  deleteTitle?: React.ReactNode
-  activityType?: string // For determining edit capabilities
+  onShare?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => Promise<void>;
+  canShare?: boolean;
+  canEdit?: boolean;
+  canDelete?: boolean;
+  isDeleting?: boolean;
+  deleteTitle?: React.ReactNode;
+  activityType?: string; // For determining edit capabilities
 }
 
 export const ActivityMenu = ({
@@ -26,16 +26,16 @@ export const ActivityMenu = ({
   deleteTitle = "Are you sure you want to delete this item?",
   activityType,
 }: ActivityMenuProps) => {
-  const buttonClassName = `group border-none ring-none font-normal bg-transparent dark:bg-transparent text-gray-900 dark:text-zinc-100 hover:bg-white dark:hover:bg-zinc-800 dark:hover:opacity-75 hover:opacity-75 flex w-full items-start justify-start rounded-md px-2 py-2 text-sm flex-row gap-2`
+  const buttonClassName = `group border-none ring-none font-normal bg-transparent dark:bg-transparent text-gray-900 dark:text-zinc-100 hover:bg-white dark:hover:bg-zinc-800 dark:hover:opacity-75 hover:opacity-75 flex w-full items-start justify-start rounded-md px-2 py-2 text-sm flex-row gap-2`;
 
   // Determine which activities can be edited
   const canActuallyEdit =
-    canEdit && (activityType === "ProjectUpdate" || activityType === "ProjectImpact")
+    canEdit && (activityType === "ProjectUpdate" || activityType === "ProjectImpact");
 
-  const hasAnyAction = canShare || canActuallyEdit || canDelete
+  const hasAnyAction = canShare || canActuallyEdit || canDelete;
 
   if (!hasAnyAction) {
-    return null
+    return null;
   }
 
   return (
@@ -116,5 +116,5 @@ export const ActivityMenu = ({
         // </Menu>
       )}
     </div>
-  )
-}
+  );
+};

@@ -1,4 +1,4 @@
-import { z } from "zod"
+import { z } from "zod";
 
 export const settingsConfigSchema = z.object({
   privateApplications: z.boolean(),
@@ -6,6 +6,6 @@ export const settingsConfigSchema = z.object({
   donationRound: z.boolean(),
   successPageContent: z.string().optional(),
   showCommentsOnPublicPage: z.boolean(),
-})
+});
 
-export type SettingsConfigFormData = z.infer<typeof settingsConfigSchema>
+export type SettingsConfigFormData = z.infer<typeof settingsConfigSchema>;

@@ -1,9 +1,9 @@
-import { ExclamationTriangleIcon } from "@heroicons/react/24/solid"
-import type React from "react"
+import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
+import type React from "react";
 
 interface Props {
-  heading: string
-  children: React.ReactNode
+  heading: string;
+  children: React.ReactNode;
 }
 
 export default function NotFound({ heading, children }: Props) {
@@ -24,5 +24,5 @@ export default function NotFound({ heading, children }: Props) {
         </div>
       </div>
     </div>
-  )
+  );
 }

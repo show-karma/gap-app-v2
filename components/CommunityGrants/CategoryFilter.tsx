@@ -1,19 +1,19 @@
-"use client"
-import { Listbox, Transition } from "@headlessui/react"
-import { CheckIcon } from "@heroicons/react/20/solid"
-import { ChevronDownIcon } from "@heroicons/react/24/solid"
-import pluralize from "pluralize"
-import { Fragment } from "react"
-import { cn } from "@/utilities/tailwind"
+"use client";
+import { Listbox, Transition } from "@headlessui/react";
+import { CheckIcon } from "@heroicons/react/20/solid";
+import { ChevronDownIcon } from "@heroicons/react/24/solid";
+import pluralize from "pluralize";
+import { Fragment } from "react";
+import { cn } from "@/utilities/tailwind";
 
 interface CategoryFilterProps {
-  categories: string[]
-  selectedCategories: string[]
-  onChange: (categories: string[]) => void
+  categories: string[];
+  selectedCategories: string[];
+  onChange: (categories: string[]) => void;
 }
 
 export function CategoryFilter({ categories, selectedCategories, onChange }: CategoryFilterProps) {
-  if (!categories.length) return null
+  if (!categories.length) return null;
 
   return (
     <Listbox value={selectedCategories} onChange={onChange} multiple>
@@ -85,5 +85,5 @@ export function CategoryFilter({ categories, selectedCategories, onChange }: Cat
         </div>
       )}
     </Listbox>
-  )
+  );
 }

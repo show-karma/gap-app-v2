@@ -1,20 +1,20 @@
-import { Dialog, Transition } from "@headlessui/react"
-import { ChevronDownIcon, PlusIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/outline"
-import Image from "next/image"
-import { Fragment, useEffect, useRef, useState } from "react"
-import toast from "react-hot-toast"
-import { useAccount } from "wagmi"
-import { DeleteDialog } from "@/components/DeleteDialog"
-import { LoadingSpinner } from "@/components/Disbursement/components/LoadingSpinner"
-import { IndicatorForm } from "@/components/Forms/IndicatorForm"
-import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub"
-import { Button } from "@/components/Utilities/Button"
-import { errorManager } from "@/components/Utilities/errorManager"
-import { useGroupedIndicators } from "@/hooks/useGroupedIndicators"
-import type { Category, ImpactIndicator, ImpactIndicatorWithData } from "@/types/impactMeasurement"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
-import { MESSAGES } from "@/utilities/messages"
+import { Dialog, Transition } from "@headlessui/react";
+import { ChevronDownIcon, PlusIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import Image from "next/image";
+import { Fragment, useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { DeleteDialog } from "@/components/DeleteDialog";
+import { LoadingSpinner } from "@/components/Disbursement/components/LoadingSpinner";
+import { IndicatorForm } from "@/components/Forms/IndicatorForm";
+import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
+import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { useGroupedIndicators } from "@/hooks/useGroupedIndicators";
+import type { Category, ImpactIndicator, ImpactIndicatorWithData } from "@/types/impactMeasurement";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
 
 // Custom Dropdown Menu Component - copied from CategoryView.tsx
 const DropdownMenu = ({
@@ -22,28 +22,28 @@ const DropdownMenu = ({
   onChange,
   options,
 }: {
-  value: string
-  onChange: (value: string) => void
-  options: { value: string; label: string }[]
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
 }) => {
-  const [isOpen, setIsOpen] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
+        setIsOpen(false);
       }
-    }
+    };
 
-    document.addEventListener("mousedown", handleClickOutside)
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [])
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
-  const selectedOption = options.find((option) => option.value === value)
+  const selectedOption = options.find((option) => option.value === value);
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -65,8 +65,8 @@ const DropdownMenu = ({
               <button
                 key={option.value}
                 onClick={() => {
-                  onChange(option.value)
-                  setIsOpen(false)
+                  onChange(option.value);
+                  setIsOpen(false);
                 }}
                 className={`block w-full text-left px-4 py-2 text-sm ${
                   value === option.value
@@ -81,36 +81,36 @@ const DropdownMenu = ({
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
 interface IndicatorsViewProps {
-  categories: Category[]
-  onRefresh?: () => Promise<void>
-  communityId?: string
+  categories: Category[];
+  onRefresh?: () => Promise<void>;
+  communityId?: string;
 }
 
 export const IndicatorsView = ({ categories, onRefresh, communityId }: IndicatorsViewProps) => {
-  const { address } = useAccount()
-  const [indicatorViewType, setIndicatorViewType] = useState<"all" | "automated" | "manual">("all")
-  const [searchQuery, setSearchQuery] = useState<string>("")
-  const [isFormModalOpen, setIsFormModalOpen] = useState(false)
-  const [selectedAutosynced, setSelectedAutosynced] = useState<string>("")
+  const { address } = useAccount();
+  const [indicatorViewType, setIndicatorViewType] = useState<"all" | "automated" | "manual">("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [selectedAutosynced, setSelectedAutosynced] = useState<string>("");
   const [formDefaultValues, setFormDefaultValues] = useState<Partial<any>>({
     name: "",
     description: "",
     unitOfMeasure: "int",
     programs: [],
-  })
-  const [isDeletingId, setIsDeletingId] = useState<string | null>(null)
-  const [newIndicators, setNewIndicators] = useState<ImpactIndicator[]>([])
+  });
+  const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
+  const [newIndicators, setNewIndicators] = useState<ImpactIndicator[]>([]);
 
   // Filter options for dropdown - same format as CategoryView.tsx
   const filterOptions = [
     { value: "all", label: "All" },
     { value: "automated", label: "Automated" },
     { value: "manual", label: "Manual" },
-  ]
+  ];
 
   // Use the indicators hook instead of direct fetch
   const {
@@ -119,7 +119,7 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
     isLoading,
   } = useGroupedIndicators({
     communityId: communityId || "",
-  })
+  });
 
   // Handle autosynced indicator selection
   const handleAutosyncedSelect = (name: string) => {
@@ -129,50 +129,50 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
         description: "",
         unitOfMeasure: "int",
         programs: [],
-      })
-      setSelectedAutosynced("")
-      return
+      });
+      setSelectedAutosynced("");
+      return;
     }
 
-    const selectedIndicator = autosyncedIndicators.find((i) => i.name === name)
+    const selectedIndicator = autosyncedIndicators.find((i) => i.name === name);
     if (selectedIndicator) {
       setFormDefaultValues({
         name: selectedIndicator.name,
         description: selectedIndicator.description,
         unitOfMeasure: selectedIndicator.unitOfMeasure as "float" | "int",
         programs: [],
-      })
-      setSelectedAutosynced(name)
+      });
+      setSelectedAutosynced(name);
     }
-  }
+  };
 
   // Handle indicator creation success
   const handleIndicatorCreated = (_indicator: ImpactIndicatorWithData) => {
-    refetchIndicators() // Use the hook's refetch method
+    refetchIndicators(); // Use the hook's refetch method
 
     if (onRefresh) {
-      onRefresh()
+      onRefresh();
     }
 
-    toast.success("Indicator created successfully")
-  }
+    toast.success("Indicator created successfully");
+  };
 
   // Handle indicator deletion
   const handleDeleteIndicator = async (id: string) => {
     try {
-      setIsDeletingId(id)
-      const [, error] = await fetchData(INDEXER.INDICATORS.DELETE(id), "DELETE")
-      if (error) throw error
+      setIsDeletingId(id);
+      const [, error] = await fetchData(INDEXER.INDICATORS.DELETE(id), "DELETE");
+      if (error) throw error;
 
       // Refresh indicators using the hook's refetch method
-      await refetchIndicators()
+      await refetchIndicators();
 
       // Also call the parent refresh if provided
       if (onRefresh) {
-        await onRefresh()
+        await onRefresh();
       }
 
-      toast.success("Indicator deleted successfully")
+      toast.success("Indicator deleted successfully");
     } catch (error) {
       errorManager(
         "Failed to delete indicator",
@@ -182,11 +182,11 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
           address,
         },
         { error: MESSAGES.INDICATOR.DELETE.ERROR }
-      )
+      );
     } finally {
-      setIsDeletingId(null)
+      setIsDeletingId(null);
     }
-  }
+  };
 
   // Total indicators count
   const getTotalIndicatorsCount = () => {
@@ -194,22 +194,22 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
       groupedIndicators.communityAdminCreated.length +
       groupedIndicators.projectOwnerCreated.length +
       newIndicators.length
-    )
-  }
+    );
+  };
 
   // Check if an indicator is autosynced
   const isAutosyncedIndicator = (indicator: ImpactIndicator) => {
-    return autosyncedIndicators.some((i) => i.name === indicator.name)
-  }
+    return autosyncedIndicators.some((i) => i.name === indicator.name);
+  };
 
   // Filter indicators based on search and view type
   const getFilteredIndicators = (indicators: ImpactIndicator[]): ImpactIndicator[] => {
-    let filteredIndicators = [...indicators]
+    let filteredIndicators = [...indicators];
 
     if (indicatorViewType === "automated") {
-      filteredIndicators = filteredIndicators.filter((ind) => isAutosyncedIndicator(ind))
+      filteredIndicators = filteredIndicators.filter((ind) => isAutosyncedIndicator(ind));
     } else if (indicatorViewType === "manual") {
-      filteredIndicators = filteredIndicators.filter((ind) => !isAutosyncedIndicator(ind))
+      filteredIndicators = filteredIndicators.filter((ind) => !isAutosyncedIndicator(ind));
     }
 
     if (searchQuery) {
@@ -217,25 +217,25 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
         (indicator) =>
           indicator.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           indicator.description?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+      );
     }
 
     return filteredIndicators.sort((a, b) =>
       a.name.toLowerCase().localeCompare(b.name.toLowerCase())
-    )
-  }
+    );
+  };
 
   const filteredCommunityAdminIndicators = getFilteredIndicators(
     groupedIndicators.communityAdminCreated
-  )
+  );
   const filteredProjectOwnerIndicators = getFilteredIndicators(
     groupedIndicators.projectOwnerCreated
-  )
+  );
 
-  const hasIndicators = getTotalIndicatorsCount() > 0
+  const hasIndicators = getTotalIndicatorsCount() > 0;
   const hasFilteredIndicators =
-    filteredCommunityAdminIndicators.length > 0 || filteredProjectOwnerIndicators.length > 0
-  const isFiltering = searchQuery || indicatorViewType !== "all"
+    filteredCommunityAdminIndicators.length > 0 || filteredProjectOwnerIndicators.length > 0;
+  const isFiltering = searchQuery || indicatorViewType !== "all";
 
   const renderIndicatorsList = (
     indicators: ImpactIndicator[],
@@ -243,7 +243,7 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
     allowDelete: boolean = true
   ) => {
     if (indicators.length === 0 && !isFiltering) {
-      return null
+      return null;
     }
 
     return (
@@ -299,8 +299,8 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
           </div>
         )}
       </div>
-    )
-  }
+    );
+  };
 
   return (
     <div className="w-full">
@@ -435,15 +435,15 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
           as="div"
           className="relative z-50"
           onClose={() => {
-            setIsFormModalOpen(false)
+            setIsFormModalOpen(false);
             // Reset form values and selected autosynced when closing modal
             setFormDefaultValues({
               name: "",
               description: "",
               unitOfMeasure: "int",
               programs: [],
-            })
-            setSelectedAutosynced("")
+            });
+            setSelectedAutosynced("");
           }}
         >
           <Transition.Child
@@ -479,14 +479,14 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
                     </Dialog.Title>
                     <button
                       onClick={() => {
-                        setIsFormModalOpen(false)
+                        setIsFormModalOpen(false);
                         setFormDefaultValues({
                           name: "",
                           description: "",
                           unitOfMeasure: "int",
                           programs: [],
-                        })
-                        setSelectedAutosynced("")
+                        });
+                        setSelectedAutosynced("");
                       }}
                       className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                     >
@@ -528,12 +528,12 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
                     onSuccess={(indicator) => {
                       // Prevent event bubbling if any
                       if (event) {
-                        event.preventDefault()
-                        event.stopPropagation()
+                        event.preventDefault();
+                        event.stopPropagation();
                       }
 
                       // Add the new indicator to our local state
-                      setNewIndicators((prev) => [...prev, indicator])
+                      setNewIndicators((prev) => [...prev, indicator]);
 
                       // Reset form values and selected autosynced
                       setFormDefaultValues({
@@ -541,17 +541,17 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
                         description: "",
                         unitOfMeasure: "int",
                         programs: [],
-                      })
-                      setSelectedAutosynced("")
+                      });
+                      setSelectedAutosynced("");
 
                       // Handle success
-                      handleIndicatorCreated(indicator)
+                      handleIndicatorCreated(indicator);
 
                       // Close the form modal
-                      setIsFormModalOpen(false)
+                      setIsFormModalOpen(false);
                     }}
                     onError={() => {
-                      toast.error("Failed to create indicator")
+                      toast.error("Failed to create indicator");
                     }}
                     preventPropagation={true}
                   />
@@ -562,5 +562,5 @@ export const IndicatorsView = ({ categories, onRefresh, communityId }: Indicator
         </Dialog>
       </Transition>
     </div>
-  )
-}
+  );
+};

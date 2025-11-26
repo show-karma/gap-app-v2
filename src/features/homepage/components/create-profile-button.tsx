@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { useContributorProfileModalStore } from "@/store/modals/contributorProfile"
+import { Button } from "@/components/ui/button";
+import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 
 export function CreateProfileButton() {
-  const { openModal: openProfileModal } = useContributorProfileModalStore()
+  const { openModal: openProfileModal } = useContributorProfileModalStore();
 
   return (
     <Button
@@ -13,5 +13,5 @@ export function CreateProfileButton() {
     >
       Create Profile
     </Button>
-  )
+  );
 }

@@ -1,14 +1,14 @@
-import toast from "react-hot-toast"
-import type { ImpactIndicatorWithData } from "@/types/impactMeasurement"
-import fetchData from "../fetchData"
-import { INDEXER } from "../indexer"
-import { MESSAGES } from "../messages"
+import toast from "react-hot-toast";
+import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
+import fetchData from "../fetchData";
+import { INDEXER } from "../indexer";
+import { MESSAGES } from "../messages";
 
 interface DataPoint {
-  value: number | string
-  proof: string
-  startDate: string
-  endDate: string
+  value: number | string;
+  proof: string;
+  startDate: string;
+  endDate: string;
 }
 
 /**
@@ -25,10 +25,10 @@ export const sendMilestoneImpactAnswers = async (
   milestoneUID: string,
   indicatorId: string,
   datapoints: {
-    value: number | string
-    proof: string
-    startDate: string
-    endDate: string
+    value: number | string;
+    proof: string;
+    startDate: string;
+    endDate: string;
   }[],
   onSuccess?: () => void,
   onError?: (error: string) => void
@@ -46,32 +46,32 @@ export const sendMilestoneImpactAnswers = async (
           endDate: item.endDate,
         })),
       }
-    )
+    );
 
     if (error) {
       if (onError) {
-        onError(error)
+        onError(error);
       } else {
-        toast.error(MESSAGES.MILESTONES.OUTPUTS.ERROR)
+        toast.error(MESSAGES.MILESTONES.OUTPUTS.ERROR);
       }
-      return false
+      return false;
     } else {
       if (onSuccess) {
-        onSuccess()
+        onSuccess();
       } else {
-        toast.success(MESSAGES.MILESTONES.OUTPUTS.SUCCESS)
+        toast.success(MESSAGES.MILESTONES.OUTPUTS.SUCCESS);
       }
-      return true
+      return true;
     }
   } catch (error) {
     if (onError) {
-      onError(error instanceof Error ? error.message : String(error))
+      onError(error instanceof Error ? error.message : String(error));
     } else {
-      toast.error(MESSAGES.MILESTONES.OUTPUTS.ERROR)
+      toast.error(MESSAGES.MILESTONES.OUTPUTS.ERROR);
     }
-    return false
+    return false;
   }
-}
+};
 
 /**
  * Retrieves impact indicator data for a milestone
@@ -86,16 +86,16 @@ export const getMilestoneImpactAnswers = async (
     const [data, error] = await fetchData(
       INDEXER.MILESTONE.IMPACT_INDICATORS.GET(milestoneUID),
       "GET"
-    )
+    );
 
     if (error) {
-      console.error("Error fetching milestone impact data:", error)
-      return []
+      console.error("Error fetching milestone impact data:", error);
+      return [];
     }
 
-    return data || []
+    return data || [];
   } catch (error) {
-    console.error("Error fetching milestone impact data:", error)
-    return []
+    console.error("Error fetching milestone impact data:", error);
+    return [];
   }
-}
+};

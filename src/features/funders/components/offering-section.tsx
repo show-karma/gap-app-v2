@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import { SquareCheckBig } from "lucide-react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { marketingLayoutTheme } from "@/src/helper/theme"
-import { SOCIALS } from "@/utilities/socials"
-import { cn } from "@/utilities/tailwind"
+import { SquareCheckBig } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { marketingLayoutTheme } from "@/src/helper/theme";
+import { SOCIALS } from "@/utilities/socials";
+import { cn } from "@/utilities/tailwind";
 
 export interface PricingTier {
-  name: string
-  description: string
-  features: string[]
-  mostPopular: boolean
+  name: string;
+  description: string;
+  features: string[];
+  mostPopular: boolean;
 }
 
 const pricingTiers: PricingTier[] = [
@@ -49,7 +49,7 @@ const pricingTiers: PricingTier[] = [
     ],
     mostPopular: false,
   },
-]
+];
 
 export function OfferingSection() {
   return (
@@ -160,5 +160,5 @@ export function OfferingSection() {
         </Button>
       </div>
     </section>
-  )
+  );
 }

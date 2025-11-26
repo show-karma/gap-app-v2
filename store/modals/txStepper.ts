@@ -1,24 +1,24 @@
-import { create } from "zustand"
+import { create } from "zustand";
 
-export type TxStepperSteps = "preparing" | "pending" | "confirmed" | "indexing" | "indexed"
+export type TxStepperSteps = "preparing" | "pending" | "confirmed" | "indexing" | "indexed";
 
 interface TxStepperStore {
-  isStepperOpen: boolean
-  setIsStepper: (isStepperOpen: boolean) => void
-  stepperStep: TxStepperSteps
-  changeStepperStep: (stepperStep: TxStepperSteps) => void
+  isStepperOpen: boolean;
+  setIsStepper: (isStepperOpen: boolean) => void;
+  stepperStep: TxStepperSteps;
+  changeStepperStep: (stepperStep: TxStepperSteps) => void;
 }
 
 export const useStepper = create<TxStepperStore>((set, _get) => ({
   isStepperOpen: false,
   setIsStepper: (isStepperOpen: boolean) => {
-    set({ isStepperOpen })
+    set({ isStepperOpen });
     setTimeout(() => {
-      set({ stepperStep: "preparing" })
-    }, 200)
+      set({ stepperStep: "preparing" });
+    }, 200);
   },
   stepperStep: "indexed",
   changeStepperStep: (stepperStep: TxStepperSteps) => {
-    set({ stepperStep, isStepperOpen: true })
+    set({ stepperStep, isStepperOpen: true });
   },
-}))
+}));

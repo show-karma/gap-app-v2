@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import {
   CalendarIcon,
   CheckCircleIcon,
@@ -9,111 +9,115 @@ import {
   MagnifyingGlassIcon,
   UsersIcon,
   XCircleIcon,
-} from "@heroicons/react/24/outline"
+} from "@heroicons/react/24/outline";
 import {
   ArrowLeftIcon,
   ArrowTrendingUpIcon,
   ChevronDownIcon,
   EyeIcon,
   PlusIcon,
-} from "@heroicons/react/24/solid"
-import Link from "next/link"
-import { useParams, useRouter, useSearchParams } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
-import toast from "react-hot-toast"
-import { FundingPlatformStatsCard } from "@/components/FundingPlatform/Dashboard/card"
-import { Button } from "@/components/Utilities/Button"
-import { LoadingOverlay } from "@/components/Utilities/LoadingOverlay"
-import { Spinner } from "@/components/Utilities/Spinner"
-import { useFundingPrograms } from "@/hooks/useFundingPlatform"
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin"
-import { useStaff } from "@/hooks/useStaff"
-import { type FundingProgram, fundingPlatformService } from "@/services/fundingPlatformService"
-import { layoutTheme } from "@/src/helper/theme"
-import { useOwnerStore } from "@/store"
-import { envVars } from "@/utilities/enviromentVars"
-import formatCurrency from "@/utilities/formatCurrency"
-import { formatDate } from "@/utilities/formatDate"
-import { fundingPlatformDomains } from "@/utilities/fundingPlatformDomains"
-import { MESSAGES } from "@/utilities/messages"
-import { PAGES } from "@/utilities/pages"
-import { cn } from "@/utilities/tailwind"
+} from "@heroicons/react/24/solid";
+import Link from "next/link";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
+import { FundingPlatformStatsCard } from "@/components/FundingPlatform/Dashboard/card";
+import { Button } from "@/components/Utilities/Button";
+import { LoadingOverlay } from "@/components/Utilities/LoadingOverlay";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { useFundingPrograms } from "@/hooks/useFundingPlatform";
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useStaff } from "@/hooks/useStaff";
+import { type FundingProgram, fundingPlatformService } from "@/services/fundingPlatformService";
+import { layoutTheme } from "@/src/helper/theme";
+import { useOwnerStore } from "@/store";
+import { envVars } from "@/utilities/enviromentVars";
+import formatCurrency from "@/utilities/formatCurrency";
+import { formatDate } from "@/utilities/formatDate";
+import { fundingPlatformDomains } from "@/utilities/fundingPlatformDomains";
+import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
+import { cn } from "@/utilities/tailwind";
 
 const getApplyUrlByCommunityId = (communityId: string, programId: string) => {
   if (communityId in fundingPlatformDomains) {
-    const domain = fundingPlatformDomains[communityId as keyof typeof fundingPlatformDomains]
+    const domain = fundingPlatformDomains[communityId as keyof typeof fundingPlatformDomains];
     return envVars.isDev
       ? `${domain.dev}/programs/${programId}/apply`
-      : `${domain.prod}/programs/${programId}/apply`
+      : `${domain.prod}/programs/${programId}/apply`;
   } else {
     return envVars.isDev
       ? `${fundingPlatformDomains.shared.dev}/${communityId}/programs/${programId}/apply`
-      : `${fundingPlatformDomains.shared.prod}/${communityId}/programs/${programId}/apply`
+      : `${fundingPlatformDomains.shared.prod}/${communityId}/programs/${programId}/apply`;
   }
-}
+};
 
 export default function FundingPlatformAdminPage() {
-  const { communityId } = useParams() as { communityId: string }
-  const router = useRouter()
-  const searchParams = useSearchParams()
+  const { communityId } = useParams() as { communityId: string };
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const { isCommunityAdmin, isLoading: isLoadingAdmin } = useIsCommunityAdmin(communityId)
-  const isOwner = useOwnerStore((state) => state.isOwner)
-  const { isStaff } = useStaff()
+  const { isCommunityAdmin, isLoading: isLoadingAdmin } = useIsCommunityAdmin(communityId);
+  const isOwner = useOwnerStore((state) => state.isOwner);
+  const { isStaff } = useStaff();
 
-  const hasAccess = isCommunityAdmin || isOwner || isStaff
+  const hasAccess = isCommunityAdmin || isOwner || isStaff;
 
   const {
     programs,
     isLoading: isLoadingPrograms,
     error: programsError,
     refetch,
-  } = useFundingPrograms(communityId)
+  } = useFundingPrograms(communityId);
 
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  const [togglingPrograms, setTogglingPrograms] = useState<Set<string>>(new Set())
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [togglingPrograms, setTogglingPrograms] = useState<Set<string>>(new Set());
 
   // Initialize from URL params
-  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "")
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [enabledFilter, setEnabledFilter] = useState<"all" | "enabled" | "disabled">(
     (searchParams.get("status") as "all" | "enabled" | "disabled") || "all"
-  )
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  );
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const handleToggleProgram = async (
     programId: string,
     chainId: number,
     currentEnabled: boolean
   ) => {
-    const programKey = `${programId}_${chainId}`
-    setTogglingPrograms((prev) => new Set(prev).add(programKey))
+    const programKey = `${programId}_${chainId}`;
+    setTogglingPrograms((prev) => new Set(prev).add(programKey));
 
     try {
-      await fundingPlatformService.programs.toggleProgramStatus(programId, chainId, !currentEnabled)
-      toast.success(`Program ${!currentEnabled ? "enabled" : "disabled"} successfully`)
+      await fundingPlatformService.programs.toggleProgramStatus(
+        programId,
+        chainId,
+        !currentEnabled
+      );
+      toast.success(`Program ${!currentEnabled ? "enabled" : "disabled"} successfully`);
       // Refresh the programs list
-      await refetch()
+      await refetch();
     } catch (error) {
-      console.error("Error toggling program status:", error)
-      toast.error("Failed to update program status")
+      console.error("Error toggling program status:", error);
+      toast.error("Failed to update program status");
     } finally {
       setTogglingPrograms((prev) => {
-        const newSet = new Set(prev)
-        newSet.delete(programKey)
-        return newSet
-      })
+        const newSet = new Set(prev);
+        newSet.delete(programKey);
+        return newSet;
+      });
     }
-  }
+  };
 
   // Calculate statistics from programs
   const statistics: {
-    totalPrograms: number
-    totalApplications: number
-    approved: number
-    rejected: number
-    pending: number
-    revisionRequested: number
-    underReview: number
+    totalPrograms: number;
+    totalApplications: number;
+    approved: number;
+    rejected: number;
+    pending: number;
+    revisionRequested: number;
+    underReview: number;
   } = useMemo(() => {
     if (!programs || programs.length === 0) {
       // Fallback values when no programs exist
@@ -125,13 +129,13 @@ export default function FundingPlatformAdminPage() {
         pending: 0,
         revisionRequested: 0,
         underReview: 0,
-      }
+      };
     }
 
     const stats = programs.reduce(
       (acc, program) => {
         // Use actual API response data, with fallbacks only for missing fields
-        const programStats = program.metrics || undefined
+        const programStats = program.metrics || undefined;
         return {
           totalPrograms: acc.totalPrograms + 1,
           totalApplications: acc.totalApplications + (programStats?.totalApplications || 0),
@@ -141,7 +145,7 @@ export default function FundingPlatformAdminPage() {
           revisionRequested:
             acc.revisionRequested + (programStats?.revisionRequestedApplications || 0),
           underReview: acc.underReview + (programStats?.underReviewApplications || 0),
-        }
+        };
       },
       {
         totalPrograms: 0,
@@ -152,62 +156,62 @@ export default function FundingPlatformAdminPage() {
         revisionRequested: 0,
         underReview: 0,
       }
-    )
+    );
 
-    return stats
-  }, [programs])
+    return stats;
+  }, [programs]);
 
   // Filter programs based on search term and enabled status
   const filteredPrograms = useMemo(() => {
-    if (!programs) return []
+    if (!programs) return [];
 
     return programs.filter((program) => {
       // Search filter
-      const searchLower = searchTerm.toLowerCase()
+      const searchLower = searchTerm.toLowerCase();
       const matchesSearch =
         searchTerm === "" ||
         program.name?.toLowerCase().includes(searchLower) ||
         program.metadata?.title?.toLowerCase().includes(searchLower) ||
         program.metadata?.description?.toLowerCase().includes(searchLower) ||
-        program.programId?.toLowerCase().includes(searchLower)
+        program.programId?.toLowerCase().includes(searchLower);
 
       // Enabled/Disabled filter
-      let matchesEnabled = true
+      let matchesEnabled = true;
       if (enabledFilter !== "all") {
-        const isEnabled = program.applicationConfig?.isEnabled || false
-        matchesEnabled = enabledFilter === "enabled" ? isEnabled : !isEnabled
+        const isEnabled = program.applicationConfig?.isEnabled || false;
+        matchesEnabled = enabledFilter === "enabled" ? isEnabled : !isEnabled;
       }
 
-      return matchesSearch && matchesEnabled
-    })
-  }, [programs, searchTerm, enabledFilter])
+      return matchesSearch && matchesEnabled;
+    });
+  }, [programs, searchTerm, enabledFilter]);
 
   // Update URL when filters change
   useEffect(() => {
-    const params = new URLSearchParams()
+    const params = new URLSearchParams();
 
     if (searchTerm) {
-      params.set("search", searchTerm)
+      params.set("search", searchTerm);
     }
 
     if (enabledFilter !== "all") {
-      params.set("status", enabledFilter)
+      params.set("status", enabledFilter);
     }
 
-    const queryString = params.toString()
+    const queryString = params.toString();
     const newUrl = queryString
       ? `/community/${communityId}/admin/funding-platform?${queryString}`
-      : `/community/${communityId}/admin/funding-platform`
+      : `/community/${communityId}/admin/funding-platform`;
 
-    router.push(newUrl, { scroll: false })
-  }, [searchTerm, enabledFilter, communityId, router])
+    router.push(newUrl, { scroll: false });
+  }, [searchTerm, enabledFilter, communityId, router]);
 
   if (isLoadingAdmin || isLoadingPrograms) {
     return (
       <div className="flex w-full items-center justify-center min-h-[400px]">
         <Spinner />
       </div>
-    )
+    );
   }
 
   if (!hasAccess) {
@@ -215,7 +219,7 @@ export default function FundingPlatformAdminPage() {
       <div className={layoutTheme.padding}>
         <p className="text-red-500">{MESSAGES.REVIEWS.NOT_ADMIN}</p>
       </div>
-    )
+    );
   }
 
   if (programsError) {
@@ -227,7 +231,7 @@ export default function FundingPlatformAdminPage() {
           </p>
         </div>
       </div>
-    )
+    );
   }
 
   const stats = [
@@ -280,7 +284,7 @@ export default function FundingPlatformAdminPage() {
       bgColor: "bg-indigo-50 dark:bg-indigo-900",
       icon: <MagnifyingGlassIcon className="h-5 w-5 text-indigo-700 dark:text-indigo-100" />,
     },
-  ]
+  ];
 
   const _cardStats = (program: Record<string, any>) => [
     {
@@ -293,21 +297,21 @@ export default function FundingPlatformAdminPage() {
       value: formatCurrency(program.metrics?.totalApplications || 0),
       icon: <UsersIcon className="w-5 h-5 text-blue-700 dark:text-blue-100" />,
     },
-  ]
+  ];
 
   const applicationProgressPct = (program: FundingProgram) => {
-    const totalApplications = program.metrics?.totalApplications || 0
-    const approvedApplications = program.metrics?.approvedApplications || 0
+    const totalApplications = program.metrics?.totalApplications || 0;
+    const approvedApplications = program.metrics?.approvedApplications || 0;
 
-    return Number(((approvedApplications / totalApplications) * 100).toFixed(2)) || 0
-  }
+    return Number(((approvedApplications / totalApplications) * 100).toFixed(2)) || 0;
+  };
 
   const applicationProgress = (program: FundingProgram) => {
-    const approvedApplications = program.metrics?.approvedApplications || 0
-    const rejectedApplications = program.metrics?.rejectedApplications || 0
-    const pendingApplications = program.metrics?.pendingApplications || 0
-    const revisionRequestedApplications = program.metrics?.revisionRequestedApplications || 0
-    const underReviewApplications = program.metrics?.underReviewApplications || 0
+    const approvedApplications = program.metrics?.approvedApplications || 0;
+    const rejectedApplications = program.metrics?.rejectedApplications || 0;
+    const pendingApplications = program.metrics?.pendingApplications || 0;
+    const revisionRequestedApplications = program.metrics?.revisionRequestedApplications || 0;
+    const underReviewApplications = program.metrics?.underReviewApplications || 0;
 
     return [
       {
@@ -340,8 +344,8 @@ export default function FundingPlatformAdminPage() {
         color: "text-indigo-600",
         bgColor: "bg-indigo-500",
       },
-    ]
-  }
+    ];
+  };
 
   return (
     <div className="sm:px-3 md:px-4 px-6 py-2 flex flex-col gap-4">
@@ -407,8 +411,8 @@ export default function FundingPlatformAdminPage() {
                   <button
                     key={status}
                     onClick={() => {
-                      setEnabledFilter(status as typeof enabledFilter)
-                      setIsDropdownOpen(false)
+                      setEnabledFilter(status as typeof enabledFilter);
+                      setIsDropdownOpen(false);
                     }}
                     className={cn(
                       "block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700",
@@ -487,7 +491,7 @@ export default function FundingPlatformAdminPage() {
                               program.programId,
                               program.chainID,
                               program.applicationConfig?.isEnabled || false
-                            )
+                            );
                           }
                         }}
                         disabled={
@@ -712,5 +716,5 @@ export default function FundingPlatformAdminPage() {
         </div>
       )}
     </div>
-  )
+  );
 }

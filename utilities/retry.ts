@@ -9,11 +9,11 @@
 export async function retryWithBackoff<T>(
   fn: () => Promise<T>,
   options: {
-    maxRetries?: number
-    initialDelayMs?: number
-    maxDelayMs?: number
-    backoffMultiplier?: number
-    onRetry?: (attempt: number, error: unknown) => void
+    maxRetries?: number;
+    initialDelayMs?: number;
+    maxDelayMs?: number;
+    backoffMultiplier?: number;
+    onRetry?: (attempt: number, error: unknown) => void;
   } = {}
 ): Promise<T> {
   const {
@@ -22,18 +22,18 @@ export async function retryWithBackoff<T>(
     maxDelayMs = 3000,
     backoffMultiplier = 0.3,
     onRetry,
-  } = options
+  } = options;
 
-  let lastError: unknown
+  let lastError: unknown;
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      return await fn()
+      return await fn();
     } catch (error) {
-      lastError = error
+      lastError = error;
 
       if (onRetry) {
-        onRetry(attempt + 1, error)
+        onRetry(attempt + 1, error);
       }
 
       if (attempt < maxRetries - 1) {
@@ -41,13 +41,13 @@ export async function retryWithBackoff<T>(
         const currentDelay = Math.min(
           initialDelayMs * (1 + attempt * backoffMultiplier),
           maxDelayMs
-        )
-        await new Promise((resolve) => setTimeout(resolve, currentDelay))
+        );
+        await new Promise((resolve) => setTimeout(resolve, currentDelay));
       }
     }
   }
 
-  throw lastError
+  throw lastError;
 }
 
 /**
@@ -60,28 +60,28 @@ export async function retryWithBackoff<T>(
 export async function retryUntilCondition(
   condition: () => boolean | Promise<boolean>,
   options: {
-    maxRetries?: number
-    delayMs?: number
-    onRetry?: (attempt: number) => void
+    maxRetries?: number;
+    delayMs?: number;
+    onRetry?: (attempt: number) => void;
   } = {}
 ): Promise<boolean> {
-  const { maxRetries = 60, delayMs = 500, onRetry } = options
+  const { maxRetries = 60, delayMs = 500, onRetry } = options;
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
-    const result = await condition()
+    const result = await condition();
 
     if (result) {
-      return true
+      return true;
     }
 
     if (onRetry) {
-      onRetry(attempt + 1)
+      onRetry(attempt + 1);
     }
 
     if (attempt < maxRetries - 1) {
-      await new Promise((resolve) => setTimeout(resolve, delayMs))
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
   }
 
-  return false
+  return false;
 }

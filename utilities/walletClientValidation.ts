@@ -1,9 +1,9 @@
-import type { WalletClient } from "viem"
+import type { WalletClient } from "viem";
 
 export interface WalletClientValidationResult {
-  isValid: boolean
-  chainId?: number
-  issues: string[]
+  isValid: boolean;
+  chainId?: number;
+  issues: string[];
 }
 
 /**
@@ -13,37 +13,37 @@ export function validateWalletClient(
   walletClient: WalletClient | null | undefined,
   expectedChainId?: number
 ): WalletClientValidationResult {
-  const issues: string[] = []
+  const issues: string[] = [];
 
   if (!walletClient) {
-    issues.push("Wallet client is not available")
-    return { isValid: false, issues }
+    issues.push("Wallet client is not available");
+    return { isValid: false, issues };
   }
 
   if (!walletClient.account) {
-    issues.push("Wallet client has no account connected")
+    issues.push("Wallet client has no account connected");
   }
 
   if (!walletClient.chain) {
-    issues.push("Wallet client has no chain information")
+    issues.push("Wallet client has no chain information");
   } else {
-    const currentChainId = walletClient.chain.id
+    const currentChainId = walletClient.chain.id;
 
     if (expectedChainId && currentChainId !== expectedChainId) {
-      issues.push(`Wallet client is on chain ${currentChainId}, expected ${expectedChainId}`)
+      issues.push(`Wallet client is on chain ${currentChainId}, expected ${expectedChainId}`);
     }
 
     return {
       isValid: issues.length === 0,
       chainId: currentChainId,
       issues,
-    }
+    };
   }
 
   return {
     isValid: issues.length === 0,
     issues,
-  }
+  };
 }
 
 /**
@@ -56,11 +56,11 @@ export async function waitForValidWalletClient(
   delayMs = 1000
 ): Promise<WalletClient | null> {
   for (let i = 0; i < maxRetries; i++) {
-    const walletClient = getWalletClient()
-    const validation = validateWalletClient(walletClient, expectedChainId)
+    const walletClient = getWalletClient();
+    const validation = validateWalletClient(walletClient, expectedChainId);
 
     if (validation.isValid && walletClient) {
-      return walletClient
+      return walletClient;
     }
 
     // If we have a wallet client but wrong chain, it might still be switching
@@ -69,19 +69,19 @@ export async function waitForValidWalletClient(
     }
 
     // Increase delay for later attempts
-    const currentDelay = Math.min(delayMs * (1 + i * 0.2), 3000)
+    const currentDelay = Math.min(delayMs * (1 + i * 0.2), 3000);
 
     if (i < maxRetries - 1) {
-      await new Promise((resolve) => setTimeout(resolve, currentDelay))
+      await new Promise((resolve) => setTimeout(resolve, currentDelay));
     }
   }
 
   console.error(
     `❌ Failed to get valid wallet client for chain ${expectedChainId} after ${maxRetries} attempts`
-  )
+  );
 
   // Don't return invalid client - let caller handle the null case
-  return null
+  return null;
 }
 
 /**
@@ -91,10 +91,10 @@ export function shouldRefreshWalletClient(
   walletClient: WalletClient | null | undefined,
   expectedChainId: number
 ): boolean {
-  if (!walletClient) return true
-  if (!walletClient.chain) return true
-  if (walletClient.chain.id !== expectedChainId) return true
-  return false
+  if (!walletClient) return true;
+  if (!walletClient.chain) return true;
+  if (walletClient.chain.id !== expectedChainId) return true;
+  return false;
 }
 
 /**
@@ -104,12 +104,12 @@ export function getWalletClientReadinessScore(
   walletClient: WalletClient | null | undefined,
   expectedChainId?: number
 ): number {
-  let score = 0
+  let score = 0;
 
-  if (walletClient) score += 40
-  if (walletClient?.account) score += 30
-  if (walletClient?.chain) score += 20
-  if (expectedChainId && walletClient?.chain?.id === expectedChainId) score += 10
+  if (walletClient) score += 40;
+  if (walletClient?.account) score += 30;
+  if (walletClient?.chain) score += 20;
+  if (expectedChainId && walletClient?.chain?.id === expectedChainId) score += 10;
 
-  return score
+  return score;
 }

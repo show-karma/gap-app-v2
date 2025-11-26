@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useEffect } from "react"
-import { useForm } from "react-hook-form"
-import { z } from "zod"
-import { useProgram } from "@/hooks/usePrograms"
-import type { FormSchema } from "@/types/question-builder"
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { useProgram } from "@/hooks/usePrograms";
+import type { FormSchema } from "@/types/question-builder";
 
 const aiConfigSchema = z.object({
   // systemPrompt: z.string().min(10, 'System prompt must be at least 10 characters'),
@@ -13,17 +13,17 @@ const aiConfigSchema = z.object({
   aiModel: z.string().min(1, "AI model is required"),
   enableRealTimeEvaluation: z.boolean(),
   langfusePromptId: z.string().optional(),
-})
+});
 
-type AIConfigFormData = z.infer<typeof aiConfigSchema>
+type AIConfigFormData = z.infer<typeof aiConfigSchema>;
 
 interface AIPromptConfigurationProps {
-  schema: FormSchema
-  onUpdate?: (updatedSchema: FormSchema) => void
-  className?: string
-  programId?: string
-  chainId?: number
-  readOnly?: boolean
+  schema: FormSchema;
+  onUpdate?: (updatedSchema: FormSchema) => void;
+  className?: string;
+  programId?: string;
+  chainId?: number;
+  readOnly?: boolean;
 }
 
 export function AIPromptConfiguration({
@@ -35,12 +35,12 @@ export function AIPromptConfiguration({
   readOnly = false,
 }: AIPromptConfigurationProps) {
   // Fetch program data for default langfusePromptId
-  const { data: program } = useProgram(programId || "")
+  const { data: program } = useProgram(programId || "");
 
   // Get default langfusePromptId from program registry if not set in schema
   const defaultLangfusePromptId =
-    schema.aiConfig?.langfusePromptId || program?.langfusePromptId || ""
-  const recommendedPrompt = ""
+    schema.aiConfig?.langfusePromptId || program?.langfusePromptId || "";
+  const recommendedPrompt = "";
 
   const {
     register,
@@ -58,24 +58,24 @@ export function AIPromptConfiguration({
       enableRealTimeEvaluation: schema.aiConfig?.enableRealTimeEvaluation || false,
       langfusePromptId: defaultLangfusePromptId || recommendedPrompt,
     },
-  })
+  });
 
-  const watchedValues = watch()
-  const currentLangfusePromptId = watchedValues.langfusePromptId || ""
+  const watchedValues = watch();
+  const currentLangfusePromptId = watchedValues.langfusePromptId || "";
 
   const displayValue =
-    currentLangfusePromptId === recommendedPrompt ? recommendedPrompt : currentLangfusePromptId
+    currentLangfusePromptId === recommendedPrompt ? recommendedPrompt : currentLangfusePromptId;
 
   // Update form value when program data loads and no langfusePromptId is set
   useEffect(() => {
     if (program?.langfusePromptId && !schema.aiConfig?.langfusePromptId) {
-      setValue("langfusePromptId", program.langfusePromptId)
+      setValue("langfusePromptId", program.langfusePromptId);
     }
-  }, [program?.langfusePromptId, schema.aiConfig?.langfusePromptId, setValue])
+  }, [program?.langfusePromptId, schema.aiConfig?.langfusePromptId, setValue]);
 
   // Auto-update the schema when form values change
   useEffect(() => {
-    if (readOnly || !onUpdate) return // Don't update in read-only mode
+    if (readOnly || !onUpdate) return; // Don't update in read-only mode
 
     const subscription = watch((data) => {
       // Only update if we have a valid system prompt (minimum requirement)
@@ -88,12 +88,12 @@ export function AIPromptConfiguration({
           enableRealTimeEvaluation: data.enableRealTimeEvaluation || false,
           langfusePromptId: data.langfusePromptId || "",
         },
-      }
-      onUpdate(updatedSchema)
-    })
+      };
+      onUpdate(updatedSchema);
+    });
 
-    return () => subscription.unsubscribe()
-  }, [watch, onUpdate, schema, readOnly])
+    return () => subscription.unsubscribe();
+  }, [watch, onUpdate, schema, readOnly]);
 
   return (
     <div
@@ -145,9 +145,9 @@ export function AIPromptConfiguration({
             value={displayValue}
             disabled={readOnly}
             onChange={(e) => {
-              const value = e.target.value
-              const cleanValue = value.replace(/ \(Recommended\)$/, "")
-              setValue("langfusePromptId", cleanValue)
+              const value = e.target.value;
+              const cleanValue = value.replace(/ \(Recommended\)$/, "");
+              setValue("langfusePromptId", cleanValue);
             }}
             className={`w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300 ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
             placeholder=""
@@ -230,5 +230,5 @@ export function AIPromptConfiguration({
         )}
       </div>
     </div>
-  )
+  );
 }

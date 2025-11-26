@@ -12,29 +12,29 @@ import {
   Radio,
   ScrollText,
   UserPlus,
-} from "lucide-react"
-import { PAGES } from "@/utilities/pages"
-import { SOCIALS } from "@/utilities/socials"
+} from "lucide-react";
+import { PAGES } from "@/utilities/pages";
+import { SOCIALS } from "@/utilities/socials";
 
 export interface MenuItem {
-  href: string
-  icon: LucideIcon
-  title: string
-  description?: string
-  external?: boolean
-  showArrow?: boolean
-  openModal?: boolean
-  anchor?: string
+  href: string;
+  icon: LucideIcon;
+  title: string;
+  description?: string;
+  external?: boolean;
+  showArrow?: boolean;
+  openModal?: boolean;
+  anchor?: string;
 }
 
 export interface ForFundersItems {
-  main: MenuItem
-  secondary: MenuItem[]
+  main: MenuItem;
+  secondary: MenuItem[];
 }
 
 export interface ExploreItems {
-  projects: MenuItem[]
-  communities: MenuItem[]
+  projects: MenuItem[];
+  communities: MenuItem[];
 }
 
 export const forBuildersItems: MenuItem[] = [
@@ -52,7 +52,7 @@ export const forBuildersItems: MenuItem[] = [
     description: "Explore live funding opportunities",
     anchor: "live-funding-opportunities",
   },
-]
+];
 
 export const forFundersItems: ForFundersItems = {
   main: {
@@ -75,7 +75,7 @@ export const forFundersItems: ForFundersItems = {
       external: true,
     },
   ],
-}
+};
 
 export const exploreItems: ExploreItems = {
   projects: [
@@ -107,7 +107,7 @@ export const exploreItems: ExploreItems = {
       title: "Funding Map",
     },
   ],
-}
+};
 
 export const resourcesItems: MenuItem[] = [
   {
@@ -124,4 +124,4 @@ export const resourcesItems: MenuItem[] = [
     external: true,
     showArrow: true,
   },
-]
+];

@@ -1,44 +1,44 @@
-"use client"
+"use client";
 
-import { TrashIcon } from "@heroicons/react/24/outline"
-import { AreaChart, Card, Title } from "@tremor/react"
-import { useEffect, useMemo, useState } from "react"
-import toast from "react-hot-toast"
-import { useAccount } from "wagmi"
-import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub"
-import { Button } from "@/components/Utilities/Button"
-import { useImpactAnswers } from "@/hooks/useImpactAnswers"
-import { useOwnerStore, useProjectStore } from "@/store"
-import { useCommunityAdminStore } from "@/store/communityAdmin"
-import type { ImpactIndicatorWithData } from "@/types/impactMeasurement"
-import formatCurrency from "@/utilities/formatCurrency"
-import { formatDate } from "@/utilities/formatDate"
-import { MESSAGES } from "@/utilities/messages"
-import { urlRegex } from "@/utilities/regexs/urlRegex"
-import { cn } from "@/utilities/tailwind"
-import { prepareChartData } from "../../Communities/Impact/ImpactCharts"
-import { GrantsOutputsLoading } from "../Loading/Grants/Outputs"
-import { GroupedLinks } from "./GroupedLinks"
+import { TrashIcon } from "@heroicons/react/24/outline";
+import { AreaChart, Card, Title } from "@tremor/react";
+import { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
+import { Button } from "@/components/Utilities/Button";
+import { useImpactAnswers } from "@/hooks/useImpactAnswers";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useCommunityAdminStore } from "@/store/communityAdmin";
+import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
+import formatCurrency from "@/utilities/formatCurrency";
+import { formatDate } from "@/utilities/formatDate";
+import { MESSAGES } from "@/utilities/messages";
+import { urlRegex } from "@/utilities/regexs/urlRegex";
+import { cn } from "@/utilities/tailwind";
+import { prepareChartData } from "../../Communities/Impact/ImpactCharts";
+import { GrantsOutputsLoading } from "../Loading/Grants/Outputs";
+import { GroupedLinks } from "./GroupedLinks";
 
 type OutputForm = {
-  id: string
-  categoryId: string
-  unitOfMeasure: "int" | "float"
+  id: string;
+  categoryId: string;
+  unitOfMeasure: "int" | "float";
   datapoints: {
-    value: number | string
-    proof: string
-    startDate: string
-    endDate: string
-    outputTimestamp?: string
-  }[]
-  isEditing?: boolean
-  isSaving?: boolean
-  isEdited?: boolean
-}
+    value: number | string;
+    proof: string;
+    startDate: string;
+    endDate: string;
+    outputTimestamp?: string;
+  }[];
+  isEditing?: boolean;
+  isSaving?: boolean;
+  isEdited?: boolean;
+};
 
 interface FilteredOutputsAndOutcomesProps {
-  indicatorIds?: string[]
-  indicatorNames?: string[]
+  indicatorIds?: string[];
+  indicatorNames?: string[];
 }
 
 // Helper function to filter indicators
@@ -48,34 +48,34 @@ export const filterIndicators = (
   indicatorNames?: string[]
 ) => {
   if (!indicatorIds?.length && !indicatorNames?.length) {
-    return indicators // Return all if no filters provided
+    return indicators; // Return all if no filters provided
   }
 
   return indicators.filter((indicator) => {
     if (indicatorIds?.length) {
-      return indicatorIds.includes(indicator.id)
+      return indicatorIds.includes(indicator.id);
     }
     if (indicatorNames?.length) {
-      return indicatorNames.includes(indicator.name)
+      return indicatorNames.includes(indicator.name);
     }
-    return false
-  })
-}
+    return false;
+  });
+};
 
 export const FilteredOutputsAndOutcomes = ({
   indicatorIds,
   indicatorNames,
 }: FilteredOutputsAndOutcomesProps) => {
-  const { project, isProjectOwner } = useProjectStore()
+  const { project, isProjectOwner } = useProjectStore();
 
-  const isContractOwner = useOwnerStore((state) => state.isOwner)
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin)
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
+  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
 
-  const { isConnected } = useAccount()
+  const { isConnected } = useAccount();
 
-  const isAuthorized = isConnected && (isProjectOwner || isContractOwner || isCommunityAdmin)
+  const isAuthorized = isConnected && (isProjectOwner || isContractOwner || isCommunityAdmin);
 
-  const [forms, setForms] = useState<OutputForm[]>([])
+  const [forms, setForms] = useState<OutputForm[]>([]);
 
   // Use our custom hook for submitting impact answers
   const {
@@ -85,12 +85,12 @@ export const FilteredOutputsAndOutcomes = ({
   } = useImpactAnswers({
     projectIdentifier: project?.uid as string,
     enabled: !!project?.uid && !!indicatorIds?.length && !!indicatorNames?.length,
-  })
+  });
 
   // Filter indicators based on IDs and names
   const filteredAnswers = useMemo(() => {
-    return filterIndicators(impactAnswers, indicatorIds, indicatorNames)
-  }, [impactAnswers, indicatorIds, indicatorNames])
+    return filterIndicators(impactAnswers, indicatorIds, indicatorNames);
+  }, [impactAnswers, indicatorIds, indicatorNames]);
 
   // Initialize forms when impact answers are loaded
   useEffect(() => {
@@ -101,11 +101,11 @@ export const FilteredOutputsAndOutcomes = ({
           acc[form.id] = {
             isEditing: form.isEditing || false,
             isEdited: form.isEdited || false,
-          }
-          return acc
+          };
+          return acc;
         },
         {} as Record<string, { isEditing: boolean; isEdited: boolean }>
-      )
+      );
 
       setForms(
         filteredAnswers.map((item) => ({
@@ -126,24 +126,24 @@ export const FilteredOutputsAndOutcomes = ({
           isEdited: existingForms[item.id]?.isEdited || false,
           isEditing: existingForms[item.id]?.isEditing || false,
         }))
-      )
+      );
     }
-  }, [filteredAnswers, forms.reduce])
+  }, [filteredAnswers, forms.reduce]);
 
   const handleSubmit = async (id: string) => {
-    const form = forms.find((f) => f.id === id)
+    const form = forms.find((f) => f.id === id);
     if (!form?.datapoints?.length) {
-      toast.error("Please enter a value")
-      return
+      toast.error("Please enter a value");
+      return;
     }
 
-    setForms((prev) => prev.map((f) => (f.id === id ? { ...f, isSaving: true } : f)))
+    setForms((prev) => prev.map((f) => (f.id === id ? { ...f, isSaving: true } : f)));
 
     try {
       await submitImpactAnswer({
         indicatorId: id,
         datapoints: form.datapoints,
-      })
+      });
 
       // Reset editing state
       setForms((prev) =>
@@ -153,7 +153,7 @@ export const FilteredOutputsAndOutcomes = ({
           isSaving: false,
           isEdited: false,
         }))
-      )
+      );
     } catch (_error) {
       // Reset saving state but keep edited state
       setForms((prev) =>
@@ -161,9 +161,9 @@ export const FilteredOutputsAndOutcomes = ({
           ...form,
           isSaving: false,
         }))
-      )
+      );
     }
-  }
+  };
 
   const handleInputChange = (
     id: string,
@@ -178,22 +178,22 @@ export const FilteredOutputsAndOutcomes = ({
               ...f,
               isEdited: true,
               datapoints: f.datapoints.map((datapoint, i) => {
-                if (i !== index) return datapoint
+                if (i !== index) return datapoint;
 
                 return {
                   ...datapoint,
                   [field]: value,
-                }
+                };
               }),
             }
           : f
       )
-    )
-  }
+    );
+  };
 
   const handleEditClick = (id: string) => {
-    setForms((prev) => prev.map((f) => (f.id === id ? { ...f, isEditing: true } : f)))
-  }
+    setForms((prev) => prev.map((f) => (f.id === id ? { ...f, isEditing: true } : f)));
+  };
 
   const handleCancel = () => {
     // Reset forms to match the current data and clear editing state
@@ -203,13 +203,13 @@ export const FilteredOutputsAndOutcomes = ({
         isEditing: false,
         isEdited: false,
       }))
-    )
-  }
+    );
+  };
 
   // Filter outputs based on authorization
   const filteredOutputs = isAuthorized
     ? filteredAnswers
-    : filteredAnswers.filter((item) => item.datapoints?.length)
+    : filteredAnswers.filter((item) => item.datapoints?.length);
 
   const handleAddEntry = (id: string) => {
     setForms((prev) =>
@@ -231,8 +231,8 @@ export const FilteredOutputsAndOutcomes = ({
             }
           : f
       )
-    )
-  }
+    );
+  };
 
   const handleDeleteEntry = (id: string, index: number) => {
     setForms((prev) =>
@@ -245,99 +245,99 @@ export const FilteredOutputsAndOutcomes = ({
             }
           : f
       )
-    )
-  }
+    );
+  };
 
-  if (!project || isLoading) return <GrantsOutputsLoading />
+  if (!project || isLoading) return <GrantsOutputsLoading />;
 
   const isInvalidValue = (value: number, unitOfMeasure: "int" | "float") => {
-    if (value === undefined || value === null) return true
+    if (value === undefined || value === null) return true;
     if (unitOfMeasure === "int") {
-      return !Number.isInteger(Number(value))
+      return !Number.isInteger(Number(value));
     }
-    return Number.isNaN(value) || value === 0
-  }
+    return Number.isNaN(value) || value === 0;
+  };
 
   const isInvalidTimestamp = (id: string, timestamp: string) => {
-    const form = forms.find((f) => f.id === id)
-    if (!form || !timestamp) return false
+    const form = forms.find((f) => f.id === id);
+    if (!form || !timestamp) return false;
 
-    const endDate = new Date(timestamp)
-    endDate.setHours(0, 0, 0, 0) // Normalize to start of day
+    const endDate = new Date(timestamp);
+    endDate.setHours(0, 0, 0, 0); // Normalize to start of day
 
     const timestamps = form.datapoints
       .map((dp) => dp.endDate || dp.outputTimestamp)
       .filter(Boolean)
       .map((date) => {
-        const d = new Date(date as string)
-        d.setHours(0, 0, 0, 0)
-        return d.getTime()
-      })
+        const d = new Date(date as string);
+        d.setHours(0, 0, 0, 0);
+        return d.getTime();
+      });
 
-    return timestamps.filter((t) => t === endDate.getTime()).length > 1
-  }
+    return timestamps.filter((t) => t === endDate.getTime()).length > 1;
+  };
 
   const hasInvalidValues = (form: OutputForm) =>
     form.datapoints.some((datapoint) => {
-      return isInvalidValue(Number(datapoint.value), form.unitOfMeasure)
-    })
+      return isInvalidValue(Number(datapoint.value), form.unitOfMeasure);
+    });
 
   const hasInvalidTimestamps = (form: OutputForm) =>
     form.datapoints.some((datapoint) => {
-      if (!datapoint.endDate && !datapoint.outputTimestamp) return true
+      if (!datapoint.endDate && !datapoint.outputTimestamp) return true;
 
       const matchingTimestamps = form.datapoints.filter((dp) => {
-        const dpDate = formatDate(new Date(dp.endDate || dp.outputTimestamp || ""))
+        const dpDate = formatDate(new Date(dp.endDate || dp.outputTimestamp || ""));
         const datapointDate = formatDate(
           new Date(datapoint.endDate || datapoint.outputTimestamp || "")
-        )
-        return dpDate === datapointDate
-      })
+        );
+        return dpDate === datapointDate;
+      });
 
-      return matchingTimestamps.length > 1
-    })
+      return matchingTimestamps.length > 1;
+    });
 
   const hasInvalidDates = (form: OutputForm) =>
     form.datapoints.some((datapoint) => {
       // Check if start date is after end date
-      const endDate = datapoint.endDate || datapoint.outputTimestamp
+      const endDate = datapoint.endDate || datapoint.outputTimestamp;
       if (datapoint.startDate && endDate) {
-        return new Date(datapoint.startDate) > new Date(endDate)
+        return new Date(datapoint.startDate) > new Date(endDate);
       }
-      return false
-    })
+      return false;
+    });
 
   const hasInvalidDatesSameRow = (id: string, startDate: string, endDate: string) => {
-    const form = forms.find((f) => f.id === id)
-    if (!form) return false
-    return new Date(startDate) > new Date(endDate)
-  }
+    const form = forms.find((f) => f.id === id);
+    if (!form) return false;
+    return new Date(startDate) > new Date(endDate);
+  };
 
   return (
     <div className="w-full max-w-[100rem]">
       {filteredOutputs.length > 0 ? (
         <div className="flex flex-col gap-8">
           {filteredOutputs.map((item) => {
-            const form = forms.find((f) => f.id === item.id)
+            const form = forms.find((f) => f.id === item.id);
             const lastUpdated = filteredOutputs
               .find((subItem) => item.id === subItem.id)
               ?.datapoints?.sort(
                 (a, b) =>
                   new Date(b.endDate || new Date().toISOString()).getTime() -
                   new Date(a.endDate || new Date().toISOString()).getTime()
-              )[0]?.endDate
-            const allOutputs = filteredOutputs.find((subItem) => subItem.id === item.id)
+              )[0]?.endDate;
+            const allOutputs = filteredOutputs.find((subItem) => subItem.id === item.id);
             const outputs = allOutputs?.datapoints.map((datapoint, _index) => ({
               value: datapoint.value,
               proof: datapoint.proof,
               timestamp: datapoint.endDate || new Date().toISOString(),
-            }))
+            }));
 
             const outputsWithProof = outputs?.filter(
               (output) => output.proof && urlRegex.test(output.proof)
-            )
+            );
 
-            const proofs = outputsWithProof?.map((output) => output.proof) || []
+            const proofs = outputsWithProof?.map((output) => output.proof) || [];
 
             return (
               <div
@@ -657,7 +657,7 @@ export const FilteredOutputsAndOutcomes = ({
                   )}
                 </div>
               </div>
-            )
+            );
           })}
         </div>
       ) : (
@@ -666,5 +666,5 @@ export const FilteredOutputsAndOutcomes = ({
         </div>
       )}
     </div>
-  )
-}
+  );
+};

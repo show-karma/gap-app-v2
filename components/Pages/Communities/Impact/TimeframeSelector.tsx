@@ -1,15 +1,15 @@
-"use client"
+"use client";
 
-import { ChevronDownIcon } from "@heroicons/react/24/outline"
-import { useEffect, useRef, useState } from "react"
-import { Button } from "@/components/Utilities/Button"
+import { ChevronDownIcon } from "@heroicons/react/24/outline";
+import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/Utilities/Button";
 
-export type TimeframeOption = "1_month" | "3_months" | "6_months" | "1_year"
+export type TimeframeOption = "1_month" | "3_months" | "6_months" | "1_year";
 
 export interface TimeframeConfig {
-  label: string
-  value: TimeframeOption
-  months: number
+  label: string;
+  value: TimeframeOption;
+  months: number;
 }
 
 export const timeframeOptions: TimeframeConfig[] = [
@@ -17,12 +17,12 @@ export const timeframeOptions: TimeframeConfig[] = [
   { label: "3 Months", value: "3_months", months: 3 },
   { label: "6 Months", value: "6_months", months: 6 },
   { label: "1 Year", value: "1_year", months: 12 },
-]
+];
 
 interface TimeframeSelectorProps {
-  selectedTimeframe: TimeframeOption
-  onTimeframeChange: (timeframe: TimeframeOption) => void
-  className?: string
+  selectedTimeframe: TimeframeOption;
+  onTimeframeChange: (timeframe: TimeframeOption) => void;
+  className?: string;
 }
 
 export function TimeframeSelector({
@@ -30,22 +30,22 @@ export function TimeframeSelector({
   onTimeframeChange,
   className = "",
 }: TimeframeSelectorProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const selectedOption = timeframeOptions.find((option) => option.value === selectedTimeframe)
+  const selectedOption = timeframeOptions.find((option) => option.value === selectedTimeframe);
 
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
+        setIsOpen(false);
       }
     }
 
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
@@ -64,8 +64,8 @@ export function TimeframeSelector({
               <button
                 key={option.value}
                 onClick={() => {
-                  onTimeframeChange(option.value)
-                  setIsOpen(false)
+                  onTimeframeChange(option.value);
+                  setIsOpen(false);
                 }}
                 className={`w-full px-4 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-600 ${
                   option.value === selectedTimeframe
@@ -80,5 +80,5 @@ export function TimeframeSelector({
         </div>
       )}
     </div>
-  )
+  );
 }

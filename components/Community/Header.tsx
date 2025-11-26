@@ -1,11 +1,11 @@
-"use client"
-import { useParams, usePathname } from "next/navigation"
-import { CommunityPageNavigator } from "@/components/Pages/Communities/CommunityPageNavigator"
-import { CommunityImpactStatCards } from "@/components/Pages/Communities/Impact/StatCards"
-import { layoutTheme } from "@/src/helper/theme"
-import type { CommunityDetailsV2 } from "@/types/community"
-import { communityColors } from "@/utilities/communityColors"
-import { cn } from "@/utilities/tailwind"
+"use client";
+import { useParams, usePathname } from "next/navigation";
+import { CommunityPageNavigator } from "@/components/Pages/Communities/CommunityPageNavigator";
+import { CommunityImpactStatCards } from "@/components/Pages/Communities/Impact/StatCards";
+import { layoutTheme } from "@/src/helper/theme";
+import type { CommunityDetailsV2 } from "@/types/community";
+import { communityColors } from "@/utilities/communityColors";
+import { cn } from "@/utilities/tailwind";
 
 const AdminCommunityHeader = ({ community }: { community: CommunityDetailsV2 }) => {
   return (
@@ -33,12 +33,12 @@ const AdminCommunityHeader = ({ community }: { community: CommunityDetailsV2 }) 
       </div>
       <CommunityPageNavigator />
     </div>
-  )
-}
+  );
+};
 
 const NormalCommunityHeader = ({ community }: { community: CommunityDetailsV2 }) => {
-  const _pathname = usePathname()
-  const _params = useParams()
+  const _pathname = usePathname();
+  const _params = useParams();
 
   return (
     <div
@@ -77,21 +77,21 @@ const NormalCommunityHeader = ({ community }: { community: CommunityDetailsV2 })
       </div>
       <CommunityPageNavigator />
     </div>
-  )
-}
+  );
+};
 export default function CommunityHeader({ community }: { community: CommunityDetailsV2 }) {
-  const pathname = usePathname()
-  const isAdminPage = pathname.includes("/admin")
-  const isReviewerPage = pathname.includes("/reviewer")
-  const isDonatePage = pathname.includes("/donate")
+  const pathname = usePathname();
+  const isAdminPage = pathname.includes("/admin");
+  const isReviewerPage = pathname.includes("/reviewer");
+  const isDonatePage = pathname.includes("/donate");
   if (isAdminPage) {
-    return <AdminCommunityHeader community={community} />
+    return <AdminCommunityHeader community={community} />;
   }
   if (isReviewerPage) {
-    return null
+    return null;
   }
   if (isDonatePage) {
-    return null
+    return null;
   }
-  return <NormalCommunityHeader community={community} />
+  return <NormalCommunityHeader community={community} />;
 }

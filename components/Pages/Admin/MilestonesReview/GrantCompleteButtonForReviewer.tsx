@@ -1,16 +1,16 @@
-"use client"
+"use client";
 
-import { CheckCircleIcon } from "@heroicons/react/24/outline"
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import type { FC } from "react"
-import { Button } from "@/components/Utilities/Button"
-import { useGrantCompletion } from "@/hooks/useGrantCompletion"
+import { CheckCircleIcon } from "@heroicons/react/24/outline";
+import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { FC } from "react";
+import { Button } from "@/components/Utilities/Button";
+import { useGrantCompletion } from "@/hooks/useGrantCompletion";
 
 interface GrantCompleteButtonForReviewerProps {
-  project: { uid: string }
-  grant: IGrantResponse
-  text?: string
-  onComplete?: () => void
+  project: { uid: string };
+  grant: IGrantResponse;
+  text?: string;
+  onComplete?: () => void;
 }
 
 export const GrantCompleteButtonForReviewer: FC<GrantCompleteButtonForReviewerProps> = ({
@@ -19,7 +19,7 @@ export const GrantCompleteButtonForReviewer: FC<GrantCompleteButtonForReviewerPr
   text = "Mark grant as complete",
   onComplete,
 }) => {
-  const { completeGrant, isCompleting } = useGrantCompletion({ onComplete })
+  const { completeGrant, isCompleting } = useGrantCompletion({ onComplete });
 
   // Show "Marked as complete" if grant is already completed
   if (grant.completed) {
@@ -30,15 +30,15 @@ export const GrantCompleteButtonForReviewer: FC<GrantCompleteButtonForReviewerPr
           <CheckCircleIcon className="h-5 w-5" />
         </div>
       </div>
-    )
+    );
   }
 
   // Only show button if grant is not completed
-  if (!project) return null
+  if (!project) return null;
 
   const handleMarkAsComplete = () => {
-    completeGrant(grant, project)
-  }
+    completeGrant(grant, project);
+  };
 
   return (
     <Button
@@ -51,5 +51,5 @@ export const GrantCompleteButtonForReviewer: FC<GrantCompleteButtonForReviewerPr
         <CheckCircleIcon className="h-5 w-5" />
       </div>
     </Button>
-  )
-}
+  );
+};

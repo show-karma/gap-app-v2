@@ -2,8 +2,8 @@
 // The config you add here will be used whenever the server handles a request.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
-import * as Sentry from "@sentry/nextjs"
-import { sentryIgnoreErrors } from "./utilities/sentry/ignoreErrors"
+import * as Sentry from "@sentry/nextjs";
+import { sentryIgnoreErrors } from "./utilities/sentry/ignoreErrors";
 
 Sentry.init({
   enabled: process.env.NEXT_PUBLIC_VERCEL_ENV === "production",
@@ -14,4 +14,4 @@ Sentry.init({
 
   // Setting this option to true will print useful information to the console while you're setting up Sentry.
   debug: false,
-})
+});

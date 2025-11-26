@@ -1,18 +1,18 @@
-import { BarChart2, Mail, Zap } from "lucide-react"
-import Link from "next/link"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { marketingLayoutTheme } from "@/src/helper/theme"
-import { SOCIALS } from "@/utilities/socials"
-import { cn } from "@/utilities/tailwind"
+import { BarChart2, Mail, Zap } from "lucide-react";
+import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { marketingLayoutTheme } from "@/src/helper/theme";
+import { SOCIALS } from "@/utilities/socials";
+import { cn } from "@/utilities/tailwind";
 
 interface StepCard {
-  icon: React.ComponentType<{ className?: string }>
-  stepLabel: string
-  title: string
-  description: string
-  hasButton?: boolean
+  icon: React.ComponentType<{ className?: string }>;
+  stepLabel: string;
+  title: string;
+  description: string;
+  hasButton?: boolean;
 }
 
 const steps: StepCard[] = [
@@ -38,7 +38,7 @@ const steps: StepCard[] = [
     description:
       "Design your funding program, set evaluation criteria, and go live. Start receiving applications and funding projects within 48 hours.",
   },
-]
+];
 
 export function HowItWorksSection() {
   return (
@@ -77,7 +77,7 @@ export function HowItWorksSection() {
         )}
       >
         {steps.map((step, index) => {
-          const IconComponent = step.icon
+          const IconComponent = step.icon;
           return (
             <div key={index} className={cn("flex flex-col items-center gap-4 h-full")}>
               {/* Icon Container */}
@@ -155,9 +155,9 @@ export function HowItWorksSection() {
                 </CardContent>
               </Card>
             </div>
-          )
+          );
         })}
       </div>
     </section>
-  )
+  );
 }

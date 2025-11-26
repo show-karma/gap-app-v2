@@ -1,29 +1,29 @@
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import type { Metadata } from "next"
-import { notFound } from "next/navigation"
-import type { Hex } from "viem"
-import { Team } from "@/components/Pages/Project/Team"
-import { PROJECT_NAME } from "@/constants/brand"
-import { zeroUID } from "@/utilities/commons"
-import { envVars } from "@/utilities/enviromentVars"
-import { cleanMarkdownForPlainText } from "@/utilities/markdown"
-import { defaultMetadata } from "@/utilities/meta"
-import { getMetadata } from "@/utilities/sdk"
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import type { Hex } from "viem";
+import { Team } from "@/components/Pages/Project/Team";
+import { PROJECT_NAME } from "@/constants/brand";
+import { zeroUID } from "@/utilities/commons";
+import { envVars } from "@/utilities/enviromentVars";
+import { cleanMarkdownForPlainText } from "@/utilities/markdown";
+import { defaultMetadata } from "@/utilities/meta";
+import { getMetadata } from "@/utilities/sdk";
 
 type Params = Promise<{
-  projectId: string
-}>
+  projectId: string;
+}>;
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
-  const { projectId } = await params
+  const { projectId } = await params;
 
-  const projectInfo = await getMetadata<IProjectResponse>("project", projectId as Hex)
+  const projectInfo = await getMetadata<IProjectResponse>("project", projectId as Hex);
 
   if (projectInfo?.uid === zeroUID || !projectInfo) {
     return {
       title: "Not Found",
       description: "Project not found",
-    }
+    };
   }
 
   return {
@@ -56,19 +56,19 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
     icons: {
       icon: "/favicon.ico",
     },
-  }
+  };
 }
 
 const TeamPage = async (props: { params: Promise<{ projectId: string }> }) => {
-  const { projectId } = await props.params
+  const { projectId } = await props.params;
 
-  const projectInfo = await getMetadata<IProjectResponse>("project", projectId as Hex)
+  const projectInfo = await getMetadata<IProjectResponse>("project", projectId as Hex);
 
   if (projectInfo?.uid === zeroUID || !projectInfo) {
-    notFound()
+    notFound();
   }
 
-  return <Team />
-}
+  return <Team />;
+};
 
-export default TeamPage
+export default TeamPage;
