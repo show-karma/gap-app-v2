@@ -260,6 +260,7 @@ export const SingleProjectDonateModal = React.memo<
             uid: project.uid,
             title: project.title,
             payoutAddress: resolvedPayoutAddress as Hex,
+            chainID: project.chainID || fullProject?.chainID || 42161,
           }}
           fiatAmount={parseFloat(amount)}
         />

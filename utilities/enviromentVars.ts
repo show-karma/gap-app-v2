@@ -39,4 +39,5 @@ export const envVars = {
   OSO_API_KEY: process.env.NEXT_PUBLIC_OSO_API_KEY || "",
   PRIVY_APP_ID: process.env.NEXT_PUBLIC_PRIVY_APP_ID || "",
   STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "",
+  MOONPAY_PUBLIC_KEY: process.env.NEXT_PUBLIC_MOONPAY_PUBLIC_KEY || "",
 };

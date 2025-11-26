@@ -1,37 +1,36 @@
 /**
  * @file Tests for FiatOnrampModal component
- * @description Comprehensive tests for the Stripe crypto onramp modal component
- * covering rendering, Stripe SDK integration, Privy user data, and error handling
+ * @description Comprehensive tests for the MoonPay crypto onramp modal component
+ * covering rendering, MoonPay SDK integration, network selection, and currency display
  */
 
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { FiatOnrampModal } from "@/components/Donation/FiatOnramp/FiatOnrampModal";
 import "@testing-library/jest-dom";
+import * as moonpayUtils from "@/utilities/moonpay";
 
-// Mock Next.js Script component
-jest.mock("next/script", () => {
-  return function MockScript({ src, onLoad }: any) {
-    if (onLoad) {
-      setTimeout(() => onLoad(), 0);
-    }
-    return <script src={src} data-testid={`script-${src}`} />;
-  };
-});
-
-// Mock Privy
-const mockPrivyUser = {
-  wallet: {
-    address: "0x1234567890123456789012345678901234567890",
-  },
-  email: {
-    address: "test@example.com",
-  },
-};
-
-jest.mock("@privy-io/react-auth", () => ({
-  usePrivy: jest.fn(() => ({
-    user: mockPrivyUser,
-  })),
+// Mock MoonPay SDK
+jest.mock("@moonpay/moonpay-react", () => ({
+  MoonPayBuyWidget: ({
+    visible,
+    defaultCurrencyCode,
+    walletAddress,
+    baseCurrencyCode,
+    baseCurrencyAmount,
+    showOnlyCurrencies
+  }: any) => (
+    <div
+      data-testid="moonpay-widget"
+      data-visible={visible}
+      data-currency={defaultCurrencyCode}
+      data-wallet={walletAddress}
+      data-base-currency={baseCurrencyCode}
+      data-base-amount={baseCurrencyAmount}
+      data-allowed-currencies={showOnlyCurrencies}
+    >
+      MoonPay Widget
+    </div>
+  ),
 }));
 
 // Mock shadcn Dialog components
@@ -52,43 +51,35 @@ jest.mock("@/components/ui/dialog", () => ({
   DialogTitle: ({ children }: any) => (
     <h2 data-testid="dialog-title">{children}</h2>
   ),
+  DialogDescription: ({ children }: any) => (
+    <div data-testid="dialog-description">{children}</div>
+  ),
 }));
 
-// Mock the donation hook
-const mockCreateOnrampUrl = jest.fn();
-jest.mock("@/hooks/donation/useDonation", () => ({
-  useCreateOnrampUrl: jest.fn(() => ({
-    mutateAsync: mockCreateOnrampUrl,
-    isPending: false,
-  })),
-}));
+// Mock MoonPay utilities
+jest.mock("@/utilities/moonpay");
 
 // Mock project data
 const mockProject = {
   uid: "project-123",
   title: "Test Project",
   payoutAddress: "0x1234567890123456789012345678901234567890",
-};
-
-// Mock Stripe global
-const mockStripeOnramp = {
-  mount: jest.fn(() => ({
-    unmount: jest.fn(),
-  })),
-  on: jest.fn(),
+  chainID: 8453, // Base
 };
 
 describe("FiatOnrampModal", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (window as any).StripeOnramp = jest.fn(() => mockStripeOnramp);
+
+    // Setup default mock implementations
+    (moonpayUtils.toMoonPayNetworkName as jest.Mock).mockReturnValue("base");
+    (moonpayUtils.getMoonPayCurrencyCode as jest.Mock).mockReturnValue("eth_base");
+    (moonpayUtils.getAllowedMoonPayCurrencies as jest.Mock).mockReturnValue(
+      "celo,cusd,eth,eth_arbitrum,eth_base,eth_optimism,pol_polygon,usdc,usdc_arbitrum,usdc_base,usdc_celo,usdc_optimism,usdc_polygon,usdt,usdt_arbitrum,usdt_base,usdt_celo,usdt_optimism,usdt_polygon"
+    );
   });
 
-  afterEach(() => {
-    delete (window as any).StripeOnramp;
-  });
-
-  it("should not render when isOpen is false", () => {
+  it("should not render dialog content when isOpen is false", () => {
     const { container } = render(
       <FiatOnrampModal
         isOpen={false}
@@ -116,9 +107,12 @@ describe("FiatOnrampModal", () => {
     expect(screen.getByTestId("dialog-title")).toHaveTextContent(
       "Complete Your Donation to Test Project"
     );
+    expect(screen.getByTestId("dialog-description")).toHaveTextContent(
+      "Purchase crypto with your credit or debit card via MoonPay"
+    );
   });
 
-  it("should load Stripe scripts", () => {
+  it("should render MoonPay widget with correct props", () => {
     render(
       <FiatOnrampModal
         isOpen={true}
@@ -128,16 +122,14 @@ describe("FiatOnrampModal", () => {
       />
     );
 
-    expect(screen.getByTestId("script-https://js.stripe.com/v3/")).toBeInTheDocument();
-    expect(screen.getByTestId("script-https://crypto-js.stripe.com/crypto-onramp-outer.js")).toBeInTheDocument();
+    const widget = screen.getByTestId("moonpay-widget");
+    expect(widget).toBeInTheDocument();
+    expect(widget).toHaveAttribute("data-visible", "true");
+    expect(widget).toHaveAttribute("data-base-currency", "usd");
+    expect(widget).toHaveAttribute("data-base-amount", "100");
   });
 
-  it("should create onramp session with Privy user data", async () => {
-    mockCreateOnrampUrl.mockResolvedValue({
-      url: "cos_test_123_secret_abc",
-      sessionId: "cos_test_123",
-    });
-
+  it("should convert project chainID to MoonPay network name", () => {
     render(
       <FiatOnrampModal
         isOpen={true}
@@ -147,70 +139,10 @@ describe("FiatOnrampModal", () => {
       />
     );
 
-    await waitFor(() => {
-      expect(mockCreateOnrampUrl).toHaveBeenCalledWith({
-        projectId: "project-123",
-        payoutAddress: "0x1234567890123456789012345678901234567890",
-        fiatAmount: 100,
-        fiatCurrency: "USD",
-        targetToken: "USDC",
-        network: 1,
-        userEmail: "test@example.com",
-      });
-    });
+    expect(moonpayUtils.toMoonPayNetworkName).toHaveBeenCalledWith(8453);
   });
 
-  it("should create onramp session without email if user has no email", async () => {
-    const { usePrivy } = require("@privy-io/react-auth");
-    usePrivy.mockReturnValue({
-      user: {
-        wallet: {
-          address: "0x1234567890123456789012345678901234567890",
-        },
-      },
-    });
-
-    mockCreateOnrampUrl.mockResolvedValue({
-      url: "cos_test_123_secret_abc",
-      sessionId: "cos_test_123",
-    });
-
-    render(
-      <FiatOnrampModal
-        isOpen={true}
-        onClose={jest.fn()}
-        project={mockProject}
-        fiatAmount={200}
-      />
-    );
-
-    await waitFor(() => {
-      expect(mockCreateOnrampUrl).toHaveBeenCalledWith({
-        projectId: "project-123",
-        payoutAddress: "0x1234567890123456789012345678901234567890",
-        fiatAmount: 200,
-        fiatCurrency: "USD",
-        targetToken: "USDC",
-        network: 1,
-        userEmail: undefined,
-      });
-    });
-
-    usePrivy.mockReturnValue({
-      user: mockPrivyUser,
-    });
-  });
-
-  it("should not create session if user has no wallet", async () => {
-    const { usePrivy } = require("@privy-io/react-auth");
-    usePrivy.mockReturnValue({
-      user: {
-        email: {
-          address: "test@example.com",
-        },
-      },
-    });
-
+  it("should get correct currency code for ETH on the selected network", () => {
     render(
       <FiatOnrampModal
         isOpen={true}
@@ -220,21 +152,10 @@ describe("FiatOnrampModal", () => {
       />
     );
 
-    await waitFor(() => {
-      expect(mockCreateOnrampUrl).not.toHaveBeenCalled();
-    });
-
-    usePrivy.mockReturnValue({
-      user: mockPrivyUser,
-    });
+    expect(moonpayUtils.getMoonPayCurrencyCode).toHaveBeenCalledWith("ETH", "base");
   });
 
-  it("should mount Stripe onramp SDK when client secret is received", async () => {
-    mockCreateOnrampUrl.mockResolvedValue({
-      url: "cos_test_123_secret_abc",
-      sessionId: "cos_test_123",
-    });
-
+  it("should pass defaultCurrencyCode to MoonPay widget", () => {
     render(
       <FiatOnrampModal
         isOpen={true}
@@ -244,21 +165,11 @@ describe("FiatOnrampModal", () => {
       />
     );
 
-    await waitFor(() => {
-      expect(window.StripeOnramp).toHaveBeenCalledWith("cos_test_123_secret_abc");
-    });
-
-    await waitFor(() => {
-      expect(mockStripeOnramp.mount).toHaveBeenCalled();
-    });
+    const widget = screen.getByTestId("moonpay-widget");
+    expect(widget).toHaveAttribute("data-currency", "eth_base");
   });
 
-  it("should set up event listeners for onramp session updates", async () => {
-    mockCreateOnrampUrl.mockResolvedValue({
-      url: "cos_test_123_secret_abc",
-      sessionId: "cos_test_123",
-    });
-
+  it("should pass project payoutAddress to MoonPay widget", () => {
     render(
       <FiatOnrampModal
         isOpen={true}
@@ -268,21 +179,11 @@ describe("FiatOnrampModal", () => {
       />
     );
 
-    await waitFor(() => {
-      expect(mockStripeOnramp.on).toHaveBeenCalledWith(
-        "onramp_session_updated",
-        expect.any(Function)
-      );
-    });
+    const widget = screen.getByTestId("moonpay-widget");
+    expect(widget).toHaveAttribute("data-wallet", "0x1234567890123456789012345678901234567890");
   });
 
-  it("should display loading state while creating session", () => {
-    const { useCreateOnrampUrl } = require("@/hooks/donation/useDonation");
-    useCreateOnrampUrl.mockReturnValue({
-      mutateAsync: mockCreateOnrampUrl,
-      isPending: true,
-    });
-
+  it("should pass allowed currencies from SUPPORTED_TOKENS", () => {
     render(
       <FiatOnrampModal
         isOpen={true}
@@ -292,38 +193,102 @@ describe("FiatOnrampModal", () => {
       />
     );
 
-    expect(screen.getByText("Loading payment gateway...")).toBeInTheDocument();
-
-    useCreateOnrampUrl.mockReturnValue({
-      mutateAsync: mockCreateOnrampUrl,
-      isPending: false,
-    });
+    expect(moonpayUtils.getAllowedMoonPayCurrencies).toHaveBeenCalled();
+    const widget = screen.getByTestId("moonpay-widget");
+    // Should have the allowed currencies attribute with the mocked value
+    expect(widget).toHaveAttribute("data-allowed-currencies");
+    const allowedCurrencies = widget.getAttribute("data-allowed-currencies");
+    expect(allowedCurrencies).toContain("eth_base");
+    expect(allowedCurrencies).toContain("usdc_base");
   });
 
-  it("should handle errors when creating onramp session", async () => {
-    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
-
-    mockCreateOnrampUrl.mockRejectedValue(
-      new Error("Failed to create onramp session")
-    );
-
+  it("should pass fiatAmount correctly to MoonPay widget", () => {
     render(
       <FiatOnrampModal
         isOpen={true}
         onClose={jest.fn()}
         project={mockProject}
+        fiatAmount={250.5}
+      />
+    );
+
+    const widget = screen.getByTestId("moonpay-widget");
+    expect(widget).toHaveAttribute("data-base-amount", "250.5");
+  });
+
+  it("should handle Optimism network correctly", () => {
+    (moonpayUtils.toMoonPayNetworkName as jest.Mock).mockReturnValue("optimism");
+    (moonpayUtils.getMoonPayCurrencyCode as jest.Mock).mockReturnValue("eth_optimism");
+
+    const optimismProject = {
+      ...mockProject,
+      chainID: 10,
+    };
+
+    render(
+      <FiatOnrampModal
+        isOpen={true}
+        onClose={jest.fn()}
+        project={optimismProject}
         fiatAmount={100}
       />
     );
 
-    await waitFor(() => {
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Failed to create onramp session:",
-        expect.any(Error)
-      );
-    });
+    expect(moonpayUtils.toMoonPayNetworkName).toHaveBeenCalledWith(10);
+    expect(moonpayUtils.getMoonPayCurrencyCode).toHaveBeenCalledWith("ETH", "optimism");
 
-    consoleErrorSpy.mockRestore();
+    const widget = screen.getByTestId("moonpay-widget");
+    expect(widget).toHaveAttribute("data-currency", "eth_optimism");
+  });
+
+  it("should handle Arbitrum network correctly", () => {
+    (moonpayUtils.toMoonPayNetworkName as jest.Mock).mockReturnValue("arbitrum");
+    (moonpayUtils.getMoonPayCurrencyCode as jest.Mock).mockReturnValue("eth_arbitrum");
+
+    const arbitrumProject = {
+      ...mockProject,
+      chainID: 42161,
+    };
+
+    render(
+      <FiatOnrampModal
+        isOpen={true}
+        onClose={jest.fn()}
+        project={arbitrumProject}
+        fiatAmount={100}
+      />
+    );
+
+    expect(moonpayUtils.toMoonPayNetworkName).toHaveBeenCalledWith(42161);
+    expect(moonpayUtils.getMoonPayCurrencyCode).toHaveBeenCalledWith("ETH", "arbitrum");
+
+    const widget = screen.getByTestId("moonpay-widget");
+    expect(widget).toHaveAttribute("data-currency", "eth_arbitrum");
+  });
+
+  it("should handle Ethereum mainnet correctly", () => {
+    (moonpayUtils.toMoonPayNetworkName as jest.Mock).mockReturnValue("ethereum");
+    (moonpayUtils.getMoonPayCurrencyCode as jest.Mock).mockReturnValue("eth");
+
+    const ethereumProject = {
+      ...mockProject,
+      chainID: 1,
+    };
+
+    render(
+      <FiatOnrampModal
+        isOpen={true}
+        onClose={jest.fn()}
+        project={ethereumProject}
+        fiatAmount={100}
+      />
+    );
+
+    expect(moonpayUtils.toMoonPayNetworkName).toHaveBeenCalledWith(1);
+    expect(moonpayUtils.getMoonPayCurrencyCode).toHaveBeenCalledWith("ETH", "ethereum");
+
+    const widget = screen.getByTestId("moonpay-widget");
+    expect(widget).toHaveAttribute("data-currency", "eth");
   });
 
   it("should call onClose when dialog is closed", () => {
@@ -360,92 +325,12 @@ describe("FiatOnrampModal", () => {
     require("@/components/ui/dialog").Dialog = OriginalDialog;
   });
 
-  it("should not create duplicate sessions on re-render", async () => {
-    mockCreateOnrampUrl.mockResolvedValue({
-      url: "cos_test_123_secret_abc",
-      sessionId: "cos_test_123",
-    });
-
-    const { rerender } = render(
-      <FiatOnrampModal
-        isOpen={true}
-        onClose={jest.fn()}
-        project={mockProject}
-        fiatAmount={100}
-      />
-    );
-
-    await waitFor(() => {
-      expect(mockCreateOnrampUrl).toHaveBeenCalledTimes(1);
-    });
-
-    rerender(
-      <FiatOnrampModal
-        isOpen={true}
-        onClose={jest.fn()}
-        project={mockProject}
-        fiatAmount={100}
-      />
-    );
-
-    expect(mockCreateOnrampUrl).toHaveBeenCalledTimes(1);
-  });
-
-  it("should render onramp container with correct id", async () => {
-    mockCreateOnrampUrl.mockResolvedValue({
-      url: "cos_test_123_secret_abc",
-      sessionId: "cos_test_123",
-    });
-
-    render(
-      <FiatOnrampModal
-        isOpen={true}
-        onClose={jest.fn()}
-        project={mockProject}
-        fiatAmount={100}
-      />
-    );
-
-    await waitFor(() => {
-      const container = document.getElementById("onramp-container");
-      expect(container).toBeInTheDocument();
-    });
-  });
-
-  it("should pass fiatAmount correctly to API", async () => {
-    mockCreateOnrampUrl.mockResolvedValue({
-      url: "cos_test_123_secret_abc",
-      sessionId: "cos_test_123",
-    });
-
-    render(
-      <FiatOnrampModal
-        isOpen={true}
-        onClose={jest.fn()}
-        project={mockProject}
-        fiatAmount={250.5}
-      />
-    );
-
-    await waitFor(() => {
-      expect(mockCreateOnrampUrl).toHaveBeenCalledWith(
-        expect.objectContaining({
-          fiatAmount: 250.5,
-        })
-      );
-    });
-  });
-
-  it("should use project payoutAddress as destination wallet", async () => {
+  it("should use different payoutAddress for different projects", () => {
     const customProject = {
       ...mockProject,
       payoutAddress: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+      chainID: 10,
     };
-
-    mockCreateOnrampUrl.mockResolvedValue({
-      url: "cos_test_123_secret_abc",
-      sessionId: "cos_test_123",
-    });
 
     render(
       <FiatOnrampModal
@@ -456,12 +341,7 @@ describe("FiatOnrampModal", () => {
       />
     );
 
-    await waitFor(() => {
-      expect(mockCreateOnrampUrl).toHaveBeenCalledWith(
-        expect.objectContaining({
-          payoutAddress: "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
-        })
-      );
-    });
+    const widget = screen.getByTestId("moonpay-widget");
+    expect(widget).toHaveAttribute("data-wallet", "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd");
   });
 });

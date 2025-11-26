@@ -10,6 +10,7 @@ interface ProminentDonateButtonProps {
     title: string;
     payoutAddress: Hex;
     imageURL?: string;
+    chainID?: number;
   };
 }
 

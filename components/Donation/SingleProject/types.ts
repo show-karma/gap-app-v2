@@ -13,6 +13,7 @@ export interface DonateButtonProps {
   projectId: string;
   projectTitle: string;
   payoutAddress: Hex;
+  chainID?: number;
   className?: string;
 }
 
@@ -24,6 +25,7 @@ export interface SingleProjectDonateModalProps {
     title: string;
     payoutAddress: Hex | string | Record<string, string>;
     imageURL?: string;
+    chainID?: number;
   };
 }
 

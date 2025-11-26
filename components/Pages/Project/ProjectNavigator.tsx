@@ -139,6 +139,7 @@ export const ProjectNavigator = ({
             title: project.details.data.title || "",
             payoutAddress: project.payoutAddress as Hex,
             imageURL: project.details?.data.imageURL,
+            chainID: project.chainID,
           }}
         />
       )}

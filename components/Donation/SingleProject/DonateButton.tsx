@@ -6,7 +6,7 @@ import { SingleProjectDonateModal } from './SingleProjectDonateModal';
 import type { DonateButtonProps } from './types';
 
 export const DonateButton = React.memo<DonateButtonProps>(
-  ({ projectId, projectTitle, payoutAddress, className }) => {
+  ({ projectId, projectTitle, payoutAddress, chainID, className }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const handleOpenModal = useCallback(() => {
@@ -28,7 +28,8 @@ export const DonateButton = React.memo<DonateButtonProps>(
           project={{
             uid: projectId,
             title: projectTitle,
-            payoutAddress
+            payoutAddress,
+            chainID
           }}
         />
       </>

@@ -11,7 +11,7 @@ const securityHeaders = [
   },
   {
     key: "Content-Security-Policy",
-    value: "frame-src 'self' https://js.stripe.com https://crypto.stripe.com https://*.stripe.com https://auth.privy.io https://*.privy.io https://paragraph.com https://*.paragraph.com; frame-ancestors 'self';",
+    value: "frame-src 'self' https://js.stripe.com https://crypto.stripe.com https://*.stripe.com https://auth.privy.io https://*.privy.io https://paragraph.com https://*.paragraph.com https://*.moonpay.com; frame-ancestors 'self';",
   },
 ];
 

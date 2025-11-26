@@ -7,6 +7,7 @@ export interface FiatOnrampModalProps {
     uid: string;
     title: string;
     payoutAddress: Hex;
+    chainID: number;
   };
   fiatAmount: number;
 }
