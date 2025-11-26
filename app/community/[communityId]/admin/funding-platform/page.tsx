@@ -63,7 +63,7 @@ export default function FundingPlatformAdminPage() {
   const { isCommunityAdmin, isLoading: isLoadingAdmin } =
     useIsCommunityAdmin(communityId);
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isStaff } = useStaff();
+  const { isStaff, isLoading: isStaffLoading } = useStaff();
 
   const hasAccess = isCommunityAdmin || isOwner || isStaff;
 
@@ -219,7 +219,7 @@ export default function FundingPlatformAdminPage() {
     router.push(newUrl, { scroll: false });
   }, [searchTerm, enabledFilter, communityId, router]);
 
-  if (isLoadingAdmin || isLoadingPrograms) {
+  if (isLoadingAdmin || isStaffLoading || isLoadingPrograms) {
     return (
       <div className="flex w-full items-center justify-center min-h-[400px]">
         <Spinner />

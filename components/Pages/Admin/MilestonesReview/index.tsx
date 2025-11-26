@@ -17,6 +17,7 @@ import { GrantCompleteButtonForReviewer } from "./GrantCompleteButtonForReviewer
 import { useAccount } from "wagmi";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { useIsReviewer, useReviewerPrograms } from "@/hooks/usePermissions";
+import { useStaff } from "@/hooks/useStaff";
 import { useOwnerStore } from "@/store";
 
 interface MilestonesReviewPageProps {
@@ -40,6 +41,7 @@ export function MilestonesReviewPage({
   const { isCommunityAdmin, isLoading: isLoadingCommunityAdmin } = useIsCommunityAdmin(
     communityId
   );
+  const { isStaff } = useStaff();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isOwnerLoading = useOwnerStore((state) => state.isOwnerLoading);
 
@@ -70,10 +72,10 @@ export function MilestonesReviewPage({
   }, [reviewerPrograms, parsedProgramId, parsedChainId]);
 
   // Determine if user can verify milestones (must be before early returns)
-  // Only milestone reviewers, admins, and contract owners can verify/complete/sync
+  // Only milestone reviewers, admins, contract owners, and staff can verify/complete/sync
   const canVerifyMilestones = useMemo(
-    () => isCommunityAdmin || isContractOwner || (isMilestoneReviewer || false),
-    [isCommunityAdmin, isContractOwner, isMilestoneReviewer]
+    () => isCommunityAdmin || isContractOwner || isStaff || (isMilestoneReviewer || false),
+    [isCommunityAdmin, isContractOwner, isStaff, isMilestoneReviewer]
   );
 
   // Get the actual project UID from the data (projectId might be a slug)
@@ -99,7 +101,7 @@ export function MilestonesReviewPage({
   const backButtonConfig = useMemo(() => {
     // Only show back to application if came from application page
     if (referrer === "application" && referenceNumber) {
-      const appUrl = (isCommunityAdmin || isContractOwner)
+      const appUrl = (isCommunityAdmin || isContractOwner || isStaff)
         ? PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, programId) + `/${referenceNumber}`
         : isReviewer && parsedChainId
           ? PAGES.REVIEWER.APPLICATION_DETAIL(communityId, parsedProgramId, parsedChainId, referenceNumber)
@@ -115,12 +117,12 @@ export function MilestonesReviewPage({
       url: PAGES.ADMIN.MILESTONES(communityId),
       label: "Back to Milestones Report",
     };
-  }, [referrer, referenceNumber, isCommunityAdmin, isContractOwner, isReviewer, communityId, programId, parsedProgramId, parsedChainId]);
+  }, [referrer, referenceNumber, isCommunityAdmin, isContractOwner, isStaff, isReviewer, communityId, programId, parsedProgramId, parsedChainId]);
 
   // Memoized milestone review URL - only returns URL if application is approved
   const milestoneReviewUrl = useMemo(() => {
     if (fundingApplication?.status?.toLowerCase() === "approved" && referenceNumber) {
-      const appUrl = (isCommunityAdmin || isContractOwner)
+      const appUrl = (isCommunityAdmin || isContractOwner || isStaff)
         ? PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, programId) + `/${referenceNumber}`
         : isReviewer && parsedChainId
           ? PAGES.REVIEWER.APPLICATION_DETAIL(communityId, parsedProgramId, parsedChainId, referenceNumber)
@@ -129,7 +131,7 @@ export function MilestonesReviewPage({
       return appUrl;
     }
     return null;
-  }, [fundingApplication?.status, referenceNumber, isCommunityAdmin, isContractOwner, isReviewer, communityId, programId, parsedProgramId, parsedChainId]);
+  }, [fundingApplication?.status, referenceNumber, isCommunityAdmin, isContractOwner, isStaff, isReviewer, communityId, programId, parsedProgramId, parsedChainId]);
 
   const { verifyMilestone, isVerifying } = useMilestoneCompletionVerification({
     projectId,
@@ -204,8 +206,8 @@ export function MilestonesReviewPage({
     );
   }
 
-  // Check authorization: user must be logged in AND (community admin OR contract owner OR program reviewer)
-  const isAuthorized = address && (isCommunityAdmin || isContractOwner || isReviewer);
+  // Check authorization: user must be logged in AND (community admin OR contract owner OR program reviewer OR staff)
+  const isAuthorized = address && (isCommunityAdmin || isContractOwner || isReviewer || isStaff);
 
   if (!isAuthorized) {
     return (
@@ -221,7 +223,7 @@ export function MilestonesReviewPage({
             <p className="text-red-600 dark:text-red-400 mb-4">
               {!address
                 ? "You must be logged in to access this page."
-                : "You do not have permission to access this page. Only community administrators, contract owners, and program reviewers can review milestones."}
+                : "You do not have permission to access this page. Only community administrators, contract owners, staff, and program reviewers can review milestones."}
             </p>
             <Link href={PAGES.ADMIN.MILESTONES(communityId)}>
               <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white">

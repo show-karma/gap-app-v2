@@ -68,7 +68,7 @@ export default function ApplicationsPage() {
   const { isCommunityAdmin, isLoading: isLoadingAdmin } =
     useIsCommunityAdmin(communityId);
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isStaff } = useStaff();
+  const { isStaff, isLoading: isStaffLoading } = useStaff();
 
   // Check if user is a reviewer for this program
   const { hasPermission: canView, isLoading: isLoadingPermission } = usePermissions({
@@ -121,7 +121,7 @@ export default function ApplicationsPage() {
     return updateStatusAsync({ applicationId, status, note });
   };
 
-  if (isLoadingAdmin || isLoadingPermission) {
+  if (isLoadingAdmin || isStaffLoading || isLoadingPermission) {
     return (
       <div className="flex w-full items-center justify-center min-h-[600px]">
         <Spinner />

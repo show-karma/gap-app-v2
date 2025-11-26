@@ -41,7 +41,7 @@ export default function ApplicationDetailPage() {
 
   const { isCommunityAdmin, isLoading: isLoadingAdmin } = useIsCommunityAdmin(communityId);
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isStaff } = useStaff();
+  const { isStaff, isLoading: isStaffLoading } = useStaff();
   const hasAccess = isCommunityAdmin || isOwner || isStaff;
 
   // Get current user address
@@ -167,7 +167,7 @@ export default function ApplicationDetailPage() {
   }, [application?.status, application?.projectUID, communityId, combinedProgramId]);
 
   // Check loading states
-  if (isLoadingAdmin || isLoadingApplication) {
+  if (isLoadingAdmin || isStaffLoading || isLoadingApplication) {
     return (
       <div className="flex w-full items-center justify-center min-h-screen">
         <Spinner />

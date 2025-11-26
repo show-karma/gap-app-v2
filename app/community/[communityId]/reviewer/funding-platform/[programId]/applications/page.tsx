@@ -2,6 +2,7 @@
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useStaff } from "@/hooks/useStaff";
 import { ApplicationListWithAPI } from "@/components/FundingPlatform";
 import { IFundingApplication } from "@/types/funding-platform";
 import { IApplicationFilters } from "@/services/fundingPlatformService";
@@ -68,6 +69,8 @@ export default function ReviewerApplicationsPage() {
     action: "read",
   });
 
+  const { isStaff } = useStaff();
+
   // Reviewers with view permission can comment (used in ApplicationListWithAPI internally)
   // const canComment = canView; // Not directly used here but reviewers can comment in the application detail view
 
@@ -108,7 +111,7 @@ export default function ReviewerApplicationsPage() {
     );
   }
 
-  if (!canView) {
+  if (!canView && !isStaff) {
     return (
       <div className={layoutTheme.padding}>
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
