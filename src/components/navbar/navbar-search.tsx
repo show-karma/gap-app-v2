@@ -11,7 +11,11 @@ import { PAGES } from "@/utilities/pages";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { errorManager } from "@/components/Utilities/errorManager";
 
-export function NavbarSearch() {
+interface NavbarSearchProps {
+    onSelectItem?: () => void;
+}
+
+export function NavbarSearch({ onSelectItem }: NavbarSearchProps = {}) {
     const [results, setResults] = useState<ISearchResponse>({
         communities: [],
         projects: [],
@@ -79,6 +83,7 @@ export function NavbarSearch() {
         setIsSearchListOpen(false);
         setSearchValue("");
         setResults({ communities: [], projects: [] });
+        onSelectItem?.();
     };
 
     const groupedCommunities = groupSimilarCommunities(results.communities);
