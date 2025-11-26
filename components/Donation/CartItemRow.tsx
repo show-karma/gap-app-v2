@@ -129,6 +129,7 @@ export function CartItemRow({
         {/* Remove Button - 1 column */}
         <div className="col-span-1 flex justify-end">
           <button
+            type="button"
             data-testid="remove-item"
             onClick={onRemove}
             className="text-red-500"

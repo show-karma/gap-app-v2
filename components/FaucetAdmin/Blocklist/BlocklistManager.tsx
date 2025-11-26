@@ -49,6 +49,7 @@ export function BlocklistManager() {
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Blocked Addresses</h2>
         <button
+          type="button"
           onClick={() => setShowAddForm(true)}
           className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
         >
@@ -192,6 +193,7 @@ export function BlocklistManager() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                   <button
+                    type="button"
                     onClick={() => {
                       if (confirm("Are you sure you want to unblock this address?")) {
                         unblockAddress({

@@ -229,10 +229,15 @@ export const ProjectDiscovery = () => {
 
           <div className="flex justify-between gap-4">
             <div className="w-1/2">
-              <label className="block text-sm font-medium text-gray-700">Category</label>
+              <label htmlFor="category-select" className="block text-sm font-medium text-gray-700">
+                Category
+              </label>
               <Listbox value={selectedCategory} onChange={setSelectedCategory}>
                 <div className="relative mt-1">
-                  <Listbox.Button className="relative w-full cursor-default rounded-lg bg-white py-3 pl-4 pr-10 text-left border border-gray-200 shadow-sm hover:border-primary/50 transition-colors focus:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20">
+                  <Listbox.Button
+                    id="category-select"
+                    className="relative w-full cursor-default rounded-lg bg-white py-3 pl-4 pr-10 text-left border border-gray-200 shadow-sm hover:border-primary/50 transition-colors focus:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+                  >
                     <span className="block truncate text-gray-900">
                       {selectedCategory?.name || "Select Category"}
                     </span>
@@ -260,10 +265,15 @@ export const ProjectDiscovery = () => {
             </div>
 
             <div className="w-1/2">
-              <label className="block text-sm font-medium text-gray-700">Program</label>
+              <label htmlFor="program-select" className="block text-sm font-medium text-gray-700">
+                Program
+              </label>
               <Listbox value={selectedProgram} onChange={setSelectedProgram}>
                 <div className="relative mt-1">
-                  <Listbox.Button className="relative w-full cursor-default rounded-lg bg-white py-3 pl-4 pr-10 text-left border border-gray-200 shadow-sm hover:border-primary/50 transition-colors focus:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20">
+                  <Listbox.Button
+                    id="program-select"
+                    className="relative w-full cursor-default rounded-lg bg-white py-3 pl-4 pr-10 text-left border border-gray-200 shadow-sm hover:border-primary/50 transition-colors focus:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+                  >
                     <span className="block truncate text-gray-900">
                       {selectedProgram?.name || "Select Program"}
                     </span>
@@ -293,11 +303,15 @@ export const ProjectDiscovery = () => {
 
           <div className="space-y-6">
             <div className="space-y-4">
-              <label className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="trusted-circle-input"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Trusted Circle (Optional)
               </label>
               <div className="flex gap-3">
                 <input
+                  id="trusted-circle-input"
                   type="text"
                   value={endorserInput}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>

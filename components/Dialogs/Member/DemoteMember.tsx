@@ -7,7 +7,6 @@ import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
-import { useGap } from "@/hooks/useGap";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
@@ -28,7 +27,6 @@ interface DemoteMemberDialogProps {
 export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({ memberAddress }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isDemoting, setIsDemoting] = useState(false);
-  const { gap } = useGap();
   const { address, chain } = useAccount();
   const { project } = useProjectStore();
   const { teamProfiles } = useTeamProfiles(project);

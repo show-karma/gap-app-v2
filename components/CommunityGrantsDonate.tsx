@@ -98,6 +98,7 @@ export const CommunityGrantsDonate = ({ initialProjects }: CommunityGrantsDonate
                                     const inCart = items.some((i) => i.uid === project.uid);
                                     return (
                                       <button
+                                        type="button"
                                         onClick={(e) => {
                                           e.preventDefault();
                                           toggle({

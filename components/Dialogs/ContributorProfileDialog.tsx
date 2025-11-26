@@ -29,8 +29,6 @@ import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { cn } from "@/utilities/tailwind";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
-type ContributorProfileDialogProps = {};
-
 const profileSchema = z.object({
   name: z.string().min(3, { message: "This name is too short" }),
   aboutMe: z.string().optional(),
@@ -70,17 +68,13 @@ const inputStyle =
 
 type SchemaType = z.infer<typeof profileSchema>;
 
-export const ContributorProfileDialog: FC<ContributorProfileDialogProps> = () => {
+export const ContributorProfileDialog: FC = () => {
   const project = useProjectStore((state) => state.project);
   const { address, chain, isConnected } = useAccount();
   const { closeModal, isModalOpen: isOpen, isGlobal } = useContributorProfileModalStore();
 
   // Fetch contributor profile using React Query
-  const {
-    profile,
-    isLoading: isProfileLoading,
-    refetch: refetchProfile,
-  } = useContributorProfile(address);
+  const { profile, refetch: refetchProfile } = useContributorProfile(address);
 
   // Fetch team profiles using React Query
   const { refetch: refetchTeamProfiles } = useTeamProfiles(project);
@@ -99,8 +93,6 @@ export const ContributorProfileDialog: FC<ContributorProfileDialogProps> = () =>
     register,
     setValue,
     handleSubmit,
-    watch,
-    clearErrors,
     reset,
     formState: { errors, isValid },
   } = useForm<SchemaType>({

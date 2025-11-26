@@ -2,7 +2,7 @@
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
 import { Command, CommandGroup, CommandItem } from "cmdk";
-/* eslint-disable @next/next/no-img-element */
+import Image from "next/image";
 import { type FC, useState } from "react";
 import type { Chain } from "viem";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
@@ -35,7 +35,13 @@ export const NetworkDropdown: FC<NetworkDropdownProps> = ({
       >
         {value ? (
           <div className="flex flex-row gap-2 items-center">
-            <img src={chainImgDictionary(value)} alt={""} className="w-5 h-5" />
+            <Image
+              src={chainImgDictionary(value)}
+              alt={networks.find((network) => network.id === value)?.name || "Network"}
+              width={20}
+              height={20}
+              className="w-5 h-5"
+            />
             <p>{networks.find((network) => network.id === value)?.name} </p>
           </div>
         ) : (
@@ -93,9 +99,11 @@ export const NetworkDropdown: FC<NetworkDropdownProps> = ({
                 />
                 <div className="flex flex-row gap-2 items-center justify-start w-full">
                   <div className="min-w-5 min-h-5 w-5 h-5 m-0">
-                    <img
+                    <Image
                       src={chainImgDictionary(network.id)}
-                      alt={""}
+                      alt={network.name || "Network"}
+                      width={20}
+                      height={20}
                       className="min-w-5 min-h-5 w-5 h-5 m-0 rounded-full"
                     />
                   </div>

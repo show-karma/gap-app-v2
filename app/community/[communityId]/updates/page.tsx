@@ -2,6 +2,7 @@
 
 import { Listbox, Transition } from "@headlessui/react";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
+import Image from "next/image";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import pluralize from "pluralize";
 import { Fragment, useCallback, useMemo, useState } from "react";
@@ -87,7 +88,13 @@ export default function CommunityUpdatesPage() {
     return (
       <div className="flex w-full items-center justify-center rounded border border-gray-200 px-6 py-10">
         <div className="flex max-w-[438px] flex-col items-center justify-center gap-6">
-          <img src="/images/comments.png" alt="" className="h-[185px] w-[438px] object-cover" />
+          <Image
+            src="/images/comments.png"
+            alt="No updates"
+            width={438}
+            height={185}
+            className="object-cover"
+          />
           <div className="flex w-full flex-col items-center justify-center gap-3">
             <p className="text-center text-lg font-semibold text-black dark:text-zinc-100">
               Community Updates

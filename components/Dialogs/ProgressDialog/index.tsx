@@ -26,6 +26,7 @@ const Box = ({
 }) => {
   return (
     <button
+      type="button"
       onClick={onClick}
       className={cn(
         "flex flex-1 group flex-col gap-4 items-center justify-center w-full border hover:border-blue-800 hover:bg-slate-50 dark:hover:bg-slate-900 p-2 rounded-lg bg-white dark:bg-zinc-800 border-gray-200 dark:border-gray-700 transition-all ease-in-out duration-200",
@@ -205,7 +206,7 @@ export const ProgressDialog = () => {
                   <div className="flex flex-col gap-2">
                     <div className="flex flex-row gap-2 px-4 pt-4 items-center">
                       {progressModalScreen !== "menu" ? (
-                        <button onClick={() => setProgressModalScreen("menu")}>
+                        <button type="button" onClick={() => setProgressModalScreen("menu")}>
                           <ArrowLeftIcon className="w-6 h-6" />
                         </button>
                       ) : null}
@@ -215,6 +216,7 @@ export const ProgressDialog = () => {
                       </h2>
 
                       <button
+                        type="button"
                         className="p-2 text-black dark:text-white"
                         onClick={() => closeModal()}
                       >

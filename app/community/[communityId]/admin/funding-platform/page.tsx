@@ -390,6 +390,7 @@ export default function FundingPlatformAdminPage() {
           {/* Enabled/Disabled Filter Dropdown */}
           <div className="relative">
             <button
+              type="button"
               className="flex items-center justify-between min-w-[160px] px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             >
@@ -410,6 +411,7 @@ export default function FundingPlatformAdminPage() {
                 {["all", "enabled", "disabled"].map((status) => (
                   <button
                     key={status}
+                    type="button"
                     onClick={() => {
                       setEnabledFilter(status as typeof enabledFilter);
                       setIsDropdownOpen(false);
@@ -475,6 +477,7 @@ export default function FundingPlatformAdminPage() {
                       }
                     >
                       <button
+                        type="button"
                         className={cn(
                           "flex items-center space-x-2 text-sm text-zinc-900 px-2 py-1 rounded-full",
                           program.applicationConfig?.isEnabled
@@ -563,7 +566,10 @@ export default function FundingPlatformAdminPage() {
                       )}
                       title="Configure Form"
                     >
-                      <button className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-md transition-colors">
+                      <button
+                        type="button"
+                        className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-md transition-colors"
+                      >
                         <Cog6ToothIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                       </button>
                     </Link>

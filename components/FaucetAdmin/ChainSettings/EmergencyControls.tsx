@@ -19,6 +19,7 @@ export function EmergencyControls({
     <div className="flex space-x-2">
       {enabled ? (
         <button
+          type="button"
           onClick={() => {
             if (
               confirm(
@@ -35,6 +36,7 @@ export function EmergencyControls({
         </button>
       ) : (
         <button
+          type="button"
           onClick={() => {
             if (confirm(`Are you sure you want to resume operations for chain ${chainId}?`)) {
               onResume();

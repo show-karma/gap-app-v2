@@ -41,6 +41,7 @@ export function BalanceDisplay({
           <span className="text-red-600 dark:text-red-400">Balance unavailable</span>
           {canRetry && onRetry && (
             <button
+              type="button"
               onClick={onRetry}
               className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline"
             >

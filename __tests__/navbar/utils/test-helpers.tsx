@@ -271,118 +271,99 @@ export const createMockRouter = (overrides: any = {}) => ({
   ...overrides,
 });
 
-/**
- * Update global mocks (for use with rerender)
- */
-export const updateMocks = (options: Partial<CustomRenderOptions>) => {
+// Helper to update auth mocks
+const updateAuthMock = (mockUseAuth?: any, mockUsePrivy?: any) => {
+  if (mockUseAuth || mockUsePrivy) {
+    mockAuthState.current = mockUseAuth || mockUsePrivy;
+  }
+};
+
+// Helper to update theme mock
+const updateThemeMock = (mockUseTheme?: any) => {
+  if (!mockUseTheme) return;
+  const themeMock = typeof mockUseTheme === "function" ? mockUseTheme() : mockUseTheme;
+  mockThemeState.current = themeMock;
+};
+
+// Helper to update contributor profile modal
+const updateContributorProfileModalMock = (mockUseContributorProfileModalStore?: any) => {
+  if (!mockUseContributorProfileModalStore) return;
+  const modalMock =
+    typeof mockUseContributorProfileModalStore === "function"
+      ? mockUseContributorProfileModalStore()
+      : mockUseContributorProfileModalStore;
+  const module = require("@/store/modals/contributorProfile");
+  if (
+    module.useContributorProfileModalStore &&
+    jest.isMockFunction(module.useContributorProfileModalStore)
+  ) {
+    module.useContributorProfileModalStore.mockReturnValue(modalMock);
+  }
+};
+
+// Helper to update a single store mock
+const updateStoreMock = (modulePath: string, hookName: string, mockValue: any) => {
+  if (!mockValue) return;
+  const module = require(modulePath);
+  if (module[hookName] && jest.isMockFunction(module[hookName])) {
+    module[hookName].mockReturnValue(mockValue);
+  }
+};
+
+// Helper to update owner store mock (special case with selector pattern)
+const updateOwnerStoreMock = (mockUseOwnerStore: any) => {
+  if (!mockUseOwnerStore) return;
+
+  const ownerImpl =
+    typeof mockUseOwnerStore === "function"
+      ? mockUseOwnerStore
+      : (selector?: Function) => (selector ? selector(mockUseOwnerStore) : mockUseOwnerStore);
+
+  const ownerModule = require("@/store/owner");
+  const storeModule = require("@/store");
+
+  if (ownerModule.useOwnerStore && jest.isMockFunction(ownerModule.useOwnerStore)) {
+    ownerModule.useOwnerStore.mockImplementation(ownerImpl);
+  }
+  if (storeModule.useOwnerStore && jest.isMockFunction(storeModule.useOwnerStore)) {
+    storeModule.useOwnerStore.mockImplementation(ownerImpl);
+  }
+};
+
+// Helper to update permission-related mocks
+const updatePermissionMocks = (mockPermissions?: any) => {
+  if (!mockPermissions) return;
+
   const {
-    mockUseAuth,
-    mockUsePrivy,
-    mockPermissions,
-    mockUseLogout,
-    mockModalStore,
     mockUseCommunitiesStore,
     mockUseReviewerPrograms,
     mockUseStaff,
     mockUseOwnerStore,
     mockUseRegistryStore,
-    mockRouter,
-    mockUseTheme,
-    mockUseContributorProfileModalStore,
-  } = options;
+  } = mockPermissions;
 
-  // Update auth mock
-  if (mockUseAuth || mockUsePrivy) {
-    const authMock = mockUseAuth || mockUsePrivy;
-    mockAuthState.current = authMock;
-  }
+  updateStoreMock("@/store/communities", "useCommunitiesStore", mockUseCommunitiesStore);
+  updateStoreMock("@/hooks/usePermissions", "useReviewerPrograms", mockUseReviewerPrograms);
+  updateStoreMock("@/hooks/useStaff", "useStaff", mockUseStaff);
+  updateOwnerStoreMock(mockUseOwnerStore);
+  updateStoreMock("@/store/registry", "useRegistryStore", mockUseRegistryStore);
+};
 
-  // Update theme mock
-  if (mockUseTheme) {
-    const themeMock = typeof mockUseTheme === "function" ? mockUseTheme() : mockUseTheme;
-    mockThemeState.current = themeMock;
-  }
+/**
+ * Update global mocks (for use with rerender)
+ */
+export const updateMocks = (options: Partial<CustomRenderOptions>) => {
+  updateAuthMock(options.mockUseAuth, options.mockUsePrivy);
+  updateThemeMock(options.mockUseTheme);
+  updateContributorProfileModalMock(options.mockUseContributorProfileModalStore);
+  updatePermissionMocks(options.mockPermissions);
 
-  // Update contributor profile modal store mock
-  if (mockUseContributorProfileModalStore) {
-    const modalMock =
-      typeof mockUseContributorProfileModalStore === "function"
-        ? mockUseContributorProfileModalStore()
-        : mockUseContributorProfileModalStore;
-    const module = require("@/store/modals/contributorProfile");
-    if (
-      module.useContributorProfileModalStore &&
-      jest.isMockFunction(module.useContributorProfileModalStore)
-    ) {
-      module.useContributorProfileModalStore.mockReturnValue(modalMock);
-    }
-  }
-
-  // Update permissions mocks
-  if (mockPermissions) {
-    const {
-      mockUseCommunitiesStore: communitiesStore,
-      mockUseReviewerPrograms: reviewerPrograms,
-      mockUseStaff: staff,
-      mockUseOwnerStore: owner,
-      mockUseRegistryStore: registry,
-    } = mockPermissions;
-
-    if (communitiesStore) {
-      const module = require("@/store/communities");
-      if (module.useCommunitiesStore && jest.isMockFunction(module.useCommunitiesStore)) {
-        module.useCommunitiesStore.mockReturnValue(communitiesStore);
-      }
-    }
-
-    if (reviewerPrograms) {
-      const module = require("@/hooks/usePermissions");
-      if (module.useReviewerPrograms && jest.isMockFunction(module.useReviewerPrograms)) {
-        module.useReviewerPrograms.mockReturnValue(reviewerPrograms);
-      }
-    }
-
-    if (staff) {
-      const module = require("@/hooks/useStaff");
-      if (module.useStaff && jest.isMockFunction(module.useStaff)) {
-        module.useStaff.mockReturnValue(staff);
-      }
-    }
-
-    if (owner) {
-      const ownerModule = require("@/store/owner");
-      const storeModule = require("@/store");
-      // Handle Zustand selector pattern
-      const ownerImpl =
-        typeof owner === "function"
-          ? owner
-          : (selector?: Function) => (selector ? selector(owner) : owner);
-
-      if (ownerModule.useOwnerStore && jest.isMockFunction(ownerModule.useOwnerStore)) {
-        ownerModule.useOwnerStore.mockImplementation(ownerImpl);
-      }
-      if (storeModule.useOwnerStore && jest.isMockFunction(storeModule.useOwnerStore)) {
-        storeModule.useOwnerStore.mockImplementation(ownerImpl);
-      }
-    }
-
-    if (registry) {
-      const module = require("@/store/registry");
-      if (module.useRegistryStore && jest.isMockFunction(module.useRegistryStore)) {
-        module.useRegistryStore.mockReturnValue(registry);
-      }
-    }
-  }
-
-  // Individual store mocks
-  if (mockUseCommunitiesStore) {
+  if (options.mockUseCommunitiesStore) {
     const module = require("@/store/communities");
     if (module.useCommunitiesStore && jest.isMockFunction(module.useCommunitiesStore)) {
-      module.useCommunitiesStore.mockReturnValue(mockUseCommunitiesStore);
+      module.useCommunitiesStore.mockReturnValue(options.mockUseCommunitiesStore);
     }
   }
-
-  // Add other individual mock updates as needed
 };
 
 export const createMockUseCommunitiesStore = (
@@ -580,88 +561,11 @@ export const renderWithProviders = (
     ...renderOptions
   } = options;
 
-  // Setup mocks if provided - modify the global mock state
-  if (mockUseAuth || mockUsePrivy) {
-    const authMock = mockUseAuth || mockUsePrivy;
-    // Modify the imported mockAuthState
-    mockAuthState.current = authMock;
-  }
-
-  // Setup theme mock
-  if (mockUseTheme) {
-    const themeMock = typeof mockUseTheme === "function" ? mockUseTheme() : mockUseTheme;
-    mockThemeState.current = themeMock;
-  }
-
-  if (mockPermissions) {
-    const {
-      mockUseCommunitiesStore,
-      mockUseReviewerPrograms,
-      mockUseStaff,
-      mockUseOwnerStore,
-      mockUseRegistryStore,
-    } = mockPermissions;
-
-    if (mockUseCommunitiesStore) {
-      const module = require("@/store/communities");
-      if (module.useCommunitiesStore && jest.isMockFunction(module.useCommunitiesStore)) {
-        module.useCommunitiesStore.mockReturnValue(mockUseCommunitiesStore);
-      }
-    }
-
-    if (mockUseReviewerPrograms) {
-      const module = require("@/hooks/usePermissions");
-      if (module.useReviewerPrograms && jest.isMockFunction(module.useReviewerPrograms)) {
-        module.useReviewerPrograms.mockReturnValue(mockUseReviewerPrograms);
-      }
-    }
-
-    if (mockUseStaff) {
-      const module = require("@/hooks/useStaff");
-      if (module.useStaff && jest.isMockFunction(module.useStaff)) {
-        module.useStaff.mockReturnValue(mockUseStaff);
-      }
-    }
-
-    if (mockUseOwnerStore) {
-      const ownerModule = require("@/store/owner");
-      const storeModule = require("@/store");
-      // Handle Zustand selector pattern
-      const ownerImpl =
-        typeof mockUseOwnerStore === "function"
-          ? mockUseOwnerStore
-          : (selector?: Function) => (selector ? selector(mockUseOwnerStore) : mockUseOwnerStore);
-
-      if (ownerModule.useOwnerStore && jest.isMockFunction(ownerModule.useOwnerStore)) {
-        ownerModule.useOwnerStore.mockImplementation(ownerImpl);
-      }
-      if (storeModule.useOwnerStore && jest.isMockFunction(storeModule.useOwnerStore)) {
-        storeModule.useOwnerStore.mockImplementation(ownerImpl);
-      }
-    }
-
-    if (mockUseRegistryStore) {
-      const module = require("@/store/registry");
-      if (module.useRegistryStore && jest.isMockFunction(module.useRegistryStore)) {
-        module.useRegistryStore.mockReturnValue(mockUseRegistryStore);
-      }
-    }
-  }
-
-  // Setup contributor profile modal store mock
-  if (mockUseContributorProfileModalStore) {
-    const modalMock =
-      typeof mockUseContributorProfileModalStore === "function"
-        ? mockUseContributorProfileModalStore()
-        : mockUseContributorProfileModalStore;
-    const module = require("@/store/modals/contributorProfile");
-    if (
-      module.useContributorProfileModalStore &&
-      jest.isMockFunction(module.useContributorProfileModalStore)
-    ) {
-      module.useContributorProfileModalStore.mockReturnValue(modalMock);
-    }
-  }
+  // Setup all mocks using extracted helpers
+  updateAuthMock(mockUseAuth, mockUsePrivy);
+  updateThemeMock(mockUseTheme);
+  updateContributorProfileModalMock(mockUseContributorProfileModalStore);
+  updatePermissionMocks(mockPermissions);
 
   // Setup mocks if auth state and permissions provided (legacy support)
   if (authState && permissions) {

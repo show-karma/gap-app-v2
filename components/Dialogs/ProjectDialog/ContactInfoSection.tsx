@@ -179,7 +179,6 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
 
   const {
     register,
-    handleSubmit,
     setValue,
     watch,
     reset,

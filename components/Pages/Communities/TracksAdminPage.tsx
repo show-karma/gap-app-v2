@@ -340,10 +340,11 @@ export const TracksAdminPage = ({
                   <div className="space-y-2 max-h-80 overflow-y-auto p-2 border border-gray-200 dark:border-zinc-800 rounded-lg mb-4">
                     {/* All regular tracks from the community */}
                     {tracks.map((track) => (
-                      <div
+                      <button
+                        type="button"
                         key={track.id}
                         className={cn(
-                          "flex items-center p-2 rounded-md",
+                          "flex items-center p-2 rounded-md w-full text-left",
                           selectedTrackIds.includes(track.id)
                             ? "border border-primary-500"
                             : "hover:bg-gray-100 dark:hover:bg-zinc-800 border border-transparent",
@@ -375,7 +376,7 @@ export const TracksAdminPage = ({
                           )}
                         </div>
                         <span className="text-gray-900 dark:text-white">{track.name}</span>
-                      </div>
+                      </button>
                     ))}
 
                     {/* Show tracks that are in programTracks but not in tracks */}

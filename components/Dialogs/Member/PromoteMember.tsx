@@ -28,7 +28,7 @@ interface PromoteMemberDialogProps {
 export const PromoteMemberDialog: FC<PromoteMemberDialogProps> = ({ memberAddress }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isPromoting, setIsPromoting] = useState(false);
-  const { gap } = useGap();
+  const { gap: _gap } = useGap();
   const { address, chain } = useAccount();
   const { project } = useProjectStore();
   const { teamProfiles } = useTeamProfiles(project);

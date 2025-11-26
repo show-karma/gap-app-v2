@@ -4,7 +4,7 @@ import { CheckIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
 import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk";
-/* eslint-disable @next/next/no-img-element */
+import Image from "next/image";
 import { createElement, type ElementType, type FC, useEffect, useRef, useState } from "react";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
@@ -78,16 +78,24 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
           : null}
         {value ? (
           <div className="flex flex-row gap-2 items-center">
-            <img
-              src={communitiesArray.find((community) => community.value === value)?.logo}
-              alt={""}
+            <Image
+              src={
+                communitiesArray.find((community) => community.value === value)?.logo ||
+                "/placeholder.png"
+              }
+              alt={
+                communitiesArray.find((community) => community.value === value)?.label ||
+                "Community"
+              }
+              width={20}
+              height={20}
               className="w-5 h-5"
             />
             <div className="flex flex-row gap-1  items-center justify-start  flex-1">
               <p>{communitiesArray.find((community) => community.value === value)?.label} </p>
               <div className="flex flex-row gap-1 items-center">
                 <p className="w-max text-[7px]">on</p>
-                <img
+                <Image
                   src={chainImgDictionary(
                     communitiesArray.find((community) => community.value === value)
                       ?.networkId as number
@@ -96,6 +104,8 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
                     communitiesArray.find((community) => community.value === value)
                       ?.networkId as number
                   )}
+                  width={10}
+                  height={10}
                   className="min-w-2.5 min-h-2.5 w-2.5 h-2.5 m-0 rounded-full"
                 />
                 <p className="w-max text-[7px]">Network</p>
@@ -138,9 +148,11 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
                 />
                 <div className="flex flex-row gap-2 items-center justify-start w-full">
                   <div className="min-w-5 min-h-5 w-5 h-5 m-0">
-                    <img
-                      src={community.logo}
-                      alt={""}
+                    <Image
+                      src={community.logo || "/placeholder.png"}
+                      alt={community.label || "Community"}
+                      width={20}
+                      height={20}
                       className="min-w-5 min-h-5 w-5 h-5 m-0 rounded-full"
                     />
                   </div>
@@ -150,9 +162,11 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
                     </p>
                     <div className="flex flex-row gap-1 items-center">
                       <p className="w-max text-[7px]">on</p>
-                      <img
+                      <Image
                         src={chainImgDictionary(community.networkId)}
                         alt={chainNameDictionary(community.networkId)}
+                        width={10}
+                        height={10}
                         className="min-w-2.5 min-h-2.5 w-2.5 h-2.5 m-0 rounded-full"
                       />
                       <p className="w-max text-[7px]">Network</p>

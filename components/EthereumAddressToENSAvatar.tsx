@@ -1,6 +1,6 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 import { blo } from "blo";
+import Image from "next/image";
 import type React from "react";
 import { useEffect } from "react";
 import { useENS } from "@/store/ens";
@@ -32,13 +32,15 @@ const EthereumAddressToENSAvatar: React.FC<Props> = ({ address, className }) => 
 
   return (
     <div>
-      <img
+      <Image
         src={!avatar ? blo(lowerCasedAddress as `0x${string}`) : avatar}
+        alt="Recipient profile"
+        width={24}
+        height={24}
         className={cn(
           "h-6 w-6 min-h-6 min-w-6 items-center rounded-full border-1 border-gray-100 dark:border-zinc-900",
           className
         )}
-        alt="Recipient profile"
       />
     </div>
   );

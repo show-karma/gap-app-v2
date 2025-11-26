@@ -86,14 +86,13 @@ function SearchProject({
   }, 500);
 
   const renderItem = (item: IProjectResponse, _href: string) => {
+    const handleSelect = () => {
+      setPrimaryProject(item);
+      closeSearchList();
+    };
+
     return (
-      <div
-        key={item.uid}
-        onClick={() => {
-          setPrimaryProject(item);
-          closeSearchList();
-        }}
-      >
+      <button key={item.uid} type="button" onClick={handleSelect} className="w-full text-left">
         <div className=":last:border-b-0 cursor-pointer select-none border-b border-slate-100 px-4 py-2 transition hover:bg-slate-200 dark:hover:bg-zinc-700">
           <div className="flex justify-between max-w-full text-ellipsis text-black dark:text-zinc-100">
             <span className="font-bold">{item?.details?.data.title}</span>
@@ -112,15 +111,12 @@ function SearchProject({
             </div>
           </div>
         </div>
-      </div>
+      </button>
     );
   };
 
   return (
-    <div
-      className="relative mb-20 pb-20 flex flex-row items-center gap-3 rounded-lg h-max w-full bg-zinc-100 px-4 max-2xl:gap-1 max-2xl:px-2 text-gray-600 dark:text-gray-200 dark:bg-zinc-800"
-      onBlur={() => closeSearchList()}
-    >
+    <div className="relative mb-20 pb-20 flex flex-row items-center gap-3 rounded-lg h-max w-full bg-zinc-100 px-4 max-2xl:gap-1 max-2xl:px-2 text-gray-600 dark:text-gray-200 dark:bg-zinc-800">
       <MagnifyingGlassIcon className="h-5 w-5" />
       <input
         type="text"
@@ -130,6 +126,7 @@ function SearchProject({
         onFocus={() =>
           [...results.projects, ...results.communities].length > 0 && setIsSearchListOpen(true)
         }
+        onBlur={() => closeSearchList()}
       />
       {isSearchListOpen && (
         <div className="absolute left-0 top-10 mt-3 max-h-32 min-w-full overflow-y-scroll rounded-md bg-white dark:bg-zinc-800 py-4 border border-zinc-200">

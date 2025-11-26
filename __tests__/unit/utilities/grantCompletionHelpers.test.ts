@@ -117,14 +117,14 @@ describe("grantCompletionHelpers", () => {
       ]);
     });
 
-    it("should convert schemaUID to 0x${string} type", () => {
+    it("should convert schemaUID to hex string type", () => {
       const result = buildRevocationPayload("schema123", "0xattestation123");
 
       expect(result[0].schema).toBe("schema123");
       expect(typeof result[0].schema).toBe("string");
     });
 
-    it("should convert attestationUID to 0x${string} type", () => {
+    it("should convert attestationUID to hex string type", () => {
       const result = buildRevocationPayload("0xschema123", "attestation123");
 
       expect(result[0].data[0].uid).toBe("attestation123");

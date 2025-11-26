@@ -357,6 +357,7 @@ export default function ReviewerFundingPlatformPage() {
           {/* Enabled/Disabled Filter Dropdown */}
           <div className="relative">
             <button
+              type="button"
               className="flex items-center justify-between min-w-[160px] px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             >
@@ -377,6 +378,7 @@ export default function ReviewerFundingPlatformPage() {
                 {["all", "enabled", "disabled"].map((status) => (
                   <button
                     key={status}
+                    type="button"
                     onClick={() => {
                       setEnabledFilter(status as typeof enabledFilter);
                       setIsDropdownOpen(false);
@@ -570,7 +572,10 @@ export default function ReviewerFundingPlatformPage() {
                         program.chainID
                       )}
                     >
-                      <button className="rounded-lg px-2 py-2 w-full border-none text-left flex items-center justify-between text-orange-700 dark:text-orange-300 text-sm hover:text-orange-800 dark:hover:text-orange-200">
+                      <button
+                        type="button"
+                        className="rounded-lg px-2 py-2 w-full border-none text-left flex items-center justify-between text-orange-700 dark:text-orange-300 text-sm hover:text-orange-800 dark:hover:text-orange-200"
+                      >
                         <span>
                           {program.metrics?.pendingApplications}{" "}
                           {pluralize("application", program.metrics?.pendingApplications)} pending

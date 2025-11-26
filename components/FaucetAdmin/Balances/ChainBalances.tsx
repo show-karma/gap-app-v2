@@ -21,6 +21,7 @@ export function ChainBalances() {
       <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-6 text-center">
         <p className="text-red-800 dark:text-red-200">Failed to load balances. Please try again.</p>
         <button
+          type="button"
           onClick={() => refetch()}
           className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
         >
@@ -39,6 +40,7 @@ export function ChainBalances() {
           Faucet Balances by Chain
         </h2>
         <button
+          type="button"
           onClick={() => refetch()}
           className="px-4 py-2 bg-gray-100 dark:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-600 transition-colors"
         >

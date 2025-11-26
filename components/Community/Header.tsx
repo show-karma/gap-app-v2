@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import { useParams, usePathname } from "next/navigation";
 import { CommunityPageNavigator } from "@/components/Pages/Communities/CommunityPageNavigator";
 import { CommunityImpactStatCards } from "@/components/Pages/Communities/Impact/StatCards";
@@ -18,9 +19,11 @@ const AdminCommunityHeader = ({ community }: { community: CommunityDetailsV2 }) 
       <div className="flex flex-row gap-4 flex-wrap max-lg:flex-col justify-between items-center w-full">
         <div className="flex h-max flex-1 flex-row items-center justify-start gap-3 ">
           <div className="flex justify-center bg-black rounded-full p-2">
-            <img
-              alt={(community as CommunityDetailsV2)?.details?.name}
-              src={(community as CommunityDetailsV2)?.details?.logoUrl || ""}
+            <Image
+              alt={(community as CommunityDetailsV2)?.details?.name || "Community"}
+              src={(community as CommunityDetailsV2)?.details?.logoUrl || "/placeholder.png"}
+              width={24}
+              height={24}
               className={"h-6 w-6 min-w-6 min-h-6 rounded-full"}
             />
           </div>
@@ -58,9 +61,11 @@ const NormalCommunityHeader = ({ community }: { community: CommunityDetailsV2 })
             }}
           >
             <div className="flex justify-center border border-white rounded-full p-2">
-              <img
-                alt={(community as CommunityDetailsV2)?.details?.name}
-                src={(community as CommunityDetailsV2)?.details?.logoUrl || ""}
+              <Image
+                alt={(community as CommunityDetailsV2)?.details?.name || "Community"}
+                src={(community as CommunityDetailsV2)?.details?.logoUrl || "/placeholder.png"}
+                width={56}
+                height={56}
                 className={
                   "h-14 w-14 min-w-14 min-h-14 rounded-full max-lg:h-8 max-lg:w-8 max-lg:min-h-8 max-lg:min-w-8"
                 }

@@ -11,8 +11,6 @@ import { INDEXER } from "@/utilities/indexer";
 import { Button } from "../Utilities/Button";
 import { Spinner } from "../Utilities/Spinner";
 
-type Props = {};
-
 function GrantGenieRecommendations({ projectId }: { projectId: string }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(false);
@@ -68,11 +66,11 @@ function GrantGenieRecommendations({ projectId }: { projectId: string }) {
   );
 }
 
-export const GrantsGenieDialog: FC<Props> = () => {
+export const GrantsGenieDialog: FC = () => {
   const {
     isGrantGenieModalOpen: isOpen,
     closeGrantGenieModal: closeModal,
-    openGrantGenieModal: openModal,
+    openGrantGenieModal: _openModal,
   } = useGrantGenieModalStore();
   const project = useProjectStore((state) => state.project);
   const _isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);

@@ -43,6 +43,7 @@ export function TransactionStatus({
         </h3>
         {hasFailures && canRetry && onRetry && (
           <button
+            type="button"
             onClick={onRetry}
             className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
           >

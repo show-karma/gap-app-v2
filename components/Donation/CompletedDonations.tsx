@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useMemo } from "react";
@@ -52,6 +53,7 @@ export function CompletedDonations({ session, onStartNewDonation }: CompletedDon
         <div className="text-center">
           <p className="text-gray-600 dark:text-gray-400">No donation data available</p>
           <button
+            type="button"
             onClick={onStartNewDonation}
             className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
           >
@@ -137,9 +139,11 @@ export function CompletedDonations({ session, onStartNewDonation }: CompletedDon
                 >
                   <div className="flex items-center gap-4 flex-1">
                     {donation.projectImageURL && (
-                      <img
+                      <Image
                         src={donation.projectImageURL}
                         alt={donation.projectTitle}
+                        width={48}
+                        height={48}
                         className="h-12 w-12 rounded-lg object-cover"
                       />
                     )}
@@ -198,9 +202,11 @@ export function CompletedDonations({ session, onStartNewDonation }: CompletedDon
                 >
                   <div className="flex items-center gap-4">
                     {donation.projectImageURL && (
-                      <img
+                      <Image
                         src={donation.projectImageURL}
                         alt={donation.projectTitle}
+                        width={48}
+                        height={48}
                         className="h-12 w-12 rounded-lg object-cover opacity-60"
                       />
                     )}
@@ -225,6 +231,7 @@ export function CompletedDonations({ session, onStartNewDonation }: CompletedDon
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <button
+            type="button"
             onClick={onStartNewDonation}
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-base font-medium text-white hover:bg-blue-700 transition-colors"
           >

@@ -15,6 +15,60 @@ import {
   renderWithProviders,
 } from "../utils/test-helpers";
 
+// Helper to verify drawer menu items
+const verifyDrawerMenuItems = (drawer: HTMLElement, expected: ExpectedElements) => {
+  const checkItem = (text: string, shouldExist: boolean | undefined) => {
+    const element = within(drawer).queryByText(text);
+    if (shouldExist) {
+      expect(element).toBeInTheDocument();
+    } else if (shouldExist === false) {
+      expect(element).not.toBeInTheDocument();
+    }
+  };
+
+  if (expected.signIn) {
+    const signInButtons = within(drawer).queryAllByText("Sign in");
+    expect(signInButtons.length).toBeGreaterThan(0);
+  }
+  if (expected.contactSales) checkItem("Contact sales", true);
+  if (expected.userMenu) checkItem("My profile", true);
+  if (expected.myProjects) checkItem("My projects", true);
+  checkItem("Review", expected.review);
+  checkItem("Admin", expected.admin);
+  checkItem("Manage Programs", expected.managePrograms);
+  if (expected.helpDocs) checkItem("Help & Docs", true);
+  if (expected.logout) checkItem("Log out", true);
+  if (expected.resources) {
+    const resourcesSections = within(drawer).queryAllByText("Resources");
+    expect(resourcesSections.length).toBeGreaterThan(0);
+  }
+};
+
+// Helper to verify user menu items
+const verifyUserMenuItems = (expected: ExpectedElements) => {
+  const checkMenuItem = (text: string, shouldExist: boolean | undefined) => {
+    const element = screen.queryByText(text);
+    if (shouldExist) {
+      expect(element).toBeInTheDocument();
+    } else if (shouldExist === false) {
+      expect(element).not.toBeInTheDocument();
+    }
+  };
+
+  if (expected.myProjects) {
+    expect(screen.getByText("My projects")).toBeInTheDocument();
+  }
+  checkMenuItem("Review", expected.review);
+  checkMenuItem("Admin", expected.admin);
+  checkMenuItem("Manage Programs", expected.managePrograms);
+  if (expected.helpDocs) {
+    expect(screen.getByText("Help & Docs")).toBeInTheDocument();
+  }
+  if (expected.logout) {
+    expect(screen.getByText("Log out")).toBeInTheDocument();
+  }
+};
+
 // Define what we expect for each permission scenario
 interface ExpectedElements {
   signIn: boolean;
@@ -91,58 +145,18 @@ describe("Permission Matrix Integration Tests", () => {
             mockUseLogout: createMockUseLogoutFunction(jest.fn()),
           });
 
-          if (expected.userMenu) {
-            // Try to open desktop user menu
-            const userAvatar = screen.queryByTestId("user-avatar");
+          if (!expected.userMenu) return;
 
-            if (userAvatar) {
-              await user.click(userAvatar);
+          const userAvatar = screen.queryByTestId("user-avatar");
+          if (!userAvatar) return;
 
-              // Wait for menu to open
-              await waitFor(() => {
-                expect(screen.getByText("My profile")).toBeInTheDocument();
-              });
+          await user.click(userAvatar);
 
-              // Check My Projects
-              if (expected.myProjects) {
-                expect(screen.getByText("My projects")).toBeInTheDocument();
-              }
+          await waitFor(() => {
+            expect(screen.getByText("My profile")).toBeInTheDocument();
+          });
 
-              // Check Review link
-              const reviewLink = screen.queryByText("Review");
-              if (expected.review) {
-                expect(reviewLink).toBeInTheDocument();
-              } else {
-                expect(reviewLink).not.toBeInTheDocument();
-              }
-
-              // Check Admin link
-              const adminLink = screen.queryByText("Admin");
-              if (expected.admin) {
-                expect(adminLink).toBeInTheDocument();
-              } else {
-                expect(adminLink).not.toBeInTheDocument();
-              }
-
-              // Check Manage Programs link
-              const manageProgramsLink = screen.queryByText("Manage Programs");
-              if (expected.managePrograms) {
-                expect(manageProgramsLink).toBeInTheDocument();
-              } else {
-                expect(manageProgramsLink).not.toBeInTheDocument();
-              }
-
-              // Check Help & Docs
-              if (expected.helpDocs) {
-                expect(screen.getByText("Help & Docs")).toBeInTheDocument();
-              }
-
-              // Check Logout
-              if (expected.logout) {
-                expect(screen.getByText("Log out")).toBeInTheDocument();
-              }
-            }
-          }
+          verifyUserMenuItems(expected);
         });
       });
     });
@@ -170,68 +184,7 @@ describe("Permission Matrix Integration Tests", () => {
           });
 
           const drawer = screen.getByRole("dialog");
-
-          // Check Sign In button
-          if (expected.signIn) {
-            const signInButtons = within(drawer).queryAllByText("Sign in");
-            expect(signInButtons.length).toBeGreaterThan(0);
-          }
-
-          // Check Contact Sales button
-          if (expected.contactSales) {
-            expect(within(drawer).getByText("Contact sales")).toBeInTheDocument();
-          }
-
-          // Check user-specific elements
-          if (expected.userMenu) {
-            expect(within(drawer).getByText("My profile")).toBeInTheDocument();
-          }
-
-          // Check My Projects
-          if (expected.myProjects) {
-            expect(within(drawer).getByText("My projects")).toBeInTheDocument();
-          }
-
-          // Check Review link
-          const reviewLink = within(drawer).queryByText("Review");
-          if (expected.review) {
-            expect(reviewLink).toBeInTheDocument();
-          } else {
-            expect(reviewLink).not.toBeInTheDocument();
-          }
-
-          // Check Admin link
-          const adminLink = within(drawer).queryByText("Admin");
-          if (expected.admin) {
-            expect(adminLink).toBeInTheDocument();
-          } else {
-            expect(adminLink).not.toBeInTheDocument();
-          }
-
-          // Check Manage Programs link
-          const manageProgramsLink = within(drawer).queryByText("Manage Programs");
-          if (expected.managePrograms) {
-            expect(manageProgramsLink).toBeInTheDocument();
-          } else {
-            expect(manageProgramsLink).not.toBeInTheDocument();
-          }
-
-          // Check Help & Docs
-          if (expected.helpDocs) {
-            expect(within(drawer).getByText("Help & Docs")).toBeInTheDocument();
-          }
-
-          // Check Logout
-          if (expected.logout) {
-            expect(within(drawer).getByText("Log out")).toBeInTheDocument();
-          }
-
-          // Check Resources section
-          const resourcesSections = within(drawer).queryAllByText("Resources");
-          if (expected.resources) {
-            // Resources section should be present
-            expect(resourcesSections.length).toBeGreaterThan(0);
-          }
+          verifyDrawerMenuItems(drawer, expected);
         });
       });
     });

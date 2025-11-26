@@ -24,8 +24,8 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   };
 
   if (!community) {
-    (dynamicMetadata.title = `Launch ${communityName} community!`),
-      (dynamicMetadata.description = `Looks like no one’s started this community. Create it now to launch programs, fund projects, and track progress, all in one place.`);
+    dynamicMetadata.title = `Launch ${communityName} community!`;
+    dynamicMetadata.description = `Looks like no one's started this community. Create it now to launch programs, fund projects, and track progress, all in one place.`;
   }
 
   return {

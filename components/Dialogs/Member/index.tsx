@@ -44,7 +44,7 @@ export const MemberDialog: FC<MemberDialogProps> = ({ profile, buttonText, butto
 
   return (
     <>
-      <button className={buttonClassName} onClick={openModal}>
+      <button type="button" className={buttonClassName} onClick={openModal}>
         {buttonText}
       </button>
       {isOpen ? (

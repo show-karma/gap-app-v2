@@ -456,11 +456,16 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
                     {/* Community Selection */}
                     <div className="flex flex-col gap-4">
                       <div className="relative">
-                        <label className="text-md font-bold text-gray-900 dark:text-zinc-100 mb-2 block">
+                        <label
+                          htmlFor="community-dropdown"
+                          className="text-md font-bold text-gray-900 dark:text-zinc-100 mb-2 block"
+                        >
                           Select Community
                         </label>
-                        <div
-                          className="flex items-center justify-between p-3 bg-gray-100 dark:bg-zinc-700 rounded-lg cursor-pointer border border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400 transition-colors"
+                        <button
+                          id="community-dropdown"
+                          type="button"
+                          className="flex items-center justify-between p-3 bg-gray-100 dark:bg-zinc-700 rounded-lg cursor-pointer border border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400 transition-colors w-full text-left"
                           onClick={() => setShowDropdown(!showDropdown)}
                         >
                           <div className="flex items-center space-x-3">
@@ -495,15 +500,16 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
                               showDropdown ? "rotate-180" : ""
                             }`}
                           />
-                        </div>
+                        </button>
 
                         {/* Dropdown */}
                         {showDropdown && (
                           <div className="absolute z-50 w-full mt-1 bg-white dark:bg-zinc-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                             {communities.map((community) => (
-                              <div
+                              <button
                                 key={community.uid}
-                                className="flex items-center space-x-3 p-3 hover:bg-gray-50 dark:hover:bg-zinc-600 cursor-pointer transition-colors"
+                                type="button"
+                                className="flex items-center space-x-3 p-3 hover:bg-gray-50 dark:hover:bg-zinc-600 cursor-pointer transition-colors w-full text-left"
                                 onClick={() => {
                                   setSelectedCommunity(community);
                                   setShowDropdown(false);
@@ -530,7 +536,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
                                     </span>
                                   )}
                                 </div>
-                              </div>
+                              </button>
                             ))}
                           </div>
                         )}

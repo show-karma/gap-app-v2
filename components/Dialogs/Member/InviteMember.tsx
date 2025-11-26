@@ -5,26 +5,22 @@ import { Dialog, Transition } from "@headlessui/react";
 import { ArrowPathIcon, CheckIcon, ClipboardDocumentIcon } from "@heroicons/react/24/outline";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { type FC, Fragment, useEffect, useState } from "react";
-import { useAccount } from "wagmi";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/ui/button";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useInviteLink, useInviteUrl } from "@/hooks/useInviteLink";
 import { useProjectStore } from "@/store";
 
-type InviteMemberDialogProps = {};
-
-export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
+export const InviteMemberDialog: FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const project = useProjectStore((state) => state.project);
   const [, copyToClipboard] = useCopyToClipboard();
 
-  const { inviteCode, isLoading, isGenerating, isRevoking, generateCode, revokeCode, isSuccess } =
+  const { inviteCode, isLoading, isGenerating, generateCode, revokeCode, isSuccess } =
     useInviteLink(project?.uid);
 
-  const { address } = useAccount();
   const code = inviteCode?.hash;
   const inviteUrl = useInviteUrl(project, code);
   const openModal = () => {

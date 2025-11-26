@@ -3,8 +3,8 @@ import { CheckIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
 import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk";
+import Image from "next/image";
 import pluralize from "pluralize";
-/* eslint-disable @next/next/no-img-element */
 import { type FC, useState } from "react";
 import { ChevronDown } from "@/components/Icons/ChevronDown";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
@@ -74,9 +74,11 @@ export const CommunitiesSelect: FC<CommunitiesSelectProps> = ({
                 />
                 <div className="flex flex-row gap-2 items-center justify-start w-full">
                   <div className="min-w-5 min-h-5 w-5 h-5 m-0">
-                    <img
-                      src={community.details?.data?.imageURL}
-                      alt={""}
+                    <Image
+                      src={community.details?.data?.imageURL || "/placeholder.png"}
+                      alt={community.details?.data?.name || "Community"}
+                      width={20}
+                      height={20}
                       className="min-w-5 min-h-5 w-5 h-5 m-0 rounded-full"
                     />
                   </div>
@@ -86,9 +88,11 @@ export const CommunitiesSelect: FC<CommunitiesSelectProps> = ({
                     </p>
                     <div className="flex flex-row gap-1 items-center">
                       <p className="w-max text-[7px]">on</p>
-                      <img
+                      <Image
                         src={chainImgDictionary(community.chainID)}
                         alt={chainNameDictionary(community.chainID)}
+                        width={10}
+                        height={10}
                         className="min-w-2.5 min-h-2.5 w-2.5 h-2.5 m-0 rounded-full"
                       />
                       <p className="w-max text-[7px]">Network</p>

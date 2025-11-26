@@ -95,6 +95,7 @@ export default function DonationCheckoutError({
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <button
+            type="button"
             onClick={reset}
             className="flex-1 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
           >
