@@ -182,7 +182,7 @@ export function NavbarMobileMenu() {
                     <div className="flex flex-col p-4 gap-2 max-h-[70vh] overflow-y-auto">
                         {/* Mobile Search */}
                         <div className="mb-4 w-full">
-                            <NavbarSearch />
+                            <NavbarSearch onSelectItem={() => setMobileMenuOpen(false)} />
                         </div>
 
                         {isLoggedIn && quickActions.length > 0 && (
