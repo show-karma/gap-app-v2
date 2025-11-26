@@ -422,8 +422,17 @@ export const useApplicationUpdateV2 = () => {
     },
     onError: (error: any) => {
       console.error('Failed to update application:', error);
-      const message = error.response?.data?.message || 'Failed to update application';
-      toast.error(message);
+      
+      if (error.response?.status === 403) {
+        const message = error.response?.data?.message || 'You do not have permission to edit this application';
+        toast.error(message);
+      } else if (error.response?.status === 400) {
+        const message = error.response?.data?.message || 'Validation error. Please check your input.';
+        toast.error(message);
+      } else {
+        const message = error.response?.data?.message || 'Failed to update application';
+        toast.error(message);
+      }
     },
   });
 
