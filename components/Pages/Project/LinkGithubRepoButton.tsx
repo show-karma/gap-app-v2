@@ -1,19 +1,19 @@
-"use client"
+"use client";
 
-import { Dialog, Transition } from "@headlessui/react"
-import { CheckIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline"
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import type { FC, ReactNode } from "react"
-import { Fragment, useEffect, useState } from "react"
-import toast from "react-hot-toast"
-import { useAccount } from "wagmi"
-import { Button } from "@/components/Utilities/Button"
-import { errorManager } from "@/components/Utilities/errorManager"
-import { useOwnerStore, useProjectStore } from "@/store"
-import { useCommunityAdminStore } from "@/store/communityAdmin"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
-import { MESSAGES } from "@/utilities/messages"
+import { Dialog, Transition } from "@headlessui/react";
+import { CheckIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { FC, ReactNode } from "react";
+import { Fragment, useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { Button } from "@/components/ui/button";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useCommunityAdminStore } from "@/store/communityAdmin";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
 
 // GitHub icon SVG component
 const GitHubIcon: FC<{ className?: string }> = ({ className }) => (
@@ -30,14 +30,14 @@ const GitHubIcon: FC<{ className?: string }> = ({ className }) => (
   >
     <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
   </svg>
-)
+);
 
 interface LinkGithubRepoButtonProps {
-  buttonClassName?: string
-  project: IProjectResponse & { external: Record<string, string[]> }
-  "data-link-github-button"?: string
-  buttonElement?: { text: string; icon: ReactNode; styleClass: string } | null
-  onClose?: () => void
+  buttonClassName?: string;
+  project: IProjectResponse & { external: Record<string, string[]> };
+  "data-link-github-button"?: string;
+  buttonElement?: { text: string; icon: ReactNode; styleClass: string } | null;
+  onClose?: () => void;
 }
 
 export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
@@ -47,222 +47,237 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
   buttonElement,
   onClose,
 }) => {
-  const isOwner = useOwnerStore((state) => state.isOwner)
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner)
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin)
-  const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin
-  const { address } = useAccount()
+  const isOwner = useOwnerStore((state) => state.isOwner);
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isCommunityAdmin = useCommunityAdminStore(
+    (state) => state.isCommunityAdmin
+  );
+  const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
+  const { address } = useAccount();
 
-  const [isOpen, setIsOpen] = useState(false)
-  const [repos, setRepos] = useState<string[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [validationErrors, setValidationErrors] = useState<Record<number, string>>({})
-  const [error, setError] = useState<string | null>(null)
-  const [validatingRepo, setValidatingRepo] = useState<number | null>(null)
-  const [validatedRepos, setValidatedRepos] = useState<Record<number, boolean>>({})
-  const { refreshProject } = useProjectStore()
+  const [isOpen, setIsOpen] = useState(false);
+  const [repos, setRepos] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<
+    Record<number, string>
+  >({});
+  const [error, setError] = useState<string | null>(null);
+  const [validatingRepo, setValidatingRepo] = useState<number | null>(null);
+  const [validatedRepos, setValidatedRepos] = useState<Record<number, boolean>>(
+    {}
+  );
+  const { refreshProject } = useProjectStore();
 
   // Auto open the dialog if buttonElement is null
   useEffect(() => {
     if (buttonElement === null) {
-      setIsOpen(true)
+      setIsOpen(true);
     }
-  }, [buttonElement])
+  }, [buttonElement]);
 
   useEffect(() => {
     if (project?.external?.github?.length) {
-      setRepos(project.external.github)
+      setRepos(project.external.github);
       // Mark existing repos as needing validation
-      const initialValidationState: Record<number, boolean> = {}
+      const initialValidationState: Record<number, boolean> = {};
       project.external.github.forEach((_, index) => {
-        initialValidationState[index] = false
-      })
-      setValidatedRepos(initialValidationState)
+        initialValidationState[index] = false;
+      });
+      setValidatedRepos(initialValidationState);
     } else {
-      setRepos([""])
-      setValidatedRepos({})
+      setRepos([""]);
+      setValidatedRepos({});
     }
-  }, [project?.external?.github])
+  }, [project?.external?.github]);
 
   const handleAddRepo = () => {
-    setRepos([...repos, ""])
+    setRepos([...repos, ""]);
     // New repo is not validated
-    setValidatedRepos((prev) => ({ ...prev, [repos.length]: false }))
-  }
+    setValidatedRepos((prev) => ({ ...prev, [repos.length]: false }));
+  };
 
   const handleRemoveRepo = (index: number) => {
-    const newRepos = repos.filter((_, i) => i !== index)
+    const newRepos = repos.filter((_, i) => i !== index);
     if (newRepos.length === 0) {
-      setRepos([""])
-      setValidatedRepos({})
+      setRepos([""]);
+      setValidatedRepos({});
     } else {
-      setRepos(newRepos)
+      setRepos(newRepos);
 
       // Update validation state by removing the deleted index and shifting others
-      const newValidatedRepos: Record<number, boolean> = {}
-      let newIndex = 0
+      const newValidatedRepos: Record<number, boolean> = {};
+      let newIndex = 0;
 
       for (let i = 0; i < repos.length; i++) {
         if (i !== index) {
-          newValidatedRepos[newIndex] = validatedRepos[i] || false
-          newIndex++
+          newValidatedRepos[newIndex] = validatedRepos[i] || false;
+          newIndex++;
         }
       }
 
-      setValidatedRepos(newValidatedRepos)
+      setValidatedRepos(newValidatedRepos);
     }
 
     // Remove any validation errors for this index
-    const newValidationErrors = { ...validationErrors }
-    delete newValidationErrors[index]
-    setValidationErrors(newValidationErrors)
-  }
+    const newValidationErrors = { ...validationErrors };
+    delete newValidationErrors[index];
+    setValidationErrors(newValidationErrors);
+  };
 
   const handleRepoChange = (index: number, value: string) => {
-    const newRepos = [...repos]
-    newRepos[index] = value
-    setRepos(newRepos)
+    const newRepos = [...repos];
+    newRepos[index] = value;
+    setRepos(newRepos);
 
     // Clear validation status and errors when user changes the URL
-    setValidatedRepos((prev) => ({ ...prev, [index]: false }))
+    setValidatedRepos((prev) => ({ ...prev, [index]: false }));
 
     if (validationErrors[index]) {
-      const newValidationErrors = { ...validationErrors }
-      delete newValidationErrors[index]
-      setValidationErrors(newValidationErrors)
+      const newValidationErrors = { ...validationErrors };
+      delete newValidationErrors[index];
+      setValidationErrors(newValidationErrors);
     }
-  }
+  };
 
   const validateGithubRepo = async (repo: string, index: number) => {
     if (!repo) {
-      return false
+      return false;
     }
 
     // Basic URL validation
-    let repoUrl: URL
+    let repoUrl: URL;
     try {
-      repoUrl = new URL(repo)
+      repoUrl = new URL(repo);
       if (!repoUrl.hostname.includes("github.com")) {
         setValidationErrors((prev) => ({
           ...prev,
           [index]: "Not a valid GitHub URL",
-        }))
-        setValidatedRepos((prev) => ({ ...prev, [index]: false }))
-        return false
+        }));
+        setValidatedRepos((prev) => ({ ...prev, [index]: false }));
+        return false;
       }
-    } catch (_e) {
+    } catch (e) {
       setValidationErrors((prev) => ({
         ...prev,
         [index]: "Invalid URL format",
-      }))
-      setValidatedRepos((prev) => ({ ...prev, [index]: false }))
-      return false
+      }));
+      setValidatedRepos((prev) => ({ ...prev, [index]: false }));
+      return false;
     }
 
     // Extract owner and repo name from URL
-    const pathParts = repoUrl.pathname.split("/").filter(Boolean)
+    const pathParts = repoUrl.pathname.split("/").filter(Boolean);
     if (pathParts.length < 2) {
       setValidationErrors((prev) => ({
         ...prev,
         [index]: "Invalid GitHub repository URL",
-      }))
-      setValidatedRepos((prev) => ({ ...prev, [index]: false }))
-      return false
+      }));
+      setValidatedRepos((prev) => ({ ...prev, [index]: false }));
+      return false;
     }
 
-    const owner = pathParts[0]
-    const repoName = pathParts[1]
+    const owner = pathParts[0];
+    const repoName = pathParts[1];
 
     // Check if repo exists and is public
-    setValidatingRepo(index)
+    setValidatingRepo(index);
     try {
-      const response = await fetch(`https://api.github.com/repos/${owner}/${repoName}`)
+      const response = await fetch(
+        `https://api.github.com/repos/${owner}/${repoName}`
+      );
 
       if (!response.ok) {
         if (response.status === 404) {
           setValidationErrors((prev) => ({
             ...prev,
             [index]: "Repository not found or private",
-          }))
+          }));
         } else {
           setValidationErrors((prev) => ({
             ...prev,
             [index]: `GitHub API error: ${response.statusText}`,
-          }))
+          }));
         }
-        setValidatedRepos((prev) => ({ ...prev, [index]: false }))
-        return false
+        setValidatedRepos((prev) => ({ ...prev, [index]: false }));
+        return false;
       }
 
-      const repoData = await response.json()
+      const repoData = await response.json();
       if (repoData.private) {
         setValidationErrors((prev) => ({
           ...prev,
-          [index]: "Repository is private. Only public repositories are supported.",
-        }))
-        setValidatedRepos((prev) => ({ ...prev, [index]: false }))
-        return false
+          [index]:
+            "Repository is private. Only public repositories are supported.",
+        }));
+        setValidatedRepos((prev) => ({ ...prev, [index]: false }));
+        return false;
       }
 
       // Mark as validated
-      setValidatedRepos((prev) => ({ ...prev, [index]: true }))
+      setValidatedRepos((prev) => ({ ...prev, [index]: true }));
 
       // Clear any validation errors
       if (validationErrors[index]) {
-        const newValidationErrors = { ...validationErrors }
-        delete newValidationErrors[index]
-        setValidationErrors(newValidationErrors)
+        const newValidationErrors = { ...validationErrors };
+        delete newValidationErrors[index];
+        setValidationErrors(newValidationErrors);
       }
 
-      return true
+      return true;
     } catch (err) {
-      console.error("Error validating GitHub repo:", err)
+      console.error("Error validating GitHub repo:", err);
       setValidationErrors((prev) => ({
         ...prev,
         [index]: "Failed to validate repository",
-      }))
-      setValidatedRepos((prev) => ({ ...prev, [index]: false }))
-      return false
+      }));
+      setValidatedRepos((prev) => ({ ...prev, [index]: false }));
+      return false;
     } finally {
-      setValidatingRepo(null)
+      setValidatingRepo(null);
     }
-  }
+  };
 
   const handleSave = async () => {
-    setIsLoading(true)
-    setError(null)
+    setIsLoading(true);
+    setError(null);
 
     // Filter out empty repos
-    const nonEmptyRepos = repos.filter((repo) => repo.trim() !== "")
+    const nonEmptyRepos = repos.filter((repo) => repo.trim() !== "");
 
     // Check if all non-empty repos are validated
-    const allValidated = nonEmptyRepos.every((_, index) => validatedRepos[index])
+    const allValidated = nonEmptyRepos.every(
+      (_, index) => validatedRepos[index]
+    );
 
     if (!allValidated) {
-      setError("Please validate all repositories before saving.")
-      setIsLoading(false)
-      return
+      setError("Please validate all repositories before saving.");
+      setIsLoading(false);
+      return;
     }
 
     try {
-      const [data, error] = await fetchData(INDEXER.PROJECT.EXTERNAL.UPDATE(project.uid), "PUT", {
-        target: "github",
-        ids: nonEmptyRepos,
-      })
+      const [data, error] = await fetchData(
+        INDEXER.PROJECT.EXTERNAL.UPDATE(project.uid),
+        "PUT",
+        {
+          target: "github",
+          ids: nonEmptyRepos,
+        }
+      );
 
       if (data) {
-        setRepos(nonEmptyRepos.length ? nonEmptyRepos : [""])
-        toast.success("GitHub repositories updated successfully")
+        setRepos(nonEmptyRepos.length ? nonEmptyRepos : [""]);
+        toast.success("GitHub repositories updated successfully");
         if (buttonElement === null && onClose) {
-          setIsOpen(false)
-          onClose()
+          setIsOpen(false);
+          onClose();
         }
-        refreshProject()
+        refreshProject();
       }
 
       if (error) {
-        setError(`Failed to update GitHub repositories. Please try again.`)
-        throw new Error("Failed to update GitHub repositories.")
+        setError(`Failed to update GitHub repositories. Please try again.`);
+        throw new Error("Failed to update GitHub repositories.");
       }
     } catch (err) {
       errorManager(
@@ -275,26 +290,28 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
           address,
         },
         { error: MESSAGES.PROJECT.LINK_GITHUB_REPOS.ERROR }
-      )
+      );
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   // Check if all non-empty repos are validated
   const areAllReposValidated = () => {
-    return repos.filter((repo) => repo.trim() !== "").every((_, index) => validatedRepos[index])
-  }
+    return repos
+      .filter((repo) => repo.trim() !== "")
+      .every((_, index) => validatedRepos[index]);
+  };
 
   const handleClose = () => {
-    setIsOpen(false)
+    setIsOpen(false);
     if (buttonElement === null && onClose) {
-      onClose()
+      onClose();
     }
-  }
+  };
 
   if (!isAuthorized) {
-    return null
+    return null;
   }
 
   return (
@@ -334,34 +351,43 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle transition-all ease-in-out duration-300">
-                  <Dialog.Title as="h3" className="text-gray-900 dark:text-zinc-100">
-                    <h2 className="text-2xl font-bold leading-6">Link GitHub Repositories</h2>
+                <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-4 sm:p-6 text-left align-middle transition-all ease-in-out duration-300">
+                  <Dialog.Title
+                    as="h3"
+                    className="text-gray-900 dark:text-zinc-100"
+                  >
+                    <h2 className="text-2xl font-bold leading-6">
+                      Link GitHub Repositories
+                    </h2>
                     <p className="text-md text-gray-500 dark:text-gray-400 mt-2">
-                      Add one or more GitHub repository URLs for the project. Only public
-                      repositories are supported.
+                      Add one or more GitHub repository URLs for the project.
+                      Only public repositories are supported.
                     </p>
                   </Dialog.Title>
                   <div className="max-h-[60vh] flex flex-col gap-4 mt-8 overflow-y-auto">
                     {repos.map((repo, index) => (
                       <div key={index} className="flex flex-col">
                         <div className="flex items-center space-x-2">
-                          <div className="flex items-center justify-between p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg flex-grow">
-                            <div className="flex items-center space-x-4 w-full">
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg flex-grow gap-2 sm:gap-0">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full">
                               <span className="text-md font-bold capitalize whitespace-nowrap">
                                 Repository {index + 1}
                               </span>
                               <input
                                 type="text"
                                 value={repo}
-                                onChange={(e) => handleRepoChange(index, e.target.value)}
+                                onChange={(e) =>
+                                  handleRepoChange(index, e.target.value)
+                                }
                                 className="text-sm rounded-md w-full text-gray-600 dark:text-gray-300 bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none focus:border-blue-500"
                                 placeholder="https://github.com/username/repository"
                               />
                             </div>
-                            <div className="flex items-center">
+                            <div className="flex items-center self-end sm:self-auto mt-2 sm:mt-0">
                               {validatingRepo === index ? (
-                                <span className="text-sm animate-pulse mx-2">Validating...</span>
+                                <span className="text-sm animate-pulse mx-2">
+                                  Validating...
+                                </span>
                               ) : validatedRepos[index] ? (
                                 <div className="relative group">
                                   <CheckIcon
@@ -374,7 +400,9 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
                                 </div>
                               ) : (
                                 <Button
-                                  onClick={() => validateGithubRepo(repo, index)}
+                                  onClick={() =>
+                                    validateGithubRepo(repo, index)
+                                  }
                                   className="p-2 ml-2"
                                   aria-label="Validate repository"
                                   disabled={!repo.trim()}
@@ -403,14 +431,16 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
                     ))}
                     <Button
                       onClick={handleAddRepo}
-                      className="flex items-center justify-center text-white gap-2 border border-primary-500 bg-primary-500 hover:bg-primary-600"
+                      className="flex items-center justify-center gap-2 border border-primary-500"
                     >
                       <PlusIcon className="h-5 w-5" />
                       Add Another Repository
                     </Button>
-                    {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+                    {error && (
+                      <p className="text-red-500 text-sm mt-2">{error}</p>
+                    )}
                   </div>
-                  <div className="flex flex-row gap-4 mt-10 justify-end">
+                  <div className="flex flex-col sm:flex-row gap-4 mt-10 justify-end">
                     <Button
                       onClick={handleSave}
                       disabled={
@@ -418,14 +448,15 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
                         Object.keys(validationErrors).length > 0 ||
                         !areAllReposValidated()
                       }
-                      className="bg-primary-500 text-white hover:bg-primary-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                      className="w-full sm:w-auto"
                     >
                       {isLoading ? "Saving..." : "Save All"}
                     </Button>
                     <Button
-                      className="text-zinc-900 text-lg bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-zinc-900 hover:text-white"
+                      variant="secondary"
                       onClick={handleClose}
                       type="button"
+                      className="w-full sm:w-auto"
                     >
                       Cancel
                     </Button>
@@ -437,8 +468,8 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
         </Dialog>
       </Transition>
     </>
-  )
-}
+  );
+};
 
 // Add display name
-LinkGithubRepoButton.displayName = "LinkGithubRepoButton"
+LinkGithubRepoButton.displayName = "LinkGithubRepoButton";

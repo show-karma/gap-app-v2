@@ -1,26 +1,31 @@
-"use client"
+"use client";
 
-import { Dialog, Transition } from "@headlessui/react"
-import { FingerPrintIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline"
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import type { FC, ReactNode } from "react"
-import { Fragment, useEffect, useState } from "react"
-import toast from "react-hot-toast"
-import { useAccount } from "wagmi"
-import { Button } from "@/components/Utilities/Button"
-import { errorManager } from "@/components/Utilities/errorManager"
-import { useOwnerStore, useProjectStore } from "@/store"
-import { useCommunityAdminStore } from "@/store/communityAdmin"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
-import { MESSAGES } from "@/utilities/messages"
+import { Dialog, Transition } from "@headlessui/react";
+import {
+  FingerPrintIcon,
+  LinkIcon,
+  PlusIcon,
+  TrashIcon,
+} from "@heroicons/react/24/outline";
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { FC, ReactNode } from "react";
+import { Fragment, useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { Button } from "@/components/ui/button";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useCommunityAdminStore } from "@/store/communityAdmin";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
 
 interface LinkOSOProfileButtonProps {
-  buttonClassName?: string
-  project: IProjectResponse & { external: Record<string, string[]> }
-  "data-link-oso-button"?: string
-  buttonElement?: { text: string; icon: ReactNode; styleClass: string } | null
-  onClose?: () => void
+  buttonClassName?: string;
+  project: IProjectResponse & { external: Record<string, string[]> };
+  "data-link-oso-button"?: string;
+  buttonElement?: { text: string; icon: ReactNode; styleClass: string } | null;
+  onClose?: () => void;
 }
 
 export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
@@ -30,96 +35,102 @@ export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
   buttonElement,
   onClose,
 }) => {
-  const isOwner = useOwnerStore((state) => state.isOwner)
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner)
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin)
-  const { address } = useAccount()
-  const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin
-  const { refreshProject } = useProjectStore()
-  const [isOpen, setIsOpen] = useState(false)
-  const [ids, setIds] = useState<string[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const isOwner = useOwnerStore((state) => state.isOwner);
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isCommunityAdmin = useCommunityAdminStore(
+    (state) => state.isCommunityAdmin
+  );
+  const { address } = useAccount();
+  const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
+  const { refreshProject } = useProjectStore();
+  const [isOpen, setIsOpen] = useState(false);
+  const [ids, setIds] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (project?.external?.oso?.length) {
-      setIds(project.external.oso)
+      setIds(project.external.oso);
     } else {
-      setIds([""]) // Start with one empty input
+      setIds([""]); // Start with one empty input
     }
-  }, [project?.external?.oso])
+  }, [project?.external?.oso]);
 
   useEffect(() => {
     if (buttonElement === null) {
-      setIsOpen(true)
+      setIsOpen(true);
     }
-  }, [buttonElement])
+  }, [buttonElement]);
 
   const handleAddId = () => {
-    setIds([...ids, ""])
-  }
+    setIds([...ids, ""]);
+  };
 
   const handleRemoveId = (index: number) => {
-    const newIds = ids.filter((_, i) => i !== index)
+    const newIds = ids.filter((_, i) => i !== index);
     if (newIds.length === 0) {
-      setIds([""]) // Always keep at least one input
+      setIds([""]); // Always keep at least one input
     } else {
-      setIds(newIds)
+      setIds(newIds);
     }
-  }
+  };
 
   const handleIdChange = (index: number, value: string) => {
-    const newIds = [...ids]
-    newIds[index] = value
-    setIds(newIds)
-  }
+    const newIds = [...ids];
+    newIds[index] = value;
+    setIds(newIds);
+  };
 
   const handleClose = () => {
-    setIsOpen(false)
+    setIsOpen(false);
     if (buttonElement === null && onClose) {
-      onClose()
+      onClose();
     }
-  }
+  };
 
   const handleSave = async () => {
-    setIsLoading(true)
-    setError(null)
-    const validIds = ids.filter((id) => id.trim() !== "")
+    setIsLoading(true);
+    setError(null);
+    const validIds = ids.filter((id) => id.trim() !== "");
     try {
-      const [data, error] = await fetchData(INDEXER.PROJECT.EXTERNAL.UPDATE(project.uid), "PUT", {
-        target: "oso",
-        ids: validIds,
-      })
+      const [data, error] = await fetchData(
+        INDEXER.PROJECT.EXTERNAL.UPDATE(project.uid),
+        "PUT",
+        {
+          target: "oso",
+          ids: validIds,
+        }
+      );
 
       if (data) {
-        setIds(validIds)
-        toast.success(MESSAGES.PROJECT.LINK_OSO_PROFILE.SUCCESS)
+        setIds(validIds);
+        toast.success(MESSAGES.PROJECT.LINK_OSO_PROFILE.SUCCESS);
         if (buttonElement === null && onClose) {
-          setIsOpen(false)
-          onClose()
+          setIsOpen(false);
+          onClose();
         }
-        refreshProject()
+        refreshProject();
       }
 
       if (error) {
-        setError(MESSAGES.PROJECT.LINK_OSO_PROFILE.ERROR)
-        throw new Error(MESSAGES.PROJECT.LINK_OSO_PROFILE.ERROR)
+        setError(MESSAGES.PROJECT.LINK_OSO_PROFILE.ERROR);
+        throw new Error(MESSAGES.PROJECT.LINK_OSO_PROFILE.ERROR);
       }
     } catch (err) {
-      setError(MESSAGES.PROJECT.LINK_OSO_PROFILE.ERROR)
+      setError(MESSAGES.PROJECT.LINK_OSO_PROFILE.ERROR);
       errorManager(
         MESSAGES.PROJECT.LINK_OSO_PROFILE.ERROR,
         err,
         { projectUID: project.uid, target: "oso", ids: validIds, address },
         { error: MESSAGES.PROJECT.LINK_OSO_PROFILE.ERROR }
-      )
+      );
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   if (!isAuthorized) {
-    return null
+    return null;
   }
 
   return (
@@ -159,26 +170,33 @@ export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle transition-all ease-in-out duration-300">
-                  <Dialog.Title as="h3" className="text-gray-900 dark:text-zinc-100">
-                    <h2 className="text-2xl font-bold leading-6">Link OSO Profiles</h2>
+                <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-4 sm:p-6 text-left align-middle transition-all ease-in-out duration-300">
+                  <Dialog.Title
+                    as="h3"
+                    className="text-gray-900 dark:text-zinc-100"
+                  >
+                    <h2 className="text-2xl font-bold leading-6">
+                      Link OSO Profiles
+                    </h2>
                     <p className="text-md text-gray-500 dark:text-gray-400 mt-2">
-                      Add one or more OSO profile IDs for the project. This will enable the project
-                      to retrieve its OSO profile metrics.
+                      Add one or more OSO profile IDs for the project. This will
+                      enable the project to retrieve its OSO profile metrics.
                     </p>
                   </Dialog.Title>
                   <div className="max-h-[60vh] flex flex-col gap-4 mt-8 overflow-y-auto">
                     {ids.map((id, index) => (
-                      <div key={index} className="flex items-center space-x-2">
-                        <div className="flex items-center justify-between p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg flex-grow">
-                          <div className="flex items-center space-x-4 w-full">
+                      <div key={index} className="flex flex-col sm:flex-row items-center gap-2">
+                        <div className="flex items-center justify-between p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg flex-grow w-full">
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full">
                             <span className="text-md font-bold capitalize whitespace-nowrap">
                               OSO Profile {index + 1}
                             </span>
                             <input
                               type="text"
                               value={id}
-                              onChange={(e) => handleIdChange(index, e.target.value)}
+                              onChange={(e) =>
+                                handleIdChange(index, e.target.value)
+                              }
                               className="text-sm rounded-md w-full text-gray-600 dark:text-gray-300 bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none focus:border-blue-500"
                               placeholder="Enter OSO profile ID"
                             />
@@ -187,8 +205,9 @@ export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
                         {ids.length > 1 && (
                           <Button
                             onClick={() => handleRemoveId(index)}
-                            className="p-2 text-red-500 hover:text-red-700"
+                            className="p-2 text-red-500 hover:text-red-700 self-end sm:self-auto"
                             aria-label="Remove ID"
+                            variant="outline"
                           >
                             <TrashIcon className="h-5 w-5" />
                           </Button>
@@ -197,23 +216,24 @@ export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
                     ))}
                     <Button
                       onClick={handleAddId}
-                      className="flex items-center justify-center text-white gap-2 border border-primary-500 bg-primary-500 hover:bg-primary-600"
+                      className="flex items-center justify-center text-white gap-2 border border-primary-500"
                     >
                       <PlusIcon className="h-5 w-5" />
                       Add Another ID
                     </Button>
                     {error && <p className="text-red-500 mt-2">{error}</p>}
                   </div>
-                  <div className="flex flex-row gap-4 mt-10 justify-end">
+                  <div className="flex flex-col sm:flex-row gap-4 mt-10 justify-end">
                     <Button
                       onClick={handleSave}
                       disabled={isLoading}
-                      className="bg-primary-500 text-white hover:bg-primary-600"
+                      className="w-full sm:w-auto"
                     >
                       {isLoading ? "Saving..." : "Save All"}
                     </Button>
                     <Button
-                      className="text-zinc-900 text-lg bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-zinc-900 hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900"
+                      variant="secondary"
+                      className="w-full sm:w-auto"
                       onClick={handleClose}
                     >
                       Close
@@ -226,5 +246,5 @@ export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
         </Dialog>
       </Transition>
     </>
-  )
-}
+  );
+};

@@ -1,32 +1,38 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { Dialog, Transition } from "@headlessui/react"
-import { ChevronRightIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/solid"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { Community, nullRef } from "@show-karma/karma-gap-sdk"
-import { type FC, Fragment, type ReactNode, useState } from "react"
-import { useForm } from "react-hook-form"
-import toast from "react-hot-toast"
-import { useAccount } from "wagmi"
-import { z } from "zod"
-import { useGap } from "@/hooks/useGap"
-import { useWallet } from "@/hooks/useWallet"
-import { useStepper } from "@/store/modals/txStepper"
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils"
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
-import { MESSAGES } from "@/utilities/messages"
-import { appNetwork } from "@/utilities/network"
-import { sanitizeObject } from "@/utilities/sanitize"
-import { cn } from "@/utilities/tailwind"
-import { safeGetWalletClient } from "@/utilities/wallet-helpers"
-import { Button } from "../Utilities/Button"
-import { errorManager } from "../Utilities/errorManager"
-import { MarkdownEditor } from "../Utilities/MarkdownEditor"
+import { Dialog, Transition } from "@headlessui/react";
+import {
+  ChevronRightIcon,
+  PlusIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/solid";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Community, nullRef } from "@show-karma/karma-gap-sdk";
+import { type FC, Fragment, type ReactNode, useState } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { z } from "zod";
+import { useGap } from "@/hooks/useGap";
+import { useWallet } from "@/hooks/useWallet";
+import { useStepper } from "@/store/modals/txStepper";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { appNetwork } from "@/utilities/network";
+import { sanitizeObject } from "@/utilities/sanitize";
+import { cn } from "@/utilities/tailwind";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { errorManager } from "../Utilities/errorManager";
+import { MarkdownEditor } from "../Utilities/MarkdownEditor";
+import { Button } from "../ui/button";
 
-const inputStyle = "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900"
-const labelStyle = "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200"
+const inputStyle =
+  "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
+const labelStyle =
+  "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
 
 const schema = z.object({
   name: z
@@ -35,24 +41,24 @@ const schema = z.object({
     .max(50, { message: MESSAGES.COMMUNITY_FORM.TITLE.MAX }),
   slug: z.string().min(3, { message: MESSAGES.COMMUNITY_FORM.SLUG }),
   imageURL: z.string().min(1, { message: MESSAGES.COMMUNITY_FORM.IMAGE_URL }),
-})
+});
 
-type SchemaType = z.infer<typeof schema>
+type SchemaType = z.infer<typeof schema>;
 
 type ProjectDialogProps = {
   buttonElement?: {
-    text?: string
-    icon?: ReactNode
-    iconSide?: "left" | "right"
-    styleClass: string
-  }
-  createCommuninity?: Community
-  refreshCommunities: () => Promise<Community[] | undefined>
-}
+    text?: string;
+    icon?: ReactNode;
+    iconSide?: "left" | "right";
+    styleClass: string;
+  };
+  createCommuninity?: Community;
+  refreshCommunities: () => Promise<Community[] | undefined>;
+};
 
 export const CommunityDialog: FC<ProjectDialogProps> = ({
   buttonElement = {
-    icon: <PlusIcon className="h-4 w-4 text-white" />,
+    icon: <PlusIcon className="h-4 w-4" />,
     iconSide: "left",
     text: "New Community",
     styleClass: "",
@@ -65,16 +71,16 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
     name: createCommuninity?.details?.name || "",
     imageURL: createCommuninity?.details?.imageURL || "",
     slug: createCommuninity?.details?.slug || "",
-  }
+  };
 
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
 
   function closeModal() {
-    setIsOpen(false)
+    setIsOpen(false);
   }
 
   function openModal() {
-    setIsOpen(true)
+    setIsOpen(true);
   }
 
   const {
@@ -85,37 +91,33 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
     resolver: zodResolver(schema),
     mode: "onChange",
     defaultValues: dataToUpdate,
-  })
+  });
 
-  const { address, chain } = useAccount()
-  const { switchChainAsync } = useWallet()
-  const [isLoading, setIsLoading] = useState(false)
+  const { address, chain } = useAccount();
+  const { switchChainAsync } = useWallet();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const { gap } = useGap()
-  const { changeStepperStep, setIsStepper } = useStepper()
+  const { gap } = useGap();
+  const { changeStepperStep, setIsStepper } = useStepper();
 
   const createCommunity = async (data: SchemaType) => {
-    if (!gap) return
-    let gapClient = gap
-    setIsLoading(true) // Set loading state to true
+    if (!gap) return;
+    let gapClient = gap;
+    setIsLoading(true); // Set loading state to true
 
     try {
-      const {
-        success,
-        chainId: actualChainId,
-        gapClient: newGapClient,
-      } = await ensureCorrectChain({
+      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
         targetChainId: selectedChain,
         currentChainId: chain?.id,
         switchChainAsync,
-      })
+      });
 
       if (!success) {
-        setIsLoading(false)
-        return
+        setIsLoading(false);
+        return;
       }
 
-      gapClient = newGapClient
+      gapClient = newGapClient;
 
       const newCommunity = new Community({
         data: {
@@ -123,58 +125,67 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
         },
         schema: gapClient.findSchema("Community"),
         refUID: nullRef,
-        recipient: (address || "0x0000000000000000000000000000000000000000") as `0x${string}`,
+        recipient: (address ||
+          "0x0000000000000000000000000000000000000000") as `0x${string}`,
         uid: nullRef,
-      })
+      });
       if (await gapClient.fetch.slugExists(data.slug as string)) {
-        data.slug = await gapClient.generateSlug(data.slug as string)
+        data.slug = await gapClient.generateSlug(data.slug as string);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(actualChainId)
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient) {
-        throw new Error("Failed to connect to wallet", { cause: error })
+        throw new Error("Failed to connect to wallet", { cause: error });
       }
-      const walletSigner = await walletClientToSigner(walletClient)
+      const walletSigner = await walletClientToSigner(walletClient);
       const sanitizedData = sanitizeObject({
         name: data.name,
         description: description as string,
         imageURL: data.imageURL as string,
         slug: data.slug as string,
-      })
+      });
       await newCommunity
         .attest(walletSigner as any, sanitizedData, changeStepperStep)
         .then(async (res) => {
-          const txHash = res?.tx[0]?.hash
+          const txHash = res?.tx[0]?.hash;
           if (txHash) {
-            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, newCommunity.chainID), "POST", {})
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, newCommunity.chainID),
+              "POST",
+              {}
+            );
           }
-          await fetchData(INDEXER.ATTESTATION_LISTENER(newCommunity.uid, actualChainId), "POST", {})
-          let retries = 1000
-          changeStepperStep("indexing")
+          await fetchData(
+            INDEXER.ATTESTATION_LISTENER(newCommunity.uid, actualChainId),
+            "POST",
+            {}
+          );
+          let retries = 1000;
+          changeStepperStep("indexing");
           while (retries > 0) {
             await refreshCommunities()
               .then(async (fetchedCommunities) => {
                 const createdCommunityExists = fetchedCommunities?.find(
                   (g) => g.uid === newCommunity.uid
-                )
+                );
                 if (createdCommunityExists) {
-                  retries = 0
-                  changeStepperStep("indexed")
-                  toast.success("Community created successfully!")
-                  closeModal() // Close the dialog upon successful submission
+                  retries = 0;
+                  changeStepperStep("indexed");
+                  toast.success("Community created successfully!");
+                  closeModal(); // Close the dialog upon successful submission
                 }
-                retries -= 1
+                retries -= 1;
                 // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500))
+                await new Promise((resolve) => setTimeout(resolve, 1500));
               })
               .catch(async () => {
-                retries -= 1
+                retries -= 1;
                 // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500))
-              })
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+              });
           }
-        })
+        });
     } catch (error: any) {
       errorManager(
         `Error creating community`,
@@ -186,33 +197,34 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
         {
           error: "Failed to create community.",
         }
-      )
+      );
     } finally {
-      setIsLoading(false) // Reset loading state
-      setIsStepper(false)
+      setIsLoading(false); // Reset loading state
+      setIsStepper(false);
     }
-  }
+  };
 
   const onSubmit = async (data: SchemaType) => {
-    await createCommunity(data) // Call the createCommunity function
-  }
+    await createCommunity(data); // Call the createCommunity function
+  };
 
-  const [description, setDescription] = useState(dataToUpdate?.description || "")
-  const [selectedChain, setSelectedChain] = useState(appNetwork[0].id)
+  const [description, setDescription] = useState(
+    dataToUpdate?.description || ""
+  );
+  const [selectedChain, setSelectedChain] = useState(appNetwork[0].id);
 
   return (
     <>
-      <button
+      <Button
         onClick={openModal}
         className={cn(
-          "flex justify-center min-w-max items-center gap-x-1 rounded-md bg-brand-blue border-2 border-brand-blue px-3 py-2 text-sm font-semibold text-white dark:text-zinc-100 hover:opacity-75 dark:hover:bg-primary-900",
           buttonElement.styleClass
         )}
       >
         {buttonElement.iconSide === "left" && buttonElement.icon}
         {buttonElement.text}
         {buttonElement.iconSide === "right" && buttonElement.icon}
-      </button>
+      </Button>
       <Transition appear show={isOpen} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={closeModal}>
           <Transition.Child
@@ -284,7 +296,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
                           className={inputStyle}
                           value={selectedChain}
                           onChange={(e) => {
-                            setSelectedChain(+e.target.value)
+                            setSelectedChain(+e.target.value);
                           }}
                         >
                           {appNetwork.map((chain) => (
@@ -302,7 +314,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
                         <MarkdownEditor
                           value={description}
                           onChange={(newValue: string) => {
-                            setDescription(newValue || "")
+                            setDescription(newValue || "");
                           }}
                         />
                       </div>
@@ -318,7 +330,9 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
                           placeholder='e.g. "https://example.com/image.jpg"'
                           {...register("imageURL")}
                         />
-                        <p className="text-red-500">{errors.imageURL?.message}</p>
+                        <p className="text-red-500">
+                          {errors.imageURL?.message}
+                        </p>
                       </div>
 
                       <div className="flex w-full flex-col gap-2">
@@ -363,5 +377,5 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
         </Dialog>
       </Transition>
     </>
-  )
-}
+  );
+};

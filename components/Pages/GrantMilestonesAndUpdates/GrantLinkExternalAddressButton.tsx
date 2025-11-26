@@ -1,43 +1,47 @@
-"use client"
+"use client";
 
-import { Dialog, Transition } from "@headlessui/react"
-import { CheckCircleIcon, LinkIcon } from "@heroicons/react/24/outline"
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import type { FC } from "react"
-import { Fragment, useEffect, useState } from "react"
-import { Button } from "@/components/Utilities/Button"
-import { PROJECT_NAME } from "@/constants/brand"
-import { useOwnerStore, useProjectStore } from "@/store"
-import { useCommunityAdminStore } from "@/store/communityAdmin"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
+import { Dialog, Transition } from "@headlessui/react";
+import { CheckCircleIcon, LinkIcon } from "@heroicons/react/24/outline";
+import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { FC } from "react";
+import { Fragment, useEffect, useState } from "react";
+import { Button } from "@/components/Utilities/Button";
+import { PROJECT_NAME } from "@/constants/brand";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useCommunityAdminStore } from "@/store/communityAdmin";
+import { envVars } from "@/utilities/enviromentVars";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 interface GrantLinkExternalAddressButtonProps {
-  grant: IGrantResponse & { external: Record<string, string[]> }
+  grant: IGrantResponse & { external: Record<string, string[]> };
 }
 
-export const GrantLinkExternalAddressButton: FC<GrantLinkExternalAddressButtonProps> = ({
-  grant,
-}) => {
-  const isOwner = useOwnerStore((state) => state.isOwner)
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner)
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin)
-  const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin
-  const isEnabledForCommunity = grant.community?.details?.data?.slug === "octant"
-  const [isOpen, setIsOpen] = useState(false)
-  const [editedAddress, setEditedAddress] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+export const GrantLinkExternalAddressButton: FC<
+  GrantLinkExternalAddressButtonProps
+> = ({ grant }) => {
+  const isOwner = useOwnerStore((state) => state.isOwner);
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isCommunityAdmin = useCommunityAdminStore(
+    (state) => state.isCommunityAdmin
+  );
+  const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
+  const isEnabledForCommunity =
+    grant.community?.details?.data?.slug === "octant";
+  const [isOpen, setIsOpen] = useState(false);
+  const [editedAddress, setEditedAddress] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (grant?.external?.octant?.[0]) {
-      setEditedAddress(grant?.external?.octant?.[0])
+      setEditedAddress(grant?.external?.octant?.[0]);
     }
-  }, [grant?.external?.octant])
+  }, [grant?.external?.octant]);
 
   const handleSave = async (address: string) => {
-    setIsLoading(true)
-    setError(null)
+    setIsLoading(true);
+    setError(null);
     try {
       const [data, error] = await fetchData(
         INDEXER.GRANTS.EXTERNAL_ADDRESS.UPDATE(grant.uid),
@@ -46,33 +50,33 @@ export const GrantLinkExternalAddressButton: FC<GrantLinkExternalAddressButtonPr
           target: "octant",
           address: address,
         }
-      )
+      );
 
       if (data) {
         // Update the local state to reflect the change
-        setEditedAddress(address)
+        setEditedAddress(address);
       }
 
       if (error) {
-        setError(`Failed to update Octant address. Please try again.`)
+        setError(`Failed to update Octant address. Please try again.`);
       }
     } catch (err) {
-      setError(`Failed to update Octant address. Please try again.`)
-      console.error(err)
+      setError(`Failed to update Octant address. Please try again.`);
+      console.error(err);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   if (!isAuthorized || !isEnabledForCommunity) {
-    return null
+    return null;
   }
 
   return (
     <>
       <Button
         onClick={() => setIsOpen(true)}
-        className="flex flex-row items-center justify-center gap-2 rounded-md border border-primary-500 bg-white px-3.5 py-2 text-sm font-semibold text-primary-500 hover:bg-primary-100"
+        className="flex flex-row items-center justify-center gap-2 rounded-md border border-primary-500 px-3.5 py-2 text-sm font-semibold"
       >
         Link Octant Address
         <div className="h-5 w-5">
@@ -80,7 +84,11 @@ export const GrantLinkExternalAddressButton: FC<GrantLinkExternalAddressButtonPr
         </div>
       </Button>
       <Transition appear show={isOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-10" onClose={() => setIsOpen(false)}>
+        <Dialog
+          as="div"
+          className="relative z-10"
+          onClose={() => setIsOpen(false)}
+        >
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -105,23 +113,32 @@ export const GrantLinkExternalAddressButton: FC<GrantLinkExternalAddressButtonPr
                 leaveTo="opacity-0 scale-95"
               >
                 <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle transition-all ease-in-out duration-300">
-                  <Dialog.Title as="h3" className=" text-gray-900 dark:text-zinc-100">
-                    <h2 className="text-2xl font-bold leading-6">Link Octant Address</h2>
+                  <Dialog.Title
+                    as="h3"
+                    className=" text-gray-900 dark:text-zinc-100"
+                  >
+                    <h2 className="text-2xl font-bold leading-6">
+                      Link Octant Address
+                    </h2>
                     <p className="text-md text-gray-500 dark:text-gray-400 mt-2">
-                      Please add the Ethereum account address you used for the &quot;
-                      {grant.details?.data?.title}&quot; in Octant. This will enable Octant to
-                      retrieve your {PROJECT_NAME} profile data and display it within the Octant
-                      app.
+                      Please add the Ethereum account address you used for the
+                      &quot;{grant.details?.data?.title}&quot; in Octant. This
+                      will enable Octant to retrieve your {PROJECT_NAME} profile data and
+                      display it within the Octant app.
                     </p>
                   </Dialog.Title>
                   <div className="max-h-[60vh] flex flex-col gap-2 mt-8 overflow-y-auto">
                     <div className="space-y-4">
                       <div className="flex items-center justify-between p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg">
                         <div className="flex items-center space-x-4 w-full">
-                          <span className="text-md font-bold capitalize">Octant</span>
+                          <span className="text-md font-bold capitalize">
+                            Octant
+                          </span>
                           <input
                             type="text"
-                            value={editedAddress || grant?.external?.octant?.[0]}
+                            value={
+                              editedAddress || grant?.external?.octant?.[0]
+                            }
                             onChange={(e) => setEditedAddress(e.target.value)}
                             className="text-sm rounded-md w-full text-gray-600 dark:text-gray-300 bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none focus:border-blue-500"
                           />
@@ -129,7 +146,7 @@ export const GrantLinkExternalAddressButton: FC<GrantLinkExternalAddressButtonPr
                         <Button
                           onClick={() => handleSave(editedAddress)}
                           disabled={isLoading}
-                          className="ml-3 p-2 flex flex-row items-center justify-center gap-2 rounded-md border border-primary-500 bg-primary-100 px-3.5 py-2 text-sm font-semibold text-primary-500 hover:bg-primary-100"
+                          className="ml-3 p-2 flex flex-row items-center justify-center gap-2 rounded-md border px-3.5 py-2 text-sm font-semibold"
                         >
                           {isLoading ? "Saving..." : "Save"}{" "}
                           <CheckCircleIcon className="h-5 w-5 transition-none" />
@@ -153,5 +170,5 @@ export const GrantLinkExternalAddressButton: FC<GrantLinkExternalAddressButtonPr
         </Dialog>
       </Transition>
     </>
-  )
-}
+  );
+};

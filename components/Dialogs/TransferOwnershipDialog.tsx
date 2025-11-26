@@ -1,116 +1,126 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { Dialog, Transition } from "@headlessui/react"
-import { PlusIcon } from "@heroicons/react/24/solid"
-import { type FC, Fragment, type ReactNode, useEffect, useState } from "react"
-import toast from "react-hot-toast"
-import { isAddress } from "viem"
-import { useAccount } from "wagmi"
-import { useWallet } from "@/hooks/useWallet"
-import { useProjectStore } from "@/store"
-import { useTransferOwnershipModalStore } from "@/store/modals/transferOwnership"
-import { useStepper } from "@/store/modals/txStepper"
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils"
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
-import { sanitizeInput } from "@/utilities/sanitize"
-import { getProjectById, isOwnershipTransfered } from "@/utilities/sdk"
-import { safeGetWalletClient } from "@/utilities/wallet-helpers"
-import { Button } from "../Utilities/Button"
-import { errorManager } from "../Utilities/errorManager"
+import { Dialog, Transition } from "@headlessui/react";
+import { PlusIcon } from "@heroicons/react/24/solid";
+import { type FC, Fragment, type ReactNode, useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { isAddress } from "viem";
+import { useAccount } from "wagmi";
+import { useWallet } from "@/hooks/useWallet";
+import { useProjectStore } from "@/store";
+import { useTransferOwnershipModalStore } from "@/store/modals/transferOwnership";
+import { useStepper } from "@/store/modals/txStepper";
+import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { sanitizeInput } from "@/utilities/sanitize";
+import { getProjectById, isOwnershipTransfered } from "@/utilities/sdk";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { errorManager } from "../Utilities/errorManager";
+import { Button } from "../ui/button";
 
 type TransferOwnershipProps = {
   buttonElement?: {
-    text: string
-    icon: ReactNode
-    styleClass: string
-  } | null
-}
+    text: string;
+    icon: ReactNode;
+    styleClass: string;
+  } | null;
+};
 
 export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
   buttonElement = {
     icon: <PlusIcon className="h-4 w-4 text-primary-600" />,
     text: "Transfer Ownership",
     styleClass:
-      "flex items-center gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100  hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900",
+      "flex items-center gap-x-1 rounded-md  px-3 py-2 text-sm font-semibold",
   },
 }) => {
   const {
     isTransferOwnershipModalOpen: isOpen,
     openTransferOwnershipModal: openModal,
     closeTransferOwnershipModal: closeModal,
-  } = useTransferOwnershipModalStore()
-  const [newOwner, setNewOwner] = useState<string>()
-  const [isLoading, setIsLoading] = useState(false)
-  const [validAddress, setValidAddress] = useState(true)
+  } = useTransferOwnershipModalStore();
+  const [newOwner, setNewOwner] = useState<string>();
+  const [isLoading, setIsLoading] = useState(false);
+  const [validAddress, setValidAddress] = useState(true);
 
-  const signer = useSigner()
-  const { chain, address } = useAccount()
-  const project = useProjectStore((state) => state.project)
-  const refreshProject = useProjectStore((state) => state.refreshProject)
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin)
-  const setIsProjectOwner = useProjectStore((state) => state.setIsProjectOwner)
-  const { switchChainAsync } = useWallet()
-  const { changeStepperStep, setIsStepper } = useStepper()
+  const signer = useSigner();
+  const { chain, address } = useAccount();
+  const project = useProjectStore((state) => state.project);
+  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const setIsProjectOwner = useProjectStore((state) => state.setIsProjectOwner);
+  const { switchChainAsync } = useWallet();
+  const { changeStepperStep, setIsStepper } = useStepper();
 
   const transfer = async () => {
-    if (!project) return
+    if (!project) return;
     if (!newOwner || !isAddress(newOwner)) {
-      toast.error("Please enter a valid address")
-      return
+      toast.error("Please enter a valid address");
+      return;
     }
     try {
-      setIsLoading(true)
+      setIsLoading(true);
       const { success, chainId: actualChainId } = await ensureCorrectChain({
         targetChainId: project.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
-      })
+      });
 
       if (!success) {
-        setIsLoading(false)
-        return
+        setIsLoading(false);
+        return;
       }
 
-      const { walletClient, error } = await safeGetWalletClient(actualChainId)
+      const { walletClient, error } = await safeGetWalletClient(
+        actualChainId
+      );
 
       if (error || !walletClient) {
-        throw new Error("Failed to connect to wallet", { cause: error })
+        throw new Error("Failed to connect to wallet", { cause: error });
       }
-      if (!walletClient) return
-      const walletSigner = await walletClientToSigner(walletClient)
-      const fetchedProject = await getProjectById(project.uid)
-      if (!fetchedProject) return
+      if (!walletClient) return;
+      const walletSigner = await walletClientToSigner(walletClient);
+      const fetchedProject = await getProjectById(project.uid);
+      if (!fetchedProject) return;
       await fetchedProject
-        .transferOwnership(walletSigner, sanitizeInput(newOwner), changeStepperStep)
+        .transferOwnership(
+          walletSigner,
+          sanitizeInput(newOwner),
+          changeStepperStep
+        )
         .then(async (res) => {
-          let retries = 1000
-          changeStepperStep("indexing")
-          const txHash = res?.tx[0]?.hash
+          let retries = 1000;
+          changeStepperStep("indexing");
+          const txHash = res?.tx[0]?.hash;
           if (txHash) {
-            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), "POST", {})
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, project.chainID),
+              "POST",
+              {}
+            );
           }
           while (retries > 0) {
             const isTransfered = await isOwnershipTransfered(
               walletSigner || signer,
               fetchedProject,
               newOwner as `0x${string}`
-            )
+            );
 
             if (isTransfered) {
-              setIsProjectOwner(false)
-              retries = 0
-              await refreshProject()
-              changeStepperStep("indexed")
+              setIsProjectOwner(false);
+              retries = 0;
+              await refreshProject();
+              changeStepperStep("indexed");
             }
-            retries -= 1
+            retries -= 1;
             // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-            await new Promise((resolve) => setTimeout(resolve, 1500))
+            await new Promise((resolve) => setTimeout(resolve, 1500));
           }
-          toast.success("Ownership transferred successfully")
-        })
-      closeModal()
+          toast.success("Ownership transferred successfully");
+        });
+      closeModal();
     } catch (error: any) {
       errorManager(
         `Error transferring ownership from ${project.recipient} to ${newOwner}`,
@@ -124,22 +134,26 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
         {
           error: "Failed to transfer ownership.",
         }
-      )
-      console.error(error)
+      );
+      console.error(error);
     } finally {
-      setIsLoading(false)
-      setIsStepper(false)
+      setIsLoading(false);
+      setIsStepper(false);
     }
-  }
+  };
 
   useEffect(() => {
-    if (newOwner?.length) setValidAddress(isAddress(newOwner))
-  }, [newOwner])
+    if (newOwner?.length) setValidAddress(isAddress(newOwner));
+  }, [newOwner]);
 
   return (
     <>
       {buttonElement ? (
-        <Button disabled={!isProjectAdmin} onClick={openModal} className={buttonElement.styleClass}>
+        <Button
+          disabled={!isProjectAdmin}
+          onClick={openModal}
+          className={buttonElement.styleClass}
+        >
           {buttonElement.icon}
           {buttonElement.text}
         </Button>
@@ -216,5 +230,5 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
         </Dialog>
       </Transition>
     </>
-  )
-}
+  );
+};

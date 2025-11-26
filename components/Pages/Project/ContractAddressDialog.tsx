@@ -1,15 +1,15 @@
-"use client"
+"use client";
 
-import { Dialog, Transition } from "@headlessui/react"
-import type { FC, ReactNode } from "react"
-import { Fragment } from "react"
+import { Dialog, Transition } from "@headlessui/react";
+import type { FC, ReactNode } from "react";
+import { Fragment } from "react";
 
 interface ContractAddressDialogProps {
-  isOpen: boolean
-  onClose: () => void
-  title: string
-  description: string
-  children: ReactNode
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  description: string;
+  children: ReactNode;
 }
 
 export const ContractAddressDialog: FC<ContractAddressDialogProps> = ({
@@ -45,10 +45,17 @@ export const ContractAddressDialog: FC<ContractAddressDialogProps> = ({
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-3xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle transition-all ease-in-out duration-300">
-                <Dialog.Title as="h2" className="text-gray-900 dark:text-zinc-100">
-                  <div className="text-2xl font-bold leading-6">{title}</div>
-                  <p className="text-md text-gray-500 dark:text-gray-400 mt-2">{description}</p>
+              <Dialog.Panel className="w-full max-w-3xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-4 sm:p-6 text-left align-middle transition-all ease-in-out duration-300">
+                <Dialog.Title
+                  as="h2"
+                  className="text-gray-900 dark:text-zinc-100"
+                >
+                  <div className="text-2xl font-bold leading-6">
+                    {title}
+                  </div>
+                  <p className="text-md text-gray-500 dark:text-gray-400 mt-2">
+                    {description}
+                  </p>
                 </Dialog.Title>
                 {children}
               </Dialog.Panel>
@@ -57,5 +64,5 @@ export const ContractAddressDialog: FC<ContractAddressDialogProps> = ({
         </div>
       </Dialog>
     </Transition>
-  )
-}
+  );
+};

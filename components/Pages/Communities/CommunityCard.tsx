@@ -92,7 +92,7 @@ export const CommunityCard = ({ community }: CommunityCardProps) => {
       <div className="flex justify-end mt-auto pt-2">
         <Link
           href={PAGES.COMMUNITY.ALL_GRANTS(slug || community.uid)}
-          className="flex items-center justify-center w-full lg:w-20 h-10 bg-primary-100 dark:bg-primary-900 text-primary-500 dark:text-primary-400 text-sm font-semibold rounded flex-shrink-0"
+          className="flex items-center justify-center w-full lg:w-20 h-10 text-sm font-semibold rounded flex-shrink-0"
         >
           <span>Go</span>
           <ChevronRightIcon className="h-4 w-4 ml-1" />

@@ -1,20 +1,21 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { Dialog, Transition } from "@headlessui/react"
-import { PlusIcon } from "@heroicons/react/24/solid"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useParams } from "next/navigation"
-import { type FC, Fragment, useState } from "react"
-import { type SubmitHandler, useForm } from "react-hook-form"
-import toast from "react-hot-toast"
-import { useAccount } from "wagmi"
-import { z } from "zod"
-import { Button } from "@/components/Utilities/Button"
-import { errorManager } from "@/components/Utilities/errorManager"
-import { useAuth } from "@/hooks/useAuth"
-import { useCommunityDetails } from "@/hooks/useCommunityDetails"
-import fetchData from "@/utilities/fetchData"
-import { INDEXER } from "@/utilities/indexer"
+import { Dialog, Transition } from "@headlessui/react";
+import { PlusIcon } from "@heroicons/react/24/solid";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useParams } from "next/navigation";
+import { type FC, Fragment, useState } from "react";
+import { type SubmitHandler, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { z } from "zod";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import { useCommunityDetails } from "@/hooks/useCommunityDetails";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+
 
 type RegionCreationDialogProps = {
   refreshRegions: () => Promise<void>
@@ -105,7 +106,7 @@ export const RegionCreationDialog: FC<RegionCreationDialogProps> = ({ refreshReg
       <Button
         onClick={openModal}
         className={
-          "flex justify-center items-center gap-x-1 rounded-md bg-primary-500 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-white dark:text-zinc-100  hover:opacity-75 dark:hover:opacity-75 border border-primary-200 dark:border-primary-900"
+          "flex justify-center items-center gap-x-1 rounded-md px-3 py-2 text-sm font-semibold"
         }
       >
         <PlusIcon className="h-4 w-4" />
@@ -154,14 +155,13 @@ export const RegionCreationDialog: FC<RegionCreationDialogProps> = ({ refreshReg
                     </div>
                     <div className="flex flex-row gap-4 justify-end">
                       <Button
-                        className="text-zinc-900 hover:bg-transparent text-lg bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:opacity-75 disabled:hover:bg-transparent disabled:hover:text-zinc-900"
                         onClick={closeModal}
                         disabled={isLoading}
+                        variant="outline"
                       >
                         Cancel
                       </Button>
                       <Button
-                        className="text-white text-lg bg-primary-500 border-black  hover:bg-primary-600 hover:text-white"
                         disabled={isLoading || !isValid}
                         isLoading={isLoading}
                         type="submit"

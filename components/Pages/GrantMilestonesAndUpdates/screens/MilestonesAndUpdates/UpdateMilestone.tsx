@@ -1,32 +1,38 @@
 /* eslint-disable @next/next/no-img-element */
-"use client"
+"use client";
 
-import { PencilSquareIcon, ShareIcon } from "@heroicons/react/24/outline"
+import { PencilSquareIcon, ShareIcon } from "@heroicons/react/24/outline";
 import type {
   IMilestoneCompleted,
   IMilestoneResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types"
-import { type FC, useState } from "react"
-import { MilestoneUpdateForm } from "@/components/Forms/MilestoneUpdate"
-import { Button } from "@/components/Utilities/Button"
-import { ExternalLink } from "@/components/Utilities/ExternalLink"
-import { useOwnerStore, useProjectStore } from "@/store"
-import { useCommunityAdminStore } from "@/store/communityAdmin"
-import { shareOnX } from "@/utilities/share/shareOnX"
-import { SHARE_TEXTS } from "@/utilities/share/text"
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { type FC, useState } from "react";
+import { MilestoneUpdateForm } from "@/components/Forms/MilestoneUpdate";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { Button } from "@/components/ui/button";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useCommunityAdminStore } from "@/store/communityAdmin";
+import { shareOnX } from "@/utilities/share/shareOnX";
+import { SHARE_TEXTS } from "@/utilities/share/text";
 
 interface NotUpdatingCaseProps {
-  milestone: IMilestoneResponse
-  isAuthorized: boolean
-  setIsUpdating: (value: boolean) => void
+  milestone: IMilestoneResponse;
+  isAuthorized: boolean;
+  setIsUpdating: (value: boolean) => void;
 }
 
-const NotUpdatingCase: FC<NotUpdatingCaseProps> = ({ milestone, isAuthorized, setIsUpdating }) => {
-  const project = useProjectStore((state) => state.project)
-  const grant = project?.grants.find((g) => g.uid.toLowerCase() === milestone.refUID.toLowerCase())
+const NotUpdatingCase: FC<NotUpdatingCaseProps> = ({
+  milestone,
+  isAuthorized,
+  setIsUpdating,
+}) => {
+  const project = useProjectStore((state) => state.project);
+  const grant = project?.grants.find(
+    (g) => g.uid.toLowerCase() === milestone.refUID.toLowerCase()
+  );
 
   if (!isAuthorized) {
-    return undefined
+    return undefined;
   }
   return (
     <div className="flex flex-row items-center justify-end gap-2">
@@ -42,27 +48,29 @@ const NotUpdatingCase: FC<NotUpdatingCaseProps> = ({ milestone, isAuthorized, se
               )
             )}
           >
-            <p className="text-sm font-semibold text-gray-600 dark:text-zinc-100">Share</p>
+            <p className="text-sm font-semibold text-gray-600 dark:text-zinc-100">
+              Share
+            </p>
             <ShareIcon className="relative h-5 w-5" />
           </ExternalLink>
           <Button
-            className="flex items-center justify-center gap-2 rounded border border-blue-600 bg-brand-blue dark:bg-primary-700 dark:text-zinc-200 px-4 py-2.5 hover:bg-brand-blue"
+            className="flex items-center justify-center gap-2 rounded border border-blue-600 px-4 py-2.5"
             onClick={() => setIsUpdating(true)}
           >
-            <p className="text-sm font-semibold text-white">Post an update</p>
+            Post an update
             <PencilSquareIcon className="relative h-5 w-5" />
           </Button>
         </>
       ) : null}
     </div>
-  )
-}
+  );
+};
 
 interface UpdateMilestoneProps {
-  milestone: IMilestoneResponse
-  isEditing: boolean
-  previousData?: IMilestoneCompleted["data"]
-  cancelEditing: (value: boolean) => void
+  milestone: IMilestoneResponse;
+  isEditing: boolean;
+  previousData?: IMilestoneCompleted["data"];
+  cancelEditing: (value: boolean) => void;
 }
 
 export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
@@ -71,11 +79,13 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
   previousData,
   cancelEditing,
 }) => {
-  const [isUpdating, setIsUpdating] = useState(false)
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin)
-  const isContractOwner = useOwnerStore((state) => state.isOwner)
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin)
-  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin
+  const [isUpdating, setIsUpdating] = useState(false);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
+  const isCommunityAdmin = useCommunityAdminStore(
+    (state) => state.isCommunityAdmin
+  );
+  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
   return isUpdating || isEditing ? (
     <MilestoneUpdateForm
       milestone={milestone}
@@ -90,5 +100,5 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
       milestone={milestone}
       setIsUpdating={setIsUpdating}
     />
-  )
-}
+  );
+};

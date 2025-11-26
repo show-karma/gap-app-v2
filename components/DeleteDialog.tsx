@@ -3,7 +3,7 @@ import { Dialog, Transition } from "@headlessui/react"
 import { PlusIcon } from "@heroicons/react/24/solid"
 /* eslint-disable @next/next/no-img-element */
 import { type FC, Fragment, type ReactNode, useState } from "react"
-import { Button } from "./Utilities/Button"
+import { Button } from "./ui/button"
 
 type DeleteDialogProps = {
   title?: ReactNode
@@ -27,7 +27,7 @@ export const DeleteDialog: FC<DeleteDialogProps> = ({
     icon: <PlusIcon className="h-4 w-4 text-primary-600" />,
     text: "Delete Project",
     styleClass:
-      "flex justify-center items-center gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100  hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900",
+      "flex justify-center items-center gap-x-1 rounded-md px-3 py-2 text-sm font-semibold",
   },
   isLoading,
   afterFunction,
@@ -52,7 +52,9 @@ export const DeleteDialog: FC<DeleteDialogProps> = ({
         afterFunction?.()
       })
       closeModal()
-    } catch (_error: any) {}
+    } catch (error: any) {
+      console.log(error)
+    }
   }
 
   return (

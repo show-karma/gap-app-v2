@@ -1,6 +1,7 @@
 "use client"
 
-import Link from "next/link"
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 interface CommunityNotFoundProps {
   communityId: string
@@ -13,17 +14,16 @@ export const CommunityNotFound: React.FC<CommunityNotFoundProps> = ({ communityI
         <h1 className="text-4xl sm:text-5xl font-bold text-black dark:text-white">
           Launch {communityId} community!
         </h1>
-        <p className="text-lg text-gray-600 dark:text-gray-400">
-          Looks like no one’s started this community. Create it now to launch programs, fund
-          projects, and track progress, all in one place.
+        <p className="text-lg">
+          Looks like no one's started this community. Create it now to launch
+          programs, fund projects, and track progress, all in one place.
         </p>
         <Link href="https://tally.so/r/wd0jeq" target="_blank" rel="noreferrer">
-          <button
-            type="button"
-            className="bg-primary-500 text-white font-bold rounded-sm px-6 py-3 text-lg hover:bg-primary-600 transition-colors"
+          <Button
+            className="font-bold rounded-sm px-6 py-3 text-lg"
           >
             Create Community
-          </button>
+          </Button>
         </Link>
         <Link
           href="/communities"
