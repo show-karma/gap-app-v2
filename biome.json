@@ -37,9 +37,9 @@
             "allow": ["warn", "error", "info"]
           }
         },
-        "noArrayIndexKey": "off",
-        "noShadowRestrictedNames": "off",
-        "noExplicitAny": "off"
+        "noArrayIndexKey": "warn",
+        "noShadowRestrictedNames": "warn",
+        "noExplicitAny": "warn"
       },
       "correctness": {
         "useExhaustiveDependencies": "warn"

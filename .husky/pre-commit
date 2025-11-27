@@ -1,1 +1,1 @@
-pnpm tsc --noEmit && pnpm lint:fix --diagnostic-level=error && git add .
+pnpm tsc --noEmit && pnpm lint-staged
