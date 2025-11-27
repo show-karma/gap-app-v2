@@ -120,6 +120,9 @@ module.exports = {
   				lightblue: '#EEF4FF',
   				black: '#18181B'
   			},
+  			moonpay: {
+  				purple: '#7D00FF'
+  			},
   			warning: {
   				'50': '#fffbeb',
   				'700': '#b45309'

@@ -7,6 +7,10 @@ export interface SupportedToken {
   chainName: string;
   isNative: boolean;
   logoUrl?: string;
+  moonPay?: {
+    supported: boolean;
+    customCurrencyCode?: string;
+  };
 }
 
 export interface NetworkConfig {
@@ -116,6 +120,10 @@ const TEST_NETWORKS: Record<number, NetworkConfig> = {
 export const SUPPORTED_NETWORKS: Record<number, NetworkConfig> =
   includeTestNetworks ? TEST_NETWORKS : MAINNET_NETWORKS;
 
+// Export mainnet chain IDs for reuse
+export const MAINNET_CHAIN_IDS = [1, 10, 42161, 8453, 42220, 137] as const;
+export const MAINNET_CHAINS: number[] = [...MAINNET_CHAIN_IDS];
+
 // Supported tokens configuration
 export const SUPPORTED_TOKENS: SupportedToken[] = [
   // USDT - All 6 networks
@@ -127,6 +135,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     chainId: 1,
     chainName: "Ethereum",
     isNative: false,
+    moonPay: { supported: true, customCurrencyCode: "usdt" },
   },
   {
     symbol: "USDT",
@@ -136,6 +145,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     chainId: 10,
     chainName: "Optimism",
     isNative: false,
+    moonPay: { supported: true },
   },
   {
     symbol: "USDT",
@@ -145,6 +155,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     chainId: 42161,
     chainName: "Arbitrum One",
     isNative: false,
+    moonPay: { supported: true },
   },
   {
     symbol: "USDT",
@@ -154,6 +165,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     chainId: 8453,
     chainName: "Base",
     isNative: false,
+    moonPay: { supported: true },
   },
   {
     symbol: "USDT",
@@ -163,6 +175,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     chainId: 42220,
     chainName: "Celo",
     isNative: false,
+    moonPay: { supported: true },
   },
   {
     symbol: "USDT",
@@ -172,6 +185,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     chainId: 137,
     chainName: "Polygon",
     isNative: false,
+    moonPay: { supported: true },
   },
 
   // USDC - All 6 networks
@@ -183,6 +197,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     chainId: 1,
     chainName: "Ethereum",
     isNative: false,
+    moonPay: { supported: true, customCurrencyCode: "usdc" },
   },
   {
     symbol: "USDC",
@@ -192,6 +207,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     chainId: 10,
     chainName: "Optimism",
     isNative: false,
+    moonPay: { supported: true },
   },
   {
     symbol: "USDC",
@@ -201,6 +217,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     chainId: 42161,
     chainName: "Arbitrum One",
     isNative: false,
+    moonPay: { supported: true },
   },
   {
     symbol: "USDC",
@@ -210,6 +227,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     chainId: 8453,
     chainName: "Base",
     isNative: false,
+    moonPay: { supported: true },
   },
   {
     symbol: "USDC",
@@ -219,6 +237,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     chainId: 42220,
     chainName: "Celo",
     isNative: false,
+    moonPay: { supported: true },
   },
   {
     symbol: "USDC",
@@ -228,6 +247,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     chainId: 137,
     chainName: "Polygon",
     isNative: false,
+    moonPay: { supported: true },
   },
 
   // cUSD - Celo only
@@ -239,6 +259,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     chainId: 42220,
     chainName: "Celo",
     isNative: false,
+    moonPay: { supported: true, customCurrencyCode: "cusd" },
   },
 
   // USDGLO - All 6 networks (placeholder addresses - need actual deployment addresses)
@@ -307,6 +328,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     chainId: 1,
     chainName: "Ethereum",
     isNative: true,
+    moonPay: { supported: true, customCurrencyCode: "eth" },
   },
   {
     symbol: "ETH",
@@ -316,6 +338,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     chainId: 10,
     chainName: "Optimism",
     isNative: true,
+    moonPay: { supported: true },
   },
   {
     symbol: "ETH",
@@ -325,6 +348,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     chainId: 42161,
     chainName: "Arbitrum One",
     isNative: true,
+    moonPay: { supported: true },
   },
   {
     symbol: "ETH",
@@ -334,6 +358,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     chainId: 8453,
     chainName: "Base",
     isNative: true,
+    moonPay: { supported: true },
   },
 
   // WETH - All 6 networks
@@ -401,6 +426,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     chainId: 42220,
     chainName: "Celo",
     isNative: true,
+    moonPay: { supported: true, customCurrencyCode: "celo" },
   },
 
   // MATIC - Polygon native
@@ -412,6 +438,7 @@ export const SUPPORTED_TOKENS: SupportedToken[] = [
     chainId: 137,
     chainName: "Polygon",
     isNative: true,
+    moonPay: { supported: true, customCurrencyCode: "pol_polygon" },
   },
 
   // Network-specific tokens
@@ -537,4 +564,8 @@ export function isChainSupported(chainId: number): boolean {
 
 export function getNetworkConfig(chainId: number): NetworkConfig | undefined {
   return SUPPORTED_NETWORKS[chainId];
+}
+
+export function getMoonPaySupportedTokens(): SupportedToken[] {
+  return SUPPORTED_TOKENS.filter((token) => token.moonPay?.supported);
 }

@@ -8,6 +8,12 @@ import { WagmiProvider } from '@privy-io/wagmi';
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { envVars } from "@/utilities/enviromentVars";
 import { PROJECT_NAME } from "@/constants/brand";
+import dynamic from "next/dynamic";
+
+const MoonPayProvider = dynamic(
+  () => import("@moonpay/moonpay-react").then((mod) => mod.MoonPayProvider),
+  { ssr: false }
+);
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -32,6 +38,8 @@ export default function PrivyProviderWrapper({
 
   // Determine the default chain based on environment
   const defaultChain = appNetwork[0];
+
+  const moonpayApiKey = envVars.MOONPAY_PUBLIC_KEY;
 
   return (
     <PrivyProvider
@@ -59,7 +67,9 @@ export default function PrivyProviderWrapper({
     >
       <QueryClientProvider client={queryClient}>
         <WagmiProvider config={privyConfig}>
-          {children}
+          <MoonPayProvider apiKey={moonpayApiKey || ""} debug={process.env.NODE_ENV === "development"}>
+            {children}
+          </MoonPayProvider>
         </WagmiProvider>
       </QueryClientProvider>
     </PrivyProvider>
