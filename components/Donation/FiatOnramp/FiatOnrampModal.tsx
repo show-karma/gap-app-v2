@@ -81,7 +81,7 @@ export const FiatOnrampModal = React.memo<FiatOnrampModalProps>(
                   Important: Third-Party Donation Address
                 </p>
                 <p className="text-amber-700 dark:text-amber-300">
-                  Your donation will be sent to {project.title}'s wallet:{" "}
+                  Your donation will be sent to {project.title}&apos;s wallet:{" "}
                   <code className="bg-amber-100 dark:bg-amber-900 px-1.5 py-0.5 rounded text-xs font-mono">
                     {truncateAddress(project.payoutAddress)}
                   </code>
