@@ -596,21 +596,13 @@ const grantTypes = [
   "Hackathons",
   "Accelerators",
 ];
-const platformsUsed = [
-  "Gitcoin",
-  "Questbook",
-  "Charmverse",
-  "GitHub",
-  "Notion",
-  "Custom",
-];
+const platformsUsed = ["Gitcoin", "Questbook", "Charmverse", "GitHub", "Notion", "Custom"];
 
 const status = ["Active", "Inactive"];
 
 const grantSizes = [0, 250000];
 
-const supportedNetworks =
-  process.env.NEXT_PUBLIC_ENV === "production" ? 42161 : 11155111;
+const supportedNetworks = process.env.NEXT_PUBLIC_ENV === "production" ? 42161 : 11155111;
 
 export const registryHelper = {
   networks,

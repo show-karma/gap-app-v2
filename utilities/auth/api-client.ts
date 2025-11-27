@@ -1,13 +1,16 @@
-import axios, { AxiosInstance } from "axios";
-import { TokenManager } from "./token-manager";
+import axios, { type AxiosInstance } from "axios";
 import { envVars } from "../enviromentVars";
+import { TokenManager } from "./token-manager";
 
 /**
  * Creates an authenticated axios instance for API calls
  * This function creates an axios instance with an interceptor that
  * automatically adds the auth token from the store to requests
  */
-export function createAuthenticatedApiClient(baseURL: string = envVars.NEXT_PUBLIC_GAP_INDEXER_URL, timeout = 30000): AxiosInstance {
+export function createAuthenticatedApiClient(
+  baseURL: string = envVars.NEXT_PUBLIC_GAP_INDEXER_URL,
+  timeout = 30000
+): AxiosInstance {
   const apiClient = axios.create({
     baseURL,
     timeout,

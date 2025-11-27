@@ -1,25 +1,19 @@
 "use client";
-/* eslint-disable @next/next/no-img-element */
-import { Button } from "@/components/Utilities/Button";
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import { DatePicker } from "@/components/Utilities/DatePicker";
-
-import { formatDate } from "@/utilities/formatDate";
 import { Popover } from "@headlessui/react";
-import {
-  CalendarIcon,
-  ChevronDownIcon,
-  PencilIcon,
-} from "@heroicons/react/24/outline";
+import { ChevronDownIcon, PencilIcon } from "@heroicons/react/24/outline";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { IMilestone } from "@show-karma/karma-gap-sdk";
+import type { IMilestone } from "@show-karma/karma-gap-sdk";
 import { type FC, useEffect } from "react";
-import { DayPicker } from "react-day-picker";
 import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
+/* eslint-disable @next/next/no-img-element */
+import { Button } from "@/components/Utilities/Button";
+import { DatePicker } from "@/components/Utilities/DatePicker";
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { formatDate } from "@/utilities/formatDate";
 import { useGrantFormStore } from "./store";
 
 interface MilestoneProps {
@@ -47,9 +41,7 @@ const milestoneSchema = z.object({
     .refine(
       (data) => {
         const endsAt = data.endsAt.getTime() / 1000;
-        const startsAt = data.startsAt
-          ? data.startsAt.getTime() / 1000
-          : undefined;
+        const startsAt = data.startsAt ? data.startsAt.getTime() / 1000 : undefined;
 
         return startsAt ? startsAt <= endsAt : true;
       },
@@ -101,9 +93,7 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
         title: data.title,
         description: data.description || "",
         endsAt: data.dates.endsAt.getTime() / 1000,
-        startsAt: data.dates.startsAt
-          ? data.dates.startsAt.getTime() / 1000
-          : undefined,
+        startsAt: data.dates.startsAt ? data.dates.startsAt.getTime() / 1000 : undefined,
         priority: data.priority,
       },
       index
@@ -114,8 +104,7 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
     if (isValid) {
       const title = watch("title") || currentMilestone.title;
       const description = watch("description") || currentMilestone.description;
-      const endsAt =
-        watch("dates.endsAt").getTime() / 1000 || currentMilestone.endsAt;
+      const endsAt = watch("dates.endsAt").getTime() / 1000 || currentMilestone.endsAt;
       const startsAt = watch("dates.startsAt")
         ? watch("dates.startsAt")!.getTime() / 1000
         : currentMilestone.startsAt;
@@ -132,16 +121,24 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
         },
       });
     }
-  }, [isValid]);
+  }, [
+    isValid,
+    changeMilestoneForm,
+    currentMilestone.description,
+    currentMilestone.endsAt,
+    currentMilestone.priority,
+    currentMilestone.startsAt,
+    currentMilestone.title,
+    index,
+    milestonesForms[index].isEditing,
+    watch,
+  ]);
 
   const priorities = Array.from({ length: 5 }, (_, index) => index + 1);
 
   return milestonesForms[index].isEditing ? (
     <div className="flex w-full flex-col gap-6 rounded-md border border-gray-200 dark:border-zinc-700 p-6">
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="flex w-full flex-col gap-4"
-      >
+      <form onSubmit={handleSubmit(onSubmit)} className="flex w-full flex-col gap-4">
         <div className="flex w-full flex-col">
           <label htmlFor="milestone-title" className={labelStyle}>
             Milestone title *
@@ -176,14 +173,11 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
                 control={form.control}
                 render={({ field, formState }) => (
                   <div className="flex w-full flex-col gap-2">
-                    <label className={labelStyle}>Start date (optional)</label>
+                    <div className={labelStyle}>Start date (optional)</div>
                     <DatePicker
                       selected={field.value}
                       onSelect={(date) => {
-                        if (
-                          formatDate(date) ===
-                          formatDate(watch("dates.startsAt") || "")
-                        ) {
+                        if (formatDate(date) === formatDate(watch("dates.startsAt") || "")) {
                           setValue("dates.startsAt", undefined, {
                             shouldValidate: true,
                           });
@@ -217,7 +211,7 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
                 control={form.control}
                 render={({ field, formState }) => (
                   <div className="flex w-full flex-col gap-2">
-                    <label className={labelStyle}>End date *</label>
+                    <div className={labelStyle}>End date *</div>
                     <DatePicker
                       selected={field.value}
                       onSelect={(date) => {
@@ -243,13 +237,11 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
                 control={form.control}
                 render={({ field, formState, fieldState }) => (
                   <div className="flex w-full flex-col gap-2">
-                    <label className={labelStyle}>Priority (optional)</label>
+                    <div className={labelStyle}>Priority (optional)</div>
                     <div>
                       <Popover className="relative">
                         <Popover.Button className="max-lg:w-full w-max text-sm flex-row flex gap-2 items-center text-black dark:text-white border border-gray-200 bg-white dark:bg-zinc-800 px-4 py-2 rounded-md">
-                          {field.value
-                            ? `Priority ${field.value}`
-                            : `Select priority`}
+                          {field.value ? `Priority ${field.value}` : `Select priority`}
                           <ChevronDownIcon className="ml-auto h-4 w-4 opacity-50 text-black dark:text-white" />
                         </Popover.Button>
                         <Popover.Panel className="absolute z-10 bg-white border border-gray-200 dark:bg-zinc-800 mt-4 rounded-md w-[160px] scroll-smooth overflow-y-auto overflow-x-hidden py-2">
@@ -296,18 +288,12 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
                                     }
                                     const watchPriority = watch("priority");
                                     if (formPriorities.includes(priority)) {
-                                      const newPriorities =
-                                        formPriorities.filter(
-                                          (p) =>
-                                            p !== priority &&
-                                            p !== watchPriority
-                                        );
+                                      const newPriorities = formPriorities.filter(
+                                        (p) => p !== priority && p !== watchPriority
+                                      );
                                       setFormPriorities(newPriorities);
                                     } else {
-                                      setFormPriorities([
-                                        ...formPriorities,
-                                        priority,
-                                      ]);
+                                      setFormPriorities([...formPriorities, priority]);
                                     }
                                     close();
                                   }}
@@ -335,9 +321,7 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
             variant="secondary"
             onClick={() => {
               removeMilestone(index);
-              setFormPriorities(
-                formPriorities.filter((p) => p !== watch("priority"))
-              );
+              setFormPriorities(formPriorities.filter((p) => p !== watch("priority")));
             }}
           >
             Delete

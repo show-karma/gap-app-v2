@@ -1,20 +1,12 @@
-import {
-  CheckIcon,
-  ChevronDownIcon,
-  MagnifyingGlassIcon,
-  PlusIcon,
-} from "@heroicons/react/24/outline";
+import { Dialog, Switch, Transition } from "@headlessui/react";
+import { ChevronDownIcon, MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import * as Popover from "@radix-ui/react-popover";
-import { FC, useEffect, useState } from "react";
-import { ImpactIndicator } from "@/types/impactMeasurement";
-import { Button } from "@/components/Utilities/Button";
-import { IndicatorForm } from "@/components/Forms/IndicatorForm";
-import { Dialog, Transition } from "@headlessui/react";
-import { Fragment } from "react";
-import { XMarkIcon } from "@heroicons/react/24/outline";
-import { Switch } from "@headlessui/react";
-import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
+import { type FC, Fragment, useEffect, useState } from "react";
 import { LoadingSpinner } from "@/components/Disbursement/components/LoadingSpinner";
+import { IndicatorForm } from "@/components/Forms/IndicatorForm";
+import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
+import { Button } from "@/components/Utilities/Button";
+import type { ImpactIndicator } from "@/types/impactMeasurement";
 
 interface IndicatorsDropdownProps {
   selectedIndicators: string[];
@@ -153,7 +145,6 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
                   placeholder="Search for indicators"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  autoFocus
                   disabled={isLoading}
                 />
               </div>
@@ -281,10 +272,14 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
 
                   {/* Add autosynced indicator selector */}
                   <div className="mb-4">
-                    <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                    <label
+                      htmlFor="indicators-dropdown-autosynced"
+                      className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
+                    >
                       Select Autosynced Indicator (Optional)
                     </label>
                     <select
+                      id="indicators-dropdown-autosynced"
                       value={selectedAutosynced}
                       onChange={(e) => handleAutosyncedSelect(e.target.value)}
                       className="w-full p-2 border rounded-md bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-700"

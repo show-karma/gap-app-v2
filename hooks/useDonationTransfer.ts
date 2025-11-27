@@ -1,39 +1,33 @@
+import { useCallback, useState } from "react";
+import { type Address, getAddress, type PublicClient, parseUnits } from "viem";
 import {
   useAccount,
-  useChainId,
   usePublicClient,
   useWaitForTransactionReceipt,
   useWalletClient,
   useWriteContract,
 } from "wagmi";
+import { TRANSACTION_CONSTANTS } from "@/constants/donation";
+import type { DonationPayment } from "@/store/donationCart";
+import { validateChainSync } from "@/utilities/chainSyncValidation";
 import {
-  formatUnits,
-  getAddress,
-  parseUnits,
-  type Address,
-  type PublicClient,
-} from "viem";
-import { useState, useCallback } from "react";
-import { DonationPayment } from "@/store/donationCart";
-import {
-  BatchDonationsABI,
   BATCH_DONATIONS_CONTRACTS,
+  BatchDonationsABI,
   PERMIT2_ADDRESS,
 } from "@/utilities/donations/batchDonations";
+import { parseDonationError } from "@/utilities/donations/errorMessages";
 import {
+  type ApprovalTransaction,
   checkTokenAllowances,
   executeApprovals,
   getApprovalAmount,
-  TokenApprovalInfo,
-  ApprovalTransaction,
+  type TokenApprovalInfo,
 } from "@/utilities/erc20";
-import { getBatchDonationsContractAddress } from "@/utilities/donations/batchDonations";
 import { getRPCClient } from "@/utilities/rpcClient";
-import { validateWalletClient, waitForValidWalletClient } from "@/utilities/walletClientValidation";
-import { getWalletClientWithFallback, isWalletClientGoodEnough } from "@/utilities/walletClientFallback";
-import { validateChainSync } from "@/utilities/chainSyncValidation";
-import { getShortErrorMessage, parseDonationError } from "@/utilities/donations/errorMessages";
-import { TRANSACTION_CONSTANTS } from "@/constants/donation";
+import {
+  getWalletClientWithFallback,
+  isWalletClientGoodEnough,
+} from "@/utilities/walletClientFallback";
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000" as Address;
 const PERMIT_DEADLINE_SECONDS = 3600;
@@ -81,7 +75,9 @@ export function useDonationTransfer() {
   const { writeContractAsync } = useWriteContract();
   const [transfers, setTransfers] = useState<TransferResult[]>([]);
   const [isExecuting, setIsExecuting] = useState(false);
-  const [executionState, setExecutionState] = useState<DonationExecutionState>({ phase: "completed" });
+  const [executionState, setExecutionState] = useState<DonationExecutionState>({
+    phase: "completed",
+  });
   const [approvalInfo, setApprovalInfo] = useState<TokenApprovalInfo[]>([]);
 
   const checkApprovals = useCallback(
@@ -92,14 +88,20 @@ export function useDonationTransfer() {
       }
 
       // Group token transfers by token address to get total required amounts
-      const tokenRequirementsByChain = new Map<number, Map<string, {
-        tokenAddress: Address;
-        tokenSymbol: string;
-        requiredAmount: bigint;
-        chainId: number;
-      }>>();
+      const tokenRequirementsByChain = new Map<
+        number,
+        Map<
+          string,
+          {
+            tokenAddress: Address;
+            tokenSymbol: string;
+            requiredAmount: bigint;
+            chainId: number;
+          }
+        >
+      >();
 
-      payments.forEach(payment => {
+      payments.forEach((payment) => {
         if (payment.token.isNative) {
           return;
         }
@@ -113,12 +115,17 @@ export function useDonationTransfer() {
           return;
         }
 
-        const chainMap = tokenRequirementsByChain.get(chainId) ?? new Map<string, {
-          tokenAddress: Address;
-          tokenSymbol: string;
-          requiredAmount: bigint;
-          chainId: number;
-        }>();
+        const chainMap =
+          tokenRequirementsByChain.get(chainId) ??
+          new Map<
+            string,
+            {
+              tokenAddress: Address;
+              tokenSymbol: string;
+              requiredAmount: bigint;
+              chainId: number;
+            }
+          >();
 
         const existing = chainMap.get(key);
         if (existing) {
@@ -178,7 +185,7 @@ export function useDonationTransfer() {
         throw new Error("Wallet or client not available");
       }
 
-      const tokensNeedingApproval = approvals.filter(info => info.needsApproval);
+      const tokensNeedingApproval = approvals.filter((info) => info.needsApproval);
 
       if (tokensNeedingApproval.length === 0) {
         return []; // No approvals needed
@@ -198,10 +205,10 @@ export function useDonationTransfer() {
       setExecutionState({ phase: "approving", approvals: [], approvalProgress: 0 });
 
       const totalApprovals = tokensNeedingApproval.length;
-      const approvalRequests = tokensNeedingApproval.map(info => ({
+      const approvalRequests = tokensNeedingApproval.map((info) => ({
         tokenAddress: info.tokenAddress,
         tokenSymbol: info.tokenSymbol,
-        amount: getApprovalAmount(info.requiredAmount, false) // Use max uint256 for better UX
+        amount: getApprovalAmount(info.requiredAmount, false), // Use max uint256 for better UX
       }));
 
       const results = await executeApprovals(
@@ -216,8 +223,8 @@ export function useDonationTransfer() {
             approvals: progress,
             approvalProgress:
               totalApprovals > 0
-                ? (progress.filter(p => p.status === "confirmed").length / totalApprovals) * 100
-                : 0
+                ? (progress.filter((p) => p.status === "confirmed").length / totalApprovals) * 100
+                : 0,
           });
         }
       );
@@ -226,7 +233,6 @@ export function useDonationTransfer() {
     },
     [address, walletClient, publicClient]
   );
-
 
   const executeDonations = useCallback(
     async (
@@ -240,7 +246,7 @@ export function useDonationTransfer() {
 
       // SECURITY: Validate all recipient addresses upfront before starting execution
       // This implements the checks-effects-interactions pattern
-      const recipientValidation = payments.map((payment) => {
+      const _recipientValidation = payments.map((payment) => {
         const recipient = getRecipientAddress(payment.projectId);
         if (!recipient) {
           throw new Error(`Missing payout address for project ${payment.projectId}`);
@@ -265,7 +271,7 @@ export function useDonationTransfer() {
         const approvalInfo = await checkApprovals(payments);
 
         // Step 2: Execute ERC20 approvals to Permit2 if needed
-        const tokensNeedingApproval = approvalInfo.filter(info => info.needsApproval);
+        const tokensNeedingApproval = approvalInfo.filter((info) => info.needsApproval);
         if (tokensNeedingApproval.length > 0) {
           const approvalsByChain = tokensNeedingApproval.reduce<Map<number, TokenApprovalInfo[]>>(
             (acc, info) => {
@@ -278,7 +284,7 @@ export function useDonationTransfer() {
           );
 
           for (const [chainId, chainApprovals] of approvalsByChain.entries()) {
-            const chainPayments = payments.filter(payment => payment.chainId === chainId);
+            const chainPayments = payments.filter((payment) => payment.chainId === chainId);
             if (chainPayments.length === 0) {
               continue;
             }
@@ -288,14 +294,10 @@ export function useDonationTransfer() {
 
               // Check wallet client readiness for approvals
               if (!isWalletClientGoodEnough(walletClient, chainId)) {
-                await getWalletClientWithFallback(
-                  walletClient,
-                  chainId,
-                  async () => {
-                    const result = await refetchWalletClient();
-                    return { data: result.data };
-                  }
-                );
+                await getWalletClientWithFallback(walletClient, chainId, async () => {
+                  const result = await refetchWalletClient();
+                  return { data: result.data };
+                });
               }
             }
 
@@ -307,15 +309,12 @@ export function useDonationTransfer() {
         setExecutionState({ phase: "donating" });
 
         const results: TransferResult[] = [];
-        const paymentsByChain = payments.reduce<Map<number, DonationPayment[]>>(
-          (acc, payment) => {
-            const list = acc.get(payment.chainId) ?? [];
-            list.push(payment);
-            acc.set(payment.chainId, list);
-            return acc;
-          },
-          new Map()
-        );
+        const paymentsByChain = payments.reduce<Map<number, DonationPayment[]>>((acc, payment) => {
+          const list = acc.get(payment.chainId) ?? [];
+          list.push(payment);
+          acc.set(payment.chainId, list);
+          return acc;
+        }, new Map());
 
         for (const [chainId, chainPayments] of paymentsByChain.entries()) {
           // SECURITY: Validate chain ID is supported and has deployed contract
@@ -327,16 +326,16 @@ export function useDonationTransfer() {
           if (!contractAddress) {
             throw new Error(
               `Batch donations contract not deployed on chain ${chainId}. ` +
-              `Please contact support or use a different network.`
+                `Please contact support or use a different network.`
             );
           }
 
           // SECURITY: Validate all payments in this batch use the same chain
-          const invalidChainPayments = chainPayments.filter(p => p.chainId !== chainId);
+          const invalidChainPayments = chainPayments.filter((p) => p.chainId !== chainId);
           if (invalidChainPayments.length > 0) {
             throw new Error(
               `Chain mismatch detected: Some payments claim to be on chain ${chainId} ` +
-              `but have different chainId values. This should not happen.`
+                `but have different chainId values. This should not happen.`
             );
           }
 
@@ -356,7 +355,9 @@ export function useDonationTransfer() {
           );
 
           if (!currentWalletClient) {
-            throw new Error(`Wallet client is not available for chain ${chainId}. Please ensure your wallet is connected and try again.`);
+            throw new Error(
+              `Wallet client is not available for chain ${chainId}. Please ensure your wallet is connected and try again.`
+            );
           }
 
           // Critical: Validate chain synchronization before executing donations
@@ -364,7 +365,7 @@ export function useDonationTransfer() {
             await validateChainSync(currentWalletClient, chainId, "batch donations");
           } catch (error) {
             // Try one more time with a fresh wallet client
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            await new Promise((resolve) => setTimeout(resolve, 2000));
 
             const result = await refetchWalletClient();
             const freshClient = result.data;
@@ -417,7 +418,7 @@ export function useDonationTransfer() {
             } catch (error) {
               throw new Error(
                 `Failed to parse amount for ${payment.token.symbol}: ${payment.amount}. ` +
-                `Error: ${error instanceof Error ? error.message : "Unknown error"}`
+                  `Error: ${error instanceof Error ? error.message : "Unknown error"}`
               );
             }
 
@@ -489,12 +490,11 @@ export function useDonationTransfer() {
           const hash = await writeContractAsync({
             address: getAddress(contractAddress),
             abi: BatchDonationsABI,
-            functionName: hasTokenTransfers
-              ? "batchDonateWithPermit"
-              : "batchDonate",
-            args: hasTokenTransfers && permit && permitSignature
-              ? [donations, permit, permitSignature]
-              : [donations],
+            functionName: hasTokenTransfers ? "batchDonateWithPermit" : "batchDonate",
+            args:
+              hasTokenTransfers && permit && permitSignature
+                ? [donations, permit, permitSignature]
+                : [donations],
             chainId,
             ...(totalEth > 0n ? { value: totalEth } : {}),
           });
@@ -517,11 +517,10 @@ export function useDonationTransfer() {
             const receipt = await chainPublicClient.waitForTransactionReceipt({
               hash,
               confirmations: TRANSACTION_CONSTANTS.REQUIRED_CONFIRMATIONS,
-            })
+            });
 
             const wasSuccessful = receipt.status === "success";
 
-            
             chainResults.forEach((result) => {
               result.status = wasSuccessful ? "success" : "error";
               result.error = wasSuccessful ? undefined : "Transaction failed";
@@ -530,14 +529,16 @@ export function useDonationTransfer() {
             setTransfers((prev) =>
               prev.map((transfer) => {
                 const isThisTransaction = chainResults.some(
-                  (result) => result.hash === transfer.hash && result.projectId === transfer.projectId
+                  (result) =>
+                    result.hash === transfer.hash && result.projectId === transfer.projectId
                 );
                 if (!isThisTransaction) {
                   return transfer;
                 }
 
                 const matchingResult = chainResults.find(
-                  (result) => result.hash === transfer.hash && result.projectId === transfer.projectId
+                  (result) =>
+                    result.hash === transfer.hash && result.projectId === transfer.projectId
                 );
 
                 return matchingResult
@@ -563,7 +564,8 @@ export function useDonationTransfer() {
             setTransfers((prev) =>
               prev.map((transfer) => {
                 const isThisTransaction = chainResults.some(
-                  (result) => result.hash === transfer.hash && result.projectId === transfer.projectId
+                  (result) =>
+                    result.hash === transfer.hash && result.projectId === transfer.projectId
                 );
                 if (!isThisTransaction) {
                   return transfer;
@@ -596,7 +598,15 @@ export function useDonationTransfer() {
         setIsExecuting(false);
       }
     },
-    [address, publicClient, walletClient, writeContractAsync, checkApprovals, executeApprovalTransactions]
+    [
+      address,
+      publicClient,
+      walletClient,
+      writeContractAsync,
+      checkApprovals,
+      executeApprovalTransactions,
+      refetchWalletClient,
+    ]
   );
 
   const checkSufficientBalance = useCallback(
@@ -623,10 +633,8 @@ export function useDonationTransfer() {
       for (const payment of payments) {
         // SECURITY: Validate payment amount is positive and valid
         const amount = parseFloat(payment.amount);
-        if (isNaN(amount) || amount <= 0) {
-          errors.push(
-            `Invalid amount for ${payment.token.symbol}: ${payment.amount}`
-          );
+        if (Number.isNaN(amount) || amount <= 0) {
+          errors.push(`Invalid amount for ${payment.token.symbol}: ${payment.amount}`);
           continue;
         }
 
@@ -662,12 +670,11 @@ export function useDonationTransfer() {
   );
 
   const getEstimatedGasCost = useCallback((payments: DonationPayment[]): string => {
-    const uniqueChains = new Set(payments.map(p => p.chainId)).size;
-    const nativeTransfers = payments.filter(p => p.token.isNative).length;
-    const tokenTransfers = payments.filter(p => !p.token.isNative).length;
+    const uniqueChains = new Set(payments.map((p) => p.chainId)).size;
+    const nativeTransfers = payments.filter((p) => p.token.isNative).length;
+    const tokenTransfers = payments.filter((p) => !p.token.isNative).length;
 
-    const totalGas =
-      nativeTransfers * 21_000 + tokenTransfers * 95_000 + uniqueChains * 120_000;
+    const totalGas = nativeTransfers * 21_000 + tokenTransfers * 95_000 + uniqueChains * 120_000;
 
     return `~${totalGas.toLocaleString()} gas units (permit + batch execution)`;
   }, []);
@@ -686,7 +693,12 @@ export function useDonationTransfer() {
 }
 
 export function useTransactionStatus(hash: string) {
-  const { data: receipt, isLoading, isSuccess, isError } = useWaitForTransactionReceipt({
+  const {
+    data: receipt,
+    isLoading,
+    isSuccess,
+    isError,
+  } = useWaitForTransactionReceipt({
     hash: hash as `0x${string}`,
     query: {
       enabled: !!hash,
@@ -698,12 +710,6 @@ export function useTransactionStatus(hash: string) {
     isLoading,
     isSuccess,
     isError,
-    status: isLoading
-      ? "pending"
-      : isSuccess
-      ? "success"
-      : isError
-      ? "error"
-      : "idle",
+    status: isLoading ? "pending" : isSuccess ? "success" : isError ? "error" : "idle",
   };
 }

@@ -1,23 +1,13 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, useEffect, useState } from "react";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "cmdk";
-import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/solid";
+
+import { CheckIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
-import { cn } from "@/utilities/tailwind";
-import { ChevronDown } from "@/components/Icons/ChevronDown";
-import pluralize from "pluralize";
-import Image from "next/image";
-import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk";
+import { type FC, useState } from "react";
 import { useAccount } from "wagmi";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
-import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { ChevronDown } from "@/components/Icons/ChevronDown";
+import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import { cn } from "@/utilities/tailwind";
 
 const ProgramDropdown: FC<{
   selectedProgram: GrantProgram | null;
@@ -40,7 +30,7 @@ const ProgramDropdown: FC<{
   setSelectedProgram,
 }) => {
   const [open, setOpen] = useState(false);
-  const [adding, setAdding] = useState(false);
+  const [_adding, _setAdding] = useState(false);
   const { address: owner } = useAccount();
 
   return (
@@ -75,11 +65,12 @@ const ProgramDropdown: FC<{
           <CommandGroup>
             {cleanFunction ? (
               <CommandItem>
-                <div
+                <button
+                  type="button"
                   onClick={() => {
                     cleanFunction();
                   }}
-                  className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
+                  className="w-full my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 bg-transparent border-none text-left"
                 >
                   <div className="flex flex-row gap-2 items-center justify-start w-full">
                     <div className="flex flex-row gap-1  items-center justify-start  flex-1">
@@ -88,24 +79,23 @@ const ProgramDropdown: FC<{
                       </p>
                     </div>
                     <CheckIcon
-                      className={cn(
-                        "mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white"
-                      )}
+                      className={cn("mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white")}
                       style={{
                         display: selectedProgram ? "none" : "block",
                       }}
                     />
                   </div>
-                </div>
+                </button>
               </CommandItem>
             ) : null}
             {list.map((item, index) => (
               <CommandItem key={index}>
-                <div
+                <button
+                  type="button"
                   onClick={() => {
                     setSelectedProgram(item);
                   }}
-                  className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
+                  className="w-full my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 bg-transparent border-none text-left"
                 >
                   <div className="flex flex-row gap-2 items-center justify-start w-full">
                     <div className="flex flex-row gap-1  items-center justify-start  flex-1">
@@ -115,18 +105,15 @@ const ProgramDropdown: FC<{
                     </div>
                   </div>
                   <CheckIcon
-                    className={cn(
-                      "mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white"
-                    )}
+                    className={cn("mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white")}
                     style={{
                       display:
-                        selectedProgram?.metadata?.title ==
-                        item?.metadata?.title
+                        selectedProgram?.metadata?.title === item?.metadata?.title
                           ? "block"
                           : "none",
                     }}
                   />
-                </div>
+                </button>
               </CommandItem>
             ))}
           </CommandGroup>

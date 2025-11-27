@@ -1,4 +1,4 @@
-import React, { FC, ReactElement } from "react";
+import type { FC, ReactElement } from "react";
 
 type GenericJSON = Record<string, unknown>;
 
@@ -64,12 +64,7 @@ const GenericJSONDisplay: FC<GenericJSONDisplayProps> = ({ data }) => {
   const getDecisionColor = (decision: string) => {
     const dec = decision.toLowerCase();
     if (dec === "reject" || dec === "rejected") return "text-red-600 dark:text-red-400";
-    if (
-      dec === "accept" ||
-      dec === "accepted" ||
-      dec === "approve" ||
-      dec === "approved"
-    )
+    if (dec === "accept" || dec === "accepted" || dec === "approve" || dec === "approved")
       return "text-green-600 dark:text-green-400";
     if (dec === "pending" || dec === "review") return "text-yellow-600 dark:text-yellow-400";
     return "text-gray-700 dark:text-gray-300";

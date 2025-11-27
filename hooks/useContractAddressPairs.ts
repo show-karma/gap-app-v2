@@ -1,15 +1,13 @@
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useCallback, useEffect, useState } from "react";
-import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { NetworkAddressPair } from "@/components/Pages/Project/types";
+import type { NetworkAddressPair } from "@/components/Pages/Project/types";
 
 interface UseContractAddressPairsProps {
   project: IProjectResponse & { external: Record<string, string[]> };
 }
 
 export const useContractAddressPairs = ({ project }: UseContractAddressPairsProps) => {
-  const [networkAddressPairs, setNetworkAddressPairs] = useState<
-    NetworkAddressPair[]
-  >([]);
+  const [networkAddressPairs, setNetworkAddressPairs] = useState<NetworkAddressPair[]>([]);
 
   // Initialize pairs from project data
   useEffect(() => {
@@ -25,10 +23,7 @@ export const useContractAddressPairs = ({ project }: UseContractAddressPairsProp
   }, [project?.external?.network_addresses]);
 
   const addPair = useCallback(() => {
-    setNetworkAddressPairs((prev) => [
-      ...prev,
-      { network: "", address: "" },
-    ]);
+    setNetworkAddressPairs((prev) => [...prev, { network: "", address: "" }]);
   }, []);
 
   const removePair = useCallback((index: number) => {

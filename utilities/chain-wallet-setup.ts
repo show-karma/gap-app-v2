@@ -1,8 +1,8 @@
 import type { GAP } from "@show-karma/karma-gap-sdk";
 import type { Signer } from "ethers";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 
 interface SetupChainAndWalletParams {
   targetChainId: number;

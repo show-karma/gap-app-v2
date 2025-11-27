@@ -1,11 +1,9 @@
+import Link from "next/link";
 import { MegaphoneIcon } from "@/components/Icons/Megaphone";
 import { RightArrowIcon } from "@/components/Icons/RightArrow";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { PAGES } from "@/utilities/pages";
-import Link from "next/link";
 
-const bannerLink =
-  "https://www.notion.so/Job-Board-15b0525cb96480fd98a5c1f4f31ee792";
+const bannerLink = "https://www.notion.so/Job-Board-15b0525cb96480fd98a5c1f4f31ee792";
 
 export function NewFeatureBanner() {
   return (
@@ -15,8 +13,7 @@ export function NewFeatureBanner() {
           <MegaphoneIcon />
           <div className="flex flex-row gap-1">
             <p className="text-sm font-semibold text-[#080a0e] max-md:text-xs">
-              Are you a dev interested in working on challenging funding
-              infrastructure?
+              Are you a dev interested in working on challenging funding infrastructure?
             </p>{" "}
             <Link
               href={bannerLink}

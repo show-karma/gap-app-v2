@@ -1,7 +1,7 @@
 "use client";
+import type { SupportedToken } from "@/constants/supportedTokens";
 import { TransactionStatus } from "./TransactionStatus";
 import { ValidationErrors } from "./ValidationErrors";
-import type { SupportedToken } from "@/constants/supportedTokens";
 
 interface TransferResult {
   projectId: string;
@@ -79,9 +79,8 @@ export function DonationExecutor({
 
   return (
     <>
-      <div
+      <section
         className="rounded-2xl border border-gray-200 bg-white/80 p-6 shadow-sm dark:border-gray-800 dark:bg-zinc-950/70 backdrop-blur-sm"
-        role="region"
         aria-label="Donation execution controls"
       >
         <div className="flex flex-col gap-4">
@@ -89,10 +88,11 @@ export function DonationExecutor({
             data-testid="execute-button"
             type="button"
             disabled={isDisabled}
-            className={`inline-flex h-14 items-center justify-center rounded-full px-8 text-sm font-semibold tracking-wide transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 ${!isDisabled
+            className={`inline-flex h-14 items-center justify-center rounded-full px-8 text-sm font-semibold tracking-wide transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 ${
+              !isDisabled
                 ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl transform hover:scale-[1.02]"
                 : "bg-gray-200 text-gray-500 dark:bg-gray-800 dark:text-gray-400 cursor-not-allowed"
-              }`}
+            }`}
             onClick={onExecute}
             aria-label={getAriaLabel()}
             aria-busy={isExecuting}
@@ -102,8 +102,7 @@ export function DonationExecutor({
               <div className="flex items-center gap-2">
                 <div
                   className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
-                  role="status"
-                  aria-label="Loading"
+                  aria-hidden="true"
                 />
                 <span>Processing...</span>
               </div>
@@ -145,12 +144,12 @@ export function DonationExecutor({
               <path d="M12 8h.01" />
             </svg>
             <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
-              You&apos;ll approve each token once per network and then confirm the batch
-              transfer. Multi-chain donations are processed securely across networks.
+              You&apos;ll approve each token once per network and then confirm the batch transfer.
+              Multi-chain donations are processed securely across networks.
             </p>
           </div>
         </div>
-      </div>
+      </section>
 
       <ValidationErrors
         validationErrors={validationErrors}
@@ -158,11 +157,7 @@ export function DonationExecutor({
         items={items}
       />
 
-      <TransactionStatus
-        transfers={transfers}
-        items={items}
-        selectedTokens={selectedTokens}
-      />
+      <TransactionStatus transfers={transfers} items={items} selectedTokens={selectedTokens} />
     </>
   );
 }

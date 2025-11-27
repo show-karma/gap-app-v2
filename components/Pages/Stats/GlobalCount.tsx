@@ -1,11 +1,11 @@
 "use client";
+import { ArrowPathIcon } from "@heroicons/react/24/solid";
+import { Card, Title } from "@tremor/react";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { useState, useEffect } from "react";
-import { Button } from "@/components/Utilities/Button";
-import { ArrowPathIcon } from "@heroicons/react/24/solid";
-import { Card, LineChart, Title } from "@tremor/react";
-import { errorManager } from "@/components/Utilities/errorManager";
 
 export function GlobalCount() {
   const [stats, setStats] = useState<any>([]);
@@ -44,7 +44,7 @@ export function GlobalCount() {
 
   useEffect(() => {
     fetchStats();
-  }, []);
+  }, [fetchStats]);
 
   return (
     <div className="container mx-auto sm:px-0 lg:px-20 w-full flex-col items-center justify-center">
@@ -66,9 +66,7 @@ export function GlobalCount() {
             {stats.map((item: any) => (
               <div className="mx-1" key={item._id as any}>
                 <p>{item._id}</p>
-                <p className="text-blue-500 font-bold text-xl">
-                  {item.count as any}
-                </p>
+                <p className="text-blue-500 font-bold text-xl">{item.count as any}</p>
               </div>
             ))}
           </div>

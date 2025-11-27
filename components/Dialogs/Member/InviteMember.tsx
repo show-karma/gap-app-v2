@@ -1,41 +1,26 @@
 "use client";
-/* eslint-disable @next/next/no-img-element */
-import { Button } from "@/components/ui/button";
-import { useProjectStore } from "@/store";
-import { Dialog, Transition } from "@headlessui/react";
-import * as Tooltip from "@radix-ui/react-tooltip";
-import { FC, Fragment, useEffect, useState } from "react";
-import { useAccount } from "wagmi";
 
+/* eslint-disable @next/next/no-img-element */
+import { Dialog, Transition } from "@headlessui/react";
+import { ArrowPathIcon, CheckIcon, ClipboardDocumentIcon } from "@heroicons/react/24/outline";
+import * as Tooltip from "@radix-ui/react-tooltip";
+import { type FC, Fragment, useEffect, useState } from "react";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { Button } from "@/components/ui/button";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useInviteLink, useInviteUrl } from "@/hooks/useInviteLink";
-import {
-  ArrowPathIcon,
-  CheckIcon,
-  ClipboardDocumentIcon,
-} from "@heroicons/react/24/outline";
+import { useProjectStore } from "@/store";
 
-type InviteMemberDialogProps = {};
-
-export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
+export const InviteMemberDialog: FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const project = useProjectStore((state) => state.project);
   const [, copyToClipboard] = useCopyToClipboard();
 
-  const {
-    inviteCode,
-    isLoading,
-    isGenerating,
-    isRevoking,
-    generateCode,
-    revokeCode,
-    isSuccess,
-  } = useInviteLink(project?.uid);
+  const { inviteCode, isLoading, isGenerating, generateCode, revokeCode, isSuccess } =
+    useInviteLink(project?.uid);
 
-  const { address } = useAccount();
   const code = inviteCode?.hash;
   const inviteUrl = useInviteUrl(project, code);
   const openModal = () => {
@@ -99,8 +84,7 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
                     {code ? (
                       <div className="flex flex-col gap-2 h-full">
                         <p className="text-zinc-800 dark:text-zinc-100">
-                          Share this invite link with your team member to join
-                          your project.
+                          Share this invite link with your team member to join your project.
                         </p>
                         <div className=" items-center flex flex-row gap-2 h-max max-h-40">
                           <Button
@@ -179,9 +163,7 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
                         </div>
                       </div>
                     ) : isLoading || isGenerating ? (
-                      <p className="text-black dark:text-zinc-200 text-base">
-                        Generating code...
-                      </p>
+                      <p className="text-black dark:text-zinc-200 text-base">Generating code...</p>
                     ) : (
                       <Spinner />
                     )}

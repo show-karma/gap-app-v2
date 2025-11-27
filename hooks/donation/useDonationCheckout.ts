@@ -1,19 +1,18 @@
-import { useState, useCallback } from "react";
-import { useAccount } from "wagmi";
+import { useCallback, useState } from "react";
 import toast from "react-hot-toast";
-import type { SupportedToken } from "@/constants/supportedTokens";
-import { useDonationTransfer } from "@/hooks/useDonationTransfer";
-import { parseDonationError } from "@/utilities/donations/errorMessages";
+import { useAccount } from "wagmi";
 import { UX_CONSTANTS } from "@/constants/donation";
+import { useDonationTransfer } from "@/hooks/useDonationTransfer";
 import { useDonationCart } from "@/store/donationCart";
 import {
-  type DonationPayment,
-  validatePayoutAddresses,
-  getTargetChainId,
-  ensureCorrectNetwork,
-  waitForWalletSync,
   createCompletedDonations,
+  type DonationPayment,
+  ensureCorrectNetwork,
+  getTargetChainId,
+  validatePayoutAddresses,
+  waitForWalletSync,
 } from "@/utilities/donations/donationExecution";
+import { parseDonationError } from "@/utilities/donations/errorMessages";
 
 export function useDonationCheckout() {
   const { address, isConnected } = useAccount();
@@ -113,11 +112,7 @@ export function useDonationCheckout() {
 
         // Create completed session record
         const cartState = useDonationCart.getState();
-        const completedDonations = createCompletedDonations(
-          results,
-          payments,
-          cartState.items
-        );
+        const completedDonations = createCompletedDonations(results, payments, cartState.items);
 
         // Save session if we have completed donations
         if (completedDonations.length > 0) {
@@ -127,8 +122,6 @@ export function useDonationCheckout() {
             donations: completedDonations,
             totalProjects: payments.length,
           };
-
-          console.log("Saving completed session:", session);
           cartState.setLastCompletedSession(session);
         } else {
           console.warn("No completed donations to save in session");

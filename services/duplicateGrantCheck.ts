@@ -12,9 +12,7 @@ export interface DuplicateCheckParams {
  * @param params - Parameters to check for duplicate grants
  * @returns Promise<boolean> - True if duplicate exists, false otherwise
  */
-export async function checkForDuplicateGrant(
-  params: DuplicateCheckParams
-): Promise<boolean> {
+export async function checkForDuplicateGrant(params: DuplicateCheckParams): Promise<boolean> {
   try {
     if (!params.projectUid) {
       return false;
@@ -47,8 +45,7 @@ export async function checkForDuplicateGrant(
 
         return (
           existingCommunity === params.community &&
-          existingTitle?.toLowerCase().trim() ===
-            params.title?.toLowerCase().trim()
+          existingTitle?.toLowerCase().trim() === params.title?.toLowerCase().trim()
         );
       }
     });

@@ -1,15 +1,12 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import { ContributorProfileDialog } from "@/components/Dialogs/ContributorProfileDialog";
 import { InviteMemberDialog } from "@/components/Dialogs/Member/InviteMember";
-import { useOwnerStore, useProjectStore } from "@/store";
-import {
-  getProjectMemberRoles,
-  Member,
-} from "@/utilities/getProjectMemberRoles";
-import { useQuery } from "@tanstack/react-query";
-import { MemberCard } from "./MemberCard";
 import { useProjectInstance } from "@/hooks/useProjectInstance";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { getProjectMemberRoles, type Member } from "@/utilities/getProjectMemberRoles";
+import { MemberCard } from "./MemberCard";
 
 export const Team = () => {
   const project = useProjectStore((state) => state.project);
@@ -38,9 +35,7 @@ export const Team = () => {
   } = useQuery<Record<string, Member["role"]>>({
     queryKey: ["memberRoles", project?.uid],
     queryFn: () =>
-      project && projectInstance
-        ? getProjectMemberRoles(project, projectInstance)
-        : {},
+      project && projectInstance ? getProjectMemberRoles(project, projectInstance) : {},
     enabled: !!project && !!projectInstance,
     staleTime: 1000 * 60 * 5,
   });
@@ -66,9 +61,7 @@ export const Team = () => {
       </div>
       <div className="flex flex-col gap-4 max-w-3xl w-full">
         {sortedMembers?.length
-          ? sortedMembers?.map((member) => (
-              <MemberCard key={member} member={member as string} />
-            ))
+          ? sortedMembers?.map((member) => <MemberCard key={member} member={member as string} />)
           : null}
       </div>
     </div>

@@ -3,21 +3,21 @@
  * @description Tests for faucet-related hooks including eligibility, balance, history, and claim functionality
  */
 
-import { renderHook, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { act, renderHook, waitFor } from "@testing-library/react";
+import React from "react";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
 import {
-  useFaucetEligibility,
-  useFaucetBalance,
   useAllFaucetBalances,
-  useFaucetHistory,
-  useFaucetStats,
+  useFaucetBalance,
   useFaucetClaim,
+  useFaucetEligibility,
+  useFaucetHistory,
   useFaucetRequest,
+  useFaucetStats,
 } from "@/hooks/useFaucet";
 import { faucetService } from "@/utilities/faucet/faucetService";
-import { useAccount } from "wagmi";
-import toast from "react-hot-toast";
-import React from "react";
 
 jest.mock("@/utilities/faucet/faucetService", () => ({
   faucetService: {
@@ -62,7 +62,7 @@ describe("useFaucet hooks", () => {
     const Wrapper = ({ children }: { children: React.ReactNode }) =>
       React.createElement(QueryClientProvider, { client: queryClient }, children);
 
-    Wrapper.displayName = 'QueryClientWrapper';
+    Wrapper.displayName = "QueryClientWrapper";
 
     return Wrapper;
   };
@@ -91,16 +91,17 @@ describe("useFaucet hooks", () => {
       const transaction = { type: "gas", amount: "0.1" } as any;
 
       const wrapper = createWrapper();
-      const { result } = renderHook(
-        () => useFaucetEligibility(10, transaction),
-        { wrapper }
-      );
+      const { result } = renderHook(() => useFaucetEligibility(10, transaction), { wrapper });
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false);
       });
 
-      expect(mockFaucetService.checkEligibility).toHaveBeenCalledWith(10, expect.any(String), transaction);
+      expect(mockFaucetService.checkEligibility).toHaveBeenCalledWith(
+        10,
+        expect.any(String),
+        transaction
+      );
       expect(result.current.data).toEqual(mockEligibility);
     });
   });
@@ -326,4 +327,3 @@ describe("useFaucet hooks", () => {
     });
   });
 });
-

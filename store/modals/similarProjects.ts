@@ -7,12 +7,10 @@ interface SimilarProjectsModalStore {
   closeSimilarProjectsModal: () => void;
 }
 
-export const useSimilarProjectsModalStore = create<SimilarProjectsModalStore>(
-  (set) => ({
-    isSimilarProjectsModalOpen: false,
-    setIsSimilarProjectsModalOpen: (isSimilarProjectsModalOpen: boolean) =>
-      set({ isSimilarProjectsModalOpen }),
-    openSimilarProjectsModal: () => set({ isSimilarProjectsModalOpen: true }),
-    closeSimilarProjectsModal: () => set({ isSimilarProjectsModalOpen: false }),
-  })
-);
+export const useSimilarProjectsModalStore = create<SimilarProjectsModalStore>((set) => ({
+  isSimilarProjectsModalOpen: false,
+  setIsSimilarProjectsModalOpen: (isSimilarProjectsModalOpen: boolean) =>
+    set({ isSimilarProjectsModalOpen }),
+  openSimilarProjectsModal: () => set({ isSimilarProjectsModalOpen: true }),
+  closeSimilarProjectsModal: () => set({ isSimilarProjectsModalOpen: false }),
+}));

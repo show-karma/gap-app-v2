@@ -1,7 +1,7 @@
 /**
  * CreateProjectButton Component Tests
  * Tests the project creation button with ProjectDialog integration
- * 
+ *
  * Target: 5 tests
  * - Rendering (2)
  * - Dialog Integration (2)
@@ -9,10 +9,7 @@
  */
 
 import { CreateProjectButton } from "@/src/features/homepage/components/create-project-button";
-import {
-  renderWithProviders,
-  screen,
-} from "../utils/test-helpers";
+import { renderWithProviders, screen } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
 
 describe("CreateProjectButton Component", () => {
@@ -58,4 +55,3 @@ describe("CreateProjectButton Component", () => {
     expect(button).not.toHaveAttribute("disabled");
   });
 });
-

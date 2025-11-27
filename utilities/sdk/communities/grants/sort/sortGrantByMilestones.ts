@@ -1,4 +1,4 @@
-import type { Grant } from '@show-karma/karma-gap-sdk';
+import type { Grant } from "@show-karma/karma-gap-sdk";
 
 export const sortGrantByMilestones = (grants: Grant[]) => {
   const newGrants = [...grants];

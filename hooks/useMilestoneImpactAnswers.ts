@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
+import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import { getMilestoneImpactAnswers } from "@/utilities/impact";
-import { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 
 interface UseMilestoneImpactAnswersProps {
   milestoneUID?: string;
@@ -9,9 +9,7 @@ interface UseMilestoneImpactAnswersProps {
 /**
  * Hook to fetch impact indicator data for a specific milestone
  */
-export const useMilestoneImpactAnswers = ({
-  milestoneUID,
-}: UseMilestoneImpactAnswersProps) => {
+export const useMilestoneImpactAnswers = ({ milestoneUID }: UseMilestoneImpactAnswersProps) => {
   return useQuery<ImpactIndicatorWithData[]>({
     queryKey: ["milestoneImpactAnswers", milestoneUID],
     queryFn: () => {

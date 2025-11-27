@@ -1,14 +1,6 @@
-import { Menu, Transition } from "@headlessui/react";
-import { Fragment } from "react";
-import {
-  EllipsisVerticalIcon,
-  PencilSquareIcon,
-  ShareIcon,
-  TrashIcon,
-} from "@heroicons/react/24/outline";
-import { Button } from "@/components/Utilities/Button";
+import { PencilSquareIcon, ShareIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { DeleteDialog } from "@/components/DeleteDialog";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { Button } from "@/components/Utilities/Button";
 import { cn } from "@/utilities/tailwind";
 
 interface ActivityMenuProps {
@@ -38,8 +30,7 @@ export const ActivityMenu = ({
 
   // Determine which activities can be edited
   const canActuallyEdit =
-    canEdit &&
-    (activityType === "ProjectUpdate" || activityType === "ProjectImpact");
+    canEdit && (activityType === "ProjectUpdate" || activityType === "ProjectImpact");
 
   const hasAnyAction = canShare || canActuallyEdit || canDelete;
 
@@ -77,13 +68,8 @@ export const ActivityMenu = ({
           title={deleteTitle}
           buttonElement={{
             text: "",
-            icon: (
-              <TrashIcon className="h-5 w-5 text-[#D92D20] dark:text-red-500" />
-            ),
-            styleClass: cn(
-              buttonClassName,
-              "text-[#D92D20] dark:text-red-500 w-max p-0"
-            ),
+            icon: <TrashIcon className="h-5 w-5 text-[#D92D20] dark:text-red-500" />,
+            styleClass: cn(buttonClassName, "text-[#D92D20] dark:text-red-500 w-max p-0"),
           }}
         />
         // <Menu as="div" className="relative inline-block text-left h-6">

@@ -4,7 +4,7 @@
  */
 
 import "@testing-library/jest-dom";
-import { TextEncoder, TextDecoder } from "util";
+import { TextDecoder, TextEncoder } from "node:util";
 import React from "react";
 
 // Polyfill TextEncoder/TextDecoder for Node environment
@@ -28,7 +28,6 @@ Object.defineProperty(window, "matchMedia", {
 
 // Mock IntersectionObserver
 global.IntersectionObserver = class IntersectionObserver {
-  constructor() {}
   disconnect() {}
   observe() {}
   takeRecords() {
@@ -39,7 +38,6 @@ global.IntersectionObserver = class IntersectionObserver {
 
 // Mock ResizeObserver
 global.ResizeObserver = class ResizeObserver {
-  constructor() {}
   disconnect() {}
   observe() {}
   unobserve() {}
@@ -67,7 +65,11 @@ jest.mock("next/link", () => ({
 // Mock ExternalLink component
 jest.mock("@/components/Utilities/ExternalLink", () => ({
   ExternalLink: ({ children, href, ...props }: any) =>
-    React.createElement("a", { href, target: "_blank", rel: "noopener noreferrer", ...props }, children),
+    React.createElement(
+      "a",
+      { href, target: "_blank", rel: "noopener noreferrer", ...props },
+      children
+    ),
 }));
 
 // Mock useAuth hook - homepage doesn't require complex auth mocking initially
@@ -83,7 +85,7 @@ export const mockAuthState = {
     logout: jest.fn(),
     disconnect: jest.fn(),
     getAccessToken: jest.fn().mockResolvedValue("mock-token"),
-  }
+  },
 };
 
 jest.mock("@/hooks/useAuth", () => ({
@@ -115,15 +117,18 @@ jest.mock("@/src/components/ui/infinite-moving-cards", () => ({
       "div",
       { "data-testid": "infinite-moving-cards" },
       items?.map((item: any, index: number) =>
-        React.createElement("div", { key: index, "data-testid": `carousel-item-${index}` }, item.text)
+        React.createElement(
+          "div",
+          { key: index, "data-testid": `carousel-item-${index}` },
+          item.text
+        )
       )
     ),
 }));
 
 // Mock theme image component
 jest.mock("@/src/components/ui/theme-image", () => ({
-  ThemeImage: ({ src, alt, ...props }: any) =>
-    React.createElement("img", { src, alt, ...props }),
+  ThemeImage: ({ src, alt, ...props }: any) => React.createElement("img", { src, alt, ...props }),
 }));
 
 /**
@@ -154,4 +159,3 @@ export const setViewportSize = (width: number, height: number) => {
   // Trigger resize event
   window.dispatchEvent(new Event("resize"));
 };
-

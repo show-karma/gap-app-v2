@@ -1,7 +1,7 @@
 /**
  * Homepage Navigation Flow Integration Tests
  * Tests navigation and link flows throughout the homepage
- * 
+ *
  * Target: 12 tests
  * - CTA Navigation (6)
  * - External Links (3)
@@ -9,10 +9,7 @@
  */
 
 import HomePage from "@/app/page";
-import {
-  renderWithProviders,
-  screen,
-} from "../utils/test-helpers";
+import { renderWithProviders, screen } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
 
 // Mock PAGES utility
@@ -55,9 +52,11 @@ describe("Homepage Navigation Flows", () => {
 
       const viewAllLinks = screen.getAllByRole("link", { name: /View all/i });
       expect(viewAllLinks.length).toBeGreaterThanOrEqual(1);
-      
+
       // Find the one pointing to funding-map
-      const fundingMapLink = viewAllLinks.find(link => link.getAttribute("href") === "/funding-map");
+      const fundingMapLink = viewAllLinks.find(
+        (link) => link.getAttribute("href") === "/funding-map"
+      );
       expect(fundingMapLink).toBeDefined();
     });
 
@@ -90,9 +89,11 @@ describe("Homepage Navigation Flows", () => {
 
       const discordLinks = screen.getAllByRole("link", { name: /Discord/i });
       expect(discordLinks.length).toBeGreaterThanOrEqual(1);
-      
+
       // At least one should have target="_blank"
-      const externalDiscordLink = discordLinks.find(link => link.getAttribute("target") === "_blank");
+      const externalDiscordLink = discordLinks.find(
+        (link) => link.getAttribute("target") === "_blank"
+      );
       expect(externalDiscordLink).toBeDefined();
       expect(externalDiscordLink).toHaveAttribute("rel", "noopener noreferrer");
     });
@@ -108,7 +109,7 @@ describe("Homepage Navigation Flows", () => {
       const { container } = renderWithProviders(await HomePage());
 
       const externalLinks = Array.from(container.querySelectorAll('a[target="_blank"]'));
-      
+
       externalLinks.forEach((link) => {
         expect(link).toHaveAttribute("rel");
         expect(link.getAttribute("rel")).toContain("noopener");
@@ -125,7 +126,7 @@ describe("Homepage Navigation Flows", () => {
 
       // All links should be within main
       const links = main?.querySelectorAll("a");
-      expect(links && links.length).toBeGreaterThan(0);
+      expect(links?.length).toBeGreaterThan(0);
     });
 
     it("should have proper link structure for internal navigation", async () => {
@@ -142,10 +143,9 @@ describe("Homepage Navigation Flows", () => {
       // Multiple sections should have similar CTA patterns
       const createButtons = screen.getAllByRole("button", { name: /Create project/i });
       const fundersLinks = screen.getAllByRole("link", { name: /funders|Grow your ecosystem/i });
-      
+
       expect(createButtons.length).toBeGreaterThanOrEqual(2);
       expect(fundersLinks.length).toBeGreaterThanOrEqual(1);
     });
   });
 });
-

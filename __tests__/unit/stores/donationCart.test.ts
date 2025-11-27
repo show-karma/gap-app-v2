@@ -1,6 +1,6 @@
-import { renderHook, act, waitFor } from "@testing-library/react";
-import { useDonationCart, DonationCartItem, DonationPayment } from "@/store/donationCart";
-import { SupportedToken } from "@/constants/supportedTokens";
+import { act, renderHook } from "@testing-library/react";
+import type { SupportedToken } from "@/constants/supportedTokens";
+import { type DonationCartItem, useDonationCart } from "@/store/donationCart";
 
 // Mock the zustand persist middleware
 const mockStorageData: Record<string, string> = {};
@@ -313,9 +313,7 @@ describe("useDonationCart", () => {
         result.current.setSelectedToken(mockItem.uid, mockNativeToken);
       });
 
-      expect(result.current.selectedTokens[mockItem.uid]).toEqual(
-        mockNativeToken
-      );
+      expect(result.current.selectedTokens[mockItem.uid]).toEqual(mockNativeToken);
     });
 
     it("should handle setting token for non-existent project", () => {
@@ -325,9 +323,7 @@ describe("useDonationCart", () => {
         result.current.setSelectedToken("non-existent-id", mockToken);
       });
 
-      expect(result.current.selectedTokens["non-existent-id"]).toEqual(
-        mockToken
-      );
+      expect(result.current.selectedTokens["non-existent-id"]).toEqual(mockToken);
     });
   });
 
@@ -685,15 +681,10 @@ describe("useDonationCart", () => {
 
       act(() => {
         result.current.add(mockItem);
-        result.current.setAmount(
-          mockItem.uid,
-          "999999999999999999999999999999"
-        );
+        result.current.setAmount(mockItem.uid, "999999999999999999999999999999");
       });
 
-      expect(result.current.amounts[mockItem.uid]).toBe(
-        "999999999999999999999999999999"
-      );
+      expect(result.current.amounts[mockItem.uid]).toBe("999999999999999999999999999999");
     });
 
     it("should handle decimal amounts", () => {

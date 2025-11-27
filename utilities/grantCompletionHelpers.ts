@@ -1,8 +1,5 @@
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { retryUntilConditionMet } from "@/utilities/retries";
-import type {
-  IGrantResponse,
-  IProjectResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 /**
  * Factory function to create a check function for grant completion existence
@@ -19,9 +16,7 @@ export const createCheckIfCompletionExists = (
         if (!fetchedProject || !fetchedProject.grants) {
           return true;
         }
-        const foundGrant = fetchedProject.grants.find(
-          (g) => g.uid === grantUID
-        );
+        const foundGrant = fetchedProject.grants.find((g) => g.uid === grantUID);
         // If grant doesn't exist, consider completion as removed
         // Otherwise check if completion exists
         return !foundGrant?.completed;

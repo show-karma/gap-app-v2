@@ -1,9 +1,9 @@
 "use client";
-import { useOwnerStore, useProjectStore } from "@/store";
 import { ContactInfoSubscription } from "@/components/ContactInfoSubscription";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
+import { useOwnerStore, useProjectStore } from "@/store";
 
 const ContactInfoPage = () => {
   const isOwnerLoading = useOwnerStore((state) => state.isOwnerLoading);
@@ -12,10 +12,7 @@ const ContactInfoPage = () => {
   const isAuthorized = useProjectStore((state) => state.isProjectAdmin);
 
   const projectId = project?.uid;
-  const { data: contactsInfo, isLoading } = useContactInfo(
-    projectId,
-    isAuthorized
-  );
+  const { data: contactsInfo, isLoading } = useContactInfo(projectId, isAuthorized);
   const isAuthorizationLoading = isOwnerLoading || isPermissionLoading;
 
   return (
@@ -28,9 +25,7 @@ const ContactInfoPage = () => {
           <Spinner />
         </div>
       ) : (
-        <ContactInfoSubscription
-          contactInfo={contactsInfo?.[contactsInfo.length - 1]}
-        />
+        <ContactInfoSubscription contactInfo={contactsInfo?.[contactsInfo.length - 1]} />
       )}
     </div>
   );

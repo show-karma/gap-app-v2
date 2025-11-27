@@ -3,19 +3,17 @@
  * Tests theme switching functionality in both desktop and mobile contexts
  */
 
-import { screen, waitFor, within, fireEvent } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Navbar } from "@/src/components/navbar/navbar";
-import {
-  renderWithProviders,
-  createMockUsePrivy,
-  createMockPermissions,
-  createMockUseTheme,
-  updateMocks,
-  cleanupAfterEach
-} from "../utils/test-helpers";
-
 import { getAuthFixture } from "../fixtures/auth-fixtures";
+import {
+  cleanupAfterEach,
+  createMockPermissions,
+  createMockUsePrivy,
+  createMockUseTheme,
+  renderWithProviders,
+} from "../utils/test-helpers";
 
 describe("Theme Switching Integration Tests", () => {
   afterEach(() => {
@@ -186,17 +184,14 @@ describe("Theme Switching Integration Tests", () => {
         fireEvent.click(darkModeButton);
 
         // Simulate theme change by rerendering with dark theme
-        rerender(
-          <Navbar />,
-          {
-            mockUsePrivy: createMockUsePrivy(authFixture.authState),
-            mockPermissions: createMockPermissions(authFixture.permissions),
-            mockUseTheme: createMockUseTheme({
-              theme: "dark",
-              setTheme: mockSetTheme,
-            }),
-          }
-        );
+        rerender(<Navbar />, {
+          mockUsePrivy: createMockUsePrivy(authFixture.authState),
+          mockPermissions: createMockPermissions(authFixture.permissions),
+          mockUseTheme: createMockUseTheme({
+            theme: "dark",
+            setTheme: mockSetTheme,
+          }),
+        });
 
         // Reopen menu to verify updated state
         const updatedAvatar = screen.queryByTestId("user-avatar");
@@ -361,17 +356,14 @@ describe("Theme Switching Integration Tests", () => {
       fireEvent.click(darkModeButton);
 
       // Rerender with dark theme
-      rerender(
-        <Navbar />,
-        {
-          mockUsePrivy: createMockUsePrivy(authFixture.authState),
-          mockPermissions: createMockPermissions(authFixture.permissions),
-          mockUseTheme: createMockUseTheme({
-            theme: "dark",
-            setTheme: mockSetTheme,
-          }),
-        }
-      );
+      rerender(<Navbar />, {
+        mockUsePrivy: createMockUsePrivy(authFixture.authState),
+        mockPermissions: createMockPermissions(authFixture.permissions),
+        mockUseTheme: createMockUseTheme({
+          theme: "dark",
+          setTheme: mockSetTheme,
+        }),
+      });
 
       // Close and reopen drawer (use fireEvent for mobile drawer interactions)
       const closeButton = screen.getByLabelText(/close/i);
@@ -448,17 +440,14 @@ describe("Theme Switching Integration Tests", () => {
 
       // Rerender multiple times with dark theme
       for (let i = 0; i < 3; i++) {
-        rerender(
-          <Navbar />,
-          {
-            mockUsePrivy: createMockUsePrivy(authFixture.authState),
-            mockPermissions: createMockPermissions(authFixture.permissions),
-            mockUseTheme: createMockUseTheme({
-              theme: "dark",
-              setTheme: mockSetTheme,
-            }),
-          }
-        );
+        rerender(<Navbar />, {
+          mockUsePrivy: createMockUsePrivy(authFixture.authState),
+          mockPermissions: createMockPermissions(authFixture.permissions),
+          mockUseTheme: createMockUseTheme({
+            theme: "dark",
+            setTheme: mockSetTheme,
+          }),
+        });
       }
 
       // Theme should remain dark
@@ -600,10 +589,8 @@ describe("Theme Switching Integration Tests", () => {
       // Theme toggle should still be functional
       const drawer = screen.getByRole("dialog");
       const themeToggle =
-        within(drawer).queryByText("Dark mode") ||
-        within(drawer).queryByText("Light mode");
+        within(drawer).queryByText("Dark mode") || within(drawer).queryByText("Light mode");
       expect(themeToggle).toBeInTheDocument();
     });
   });
 });
-

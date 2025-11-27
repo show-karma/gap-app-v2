@@ -1,12 +1,12 @@
-import { FC, Fragment, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import JSConfetti from "js-confetti";
+import { type FC, Fragment, useEffect } from "react";
+import { TwitterIcon } from "@/components/Icons";
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { shareOnX } from "@/utilities/share/shareOnX";
-import { TwitterIcon } from "@/components/Icons";
 
 export const ShareDialog: FC = () => {
   const {
@@ -71,9 +71,7 @@ export const ShareDialog: FC = () => {
                       className="text-brand-darkblue dark:text-zinc-100 font-bold text-xl"
                       style={{
                         textAlign:
-                          modalShareSecondText === " " || !modalShareSecondText
-                            ? "center"
-                            : "left",
+                          modalShareSecondText === " " || !modalShareSecondText ? "center" : "left",
                       }}
                     >
                       {modalShareText}

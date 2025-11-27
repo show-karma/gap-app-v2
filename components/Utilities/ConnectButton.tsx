@@ -1,9 +1,9 @@
 "use client";
 
-import { useAccount, useChainId, useSwitchChain } from "wagmi";
-import { appNetwork } from "@/utilities/network";
 import { useState } from "react";
+import { useAccount, useChainId, useSwitchChain } from "wagmi";
 import { useAuth } from "@/hooks/useAuth";
+import { appNetwork } from "@/utilities/network";
 
 interface ConnectButtonCustomProps {
   children: (props: {
@@ -26,7 +26,6 @@ export function ConnectButtonCustom({ children }: ConnectButtonCustomProps) {
   const { switchChain } = useSwitchChain();
   const [isChainModalOpen, setIsChainModalOpen] = useState(false);
 
-
   // Format address for display
   const formatAddress = (addr: string) => {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
@@ -34,18 +33,17 @@ export function ConnectButtonCustom({ children }: ConnectButtonCustomProps) {
 
   const account = address
     ? {
-      address,
-      displayName: formatAddress(address),
-    }
+        address,
+        displayName: formatAddress(address),
+      }
     : undefined;
 
   const chain = currentChain
     ? {
-      id: currentChain.id,
-      name: currentChain.name,
-    }
+        id: currentChain.id,
+        name: currentChain.name,
+      }
     : undefined;
-
 
   const authenticationStatus = !ready
     ? "loading"
@@ -66,9 +64,11 @@ export function ConnectButtonCustom({ children }: ConnectButtonCustomProps) {
       {/* Chain Selector Modal */}
       {isChainModalOpen && isConnected && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black bg-opacity-50"
+          <button
+            type="button"
+            className="absolute inset-0 bg-black bg-opacity-50 border-none p-0 cursor-pointer"
             onClick={() => setIsChainModalOpen(false)}
+            aria-label="Close network modal"
           />
           <div className="relative bg-white dark:bg-zinc-800 rounded-lg p-6 max-w-sm w-full mx-4">
             <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
@@ -82,10 +82,11 @@ export function ConnectButtonCustom({ children }: ConnectButtonCustomProps) {
                     switchChain({ chainId: network.id });
                     setIsChainModalOpen(false);
                   }}
-                  className={`w-full text-left px-4 py-2 rounded-md transition-colors ${chainId === network.id
-                    ? "bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100"
-                    : "hover:bg-gray-100 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-200"
-                    }`}
+                  className={`w-full text-left px-4 py-2 rounded-md transition-colors ${
+                    chainId === network.id
+                      ? "bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100"
+                      : "hover:bg-gray-100 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-200"
+                  }`}
                 >
                   {network.name}
                 </button>

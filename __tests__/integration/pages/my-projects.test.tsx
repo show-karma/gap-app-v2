@@ -4,9 +4,7 @@ import Page from "@/app/my-projects/page";
 
 jest.mock("@/components/Pages/MyProjects", () => {
   return function MockMyProjects() {
-    return (
-      <div data-testid="mock-my-projects">Mocked MyProjects Component</div>
-    );
+    return <div data-testid="mock-my-projects">Mocked MyProjects Component</div>;
   };
 });
 describe("My Projects Page", () => {
@@ -14,9 +12,7 @@ describe("My Projects Page", () => {
     render(<Page />);
     const myProjectsComponent = screen.getByTestId("mock-my-projects");
     expect(myProjectsComponent).toBeInTheDocument();
-    expect(myProjectsComponent).toHaveTextContent(
-      "Mocked MyProjects Component"
-    );
+    expect(myProjectsComponent).toHaveTextContent("Mocked MyProjects Component");
   });
 
   //   check if the page is fetching data from the indexer

@@ -6,13 +6,11 @@
  */
 
 import {
+  exploreItems,
   forBuildersItems,
   forFundersItems,
-  exploreItems,
+  type MenuItem,
   resourcesItems,
-  MenuItem,
-  ForFundersItems,
-  ExploreItems,
 } from "@/src/components/navbar/menu-items";
 import { PAGES } from "@/utilities/pages";
 import { SOCIALS } from "@/utilities/socials";
@@ -45,18 +43,14 @@ describe("Menu Items Configuration", () => {
     });
 
     it('should contain "Create project" item with modal trigger', () => {
-      const createProjectItem = forBuildersItems.find(
-        (item) => item.title === "Create project"
-      );
+      const createProjectItem = forBuildersItems.find((item) => item.title === "Create project");
       expect(createProjectItem).toBeDefined();
       expect(createProjectItem?.openModal).toBe(true);
       expect(createProjectItem?.href).toBe(PAGES.MY_PROJECTS);
     });
 
     it('should contain "Find funding" item with anchor', () => {
-      const findFundingItem = forBuildersItems.find(
-        (item) => item.title === "Find funding"
-      );
+      const findFundingItem = forBuildersItems.find((item) => item.title === "Find funding");
       expect(findFundingItem).toBeDefined();
       expect(findFundingItem?.anchor).toBe("live-funding-opportunities");
       expect(findFundingItem?.href).toBe(PAGES.HOME);
@@ -153,26 +147,20 @@ describe("Menu Items Configuration", () => {
     });
 
     it('should contain "All projects" item', () => {
-      const allProjectsItem = exploreItems.projects.find(
-        (item) => item.title === "All projects"
-      );
+      const allProjectsItem = exploreItems.projects.find((item) => item.title === "All projects");
       expect(allProjectsItem).toBeDefined();
       expect(allProjectsItem?.href).toBe(PAGES.PROJECTS_EXPLORER);
     });
 
     it('should contain "Most Grants" item with query parameters', () => {
-      const mostGrantsItem = exploreItems.projects.find(
-        (item) => item.title === "Most Grants"
-      );
+      const mostGrantsItem = exploreItems.projects.find((item) => item.title === "Most Grants");
       expect(mostGrantsItem).toBeDefined();
       expect(mostGrantsItem?.href).toContain("sortBy=noOfGrants");
       expect(mostGrantsItem?.href).toContain("sortOrder=desc");
     });
 
     it('should contain "Most Active" item with query parameters', () => {
-      const mostActiveItem = exploreItems.projects.find(
-        (item) => item.title === "Most Active"
-      );
+      const mostActiveItem = exploreItems.projects.find((item) => item.title === "Most Active");
       expect(mostActiveItem).toBeDefined();
       expect(mostActiveItem?.href).toContain("sortBy=noOfGrantMilestones");
       expect(mostActiveItem?.href).toContain("sortOrder=desc");
@@ -187,9 +175,7 @@ describe("Menu Items Configuration", () => {
     });
 
     it('should contain "Funding Map" item', () => {
-      const fundingMapItem = exploreItems.communities.find(
-        (item) => item.title === "Funding Map"
-      );
+      const fundingMapItem = exploreItems.communities.find((item) => item.title === "Funding Map");
       expect(fundingMapItem).toBeDefined();
       expect(fundingMapItem?.href).toBe(PAGES.REGISTRY.ROOT);
     });
@@ -248,7 +234,7 @@ describe("Menu Items Configuration", () => {
   describe("No Duplicate Hrefs", () => {
     it("should not have duplicate hrefs in forBuildersItems", () => {
       const hrefs = forBuildersItems.map((item) => item.href);
-      const uniqueHrefs = new Set(hrefs);
+      const _uniqueHrefs = new Set(hrefs);
       // Note: We allow duplicate hrefs because "Create project" and other items might go to the same page
       // with different behaviors (modal vs navigation)
       expect(hrefs.length).toBeGreaterThan(0);
@@ -343,4 +329,3 @@ describe("Menu Items Configuration", () => {
     });
   });
 });
-

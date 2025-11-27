@@ -12,10 +12,7 @@ export function formatFarcasterLink(farcasterInput: string): string {
   }
 
   // If it includes warpcast.com or farcaster.xyz, just prepend https://
-  if (
-    farcasterInput.includes("warpcast.com") ||
-    farcasterInput.includes("farcaster.xyz")
-  ) {
+  if (farcasterInput.includes("warpcast.com") || farcasterInput.includes("farcaster.xyz")) {
     return `https://${farcasterInput}`;
   }
 

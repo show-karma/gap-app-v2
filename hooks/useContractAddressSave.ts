@@ -1,14 +1,14 @@
 import { useCallback, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
-import { NetworkAddressPair } from "@/components/Pages/Project/types";
+import type { NetworkAddressPair } from "@/components/Pages/Project/types";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { validateNetworkAddressPair } from "@/schemas/contractAddress";
 import { useProjectStore } from "@/store";
+import { getContractKey } from "@/utilities/contractKey";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
-import { validateNetworkAddressPair } from "@/schemas/contractAddress";
-import { getContractKey } from "@/utilities/contractKey";
 import { useContractAddressValidation } from "./useContractAddressValidation";
 
 interface UseContractAddressSaveProps {
@@ -16,32 +16,24 @@ interface UseContractAddressSaveProps {
   onSuccess?: () => void;
 }
 
-export const useContractAddressSave = ({
-  projectUid,
-  onSuccess,
-}: UseContractAddressSaveProps) => {
+export const useContractAddressSave = ({ projectUid, onSuccess }: UseContractAddressSaveProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { address } = useAccount();
   const { refreshProject } = useProjectStore();
-  const { validateAll, invalidContracts, setInvalidContracts } =
-    useContractAddressValidation({ projectUid });
+  const { validateAll, invalidContracts, setInvalidContracts } = useContractAddressValidation({
+    projectUid,
+  });
 
   const saveContracts = useCallback(
     async (pairs: NetworkAddressPair[]): Promise<boolean> => {
-      const formattedAddresses = pairs.map(
-        (pair) => `${pair.network}:${pair.address}`,
-      );
+      const formattedAddresses = pairs.map((pair) => `${pair.network}:${pair.address}`);
 
       try {
-        const [data, error] = await fetchData(
-          INDEXER.PROJECT.EXTERNAL.UPDATE(projectUid),
-          "PUT",
-          {
-            target: "network_addresses",
-            ids: formattedAddresses,
-          },
-        );
+        const [data, error] = await fetchData(INDEXER.PROJECT.EXTERNAL.UPDATE(projectUid), "PUT", {
+          target: "network_addresses",
+          ids: formattedAddresses,
+        });
 
         if (error) {
           setError(MESSAGES.PROJECT.LINK_CONTRACT_ADDRESSES.ERROR);
@@ -69,12 +61,12 @@ export const useContractAddressSave = ({
             ids: formattedAddresses,
             address,
           },
-          { error: MESSAGES.PROJECT.LINK_CONTRACT_ADDRESSES.ERROR },
+          { error: MESSAGES.PROJECT.LINK_CONTRACT_ADDRESSES.ERROR }
         );
         return false;
       }
     },
-    [projectUid, onSuccess, refreshProject, address],
+    [projectUid, onSuccess, refreshProject, address]
   );
 
   const save = useCallback(
@@ -86,18 +78,21 @@ export const useContractAddressSave = ({
       try {
         // Filter out empty pairs
         const validPairs = pairs.filter(
-          (pair) =>
-            pair?.network?.trim() !== "" && pair?.address?.trim() !== "",
+          (pair) => pair?.network?.trim() !== "" && pair?.address?.trim() !== ""
         );
 
         // First, validate address format with zod
-        const formatValidationErrors = new Map<string, { projectName: string; errorMessage: string }>();
+        const formatValidationErrors = new Map<
+          string,
+          { projectName: string; errorMessage: string }
+        >();
 
         validPairs.forEach((pair) => {
           const validation = validateNetworkAddressPair(pair.network, pair.address);
           if (!validation.isValid && validation.errors) {
             const contractKey = getContractKey(pair.network, pair.address);
-            const errorMessage = validation.errors.address || validation.errors.network || "Invalid format";
+            const errorMessage =
+              validation.errors.address || validation.errors.network || "Invalid format";
             formatValidationErrors.set(contractKey, {
               projectName: "Validation Failed",
               errorMessage,
@@ -125,7 +120,7 @@ export const useContractAddressSave = ({
         setIsLoading(false);
       }
     },
-    [validateAll, saveContracts, setInvalidContracts],
+    [validateAll, saveContracts, setInvalidContracts]
   );
 
   return {

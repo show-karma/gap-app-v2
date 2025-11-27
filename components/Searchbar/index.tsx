@@ -1,14 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
+import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
+import type { ISearchResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import debounce from "lodash.debounce";
 import { type FC, useState } from "react";
-
-import { SearchList } from "./SearchList";
-import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
-import { ISearchResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { SearchList } from "./SearchList";
 
 export const Searchbar: FC = () => {
   const [results, setResults] = useState<ISearchResponse>({
@@ -17,8 +15,7 @@ export const Searchbar: FC = () => {
   });
   const [isSearchListOpen, setIsSearchListOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isSearchListInteracting, setIsSearchListInteracting] =
-    useState<boolean>(false);
+  const [_isSearchListInteracting, setIsSearchListInteracting] = useState<boolean>(false);
 
   const closeSearchList = () => {
     setTimeout(() => {
@@ -40,10 +37,7 @@ export const Searchbar: FC = () => {
   }, 500);
 
   return (
-    <div
-      className="relative flex flex-row items-center gap-3 rounded-lg h-max w-full bg-zinc-100 px-4 max-2xl:gap-1 max-2xl:px-2 text-gray-600 dark:text-gray-200 dark:bg-zinc-800"
-      onBlur={() => closeSearchList()}
-    >
+    <div className="relative flex flex-row items-center gap-3 rounded-lg h-max w-full bg-zinc-100 px-4 max-2xl:gap-1 max-2xl:px-2 text-gray-600 dark:text-gray-200 dark:bg-zinc-800">
       <MagnifyingGlassIcon className="h-5 w-5" />
       <input
         type="text"
@@ -51,8 +45,7 @@ export const Searchbar: FC = () => {
         className="w-full min-w-[160px] bg-transparent placeholder:text-gray-400 px-1 py-2 text-gray-600 dark:text-gray-200 border-none border-b-zinc-800 outline-none focus:ring-0"
         onChange={(e) => debouncedSearch(e.target.value)}
         onFocus={() =>
-          [...results.projects, ...results.communities].length > 0 &&
-          setIsSearchListOpen(true)
+          [...results.projects, ...results.communities].length > 0 && setIsSearchListOpen(true)
         }
       />
       <SearchList

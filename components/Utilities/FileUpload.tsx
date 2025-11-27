@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useState, useRef, useEffect } from "react";
-import { cn } from "@/utilities/tailwind";
+import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { cn } from "@/utilities/tailwind";
 
 interface FileUploadProps {
   onFileSelect: (file: File) => void;
@@ -46,14 +46,14 @@ export function FileUpload({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [validationError, setValidationError] = useState<string | null>(null);
-  
+
   // Add ref for file input
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Clear file input when uploadedFile becomes null
   useEffect(() => {
     if (!uploadedFile && fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   }, [uploadedFile]);
 
@@ -62,106 +62,104 @@ export function FileUpload({
     return new Promise((resolve, reject) => {
       const img = new Image();
       const url = URL.createObjectURL(file);
-      
+
       img.onload = () => {
         URL.revokeObjectURL(url);
         resolve({
           width: img.naturalWidth,
-          height: img.naturalHeight
+          height: img.naturalHeight,
         });
       };
-      
+
       img.onerror = () => {
         URL.revokeObjectURL(url);
-        reject(new Error('Failed to load image'));
+        reject(new Error("Failed to load image"));
       };
-      
+
       img.src = url;
     });
   }, []);
 
   // S3 upload function
-  const uploadToS3 = useCallback(async (file: File) => {
-    try {
-      setIsUploading(true);
-      setUploadProgress(0);
-      setValidationError(null);
-      onUploadProgress?.(0);
+  const uploadToS3 = useCallback(
+    async (file: File) => {
+      try {
+        setIsUploading(true);
+        setUploadProgress(0);
+        setValidationError(null);
+        onUploadProgress?.(0);
 
-      // Get image dimensions for validation
-      const dimensions = await getImageDimensions(file);
-      
-      // Validate square aspect ratio
-      if (dimensions.width !== dimensions.height) {
-        const error = "Image must have a square aspect ratio (1:1)";
-        setValidationError(error);
-        toast.error(error);
-        onS3UploadError?.(error);
-        return;
-      }
+        // Get image dimensions for validation
+        const dimensions = await getImageDimensions(file);
 
-      // Step 1: Get presigned URL
-      setUploadProgress(10);
-      onUploadProgress?.(10);
-      
-      const [data, error] = await fetchData(
-        INDEXER.PROJECT.LOGOS.PRESIGNED_URL(),
-        'POST',
-        {
+        // Validate square aspect ratio
+        if (dimensions.width !== dimensions.height) {
+          const error = "Image must have a square aspect ratio (1:1)";
+          setValidationError(error);
+          toast.error(error);
+          onS3UploadError?.(error);
+          return;
+        }
+
+        // Step 1: Get presigned URL
+        setUploadProgress(10);
+        onUploadProgress?.(10);
+
+        const [data, error] = await fetchData(INDEXER.PROJECT.LOGOS.PRESIGNED_URL(), "POST", {
           fileName: file.name,
           fileType: file.type,
           fileSize: file.size,
           width: dimensions.width,
           height: dimensions.height,
+        });
+
+        if (error) {
+          throw new Error(error || "Failed to get upload URL");
         }
-      );
 
-      if (error) {
-        throw new Error(error || 'Failed to get upload URL');
+        const { uploadUrl, finalUrl, key } = data;
+
+        // Step 2: Upload directly to S3 with progress tracking
+        setUploadProgress(20);
+        onUploadProgress?.(20);
+
+        const uploadResponse = await fetch(uploadUrl, {
+          method: "PUT",
+          body: file,
+          headers: {
+            "Content-Type": file.type,
+          },
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error("Failed to upload file to S3");
+        }
+
+        // Complete upload
+        setUploadProgress(100);
+        onUploadProgress?.(100);
+
+        toast.success("Image uploaded successfully!");
+        onS3UploadComplete?.(finalUrl, key);
+      } catch (error: any) {
+        console.error("Upload error:", error);
+        const errorMessage = error.message || "Failed to upload image";
+        setValidationError(errorMessage);
+        toast.error(errorMessage);
+        onS3UploadError?.(errorMessage);
+      } finally {
+        setIsUploading(false);
+        setUploadProgress(0);
+        onUploadProgress?.(0);
       }
-
-      const { uploadUrl, finalUrl, key } = data;
-      
-      // Step 2: Upload directly to S3 with progress tracking
-      setUploadProgress(20);
-      onUploadProgress?.(20);
-
-      const uploadResponse = await fetch(uploadUrl, {
-        method: 'PUT',
-        body: file,
-        headers: {
-          'Content-Type': file.type,
-        },
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error('Failed to upload file to S3');
-      }
-
-      // Complete upload
-      setUploadProgress(100);
-      onUploadProgress?.(100);
-      
-      toast.success('Image uploaded successfully!');
-      onS3UploadComplete?.(finalUrl, key);
-
-    } catch (error: any) {
-      console.error('Upload error:', error);
-      const errorMessage = error.message || 'Failed to upload image';
-      setValidationError(errorMessage);
-      toast.error(errorMessage);
-      onS3UploadError?.(errorMessage);
-    } finally {
-      setIsUploading(false);
-      setUploadProgress(0);
-      onUploadProgress?.(0);
-    }
-  }, [getImageDimensions, onUploadProgress, onS3UploadComplete, onS3UploadError]);
+    },
+    [getImageDimensions, onUploadProgress, onS3UploadComplete, onS3UploadError]
+  );
 
   const handleFileSelection = useCallback(
     (file: File) => {
       setValidationError(null);
-      
+
       // File size validation (only if maxFileSize is provided)
       if (maxFileSize && file.size > maxFileSize) {
         const error = `File size must be less than ${(maxFileSize / 1024 / 1024).toFixed(1)}MB`;
@@ -172,12 +170,14 @@ export function FileUpload({
 
       // File type validation (only if allowedFileTypes is provided)
       if (allowedFileTypes && !allowedFileTypes.includes(file.type)) {
-        const fileTypeNames = allowedFileTypes.map(type => {
-          if (type === 'image/jpeg') return 'JPEG';
-          if (type === 'image/png') return 'PNG';
-          if (type === 'image/webp') return 'WebP';
-          return type.split('/')[1]?.toUpperCase() || type;
-        }).join(', ');
+        const fileTypeNames = allowedFileTypes
+          .map((type) => {
+            if (type === "image/jpeg") return "JPEG";
+            if (type === "image/png") return "PNG";
+            if (type === "image/webp") return "WebP";
+            return type.split("/")[1]?.toUpperCase() || type;
+          })
+          .join(", ");
         const error = `Only ${fileTypeNames} files are allowed`;
         setValidationError(error);
         toast.error(error);
@@ -221,7 +221,7 @@ export function FileUpload({
       setIsDragOver(false);
 
       const files = e.dataTransfer.files;
-      if (files && files[0]) {
+      if (files?.[0]) {
         handleFileSelection(files[0]);
       }
     },
@@ -231,7 +231,7 @@ export function FileUpload({
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = e.target.files;
-      if (files && files[0]) {
+      if (files?.[0]) {
         handleFileSelection(files[0]);
       }
     },
@@ -240,14 +240,15 @@ export function FileUpload({
 
   return (
     <div className={className}>
-      <div
+      <section
+        aria-label="File drop zone"
         className={cn(
           "flex justify-center rounded-xl border-2 border-dashed px-6 pb-6 pt-5 transition-all duration-200",
           isDragOver
             ? "border-indigo-400 bg-indigo-50 dark:bg-indigo-950/20 scale-105"
             : validationError
-            ? "border-red-400 bg-red-50 dark:bg-red-950/20"
-            : "border-gray-300 dark:border-zinc-700 hover:border-gray-400 dark:hover:border-zinc-600",
+              ? "border-red-400 bg-red-50 dark:bg-red-950/20"
+              : "border-gray-300 dark:border-zinc-700 hover:border-gray-400 dark:hover:border-zinc-600",
           (disabled || isUploading) && "opacity-50 pointer-events-none"
         )}
         onDragOver={handleDragOver}
@@ -261,8 +262,8 @@ export function FileUpload({
               isDragOver
                 ? "text-indigo-500 dark:text-indigo-400"
                 : validationError
-                ? "text-red-500 dark:text-red-400"
-                : "text-gray-400 dark:text-gray-500"
+                  ? "text-red-500 dark:text-red-400"
+                  : "text-gray-400 dark:text-gray-500"
             )}
             stroke="currentColor"
             fill="none"
@@ -285,11 +286,7 @@ export function FileUpload({
               )}
             >
               <span className="font-semibold">
-                {isUploading
-                  ? "Uploading..."
-                  : uploadedFile
-                  ? uploadedFile.name
-                  : "Upload a file"}
+                {isUploading ? "Uploading..." : uploadedFile ? uploadedFile.name : "Upload a file"}
               </span>
               <input
                 id="file-upload"
@@ -304,11 +301,11 @@ export function FileUpload({
             </label>
             {!uploadedFile && !isUploading && <p className="pl-1">or drag and drop</p>}
           </div>
-          
+
           {/* Progress Bar */}
           {isUploading && (
             <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700">
-              <div 
+              <div
                 className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                 style={{ width: `${uploadProgress}%` }}
               />
@@ -325,9 +322,7 @@ export function FileUpload({
           {/* Validation Error */}
           {validationError && (
             <div className="text-xs text-red-600 dark:text-red-400 space-y-2">
-              <p className="bg-red-50 dark:bg-red-950/20 px-3 py-2 rounded-lg">
-                {validationError}
-              </p>
+              <p className="bg-red-50 dark:bg-red-950/20 px-3 py-2 rounded-lg">{validationError}</p>
               {useS3Upload && (
                 <button
                   onClick={retryUpload}
@@ -340,7 +335,7 @@ export function FileUpload({
             </div>
           )}
         </div>
-      </div>
+      </section>
     </div>
   );
 }

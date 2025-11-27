@@ -4,7 +4,7 @@ import { PlusIcon } from "@heroicons/react/24/outline";
 import type { FC } from "react";
 import { ContractAddressItem } from "@/components/Pages/Project/ContractAddressItem";
 import { Button } from "@/components/ui/button";
-import type { NetworkAddressPair, InvalidInfo } from "./types";
+import type { InvalidInfo, NetworkAddressPair } from "./types";
 
 interface ContractAddressListProps {
   pairs: NetworkAddressPair[];

@@ -1,4 +1,3 @@
-import React from "react";
 import { render, screen } from "@testing-library/react";
 import { GrantCompleteButton } from "@/components/Pages/GrantMilestonesAndUpdates/GrantCompleteButton";
 import "@testing-library/jest-dom";
@@ -7,12 +6,7 @@ import "@testing-library/jest-dom";
 jest.mock(
   "@/components/Pages/GrantMilestonesAndUpdates/GrantCompleteButton/GrantCompletedButton",
   () => ({
-    GrantCompletedButton: ({
-      onClick,
-      disabled,
-      isRevoking,
-      isAuthorized,
-    }: any) => (
+    GrantCompletedButton: ({ onClick, disabled, isRevoking, isAuthorized }: any) => (
       <button
         onClick={onClick}
         disabled={disabled}
@@ -105,16 +99,10 @@ describe("GrantCompleteButton", () => {
         completed: { uid: "0xcompletion123" },
       };
 
-      render(
-        <GrantCompleteButton grant={completedGrant} project={mockProject} />
-      );
+      render(<GrantCompleteButton grant={completedGrant} project={mockProject} />);
 
-      expect(
-        screen.getByTestId("grant-completed-button")
-      ).toBeInTheDocument();
-      expect(
-        screen.queryByTestId("grant-not-completed-button")
-      ).not.toBeInTheDocument();
+      expect(screen.getByTestId("grant-completed-button")).toBeInTheDocument();
+      expect(screen.queryByTestId("grant-not-completed-button")).not.toBeInTheDocument();
     });
 
     it("should pass revokeCompletion from hook as onClick", () => {
@@ -123,9 +111,7 @@ describe("GrantCompleteButton", () => {
         completed: { uid: "0xcompletion123" },
       };
 
-      render(
-        <GrantCompleteButton grant={completedGrant} project={mockProject} />
-      );
+      render(<GrantCompleteButton grant={completedGrant} project={mockProject} />);
 
       const button = screen.getByTestId("grant-completed-button");
       expect(button).toBeInTheDocument();
@@ -145,9 +131,7 @@ describe("GrantCompleteButton", () => {
         completed: { uid: "0xcompletion123" },
       };
 
-      render(
-        <GrantCompleteButton grant={completedGrant} project={mockProject} />
-      );
+      render(<GrantCompleteButton grant={completedGrant} project={mockProject} />);
 
       const button = screen.getByTestId("grant-completed-button");
       expect(button).toBeDisabled();
@@ -163,9 +147,7 @@ describe("GrantCompleteButton", () => {
         completed: { uid: "0xcompletion123" },
       };
 
-      render(
-        <GrantCompleteButton grant={completedGrant} project={mockProject} />
-      );
+      render(<GrantCompleteButton grant={completedGrant} project={mockProject} />);
 
       const button = screen.getByTestId("grant-completed-button");
       expect(button).toBeDisabled();
@@ -178,9 +160,7 @@ describe("GrantCompleteButton", () => {
         completed: { uid: "0xcompletion123" },
       };
 
-      render(
-        <GrantCompleteButton grant={completedGrant} project={mockProject} />
-      );
+      render(<GrantCompleteButton grant={completedGrant} project={mockProject} />);
 
       const button = screen.getByTestId("grant-completed-button");
       expect(button).toHaveAttribute("data-is-revoking", "true");
@@ -193,9 +173,7 @@ describe("GrantCompleteButton", () => {
         completed: { uid: "0xcompletion123" },
       };
 
-      render(
-        <GrantCompleteButton grant={completedGrant} project={mockProject} />
-      );
+      render(<GrantCompleteButton grant={completedGrant} project={mockProject} />);
 
       const button = screen.getByTestId("grant-completed-button");
       expect(button).toHaveAttribute("data-is-authorized", "true");
@@ -209,9 +187,7 @@ describe("GrantCompleteButton", () => {
         completed: { uid: "0xcompletion123" },
       };
 
-      render(
-        <GrantCompleteButton grant={completedGrant} project={mockProject} />
-      );
+      render(<GrantCompleteButton grant={completedGrant} project={mockProject} />);
 
       const button = screen.getByTestId("grant-completed-button");
       expect(button).not.toBeDisabled();
@@ -226,16 +202,10 @@ describe("GrantCompleteButton", () => {
         completed: null,
       };
 
-      render(
-        <GrantCompleteButton grant={notCompletedGrant} project={mockProject} />
-      );
+      render(<GrantCompleteButton grant={notCompletedGrant} project={mockProject} />);
 
-      expect(
-        screen.getByTestId("grant-not-completed-button")
-      ).toBeInTheDocument();
-      expect(
-        screen.queryByTestId("grant-completed-button")
-      ).not.toBeInTheDocument();
+      expect(screen.getByTestId("grant-not-completed-button")).toBeInTheDocument();
+      expect(screen.queryByTestId("grant-completed-button")).not.toBeInTheDocument();
     });
 
     it("should show GrantNotCompletedButton when grant.completed is undefined", () => {
@@ -245,13 +215,9 @@ describe("GrantCompleteButton", () => {
         completed: undefined,
       };
 
-      render(
-        <GrantCompleteButton grant={notCompletedGrant} project={mockProject} />
-      );
+      render(<GrantCompleteButton grant={notCompletedGrant} project={mockProject} />);
 
-      expect(
-        screen.getByTestId("grant-not-completed-button")
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("grant-not-completed-button")).toBeInTheDocument();
     });
 
     it("should show GrantNotCompletedButton when grant.completed is false", () => {
@@ -261,13 +227,9 @@ describe("GrantCompleteButton", () => {
         completed: false,
       };
 
-      render(
-        <GrantCompleteButton grant={notCompletedGrant} project={mockProject} />
-      );
+      render(<GrantCompleteButton grant={notCompletedGrant} project={mockProject} />);
 
-      expect(
-        screen.getByTestId("grant-not-completed-button")
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("grant-not-completed-button")).toBeInTheDocument();
     });
 
     it("should pass project prop correctly", () => {
@@ -277,9 +239,7 @@ describe("GrantCompleteButton", () => {
         completed: null,
       };
 
-      render(
-        <GrantCompleteButton grant={notCompletedGrant} project={mockProject} />
-      );
+      render(<GrantCompleteButton grant={notCompletedGrant} project={mockProject} />);
 
       const link = screen.getByTestId("grant-not-completed-button");
       expect(link).toHaveAttribute(
@@ -296,9 +256,7 @@ describe("GrantCompleteButton", () => {
         completed: null,
       };
 
-      render(
-        <GrantCompleteButton grant={customGrant} project={mockProject} />
-      );
+      render(<GrantCompleteButton grant={customGrant} project={mockProject} />);
 
       const link = screen.getByTestId("grant-not-completed-button");
       expect(link.getAttribute("href")).toContain("custom-grant-789");
@@ -311,9 +269,7 @@ describe("GrantCompleteButton", () => {
         completed: null,
       };
 
-      render(
-        <GrantCompleteButton grant={notCompletedGrant} project={mockProject} />
-      );
+      render(<GrantCompleteButton grant={notCompletedGrant} project={mockProject} />);
 
       const link = screen.getByTestId("grant-not-completed-button");
       expect(link).toHaveAttribute("data-text", "Mark as Complete");
@@ -355,12 +311,8 @@ describe("GrantCompleteButton", () => {
       );
 
       expect(container.firstChild).toBeNull();
-      expect(
-        screen.queryByTestId("grant-completed-button")
-      ).not.toBeInTheDocument();
-      expect(
-        screen.queryByTestId("grant-not-completed-button")
-      ).not.toBeInTheDocument();
+      expect(screen.queryByTestId("grant-completed-button")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("grant-not-completed-button")).not.toBeInTheDocument();
     });
 
     it("should return null when project is missing", () => {
@@ -385,10 +337,7 @@ describe("GrantCompleteButton", () => {
       };
 
       const { container } = render(
-        <GrantCompleteButton
-          grant={notCompletedGrant}
-          project={undefined as any}
-        />
+        <GrantCompleteButton grant={notCompletedGrant} project={undefined as any} />
       );
 
       expect(container.firstChild).toBeNull();
@@ -403,9 +352,7 @@ describe("GrantCompleteButton", () => {
         completed: { uid: "0xcompletion123" },
       };
 
-      render(
-        <GrantCompleteButton grant={completedGrant} project={mockProject} />
-      );
+      render(<GrantCompleteButton grant={completedGrant} project={mockProject} />);
 
       const button = screen.getByTestId("grant-completed-button");
       expect(button).toHaveAttribute("data-is-authorized", "true");
@@ -418,9 +365,7 @@ describe("GrantCompleteButton", () => {
         completed: { uid: "0xcompletion123" },
       };
 
-      render(
-        <GrantCompleteButton grant={completedGrant} project={mockProject} />
-      );
+      render(<GrantCompleteButton grant={completedGrant} project={mockProject} />);
 
       const button = screen.getByTestId("grant-completed-button");
       expect(button).toHaveAttribute("data-is-authorized", "true");
@@ -433,9 +378,7 @@ describe("GrantCompleteButton", () => {
         completed: { uid: "0xcompletion123" },
       };
 
-      render(
-        <GrantCompleteButton grant={completedGrant} project={mockProject} />
-      );
+      render(<GrantCompleteButton grant={completedGrant} project={mockProject} />);
 
       const button = screen.getByTestId("grant-completed-button");
       expect(button).toHaveAttribute("data-is-authorized", "true");
@@ -451,9 +394,7 @@ describe("GrantCompleteButton", () => {
         completed: { uid: "0xcompletion123" },
       };
 
-      render(
-        <GrantCompleteButton grant={completedGrant} project={mockProject} />
-      );
+      render(<GrantCompleteButton grant={completedGrant} project={mockProject} />);
 
       const button = screen.getByTestId("grant-completed-button");
       expect(button).toHaveAttribute("data-is-authorized", "true");
@@ -469,9 +410,7 @@ describe("GrantCompleteButton", () => {
         completed: { uid: "0xcompletion123" },
       };
 
-      render(
-        <GrantCompleteButton grant={completedGrant} project={mockProject} />
-      );
+      render(<GrantCompleteButton grant={completedGrant} project={mockProject} />);
 
       const button = screen.getByTestId("grant-completed-button");
       expect(button).toHaveAttribute("data-is-authorized", "true");
@@ -487,9 +426,7 @@ describe("GrantCompleteButton", () => {
         completed: { uid: "0xcompletion123" },
       };
 
-      render(
-        <GrantCompleteButton grant={completedGrant} project={mockProject} />
-      );
+      render(<GrantCompleteButton grant={completedGrant} project={mockProject} />);
 
       const button = screen.getByTestId("grant-completed-button");
       expect(button).toHaveAttribute("data-is-authorized", "true");
@@ -505,9 +442,7 @@ describe("GrantCompleteButton", () => {
         completed: { uid: "0xcompletion123" },
       };
 
-      render(
-        <GrantCompleteButton grant={completedGrant} project={mockProject} />
-      );
+      render(<GrantCompleteButton grant={completedGrant} project={mockProject} />);
 
       const button = screen.getByTestId("grant-completed-button");
       expect(button).toHaveAttribute("data-is-authorized", "false");
@@ -521,9 +456,7 @@ describe("GrantCompleteButton", () => {
         completed: { uid: "0xcompletion123" },
       };
 
-      render(
-        <GrantCompleteButton grant={completedGrant} project={mockProject} />
-      );
+      render(<GrantCompleteButton grant={completedGrant} project={mockProject} />);
 
       const { useGrantCompletionRevoke } = require("@/hooks/useGrantCompletionRevoke");
       expect(useGrantCompletionRevoke).toHaveBeenCalledWith({
@@ -538,9 +471,7 @@ describe("GrantCompleteButton", () => {
         completed: { uid: "0xcompletion123" },
       };
 
-      render(
-        <GrantCompleteButton grant={completedGrant} project={mockProject} />
-      );
+      render(<GrantCompleteButton grant={completedGrant} project={mockProject} />);
 
       // The onClick handler should be the mockRevokeCompletion
       // We verify this by checking the hook was called
@@ -554,9 +485,7 @@ describe("GrantCompleteButton", () => {
         completed: { uid: "0xcompletion123" },
       };
 
-      render(
-        <GrantCompleteButton grant={completedGrant} project={mockProject} />
-      );
+      render(<GrantCompleteButton grant={completedGrant} project={mockProject} />);
 
       const button = screen.getByTestId("grant-completed-button");
       expect(button).toHaveAttribute("data-is-revoking", "true");
@@ -577,9 +506,7 @@ describe("GrantCompleteButton", () => {
       expect(button).toHaveAttribute("data-is-revoking", "false");
 
       mockIsRevoking.mockReturnValue(true);
-      rerender(
-        <GrantCompleteButton grant={completedGrant} project={mockProject} />
-      );
+      rerender(<GrantCompleteButton grant={completedGrant} project={mockProject} />);
 
       button = screen.getByTestId("grant-completed-button");
       expect(button).toHaveAttribute("data-is-revoking", "true");
@@ -593,17 +520,10 @@ describe("GrantCompleteButton", () => {
         completed: {},
       };
 
-      render(
-        <GrantCompleteButton
-          grant={grantWithEmptyCompletion}
-          project={mockProject}
-        />
-      );
+      render(<GrantCompleteButton grant={grantWithEmptyCompletion} project={mockProject} />);
 
       // Empty object is truthy, so should show completed button
-      expect(
-        screen.getByTestId("grant-completed-button")
-      ).toBeInTheDocument();
+      expect(screen.getByTestId("grant-completed-button")).toBeInTheDocument();
     });
 
     it("should handle multiple authorization flags being true", () => {
@@ -616,13 +536,10 @@ describe("GrantCompleteButton", () => {
         completed: { uid: "0xcompletion123" },
       };
 
-      render(
-        <GrantCompleteButton grant={completedGrant} project={mockProject} />
-      );
+      render(<GrantCompleteButton grant={completedGrant} project={mockProject} />);
 
       const button = screen.getByTestId("grant-completed-button");
       expect(button).toHaveAttribute("data-is-authorized", "true");
     });
   });
 });
-

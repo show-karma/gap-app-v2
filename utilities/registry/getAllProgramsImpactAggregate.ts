@@ -1,5 +1,5 @@
 import { errorManager } from "@/components/Utilities/errorManager";
-import { ImpactAggregateData } from "@/types/programs";
+import type { ImpactAggregateData } from "@/types/programs";
 import fetchData from "../fetchData";
 import { INDEXER } from "../indexer";
 
@@ -12,7 +12,7 @@ export async function getAllProgramsImpactAggregate(communityId: string) {
       throw error;
     }
 
-    let existingCategories = (data as ImpactAggregateData[]).map((item) => {
+    const existingCategories = (data as ImpactAggregateData[]).map((item) => {
       return {
         categoryName: item.categoryName,
         impacts: item.impacts || [],

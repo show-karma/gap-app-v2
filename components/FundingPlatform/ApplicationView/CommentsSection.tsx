@@ -1,9 +1,8 @@
 "use client";
 
-import { FC } from "react";
-import { ChatBubbleLeftIcon } from "@heroicons/react/24/outline";
+import type { FC } from "react";
+import type { IApplicationVersion } from "@/types/funding-platform";
 import CommentsTimeline from "./CommentsTimeline";
-import { IApplicationVersion } from "@/types/funding-platform";
 
 interface CommentsSectionProps {
   applicationId: string;

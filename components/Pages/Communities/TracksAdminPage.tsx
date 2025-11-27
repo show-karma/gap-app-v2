@@ -1,43 +1,34 @@
 "use client";
-import { useState, useEffect, Fragment } from "react";
-import { useAuth } from "@/hooks/useAuth";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
-import { MESSAGES } from "@/utilities/messages";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+
+import { ArchiveBoxIcon, PencilIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { ChevronLeftIcon } from "@heroicons/react/24/solid";
 import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
-import { errorManager } from "@/components/Utilities/errorManager";
+import { CreateTrackModal } from "@/components/Pages/Communities/Tracks/CreateTrackModal";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useAuth } from "@/hooks/useAuth";
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useCommunityPrograms } from "@/hooks/usePrograms";
 import {
-  PlusIcon,
-  PencilIcon,
-  ArchiveBoxIcon,
-  TagIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/outline";
-import toast from "react-hot-toast";
-import { cn } from "@/utilities/tailwind";
-import { Dialog, Transition } from "@headlessui/react";
-import { INDEXER } from "@/utilities/indexer";
-import {
-  useTracksForCommunity,
-  useTracksForProgram,
-  useCreateTrack,
-  useUpdateTrack,
   useArchiveTrack,
   useAssignTracksToProgram,
-  useRemoveTrackFromProgram,
+  useCreateTrack,
   useRemoveTracksFromProgramBatch,
+  useTracksForCommunity,
+  useTracksForProgram,
+  useUpdateTrack,
 } from "@/hooks/useTracks";
-import { Track } from "@/services/tracks";
-import { useCommunityPrograms } from "@/hooks/usePrograms";
-import { CreateTrackModal } from "@/components/Pages/Communities/Tracks/CreateTrackModal";
-import { EditTrackModal } from "./Tracks/EditTrackModal";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import type { Track } from "@/services/tracks";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
-import { ChevronLeftIcon } from "@heroicons/react/24/solid";
+import { cn } from "@/utilities/tailwind";
+import { EditTrackModal } from "./Tracks/EditTrackModal";
 
 export const TracksAdminPage = ({
   communityId,
@@ -56,9 +47,9 @@ export const TracksAdminPage = ({
   const [selectedTrackIds, setSelectedTrackIds] = useState<string[]>([]);
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
   const [showEditModal, setShowEditModal] = useState<boolean>(false);
-  const [showAssignModal, setShowAssignModal] = useState<boolean>(false);
+  const [_showAssignModal, _setShowAssignModal] = useState<boolean>(false);
 
-  const signer = useSigner();
+  const _signer = useSigner();
 
   // Check if user is admin of this community
   const { isCommunityAdmin: isAdmin, isLoading: loading } = useIsCommunityAdmin(
@@ -80,16 +71,15 @@ export const TracksAdminPage = ({
   } = useTracksForProgram(selectedProgram);
 
   // React Query hook for community programs
-  const { data: programs = [], isLoading: isLoadingPrograms } =
-    useCommunityPrograms(communityId);
+  const { data: programs = [], isLoading: isLoadingPrograms } = useCommunityPrograms(communityId);
 
   const { mutate: createTrack, isPending: isCreatingTrack } = useCreateTrack();
-  const { mutate: updateTrack, isPending: isUpdatingTrack } = useUpdateTrack(
+  const { mutate: updateTrack, isPending: isUpdatingTrack } = useUpdateTrack(community?.uid || "");
+  const { mutate: archiveTrack } = useArchiveTrack(community?.uid || "");
+  const { mutate: assignTracksToProgram, isPending: isAssigningTracks } = useAssignTracksToProgram(
+    selectedProgram,
     community?.uid || ""
   );
-  const { mutate: archiveTrack } = useArchiveTrack(community?.uid || "");
-  const { mutate: assignTracksToProgram, isPending: isAssigningTracks } =
-    useAssignTracksToProgram(selectedProgram, community?.uid || "");
   const { mutate: removeTracksFromProgram } = useRemoveTracksFromProgramBatch(
     selectedProgram,
     community?.uid || ""
@@ -215,11 +205,7 @@ export const TracksAdminPage = ({
   return (
     <div className="max-w-full w-full">
       <div className="w-full flex flex-row items-center justify-between max-w-4xl mb-4">
-        <Link
-          href={PAGES.ADMIN.ROOT(
-            community?.details?.data?.slug || (community?.uid as string)
-          )}
-        >
+        <Link href={PAGES.ADMIN.ROOT(community?.details?.data?.slug || (community?.uid as string))}>
           <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-transparent text-black dark:text-white dark:bg-transparent hover:bg-transparent rounded-md transition-all ease-in-out duration-200">
             <ChevronLeftIcon className="h-5 w-5" />
             Return to admin page
@@ -227,9 +213,7 @@ export const TracksAdminPage = ({
         </Link>
       </div>
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Tracks Management
-        </h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Tracks Management</h1>
         <Button onClick={() => setShowCreateModal(true)}>
           <PlusIcon className="w-5 h-5 mr-2" />
           Create Track
@@ -259,9 +243,7 @@ export const TracksAdminPage = ({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Tracks List */}
         <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-zinc-800">
-          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
-            All Tracks
-          </h2>
+          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">All Tracks</h2>
 
           {isLoadingTracks ? (
             <div className="flex justify-center py-8">
@@ -279,9 +261,7 @@ export const TracksAdminPage = ({
                   className="flex items-center justify-between p-4 bg-gray-50 dark:bg-zinc-800 rounded-lg"
                 >
                   <div>
-                    <h3 className="font-medium text-gray-900 dark:text-white">
-                      {track.name}
-                    </h3>
+                    <h3 className="font-medium text-gray-900 dark:text-white">{track.name}</h3>
                     {track.description && (
                       <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                         {track.description}
@@ -354,18 +334,17 @@ export const TracksAdminPage = ({
                   <Spinner />
                 </div>
               ) : tracks.length === 0 && programTracks.length === 0 ? (
-                <p className="text-gray-500 dark:text-gray-400">
-                  No tracks available to assign.
-                </p>
+                <p className="text-gray-500 dark:text-gray-400">No tracks available to assign.</p>
               ) : (
                 <>
                   <div className="space-y-2 max-h-80 overflow-y-auto p-2 border border-gray-200 dark:border-zinc-800 rounded-lg mb-4">
                     {/* All regular tracks from the community */}
                     {tracks.map((track) => (
-                      <div
+                      <button
+                        type="button"
                         key={track.id}
                         className={cn(
-                          "flex items-center p-2 rounded-md",
+                          "flex items-center p-2 rounded-md w-full text-left",
                           selectedTrackIds.includes(track.id)
                             ? "border border-primary-500"
                             : "hover:bg-gray-100 dark:hover:bg-zinc-800 border border-transparent",
@@ -396,18 +375,13 @@ export const TracksAdminPage = ({
                             </svg>
                           )}
                         </div>
-                        <span className="text-gray-900 dark:text-white">
-                          {track.name}
-                        </span>
-                      </div>
+                        <span className="text-gray-900 dark:text-white">{track.name}</span>
+                      </button>
                     ))}
 
                     {/* Show tracks that are in programTracks but not in tracks */}
                     {programTracks
-                      .filter(
-                        (pt: Track) =>
-                          !tracks.some((t: Track) => t.id === pt.id)
-                      )
+                      .filter((pt: Track) => !tracks.some((t: Track) => t.id === pt.id))
                       .map((track: Track) => (
                         <div
                           key={track.id}
@@ -448,9 +422,7 @@ export const TracksAdminPage = ({
                     disabled={isAssigningTracks}
                     className="w-full"
                   >
-                    {isAssigningTracks ? (
-                      <Spinner className="w-4 h-4 mr-2" />
-                    ) : null}
+                    {isAssigningTracks ? <Spinner className="w-4 h-4 mr-2" /> : null}
                     Save Track Assignments
                   </Button>
                 </>

@@ -1,8 +1,8 @@
 "use client";
 
-import { useFaucetConfig } from "@/hooks/useFaucetAdmin";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useFaucetConfig } from "@/hooks/useFaucetAdmin";
 
 export function GlobalConfigForm() {
   const { config, isLoading, updateGlobalConfig } = useFaucetConfig();
@@ -45,14 +45,20 @@ export function GlobalConfigForm() {
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label
+            htmlFor="global-config-rate-limit"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
             Default Rate Limit (hours)
           </label>
           <input
+            id="global-config-rate-limit"
             type="number"
             step="0.0001"
             value={formData.defaultRateLimitHours}
-            onChange={(e) => setFormData({ ...formData, defaultRateLimitHours: parseFloat(e.target.value) })}
+            onChange={(e) =>
+              setFormData({ ...formData, defaultRateLimitHours: parseFloat(e.target.value) })
+            }
             className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900 text-gray-900 dark:text-white"
             required
           />
@@ -62,13 +68,19 @@ export function GlobalConfigForm() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label
+            htmlFor="global-config-buffer"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
             Default Buffer Percentage (%)
           </label>
           <input
+            id="global-config-buffer"
             type="number"
             value={formData.defaultBufferPercentage}
-            onChange={(e) => setFormData({ ...formData, defaultBufferPercentage: parseInt(e.target.value) })}
+            onChange={(e) =>
+              setFormData({ ...formData, defaultBufferPercentage: parseInt(e.target.value, 10) })
+            }
             className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900 text-gray-900 dark:text-white"
             required
           />
@@ -78,13 +90,19 @@ export function GlobalConfigForm() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label
+            htmlFor="global-config-max-chains"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+          >
             Max Chains Per Request
           </label>
           <input
+            id="global-config-max-chains"
             type="number"
             value={formData.maxChainsPerRequest}
-            onChange={(e) => setFormData({ ...formData, maxChainsPerRequest: parseInt(e.target.value) })}
+            onChange={(e) =>
+              setFormData({ ...formData, maxChainsPerRequest: parseInt(e.target.value, 10) })
+            }
             className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-900 text-gray-900 dark:text-white"
             required
           />
@@ -101,7 +119,10 @@ export function GlobalConfigForm() {
             onChange={(e) => setFormData({ ...formData, globalEnabled: e.target.checked })}
             className="rounded border-gray-300 dark:border-zinc-600"
           />
-          <label htmlFor="globalEnabled" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label
+            htmlFor="globalEnabled"
+            className="text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
             Enable faucet globally
           </label>
         </div>
@@ -109,7 +130,8 @@ export function GlobalConfigForm() {
         {!formData.globalEnabled && (
           <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
             <p className="text-sm text-yellow-800 dark:text-yellow-200">
-              Warning: Disabling the faucet globally will prevent all users from claiming funds on any chain.
+              Warning: Disabling the faucet globally will prevent all users from claiming funds on
+              any chain.
             </p>
           </div>
         )}

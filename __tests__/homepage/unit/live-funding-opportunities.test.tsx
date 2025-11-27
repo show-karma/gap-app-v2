@@ -1,7 +1,7 @@
 /**
  * LiveFundingOpportunities Component Tests
  * Tests the live funding opportunities section with async data loading
- * 
+ *
  * Target: 24 tests
  * - Loading States (5)
  * - Data Display (7)
@@ -11,12 +11,7 @@
  */
 
 import { LiveFundingOpportunities } from "@/src/features/homepage/components/live-funding-opportunities";
-import {
-  renderWithProviders,
-  screen,
-  within,
-  waitFor,
-} from "../utils/test-helpers";
+import { renderWithProviders, screen, within } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
 import { mockFundingOpportunities } from "../fixtures/funding-opportunities";
 
@@ -36,9 +31,7 @@ jest.mock("@/utilities/pages", () => ({
 
 // Mock LiveFundingOpportunitiesSkeleton
 jest.mock("@/src/features/homepage/components/live-funding-opportunities-skeleton", () => ({
-  LiveFundingOpportunitiesSkeleton: () => (
-    <div data-testid="funding-skeleton">Loading...</div>
-  ),
+  LiveFundingOpportunitiesSkeleton: () => <div data-testid="funding-skeleton">Loading...</div>,
 }));
 
 // Mock LiveFundingOpportunitiesCarousel
@@ -226,9 +219,9 @@ describe("LiveFundingOpportunities Component", () => {
       renderWithProviders(await LiveFundingOpportunities());
 
       const cards = screen.getAllByTestId(/^funding-card-/);
-      
+
       // Each card should have a unique testid
-      const testIds = cards.map(card => card.getAttribute("data-testid"));
+      const testIds = cards.map((card) => card.getAttribute("data-testid"));
       const uniqueTestIds = new Set(testIds);
       expect(uniqueTestIds.size).toBe(cards.length);
       expect(cards.length).toBe(testPrograms.length);
@@ -241,7 +234,7 @@ describe("LiveFundingOpportunities Component", () => {
       renderWithProviders(await LiveFundingOpportunities());
 
       const cards = screen.getAllByTestId(/^funding-card-/);
-      
+
       // First card should contain first program's title
       const firstTitle = testPrograms[0].metadata?.title || testPrograms[0].name;
       expect(within(cards[0]).getByText(firstTitle)).toBeInTheDocument();
@@ -253,7 +246,7 @@ describe("LiveFundingOpportunities Component", () => {
 
       const { unmount } = renderWithProviders(await LiveFundingOpportunities());
       expect(screen.getByTestId("funding-carousel")).toBeInTheDocument();
-      
+
       unmount();
 
       // Test with many programs
@@ -273,7 +266,7 @@ describe("LiveFundingOpportunities Component", () => {
       const uid = `${firstProgram.programId}-${firstProgram.chainID}`;
       const card = screen.getByTestId(`funding-card-${uid}`);
       const title = firstProgram.metadata?.title || firstProgram.name;
-      
+
       expect(card).toBeInTheDocument();
       expect(within(card).getByText(title)).toBeInTheDocument();
     });
@@ -311,7 +304,7 @@ describe("LiveFundingOpportunities Component", () => {
         const title = program.metadata?.title || program.name;
         const description = program.metadata?.description || "";
         const fundingAmount = program.metadata?.programBudget || "";
-        
+
         // Verify all content is present
         expect(within(card).getByText(title)).toBeInTheDocument();
         if (description) {
@@ -366,4 +359,3 @@ describe("LiveFundingOpportunities Component", () => {
     });
   });
 });
-

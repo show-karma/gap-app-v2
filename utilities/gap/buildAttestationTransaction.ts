@@ -1,12 +1,13 @@
 import {
-  Project,
-  ProjectDetails,
+  GAP,
+  type IProjectDetails,
   MemberOf,
   nullRef,
-  type IProjectDetails,
-    GAP
+  Project,
+  ProjectDetails,
 } from "@show-karma/karma-gap-sdk";
 import type { Hex } from "viem";
+
 // import type { GAP } from "@show-karma/karma-gap-sdk/core/class/GAP";
 
 interface ProjectFormData {
@@ -88,7 +89,7 @@ export async function buildProjectAttestationTransaction(
         { type: "pitchDeck", url: projectData.pitchDeck || "" },
         { type: "demoVideo", url: projectData.demoVideo || "" },
         { type: "farcaster", url: projectData.farcaster || "" },
-        ...(projectData.customLinks?.map(link => ({
+        ...(projectData.customLinks?.map((link) => ({
           type: "custom" as const,
           name: link.name,
           url: link.url,
@@ -125,7 +126,7 @@ export async function buildProjectAttestationTransaction(
 
     // Populate the transaction without executing it
     const populatedTx = await contract.multiSequentialAttest.populateTransaction(
-      payload.map((p: { payload: any; }[]) => p[1].payload)
+      payload.map((p: { payload: any }[]) => p[1].payload)
     );
 
     // Get the contract address

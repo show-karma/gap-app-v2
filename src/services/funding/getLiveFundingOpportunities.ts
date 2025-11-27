@@ -1,7 +1,7 @@
+import { errorManager } from "@/components/Utilities/errorManager";
+import type { FundingProgram } from "@/services/fundingPlatformService";
 import { fundingProgramsAPI } from "@/services/fundingPlatformService";
 import { transformLiveFundingOpportunities } from "@/utilities/funding-programs";
-import type { FundingProgram } from "@/services/fundingPlatformService";
-import { errorManager } from "@/components/Utilities/errorManager";
 
 /**
  * Application service to fetch live funding opportunities
@@ -22,4 +22,3 @@ export async function getLiveFundingOpportunities(): Promise<FundingProgram[]> {
     throw error;
   }
 }
-

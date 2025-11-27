@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useCallback, useMemo, useState } from "react";
+import type React from "react";
+import { useCallback, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { RoleManagementTab } from "@/components/Generic/RoleManagement/RoleManagementTab";
 import type {
@@ -50,8 +51,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
   communityId,
   readOnly = false,
 }) => {
-  const { isCommunityAdmin, isLoading: isLoadingAdmin } =
-    useIsCommunityAdmin(communityId);
+  const { isCommunityAdmin, isLoading: isLoadingAdmin } = useIsCommunityAdmin(communityId);
   const [selectedRole, setSelectedRole] = useState<ReviewerRole>("program");
 
   // Fetch program reviewers with mutations
@@ -131,7 +131,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
         },
       },
     ],
-    [],
+    []
   );
 
   // Configuration for program reviewer role
@@ -143,7 +143,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
       resource: `program_${programId}_${chainID}`,
       canAddMultiple: true,
     }),
-    [commonFields, programId, chainID],
+    [commonFields, programId, chainID]
   );
 
   // Configuration for milestone reviewer role
@@ -155,7 +155,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
       resource: `program_${programId}_${chainID}`,
       canAddMultiple: true,
     }),
-    [commonFields, programId, chainID],
+    [commonFields, programId, chainID]
   );
 
   // Role options for the role selector
@@ -172,34 +172,30 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
         config: milestoneReviewerConfig,
       },
     ],
-    [programReviewerConfig, milestoneReviewerConfig],
+    [programReviewerConfig, milestoneReviewerConfig]
   );
 
   // Merge reviewers from both types with role information
   const members: ReviewerMemberWithRole[] = useMemo(() => {
-    const programMembers: ReviewerMemberWithRole[] = programReviewers.map(
-      (reviewer) => ({
-        id: `program-${reviewer.publicAddress}`,
-        publicAddress: reviewer.publicAddress,
-        name: reviewer.name,
-        email: reviewer.email,
-        telegram: reviewer.telegram || "",
-        assignedAt: reviewer.assignedAt,
-        role: "program" as ReviewerRole,
-      }),
-    );
+    const programMembers: ReviewerMemberWithRole[] = programReviewers.map((reviewer) => ({
+      id: `program-${reviewer.publicAddress}`,
+      publicAddress: reviewer.publicAddress,
+      name: reviewer.name,
+      email: reviewer.email,
+      telegram: reviewer.telegram || "",
+      assignedAt: reviewer.assignedAt,
+      role: "program" as ReviewerRole,
+    }));
 
-    const milestoneMembers: ReviewerMemberWithRole[] = milestoneReviewers.map(
-      (reviewer) => ({
-        id: `milestone-${reviewer.publicAddress}`,
-        publicAddress: reviewer.publicAddress,
-        name: reviewer.name,
-        email: reviewer.email,
-        telegram: reviewer.telegram || "",
-        assignedAt: reviewer.assignedAt,
-        role: "milestone" as ReviewerRole,
-      }),
-    );
+    const milestoneMembers: ReviewerMemberWithRole[] = milestoneReviewers.map((reviewer) => ({
+      id: `milestone-${reviewer.publicAddress}`,
+      publicAddress: reviewer.publicAddress,
+      name: reviewer.name,
+      email: reviewer.email,
+      telegram: reviewer.telegram || "",
+      assignedAt: reviewer.assignedAt,
+      role: "milestone" as ReviewerRole,
+    }));
 
     return [...programMembers, ...milestoneMembers];
   }, [programReviewers, milestoneReviewers]);
@@ -212,7 +208,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
         await addMilestoneReviewer(data);
       }
     },
-    [selectedRole, addProgramReviewer, addMilestoneReviewer],
+    [selectedRole, addProgramReviewer, addMilestoneReviewer]
   );
 
   const handleRemove = useCallback(
@@ -247,7 +243,7 @@ export const ReviewerManagementTab: React.FC<ReviewerManagementTabProps> = ({
         console.error("Error in handleRemove:", error);
       }
     },
-    [removeProgramReviewer, removeMilestoneReviewer],
+    [removeProgramReviewer, removeMilestoneReviewer]
   );
 
   const handleRefresh = useCallback(() => {

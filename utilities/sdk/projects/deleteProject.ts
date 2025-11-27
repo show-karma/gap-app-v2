@@ -1,31 +1,28 @@
+import type { GAP, Project, SignerOrProvider } from "@show-karma/karma-gap-sdk";
+import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
+import type { Hex } from "viem";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { TxStepperSteps } from "@/store/modals/txStepper";
+import type { TxStepperSteps } from "@/store/modals/txStepper";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
-import { Project } from "@show-karma/karma-gap-sdk";
-import { Hex } from "viem";
 
 export const deleteProject = async (
   project: Project,
-  signer: any,
-  gap: any,
-  router: any,
+  signer: SignerOrProvider,
+  gap: GAP,
+  router: AppRouterInstance,
   changeStepperStep: (step: TxStepperSteps) => void
 ) => {
   try {
     if (!gap) return;
-    await project.revoke(signer as any, changeStepperStep).then(async (res) => {
+    await project.revoke(signer, changeStepperStep).then(async (res) => {
       let retries = 1000;
       let fetchedProject: Project | null = null;
       changeStepperStep("indexing");
       const txHash = res?.tx[0]?.hash;
       if (txHash) {
-        await fetchData(
-          INDEXER.ATTESTATION_LISTENER(txHash, project.chainID),
-          "POST",
-          {}
-        );
+        await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), "POST", {});
       }
       while (retries > 0) {
         // eslint-disable-next-line no-await-in-loop
@@ -44,8 +41,8 @@ export const deleteProject = async (
         await new Promise((resolve) => setTimeout(resolve, 1500));
       }
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     errorManager(`Error deleting project: ${project.uid}`, error);
-    throw new Error(error);
+    throw error instanceof Error ? error : new Error(String(error));
   }
 };

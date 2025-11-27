@@ -1,14 +1,12 @@
+import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useQuery } from "@tanstack/react-query";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { useCommunitiesStore } from "@/store/communities";
-import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useAuth } from "@/hooks/useAuth";
+import { useCommunitiesStore } from "@/store/communities";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 
-const fetchAdminCommunities = async (
-  address: string
-): Promise<ICommunityResponse[]> => {
+const fetchAdminCommunities = async (address: string): Promise<ICommunityResponse[]> => {
   if (!address) return [];
 
   const response = await gapIndexerApi.adminOf(address as `0x${string}`);
@@ -24,7 +22,7 @@ export const useAdminCommunities = (address?: string) => {
     queryFn: () => fetchAdminCommunities(address!),
     enabled: !!address && isAuth,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: (failureCount, error) => {
+    retry: (failureCount, _error) => {
       // Retry up to 2 times for network errors
       return failureCount < 2;
     },
@@ -49,11 +47,7 @@ export const useAdminCommunities = (address?: string) => {
 
   useEffect(() => {
     if (error) {
-      errorManager(
-        `Error fetching communities of user ${address} is admin`,
-        error,
-        { address }
-      );
+      errorManager(`Error fetching communities of user ${address} is admin`, error, { address });
       setCommunities([]);
     }
   }, [error, address, setCommunities]);

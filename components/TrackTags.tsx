@@ -1,10 +1,10 @@
 "use client";
 
-import React from "react";
-import * as Tooltip from "@radix-ui/react-tooltip";
-import { Spinner } from "./Utilities/Spinner";
 import { TagIcon } from "@heroicons/react/24/outline";
+import * as Tooltip from "@radix-ui/react-tooltip";
+import type React from "react";
 import { useTracksForCommunity } from "@/hooks/useTracks";
+import { Spinner } from "./Utilities/Spinner";
 
 interface TrackTagsProps {
   communityId: string;
@@ -20,15 +20,9 @@ export const TrackTags: React.FC<TrackTagsProps> = ({
   className = "",
   showLabel = false,
 }) => {
-  const {
-    data: communityTracks = [],
-    isLoading,
-    isError,
-  } = useTracksForCommunity(communityId);
+  const { data: communityTracks = [], isLoading, isError } = useTracksForCommunity(communityId);
 
-  const tracks = communityTracks.filter((track) =>
-    trackIds?.includes(track.id)
-  );
+  const tracks = communityTracks.filter((track) => trackIds?.includes(track.id));
 
   if (!trackIds || trackIds.length === 0) {
     return null;

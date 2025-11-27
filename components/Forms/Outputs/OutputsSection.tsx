@@ -1,24 +1,24 @@
 "use client";
 
-import { useMemo } from "react";
-import { useFieldArray } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
-import { DeliverablesTable } from "./DeliverablesTable";
-import { MetricsTable } from "./MetricsTable";
+import { useMemo } from "react";
+import type {
+  Control,
+  FieldErrors,
+  UseFormRegister,
+  UseFormSetValue,
+  UseFormWatch,
+} from "react-hook-form";
+import { useFieldArray } from "react-hook-form";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
-import { cn } from "@/utilities/tailwind";
 import { useImpactAnswers } from "@/hooks/useImpactAnswers";
 import { useUnlinkedIndicators } from "@/hooks/useUnlinkedIndicators";
+import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import { getIndicatorsByCommunity } from "@/utilities/queries/getIndicatorsByCommunity";
-import { ImpactIndicatorWithData } from "@/types/impactMeasurement";
-import { CategorizedIndicator, OutputData, DeliverableData, CommunityData } from "./types";
-import type { 
-  UseFormRegister, 
-  UseFormSetValue, 
-  UseFormWatch, 
-  FieldErrors, 
-  Control 
-} from "react-hook-form";
+import { cn } from "@/utilities/tailwind";
+import { DeliverablesTable } from "./DeliverablesTable";
+import { MetricsTable } from "./MetricsTable";
+import type { CategorizedIndicator, CommunityData, OutputData } from "./types";
 
 interface OutputsSectionProps {
   // Form controls
@@ -27,16 +27,16 @@ interface OutputsSectionProps {
   setValue: UseFormSetValue<any>;
   watch: UseFormWatch<any>;
   errors: FieldErrors<any>;
-  
+
   // Data
   projectUID?: string;
   selectedCommunities: CommunityData[];
   selectedPrograms: { programId: string; title: string; chainID: number }[];
-  
+
   // Handlers
   onCreateNewIndicator: (index: number) => void;
   onIndicatorCreated: (indicator: ImpactIndicatorWithData) => void;
-  
+
   // Styling
   labelStyle: string;
 }
@@ -70,10 +70,7 @@ export const OutputsSection = ({
 
   // Fetch community indicators for all selected communities
   const { data: communityIndicatorsData = [] } = useQuery({
-    queryKey: [
-      "allCommunityIndicators",
-      selectedCommunities.map((c) => c.uid).sort(),
-    ],
+    queryKey: ["allCommunityIndicators", selectedCommunities.map((c) => c.uid).sort()],
     queryFn: async () => {
       if (selectedCommunities.length === 0) return [];
       const results = await Promise.all(
@@ -86,10 +83,7 @@ export const OutputsSection = ({
               communityName: community.name,
             }));
           } catch (error) {
-            console.error(
-              `Failed to fetch indicators for community ${community.uid}:`,
-              error
-            );
+            console.error(`Failed to fetch indicators for community ${community.uid}:`, error);
             return [];
           }
         })
@@ -104,42 +98,40 @@ export const OutputsSection = ({
 
   // Categorized indicators combining project, community, and unlinked indicators
   const categorizedIndicators = useMemo((): CategorizedIndicator[] => {
-    const projectIndicators: CategorizedIndicator[] = (
-      indicatorsData || []
-    ).map((indicator) => ({
+    const projectIndicators: CategorizedIndicator[] = (indicatorsData || []).map((indicator) => ({
       ...indicator,
       source: "project" as const,
     }));
 
-    const communityIndicators: CategorizedIndicator[] = (
-      communityIndicatorsData || []
-    ).map((indicator) => ({
-      id: indicator.id,
-      name: indicator.name,
-      description: indicator.description,
-      unitOfMeasure: indicator.unitOfMeasure,
-      datapoints: [],
-      programs: [], // Community indicators don't have specific programs associated
-      hasData: false, // Community indicators start without data
-      isAssociatedWithPrograms: false, // Community indicators are not associated with specific programs
-      source: "community" as const,
-      communityName: indicator.communityName,
-      communityId: indicator.communityId,
-    }));
+    const communityIndicators: CategorizedIndicator[] = (communityIndicatorsData || []).map(
+      (indicator) => ({
+        id: indicator.id,
+        name: indicator.name,
+        description: indicator.description,
+        unitOfMeasure: indicator.unitOfMeasure,
+        datapoints: [],
+        programs: [], // Community indicators don't have specific programs associated
+        hasData: false, // Community indicators start without data
+        isAssociatedWithPrograms: false, // Community indicators are not associated with specific programs
+        source: "community" as const,
+        communityName: indicator.communityName,
+        communityId: indicator.communityId,
+      })
+    );
 
-    const unlinkedIndicators: CategorizedIndicator[] = (
-      unlinkedIndicatorsData || []
-    ).map((indicator) => ({
-      id: indicator.id,
-      name: indicator.name,
-      description: indicator.description,
-      unitOfMeasure: indicator.unitOfMeasure,
-      datapoints: [],
-      programs: [], // Unlinked indicators don't have specific programs associated
-      hasData: false, // Unlinked indicators start without data
-      isAssociatedWithPrograms: false, // Unlinked indicators are not associated with specific programs
-      source: "unlinked" as const,
-    }));
+    const unlinkedIndicators: CategorizedIndicator[] = (unlinkedIndicatorsData || []).map(
+      (indicator) => ({
+        id: indicator.id,
+        name: indicator.name,
+        description: indicator.description,
+        unitOfMeasure: indicator.unitOfMeasure,
+        datapoints: [],
+        programs: [], // Unlinked indicators don't have specific programs associated
+        hasData: false, // Unlinked indicators start without data
+        isAssociatedWithPrograms: false, // Unlinked indicators are not associated with specific programs
+        source: "unlinked" as const,
+      })
+    );
 
     return [...projectIndicators, ...communityIndicators, ...unlinkedIndicators];
   }, [indicatorsData, communityIndicatorsData, unlinkedIndicatorsData]);

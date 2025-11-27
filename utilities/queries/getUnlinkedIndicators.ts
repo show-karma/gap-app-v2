@@ -22,4 +22,4 @@ export const getUnlinkedIndicators = async (): Promise<UnlinkedIndicator[]> => {
     errorManager("Error fetching unlinked indicators", error);
     return [];
   }
-}; 
+};

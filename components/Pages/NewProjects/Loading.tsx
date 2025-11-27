@@ -77,7 +77,12 @@ export const FilterByProgramsSkeleton = () => {
 
 export const NewProjectsLoading = () => {
   return (
-    <div className={cn(layoutTheme.padding, "flex w-full max-w-full flex-row justify-start gap-6 pb-7 pt-5 max-lg:flex-col")}>
+    <div
+      className={cn(
+        layoutTheme.padding,
+        "flex w-full max-w-full flex-row justify-start gap-6 pb-7 pt-5 max-lg:flex-col"
+      )}
+    >
       <div className="flex w-full max-w-full flex-col justify-start items-center gap-6 mt-4">
         <div className="flex flex-row justify-between items-center gap-3 w-full flex-wrap">
           <h1 className="text-2xl font-bold text-black dark:text-white">

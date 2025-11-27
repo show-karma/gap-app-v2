@@ -1,43 +1,39 @@
 "use client";
 
-import { Button } from "@/components/Utilities/Button";
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { getGapClient, useGap } from "@/hooks/useGap";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
-import { useStepper } from "@/store/modals/txStepper";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
-import { MESSAGES } from "@/utilities/messages";
-import { PAGES } from "@/utilities/pages";
-import { urlRegex } from "@/utilities/regexs/urlRegex";
-import { sanitizeObject } from "@/utilities/sanitize";
-import { cn } from "@/utilities/tailwind";
-import { privyConfig as config } from "@/utilities/wagmi/privy-config";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
+import type {
   IMilestoneCompleted,
   IMilestoneResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-
 import { useRouter } from "next/navigation";
-import { type FC, useState, useEffect } from "react";
+import { type FC, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
-import { errorManager } from "../Utilities/errorManager";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { SHARE_TEXTS } from "@/utilities/share/text";
-import { useShareDialogStore } from "@/store/modals/shareDialog";
-import { useWallet } from "@/hooks/useWallet";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import { OutputsSection } from "@/components/Forms/Outputs/OutputsSection";
-import { sendMilestoneImpactAnswers } from "@/utilities/impact/milestoneImpactAnswers";
+import { Button } from "@/components/Utilities/Button";
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { useGap } from "@/hooks/useGap";
 import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
+import { useWallet } from "@/hooks/useWallet";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useCommunityAdminStore } from "@/store/communityAdmin";
+import { useShareDialogStore } from "@/store/modals/shareDialog";
+import { useStepper } from "@/store/modals/txStepper";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import fetchData from "@/utilities/fetchData";
+import { sendMilestoneImpactAnswers } from "@/utilities/impact/milestoneImpactAnswers";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
+import { sanitizeObject } from "@/utilities/sanitize";
+import { SHARE_TEXTS } from "@/utilities/share/text";
+import { cn } from "@/utilities/tailwind";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { errorManager } from "../Utilities/errorManager";
 
 interface MilestoneUpdateFormProps {
   milestone: IMilestoneResponse;
@@ -48,11 +44,9 @@ interface MilestoneUpdateFormProps {
   setIsUpdating?: (value: boolean) => void;
 }
 
-const labelStyle =
-  "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
+const labelStyle = "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
 
-const inputStyle =
-  "bg-white border border-gray-300 rounded-md p-2 dark:bg-zinc-900";
+const inputStyle = "bg-white border border-gray-300 rounded-md p-2 dark:bg-zinc-900";
 
 const schema = z.object({
   description: z.string().optional(),
@@ -60,7 +54,7 @@ const schema = z.object({
     (value) => {
       if (value === "") return false; // Empty string is not valid
       const num = Number(value);
-      return !isNaN(num) && num >= 0 && num <= 100;
+      return !Number.isNaN(num) && num >= 0 && num <= 100;
     },
     {
       message: "Please enter a number between 0 and 100",
@@ -93,16 +87,14 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   afterSubmit,
   setIsUpdating: parentSetIsUpdating,
 }) => {
-  const selectedProject = useProjectStore((state) => state.project);
+  const _selectedProject = useProjectStore((state) => state.project);
   const [isSubmitLoading, setIsSubmitLoading] = useState(false);
   const { chain, address } = useAccount();
   const { switchChainAsync } = useWallet();
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isCommunityAdmin = useCommunityAdminStore(
-    (state) => state.isCommunityAdmin
-  );
-  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
+  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
+  const _isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const { openShareDialog, closeShareDialog } = useShareDialogStore();
   const router = useRouter();
@@ -112,17 +104,21 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
     milestoneUID: milestone.uid,
   });
 
-
   // Transform milestone impact data to form format
   const transformMilestoneImpactToOutputs = (impactData: any[]) => {
     if (!impactData || impactData.length === 0) return [];
-    
+
     return impactData.map((metric: any) => ({
-      outputId: metric.id || '',
-      value: metric.datapoints && metric.datapoints.length > 0 ? metric.datapoints[0].value : '',
-      proof: metric.datapoints && metric.datapoints.length > 0 ? metric.datapoints[0].proof || '' : '',
-      startDate: metric.datapoints && metric.datapoints.length > 0 ? metric.datapoints[0].startDate || '' : '',
-      endDate: metric.datapoints && metric.datapoints.length > 0 ? metric.datapoints[0].endDate || '' : '',
+      outputId: metric.id || "",
+      value: metric.datapoints && metric.datapoints.length > 0 ? metric.datapoints[0].value : "",
+      proof:
+        metric.datapoints && metric.datapoints.length > 0 ? metric.datapoints[0].proof || "" : "",
+      startDate:
+        metric.datapoints && metric.datapoints.length > 0
+          ? metric.datapoints[0].startDate || ""
+          : "",
+      endDate:
+        metric.datapoints && metric.datapoints.length > 0 ? metric.datapoints[0].endDate || "" : "",
     }));
   };
 
@@ -139,7 +135,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
     mode: "onChange",
     defaultValues: {
       description: previousData?.reason,
-      completionPercentage: (previousData as any)?.completionPercentage?.toString() || '0',
+      completionPercentage: (previousData as any)?.completionPercentage?.toString() || "0",
       outputs: [],
       deliverables: (previousData as any)?.deliverables || [],
     },
@@ -149,9 +145,9 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   useEffect(() => {
     if (milestoneImpactData && milestoneImpactData.length > 0) {
       const transformedOutputs = transformMilestoneImpactToOutputs(milestoneImpactData);
-      setValue('outputs', transformedOutputs, { shouldValidate: true });
+      setValue("outputs", transformedOutputs, { shouldValidate: true });
     }
-  }, [milestoneImpactData, setValue]);
+  }, [milestoneImpactData, setValue, transformMilestoneImpactToOutputs]);
 
   const openDialog = () => {
     openShareDialog({
@@ -170,45 +166,50 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   const project = useProjectStore((state) => state.project);
 
   // Get grant and community information for OutputsSection
-  const grantInstance = project?.grants?.find(g => g.uid === milestone.refUID);
-  const selectedCommunities = grantInstance?.community ? [{
-    uid: grantInstance.community.uid,
-    name: grantInstance.community.details?.data?.name || '',
-    details: grantInstance.community.details
-  }] : [];
-  const selectedPrograms = grantInstance?.details?.data?.programId ? [{
-    programId: grantInstance.details.data.programId,
-    title: grantInstance.details.data.title || '',
-    chainID: grantInstance.chainID
-  }] : [];
+  const grantInstance = project?.grants?.find((g) => g.uid === milestone.refUID);
+  const selectedCommunities = grantInstance?.community
+    ? [
+        {
+          uid: grantInstance.community.uid,
+          name: grantInstance.community.details?.data?.name || "",
+          details: grantInstance.community.details,
+        },
+      ]
+    : [];
+  const selectedPrograms = grantInstance?.details?.data?.programId
+    ? [
+        {
+          programId: grantInstance.details.data.programId,
+          title: grantInstance.details.data.title || "",
+          chainID: grantInstance.chainID,
+        },
+      ]
+    : [];
 
   // Helper function to send outputs and deliverables data
-  const sendOutputsAndDeliverables = async (
-    milestoneUID: string,
-    data: SchemaType
-  ) => {
+  const sendOutputsAndDeliverables = async (milestoneUID: string, data: SchemaType) => {
     try {
       // Send outputs (metrics) data if any
       if (data.outputs && data.outputs.length > 0) {
         for (const output of data.outputs) {
-          if (output.outputId && (output.value !== undefined && output.value !== "")) {
+          if (output.outputId && output.value !== undefined && output.value !== "") {
             // Default to today's date if not specified (matching project behavior)
-            const today = new Date().toISOString().split('T')[0];
-            
-            const datapoints = [{
-              value: output.value,
-              proof: output.proof || "",
-              startDate: output.startDate || today,
-              endDate: output.endDate || today,
-            }];
-            
+            const today = new Date().toISOString().split("T")[0];
+
+            const datapoints = [
+              {
+                value: output.value,
+                proof: output.proof || "",
+                startDate: output.startDate || today,
+                endDate: output.endDate || today,
+              },
+            ];
+
             await sendMilestoneImpactAnswers(
               milestoneUID,
               output.outputId,
               datapoints,
-              () => {
-                console.log(`Successfully sent output data for indicator ${output.outputId}`);
-              },
+              () => {},
               (error) => {
                 console.error(`Error sending output data for indicator ${output.outputId}:`, error);
               }
@@ -219,9 +220,6 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
 
       // Send deliverables data if any
       if (data.deliverables && data.deliverables.length > 0) {
-        // For now, deliverables are just stored with the milestone completion
-        // In the future, they could be sent as separate entities to the backend
-        console.log("Deliverables included with milestone completion:", data.deliverables);
       }
     } catch (error) {
       console.error("Error sending outputs and deliverables:", error);
@@ -229,14 +227,15 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
     }
   };
 
-  const completeMilestone = async (
-    milestone: IMilestoneResponse,
-    data: SchemaType
-  ) => {
+  const completeMilestone = async (milestone: IMilestoneResponse, data: SchemaType) => {
     let gapClient = gap;
     setIsSubmitLoading(true);
     try {
-      const { success, chainId: actualChainId, gapClient: updatedGapClient } = await ensureCorrectChain({
+      const {
+        success,
+        chainId: actualChainId,
+        gapClient: updatedGapClient,
+      } = await ensureCorrectChain({
         targetChainId: milestone.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
@@ -249,9 +248,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
 
       gapClient = updatedGapClient;
 
-      const { walletClient, error } = await safeGetWalletClient(
-        actualChainId
-      );
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
@@ -285,10 +282,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
             await fetchData(
-              INDEXER.ATTESTATION_LISTENER(
-                txHash,
-                milestoneInstance?.chainID as number
-              ),
+              INDEXER.ATTESTATION_LISTENER(txHash, milestoneInstance?.chainID as number),
               "POST",
               {}
             );
@@ -296,9 +290,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           while (retries > 0) {
             await refreshProject()
               .then(async (fetchedProject) => {
-                const foundGrant = fetchedProject?.grants.find(
-                  (g) => g.uid === milestone.refUID
-                );
+                const foundGrant = fetchedProject?.grants.find((g) => g.uid === milestone.refUID);
 
                 const fetchedMilestone = foundGrant?.milestones.find(
                   (u: any) => u.uid === milestone.uid
@@ -310,10 +302,10 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                   retries = 0;
                   changeStepperStep("indexed");
                   toast.success(MESSAGES.MILESTONES.COMPLETE.SUCCESS);
-                  
+
                   // Send outputs and deliverables data
                   await sendOutputsAndDeliverables(milestone.uid, data);
-                  
+
                   afterSubmit?.();
                   openDialog();
                   cancelEditing(false);
@@ -339,7 +331,6 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           }
         });
     } catch (error) {
-      console.log(error);
       errorManager(
         `Error completing milestone ${milestone.uid} from grant ${milestone.refUID}`,
         error,
@@ -359,14 +350,15 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
     }
   };
 
-  const updateMilestoneCompletion = async (
-    milestone: IMilestoneResponse,
-    data: SchemaType
-  ) => {
+  const updateMilestoneCompletion = async (milestone: IMilestoneResponse, data: SchemaType) => {
     let gapClient = gap;
     setIsSubmitLoading(true);
     try {
-      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+      const {
+        success,
+        chainId: actualChainId,
+        gapClient: newGapClient,
+      } = await ensureCorrectChain({
         targetChainId: milestone.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
@@ -379,9 +371,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
 
       gapClient = newGapClient;
 
-      const { walletClient, error } = await safeGetWalletClient(
-        actualChainId
-      );
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
@@ -415,10 +405,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
             await fetchData(
-              INDEXER.ATTESTATION_LISTENER(
-                txHash,
-                milestoneInstance?.chainID as number
-              ),
+              INDEXER.ATTESTATION_LISTENER(txHash, milestoneInstance?.chainID as number),
               "POST",
               {}
             );
@@ -426,9 +413,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           while (retries > 0) {
             await refreshProject()
               .then(async (fetchedProject) => {
-                const foundGrant = fetchedProject?.grants.find(
-                  (g) => g.uid === milestone.refUID
-                );
+                const foundGrant = fetchedProject?.grants.find((g) => g.uid === milestone.refUID);
 
                 const fetchedMilestone = foundGrant?.milestones.find(
                   (u: any) => u.uid === milestone.uid
@@ -441,10 +426,10 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                   retries = 0;
                   changeStepperStep("indexed");
                   toast.success(MESSAGES.MILESTONES.UPDATE_COMPLETION.SUCCESS);
-                  
+
                   // Send outputs and deliverables data
                   await sendOutputsAndDeliverables(milestone.uid, data);
-                  
+
                   closeShareDialog();
                   PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
                     fetchedProject?.uid as string,
@@ -466,7 +451,6 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           }
         });
     } catch (error) {
-      console.log(error);
       errorManager(
         `Error updating milestone completion ${milestone.uid} from grant ${milestone.refUID}`,
         error,
@@ -501,11 +485,8 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   return (
     <form className="flex w-full flex-col" onSubmit={handleSubmit(onSubmit)}>
       <div className="flex w-full flex-col items-start gap-2">
-        <div
-          className="flex w-full flex-col items-start gap-2"
-          data-color-mode="light"
-        >
-          <label className={labelStyle}>Description (optional)</label>
+        <div className="flex w-full flex-col items-start gap-2" data-color-mode="light">
+          <div className={labelStyle}>Description (optional)</div>
           <div className="w-full" data-color-mode="light">
             <MarkdownEditor
               value={watch("description") || ""}
@@ -532,9 +513,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
               className={cn(inputStyle, "w-24")}
               {...register("completionPercentage")}
             />
-            <p className="text-red-500 text-xs mt-1">
-              {errors.completionPercentage?.message}
-            </p>
+            <p className="text-red-500 text-xs mt-1">{errors.completionPercentage?.message}</p>
           </div>
         </div>
 
@@ -545,7 +524,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           setValue={setValue}
           watch={watch}
           errors={errors}
-          projectUID={project?.uid || ''}
+          projectUID={project?.uid || ""}
           selectedCommunities={selectedCommunities}
           selectedPrograms={selectedPrograms}
           onCreateNewIndicator={() => {}}
@@ -569,10 +548,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
         <Button
           type="submit"
           isLoading={isSubmitLoading}
-          disabled={
-            isSubmitLoading ||
-            !isValid
-          }
+          disabled={isSubmitLoading || !isValid}
           className="flex h-min w-max flex-row gap-2 items-center rounded bg-brand-blue px-4 py-2.5 hover:bg-brand-blue"
         >
           <p className="text-base font-semibold text-white ">
@@ -581,11 +557,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           {isEditing ? (
             <PencilSquareIcon className="h-4 w-4" />
           ) : (
-            <img
-              src="/icons/rounded-check.svg"
-              className="h-4 w-4"
-              alt="Complete"
-            />
+            <img src="/icons/rounded-check.svg" className="h-4 w-4" alt="Complete" />
           )}
         </Button>
       </div>

@@ -1,10 +1,10 @@
-import { Method } from "axios";
+import type { Method } from "axios";
 
 export async function fetchFromLocalApi<T>(
   endpoint: string,
   method: Method = "GET",
   body?: any,
-  headers?: Record<string, string>
+  _headers?: Record<string, string>
 ): Promise<T> {
   const url = `${process.env.VERCEL_URL}/api${endpoint}`;
 

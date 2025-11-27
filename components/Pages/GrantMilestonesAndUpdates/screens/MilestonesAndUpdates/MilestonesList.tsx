@@ -1,11 +1,10 @@
+import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import pluralize from "pluralize";
-import { type FC, useEffect, useMemo, useState, use } from "react";
-
+import { type FC, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
+import { cn } from "@/utilities/tailwind";
 import { GrantUpdate } from "./GrantUpdate";
 import { MilestoneDetails } from "./MilestoneDetails";
-import { cn } from "@/utilities/tailwind";
-import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 interface MilestonesListProps {
   grant: IGrantResponse;
@@ -21,21 +20,13 @@ interface TabButtonProps {
   length: number;
 }
 
-const TabButton: FC<TabButtonProps> = ({
-  handleSelection,
-  tab,
-  tabName,
-  selectedType,
-  length,
-}) => {
+const TabButton: FC<TabButtonProps> = ({ handleSelection, tab, tabName, selectedType, length }) => {
   const isSelected = selectedType === tab;
   return (
     <Button
       className={cn(
         "flex flex-row my-0.5 items-center gap-2 bg-transparent px-2 py-1 font-medium text-black hover:bg-white hover:text-black max-sm:text-sm",
-        isSelected
-          ? "text-black bg-white dark:bg-zinc-600 dark:text-white"
-          : "text-gray-500"
+        isSelected ? "text-black bg-white dark:bg-zinc-600 dark:text-white" : "text-gray-500"
       )}
       onClick={() => {
         handleSelection(tab);
@@ -65,9 +56,7 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
   const [completedMilestones, setCompletedMilestones] = useState([] as any[]);
   const [allMilestones, setAllMilestones] = useState([] as any[]);
 
-  const [selectedMilestoneType, setSelectedMilestoneType] = useState<
-    Tab | undefined
-  >(undefined);
+  const [selectedMilestoneType, setSelectedMilestoneType] = useState<Tab | undefined>(undefined);
 
   const getOrderedMerge = () => {
     const merged: any[] = [];
@@ -100,7 +89,7 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
 
   useEffect(() => {
     getOrderedMerge();
-  }, [updates, milestones, grant.uid]);
+  }, [getOrderedMerge]);
 
   const getUnsortedMilestones = () => {
     const unsortedCompletedMilestones = generalArray.filter((item) => {
@@ -120,30 +109,21 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
   };
 
   const rearrangeArrayByType = () => {
-    const {
-      unsortedCompletedMilestones,
-      unsortedPendingMilestones,
-      unsortedAllMilestones,
-    } = getUnsortedMilestones();
+    const { unsortedCompletedMilestones, unsortedPendingMilestones, unsortedAllMilestones } =
+      getUnsortedMilestones();
 
-    const completedMilestonesToSet = unsortedCompletedMilestones.sort(
-      (a, b) => {
-        const getDate = (item: any) => {
-          if (item.type === "update") {
-            return new Date(item.object.createdAt).getTime();
-          }
-          if (item.object.completed)
-            return new Date(item.object.completed.createdAt).getTime();
-          return (
-            new Date(item.object.endsAt).getTime() ||
-            new Date(item.object.createdAt).getTime()
-          );
-        };
-        const bDate = getDate(b);
-        const aDate = getDate(a);
-        return bDate - aDate;
-      }
-    );
+    const completedMilestonesToSet = unsortedCompletedMilestones.sort((a, b) => {
+      const getDate = (item: any) => {
+        if (item.type === "update") {
+          return new Date(item.object.createdAt).getTime();
+        }
+        if (item.object.completed) return new Date(item.object.completed.createdAt).getTime();
+        return new Date(item.object.endsAt).getTime() || new Date(item.object.createdAt).getTime();
+      };
+      const bDate = getDate(b);
+      const aDate = getDate(a);
+      return bDate - aDate;
+    });
 
     const pendingMilestonesToSet = unsortedPendingMilestones.sort((a, b) => {
       const getDate = (item: any) => {
@@ -163,10 +143,7 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
         if (item.object.completed) {
           return new Date(item.object.completed.createdAt).getTime() / 1000;
         }
-        return (
-          new Date(item.object.endsAt).getTime() ||
-          new Date(item.object.createdAt).getTime()
-        );
+        return new Date(item.object.endsAt).getTime() || new Date(item.object.createdAt).getTime();
       };
       const bDate = getDate(b);
       const aDate = getDate(a);
@@ -183,9 +160,7 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
       all: allMilestonesToSet,
     };
 
-    const ordered = selectedMilestoneType
-      ? setDictionary[selectedMilestoneType]
-      : [];
+    const ordered = selectedMilestoneType ? setDictionary[selectedMilestoneType] : [];
 
     setSelectedTabArray(ordered);
   };
@@ -222,10 +197,9 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
 
   useMemo(() => {
     rearrangeArrayByType();
-  }, [selectedMilestoneType, grant.uid, generalArray]);
+  }, [rearrangeArrayByType]);
 
-  const updatesLength =
-    grant.milestones.filter((i) => i.completed).length + updates.length;
+  const updatesLength = grant.milestones.filter((i) => i.completed).length + updates.length;
   const milestonesCounter = milestones.length;
 
   return (
@@ -234,9 +208,7 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
         <div className=" flex flex-col items-start justify-start gap-0 ">
           <div className="flex w-full flex-row flex-wrap items-center justify-between gap-4 py-3">
             <div className="flex w-max flex-row flex-wrap items-center  gap-4 max-sm:flex-col max-sm:items-start max-sm:justify-start">
-              <p className="text-xs font-bold text-slate-600 dark:text-slate-200">
-                MILESTONES
-              </p>
+              <p className="text-xs font-bold text-slate-600 dark:text-slate-200">MILESTONES</p>
               <div className="flex flex-row flex-wrap gap-2 rounded bg-[#F2F4F7] dark:bg-zinc-800 px-2 py-1">
                 <TabButton
                   handleSelection={() => handleSelection("completed")}
@@ -263,9 +235,8 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
             </div>
             <div className="flex flex-row flex-wrap gap-5">
               <p className="text-base font-normal text-gray-500 max-sm:text-sm">
-                {milestonesCounter} {pluralize("Milestone", milestonesCounter)},{" "}
-                {updatesLength} {pluralize("update", updatesLength)} in this
-                grant
+                {milestonesCounter} {pluralize("Milestone", milestonesCounter)}, {updatesLength}{" "}
+                {pluralize("update", updatesLength)} in this grant
               </p>
             </div>
           </div>
@@ -273,9 +244,7 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
           <div className="mt-3 flex w-full flex-col gap-6">
             {selectedTabArray.map((item) => {
               if (item.type === "update") {
-                const updatesArray = generalArray.filter(
-                  (i) => i.type === "update"
-                );
+                const updatesArray = generalArray.filter((i) => i.type === "update");
                 const updatesIndex = updatesArray.findIndex(
                   (i) =>
                     // eslint-disable-next-line no-underscore-dangle
@@ -295,9 +264,7 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
                 );
               }
 
-              const milestoneArray = generalArray.filter(
-                (i) => i.type === "milestone"
-              );
+              const milestoneArray = generalArray.filter((i) => i.type === "milestone");
               const mIndex = milestoneArray.findIndex(
                 (i) =>
                   // eslint-disable-next-line no-underscore-dangle

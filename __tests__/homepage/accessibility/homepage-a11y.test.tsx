@@ -1,18 +1,14 @@
 /**
  * Homepage Accessibility Tests
  * Tests WCAG 2.2 AA compliance using jest-axe
- * 
+ *
  * Target: 8 tests
  * - Automated Checks (8): Each major section tested with axe
  */
 
-import HomePage from "@/app/page";
-import {
-  renderWithProviders,
-  screen,
-  waitFor,
-} from "../utils/test-helpers";
 import { axe, toHaveNoViolations } from "jest-axe";
+import HomePage from "@/app/page";
+import { renderWithProviders, screen, waitFor } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
 
 // Extend Jest matchers
@@ -49,13 +45,13 @@ describe("Homepage Accessibility", () => {
       expect(heroSection).toBeInTheDocument();
 
       const results = await axe(heroSection as HTMLElement);
-      
+
       // Hero may have image-redundant-alt violations in carousel (acceptable)
       // Filter out known acceptable violations
       const criticalViolations = results.violations.filter(
         (v: any) => v.id !== "image-redundant-alt"
       );
-      
+
       expect(criticalViolations.length).toBe(0);
     });
 
@@ -137,11 +133,10 @@ describe("Homepage Accessibility", () => {
       });
 
       const results = await axe(container);
-      
+
       // Full page should have minimal violations
       // We allow up to 5 violations for full page as per plan
       expect(results.violations.length).toBeLessThanOrEqual(5);
     });
   });
 });
-
