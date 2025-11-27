@@ -82,10 +82,10 @@ const AIEvaluationButton: FC<AIEvaluationButtonProps> = ({
 
       let errorMessage = `Failed to run ${isInternal ? "internal " : ""}AI evaluation`;
 
-      if (error instanceof Error) {
+      if (isAxiosErrorWithResponse(error)) {
+        errorMessage = error.response?.data?.message || error.message || errorMessage;
+      } else if (error instanceof Error) {
         errorMessage = error.message;
-      } else if (isAxiosErrorWithResponse(error)) {
-        errorMessage = error.response?.data?.message || errorMessage;
       }
 
       toast.error(errorMessage);
