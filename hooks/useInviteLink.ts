@@ -137,8 +137,8 @@ export const useInviteUrl = (
   const isDev =
     process.env.NEXT_PUBLIC_ENV === "dev" ||
     process.env.NODE_ENV === "development";
-  const baseUrl = isDev ? "staging.karmahq.xyz" : "karmahq.xyz";
+  const baseUrl = isDev ? "staging.karmahq.xyz" : "www.karmahq.xyz";
   const projectIdentifier = project.details?.data.slug || project.uid;
 
-  return `https://${baseUrl}/project/${projectIdentifier}/?invite-code=${inviteCode}`;
+  return `https://${baseUrl}/project/${projectIdentifier}?invite-code=${inviteCode}`;
 };
