@@ -10,4 +10,5 @@ export interface FiatOnrampModalProps {
     chainID: number;
   };
   fiatAmount: number;
+  defaultCrypto?: string;
 }

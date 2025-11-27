@@ -18,13 +18,11 @@ import {
 } from "@/utilities/moonpay";
 import type { FiatOnrampModalProps } from "./types";
 
-const MOONPAY_PURPLE = "#7D00FF";
-
 export const FiatOnrampModal = React.memo<FiatOnrampModalProps>(
-  ({ isOpen, onClose, project, fiatAmount }) => {
+  ({ isOpen, onClose, project, fiatAmount, defaultCrypto = "ETH" }) => {
     const [isProcessing, setIsProcessing] = useState(true);
     const selectedNetwork = toMoonPayNetworkName(project.chainID);
-    const currencyCode = getMoonPayCurrencyCode("ETH", selectedNetwork);
+    const currencyCode = getMoonPayCurrencyCode(defaultCrypto, selectedNetwork);
     const getSignature = useMoonPaySignature();
 
     const handleClose = useCallback(() => {
@@ -58,10 +56,7 @@ export const FiatOnrampModal = React.memo<FiatOnrampModalProps>(
         >
           <DialogHeader className="px-6 pt-6 pb-4 bg-gradient-to-r from-purple-50 to-white dark:from-purple-950/20 dark:to-background border-b">
             <div className="flex items-center gap-3 mb-2">
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: MOONPAY_PURPLE }}
-              >
+              <div className="w-10 h-10 rounded-full flex items-center justify-center bg-moonpay-purple">
                 <CreditCard className="w-5 h-5 text-white" />
               </div>
               <DialogTitle className="text-2xl font-semibold">
@@ -72,7 +67,7 @@ export const FiatOnrampModal = React.memo<FiatOnrampModalProps>(
               <span>Purchase crypto with your debit or credit card</span>
               <span className="mx-1">•</span>
               <span>Powered by</span>
-              <span className="font-semibold" style={{ color: MOONPAY_PURPLE }}>
+              <span className="font-semibold text-moonpay-purple">
                 MoonPay
               </span>
             </DialogDescription>
