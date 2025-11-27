@@ -2,7 +2,7 @@
 "use client";
 
 import { MilestoneUpdateForm } from "@/components/Forms/MilestoneUpdate";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/button";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { PencilSquareIcon, ShareIcon } from "@heroicons/react/24/outline";
@@ -54,10 +54,10 @@ const NotUpdatingCase: FC<NotUpdatingCaseProps> = ({
             <ShareIcon className="relative h-5 w-5" />
           </ExternalLink>
           <Button
-            className="flex items-center justify-center gap-2 rounded border border-blue-600 bg-brand-blue dark:bg-primary-700 dark:text-zinc-200 px-4 py-2.5 hover:bg-brand-blue"
+            className="flex items-center justify-center gap-2 rounded border border-blue-600 px-4 py-2.5"
             onClick={() => setIsUpdating(true)}
           >
-            <p className="text-sm font-semibold text-white">Post an update</p>
+            Post an update
             <PencilSquareIcon className="relative h-5 w-5" />
           </Button>
         </>

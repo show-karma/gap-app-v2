@@ -6,7 +6,7 @@ import {
     CheckIcon,
     XMarkIcon
 } from "@heroicons/react/24/solid";
-import { Button } from "../Utilities/Button";
+import { Button } from "../ui/button";
 
 
 export const ReasonsModal: FC<{
@@ -24,7 +24,7 @@ export const ReasonsModal: FC<{
                     className={`flex items-center gap-x-1 rounded-md px-3 py-2 text-sm font-semibold border ${text === "Include"
                         ? 'text-green-800 bg-green-100 hover:bg-green-200 border-green-200'
                         : 'text-red-800 bg-red-100 hover:bg-red-200 border-red-200'
-                        } dark:bg-primary-900/50 dark:text-zinc-100 dark:hover:bg-primary-900 dark:border-primary-900`}
+                        } `}
                 >
                     {text === "Include" ? <CheckIcon className="h-4 w-4" /> : <XMarkIcon className="h-4 w-4" />}
                     <span className={`inline-block px-3 py-1 text-sm font-semibold rounded-full`}>

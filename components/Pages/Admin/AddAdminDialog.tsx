@@ -11,7 +11,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAccount } from "wagmi";
 import { GAP } from "@show-karma/karma-gap-sdk";
-import { Button } from "../../Utilities/Button";
+import { Button } from "../../ui/button";
 import { MESSAGES } from "@/utilities/messages";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { cn } from "@/utilities/tailwind";
@@ -64,7 +64,7 @@ type AddAdminDialogProps = {
 
 export const AddAdmin: FC<AddAdminDialogProps> = ({
   buttonElement = {
-    icon: <PlusIcon className="h-4 w-4 text-brand-blue" />,
+    icon: <PlusIcon className="h-4 w-4" />,
     iconSide: "left",
     text: "Add Admin",
     styleClass: "",
@@ -192,17 +192,17 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
 
   return (
     <>
-      <button
+      <Button
         onClick={openModal}
         className={cn(
-          "flex justify-center min-w-max items-center gap-x-1 rounded-md px-3 py-2 text-sm font-semibold text-brand-blue dark:text-zinc-100 hover:opacity-75 dark:hover:bg-primary-900",
+          "flex justify-center min-w-max items-center gap-x-1 rounded-md px-3 py-2 text-sm font-semibold hover:opacity-75",
           buttonElement.styleClass
         )}
       >
         {buttonElement.iconSide === "left" && buttonElement.icon}
         {buttonElement.text}
         {buttonElement.iconSide === "right" && buttonElement.icon}
-      </button>
+      </Button>
       <Transition appear show={isOpen} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={closeModal}>
           <Transition.Child
@@ -281,7 +281,6 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
 
                       <Button
                         type={"submit"}
-                        className="flex flex-row gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                         isLoading={isLoading}
                       >
                         Add Admin
