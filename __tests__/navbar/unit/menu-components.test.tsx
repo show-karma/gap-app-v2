@@ -318,12 +318,12 @@ describe("ExploreContent Component", () => {
   describe("Mobile Variant", () => {
     it("should render Projects section title", () => {
       renderWithProviders(<ExploreContent variant="mobile" />);
-      expect(screen.getByText("Projects")).toBeInTheDocument();
+      expect(screen.getByText("Explore Projects")).toBeInTheDocument();
     });
 
     it("should render Communities section title", () => {
       renderWithProviders(<ExploreContent variant="mobile" />);
-      expect(screen.getByText("Communities")).toBeInTheDocument();
+      expect(screen.getByText("Explore Communities")).toBeInTheDocument();
     });
 
     it("should render all project items", () => {

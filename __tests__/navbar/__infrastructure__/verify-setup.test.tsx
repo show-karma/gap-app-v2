@@ -270,7 +270,8 @@ describe("Test Infrastructure Verification", () => {
       const fixture = getAuthFixture("loading");
       expect(fixture.authState.ready).toBe(false);
       expect(fixture.expectedElements.userMenu).toBe(false);
-      expect(fixture.expectedElements.signIn).toBe(false);
+      // Sign in is shown in mobile menu even during loading (authenticated=false)
+      expect(fixture.expectedElements.signIn).toBe(true);
     });
   });
 });

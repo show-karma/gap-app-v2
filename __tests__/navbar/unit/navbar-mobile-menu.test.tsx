@@ -94,7 +94,8 @@ describe("NavbarMobileMenu", () => {
       await waitFor(() => {
         expect(screen.getByText("For Builders")).toBeInTheDocument();
         expect(screen.getByText("For Funders")).toBeInTheDocument();
-        expect(screen.getByText("Explore")).toBeInTheDocument();
+        // Explore section renders as "Explore Projects" and "Explore Communities" subsections
+        expect(screen.getByText("Explore Projects")).toBeInTheDocument();
       });
     });
 
@@ -111,7 +112,7 @@ describe("NavbarMobileMenu", () => {
   });
 
   describe("Authenticated State", () => {
-    it("shows navigation sections when authenticated", async () => {
+    it("shows Explore section and quick actions when authenticated", async () => {
       const user = userEvent.setup();
       const fixture = getAuthFixture("authenticated-basic");
 
@@ -123,9 +124,13 @@ describe("NavbarMobileMenu", () => {
       await user.click(screen.getByLabelText(/open menu/i));
 
       await waitFor(() => {
-        expect(screen.getByText("For Builders")).toBeInTheDocument();
-        expect(screen.getByText("For Funders")).toBeInTheDocument();
-        expect(screen.getByText("Explore")).toBeInTheDocument();
+        // When logged in, For Builders/Funders are hidden
+        expect(screen.queryByText("For Builders")).not.toBeInTheDocument();
+        expect(screen.queryByText("For Funders")).not.toBeInTheDocument();
+        // Explore section renders as subsections
+        expect(screen.getByText("Explore Projects")).toBeInTheDocument();
+        // Quick actions appear instead
+        expect(screen.getByText("My projects")).toBeInTheDocument();
       });
     });
 
@@ -174,10 +179,10 @@ describe("NavbarMobileMenu", () => {
   });
 
   describe("Responsive Display", () => {
-    it("only visible on mobile/tablet (xl:hidden class)", () => {
+    it("only visible on mobile/tablet (lg:hidden class)", () => {
       const { container } = renderWithProviders(<NavbarMobileMenu />);
 
-      const mobileWrapper = container.querySelector(".xl\\:hidden");
+      const mobileWrapper = container.querySelector(".lg\\:hidden");
       expect(mobileWrapper).toBeInTheDocument();
     });
   });

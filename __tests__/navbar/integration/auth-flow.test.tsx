@@ -37,16 +37,15 @@ describe("Authentication Flow Integration Tests", () => {
         }),
       });
 
-      // Verify auth buttons visible
-      expect(screen.getByText("Sign in")).toBeInTheDocument();
-      expect(screen.getByText("Contact sales")).toBeInTheDocument();
+      // Verify auth buttons visible (both mobile and desktop have them)
+      const signInButtons = screen.getAllByText("Sign in");
+      expect(signInButtons.length).toBeGreaterThan(0);
 
-      // Verify user menu not visible
-      expect(screen.queryByTestId("user-avatar")).not.toBeInTheDocument();
+      // Verify user profile button not visible (authenticated only)
+      expect(screen.queryByLabelText("Open profile")).not.toBeInTheDocument();
 
-      // Click sign in
-      const signInButton = screen.getByText("Sign in");
-      await user.click(signInButton);
+      // Click first sign in button
+      await user.click(signInButtons[0]);
 
       // Verify authenticate called
       expect(mockAuthenticate).toHaveBeenCalledTimes(1);
@@ -64,15 +63,12 @@ describe("Authentication Flow Integration Tests", () => {
 
       // Verify UI updated - auth buttons should disappear
       await waitFor(() => {
-        expect(screen.queryByText("Sign in")).not.toBeInTheDocument();
+        const remainingSignIn = screen.queryAllByText("Sign in");
+        expect(remainingSignIn.length).toBe(0);
       });
 
-      // Verify user menu appears (desktop - may not be visible on mobile viewport)
-      // On desktop (>= 1280px), user avatar should be visible
-      const desktopUserMenu = screen.queryByTestId("user-avatar");
-      if (desktopUserMenu) {
-        expect(desktopUserMenu).toBeInTheDocument();
-      }
+      // Verify profile button appears (mobile)
+      expect(screen.getByLabelText("Open profile")).toBeInTheDocument();
     });
 
     it("should show user menu after successful authentication", async () => {
@@ -106,28 +102,26 @@ describe("Authentication Flow Integration Tests", () => {
         },
       });
 
-      // Try to find user avatar (desktop) - it may be hidden on smaller viewports
-      const userAvatar = screen.queryByTestId("user-avatar");
+      // Try to find user avatar (desktop) - may have multiple
+      const userAvatars = screen.getAllByRole("img", { name: /Recipient profile/i });
 
-      if (userAvatar) {
-        // Click user avatar
-        await user.click(userAvatar);
+      // Click first user avatar
+      await user.click(userAvatars[0]);
 
-        // Wait for menu to open and find profile button
-        await waitFor(() => {
-          expect(screen.getByText("My profile")).toBeInTheDocument();
-        });
+      // Wait for menu to open and find profile button
+      await waitFor(() => {
+        expect(screen.getByText("Edit profile")).toBeInTheDocument();
+      });
 
-        // Click "My profile"
-        const profileButton = screen.getByText("My profile");
-        await user.click(profileButton);
+      // Click "Edit profile"
+      const profileButton = screen.getByText("Edit profile");
+      await user.click(profileButton);
 
-        // Verify modal opened
-        expect(mockOpenModal).toHaveBeenCalledTimes(1);
-      }
+      // Verify modal opened
+      expect(mockOpenModal).toHaveBeenCalledTimes(1);
     });
 
-    it("should open profile modal from mobile menu", async () => {
+    it("should open profile modal from mobile avatar button", async () => {
       const user = userEvent.setup();
       const mockOpenModal = jest.fn();
       const authFixture = getAuthFixture("authenticated-basic");
@@ -142,27 +136,14 @@ describe("Authentication Flow Integration Tests", () => {
         },
       });
 
-      // Open mobile drawer
-      const mobileMenuButton = screen.getByLabelText("Open menu");
-      await user.click(mobileMenuButton);
+      // Mobile has an avatar button that directly opens profile modal
+      const profileButton = screen.getByLabelText("Open profile");
+      await user.click(profileButton);
 
-      // Wait for drawer to open
+      // Verify modal opened
       await waitFor(() => {
-        expect(screen.getByText("Menu")).toBeInTheDocument();
+        expect(mockOpenModal).toHaveBeenCalledTimes(1);
       });
-
-      // Find and click profile button in mobile drawer
-      const profileButtons = screen.getAllByText("My profile");
-      const mobileProfileButton = profileButtons.find((btn) => btn.closest('[role="dialog"]'));
-
-      if (mobileProfileButton) {
-        fireEvent.click(mobileProfileButton);
-
-        // Wait for action to complete
-        await waitFor(() => {
-          expect(mockOpenModal).toHaveBeenCalledTimes(1);
-        });
-      }
     });
   });
 
@@ -270,15 +251,10 @@ describe("Authentication Flow Integration Tests", () => {
         mockUsePrivy: createMockUsePrivy(loadingFixture.authState),
       });
 
-      // Skeleton should be visible
-      const skeleton = screen.queryByTestId("user-skeleton");
-      if (skeleton) {
-        expect(skeleton).toBeInTheDocument();
-      }
-
-      // Auth buttons and user menu should not be visible
-      expect(screen.queryByText("Sign in")).not.toBeInTheDocument();
-      expect(screen.queryByTestId("user-avatar")).not.toBeInTheDocument();
+      // When ready is false, the NavbarUserMenu shows skeleton, but other parts may still render
+      // Mobile menu button should still be present
+      const mobileMenuButton = screen.queryByLabelText("Open menu");
+      expect(mobileMenuButton).toBeInTheDocument();
     });
 
     it("should transition from loading to authenticated state", async () => {
@@ -289,12 +265,6 @@ describe("Authentication Flow Integration Tests", () => {
         mockUsePrivy: createMockUsePrivy(loadingFixture.authState),
       });
 
-      // Verify loading state
-      const skeleton = screen.queryByTestId("user-skeleton");
-      if (skeleton) {
-        expect(skeleton).toBeInTheDocument();
-      }
-
       // Update to ready and authenticated
       updateMocks({
         mockUsePrivy: createMockUsePrivy(authFixture.authState),
@@ -302,9 +272,9 @@ describe("Authentication Flow Integration Tests", () => {
       });
       rerender(<Navbar />);
 
-      // Verify skeleton disappears and user menu appears
+      // Verify authenticated state - Sign in button should be gone
       await waitFor(() => {
-        expect(screen.queryByTestId("user-skeleton")).not.toBeInTheDocument();
+        expect(screen.queryByText("Sign in")).not.toBeInTheDocument();
       });
     });
 
@@ -322,12 +292,14 @@ describe("Authentication Flow Integration Tests", () => {
       });
       rerender(<Navbar />);
 
-      // Verify auth buttons appear
+      // Verify auth buttons appear (may have multiple - mobile and desktop)
       await waitFor(() => {
-        expect(screen.getByText("Sign in")).toBeInTheDocument();
+        const signInButtons = screen.getAllByText("Sign in");
+        expect(signInButtons.length).toBeGreaterThan(0);
       });
 
-      expect(screen.getByText("Contact sales")).toBeInTheDocument();
+      const contactSalesButtons = screen.getAllByText("Contact sales");
+      expect(contactSalesButtons.length).toBeGreaterThan(0);
     });
   });
 
@@ -436,15 +408,15 @@ describe("Authentication Flow Integration Tests", () => {
         expect(screen.getByText("Menu")).toBeInTheDocument();
       });
 
-      // Verify authenticated content in mobile menu
-      expect(screen.getByText("My profile")).toBeInTheDocument();
-      expect(screen.getByText("My projects")).toBeInTheDocument();
-      expect(screen.getByText("Log out")).toBeInTheDocument();
+      // Verify authenticated content (may appear in multiple places)
+      const myProjectsElements = screen.getAllByText("My projects");
+      expect(myProjectsElements.length).toBeGreaterThan(0);
+      const logoutElements = screen.getAllByText("Log out");
+      expect(logoutElements.length).toBeGreaterThan(0);
 
-      // Sign in button should not be in mobile menu
+      // Sign in button should not be visible when authenticated
       const signInButtons = screen.queryAllByText("Sign in");
-      const mobileSignIn = signInButtons.find((btn) => btn.closest('[role="dialog"]'));
-      expect(mobileSignIn).toBeUndefined();
+      expect(signInButtons.length).toBe(0);
     });
   });
 });

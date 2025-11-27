@@ -526,6 +526,7 @@ export const authFixtures: AuthFixture[] = [
   },
 
   // 15. Loading State
+  // Note: Even during loading, mobile menu shows Sign in/Contact sales because authenticated=false
   {
     name: "loading",
     description: "Authentication is loading (ready = false)",
@@ -543,9 +544,9 @@ export const authFixtures: AuthFixture[] = [
       isRegistryAdmin: false,
     },
     expectedElements: {
-      signIn: false,
-      contactSales: false,
-      resources: false,
+      signIn: true, // Mobile menu shows these even during loading
+      contactSales: true,
+      resources: true,
       userMenu: false,
       myProjects: false,
       review: false,

@@ -76,8 +76,8 @@ describe("NavbarUserMenu", () => {
     it("should show avatar and menu when logged in", async () => {
       await setupAuthAndOpenMenu("authenticated-basic");
 
-      // Menu should be open with "My profile" visible
-      expect(screen.getByText("My profile")).toBeInTheDocument();
+      // Menu should be open with "Edit profile" visible
+      expect(screen.getByText("Edit profile")).toBeInTheDocument();
     });
 
     it("should have desktop-only visibility (hidden on mobile/tablet)", () => {
@@ -108,8 +108,9 @@ describe("NavbarUserMenu", () => {
     it("should render avatar with correct address prop", async () => {
       await setupAuthAndOpenMenu("authenticated-basic");
 
-      // Should show formatted address in menu
-      expect(screen.getByText(/0x1234/i)).toBeInTheDocument();
+      // Should show formatted address in menu (may have multiple with short/long formats)
+      const addressElements = screen.getAllByText(/0x1234/i);
+      expect(addressElements.length).toBeGreaterThan(0);
     });
 
     it("should format wallet address correctly (0x1234...5678)", async () => {
@@ -126,14 +127,14 @@ describe("NavbarUserMenu", () => {
       await setupAuthAndOpenMenu("authenticated-basic");
 
       // Menu should be open with items visible
-      expect(screen.getByText("My profile")).toBeInTheDocument();
+      expect(screen.getByText("Edit profile")).toBeInTheDocument();
     });
   });
 
   describe("Always Visible Menu Items", () => {
-    it('should display "My profile" button', async () => {
+    it('should display "Edit profile" button', async () => {
       await setupAuthAndOpenMenu("authenticated-basic");
-      expect(screen.getByText("My profile")).toBeInTheDocument();
+      expect(screen.getByText("Edit profile")).toBeInTheDocument();
     });
 
     it("should display theme toggle", async () => {
@@ -165,7 +166,7 @@ describe("NavbarUserMenu", () => {
   });
 
   describe("Profile Modal Tests", () => {
-    it('should call openModal() when "My profile" is clicked', async () => {
+    it('should call openModal() when "Edit profile" is clicked', async () => {
       const mockOpenModal = jest.fn();
       const authFixture = getAuthFixture("authenticated-basic");
       const user = userEvent.setup();
@@ -184,8 +185,8 @@ describe("NavbarUserMenu", () => {
       const avatar = screen.getByRole("img");
       await user.click(avatar);
 
-      // Click "My profile" button
-      const profileButton = await screen.findByText("My profile");
+      // Click "Edit profile" button
+      const profileButton = await screen.findByText("Edit profile");
       await user.click(profileButton);
 
       expect(mockOpenModal).toHaveBeenCalledTimes(1);
@@ -355,7 +356,7 @@ describe("NavbarUserMenu", () => {
       await setupAuthAndOpenMenu("authenticated-basic");
 
       // Verify menu is fully open by checking for menu items
-      expect(screen.getByText("My profile")).toBeInTheDocument();
+      expect(screen.getByText("Edit profile")).toBeInTheDocument();
       expect(screen.getByText("Log out")).toBeInTheDocument();
 
       // Check for separators - the component has 3 <hr> elements

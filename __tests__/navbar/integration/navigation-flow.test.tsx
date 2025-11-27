@@ -180,7 +180,8 @@ describe("Navigation Flow Integration Tests", () => {
       const drawer = screen.getByRole("dialog");
       expect(within(drawer).getByText("For Builders")).toBeInTheDocument();
       expect(within(drawer).getByText("For Funders")).toBeInTheDocument();
-      expect(within(drawer).getByText("Explore")).toBeInTheDocument();
+      // Explore section renders as subsections
+      expect(within(drawer).getByText("Explore Projects")).toBeInTheDocument();
     });
 
     it("should navigate from mobile drawer item", async () => {
@@ -226,10 +227,11 @@ describe("Navigation Flow Integration Tests", () => {
 
       const drawer = screen.getByRole("dialog");
 
-      // Verify all sections including Resources
+      // Verify all sections including Resources (only visible when logged out)
       expect(within(drawer).getByText("For Builders")).toBeInTheDocument();
       expect(within(drawer).getByText("For Funders")).toBeInTheDocument();
-      expect(within(drawer).getByText("Explore")).toBeInTheDocument();
+      // Explore renders as subsections
+      expect(within(drawer).getByText("Explore Projects")).toBeInTheDocument();
       expect(within(drawer).getByText("Resources")).toBeInTheDocument();
     });
 
@@ -295,8 +297,12 @@ describe("Navigation Flow Integration Tests", () => {
         mockUsePrivy: createMockUsePrivy(authFixture.authState),
       });
 
-      const contactSalesLink = screen.getByText("Contact sales");
-      const linkElement = contactSalesLink.closest("a");
+      // Contact sales buttons - find all of them (mobile and desktop)
+      const contactSalesLinks = screen.getAllByText("Contact sales");
+      expect(contactSalesLinks.length).toBeGreaterThan(0);
+
+      // Check the first link element
+      const linkElement = contactSalesLinks[0].closest("a");
 
       if (linkElement) {
         expect(linkElement).toHaveAttribute("target", "_blank");

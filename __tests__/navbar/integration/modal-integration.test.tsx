@@ -25,7 +25,7 @@ describe("Modal Integration Tests", () => {
     cleanupAfterEach();
   });
   describe("1. Profile Modal from Desktop Menu", () => {
-    it("should open profile modal when clicking My profile", async () => {
+    it("should open profile modal when clicking Edit profile", async () => {
       const user = userEvent.setup();
       const mockOpenModal = jest.fn();
       const authFixture = getAuthFixture("authenticated-basic");
@@ -40,17 +40,17 @@ describe("Modal Integration Tests", () => {
         },
       });
 
-      // Open desktop user menu
-      const userAvatar = screen.getByRole("img", { name: /Recipient profile/i });
-
-      await user.click(userAvatar);
+      // Open desktop user menu - find avatar images (there might be multiple)
+      const userAvatars = screen.getAllByRole("img", { name: /Recipient profile/i });
+      // Click the first one (desktop)
+      await user.click(userAvatars[0]);
 
       await waitFor(() => {
-        expect(screen.getByText("My profile")).toBeInTheDocument();
+        expect(screen.getByText("Edit profile")).toBeInTheDocument();
       });
 
-      // Click My profile
-      const profileButton = screen.getByText("My profile");
+      // Click Edit profile
+      const profileButton = screen.getByText("Edit profile");
       await user.click(profileButton);
 
       // Verify openModal was called
@@ -72,15 +72,14 @@ describe("Modal Integration Tests", () => {
         },
       });
 
-      const userAvatar = screen.getByRole("img", { name: /Recipient profile/i });
-
-      await user.click(userAvatar);
+      const userAvatars = screen.getAllByRole("img", { name: /Recipient profile/i });
+      await user.click(userAvatars[0]);
 
       await waitFor(() => {
-        expect(screen.getByText("My profile")).toBeInTheDocument();
+        expect(screen.getByText("Edit profile")).toBeInTheDocument();
       });
 
-      const profileButton = screen.getByText("My profile");
+      const profileButton = screen.getByText("Edit profile");
       await user.click(profileButton);
 
       // Verify openModal was called
@@ -102,15 +101,14 @@ describe("Modal Integration Tests", () => {
         },
       });
 
-      const userAvatar = screen.getByRole("img", { name: /Recipient profile/i });
-
-      await user.click(userAvatar);
+      const userAvatars = screen.getAllByRole("img", { name: /Recipient profile/i });
+      await user.click(userAvatars[0]);
 
       await waitFor(() => {
-        expect(screen.getByText("My profile")).toBeInTheDocument();
+        expect(screen.getByText("Edit profile")).toBeInTheDocument();
       });
 
-      const profileButton = screen.getByText("My profile");
+      const profileButton = screen.getByText("Edit profile");
       await user.click(profileButton);
 
       // Menu should close after clicking
@@ -120,7 +118,7 @@ describe("Modal Integration Tests", () => {
   });
 
   describe("2. Profile Modal from Mobile Menu", () => {
-    it("should open profile modal from mobile drawer", async () => {
+    it("should open profile modal from mobile avatar button", async () => {
       const user = userEvent.setup();
       const mockOpenModal = jest.fn();
       const authFixture = getAuthFixture("authenticated-basic");
@@ -135,20 +133,9 @@ describe("Modal Integration Tests", () => {
         },
       });
 
-      // Open mobile drawer
-      const mobileMenuButton = screen.getByLabelText("Open menu");
-      await user.click(mobileMenuButton);
-
-      await waitFor(() => {
-        expect(screen.getByText("Menu")).toBeInTheDocument();
-      });
-
-      // Find My profile in drawer
-      const drawer = screen.getByRole("dialog");
-      const profileButton = within(drawer).getByText("My profile");
-
-      // Click My profile using fireEvent to avoid setPointerCapture error
-      fireEvent.click(profileButton);
+      // Mobile menu has an avatar button (with "Open profile" aria-label) that directly opens profile modal
+      const profileButton = screen.getByLabelText("Open profile");
+      await user.click(profileButton);
 
       // Verify openModal was called
       await waitFor(() => {
@@ -156,7 +143,7 @@ describe("Modal Integration Tests", () => {
       });
     });
 
-    it("should close drawer after opening profile modal", async () => {
+    it("should call openModal with isGlobal parameter", async () => {
       const user = userEvent.setup();
       const mockOpenModal = jest.fn();
       const authFixture = getAuthFixture("authenticated-basic");
@@ -171,22 +158,13 @@ describe("Modal Integration Tests", () => {
         },
       });
 
-      // Open drawer
-      const mobileMenuButton = screen.getByLabelText("Open menu");
-      await user.click(mobileMenuButton);
+      // Click mobile profile button
+      const profileButton = screen.getByLabelText("Open profile");
+      await user.click(profileButton);
 
+      // Verify openModal was called with correct params
       await waitFor(() => {
-        expect(screen.getByText("Menu")).toBeInTheDocument();
-      });
-
-      // Click profile using fireEvent to avoid setPointerCapture error
-      const drawer = screen.getByRole("dialog");
-      const profileButton = within(drawer).getByText("My profile");
-      fireEvent.click(profileButton);
-
-      // Drawer should close (via onClose callback)
-      await waitFor(() => {
-        expect(mockOpenModal).toHaveBeenCalled();
+        expect(mockOpenModal).toHaveBeenCalledWith({ isGlobal: true });
       });
     });
 
@@ -210,18 +188,9 @@ describe("Modal Integration Tests", () => {
           },
         });
 
-        // Open drawer
-        const mobileMenuButton = screen.getByLabelText("Open menu");
-        await user.click(mobileMenuButton);
-
-        await waitFor(() => {
-          expect(screen.getByText("Menu")).toBeInTheDocument();
-        });
-
-        // Click profile using fireEvent to avoid setPointerCapture error
-        const drawer = screen.getByRole("dialog");
-        const profileButton = within(drawer).getByText("My profile");
-        fireEvent.click(profileButton);
+        // Click mobile profile avatar button
+        const profileButton = screen.getByLabelText("Open profile");
+        await user.click(profileButton);
 
         // Should work for all roles
         await waitFor(() => {
@@ -444,17 +413,16 @@ describe("Modal Integration Tests", () => {
         },
       });
 
-      // Open user menu
-      const userAvatar = screen.getByRole("img", { name: /Recipient profile/i });
-
-      await user.click(userAvatar);
+      // Open user menu - may have multiple avatars
+      const userAvatars = screen.getAllByRole("img", { name: /Recipient profile/i });
+      await user.click(userAvatars[0]);
 
       await waitFor(() => {
-        expect(screen.getByText("My profile")).toBeInTheDocument();
+        expect(screen.getByText("Edit profile")).toBeInTheDocument();
       });
 
       // Open profile modal
-      const profileButton = screen.getByText("My profile");
+      const profileButton = screen.getByText("Edit profile");
       await user.click(profileButton);
 
       expect(mockOpenModal).toHaveBeenCalled();
@@ -478,18 +446,9 @@ describe("Modal Integration Tests", () => {
         },
       });
 
-      // Open mobile drawer
-      const mobileMenuButton = screen.getByLabelText("Open menu");
-      await user.click(mobileMenuButton);
-
-      await waitFor(() => {
-        expect(screen.getByText("Menu")).toBeInTheDocument();
-      });
-
-      // Open profile modal using fireEvent to avoid setPointerCapture error
-      const drawer = screen.getByRole("dialog");
-      const profileButton = within(drawer).getByText("My profile");
-      fireEvent.click(profileButton);
+      // Use mobile avatar button directly (not drawer)
+      const profileButton = screen.getByLabelText("Open profile");
+      await user.click(profileButton);
 
       await waitFor(() => {
         expect(mockOpenModal).toHaveBeenCalledTimes(1);
@@ -498,9 +457,7 @@ describe("Modal Integration Tests", () => {
       // Try opening modal again - it should work multiple times
       mockOpenModal.mockClear();
 
-      // The drawer stays open, so we can click profile again
-      const secondProfileButton = within(drawer).getByText("My profile");
-      fireEvent.click(secondProfileButton);
+      await user.click(profileButton);
 
       await waitFor(() => {
         expect(mockOpenModal).toHaveBeenCalledTimes(1);
@@ -522,7 +479,13 @@ describe("Modal Integration Tests", () => {
         },
       });
 
-      // Open mobile drawer
+      // Open profile modal via mobile button
+      const profileButton = screen.getByLabelText("Open profile");
+      await user.click(profileButton);
+
+      expect(mockOpenModal).toHaveBeenCalled();
+
+      // Open mobile drawer to check other navigation
       const mobileMenuButton = screen.getByLabelText("Open menu");
       await user.click(mobileMenuButton);
 
@@ -530,13 +493,8 @@ describe("Modal Integration Tests", () => {
         expect(screen.getByText("Menu")).toBeInTheDocument();
       });
 
-      // Open profile modal using fireEvent to avoid setPointerCapture error
-      const drawer = screen.getByRole("dialog");
-      const profileButton = within(drawer).getByText("My profile");
-      fireEvent.click(profileButton);
-
       // Other navigation should still work
-      // For example, My projects link should still be functional
+      const drawer = screen.getByRole("dialog");
       const myProjectsLink = within(drawer).getByText("My projects");
       expect(myProjectsLink).toBeInTheDocument();
     });
@@ -544,7 +502,6 @@ describe("Modal Integration Tests", () => {
 
   describe("6. Modal Accessibility", () => {
     it("should have accessible modal trigger buttons", async () => {
-      const user = userEvent.setup();
       const mockOpenModal = jest.fn();
       const authFixture = getAuthFixture("authenticated-basic");
 
@@ -558,19 +515,8 @@ describe("Modal Integration Tests", () => {
         },
       });
 
-      // Open mobile drawer
-      const mobileMenuButton = screen.getByLabelText("Open menu");
-      await user.click(mobileMenuButton);
-
-      await waitFor(() => {
-        expect(screen.getByText("Menu")).toBeInTheDocument();
-      });
-
-      // Profile button should be accessible
-      const drawer = screen.getByRole("dialog");
-      const profileButton = within(drawer).getByText("My profile");
-
-      // Should be keyboard accessible
+      // Mobile profile button should have aria-label for accessibility
+      const profileButton = screen.getByLabelText("Open profile");
       expect(profileButton).toBeInTheDocument();
     });
 
@@ -589,27 +535,15 @@ describe("Modal Integration Tests", () => {
         },
       });
 
-      // Open mobile drawer
-      const mobileMenuButton = screen.getByLabelText("Open menu");
-      await user.click(mobileMenuButton);
-
-      await waitFor(() => {
-        expect(screen.getByText("Menu")).toBeInTheDocument();
-      });
-
-      // Tab to profile button
-      const drawer = screen.getByRole("dialog");
-      const profileText = within(drawer).getByText("My profile");
-
-      // Get the actual button element (parent of the text)
-      const profileButton = profileText.closest("button") || profileText;
+      // Mobile profile button should be keyboard accessible
+      const profileButton = screen.getByLabelText("Open profile");
 
       // Test keyboard accessibility - button should be focusable
       profileButton.focus();
       expect(document.activeElement).toBe(profileButton);
 
-      // Click should work (keyboard activation would trigger click event)
-      fireEvent.click(profileButton);
+      // Click should work
+      await user.click(profileButton);
 
       // Should trigger modal
       await waitFor(() => {
