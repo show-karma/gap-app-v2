@@ -19,7 +19,7 @@ interface FundingOpportunityCardProps {
 }
 
 function formatCurrency(amount: string | undefined): string {
-  if (!amount) return "TBD";
+  if (!amount) return "";
   const num = parseFloat(amount);
   if (num >= 1000000) return `$${(num / 1000000).toFixed(0)}M`;
   if (num >= 1000) return `$${(num / 1000).toFixed(0)}k`;
@@ -175,7 +175,7 @@ export function FundingOpportunityCard({
             </div>
             <div className="text-right">
               <div className="text-white text-lg font-bold">{formatCurrency(budget)}</div>
-              <div className="text-white/70 text-xs">Available</div>
+              <div className="text-white/70 text-xs">{budget ? "Available" : ""}</div>
             </div>
           </div>
         </CardContent>
