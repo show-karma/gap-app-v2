@@ -72,6 +72,7 @@ export type FundingProgram = {
     grantTypes?: string[];
     credentials?: {};
     description?: string;
+    shortDescription?: string;
     logoImgData?: string;
     grantsToDate?: number;
     bannerImgData?: string;
