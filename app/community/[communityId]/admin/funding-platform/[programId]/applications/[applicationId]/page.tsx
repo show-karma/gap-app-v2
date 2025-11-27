@@ -29,7 +29,11 @@ import { layoutTheme } from "@/src/helper/theme";
 
 export default function ApplicationDetailPage() {
   const router = useRouter();
-  const { communityId, programId: combinedProgramId, applicationId } = useParams() as {
+  const {
+    communityId,
+    programId: combinedProgramId,
+    applicationId,
+  } = useParams() as {
     communityId: string;
     programId: string;
     applicationId: string;
@@ -54,11 +58,7 @@ export default function ApplicationDetailPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   // Fetch application data
-  const {
-    application,
-    isLoading: isLoadingApplication,
-    refetch: refetchApplication,
-  } = useApplication(applicationId);
+  const { application, isLoading: isLoadingApplication, refetch: refetchApplication } = useApplication(applicationId);
 
   // Fetch program config
   const { data: program } = useProgramConfig(programId, parsedChainId);
@@ -93,7 +93,7 @@ export default function ApplicationDetailPage() {
     await updateStatusAsync({
       applicationId: application.referenceNumber,
       status,
-      note
+      note,
     });
   };
 
@@ -123,13 +123,11 @@ export default function ApplicationDetailPage() {
       await deleteApplicationAsync(application.referenceNumber);
       // Only close modal and navigate on success
       setIsDeleteModalOpen(false);
-      router.push(
-        `${PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, combinedProgramId)}`
-      );
+      router.push(`${PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, combinedProgramId)}`);
     } catch (error) {
       // Error is handled by the hook (shows toast with specific message and logs to Sentry)
       // Modal stays open to allow user to retry or cancel
-      console.error('Failed to delete application:', error);
+      console.error("Failed to delete application:", error);
     }
   };
 
@@ -153,9 +151,7 @@ export default function ApplicationDetailPage() {
   };
 
   const handleBackClick = () => {
-    router.push(
-      `${PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, combinedProgramId)}`
-    );
+    router.push(`${PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, combinedProgramId)}`);
   };
 
   // Memoized milestone review URL - only returns URL if approved and has projectUID
@@ -189,11 +185,7 @@ export default function ApplicationDetailPage() {
     return (
       <div className="min-h-screen">
         <div className={layoutTheme.padding}>
-          <Button
-            onClick={handleBackClick}
-            variant="secondary"
-            className="flex items-center mb-4"
-          >
+          <Button onClick={handleBackClick} variant="secondary" className="flex items-center mb-4">
             <ArrowLeftIcon className="w-4 h-4 mr-2" />
             Back to Applications
           </Button>
@@ -210,18 +202,12 @@ export default function ApplicationDetailPage() {
         <div className="px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4 max-sm:gap-1 max-sm:flex-col max-sm:items-start">
-              <Button
-                onClick={handleBackClick}
-                variant="secondary"
-                className="flex items-center"
-              >
+              <Button onClick={handleBackClick} variant="secondary" className="flex items-center">
                 <ArrowLeftIcon className="w-4 h-4 mr-2" />
                 Back to Applications
               </Button>
               <div className="flex flex-col gap-0">
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Application Details
-                </h1>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white">Application Details</h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Application ID: {application.referenceNumber}
                 </p>
@@ -256,8 +242,7 @@ export default function ApplicationDetailPage() {
                       Review Project Milestones
                     </h3>
                     <p className="text-xs text-green-700 dark:text-green-300">
-                      View and verify milestone completions for this approved
-                      application
+                      View and verify milestone completions for this approved application
                     </p>
                   </div>
                   <Link href={milestoneReviewUrl}>
@@ -274,6 +259,7 @@ export default function ApplicationDetailPage() {
               program={program}
               showStatusActions={hasAccess}
               showAIEvaluationButton={hasAccess}
+              showInternalEvaluation={hasAccess}
               onStatusChange={handleStatusChange}
               viewMode={applicationViewMode}
               onViewModeChange={setApplicationViewMode}
@@ -312,4 +298,3 @@ export default function ApplicationDetailPage() {
     </div>
   );
 }
-

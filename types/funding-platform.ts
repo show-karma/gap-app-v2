@@ -99,6 +99,7 @@ export interface IAIConfig {
   detailedPrompt?: string;
   aiModel?: string;
   enableRealTimeEvaluation?: boolean;
+  internalLangfusePromptId?: string;
 }
 
 // V2 Funding Application
@@ -117,6 +118,11 @@ export interface IFundingApplication {
   aiEvaluation?: {
     evaluation?: string;
     promptId?: string;
+  };
+  internalAIEvaluation?: {
+    evaluation?: string;
+    promptId?: string;
+    evaluatedAt?: string | Date;
   };
   createdAt: string | Date;
   updatedAt: string | Date;

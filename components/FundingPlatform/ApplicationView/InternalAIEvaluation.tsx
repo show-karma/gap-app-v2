@@ -1,14 +1,14 @@
 "use client";
 
+import { JSX } from "react";
 import { cn } from "@/utilities/tailwind";
 import {
     XMarkIcon,
     CheckCircleIcon,
     ExclamationTriangleIcon,
     ClockIcon,
-    SunIcon,
+    LockClosedIcon,
 } from "@heroicons/react/24/outline";
-import { JSX } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import {
     parseEvaluation,
@@ -19,14 +19,12 @@ import {
     type GenericJSON,
 } from "./evaluationUtils";
 
-export type AIEvaluationData = string;
+export type InternalAIEvaluationData = string;
 
-interface AIEvaluationDisplayProps {
-    evaluation: AIEvaluationData | null;
+interface InternalAIEvaluationDisplayProps {
+    evaluation: InternalAIEvaluationData | null;
     isLoading: boolean;
-    isEnabled: boolean;
     className?: string;
-    hasError?: boolean;
     programName?: string;
 }
 
@@ -518,7 +516,7 @@ function EvaluationDisplay({
             {/* Footer disclaimer */}
             <div className="pt-3 border-t border-zinc-200 dark:border-zinc-700">
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                    This AI-generated review is for guidance only and may not be fully accurate.
+                    This internal AI evaluation is for reviewer use only and is not visible to applicants.
                 </p>
             </div>
         </div>
@@ -559,27 +557,31 @@ function EvaluationContent({
     );
 }
 
-export function AIEvaluationDisplay({
+/**
+ * Component for displaying internal AI evaluation results.
+ * This evaluation is only visible to reviewers and admins, not to applicants.
+ * 
+ * @param evaluation - The evaluation JSON string to parse and display
+ * @param isLoading - Whether the evaluation is currently being loaded
+ * @param className - Additional CSS classes to apply
+ * @param programName - Optional program name for context
+ */
+export function InternalAIEvaluationDisplay({
     evaluation,
     isLoading,
-    isEnabled,
     className = "",
-    hasError = false,
     programName,
-}: AIEvaluationDisplayProps) {
-    if (!isEnabled) {
-        return null;
-    }
+}: InternalAIEvaluationDisplayProps) {
 
     return (
         <div className={`${className}`}>
             <div className="flex flex-col gap-1 pb-4 items-start">
                 <div className="flex items-start justify-start gap-2">
-                    <SunIcon className="w-5 h-5 text-primary animate-pulse" />
-                    <h3 className="text-sm font-semibold">AI Evaluation Feedback</h3>
+                    <LockClosedIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                    <h3 className="text-sm font-semibold">Internal AI Evaluation</h3>
                 </div>
-                <p className="text-xs text-default-500">
-                    Real-time feedback to help improve your application
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                    For reviewer use only - not visible to applicants
                 </p>
             </div>
 
@@ -597,10 +599,9 @@ export function AIEvaluationDisplay({
                 ) : (
                     <div className="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 text-center">
                         <ClockIcon className="w-8 h-8 text-gray-400 dark:text-gray-500 mx-auto mb-2" />
-                        <p className="text-gray-500 dark:text-gray-400 text-sm">AI evaluation pending</p>
+                        <p className="text-gray-500 dark:text-gray-400 text-sm">Internal evaluation pending</p>
                         <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">
-                            The application will be automatically evaluated by AI shortly after
-                            submission.
+                            The internal evaluation will be automatically generated after application submission.
                         </p>
                     </div>
                 )}
@@ -608,3 +609,6 @@ export function AIEvaluationDisplay({
         </div>
     );
 }
+
+
+
