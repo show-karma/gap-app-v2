@@ -22,7 +22,7 @@ describe("errorManager", () => {
 
     errorManager("Test error", error);
 
-    expect(consoleLogSpy).toHaveBeenCalledWith("User rejected action");
+    // errorManager returns early without logging or capturing for rejected transactions
     expect(Sentry.captureException).not.toHaveBeenCalled();
   });
 

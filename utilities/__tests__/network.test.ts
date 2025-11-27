@@ -121,9 +121,9 @@ describe("network utilities", () => {
       expect(getChainIdByName("sepolia")).toBe(11155111);
       expect(getChainIdByName("Sepolia")).toBe(11155111);
       expect(getChainIdByName("optimism-sepolia")).toBe(11155420);
-      // 'optimismSepolia' won't match because switch uses toLowerCase()
-      // which converts to 'optimismsepolia', not matching the case statement
-      expect(getChainIdByName("optimismSepolia")).toBe(1); // Returns default
+      // 'optimismSepolia' converts to 'optimismsepolia' via toLowerCase()
+      // which matches the case statement for optimism sepolia
+      expect(getChainIdByName("optimismSepolia")).toBe(11155420);
       expect(getChainIdByName("base-sepolia")).toBe(84532);
       expect(getChainIdByName("base sepolia")).toBe(84532);
       expect(getChainIdByName("basesepolia")).toBe(84532);

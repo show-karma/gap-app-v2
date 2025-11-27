@@ -41,7 +41,7 @@ describe("Modal Integration Tests", () => {
       });
 
       // Open desktop user menu
-      const userAvatar = screen.getByRole("img", { name: /profile picture/i });
+      const userAvatar = screen.getByRole("img", { name: /Recipient profile/i });
 
       await user.click(userAvatar);
 
@@ -72,7 +72,7 @@ describe("Modal Integration Tests", () => {
         },
       });
 
-      const userAvatar = screen.getByRole("img", { name: /profile picture/i });
+      const userAvatar = screen.getByRole("img", { name: /Recipient profile/i });
 
       await user.click(userAvatar);
 
@@ -102,7 +102,7 @@ describe("Modal Integration Tests", () => {
         },
       });
 
-      const userAvatar = screen.getByRole("img", { name: /profile picture/i });
+      const userAvatar = screen.getByRole("img", { name: /Recipient profile/i });
 
       await user.click(userAvatar);
 
@@ -445,7 +445,7 @@ describe("Modal Integration Tests", () => {
       });
 
       // Open user menu
-      const userAvatar = screen.getByRole("img", { name: /profile picture/i });
+      const userAvatar = screen.getByRole("img", { name: /Recipient profile/i });
 
       await user.click(userAvatar);
 

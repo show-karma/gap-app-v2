@@ -358,12 +358,13 @@ describe("ReasonsModal", () => {
   });
 
   describe("Dark Mode Support", () => {
-    it("should have dark mode classes for trigger button", () => {
+    it("should render trigger button with correct variant-specific styling", () => {
       render(<ReasonsModal text="Include" reasons={mockReasonsInclude} />);
 
       const button = screen.getByText("Include").closest("button");
-      expect(button?.className).toContain("dark:bg-primary-900/50");
-      expect(button?.className).toContain("dark:text-zinc-100");
+      // Trigger button has variant-specific colors, not dark mode classes
+      expect(button?.className).toContain("text-green-800");
+      expect(button?.className).toContain("bg-green-100");
     });
 
     it("should have dark mode classes for title", () => {

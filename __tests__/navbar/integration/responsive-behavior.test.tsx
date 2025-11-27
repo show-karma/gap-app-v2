@@ -198,7 +198,7 @@ describe("Responsive Behavior Integration Tests", () => {
       });
 
       // User avatar should be visible on desktop
-      const userAvatar = screen.getByRole("img", { name: /profile picture/i });
+      const userAvatar = screen.getByRole("img", { name: /Recipient profile/i });
       expect(userAvatar).toBeInTheDocument();
 
       // Click to open menu

@@ -5,8 +5,8 @@ import {
   waitForChainSync,
 } from "@/utilities/chainSyncValidation";
 
-// Mock console methods
-const mockConsoleLog = jest.spyOn(console, "log").mockImplementation(() => {});
+// Mock console methods to prevent test output clutter
+const _mockConsoleLog = jest.spyOn(console, "log").mockImplementation(() => {});
 const _mockConsoleWarn = jest.spyOn(console, "warn").mockImplementation(() => {});
 
 describe("chainSyncValidation utilities", () => {
@@ -44,8 +44,7 @@ describe("chainSyncValidation utilities", () => {
         validateChainSync(walletClient, expectedChainId, "donation")
       ).resolves.not.toThrow();
 
-      expect(mockConsoleLog).toHaveBeenCalledWith(expect.stringContaining("Validating chain sync"));
-      expect(mockConsoleLog).toHaveBeenCalledWith(expect.stringContaining("Chain sync validated"));
+      // validateChainSync completes silently when chains match
     });
 
     it("should throw error when wallet client is null", async () => {

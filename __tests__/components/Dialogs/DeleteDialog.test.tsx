@@ -322,24 +322,26 @@ describe("DeleteDialog", () => {
       expect(cancelButton).toBeDisabled();
     });
 
-    it("should disable continue button when isLoading is true", () => {
+    it("should show spinner instead of Continue button when isLoading is true", () => {
       render(<DeleteDialog {...defaultProps} isLoading={true} />);
 
       const triggerButton = screen.getByText("Delete Project");
       fireEvent.click(triggerButton);
 
-      const buttons = screen.getAllByRole("button");
-      const continueButton = buttons.find((btn) => btn.textContent === "Loading...");
-      expect(continueButton).toBeDisabled();
+      // Continue button is replaced with a spinner when loading
+      expect(screen.queryByText("Continue")).not.toBeInTheDocument();
+      // Spinner is shown with Loading aria-label
+      expect(screen.getByRole("status", { name: /loading/i })).toBeInTheDocument();
     });
 
-    it("should show loading indicator on continue button", () => {
+    it("should show loading spinner indicator when isLoading is true", () => {
       render(<DeleteDialog {...defaultProps} isLoading={true} />);
 
       const triggerButton = screen.getByText("Delete Project");
       fireEvent.click(triggerButton);
 
-      expect(screen.getByText("Loading...")).toBeInTheDocument();
+      // The Spinner component has role="status" and aria-label="Loading"
+      expect(screen.getByRole("status", { name: /loading/i })).toBeInTheDocument();
     });
 
     it("should enable buttons when not loading", () => {
