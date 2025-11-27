@@ -110,12 +110,12 @@ interface ExploreContentProps {
 export function ExploreContent({ variant = "desktop", onClose }: ExploreContentProps) {
   if (variant === "mobile") {
     return (
-      <div className="flex flex-col gap-2">
-        <MenuSection title="Projects" variant="mobile" />
+      <div className="flex flex-col gap-1">
+        <MenuSection title="Explore Projects" variant="mobile" />
         {exploreItems.projects.map((item) => (
           <SimpleMenuItem key={item.title} {...item} variant="mobile" onClick={onClose} />
         ))}
-        <MenuSection title="Communities" variant="mobile" className="mt-2" />
+        <MenuSection title="Explore Communities" variant="mobile" className="mt-2" />
         {exploreItems.communities.map((item) => (
           <SimpleMenuItem key={item.href} {...item} variant="mobile" onClick={onClose} />
         ))}

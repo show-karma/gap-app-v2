@@ -334,6 +334,7 @@ export const ProjectDiscovery = () => {
                 >
                   <span className="text-sm font-medium truncate max-w-[200px]">{endorser}</span>
                   <button
+                    type="button"
                     onClick={() => handleEndorserRemove(endorser)}
                     className="text-primary/60 hover:text-primary transition-colors"
                     aria-label="Remove endorser"
@@ -436,6 +437,7 @@ export const ProjectDiscovery = () => {
                     </div>
                     <div className="flex flex-col items-end justify-center">
                       <button
+                        type="button"
                         onClick={() => handleScoreClick(result.project.projectUID)}
                         className="text-2xl text-primary font-bold hover:opacity-80 transition-opacity underline decoration-dotted cursor-pointer"
                         aria-label="Show impact score calculation"
@@ -453,6 +455,7 @@ export const ProjectDiscovery = () => {
                           Impact Score Calculation
                         </h4>
                         <button
+                          type="button"
                           onClick={() => setActiveCalculation(null)}
                           className="text-gray-400 hover:text-gray-600"
                           aria-label="Close calculation"

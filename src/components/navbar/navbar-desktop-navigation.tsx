@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { DiscordIcon, TelegramIcon, TwitterIcon } from "@/components/Icons";
 import { ParagraphIcon } from "@/components/Icons/Paragraph";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -11,6 +13,12 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { useAuth } from "@/hooks/useAuth";
+import { useReviewerPrograms } from "@/hooks/usePermissions";
+import { useStaff } from "@/hooks/useStaff";
+import { useOwnerStore } from "@/store";
+import { useCommunitiesStore } from "@/store/communities";
+import { useRegistryStore } from "@/store/registry";
+import { PAGES } from "@/utilities/pages";
 import { SOCIALS } from "@/utilities/socials";
 import { cn } from "@/utilities/tailwind";
 import { Logo } from "../shared/logo";
@@ -56,38 +64,71 @@ const socialMediaLinks = [
 
 export function NavbarDesktopNavigation() {
   const { authenticated: isLoggedIn } = useAuth();
+  const { communities } = useCommunitiesStore();
+  const { programs: reviewerPrograms } = useReviewerPrograms();
+  const { isStaff } = useStaff();
+  const isOwner = useOwnerStore((state) => state.isOwner);
+  const { isPoolManager, isRegistryAdmin } = useRegistryStore();
+
+  const hasReviewerRole = reviewerPrograms && reviewerPrograms.length > 0;
+  const isCommunityAdmin = communities.length !== 0;
+  const hasAdminAccess = isStaff || isOwner || isCommunityAdmin;
+  const isRegistryAllowed = (isRegistryAdmin || isPoolManager) && isLoggedIn;
 
   return (
-    <div className="hidden xl:flex items-center flex-1 lg:justify-between gap-8">
+    <div className="hidden lg:flex items-center flex-1 lg:justify-between gap-8">
       <div className="flex flex-row items-center gap-3 flex-shrink-0">
         <Logo />
-        <NavigationMenu>
-          <NavigationMenuList>
-            {/* For Builders Dropdown */}
-            <NavigationMenuItem>
-              <NavigationMenuTrigger className={cn(menuStyles.button, "h-auto py-2")}>
-                For Builders
-              </NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <div className="min-w-[500px] p-4">
-                  <ForBuildersContent variant="desktop" />
-                </div>
-              </NavigationMenuContent>
-            </NavigationMenuItem>
+        {!isLoggedIn ? (
+          <NavigationMenu>
+            <NavigationMenuList>
+              {/* For Builders Dropdown */}
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className={cn(menuStyles.button, "h-auto py-2")}>
+                  For Builders
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <div className="min-w-[500px] p-4">
+                    <ForBuildersContent variant="desktop" />
+                  </div>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
 
-            {/* For Funders Dropdown */}
-            <NavigationMenuItem>
-              <NavigationMenuTrigger className={cn(menuStyles.button, "h-auto py-2")}>
-                For Funders
-              </NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <div className="min-w-[500px] p-4">
-                  <ForFundersContent variant="desktop" />
-                </div>
-              </NavigationMenuContent>
-            </NavigationMenuItem>
-          </NavigationMenuList>
-        </NavigationMenu>
+              {/* For Funders Dropdown */}
+              <NavigationMenuItem>
+                <NavigationMenuTrigger className={cn(menuStyles.button, "h-auto py-2")}>
+                  For Funders
+                </NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <div className="min-w-[500px] p-4">
+                    <ForFundersContent variant="desktop" />
+                  </div>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+            </NavigationMenuList>
+          </NavigationMenu>
+        ) : (
+          <div className="flex flex-row items-center gap-2">
+            <Button variant="secondary" size="sm" asChild>
+              <Link href={PAGES.MY_PROJECTS}>My projects</Link>
+            </Button>
+            {hasReviewerRole && (
+              <Button variant="secondary" size="sm" asChild>
+                <Link href={PAGES.MY_REVIEWS}>Review</Link>
+              </Button>
+            )}
+            {hasAdminAccess && (
+              <Button variant="secondary" size="sm" asChild>
+                <Link href={PAGES.ADMIN.LIST}>Admin</Link>
+              </Button>
+            )}
+            {isRegistryAllowed && (
+              <Button variant="secondary" size="sm" asChild>
+                <Link href={PAGES.REGISTRY.MANAGE_PROGRAMS}>Manage Programs</Link>
+              </Button>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="flex flex-1 justify-center flex-row items-center gap-3">

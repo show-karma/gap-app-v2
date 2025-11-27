@@ -11,7 +11,11 @@ import { groupSimilarCommunities } from "@/utilities/communityHelpers";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { PAGES } from "@/utilities/pages";
 
-export function NavbarSearch() {
+interface NavbarSearchProps {
+  onSelectItem?: () => void;
+}
+
+export function NavbarSearch({ onSelectItem }: NavbarSearchProps = {}) {
   const [results, setResults] = useState<ISearchResponse>({
     communities: [],
     projects: [],
@@ -80,13 +84,14 @@ export function NavbarSearch() {
     setIsSearchListOpen(false);
     setSearchValue("");
     setResults({ communities: [], projects: [] });
+    onSelectItem?.();
   };
 
   const groupedCommunities = groupSimilarCommunities(results.communities);
   const totalResults = results.projects.length + groupedCommunities.length;
 
   return (
-    <div className="relative flex-1 min-w-20 max-w-[240px]" ref={searchRef}>
+    <div className="relative flex-1 min-w-20 md:max-w-[240px]" ref={searchRef}>
       <div className="relative flex items-center gap-1.5 px-3 py-2 text-sm border border-border rounded-md bg-background w-full transition-[box-shadow,border-color,background-color] duration-100 ease-in-out focus-within:bg-background focus-within:border-foreground/20 focus-within:ring-2 focus-within:ring-border hover:bg-secondary focus-within:hover:bg-background cursor-text">
         <MagnifyingGlassIcon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
         <input
