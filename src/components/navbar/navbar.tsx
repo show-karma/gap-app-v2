@@ -13,7 +13,7 @@ export function Navbar() {
         >
             <div className={cn(
                 layoutTheme.padding,
-                "flex justify-between w-full flex-row gap-8 py-5 max-w-[1920px] min-w-min items-center"
+                "flex justify-between w-full flex-row gap-8 py-3 max-w-[1920px] min-w-min items-center"
             )}>
 
                 <NavbarDesktopNavigation />

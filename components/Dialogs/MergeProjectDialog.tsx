@@ -2,7 +2,7 @@
 import { FC, Fragment, ReactNode, useState, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { PlusIcon } from "@heroicons/react/24/solid";
-import { Button } from "../Utilities/Button";
+import { Button } from "../ui/button";
 import toast from "react-hot-toast";
 import { useProjectStore } from "@/store";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -33,6 +33,7 @@ import EthereumAddressToENSName from "../EthereumAddressToENSName";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useWallet } from "@/hooks/useWallet";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import { useStaff } from "@/hooks/useStaff";
 
 type MergeProjectProps = {
   buttonElement?: {
@@ -166,10 +167,10 @@ type PointerType = z.infer<typeof pointerSchema>;
 
 export const MergeProjectDialog: FC<MergeProjectProps> = ({
   buttonElement = {
-    icon: <PlusIcon className="h-4 w-4 text-primary-600" />,
+    icon: <PlusIcon className="h-4 w-4" />,
     text: "Merge",
     styleClass:
-      "flex items-center gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100  hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900",
+      "flex items-center gap-x-1 rounded-md px-3 py-2 text-sm font-semibold",
   },
 }) => {
   const { isMergeModalOpen: isOpen, setIsMergeModalOpen: setIsOpen } =
@@ -196,6 +197,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
   const setIsProjectAdmin = useProjectStore((state) => state.setIsProjectAdmin);
   const { switchChainAsync } = useWallet();
   const { changeStepperStep, setIsStepper } = useStepper();
+  const { isStaff } = useStaff();
 
   const createProjectPointer = async ({ ogProjectUID }: PointerType) => {
     let gapClient = gap;
@@ -304,7 +306,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
     <>
       {buttonElement ? (
         <Button
-          disabled={!isProjectAdmin}
+          disabled={!isProjectAdmin && !isStaff}
           onClick={openModal}
           className={buttonElement.styleClass}
         >
@@ -384,7 +386,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
                   )}
                   <div className="flex flex-row gap-4 justify-end">
                     <Button
-                      className="text-zinc-900 text-lg bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-zinc-900 hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900"
+                      className="text-zinc-900 bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-zinc-900 hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900"
                       onClick={closeModal}
                       disabled={isLoading}
                     >
@@ -392,7 +394,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
                     </Button>
                     {project?.symlinks?.length == 0 && (
                       <Button
-                        className="text-white text-lg bg-red-600 border-black  hover:bg-red-600 hover:text-white"
+                        className=" bg-red-600 border-black  hover:bg-red-600 hover:text-white"
                         onClick={async () => {
                           if (!validAddress) return;
                           setIsLoading(true);

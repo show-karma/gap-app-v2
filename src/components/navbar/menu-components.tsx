@@ -33,14 +33,14 @@ interface MenuSectionProps {
 export function MenuSection({ title, variant = 'desktop', className }: MenuSectionProps) {
     if (variant === 'mobile') {
         return (
-            <h3 className={cn(menuStyles.itemDescription, className)}>
+            <h3 className={cn(menuStyles.itemDescription, "mb-2", className)}>
                 {title}
             </h3>
         );
     }
 
     return (
-        <p className={cn(menuStyles.itemDescription, className)}>{title}</p>
+        <p className={cn(menuStyles.itemDescription, "mb-2", className)}>{title}</p>
     );
 }
 
@@ -141,8 +141,8 @@ interface ExploreContentProps {
 export function ExploreContent({ variant = 'desktop', onClose }: ExploreContentProps) {
     if (variant === 'mobile') {
         return (
-            <div className="flex flex-col gap-2">
-                <MenuSection title="Projects" variant="mobile" />
+            <div className="flex flex-col gap-1">
+                <MenuSection title="Explore Projects" variant="mobile" />
                 {exploreItems.projects.map((item) => (
                     <SimpleMenuItem
                         key={item.title}
@@ -151,7 +151,7 @@ export function ExploreContent({ variant = 'desktop', onClose }: ExploreContentP
                         onClick={onClose}
                     />
                 ))}
-                <MenuSection title="Communities" variant="mobile" className="mt-2" />
+                <MenuSection title="Explore Communities" variant="mobile" className="mt-2" />
                 {exploreItems.communities.map((item) => (
                     <SimpleMenuItem
                         key={item.href}

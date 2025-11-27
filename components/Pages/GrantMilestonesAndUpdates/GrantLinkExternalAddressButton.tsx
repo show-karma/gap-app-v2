@@ -76,7 +76,7 @@ export const GrantLinkExternalAddressButton: FC<
     <>
       <Button
         onClick={() => setIsOpen(true)}
-        className="flex flex-row items-center justify-center gap-2 rounded-md border border-primary-500 bg-white px-3.5 py-2 text-sm font-semibold text-primary-500 hover:bg-primary-100"
+        className="flex flex-row items-center justify-center gap-2 rounded-md border border-primary-500 px-3.5 py-2 text-sm font-semibold"
       >
         Link Octant Address
         <div className="h-5 w-5">
@@ -146,7 +146,7 @@ export const GrantLinkExternalAddressButton: FC<
                         <Button
                           onClick={() => handleSave(editedAddress)}
                           disabled={isLoading}
-                          className="ml-3 p-2 flex flex-row items-center justify-center gap-2 rounded-md border border-primary-500 bg-primary-100 px-3.5 py-2 text-sm font-semibold text-primary-500 hover:bg-primary-100"
+                          className="ml-3 p-2 flex flex-row items-center justify-center gap-2 rounded-md border px-3.5 py-2 text-sm font-semibold"
                         >
                           {isLoading ? "Saving..." : "Save"}{" "}
                           <CheckCircleIcon className="h-5 w-5 transition-none" />

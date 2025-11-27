@@ -2,7 +2,7 @@
 import { FC, Fragment, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { PlusIcon } from "@heroicons/react/24/solid";
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/button";
 import { z } from "zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -110,7 +110,7 @@ export const RegionCreationDialog: FC<RegionCreationDialogProps> = ({
       <Button
         onClick={openModal}
         className={
-          "flex justify-center items-center gap-x-1 rounded-md bg-primary-500 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-white dark:text-zinc-100  hover:opacity-75 dark:hover:opacity-75 border border-primary-200 dark:border-primary-900"
+          "flex justify-center items-center gap-x-1 rounded-md px-3 py-2 text-sm font-semibold"
         }
       >
         <PlusIcon className="h-4 w-4" />
@@ -167,14 +167,13 @@ export const RegionCreationDialog: FC<RegionCreationDialogProps> = ({
                     </div>
                     <div className="flex flex-row gap-4 justify-end">
                       <Button
-                        className="text-zinc-900 hover:bg-transparent text-lg bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:opacity-75 disabled:hover:bg-transparent disabled:hover:text-zinc-900"
                         onClick={closeModal}
                         disabled={isLoading}
+                        variant="outline"
                       >
                         Cancel
                       </Button>
                       <Button
-                        className="text-white text-lg bg-primary-500 border-black  hover:bg-primary-600 hover:text-white"
                         disabled={isLoading || !isValid}
                         isLoading={isLoading}
                         type="submit"

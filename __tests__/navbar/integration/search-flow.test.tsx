@@ -189,12 +189,15 @@ describe("Search Flow Integration Tests", () => {
       const mobileMenuButton = screen.getByLabelText("Open menu");
       await user.click(mobileMenuButton);
 
+      // Wait for drawer to open and verify it's visible
       await waitFor(() => {
         expect(screen.getByText("Menu")).toBeInTheDocument();
       });
 
-      // Search in drawer using fireEvent to avoid setPointerCapture error
       const drawer = screen.getByRole("dialog");
+      expect(drawer).toBeInTheDocument();
+
+      // Search in drawer using fireEvent to avoid setPointerCapture error
       const searchInput = within(drawer).getByPlaceholderText("Search Project/Community");
       fireEvent.change(searchInput, { target: { value: searchQueries.medium } });
       await waitForDebounce();
@@ -212,7 +215,20 @@ describe("Search Flow Integration Tests", () => {
       });
 
       fireEvent.click(resultLink);
-      // Drawer closing is handled by component's onClose callback
+
+      // Verify the search dropdown closes after clicking a search result
+      // The onSelectItem callback triggers setMobileMenuOpen(false)
+      // Note: The Drawer uses CSS animations, so in jsdom it may not fully unmount immediately
+      // We verify the search results are cleared (dropdown closed) as an indication the callback was triggered
+      await waitFor(() => {
+        // Search input should be cleared
+        expect(searchInput).toHaveValue("");
+      });
+
+      // Verify search results are no longer visible (dropdown closed)
+      await waitFor(() => {
+        expect(within(drawer).queryByText(firstProject.details.data.title)).not.toBeInTheDocument();
+      });
     });
   });
 

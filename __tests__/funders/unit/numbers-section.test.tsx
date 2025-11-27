@@ -20,7 +20,7 @@ describe("NumbersSection Component", () => {
     it("should render the section badge", () => {
       renderWithProviders(<NumbersSection />);
       
-      expect(screen.getByText("The numbers")).toBeInTheDocument();
+      expect(screen.getByText("The Numbers")).toBeInTheDocument();
     });
 
     it("should render the main heading", () => {
@@ -117,7 +117,7 @@ describe("NumbersSection Component", () => {
     it("should use badge styling for 'The numbers' pill", () => {
       renderWithProviders(<NumbersSection />);
       
-      const badge = screen.getByText("The numbers");
+      const badge = screen.getByText("The Numbers");
       expect(badge.className).toContain("rounded-full");
     });
   });
@@ -128,7 +128,7 @@ describe("NumbersSection Component", () => {
       
       renderWithProviders(<NumbersSection />);
       
-      expect(screen.getByText("The numbers")).toBeInTheDocument();
+      expect(screen.getByText("The Numbers")).toBeInTheDocument();
       expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(4);
     });
 
@@ -137,7 +137,7 @@ describe("NumbersSection Component", () => {
       
       renderWithProviders(<NumbersSection />);
       
-      expect(screen.getByText("The numbers")).toBeInTheDocument();
+      expect(screen.getByText("The Numbers")).toBeInTheDocument();
       expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(4);
     });
 
@@ -146,7 +146,7 @@ describe("NumbersSection Component", () => {
       
       renderWithProviders(<NumbersSection />);
       
-      expect(screen.getByText("The numbers")).toBeInTheDocument();
+      expect(screen.getByText("The Numbers")).toBeInTheDocument();
       expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(4);
     });
   });

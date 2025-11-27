@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { PhoneCall, ChevronRight, CircleHelp, LogOutIcon, ToggleLeft, ToggleRight, FolderKanban, ShieldCheck, CheckCircle2, Settings } from "lucide-react";
+import { PhoneCall, ChevronRight, CircleHelp, LogOutIcon, ToggleLeft, ToggleRight } from "lucide-react";
 import { SOCIALS } from "@/utilities/socials";
 import { TwitterIcon, DiscordIcon, TelegramIcon } from "@/components/Icons";
 import { ParagraphIcon } from "@/components/Icons/Paragraph";
@@ -97,55 +97,137 @@ export function NavbarMobileMenu() {
     const hasAdminAccess = isStaff || isOwner || isCommunityAdmin;
     const isRegistryAllowed = (isRegistryAdmin || isPoolManager) && isLoggedIn;
 
+    const quickActions = [
+        {
+            label: "My projects",
+            href: PAGES.MY_PROJECTS,
+            visible: isLoggedIn,
+        },
+        {
+            label: "Review",
+            href: PAGES.MY_REVIEWS,
+            visible: isLoggedIn && hasReviewerRole,
+        },
+        {
+            label: "Admin",
+            href: PAGES.ADMIN.LIST,
+            visible: isLoggedIn && hasAdminAccess,
+        },
+        {
+            label: "Manage Programs",
+            href: PAGES.REGISTRY.MANAGE_PROGRAMS,
+            visible: isRegistryAllowed,
+        },
+    ].filter((action) => action.visible);
+
     return (
-        <div className="xl:hidden flex flex-row items-center gap-4 w-full justify-between">
+        <div className="lg:hidden flex flex-row items-center gap-3 w-full">
             <Logo />
-            <Drawer open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-                <DrawerTrigger asChild>
+            <div className="flex flex-row items-center gap-2 ml-auto">
+                {!isLoggedIn ? (
+                    <>
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => login()}
+                        >
+                            Sign in
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-border text-foreground hover:bg-accent shadow-sm"
+                            asChild
+                        >
+                            <ExternalLink href={SOCIALS.PARTNER_FORM}>
+                                Contact sales
+                            </ExternalLink>
+                        </Button>
+                    </>
+                ) : (
                     <button
-                        className="p-2 text-muted-foreground"
-                        aria-label="Open menu"
+                        className="flex items-center gap-2 rounded-full border border-border p-1"
+                        onClick={() => openProfileModal({ isGlobal: true })}
+                        aria-label="Open profile"
                     >
-                        <Bars3Icon className="w-6 h-6" />
+                        <EthereumAddressToENSAvatar
+                            address={account?.address}
+                            className="h-8 w-8 min-h-8 min-w-8 max-h-8 max-w-8 rounded-full"
+                        />
+                        {address && (
+                            <span className="text-sm text-muted-foreground inline px-1">
+                                {formatAddress(address)}
+                            </span>
+                        )}
                     </button>
-                </DrawerTrigger>
-                <DrawerContent>
-                    <DrawerHeader className="flex items-center justify-between border-b border-border">
-                        <DrawerTitle>Menu</DrawerTitle>
-                        <DrawerClose asChild>
-                            <button className="p-2" aria-label="Close menu">
-                                <XMarkIcon className="w-5 h-5" />
-                            </button>
-                        </DrawerClose>
-                    </DrawerHeader>
+                )}
+                <Drawer open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                    <DrawerTrigger asChild>
+                        <button
+                            className="p-2 text-muted-foreground"
+                            aria-label="Open menu"
+                        >
+                            <Bars3Icon className="w-6 h-6" />
+                        </button>
+                    </DrawerTrigger>
+                    <DrawerContent>
+                        <DrawerHeader className="flex items-center justify-between border-b border-border">
+                            <DrawerTitle>Menu</DrawerTitle>
+                            <DrawerClose asChild>
+                                <button className="p-2" aria-label="Close menu">
+                                    <XMarkIcon className="w-5 h-5" />
+                                </button>
+                            </DrawerClose>
+                        </DrawerHeader>
                     <div className="flex flex-col p-4 gap-2 max-h-[70vh] overflow-y-auto">
                         {/* Mobile Search */}
-                        <div className="mb-4">
-                            <NavbarSearch />
+                        <div className="mb-4 w-full">
+                            <NavbarSearch onSelectItem={() => setMobileMenuOpen(false)} />
                         </div>
 
+                        {isLoggedIn && quickActions.length > 0 && (
+                            <div className="mb-4 flex flex-col items-start justify-start gap-2">
+                                {quickActions.map((action) => (
+                                    <Button
+                                        key={action.href}
+                                        variant="secondary"
+                                        asChild
+                                    >
+                                        <Link
+                                            href={action.href}
+                                            onClick={() => setMobileMenuOpen(false)}
+                                        >
+                                            {action.label}
+                                        </Link>
+                                    </Button>
+                                ))}
+                            </div>
+                        )}
 
-                        {/* For Builders Section */}
-                        <div className="border-b border-border pb-4">
-                            <MenuSection title="For Builders" variant="mobile" />
-                            <ForBuildersContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
-                        </div>
+                        {!isLoggedIn && (
+                            <>
+                                {/* For Builders Section */}
+                                <div className="border-b border-border py-3">
+                                    <MenuSection title="For Builders" variant="mobile" />
+                                    <ForBuildersContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
+                                </div>
 
-                        {/* For Funders Section */}
-                        <div className="border-b border-border pb-4">
-                            <MenuSection title="For Funders" variant="mobile" />
-                            <ForFundersContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
-                        </div>
+                                {/* For Funders Section */}
+                                <div className="border-b border-border py-3">
+                                    <MenuSection title="For Funders" variant="mobile" />
+                                    <ForFundersContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
+                                </div>
+                            </>
+                        )}
 
                         {/* Explore Section */}
-                        <div className="border-b border-border pb-4">
-                            <MenuSection title="Explore" variant="mobile" className="mb-4" />
+                        <div className="border-b border-border py-5">
                             <ExploreContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
                         </div>
 
                         {/* Resources Section - Only when NOT logged in */}
                         {!isLoggedIn && (
-                            <div className="border-b border-border pb-4">
+                            <div className="border-b border-border py-3">
                                 <MenuSection title="Resources" variant="mobile" />
                                 <ResourcesContent variant="mobile" onClose={() => setMobileMenuOpen(false)} />
                                 <div className="mt-4 pt-4 border-t border-border">
@@ -171,23 +253,7 @@ export function NavbarMobileMenu() {
 
                         {/* Mobile Auth */}
                         {isLoggedIn ? (
-                            <div className="pt-2">
-                                <button
-                                    className="w-full flex items-center justify-between py-3 rounded-md hover:bg-accent text-left"
-                                    onClick={() => {
-                                        openProfileModal();
-                                        setMobileMenuOpen(false);
-                                    }}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <EthereumAddressToENSAvatar
-                                            address={account?.address}
-                                            className="h-6 w-6 min-h-6 min-w-6 max-h-6 max-w-6 rounded-full"
-                                        />
-                                        <span className={menuStyles.itemText}>My profile</span>
-                                    </div>
-                                    <ChevronRight className={menuStyles.itemIcon} />
-                                </button>
+                            <div className="py-3">
                                 <button
                                     className="w-full flex items-center gap-3 py-3 rounded-md hover:bg-accent text-left"
                                     onClick={toggleTheme}
@@ -201,53 +267,15 @@ export function NavbarMobileMenu() {
                                         {currentTheme === "light" ? "Dark mode" : "Light mode"}
                                     </span>
                                 </button>
-                                <hr className="h-[1px] w-full border-border" />
-                                <Link
-                                    href={PAGES.MY_PROJECTS}
-                                    className="w-full flex items-center gap-3 py-3 rounded-md hover:bg-accent text-left"
-                                    onClick={() => setMobileMenuOpen(false)}
-                                >
-                                    <FolderKanban className={menuStyles.itemIcon} />
-                                    <span className={menuStyles.itemText}>My projects</span>
-                                </Link>
-                                {hasReviewerRole && (
-                                    <Link
-                                        href={PAGES.MY_REVIEWS}
-                                        className="w-full flex items-center gap-3 py-3 rounded-md hover:bg-accent text-left"
-                                        onClick={() => setMobileMenuOpen(false)}
-                                    >
-                                        <CheckCircle2 className={menuStyles.itemIcon} />
-                                        <span className={menuStyles.itemText}>Review</span>
-                                    </Link>
-                                )}
-                                {hasAdminAccess && (
-                                    <Link
-                                        href={PAGES.ADMIN.LIST}
-                                        className="w-full flex items-center gap-3 py-3 rounded-md hover:bg-accent text-left"
-                                        onClick={() => setMobileMenuOpen(false)}
-                                    >
-                                        <ShieldCheck className={menuStyles.itemIcon} />
-                                        <span className={menuStyles.itemText}>Admin</span>
-                                    </Link>
-                                )}
-                                {isRegistryAllowed && (
-                                    <Link
-                                        href={PAGES.REGISTRY.MANAGE_PROGRAMS}
-                                        className="w-full flex items-center gap-3 py-3 rounded-md hover:bg-accent text-left"
-                                        onClick={() => setMobileMenuOpen(false)}
-                                    >
-                                        <Settings className={menuStyles.itemIcon} />
-                                        <span className={menuStyles.itemText}>Manage Programs</span>
-                                    </Link>
-                                )}
                                 <ExternalLink
                                     href={SOCIALS.DOCS}
                                     className="w-full flex items-center gap-3 py-3 rounded-md hover:bg-accent text-left"
                                     onClick={() => setMobileMenuOpen(false)}
                                 >
                                     <CircleHelp className={menuStyles.itemIcon} />
-                                    <span className={menuStyles.itemText}>Help & Docs</span>
+                                    <span className={menuStyles.itemText}>Docs</span>
                                 </ExternalLink>
+                                <hr className="h-[1px] w-full border-border" />
                                 <button
                                     className="w-full flex items-center gap-3 rounded-md hover:bg-accent text-left mt-4"
                                     onClick={() => {
@@ -277,35 +305,11 @@ export function NavbarMobileMenu() {
                                     </div>
                                 </div>
                             </div>
-                        ) : (
-                            <div className="pt-2 flex flex-col gap-2">
-                                <Button
-                                    variant="outline"
-                                    className="w-full bg-secondary border-none rounded px-3 py-2 text-sm font-medium text-secondary-foreground hover:text-muted-foreground transition-colors"
-                                    size="lg"
-                                    onClick={() => {
-                                        login();
-                                        setMobileMenuOpen(false);
-                                    }}
-                                >
-                                    Sign in
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="lg"
-                                    className="w-full border-border text-foreground hover:bg-accent shadow-sm"
-                                    asChild
-                                >
-                                    <ExternalLink href={SOCIALS.PARTNER_FORM}>
-                                        <PhoneCall className="w-4 h-4" />
-                                        Contact sales
-                                    </ExternalLink>
-                                </Button>
-                            </div>
-                        )}
+                        ) : null}
                     </div>
-                </DrawerContent>
-            </Drawer>
+                    </DrawerContent>
+                </Drawer>
+            </div>
         </div>
     );
 }

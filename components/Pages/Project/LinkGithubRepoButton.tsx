@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
@@ -351,7 +351,7 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle transition-all ease-in-out duration-300">
+                <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-4 sm:p-6 text-left align-middle transition-all ease-in-out duration-300">
                   <Dialog.Title
                     as="h3"
                     className="text-gray-900 dark:text-zinc-100"
@@ -368,8 +368,8 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
                     {repos.map((repo, index) => (
                       <div key={index} className="flex flex-col">
                         <div className="flex items-center space-x-2">
-                          <div className="flex items-center justify-between p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg flex-grow">
-                            <div className="flex items-center space-x-4 w-full">
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg flex-grow gap-2 sm:gap-0">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full">
                               <span className="text-md font-bold capitalize whitespace-nowrap">
                                 Repository {index + 1}
                               </span>
@@ -383,7 +383,7 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
                                 placeholder="https://github.com/username/repository"
                               />
                             </div>
-                            <div className="flex items-center">
+                            <div className="flex items-center self-end sm:self-auto mt-2 sm:mt-0">
                               {validatingRepo === index ? (
                                 <span className="text-sm animate-pulse mx-2">
                                   Validating...
@@ -431,7 +431,7 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
                     ))}
                     <Button
                       onClick={handleAddRepo}
-                      className="flex items-center justify-center text-white gap-2 border border-primary-500 bg-primary-500 hover:bg-primary-600"
+                      className="flex items-center justify-center gap-2 border border-primary-500"
                     >
                       <PlusIcon className="h-5 w-5" />
                       Add Another Repository
@@ -440,7 +440,7 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
                       <p className="text-red-500 text-sm mt-2">{error}</p>
                     )}
                   </div>
-                  <div className="flex flex-row gap-4 mt-10 justify-end">
+                  <div className="flex flex-col sm:flex-row gap-4 mt-10 justify-end">
                     <Button
                       onClick={handleSave}
                       disabled={
@@ -448,14 +448,15 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
                         Object.keys(validationErrors).length > 0 ||
                         !areAllReposValidated()
                       }
-                      className="bg-primary-500 text-white hover:bg-primary-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                      className="w-full sm:w-auto"
                     >
                       {isLoading ? "Saving..." : "Save All"}
                     </Button>
                     <Button
-                      className="text-zinc-900 text-lg bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-zinc-900 hover:text-white"
+                      variant="secondary"
                       onClick={handleClose}
                       type="button"
+                      className="w-full sm:w-auto"
                     >
                       Cancel
                     </Button>

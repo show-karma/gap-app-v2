@@ -367,7 +367,7 @@ export const TracksAdminPage = ({
                         className={cn(
                           "flex items-center p-2 rounded-md",
                           selectedTrackIds.includes(track.id)
-                            ? "bg-primary-100 dark:bg-primary-900/20 border border-primary-500"
+                            ? "border border-primary-500"
                             : "hover:bg-gray-100 dark:hover:bg-zinc-800 border border-transparent",
                           "cursor-pointer"
                         )}
@@ -377,7 +377,7 @@ export const TracksAdminPage = ({
                           className={cn(
                             "w-4 h-4 rounded-sm mr-3 flex items-center justify-center border",
                             selectedTrackIds.includes(track.id)
-                              ? "bg-primary-500 border-primary-500"
+                              ? ""
                               : "border-gray-300 dark:border-zinc-600"
                           )}
                         >
@@ -417,7 +417,7 @@ export const TracksAdminPage = ({
                         >
                           <div
                             className={cn(
-                              "w-4 h-4 rounded-sm mr-3 flex items-center justify-center border bg-primary-500 border-primary-500"
+                              "w-4 h-4 rounded-sm mr-3 flex items-center justify-center border"
                             )}
                           >
                             <svg

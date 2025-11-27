@@ -119,7 +119,7 @@ function MetricCardComponent({ card }: { card: MetricCard }) {
             <div className="flex flex-col gap-0">
                 <div className={cn(
                     "text-foreground font-semibold",
-                    "text-[48px] leading-[100%] tracking-[-0.01em]"
+                    "text-5xl leading-none tracking-[-0.01em]"
                 )}>
                     {card.metric}
                 </div>
@@ -142,7 +142,6 @@ function MetricCardComponent({ card }: { card: MetricCard }) {
     );
 }
 
-
 /**
  * Renders a testimonial card with quote styling and author information.
  * Displays a large quote mark, testimonial text, and optional author avatar.
@@ -158,7 +157,7 @@ function TestimonialCardComponent({ card }: { card: TestimonialCard }) {
                 <div className="flex flex-col gap-8">
                     <span className={cn(
                         "text-foreground",
-                        "font-semibold text-[40px] leading-[44px] tracking-[-0.02em]"
+                        "font-semibold text-4xl leading-tight tracking-[-0.02em]"
                     )}>
                         {`“`}
                     </span>
@@ -211,20 +210,20 @@ function CaseStudyCardComponent({ card }: { card: CaseStudyCard }) {
         <div className={cn(
             "flex flex-col justify-between",
             "min-h-[317px] h-full w-full",
-            "rounded-2xl border border-border bg-background p-5",
+            "rounded-2xl border border-border bg-background p-8",
         )}>
             <div className="flex flex-col gap-3">
                 {card.headline && (
                     <h3 className={cn(
                         "text-foreground font-semibold",
-                        "text-[20px] leading-[120%] tracking-[-0.02em]"
+                        "text-2xl leading-tight tracking-tight"
                     )}>
                         {card.headline}
                     </h3>
                 )}
                 <p className={cn(
-                    "text-foreground font-normal text-sm",
-                    "leading-[150%] tracking-[0%]"
+                    "text-muted-foreground font-normal text-sm",
+                    "leading-[150%]"
                 )}>
                     {card.description}
                 </p>
@@ -307,18 +306,16 @@ export function CaseStudiesSection() {
                 </Badge>
 
                 <h2 className={cn(
-                    "font-semibold",
-                    "text-[32px] leading-[36px] tracking-[-0.02em]",
-                    "md:text-[40px] md:leading-[44px]",
+                    "section-title",
                     "w-full"
                 )}>
-                    <span className="text-foreground">Ecosystems trust Karma</span>
+                    <span className="text-foreground">Ecosystems trust Karma</span> <br className="hidden md:block" />
                     <span className="text-muted-foreground"> to help them grow</span>
                 </h2>
             </div>
 
             <div className={cn(
-                "grid grid-cols-1 md:grid-cols-6 gap-4 w-full",
+                "grid grid-cols-1 md:grid-cols-6 gap-10 w-full",
                 "max-w-[1920px]",
                 "items-stretch"
             )}>

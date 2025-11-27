@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
@@ -170,7 +170,7 @@ export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle transition-all ease-in-out duration-300">
+                <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-4 sm:p-6 text-left align-middle transition-all ease-in-out duration-300">
                   <Dialog.Title
                     as="h3"
                     className="text-gray-900 dark:text-zinc-100"
@@ -185,9 +185,9 @@ export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
                   </Dialog.Title>
                   <div className="max-h-[60vh] flex flex-col gap-4 mt-8 overflow-y-auto">
                     {ids.map((id, index) => (
-                      <div key={index} className="flex items-center space-x-2">
-                        <div className="flex items-center justify-between p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg flex-grow">
-                          <div className="flex items-center space-x-4 w-full">
+                      <div key={index} className="flex flex-col sm:flex-row items-center gap-2">
+                        <div className="flex items-center justify-between p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg flex-grow w-full">
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full">
                             <span className="text-md font-bold capitalize whitespace-nowrap">
                               OSO Profile {index + 1}
                             </span>
@@ -205,8 +205,9 @@ export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
                         {ids.length > 1 && (
                           <Button
                             onClick={() => handleRemoveId(index)}
-                            className="p-2 text-red-500 hover:text-red-700"
+                            className="p-2 text-red-500 hover:text-red-700 self-end sm:self-auto"
                             aria-label="Remove ID"
+                            variant="outline"
                           >
                             <TrashIcon className="h-5 w-5" />
                           </Button>
@@ -215,23 +216,24 @@ export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
                     ))}
                     <Button
                       onClick={handleAddId}
-                      className="flex items-center justify-center text-white gap-2 border border-primary-500 bg-primary-500 hover:bg-primary-600"
+                      className="flex items-center justify-center text-white gap-2 border border-primary-500"
                     >
                       <PlusIcon className="h-5 w-5" />
                       Add Another ID
                     </Button>
                     {error && <p className="text-red-500 mt-2">{error}</p>}
                   </div>
-                  <div className="flex flex-row gap-4 mt-10 justify-end">
+                  <div className="flex flex-col sm:flex-row gap-4 mt-10 justify-end">
                     <Button
                       onClick={handleSave}
                       disabled={isLoading}
-                      className="bg-primary-500 text-white hover:bg-primary-600"
+                      className="w-full sm:w-auto"
                     >
                       {isLoading ? "Saving..." : "Save All"}
                     </Button>
                     <Button
-                      className="text-zinc-900 text-lg bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-zinc-900 hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900"
+                      variant="secondary"
+                      className="w-full sm:w-auto"
                       onClick={handleClose}
                     >
                       Close

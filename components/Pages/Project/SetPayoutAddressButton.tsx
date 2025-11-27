@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/Utilities/Button";
+import { Button } from "@/components/ui/button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
@@ -448,7 +448,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-2xl transform overflow-visible rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle transition-all ease-in-out duration-300">
+                <Dialog.Panel className="w-full max-w-2xl transform overflow-visible rounded-2xl dark:bg-zinc-800 bg-white p-4 sm:p-6 text-left align-middle transition-all ease-in-out duration-300">
                   <Dialog.Title
                     as="h2"
                     className="text-gray-900 dark:text-zinc-100 text-2xl font-bold leading-6"
@@ -550,33 +550,35 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
                       {/* Payout Address Input - only show when community is selected */}
                       {selectedCommunity && (
                         <div className="flex flex-col">
-                          <div className="flex items-center justify-between p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg">
-                            <div className="flex items-center space-x-4 w-full">
-                              <span className="text-md font-bold capitalize whitespace-nowrap">
+                          <div className="p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full">
+                              <span className="text-md font-bold capitalize whitespace-nowrap shrink-0">
                                 Payout Address
                               </span>
-                              <input
-                                type="text"
-                                value={payoutAddress}
-                                onChange={(e) =>
-                                  handleAddressChange(e.target.value)
-                                }
-                                className="text-sm rounded-md w-full text-gray-600 dark:text-gray-300 bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none focus:border-blue-500"
-                                placeholder="0x1234567890abcdef1234567890abcdef12345678"
-                              />
-                            </div>
-                            <div className="flex items-center">
-                              {isValidated && payoutAddress.trim() && (
-                                <div className="relative group">
-                                  <CheckIcon
-                                    className="h-9 w-10 text-green-500 p-2 mx-1 border border-green-500 rounded-md"
-                                    aria-label="Valid address"
-                                  />
-                                  <div className="absolute bottom-1/2 right-full transform translate-y-1/2 mr-2 px-3 py-1 bg-gray-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                                    Valid Ethereum address
-                                  </div>
+                              <div className="flex w-full items-center gap-2">
+                                <input
+                                  type="text"
+                                  value={payoutAddress}
+                                  onChange={(e) =>
+                                    handleAddressChange(e.target.value)
+                                  }
+                                  className="text-sm rounded-md w-full flex-1 text-gray-600 dark:text-gray-300 bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none focus:border-blue-500"
+                                  placeholder="0x1234567890abcdef1234567890abcdef12345678"
+                                />
+                                <div className="flex items-center shrink-0">
+                                  {isValidated && payoutAddress.trim() && (
+                                    <div className="relative group">
+                                      <CheckIcon
+                                        className="h-9 w-10 text-green-500 p-2 border border-green-500 rounded-md"
+                                        aria-label="Valid address"
+                                      />
+                                      <div className="absolute bottom-1/2 right-full transform translate-y-1/2 mr-2 px-3 py-1 bg-gray-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                                        Valid Ethereum address
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
-                              )}
+                              </div>
                             </div>
                           </div>
                           {validationError && (
@@ -591,7 +593,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
                       <p className="text-red-500 text-sm mt-4">{error}</p>
                     )}
                   </div>
-                  <div className="flex flex-row gap-4 mt-10 justify-end">
+                  <div className="flex flex-col sm:flex-row gap-4 mt-10 justify-end">
                     <Button
                       onClick={handleSave}
                       disabled={
@@ -600,7 +602,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
                         (payoutAddress.trim() && !isValidated) ||
                         validationError !== null
                       }
-                      className="bg-primary-500 text-white hover:bg-primary-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                      className="w-full sm:w-auto"
                     >
                       {isLoading
                         ? "Saving..."
@@ -612,13 +614,14 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
                       <Button
                         onClick={handleRemove}
                         disabled={isLoading}
-                        className="bg-red-500 text-white hover:bg-red-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                        className="w-full sm:w-auto bg-red-500 text-white hover:bg-red-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
                       >
                         {isLoading ? "Removing..." : "Remove Payout Address"}
                       </Button>
                     )}
                     <Button
-                      className="text-zinc-900 text-lg bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-zinc-900 hover:text-white"
+                      variant="secondary"
+                      className="w-full sm:w-auto"
                       onClick={handleClose}
                       type="button"
                     >
