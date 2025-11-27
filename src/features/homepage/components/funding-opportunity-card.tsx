@@ -203,7 +203,7 @@ export function FundingOpportunityCard({
           </Badge>
           <div className="text-right">
             <div className="text-lg font-bold text-foreground">{formatCurrency(budget)}</div>
-            <div className="text-xs text-muted-foreground">Available</div>
+            <div className="text-xs text-muted-foreground">{budget ? "Available" : ""}</div>
           </div>
         </div>
 
