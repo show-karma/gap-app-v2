@@ -1,31 +1,30 @@
-import { useState } from "react";
-import { useAccount } from "wagmi";
-import toast from "react-hot-toast";
-import { getGapClient, useGap } from "@/hooks/useGap";
-import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
-import { MESSAGES } from "@/utilities/messages";
-import { retryUntilConditionMet } from "@/utilities/retries";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { shareOnX } from "@/utilities/share/shareOnX";
-import { SHARE_TEXTS } from "@/utilities/share/text";
-import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
-import { useParams, useRouter } from "next/navigation";
-import {
+import type {
   IGrantUpdate,
   IMilestoneResponse,
   IProjectImpact,
   IProjectMilestoneResponse,
   IProjectUpdate,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useWallet } from "./useWallet";
+import { useParams, useRouter } from "next/navigation";
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
+import { useGap } from "@/hooks/useGap";
+import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useStepper } from "@/store/modals/txStepper";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { retryUntilConditionMet } from "@/utilities/retries";
+import { shareOnX } from "@/utilities/share/shareOnX";
+import { SHARE_TEXTS } from "@/utilities/share/text";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { useWallet } from "./useWallet";
 
 type UpdateType =
   | IProjectUpdate
@@ -84,7 +83,11 @@ export const useUpdateActions = (update: UpdateType) => {
     let gapClient = gap;
     try {
       setIsDeletingUpdate(true);
-      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+      const {
+        success,
+        chainId: actualChainId,
+        gapClient: newGapClient,
+      } = await ensureCorrectChain({
         targetChainId: update.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
@@ -106,46 +109,36 @@ export const useUpdateActions = (update: UpdateType) => {
 
       let findUpdate: any = null;
       let deleteMessage = "";
-      let deleteErrorMessage = "";
+      let _deleteErrorMessage = "";
 
       // Handle different update types
       switch (update.type) {
         case "ProjectUpdate": {
-          const instanceProject = await gapClient.fetch.projectById(
-            project?.uid
-          );
+          const instanceProject = await gapClient.fetch.projectById(project?.uid);
           if (!instanceProject) throw new Error("Project not found");
 
-          findUpdate = instanceProject.updates.find(
-            (upd) => upd.uid === update.uid
-          );
+          findUpdate = instanceProject.updates.find((upd) => upd.uid === update.uid);
           if (!findUpdate) throw new Error("Project update not found");
 
           deleteMessage = MESSAGES.PROJECT_UPDATE_FORM.DELETE.SUCCESS;
-          deleteErrorMessage = MESSAGES.PROJECT_UPDATE_FORM.DELETE.ERROR;
+          _deleteErrorMessage = MESSAGES.PROJECT_UPDATE_FORM.DELETE.ERROR;
           break;
         }
 
         case "ProjectImpact": {
-          const instanceProject = await gapClient.fetch.projectById(
-            project?.uid
-          );
+          const instanceProject = await gapClient.fetch.projectById(project?.uid);
           if (!instanceProject) throw new Error("Project not found");
 
-          findUpdate = instanceProject.impacts?.find(
-            (impact) => impact.uid === update.uid
-          );
+          findUpdate = instanceProject.impacts?.find((impact) => impact.uid === update.uid);
           if (!findUpdate) throw new Error("Project impact not found");
 
           deleteMessage = MESSAGES.PROJECT.IMPACT.REMOVE.SUCCESS;
-          deleteErrorMessage = MESSAGES.PROJECT.IMPACT.REMOVE.ERROR;
+          _deleteErrorMessage = MESSAGES.PROJECT.IMPACT.REMOVE.ERROR;
           break;
         }
 
         case "GrantUpdate": {
-          const instanceProject = await gapClient.fetch.projectById(
-            project?.uid
-          );
+          const instanceProject = await gapClient.fetch.projectById(project?.uid);
           if (!instanceProject) throw new Error("Project not found");
 
           const grantInstance = instanceProject.grants.find(
@@ -154,13 +147,12 @@ export const useUpdateActions = (update: UpdateType) => {
           if (!grantInstance) throw new Error("Grant not found");
 
           findUpdate = grantInstance.updates.find(
-            (grantUpdate) =>
-              grantUpdate.uid.toLowerCase() === update.uid.toLowerCase()
+            (grantUpdate) => grantUpdate.uid.toLowerCase() === update.uid.toLowerCase()
           );
           if (!findUpdate) throw new Error("Grant update not found");
 
           deleteMessage = MESSAGES.GRANT.GRANT_UPDATE.UNDO.SUCCESS;
-          deleteErrorMessage = MESSAGES.GRANT.GRANT_UPDATE.UNDO.ERROR;
+          _deleteErrorMessage = MESSAGES.GRANT.GRANT_UPDATE.UNDO.ERROR;
           break;
         }
 
@@ -185,16 +177,15 @@ export const useUpdateActions = (update: UpdateType) => {
                   (impact) => impact.uid === update.uid
                 );
                 break;
-              case "GrantUpdate":
+              case "GrantUpdate": {
                 const grant = fetchedProject?.grants?.find(
-                  (grant) =>
-                    grant.uid.toLowerCase() === update.refUID.toLowerCase()
+                  (grant) => grant.uid.toLowerCase() === update.refUID.toLowerCase()
                 );
                 stillExists = !!grant?.updates?.find(
-                  (grantUpdate) =>
-                    grantUpdate.uid.toLowerCase() === update.uid.toLowerCase()
+                  (grantUpdate) => grantUpdate.uid.toLowerCase() === update.uid.toLowerCase()
                 );
                 break;
+              }
             }
 
             return !stillExists;
@@ -223,11 +214,7 @@ export const useUpdateActions = (update: UpdateType) => {
           const res = await findUpdate.revoke(walletSigner as any, changeStepperStep);
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, findUpdate.chainID),
-              "POST",
-              {}
-            );
+            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, findUpdate.chainID), "POST", {});
           }
 
           await checkIfAttestationExists(() => {
@@ -238,7 +225,7 @@ export const useUpdateActions = (update: UpdateType) => {
         } catch (onChainError: any) {
           // Silently fallback to off-chain revoke
           setIsStepper(false); // Reset stepper since we're falling back
-          
+
           const success = await performOffChainRevoke({
             uid: findUpdate?.uid as `0x${string}`,
             chainID: findUpdate.chainID,
@@ -251,7 +238,7 @@ export const useUpdateActions = (update: UpdateType) => {
               loading: `Deleting ${update.type.toLowerCase()}...`,
             },
           });
-          
+
           if (!success) {
             // Both methods failed - throw the original error to maintain expected behavior
             throw onChainError;
@@ -259,19 +246,16 @@ export const useUpdateActions = (update: UpdateType) => {
         }
       }
     } catch (error: any) {
-      console.log(error);
       const errorMessage =
         update.type === "ProjectUpdate"
           ? MESSAGES.PROJECT_UPDATE_FORM.DELETE.ERROR
           : update.type === "ProjectImpact"
-          ? MESSAGES.PROJECT.IMPACT.REMOVE.ERROR
-          : MESSAGES.GRANT.GRANT_UPDATE.UNDO.ERROR;
+            ? MESSAGES.PROJECT.IMPACT.REMOVE.ERROR
+            : MESSAGES.GRANT.GRANT_UPDATE.UNDO.ERROR;
 
       toast.error(errorMessage);
       errorManager(
-        `Error deleting ${update.type.toLowerCase()} ${
-          update.uid
-        } from project ${project?.uid}`,
+        `Error deleting ${update.type.toLowerCase()} ${update.uid} from project ${project?.uid}`,
         error
       );
     } finally {

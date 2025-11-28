@@ -1,32 +1,24 @@
 /* eslint-disable @next/next/no-img-element */
-import React from "react";
 
-import { Hex } from "viem";
-import { Metadata } from "next";
-import { getMetadata } from "@/utilities/sdk";
-import { zeroUID } from "@/utilities/commons";
-import { defaultMetadata } from "@/utilities/meta";
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { Metadata } from "next";
+import type { Hex } from "viem";
 import ContactInfoPage from "@/components/Pages/Project/ContactInfoPage";
-import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { PROJECT_NAME } from "@/constants/brand";
+import { zeroUID } from "@/utilities/commons";
 import { envVars } from "@/utilities/enviromentVars";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
-import { PROJECT_NAME } from "@/constants/brand";
+import { defaultMetadata } from "@/utilities/meta";
+import { getMetadata } from "@/utilities/sdk";
 
 type Params = Promise<{
   projectId: string;
 }>;
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Params;
-}): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { projectId } = await params;
 
-  const projectInfo = await getMetadata<IProjectResponse>(
-    "project",
-    projectId as Hex
-  );
+  const projectInfo = await getMetadata<IProjectResponse>("project", projectId as Hex);
 
   if (projectInfo?.uid === zeroUID || !projectInfo) {
     return {
@@ -37,11 +29,7 @@ export async function generateMetadata({
 
   return {
     title: `${projectInfo.details?.data.title} | ${PROJECT_NAME}`,
-    description:
-      cleanMarkdownForPlainText(
-        projectInfo.details?.data.description || "",
-        80
-      ) || "",
+    description: cleanMarkdownForPlainText(projectInfo.details?.data.description || "", 80) || "",
     twitter: {
       creator: defaultMetadata.twitter.creator,
       site: defaultMetadata.twitter.site,
@@ -56,11 +44,7 @@ export async function generateMetadata({
     openGraph: {
       url: defaultMetadata.openGraph.url,
       title: `${projectInfo.details?.data.title} | ${PROJECT_NAME}`,
-      description:
-        cleanMarkdownForPlainText(
-          projectInfo.details?.data.description || "",
-          80
-        ) || "",
+      description: cleanMarkdownForPlainText(projectInfo.details?.data.description || "", 80) || "",
 
       images: [
         {

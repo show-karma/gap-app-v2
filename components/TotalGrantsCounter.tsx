@@ -1,11 +1,11 @@
 "use client";
 
-import { getTotalProjects } from "@/utilities/karma/totalProjects";
-import { getGrants } from "@/utilities/sdk";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import pluralize from "pluralize";
-import { Hex } from "viem";
+import type { Hex } from "viem";
+import { getTotalProjects } from "@/utilities/karma/totalProjects";
+import { getGrants } from "@/utilities/sdk";
 
 interface TotalGrantsCounterProps {
   overrideGrantsNo?: string;
@@ -23,8 +23,7 @@ export const TotalGrantsCounter = (props: TotalGrantsCounterProps) => {
   });
   const { data: fetchedGrants, isLoading: isLoadingGrants } = useQuery({
     queryKey: ["total-grants", communityId],
-    queryFn: () =>
-      getGrants(communityId as Hex).then((res) => res.pageInfo.totalItems),
+    queryFn: () => getGrants(communityId as Hex).then((res) => res.pageInfo.totalItems),
     initialData: 0,
     enabled: !!communityId,
   });
@@ -38,9 +37,7 @@ export const TotalGrantsCounter = (props: TotalGrantsCounterProps) => {
     >
       Total Grants {grants ? `(${grants})` : null}
       {` `}
-      {!isLoading
-        ? `across ${projects} ${pluralize("projects", projects)}`
-        : null}
+      {!isLoading ? `across ${projects} ${pluralize("projects", projects)}` : null}
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 interface LoadingSpinnerProps {
   size?: "sm" | "md" | "lg";
@@ -29,11 +29,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
     return (
       <div className="flex items-center justify-center py-8">
         <div className={`${spinnerClasses} mr-3`}></div>
-        <span
-          className={`font-medium ${
-            color === "white" ? "text-white" : `text-${color}-600`
-          }`}
-        >
+        <span className={`font-medium ${color === "white" ? "text-white" : `text-${color}-600`}`}>
           {message}
         </span>
       </div>

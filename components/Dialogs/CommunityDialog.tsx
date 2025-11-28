@@ -1,39 +1,32 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, Fragment, ReactNode, useState } from "react";
+
 import { Dialog, Transition } from "@headlessui/react";
-import {
-  ChevronRightIcon,
-  PlusIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/solid";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
+import { ChevronRightIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MarkdownEditor } from "../Utilities/MarkdownEditor";
-import { useAccount } from "wagmi";
 import { Community, nullRef } from "@show-karma/karma-gap-sdk";
-import { Button } from "../ui/button";
-import { MESSAGES } from "@/utilities/messages";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { appNetwork } from "@/utilities/network";
-import { cn } from "@/utilities/tailwind";
-import { useGap } from "@/hooks/useGap";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { type FC, Fragment, type ReactNode, useState } from "react";
+import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { z } from "zod";
+import { useGap } from "@/hooks/useGap";
+import { useWallet } from "@/hooks/useWallet";
 import { useStepper } from "@/store/modals/txStepper";
-import { privyConfig as config } from "@/utilities/wagmi/privy-config";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-
-import { errorManager } from "../Utilities/errorManager";
+import { MESSAGES } from "@/utilities/messages";
+import { appNetwork } from "@/utilities/network";
 import { sanitizeObject } from "@/utilities/sanitize";
-import { useWallet } from "@/hooks/useWallet";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import { cn } from "@/utilities/tailwind";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { errorManager } from "../Utilities/errorManager";
+import { MarkdownEditor } from "../Utilities/MarkdownEditor";
+import { Button } from "../ui/button";
 
-const inputStyle =
-  "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
-const labelStyle =
-  "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
+const inputStyle = "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
+const labelStyle = "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
 
 const schema = z.object({
   name: z
@@ -107,7 +100,11 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
     setIsLoading(true); // Set loading state to true
 
     try {
-      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+      const {
+        success,
+        chainId: actualChainId,
+        gapClient: newGapClient,
+      } = await ensureCorrectChain({
         targetChainId: selectedChain,
         currentChainId: chain?.id,
         switchChainAsync,
@@ -126,8 +123,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
         },
         schema: gapClient.findSchema("Community"),
         refUID: nullRef,
-        recipient: (address ||
-          "0x0000000000000000000000000000000000000000") as `0x${string}`,
+        recipient: (address || "0x0000000000000000000000000000000000000000") as `0x${string}`,
         uid: nullRef,
       });
       if (await gapClient.fetch.slugExists(data.slug as string)) {
@@ -151,11 +147,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
         .then(async (res) => {
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, newCommunity.chainID),
-              "POST",
-              {}
-            );
+            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, newCommunity.chainID), "POST", {});
           }
           await fetchData(
             INDEXER.ATTESTATION_LISTENER(newCommunity.uid, actualChainId),
@@ -209,19 +201,12 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
     await createCommunity(data); // Call the createCommunity function
   };
 
-  const [description, setDescription] = useState(
-    dataToUpdate?.description || ""
-  );
+  const [description, setDescription] = useState(dataToUpdate?.description || "");
   const [selectedChain, setSelectedChain] = useState(appNetwork[0].id);
 
   return (
     <>
-      <Button
-        onClick={openModal}
-        className={cn(
-          buttonElement.styleClass
-        )}
-      >
+      <Button onClick={openModal} className={cn(buttonElement.styleClass)}>
         {buttonElement.iconSide === "left" && buttonElement.icon}
         {buttonElement.text}
         {buttonElement.iconSide === "right" && buttonElement.icon}
@@ -331,9 +316,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
                           placeholder='e.g. "https://example.com/image.jpg"'
                           {...register("imageURL")}
                         />
-                        <p className="text-red-500">
-                          {errors.imageURL?.message}
-                        </p>
+                        <p className="text-red-500">{errors.imageURL?.message}</p>
                       </div>
 
                       <div className="flex w-full flex-col gap-2">

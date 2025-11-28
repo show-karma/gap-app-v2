@@ -40,4 +40,3 @@ export const mockPricingTiers: PricingTier[] = [
     mostPopular: false,
   },
 ];
-

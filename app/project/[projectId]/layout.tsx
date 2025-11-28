@@ -1,26 +1,18 @@
 /* eslint-disable @next/next/no-img-element */
-import { ProjectWrapper } from "@/components/Pages/Project/ProjectWrapper";
-import {
-  dehydrate,
-  HydrationBoundary,
-  QueryClient,
-} from "@tanstack/react-query";
 
-import { generateProjectOverviewMetadata } from "@/utilities/metadata/projectMetadata";
-import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
-import { Metadata } from "next";
-import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
+import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
+import type { Metadata } from "next";
+import { ProjectWrapper } from "@/components/Pages/Project/ProjectWrapper";
 import { layoutTheme } from "@/src/helper/theme";
+import { generateProjectOverviewMetadata } from "@/utilities/metadata/projectMetadata";
+import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
+import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
 
 type Params = Promise<{
   projectId: string;
 }>;
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Params;
-}): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const awaitedParams = await params;
   const { projectId } = awaitedParams;
 

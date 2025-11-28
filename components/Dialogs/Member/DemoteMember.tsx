@@ -1,37 +1,32 @@
+import { Dialog, Transition } from "@headlessui/react";
+import { ShieldExclamationIcon } from "@heroicons/react/24/outline";
+import * as Tooltip from "@radix-ui/react-tooltip";
+import { type FC, Fragment, useState } from "react";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
-import { useGap } from "@/hooks/useGap";
+import { useTeamProfiles } from "@/hooks/useTeamProfiles";
+import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { getProjectMemberRoles } from "@/utilities/getProjectMemberRoles";
 import { INDEXER } from "@/utilities/indexer";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { getProjectById } from "@/utilities/sdk";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { Dialog, Transition } from "@headlessui/react";
-import { ShieldExclamationIcon } from "@heroicons/react/24/outline";
-import { ArrowDownIcon } from "@heroicons/react/24/solid";
-import * as Tooltip from "@radix-ui/react-tooltip";
-import { FC, Fragment, useState } from "react";
-import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
-import { useTeamProfiles } from "@/hooks/useTeamProfiles";
-import { useWallet } from "@/hooks/useWallet";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 interface DemoteMemberDialogProps {
   memberAddress: string;
 }
 
-export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({
-  memberAddress,
-}) => {
+export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({ memberAddress }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isDemoting, setIsDemoting] = useState(false);
-  const { gap } = useGap();
   const { address, chain } = useAccount();
   const { project } = useProjectStore();
   const { teamProfiles } = useTeamProfiles(project);
@@ -47,7 +42,11 @@ export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({
     try {
       setIsDemoting(true);
       setIsStepper(true);
-      const { success, chainId: actualChainId, gapClient } = await ensureCorrectChain({
+      const {
+        success,
+        chainId: actualChainId,
+        gapClient,
+      } = await ensureCorrectChain({
         targetChainId: project.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
@@ -58,9 +57,7 @@ export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({
         return;
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        actualChainId
-      );
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
@@ -80,12 +77,8 @@ export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({
       const checkIfAttestationExists = async (callbackFn?: () => void) => {
         await retryUntilConditionMet(
           async () => {
-            const memberRoles = await getProjectMemberRoles(
-              project,
-              projectInstance
-            );
-            const isAdmin =
-              memberRoles[memberAddress.toLowerCase()] !== "Admin";
+            const memberRoles = await getProjectMemberRoles(project, projectInstance);
+            const isAdmin = memberRoles[memberAddress.toLowerCase()] !== "Admin";
 
             return isAdmin;
           },
@@ -96,11 +89,7 @@ export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({
       };
 
       await projectInstance
-        .removeAdmin(
-          walletSigner as any,
-          memberAddress.toLowerCase(),
-          changeStepperStep
-        )
+        .removeAdmin(walletSigner as any, memberAddress.toLowerCase(), changeStepperStep)
         .then(async (res) => {
           changeStepperStep("indexing");
           const txHash = res?.tx[0]?.hash;
@@ -135,7 +124,6 @@ export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({
           error: `Failed to remove member ${memberAddress} as admin.`,
         }
       );
-      console.log(error);
     } finally {
       setIsDemoting(false);
       setIsStepper(false);
@@ -207,8 +195,8 @@ export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({
                   </Dialog.Title>
                   <div className="mt-2">
                     <p className="text-sm text-gray-600 dark:text-zinc-400">
-                      Are you sure you want to remove{" "}
-                      {profile?.data.name || memberAddress} as admin?
+                      Are you sure you want to remove {profile?.data.name || memberAddress} as
+                      admin?
                     </p>
                   </div>
 

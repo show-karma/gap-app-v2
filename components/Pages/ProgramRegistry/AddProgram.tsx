@@ -1,4 +1,16 @@
 "use client";
+import { ChevronLeftIcon } from "@heroicons/react/24/solid";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { AlloBase } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/Allo";
+import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import type { SubmitHandler } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { z } from "zod";
 import { CommunitiesSelect } from "@/components/CommunitiesSelect";
 import { Telegram2Icon, WebsiteIcon } from "@/components/Icons";
 import { BlogIcon } from "@/components/Icons/Blog";
@@ -7,13 +19,16 @@ import { DiscussionIcon } from "@/components/Icons/Discussion";
 import { OrganizationIcon } from "@/components/Icons/Organization";
 import { Twitter2Icon } from "@/components/Icons/Twitter2";
 import { Button } from "@/components/Utilities/Button";
+import { DatePicker } from "@/components/Utilities/DatePicker";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { useGap } from "@/hooks/useGap";
 import { useAuth } from "@/hooks/useAuth";
+import { useGap } from "@/hooks/useGap";
+import { useWallet } from "@/hooks/useWallet";
 import { useStepper } from "@/store/modals/txStepper";
 import { useRegistryStore } from "@/store/registry";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import { envVars } from "@/utilities/enviromentVars";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
@@ -25,29 +40,11 @@ import { PAGES } from "@/utilities/pages";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { cn } from "@/utilities/tailwind";
-import { privyConfig as config } from "@/utilities/wagmi/privy-config";
-import { Popover } from "@headlessui/react";
-import { CalendarIcon, ChevronLeftIcon } from "@heroicons/react/24/solid";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { AlloBase } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/Allo";
-import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { DayPicker } from "react-day-picker";
-import type { SubmitHandler } from "react-hook-form";
-import { Controller, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
-import { z } from "zod";
 import { registryHelper } from "./helper";
-import { GrantProgram } from "./ProgramList";
+import type { GrantProgram } from "./ProgramList";
 import { SearchDropdown } from "./SearchDropdown";
 import { StatusDropdown } from "./StatusDropdown";
-import { DatePicker } from "@/components/Utilities/DatePicker";
-import { useWallet } from "@/hooks/useWallet";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 const labelStyle = "text-sm font-bold text-brand-gray dark:text-zinc-100";
 const inputStyle =
@@ -169,7 +166,7 @@ export default function AddProgram({
   refreshPrograms?: () => Promise<void>;
 }) {
   const router = useRouter();
-  const supportedChains = appNetwork
+  const _supportedChains = appNetwork
     .filter((chain) => {
       const support = [10, 42161, 11155111];
       return support.includes(chain.id);
@@ -183,9 +180,7 @@ export default function AddProgram({
     });
   const { gap } = useGap();
 
-  const [allCommunities, setAllCommunities] = useState<ICommunityResponse[]>(
-    []
-  );
+  const [allCommunities, setAllCommunities] = useState<ICommunityResponse[]>([]);
 
   useEffect(() => {
     const fetchCommunities = async () => {
@@ -194,15 +189,14 @@ export default function AddProgram({
         const result = await gapIndexerApi.communities();
         setAllCommunities(result.data);
         return result;
-      } catch (error: any) {
-        console.log(error);
+      } catch (_error: any) {
         setAllCommunities([]);
         return undefined;
       }
     };
 
     if (allCommunities.length === 0) fetchCommunities();
-  }, [allCommunities]);
+  }, [allCommunities, gap]);
 
   const {
     register,
@@ -226,9 +220,7 @@ export default function AddProgram({
           ? new Date(programToEdit?.metadata?.endsAt)
           : undefined,
       },
-      amountDistributed: programToEdit?.metadata?.amountDistributedToDate as
-        | number
-        | undefined,
+      amountDistributed: programToEdit?.metadata?.amountDistributedToDate as number | undefined,
       budget: programToEdit?.metadata?.programBudget as number | undefined,
       minGrantSize: programToEdit?.metadata?.minGrantSize as number | undefined,
       maxGrantSize: programToEdit?.metadata?.maxGrantSize as number | undefined,
@@ -270,7 +262,7 @@ export default function AddProgram({
       | "communityRef"
   ) => {
     const oldArray = watch(fieldName);
-    let newArray = [...oldArray];
+    const newArray = [...oldArray];
     if (newArray.includes(value)) {
       const filtered = newArray.filter((item) => item !== value);
       setValue(fieldName, filtered, {
@@ -344,7 +336,7 @@ export default function AddProgram({
         communityRef: data.communityRef,
       };
 
-      const [request, error] = await fetchData(
+      const [_request, error] = await fetchData(
         INDEXER.REGISTRY.CREATE,
         "POST",
         {
@@ -411,9 +403,7 @@ export default function AddProgram({
         return;
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        actualChainId
-      );
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
@@ -461,36 +451,22 @@ export default function AddProgram({
       });
 
       const isSameAddress =
-        programToEdit?.createdByAddress?.toLowerCase() ===
-        address?.toLowerCase();
-      const lowercasedAdmins = programToEdit?.admins?.map((item) =>
-        item.toLowerCase()
-      );
+        programToEdit?.createdByAddress?.toLowerCase() === address?.toLowerCase();
+      const lowercasedAdmins = programToEdit?.admins?.map((item) => item.toLowerCase());
       const permissionToEditOnChain = !!(
         programToEdit?.txHash &&
         (isSameAddress || isRegistryAdmin) &&
         lowercasedAdmins?.includes(address?.toLowerCase())
       );
       if (permissionToEditOnChain) {
-        const allo = new AlloBase(
-          walletSigner as any,
-          envVars.IPFS_TOKEN,
-          chainSelected as number
-        );
+        const allo = new AlloBase(walletSigner as any, envVars.IPFS_TOKEN, chainSelected as number);
         const hasRegistry = await allo
-          .updatePoolMetadata(
-            programToEdit?.programId as string,
-            metadata,
-            changeStepperStep
-          )
+          .updatePoolMetadata(programToEdit?.programId as string, metadata, changeStepperStep)
           .then(async (res) => {
             let retries = 1000;
             changeStepperStep("indexing");
             while (retries > 0) {
-              await fetchData(
-                INDEXER.REGISTRY.GET_ALL +
-                `?programId=${programToEdit?.programId}`
-              )
+              await fetchData(`${INDEXER.REGISTRY.GET_ALL}?programId=${programToEdit?.programId}`)
                 .then(async ([res]) => {
                   const hasUpdated =
                     new Date(programToEdit?.updatedAt) <
@@ -520,11 +496,8 @@ export default function AddProgram({
           throw new Error("Error editing program");
         }
       } else {
-        const [request, error] = await fetchData(
-          INDEXER.REGISTRY.UPDATE(
-            programToEdit?._id.$oid as string,
-            chainSelected as number
-          ),
+        const [_request, error] = await fetchData(
+          INDEXER.REGISTRY.UPDATE(programToEdit?._id.$oid as string, chainSelected as number),
           "PUT",
           {
             metadata,
@@ -579,17 +552,13 @@ export default function AddProgram({
                 className="flex flex-row gap-2 bg-transparent hover:bg-transparent text-[#004EEB] text-sm p-0"
               >
                 <ChevronLeftIcon className="w-4 h-4" />
-                <p className="border-b border-b-[#004EEB]">
-                  Back to Manage Programs
-                </p>
+                <p className="border-b border-b-[#004EEB]">Back to Manage Programs</p>
               </Button>
             ) : (
               <Link href={PAGES.REGISTRY.ROOT}>
                 <Button className="flex flex-row gap-2 bg-transparent hover:bg-transparent text-[#004EEB] text-sm p-0">
                   <ChevronLeftIcon className="w-4 h-4" />
-                  <p className="border-b border-b-[#004EEB]">
-                    Back to programs
-                  </p>
+                  <p className="border-b border-b-[#004EEB]">Back to programs</p>
                 </Button>
               </Link>
             )}
@@ -607,10 +576,7 @@ export default function AddProgram({
             </p>
           </div>
         </div>
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="gap-4 rounded-lg w-full flex-col flex"
-        >
+        <form onSubmit={handleSubmit(onSubmit)} className="gap-4 rounded-lg w-full flex-col flex">
           <div className="flex flex-col w-full gap-6">
             <div className="flex flex-col w-full gap-6 border-b border-b-[#98A2B3] pb-10">
               <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-4">
@@ -624,9 +590,7 @@ export default function AddProgram({
                     placeholder="Ex: Super cool Program"
                     {...register("name")}
                   />
-                  <p className="text-base text-red-400">
-                    {errors.name?.message}
-                  </p>
+                  <p className="text-base text-red-400">{errors.name?.message}</p>
                 </div>
                 <div className="flex w-full flex-col  gap-1">
                   <label htmlFor="program-grants-site" className={labelStyle}>
@@ -638,9 +602,7 @@ export default function AddProgram({
                     placeholder="Ex: https://program.xyz/"
                     {...register("grantsSite")}
                   />
-                  <p className="text-base text-red-400">
-                    {errors.grantsSite?.message}
-                  </p>
+                  <p className="text-base text-red-400">{errors.grantsSite?.message}</p>
                 </div>
               </div>
               <div className="flex w-full flex-row items-center justify-between gap-4">
@@ -650,16 +612,11 @@ export default function AddProgram({
                     control={control}
                     render={({ field, formState }) => (
                       <div className="flex w-full flex-col gap-2">
-                        <label className={labelStyle}>
-                          Start date (optional)
-                        </label>
+                        <div className={labelStyle}>Start date (optional)</div>
                         <DatePicker
                           selected={field.value}
                           onSelect={(date) => {
-                            if (
-                              formatDate(date) ===
-                              formatDate(watch("dates.startsAt") || "")
-                            ) {
+                            if (formatDate(date) === formatDate(watch("dates.startsAt") || "")) {
                               setValue("dates.startsAt", undefined, {
                                 shouldValidate: true,
                               });
@@ -693,16 +650,11 @@ export default function AddProgram({
                     control={control}
                     render={({ field, formState }) => (
                       <div className="flex w-full flex-col gap-2">
-                        <label className={labelStyle}>
-                          End date (optional)
-                        </label>
+                        <div className={labelStyle}>End date (optional)</div>
                         <DatePicker
                           selected={field.value}
                           onSelect={(date) => {
-                            if (
-                              formatDate(date) ===
-                              formatDate(watch("dates.endsAt") || "")
-                            ) {
+                            if (formatDate(date) === formatDate(watch("dates.endsAt") || "")) {
                               setValue("dates.endsAt", undefined, {
                                 shouldValidate: true,
                               });
@@ -737,10 +689,7 @@ export default function AddProgram({
                   Description *
                 </label>
                 <textarea
-                  className={cn(
-                    inputStyle,
-                    "bg-transparent min-h-[120px] max-h-[360px]"
-                  )}
+                  className={cn(inputStyle, "bg-transparent min-h-[120px] max-h-[360px]")}
                   value={watch("description")}
                   onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
                     setValue("description", event.target.value || "", {
@@ -749,9 +698,7 @@ export default function AddProgram({
                   }
                   placeholder="Please provide a description of this program"
                 />
-                <p className="text-base text-red-400">
-                  {errors.description?.message}
-                </p>
+                <p className="text-base text-red-400">{errors.description?.message}</p>
               </div>
               <div className="grid grid-cols-4  max-sm:grid-cols-1 max-md:grid-cols-2 gap-4 justify-between">
                 <div className="flex w-full flex-col gap-1">
@@ -760,17 +707,13 @@ export default function AddProgram({
                   </label>
                   <SearchDropdown
                     list={registryHelper.categories}
-                    onSelectFunction={(value: string) =>
-                      onChangeGeneric(value, "categories")
-                    }
+                    onSelectFunction={(value: string) => onChangeGeneric(value, "categories")}
                     type={"Categories"}
                     selected={watch("categories")}
                     prefixUnselected="Select"
                     buttonClassname="w-full max-w-full"
                   />
-                  <p className="text-base text-red-400">
-                    {errors.categories?.message}
-                  </p>
+                  <p className="text-base text-red-400">{errors.categories?.message}</p>
                 </div>
                 <div className="flex w-full flex-col  gap-1">
                   <label htmlFor="program-organizations" className={labelStyle}>
@@ -778,18 +721,14 @@ export default function AddProgram({
                   </label>
                   <SearchDropdown
                     list={registryHelper.organizations}
-                    onSelectFunction={(value: string) =>
-                      onChangeGeneric(value, "organizations")
-                    }
+                    onSelectFunction={(value: string) => onChangeGeneric(value, "organizations")}
                     type={"Organizations"}
                     selected={watch("organizations")}
                     prefixUnselected="Select"
                     buttonClassname="w-full max-w-full"
                     canAdd
                   />
-                  <p className="text-base text-red-400">
-                    {errors.organizations?.message}
-                  </p>
+                  <p className="text-base text-red-400">{errors.organizations?.message}</p>
                 </div>
                 <div className="flex w-full flex-col  gap-1">
                   <label htmlFor="program-ecosystems" className={labelStyle}>
@@ -797,18 +736,14 @@ export default function AddProgram({
                   </label>
                   <SearchDropdown
                     list={registryHelper.ecosystems}
-                    onSelectFunction={(value: string) =>
-                      onChangeGeneric(value, "ecosystems")
-                    }
+                    onSelectFunction={(value: string) => onChangeGeneric(value, "ecosystems")}
                     type={"Ecosystems"}
                     selected={watch("ecosystems")}
                     prefixUnselected="Select"
                     buttonClassname="w-full max-w-full"
                     canAdd
                   />
-                  <p className="text-base text-red-400">
-                    {errors.ecosystems?.message}
-                  </p>
+                  <p className="text-base text-red-400">{errors.ecosystems?.message}</p>
                 </div>
                 <div className="flex w-full flex-col  gap-1">
                   <label htmlFor="program-networks" className={labelStyle}>
@@ -818,18 +753,14 @@ export default function AddProgram({
                   <SearchDropdown
                     list={registryHelper.networks}
                     imageDictionary={registryHelper.networkImages}
-                    onSelectFunction={(value: string) =>
-                      onChangeGeneric(value, "networks")
-                    }
+                    onSelectFunction={(value: string) => onChangeGeneric(value, "networks")}
                     type={"Networks"}
                     selected={watch("networks")}
                     prefixUnselected="Select"
                     buttonClassname="w-full max-w-full"
                     canAdd
                   />
-                  <p className="text-base text-red-400">
-                    {errors.networks?.message}
-                  </p>
+                  <p className="text-base text-red-400">{errors.networks?.message}</p>
                 </div>
                 <div className="flex w-full flex-col gap-1">
                   <label htmlFor="program-types" className={labelStyle}>
@@ -837,17 +768,13 @@ export default function AddProgram({
                   </label>
                   <SearchDropdown
                     list={registryHelper.grantTypes}
-                    onSelectFunction={(value: string) =>
-                      onChangeGeneric(value, "grantTypes")
-                    }
+                    onSelectFunction={(value: string) => onChangeGeneric(value, "grantTypes")}
                     type={"Mechanisms"}
                     selected={watch("grantTypes")}
                     prefixUnselected="Select"
                     buttonClassname="w-full max-w-full"
                   />
-                  <p className="text-base text-red-400">
-                    {errors.grantTypes?.message}
-                  </p>
+                  <p className="text-base text-red-400">{errors.grantTypes?.message}</p>
                 </div>
                 <div className="flex w-full flex-col  gap-1">
                   <label htmlFor="program-types" className={labelStyle}>
@@ -855,9 +782,7 @@ export default function AddProgram({
                   </label>
                   <SearchDropdown
                     list={registryHelper.platformsUsed}
-                    onSelectFunction={(value: string) =>
-                      onChangeGeneric(value, "platformsUsed")
-                    }
+                    onSelectFunction={(value: string) => onChangeGeneric(value, "platformsUsed")}
                     type={"Platforms"}
                     selected={watch("platformsUsed")}
                     prefixUnselected="Select"
@@ -865,9 +790,7 @@ export default function AddProgram({
                     shouldSort={false}
                     canAdd
                   />
-                  <p className="text-base text-red-400">
-                    {errors.platformsUsed?.message}
-                  </p>
+                  <p className="text-base text-red-400">{errors.platformsUsed?.message}</p>
                 </div>
                 <div className="flex w-full flex-col">
                   <label htmlFor="grant-title" className={`${labelStyle} mb-1`}>
@@ -882,9 +805,7 @@ export default function AddProgram({
                     buttonClassname="w-full max-w-full"
                     type="community"
                   />
-                  <p className="text-base text-red-400">
-                    {errors?.communityRef?.message}
-                  </p>
+                  <p className="text-base text-red-400">{errors?.communityRef?.message}</p>
                 </div>
                 {programToEdit && (
                   <div className="flex w-full flex-col gap-1">
@@ -915,15 +836,10 @@ export default function AddProgram({
                   type="number"
                   {...register("budget")}
                 />
-                <p className="text-base text-red-400">
-                  {errors.budget?.message}
-                </p>
+                <p className="text-base text-red-400">{errors.budget?.message}</p>
               </div>
               <div className="flex w-full flex-col  gap-1">
-                <label
-                  htmlFor="program-amount-distributed"
-                  className={labelStyle}
-                >
+                <label htmlFor="program-amount-distributed" className={labelStyle}>
                   Amount distributed to date
                 </label>
                 <input
@@ -933,9 +849,7 @@ export default function AddProgram({
                   type="number"
                   {...register("amountDistributed")}
                 />
-                <p className="text-base text-red-400">
-                  {errors.amountDistributed?.message}
-                </p>
+                <p className="text-base text-red-400">{errors.amountDistributed?.message}</p>
               </div>
               <div className="flex w-full flex-col  gap-1">
                 <label htmlFor="program-grants-issued" className={labelStyle}>
@@ -948,9 +862,7 @@ export default function AddProgram({
                   placeholder="Ex: 60"
                   {...register("grantsToDate")}
                 />
-                <p className="text-base text-red-400">
-                  {errors.grantsToDate?.message}
-                </p>
+                <p className="text-base text-red-400">{errors.grantsToDate?.message}</p>
               </div>
               <div className="flex w-full flex-col  gap-1">
                 <label htmlFor="program-min-grant-size" className={labelStyle}>
@@ -963,9 +875,7 @@ export default function AddProgram({
                   placeholder="Ex: 80000"
                   {...register("minGrantSize")}
                 />
-                <p className="text-base text-red-400">
-                  {errors.minGrantSize?.message}
-                </p>
+                <p className="text-base text-red-400">{errors.minGrantSize?.message}</p>
               </div>
               <div className="flex w-full flex-col  gap-1">
                 <label htmlFor="program-max-grant-size" className={labelStyle}>
@@ -978,9 +888,7 @@ export default function AddProgram({
                   placeholder="Ex: 80000"
                   {...register("maxGrantSize")}
                 />
-                <p className="text-base text-red-400">
-                  {errors.maxGrantSize?.message}
-                </p>
+                <p className="text-base text-red-400">{errors.maxGrantSize?.message}</p>
               </div>
             </div>
             <div className="grid grid-cols-3 max-sm:grid-cols-1 w-full gap-6  pb-10">
@@ -999,9 +907,7 @@ export default function AddProgram({
                     {...register("twitter")}
                   />
                 </div>
-                <p className="text-base text-red-400">
-                  {errors.twitter?.message}
-                </p>
+                <p className="text-base text-red-400">{errors.twitter?.message}</p>
               </div>
               <div className="flex w-full flex-col gap-2 justify-between">
                 <label htmlFor="program-discord" className={labelStyle}>
@@ -1018,9 +924,7 @@ export default function AddProgram({
                     {...register("discord")}
                   />
                 </div>
-                <p className="text-base text-red-400">
-                  {errors.discord?.message}
-                </p>
+                <p className="text-base text-red-400">{errors.discord?.message}</p>
               </div>
               <div className="flex w-full flex-col gap-2 justify-between">
                 <label htmlFor="program-blog" className={labelStyle}>
@@ -1054,9 +958,7 @@ export default function AddProgram({
                     {...register("forum")}
                   />
                 </div>
-                <p className="text-base text-red-400">
-                  {errors.forum?.message}
-                </p>
+                <p className="text-base text-red-400">{errors.forum?.message}</p>
               </div>
               <div className="flex w-full flex-col gap-2 justify-between">
                 <label htmlFor="program-org" className={labelStyle}>
@@ -1073,9 +975,7 @@ export default function AddProgram({
                     {...register("orgWebsite")}
                   />
                 </div>
-                <p className="text-base text-red-400">
-                  {errors.orgWebsite?.message}
-                </p>
+                <p className="text-base text-red-400">{errors.orgWebsite?.message}</p>
               </div>
               <div className="flex w-full flex-col gap-2 justify-between">
                 <label htmlFor="program-bug-bounty" className={labelStyle}>
@@ -1092,9 +992,7 @@ export default function AddProgram({
                     {...register("bugBounty")}
                   />
                 </div>
-                <p className="text-base text-red-400">
-                  {errors.bugBounty?.message}
-                </p>
+                <p className="text-base text-red-400">{errors.bugBounty?.message}</p>
               </div>
 
               <div className="flex w-full flex-col gap-2 justify-between">
@@ -1112,9 +1010,7 @@ export default function AddProgram({
                     {...register("telegram")}
                   />
                 </div>
-                <p className="text-base text-red-400">
-                  {errors.telegram?.message}
-                </p>
+                <p className="text-base text-red-400">{errors.telegram?.message}</p>
               </div>
             </div>
           </div>

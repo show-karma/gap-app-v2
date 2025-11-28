@@ -1,10 +1,9 @@
-import { defaultMetadata } from "@/utilities/meta";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { TracksAdminPage } from "@/components/Pages/Communities/TracksAdminPage";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { zeroUID } from "@/utilities/commons";
-import { TracksAdminPage } from "@/components/Pages/Communities/TracksAdminPage";
+import { defaultMetadata } from "@/utilities/meta";
 import { getCommunityData } from "@/utilities/queries/getCommunityData";
 
 export const metadata = defaultMetadata;

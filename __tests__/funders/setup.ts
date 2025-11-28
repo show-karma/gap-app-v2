@@ -1,6 +1,6 @@
 /**
  * Global setup file for funders page tests
- * 
+ *
  * This file configures mocks and test utilities for the funders page test suite.
  * Following the pattern established in homepage tests to avoid global conflicts.
  */
@@ -25,7 +25,6 @@ Object.defineProperty(window, "matchMedia", {
 
 // Mock IntersectionObserver
 global.IntersectionObserver = class IntersectionObserver {
-  constructor() {}
   disconnect() {}
   observe() {}
   takeRecords() {
@@ -36,7 +35,6 @@ global.IntersectionObserver = class IntersectionObserver {
 
 // Mock ResizeObserver
 global.ResizeObserver = class ResizeObserver {
-  constructor() {}
   disconnect() {}
   observe() {}
   unobserve() {}
@@ -55,17 +53,13 @@ jest.mock("next/image", () => ({
 jest.mock("next/link", () => ({
   __esModule: true,
   default: ({ children, href, ...props }: any) => {
-    return React.createElement(
-      "a",
-      { href, ...props },
-      children
-    );
+    return React.createElement("a", { href, ...props }, children);
   },
 }));
 
 // Mock InfiniteMovingCards component
 jest.mock("@/src/components/ui/infinite-moving-cards", () => ({
-  InfiniteMovingCards: ({ items }: any) => (
+  InfiniteMovingCards: ({ items }: any) =>
     React.createElement(
       "div",
       { "data-testid": "infinite-moving-cards" },
@@ -76,8 +70,7 @@ jest.mock("@/src/components/ui/infinite-moving-cards", () => ({
           item.text || item.name
         )
       )
-    )
-  ),
+    ),
 }));
 
 // Mock ThemeImage component (renders light version for tests)
@@ -100,45 +93,46 @@ jest.mock("@/utilities/chosenCommunities", () => ({
 
 // Mock CustomerAvatar component
 jest.mock("@/src/features/funders/components/customer-avatar", () => ({
-  CustomerAvatar: ({ src, alt }: any) => React.createElement("img", {
-    "data-testid": "customer-avatar",
-    src,
-    alt,
-    className: "customer-avatar"
-  }),
+  CustomerAvatar: ({ src, alt }: any) =>
+    React.createElement("img", {
+      "data-testid": "customer-avatar",
+      src,
+      alt,
+      className: "customer-avatar",
+    }),
 }));
 
 // Mock CommunityImage component
 jest.mock("@/src/features/funders/components/community-image", () => ({
-  CommunityImage: ({ src, alt }: any) => React.createElement("img", {
-    "data-testid": "community-image",
-    src,
-    alt,
-    className: "community-image"
-  }),
+  CommunityImage: ({ src, alt }: any) =>
+    React.createElement("img", {
+      "data-testid": "community-image",
+      src,
+      alt,
+      className: "community-image",
+    }),
 }));
 
 // Mock FAQAccordion component
 jest.mock("@/src/components/shared/faq-accordion", () => ({
-  FAQAccordion: ({ items }: any) => React.createElement(
-    "div",
-    { "data-testid": "faq-accordion" },
-    items?.map((item: any, idx: number) =>
-      React.createElement(
-        "div",
-        { key: idx, "data-testid": `faq-item-${idx}` },
-        item.question
+  FAQAccordion: ({ items }: any) =>
+    React.createElement(
+      "div",
+      { "data-testid": "faq-accordion" },
+      items?.map((item: any, idx: number) =>
+        React.createElement("div", { key: idx, "data-testid": `faq-item-${idx}` }, item.question)
       )
-    )
-  ),
+    ),
 }));
 
 // Mock lucide-react icons
 jest.mock("lucide-react", () => ({
   Mail: (props: any) => React.createElement("svg", { ...props, "data-testid": "mail-icon" }),
   Zap: (props: any) => React.createElement("svg", { ...props, "data-testid": "zap-icon" }),
-  BarChart2: (props: any) => React.createElement("svg", { ...props, "data-testid": "barchart-icon" }),
-  SquareCheckBig: (props: any) => React.createElement("svg", { ...props, "data-testid": "check-icon" }),
+  BarChart2: (props: any) =>
+    React.createElement("svg", { ...props, "data-testid": "barchart-icon" }),
+  SquareCheckBig: (props: any) =>
+    React.createElement("svg", { ...props, "data-testid": "check-icon" }),
 }));
 
 // Mock useAuth hook
@@ -206,4 +200,3 @@ export const resetMockThemeState = () => {
 export const resetMockChosenCommunities = () => {
   mockChosenCommunities.mockReset();
 };
-

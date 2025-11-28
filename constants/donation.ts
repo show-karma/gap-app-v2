@@ -129,7 +129,7 @@ export function formatEstimatedTime(seconds: number): string {
   }
 
   const minutes = Math.ceil(seconds / 60);
-  return `~${minutes} minute${minutes > 1 ? 's' : ''}`;
+  return `~${minutes} minute${minutes > 1 ? "s" : ""}`;
 }
 
 /**

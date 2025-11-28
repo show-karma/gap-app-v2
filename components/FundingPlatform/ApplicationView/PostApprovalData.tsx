@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useMemo } from "react";
+import { type FC, useMemo } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { formatDate } from "@/utilities/formatDate";
 
@@ -9,10 +9,7 @@ interface PostApprovalDataProps {
   program?: any;
 }
 
-const PostApprovalData: FC<PostApprovalDataProps> = ({
-  postApprovalData,
-  program,
-}) => {
+const PostApprovalData: FC<PostApprovalDataProps> = ({ postApprovalData, program }) => {
   // Create field labels mapping from program's post-approval schema
   const fieldLabels = useMemo(() => {
     const labels: Record<string, string> = {};
@@ -40,7 +37,10 @@ const PostApprovalData: FC<PostApprovalDataProps> = ({
             </dt>
             <dd className="text-sm text-gray-900 dark:text-gray-100">
               {Array.isArray(value) ? (
-                value.length > 0 && value[0] !== null && typeof value[0] === "object" && "title" in value[0] ? (
+                value.length > 0 &&
+                value[0] !== null &&
+                typeof value[0] === "object" &&
+                "title" in value[0] ? (
                   <div className="space-y-2">
                     {value.map((milestone: any, index) => (
                       <div
@@ -99,9 +99,7 @@ const PostApprovalData: FC<PostApprovalDataProps> = ({
 
   return (
     <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">
-        Approval Details
-      </h3>
+      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-6">Approval Details</h3>
       {renderPostApprovalData()}
     </div>
   );

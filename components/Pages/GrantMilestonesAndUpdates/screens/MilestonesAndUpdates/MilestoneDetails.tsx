@@ -1,11 +1,11 @@
 "use client";
 
+import type { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { FC } from "react";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { formatDate } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";
-import { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { type FC } from "react";
 import { MilestoneDelete } from "./MilestoneDelete";
 import { Updates } from "./Updates";
 
@@ -45,9 +45,7 @@ const FlagIcon = () => {
   );
 };
 
-export const MilestoneDateStatus: FC<MilestoneDateStatusProps> = ({
-  milestone,
-}) => {
+export const MilestoneDateStatus: FC<MilestoneDateStatusProps> = ({ milestone }) => {
   const getMilestoneStatus = () => {
     if (milestone.completed) return "completed";
     if (milestone.data.endsAt < Date.now() / 1000) return "past due";
@@ -65,9 +63,7 @@ export const MilestoneDateStatus: FC<MilestoneDateStatusProps> = ({
             )}`
           : `Due on ${formatDate(milestone.data.endsAt * 1000)}`}
       </p>
-      <div
-        className={`flex items-center justify-start rounded-2xl px-2 py-1 ${statusBg[status]}`}
-      >
+      <div className={`flex items-center justify-start rounded-2xl px-2 py-1 ${statusBg[status]}`}>
         <p className="text-center text-xs font-medium leading-none text-white">
           {statusDictionary[status]}
         </p>
@@ -101,15 +97,10 @@ interface MilestoneDetailsProps {
   index: number;
 }
 
-export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
-  milestone,
-  index,
-}) => {
+export const MilestoneDetails: FC<MilestoneDetailsProps> = ({ milestone, index }) => {
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isCommunityAdmin = useCommunityAdminStore(
-    (state) => state.isCommunityAdmin
-  );
+  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
   const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
   return (
     <div className="flex flex-col gap-2">
@@ -127,10 +118,7 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
         >
           <div className="flex w-full flex-row items-start justify-between px-4 max-lg:mb-4 max-lg:flex-col">
             <div className="flex flex-col gap-3">
-              <MilestoneTag
-                index={index}
-                priority={milestone?.data?.priority}
-              />
+              <MilestoneTag index={index} priority={milestone?.data?.priority} />
               <h4 className="text-base font-bold leading-normal text-black dark:text-zinc-100">
                 {milestone.data.title}
               </h4>

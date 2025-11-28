@@ -1,18 +1,19 @@
 /* eslint-disable @next/next/no-img-element */
+
+import { Dialog, Transition } from "@headlessui/react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { type FC, Fragment, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { isAddress } from "viem";
+import { useAccount } from "wagmi";
+import { z } from "zod";
 import { useProjectStore } from "@/store";
 import { useAdminTransferOwnershipModalStore } from "@/store/modals/adminTransferOwnership";
 import fetchData from "@/utilities/fetchData";
 import { sanitizeInput } from "@/utilities/sanitize";
-import { Dialog, Transition } from "@headlessui/react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { FC, Fragment, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { isAddress } from "viem";
-import { z } from "zod";
 import { Button } from "../Utilities/Button";
 import { errorManager } from "../Utilities/errorManager";
-import { useAccount } from "wagmi";
 
 const schema = z.object({
   newOwner: z
@@ -138,9 +139,7 @@ export const AdminTransferOwnershipDialog: FC = () => {
                       {...register("newOwner")}
                     />
                     {errors.newOwner && (
-                      <p className="text-red-500 text-sm">
-                        {errors.newOwner.message}
-                      </p>
+                      <p className="text-red-500 text-sm">{errors.newOwner.message}</p>
                     )}
                   </div>
                   <div className="flex flex-row gap-4 mt-10 justify-end">

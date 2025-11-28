@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
-import fetchData from "@/utilities/fetchData";
 import { errorManager } from "@/components/Utilities/errorManager";
+import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 interface CommunityWithStats {
@@ -51,11 +51,11 @@ export const useCommunities = (options: UseCommunitiesOptions = {}) => {
           includeStats,
         });
         const [response, error] = await fetchData(endpoint, "GET", {}, {}, {}, false);
-        
+
         if (error) {
           throw new Error(error);
         }
-        
+
         if (!response) {
           return {
             payload: [],
@@ -76,9 +76,7 @@ export const useCommunities = (options: UseCommunitiesOptions = {}) => {
       }
     },
     getNextPageParam: (lastPage) => {
-      return lastPage.pagination.hasNextPage 
-        ? lastPage.pagination.page + 1 
-        : undefined;
+      return lastPage.pagination.hasNextPage ? lastPage.pagination.page + 1 : undefined;
     },
     initialPageParam: 1,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -86,4 +84,4 @@ export const useCommunities = (options: UseCommunitiesOptions = {}) => {
   });
 };
 
-export type { CommunityWithStats, CommunitiesResponse }; 
+export type { CommunityWithStats, CommunitiesResponse };

@@ -1,12 +1,12 @@
 "use client";
 
-import {useChains, useRequests} from "@/hooks/useFaucetAdmin";
-import { useFaucetHistory, useFaucetStats } from "@/hooks/useFaucet";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { formatEther } from "viem";
 import { useState } from "react";
+import { formatEther } from "viem";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { useFaucetHistory, useFaucetStats } from "@/hooks/useFaucet";
+import { useChains, useRequests } from "@/hooks/useFaucetAdmin";
 
-type RequestStatus = 'PENDING' | 'CLAIMED' | 'EXPIRED' | 'FAILED';
+type RequestStatus = "PENDING" | "CLAIMED" | "EXPIRED" | "FAILED";
 
 export function UsageAnalytics() {
   const [selectedDays, setSelectedDays] = useState(7);
@@ -14,16 +14,19 @@ export function UsageAnalytics() {
   const [selectedStatus, setSelectedStatus] = useState<RequestStatus | undefined>(undefined);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const { chains } = useChains()
+  const { chains } = useChains();
   const { data: stats, isLoading: statsLoading } = useFaucetStats(selectedChain, selectedDays);
   const { data: requests, isLoading: isRequestsPending } = useRequests({
     page: currentPage,
     limit: pageSize,
     status: selectedStatus,
-    chainId: selectedChain
+    chainId: selectedChain,
   });
-  const { data: recentHistory, isLoading: historyLoading } = useFaucetHistory(undefined, selectedChain);
-  
+  const { data: recentHistory, isLoading: historyLoading } = useFaucetHistory(
+    undefined,
+    selectedChain
+  );
+
   const isLoading = statsLoading || isRequestsPending || historyLoading;
 
   if (isLoading) {
@@ -40,13 +43,17 @@ export function UsageAnalytics() {
       <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm p-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label
+              htmlFor="analytics-chain"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
               Chain
             </label>
             <select
+              id="analytics-chain"
               value={selectedChain || ""}
               onChange={(e) => {
-                setSelectedChain(e.target.value ? parseInt(e.target.value) : undefined);
+                setSelectedChain(e.target.value ? parseInt(e.target.value, 10) : undefined);
                 setCurrentPage(1);
               }}
               className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
@@ -59,12 +66,16 @@ export function UsageAnalytics() {
               ))}
             </select>
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label
+              htmlFor="analytics-status"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
               Status
             </label>
             <select
+              id="analytics-status"
               value={selectedStatus || ""}
               onChange={(e) => {
                 setSelectedStatus(e.target.value as RequestStatus | undefined);
@@ -79,14 +90,18 @@ export function UsageAnalytics() {
               <option value="FAILED">Failed</option>
             </select>
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label
+              htmlFor="analytics-period"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
               Time Period
             </label>
             <select
+              id="analytics-period"
               value={selectedDays}
-              onChange={(e) => setSelectedDays(parseInt(e.target.value))}
+              onChange={(e) => setSelectedDays(parseInt(e.target.value, 10))}
               className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
             >
               <option value={1}>Last 24 hours</option>
@@ -95,15 +110,19 @@ export function UsageAnalytics() {
               <option value={90}>Last 90 days</option>
             </select>
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label
+              htmlFor="analytics-page-size"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            >
               Page Size
             </label>
             <select
+              id="analytics-page-size"
               value={pageSize}
               onChange={(e) => {
-                setPageSize(parseInt(e.target.value));
+                setPageSize(parseInt(e.target.value, 10));
                 setCurrentPage(1);
               }}
               className="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
@@ -158,7 +177,7 @@ export function UsageAnalytics() {
       <div>
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            {selectedStatus ? `${selectedStatus} Requests` : 'All Requests'}
+            {selectedStatus ? `${selectedStatus} Requests` : "All Requests"}
           </h3>
           {requests?.pagination.totalCount && (
             <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -166,8 +185,8 @@ export function UsageAnalytics() {
             </p>
           )}
         </div>
-        
-        {requests && requests?.payload && requests?.payload?.length > 0 ? (
+
+        {requests?.payload && requests?.payload?.length > 0 ? (
           <>
             <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm overflow-hidden">
               <table className="w-full">
@@ -197,18 +216,21 @@ export function UsageAnalytics() {
                         {request.walletAddress.slice(0, 6)}...{request.walletAddress.slice(-4)}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
-                        {chains?.find(n => n.chainId === request.chainId)?.name || request.chainId}
+                        {chains?.find((n) => n.chainId === request.chainId)?.name ||
+                          request.chainId}
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          request.status === "CLAIMED"
-                            ? "bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400"
-                            : request.status === "FAILED"
-                            ? "bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400"
-                            : request.status === "EXPIRED"
-                            ? "bg-gray-100 dark:bg-gray-900/20 text-gray-800 dark:text-gray-400"
-                            : "bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400"
-                        }`}>
+                        <span
+                          className={`px-2 py-1 text-xs rounded-full ${
+                            request.status === "CLAIMED"
+                              ? "bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400"
+                              : request.status === "FAILED"
+                                ? "bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400"
+                                : request.status === "EXPIRED"
+                                  ? "bg-gray-100 dark:bg-gray-900/20 text-gray-800 dark:text-gray-400"
+                                  : "bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400"
+                          }`}
+                        >
                           {request.status}
                         </span>
                       </td>
@@ -222,59 +244,74 @@ export function UsageAnalytics() {
                       </td>
                     </tr>
                   ))}
-              </tbody>
-            </table>
-          </div>
-          
-          {/* Pagination Controls */}
-          {requests?.pagination.totalCount > pageSize && (
-            <div className="flex justify-between items-center mt-4">
-              <div className="text-sm text-gray-700 dark:text-gray-300">
-                Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, requests?.pagination.totalCount)} of {requests.pagination.totalCount} results
-              </div>
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                  className="px-3 py-1 text-sm bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-600 rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Previous
-                </button>
-                
-                {/* Page numbers */}
-                {Array.from({ length: Math.min(5, Math.ceil(requests?.pagination.totalCount / pageSize)) }, (_, i) => {
-                  const pageNum = currentPage > 3 ? currentPage - 2 + i : i + 1;
-                  if (pageNum > Math.ceil(requests?.pagination.totalCount / pageSize)) return null;
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => setCurrentPage(pageNum)}
-                      className={`px-3 py-1 text-sm rounded-lg ${
-                        pageNum === currentPage
-                          ? "bg-blue-500 text-white"
-                          : "bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-600 hover:bg-gray-50 dark:hover:bg-zinc-700"
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                }).filter(Boolean)}
-                
-                <button
-                  onClick={() => setCurrentPage(Math.min(Math.ceil(requests?.pagination.totalCount / pageSize), currentPage + 1))}
-                  disabled={currentPage >= Math.ceil(requests?.pagination.totalCount / pageSize)}
-                  className="px-3 py-1 text-sm bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-600 rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Next
-                </button>
-              </div>
+                </tbody>
+              </table>
             </div>
-          )}
+
+            {/* Pagination Controls */}
+            {requests?.pagination.totalCount > pageSize && (
+              <div className="flex justify-between items-center mt-4">
+                <div className="text-sm text-gray-700 dark:text-gray-300">
+                  Showing {(currentPage - 1) * pageSize + 1} to{" "}
+                  {Math.min(currentPage * pageSize, requests?.pagination.totalCount)} of{" "}
+                  {requests.pagination.totalCount} results
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1 text-sm bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-600 rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Previous
+                  </button>
+
+                  {/* Page numbers */}
+                  {Array.from(
+                    { length: Math.min(5, Math.ceil(requests?.pagination.totalCount / pageSize)) },
+                    (_, i) => {
+                      const pageNum = currentPage > 3 ? currentPage - 2 + i : i + 1;
+                      if (pageNum > Math.ceil(requests?.pagination.totalCount / pageSize))
+                        return null;
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => setCurrentPage(pageNum)}
+                          className={`px-3 py-1 text-sm rounded-lg ${
+                            pageNum === currentPage
+                              ? "bg-blue-500 text-white"
+                              : "bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-600 hover:bg-gray-50 dark:hover:bg-zinc-700"
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    }
+                  ).filter(Boolean)}
+
+                  <button
+                    onClick={() =>
+                      setCurrentPage(
+                        Math.min(
+                          Math.ceil(requests?.pagination.totalCount / pageSize),
+                          currentPage + 1
+                        )
+                      )
+                    }
+                    disabled={currentPage >= Math.ceil(requests?.pagination.totalCount / pageSize)}
+                    className="px-3 py-1 text-sm bg-white dark:bg-zinc-800 border border-gray-300 dark:border-zinc-600 rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </>
         ) : (
           <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm p-8 text-center">
             <p className="text-gray-500 dark:text-gray-400">
-              {selectedStatus ? `No ${selectedStatus.toLowerCase()} requests found` : 'No requests found'}
+              {selectedStatus
+                ? `No ${selectedStatus.toLowerCase()} requests found`
+                : "No requests found"}
             </p>
           </div>
         )}

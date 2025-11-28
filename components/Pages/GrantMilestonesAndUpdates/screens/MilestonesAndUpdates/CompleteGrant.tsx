@@ -1,35 +1,34 @@
 "use client";
+import { XMarkIcon } from "@heroicons/react/24/solid";
+import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import type { FC } from "react";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import type { Hex } from "viem";
+import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { getGapClient, useGap } from "@/hooks/useGap";
+import { useGap } from "@/hooks/useGap";
+import { useTracksForProgram } from "@/hooks/useTracks";
+import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
 import { useStepper } from "@/store/modals/txStepper";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
+import { isFundingProgramGrant } from "@/utilities/funding-programs";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
-import { XMarkIcon } from "@heroicons/react/24/solid";
-import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import type { FC } from "react";
-import { useState, useEffect } from "react";
-import toast from "react-hot-toast";
-import { Hex } from "viem";
-import { useAccount } from "wagmi";
-import { useWallet } from "@/hooks/useWallet";
-import { isFundingProgramGrant } from "@/utilities/funding-programs";
 import { FundingProgramFields } from "./CompletionRequirements/FundingProgramFields";
 import { TrackExplanations } from "./CompletionRequirements/TrackExplanations";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { useTracksForProgram } from "@/hooks/useTracks";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 
@@ -46,7 +45,7 @@ export const GrantCompletion: FC = () => {
 
   // Get tracks for the program to check if they exist
   const programIdWithChain = grant?.details?.data?.programId;
-  const { data: availableTracks = [] } = useTracksForProgram(programIdWithChain || '');
+  const { data: availableTracks = [] } = useTracksForProgram(programIdWithChain || "");
 
   // Validation states
   const [validationErrors, setValidationErrors] = useState<{
@@ -80,9 +79,8 @@ export const GrantCompletion: FC = () => {
         if (grant?.community) {
           try {
             // Handle both string and object community
-            const communityId = typeof grant.community === 'string'
-              ? grant.community
-              : grant.community.uid;
+            const communityId =
+              typeof grant.community === "string" ? grant.community : grant.community.uid;
 
             const response = await gapIndexerApi.communityBySlug(communityId);
             if (response.data) {
@@ -90,14 +88,11 @@ export const GrantCompletion: FC = () => {
               setIsFundingProgram(isFundingProgramGrant(communityName, grantName));
             }
           } catch (error) {
-            errorManager(
-              "Error fetching community information for funding program check",
-              error,
-              {
-                grantUID: grant?.uid,
-                communityId: typeof grant.community === 'string' ? grant.community : grant.community.uid,
-              }
-            );
+            errorManager("Error fetching community information for funding program check", error, {
+              grantUID: grant?.uid,
+              communityId:
+                typeof grant.community === "string" ? grant.community : grant.community.uid,
+            });
             // Safe fallback: Check only by grant name if community fetch fails
             setIsFundingProgram(isFundingProgramGrant(undefined, grantName));
           }
@@ -106,14 +101,16 @@ export const GrantCompletion: FC = () => {
     };
 
     checkFundingProgram();
-  }, [grant?.community, grant?.details?.data?.title]);
+  }, [grant?.community, grant?.details?.data?.title, grant]);
 
   useEffect(() => {
     if (grant?.details?.data?.selectedTrackIds) {
-      setTrackExplanations(grant.details.data.selectedTrackIds.map(trackId => ({
-        trackUID: trackId,
-        explanation: ""
-      })));
+      setTrackExplanations(
+        grant.details.data.selectedTrackIds.map((trackId) => ({
+          trackUID: trackId,
+          explanation: "",
+        }))
+      );
     }
   }, [grant?.details?.data?.selectedTrackIds]);
 
@@ -132,7 +129,11 @@ export const GrantCompletion: FC = () => {
 
     // Step 1: Ensure correct chain
     try {
-      const { success, chainId, gapClient: newGapClient } = await ensureCorrectChain({
+      const {
+        success,
+        chainId,
+        gapClient: newGapClient,
+      } = await ensureCorrectChain({
         targetChainId: grantToComplete.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
@@ -157,7 +158,7 @@ export const GrantCompletion: FC = () => {
     }
 
     // Step 2: Connect wallet
-    let walletClient;
+    let walletClient: any = null;
     try {
       const result = await safeGetWalletClient(actualChainId);
       if (result.error || !result.walletClient || !gapClient) {
@@ -176,12 +177,13 @@ export const GrantCompletion: FC = () => {
       const walletSigner = await walletClientToSigner(walletClient);
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);
       if (!fetchedProject) {
-        const errorMsg = "Failed to fetch project data. The project may have been deleted or you may not have permission to access it.";
-        errorManager(
-          "Project not found when completing grant",
-          new Error(errorMsg),
-          { projectUID: project?.uid, grantUID: grantToComplete.uid, address }
-        );
+        const errorMsg =
+          "Failed to fetch project data. The project may have been deleted or you may not have permission to access it.";
+        errorManager("Project not found when completing grant", new Error(errorMsg), {
+          projectUID: project?.uid,
+          grantUID: grantToComplete.uid,
+          address,
+        });
         toast.error(errorMsg);
         setIsLoading(false);
         return;
@@ -191,16 +193,12 @@ export const GrantCompletion: FC = () => {
       );
       if (!grantInstance) {
         const errorMsg = "Grant not found in project. Please refresh the page and try again.";
-        errorManager(
-          "Grant instance not found in fetched project",
-          new Error(errorMsg),
-          {
-            projectUID: project?.uid,
-            grantUID: grantToComplete.uid,
-            availableGrants: fetchedProject.grants.map(g => g.uid),
-            address
-          }
-        );
+        errorManager("Grant instance not found in fetched project", new Error(errorMsg), {
+          projectUID: project?.uid,
+          grantUID: grantToComplete.uid,
+          availableGrants: fetchedProject.grants.map((g) => g.uid),
+          address,
+        });
         toast.error(errorMsg);
         setIsLoading(false);
         return;
@@ -210,9 +208,10 @@ export const GrantCompletion: FC = () => {
         text: data.text || "",
         ...(data.pitchDeckLink && { pitchDeckLink: data.pitchDeckLink }),
         ...(data.demoVideoLink && { demoVideoLink: data.demoVideoLink }),
-        ...(data.trackExplanations && data.trackExplanations.length > 0 && {
-          trackExplanations: data.trackExplanations
-        }),
+        ...(data.trackExplanations &&
+          data.trackExplanations.length > 0 && {
+            trackExplanations: data.trackExplanations,
+          }),
       });
       await grantInstance
         .complete(walletSigner, sanitizedGrantComplete, changeStepperStep)
@@ -235,14 +234,12 @@ export const GrantCompletion: FC = () => {
               .catch((err) => {
                 errorManager("Error polling for grant completion", err, {
                   grantUID: grantToComplete.uid,
-                  retriesRemaining: retries
+                  retriesRemaining: retries,
                 });
                 return null;
               });
-            const grant = fetchedProject?.grants?.find(
-              (g) => g.uid === grantToComplete.uid
-            );
-            if (grant && grant.completed) {
+            const grant = fetchedProject?.grants?.find((g) => g.uid === grantToComplete.uid);
+            if (grant?.completed) {
               changeStepperStep("indexed");
               toast.success(MESSAGES.GRANT.MARK_AS_COMPLETE.SUCCESS);
               await refreshProject().then(() => {
@@ -270,7 +267,9 @@ export const GrantCompletion: FC = () => {
             new Error(`Grant not indexed after ${maxRetries} attempts`),
             { grantUID: grantToComplete.uid, txHash }
           );
-          toast.error("Grant completion is taking longer than expected. Please refresh the page in a moment to see if it completed.");
+          toast.error(
+            "Grant completion is taking longer than expected. Please refresh the page in a moment to see if it completed."
+          );
         });
     } catch (error: any) {
       errorManager(
@@ -295,20 +294,22 @@ export const GrantCompletion: FC = () => {
 
       if (!pitchDeckLink || !pitchDeckLink.trim()) {
         errors.pitchDeckLink = true;
-        if (!firstErrorField) firstErrorField = 'pitch-deck-link';
+        if (!firstErrorField) firstErrorField = "pitch-deck-link";
       }
       if (!demoVideoLink || !demoVideoLink.trim()) {
         errors.demoVideoLink = true;
-        if (!firstErrorField) firstErrorField = 'demo-video-link';
+        if (!firstErrorField) firstErrorField = "demo-video-link";
       }
 
       // Only validate track explanations if tracks were selected
       if (trackExplanations.length > 0) {
         // Check if all selected tracks have explanations
-        const missingExplanations = trackExplanations.some(te => !te.explanation || te.explanation.trim() === '');
+        const missingExplanations = trackExplanations.some(
+          (te) => !te.explanation || te.explanation.trim() === ""
+        );
         if (missingExplanations) {
           errors.trackExplanations = true;
-          if (!firstErrorField) firstErrorField = 'track-explanations';
+          if (!firstErrorField) firstErrorField = "track-explanations";
         }
       }
 
@@ -321,7 +322,7 @@ export const GrantCompletion: FC = () => {
           setTimeout(() => {
             const element = firstErrorField ? document.getElementById(firstErrorField) : null;
             if (element) {
-              element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              element.scrollIntoView({ behavior: "smooth", block: "center" });
               // Try to focus if it's an input
               if (element instanceof HTMLInputElement) {
                 element.focus();
@@ -386,14 +387,14 @@ export const GrantCompletion: FC = () => {
                   setPitchDeckLink(value);
                   // Clear error when user starts typing
                   if (validationErrors.pitchDeckLink) {
-                    setValidationErrors(prev => ({ ...prev, pitchDeckLink: false }));
+                    setValidationErrors((prev) => ({ ...prev, pitchDeckLink: false }));
                   }
                 }}
                 onDemoVideoChange={(value) => {
                   setDemoVideoLink(value);
                   // Clear error when user starts typing
                   if (validationErrors.demoVideoLink) {
-                    setValidationErrors(prev => ({ ...prev, demoVideoLink: false }));
+                    setValidationErrors((prev) => ({ ...prev, demoVideoLink: false }));
                   }
                 }}
                 errors={validationErrors}
@@ -405,8 +406,11 @@ export const GrantCompletion: FC = () => {
                 onTrackExplanationsChange={(explanations) => {
                   setTrackExplanations(explanations);
                   // Clear error when all explanations are provided
-                  if (explanations.every(te => te.explanation.trim() !== '') && validationErrors.trackExplanations) {
-                    setValidationErrors(prev => ({ ...prev, trackExplanations: false }));
+                  if (
+                    explanations.every((te) => te.explanation.trim() !== "") &&
+                    validationErrors.trackExplanations
+                  ) {
+                    setValidationErrors((prev) => ({ ...prev, trackExplanations: false }));
                   }
                 }}
                 errors={validationErrors}

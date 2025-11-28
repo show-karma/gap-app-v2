@@ -44,4 +44,3 @@ describe("Homepage Test Infrastructure", () => {
     expect(typeof observer.observe).toBe("function");
   });
 });
-

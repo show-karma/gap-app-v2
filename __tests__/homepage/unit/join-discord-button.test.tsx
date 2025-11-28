@@ -1,7 +1,7 @@
 /**
  * JoinDiscordButton Component Tests
  * Tests the Discord join button with external link
- * 
+ *
  * Target: 5 tests
  * - Rendering (2)
  * - External Link (2)
@@ -9,10 +9,7 @@
  */
 
 import { JoinDiscordButton } from "@/src/features/homepage/components/join-discord-button";
-import {
-  renderWithProviders,
-  screen,
-} from "../utils/test-helpers";
+import { renderWithProviders, screen } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
 
 // Mock SOCIALS utility
@@ -63,4 +60,3 @@ describe("JoinDiscordButton Component", () => {
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
   });
 });
-

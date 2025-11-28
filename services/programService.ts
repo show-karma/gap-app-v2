@@ -1,7 +1,7 @@
-import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import type { Hex } from "viem";
+import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getPrograms } from "@/utilities/sdk/communities/getPrograms";
-import { Hex } from "viem";
 
 export const programService = {
   /**
@@ -20,10 +20,7 @@ export const programService = {
         return bTime - aTime;
       });
     } catch (error: any) {
-      errorManager(
-        `Error fetching programs for community ${communityId}`,
-        error
-      );
+      errorManager(`Error fetching programs for community ${communityId}`, error);
       throw error;
     }
   },

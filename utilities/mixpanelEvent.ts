@@ -6,10 +6,7 @@ export interface IMixpanelEvent {
 }
 
 export const mixpanelEvent = (data: IMixpanelEvent) => {
-  if (
-    !process.env.NEXT_PUBLIC_MIXPANEL_KEY ||
-    process.env.NEXT_PUBLIC_ENV !== "production"
-  ) {
+  if (!process.env.NEXT_PUBLIC_MIXPANEL_KEY || process.env.NEXT_PUBLIC_ENV !== "production") {
     console.error("Mixpanel is not enabled");
     return;
   }

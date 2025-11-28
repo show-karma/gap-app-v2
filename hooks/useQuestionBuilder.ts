@@ -1,21 +1,13 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fundingPlatformService } from "@/services/fundingPlatformService";
-import { FormSchema } from "@/types/question-builder";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { IFundingProgramConfig } from "@/types/funding-platform";
+import { fundingPlatformService } from "@/services/fundingPlatformService";
+import type { IFundingProgramConfig } from "@/types/funding-platform";
+import type { FormSchema } from "@/types/question-builder";
 
 // Query keys for caching
 const QUERY_KEYS = {
-  questionSchema: (programId: string, chainId: number) => [
-    "question-schema",
-    programId,
-    chainId,
-  ],
-  programConfig: (programId: string, chainId: number) => [
-    "program-config",
-    programId,
-    chainId,
-  ],
+  questionSchema: (programId: string, chainId: number) => ["question-schema", programId, chainId],
+  programConfig: (programId: string, chainId: number) => ["program-config", programId, chainId],
 };
 
 /**
@@ -37,9 +29,7 @@ function createFormSchemaHook(
       : "Form schema saved successfully");
   const errorMessage =
     options?.errorMessage ||
-    (isPostApproval
-      ? "Failed to save post approval form schema"
-      : "Failed to save form schema");
+    (isPostApproval ? "Failed to save post approval form schema" : "Failed to save form schema");
 
   return function useFormSchema(programId: string, chainId: number) {
     const queryClient = useQueryClient();
@@ -51,11 +41,10 @@ function createFormSchemaHook(
       queryKey,
       queryFn: async () => {
         try {
-          const result =
-            await fundingPlatformService.programs.getProgramConfiguration(
-              programId,
-              chainId
-            );
+          const result = await fundingPlatformService.programs.getProgramConfiguration(
+            programId,
+            chainId
+          );
 
           // The service returns FundingProgram type, config is in applicationConfig
           const config = result?.applicationConfig;

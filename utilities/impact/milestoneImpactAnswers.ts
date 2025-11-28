@@ -1,8 +1,8 @@
-import { ImpactIndicatorWithData } from "@/types/impactMeasurement";
+import toast from "react-hot-toast";
+import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import fetchData from "../fetchData";
 import { INDEXER } from "../indexer";
 import { MESSAGES } from "../messages";
-import toast from "react-hot-toast";
 
 interface DataPoint {
   value: number | string;

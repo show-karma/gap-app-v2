@@ -3,11 +3,11 @@
  * @description Tests for donation checkout hook covering state management, validation, and donation execution flow
  */
 
-import { renderHook, act } from "@testing-library/react";
-import { useDonationCheckout } from "@/hooks/donation/useDonationCheckout";
-import type { SupportedToken } from "@/constants/supportedTokens";
-import * as wagmi from "wagmi";
+import { act, renderHook } from "@testing-library/react";
 import toast from "react-hot-toast";
+import * as wagmi from "wagmi";
+import type { SupportedToken } from "@/constants/supportedTokens";
+import { useDonationCheckout } from "@/hooks/donation/useDonationCheckout";
 
 // Mock dependencies
 jest.mock("wagmi", () => ({
@@ -106,9 +106,7 @@ describe("useDonationCheckout", () => {
         await result.current.handleExecuteDonations([mockPayment]);
       });
 
-      expect(toast.error).toHaveBeenCalledWith(
-        expect.stringContaining("Connect your wallet")
-      );
+      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining("Connect your wallet"));
     });
 
     it("should show error when no payments provided", async () => {
@@ -170,9 +168,7 @@ describe("useDonationCheckout", () => {
         valid: true,
         errors: [],
       });
-      mockUseDonationTransfer.executeDonations.mockResolvedValue(
-        mockTransfers
-      );
+      mockUseDonationTransfer.executeDonations.mockResolvedValue(mockTransfers);
 
       act(() => {
         result.current.setShowStepsPreview(true);
@@ -208,9 +204,7 @@ describe("useDonationCheckout", () => {
         );
       });
 
-      expect(toast.error).toHaveBeenCalledWith(
-        expect.stringContaining("missing payout addresses")
-      );
+      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining("missing payout addresses"));
       expect(mockSetMissingPayouts).toHaveBeenCalled();
       expect(mockUseDonationTransfer.executeDonations).not.toHaveBeenCalled();
     });
@@ -222,9 +216,7 @@ describe("useDonationCheckout", () => {
         valid: true,
         errors: [],
       });
-      mockUseDonationTransfer.executeDonations.mockResolvedValue(
-        mockTransfers
-      );
+      mockUseDonationTransfer.executeDonations.mockResolvedValue(mockTransfers);
 
       await act(async () => {
         await result.current.handleProceedWithDonations(
@@ -265,9 +257,7 @@ describe("useDonationCheckout", () => {
       });
 
       expect(result.current.validationErrors).toEqual(["Insufficient balance"]);
-      expect(toast.error).toHaveBeenCalledWith(
-        expect.stringContaining("Insufficient balance")
-      );
+      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining("Insufficient balance"));
       expect(mockUseDonationTransfer.executeDonations).not.toHaveBeenCalled();
     });
 
@@ -278,9 +268,7 @@ describe("useDonationCheckout", () => {
         valid: true,
         errors: [],
       });
-      mockUseDonationTransfer.executeDonations.mockResolvedValue(
-        mockTransfers
-      );
+      mockUseDonationTransfer.executeDonations.mockResolvedValue(mockTransfers);
 
       await act(async () => {
         await result.current.handleProceedWithDonations(
@@ -300,9 +288,7 @@ describe("useDonationCheckout", () => {
     it("should handle network switch error", async () => {
       const { result } = renderHook(() => useDonationCheckout());
 
-      mockSwitchNetwork.mockRejectedValue(
-        new Error("User rejected network switch")
-      );
+      mockSwitchNetwork.mockRejectedValue(new Error("User rejected network switch"));
 
       await act(async () => {
         await result.current.handleProceedWithDonations(
@@ -327,9 +313,7 @@ describe("useDonationCheckout", () => {
         valid: true,
         errors: [],
       });
-      mockUseDonationTransfer.executeDonations.mockResolvedValue(
-        mockTransfers
-      );
+      mockUseDonationTransfer.executeDonations.mockResolvedValue(mockTransfers);
 
       await act(async () => {
         await result.current.handleProceedWithDonations(
@@ -353,9 +337,7 @@ describe("useDonationCheckout", () => {
         valid: true,
         errors: [],
       });
-      mockUseDonationTransfer.executeDonations.mockResolvedValue(
-        mockTransfers
-      );
+      mockUseDonationTransfer.executeDonations.mockResolvedValue(mockTransfers);
 
       await act(async () => {
         await result.current.handleProceedWithDonations(
@@ -369,9 +351,7 @@ describe("useDonationCheckout", () => {
         );
       });
 
-      expect(toast.success).toHaveBeenCalledWith(
-        expect.stringContaining("success")
-      );
+      expect(toast.success).toHaveBeenCalledWith(expect.stringContaining("success"));
     });
 
     it("should show error toast when some donations fail", async () => {
@@ -397,9 +377,7 @@ describe("useDonationCheckout", () => {
         );
       });
 
-      expect(toast.error).toHaveBeenCalledWith(
-        expect.stringContaining("Some donations failed")
-      );
+      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining("Some donations failed"));
     });
 
     it("should show special success message when approvals were needed", async () => {
@@ -409,9 +387,7 @@ describe("useDonationCheckout", () => {
         valid: true,
         errors: [],
       });
-      mockUseDonationTransfer.executeDonations.mockResolvedValue(
-        mockTransfers
-      );
+      mockUseDonationTransfer.executeDonations.mockResolvedValue(mockTransfers);
 
       // Mock approvals were needed
       const { useDonationTransfer } = require("@/hooks/useDonationTransfer");
@@ -434,9 +410,7 @@ describe("useDonationCheckout", () => {
         );
       });
 
-      expect(toast.success).toHaveBeenCalledWith(
-        expect.stringContaining("approved")
-      );
+      expect(toast.success).toHaveBeenCalledWith(expect.stringContaining("approved"));
     });
 
     it("should handle execution error", async () => {
@@ -446,9 +420,7 @@ describe("useDonationCheckout", () => {
         valid: true,
         errors: [],
       });
-      mockUseDonationTransfer.executeDonations.mockRejectedValue(
-        new Error("Execution failed")
-      );
+      mockUseDonationTransfer.executeDonations.mockRejectedValue(new Error("Execution failed"));
 
       await act(async () => {
         await result.current.handleProceedWithDonations(
@@ -472,9 +444,7 @@ describe("useDonationCheckout", () => {
         valid: true,
         errors: [],
       });
-      mockUseDonationTransfer.executeDonations.mockResolvedValue(
-        mockTransfers
-      );
+      mockUseDonationTransfer.executeDonations.mockResolvedValue(mockTransfers);
 
       await act(async () => {
         await result.current.handleProceedWithDonations(

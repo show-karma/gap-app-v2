@@ -17,10 +17,9 @@ interface MarkdownEditorProps {
   disabled?: boolean;
   overflow?: boolean;
 }
-const MDEditor = dynamic(
-  () => import("@uiw/react-md-editor").then((mod) => mod.default),
-  { ssr: false }
-);
+const MDEditor = dynamic(() => import("@uiw/react-md-editor").then((mod) => mod.default), {
+  ssr: false,
+});
 
 export const MarkdownEditor: FC<MarkdownEditorProps> = ({
   value,
@@ -33,11 +32,7 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
   overflow = false,
 }) => {
   return (
-    <div
-      data-color-mode="light"
-      className="h-full w-full"
-      style={{ minHeight: "100%" }}
-    >
+    <div data-color-mode="light" className="h-full w-full" style={{ minHeight: "100%" }}>
       <MDEditor
         className={cn(
           "flex-1 bg-white dark:bg-zinc-900 dark:text-white text-black dark:border-gray-600",

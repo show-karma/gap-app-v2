@@ -1,12 +1,10 @@
 "use client";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import type { MaturityStageOptions, SortByOptions, StatusOptions } from "@/types";
+import type { CommunityProjectsV2Response } from "@/types/community";
 import { getCommunityProjectsV2 } from "@/utilities/queries/getCommunityDataV2";
-import { CommunityProjectsV2Response } from "@/types/community";
-import { SortByOptions, StatusOptions, MaturityStageOptions } from "@/types";
 
-const getStatusFromMaturityStage = (
-  stage: MaturityStageOptions
-): StatusOptions | undefined => {
+const getStatusFromMaturityStage = (stage: MaturityStageOptions): StatusOptions | undefined => {
   if (stage === "all") return undefined;
   return `maturity-stage-${stage}` as StatusOptions;
 };
@@ -68,14 +66,12 @@ export function useCommunityProjectsInfinite({
       return response;
     },
     getNextPageParam: (lastPage) => {
-      return lastPage.pagination.hasNextPage
-        ? lastPage.pagination.page + 1
-        : undefined;
+      return lastPage.pagination.hasNextPage ? lastPage.pagination.page + 1 : undefined;
     },
     initialPageParam: 1,
     enabled: enabled && !!communityId,
     staleTime: 0, // Always consider data stale when filters change
     gcTime: 1000 * 60 * 10, // 10 minutes (formerly cacheTime)
-    refetchOnMount: 'always', // Always refetch when component mounts
+    refetchOnMount: "always", // Always refetch when component mounts
   });
 }

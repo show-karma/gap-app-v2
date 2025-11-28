@@ -1,8 +1,8 @@
 import {
-  validateContractAddress,
-  validateNetworkAddressPair,
   ethereumAddressSchema,
   networkAddressPairSchema,
+  validateContractAddress,
+  validateNetworkAddressPair,
 } from "../contractAddress";
 
 describe("Contract Address Validation", () => {
@@ -82,10 +82,7 @@ describe("Contract Address Validation", () => {
     });
 
     it("should reject a pair with empty network", () => {
-      const result = validateNetworkAddressPair(
-        "",
-        "0xdAC17F958D2ee523a2206206994597C13D831ec7"
-      );
+      const result = validateNetworkAddressPair("", "0xdAC17F958D2ee523a2206206994597C13D831ec7");
       expect(result.isValid).toBe(false);
       expect(result.errors?.network).toBe("Network is required");
     });
@@ -116,9 +113,7 @@ describe("Contract Address Validation", () => {
     });
 
     it("should trim and parse", () => {
-      const result = ethereumAddressSchema.parse(
-        "  0xdAC17F958D2ee523a2206206994597C13D831ec7  "
-      );
+      const result = ethereumAddressSchema.parse("  0xdAC17F958D2ee523a2206206994597C13D831ec7  ");
       expect(result).toBe("0xdAC17F958D2ee523a2206206994597C13D831ec7");
     });
   });
@@ -152,13 +147,10 @@ describe("Contract Address Validation", () => {
       "0x0000000000000000000000000000000000000000", // Zero address (technically valid)
     ];
 
-    it.each(validAddresses)(
-      "should validate real Ethereum address: %s",
-      (address: string) => {
-        const result = validateContractAddress(address);
-        expect(result.isValid).toBe(true);
-      }
-    );
+    it.each(validAddresses)("should validate real Ethereum address: %s", (address: string) => {
+      const result = validateContractAddress(address);
+      expect(result.isValid).toBe(true);
+    });
 
     const invalidAddresses = [
       "0x742d35Cc6634C0532925a3b844Bc9e7595f0bE", // Too short
@@ -169,12 +161,9 @@ describe("Contract Address Validation", () => {
       "0x", // Just prefix
     ];
 
-    it.each(invalidAddresses)(
-      "should reject invalid Ethereum address: %s",
-      (address: string) => {
-        const result = validateContractAddress(address);
-        expect(result.isValid).toBe(false);
-      }
-    );
+    it.each(invalidAddresses)("should reject invalid Ethereum address: %s", (address: string) => {
+      const result = validateContractAddress(address);
+      expect(result.isValid).toBe(false);
+    });
   });
 });

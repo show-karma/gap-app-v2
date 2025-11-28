@@ -1,19 +1,17 @@
 "use client";
+import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FC, useState } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
-import { z } from "zod";
-import { Button } from "./Utilities/Button";
+import { type FC, useState } from "react";
+import { type SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { Contact } from "@/types/project";
-import { INDEXER } from "@/utilities/indexer";
-import fetchData from "@/utilities/fetchData";
-import { TrashIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
-
-import { errorManager } from "./Utilities/errorManager";
-import { generateRandomString } from "@/utilities/generateRandomString";
+import { z } from "zod";
 import { useContactInfo } from "@/hooks/useContactInfo";
+import { useOwnerStore, useProjectStore } from "@/store";
+import type { Contact } from "@/types/project";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { Button } from "./Utilities/Button";
+import { errorManager } from "./Utilities/errorManager";
 
 const labelStyle = "text-sm font-bold";
 const inputStyle =
@@ -61,10 +59,7 @@ const ContactBlock: FC<ContactBlockProps> = ({
             key={contact.id}
             className="min-h-max h-max max-h-max p-4 bg-white dark:bg-zinc-600 rounded-xl justify-between items-end flex w-full flex-row gap-2"
             style={{
-              border:
-                value === contact.id
-                  ? "2px solid #155EEF"
-                  : "2px solid transparent",
+              border: value === contact.id ? "2px solid #155EEF" : "2px solid transparent",
             }}
           >
             <div className="flex-col justify-center items-start gap-1 flex">
@@ -114,16 +109,16 @@ interface ContactInfoSubscriptionProps {
   contactInfo?: Contact;
 }
 
-export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
-  contactInfo,
-}) => {
+export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({ contactInfo }) => {
   const project = useProjectStore((state) => state.project);
   const projectId = project?.uid;
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isAuthorized = isOwner || isProjectAdmin;
-  const { data: existingContacts, refetch: refreshContactInfo } =
-    useContactInfo(projectId, isAuthorized);
+  const { data: existingContacts, refetch: refreshContactInfo } = useContactInfo(
+    projectId,
+    isAuthorized
+  );
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -175,15 +170,13 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
       }
       if (data.id === "0") {
         await fetchData(
-          INDEXER.SUBSCRIPTION.CREATE(
-            project?.details?.data?.slug || (project?.uid as string)
-          ),
+          INDEXER.SUBSCRIPTION.CREATE(project?.details?.data?.slug || (project?.uid as string)),
           "POST",
           { contacts: [data] },
           {},
           {},
           true
-        ).then(([res, error]) => {
+        ).then(([_res, error]) => {
           if (!error) {
             toast.success("Contact info created successfully");
             refreshProject();
@@ -205,7 +198,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
           {},
           {},
           true
-        ).then(([res, error]) => {
+        ).then(([_res, error]) => {
           if (!error) {
             toast.success("Contact info updated successfully");
             refreshProject();
@@ -229,8 +222,6 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
           error: "Failed to update contact information.",
         }
       );
-
-      console.log(error);
     } finally {
       setIsLoading(false);
     }
@@ -242,15 +233,13 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
     setIsDeleteLoading(true);
     try {
       await fetchData(
-        INDEXER.SUBSCRIPTION.DELETE(
-          project?.details?.data?.slug || (project?.uid as string)
-        ),
+        INDEXER.SUBSCRIPTION.DELETE(project?.details?.data?.slug || (project?.uid as string)),
         "DELETE",
         { contacts: [id] },
         {},
         {},
         true
-      ).then(([res, error]) => {
+      ).then(([_res, error]) => {
         if (!error) {
           toast.success("Contact info deleted successfully");
           refreshProject();
@@ -271,7 +260,6 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
           error: "Failed to delete contact info.",
         }
       );
-      console.log(error);
     } finally {
       setIsDeleteLoading(false);
     }
@@ -283,31 +271,26 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
     });
     const contact = existingContacts?.find((contact) => contact.id === value);
     setValue("name", contact?.name || "", {
-      shouldValidate: contact ? true : false,
+      shouldValidate: !!contact,
     });
     setValue("email", contact?.email || "", {
-      shouldValidate: contact ? true : false,
+      shouldValidate: !!contact,
     });
     setValue("telegram", contact?.telegram || "", {
-      shouldValidate: contact ? true : false,
+      shouldValidate: !!contact,
     });
   };
 
   return isAuthorized ? (
     <div className="px-4 py-4 rounded-md border border-transparent dark:bg-zinc-800 dark:border flex flex-col gap-4 items-start">
-      <h3 className="text-xl font-bold leading-6 text-gray-900 dark:text-zinc-100">
-        Contact Info
-      </h3>
+      <h3 className="text-xl font-bold leading-6 text-gray-900 dark:text-zinc-100">Contact Info</h3>
       <p className="text-zinc-600 dark:text-blue-100">
-        We promise to never spam you. We will send notifications to inform you
-        if your project qualifies for any grants (proactive or retroactive), and
-        provide reminders about milestones and grant deadlines.
+        We promise to never spam you. We will send notifications to inform you if your project
+        qualifies for any grants (proactive or retroactive), and provide reminders about milestones
+        and grant deadlines.
       </p>
 
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="flex flex-col md:flex-row gap-8"
-      >
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col md:flex-row gap-8">
         <div className="flex w-full flex-col gap-3">
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="name-input" className={labelStyle}>

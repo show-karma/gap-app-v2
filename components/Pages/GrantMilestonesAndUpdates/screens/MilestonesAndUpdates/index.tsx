@@ -1,22 +1,19 @@
 "use client";
+import type {
+  IGrantResponse,
+  IProjectResponse,
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { GrantCompletionCard } from "@/components/Pages/Grants/MilestonesAndUpdates";
+import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
 /* eslint-disable @next/next/no-img-element */
 import { useOwnerStore, useProjectStore } from "@/store";
 // import { MilestonesList } from "./MilestonesList";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
-import { formatDate } from "@/utilities/formatDate";
+import { useGrantStore } from "@/store/grant";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
-import { ReadMore } from "@/utilities/ReadMore";
-import {
-  IGrantResponse,
-  IProjectResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import Link from "next/link";
-
-import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
-import { useGrantStore } from "@/store/grant";
-import dynamic from "next/dynamic";
-import { GrantCompletionCard } from "@/components/Pages/Grants/MilestonesAndUpdates";
 
 const MilestonesList = dynamic(
   () =>
@@ -37,9 +34,7 @@ export const EmptyMilestone = ({
 }) => {
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isCommunityAdmin = useCommunityAdminStore(
-    (state) => state.isCommunityAdmin
-  );
+  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
 
   const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
 
@@ -47,11 +42,7 @@ export const EmptyMilestone = ({
     return (
       <div className="flex w-full items-center justify-center rounded-md border border-gray-200 px-6 py-10">
         <div className="flex max-w-[438px] flex-col items-center justify-center gap-6">
-          <img
-            src="/images/comments.png"
-            alt=""
-            className="h-[185px] w-[438px] object-cover"
-          />
+          <img src="/images/comments.png" alt="" className="h-[185px] w-[438px] object-cover" />
           <div className="flex w-full flex-col items-center justify-center gap-3">
             <p className="text-center text-lg font-semibold text-black dark:text-zinc-100">
               {MESSAGES.PROJECT.EMPTY.GRANTS.UPDATES}
@@ -67,11 +58,7 @@ export const EmptyMilestone = ({
   return (
     <div className="flex w-full items-center justify-center rounded-md border border-gray-200 px-6 py-10">
       <div className="flex max-w-[438px] flex-col items-center justify-center gap-6">
-        <img
-          src="/images/comments.png"
-          alt=""
-          className="h-[185px] w-[438px] object-cover"
-        />
+        <img src="/images/comments.png" alt="" className="h-[185px] w-[438px] object-cover" />
         <div className="flex w-full flex-col items-center justify-center gap-3">
           <p className="text-center text-lg font-semibold text-black dark:text-white">
             {MESSAGES.PROJECT.EMPTY.GRANTS.NOT_ADDED_MILESTONE}
@@ -85,11 +72,7 @@ export const EmptyMilestone = ({
               )}
               className="items-center flex flex-row justify-center gap-2 rounded border border-blue-600 dark:bg-blue-800 bg-brand-blue px-4 py-2.5 text-base font-semibold text-white hover:bg-brand-blue"
             >
-              <img
-                src="/icons/plus.svg"
-                alt="Add"
-                className="relative h-5 w-5"
-              />
+              <img src="/icons/plus.svg" alt="Add" className="relative h-5 w-5" />
               Add a new Milestone
             </Link>
           </div>
@@ -99,26 +82,22 @@ export const EmptyMilestone = ({
   );
 };
 
-
 export const MilestonesAndUpdates = () => {
   const { grant } = useGrantStore();
   const project = useProjectStore((state) => state.project);
 
-  const hasMilestonesOrUpdates =
-    grant?.milestones?.length || grant?.updates?.length;
+  const hasMilestonesOrUpdates = grant?.milestones?.length || grant?.updates?.length;
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isCommunityAdmin = useCommunityAdminStore(
-    (state) => state.isCommunityAdmin
-  );
+  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
   const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
 
   return (
     <div className="space-y-5">
       {grant?.completed &&
-        (grant?.completed.data.title ||
-          grant?.completed.data.text ||
-          grant?.completed?.data?.proofOfWork) ? (
+      (grant?.completed.data.title ||
+        grant?.completed.data.text ||
+        grant?.completed?.data?.proofOfWork) ? (
         <GrantCompletionCard completion={grant?.completed} />
       ) : null}
       {hasMilestonesOrUpdates ? (

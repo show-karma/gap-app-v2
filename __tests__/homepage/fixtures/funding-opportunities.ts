@@ -185,7 +185,7 @@ export const createMockFundingOpportunity = (
 ): FundingProgram => {
   const programId = overrides.programId || `program-${Math.random().toString(36).substr(2, 9)}`;
   const chainID = overrides.chainID || 1;
-  
+
   return {
     programId,
     chainID,
@@ -244,4 +244,3 @@ export const getMockFundingOpportunities = (count: number): FundingProgram[] => 
 export const getEmptyFundingOpportunities = (): FundingProgram[] => {
   return [];
 };
-

@@ -1,20 +1,20 @@
 "use client";
 
-import {useChains, useFaucetConfig, useFaucetEmergency} from "@/hooks/useFaucetAdmin";
 import { useState } from "react";
+import { formatEther } from "viem";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { useFaucetConfig, useFaucetEmergency } from "@/hooks/useFaucetAdmin";
+import type { FaucetChainSettings } from "@/utilities/faucet/faucetService";
+import { appNetwork } from "@/utilities/network";
 import { ChainSettingsForm } from "./ChainSettingsForm";
 import { EmergencyControls } from "./EmergencyControls";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { appNetwork } from "@/utilities/network";
-import { formatEther, parseEther } from "viem";
-import type { FaucetChainSettings } from "@/utilities/faucet/faucetService";
 
 export function ChainSettingsManager() {
-  const { config, isLoading, updateChainSettings, createChainSettings, deleteChainSettings } = useFaucetConfig();
+  const { config, isLoading, updateChainSettings, createChainSettings, deleteChainSettings } =
+    useFaucetConfig();
   const { emergencyStop, resumeOperations } = useFaucetEmergency();
   const [editingChain, setEditingChain] = useState<number | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
-  console.log(config)
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -34,7 +34,7 @@ export function ChainSettingsManager() {
   };
 
   const getChainName = (chainId: number) => {
-    return appNetwork.find(n => n.id === chainId)?.name || `Chain ${chainId}`;
+    return appNetwork.find((n) => n.id === chainId)?.name || `Chain ${chainId}`;
   };
 
   return (
@@ -119,8 +119,8 @@ export function ChainSettingsManager() {
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Rate Limit</p>
                   <p className="text-lg font-medium text-gray-900 dark:text-white">
-                    {settings.rateLimitHours 
-                      ? settings.rateLimitHours < 1 
+                    {settings.rateLimitHours
+                      ? settings.rateLimitHours < 1
                         ? `${Math.round(settings.rateLimitHours * 60)} minutes`
                         : `${settings.rateLimitHours} hours`
                       : "Default"}
@@ -140,7 +140,9 @@ export function ChainSettingsManager() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Status</p>
-                  <p className={`text-lg font-medium ${settings.enabled ? "text-green-600" : "text-red-600"}`}>
+                  <p
+                    className={`text-lg font-medium ${settings.enabled ? "text-green-600" : "text-red-600"}`}
+                  >
                     {settings.enabled ? "Enabled" : "Disabled"}
                   </p>
                 </div>
@@ -149,19 +151,20 @@ export function ChainSettingsManager() {
           </div>
         ))}
 
-        {(!config?.configurations.chains || config?.configurations.chains.length === 0) && !showAddForm && (
-          <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm p-8 text-center">
-            <p className="text-gray-500 dark:text-gray-400 mb-4">
-              No chain settings configured yet
-            </p>
-            <button
-              onClick={() => setShowAddForm(true)}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-            >
-              Add First Chain
-            </button>
-          </div>
-        )}
+        {(!config?.configurations.chains || config?.configurations.chains.length === 0) &&
+          !showAddForm && (
+            <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm p-8 text-center">
+              <p className="text-gray-500 dark:text-gray-400 mb-4">
+                No chain settings configured yet
+              </p>
+              <button
+                onClick={() => setShowAddForm(true)}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                Add First Chain
+              </button>
+            </div>
+          )}
       </div>
     </div>
   );

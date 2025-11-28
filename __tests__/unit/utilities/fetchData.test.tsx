@@ -1,6 +1,6 @@
 import axios from "axios";
-import fetchData from "@/utilities/fetchData";
 import { TokenManager } from "@/utilities/auth/token-manager";
+import fetchData from "@/utilities/fetchData";
 
 jest.mock("axios");
 jest.mock("@/utilities/auth/token-manager");

@@ -1,11 +1,10 @@
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+
 const links = {
   funding_block: "https://tally.so/r/w2rJ8M",
   add_program: "/funding-map/add-program",
-  cryptographer:
-    "https://sovs.notion.site/Cartographer-Syndicate-a574b48ae162451cb73c17326f471b6a",
-  notion:
-    "https://www.notion.so/sovs/Onchain-Grant-Registry-8fde2610cf6c4422a07216d4b2506c73",
+  cryptographer: "https://sovs.notion.site/Cartographer-Syndicate-a574b48ae162451cb73c17326f471b6a",
+  notion: "https://www.notion.so/sovs/Onchain-Grant-Registry-8fde2610cf6c4422a07216d4b2506c73",
 };
 
 export const ProgramHeader = () => {
@@ -16,22 +15,16 @@ export const ProgramHeader = () => {
           {`The best grant program directory you’ll find`}
         </h1>
         <p className="text-start text-lg max-lg:text-base max-w-5xl text-black dark:text-white">
-          Explore our curated list of grant programs for innovators and
-          creators: from tech pioneers to community leaders, there is a grant
-          program to elevate your project. Find and apply for a grant now!
+          Explore our curated list of grant programs for innovators and creators: from tech pioneers
+          to community leaders, there is a grant program to elevate your project. Find and apply for
+          a grant now!
         </p>
       </div>
       <div className="flex flex-row gap-4 flex-wrap">
         <div className="bg-[#DBFFC5] flex flex-row gap-3 px-3 py-4 rounded-lg w-full max-w-[312px] h-[96px] max-md:h-full max-sm:max-w-full">
-          <img
-            src="/icons/funding.png"
-            alt="Funding"
-            className="w-6 h-6 mt-1"
-          />
+          <img src="/icons/funding.png" alt="Funding" className="w-6 h-6 mt-1" />
           <div className="flex flex-col gap-1">
-            <p className="text-black text-sm font-semibold">
-              Looking for funding?
-            </p>
+            <p className="text-black text-sm font-semibold">Looking for funding?</p>
             <p className="text-brand-gray text-sm font-normal">
               <ExternalLink
                 href={links.funding_block}
@@ -46,9 +39,7 @@ export const ProgramHeader = () => {
         <div className="bg-[#DDF9F2] flex flex-row gap-3 px-3 py-4 rounded-lg w-full max-w-[312px] h-[96px] max-md:h-full max-sm:max-w-full">
           <img src="/icons/reward.png" alt="Reward" className="w-6 h-6 mt-1" />
           <div className="flex flex-col gap-1">
-            <p className="text-black text-sm font-semibold">
-              Are we missing a grant program?
-            </p>
+            <p className="text-black text-sm font-semibold">Are we missing a grant program?</p>
             <p className="text-brand-gray text-sm font-normal">
               <ExternalLink
                 href={links.add_program}
@@ -82,20 +73,13 @@ export const ProgramHeader = () => {
           </div>
         </div>
         <div className="bg-[#ECE9FE] flex flex-row gap-3 px-3 py-4 rounded-lg w-full max-w-[312px] h-[96px] max-md:h-full max-sm:max-w-full">
-          <img
-            src="/icons/karma-logo-rounded.png"
-            alt="Karma Logo"
-            className="w-6 h-6 mt-1"
-          />
+          <img src="/icons/karma-logo-rounded.png" alt="Karma Logo" className="w-6 h-6 mt-1" />
           <div className="flex flex-col gap-1">
             <p className="text-black text-sm font-semibold">
               Our vision and roadmap for the funding map.
             </p>
             <p className="text-brand-gray text-sm font-normal">
-              <ExternalLink
-                href={links.notion}
-                className="text-[#155EEF] underline font-semibold"
-              >
+              <ExternalLink href={links.notion} className="text-[#155EEF] underline font-semibold">
                 Learn more
               </ExternalLink>{" "}
               about it.

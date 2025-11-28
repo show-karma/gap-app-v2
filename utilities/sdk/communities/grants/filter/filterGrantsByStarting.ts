@@ -5,9 +5,7 @@ export const filterGrantsByStarting = (grants: Grant[]) => {
   // filter by grants that doesn't have any milestones completed
   return newGrants.filter((grant) => {
     const { milestones } = grant;
-    const completedMilestones = milestones.filter(
-      (milestone) => milestone.completed
-    );
+    const completedMilestones = milestones.filter((milestone) => milestone.completed);
     return completedMilestones.length === 0;
   });
 };

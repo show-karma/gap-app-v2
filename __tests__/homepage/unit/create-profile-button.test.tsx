@@ -1,7 +1,7 @@
 /**
  * CreateProfileButton Component Tests
  * Tests the profile creation button with modal integration
- * 
+ *
  * Target: 5 tests
  * - Rendering (2)
  * - Click Behavior (2)
@@ -9,11 +9,7 @@
  */
 
 import { CreateProfileButton } from "@/src/features/homepage/components/create-profile-button";
-import {
-  renderWithProviders,
-  screen,
-  fireEvent,
-} from "../utils/test-helpers";
+import { fireEvent, renderWithProviders, screen } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
 
 // Mock the contributor profile modal store
@@ -75,4 +71,3 @@ describe("CreateProfileButton Component", () => {
     expect(button.tagName).toBe("BUTTON");
   });
 });
-

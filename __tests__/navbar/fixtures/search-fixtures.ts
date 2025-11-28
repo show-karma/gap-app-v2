@@ -3,7 +3,7 @@
  * Provides mock search responses for various scenarios
  */
 
-import { ISearchResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { ISearchResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 /**
  * Helper: Create mock project
@@ -192,24 +192,24 @@ export const searchQueries = {
   medium: "project",
   long: "awesome blockchain project",
   special: "DeFi@2024",
-  
+
   // Invalid queries (< 3 characters)
   tooShort1: "p",
   tooShort2: "pr",
   empty: "",
-  
+
   // Edge cases
   spaces: "   ",
   unicode: "プロジェクト",
   emoji: "🚀 project",
   sql: "'; DROP TABLE projects; --",
-  
+
   // Real-world examples
   optimism: "optimism",
   ethereum: "ethereum",
   defi: "defi protocol",
   nft: "nft",
-  
+
   // No results expected
   nonsense: "xyzabc123nonexistent",
 };
@@ -270,27 +270,31 @@ export const searchResponseScenarios = {
  */
 export const getResultsByQuery = (query: string): ISearchResponse => {
   const lowerQuery = query.toLowerCase();
-  
+
   if (query.length < 3) {
     return emptySearchResults;
   }
-  
+
   if (lowerQuery.includes("project")) {
     return projectsOnlyResults;
   }
-  
-  if (lowerQuery.includes("community") || lowerQuery.includes("optimism") || lowerQuery.includes("arbitrum")) {
+
+  if (
+    lowerQuery.includes("community") ||
+    lowerQuery.includes("optimism") ||
+    lowerQuery.includes("arbitrum")
+  ) {
     return communitiesOnlyResults;
   }
-  
+
   if (lowerQuery.includes("defi") || lowerQuery.includes("nft")) {
     return mixedResults;
   }
-  
+
   if (lowerQuery === "nonexistent" || lowerQuery === searchQueries.nonsense) {
     return emptySearchResults;
   }
-  
+
   // Default to mixed results
   return mixedResults;
 };
@@ -300,16 +304,16 @@ export const getResultsByQuery = (query: string): ISearchResponse => {
  */
 export const groupSimilarCommunitiesMock = (communities: any[]) => {
   const grouped: { [key: string]: any[] } = {};
-  
-  communities.forEach(community => {
+
+  communities.forEach((community) => {
     const key = community.name.toLowerCase();
     if (!grouped[key]) {
       grouped[key] = [];
     }
     grouped[key].push(community);
   });
-  
-  return Object.values(grouped).map(group => {
+
+  return Object.values(grouped).map((group) => {
     if (group.length === 1) {
       return group[0];
     }
@@ -347,4 +351,3 @@ export const searchFixtures = {
   createMockProject,
   createMockCommunity,
 };
-

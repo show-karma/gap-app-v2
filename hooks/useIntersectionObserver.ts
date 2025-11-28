@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from "react";
 
 interface UseIntersectionObserverOptions {
   threshold?: number;
@@ -9,7 +9,7 @@ interface UseIntersectionObserverOptions {
 
 export function useIntersectionObserver({
   threshold = 0.1,
-  rootMargin = '100px',
+  rootMargin = "100px",
   triggerOnce = false,
 }: UseIntersectionObserverOptions = {}) {
   const [isVisible, setIsVisible] = useState(false);
@@ -27,7 +27,7 @@ export function useIntersectionObserver({
       ([entry]) => {
         const isIntersecting = entry.isIntersecting;
         setIsVisible(isIntersecting);
-        
+
         if (isIntersecting && triggerOnce) {
           setHasTriggered(true);
         }

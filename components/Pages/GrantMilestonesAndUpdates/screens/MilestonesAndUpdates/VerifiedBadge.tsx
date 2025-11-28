@@ -1,28 +1,24 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { blo } from "blo";
-import { FC, useEffect, useMemo, useState } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
+import type {
+  IGrantUpdateStatus,
+  IMilestoneCompleted,
+  IProjectImpactStatus,
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { type FC, useEffect, useState } from "react";
+import type { Hex } from "viem";
+import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import { useENS } from "@/store/ens";
 import { formatDate } from "@/utilities/formatDate";
 import { VerificationsDialog } from "./VerificationsDialog";
-import {
-  IMilestoneCompleted,
-  IProjectImpactStatus,
-  IGrantUpdateStatus,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { Hex } from "viem";
-import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 
 interface VerifiedBadgeProps {
-  verifications:
-    | IMilestoneCompleted[]
-    | IGrantUpdateStatus[]
-    | IProjectImpactStatus[];
+  verifications: IMilestoneCompleted[] | IGrantUpdateStatus[] | IProjectImpactStatus[];
   title: string;
 }
 
-const BlockieTooltip = ({
+const _BlockieTooltip = ({
   address,
   date,
   reason,
@@ -35,7 +31,7 @@ const BlockieTooltip = ({
 
   useEffect(() => {
     populateEns([address]);
-  }, [address]);
+  }, [address, populateEns]);
 
   return (
     <Tooltip.Provider>
@@ -56,9 +52,7 @@ const BlockieTooltip = ({
           >
             <div>
               <div>
-                <p className="text-xs font-bold truncate">
-                  {ensData[address]?.name || address}
-                </p>
+                <p className="text-xs font-bold truncate">{ensData[address]?.name || address}</p>
                 <p className="text-xs font-normal">on {formatDate(date)}</p>
               </div>
               <p className="text-xs font-normal mt-1">{reason}</p>
@@ -71,19 +65,13 @@ const BlockieTooltip = ({
   );
 };
 
-export const VerifiedBadge: FC<VerifiedBadgeProps> = ({
-  verifications,
-  title,
-}) => {
+export const VerifiedBadge: FC<VerifiedBadgeProps> = ({ verifications, title }) => {
   const [orderedSort, setOrderedSort] = useState<
     (IMilestoneCompleted | IGrantUpdateStatus | IProjectImpactStatus)[]
   >([]);
 
   const getUniqueVerifications = (
-    verifications:
-      | IMilestoneCompleted[]
-      | IGrantUpdateStatus[]
-      | IProjectImpactStatus[]
+    verifications: IMilestoneCompleted[] | IGrantUpdateStatus[] | IProjectImpactStatus[]
   ) => {
     // get unique and by last date
     const uniqueVerifications: Record<
@@ -94,10 +82,7 @@ export const VerifiedBadge: FC<VerifiedBadgeProps> = ({
       if (!verification.attester) return;
       if (!uniqueVerifications[verification.attester]) {
         uniqueVerifications[verification.attester] = verification;
-      } else if (
-        uniqueVerifications[verification.attester].createdAt <
-        verification.createdAt
-      ) {
+      } else if (uniqueVerifications[verification.attester].createdAt < verification.createdAt) {
         uniqueVerifications[verification.attester] = verification;
       }
     });
@@ -111,14 +96,12 @@ export const VerifiedBadge: FC<VerifiedBadgeProps> = ({
 
     // order by date
     const sorted = uniques.sort((a, b) => {
-      if (new Date(a.createdAt).getTime() < new Date(b.createdAt).getTime())
-        return 1;
-      if (new Date(a.createdAt).getTime() > new Date(b.createdAt).getTime())
-        return -1;
+      if (new Date(a.createdAt).getTime() < new Date(b.createdAt).getTime()) return 1;
+      if (new Date(a.createdAt).getTime() > new Date(b.createdAt).getTime()) return -1;
       return 0;
     });
     setOrderedSort(sorted);
-  }, [verifications]);
+  }, [verifications, getUniqueVerifications]);
 
   const openDialog = () => setIsOpenDialog(true);
 
@@ -128,24 +111,15 @@ export const VerifiedBadge: FC<VerifiedBadgeProps> = ({
 
   return (
     <div className="flex flex-row items-center gap-2 flex-1">
-      <img
-        alt="Verified Badge"
-        src={"/icons/milestone-verified-badge.svg"}
-        className="w-6 h-6"
-      />
-      <span className="text-sm font-semibold text-gray-700 dark:text-gray-400">
-        Verified by
-      </span>
+      <img alt="Verified Badge" src={"/icons/milestone-verified-badge.svg"} className="w-6 h-6" />
+      <span className="text-sm font-semibold text-gray-700 dark:text-gray-400">Verified by</span>
       <VerificationsDialog
         verifications={orderedSort}
         isOpen={isOpenDialog}
         closeDialog={closeDialog}
         title={title}
       />
-      <button
-        className="ml-2 flex flex-row -space-x-1 flex-wrap"
-        onClick={openDialog}
-      >
+      <button className="ml-2 flex flex-row -space-x-1 flex-wrap" onClick={openDialog}>
         {orderedSort.slice(0, 4).map((verification) => (
           <EthereumAddressToENSAvatar
             key={verification.attester}

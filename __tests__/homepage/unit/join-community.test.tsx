@@ -1,7 +1,7 @@
 /**
  * JoinCommunity Component Tests
  * Tests the community engagement section
- * 
+ *
  * Target: 7 tests
  * - Rendering (3)
  * - Button Display (2)
@@ -10,17 +10,12 @@
  */
 
 import { JoinCommunity } from "@/src/features/homepage/components/join-community";
-import {
-  renderWithProviders,
-  screen,
-} from "../utils/test-helpers";
+import { renderWithProviders, screen } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
 
 // Mock child components
 jest.mock("@/src/features/homepage/components/create-profile-button", () => ({
-  CreateProfileButton: () => (
-    <button data-testid="create-profile-button">Create Profile</button>
-  ),
+  CreateProfileButton: () => <button data-testid="create-profile-button">Create Profile</button>,
 }));
 
 jest.mock("@/src/features/homepage/components/join-discord-button", () => ({
@@ -66,8 +61,8 @@ describe("JoinCommunity Component", () => {
     renderWithProviders(<JoinCommunity />);
 
     const buttons = screen.getByTestId("join-discord-button").parentElement;
-    const allButtons = buttons?.querySelectorAll('[data-testid]');
-    
+    const allButtons = buttons?.querySelectorAll("[data-testid]");
+
     // Discord button should appear first in the DOM
     expect(allButtons?.[0]).toHaveAttribute("data-testid", "join-discord-button");
   });
@@ -77,7 +72,7 @@ describe("JoinCommunity Component", () => {
 
     const section = container.querySelector("section");
     const innerDiv = section?.querySelector("div");
-    
+
     expect(innerDiv).toHaveClass("items-center");
   });
 
@@ -92,4 +87,3 @@ describe("JoinCommunity Component", () => {
     expect(heading).toHaveTextContent(/Join our community/i);
   });
 });
-

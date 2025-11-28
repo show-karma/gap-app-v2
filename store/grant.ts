@@ -1,5 +1,5 @@
+import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { create } from "zustand";
-import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 
 interface GrantStore {
@@ -20,9 +20,7 @@ export const useGrantStore = create<GrantStore>((set, get) => ({
     if (!grant) return;
     set({ loading: true });
     try {
-      const refreshedGrant = await gapIndexerApi
-        .grantBySlug(grant.uid)
-        .then((res) => res.data);
+      const refreshedGrant = await gapIndexerApi.grantBySlug(grant.uid).then((res) => res.data);
       set({ grant: refreshedGrant, loading: false });
       return refreshedGrant;
     } catch (error) {

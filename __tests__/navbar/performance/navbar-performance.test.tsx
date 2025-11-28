@@ -3,19 +3,18 @@
  * Tests render performance, re-render optimization, memory management, and debouncing efficiency
  */
 
-import React from "react";
-import { screen, fireEvent, waitFor } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import { Navbar } from "@/src/components/navbar/navbar";
-import { renderWithProviders, waitForDebounce } from "../utils/test-helpers";
 import { getAuthFixture } from "../fixtures/auth-fixtures";
-import { server } from "../setup";
 import { scenarioHandlers } from "../mocks/handlers";
+import { server } from "../setup";
+import { renderWithProviders } from "../utils/test-helpers";
 
 // Mock child components to prevent complex dependency issues
 jest.mock("@/src/components/navbar/navbar-desktop-navigation", () => ({
   NavbarDesktopNavigation: () => (
     <div data-testid="desktop-navigation">
-      <input type="search" role="searchbox" aria-label="Search" />
+      <input type="search" aria-label="Search" />
       <button type="button">Sign in</button>
     </div>
   ),
@@ -30,15 +29,15 @@ jest.mock("@/src/components/navbar/navbar-mobile-menu", () => ({
 }));
 
 jest.mock("@/src/components/navbar/navbar-search", () => ({
-  NavbarSearch: () => (
-    <input type="search" role="searchbox" aria-label="Search" data-testid="navbar-search" />
-  ),
+  NavbarSearch: () => <input type="search" aria-label="Search" data-testid="navbar-search" />,
 }));
 
 jest.mock("@/src/components/navbar/navbar-user-menu", () => ({
   NavbarUserMenu: () => (
     <div data-testid="user-menu">
-      <button type="button" data-testid="user-avatar">Avatar</button>
+      <button type="button" data-testid="user-avatar">
+        Avatar
+      </button>
     </div>
   ),
 }));
@@ -51,12 +50,12 @@ describe("Navbar Performance Tests", () => {
   describe("Component Render Performance", () => {
     it("navbar renders within acceptable time", () => {
       const startTime = performance.now();
-      
+
       renderWithProviders(<Navbar />);
-      
+
       const endTime = performance.now();
       const renderTime = endTime - startTime;
-      
+
       // Should render in less than 100ms
       expect(renderTime).toBeLessThan(100);
     });
@@ -64,42 +63,42 @@ describe("Navbar Performance Tests", () => {
     it("desktop navigation renders efficiently", () => {
       const fixture = getAuthFixture("unauthenticated");
       const startTime = performance.now();
-      
+
       renderWithProviders(<Navbar />, {
         authState: fixture.authState,
         permissions: fixture.permissions,
       });
-      
+
       const endTime = performance.now();
       const renderTime = endTime - startTime;
-      
+
       // Complex component should still render quickly
       expect(renderTime).toBeLessThan(150);
     });
 
     it("search component renders quickly", () => {
       const startTime = performance.now();
-      
+
       renderWithProviders(<Navbar />);
-      
+
       const endTime = performance.now();
       const renderTime = endTime - startTime;
-      
+
       expect(renderTime).toBeLessThan(50);
     });
 
     it("user menu renders efficiently with permissions", () => {
       const fixture = getAuthFixture("super-user");
       const startTime = performance.now();
-      
+
       renderWithProviders(<Navbar />, {
         authState: fixture.authState,
         permissions: fixture.permissions,
       });
-      
+
       const endTime = performance.now();
       const renderTime = endTime - startTime;
-      
+
       // Even with all permissions, should render quickly
       expect(renderTime).toBeLessThan(100);
     });
@@ -112,17 +111,15 @@ describe("Navbar Performance Tests", () => {
       });
 
       const startTime = performance.now();
-      
+
       // Simulate multiple rapid re-renders
       for (let i = 0; i < 10; i++) {
-        rerender(
-          <Navbar />
-        );
+        rerender(<Navbar />);
       }
-      
+
       const endTime = performance.now();
       const totalTime = endTime - startTime;
-      
+
       // 10 re-renders should complete in reasonable time
       expect(totalTime).toBeLessThan(500);
     });
@@ -178,10 +175,10 @@ describe("Navbar Performance Tests", () => {
 
       const startTime = performance.now();
       fireEvent.change(searchInput, { target: { value: "test" } });
-      
+
       // Advance to debounce completion
       jest.advanceTimersByTime(500);
-      
+
       const endTime = performance.now();
 
       // Debounce should be around 500ms (allowing for test overhead)
@@ -225,7 +222,7 @@ describe("Navbar Performance Tests", () => {
       const initialRenderCount = renderCount;
 
       // Update to authenticated state
-      const authenticatedFixture = getAuthFixture("authenticated-basic");
+      const _authenticatedFixture = getAuthFixture("authenticated-basic");
       rerender(<NavbarWithCounter />);
 
       // Should only re-render once for auth change
@@ -268,7 +265,7 @@ describe("Navbar Performance Tests", () => {
       const initialCount = navbarRenderCount;
 
       const searchInput = screen.getByRole("searchbox");
-      
+
       // Type multiple times
       fireEvent.change(searchInput, { target: { value: "t" } });
       fireEvent.change(searchInput, { target: { value: "te" } });
@@ -295,7 +292,7 @@ describe("Navbar Performance Tests", () => {
       const initialCount = navbarRenderCount;
 
       // Change to admin permissions
-      const adminFixture = getAuthFixture("community-admin-single");
+      const _adminFixture = getAuthFixture("community-admin-single");
       rerender(<NavbarWithCounter />);
 
       // Should re-render for permission change, but only once
@@ -311,11 +308,11 @@ describe("Navbar Performance Tests", () => {
     it("handles 100+ search results efficiently", async () => {
       jest.useFakeTimers();
       renderWithProviders(<Navbar />);
-      
+
       const searchInput = screen.getByRole("searchbox");
-      
+
       const startTime = performance.now();
-      
+
       fireEvent.change(searchInput, { target: { value: "test" } });
       jest.advanceTimersByTime(500);
 
@@ -331,13 +328,13 @@ describe("Navbar Performance Tests", () => {
 
     it("scrolling through large results is performant", async () => {
       renderWithProviders(<Navbar />);
-      
+
       const searchInput = screen.getByRole("searchbox");
-      
+
       const startTime = performance.now();
       fireEvent.change(searchInput, { target: { value: "test" } });
       const endTime = performance.now();
-      
+
       // Input change should be instant
       expect(endTime - startTime).toBeLessThan(100);
     });
@@ -345,15 +342,15 @@ describe("Navbar Performance Tests", () => {
     it("filtering large results doesn't cause lag", async () => {
       jest.useFakeTimers();
       renderWithProviders(<Navbar />);
-      
+
       const searchInput = screen.getByRole("searchbox");
-      
+
       // First search with large results
       fireEvent.change(searchInput, { target: { value: "test" } });
       jest.advanceTimersByTime(500);
 
       const startTime = performance.now();
-      
+
       // Refine search
       fireEvent.change(searchInput, { target: { value: "test project" } });
       jest.advanceTimersByTime(500);
@@ -382,7 +379,7 @@ describe("Navbar Performance Tests", () => {
     it("clears debounce timers on unmount", () => {
       jest.useFakeTimers();
       const { unmount } = renderWithProviders(<Navbar />);
-      
+
       const searchInput = screen.getByRole("searchbox");
       fireEvent.change(searchInput, { target: { value: "test" } });
 
@@ -421,10 +418,10 @@ describe("Navbar Performance Tests", () => {
       // Cleanup happens in afterEach
       // Verify no interference in next render
       const { unmount: unmount2 } = renderWithProviders(<Navbar />);
-      
+
       // Component should be present
       expect(screen.queryByRole("navigation")).toBeInTheDocument();
-      
+
       // Cleanup
       unmount2();
     });
@@ -458,12 +455,12 @@ describe("Navbar Performance Tests", () => {
     it("all subcomponents mount efficiently together", () => {
       const fixture = getAuthFixture("super-user");
       const startTime = performance.now();
-      
+
       renderWithProviders(<Navbar />, {
         authState: fixture.authState,
         permissions: fixture.permissions,
       });
-      
+
       const endTime = performance.now();
 
       // Even with all features enabled, mount should be fast
@@ -473,7 +470,7 @@ describe("Navbar Performance Tests", () => {
     it("desktop and mobile components mount without blocking", () => {
       const fixture = getAuthFixture("authenticated-basic");
       const startTime = performance.now();
-      
+
       renderWithProviders(<Navbar />, {
         authState: fixture.authState,
         permissions: fixture.permissions,
@@ -482,7 +479,7 @@ describe("Navbar Performance Tests", () => {
       // Both should be present
       expect(screen.getByTestId("desktop-navigation")).toBeInTheDocument();
       expect(screen.getByTestId("mobile-menu")).toBeInTheDocument();
-      
+
       const endTime = performance.now();
 
       // Parallel mounting should be efficient
@@ -492,12 +489,12 @@ describe("Navbar Performance Tests", () => {
     it("loading state doesn't impact mount performance", () => {
       const fixture = getAuthFixture("loading");
       const startTime = performance.now();
-      
+
       renderWithProviders(<Navbar />, {
         authState: fixture.authState,
         permissions: fixture.permissions,
       });
-      
+
       const endTime = performance.now();
 
       // Loading state should be fast to render
@@ -550,4 +547,3 @@ describe("Navbar Performance Tests", () => {
     });
   });
 });
-

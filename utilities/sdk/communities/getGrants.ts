@@ -1,13 +1,13 @@
+import type { Hex } from "@show-karma/karma-gap-sdk";
+import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { errorManager } from "@/components/Utilities/errorManager";
 import type { SortByOptions, StatusOptions } from "@/types/filters";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import type { Hex } from "@show-karma/karma-gap-sdk";
-import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 export interface GrantsResponse {
   // TODO: needs to be added to the SDK
-  grants: (IGrantResponse & {regions:[]}) [];
+  grants: (IGrantResponse & { regions: [] })[];
   pageInfo: {
     page?: string;
     pageLimit?: string;
@@ -51,7 +51,6 @@ export const getGrants = async (
     return { grants, pageInfo, uniqueProjectCount };
   } catch (error: any) {
     errorManager(`Error getting grants of community: ${uid}`, error);
-    console.log(error);
     return { grants: [], pageInfo: {} };
   }
 };

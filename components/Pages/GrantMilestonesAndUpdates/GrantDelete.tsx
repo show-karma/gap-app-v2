@@ -1,13 +1,18 @@
+import { TrashIcon } from "@heroicons/react/24/outline";
+import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useRouter } from "next/navigation";
+import { type FC, useState } from "react";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { getGapClient, useGap } from "@/hooks/useGap";
-import { useWallet } from "@/hooks/useWallet";
+import { useGap } from "@/hooks/useGap";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
+import { useWallet } from "@/hooks/useWallet";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import { useStepper } from "@/store/modals/txStepper";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -15,14 +20,6 @@ import { PAGES } from "@/utilities/pages";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { shortAddress } from "@/utilities/shortAddress";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { TrashIcon } from "@heroicons/react/24/outline";
-import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useRouter } from "next/navigation";
-
-import { useQueryState } from "nuqs";
-import { type FC, useState } from "react";
-import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
 
 interface GrantDeleteProps {
   grant: IGrantResponse;
@@ -51,7 +48,11 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
     setIsDeletingGrant(true);
     let gapClient = gap;
     try {
-      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+      const {
+        success,
+        chainId: actualChainId,
+        gapClient: newGapClient,
+      } = await ensureCorrectChain({
         targetChainId: grant.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
@@ -85,14 +86,9 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
               (g) => g.uid?.toLowerCase() === grantUID?.toLowerCase()
             );
             if (!stillExist) {
-              if (
-                fetchedProject?.grants &&
-                fetchedProject?.grants?.length > 0
-              ) {
+              if (fetchedProject?.grants && fetchedProject?.grants?.length > 0) {
                 router.push(
-                  PAGES.PROJECT.GRANTS(
-                    project?.uid || project?.details?.data.slug || ""
-                  )
+                  PAGES.PROJECT.GRANTS(project?.uid || project?.details?.data.slug || "")
                 );
               }
             }
@@ -123,11 +119,7 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
           changeStepperStep("indexing");
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, grant.chainID),
-              "POST",
-              {}
-            );
+            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, grant.chainID), "POST", {});
           }
           await checkIfAttestationExists(() => {
             changeStepperStep("indexed");
@@ -158,15 +150,11 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
       }
     } catch (error: any) {
       errorManager(
-        MESSAGES.GRANT.DELETE.ERROR(
-          grant.details?.data?.title || shortAddress(grant.uid)
-        ),
+        MESSAGES.GRANT.DELETE.ERROR(grant.details?.data?.title || shortAddress(grant.uid)),
         error,
         { grantUID: grant.uid, address },
         {
-          error: MESSAGES.GRANT.DELETE.ERROR(
-            grant.details?.data?.title || shortAddress(grant.uid)
-          ),
+          error: MESSAGES.GRANT.DELETE.ERROR(grant.details?.data?.title || shortAddress(grant.uid)),
         }
       );
     } finally {
@@ -182,8 +170,7 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
       buttonElement={{
         icon: <TrashIcon className="w-6 h-6" />,
         text: "",
-        styleClass:
-          "bg-transparent text-red-500 p-1 px-2 hover:opacity-75 hover:bg-transparent",
+        styleClass: "bg-transparent text-red-500 p-1 px-2 hover:opacity-75 hover:bg-transparent",
       }}
       title={
         <p className="font-normal">

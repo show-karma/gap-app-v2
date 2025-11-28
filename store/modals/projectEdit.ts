@@ -7,12 +7,9 @@ interface ProjectEditModalStore {
   closeProjectEditModal: () => void;
 }
 
-export const useProjectEditModalStore = create<ProjectEditModalStore>(
-  (set, get) => ({
-    isProjectEditModalOpen: false,
-    setIsProjectEditModalOpen: (isProjectEditModalOpen: boolean) =>
-      set({ isProjectEditModalOpen }),
-    openProjectEditModal: () => set({ isProjectEditModalOpen: true }),
-    closeProjectEditModal: () => set({ isProjectEditModalOpen: false }),
-  })
-);
+export const useProjectEditModalStore = create<ProjectEditModalStore>((set, _get) => ({
+  isProjectEditModalOpen: false,
+  setIsProjectEditModalOpen: (isProjectEditModalOpen: boolean) => set({ isProjectEditModalOpen }),
+  openProjectEditModal: () => set({ isProjectEditModalOpen: true }),
+  closeProjectEditModal: () => set({ isProjectEditModalOpen: false }),
+}));

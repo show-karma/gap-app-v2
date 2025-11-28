@@ -1,18 +1,17 @@
+import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useState } from "react";
+import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { useWallet } from "@/hooks/useWallet";
 import { useStepper } from "@/store/modals/txStepper";
-import toast from "react-hot-toast";
-import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { MESSAGES } from "@/utilities/messages";
-import { sanitizeObject } from "@/utilities/sanitize";
-
+import { pollForGrantCompletion } from "@/utilities/attestation-polling";
 // Import the utilities we created
 import { setupChainAndWallet } from "@/utilities/chain-wallet-setup";
 import { fetchGrantInstance } from "@/utilities/grant-helpers";
 import { notifyIndexerForGrant } from "@/utilities/indexer-notification";
-import { pollForGrantCompletion } from "@/utilities/attestation-polling";
+import { MESSAGES } from "@/utilities/messages";
+import { sanitizeObject } from "@/utilities/sanitize";
 
 interface UseGrantCompletionParams {
   onComplete?: () => void;

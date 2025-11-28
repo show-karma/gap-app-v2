@@ -1,5 +1,5 @@
+import type { MetadataRoute } from "next";
 import { chosenCommunities } from "@/utilities/chosenCommunities";
-import { MetadataRoute } from "next";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return chosenCommunities().map((community) => ({

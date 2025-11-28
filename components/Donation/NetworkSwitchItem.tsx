@@ -12,22 +12,14 @@ export function NetworkSwitchItem({
   needsSwitch,
 }: NetworkSwitchItemProps) {
   return (
-    <div
-      className="flex items-center justify-between rounded-md bg-white/50 p-2 text-xs dark:bg-black/20"
-      role="listitem"
-    >
+    <li className="flex items-center justify-between rounded-md bg-white/50 p-2 text-xs dark:bg-black/20">
       <div className="flex items-center gap-2">
         <span className="font-mono font-medium text-amber-900 dark:text-amber-100">
           {index + 1}.
         </span>
-        <span className="font-medium text-amber-900 dark:text-amber-100">
-          {chainName}
-        </span>
+        <span className="font-medium text-amber-900 dark:text-amber-100">{chainName}</span>
         {needsSwitch && (
-          <span
-            className="inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/60 dark:text-amber-300"
-            aria-label="Network switch required"
-          >
+          <span className="inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/60 dark:text-amber-300">
             <svg
               width="10"
               height="10"
@@ -43,15 +35,9 @@ export function NetworkSwitchItem({
           </span>
         )}
       </div>
-      <span
-        className="text-amber-700 dark:text-amber-300"
-        aria-label={`${projectCount} ${
-          projectCount === 1 ? "project" : "projects"
-        }`}
-      >
-        {projectCount}{" "}
-        {projectCount === 1 ? "project" : "projects"}
+      <span className="text-amber-700 dark:text-amber-300">
+        {projectCount} {projectCount === 1 ? "project" : "projects"}
       </span>
-    </div>
+    </li>
   );
 }

@@ -1,16 +1,16 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect, useState } from "react";
+import type { SubmitHandler } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Button } from "@/components/Utilities/Button";
-import { errorManager } from "@/components/Utilities/errorManager";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
-import { ImpactIndicatorWithData } from "@/types/impactMeasurement";
-import { useState, useEffect } from "react";
 // Temporarily comment out SearchWithValueDropdown to fix import issue
 // import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown";
-import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
-import type { SubmitHandler } from "react-hook-form";
+import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
+import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 const UNIT_TYPES = ["int", "float"] as const;
 type UnitType = (typeof UNIT_TYPES)[number];
@@ -82,9 +82,7 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
   });
 
   const [isLoading, setIsLoading] = useState(false);
-  const [availablePrograms, setAvailablePrograms] = useState<GrantProgram[]>(
-    []
-  );
+  const [_availablePrograms, setAvailablePrograms] = useState<GrantProgram[]>([]);
   const finalIsLoading = isLoading || externalIsLoading;
 
   // Reset form when defaultValues change
@@ -100,20 +98,16 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
       if (!communityId) return;
 
       try {
-        const [result, error] = await fetchData(
-          INDEXER.COMMUNITY.PROGRAMS(communityId)
-        );
+        const [result, error] = await fetchData(INDEXER.COMMUNITY.PROGRAMS(communityId));
         if (error) throw error;
 
-        const sortedPrograms = result.sort(
-          (a: GrantProgram, b: GrantProgram) => {
-            const aTitle = a.metadata?.title || "";
-            const bTitle = b.metadata?.title || "";
-            if (aTitle < bTitle) return -1;
-            if (aTitle > bTitle) return 1;
-            return 0;
-          }
-        );
+        const sortedPrograms = result.sort((a: GrantProgram, b: GrantProgram) => {
+          const aTitle = a.metadata?.title || "";
+          const bTitle = b.metadata?.title || "";
+          if (aTitle < bTitle) return -1;
+          if (aTitle > bTitle) return 1;
+          return 0;
+        });
         setAvailablePrograms(sortedPrograms);
       } catch (error) {
         console.error("Failed to fetch programs:", error);
@@ -131,8 +125,12 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
 
     setIsLoading(true);
     try {
-      console.log("Submitting indicator data:", {
-        ...data,
+      const [response, error] = await fetchData(INDEXER.INDICATORS.CREATE_OR_UPDATE(), "POST", {
+        indicatorId: indicatorId,
+        name: data.name,
+        description: data.description,
+        unitOfMeasure: data.unitOfMeasure,
+        communityUID: communityId,
         programs:
           preSelectedPrograms?.map((item) => {
             return {
@@ -143,30 +141,6 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
           data.programs ||
           [],
       });
-
-      const [response, error] = await fetchData(
-        INDEXER.INDICATORS.CREATE_OR_UPDATE(),
-        "POST",
-        {
-          indicatorId: indicatorId,
-          name: data.name,
-          description: data.description,
-          unitOfMeasure: data.unitOfMeasure,
-          communityUID: communityId,
-          programs:
-            preSelectedPrograms?.map((item) => {
-              return {
-                programId: item.programId,
-                chainID: item.chainID,
-              };
-            }) ||
-            data.programs ||
-            [],
-        }
-      );
-
-      console.log("API Response:", response);
-      console.log("API Error:", error);
 
       if (error) throw error;
 
@@ -191,27 +165,24 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
         formData: data,
         indicatorId,
       });
-      errorManager(
-        `Failed to ${indicatorId ? "update" : "create"} indicator`,
-        error,
-        { ...data, indicatorId }
-      );
+      errorManager(`Failed to ${indicatorId ? "update" : "create"} indicator`, error, {
+        ...data,
+        indicatorId,
+      });
       onError?.(error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const selectedPrograms = watch("programs") || [];
+  const _selectedPrograms = watch("programs") || [];
 
   const renderProgramSelector = () => {
     // If we have pre-selected programs (ProjectUpdate scenario)
     if (preSelectedPrograms) {
       return (
         <div className="space-y-2">
-          <label className="block text-sm font-medium mb-1">
-            Selected Programs
-          </label>
+          <div className="block text-sm font-medium mb-1">Selected Programs</div>
           <div className="space-y-1">
             {preSelectedPrograms.map((program) => (
               <div
@@ -251,21 +222,25 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
       }}
     >
       <div>
-        <label className="block text-sm font-medium mb-1">Name</label>
+        <label htmlFor="indicator-name" className="block text-sm font-medium mb-1">
+          Name
+        </label>
         <input
+          id="indicator-name"
           {...register("name")}
           className="w-full p-2 border rounded-md bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-700"
           placeholder="Enter indicator name"
           readOnly={readOnlyFields.name}
         />
-        {errors.name && (
-          <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
-        )}
+        {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>}
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">Description</label>
+        <label htmlFor="indicator-description" className="block text-sm font-medium mb-1">
+          Description
+        </label>
         <textarea
+          id="indicator-description"
           {...register("description")}
           className="w-full p-2 border rounded-md bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-700"
           placeholder="Enter indicator description"
@@ -273,14 +248,12 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
           readOnly={readOnlyFields.description}
         />
         {errors.description && (
-          <p className="text-red-500 text-sm mt-1">
-            {errors.description.message}
-          </p>
+          <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>
         )}
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">Unit Type</label>
+        <div className="block text-sm font-medium mb-1">Unit Type</div>
         <div className="grid grid-cols-2 gap-4">
           {UNIT_TYPES.map((type) => {
             const isSelected = watch("unitOfMeasure") === type;
@@ -307,9 +280,7 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
                       : "border-gray-300 dark:border-gray-600"
                   } flex items-center justify-center`}
                 >
-                  {isSelected && (
-                    <div className="w-2 h-2 rounded-full bg-white" />
-                  )}
+                  {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
                 </div>
                 <div className="flex flex-row gap-4 items-center justify-center flex-1">
                   <div className="font-medium text-center">
@@ -321,20 +292,13 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
           })}
         </div>
         {errors.unitOfMeasure && (
-          <p className="text-red-500 text-sm mt-1">
-            {errors.unitOfMeasure.message}
-          </p>
+          <p className="text-red-500 text-sm mt-1">{errors.unitOfMeasure.message}</p>
         )}
       </div>
 
       {renderProgramSelector()}
 
-      <Button
-        type="submit"
-        disabled={finalIsLoading}
-        isLoading={finalIsLoading}
-        className="w-full"
-      >
+      <Button type="submit" disabled={finalIsLoading} isLoading={finalIsLoading} className="w-full">
         {indicatorId ? "Update Output Metric" : "Create Output Metric"}
       </Button>
     </form>
