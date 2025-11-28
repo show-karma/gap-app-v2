@@ -531,9 +531,13 @@ export const fundingApplicationsAPI = {
     promptId: string;
     updatedAt: string;
   }> {
-    const response = await apiClient.post(`/v2/funding-applications/${referenceNumber}/evaluate-internal`);
+    const response = await apiClient.post(
+      `/v2/funding-applications/${referenceNumber}/evaluate-internal`,
+      {},
+      { timeout: 90000 }
+    );
     return response.data;
-  },
+  }
 };
 
 // Combined service for easy import
