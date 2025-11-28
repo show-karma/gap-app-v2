@@ -2,7 +2,7 @@
 import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
@@ -21,28 +21,31 @@ export const ProjectNavigator = ({
   const pathname = usePathname();
   const projectId = useParams().projectId as string;
   const project = useProjectStore((state) => state.project);
-  const publicTabs = [
-    {
-      name: "Project",
-      href: PAGES.PROJECT.OVERVIEW(project?.details?.data?.slug || projectId),
-    },
-    {
-      name: "Updates",
-      href: PAGES.PROJECT.UPDATES(project?.details?.data?.slug || projectId),
-    },
-    {
-      name: "Funding",
-      href: PAGES.PROJECT.GRANTS(project?.details?.data?.slug || projectId),
-    },
-    {
-      name: "Impact",
-      href: PAGES.PROJECT.IMPACT.ROOT(project?.details?.data?.slug || projectId),
-    },
-    {
-      name: "Team",
-      href: PAGES.PROJECT.TEAM(project?.details?.data?.slug || projectId),
-    },
-  ];
+  const publicTabs = useMemo(
+    () => [
+      {
+        name: "Project",
+        href: PAGES.PROJECT.OVERVIEW(project?.details?.data?.slug || projectId),
+      },
+      {
+        name: "Updates",
+        href: PAGES.PROJECT.UPDATES(project?.details?.data?.slug || projectId),
+      },
+      {
+        name: "Funding",
+        href: PAGES.PROJECT.GRANTS(project?.details?.data?.slug || projectId),
+      },
+      {
+        name: "Impact",
+        href: PAGES.PROJECT.IMPACT.ROOT(project?.details?.data?.slug || projectId),
+      },
+      {
+        name: "Team",
+        href: PAGES.PROJECT.TEAM(project?.details?.data?.slug || projectId),
+      },
+    ],
+    [project?.details?.data?.slug, projectId]
+  );
   const [tabs, setTabs] = useState<typeof publicTabs>(publicTabs);
 
   const isOwner = useOwnerStore((state) => state.isOwner);
