@@ -13,6 +13,7 @@ export const FUNDING_PROGRAM_GRANT_NAMES = [
   "Divvi Builder Camp",
   "Celo Support Streams",
   "GoodDollar",
+  "Cel'Eu Cirkvit",
 ] as const;
 
 export type FundingProgramCommunity = (typeof FUNDING_PROGRAM_COMMUNITIES)[number];
