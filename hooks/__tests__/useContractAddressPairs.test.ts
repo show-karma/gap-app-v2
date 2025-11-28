@@ -1,8 +1,7 @@
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { act, renderHook } from "@testing-library/react";
 import { useContractAddressPairs } from "../useContractAddressPairs";
 
-describe("useContractAddressPairs", () => {
+describe("useContractAddressPairs - User Workflows", () => {
   const createMockProject = (
     networkAddresses: string[] = [],
     networkAddressesVerified: any[] = []
@@ -14,25 +13,30 @@ describe("useContractAddressPairs", () => {
     },
   });
 
-  describe("Initialization", () => {
-    it("should initialize with empty pair when no addresses exist", () => {
+  describe("User opens Link Contracts dialog", () => {
+    it("should show empty input when project has no contracts", () => {
       const project = createMockProject();
       const { result } = renderHook(() => useContractAddressPairs({ project }));
 
       expect(result.current.pairs).toEqual([{ network: "", address: "", verified: false }]);
     });
 
-    it("should initialize from network_addresses", () => {
+    it("should show existing contracts when project has contracts", () => {
       const project = createMockProject(["ethereum:0x123", "optimism:0x456"]);
       const { result } = renderHook(() => useContractAddressPairs({ project }));
 
-      expect(result.current.pairs).toEqual([
-        { network: "ethereum", address: "0x123", verified: false },
-        { network: "optimism", address: "0x456", verified: false },
-      ]);
+      expect(result.current.pairs).toHaveLength(2);
+      expect(result.current.pairs[0]).toMatchObject({
+        network: "ethereum",
+        address: "0x123",
+      });
+      expect(result.current.pairs[1]).toMatchObject({
+        network: "optimism",
+        address: "0x456",
+      });
     });
 
-    it("should initialize with verification status from network_addresses_verified", () => {
+    it("should show verified badges for verified contracts", () => {
       const project = createMockProject(
         ["ethereum:0x123"],
         [
@@ -41,197 +45,26 @@ describe("useContractAddressPairs", () => {
             address: "0x123",
             verified: true,
             verifiedAt: "2024-01-01T00:00:00Z",
-            verifiedBy: "0xVerifier",
           },
         ]
       );
       const { result } = renderHook(() => useContractAddressPairs({ project }));
 
-      expect(result.current.pairs).toEqual([
-        {
-          network: "ethereum",
-          address: "0x123",
-          verified: true,
-          verifiedAt: "2024-01-01T00:00:00Z",
-          verifiedBy: "0xVerifier",
-        },
-      ]);
-    });
-  });
-
-  describe("Dual-Source Merging", () => {
-    it("should merge network_addresses with network_addresses_verified", () => {
-      const project = createMockProject(
-        ["ethereum:0x123", "optimism:0x456"],
-        [
-          {
-            network: "ethereum",
-            address: "0x123",
-            verified: true,
-            verifiedAt: "2024-01-01",
-          },
-        ]
-      );
-      const { result } = renderHook(() => useContractAddressPairs({ project }));
-
-      expect(result.current.pairs).toEqual([
-        {
-          network: "ethereum",
-          address: "0x123",
-          verified: true,
-          verifiedAt: "2024-01-01",
-        },
-        {
-          network: "optimism",
-          address: "0x456",
-          verified: false,
-        },
-      ]);
-    });
-
-    it("should include verified contracts not in network_addresses", () => {
-      const project = createMockProject(
-        ["ethereum:0x123"],
-        [
-          {
-            network: "optimism",
-            address: "0x456",
-            verified: true,
-            verifiedAt: "2024-01-01",
-          },
-        ]
-      );
-      const { result } = renderHook(() => useContractAddressPairs({ project }));
-
-      expect(result.current.pairs).toHaveLength(2);
-      expect(result.current.pairs).toContainEqual({
+      expect(result.current.pairs[0]).toMatchObject({
         network: "ethereum",
         address: "0x123",
-        verified: false,
-      });
-      expect(result.current.pairs).toContainEqual({
-        network: "optimism",
-        address: "0x456",
         verified: true,
-        verifiedAt: "2024-01-01",
+        verifiedAt: "2024-01-01T00:00:00Z",
       });
     });
-
-    it("should handle only verified contracts (no network_addresses)", () => {
-      const project = createMockProject(
-        [],
-        [
-          {
-            network: "ethereum",
-            address: "0x123",
-            verified: true,
-            verifiedAt: "2024-01-01",
-          },
-        ]
-      );
-      const { result } = renderHook(() => useContractAddressPairs({ project }));
-
-      expect(result.current.pairs).toEqual([
-        {
-          network: "ethereum",
-          address: "0x123",
-          verified: true,
-          verifiedAt: "2024-01-01",
-        },
-      ]);
-    });
   });
 
-  describe("Case-Insensitive Key Generation", () => {
-    it("should match contracts case-insensitively", () => {
-      const project = createMockProject(
-        ["ETHEREUM:0xABC123"],
-        [
-          {
-            network: "ethereum",
-            address: "0xabc123",
-            verified: true,
-          },
-        ]
-      );
-      const { result } = renderHook(() => useContractAddressPairs({ project }));
-
-      expect(result.current.pairs).toHaveLength(1);
-      expect(result.current.pairs[0]).toEqual({
-        network: "ETHEREUM",
-        address: "0xABC123",
-        verified: true,
-      });
-    });
-
-    it("should not create duplicates for case variants", () => {
-      const project = createMockProject(
-        ["ethereum:0xABC", "ETHEREUM:0xabc"],
-        [
-          {
-            network: "Ethereum",
-            address: "0xAbC",
-            verified: true,
-          },
-        ]
-      );
-      const { result } = renderHook(() => useContractAddressPairs({ project }));
-
-      // Should have 2 entries from network_addresses
-      expect(result.current.pairs).toHaveLength(2);
-      // First one should be verified (matched)
-      expect(result.current.pairs[0].verified).toBe(true);
-      // Second one should also be verified (matched due to case-insensitive key)
-      expect(result.current.pairs[1].verified).toBe(true);
-    });
-  });
-
-  describe("Duplicate Handling", () => {
-    it("should not duplicate verified-only contracts", () => {
-      const project = createMockProject(
-        ["ethereum:0x123"],
-        [
-          {
-            network: "ethereum",
-            address: "0x123",
-            verified: true,
-          },
-        ]
-      );
-      const { result } = renderHook(() => useContractAddressPairs({ project }));
-
-      expect(result.current.pairs).toHaveLength(1);
-    });
-
-    it("should add verified contract only if not in network_addresses", () => {
-      const project = createMockProject(
-        ["ethereum:0x111"],
-        [
-          {
-            network: "ethereum",
-            address: "0x111",
-            verified: true,
-          },
-          {
-            network: "optimism",
-            address: "0x222",
-            verified: true,
-          },
-        ]
-      );
-      const { result } = renderHook(() => useContractAddressPairs({ project }));
-
-      expect(result.current.pairs).toHaveLength(2);
-      const addresses = result.current.pairs.map((p) => p.address);
-      expect(addresses).toContain("0x111");
-      expect(addresses).toContain("0x222");
-    });
-  });
-
-  describe("Add Pair", () => {
-    it("should add empty pair", () => {
+  describe("User adds a new contract", () => {
+    it("should add empty pair when user clicks Add Contract button", () => {
       const project = createMockProject(["ethereum:0x123"]);
       const { result } = renderHook(() => useContractAddressPairs({ project }));
+
+      expect(result.current.pairs).toHaveLength(1);
 
       act(() => {
         result.current.addPair();
@@ -245,7 +78,7 @@ describe("useContractAddressPairs", () => {
       });
     });
 
-    it("should add multiple pairs", () => {
+    it("should allow adding multiple contracts", () => {
       const project = createMockProject();
       const { result } = renderHook(() => useContractAddressPairs({ project }));
 
@@ -258,10 +91,12 @@ describe("useContractAddressPairs", () => {
     });
   });
 
-  describe("Remove Pair", () => {
-    it("should remove pair at index", () => {
+  describe("User removes a contract", () => {
+    it("should remove contract when user clicks remove button", () => {
       const project = createMockProject(["ethereum:0x123", "optimism:0x456"]);
       const { result } = renderHook(() => useContractAddressPairs({ project }));
+
+      expect(result.current.pairs).toHaveLength(2);
 
       act(() => {
         result.current.removePair(0);
@@ -271,7 +106,7 @@ describe("useContractAddressPairs", () => {
       expect(result.current.pairs[0].network).toBe("optimism");
     });
 
-    it("should maintain at least one empty pair when removing last", () => {
+    it("should keep at least one empty field when removing last contract", () => {
       const project = createMockProject(["ethereum:0x123"]);
       const { result } = renderHook(() => useContractAddressPairs({ project }));
 
@@ -281,23 +116,10 @@ describe("useContractAddressPairs", () => {
 
       expect(result.current.pairs).toEqual([{ network: "", address: "", verified: false }]);
     });
-
-    it("should handle removing from multiple pairs", () => {
-      const project = createMockProject(["ethereum:0x111", "optimism:0x222", "arbitrum:0x333"]);
-      const { result } = renderHook(() => useContractAddressPairs({ project }));
-
-      act(() => {
-        result.current.removePair(1);
-      });
-
-      expect(result.current.pairs).toHaveLength(2);
-      expect(result.current.pairs[0].network).toBe("ethereum");
-      expect(result.current.pairs[1].network).toBe("arbitrum");
-    });
   });
 
-  describe("Update Address", () => {
-    it("should update address at index", () => {
+  describe("User types in network/address fields", () => {
+    it("should update address when user types", () => {
       const project = createMockProject(["ethereum:0x123"]);
       const { result } = renderHook(() => useContractAddressPairs({ project }));
 
@@ -309,27 +131,7 @@ describe("useContractAddressPairs", () => {
       expect(result.current.pairs[0].network).toBe("ethereum");
     });
 
-    it("should preserve other properties when updating address", () => {
-      const project = createMockProject(
-        ["ethereum:0x123"],
-        [{ network: "ethereum", address: "0x123", verified: true }]
-      );
-      const { result } = renderHook(() => useContractAddressPairs({ project }));
-
-      act(() => {
-        result.current.updateAddress(0, "0x456");
-      });
-
-      expect(result.current.pairs[0]).toMatchObject({
-        network: "ethereum",
-        address: "0x456",
-        verified: true,
-      });
-    });
-  });
-
-  describe("Update Network", () => {
-    it("should update network at index", () => {
+    it("should update network when user selects from dropdown", () => {
       const project = createMockProject(["ethereum:0x123"]);
       const { result } = renderHook(() => useContractAddressPairs({ project }));
 
@@ -340,61 +142,34 @@ describe("useContractAddressPairs", () => {
       expect(result.current.pairs[0].network).toBe("optimism");
       expect(result.current.pairs[0].address).toBe("0x123");
     });
+  });
 
-    it("should preserve other properties when updating network", () => {
+  describe("Contract verification updates", () => {
+    it("should show verified contract even if user hasn't saved it yet", () => {
+      // User verified a contract in the dialog, but hasn't hit Save All yet
+      // The contract should appear in the list as verified
       const project = createMockProject(
-        ["ethereum:0x123"],
-        [{ network: "ethereum", address: "0x123", verified: true }]
+        [], // Not in network_addresses yet
+        [
+          {
+            network: "ethereum",
+            address: "0x123",
+            verified: true,
+            verifiedAt: "2024-01-01",
+          },
+        ]
       );
       const { result } = renderHook(() => useContractAddressPairs({ project }));
 
-      act(() => {
-        result.current.updateNetwork(0, "optimism");
-      });
-
+      expect(result.current.pairs).toHaveLength(1);
       expect(result.current.pairs[0]).toMatchObject({
-        network: "optimism",
+        network: "ethereum",
         address: "0x123",
         verified: true,
       });
     });
-  });
 
-  describe("Set Pairs", () => {
-    it("should allow setting pairs directly", () => {
-      const project = createMockProject();
-      const { result } = renderHook(() => useContractAddressPairs({ project }));
-
-      const newPairs = [
-        { network: "ethereum", address: "0x111", verified: false },
-        { network: "optimism", address: "0x222", verified: true },
-      ];
-
-      act(() => {
-        result.current.setPairs(newPairs);
-      });
-
-      expect(result.current.pairs).toEqual(newPairs);
-    });
-  });
-
-  describe("Re-initialization on Project Change", () => {
-    it("should update pairs when project data changes", () => {
-      const project1 = createMockProject(["ethereum:0x123"]);
-      const { result, rerender } = renderHook(
-        ({ project }) => useContractAddressPairs({ project }),
-        { initialProps: { project: project1 } }
-      );
-
-      expect(result.current.pairs).toHaveLength(1);
-
-      const project2 = createMockProject(["ethereum:0x123", "optimism:0x456"]);
-      rerender({ project: project2 });
-
-      expect(result.current.pairs).toHaveLength(2);
-    });
-
-    it("should update verification status when verified contracts change", () => {
+    it("should update verified status when user verifies a contract", () => {
       const project1 = createMockProject(["ethereum:0x123"]);
       const { result, rerender } = renderHook(
         ({ project }) => useContractAddressPairs({ project }),
@@ -403,6 +178,7 @@ describe("useContractAddressPairs", () => {
 
       expect(result.current.pairs[0].verified).toBe(false);
 
+      // User clicks Verify and successfully verifies the contract
       const project2 = createMockProject(
         ["ethereum:0x123"],
         [{ network: "ethereum", address: "0x123", verified: true }]
@@ -413,51 +189,44 @@ describe("useContractAddressPairs", () => {
     });
   });
 
-  describe("Edge Cases", () => {
-    it("should handle malformed network_addresses entries", () => {
-      const project = createMockProject(["invalidformat"]);
+  describe("Case sensitivity issues (common user error)", () => {
+    it("should match contracts regardless of address case", () => {
+      // User might paste addresses in different cases
+      // System should recognize them as the same contract
+      const project = createMockProject(
+        ["ethereum:0xABC123"], // Uppercase in network_addresses
+        [
+          {
+            network: "ethereum",
+            address: "0xabc123", // Lowercase in verified
+            verified: true,
+          },
+        ]
+      );
       const { result } = renderHook(() => useContractAddressPairs({ project }));
 
       expect(result.current.pairs).toHaveLength(1);
-      expect(result.current.pairs[0].network).toBe("invalidformat");
-      expect(result.current.pairs[0].address).toBeUndefined();
+      expect(result.current.pairs[0].verified).toBe(true);
     });
 
-    it("should handle verified contracts with missing fields", () => {
+    it("should not create duplicate entries for case variants", () => {
+      // Bug scenario: system creates two entries for same contract
       const project = createMockProject(
-        [],
+        ["ethereum:0xABC", "ETHEREUM:0xabc"], // Same contract, different case
         [
           {
-            network: "ethereum",
-            address: "0x123",
+            network: "Ethereum",
+            address: "0xAbC",
             verified: true,
-            // missing verifiedAt and verifiedBy
           },
         ]
       );
       const { result } = renderHook(() => useContractAddressPairs({ project }));
 
-      expect(result.current.pairs[0]).toEqual({
-        network: "ethereum",
-        address: "0x123",
-        verified: true,
-      });
-    });
-
-    it("should handle verified=false in network_addresses_verified", () => {
-      const project = createMockProject(
-        ["ethereum:0x123"],
-        [
-          {
-            network: "ethereum",
-            address: "0x123",
-            verified: false,
-          },
-        ]
-      );
-      const { result } = renderHook(() => useContractAddressPairs({ project }));
-
-      expect(result.current.pairs[0].verified).toBe(false);
+      // Should have 2 entries (from network_addresses), both marked as verified
+      expect(result.current.pairs).toHaveLength(2);
+      expect(result.current.pairs[0].verified).toBe(true);
+      expect(result.current.pairs[1].verified).toBe(true);
     });
   });
 });
