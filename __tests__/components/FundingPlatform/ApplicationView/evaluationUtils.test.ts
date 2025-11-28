@@ -1,12 +1,12 @@
-import {
-  parseEvaluation,
-  getScoreColor,
-  getScoreIcon,
-  getPriorityColor,
-  getStatusColor,
-} from "@/components/FundingPlatform/ApplicationView/evaluationUtils";
 import { CheckCircleIcon, ExclamationTriangleIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import React from "react";
+import {
+  getPriorityColor,
+  getScoreColor,
+  getScoreIcon,
+  getStatusColor,
+  parseEvaluation,
+} from "@/components/FundingPlatform/ApplicationView/evaluationUtils";
 
 describe("evaluationUtils", () => {
   describe("parseEvaluation", () => {
@@ -34,7 +34,10 @@ describe("evaluationUtils", () => {
       const result = parseEvaluation(invalidJSON);
 
       expect(result).toBeNull();
-      expect(consoleSpy).toHaveBeenCalledWith("Failed to parse evaluation JSON:", expect.any(Error));
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Failed to parse evaluation JSON:",
+        expect.any(Error)
+      );
 
       consoleSpy.mockRestore();
     });
@@ -142,7 +145,9 @@ describe("evaluationUtils", () => {
 
     it("should return yellow color for medium priority", () => {
       const result = getPriorityColor("medium");
-      expect(result).toBe("bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300");
+      expect(result).toBe(
+        "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300"
+      );
     });
 
     it("should return blue color for low priority", () => {
@@ -151,9 +156,15 @@ describe("evaluationUtils", () => {
     });
 
     it("should handle case-insensitive priority values", () => {
-      expect(getPriorityColor("HIGH")).toBe("bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300");
-      expect(getPriorityColor("Medium")).toBe("bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300");
-      expect(getPriorityColor("LOW")).toBe("bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300");
+      expect(getPriorityColor("HIGH")).toBe(
+        "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
+      );
+      expect(getPriorityColor("Medium")).toBe(
+        "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300"
+      );
+      expect(getPriorityColor("LOW")).toBe(
+        "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"
+      );
     });
 
     it("should return default color for unknown priority", () => {
@@ -181,7 +192,9 @@ describe("evaluationUtils", () => {
 
     it("should return yellow color for incomplete status", () => {
       const result = getStatusColor("incomplete");
-      expect(result).toBe("bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300");
+      expect(result).toBe(
+        "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300"
+      );
     });
 
     it("should return red color for rejected status", () => {
@@ -190,9 +203,15 @@ describe("evaluationUtils", () => {
     });
 
     it("should handle case-insensitive status values", () => {
-      expect(getStatusColor("COMPLETE")).toBe("bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300");
-      expect(getStatusColor("Incomplete")).toBe("bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300");
-      expect(getStatusColor("REJECTED")).toBe("bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300");
+      expect(getStatusColor("COMPLETE")).toBe(
+        "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
+      );
+      expect(getStatusColor("Incomplete")).toBe(
+        "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300"
+      );
+      expect(getStatusColor("REJECTED")).toBe(
+        "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
+      );
     });
 
     it("should return default color for unknown status", () => {
@@ -206,4 +225,3 @@ describe("evaluationUtils", () => {
     });
   });
 });
-

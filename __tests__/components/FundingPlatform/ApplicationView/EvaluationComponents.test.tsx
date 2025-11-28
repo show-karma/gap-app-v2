@@ -1,22 +1,27 @@
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import {
-  ScoreDisplay,
+  AdditionalNotes,
   DecisionDisplay,
   DisqualificationReason,
+  EvaluationDisplay,
   EvaluationSummary,
   ImprovementRecommendations,
-  AdditionalNotes,
+  ScoreDisplay,
   StatusChip,
-  EvaluationDisplay,
 } from "@/components/FundingPlatform/ApplicationView/EvaluationComponents";
-import { getScoreColor, getScoreIcon, getPriorityColor, getStatusColor } from "@/components/FundingPlatform/ApplicationView/evaluationUtils";
-import { CheckCircleIcon, ExclamationTriangleIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import React from "react";
+import {
+  getPriorityColor,
+  getScoreColor,
+  getScoreIcon,
+  getStatusColor,
+} from "@/components/FundingPlatform/ApplicationView/evaluationUtils";
 
 // Mock MarkdownPreview
 jest.mock("@/components/Utilities/MarkdownPreview", () => ({
-  MarkdownPreview: ({ source }: { source: string }) => <div data-testid="markdown-preview">{source}</div>,
+  MarkdownPreview: ({ source }: { source: string }) => (
+    <div data-testid="markdown-preview">{source}</div>
+  ),
 }));
 
 describe("EvaluationComponents", () => {
@@ -26,7 +31,12 @@ describe("EvaluationComponents", () => {
 
     it("should render score with icon and text", () => {
       render(
-        <ScoreDisplay score={8} isGrowthGrants={false} getScoreIcon={mockGetScoreIcon} getScoreColor={mockGetScoreColor} />
+        <ScoreDisplay
+          score={8}
+          isGrowthGrants={false}
+          getScoreIcon={mockGetScoreIcon}
+          getScoreColor={mockGetScoreColor}
+        />
       );
 
       expect(screen.getByText("Score: 8/10")).toBeInTheDocument();
@@ -35,7 +45,12 @@ describe("EvaluationComponents", () => {
 
     it("should show probability badge for Growth Grants", () => {
       render(
-        <ScoreDisplay score={8} isGrowthGrants={true} getScoreIcon={mockGetScoreIcon} getScoreColor={mockGetScoreColor} />
+        <ScoreDisplay
+          score={8}
+          isGrowthGrants={true}
+          getScoreIcon={mockGetScoreIcon}
+          getScoreColor={mockGetScoreColor}
+        />
       );
 
       expect(screen.getByText("High")).toBeInTheDocument();
@@ -43,7 +58,12 @@ describe("EvaluationComponents", () => {
 
     it("should show Medium probability for score 4-7 in Growth Grants", () => {
       render(
-        <ScoreDisplay score={5} isGrowthGrants={true} getScoreIcon={mockGetScoreIcon} getScoreColor={mockGetScoreColor} />
+        <ScoreDisplay
+          score={5}
+          isGrowthGrants={true}
+          getScoreIcon={mockGetScoreIcon}
+          getScoreColor={mockGetScoreColor}
+        />
       );
 
       expect(screen.getByText("Medium")).toBeInTheDocument();
@@ -51,7 +71,12 @@ describe("EvaluationComponents", () => {
 
     it("should show Low probability for score <4 in Growth Grants", () => {
       render(
-        <ScoreDisplay score={3} isGrowthGrants={true} getScoreIcon={mockGetScoreIcon} getScoreColor={mockGetScoreColor} />
+        <ScoreDisplay
+          score={3}
+          isGrowthGrants={true}
+          getScoreIcon={mockGetScoreIcon}
+          getScoreColor={mockGetScoreColor}
+        />
       );
 
       expect(screen.getByText("Low")).toBeInTheDocument();
@@ -59,7 +84,12 @@ describe("EvaluationComponents", () => {
 
     it("should show progress bar for non-Growth Grants", () => {
       const { container } = render(
-        <ScoreDisplay score={8} isGrowthGrants={false} getScoreIcon={mockGetScoreIcon} getScoreColor={mockGetScoreColor} />
+        <ScoreDisplay
+          score={8}
+          isGrowthGrants={false}
+          getScoreIcon={mockGetScoreIcon}
+          getScoreColor={mockGetScoreColor}
+        />
       );
 
       const progressBar = container.querySelector('[style*="width: 80%"]');
@@ -68,7 +98,12 @@ describe("EvaluationComponents", () => {
 
     it("should calculate progress bar width correctly (score * 10%)", () => {
       const { container } = render(
-        <ScoreDisplay score={5} isGrowthGrants={false} getScoreIcon={mockGetScoreIcon} getScoreColor={mockGetScoreColor} />
+        <ScoreDisplay
+          score={5}
+          isGrowthGrants={false}
+          getScoreIcon={mockGetScoreIcon}
+          getScoreColor={mockGetScoreColor}
+        />
       );
 
       const progressBar = container.querySelector('[style*="width: 50%"]');
@@ -77,7 +112,12 @@ describe("EvaluationComponents", () => {
 
     it("should not show progress bar for Growth Grants", () => {
       const { container } = render(
-        <ScoreDisplay score={8} isGrowthGrants={true} getScoreIcon={mockGetScoreIcon} getScoreColor={mockGetScoreColor} />
+        <ScoreDisplay
+          score={8}
+          isGrowthGrants={true}
+          getScoreIcon={mockGetScoreIcon}
+          getScoreColor={mockGetScoreColor}
+        />
       );
 
       const progressBar = container.querySelector('[style*="width"]');
@@ -238,7 +278,12 @@ describe("EvaluationComponents", () => {
         },
       ];
 
-      render(<ImprovementRecommendations recommendations={recommendations} getPriorityColor={mockGetPriorityColor} />);
+      render(
+        <ImprovementRecommendations
+          recommendations={recommendations}
+          getPriorityColor={mockGetPriorityColor}
+        />
+      );
 
       expect(screen.getByText("Improvement Recommendations")).toBeInTheDocument();
       expect(screen.getByText("HIGH")).toBeInTheDocument();
@@ -254,7 +299,12 @@ describe("EvaluationComponents", () => {
         },
       ];
 
-      render(<ImprovementRecommendations recommendations={recommendations} getPriorityColor={mockGetPriorityColor} />);
+      render(
+        <ImprovementRecommendations
+          recommendations={recommendations}
+          getPriorityColor={mockGetPriorityColor}
+        />
+      );
 
       expect(screen.getByTestId("markdown-preview")).toHaveTextContent("Add more details");
       expect(screen.queryByText("HIGH")).not.toBeInTheDocument();
@@ -268,7 +318,12 @@ describe("EvaluationComponents", () => {
         },
       ];
 
-      render(<ImprovementRecommendations recommendations={recommendations} getPriorityColor={mockGetPriorityColor} />);
+      render(
+        <ImprovementRecommendations
+          recommendations={recommendations}
+          getPriorityColor={mockGetPriorityColor}
+        />
+      );
 
       expect(screen.queryByText(/Impact:/)).not.toBeInTheDocument();
     });
@@ -279,7 +334,12 @@ describe("EvaluationComponents", () => {
         { priority: "low", recommendation: "Rec 2" },
       ];
 
-      render(<ImprovementRecommendations recommendations={recommendations} getPriorityColor={mockGetPriorityColor} />);
+      render(
+        <ImprovementRecommendations
+          recommendations={recommendations}
+          getPriorityColor={mockGetPriorityColor}
+        />
+      );
 
       expect(screen.getByText("HIGH")).toBeInTheDocument();
       expect(screen.getByText("LOW")).toBeInTheDocument();
@@ -291,7 +351,9 @@ describe("EvaluationComponents", () => {
       render(<AdditionalNotes notes="These are additional notes" />);
 
       expect(screen.getByText("Additional Notes")).toBeInTheDocument();
-      expect(screen.getByTestId("markdown-preview")).toHaveTextContent("These are additional notes");
+      expect(screen.getByTestId("markdown-preview")).toHaveTextContent(
+        "These are additional notes"
+      );
     });
   });
 
@@ -474,4 +536,3 @@ describe("EvaluationComponents", () => {
     });
   });
 });
-

@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom";
-import { TextEncoder, TextDecoder } from "util";
+import { TextDecoder, TextEncoder } from "node:util";
 
 // Polyfills
 global.TextEncoder = TextEncoder;
@@ -8,41 +8,41 @@ global.TextDecoder = TextDecoder;
 // Fetch API polyfills for MSW (Jest jsdom environment doesn't expose Node's native fetch)
 // MUST be set up BEFORE importing MSW setup
 // Node.js 18+ has native fetch, but Jest's jsdom environment doesn't expose it to the global scope
-if (typeof globalThis.Response === 'undefined') {
+if (typeof globalThis.Response === "undefined") {
   globalThis.Response = class Response {
     constructor(body, init = {}) {
       this.body = body;
       this.status = init.status || 200;
-      this.statusText = init.statusText || 'OK';
+      this.statusText = init.statusText || "OK";
       this.headers = new Map(Object.entries(init.headers || {}));
       this.ok = this.status >= 200 && this.status < 300;
     }
     async text() {
-      return typeof this.body === 'string' ? this.body : JSON.stringify(this.body);
+      return typeof this.body === "string" ? this.body : JSON.stringify(this.body);
     }
     async json() {
-      return typeof this.body === 'string' ? JSON.parse(this.body) : this.body;
+      return typeof this.body === "string" ? JSON.parse(this.body) : this.body;
     }
   };
 }
 
-if (typeof globalThis.Request === 'undefined') {
+if (typeof globalThis.Request === "undefined") {
   globalThis.Request = class Request {
     constructor(input, init = {}) {
-      this.url = typeof input === 'string' ? input : input.url;
-      this.method = init.method || 'GET';
+      this.url = typeof input === "string" ? input : input.url;
+      this.method = init.method || "GET";
       this.headers = new Map(Object.entries(init.headers || {}));
     }
   };
 }
 
-if (typeof globalThis.Headers === 'undefined') {
+if (typeof globalThis.Headers === "undefined") {
   globalThis.Headers = class Headers extends Map {};
 }
 
 // Mock until-async before importing MSW (it's an ESM-only package that Jest can't transform)
 // The manual mock in __mocks__/until-async.js will be used automatically
-jest.mock('until-async');
+jest.mock("until-async");
 
 // Import MSW setup AFTER polyfills are configured
 require("@/__tests__/utils/msw/setup");
@@ -67,7 +67,6 @@ Object.defineProperty(window, "matchMedia", {
 
 // Mock IntersectionObserver
 global.IntersectionObserver = class IntersectionObserver {
-  constructor() {}
   disconnect() {}
   observe() {}
   takeRecords() {
@@ -78,7 +77,6 @@ global.IntersectionObserver = class IntersectionObserver {
 
 // Mock ResizeObserver
 global.ResizeObserver = class ResizeObserver {
-  constructor() {}
   disconnect() {}
   observe() {}
   unobserve() {}

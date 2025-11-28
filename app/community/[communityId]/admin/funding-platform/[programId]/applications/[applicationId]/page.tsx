@@ -7,7 +7,6 @@ import { useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 import ApplicationContent from "@/components/FundingPlatform/ApplicationView/ApplicationContent";
 import CommentsSection from "@/components/FundingPlatform/ApplicationView/CommentsSection";
-import PostApprovalData from "@/components/FundingPlatform/ApplicationView/PostApprovalData";
 import DeleteApplicationModal from "@/components/FundingPlatform/ApplicationView/DeleteApplicationModal";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -16,16 +15,16 @@ import {
   useApplicationComments,
   useApplicationStatus,
   useApplicationVersions,
-  useProgramConfig,
   useDeleteApplication,
+  useProgramConfig,
 } from "@/hooks/useFundingPlatform";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { useStaff } from "@/hooks/useStaff";
+import { layoutTheme } from "@/src/helper/theme";
 import { useOwnerStore } from "@/store";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
-import { layoutTheme } from "@/src/helper/theme";
 
 export default function ApplicationDetailPage() {
   const router = useRouter();
@@ -58,7 +57,11 @@ export default function ApplicationDetailPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   // Fetch application data
-  const { application, isLoading: isLoadingApplication, refetch: refetchApplication } = useApplication(applicationId);
+  const {
+    application,
+    isLoading: isLoadingApplication,
+    refetch: refetchApplication,
+  } = useApplication(applicationId);
 
   // Fetch program config
   const { data: program } = useProgramConfig(programId, parsedChainId);
@@ -207,7 +210,9 @@ export default function ApplicationDetailPage() {
                 Back to Applications
               </Button>
               <div className="flex flex-col gap-0">
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">Application Details</h1>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Application Details
+                </h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Application ID: {application.referenceNumber}
                 </p>

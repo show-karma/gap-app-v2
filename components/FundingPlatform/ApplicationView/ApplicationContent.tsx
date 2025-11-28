@@ -1,32 +1,31 @@
 "use client";
 
-import { FC, useState, useEffect, useMemo, JSX } from "react";
-import { IFundingApplication } from "@/types/funding-platform";
-import { cn } from "@/utilities/tailwind";
-import { formatDate } from "@/utilities/formatDate";
+import {
+  ArrowPathIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  DocumentTextIcon,
+  ExclamationTriangleIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
+import { type FC, type JSX, useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { useApplicationVersions } from "@/hooks/useFundingPlatform";
+import { useApplicationVersionsStore } from "@/store/applicationVersions";
+import type { IFundingApplication, IFundingProgramConfig } from "@/types/funding-platform";
+import type { FormSchema } from "@/types/question-builder";
+import { formatDate } from "@/utilities/formatDate";
+import { cn } from "@/utilities/tailwind";
 import { getProjectTitle } from "../helper/getProjecTitle";
 import { AIEvaluationDisplay } from "./AIEvaluation";
-import { InternalAIEvaluationDisplay } from "./InternalAIEvaluation";
-import StatusChangeModal from "./StatusChangeModal";
-import { StatusActionButtons } from "./StatusActionButtons";
 import AIEvaluationButton from "./AIEvaluationButton";
 import ApplicationVersionSelector from "./ApplicationVersionSelector";
 import ApplicationVersionViewer from "./ApplicationVersionViewer";
-import { useApplicationVersionsStore } from "@/store/applicationVersions";
-import { useApplicationVersions } from "@/hooks/useFundingPlatform";
-import toast from "react-hot-toast";
-import {
-  CheckCircleIcon,
-  ExclamationTriangleIcon,
-  ClockIcon,
-  XMarkIcon,
-  DocumentTextIcon,
-  ArrowPathIcon,
-} from "@heroicons/react/24/outline";
+import { InternalAIEvaluationDisplay } from "./InternalAIEvaluation";
 import PostApprovalData from "./PostApprovalData";
-import { IFundingProgramConfig } from "@/types/funding-platform";
-import { FormSchema } from "@/types/question-builder";
+import { StatusActionButtons } from "./StatusActionButtons";
+import StatusChangeModal from "./StatusChangeModal";
 
 // Type for program prop that supports both IFundingProgramConfig and FormSchema structures
 type ProgramWithFormSchema =
@@ -171,7 +170,9 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
         await onRefresh();
       } catch (error) {
         console.error("Failed to refresh application data after AI evaluation:", error);
-        toast.error("Evaluation completed but failed to refresh the display. Please reload the page.");
+        toast.error(
+          "Evaluation completed but failed to refresh the display. Please reload the page."
+        );
       }
     }
   };
@@ -189,7 +190,8 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
   const renderFieldValue = (value: any): JSX.Element => {
     if (Array.isArray(value)) {
       // Check if it's an array of milestones
-      const isMilestoneArray = value.length > 0 && typeof value[0] === "object" && "title" in value[0];
+      const isMilestoneArray =
+        value.length > 0 && typeof value[0] === "object" && "title" in value[0];
 
       if (isMilestoneArray) {
         return (
@@ -201,7 +203,9 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
               >
                 <div className="space-y-1">
                   <div className="flex justify-between items-start">
-                    <h5 className="font-medium text-gray-900 dark:text-gray-100">{milestone.title}</h5>
+                    <h5 className="font-medium text-gray-900 dark:text-gray-100">
+                      {milestone.title}
+                    </h5>
                     {milestone.dueDate && (
                       <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
                         Due: {formatDate(new Date(milestone.dueDate))}
@@ -286,45 +290,57 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
               className={cn(
                 "flex items-center space-x-2 px-3 py-1 rounded-full border text-sm font-medium",
                 statusColors[application.status as keyof typeof statusColors] ||
-                  "bg-zinc-100 text-gray-800 border-gray-200",
+                  "bg-zinc-100 text-gray-800 border-gray-200"
               )}
             >
               <StatusIcon className="w-4 h-4" />
               <span>{formatStatus(application.status)}</span>
             </div>
             <div className="flex flex-col gap-1">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{getProjectTitle(application)}</h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{application.applicantEmail}</p>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                {getProjectTitle(application)}
+              </h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                {application.applicantEmail}
+              </p>
             </div>
           </div>
 
           <dl className="grid grid-cols-2 gap-4">
             <div>
               <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Submitted</dt>
-              <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100">{formatDate(application.createdAt)}</dd>
+              <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                {formatDate(application.createdAt)}
+              </dd>
             </div>
             <div>
               <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Last Updated</dt>
-              <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100">{formatDate(application.updatedAt)}</dd>
+              <dd className="mt-1 text-sm text-gray-900 dark:text-gray-100">
+                {formatDate(application.updatedAt)}
+              </dd>
             </div>
           </dl>
 
           {/* Status Actions */}
-          {!["approved", "rejected"].includes(application.status) && showStatusActions && onStatusChange && (
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <StatusActionButtons
-                currentStatus={application.status as any}
-                onStatusChange={handleStatusChangeClick}
-                isUpdating={isUpdatingStatus}
-              />
-            </div>
-          )}
+          {!["approved", "rejected"].includes(application.status) &&
+            showStatusActions &&
+            onStatusChange && (
+              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <StatusActionButtons
+                  currentStatus={application.status as any}
+                  onStatusChange={handleStatusChangeClick}
+                  isUpdating={isUpdatingStatus}
+                />
+              </div>
+            )}
         </div>
 
         {/* Current Revision Reason */}
         {getCurrentRevisionReason() && (
           <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-            <h3 className="text-sm font-medium text-yellow-900 dark:text-yellow-300 mb-2">Revision Requested</h3>
+            <h3 className="text-sm font-medium text-yellow-900 dark:text-yellow-300 mb-2">
+              Revision Requested
+            </h3>
             <div className="text-sm text-yellow-800 dark:text-yellow-400 prose prose-sm dark:prose-invert max-w-none">
               <MarkdownPreview source={getCurrentRevisionReason() || ""} />
             </div>
@@ -342,7 +358,9 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
         >
           {/* Toggle Header */}
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white">Application Details</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+              Application Details
+            </h3>
             {versions.length > 0 && (
               <div className="flex items-center bg-gray-100 dark:bg-zinc-700 rounded-lg p-1">
                 <button
@@ -351,7 +369,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
                     "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
                     viewMode === "details"
                       ? "bg-white dark:bg-zinc-600 text-gray-900 dark:text-white shadow-sm"
-                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200",
+                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
                   )}
                 >
                   <DocumentTextIcon className="w-4 h-4" />
@@ -363,7 +381,7 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
                     "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
                     viewMode === "changes"
                       ? "bg-white dark:bg-zinc-600 text-gray-900 dark:text-white shadow-sm"
-                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200",
+                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
                   )}
                 >
                   <ArrowPathIcon className="w-4 h-4" />
@@ -380,7 +398,9 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
           ) : (
             /* Changes Mode - Show version selector and changed fields */
             <div>
-              <ApplicationVersionSelector applicationId={application.referenceNumber || application.id} />
+              <ApplicationVersionSelector
+                applicationId={application.referenceNumber || application.id}
+              />
               {selectedVersion && (
                 <div className="mt-6">
                   <ApplicationVersionViewer version={selectedVersion} />
@@ -415,9 +435,14 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
         {shouldShowInternalEvaluation && (
           <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <div className="flex items-center justify-between gap-4 mb-4">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white">Internal AI Evaluation</h3>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                Internal AI Evaluation
+              </h3>
               {showAIEvaluationButton && (
-                <div className="flex-shrink-0" title={!canRunInternalEvaluation ? internalPromptHelpText : undefined}>
+                <div
+                  className="flex-shrink-0"
+                  title={!canRunInternalEvaluation ? internalPromptHelpText : undefined}
+                >
                   <AIEvaluationButton
                     referenceNumber={application.referenceNumber}
                     onEvaluationComplete={handleAIEvaluationComplete}
@@ -432,11 +457,14 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
               <div className="mb-4 flex items-start gap-3 rounded-lg border border-yellow-200 bg-yellow-50 p-3 dark:border-yellow-900/50 dark:bg-yellow-900/20">
                 <ExclamationTriangleIcon className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
                 <div className="space-y-1 text-sm">
-                  <p className="font-medium text-yellow-900 dark:text-yellow-200">Internal prompt not configured</p>
+                  <p className="font-medium text-yellow-900 dark:text-yellow-200">
+                    Internal prompt not configured
+                  </p>
                   <p className="text-yellow-800 dark:text-yellow-200/80 text-xs leading-relaxed">
-                    Set the <span className="font-semibold">Internal AI Evaluation Prompt Name</span> in the
-                    program&apos;s AI configuration (Form Builder → AI Evaluation Configuration) to enable manual
-                    internal runs.
+                    Set the{" "}
+                    <span className="font-semibold">Internal AI Evaluation Prompt Name</span> in the
+                    program&apos;s AI configuration (Form Builder → AI Evaluation Configuration) to
+                    enable manual internal runs.
                   </p>
                 </div>
               </div>

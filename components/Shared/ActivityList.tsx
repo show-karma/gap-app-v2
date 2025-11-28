@@ -1,13 +1,13 @@
-import { FC } from "react";
-import { ActivityCard } from "./ActivityCard";
-import {
-  IProjectUpdate,
+import type {
   IGrantUpdate,
   IMilestoneResponse,
   IProjectImpact,
   IProjectMilestoneResponse,
+  IProjectUpdate,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { UnifiedMilestone } from "@/types/roadmap";
+import type { FC } from "react";
+import type { UnifiedMilestone } from "@/types/roadmap";
+import { ActivityCard } from "./ActivityCard";
 
 type UpdateType =
   | IProjectUpdate

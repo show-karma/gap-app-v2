@@ -6,21 +6,20 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NavbarDesktopNavigation } from "@/src/components/navbar/navbar-desktop-navigation";
+import { getAuthFixture } from "../fixtures/auth-fixtures";
 import {
-  renderWithProviders,
-  createMockUseAuth,
   createMockPermissions,
-  updateMocks,
-  resetMockAuthState,
+  createMockUseAuth,
   createMockUseCommunitiesStore,
-  createMockUseReviewerPrograms,
-  createMockUseStaff,
+  createMockUseContributorProfileModalStore,
   createMockUseOwnerStore,
   createMockUseRegistryStore,
+  createMockUseReviewerPrograms,
+  createMockUseStaff,
   createMockUseTheme,
-  createMockUseContributorProfileModalStore,
+  renderWithProviders,
+  resetMockAuthState,
 } from "../utils/test-helpers";
-import { getAuthFixture } from "../fixtures/auth-fixtures";
 
 describe("NavbarDesktopNavigation", () => {
   afterEach(() => {
@@ -35,8 +34,8 @@ describe("NavbarDesktopNavigation", () => {
         mockUseAuth: createMockUseAuth(authFixture.authState),
       });
 
-      // Should have hidden xl:flex class for desktop-only display
-      const desktopNav = container.querySelector(".hidden.xl\\:flex");
+      // Should have hidden lg:flex class for desktop-only display
+      const desktopNav = container.querySelector(".hidden.lg\\:flex");
       expect(desktopNav).toBeInTheDocument();
     });
 
@@ -69,7 +68,7 @@ describe("NavbarDesktopNavigation", () => {
       });
 
       // Check that the desktop navigation renders with proper structure
-      const desktopNav = container.querySelector(".hidden.xl\\:flex");
+      const desktopNav = container.querySelector(".hidden.lg\\:flex");
       expect(desktopNav).toBeInTheDocument();
       expect(desktopNav?.className).toContain("flex-1");
       expect(desktopNav?.className).toContain("gap-8");
@@ -125,7 +124,7 @@ describe("NavbarDesktopNavigation", () => {
 
     it('should NOT render "Resources" dropdown when logged in', () => {
       const authFixture = getAuthFixture("authenticated-basic");
-      
+
       renderWithProviders(<NavbarDesktopNavigation />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
@@ -282,25 +281,17 @@ describe("NavbarDesktopNavigation", () => {
         mockUseAuth: createMockUseAuth(authFixture.authState),
       });
 
-      expect(
-        screen.getByRole("button", { name: /for builders/i })
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: /for funders/i })
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: /explore/i })
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: /resources/i })
-      ).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /for builders/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /for funders/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /explore/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /resources/i })).toBeInTheDocument();
     });
   });
 
   describe("Auth State - Logged In", () => {
     it("should NOT render NavbarAuthButtons when logged in", () => {
       const authFixture = getAuthFixture("authenticated-basic");
-      
+
       renderWithProviders(<NavbarDesktopNavigation />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
@@ -313,7 +304,7 @@ describe("NavbarDesktopNavigation", () => {
 
     it("should render NavbarUserMenu when logged in", () => {
       const authFixture = getAuthFixture("authenticated-basic");
-      
+
       const { debug } = renderWithProviders(<NavbarDesktopNavigation />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
@@ -324,7 +315,7 @@ describe("NavbarDesktopNavigation", () => {
 
       // NavbarUserMenu should NOT render auth buttons
       expect(screen.queryByText("Sign in")).not.toBeInTheDocument();
-      
+
       // NavbarUserMenu should render when authenticated
       // Since the menu itself might be hidden, check that auth buttons are gone
       // which means the authenticated path is rendering
@@ -332,7 +323,7 @@ describe("NavbarDesktopNavigation", () => {
 
     it("should NOT show Resources dropdown when logged in", () => {
       const authFixture = getAuthFixture("authenticated-basic");
-      
+
       renderWithProviders(<NavbarDesktopNavigation />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
@@ -344,38 +335,28 @@ describe("NavbarDesktopNavigation", () => {
       expect(resourcesButton).not.toBeInTheDocument();
     });
 
-    it("should still render main navigation dropdowns when logged in", () => {
+    it("should render quick action buttons and Explore dropdown when logged in", () => {
       const authFixture = getAuthFixture("authenticated-basic");
       renderWithProviders(<NavbarDesktopNavigation />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockUseCommunitiesStore: createMockUseCommunitiesStore(
-          authFixture.permissions.communities
-        ),
+        mockUseCommunitiesStore: createMockUseCommunitiesStore(authFixture.permissions.communities),
         mockUseReviewerPrograms: createMockUseReviewerPrograms(
           authFixture.permissions.reviewerPrograms
         ),
         mockUseStaff: createMockUseStaff(authFixture.permissions.isStaff),
-        mockUseOwnerStore: createMockUseOwnerStore(
-          authFixture.permissions.isOwner
-        ),
+        mockUseOwnerStore: createMockUseOwnerStore(authFixture.permissions.isOwner),
         mockUseRegistryStore: createMockUseRegistryStore(
           authFixture.permissions.isPoolManager,
           authFixture.permissions.isRegistryAdmin
         ),
         mockUseTheme: createMockUseTheme(),
-        mockUseContributorProfileModalStore:
-          createMockUseContributorProfileModalStore(),
+        mockUseContributorProfileModalStore: createMockUseContributorProfileModalStore(),
       });
 
-      expect(
-        screen.getByRole("button", { name: /for builders/i })
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: /for funders/i })
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: /explore/i })
-      ).toBeInTheDocument();
+      // When logged in, For Builders/Funders dropdowns are replaced with direct action buttons
+      // and only Explore dropdown remains
+      expect(screen.getByRole("link", { name: /my projects/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /explore/i })).toBeInTheDocument();
     });
   });
 
@@ -423,26 +404,26 @@ describe("NavbarDesktopNavigation", () => {
   });
 
   describe("Responsive Classes", () => {
-    it("should have hidden class below xl breakpoint", () => {
+    it("should have hidden class below lg breakpoint", () => {
       const authFixture = getAuthFixture("unauthenticated");
       const { container } = renderWithProviders(<NavbarDesktopNavigation />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
       });
 
-      const desktopNav = container.querySelector(".hidden.xl\\:flex");
+      const desktopNav = container.querySelector(".hidden.lg\\:flex");
       expect(desktopNav).toBeInTheDocument();
       expect(desktopNav?.className).toContain("hidden");
     });
 
-    it("should have xl:flex class for desktop visibility", () => {
+    it("should have lg:flex class for desktop visibility", () => {
       const authFixture = getAuthFixture("unauthenticated");
       const { container } = renderWithProviders(<NavbarDesktopNavigation />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
       });
 
-      const desktopNav = container.querySelector(".hidden.xl\\:flex");
+      const desktopNav = container.querySelector(".hidden.lg\\:flex");
       expect(desktopNav).toBeInTheDocument();
-      expect(desktopNav?.className).toContain("xl:flex");
+      expect(desktopNav?.className).toContain("lg:flex");
     });
 
     it("should have proper flex alignment classes", () => {
@@ -451,7 +432,7 @@ describe("NavbarDesktopNavigation", () => {
         mockUseAuth: createMockUseAuth(authFixture.authState),
       });
 
-      const desktopNav = container.querySelector(".hidden.xl\\:flex");
+      const desktopNav = container.querySelector(".hidden.lg\\:flex");
       expect(desktopNav).toBeInTheDocument();
       expect(desktopNav?.className).toContain("items-center");
     });
@@ -462,7 +443,7 @@ describe("NavbarDesktopNavigation", () => {
         mockUseAuth: createMockUseAuth(authFixture.authState),
       });
 
-      const desktopNav = container.querySelector(".hidden.xl\\:flex");
+      const desktopNav = container.querySelector(".hidden.lg\\:flex");
       expect(desktopNav).toBeInTheDocument();
       expect(desktopNav?.className).toContain("gap-8");
     });
@@ -482,9 +463,12 @@ describe("NavbarDesktopNavigation", () => {
       await user.click(resourcesButton);
 
       // Wait for dropdown content to appear
-      await waitFor(() => {
-        expect(screen.getByText("Follow")).toBeInTheDocument();
-      }, { timeout: 3000 });
+      await waitFor(
+        () => {
+          expect(screen.getByText("Follow")).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
 
       // Check for social media links (by aria-label)
       expect(screen.getByLabelText("Twitter")).toBeInTheDocument();
@@ -511,4 +495,3 @@ describe("NavbarDesktopNavigation", () => {
     });
   });
 });
-

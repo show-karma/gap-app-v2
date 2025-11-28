@@ -1,9 +1,9 @@
-import { Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
+import { Fragment } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { Track } from "@/services/tracks";
+import type { Track } from "@/services/tracks";
 
 interface EditTrackModalProps {
   show: boolean;
@@ -108,14 +108,8 @@ export const EditTrackModal = ({
                         rows={3}
                       />
                     </div>
-                    <Button
-                      onClick={onSubmit}
-                      disabled={isSubmitting}
-                      className="w-full"
-                    >
-                      {isSubmitting ? (
-                        <Spinner className="w-4 h-4 mr-2" />
-                      ) : null}
+                    <Button onClick={onSubmit} disabled={isSubmitting} className="w-full">
+                      {isSubmitting ? <Spinner className="w-4 h-4 mr-2" /> : null}
                       Update Track
                     </Button>
                   </div>

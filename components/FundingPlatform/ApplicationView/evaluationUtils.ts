@@ -1,5 +1,5 @@
-import React, { JSX } from "react";
-import { XMarkIcon, CheckCircleIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import { CheckCircleIcon, ExclamationTriangleIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import React, { type JSX } from "react";
 
 export type GenericJSON = Record<string, unknown>;
 
@@ -38,8 +38,10 @@ export function getScoreColor(score: number): string {
  * @returns JSX element with appropriate icon
  */
 export function getScoreIcon(score: number): JSX.Element {
-  if (score > 7) return React.createElement(CheckCircleIcon, { className: "w-5 h-5 text-green-500" });
-  if (score >= 4) return React.createElement(ExclamationTriangleIcon, { className: "w-5 h-5 text-blue-500" });
+  if (score > 7)
+    return React.createElement(CheckCircleIcon, { className: "w-5 h-5 text-green-500" });
+  if (score >= 4)
+    return React.createElement(ExclamationTriangleIcon, { className: "w-5 h-5 text-blue-500" });
   return React.createElement(XMarkIcon, { className: "w-5 h-5 text-red-500" });
 }
 

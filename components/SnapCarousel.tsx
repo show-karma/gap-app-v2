@@ -1,5 +1,6 @@
 // Carousel.tsx
-import React, { CSSProperties } from "react";
+import type React from "react";
+import type { CSSProperties } from "react";
 import { useSnapCarousel } from "react-snap-carousel";
 
 const styles = {
@@ -51,9 +52,7 @@ const styles = {
 
 interface CarouselProps<T> {
   readonly items: T[];
-  readonly renderItem: (
-    props: CarouselRenderItemProps<T>
-  ) => React.ReactElement<CarouselItemProps>;
+  readonly renderItem: (props: CarouselRenderItemProps<T>) => React.ReactElement<CarouselItemProps>;
 }
 
 interface CarouselRenderItemProps<T> {
@@ -62,10 +61,7 @@ interface CarouselRenderItemProps<T> {
   index: number;
 }
 
-export const Carousel = <T extends any>({
-  items,
-  renderItem,
-}: CarouselProps<T>) => {
+export const Carousel = <T,>({ items, renderItem }: CarouselProps<T>) => {
   const {
     scrollRef,
     pages,

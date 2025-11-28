@@ -1,5 +1,5 @@
-import React from "react";
 import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import React from "react";
 
 interface Member {
   uid: string;

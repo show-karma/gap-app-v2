@@ -1,6 +1,6 @@
 "use client";
-import { getCommunityRegions } from "@/utilities/queries/getCommunityRegions";
 import { useQuery } from "@tanstack/react-query";
+import { getCommunityRegions } from "@/utilities/queries/getCommunityRegions";
 
 export interface RegionOption {
   id: string;

@@ -1,28 +1,24 @@
+import { ChevronDownIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as Accordion from "@radix-ui/react-accordion";
+import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import Link from "next/link";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { z } from "zod";
+import { DeleteDialog } from "@/components/DeleteDialog";
 import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useIndicators } from "@/hooks/useIndicators";
-import {
-  Category,
-  ImpactIndicator,
-  ImpactSegment,
-} from "@/types/impactMeasurement";
+import type { Category, ImpactIndicator, ImpactSegment } from "@/types/impactMeasurement";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
-import { ChevronDownIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as Accordion from "@radix-ui/react-accordion";
-import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import Link from "next/link";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { z } from "zod";
-import { DeleteDialog } from "@/components/DeleteDialog";
-import { useAccount } from "wagmi";
 
 const OUTPUT_TYPES = ["output", "outcome"] as const;
 type OutputType = (typeof OUTPUT_TYPES)[number];
@@ -71,13 +67,7 @@ interface EditFormProps {
   impact_indicators: ImpactIndicator[];
 }
 
-const EditForm = ({
-  segment,
-  categoryId,
-  onSave,
-  isLoading,
-  impact_indicators,
-}: EditFormProps) => {
+const EditForm = ({ segment, categoryId, onSave, isLoading, impact_indicators }: EditFormProps) => {
   const {
     register,
     handleSubmit,
@@ -90,8 +80,7 @@ const EditForm = ({
       name: segment.name,
       description: segment.description || "",
       type: segment.type,
-      impact_indicators:
-        segment.impact_indicators?.map((item) => item.id) || [],
+      impact_indicators: segment.impact_indicators?.map((item) => item.id) || [],
     },
     mode: "onChange",
   });
@@ -113,24 +102,30 @@ const EditForm = ({
     <form onSubmit={handleSubmit(onSave)} className="space-y-4">
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <label className="text-sm text-gray-600 dark:text-gray-400">
+          <label
+            htmlFor="manage-categories-name"
+            className="text-sm text-gray-600 dark:text-gray-400"
+          >
             Name
           </label>
           <input
+            id="manage-categories-name"
             {...register("name")}
             placeholder="Enter name"
             className="text-sm p-2 border border-gray-200 dark:border-gray-700 rounded-md 
               focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-full"
           />
-          {errors.name && (
-            <p className="text-sm text-red-500">{errors.name.message}</p>
-          )}
+          {errors.name && <p className="text-sm text-red-500">{errors.name.message}</p>}
         </div>
         <div className="flex flex-col gap-2">
-          <label className="text-sm text-gray-600 dark:text-gray-400">
+          <label
+            htmlFor="manage-categories-description"
+            className="text-sm text-gray-600 dark:text-gray-400"
+          >
             Description
           </label>
           <textarea
+            id="manage-categories-description"
             {...register("description")}
             placeholder="Enter description"
             rows={3}
@@ -142,10 +137,14 @@ const EditForm = ({
           )}
         </div>
         <div className="flex flex-col gap-2">
-          <label className="text-sm text-gray-600 dark:text-gray-400">
+          <label
+            htmlFor="manage-categories-type"
+            className="text-sm text-gray-600 dark:text-gray-400"
+          >
             Type
           </label>
           <select
+            id="manage-categories-type"
             {...register("type")}
             className="text-sm p-2 border border-gray-200 dark:border-gray-700 rounded-md 
               focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-full"
@@ -197,9 +196,7 @@ export const ManageCategoriesOutputs = ({
   const [isSavingOutput, setIsSavingOutput] = useState<string>("");
   const [isDeletingOutput, setIsDeletingOutput] = useState<string>("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
-  const selectedCategory = categories.find(
-    (cat) => cat.id === selectedCategoryId
-  );
+  const selectedCategory = categories.find((cat) => cat.id === selectedCategoryId);
 
   const { data: impact_indicators = [] } = useIndicators({
     communityId: community?.uid || "",
@@ -222,10 +219,7 @@ export const ManageCategoriesOutputs = ({
 
   const selectedIndicators = watch("impact_indicators") || [];
 
-  const handleAddOutput = async (
-    data: ImpactSegmentFormData,
-    categoryId: string
-  ) => {
+  const handleAddOutput = async (data: ImpactSegmentFormData, categoryId: string) => {
     try {
       setIsSavingOutput("new");
       const [, error] = await fetchData(
@@ -301,11 +295,7 @@ export const ManageCategoriesOutputs = ({
     setValue("impact_indicators", updated);
   };
 
-  const saveOutput = async (
-    data: ImpactSegmentFormData,
-    categoryId: string,
-    outputId: string
-  ) => {
+  const saveOutput = async (data: ImpactSegmentFormData, categoryId: string, outputId: string) => {
     try {
       setIsSavingOutput(outputId);
       const [, error] = await fetchData(
@@ -348,10 +338,14 @@ export const ManageCategoriesOutputs = ({
       {categories.length ? (
         <div className="space-y-8">
           <div className="flex flex-col gap-4">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <label
+              htmlFor="category-selector"
+              className="text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
               Choose a category to define it&apos;s activities and outcomes
             </label>
             <select
+              id="category-selector"
               value={selectedCategoryId}
               onChange={(e) => setSelectedCategoryId(e.target.value)}
               className="w-full p-2 text-sm border bg-gray-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 rounded-md 
@@ -398,14 +392,11 @@ export const ManageCategoriesOutputs = ({
                         </div>
                         <div className="flex items-center gap-2">
                           <ChevronDownIcon className="h-5 w-5 transform transition-transform duration-200 ease-in-out ui-open:rotate-180" />
-                          <div onClick={(e) => e.stopPropagation()}>
+                          <span>
                             <DeleteDialog
                               title={`Are you sure you want to delete ${segment.name}?`}
                               deleteFunction={() =>
-                                handleRemoveOutput(
-                                  selectedCategory.id,
-                                  segment.id
-                                )
+                                handleRemoveOutput(selectedCategory.id, segment.id)
                               }
                               isLoading={isDeletingOutput === segment.id}
                               buttonElement={{
@@ -413,8 +404,7 @@ export const ManageCategoriesOutputs = ({
                                   <TrashIcon
                                     className={cn(
                                       "h-4 w-4",
-                                      isDeletingOutput === segment.id &&
-                                        "animate-pulse opacity-50"
+                                      isDeletingOutput === segment.id && "animate-pulse opacity-50"
                                     )}
                                   />
                                 ),
@@ -423,16 +413,14 @@ export const ManageCategoriesOutputs = ({
                                   "text-red-500 hover:text-red-700 transition-colors disabled:opacity-50 bg-transparent hover:bg-transparent hover:opacity-75",
                               }}
                             />
-                          </div>
+                          </span>
                         </div>
                       </Accordion.Trigger>
                       <Accordion.Content className="p-4 bg-gray-50 dark:bg-zinc-900">
                         <EditForm
                           segment={segment}
                           categoryId={selectedCategory.id}
-                          onSave={(data) =>
-                            saveOutput(data, selectedCategory.id, segment.id)
-                          }
+                          onSave={(data) => saveOutput(data, selectedCategory.id, segment.id)}
                           isLoading={isSavingOutput === segment.id}
                           impact_indicators={impact_indicators}
                         />
@@ -462,26 +450,32 @@ export const ManageCategoriesOutputs = ({
                         className="flex flex-col gap-4"
                       >
                         <div className="flex flex-col gap-2">
-                          <label className="text-sm text-gray-600 dark:text-gray-400">
+                          <label
+                            htmlFor="edit-activity-name"
+                            className="text-sm text-gray-600 dark:text-gray-400"
+                          >
                             Name
                           </label>
                           <input
+                            id="edit-activity-name"
                             {...register("name")}
                             placeholder="Enter Activity/Outcome name"
                             className="text-sm p-2 border border-gray-200 dark:border-gray-700 rounded-md 
                               focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-full"
                           />
                           {errors.name && (
-                            <p className="text-sm text-red-500">
-                              {errors.name.message}
-                            </p>
+                            <p className="text-sm text-red-500">{errors.name.message}</p>
                           )}
                         </div>
                         <div className="flex flex-col gap-2">
-                          <label className="text-sm text-gray-600 dark:text-gray-400">
+                          <label
+                            htmlFor="edit-activity-description"
+                            className="text-sm text-gray-600 dark:text-gray-400"
+                          >
                             Description
                           </label>
                           <textarea
+                            id="edit-activity-description"
                             {...register("description")}
                             placeholder="Enter description"
                             rows={3}
@@ -489,16 +483,18 @@ export const ManageCategoriesOutputs = ({
                               focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-full"
                           />
                           {errors.description && (
-                            <p className="text-sm text-red-500">
-                              {errors.description.message}
-                            </p>
+                            <p className="text-sm text-red-500">{errors.description.message}</p>
                           )}
                         </div>
                         <div className="flex flex-col gap-2">
-                          <label className="text-sm text-gray-600 dark:text-gray-400">
+                          <label
+                            htmlFor="edit-activity-type"
+                            className="text-sm text-gray-600 dark:text-gray-400"
+                          >
                             Type
                           </label>
                           <select
+                            id="edit-activity-type"
                             {...register("type")}
                             className="text-sm p-2 border border-gray-200 dark:border-gray-700 rounded-md 
                               focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-full"
@@ -511,9 +507,9 @@ export const ManageCategoriesOutputs = ({
                           </select>
                         </div>
                         <div className="flex flex-col gap-2">
-                          <label className="text-sm text-gray-600 dark:text-gray-400">
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
                             Assign Indicators
-                          </label>
+                          </div>
                           <SearchWithValueDropdown
                             onSelectFunction={handleNewIndicatorChange}
                             selected={selectedIndicators}

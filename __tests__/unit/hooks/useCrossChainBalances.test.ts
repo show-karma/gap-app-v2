@@ -3,12 +3,12 @@
  * @description Tests for cross-chain balance fetching hook covering multi-chain balance retrieval and caching
  */
 
-import { renderHook, waitFor } from "@testing-library/react";
-import { useCrossChainBalances } from "@/hooks/donation/useCrossChainBalances";
-import type { SupportedToken } from "@/constants/supportedTokens";
-import * as wagmi from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { renderHook, waitFor } from "@testing-library/react";
 import React from "react";
+import * as wagmi from "wagmi";
+import type { SupportedToken } from "@/constants/supportedTokens";
+import { useCrossChainBalances } from "@/hooks/donation/useCrossChainBalances";
 
 // Mock dependencies
 jest.mock("wagmi", () => ({
@@ -63,7 +63,7 @@ describe("useCrossChainBalances", () => {
     const Wrapper = ({ children }: { children: React.ReactNode }) =>
       React.createElement(QueryClientProvider, { client: queryClient }, children);
 
-    Wrapper.displayName = 'QueryClientWrapper';
+    Wrapper.displayName = "QueryClientWrapper";
 
     return Wrapper;
   };
@@ -87,7 +87,7 @@ describe("useCrossChainBalances", () => {
     });
 
     // Mock RPC client
-    getRPCClient.mockImplementation((chainId: number) => {
+    getRPCClient.mockImplementation((_chainId: number) => {
       const mockClient = {
         getBalance: jest.fn().mockResolvedValue(BigInt("5000000000000000000")), // 5 ETH
         multicall: jest.fn().mockResolvedValue([
@@ -105,20 +105,18 @@ describe("useCrossChainBalances", () => {
         isConnected: false,
       });
 
-      const { result } = renderHook(
-        () => useCrossChainBalances(10, [10, 8453]),
-        { wrapper: createWrapper() }
-      );
+      const { result } = renderHook(() => useCrossChainBalances(10, [10, 8453]), {
+        wrapper: createWrapper(),
+      });
 
       expect(result.current.balanceByTokenKey).toEqual({});
       expect(result.current.isFetchingCrossChainBalances).toBe(false);
     });
 
     it("should not fetch when no chains provided", () => {
-      const { result } = renderHook(
-        () => useCrossChainBalances(10, []),
-        { wrapper: createWrapper() }
-      );
+      const { result } = renderHook(() => useCrossChainBalances(10, []), {
+        wrapper: createWrapper(),
+      });
 
       expect(result.current.balanceByTokenKey).toEqual({});
       expect(result.current.isFetchingCrossChainBalances).toBe(false);
@@ -127,10 +125,9 @@ describe("useCrossChainBalances", () => {
 
   describe("balance fetching", () => {
     it("should fetch balances from multiple chains", async () => {
-      const { result } = renderHook(
-        () => useCrossChainBalances(10, [10, 8453]),
-        { wrapper: createWrapper() }
-      );
+      const { result } = renderHook(() => useCrossChainBalances(10, [10, 8453]), {
+        wrapper: createWrapper(),
+      });
 
       await waitFor(() => {
         expect(result.current.isFetchingCrossChainBalances).toBe(false);
@@ -143,10 +140,9 @@ describe("useCrossChainBalances", () => {
     it("should use react-query caching", async () => {
       const { getRPCClient } = require("@/utilities/rpcClient");
 
-      const { rerender } = renderHook(
-        () => useCrossChainBalances(10, [10, 8453]),
-        { wrapper: createWrapper() }
-      );
+      const { rerender } = renderHook(() => useCrossChainBalances(10, [10, 8453]), {
+        wrapper: createWrapper(),
+      });
 
       await waitFor(() => {
         expect(getRPCClient).toHaveBeenCalled();
@@ -162,10 +158,9 @@ describe("useCrossChainBalances", () => {
     });
 
     it("should handle native token balances", async () => {
-      const { result } = renderHook(
-        () => useCrossChainBalances(8453, [8453]),
-        { wrapper: createWrapper() }
-      );
+      const { result } = renderHook(() => useCrossChainBalances(8453, [8453]), {
+        wrapper: createWrapper(),
+      });
 
       await waitFor(() => {
         expect(result.current.isFetchingCrossChainBalances).toBe(false);
@@ -176,10 +171,9 @@ describe("useCrossChainBalances", () => {
     });
 
     it("should handle ERC20 token balances", async () => {
-      const { result } = renderHook(
-        () => useCrossChainBalances(10, [10]),
-        { wrapper: createWrapper() }
-      );
+      const { result } = renderHook(() => useCrossChainBalances(10, [10]), {
+        wrapper: createWrapper(),
+      });
 
       await waitFor(() => {
         expect(result.current.isFetchingCrossChainBalances).toBe(false);
@@ -191,21 +185,19 @@ describe("useCrossChainBalances", () => {
   });
 
   describe("error handling", () => {
-
     it("should handle multicall failures", async () => {
       const { getRPCClient } = require("@/utilities/rpcClient");
 
       getRPCClient.mockResolvedValue({
         getBalance: jest.fn().mockResolvedValue(BigInt("5000000000000000000")),
-        multicall: jest.fn().mockResolvedValue([
-          { status: "failure", error: new Error("Token error") },
-        ]),
+        multicall: jest
+          .fn()
+          .mockResolvedValue([{ status: "failure", error: new Error("Token error") }]),
       });
 
-      const { result } = renderHook(
-        () => useCrossChainBalances(10, [10]),
-        { wrapper: createWrapper() }
-      );
+      const { result } = renderHook(() => useCrossChainBalances(10, [10]), {
+        wrapper: createWrapper(),
+      });
 
       await waitFor(() => {
         expect(result.current.isFetchingCrossChainBalances).toBe(false);

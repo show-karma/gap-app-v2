@@ -1,16 +1,16 @@
 "use client";
 
 import { ClockIcon, SunIcon } from "@heroicons/react/24/outline";
-import { JSX } from "react";
+import type { JSX } from "react";
+import { EvaluationDisplay } from "./EvaluationComponents";
 import {
-  parseEvaluation,
+  type GenericJSON,
+  getPriorityColor,
   getScoreColor,
   getScoreIcon,
-  getPriorityColor,
   getStatusColor,
-  type GenericJSON,
+  parseEvaluation,
 } from "./evaluationUtils";
-import { EvaluationDisplay } from "./EvaluationComponents";
 
 export type AIEvaluationData = string;
 
@@ -47,7 +47,9 @@ function EvaluationContent({
   if (!parsedEvaluation) {
     return (
       <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
-        <p className="text-sm text-red-600 dark:text-red-400">Failed to parse evaluation data. Please try again.</p>
+        <p className="text-sm text-red-600 dark:text-red-400">
+          Failed to parse evaluation data. Please try again.
+        </p>
       </div>
     );
   }
@@ -85,7 +87,9 @@ export function AIEvaluationDisplay({
           <SunIcon className="w-5 h-5 text-primary animate-pulse" />
           <h3 className="text-sm font-semibold">AI Evaluation Feedback</h3>
         </div>
-        <p className="text-xs text-default-500">Real-time feedback to help improve your application</p>
+        <p className="text-xs text-default-500">
+          Real-time feedback to help improve your application
+        </p>
       </div>
 
       <div className="pt-0">

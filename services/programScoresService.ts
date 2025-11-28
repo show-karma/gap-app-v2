@@ -19,11 +19,11 @@ export const programScoresService = {
       "POST",
       request
     );
-    
+
     if (error) {
       throw new Error(`Failed to upload program scores: ${error}`);
     }
 
     return data as ProgramScoreUploadResult;
-  }
+  },
 };

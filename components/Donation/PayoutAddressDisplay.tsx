@@ -11,10 +11,7 @@ interface PayoutAddressDisplayProps {
   formatAddress: (address?: string) => string;
 }
 
-export function PayoutAddressDisplay({
-  payoutInfo,
-  formatAddress,
-}: PayoutAddressDisplayProps) {
+export function PayoutAddressDisplay({ payoutInfo, formatAddress }: PayoutAddressDisplayProps) {
   if (!payoutInfo) return null;
 
   if (payoutInfo.isLoading) {

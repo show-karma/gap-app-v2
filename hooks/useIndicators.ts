@@ -1,8 +1,8 @@
+import { type QueryKey, type QueryOptions, useQuery } from "@tanstack/react-query";
 import {
-  Indicator,
   getIndicatorsByCommunity,
+  type Indicator,
 } from "@/utilities/queries/getIndicatorsByCommunity";
-import { QueryKey, QueryOptions, useQuery } from "@tanstack/react-query";
 
 interface UseIndicatorsProps {
   communityId: string;

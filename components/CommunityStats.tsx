@@ -1,10 +1,10 @@
 "use client";
+import { Dialog, Transition } from "@headlessui/react";
+import { ArrowPathIcon, ChartBarSquareIcon } from "@heroicons/react/24/solid";
+import { Fragment, useState } from "react";
+import { Button } from "@/components/Utilities/Button";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { useState, Fragment } from "react";
-import { Dialog, Transition } from "@headlessui/react";
-import { Button } from "@/components/Utilities/Button";
-import { ArrowPathIcon, ChartBarSquareIcon } from "@heroicons/react/24/solid";
 
 import { errorManager } from "./Utilities/errorManager";
 
@@ -13,7 +13,7 @@ interface CommunityStatsProps {
 }
 
 export default function CommunityStats({ communityId }: CommunityStatsProps) {
-  let [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [stats, setStats] = useState<any>({});
   const [error, setError] = useState<any>("");
   const [loading, setLoading] = useState<boolean>(true);
@@ -21,15 +21,12 @@ export default function CommunityStats({ communityId }: CommunityStatsProps) {
   async function fetchStats() {
     setLoading(true);
     try {
-      const [data, error]: any = await fetchData(
-        INDEXER.COMMUNITY.STATS(communityId as string)
-      );
+      const [data, error]: any = await fetchData(INDEXER.COMMUNITY.STATS(communityId as string));
       if (error) {
         console.error("Error fetching data:", error);
         setError(error);
       } else {
-        if (data && data?.projects) {
-          console.log("Stats fetched:", data);
+        if (data?.projects) {
           setStats({
             "No. of Projects": data?.projects,
             "No. of Project Edits": data?.ProjectEdits,
@@ -134,21 +131,14 @@ export default function CommunityStats({ communityId }: CommunityStatsProps) {
                   {loading ? (
                     <div>Loading stats...</div>
                   ) : error ? (
-                    <div className="font-bold">
-                      Error fetching stats: {JSON.stringify(error)}
-                    </div>
+                    <div className="font-bold">Error fetching stats: {JSON.stringify(error)}</div>
                   ) : (
-                    <>
-                      {Object.entries(stats).map(([key, value]) => (
-                        <div
-                          className="mx-1 flex items-center justify-between"
-                          key={key}
-                        >
-                          <p>{key}</p>
-                          <p className="text-blue-500">{value as any}</p>
-                        </div>
-                      ))}
-                    </>
+                    Object.entries(stats).map(([key, value]) => (
+                      <div className="mx-1 flex items-center justify-between" key={key}>
+                        <p>{key}</p>
+                        <p className="text-blue-500">{value as any}</p>
+                      </div>
+                    ))
                   )}
                 </Dialog.Panel>
               </Transition.Child>

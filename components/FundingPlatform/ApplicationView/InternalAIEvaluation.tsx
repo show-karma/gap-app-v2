@@ -1,16 +1,16 @@
 "use client";
 
 import { ClockIcon, LockClosedIcon } from "@heroicons/react/24/outline";
-import { JSX } from "react";
+import type { JSX } from "react";
+import { EvaluationDisplay } from "./EvaluationComponents";
 import {
-  parseEvaluation,
+  type GenericJSON,
+  getPriorityColor,
   getScoreColor,
   getScoreIcon,
-  getPriorityColor,
   getStatusColor,
-  type GenericJSON,
+  parseEvaluation,
 } from "./evaluationUtils";
-import { EvaluationDisplay } from "./EvaluationComponents";
 
 export type InternalAIEvaluationData = string;
 
@@ -45,7 +45,9 @@ function EvaluationContent({
   if (!parsedEvaluation) {
     return (
       <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
-        <p className="text-sm text-red-600 dark:text-red-400">Failed to parse evaluation data. Please try again.</p>
+        <p className="text-sm text-red-600 dark:text-red-400">
+          Failed to parse evaluation data. Please try again.
+        </p>
       </div>
     );
   }
@@ -86,7 +88,9 @@ export function InternalAIEvaluationDisplay({
           <LockClosedIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
           <h3 className="text-sm font-semibold">Internal AI Evaluation</h3>
         </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400">For reviewer use only - not visible to applicants</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          For reviewer use only - not visible to applicants
+        </p>
       </div>
 
       <div className="pt-0">

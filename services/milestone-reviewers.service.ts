@@ -2,10 +2,10 @@ import axios from "axios";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
 import {
-  validateWalletAddress,
   validateEmail,
-  validateTelegram,
   validateReviewerData as validateReviewerDataUtil,
+  validateTelegram,
+  validateWalletAddress,
 } from "@/utilities/validators";
 
 const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
@@ -17,12 +17,9 @@ const apiClient = createAuthenticatedApiClient(API_URL, 30000);
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.error(
-      "Milestone Reviewers API Error:",
-      error.response?.data || error.message,
-    );
+    console.error("Milestone Reviewers API Error:", error.response?.data || error.message);
     throw error;
-  },
+  }
 );
 
 /**
@@ -79,13 +76,10 @@ export const milestoneReviewersService = {
   /**
    * Get all milestone reviewers for a program
    */
-  async getReviewers(
-    programId: string,
-    chainID: number,
-  ): Promise<MilestoneReviewer[]> {
+  async getReviewers(programId: string, chainID: number): Promise<MilestoneReviewer[]> {
     try {
       const response = await apiClient.get<MilestoneReviewerResponse[]>(
-        `/v2/programs/${programId}/${chainID}/milestone-reviewers`,
+        `/v2/programs/${programId}/${chainID}/milestone-reviewers`
       );
 
       // Map the API response to the expected format
@@ -119,14 +113,11 @@ export const milestoneReviewersService = {
   async addReviewer(
     programId: string,
     chainID: number,
-    reviewerData: AddMilestoneReviewerRequest,
+    reviewerData: AddMilestoneReviewerRequest
   ): Promise<MilestoneReviewer> {
     const response = await apiClient.post<{
       reviewer?: MilestoneReviewerResponse;
-    }>(
-      `/v2/programs/${programId}/${chainID}/milestone-reviewers`,
-      reviewerData,
-    );
+    }>(`/v2/programs/${programId}/${chainID}/milestone-reviewers`, reviewerData);
 
     // Map the API response to the expected format
     const reviewer = response.data?.reviewer;
@@ -157,13 +148,9 @@ export const milestoneReviewersService = {
   /**
    * Remove a milestone reviewer from a program
    */
-  async removeReviewer(
-    programId: string,
-    chainID: number,
-    publicAddress: string,
-  ): Promise<void> {
+  async removeReviewer(programId: string, chainID: number, publicAddress: string): Promise<void> {
     await apiClient.delete(
-      `/v2/programs/${programId}/${chainID}/milestone-reviewers/${publicAddress}`,
+      `/v2/programs/${programId}/${chainID}/milestone-reviewers/${publicAddress}`
     );
   },
 
@@ -173,7 +160,7 @@ export const milestoneReviewersService = {
   async addMultipleReviewers(
     programId: string,
     chainID: number,
-    reviewers: AddMilestoneReviewerRequest[],
+    reviewers: AddMilestoneReviewerRequest[]
   ): Promise<{
     added: MilestoneReviewer[];
     errors: Array<{ reviewer: AddMilestoneReviewerRequest; error: string }>;

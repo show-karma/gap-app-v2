@@ -5,11 +5,10 @@
  * with multiple components and hooks working together.
  */
 
-import React, { ReactElement } from "react";
-import { render, RenderOptions, waitFor } from "@testing-library/react";
+import { waitFor } from "@testing-library/react";
+import type { Address } from "viem";
 import type { SupportedToken } from "@/constants/supportedTokens";
 import type { DonationPayment } from "@/store/donationCart";
-import type { Address } from "viem";
 
 /**
  * Mock wallet connection with default or custom address
@@ -117,9 +116,7 @@ export async function simulateTransaction(
   if (shouldSucceed) {
     mockWriteContractAsync.mockResolvedValue(txHash);
   } else {
-    mockWriteContractAsync.mockRejectedValue(
-      new Error("Transaction reverted")
-    );
+    mockWriteContractAsync.mockRejectedValue(new Error("Transaction reverted"));
   }
 
   (wagmi.useWriteContract as jest.Mock).mockReturnValue({
@@ -147,9 +144,7 @@ export async function waitForDonationComplete(
 /**
  * Create mock token
  */
-export function createMockToken(
-  overrides?: Partial<SupportedToken>
-): SupportedToken {
+export function createMockToken(overrides?: Partial<SupportedToken>): SupportedToken {
   return {
     address: "0xUSDC000000000000000000000000000000000000",
     symbol: "USDC",
@@ -180,9 +175,7 @@ export function createMockNativeToken(chainId: number = 10): SupportedToken {
 /**
  * Create mock payment
  */
-export function createMockPayment(
-  overrides?: Partial<DonationPayment>
-): DonationPayment {
+export function createMockPayment(overrides?: Partial<DonationPayment>): DonationPayment {
   return {
     projectId: "project-1",
     amount: "100",
@@ -215,7 +208,11 @@ export function setupDefaultMocks() {
   });
 
   // Mock utilities
-  const { checkTokenAllowances, executeApprovals, getApprovalAmount } = require("@/utilities/erc20");
+  const {
+    checkTokenAllowances,
+    executeApprovals,
+    getApprovalAmount,
+  } = require("@/utilities/erc20");
   checkTokenAllowances.mockResolvedValue([]);
   executeApprovals.mockResolvedValue([]);
   getApprovalAmount.mockImplementation((amount: bigint) => amount);
@@ -223,7 +220,10 @@ export function setupDefaultMocks() {
   const { getRPCClient } = require("@/utilities/rpcClient");
   getRPCClient.mockResolvedValue(mockPublicClient);
 
-  const { getWalletClientWithFallback, isWalletClientGoodEnough } = require("@/utilities/walletClientFallback");
+  const {
+    getWalletClientWithFallback,
+    isWalletClientGoodEnough,
+  } = require("@/utilities/walletClientFallback");
   getWalletClientWithFallback.mockResolvedValue(mockWalletClient);
   isWalletClientGoodEnough.mockReturnValue(true);
 
@@ -240,7 +240,11 @@ export function setupDefaultMocks() {
 /**
  * Setup mocks for approval needed scenario
  */
-export function setupApprovalNeededMocks(tokenAddress: string, tokenSymbol: string, requiredAmount: bigint) {
+export function setupApprovalNeededMocks(
+  tokenAddress: string,
+  tokenSymbol: string,
+  requiredAmount: bigint
+) {
   const { checkTokenAllowances } = require("@/utilities/erc20");
 
   checkTokenAllowances.mockResolvedValue([
@@ -267,9 +271,7 @@ export function createPayoutAddressGetter(
 /**
  * Mock switch chain function
  */
-export function createMockSwitchChain(
-  shouldSucceed: boolean = true
-): jest.Mock {
+export function createMockSwitchChain(shouldSucceed: boolean = true): jest.Mock {
   const mockSwitchChain = jest.fn();
 
   if (shouldSucceed) {
@@ -284,9 +286,7 @@ export function createMockSwitchChain(
 /**
  * Mock fresh wallet client getter
  */
-export function createMockGetFreshWalletClient(
-  chainId: number = 10
-): jest.Mock {
+export function createMockGetFreshWalletClient(chainId: number = 10): jest.Mock {
   return jest.fn().mockResolvedValue({
     chain: { id: chainId },
     account: { address: "0x1234567890123456789012345678901234567890" },

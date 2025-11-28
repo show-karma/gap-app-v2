@@ -43,4 +43,4 @@ export const SUPPORTED_CONTRACT_NETWORKS = [
   "apechain",
 ] as const;
 
-export type SupportedContractNetwork = typeof SUPPORTED_CONTRACT_NETWORKS[number];
+export type SupportedContractNetwork = (typeof SUPPORTED_CONTRACT_NETWORKS)[number];

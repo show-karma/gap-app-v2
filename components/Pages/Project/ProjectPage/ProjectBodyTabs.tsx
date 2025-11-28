@@ -1,36 +1,27 @@
 /* eslint-disable @next/next/no-img-element */
-import { useProjectStore } from "@/store";
-import { ReadMore } from "@/utilities/ReadMore";
-import {
-  CheckCircleIcon,
-  ExclamationTriangleIcon,
-  MapPinIcon,
-} from "@heroicons/react/24/outline";
-import { Bars4Icon } from "@heroicons/react/24/solid";
-import { FC } from "react";
 
+import { CheckCircleIcon, ExclamationTriangleIcon, MapPinIcon } from "@heroicons/react/24/outline";
+import { Bars4Icon } from "@heroicons/react/24/solid";
+import type { FC } from "react";
 import { BusinessModelIcon } from "@/components/Icons/BusinessModel";
 import { FundsRaisedIcon } from "@/components/Icons/FundsRaised";
 import { PathIcon } from "@/components/Icons/PathIcon";
 import { StageIcon } from "@/components/Icons/StageIcon";
 import { TargetIcon } from "@/components/Icons/Target";
+import { useProjectStore } from "@/store";
+import { ReadMore } from "@/utilities/ReadMore";
 import { ProjectBlocks } from "./ProjectBlocks";
 
 export const InformationBlock: FC = () => {
   const { project } = useProjectStore();
   return (
-    <div
-      id="information-tab"
-      className="flex flex-col gap-6 max-sm:gap-4 flex-1 w-full"
-    >
+    <div id="information-tab" className="flex flex-col gap-6 max-sm:gap-4 flex-1 w-full">
       <ProjectBlocks />
 
       <div className="flex flex-row gap-2 items-start justify-start">
         <Bars4Icon className="w-6 h-6 max-w-6 max-h-[24px] min-w-6 min-h-[24px] text-black dark:text-zinc-100" />
         <div className="flex flex-col gap-1 justify-start items-start flex-1 w-full max-w-full">
-          <p className="font-bold leading-normal text-black dark:text-zinc-100">
-            Description
-          </p>
+          <p className="font-bold leading-normal text-black dark:text-zinc-100">Description</p>
           <ReadMore
             readLessText="Show less"
             readMoreText="Show more"
@@ -46,9 +37,7 @@ export const InformationBlock: FC = () => {
         <div className="flex flex-row gap-2 items-start justify-start">
           <TargetIcon className="w-6 h-6 max-w-6 max-h-[24px] min-w-6 min-h-[24px]  text-black dark:text-zinc-100" />
           <div className="flex flex-col gap-1 justify-start items-start">
-            <p className="font-bold leading-normal text-black dark:text-zinc-100">
-              Mission
-            </p>
+            <p className="font-bold leading-normal text-black dark:text-zinc-100">Mission</p>
             <ReadMore
               readLessText="Show less"
               readMoreText="Show more"
@@ -66,9 +55,7 @@ export const InformationBlock: FC = () => {
         <div className="flex flex-row gap-2 items-start justify-start">
           <ExclamationTriangleIcon className="w-6 h-6 max-w-6 max-h-[24px] min-w-6 min-h-[24px] text-black dark:text-zinc-100" />
           <div className="flex flex-col gap-1 justify-start items-start">
-            <p className="font-bold leading-normal text-black dark:text-zinc-100">
-              Problem
-            </p>
+            <p className="font-bold leading-normal text-black dark:text-zinc-100">Problem</p>
             <ReadMore
               readLessText="Show less"
               readMoreText="Show more"
@@ -85,9 +72,7 @@ export const InformationBlock: FC = () => {
         <div className="flex flex-row gap-2 items-start justify-start">
           <CheckCircleIcon className="w-6 h-6 max-w-6 max-h-[24px] min-w-6 min-h-[24px] text-black dark:text-zinc-100" />
           <div className="flex flex-col gap-1 justify-start items-start">
-            <p className="font-bold leading-normal text-black dark:text-zinc-100">
-              Solution
-            </p>
+            <p className="font-bold leading-normal text-black dark:text-zinc-100">Solution</p>
             <ReadMore
               readLessText="Show less"
               readMoreText="Show more"
@@ -147,9 +132,7 @@ export const InformationBlock: FC = () => {
               <div className="flex flex-row gap-2 max-sm:flex-col items-start justify-start">
                 <div className="flex flex-row gap-3 justify-start items-start">
                   <PathIcon className="w-6 h-6 max-w-6 max-h-[24px] min-w-6 min-h-[24px] text-black dark:text-zinc-100" />
-                  <p className="font-bold leading-normal text-black dark:text-zinc-100">
-                    Path
-                  </p>
+                  <p className="font-bold leading-normal text-black dark:text-zinc-100">Path</p>
                 </div>
                 <p className="font-normal text-base leading-normal text-black dark:text-zinc-100">
                   {project?.details?.data?.pathToTake}
@@ -160,9 +143,7 @@ export const InformationBlock: FC = () => {
               <div className="flex flex-row gap-2 max-sm:flex-col items-start justify-start">
                 <div className="flex flex-row gap-3 justify-start items-start">
                   <StageIcon className="w-6 h-6 max-w-6 max-h-[24px] min-w-6 min-h-[24px] text-black dark:text-zinc-100" />
-                  <p className="font-bold leading-normal text-black dark:text-zinc-100">
-                    Stage
-                  </p>
+                  <p className="font-bold leading-normal text-black dark:text-zinc-100">Stage</p>
                 </div>
                 <p className="font-normal text-base leading-normal text-black dark:text-zinc-100">
                   {project?.details?.data?.stageIn}

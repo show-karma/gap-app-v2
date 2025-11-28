@@ -26,7 +26,7 @@ export const ProfilePicture = ({
   name,
   size = "32",
   className,
-  alt
+  alt,
 }: ProfilePictureProps) => {
   const isValid = isValidUrl(imageURL);
 
@@ -51,4 +51,4 @@ export const ProfilePicture = ({
       />
     </div>
   );
-}; 
+};

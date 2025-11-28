@@ -1,8 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
+
+import { useQueryState } from "nuqs";
+import type { FC } from "react";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { MESSAGES } from "@/utilities/messages";
-import { useQueryState } from "nuqs";
-import { FC } from "react";
 
 export const EmptyImpactScreen: FC = () => {
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
@@ -14,11 +15,7 @@ export const EmptyImpactScreen: FC = () => {
     return (
       <div className="flex h-max flex-1 items-center justify-center rounded border border-gray-200 px-6 py-10">
         <div className="flex max-w-[438px] flex-col items-center justify-center gap-6">
-          <img
-            src="/images/comments.png"
-            alt=""
-            className="h-[185px] w-[438px] object-cover"
-          />
+          <img src="/images/comments.png" alt="" className="h-[185px] w-[438px] object-cover" />
           <div className="flex w-full flex-col items-center justify-center gap-3">
             <p className="text-center text-lg font-semibold text-black dark:text-zinc-100 ">
               Project Impact
@@ -54,11 +51,7 @@ export const EmptyImpactScreen: FC = () => {
       </div>
       <div className="flex w-full items-center justify-center rounded border border-gray-200 px-6 py-10 dark:bg-zinc-900">
         <div className="flex max-w-[438px] flex-col items-center justify-center gap-6">
-          <img
-            src="/images/comments.png"
-            alt=""
-            className="h-[185px] w-[438px] object-cover"
-          />
+          <img src="/images/comments.png" alt="" className="h-[185px] w-[438px] object-cover" />
           <div className="flex w-full flex-col items-center justify-center gap-3">
             <p className="text-center text-lg font-semibold text-black dark:text-white">
               {`Project Impact`}

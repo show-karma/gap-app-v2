@@ -1,10 +1,10 @@
 "use client";
 
-import { FC, useEffect, Fragment } from "react";
 import { Listbox, Transition } from "@headlessui/react";
 import { ChevronDownIcon, ClockIcon, UserIcon } from "@heroicons/react/24/outline";
-import { useApplicationVersionsStore } from "@/store/applicationVersions";
+import { type FC, Fragment, useEffect } from "react";
 import { useApplicationVersions } from "@/hooks/useFundingPlatform";
+import { useApplicationVersionsStore } from "@/store/applicationVersions";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 
@@ -45,25 +45,21 @@ const ApplicationVersionSelector: FC<ApplicationVersionSelectorProps> = ({
 
   if (error) {
     return (
-      <div className="text-sm text-red-600 dark:text-red-400">
-        Failed to load version history
-      </div>
+      <div className="text-sm text-red-600 dark:text-red-400">Failed to load version history</div>
     );
   }
 
   if (versions.length === 0) {
     return (
-      <div className="text-sm text-gray-500 dark:text-gray-400">
-        No version history available
-      </div>
+      <div className="text-sm text-gray-500 dark:text-gray-400">No version history available</div>
     );
   }
 
   return (
     <div className="w-full">
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+      <div className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
         Select Version
-      </label>
+      </div>
       <Listbox value={selectedVersionId} onChange={handleVersionChange}>
         <div className="relative">
           <Listbox.Button className="relative w-full cursor-pointer rounded-lg bg-white dark:bg-zinc-800 border border-gray-300 dark:border-gray-600 py-2.5 pl-3 pr-10 text-left shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm">
@@ -72,10 +68,12 @@ const ApplicationVersionSelector: FC<ApplicationVersionSelectorProps> = ({
               <span className="block truncate">
                 {selectedVersion ? (
                   <>
-                    Version {selectedVersion.versionNumber} - {formatDate(selectedVersion.createdAt)}
+                    Version {selectedVersion.versionNumber} -{" "}
+                    {formatDate(selectedVersion.createdAt)}
                     {selectedVersion.submittedBy && (
                       <span className="ml-2 text-gray-500 dark:text-gray-400">
-                        by {selectedVersion.submittedBy.slice(0, 6)}...{selectedVersion.submittedBy.slice(-4)}
+                        by {selectedVersion.submittedBy.slice(0, 6)}...
+                        {selectedVersion.submittedBy.slice(-4)}
                       </span>
                     )}
                   </>
@@ -102,7 +100,9 @@ const ApplicationVersionSelector: FC<ApplicationVersionSelectorProps> = ({
                   className={({ active }) =>
                     cn(
                       "relative cursor-pointer select-none py-3 pl-3 pr-9",
-                      active ? "bg-blue-50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-200" : "text-gray-900 dark:text-gray-100"
+                      active
+                        ? "bg-blue-50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-200"
+                        : "text-gray-900 dark:text-gray-100"
                     )
                   }
                   value={version.id}
@@ -128,20 +128,28 @@ const ApplicationVersionSelector: FC<ApplicationVersionSelectorProps> = ({
                                 {" • "}
                                 <span className="inline-flex items-center">
                                   <UserIcon className="h-3 w-3 mr-1 inline" />
-                                  {version.submittedBy.slice(0, 6)}...{version.submittedBy.slice(-4)}
+                                  {version.submittedBy.slice(0, 6)}...
+                                  {version.submittedBy.slice(-4)}
                                 </span>
                               </>
                             )}
                           </div>
                           {version.hasChanges && (
                             <div className="mt-1 text-xs text-gray-500 dark:text-gray-500">
-                              {version.changeCount} change{version.changeCount !== 1 ? 's' : ''}
-                              {version.diffFromPrevious && version.diffFromPrevious.changedFields.length > 0 && (
-                                <span className="ml-1 italic">
-                                  ({version.diffFromPrevious.changedFields.slice(0, 2).map(f => f.fieldLabel).join(', ')}
-                                  {version.diffFromPrevious.changedFields.length > 2 && `, +${version.diffFromPrevious.changedFields.length - 2} more`})
-                                </span>
-                              )}
+                              {version.changeCount} change{version.changeCount !== 1 ? "s" : ""}
+                              {version.diffFromPrevious &&
+                                version.diffFromPrevious.changedFields.length > 0 && (
+                                  <span className="ml-1 italic">
+                                    (
+                                    {version.diffFromPrevious.changedFields
+                                      .slice(0, 2)
+                                      .map((f) => f.fieldLabel)
+                                      .join(", ")}
+                                    {version.diffFromPrevious.changedFields.length > 2 &&
+                                      `, +${version.diffFromPrevious.changedFields.length - 2} more`}
+                                    )
+                                  </span>
+                                )}
                             </div>
                           )}
                         </div>

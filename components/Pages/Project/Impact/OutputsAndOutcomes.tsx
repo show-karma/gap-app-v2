@@ -1,43 +1,40 @@
 "use client";
 
-import { Button } from "@/components/Utilities/Button";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
-import { ImpactIndicatorWithData } from "@/types/impactMeasurement";
-import fetchData from "@/utilities/fetchData";
-import { formatDate } from "@/utilities/formatDate";
-import { INDEXER } from "@/utilities/indexer";
-import { MESSAGES } from "@/utilities/messages";
-import { urlRegex } from "@/utilities/regexs/urlRegex";
-import { cn } from "@/utilities/tailwind";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { AreaChart, Card, Title } from "@tremor/react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
+import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
+import { Button } from "@/components/Utilities/Button";
+import { useImpactAnswers } from "@/hooks/useImpactAnswers";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useCommunityAdminStore } from "@/store/communityAdmin";
+import formatCurrency from "@/utilities/formatCurrency";
+import { formatDate } from "@/utilities/formatDate";
+import { MESSAGES } from "@/utilities/messages";
+import { urlRegex } from "@/utilities/regexs/urlRegex";
+import { cn } from "@/utilities/tailwind";
 import { prepareChartData } from "../../Communities/Impact/ImpactCharts";
 import { GrantsOutputsLoading } from "../Loading/Grants/Outputs";
-import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
-import { useImpactAnswers } from "@/hooks/useImpactAnswers";
 import { GroupedLinks } from "./GroupedLinks";
-import formatCurrency from "@/utilities/formatCurrency";
 
 // Function to determine indicator sorting priority
 const getIndicatorSortPriority = (indicatorName: string): number => {
   const name = indicatorName.toLowerCase();
 
   // Priority 0: GitHub indicators (highest priority - appear first)
-  if (name.includes('github') || name.includes('git')) {
+  if (name.includes("github") || name.includes("git")) {
     return 0;
   }
 
   // Priority 1: Blockchain/On-chain indicators
   if (
-    name.includes('unique users') ||
-    name.includes('unique user') ||
-    name.includes('no. of transactions') ||
-    name.includes('transaction') ||
-    name.includes('chain')
+    name.includes("unique users") ||
+    name.includes("unique user") ||
+    name.includes("no. of transactions") ||
+    name.includes("transaction") ||
+    name.includes("chain")
   ) {
     return 1;
   }
@@ -95,14 +92,11 @@ export const OutputsAndOutcomes = () => {
   const { project, isProjectOwner } = useProjectStore();
 
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isCommunityAdmin = useCommunityAdminStore(
-    (state) => state.isCommunityAdmin
-  );
+  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
 
   const { isConnected } = useAccount();
 
-  const isAuthorized =
-    isConnected && (isProjectOwner || isContractOwner || isCommunityAdmin);
+  const isAuthorized = isConnected && (isProjectOwner || isContractOwner || isCommunityAdmin);
 
   const [forms, setForms] = useState<OutputForm[]>([]);
   const [selectedPoint, setSelectedPoint] = useState<{
@@ -128,9 +122,7 @@ export const OutputsAndOutcomes = () => {
       return;
     }
 
-    setForms((prev) =>
-      prev.map((f) => (f.id === id ? { ...f, isSaving: true } : f))
-    );
+    setForms((prev) => prev.map((f) => (f.id === id ? { ...f, isSaving: true } : f)));
 
     try {
       await submitImpactAnswer({
@@ -142,24 +134,24 @@ export const OutputsAndOutcomes = () => {
         prev.map((f) =>
           f.id === id
             ? {
-              ...f,
-              isSaving: false,
-              isEdited: false,
-            }
+                ...f,
+                isSaving: false,
+                isEdited: false,
+              }
             : f
         )
       );
 
       handleCancel();
-    } catch (error) {
+    } catch (_error) {
       setForms((prev) =>
         prev.map((f) =>
           f.id === id
             ? {
-              ...f,
-              isSaving: false,
-              isEdited: true,
-            }
+                ...f,
+                isSaving: false,
+                isEdited: true,
+              }
             : f
         )
       );
@@ -176,17 +168,17 @@ export const OutputsAndOutcomes = () => {
       prev.map((f) =>
         f.id === id
           ? {
-            ...f,
-            isEdited: true,
-            datapoints: f.datapoints.map((datapoint, i) => {
-              if (i !== index) return datapoint;
+              ...f,
+              isEdited: true,
+              datapoints: f.datapoints.map((datapoint, i) => {
+                if (i !== index) return datapoint;
 
-              return {
-                ...datapoint,
-                [field]: value,
-              };
-            }),
-          }
+                return {
+                  ...datapoint,
+                  [field]: value,
+                };
+              }),
+            }
           : f
       )
     );
@@ -195,13 +187,16 @@ export const OutputsAndOutcomes = () => {
   useEffect(() => {
     if (impactAnswers.length > 0) {
       // Preserve editing state for forms that already exist
-      const existingForms = forms.reduce((acc, form) => {
-        acc[form.id] = {
-          isEditing: form.isEditing || false,
-          isEdited: form.isEdited || false,
-        };
-        return acc;
-      }, {} as Record<string, { isEditing: boolean; isEdited: boolean }>);
+      const existingForms = forms.reduce(
+        (acc, form) => {
+          acc[form.id] = {
+            isEditing: form.isEditing || false,
+            isEdited: form.isEdited || false,
+          };
+          return acc;
+        },
+        {} as Record<string, { isEditing: boolean; isEdited: boolean }>
+      );
 
       setForms(
         impactAnswers.map((item) => ({
@@ -224,12 +219,10 @@ export const OutputsAndOutcomes = () => {
         }))
       );
     }
-  }, [impactAnswers]);
+  }, [impactAnswers, forms.reduce]);
 
   const handleEditClick = (id: string) => {
-    setForms((prev) =>
-      prev.map((f) => (f.id === id ? { ...f, isEditing: true } : f))
-    );
+    setForms((prev) => prev.map((f) => (f.id === id ? { ...f, isEditing: true } : f)));
   };
 
   const handleCancel = async () => {
@@ -267,17 +260,17 @@ export const OutputsAndOutcomes = () => {
       prev.map((f) =>
         f.id === id
           ? {
-            ...f,
-            datapoints: [
-              ...f.datapoints,
-              {
-                value: 0,
-                proof: "",
-                startDate: new Date().toISOString(),
-                endDate: new Date().toISOString(),
-              },
-            ],
-          }
+              ...f,
+              datapoints: [
+                ...f.datapoints,
+                {
+                  value: 0,
+                  proof: "",
+                  startDate: new Date().toISOString(),
+                  endDate: new Date().toISOString(),
+                },
+              ],
+            }
           : f
       )
     );
@@ -291,10 +284,10 @@ export const OutputsAndOutcomes = () => {
       prev.map((f) =>
         f.id === id
           ? {
-            ...f,
-            datapoints: [...f.datapoints].filter((_, i) => i !== index),
-            isEdited: true,
-          }
+              ...f,
+              datapoints: [...f.datapoints].filter((_, i) => i !== index),
+              isEdited: true,
+            }
           : f
       )
     );
@@ -307,7 +300,7 @@ export const OutputsAndOutcomes = () => {
     if (unitOfMeasure === "int") {
       return !Number.isInteger(Number(value));
     }
-    return isNaN(value) || value === 0;
+    return Number.isNaN(value) || value === 0;
   };
 
   const isInvalidTimestamp = (id: string, timestamp: string) => {
@@ -339,9 +332,7 @@ export const OutputsAndOutcomes = () => {
       if (!datapoint.endDate && !datapoint.outputTimestamp) return true;
 
       const matchingTimestamps = form.datapoints.filter((dp) => {
-        const dpDate = formatDate(
-          new Date(dp.endDate || dp.outputTimestamp || "")
-        );
+        const dpDate = formatDate(new Date(dp.endDate || dp.outputTimestamp || ""));
         const datapointDate = formatDate(
           new Date(datapoint.endDate || datapoint.outputTimestamp || "")
         );
@@ -351,11 +342,7 @@ export const OutputsAndOutcomes = () => {
       return matchingTimestamps.length > 1;
     });
 
-  const hasInvalidDatesSameRow = (
-    id: string,
-    startDate: string,
-    endDate: string
-  ) => {
+  const hasInvalidDatesSameRow = (id: string, startDate: string, endDate: string) => {
     const form = forms.find((f) => f.id === id);
     if (!form) return false;
     return new Date(startDate) > new Date(endDate);
@@ -384,10 +371,8 @@ export const OutputsAndOutcomes = () => {
                   new Date(b.endDate || new Date().toISOString()).getTime() -
                   new Date(a.endDate || new Date().toISOString()).getTime()
               )[0]?.endDate;
-            const allOutputs = filteredOutputs.find(
-              (subItem) => subItem.id === item.id
-            );
-            const outputs = allOutputs?.datapoints.map((datapoint, index) => ({
+            const allOutputs = filteredOutputs.find((subItem) => subItem.id === item.id);
+            const outputs = allOutputs?.datapoints.map((datapoint, _index) => ({
               value: datapoint.value,
               proof: datapoint.proof,
               timestamp: datapoint.endDate || new Date().toISOString(),
@@ -397,8 +382,7 @@ export const OutputsAndOutcomes = () => {
               (output) => output.proof && urlRegex.test(output.proof)
             );
 
-            const proofs =
-              outputsWithProof?.map((output) => output.proof) || [];
+            const proofs = outputsWithProof?.map((output) => output.proof) || [];
 
             return (
               <div
@@ -410,19 +394,14 @@ export const OutputsAndOutcomes = () => {
                     <h3 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
                       {item.name}
                     </h3>
-                    <p className="text-sm text-gray-500 dark:text-zinc-400">
-                      {item.description}
-                    </p>
+                    <p className="text-sm text-gray-500 dark:text-zinc-400">{item.description}</p>
                     <div className="flex flex-row gap-2 items-center">
                       {lastUpdated ? (
                         <span className="text-sm text-gray-500 dark:text-zinc-400">
-                          Last updated{" "}
-                          {formatDate(new Date(lastUpdated), "UTC")}
+                          Last updated {formatDate(new Date(lastUpdated), "UTC")}
                         </span>
                       ) : null}
-                      {autosyncedIndicators.find(
-                        (i) => i.name === item.name
-                      ) && (
+                      {autosyncedIndicators.find((i) => i.name === item.name) && (
                         <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 rounded-full">
                           Auto-synced
                         </span>
@@ -444,65 +423,41 @@ export const OutputsAndOutcomes = () => {
                           <AreaChart
                             className="h-48 mt-4"
                             data={prepareChartData(
-                              item.datapoints.map((datapoint: any) =>
-                                Number(datapoint.value)
-                              ),
+                              item.datapoints.map((datapoint: any) => Number(datapoint.value)),
                               item.datapoints.map(
-                                (datapoint: any) =>
-                                  datapoint.endDate || new Date().toISOString()
+                                (datapoint: any) => datapoint.endDate || new Date().toISOString()
                               ),
                               item.name,
                               undefined,
-                              item.datapoints.map(
-                                (datapoint: any) => datapoint.proof
-                              )
+                              item.datapoints.map((datapoint: any) => datapoint.proof)
                             )}
                             index="date"
                             categories={[item.name]}
                             colors={["blue"]}
-                            valueFormatter={(value) =>
-                              `${formatCurrency(value)}`
-                            }
+                            valueFormatter={(value) => `${formatCurrency(value)}`}
                             showLegend={false}
                             noDataText="Awaiting grantees to submit values"
                             onValueChange={(v) => {
                               if (!v) {
-                                console.log(
-                                  "No value received from chart click"
-                                );
                                 return;
                               }
-                              console.log("Chart click data:", v);
 
-                              const selectedItem = filteredOutputs.find(
-                                (i) => i.id === item.id
-                              );
+                              const selectedItem = filteredOutputs.find((i) => i.id === item.id);
                               if (!selectedItem) {
-                                console.log("Could not find matching item");
                                 return;
                               }
 
                               // Find the exact datapoint that matches this date and value
-                              const exactDatapoint = item.datapoints.find(
-                                (dp: any) => {
-                                  const dpDate = formatDate(
-                                    new Date(
-                                      dp.endDate || new Date().toISOString()
-                                    ),
-                                    "UTC"
-                                  );
-                                  return (
-                                    dpDate === v.date &&
-                                    Number(dp.value) ===
-                                    Number(v[selectedItem.name])
-                                  );
-                                }
-                              );
-
-                              console.log(
-                                "Found matching datapoint:",
-                                exactDatapoint
-                              );
+                              const exactDatapoint = item.datapoints.find((dp: any) => {
+                                const dpDate = formatDate(
+                                  new Date(dp.endDate || new Date().toISOString()),
+                                  "UTC"
+                                );
+                                return (
+                                  dpDate === v.date &&
+                                  Number(dp.value) === Number(v[selectedItem.name])
+                                );
+                              });
 
                               setSelectedPoint({
                                 itemId: item.id,
@@ -530,8 +485,7 @@ export const OutputsAndOutcomes = () => {
                             (i) => i.name === item.name
                           );
                           const displayTable =
-                            (!isAutosynced && item.hasData) ||
-                            (!isAutosynced && form?.isEditing);
+                            (!isAutosynced && item.hasData) || (!isAutosynced && form?.isEditing);
                           return displayTable;
                         })() ? (
                           <div className="overflow-y-auto overflow-x-auto rounded">
@@ -557,17 +511,13 @@ export const OutputsAndOutcomes = () => {
                                 {item.datapoints.map((datapoint: any, index: number) => (
                                   <tr key={index}>
                                     <td className="px-4 py-2">
-                                      {!autosyncedIndicators.find(
-                                        (i) => i.name === item.name
-                                      ) && form?.isEditing ? (
+                                      {!autosyncedIndicators.find((i) => i.name === item.name) &&
+                                      form?.isEditing ? (
                                         <div className="flex flex-col gap-1">
                                           <div className="flex items-center gap-2">
                                             <input
                                               type={"number"}
-                                              value={
-                                                form?.datapoints?.[index]
-                                                  ?.value || ""
-                                              }
+                                              value={form?.datapoints?.[index]?.value || ""}
                                               onChange={(e) =>
                                                 handleInputChange(
                                                   item.id,
@@ -579,10 +529,7 @@ export const OutputsAndOutcomes = () => {
                                               className={cn(
                                                 "w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:text-zinc-100",
                                                 isInvalidValue(
-                                                  Number(
-                                                    form?.datapoints?.[index]
-                                                      ?.value
-                                                  ),
+                                                  Number(form?.datapoints?.[index]?.value),
                                                   form?.unitOfMeasure || "int"
                                                 )
                                                   ? "border-2 border-red-500"
@@ -594,12 +541,10 @@ export const OutputsAndOutcomes = () => {
                                             </span>
                                           </div>
                                           {form?.datapoints?.[index]?.value &&
-                                            isInvalidValue(
-                                              Number(
-                                                form?.datapoints?.[index]?.value
-                                              ),
-                                              form?.unitOfMeasure || "int"
-                                            ) ? (
+                                          isInvalidValue(
+                                            Number(form?.datapoints?.[index]?.value),
+                                            form?.unitOfMeasure || "int"
+                                          ) ? (
                                             <span className="text-xs text-red-500">
                                               {form?.unitOfMeasure === "int"
                                                 ? "Please enter an integer number"
@@ -609,8 +554,7 @@ export const OutputsAndOutcomes = () => {
                                         </div>
                                       ) : (
                                         <span className="text-gray-900 dark:text-zinc-100">
-                                          {form?.datapoints?.[index]?.value ||
-                                            "-"}
+                                          {form?.datapoints?.[index]?.value || "-"}
                                         </span>
                                       )}
                                     </td>
@@ -619,12 +563,8 @@ export const OutputsAndOutcomes = () => {
                                         <input
                                           type="date"
                                           value={
-                                            form?.datapoints?.[
-                                              index
-                                            ]?.startDate?.split("T")[0] ||
-                                            new Date()
-                                              .toISOString()
-                                              .split("T")[0]
+                                            form?.datapoints?.[index]?.startDate?.split("T")[0] ||
+                                            new Date().toISOString().split("T")[0]
                                           }
                                           onChange={(e) =>
                                             handleInputChange(
@@ -638,8 +578,7 @@ export const OutputsAndOutcomes = () => {
                                             "w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:text-zinc-100",
                                             hasInvalidDatesSameRow(
                                               item.id,
-                                              form?.datapoints?.[index]
-                                                ?.startDate,
+                                              form?.datapoints?.[index]?.startDate,
                                               form?.datapoints?.[index]?.endDate
                                             ) && "border-2 border-red-500"
                                           )}
@@ -648,13 +587,9 @@ export const OutputsAndOutcomes = () => {
                                         <span className="text-gray-900 dark:text-zinc-100">
                                           {form?.datapoints?.[index]?.startDate
                                             ? formatDate(
-                                              new Date(
-                                                form.datapoints?.[
-                                                  index
-                                                ].startDate
-                                              ),
-                                              "UTC"
-                                            )
+                                                new Date(form.datapoints?.[index].startDate),
+                                                "UTC"
+                                              )
                                             : "-"}
                                         </span>
                                       )}
@@ -664,15 +599,11 @@ export const OutputsAndOutcomes = () => {
                                         <input
                                           type="date"
                                           value={
-                                            form?.datapoints?.[
-                                              index
-                                            ]?.endDate?.split("T")[0] ||
-                                            form?.datapoints?.[
-                                              index
-                                            ]?.outputTimestamp?.split("T")[0] ||
-                                            new Date()
-                                              .toISOString()
-                                              .split("T")[0]
+                                            form?.datapoints?.[index]?.endDate?.split("T")[0] ||
+                                            form?.datapoints?.[index]?.outputTimestamp?.split(
+                                              "T"
+                                            )[0] ||
+                                            new Date().toISOString().split("T")[0]
                                           }
                                           onChange={(e) =>
                                             handleInputChange(
@@ -686,40 +617,30 @@ export const OutputsAndOutcomes = () => {
                                             "w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:text-zinc-100",
                                             isInvalidTimestamp(
                                               item.id,
-                                              form?.datapoints?.[index]
-                                                ?.endDate ||
-                                              form?.datapoints?.[index]
-                                                ?.outputTimestamp ||
-                                              ""
+                                              form?.datapoints?.[index]?.endDate ||
+                                                form?.datapoints?.[index]?.outputTimestamp ||
+                                                ""
                                             ) ||
-                                            (hasInvalidDatesSameRow(
-                                              item.id,
-                                              form?.datapoints?.[index]
-                                                ?.startDate,
-                                              form?.datapoints?.[index]
-                                                ?.endDate
-                                            ) &&
-                                              "border-2 border-red-500")
+                                              (hasInvalidDatesSameRow(
+                                                item.id,
+                                                form?.datapoints?.[index]?.startDate,
+                                                form?.datapoints?.[index]?.endDate
+                                              ) &&
+                                                "border-2 border-red-500")
                                           )}
                                         />
                                       ) : (
                                         <span className="text-gray-900 dark:text-zinc-100">
                                           {form?.datapoints?.[index]?.endDate
                                             ? formatDate(
-                                              new Date(
-                                                form.datapoints?.[
-                                                  index
-                                                ].endDate
-                                              ),
-                                              "UTC"
-                                            )
-                                            : datapoint.outputTimestamp
-                                              ? formatDate(
-                                                new Date(
-                                                  datapoint.outputTimestamp
-                                                ),
+                                                new Date(form.datapoints?.[index].endDate),
                                                 "UTC"
                                               )
+                                            : datapoint.outputTimestamp
+                                              ? formatDate(
+                                                  new Date(datapoint.outputTimestamp),
+                                                  "UTC"
+                                                )
                                               : "-"}
                                         </span>
                                       )}
@@ -728,10 +649,7 @@ export const OutputsAndOutcomes = () => {
                                       {form?.isEditing && isAuthorized ? (
                                         <input
                                           type="text"
-                                          value={
-                                            form?.datapoints?.[index]?.proof ||
-                                            ""
-                                          }
+                                          value={form?.datapoints?.[index]?.proof || ""}
                                           onChange={(e) =>
                                             handleInputChange(
                                               item.id,
@@ -744,25 +662,24 @@ export const OutputsAndOutcomes = () => {
                                         />
                                       ) : form?.datapoints?.[index]?.proof ? (
                                         <div className="flex flex-col gap-1">
-                                          {parseProofUrls(
-                                            form?.datapoints?.[index]?.proof
-                                          ).length > 0 ? (
-                                            parseProofUrls(
-                                              form?.datapoints?.[index]?.proof
-                                            ).map((url, urlIndex) => (
-                                              <a
-                                                key={urlIndex}
-                                                href={url}
-                                                target="_blank"
-                                                className="text-blue-500 underline dark:text-blue-400 truncate max-w-xs"
-                                              >
-                                                {url}
-                                              </a>
-                                            ))
+                                          {parseProofUrls(form?.datapoints?.[index]?.proof).length >
+                                          0 ? (
+                                            parseProofUrls(form?.datapoints?.[index]?.proof).map(
+                                              (url, urlIndex) => (
+                                                <a
+                                                  key={urlIndex}
+                                                  href={url}
+                                                  target="_blank"
+                                                  className="text-blue-500 underline dark:text-blue-400 truncate max-w-xs"
+                                                >
+                                                  {url}
+                                                </a>
+                                              )
+                                            )
                                           ) : (
                                             <span className="text-gray-900 dark:text-zinc-100">
-                                              {form?.datapoints?.[index]
-                                                ?.proof || "No proof provided"}
+                                              {form?.datapoints?.[index]?.proof ||
+                                                "No proof provided"}
                                             </span>
                                           )}
                                         </div>
@@ -774,11 +691,7 @@ export const OutputsAndOutcomes = () => {
                                     </td>
                                     <td className="px-4 py-2">
                                       {form?.isEditing && isAuthorized ? (
-                                        <button
-                                          onClick={() =>
-                                            handleDeleteEntry(item.id, index)
-                                          }
-                                        >
+                                        <button onClick={() => handleDeleteEntry(item.id, index)}>
                                           <TrashIcon className="w-4 h-4 text-red-500" />
                                         </button>
                                       ) : null}
@@ -788,9 +701,7 @@ export const OutputsAndOutcomes = () => {
                                 {form?.isEditing && isAuthorized && (
                                   <tr>
                                     <td className="px-4 py-2">
-                                      <Button
-                                        onClick={() => handleAddEntry(item.id)}
-                                      >
+                                      <Button onClick={() => handleAddEntry(item.id)}>
                                         Add new entry
                                       </Button>
                                     </td>
@@ -852,9 +763,7 @@ export const OutputsAndOutcomes = () => {
         </div>
       ) : (
         <div className="w-full text-center py-12 bg-white dark:bg-zinc-800/50 rounded-md border border-gray-200 dark:border-zinc-700">
-          <p className="text-gray-600 dark:text-zinc-300">
-            {MESSAGES.GRANT.OUTPUTS.EMPTY}
-          </p>
+          <p className="text-gray-600 dark:text-zinc-300">{MESSAGES.GRANT.OUTPUTS.EMPTY}</p>
         </div>
       )}
 
@@ -862,9 +771,11 @@ export const OutputsAndOutcomes = () => {
       {selectedPoint && (
         <div className="fixed inset-0 flex items-center justify-center z-50">
           {/* Modal backdrop */}
-          <div
-            className="fixed inset-0 bg-black/50 dark:bg-black/70"
+          <button
+            type="button"
+            className="fixed inset-0 bg-black/50 dark:bg-black/70 border-none p-0 cursor-pointer"
             onClick={() => setSelectedPoint(null)}
+            aria-label="Close modal"
           />
 
           {/* Modal content */}
@@ -884,18 +795,14 @@ export const OutputsAndOutcomes = () => {
 
               <div className="space-y-3">
                 <div>
-                  <label className="text-sm font-medium text-gray-500 dark:text-zinc-400">
-                    Value
-                  </label>
+                  <div className="text-sm font-medium text-gray-500 dark:text-zinc-400">Value</div>
                   <p className="text-base text-gray-900 dark:text-zinc-100">
                     {selectedPoint.data.value}
                   </p>
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium text-gray-500 dark:text-zinc-400">
-                    Date
-                  </label>
+                  <div className="text-sm font-medium text-gray-500 dark:text-zinc-400">Date</div>
                   <p className="text-base text-gray-900 dark:text-zinc-100">
                     {selectedPoint.data.date}
                   </p>
@@ -903,28 +810,25 @@ export const OutputsAndOutcomes = () => {
 
                 {selectedPoint.data.proof && (
                   <div>
-                    <label className="text-sm font-medium text-gray-500 dark:text-zinc-400">
+                    <div className="text-sm font-medium text-gray-500 dark:text-zinc-400">
                       Proof
-                    </label>
+                    </div>
                     <div className="mt-1 flex flex-col gap-2">
                       {parseProofUrls(selectedPoint.data.proof).length > 0 ? (
-                        parseProofUrls(selectedPoint.data.proof).map(
-                          (url, index) => (
-                            <a
-                              key={index}
-                              href={url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:hover:bg-blue-500 transition-colors"
-                            >
-                              View Proof{" "}
-                              {parseProofUrls(selectedPoint.data.proof).length >
-                                1
-                                ? `#${index + 1}`
-                                : ""}
-                            </a>
-                          )
-                        )
+                        parseProofUrls(selectedPoint.data.proof).map((url, index) => (
+                          <a
+                            key={index}
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:hover:bg-blue-500 transition-colors"
+                          >
+                            View Proof{" "}
+                            {parseProofUrls(selectedPoint.data.proof).length > 1
+                              ? `#${index + 1}`
+                              : ""}
+                          </a>
+                        ))
                       ) : (
                         <span className="text-gray-500 dark:text-zinc-400">
                           {selectedPoint.data.proof}

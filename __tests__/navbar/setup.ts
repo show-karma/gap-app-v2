@@ -3,8 +3,8 @@
  * Configures MSW, test environment, and global utilities
  */
 
-import React from "react";
 import { setupServer } from "msw/node";
+import React from "react";
 import { handlers } from "./mocks/handlers";
 import "@testing-library/jest-dom";
 import { toHaveNoViolations } from "jest-axe";
@@ -40,7 +40,6 @@ beforeAll(() => {
 
   // Mock IntersectionObserver
   global.IntersectionObserver = class IntersectionObserver {
-    constructor() {}
     disconnect() {}
     observe() {}
     takeRecords() {
@@ -51,7 +50,6 @@ beforeAll(() => {
 
   // Mock ResizeObserver
   global.ResizeObserver = class ResizeObserver {
-    constructor() {}
     disconnect() {}
     observe() {}
     unobserve() {}
@@ -129,7 +127,7 @@ jest.mock("next/image", () => ({
 // Mock next/link
 jest.mock("next/link", () => ({
   __esModule: true,
-  default: ({ children, href, onClick, ...props }: any) => 
+  default: ({ children, href, onClick, ...props }: any) =>
     React.createElement("a", { href, onClick, ...props }, children),
 }));
 
@@ -206,7 +204,7 @@ export const mockThemeState = {
     themes: ["light", "dark"],
     systemTheme: "light",
     resolvedTheme: "light",
-  }
+  },
 };
 
 jest.mock("next-themes", () => ({
@@ -276,7 +274,7 @@ export const mockAuthState = {
     logout: jest.fn(),
     disconnect: jest.fn(),
     getAccessToken: jest.fn().mockResolvedValue("mock-token"),
-  }
+  },
 };
 
 jest.mock("@/hooks/useAuth", () => ({
@@ -341,8 +339,12 @@ jest.mock("@/utilities/gapIndexerApi", () => ({
  * Mock external link component
  */
 jest.mock("@/components/Utilities/ExternalLink", () => ({
-  ExternalLink: ({ children, href, ...props }: any) => 
-    React.createElement("a", { href, target: "_blank", rel: "noopener noreferrer", ...props }, children),
+  ExternalLink: ({ children, href, ...props }: any) =>
+    React.createElement(
+      "a",
+      { href, target: "_blank", rel: "noopener noreferrer", ...props },
+      children
+    ),
 }));
 
 /**
@@ -427,4 +429,3 @@ export const setViewportSize = (width: number, height: number) => {
  * Export server for test file usage
  */
 export { server as mswServer };
-

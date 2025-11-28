@@ -1,28 +1,25 @@
 "use client";
-/* eslint-disable @next/next/no-img-element */
-import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
-import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
-import {
-  GrantProgram,
-  ProgramList,
-} from "@/components/Pages/ProgramRegistry/ProgramList";
-import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
-import Pagination from "@/components/Utilities/Pagination";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
 import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
 import { CheckIcon } from "@heroicons/react/24/solid";
 import { useQuery } from "@tanstack/react-query";
 import debounce from "lodash.debounce";
 import { useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
-import React, { Dispatch, useEffect, useState } from "react";
-
+import type React from "react";
+import { type Dispatch, useEffect, useState } from "react";
+/* eslint-disable @next/next/no-img-element */
+import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
+import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
+import { type GrantProgram, ProgramList } from "@/components/Pages/ProgramRegistry/ProgramList";
+import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
 import { errorManager } from "@/components/Utilities/errorManager";
+import Pagination from "@/components/Utilities/Pagination";
+import { layoutTheme } from "@/src/helper/theme";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { cn } from "@/utilities/tailwind";
 import { LoadingProgramTable } from "./Loading/Programs";
 import { ProgramHeader } from "./ProgramHeader";
-import { cn } from "@/utilities/tailwind";
-import { layoutTheme } from "@/src/helper/theme";
 
 const statuses = ["Active", "Inactive"];
 
@@ -37,12 +34,12 @@ export const ProgramsExplorer = () => {
   const defaultGrantTypes = ((searchParams.get("grantTypes") as string) || "")
     .split(",")
     .filter((grantType) => grantType.trim());
-  const defaultGrantSize = searchParams.get("grantSize")
+  const _defaultGrantSize = searchParams.get("grantSize")
     ? ((searchParams.get("grantSize") as string) || "")
-      .split(",")
-      .filter((grantType) => grantType.trim())
-      .map((item) => (isNaN(Number(item)) ? 0 : +item))
-      .slice(0, 2)
+        .split(",")
+        .filter((grantType) => grantType.trim())
+        .map((item) => (Number.isNaN(Number(item)) ? 0 : +item))
+        .slice(0, 2)
     : registryHelper.grantSizes;
 
   const defaultCategories = ((searchParams.get("categories") as string) || "")
@@ -55,7 +52,7 @@ export const ProgramsExplorer = () => {
   const [loading, setLoading] = useState(true);
   const pageLimit = 10;
 
-  const [selectedCategory, setSelectedCategory] = useQueryState("categories", {
+  const [selectedCategory, _setSelectedCategory] = useQueryState("categories", {
     defaultValue: defaultCategories,
     serialize: (value) => (value.length ? value?.join(",") : ""),
     parse: (value) => (value.length > 0 ? value.split(",") : []),
@@ -66,7 +63,7 @@ export const ProgramsExplorer = () => {
   const [page, setPage] = useQueryState("page", {
     defaultValue: 1,
     serialize: (value) => value.toString(),
-    parse: (value) => parseInt(value),
+    parse: (value) => parseInt(value, 10),
   });
 
   const [searchInput, setSearchInput] = useQueryState("name", {
@@ -79,31 +76,23 @@ export const ProgramsExplorer = () => {
     serialize: (value) => (value.length ? value?.join(",") : ""),
     parse: (value) => (value.length > 0 ? value.split(",") : []),
   });
-  const [selectedEcosystems, setSelectedEcosystems] = useQueryState(
-    "ecosystems",
-    {
-      defaultValue: defaultEcosystems,
-      serialize: (value) => (value.length ? value?.join(",") : ""),
-      parse: (value) => (value.length > 0 ? value.split(",") : []),
-    }
-  );
-  const [selectedGrantTypes, setSelectedGrantTypes] = useQueryState(
-    "grantTypes",
-    {
-      defaultValue: defaultGrantTypes,
-      serialize: (value) => (value.length ? value?.join(",") : ""),
-      parse: (value) => (value.length > 0 ? value.split(",") : []),
-    }
-  );
+  const [selectedEcosystems, setSelectedEcosystems] = useQueryState("ecosystems", {
+    defaultValue: defaultEcosystems,
+    serialize: (value) => (value.length ? value?.join(",") : ""),
+    parse: (value) => (value.length > 0 ? value.split(",") : []),
+  });
+  const [selectedGrantTypes, setSelectedGrantTypes] = useQueryState("grantTypes", {
+    defaultValue: defaultGrantTypes,
+    serialize: (value) => (value.length ? value?.join(",") : ""),
+    parse: (value) => (value.length > 0 ? value.split(",") : []),
+  });
 
   const [programId, setProgramId] = useQueryState("programId", {
     defaultValue: defaultProgramId,
     throttleMs: 500,
   });
 
-  const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(
-    null
-  );
+  const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(null);
 
   const debouncedSearch = debounce((value: string) => {
     setPage(1);
@@ -129,8 +118,6 @@ export const ProgramsExplorer = () => {
 
   const pageSize = 10;
 
-
-
   const { data, isLoading } = useQuery({
     queryKey: [
       "grantPrograms",
@@ -145,18 +132,15 @@ export const ProgramsExplorer = () => {
     queryFn: async () => {
       const [res, error] = await fetchData(
         INDEXER.REGISTRY.GET_ALL +
-        `?limit=${pageSize}&offset=${(page - 1) * pageSize}${searchInput ? `&name=${searchInput}` : ""
-        }${selectedGrantTypes.length ? `&grantTypes=${selectedGrantTypes}` : ""
-        }${status ? `&status=${status}` : ""}${selectedNetworks.length
-          ? `&networks=${selectedNetworks.join(",")}`
-          : ""
-        }${selectedEcosystems.length
-          ? `&ecosystems=${selectedEcosystems.join(",")}`
-          : ""
-        }${selectedCategory.length
-          ? `&categories=${selectedCategory.join(",")}`
-          : ""
-        }`
+          `?limit=${pageSize}&offset=${(page - 1) * pageSize}${
+            searchInput ? `&name=${searchInput}` : ""
+          }${
+            selectedGrantTypes.length ? `&grantTypes=${selectedGrantTypes}` : ""
+          }${status ? `&status=${status}` : ""}${
+            selectedNetworks.length ? `&networks=${selectedNetworks.join(",")}` : ""
+          }${selectedEcosystems.length ? `&ecosystems=${selectedEcosystems.join(",")}` : ""}${
+            selectedCategory.length ? `&categories=${selectedCategory.join(",")}` : ""
+          }`
       );
       if (error) {
         throw new Error(error);
@@ -179,7 +163,7 @@ export const ProgramsExplorer = () => {
   useEffect(() => {
     const searchProgramById = async (id: string) => {
       try {
-        const [data, error] = await fetchData(
+        const [data, _error] = await fetchData(
           INDEXER.REGISTRY.FIND_BY_ID(id, registryHelper.supportedNetworks)
         );
         if (data) {
@@ -190,7 +174,6 @@ export const ProgramsExplorer = () => {
         }
       } catch (error: any) {
         errorManager(`Error while searching for program by id`, error);
-        console.log(error);
       }
     };
     if (programId) {
@@ -210,7 +193,12 @@ export const ProgramsExplorer = () => {
           }}
         />
       ) : null}
-      <section className={cn(layoutTheme.padding, "flex w-full max-w-full flex-col justify-between items-center gap-6 pb-7 max-md:pt-0")}>
+      <section
+        className={cn(
+          layoutTheme.padding,
+          "flex w-full max-w-full flex-col justify-between items-center gap-6 pb-7 max-md:pt-0"
+        )}
+      >
         <ProgramHeader />
 
         <div className="flex flex-row items-center justify-end max-sm:justify-start gap-2.5  flex-wrap w-full">
@@ -220,10 +208,11 @@ export const ProgramsExplorer = () => {
               onClick={() => setStatus("")}
               id={`status-all`}
               key={"All"}
-              className={`px-3 py-1 min-w-max flex flex-row items-center gap-1 text-sm font-semibold rounded-full cursor-pointer ${status === ""
-                ? "bg-black text-white dark:bg-white dark:text-black"
-                : "border border-black text-black dark:border-white dark:text-white"
-                }`}
+              className={`px-3 py-1 min-w-max flex flex-row items-center gap-1 text-sm font-semibold rounded-full cursor-pointer ${
+                status === ""
+                  ? "bg-black text-white dark:bg-white dark:text-black"
+                  : "border border-black text-black dark:border-white dark:text-white"
+              }`}
             >
               All
             </button>
@@ -232,10 +221,11 @@ export const ProgramsExplorer = () => {
                 id={`status-${type.toLowerCase()}`}
                 onClick={() => setStatus(type)}
                 key={type}
-                className={`px-3 py-1 min-w-max flex flex-row items-center gap-1 text-sm font-semibold rounded-full cursor-pointer ${status === type
-                  ? "bg-black text-white dark:bg-white dark:text-black"
-                  : "border border-black text-black dark:border-white dark:text-white"
-                  }`}
+                className={`px-3 py-1 min-w-max flex flex-row items-center gap-1 text-sm font-semibold rounded-full cursor-pointer ${
+                  status === type
+                    ? "bg-black text-white dark:bg-white dark:text-black"
+                    : "border border-black text-black dark:border-white dark:text-white"
+                }`}
               >
                 {type}
                 {status === type ? <CheckIcon className="w-4 h-4" /> : null}
@@ -271,9 +261,7 @@ export const ProgramsExplorer = () => {
             <div className="flex flex-row gap-2 w-max flex-1 max-md:flex-wrap max-md:flex-col justify-end">
               <SearchDropdown
                 list={registryHelper.networks}
-                onSelectFunction={(value: string) =>
-                  onChangeGeneric(value, setSelectedNetworks)
-                }
+                onSelectFunction={(value: string) => onChangeGeneric(value, setSelectedNetworks)}
                 cleanFunction={() => {
                   setSelectedNetworks([]);
                 }}
@@ -284,9 +272,7 @@ export const ProgramsExplorer = () => {
               />
               <SearchDropdown
                 list={registryHelper.ecosystems}
-                onSelectFunction={(value: string) =>
-                  onChangeGeneric(value, setSelectedEcosystems)
-                }
+                onSelectFunction={(value: string) => onChangeGeneric(value, setSelectedEcosystems)}
                 cleanFunction={() => {
                   setSelectedEcosystems([]);
                 }}
@@ -297,9 +283,7 @@ export const ProgramsExplorer = () => {
               />
               <SearchDropdown
                 list={registryHelper.grantTypes}
-                onSelectFunction={(value: string) =>
-                  onChangeGeneric(value, setSelectedGrantTypes)
-                }
+                onSelectFunction={(value: string) => onChangeGeneric(value, setSelectedGrantTypes)}
                 cleanFunction={() => {
                   setSelectedGrantTypes([]);
                 }}
@@ -318,15 +302,13 @@ export const ProgramsExplorer = () => {
                   <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
                     <div
                       className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8"
-                    // {...virtualizer.containerProps}
+                      // {...virtualizer.containerProps}
                     >
                       <ProgramList
                         grantPrograms={grantPrograms}
                         selectProgram={(program) => {
                           setSelectedProgram(program);
-                          setProgramId(
-                            program._id.$oid || program.programId || ""
-                          );
+                          setProgramId(program._id.$oid || program.programId || "");
                         }}
                       />
                     </div>

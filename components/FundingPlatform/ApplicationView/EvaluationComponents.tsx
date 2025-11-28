@@ -1,10 +1,16 @@
 "use client";
 
-import { JSX } from "react";
-import { cn } from "@/utilities/tailwind";
-import { XMarkIcon, CheckCircleIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import { CheckCircleIcon, ExclamationTriangleIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import type { JSX } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import { getScoreColor, getScoreIcon, getPriorityColor, getStatusColor, type GenericJSON } from "./evaluationUtils";
+import { cn } from "@/utilities/tailwind";
+import {
+  type GenericJSON,
+  getPriorityColor,
+  getScoreColor,
+  getScoreIcon,
+  getStatusColor,
+} from "./evaluationUtils";
 
 // Small component for score display
 export function ScoreDisplay({
@@ -39,7 +45,7 @@ export function ScoreDisplay({
                 ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
                 : score >= 4
                   ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300"
-                  : "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300",
+                  : "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
             )}
           >
             {getProbabilityLevel(score)}
@@ -60,13 +66,27 @@ export function ScoreDisplay({
 }
 
 // Component for decision display
-export function DecisionDisplay({ decision, isAuditGrants }: { decision: string; isAuditGrants: boolean }) {
+export function DecisionDisplay({
+  decision,
+  isAuditGrants,
+}: {
+  decision: string;
+  isAuditGrants: boolean;
+}) {
   const getDecisionColor = (value: string) => {
     const val = value.toLowerCase();
-    if (val === "reject" || val === "rejected" || val === "low") return "text-red-600 dark:text-red-400";
-    if (val === "accept" || val === "accepted" || val === "approve" || val === "approved" || val === "high")
+    if (val === "reject" || val === "rejected" || val === "low")
+      return "text-red-600 dark:text-red-400";
+    if (
+      val === "accept" ||
+      val === "accepted" ||
+      val === "approve" ||
+      val === "approved" ||
+      val === "high"
+    )
       return "text-green-600 dark:text-green-400";
-    if (val === "pending" || val === "review" || val === "medium") return "text-yellow-600 dark:text-yellow-400";
+    if (val === "pending" || val === "review" || val === "medium")
+      return "text-yellow-600 dark:text-yellow-400";
     return "text-gray-700 dark:text-gray-300";
   };
 
@@ -85,8 +105,12 @@ export function DecisionDisplay({ decision, isAuditGrants }: { decision: string;
 
   return (
     <div className="pb-3 border-b border-zinc-200 dark:border-zinc-700">
-      <h4 className="text-sm font-medium mb-2">{isAuditGrants ? "Probability of approval" : "Decision"}</h4>
-      <p className={`text-lg font-semibold ${getDecisionColor(decision)}`}>{getDecisionDisplay(decision)}</p>
+      <h4 className="text-sm font-medium mb-2">
+        {isAuditGrants ? "Probability of approval" : "Decision"}
+      </h4>
+      <p className={`text-lg font-semibold ${getDecisionColor(decision)}`}>
+        {getDecisionDisplay(decision)}
+      </p>
     </div>
   );
 }
@@ -95,7 +119,9 @@ export function DecisionDisplay({ decision, isAuditGrants }: { decision: string;
 export function DisqualificationReason({ reason }: { reason: string }) {
   return (
     <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
-      <h4 className="text-sm font-medium mb-2 text-red-700 dark:text-red-300">Disqualification Reason</h4>
+      <h4 className="text-sm font-medium mb-2 text-red-700 dark:text-red-300">
+        Disqualification Reason
+      </h4>
       <div className="text-sm text-red-600 dark:text-red-400">
         <MarkdownPreview source={reason} />
       </div>
@@ -200,7 +226,7 @@ export function ImprovementRecommendations({
                 <span
                   className={cn(
                     "inline-block px-2 py-0.5 rounded-full text-xs font-medium",
-                    getPriorityColor(rec.priority),
+                    getPriorityColor(rec.priority)
                   )}
                 >
                   {rec.priority.toUpperCase()}
@@ -237,7 +263,13 @@ export function AdditionalNotes({ notes }: { notes: string }) {
 }
 
 // Component for status chip
-export function StatusChip({ status, getStatusColor }: { status: string; getStatusColor: (status: string) => string }) {
+export function StatusChip({
+  status,
+  getStatusColor,
+}: {
+  status: string;
+  getStatusColor: (status: string) => string;
+}) {
   return (
     <span className={cn("px-2.5 py-1 rounded-full text-xs font-medium", getStatusColor(status))}>
       {status?.charAt(0).toUpperCase() + status?.slice(1)}
@@ -312,7 +344,9 @@ export function EvaluationDisplay({
         <div className={depth > 0 ? "ml-4" : ""}>
           {entries.map(([key, val]) => (
             <div key={key} className="my-2">
-              <span className="font-medium text-gray-600 dark:text-gray-400 capitalize">{key.replace(/_/g, " ")}:</span>{" "}
+              <span className="font-medium text-gray-600 dark:text-gray-400 capitalize">
+                {key.replace(/_/g, " ")}:
+              </span>{" "}
               {renderValue(val, depth + 1)}
             </div>
           ))}
@@ -414,7 +448,8 @@ export function EvaluationDisplay({
         <>
           <p className="text-xs text-gray-400 dark:text-gray-500">
             Reviewer Confidence:{" "}
-            {evalData.reviewer_confidence?.charAt(0).toUpperCase() + evalData.reviewer_confidence?.slice(1)}
+            {evalData.reviewer_confidence?.charAt(0).toUpperCase() +
+              evalData.reviewer_confidence?.slice(1)}
           </p>
           {(() => {
             renderedFields.add("reviewer_confidence");

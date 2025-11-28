@@ -23,7 +23,8 @@ export const mockCaseStudyCards: CaseStudyCardType[] = [
   {
     type: "case-study",
     headline: "3,600+ Milestones completed by Celo grant recipients in 10 months",
-    description: "Over the past 10 months, Celo has leveraged Karma's platform to track 400+ projects.",
+    description:
+      "Over the past 10 months, Celo has leveraged Karma's platform to track 400+ projects.",
     communitySlug: "celo",
     link: "https://paragraph.com/@karmahq/scaling-ecosystem-success-celo-case-study",
   },
@@ -36,4 +37,3 @@ export const mockCaseStudyCards: CaseStudyCardType[] = [
     avatar: "/images/homepage/sophia-dew.png",
   },
 ];
-

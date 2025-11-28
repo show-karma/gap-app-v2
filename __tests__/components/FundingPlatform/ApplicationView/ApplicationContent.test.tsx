@@ -1,7 +1,7 @@
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import ApplicationContent from "@/components/FundingPlatform/ApplicationView/ApplicationContent";
-import { IFundingApplication } from "@/types/funding-platform";
+import type { IFundingApplication } from "@/types/funding-platform";
 
 // Mock child components
 jest.mock("@/components/FundingPlatform/ApplicationView/InternalAIEvaluation", () => ({
@@ -16,7 +16,12 @@ jest.mock("@/components/FundingPlatform/ApplicationView/InternalAIEvaluation", (
 jest.mock("@/components/FundingPlatform/ApplicationView/AIEvaluationButton", () => ({
   __esModule: true,
   default: ({ disabled, isInternal, referenceNumber }: any) => (
-    <button data-testid="ai-evaluation-button" disabled={disabled} data-internal={isInternal} data-ref={referenceNumber}>
+    <button
+      data-testid="ai-evaluation-button"
+      disabled={disabled}
+      data-internal={isInternal}
+      data-ref={referenceNumber}
+    >
       {isInternal ? "Run Internal AI Evaluation" : "Run AI Evaluation"}
     </button>
   ),
@@ -24,7 +29,9 @@ jest.mock("@/components/FundingPlatform/ApplicationView/AIEvaluationButton", () 
 
 jest.mock("@/components/FundingPlatform/ApplicationView/AIEvaluation", () => ({
   AIEvaluationDisplay: ({ evaluation }: any) => (
-    <div data-testid="ai-evaluation-display">{evaluation ? <div>Evaluation: {evaluation}</div> : <div>No evaluation</div>}</div>
+    <div data-testid="ai-evaluation-display">
+      {evaluation ? <div>Evaluation: {evaluation}</div> : <div>No evaluation</div>}
+    </div>
   ),
 }));
 
@@ -242,7 +249,9 @@ describe("ApplicationContent - Internal Evaluation Integration", () => {
       );
 
       const buttons = screen.getAllByTestId("ai-evaluation-button");
-      const internalButton = buttons.find((btn) => btn.getAttribute("data-internal") === "true") as HTMLButtonElement;
+      const internalButton = buttons.find(
+        (btn) => btn.getAttribute("data-internal") === "true"
+      ) as HTMLButtonElement;
       expect(internalButton).toBeDefined();
       expect(internalButton.disabled).toBe(true);
     });
@@ -259,7 +268,9 @@ describe("ApplicationContent - Internal Evaluation Integration", () => {
       );
 
       const buttons = screen.getAllByTestId("ai-evaluation-button");
-      const internalButton = buttons.find((btn) => btn.getAttribute("data-internal") === "true") as HTMLButtonElement;
+      const internalButton = buttons.find(
+        (btn) => btn.getAttribute("data-internal") === "true"
+      ) as HTMLButtonElement;
       expect(internalButton).toBeDefined();
       expect(internalButton.disabled).toBe(true);
     });
@@ -376,7 +387,9 @@ describe("ApplicationContent - Internal Evaluation Integration", () => {
 
       // Button should be enabled when prompt is configured
       const buttons = screen.getAllByTestId("ai-evaluation-button");
-      const internalButton = buttons.find((btn) => btn.getAttribute("data-internal") === "true") as HTMLButtonElement;
+      const internalButton = buttons.find(
+        (btn) => btn.getAttribute("data-internal") === "true"
+      ) as HTMLButtonElement;
       expect(internalButton).toBeDefined();
       expect(internalButton.disabled).toBe(false);
     });
@@ -404,10 +417,11 @@ describe("ApplicationContent - Internal Evaluation Integration", () => {
 
       // Button should be enabled when prompt is configured
       const buttons = screen.getAllByTestId("ai-evaluation-button");
-      const internalButton = buttons.find((btn) => btn.getAttribute("data-internal") === "true") as HTMLButtonElement;
+      const internalButton = buttons.find(
+        (btn) => btn.getAttribute("data-internal") === "true"
+      ) as HTMLButtonElement;
       expect(internalButton).toBeDefined();
       expect(internalButton.disabled).toBe(false);
     });
   });
 });
-

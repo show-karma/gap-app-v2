@@ -1,5 +1,5 @@
+import type { ContributorProfile } from "@show-karma/karma-gap-sdk";
 import { useQuery } from "@tanstack/react-query";
-import { ContributorProfile } from "@show-karma/karma-gap-sdk";
 import { getContributorProfiles } from "@/utilities/indexer/getContributorProfiles";
 
 export const useContributorProfile = (address: string | undefined) => {

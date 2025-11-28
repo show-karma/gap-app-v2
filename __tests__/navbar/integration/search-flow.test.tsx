@@ -3,28 +3,26 @@
  * Tests complete search journeys including debouncing, API integration, and navigation
  */
 
-import { screen, waitFor, within, fireEvent, cleanup } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { NavbarSearch } from "@/src/components/navbar/navbar-search";
 import { Navbar } from "@/src/components/navbar/navbar";
+import { NavbarSearch } from "@/src/components/navbar/navbar-search";
+import { getAuthFixture } from "../fixtures/auth-fixtures";
 import {
-  renderWithProviders,
-  waitForDebounce,
-  createMockUsePrivy,
-  updateMocks,
-  cleanupAfterEach
-} from "../utils/test-helpers";
-
-import { mockSearchFunction } from "../setup";
-import {
-  mixedResults,
-  projectsOnlyResults,
   communitiesOnlyResults,
   emptySearchResults,
   largeResultSet,
+  mixedResults,
+  projectsOnlyResults,
   searchQueries,
 } from "../fixtures/search-fixtures";
-import { getAuthFixture } from "../fixtures/auth-fixtures";
+import { mockSearchFunction } from "../setup";
+import {
+  cleanupAfterEach,
+  createMockUsePrivy,
+  renderWithProviders,
+  waitForDebounce,
+} from "../utils/test-helpers";
 
 describe("Search Flow Integration Tests", () => {
   beforeEach(() => {
@@ -78,7 +76,10 @@ describe("Search Flow Integration Tests", () => {
         name: new RegExp(firstProject.details.data.title, "i"),
       });
       // Component uses PAGES.PROJECT.GRANTS which adds /funding suffix
-      expect(resultLink).toHaveAttribute("href", `/project/${firstProject.details.data.slug}/funding`);
+      expect(resultLink).toHaveAttribute(
+        "href",
+        `/project/${firstProject.details.data.slug}/funding`
+      );
     });
 
     it("should show loading spinner during API call", async () => {
@@ -93,8 +94,8 @@ describe("Search Flow Integration Tests", () => {
       await user.type(searchInput, searchQueries.medium);
 
       // Loading spinner should appear immediately
-      const loadingIndicator = screen.queryByText(/searching/i) || screen.queryByRole("status");
-      
+      const _loadingIndicator = screen.queryByText(/searching/i) || screen.queryByRole("status");
+
       // Wait for results
       await waitForDebounce();
 
@@ -350,7 +351,9 @@ describe("Search Flow Integration Tests", () => {
       await waitForDebounce();
 
       await waitFor(() => {
-        expect(screen.getByText(projectsOnlyResults.projects[0].details.data.title)).toBeInTheDocument();
+        expect(
+          screen.getByText(projectsOnlyResults.projects[0].details.data.title)
+        ).toBeInTheDocument();
       });
 
       // Clear search
@@ -362,11 +365,15 @@ describe("Search Flow Integration Tests", () => {
       await waitForDebounce();
 
       await waitFor(() => {
-        expect(screen.getByText(communitiesOnlyResults.communities[0].details.data.name)).toBeInTheDocument();
+        expect(
+          screen.getByText(communitiesOnlyResults.communities[0].details.data.name)
+        ).toBeInTheDocument();
       });
 
       // Previous results should be replaced
-      expect(screen.queryByText(projectsOnlyResults.projects[0].details.data.title)).not.toBeInTheDocument();
+      expect(
+        screen.queryByText(projectsOnlyResults.projects[0].details.data.title)
+      ).not.toBeInTheDocument();
     });
 
     it("should reset state between searches", async () => {
@@ -485,8 +492,9 @@ describe("Search Flow Integration Tests", () => {
 
       // Should show empty state message
       await waitFor(() => {
-        const noResults = screen.queryByText(/no results found/i) || 
-                         screen.queryByText(/no projects or communities found/i);
+        const noResults =
+          screen.queryByText(/no results found/i) ||
+          screen.queryByText(/no projects or communities found/i);
         expect(noResults).toBeInTheDocument();
       });
     });
@@ -517,7 +525,9 @@ describe("Search Flow Integration Tests", () => {
 
       // Results should appear normally
       await waitFor(() => {
-        expect(screen.getByText(projectsOnlyResults.projects[0].details.data.title)).toBeInTheDocument();
+        expect(
+          screen.getByText(projectsOnlyResults.projects[0].details.data.title)
+        ).toBeInTheDocument();
       });
     });
   });
@@ -535,7 +545,9 @@ describe("Search Flow Integration Tests", () => {
       await waitForDebounce();
 
       await waitFor(() => {
-        expect(screen.getByText(projectsOnlyResults.projects[0].details.data.title)).toBeInTheDocument();
+        expect(
+          screen.getByText(projectsOnlyResults.projects[0].details.data.title)
+        ).toBeInTheDocument();
       });
 
       // Verify multiple projects displayed
@@ -559,7 +571,9 @@ describe("Search Flow Integration Tests", () => {
       await waitForDebounce();
 
       await waitFor(() => {
-        expect(screen.getByText(communitiesOnlyResults.communities[0].details.data.name)).toBeInTheDocument();
+        expect(
+          screen.getByText(communitiesOnlyResults.communities[0].details.data.name)
+        ).toBeInTheDocument();
       });
 
       // Verify community badge or indicator
@@ -613,4 +627,3 @@ describe("Search Flow Integration Tests", () => {
     });
   });
 });
-

@@ -1,9 +1,9 @@
-import { INDEXER } from "@/utilities/indexer";
-import fetchData from "@/utilities/fetchData";
-import { envVars } from "@/utilities/enviromentVars";
-import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import type { IProjectDetails } from "@show-karma/karma-gap-sdk";
 import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
+import { envVars } from "@/utilities/enviromentVars";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
 const apiClient = createAuthenticatedApiClient(API_URL, 30000);
@@ -139,23 +139,24 @@ export async function fetchProjectGrantMilestones(
   const updatesResponse = milestonesData as ProjectUpdatesResponse;
 
   // Ensure fundingApplicationCompletion is always present (null if missing)
-  const grantMilestones: GrantMilestoneWithCompletion[] = updatesResponse.grantMilestones.map(milestone => ({
-    uid: milestone.uid,
-    programId: milestone.programId,
-    chainId: milestone.chainId,
-    title: milestone.title,
-    description: milestone.description,
-    dueDate: milestone.dueDate,
-    status: milestone.status,
-    completionDetails: milestone.completionDetails,
-    verificationDetails: milestone.verificationDetails,
-    fundingApplicationCompletion: milestone.fundingApplicationCompletion || null,
-  }));
+  const grantMilestones: GrantMilestoneWithCompletion[] = updatesResponse.grantMilestones.map(
+    (milestone) => ({
+      uid: milestone.uid,
+      programId: milestone.programId,
+      chainId: milestone.chainId,
+      title: milestone.title,
+      description: milestone.description,
+      dueDate: milestone.dueDate,
+      status: milestone.status,
+      completionDetails: milestone.completionDetails,
+      verificationDetails: milestone.verificationDetails,
+      fundingApplicationCompletion: milestone.fundingApplicationCompletion || null,
+    })
+  );
 
   // Use the grant fetched with completed status, or fallback to finding it in project.grants
-  const grant = grantWithCompleted || project.grants?.find(
-    (g) => g.details?.data?.programId === programId
-  );
+  const grant =
+    grantWithCompleted || project.grants?.find((g) => g.details?.data?.programId === programId);
 
   return {
     project,
@@ -181,14 +182,11 @@ export async function updateMilestoneVerification(
   milestoneTitle: string,
   verificationComment?: string
 ): Promise<void> {
-  await apiClient.post(
-    `/v2/funding-applications/${referenceNumber}/milestone-completions/verify`,
-    {
-      milestoneFieldLabel,
-      milestoneTitle,
-      verificationComment: verificationComment || "",
-    }
-  );
+  await apiClient.post(`/v2/funding-applications/${referenceNumber}/milestone-completions/verify`, {
+    milestoneFieldLabel,
+    milestoneTitle,
+    verificationComment: verificationComment || "",
+  });
 }
 
 /**

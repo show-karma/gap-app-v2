@@ -1,9 +1,8 @@
-import { SortByOptions, SortOrder } from "@/types/newProjects";
-import { PageInfo } from "@/types/pagination";
-import { ProjectFromList } from "@/types/project";
+import { errorManager } from "@/components/Utilities/errorManager";
+import type { SortByOptions, SortOrder } from "@/types/newProjects";
+import type { ProjectFromList } from "@/types/project";
 import fetchData from "../fetchData";
 import { INDEXER } from "../indexer";
-import { errorManager } from "@/components/Utilities/errorManager";
 
 export const getNewProjects = async (
   pageSize: number,

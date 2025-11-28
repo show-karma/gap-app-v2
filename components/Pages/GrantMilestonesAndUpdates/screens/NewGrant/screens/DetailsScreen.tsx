@@ -1,32 +1,33 @@
-import React, { useState } from "react";
-import { StepBlock } from "../StepBlock";
-import { useGrantFormStore } from "../store";
-import { useParams, usePathname, useRouter } from "next/navigation";
-import { PAGES } from "@/utilities/pages";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { DatePicker } from "@/components/Utilities/DatePicker";
-import { formatDate } from "@/utilities/formatDate";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useParams, usePathname, useRouter } from "next/navigation";
+import type React from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { isAddress } from "viem";
-import { MESSAGES } from "@/utilities/messages";
-import { useAuth } from "@/hooks/useAuth";
 import { useAccount } from "wagmi";
-import { useStepper } from "@/store/modals/txStepper";
+import { z } from "zod";
+import { DatePicker } from "@/components/Utilities/DatePicker";
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { useAuth } from "@/hooks/useAuth";
 import { useGap } from "@/hooks/useGap";
 import { useGrant } from "@/hooks/useGrant";
-import { NextButton } from "./buttons/NextButton";
-import { CancelButton } from "./buttons/CancelButton";
+import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
-import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useStepper } from "@/store/modals/txStepper";
+import { formatDate } from "@/utilities/formatDate";
+import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
+import { StepBlock } from "../StepBlock";
+import { useGrantFormStore } from "../store";
+import { CancelButton } from "./buttons/CancelButton";
+import { NextButton } from "./buttons/NextButton";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
   "mt-2 w-full rounded-lg border border-gray-200 bg-transparent px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:text-zinc-100 dark:border-gray-600 disabled:bg-gray-100 disabled:text-gray-400";
 
-const defaultFundUsage = `| Budget Item    | % of Allocated funding |
+const _defaultFundUsage = `| Budget Item    | % of Allocated funding |
 | -------- | ------- |
 | Item 1  | X%   |
 | Item 2 | Y%     |
@@ -78,7 +79,7 @@ export const DetailsScreen: React.FC = () => {
     communityNetworkId,
   } = useGrantFormStore();
   const selectedProject = useProjectStore((state) => state.project);
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const _refreshProject = useProjectStore((state) => state.refreshProject);
   const router = useRouter();
   const { address, isConnected, connector, chain } = useAccount();
   const { authenticated: isAuth } = useAuth();
@@ -87,7 +88,7 @@ export const DetailsScreen: React.FC = () => {
   const { changeStepperStep, setIsStepper } = useStepper();
   const { isCommunityAdmin } = useCommunityAdminStore();
   const { isOwner } = useOwnerStore();
-  const [isLoading, setIsLoading] = useState(false);
+  const [_isLoading, _setIsLoading] = useState(false);
   const isAuthorized = isOwner || isCommunityAdmin;
   const params = useParams();
   const grant = params.grantUid as string;
@@ -124,11 +125,7 @@ export const DetailsScreen: React.FC = () => {
 
   const handleCancel = () => {
     if (!selectedProject) return;
-    router.push(
-      PAGES.PROJECT.GRANTS(
-        selectedProject.details?.data?.slug || selectedProject?.uid
-      )
-    );
+    router.push(PAGES.PROJECT.GRANTS(selectedProject.details?.data?.slug || selectedProject?.uid));
   };
 
   const handleNext = () => {
@@ -163,7 +160,7 @@ export const DetailsScreen: React.FC = () => {
     }
   };
 
-  const totalSteps = flowType === "program" ? 3 : 4;
+  const _totalSteps = flowType === "program" ? 3 : 4;
 
   return (
     <StepBlock currentStep={3}>
@@ -172,22 +169,17 @@ export const DetailsScreen: React.FC = () => {
           Add details to your {flowType === "grant" ? "grant" : "application"}
         </h3>
 
-        <form
-          className="w-full mb-8 space-y-6"
-          onSubmit={handleSubmit(handleNext)}
-        >
+        <form className="w-full mb-8 space-y-6" onSubmit={handleSubmit(handleNext)}>
           {/* Start Date and Recipient side-by-side */}
           <div className="flex flex-row gap-6 w-full max-md:flex-col">
             {/* Start Date - Required for both flows */}
             <div className="flex flex-col flex-1">
-              <label className={labelStyle}>Start Date *</label>
+              <div className={labelStyle}>Start Date *</div>
               <div className="mt-2">
                 <DatePicker
                   selected={watch("startDate")}
                   onSelect={(date) => {
-                    if (
-                      formatDate(date) === formatDate(watch("startDate") || "")
-                    ) {
+                    if (formatDate(date) === formatDate(watch("startDate") || "")) {
                       setValue("startDate", undefined, {
                         shouldValidate: true,
                       });
@@ -205,9 +197,7 @@ export const DetailsScreen: React.FC = () => {
                 />
               </div>
               {errors.startDate && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.startDate.message}
-                </p>
+                <p className="text-red-500 text-sm mt-1">{errors.startDate.message}</p>
               )}
             </div>
 
@@ -230,9 +220,7 @@ export const DetailsScreen: React.FC = () => {
                   </p>
                 )}
                 {errors.recipient && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.recipient?.message}
-                  </p>
+                  <p className="text-red-500 text-sm mt-1">{errors.recipient?.message}</p>
                 )}
               </div>
             )}
@@ -240,42 +228,36 @@ export const DetailsScreen: React.FC = () => {
 
           {/* Fields only for grant flow */}
           {flowType === "grant" && (
-            <>
-              <div className="flex flex-row gap-6 w-full max-md:flex-col">
-                <div className="flex flex-col flex-1">
-                  <label htmlFor="grant-amount" className={labelStyle}>
-                    Amount (optional)
-                  </label>
-                  <input
-                    id="grant-amount"
-                    className={inputStyle}
-                    placeholder="25K OP"
-                    {...register("amount")}
-                  />
-                  {errors.amount && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.amount?.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex flex-col flex-1">
-                  <label htmlFor="grant-linkToProposal" className={labelStyle}>
-                    Link to Proposal (optional)
-                  </label>
-                  <input
-                    id="grant-linkToProposal"
-                    className={inputStyle}
-                    {...register("linkToProposal")}
-                  />
-                  {errors.linkToProposal && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.linkToProposal?.message}
-                    </p>
-                  )}
-                </div>
+            <div className="flex flex-row gap-6 w-full max-md:flex-col">
+              <div className="flex flex-col flex-1">
+                <label htmlFor="grant-amount" className={labelStyle}>
+                  Amount (optional)
+                </label>
+                <input
+                  id="grant-amount"
+                  className={inputStyle}
+                  placeholder="25K OP"
+                  {...register("amount")}
+                />
+                {errors.amount && (
+                  <p className="text-red-500 text-sm mt-1">{errors.amount?.message}</p>
+                )}
               </div>
-            </>
+
+              <div className="flex flex-col flex-1">
+                <label htmlFor="grant-linkToProposal" className={labelStyle}>
+                  Link to Proposal (optional)
+                </label>
+                <input
+                  id="grant-linkToProposal"
+                  className={inputStyle}
+                  {...register("linkToProposal")}
+                />
+                {errors.linkToProposal && (
+                  <p className="text-red-500 text-sm mt-1">{errors.linkToProposal?.message}</p>
+                )}
+              </div>
+            </div>
           )}
 
           {/* Description - Required for grant flow, optional for program flow */}
@@ -301,9 +283,7 @@ export const DetailsScreen: React.FC = () => {
               />
             </div>
             {errors.description && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.description.message}
-              </p>
+              <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>
             )}
           </div>
         </form>
@@ -316,13 +296,7 @@ export const DetailsScreen: React.FC = () => {
             <NextButton
               onClick={handleSubmit(handleNext)}
               disabled={!isValid}
-              text={
-                flowType === "program" && isEditing
-                  ? isEditing
-                    ? "Update"
-                    : "Next"
-                  : "Next"
-              }
+              text={flowType === "program" && isEditing ? (isEditing ? "Update" : "Next") : "Next"}
             />
           </div>
         </div>

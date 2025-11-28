@@ -1,21 +1,17 @@
+import pluralize from "pluralize";
 import { useProjectImpactIndicators } from "@/hooks/useProjectImpactIndicators";
 import formatCurrency from "@/utilities/formatCurrency";
-import pluralize from "pluralize";
 
 interface ProjectImpactProps {
   projectId: string;
   range?: number; // Optional range parameter (30, 90, 180, 360)
 }
 
-export const ProjectImpact = ({
-  projectId,
-  range = 30,
-}: ProjectImpactProps) => {
+export const ProjectImpact = ({ projectId, range = 30 }: ProjectImpactProps) => {
   const { data: impactData } = useProjectImpactIndicators(projectId, range);
 
   const hasAnyImpactIndicators =
-    impactData?.metrics &&
-    Object.values(impactData.metrics).some((metric) => metric.value > 0);
+    impactData?.metrics && Object.values(impactData.metrics).some((metric) => metric.value > 0);
 
   if (!hasAnyImpactIndicators) {
     return null;
@@ -25,9 +21,7 @@ export const ProjectImpact = ({
 
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-black dark:text-zinc-400 font-bold text-sm">
-        Project Impact
-      </p>
+      <p className="text-black dark:text-zinc-400 font-bold text-sm">Project Impact</p>
       <div className="flex flex-row  max-lg:flex-col gap-4">
         {metrics.transactions && metrics.transactions.value > 0 && (
           <div className="flex flex-1 rounded border border-[#EAECf0] dark:border-zinc-600 border-l-[#155EEF] dark:border-l-[#155EEF] border-l-[4px] p-4 justify-between items-center">
@@ -40,9 +34,7 @@ export const ProjectImpact = ({
                   <p className="font-normal text-brand-gray text-sm dark:text-zinc-300">
                     {pluralize("Total Transaction", metrics.transactions.value)}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-zinc-400">
-                    (last {range} days)
-                  </p>
+                  <p className="text-xs text-gray-500 dark:text-zinc-400">(last {range} days)</p>
                 </div>
               </div>
             </div>
@@ -59,9 +51,7 @@ export const ProjectImpact = ({
                   <p className="font-normal text-brand-gray text-sm dark:text-zinc-300">
                     {pluralize("Git Commit", metrics.gitCommits.value)}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-zinc-400">
-                    (last {range} days)
-                  </p>
+                  <p className="text-xs text-gray-500 dark:text-zinc-400">(last {range} days)</p>
                 </div>
               </div>
             </div>
@@ -76,14 +66,9 @@ export const ProjectImpact = ({
               <div className="flex flex-row gap-3">
                 <div className="flex flex-col">
                   <p className="font-normal text-brand-gray text-sm dark:text-zinc-300">
-                    {pluralize(
-                      "Unique User",
-                      metrics.uniqueUsers.value
-                    )}
+                    {pluralize("Unique User", metrics.uniqueUsers.value)}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-zinc-400">
-                    (last {range} days)
-                  </p>
+                  <p className="text-xs text-gray-500 dark:text-zinc-400">(last {range} days)</p>
                 </div>
               </div>
             </div>

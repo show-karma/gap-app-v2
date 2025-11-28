@@ -1,6 +1,6 @@
 import type { Hex } from "@show-karma/karma-gap-sdk";
-import { envVars } from "../enviromentVars";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { envVars } from "../enviromentVars";
 import { gapIndexerApi } from "../gapIndexerApi";
 
 export const getMetadata = async <T>(
@@ -33,9 +33,8 @@ export const getMetadata = async <T>(
     }
 
     return undefined;
-  } catch (error: any) {
+  } catch (error: unknown) {
     errorManager(`Error getting metadata of ${type}: ${uid}`, error);
-    console.log(error);
     return undefined;
   }
 };

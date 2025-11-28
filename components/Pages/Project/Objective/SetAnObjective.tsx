@@ -1,16 +1,11 @@
 "use client";
-import { Button } from "@/components/Utilities/Button";
 import { useParams } from "next/navigation";
+import { Button } from "@/components/Utilities/Button";
 import { useProgressModalStore } from "@/store/modals/progress";
 
-export const SetAnObjective = ({
-  hasObjectives,
-}: {
-  hasObjectives: boolean;
-}) => {
+export const SetAnObjective = ({ hasObjectives }: { hasObjectives: boolean }) => {
   const { projectId } = useParams();
-  const { setIsProgressModalOpen, setProgressModalScreen } =
-    useProgressModalStore();
+  const { setIsProgressModalOpen, setProgressModalScreen } = useProgressModalStore();
 
   const handleCreateMilestone = () => {
     setProgressModalScreen("unified_milestone");
@@ -25,8 +20,8 @@ export const SetAnObjective = ({
             {hasObjectives ? "Set a Milestone" : "Set your first Milestone"}
           </p>
           <p className="text-[#1D2939] dark:text-zinc-300 rounded-md font-normal text-base bg-transparent">
-            Your roadmap needs milestones. Define clear milestones to guide your
-            progress and stay on course.
+            Your roadmap needs milestones. Define clear milestones to guide your progress and stay
+            on course.
           </p>
         </div>
 

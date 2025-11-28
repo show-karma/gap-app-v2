@@ -3,12 +3,12 @@
  * @description Tests for impact measurement data fetching hook
  */
 
-import { renderHook, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { renderHook, waitFor } from "@testing-library/react";
+import React from "react";
+import { useCommunityCategory } from "@/hooks/useCommunityCategory";
 import { useImpactMeasurement } from "@/hooks/useImpactMeasurement";
 import { getProgramsImpact } from "@/utilities/registry/getProgramsImpact";
-import { useCommunityCategory } from "@/hooks/useCommunityCategory";
-import React from "react";
 
 jest.mock("@/utilities/registry/getProgramsImpact", () => ({
   getProgramsImpact: jest.fn(),
@@ -26,7 +26,9 @@ jest.mock("next/navigation", () => ({
 }));
 
 const mockGetProgramsImpact = getProgramsImpact as jest.MockedFunction<typeof getProgramsImpact>;
-const mockUseCommunityCategory = useCommunityCategory as jest.MockedFunction<typeof useCommunityCategory>;
+const mockUseCommunityCategory = useCommunityCategory as jest.MockedFunction<
+  typeof useCommunityCategory
+>;
 
 describe("useImpactMeasurement", () => {
   let queryClient: QueryClient;
@@ -43,7 +45,7 @@ describe("useImpactMeasurement", () => {
     const Wrapper = ({ children }: { children: React.ReactNode }) =>
       React.createElement(QueryClientProvider, { client: queryClient }, children);
 
-    Wrapper.displayName = 'QueryClientWrapper';
+    Wrapper.displayName = "QueryClientWrapper";
 
     return Wrapper;
   };
@@ -170,4 +172,3 @@ describe("useImpactMeasurement", () => {
     });
   });
 });
-

@@ -1,32 +1,31 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, Fragment, useState } from "react";
+
 import { Dialog, Transition } from "@headlessui/react";
-import { Button } from "@/components/Utilities/Button";
-import { z } from "zod";
-import { SubmitHandler, useForm } from "react-hook-form";
+import { ArrowRightIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
-import toast from "react-hot-toast";
-import { useAuth } from "@/hooks/useAuth";
-import { useAccount } from "wagmi";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { MESSAGES } from "@/utilities/messages";
-import { getGapClient, useGap } from "@/hooks/useGap";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
-import {
+import type {
   IMilestoneCompleted,
   IMilestoneResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { type FC, Fragment, useState } from "react";
+import { type SubmitHandler, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { z } from "zod";
+import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { useAuth } from "@/hooks/useAuth";
+import { useGap } from "@/hooks/useGap";
+import { useWallet } from "@/hooks/useWallet";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useStepper } from "@/store/modals/txStepper";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-
-import { errorManager } from "@/components/Utilities/errorManager";
+import { MESSAGES } from "@/utilities/messages";
 import { sanitizeObject } from "@/utilities/sanitize";
-import { ArrowRightIcon } from "@heroicons/react/24/solid";
-import { useWallet } from "@/hooks/useWallet";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 type VerifyMilestoneUpdateDialogProps = {
   milestone: IMilestoneResponse;
@@ -39,10 +38,11 @@ const schema = z.object({
 
 type SchemaType = z.infer<typeof schema>;
 
-export const VerifyMilestoneUpdateDialog: FC<
-  VerifyMilestoneUpdateDialogProps
-> = ({ milestone, addVerifiedMilestone }) => {
-  let [isOpen, setIsOpen] = useState(false);
+export const VerifyMilestoneUpdateDialog: FC<VerifyMilestoneUpdateDialogProps> = ({
+  milestone,
+  addVerifiedMilestone,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const {
@@ -77,7 +77,11 @@ export const VerifyMilestoneUpdateDialog: FC<
     if (!gap) throw new Error("Please, connect a wallet");
     try {
       setIsLoading(true);
-      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+      const {
+        success,
+        chainId: actualChainId,
+        gapClient: newGapClient,
+      } = await ensureCorrectChain({
         targetChainId: milestone.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
@@ -90,9 +94,7 @@ export const VerifyMilestoneUpdateDialog: FC<
 
       gapClient = newGapClient;
 
-      const { walletClient, error } = await safeGetWalletClient(
-        actualChainId
-      );
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
@@ -130,17 +132,14 @@ export const VerifyMilestoneUpdateDialog: FC<
           while (retries > 0) {
             await refreshProject()
               .then(async (fetchedProject) => {
-                const foundGrant = fetchedProject?.grants.find(
-                  (g) => g.uid === milestone.refUID
-                );
+                const foundGrant = fetchedProject?.grants.find((g) => g.uid === milestone.refUID);
 
                 const fetchedMilestone = foundGrant?.milestones.find(
                   (u: any) => u.uid === milestone.uid
                 );
 
                 const alreadyExists = fetchedMilestone?.verified?.find(
-                  (v: any) =>
-                    v.attester?.toLowerCase() === address?.toLowerCase()
+                  (v: any) => v.attester?.toLowerCase() === address?.toLowerCase()
                 );
 
                 if (alreadyExists) {
@@ -221,10 +220,7 @@ export const VerifyMilestoneUpdateDialog: FC<
                 leaveTo="opacity-0 scale-95"
               >
                 <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle  transition-all">
-                  <form
-                    onSubmit={handleSubmit(onSubmit)}
-                    className="flex w-full flex-col gap-4"
-                  >
+                  <form onSubmit={handleSubmit(onSubmit)} className="flex w-full flex-col gap-4">
                     <div className="flex w-full flex-col">
                       <label htmlFor="comment" className={"text-sm font-bold"}>
                         Post a comment (optional)
@@ -237,9 +233,7 @@ export const VerifyMilestoneUpdateDialog: FC<
                         placeholder="I tested and can confirm it works as expected"
                         {...register("comment")}
                       />
-                      <p className="text-base text-red-400">
-                        {errors.comment?.message}
-                      </p>
+                      <p className="text-base text-red-400">{errors.comment?.message}</p>
                     </div>
                     <div className="flex flex-row gap-4 justify-end">
                       <Button

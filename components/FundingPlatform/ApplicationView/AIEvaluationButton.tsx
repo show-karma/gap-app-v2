@@ -1,11 +1,11 @@
 "use client";
 
-import { FC, useState, useMemo } from "react";
-import { Button } from "@/components/Utilities/Button";
 import { SparklesIcon } from "@heroicons/react/24/outline";
-import { fundingApplicationsAPI } from "@/services/fundingPlatformService";
+import type { AxiosError } from "axios";
+import { type FC, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { AxiosError } from "axios";
+import { Button } from "@/components/Utilities/Button";
+import { fundingApplicationsAPI } from "@/services/fundingPlatformService";
 
 interface AIEvaluationButtonProps {
   referenceNumber: string;
@@ -18,7 +18,9 @@ interface AIEvaluationButtonProps {
  * Type guard to check if error is an Axios error with response data
  */
 function isAxiosErrorWithResponse(error: unknown): error is AxiosError<{ message?: string }> {
-  return typeof error === "object" && error !== null && "response" in error && "isAxiosError" in error;
+  return (
+    typeof error === "object" && error !== null && "response" in error && "isAxiosError" in error
+  );
 }
 
 /**
@@ -62,7 +64,9 @@ const AIEvaluationButton: FC<AIEvaluationButtonProps> = ({
         : await fundingApplicationsAPI.runAIEvaluation(referenceNumber);
 
       toast.success(
-        isInternal ? "Internal AI evaluation completed successfully!" : "AI evaluation completed successfully!",
+        isInternal
+          ? "Internal AI evaluation completed successfully!"
+          : "AI evaluation completed successfully!"
       );
 
       // Call the callback to refresh the application data
@@ -70,22 +74,21 @@ const AIEvaluationButton: FC<AIEvaluationButtonProps> = ({
         try {
           await onEvaluationComplete();
         } catch (refreshError) {
-          console.error(
-            `Failed to refresh application after ${isInternal ? "internal " : ""}AI evaluation:`,
-            refreshError,
+          console.error("Failed to refresh application after AI evaluation:", refreshError);
+          toast.error(
+            "Evaluation completed but failed to refresh the display. Please reload the page."
           );
-          toast.error("Evaluation completed but failed to refresh the display. Please reload the page.");
         }
       }
     } catch (error) {
-      console.error(`Failed to run ${isInternal ? "internal " : ""}AI evaluation:`, error);
+      console.error("Failed to run AI evaluation:", error);
 
-      let errorMessage = `Failed to run ${isInternal ? "internal " : ""}AI evaluation`;
-
-      if (isAxiosErrorWithResponse(error)) {
-        errorMessage = error.response?.data?.message || error.message || errorMessage;
-      } else if (error instanceof Error) {
+      let errorMessage = "Failed to run AI evaluation";
+      if (error instanceof Error) {
         errorMessage = error.message;
+      } else if (error && typeof error === "object" && "response" in error) {
+        const responseError = error as { response?: { data?: { message?: string } } };
+        errorMessage = responseError.response?.data?.message || errorMessage;
       }
 
       toast.error(errorMessage);

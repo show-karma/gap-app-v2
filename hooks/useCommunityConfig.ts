@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
@@ -30,7 +30,12 @@ export const useCommunityConfig = (slug: string, enabled: boolean = true) => {
 export const useCommunityConfigMutation = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<void, Error, { slug: string; config: CommunityConfig }, { previousConfig: CommunityConfig | null }>({
+  return useMutation<
+    void,
+    Error,
+    { slug: string; config: CommunityConfig },
+    { previousConfig: CommunityConfig | null }
+  >({
     mutationFn: async ({ slug, config }) => {
       const [data, error] = await fetchData(
         INDEXER.COMMUNITY.CONFIG.UPDATE(slug),
@@ -48,7 +53,10 @@ export const useCommunityConfigMutation = () => {
       await queryClient.cancelQueries({ queryKey: ["community-config", slug] });
 
       // Snapshot the previous value
-      const previousConfig = queryClient.getQueryData<CommunityConfig | null>(["community-config", slug]);
+      const previousConfig = queryClient.getQueryData<CommunityConfig | null>([
+        "community-config",
+        slug,
+      ]);
 
       // Optimistically update to the new value
       queryClient.setQueryData(["community-config", slug], config);
@@ -56,7 +64,7 @@ export const useCommunityConfigMutation = () => {
       // Return a context object with the snapshotted value
       return { previousConfig: previousConfig ?? null };
     },
-    onError: (err, { slug }, context) => {
+    onError: (_err, { slug }, context) => {
       // If the mutation fails, use the context returned from onMutate to roll back
       if (context?.previousConfig) {
         queryClient.setQueryData(["community-config", slug], context.previousConfig);

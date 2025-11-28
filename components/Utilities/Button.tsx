@@ -1,6 +1,6 @@
 import type { FC } from "react";
-import { SimpleSpinner } from "./SimpleSpinner";
 import { cn } from "@/utilities/tailwind";
+import { SimpleSpinner } from "./SimpleSpinner";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   isLoading?: boolean;

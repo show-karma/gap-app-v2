@@ -1,12 +1,12 @@
-import Image from "next/image";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { PAGES } from "@/utilities/pages";
-import { useProjectStore } from "@/store";
-import {
+import type {
   IGrantUpdate,
   IProjectUpdate,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { UnifiedMilestone } from "@/types/roadmap";
+import Image from "next/image";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { useProjectStore } from "@/store";
+import type { UnifiedMilestone } from "@/types/roadmap";
+import { PAGES } from "@/utilities/pages";
 
 // Shared UI component for rendering grant items
 interface GrantItemProps {
@@ -17,13 +17,7 @@ interface GrantItemProps {
   keyPrefix: string;
 }
 
-const GrantItem = ({
-  href,
-  title,
-  communityImage,
-  communityName,
-  keyPrefix,
-}: GrantItemProps) => (
+const GrantItem = ({ href, title, communityImage, communityName, keyPrefix }: GrantItemProps) => (
   <ExternalLink
     href={href}
     key={keyPrefix}
@@ -31,12 +25,7 @@ const GrantItem = ({
   >
     {communityImage ? (
       <div className="w-4 h-4 relative overflow-hidden rounded-full">
-        <Image
-          src={communityImage}
-          alt={communityName || "Community"}
-          width={16}
-          height={16}
-        />
+        <Image src={communityImage} alt={communityName || "Community"} width={16} height={16} />
       </div>
     ) : null}
     <span className="font-medium">{title}</span>
@@ -79,10 +68,7 @@ export const GrantAssociation = ({
     const programId = grantMilestone?.grant.details?.data.programId;
     const communityData = grantMilestone?.grant.community?.details?.data;
 
-    if (
-      !grantTitle &&
-      (!milestone.mergedGrants || milestone.mergedGrants.length === 0)
-    ) {
+    if (!grantTitle && (!milestone.mergedGrants || milestone.mergedGrants.length === 0)) {
       return null;
     }
 
@@ -100,10 +86,7 @@ export const GrantAssociation = ({
               .map((grant, idx) => (
                 <GrantItem
                   key={`${grant.grantUID}-${grant.grantTitle}-${milestone.uid}-${milestone.title}-${idx}`}
-                  href={PAGES.COMMUNITY.ALL_GRANTS(
-                    communityData?.slug || "",
-                    grant.programId
-                  )}
+                  href={PAGES.COMMUNITY.ALL_GRANTS(communityData?.slug || "", grant.programId)}
                   title={grant.grantTitle || "Untitled Grant"}
                   communityImage={grant.communityImage}
                   communityName={grant.communityName}
@@ -113,10 +96,7 @@ export const GrantAssociation = ({
           ) : grantTitle ? (
             // Single grant display
             <GrantItem
-              href={PAGES.COMMUNITY.ALL_GRANTS(
-                communityData?.slug || "",
-                programId
-              )}
+              href={PAGES.COMMUNITY.ALL_GRANTS(communityData?.slug || "", programId)}
               title={grantTitle}
               communityImage={communityData?.imageURL}
               communityName={communityData?.name}

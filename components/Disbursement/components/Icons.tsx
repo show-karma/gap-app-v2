@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 interface IconProps {
   className?: string;
@@ -11,10 +11,7 @@ const sizeClasses = {
   lg: "h-6 w-6",
 };
 
-export const CheckIcon: React.FC<IconProps> = ({
-  className = "",
-  size = "md",
-}) => (
+export const CheckIcon: React.FC<IconProps> = ({ className = "", size = "md" }) => (
   <svg
     className={`${sizeClasses[size]} ${className}`}
     fill="none"
@@ -22,18 +19,11 @@ export const CheckIcon: React.FC<IconProps> = ({
     strokeWidth="2"
     stroke="currentColor"
   >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M4.5 12.75l6 6 9-13.5"
-    />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
   </svg>
 );
 
-export const CheckCircleIcon: React.FC<IconProps> = ({
-  className = "",
-  size = "md",
-}) => (
+export const CheckCircleIcon: React.FC<IconProps> = ({ className = "", size = "md" }) => (
   <svg
     className={`${sizeClasses[size]} ${className}`}
     fill="none"
@@ -49,10 +39,7 @@ export const CheckCircleIcon: React.FC<IconProps> = ({
   </svg>
 );
 
-export const ExternalLinkIcon: React.FC<IconProps> = ({
-  className = "",
-  size = "md",
-}) => (
+export const ExternalLinkIcon: React.FC<IconProps> = ({ className = "", size = "md" }) => (
   <svg
     className={`${sizeClasses[size]} ${className}`}
     fill="none"
@@ -68,10 +55,7 @@ export const ExternalLinkIcon: React.FC<IconProps> = ({
   </svg>
 );
 
-export const RocketIcon: React.FC<IconProps> = ({
-  className = "",
-  size = "md",
-}) => (
+export const RocketIcon: React.FC<IconProps> = ({ className = "", size = "md" }) => (
   <svg
     className={`${sizeClasses[size]} ${className}`}
     fill="none"
@@ -87,29 +71,18 @@ export const RocketIcon: React.FC<IconProps> = ({
   </svg>
 );
 
-export const PlusIcon: React.FC<IconProps> = ({
-  className = "",
-  size = "md",
-}) => (
+export const PlusIcon: React.FC<IconProps> = ({ className = "", size = "md" }) => (
   <svg
     className={`${sizeClasses[size]} ${className}`}
     fill="none"
     viewBox="0 0 24 24"
     stroke="currentColor"
   >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      d="M12 4v16m8-8H4"
-    />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
   </svg>
 );
 
-export const ConfigIcon: React.FC<IconProps> = ({
-  className = "",
-  size = "md",
-}) => (
+export const ConfigIcon: React.FC<IconProps> = ({ className = "", size = "md" }) => (
   <svg
     className={`${sizeClasses[size]} ${className}`}
     fill="none"
@@ -125,10 +98,7 @@ export const ConfigIcon: React.FC<IconProps> = ({
   </svg>
 );
 
-export const DocumentIcon: React.FC<IconProps> = ({
-  className = "",
-  size = "md",
-}) => (
+export const DocumentIcon: React.FC<IconProps> = ({ className = "", size = "md" }) => (
   <svg
     className={`${sizeClasses[size]} ${className}`}
     fill="none"
@@ -144,10 +114,7 @@ export const DocumentIcon: React.FC<IconProps> = ({
   </svg>
 );
 
-export const ChartIcon: React.FC<IconProps> = ({
-  className = "",
-  size = "md",
-}) => (
+export const ChartIcon: React.FC<IconProps> = ({ className = "", size = "md" }) => (
   <svg
     className={`${sizeClasses[size]} ${className}`}
     fill="none"
@@ -163,10 +130,7 @@ export const ChartIcon: React.FC<IconProps> = ({
   </svg>
 );
 
-export const CheckCircleFilledIcon: React.FC<IconProps> = ({
-  className = "",
-  size = "md",
-}) => (
+export const CheckCircleFilledIcon: React.FC<IconProps> = ({ className = "", size = "md" }) => (
   <svg
     className={`${sizeClasses[size]} ${className}`}
     fill="none"

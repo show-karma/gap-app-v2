@@ -1,9 +1,9 @@
 "use client";
-import { Fragment } from "react";
 import { Listbox, Transition } from "@headlessui/react";
 import { CheckIcon } from "@heroicons/react/20/solid";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import pluralize from "pluralize";
+import { Fragment } from "react";
 import { cn } from "@/utilities/tailwind";
 
 interface CategoryFilterProps {
@@ -12,11 +12,7 @@ interface CategoryFilterProps {
   onChange: (categories: string[]) => void;
 }
 
-export function CategoryFilter({
-  categories,
-  selectedCategories,
-  onChange,
-}: CategoryFilterProps) {
+export function CategoryFilter({ categories, selectedCategories, onChange }: CategoryFilterProps) {
   if (!categories.length) return null;
 
   return (
@@ -28,18 +24,13 @@ export function CategoryFilter({
               {selectedCategories.length > 0 ? (
                 <p className="flex flex-row gap-1">
                   {selectedCategories.length}
-                  <span>
-                    {pluralize("category", selectedCategories.length)} selected
-                  </span>
+                  <span>{pluralize("category", selectedCategories.length)} selected</span>
                 </p>
               ) : (
                 <p>All Categories</p>
               )}
               <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                <ChevronDownIcon
-                  className="h-4 w-4 text-gray-400"
-                  aria-hidden="true"
-                />
+                <ChevronDownIcon className="h-4 w-4 text-gray-400" aria-hidden="true" />
               </span>
             </Listbox.Button>
 

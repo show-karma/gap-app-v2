@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
 import { CheckIcon } from "@heroicons/react/24/solid";
+import type React from "react";
 
 export type DisbursementStep = "configure" | "upload" | "review";
 
@@ -48,7 +48,7 @@ export const DisbursementStepper: React.FC<DisbursementStepperProps> = ({
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <nav aria-label="Progress">
-        <ol role="list" className="flex items-center justify-between">
+        <ol className="flex items-center justify-between">
           {steps.map((step, stepIdx) => {
             const status = getStepStatus(step.id as DisbursementStep);
 
@@ -64,10 +64,7 @@ export const DisbursementStepper: React.FC<DisbursementStepperProps> = ({
                         />
                       )}
                       <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-r from-green-500 to-emerald-600 shadow-lg transform hover:scale-110 transition-all duration-200">
-                        <CheckIcon
-                          className="h-6 w-6 text-white"
-                          aria-hidden="true"
-                        />
+                        <CheckIcon className="h-6 w-6 text-white" aria-hidden="true" />
                         <span className="sr-only">{step.name}</span>
                       </div>
                     </>
@@ -111,8 +108,8 @@ export const DisbursementStepper: React.FC<DisbursementStepperProps> = ({
                         status === "completed"
                           ? "text-green-600"
                           : status === "current"
-                          ? "text-blue-600"
-                          : "text-gray-500"
+                            ? "text-blue-600"
+                            : "text-gray-500"
                       }`}
                     >
                       {step.name}

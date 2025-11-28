@@ -1,7 +1,7 @@
 /**
  * Hero Component Tests
  * Tests the main hero section of the homepage
- * 
+ *
  * Target: 25 tests
  * - Rendering (5)
  * - Interactions (6)
@@ -11,16 +11,7 @@
  */
 
 import { Hero } from "@/src/features/homepage/components/hero";
-import {
-  renderWithProviders,
-  screen,
-  within,
-  userEvent,
-  waitFor,
-  setViewportSize,
-  createMockAuth,
-  createMockRouter,
-} from "../utils/test-helpers";
+import { renderWithProviders, screen, setViewportSize, userEvent } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
 import { VIEWPORTS } from "../setup";
 
@@ -250,7 +241,7 @@ describe("Hero Component", () => {
       renderWithProviders(<Hero />);
 
       const exploreLink = screen.getByRole("link", { name: /explore projects/i });
-      
+
       // Focus the link
       exploreLink.focus();
       expect(exploreLink).toHaveFocus();
@@ -313,7 +304,7 @@ describe("Hero Component", () => {
       const { container } = renderWithProviders(<Hero />);
 
       const userImages = container.querySelectorAll('img[alt="User"]');
-      
+
       // First avatar should have z-[4], second z-[5], third z-[6]
       expect(userImages[0]).toHaveClass("z-[4]");
       expect(userImages[1]).toHaveClass("z-[5]");
@@ -321,4 +312,3 @@ describe("Hero Component", () => {
     });
   });
 });
-

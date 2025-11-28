@@ -1,8 +1,14 @@
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
-import { InternalAIEvaluationDisplay } from "@/components/FundingPlatform/ApplicationView/InternalAIEvaluation";
-import { parseEvaluation, getScoreColor, getScoreIcon, getPriorityColor, getStatusColor } from "@/components/FundingPlatform/ApplicationView/evaluationUtils";
 import { EvaluationDisplay } from "@/components/FundingPlatform/ApplicationView/EvaluationComponents";
+import {
+  getPriorityColor,
+  getScoreColor,
+  getScoreIcon,
+  getStatusColor,
+  parseEvaluation,
+} from "@/components/FundingPlatform/ApplicationView/evaluationUtils";
+import { InternalAIEvaluationDisplay } from "@/components/FundingPlatform/ApplicationView/InternalAIEvaluation";
 
 // Mock dependencies
 jest.mock("@/components/FundingPlatform/ApplicationView/evaluationUtils", () => ({
@@ -52,7 +58,9 @@ describe("InternalAIEvaluationDisplay", () => {
     it("should render disclaimer message", () => {
       render(<InternalAIEvaluationDisplay evaluation={null} isLoading={false} />);
 
-      expect(screen.getByText("For reviewer use only - not visible to applicants")).toBeInTheDocument();
+      expect(
+        screen.getByText("For reviewer use only - not visible to applicants")
+      ).toBeInTheDocument();
     });
 
     it("should apply custom className when provided", () => {
@@ -70,7 +78,11 @@ describe("InternalAIEvaluationDisplay", () => {
 
       expect(screen.getByTestId("clock-icon")).toBeInTheDocument();
       expect(screen.getByText("Internal evaluation pending")).toBeInTheDocument();
-      expect(screen.getByText(/The internal evaluation will be automatically generated after application submission/)).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          /The internal evaluation will be automatically generated after application submission/
+        )
+      ).toBeInTheDocument();
     });
 
     it("should show pending message when evaluation is empty string", () => {
@@ -96,7 +108,13 @@ describe("InternalAIEvaluationDisplay", () => {
       const parsedData = { score: 8 };
       mockParseEvaluation.mockReturnValue(parsedData);
 
-      render(<InternalAIEvaluationDisplay evaluation={evaluationData} isLoading={false} programName="Test Program" />);
+      render(
+        <InternalAIEvaluationDisplay
+          evaluation={evaluationData}
+          isLoading={false}
+          programName="Test Program"
+        />
+      );
 
       expect(EvaluationDisplay).toHaveBeenCalledTimes(1);
       const callArgs = (EvaluationDisplay as jest.Mock).mock.calls[0];
@@ -107,7 +125,8 @@ describe("InternalAIEvaluationDisplay", () => {
         getStatusColor: mockGetStatusColor,
         getScoreColor: mockGetScoreColor,
         getPriorityColor: mockGetPriorityColor,
-        footerDisclaimer: "This internal AI evaluation is for reviewer use only and is not visible to applicants.",
+        footerDisclaimer:
+          "This internal AI evaluation is for reviewer use only and is not visible to applicants.",
       });
     });
 
@@ -139,7 +158,9 @@ describe("InternalAIEvaluationDisplay", () => {
 
       render(<InternalAIEvaluationDisplay evaluation={evaluationData} isLoading={false} />);
 
-      expect(screen.getByText("Failed to parse evaluation data. Please try again.")).toBeInTheDocument();
+      expect(
+        screen.getByText("Failed to parse evaluation data. Please try again.")
+      ).toBeInTheDocument();
     });
 
     it("should not render EvaluationDisplay when parsing fails", () => {
@@ -157,7 +178,13 @@ describe("InternalAIEvaluationDisplay", () => {
       const evaluationData = '{"score": 8}';
       mockParseEvaluation.mockReturnValue({ score: 8 });
 
-      render(<InternalAIEvaluationDisplay evaluation={evaluationData} isLoading={false} programName="My Program" />);
+      render(
+        <InternalAIEvaluationDisplay
+          evaluation={evaluationData}
+          isLoading={false}
+          programName="My Program"
+        />
+      );
 
       expect(EvaluationDisplay).toHaveBeenCalledTimes(1);
       const callArgs = (EvaluationDisplay as jest.Mock).mock.calls[0];
@@ -189,4 +216,3 @@ describe("InternalAIEvaluationDisplay", () => {
     });
   });
 });
-

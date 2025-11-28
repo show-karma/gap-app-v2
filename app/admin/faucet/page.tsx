@@ -1,8 +1,8 @@
-import { defaultMetadata } from "@/utilities/meta";
-import { FaucetAdminDashboard } from "@/components/FaucetAdmin/Dashboard";
 import { Suspense } from "react";
+import { FaucetAdminDashboard } from "@/components/FaucetAdmin/Dashboard";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { PROJECT_NAME } from "@/constants/brand";
+import { defaultMetadata } from "@/utilities/meta";
 
 export const metadata = {
   ...defaultMetadata,
