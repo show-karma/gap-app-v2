@@ -7,7 +7,7 @@ import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karm
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { FC } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -384,12 +384,19 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
             communityUID: grant.community.uid || "",
           }));
 
-        setGrants(grantOptions);
+        setGrants((prev) => {
+          if (JSON.stringify(prev) === JSON.stringify(grantOptions)) return prev;
+          return grantOptions;
+        });
 
         // Handle indicators data - project indicators are handled by categorizedIndicators
         if (project.uid || project.details?.data?.slug) {
           const indicators = indicatorsData;
-          setOutputs(indicators || []);
+          setOutputs((prev) => {
+            if (!indicators) return prev;
+            if (JSON.stringify(prev) === JSON.stringify(indicators)) return prev;
+            return indicators;
+          });
         }
       } catch (error) {
         errorManager(`Error fetching project data for project ${project?.uid}`, error, {
@@ -401,14 +408,22 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     };
 
     fetchProjectData();
-  }, [project?.uid, project?.grants?.length, indicatorsData, project, address]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project?.uid, project?.grants, indicatorsData, address]);
 
   const updateToEdit = project?.updates.find((update) => update.uid === editId);
-  // Effect to load edit data
-  useEffect(() => {
-    if (!editId || !project) return;
 
-    if (!updateToEdit) return;
+  // Track if we've initialized the edit form to prevent infinite loops
+  const editInitializedRef = useRef<string | null>(null);
+  const outputsInitializedRef = useRef<string | null>(null);
+
+  // Effect to load edit data (basic fields)
+  useEffect(() => {
+    if (!editId || !project || !updateToEdit) return;
+
+    // Skip if we've already initialized for this editId
+    if (editInitializedRef.current === editId) return;
+    editInitializedRef.current = editId;
 
     setIsEditMode(true);
 
@@ -440,46 +455,47 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         }))
       );
     }
+  }, [editId, project, setValue, updateToEdit]);
 
-    if (watch("outputs").length === 0) {
-      // Set outputs if they exist and outputs are loaded
-      if (
-        updateToEdit.data.indicators &&
-        updateToEdit.data.indicators.length > 0 &&
-        outputs.length > 0
-      ) {
-        // Access outputs safely
-        const assignOutputsValues = async () => {
-          const indicators = indicatorsData;
+  // Separate effect for outputs to handle async indicator data loading
+  useEffect(() => {
+    if (!editId || !updateToEdit || !indicatorsData) return;
 
-          setValue(
-            "outputs",
-            updateToEdit.data.indicators!.map((indicator) => {
-              const matchingOutput = indicators.find(
-                (out: any) => out.id === indicator.indicatorId
-              );
-              const orderedDatapoints = matchingOutput?.datapoints.sort(
-                (a: any, b: any) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime()
-              );
-              const firstDatapoint = orderedDatapoints?.[0];
-              return {
-                outputId: indicator.indicatorId,
-                value: firstDatapoint?.value || 0,
-                proof: firstDatapoint?.proof || "",
-                startDate: firstDatapoint?.startDate
-                  ? new Date(firstDatapoint.startDate).toISOString()
-                  : undefined,
-                endDate: firstDatapoint?.endDate
-                  ? new Date(firstDatapoint.endDate).toISOString()
-                  : undefined,
-              };
-            })
-          );
-        };
-        assignOutputsValues();
-      }
+    // Skip if we've already initialized outputs for this editId
+    if (outputsInitializedRef.current === editId) return;
+
+    // Only proceed if we have indicators to set and indicator data is loaded
+    if (
+      !updateToEdit.data.indicators ||
+      updateToEdit.data.indicators.length === 0 ||
+      indicatorsData.length === 0
+    ) {
+      return;
     }
-  }, [editId, project, setValue, outputs.length, indicatorsData, updateToEdit, watch]);
+
+    outputsInitializedRef.current = editId;
+
+    const outputsToSet = updateToEdit.data.indicators.map((indicator) => {
+      const matchingOutput = indicatorsData.find((out: any) => out.id === indicator.indicatorId);
+      const orderedDatapoints = matchingOutput?.datapoints.sort(
+        (a: any, b: any) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime()
+      );
+      const firstDatapoint = orderedDatapoints?.[0];
+      return {
+        outputId: indicator.indicatorId,
+        value: firstDatapoint?.value || 0,
+        proof: firstDatapoint?.proof || "",
+        startDate: firstDatapoint?.startDate
+          ? new Date(firstDatapoint.startDate).toISOString()
+          : undefined,
+        endDate: firstDatapoint?.endDate
+          ? new Date(firstDatapoint.endDate).toISOString()
+          : undefined,
+      };
+    });
+
+    setValue("outputs", outputsToSet);
+  }, [editId, updateToEdit, indicatorsData, setValue]);
 
   const { changeStepperStep, setIsStepper } = useStepper();
 
