@@ -7,7 +7,7 @@ import type {
   IProjectUpdate,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useParams, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { MilestonesList } from "@/components/Milestone/MilestonesList";
 import { Button } from "@/components/Utilities/Button";
 import { useAllMilestones } from "@/hooks/useAllMilestones";
@@ -20,6 +20,55 @@ import { RoadmapListLoading } from "../Loading/Roadmap";
 interface ProjectRoadmapProps {
   project?: IProjectResponse;
 }
+
+// Pure utility functions moved outside the component to avoid recreating on each render
+const normalizeToMilliseconds = (timestamp: unknown): number | null => {
+  if (timestamp === null || timestamp === undefined) {
+    return null;
+  }
+
+  // If it's already a number
+  if (typeof timestamp === "number") {
+    // Detect if it's seconds (Unix timestamps in seconds typically have 10 digits or less)
+    // While millisecond timestamps have 13 digits
+    const isSeconds = timestamp < 10000000000; // If less than 11 digits, assume seconds
+    return isSeconds ? timestamp * 1000 : timestamp;
+  }
+
+  // If it's a string date or anything else, try to parse it
+  try {
+    // Only parse data types that Date constructor can handle
+    if (
+      typeof timestamp === "string" ||
+      timestamp instanceof Date ||
+      (typeof timestamp === "object" && timestamp !== null)
+    ) {
+      const parsed = new Date(timestamp as string | number | Date).getTime();
+      return !Number.isNaN(parsed) ? parsed : null;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+};
+
+const getSortTimestamp = (item: UnifiedMilestone): number => {
+  try {
+    // Check dates in priority order - end date is most important for milestones
+    const dates = [
+      normalizeToMilliseconds(item?.endsAt),
+      normalizeToMilliseconds(item?.startsAt),
+      item?.completed && typeof item.completed === "object" && "createdAt" in item.completed
+        ? normalizeToMilliseconds(item.completed.createdAt)
+        : null,
+      normalizeToMilliseconds(item?.createdAt),
+    ];
+
+    return dates.find((date) => date !== null) || Date.now();
+  } catch (_error) {
+    return Date.now();
+  }
+};
 
 export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) => {
   const { projectId } = useParams();
@@ -37,69 +86,12 @@ export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) =>
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isAuthorized = isOwner || isProjectAdmin;
 
-  // Parse filters from URL
-  const getActiveFilters = () => {
+  // Derive active filters directly from URL params - no state synchronization needed
+  const activeFilters = useMemo(() => {
     const filterParam = searchParams.get("filter");
     if (!filterParam) return ["all"];
     return filterParam.split(",");
-  };
-
-  const [activeFilters, setActiveFilters] = useState<string[]>(getActiveFilters());
-
-  // Sync with URL params when they change
-  useEffect(() => {
-    setActiveFilters(getActiveFilters());
-  }, [getActiveFilters]);
-
-  // Helper function to normalize any timestamp format to milliseconds
-  const normalizeToMilliseconds = (timestamp: unknown): number | null => {
-    if (timestamp === null || timestamp === undefined) {
-      return null;
-    }
-
-    // If it's already a number
-    if (typeof timestamp === "number") {
-      // Detect if it's seconds (Unix timestamps in seconds typically have 10 digits or less)
-      // While millisecond timestamps have 13 digits
-      const isSeconds = timestamp < 10000000000; // If less than 11 digits, assume seconds
-      return isSeconds ? timestamp * 1000 : timestamp;
-    }
-
-    // If it's a string date or anything else, try to parse it
-    try {
-      // Only parse data types that Date constructor can handle
-      if (
-        typeof timestamp === "string" ||
-        timestamp instanceof Date ||
-        (typeof timestamp === "object" && timestamp !== null)
-      ) {
-        const parsed = new Date(timestamp as string | number | Date).getTime();
-        return !Number.isNaN(parsed) ? parsed : null;
-      }
-      return null;
-    } catch {
-      return null;
-    }
-  };
-
-  // Create a function to get sortable timestamp for any item
-  const getSortTimestamp = (item: UnifiedMilestone): number => {
-    try {
-      // Check dates in priority order - end date is most important for milestones
-      const dates = [
-        normalizeToMilliseconds(item?.endsAt),
-        normalizeToMilliseconds(item?.startsAt),
-        item?.completed && typeof item.completed === "object" && "createdAt" in item.completed
-          ? normalizeToMilliseconds(item.completed.createdAt)
-          : null,
-        normalizeToMilliseconds(item?.createdAt),
-      ];
-
-      return dates.find((date) => date !== null) || Date.now();
-    } catch (_error) {
-      return Date.now();
-    }
-  };
+  }, [searchParams]);
 
   const combinedUpdatesAndMilestones = useMemo(() => {
     const updates: IProjectUpdate[] = project?.updates || [];
@@ -183,14 +175,7 @@ export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) =>
     });
 
     return allSortedItems;
-  }, [
-    project?.grants,
-    project?.updates,
-    project?.impacts,
-    project?.uid,
-    milestones,
-    getSortTimestamp,
-  ]);
+  }, [project?.grants, project?.updates, project?.impacts, project?.uid, milestones]);
 
   // Filter items based on active filters
   const filteredItems = useMemo(() => {
