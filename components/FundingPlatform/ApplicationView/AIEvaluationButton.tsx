@@ -74,7 +74,11 @@ const AIEvaluationButton: FC<AIEvaluationButtonProps> = ({
         try {
           await onEvaluationComplete();
         } catch (refreshError) {
-          console.error("Failed to refresh application after AI evaluation:", refreshError);
+          const errorPrefix = isInternal ? "internal " : "";
+          console.error(
+            `Failed to refresh application after ${errorPrefix}AI evaluation:`,
+            refreshError
+          );
           toast.error(
             "Evaluation completed but failed to refresh the display. Please reload the page."
           );
@@ -84,7 +88,16 @@ const AIEvaluationButton: FC<AIEvaluationButtonProps> = ({
       console.error("Failed to run AI evaluation:", error);
 
       let errorMessage = "Failed to run AI evaluation";
-      if (error instanceof Error) {
+
+      // Check for AxiosError-like objects (with isAxiosError property)
+      if (error && typeof error === "object" && "isAxiosError" in error) {
+        const axiosError = error as {
+          response?: { data?: { message?: string } };
+          message?: string;
+        };
+        // If response exists, use response.data.message, otherwise use the error message
+        errorMessage = axiosError.response?.data?.message || axiosError.message || errorMessage;
+      } else if (error instanceof Error) {
         errorMessage = error.message;
       } else if (error && typeof error === "object" && "response" in error) {
         const responseError = error as { response?: { data?: { message?: string } } };
