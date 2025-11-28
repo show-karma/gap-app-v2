@@ -4,7 +4,7 @@ import { ChevronDownIcon, ChevronLeftIcon, ChevronUpIcon } from "@heroicons/reac
 import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -76,55 +76,58 @@ export default function ManageIndicatorsPage() {
     fetchDetails();
   }, [communityId, router.push]);
 
-  const getCategories = async (isSilent: boolean = false) => {
-    if (!isSilent) {
-      setLoading(true);
-    }
-
-    try {
-      const [data] = await fetchData(
-        INDEXER.COMMUNITY.CATEGORIES((community?.details?.data?.slug || community?.uid) as string)
-      );
-      if (data) {
-        const categoriesWithoutOutputs = data.map((category: Category) => {
-          const outputsNotDuplicated = category.outputs?.filter(
-            (output) =>
-              !category.impact_segments?.some(
-                (segment) => segment.id === output.id || segment.name === output.name
-              )
-          );
-          return {
-            ...category,
-            impact_segments: [
-              ...(category.impact_segments || []),
-              ...(outputsNotDuplicated || []).map((output: any) => {
-                return {
-                  id: output.id,
-                  name: output.name,
-                  description: output.description,
-                  impact_indicators: [],
-                  type: output.type,
-                };
-              }),
-            ],
-          };
-        });
-        return categoriesWithoutOutputs;
-      }
-    } catch (error: any) {
-      errorManager(`Error fetching categories of community ${communityId}`, error, {
-        community: communityId,
-      });
-      console.error(error);
-      return [];
-    } finally {
+  const getCategories = useCallback(
+    async (isSilent: boolean = false) => {
       if (!isSilent) {
-        setLoading(false);
+        setLoading(true);
       }
-    }
-  };
 
-  useMemo(() => {
+      try {
+        const [data] = await fetchData(
+          INDEXER.COMMUNITY.CATEGORIES((community?.details?.data?.slug || community?.uid) as string)
+        );
+        if (data) {
+          const categoriesWithoutOutputs = data.map((category: Category) => {
+            const outputsNotDuplicated = category.outputs?.filter(
+              (output) =>
+                !category.impact_segments?.some(
+                  (segment) => segment.id === output.id || segment.name === output.name
+                )
+            );
+            return {
+              ...category,
+              impact_segments: [
+                ...(category.impact_segments || []),
+                ...(outputsNotDuplicated || []).map((output: any) => {
+                  return {
+                    id: output.id,
+                    name: output.name,
+                    description: output.description,
+                    impact_indicators: [],
+                    type: output.type,
+                  };
+                }),
+              ],
+            };
+          });
+          return categoriesWithoutOutputs;
+        }
+      } catch (error: any) {
+        errorManager(`Error fetching categories of community ${communityId}`, error, {
+          community: communityId,
+        });
+        console.error(error);
+        return [];
+      } finally {
+        if (!isSilent) {
+          setLoading(false);
+        }
+      }
+    },
+    [community, communityId]
+  );
+
+  useEffect(() => {
     if (community?.uid) {
       setLoading(true);
       getCategories()
