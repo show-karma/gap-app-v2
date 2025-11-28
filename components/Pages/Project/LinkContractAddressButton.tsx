@@ -4,6 +4,7 @@ import { ExclamationTriangleIcon, LinkIcon } from "@heroicons/react/24/outline";
 import { useQueryClient } from "@tanstack/react-query";
 import type { FC } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Button } from "@/components/Utilities/Button";
 import { SUPPORTED_CONTRACT_NETWORKS } from "@/constants/contract-networks";
 import { useContractAddressPairs } from "@/hooks/useContractAddressPairs";
@@ -221,17 +222,29 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
         </div>
       </ContractAddressDialog>
       {contractToVerify && (
-        <ContractVerificationDialog
-          isOpen={verificationDialogOpen}
-          onClose={() => {
-            setVerificationDialogOpen(false);
-            setContractToVerify(null);
+        <ErrorBoundary
+          fallback={
+            <div className="p-4 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <p className="font-medium">Verification dialog encountered an error</p>
+              <p className="text-sm mt-1">Please close and try again</p>
+            </div>
+          }
+          onError={(error) => {
+            console.error("Contract verification dialog error:", error);
           }}
-          network={contractToVerify.network}
-          contractAddress={contractToVerify.address}
-          projectUid={project.uid}
-          onSuccess={handleVerificationSuccess}
-        />
+        >
+          <ContractVerificationDialog
+            isOpen={verificationDialogOpen}
+            onClose={() => {
+              setVerificationDialogOpen(false);
+              setContractToVerify(null);
+            }}
+            network={contractToVerify.network}
+            contractAddress={contractToVerify.address}
+            projectUid={project.uid}
+            onSuccess={handleVerificationSuccess}
+          />
+        </ErrorBoundary>
       )}
     </>
   );

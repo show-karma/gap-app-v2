@@ -1,17 +1,10 @@
 "use client";
 
-import { Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import {
-  XMarkIcon,
-  CheckCircleIcon,
-  ExclamationCircleIcon,
-} from "@heroicons/react/24/outline";
+import { CheckCircleIcon, ExclamationCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { Fragment } from "react";
 import { Button } from "@/components/Utilities/Button";
-import {
-  useContractVerification,
-  VerificationStep,
-} from "@/hooks/useContractVerification";
+import { useContractVerification, VerificationStep } from "@/hooks/useContractVerification";
 
 interface ContractVerificationDialogProps {
   isOpen: boolean;
@@ -22,9 +15,14 @@ interface ContractVerificationDialogProps {
   onSuccess?: () => void | Promise<void>;
 }
 
-export const ContractVerificationDialog: React.FC<
-  ContractVerificationDialogProps
-> = ({ isOpen, onClose, network, contractAddress, projectUid, onSuccess }) => {
+export const ContractVerificationDialog: React.FC<ContractVerificationDialogProps> = ({
+  isOpen,
+  onClose,
+  network,
+  contractAddress,
+  projectUid,
+  onSuccess,
+}) => {
   const { step, deployerInfo, error, needsWalletSwitch, verifyContract, reset } =
     useContractVerification();
 
@@ -43,21 +41,39 @@ export const ContractVerificationDialog: React.FC<
   const getStepMessage = () => {
     switch (step) {
       case VerificationStep.LOOKING_UP_DEPLOYER:
-        return "Looking up contract deployer...";
+        return "Step 1 of 4: Looking up contract deployer...";
       case VerificationStep.CHECKING_WALLET:
-        return "Checking wallet connection...";
+        return "Step 2 of 4: Checking wallet connection...";
       case VerificationStep.GENERATING_MESSAGE:
-        return "Generating verification message...";
+        return "Step 2 of 4: Generating verification message...";
       case VerificationStep.WAITING_FOR_SIGNATURE:
-        return "Waiting for signature...";
+        return "Step 3 of 4: Waiting for signature...";
       case VerificationStep.VERIFYING_SIGNATURE:
-        return "Verifying signature...";
+        return "Step 4 of 4: Verifying signature...";
       case VerificationStep.SUCCESS:
         return "Contract verified successfully!";
       case VerificationStep.ERROR:
         return "Verification failed";
       default:
         return "Ready to verify contract ownership";
+    }
+  };
+
+  const getStepProgress = () => {
+    switch (step) {
+      case VerificationStep.LOOKING_UP_DEPLOYER:
+        return 25;
+      case VerificationStep.CHECKING_WALLET:
+      case VerificationStep.GENERATING_MESSAGE:
+        return 50;
+      case VerificationStep.WAITING_FOR_SIGNATURE:
+        return 75;
+      case VerificationStep.VERIFYING_SIGNATURE:
+        return 90;
+      case VerificationStep.SUCCESS:
+        return 100;
+      default:
+        return 0;
     }
   };
 
@@ -118,8 +134,7 @@ export const ContractVerificationDialog: React.FC<
                         <span className="capitalize">{network}</span>
                       </p>
                       <p className="text-gray-600 dark:text-gray-300 break-all">
-                        <span className="font-medium">Contract:</span>{" "}
-                        {contractAddress}
+                        <span className="font-medium">Contract:</span> {contractAddress}
                       </p>
                       {deployerInfo && (
                         <p className="text-gray-600 dark:text-gray-300 break-all mt-2">
@@ -130,6 +145,16 @@ export const ContractVerificationDialog: React.FC<
                     </div>
                   </div>
 
+                  {/* Progress Bar */}
+                  {isLoading && (
+                    <div className="w-full bg-gray-200 dark:bg-zinc-700 rounded-full h-2">
+                      <div
+                        className="bg-blue-500 h-2 rounded-full transition-all duration-500 ease-out"
+                        style={{ width: `${getStepProgress()}%` }}
+                      />
+                    </div>
+                  )}
+
                   {/* Status Message */}
                   <div className="flex items-center space-x-2">
                     {step === VerificationStep.SUCCESS ? (
@@ -139,17 +164,13 @@ export const ContractVerificationDialog: React.FC<
                     ) : isLoading ? (
                       <div className="animate-spin h-6 w-6 border-2 border-blue-500 border-t-transparent rounded-full" />
                     ) : null}
-                    <p className="text-sm text-gray-700 dark:text-gray-200">
-                      {getStepMessage()}
-                    </p>
+                    <p className="text-sm text-gray-700 dark:text-gray-200">{getStepMessage()}</p>
                   </div>
 
                   {/* Error Message */}
                   {error && (
                     <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 p-4 rounded">
-                      <p className="text-sm text-red-700 dark:text-red-400">
-                        {error}
-                      </p>
+                      <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
                     </div>
                   )}
 
@@ -173,9 +194,7 @@ export const ContractVerificationDialog: React.FC<
                       </p>
                       <ol className="list-decimal list-inside text-sm text-blue-700 dark:text-blue-400 mt-2 space-y-1">
                         <li>We&apos;ll look up who deployed this contract</li>
-                        <li>
-                          You&apos;ll need to switch to the deployer wallet if needed
-                        </li>
+                        <li>You&apos;ll need to switch to the deployer wallet if needed</li>
                         <li>Sign a message to prove you own the deployer wallet</li>
                         <li>Once verified, the contract will be marked as verified</li>
                       </ol>
@@ -195,10 +214,7 @@ export const ContractVerificationDialog: React.FC<
                         >
                           Cancel
                         </Button>
-                        <Button
-                          onClick={handleVerify}
-                          disabled={isLoading || needsWalletSwitch}
-                        >
+                        <Button onClick={handleVerify} disabled={isLoading || needsWalletSwitch}>
                           {isLoading ? "Verifying..." : "Start Verification"}
                         </Button>
                       </>
