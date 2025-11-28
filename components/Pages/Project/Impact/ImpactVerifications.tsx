@@ -1,18 +1,16 @@
-import { FC, useEffect, useState } from "react";
-import { VerifiedBadge } from "../../GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/VerifiedBadge";
-import { VerifyImpactDialog } from "./VerifyImpactDialog";
-import {
+import type {
   IProjectImpact,
   IProjectImpactStatus,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { type FC, useEffect, useState } from "react";
+import { VerifiedBadge } from "../../GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/VerifiedBadge";
+import { VerifyImpactDialog } from "./VerifyImpactDialog";
 
 interface ImpactVerificationsProps {
   impact: IProjectImpact;
 }
 
-export const ImpactVerifications: FC<ImpactVerificationsProps> = ({
-  impact,
-}) => {
+export const ImpactVerifications: FC<ImpactVerificationsProps> = ({ impact }) => {
   const [verifieds, setVerifieds] = useState(impact.verified);
 
   useEffect(() => {

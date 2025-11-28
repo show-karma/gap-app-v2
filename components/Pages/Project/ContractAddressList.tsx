@@ -4,7 +4,7 @@ import { PlusIcon } from "@heroicons/react/24/outline";
 import type { FC } from "react";
 import { ContractAddressItem } from "@/components/Pages/Project/ContractAddressItem";
 import { Button } from "@/components/Utilities/Button";
-import type { NetworkAddressPair, InvalidInfo } from "./types";
+import type { InvalidInfo, NetworkAddressPair } from "./types";
 
 interface ContractAddressListProps {
   pairs: NetworkAddressPair[];
@@ -33,9 +33,8 @@ export const ContractAddressList: FC<ContractAddressListProps> = ({
     <div className="max-h-[60vh] flex flex-col gap-4 mt-8 overflow-y-auto">
       {pairs.map((pair, index) => {
         // Use network:address as key for filled pairs, fallback to index for empty ones
-        const key = pair.network && pair.address
-          ? `${pair.network}:${pair.address}`
-          : `empty-${index}`;
+        const key =
+          pair.network && pair.address ? `${pair.network}:${pair.address}` : `empty-${index}`;
 
         return (
           <ContractAddressItem

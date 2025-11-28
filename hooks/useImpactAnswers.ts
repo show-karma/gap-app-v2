@@ -1,7 +1,6 @@
-import { ImpactIndicatorWithData } from "@/types/impactMeasurement";
-import { getImpactAnswers, sendImpactAnswers } from "@/services/impactService";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { getImpactAnswers, sendImpactAnswers } from "@/services/impactService";
 import { MESSAGES } from "@/utilities/messages";
 
 interface UseImpactAnswersProps {
@@ -44,8 +43,7 @@ export const useImpactAnswers = ({
         startDate: string;
         endDate: string;
       }[];
-    }) =>
-      sendImpactAnswers(projectIdentifier as string, indicatorId, datapoints),
+    }) => sendImpactAnswers(projectIdentifier as string, indicatorId, datapoints),
     onSuccess: () => {
       toast.success(MESSAGES.GRANT.OUTPUTS.SUCCESS);
       queryClient.invalidateQueries({ queryKey });

@@ -31,9 +31,7 @@ export default function SuperAdminPage() {
     </div>
   ) : (
     <div className="flex w-full items-center justify-center m-12">
-      <p>
-        You are account isnt super admin.Only Super admin can view this page
-      </p>
+      <p>You are account isnt super admin.Only Super admin can view this page</p>
     </div>
   );
 }

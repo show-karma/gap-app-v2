@@ -1,18 +1,17 @@
 "use client";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useMemo } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { AutoSizer, Grid } from "react-virtualized";
-import { CommunityProjectsV2Response } from "@/types/community";
+import { ShoppingCartIcon as ShoppingCartIconCustom } from "@/components/Icons/ShoppingCartIcon";
+import { useCommunityProjectsPaginated } from "@/hooks/useCommunityProjectsPaginated";
+import useMediaQuery from "@/hooks/useMediaQuery";
+import { useDonationCart } from "@/store";
+import type { CommunityProjectsV2Response } from "@/types/community";
 import { projectV2ToGrant } from "@/utilities/adapters/projectV2ToGrant";
 import { GrantCard } from "./GrantCard";
 import { CardListSkeleton } from "./Pages/Communities/Loading";
-import { useDonationCart } from "@/store";
-import Link from "next/link";
-import { PAGES } from "@/utilities/pages";
-import { DonationProgramDropdown } from "./Donation/ProgramDropdown";
-import { useCommunityProjectsPaginated } from "@/hooks/useCommunityProjectsPaginated";
-import { ShoppingCartIcon as ShoppingCartIconCustom } from "@/components/Icons/ShoppingCartIcon";
 
 interface CommunityGrantsDonateProps {
   initialProjects: CommunityProjectsV2Response;
@@ -23,18 +22,14 @@ export const CommunityGrantsDonate = ({ initialProjects }: CommunityGrantsDonate
   const communityId = params.communityId as string;
   const programId = params.programId as string;
   const { items, toggle } = useDonationCart();
+  const isLargeViewport = useMediaQuery("(min-width: 80rem)");
 
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-  } = useCommunityProjectsPaginated({
-    communityId,
-    programId,
-    itemsPerPage: 12,
-  });
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
+    useCommunityProjectsPaginated({
+      communityId,
+      programId,
+      itemsPerPage: 12,
+    });
 
   // Flatten all pages into a single array
   const projects = useMemo(() => {
@@ -56,14 +51,21 @@ export const CommunityGrantsDonate = ({ initialProjects }: CommunityGrantsDonate
             >
               <AutoSizer disableHeight>
                 {({ width }) => {
-                  const columns = Math.floor(width / 360);
-                  const columnCounter = columns ? (columns > 6 ? 6 : columns) : 1;
+                  const MIN_CARD_WIDTH = 360;
+                  const MAX_COLUMNS_SMALL = 6;
+                  const MAX_COLUMNS_LARGE = 3;
+                  const calculatedColumns = Math.floor(width / MIN_CARD_WIDTH);
+                  const columnCounter = calculatedColumns
+                    ? isLargeViewport
+                      ? MAX_COLUMNS_LARGE
+                      : Math.min(calculatedColumns, MAX_COLUMNS_SMALL)
+                    : 1;
                   const columnWidth = Math.floor(width / columnCounter);
                   const gutterSize = 20;
                   const height = Math.ceil(projects.length / columnCounter) * 360;
                   return (
                     <Grid
-                      key={`grid-${width}-${columnCounter}`}
+                      key={`grid-${width}-${columnCounter}-${isLargeViewport}`}
                       height={height + 60}
                       width={width}
                       rowCount={Math.ceil(projects.length / columnCounter)}
@@ -96,6 +98,7 @@ export const CommunityGrantsDonate = ({ initialProjects }: CommunityGrantsDonate
                                     const inCart = items.some((i) => i.uid === project.uid);
                                     return (
                                       <button
+                                        type="button"
                                         onClick={(e) => {
                                           e.preventDefault();
                                           toggle({
@@ -105,15 +108,25 @@ export const CommunityGrantsDonate = ({ initialProjects }: CommunityGrantsDonate
                                             imageURL: project.details?.logoUrl,
                                           });
                                         }}
-                                        className={`group relative flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 shadow-sm border ${inCart
-                                          ? "bg-red-100 hover:bg-red-200 text-red-700 border-red-200 hover:border-red-300"
-                                          : "bg-[#F0FDF4] hover:bg-emerald-100 text-emerald-700 border-[#BDEFE2] hover:border-emerald-300"
-                                          } hover:shadow-md`}
-                                        aria-label={inCart ? "Remove from donation cart" : "Add to donation cart"}
+                                        className={`group relative flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 shadow-sm border ${
+                                          inCart
+                                            ? "bg-red-100 hover:bg-red-200 text-red-700 border-red-200 hover:border-red-300"
+                                            : "bg-[#F0FDF4] hover:bg-emerald-100 text-emerald-700 border-[#BDEFE2] hover:border-emerald-300"
+                                        } hover:shadow-md`}
+                                        aria-label={
+                                          inCart
+                                            ? "Remove from donation cart"
+                                            : "Add to donation cart"
+                                        }
                                       >
-                                        <div className={`w-5 h-5 flex items-center justify-center transition-transform duration-200 ${inCart ? "group-hover:rotate-90" : ""
-                                          }`}>
-                                          <ShoppingCartIconCustom className={inCart ? "text-red-700" : "text-emerald-700"} />
+                                        <div
+                                          className={`w-5 h-5 flex items-center justify-center transition-transform duration-200 ${
+                                            inCart ? "group-hover:rotate-90" : ""
+                                          }`}
+                                        >
+                                          <ShoppingCartIconCustom
+                                            className={inCart ? "text-red-700" : "text-emerald-700"}
+                                          />
                                         </div>
                                         {inCart ? "Remove" : "Add to Cart"}
                                         {inCart && (
@@ -134,7 +147,7 @@ export const CommunityGrantsDonate = ({ initialProjects }: CommunityGrantsDonate
               </AutoSizer>
             </InfiniteScroll>
           ) : null}
-          {(isLoading || isFetchingNextPage) ? (
+          {isLoading || isFetchingNextPage ? (
             <div className="w-full flex items-center justify-center">
               <CardListSkeleton />
             </div>
@@ -147,13 +160,13 @@ export const CommunityGrantsDonate = ({ initialProjects }: CommunityGrantsDonate
         <div className="fixed bottom-6 right-6 z-50">
           <Link
             href={`/community/${communityId}/donate/${programId}/checkout`}
-            className="box-border inline-flex items-center justify-center gap-3 px-7 py-4 relative rounded-[40px] overflow-hidden border border-solid border-grayprimary-700 bg-[linear-gradient(90deg,rgba(0,78,235,1)_0%,rgba(131,8,145,1)_80%)] text-white hover:opacity-80 transition-all duration-200"
+            className="box-border inline-flex items-center justify-center gap-3 px-7 py-4 relative rounded-[40px] overflow-hidden border border-solid border-gray bg-[linear-gradient(90deg,rgba(0,78,235,1)_0%,rgba(131,8,145,1)_80%)] text-white hover:opacity-80 transition-all duration-200"
           >
             <div className="relative">
               <ShoppingCartIconCustom className="text-white" width="21" height="21" />
             </div>
             <span className="font-semibold whitespace-nowrap">
-              Checkout ({items.length} {items.length === 1 ? 'item' : 'items'})
+              Checkout ({items.length} {items.length === 1 ? "item" : "items"})
             </span>
           </Link>
         </div>

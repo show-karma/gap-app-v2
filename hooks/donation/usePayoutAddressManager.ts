@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { isAddress } from "viem";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 
 interface CartItem {
   uid: string;
@@ -17,10 +17,7 @@ interface PayoutStatus {
   isMissing: boolean;
 }
 
-export function usePayoutAddressManager(
-  items: CartItem[],
-  communityId?: string
-) {
+export function usePayoutAddressManager(items: CartItem[], communityId?: string) {
   const [payoutAddresses, setPayoutAddresses] = useState<Record<string, string>>({});
   const [missingPayouts, setMissingPayouts] = useState<string[]>([]);
   const [isFetchingPayouts, setIsFetchingPayouts] = useState(false);
@@ -33,10 +30,7 @@ export function usePayoutAddressManager(
    */
   const resolvePayoutAddress = useCallback(
     (project: IProjectResponse): string | undefined => {
-      const payout = project.payoutAddress as
-        | string
-        | Record<string, string>
-        | undefined;
+      const payout = project.payoutAddress as string | Record<string, string> | undefined;
 
       let candidateAddress: string | undefined;
 
@@ -59,9 +53,8 @@ export function usePayoutAddressManager(
       }
       // Priority 3: Grant payout address
       else {
-        const grantPayout = project.grants?.find(
-          (grant) => grant.details?.data?.payoutAddress
-        )?.details?.data?.payoutAddress;
+        const grantPayout = project.grants?.find((grant) => grant.details?.data?.payoutAddress)
+          ?.details?.data?.payoutAddress;
         if (grantPayout) {
           candidateAddress = grantPayout;
         }
@@ -84,8 +77,10 @@ export function usePayoutAddressManager(
 
   useEffect(() => {
     if (!items.length) {
-      setPayoutAddresses({});
-      setMissingPayouts([]);
+      // Only update state if it's not already empty to prevent infinite loops
+      setPayoutAddresses((prev) => (Object.keys(prev).length === 0 ? prev : {}));
+      setMissingPayouts((prev) => (prev.length === 0 ? prev : []));
+      setIsFetchingPayouts(false);
       return;
     }
 
@@ -96,9 +91,7 @@ export function usePayoutAddressManager(
       try {
         const results = await Promise.all(
           items.map(async (item) => {
-            const { data } = await gapIndexerApi.projectBySlug(
-              item.slug || item.uid
-            );
+            const { data } = await gapIndexerApi.projectBySlug(item.slug || item.uid);
             const address = resolvePayoutAddress(data);
             return { projectId: item.uid, address };
           })

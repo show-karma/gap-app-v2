@@ -19,7 +19,7 @@ const ipfsClient = new IpfsStorage({
   token: envVars.IPFS_TOKEN,
 });
 
-const gelatoOpts = {
+const _gelatoOpts = {
   sponsorUrl: envVars.NEXT_PUBLIC_SPONSOR_URL || "/api/sponsored-txn",
   useGasless: false,
 };
@@ -27,7 +27,7 @@ const gelatoOpts = {
 const gapClients: Record<number, GAP> = {};
 
 const isSupportedNetwork = (network: string): network is TNetwork =>
-  Object.prototype.hasOwnProperty.call(Networks, network);
+  Object.hasOwn(Networks, network);
 
 const getSupportedNetworkForChain = (chainID: number): TNetwork | null => {
   const candidate = getChainNameById(chainID);
@@ -35,14 +35,11 @@ const getSupportedNetworkForChain = (chainID: number): TNetwork | null => {
 };
 
 const findDefaultSupportedChainId = (): number | undefined => {
-  const fallbackChain = appNetwork.find((chain) =>
-    isSupportedNetwork(getChainNameById(chain.id)),
-  );
+  const fallbackChain = appNetwork.find((chain) => isSupportedNetwork(getChainNameById(chain.id)));
   return fallbackChain?.id;
 };
 
-export const getDefaultGapChainId = (): number | undefined =>
-  findDefaultSupportedChainId();
+export const getDefaultGapChainId = (): number | undefined => findDefaultSupportedChainId();
 
 export const getGapClient = (chainID: number): GAP => {
   const network = getSupportedNetworkForChain(chainID);
@@ -57,7 +54,7 @@ export const getGapClient = (chainID: number): GAP => {
       globalSchemas: false,
       network,
       // uncomment to use the API client
-      ...(apiUrl && apiUrl.trim()
+      ...(apiUrl?.trim()
         ? {
             apiClient: new GapIndexerClient(apiUrl),
           }
@@ -87,7 +84,7 @@ export const useGap = () => {
         // Unsupported chain - switch to first supported network
         const firstSupportedChain = gapSupportedNetworks[0];
         console.warn(
-          `GAP::Unsupported chain ${chainId}. Switching to ${firstSupportedChain.name}...`,
+          `GAP::Unsupported chain ${chainId}. Switching to ${firstSupportedChain.name}...`
         );
 
         setGapClient(getGapClient(firstSupportedChain.id));
@@ -107,7 +104,7 @@ export const useGap = () => {
         setIsUpdating(false);
       }
     },
-    [isUpdating],
+    [isUpdating]
   );
 
   useEffect(() => {

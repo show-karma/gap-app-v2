@@ -1,8 +1,8 @@
-import Safe from "@safe-global/protocol-kit";
 import SafeApiKit from "@safe-global/api-kit";
-import { erc20Abi, formatUnits, parseUnits, encodeFunctionData } from "viem";
-import { NETWORKS, TOKEN_ADDRESSES, SupportedChainId } from "../config/tokens";
-import { DisbursementRecipient } from "../types/disbursement";
+import Safe from "@safe-global/protocol-kit";
+import { encodeFunctionData, erc20Abi, formatUnits, parseUnits } from "viem";
+import { NETWORKS, type SupportedChainId, TOKEN_ADDRESSES } from "../config/tokens";
+import type { DisbursementRecipient } from "../types/disbursement";
 import { getRPCClient } from "./rpcClient";
 
 // Safe Transaction Service URLs
@@ -33,9 +33,7 @@ export async function isSafeOwner(
     const owners = await safe.getOwners();
 
     // Check if signer is one of the owners
-    return owners.some(
-      (owner) => owner.toLowerCase() === signerAddress.toLowerCase()
-    );
+    return owners.some((owner) => owner.toLowerCase() === signerAddress.toLowerCase());
   } catch (error) {
     console.error("Error checking Safe ownership:", error);
     return false;
@@ -221,44 +219,27 @@ function createEthereumProvider(walletClient: any, chainId: SupportedChainId) {
   return {
     request: async (args: { method: string; params?: any }) => {
       const { method, params } = args;
-      console.log(`Provider request: ${method}`, params);
 
       try {
         // Handle signing methods through wallet client
         if (method === "eth_sendTransaction") {
-          console.log("Handling eth_sendTransaction through wallet client");
           return await walletClient.sendTransaction(params[0]);
         }
 
         if (method === "eth_signTransaction") {
-          console.log("Handling eth_signTransaction through wallet client");
           return await walletClient.signTransaction(params[0]);
         }
 
-        if (
-          method === "eth_signTypedData_v4" ||
-          method === "eth_signTypedData"
-        ) {
-          console.log("Handling eth_signTypedData through wallet client");
-          console.log("TypedData params:", params);
-
+        if (method === "eth_signTypedData_v4" || method === "eth_signTypedData") {
           // params[0] is the address, params[1] is the typed data
           const [address, typedData] = params;
 
           // Parse the typed data if it's a string
-          const parsedTypedData =
-            typeof typedData === "string" ? JSON.parse(typedData) : typedData;
-
-          console.log("Parsed typed data:", parsedTypedData);
+          const parsedTypedData = typeof typedData === "string" ? JSON.parse(typedData) : typedData;
 
           // Verify the address matches the wallet client account
-          if (
-            address?.toLowerCase() !==
-            walletClient.account?.address?.toLowerCase()
-          ) {
-            throw new Error(
-              `Address mismatch: ${address} vs ${walletClient.account?.address}`
-            );
+          if (address?.toLowerCase() !== walletClient.account?.address?.toLowerCase()) {
+            throw new Error(`Address mismatch: ${address} vs ${walletClient.account?.address}`);
           }
 
           return await walletClient.signTypedData({
@@ -270,46 +251,31 @@ function createEthereumProvider(walletClient: any, chainId: SupportedChainId) {
         }
 
         if (method === "personal_sign") {
-          console.log("Handling personal_sign through wallet client");
-          console.log("Personal sign params:", params);
-
           // params[0] is the message, params[1] is the address
           const [message, address] = params;
 
           // Verify the address matches the wallet client account
-          if (
-            address?.toLowerCase() !==
-            walletClient.account?.address?.toLowerCase()
-          ) {
-            throw new Error(
-              `Address mismatch: ${address} vs ${walletClient.account?.address}`
-            );
+          if (address?.toLowerCase() !== walletClient.account?.address?.toLowerCase()) {
+            throw new Error(`Address mismatch: ${address} vs ${walletClient.account?.address}`);
           }
 
           return await walletClient.signMessage({
             message:
-              typeof message === "string" && message.startsWith("0x")
-                ? { raw: message }
-                : message,
+              typeof message === "string" && message.startsWith("0x") ? { raw: message } : message,
           });
         }
 
         // Handle account access
         if (method === "eth_accounts" || method === "eth_requestAccounts") {
           const accounts = [walletClient.account?.address].filter(Boolean);
-          console.log("Returning accounts:", accounts);
           return accounts;
         }
 
         // Handle chain ID
         if (method === "eth_chainId") {
           const chainIdHex = `0x${chainId.toString(16)}`;
-          console.log("Returning chainId:", chainIdHex);
           return chainIdHex;
         }
-
-        // For other methods, fall back to RPC
-        console.log(`Falling back to RPC for method: ${method}`);
         const response = await fetch(rpcUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -337,8 +303,7 @@ function createEthereumProvider(walletClient: any, chainId: SupportedChainId) {
         console.error("Error details:", {
           method,
           params,
-          errorMessage:
-            error instanceof Error ? error.message : "Unknown error",
+          errorMessage: error instanceof Error ? error.message : "Unknown error",
           errorStack: error instanceof Error ? error.stack : undefined,
         });
         throw error;
@@ -357,13 +322,6 @@ export async function signAndProposeDisbursement(
   chainId: SupportedChainId,
   walletClient: any // The wallet client from wagmi
 ) {
-  console.log("Starting disbursement transaction...", {
-    safeAddress,
-    recipientCount: recipients.length,
-    chainId,
-    walletClientAccount: walletClient?.account?.address,
-  });
-
   try {
     // Validate inputs
     if (!walletClient?.account?.address) {
@@ -373,8 +331,6 @@ export async function signAndProposeDisbursement(
     if (!safeAddress || !recipients.length) {
       throw new Error("Missing required parameters");
     }
-
-    console.log("Creating Safe SDK instance...");
     // Create provider that can handle signing
     const provider = createEthereumProvider(walletClient, chainId);
 
@@ -383,80 +339,46 @@ export async function signAndProposeDisbursement(
       signer: walletClient.account.address,
       safeAddress,
     });
-
-    console.log("Initializing API Kit...");
     // Initialize API Kit
     const apiKit = new SafeApiKit({
       chainId: BigInt(chainId),
       txServiceUrl: SAFE_SERVICE_URLS[chainId],
     });
-
-    console.log("Preparing transaction...");
     // Prepare the transaction
-    const { safeTx, totalRecipients, totalAmount } =
-      await prepareDisbursementTransaction(
-        safeAddress,
-        recipients,
-        tokenSymbol,
-        chainId
-      );
-
-    console.log("Signing transaction...");
+    const { safeTx, totalRecipients, totalAmount } = await prepareDisbursementTransaction(
+      safeAddress,
+      recipients,
+      tokenSymbol,
+      chainId
+    );
     // Sign the transaction
     const signedTx = await safe.signTransaction(safeTx);
-
-    console.log("Getting transaction hash...");
     // Get transaction hash
     const txHash = await safe.getTransactionHash(signedTx);
-
-    console.log("Getting signer address...");
     // Get signer address
     const signerAddress = walletClient.account.address;
-    console.log("Signer address:", signerAddress);
 
     // Get signature
     const signature = signedTx.signatures.get(signerAddress.toLowerCase());
     if (!signature) {
-      console.error(
-        "Available signatures:",
-        Array.from(signedTx.signatures.keys())
-      );
+      console.error("Available signatures:", Array.from(signedTx.signatures.keys()));
       throw new Error("Unable to get signature for signer address");
     }
 
-    console.log("Proposing transaction to Safe Transaction Service...");
-    console.log("Proposal data:", {
-      safeAddress,
-      safeTxHash: txHash,
-      senderAddress: signerAddress,
-      serviceUrl: SAFE_SERVICE_URLS[chainId],
-    });
-
     try {
-      // First, try to execute the transaction directly
-      console.log("Attempting direct transaction execution...");
       const executeTxResponse = await safe.executeTransaction(signedTx);
 
       // Try to wait for transaction confirmation if possible
-      let receipt;
+      let receipt: any = null;
       try {
         if (executeTxResponse.transactionResponse) {
-          receipt = await (
-            executeTxResponse.transactionResponse as any
-          ).wait?.();
+          receipt = await (executeTxResponse.transactionResponse as any).wait?.();
         }
       } catch (waitError) {
         console.warn("Failed to wait for transaction confirmation:", waitError);
       }
 
-      const finalTxHash =
-        receipt?.transactionHash || executeTxResponse.hash || txHash;
-
-      console.log("Transaction executed successfully!", {
-        txHash: finalTxHash,
-        blockNumber: receipt?.blockNumber,
-        gasUsed: receipt?.gasUsed?.toString(),
-      });
+      const finalTxHash = receipt?.transactionHash || executeTxResponse.hash || txHash;
 
       return {
         txHash: finalTxHash,
@@ -471,29 +393,22 @@ export async function signAndProposeDisbursement(
       console.error("Direct execution failed:", {
         error: executionError,
         message:
-          executionError instanceof Error
-            ? executionError.message
-            : "Unknown execution error",
+          executionError instanceof Error ? executionError.message : "Unknown execution error",
       });
 
       // If direct execution fails, fall back to proposing the transaction
       try {
-        console.log(
-          "Falling back to proposing transaction to Safe Transaction Service..."
-        );
-        const proposalResult = await apiKit.proposeTransaction({
+        const _proposalResult = await apiKit.proposeTransaction({
           safeAddress,
           safeTransactionData: signedTx.data,
           safeTxHash: txHash,
           senderAddress: signerAddress,
           senderSignature: signature.data,
         });
-        console.log("Transaction proposed successfully!", proposalResult);
       } catch (apiError) {
         console.error("Failed to propose transaction to Safe service:", {
           error: apiError,
-          message:
-            apiError instanceof Error ? apiError.message : "Unknown API error",
+          message: apiError instanceof Error ? apiError.message : "Unknown API error",
           stack: apiError instanceof Error ? apiError.stack : undefined,
           serviceUrl: SAFE_SERVICE_URLS[chainId],
           safeAddress,
@@ -503,16 +418,9 @@ export async function signAndProposeDisbursement(
 
         // Check if it's a network/fetch error vs a validation error
         if (apiError instanceof Error) {
-          if (
-            apiError.message.includes("Failed to fetch") ||
-            apiError.message.includes("fetch")
-          ) {
-            console.warn(
-              "Network connectivity issue with Safe Transaction Service"
-            );
-            console.warn(
-              "The transaction is signed and can be executed manually in the Safe app"
-            );
+          if (apiError.message.includes("Failed to fetch") || apiError.message.includes("fetch")) {
+            console.warn("Network connectivity issue with Safe Transaction Service");
+            console.warn("The transaction is signed and can be executed manually in the Safe app");
             // Don't throw - just continue
           } else if (
             apiError.message.includes("Invalid") ||
@@ -525,10 +433,6 @@ export async function signAndProposeDisbursement(
             console.warn("Unexpected Safe service error:", apiError.message);
           }
         }
-
-        console.log(
-          "Continuing despite Safe service error - transaction is signed and ready"
-        );
       }
     }
 

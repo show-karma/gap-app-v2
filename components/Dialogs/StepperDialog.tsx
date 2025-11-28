@@ -1,8 +1,8 @@
 "use client";
-import { TxStepperSteps, useStepper } from "@/store/modals/txStepper";
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { Fragment } from "react";
+import { type TxStepperSteps, useStepper } from "@/store/modals/txStepper";
 
 const StepNumberDictionary: Record<TxStepperSteps, number> = {
   preparing: 1,
@@ -29,18 +29,14 @@ const Step = ({
   stepNumber: number;
   activeNumber: number;
 }) => {
-  const lastSteps = Object.values(StepNumberDictionary).filter(
-    (item) => activeNumber >= item
-  );
+  const lastSteps = Object.values(StepNumberDictionary).filter((item) => activeNumber >= item);
   return (
     <div className="flex flex-col gap-1">
       <div className="flex flex-row gap-3 items-center">
         <div
           className="w-8 h-8 flex flex-col justify-center items-center rounded-full"
           style={{
-            backgroundColor: lastSteps.includes(stepNumber)
-              ? "#4c6fff"
-              : "#535c68",
+            backgroundColor: lastSteps.includes(stepNumber) ? "#4c6fff" : "#535c68",
           }}
         >
           {isActive ? (
@@ -78,7 +74,7 @@ export const StepperDialog = () => {
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={closeModal}>
+      <Dialog as="div" className="relative z-[150]" onClose={closeModal}>
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -104,6 +100,7 @@ export const StepperDialog = () => {
             >
               <Dialog.Panel className="w-full max-w-2xl h-max transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle  transition-all">
                 <button
+                  type="button"
                   className="p-2 text-black dark:text-white absolute top-4 right-4"
                   onClick={() => closeModal()}
                 >
@@ -121,9 +118,7 @@ export const StepperDialog = () => {
                         key={item}
                         step={item as TxStepperSteps}
                         isActive={stepperStep === item}
-                        stepNumber={
-                          StepNumberDictionary[item as TxStepperSteps]
-                        }
+                        stepNumber={StepNumberDictionary[item as TxStepperSteps]}
                         activeNumber={StepNumberDictionary[stepperStep]}
                       />
                     ))}

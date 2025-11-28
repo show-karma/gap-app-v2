@@ -1,10 +1,10 @@
-import React from "react";
 import { CheckIcon } from "@heroicons/react/24/solid";
-import { cn } from "@/utilities/tailwind/index";
-import { useTracksForProgram } from "@/hooks/useTracks";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { Track } from "@/services/tracks";
+import type React from "react";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { useTracksForProgram } from "@/hooks/useTracks";
+import type { Track } from "@/services/tracks";
+import { cn } from "@/utilities/tailwind/index";
 
 interface TrackSelectionProps {
   programId?: string;
@@ -19,12 +19,7 @@ export const TrackSelection: React.FC<TrackSelectionProps> = ({
   onTrackSelectionChange,
   disabled = false,
 }) => {
-  const {
-    data: tracks = [],
-    isLoading,
-    isError,
-    error,
-  } = useTracksForProgram(programId as string);
+  const { data: tracks = [], isLoading, isError, error } = useTracksForProgram(programId as string);
 
   const handleTrackSelection = (trackId: string) => {
     if (disabled) return;
@@ -51,18 +46,12 @@ export const TrackSelection: React.FC<TrackSelectionProps> = ({
 
   if (isError) {
     // Log error to Sentry for monitoring
-    errorManager(
-      "Failed to load tracks for program",
-      error,
-      { programId }
-    );
+    errorManager("Failed to load tracks for program", error, { programId });
 
     return (
       <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
         <p className="text-sm text-red-500 dark:text-red-400">
-          {error instanceof Error
-            ? error.message
-            : "Failed to load tracks for this program"}
+          {error instanceof Error ? error.message : "Failed to load tracks for this program"}
         </p>
       </div>
     );
@@ -79,27 +68,25 @@ export const TrackSelection: React.FC<TrackSelectionProps> = ({
   return (
     <div className="mt-4">
       <h4 className="text-sm font-semibold mb-2 text-gray-900 dark:text-gray-300">
-        {disabled
-          ? "Sponsored Tracks"
-          : "Choose the tracks (optional)"}
+        {disabled ? "Sponsored Tracks" : "Choose the tracks (optional)"}
       </h4>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
         {tracks.map((track: Track) => (
-          <div
+          <button
+            type="button"
             key={track.id}
             onClick={() => handleTrackSelection(track.id)}
+            disabled={disabled}
             className={cn(
-              "p-3 rounded-lg border cursor-pointer flex items-center justify-between transition-all bg-white dark:bg-zinc-900",
+              "w-full p-3 rounded-lg border cursor-pointer flex items-center justify-between transition-all text-left",
               selectedTrackIds.includes(track.id)
                 ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-400"
-                : "border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600",
+                : "border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600 bg-white dark:bg-zinc-900",
               disabled && "opacity-60 cursor-not-allowed"
             )}
           >
             <div>
-              <p className="font-medium text-gray-900 dark:text-white">
-                {track.name}
-              </p>
+              <p className="font-medium text-gray-900 dark:text-white">{track.name}</p>
               {track.description && (
                 <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
                   {track.description}
@@ -109,7 +96,7 @@ export const TrackSelection: React.FC<TrackSelectionProps> = ({
             {selectedTrackIds.includes(track.id) && (
               <CheckIcon className="h-5 w-5 min-h-5 min-w-5 max-h-5 max-w-5 text-blue-500 dark:text-blue-400" />
             )}
-          </div>
+          </button>
         ))}
       </div>
     </div>

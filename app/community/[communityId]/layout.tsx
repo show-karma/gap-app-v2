@@ -1,35 +1,31 @@
-import { CommunityPageNavigator } from "@/components/Pages/Communities/CommunityPageNavigator";
-import { communityColors } from "@/utilities/communityColors";
+import type { Metadata } from "next";
+import CommunityHeader from "@/components/Community/Header";
+import { CommunityNotFound } from "@/components/Pages/Communities/CommunityNotFound";
+import { PROJECT_NAME } from "@/constants/brand";
+import { layoutTheme } from "@/src/helper/theme";
 import { envVars } from "@/utilities/enviromentVars";
 import { defaultMetadata } from "@/utilities/meta";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
 import { getCommunityDetailsV2 } from "@/utilities/queries/getCommunityDataV2";
-import { Metadata } from "next";
-import { CommunityImpactStatCards } from "@/components/Pages/Communities/Impact/StatCards";
-import CommunityHeader from "@/components/Community/Header";
-import { CommunityNotFound } from "@/components/Pages/Communities/CommunityNotFound";
+import { cn } from "@/utilities/tailwind";
 
 type Params = Promise<{
   communityId: string;
 }>;
-export async function generateMetadata({
-  params,
-}: {
-  params: Params;
-}): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { communityId } = await params;
 
   const community = await getCommunityDetailsV2(communityId);
   const communityName = community?.details?.name || communityId;
 
   const dynamicMetadata = {
-    title: `Karma GAP - ${communityName} community grants`,
+    title: `${PROJECT_NAME} - ${communityName} community grants`,
     description: `View the list of grants issued by ${communityName} and the grantee updates.`,
   };
 
   if (!community) {
-    dynamicMetadata.title = `Launch ${communityName} community!`,
-    dynamicMetadata.description = `Looks like no one’s started this community. Create it now to launch programs, fund projects, and track progress, all in one place.`;
+    dynamicMetadata.title = `Launch ${communityName} community!`;
+    dynamicMetadata.description = `Looks like no one's started this community. Create it now to launch programs, fund projects, and track progress, all in one place.`;
   }
 
   return {
@@ -59,10 +55,7 @@ export async function generateMetadata({
   };
 }
 
-export default async function Layout(props: {
-  children: React.ReactNode;
-  params: Params;
-}) {
+export default async function Layout(props: { children: React.ReactNode; params: Params }) {
   const { communityId } = await props.params;
 
   const { children } = props;
@@ -80,7 +73,7 @@ export default async function Layout(props: {
   return (
     <div className="flex w-full h-full max-w-full flex-col justify-start max-lg:flex-col">
       <CommunityHeader community={community} />
-      {children}
+      <div className={cn(layoutTheme.padding, "w-full max-w-full")}>{children}</div>
     </div>
   );
 }

@@ -1,39 +1,34 @@
-import { defaultMetadata } from "@/utilities/meta";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { defaultMetadata } from "@/utilities/meta";
 import "@/styles/globals.css";
 import "@/styles/index.scss";
 import "@/components/Utilities/DynamicStars/styles.css";
 import "rc-slider/assets/index.css";
 import "react-day-picker/dist/style.css";
 import "@uiw/react-markdown-preview/markdown.css";
-import Footer from "@/components/Utilities/Footer";
-import Header from "@/components/Utilities/Header";
+import { GoogleAnalytics } from "@next/third-parties/google";
+import { Analytics } from "@vercel/analytics/react";
+import { ThemeProvider } from "next-themes";
+import { Suspense } from "react";
 import { Toaster } from "react-hot-toast";
-import PrivyProviderWrapper from "@/components/Utilities/PrivyProviderWrapper";
+import { ContributorProfileDialog } from "@/components/Dialogs/ContributorProfileDialog";
+import { OnboardingDialog } from "@/components/Dialogs/OnboardingDialog";
 import { StepperDialog } from "@/components/Dialogs/StepperDialog";
 import { ProgressBarWrapper } from "@/components/ProgressBarWrapper";
-import { ThemeProvider } from "next-themes";
-import { Analytics } from "@vercel/analytics/react";
-import { GoogleAnalytics } from "@next/third-parties/google";
-import { Suspense } from "react";
 import HotjarAnalytics from "@/components/Utilities/HotjarAnalytics";
-import { ContributorProfileDialog } from "@/components/Dialogs/ContributorProfileDialog";
+import { PermissionsProvider } from "@/components/Utilities/PermissionsProvider";
+import PrivyProviderWrapper from "@/components/Utilities/PrivyProviderWrapper";
+import { Footer } from "@/src/components/footer/footer";
+import { Navbar } from "@/src/components/navbar/navbar";
 
 export const metadata = defaultMetadata;
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
-      {process.env.NEXT_PUBLIC_GA_TRACKING_ID &&
-        process.env.NEXT_PUBLIC_ENV === "production" && (
-          <GoogleAnalytics
-            gaId={process.env.NEXT_PUBLIC_GA_TRACKING_ID as string}
-          />
-        )}
+      {process.env.NEXT_PUBLIC_GA_TRACKING_ID && process.env.NEXT_PUBLIC_ENV === "production" && (
+        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_TRACKING_ID as string} />
+      )}
       <Suspense>
         <HotjarAnalytics />
       </Suspense>
@@ -45,18 +40,18 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <PrivyProviderWrapper>
+            <PermissionsProvider />
             <Toaster />
             <StepperDialog />
             <Suspense fallback={null}>
               <ContributorProfileDialog />
             </Suspense>
+            <OnboardingDialog />
             <ProgressBarWrapper />
             <div className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white">
               <div className="flex flex-col w-full h-full">
-                <div className="fixed w-full bg-white dark:bg-black z-10">
-                  <Header />
-                </div>
-                <div className="h-[72px] w-full" />
+                <Navbar />
+                <div className="h-[80px]" />
                 {children}
                 <Analytics />
               </div>

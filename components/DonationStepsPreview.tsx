@@ -1,7 +1,7 @@
 "use client";
-import { DonationPayment } from "@/store/donationCart";
-import { SUPPORTED_NETWORKS } from "@/constants/supportedTokens";
 import { useMemo } from "react";
+import { SUPPORTED_NETWORKS } from "@/constants/supportedTokens";
+import type { DonationPayment } from "@/store/donationCart";
 
 interface DonationStepsPreviewProps {
   payments: DonationPayment[];
@@ -18,13 +18,18 @@ interface TransactionStep {
   estimatedTime: string;
 }
 
-export function DonationStepsPreview({ payments, onProceed, onCancel, isLoading }: DonationStepsPreviewProps) {
+export function DonationStepsPreview({
+  payments,
+  onProceed,
+  onCancel,
+  isLoading,
+}: DonationStepsPreviewProps) {
   const steps = useMemo(() => {
     const stepsList: TransactionStep[] = [];
-    const chainMap = new Map<number, { approvals: string[], donations: number }>();
+    const chainMap = new Map<number, { approvals: string[]; donations: number }>();
 
     // Group payments by chain
-    payments.forEach(payment => {
+    payments.forEach((payment) => {
       if (!chainMap.has(payment.chainId)) {
         chainMap.set(payment.chainId, { approvals: [], donations: 0 });
       }
@@ -54,7 +59,7 @@ export function DonationStepsPreview({ payments, onProceed, onCancel, isLoading 
           chainId,
           chainName,
           details: [`Switch to ${chainName}`],
-          estimatedTime: "5-10s"
+          estimatedTime: "5-10s",
         });
       }
 
@@ -64,8 +69,11 @@ export function DonationStepsPreview({ payments, onProceed, onCancel, isLoading 
           type: "approvals",
           chainId,
           chainName,
-          details: data.approvals.map(approval => `Approve ${approval.replace(' approval', '')}`),
-          estimatedTime: data.approvals.length === 1 ? "10-15s" : `${10 + data.approvals.length * 5}-${15 + data.approvals.length * 10}s`
+          details: data.approvals.map((approval) => `Approve ${approval.replace(" approval", "")}`),
+          estimatedTime:
+            data.approvals.length === 1
+              ? "10-15s"
+              : `${10 + data.approvals.length * 5}-${15 + data.approvals.length * 10}s`,
         });
       }
 
@@ -74,8 +82,8 @@ export function DonationStepsPreview({ payments, onProceed, onCancel, isLoading 
         type: "donation",
         chainId,
         chainName,
-        details: [`Execute ${data.donations} donation${data.donations > 1 ? 's' : ''}`],
-        estimatedTime: "15-30s"
+        details: [`Execute ${data.donations} donation${data.donations > 1 ? "s" : ""}`],
+        estimatedTime: "15-30s",
       });
     });
 
@@ -84,8 +92,8 @@ export function DonationStepsPreview({ payments, onProceed, onCancel, isLoading 
 
   const totalEstimatedTime = useMemo(() => {
     const totalSeconds = steps.reduce((acc, step) => {
-      const [min, max] = step.estimatedTime.split('-').map(t => parseInt(t.replace('s', '')));
-      return acc + ((min + max) / 2);
+      const [min, max] = step.estimatedTime.split("-").map((t) => parseInt(t.replace("s", ""), 10));
+      return acc + (min + max) / 2;
     }, 0);
 
     if (totalSeconds < 60) {
@@ -97,19 +105,26 @@ export function DonationStepsPreview({ payments, onProceed, onCancel, isLoading 
   }, [steps]);
 
   const uniqueChains = useMemo(() => {
-    const chains = new Set(payments.map(p => p.chainId));
-    return Array.from(chains).map(chainId => ({
+    const chains = new Set(payments.map((p) => p.chainId));
+    return Array.from(chains).map((chainId) => ({
       chainId,
-      name: SUPPORTED_NETWORKS[chainId]?.chainName || `Chain ${chainId}`
+      name: SUPPORTED_NETWORKS[chainId]?.chainName || `Chain ${chainId}`,
     }));
   }, [payments]);
 
-  const getStepIcon = (type: TransactionStep['type']) => {
+  const getStepIcon = (type: TransactionStep["type"]) => {
     switch (type) {
       case "network_switch":
         return (
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-200">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
             </svg>
           </div>
@@ -117,7 +132,14 @@ export function DonationStepsPreview({ payments, onProceed, onCancel, isLoading 
       case "approvals":
         return (
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-200">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="M9 12l2 2 4-4" />
               <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3" />
               <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3" />
@@ -127,7 +149,14 @@ export function DonationStepsPreview({ payments, onProceed, onCancel, isLoading 
       case "donation":
         return (
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-200">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4" />
               <path d="M4 6v12c0 1.1.9 2 2 2h14v-4" />
               <path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z" />
@@ -139,7 +168,10 @@ export function DonationStepsPreview({ payments, onProceed, onCancel, isLoading 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-2xl rounded-2xl border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-zinc-950">
+      <div
+        data-testid="steps-preview"
+        className="w-full max-w-2xl rounded-2xl border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-zinc-950"
+      >
         {/* Header */}
         <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-800">
           <div className="flex items-center justify-between">
@@ -155,7 +187,14 @@ export function DonationStepsPreview({ payments, onProceed, onCancel, isLoading 
               onClick={onCancel}
               className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <path d="M18 6L6 18M6 6l12 12" />
               </svg>
             </button>
@@ -166,15 +205,25 @@ export function DonationStepsPreview({ payments, onProceed, onCancel, isLoading 
         <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-800">
           <div className="grid grid-cols-3 gap-4 text-center">
             <div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{uniqueChains.length}</div>
-              <div className="text-xs text-gray-600 dark:text-gray-400">Network{uniqueChains.length > 1 ? 's' : ''}</div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                {uniqueChains.length}
+              </div>
+              <div className="text-xs text-gray-600 dark:text-gray-400">
+                Network{uniqueChains.length > 1 ? "s" : ""}
+              </div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{steps.length}</div>
-              <div className="text-xs text-gray-600 dark:text-gray-400">Transaction{steps.length > 1 ? 's' : ''}</div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                {steps.length}
+              </div>
+              <div className="text-xs text-gray-600 dark:text-gray-400">
+                Transaction{steps.length > 1 ? "s" : ""}
+              </div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">~{totalEstimatedTime}</div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                ~{totalEstimatedTime}
+              </div>
               <div className="text-xs text-gray-600 dark:text-gray-400">Estimated time</div>
             </div>
           </div>
@@ -202,9 +251,7 @@ export function DonationStepsPreview({ payments, onProceed, onCancel, isLoading 
                       {step.estimatedTime}
                     </span>
                   </div>
-                  <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
-                    {step.chainName}
-                  </p>
+                  <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">{step.chainName}</p>
                   <ul className="mt-2 space-y-1">
                     {step.details.map((detail, detailIndex) => (
                       <li key={detailIndex} className="text-xs text-gray-600 dark:text-gray-400">

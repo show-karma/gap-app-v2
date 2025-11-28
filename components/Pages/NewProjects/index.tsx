@@ -1,18 +1,20 @@
 "use client";
+import { Listbox, Transition } from "@headlessui/react";
+import { CheckIcon } from "@heroicons/react/20/solid";
+import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/24/solid";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { useQueryState } from "nuqs";
+import { Fragment } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { AutoSizer, Grid } from "react-virtualized";
-import { FC, Fragment } from "react";
-import { ProjectCard } from "./ProjectCard";
-import { ProjectCardListSkeleton } from "./Loading";
-import { Listbox, Transition } from "@headlessui/react";
-import { useQueryState } from "nuqs";
-import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/24/solid";
-import { cn } from "@/utilities/tailwind";
-import { CheckIcon } from "@heroicons/react/20/solid";
 import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
-import { ExplorerSortByOptions, ExplorerSortOrder } from "@/types/explorer";
+import { PROJECT_NAME } from "@/constants/brand";
+import { layoutTheme } from "@/src/helper/theme";
+import type { ExplorerSortByOptions, ExplorerSortOrder } from "@/types/explorer";
 import { getExplorerProjects } from "@/utilities/indexer/getExplorerProjects";
+import { cn } from "@/utilities/tailwind";
+import { ProjectCardListSkeleton } from "./Loading";
+import { ProjectCard } from "./ProjectCard";
 
 const sortOptions: Record<ExplorerSortByOptions, string> = {
   createdAt: "Recently Added",
@@ -28,15 +30,12 @@ export const NewProjectsPage = () => {
     defaultValue: "updatedAt",
     serialize: (value) => value,
     parse: (value) =>
-      value
-        ? (value as ExplorerSortByOptions)
-        : ("updatedAt" as ExplorerSortByOptions),
+      value ? (value as ExplorerSortByOptions) : ("updatedAt" as ExplorerSortByOptions),
   });
   const [selectedSortOrder, changeSortOrderQuery] = useQueryState("sortOrder", {
     defaultValue: "desc",
     serialize: (value) => value,
-    parse: (value) =>
-      value ? (value as ExplorerSortOrder) : ("desc" as ExplorerSortOrder),
+    parse: (value) => (value ? (value as ExplorerSortOrder) : ("desc" as ExplorerSortOrder)),
   });
   const {
     data,
@@ -76,11 +75,16 @@ export const NewProjectsPage = () => {
   };
 
   return (
-    <div className="flex w-full max-w-full flex-row justify-start gap-6 px-12 pb-7 pt-5 max-2xl:px-8 max-md:px-4 max-lg:flex-col">
+    <div
+      className={cn(
+        layoutTheme.padding,
+        "flex w-full max-w-full flex-row justify-start gap-6 pb-7 pt-5 max-lg:flex-col"
+      )}
+    >
       <div className="flex w-full max-w-full flex-col justify-start items-center gap-6 mt-4">
         <div className="flex flex-row justify-between items-center gap-3 w-full flex-wrap">
           <h1 className="text-2xl font-bold text-black dark:text-white">
-            Projects on GAP
+            Projects on {PROJECT_NAME}
           </h1>
           <div>
             {/* Sort start */}
@@ -141,11 +145,7 @@ export const NewProjectsPage = () => {
                                     "block truncate"
                                   )}
                                 >
-                                  {
-                                    sortOptions[
-                                    sortOption as ExplorerSortByOptions
-                                    ]
-                                  }
+                                  {sortOptions[sortOption as ExplorerSortByOptions]}
                                 </span>
 
                                 {selected ? (
@@ -155,10 +155,7 @@ export const NewProjectsPage = () => {
                                       "absolute inset-y-0 right-0 flex items-center pr-4"
                                     )}
                                   >
-                                    <CheckIcon
-                                      className="h-5 w-5"
-                                      aria-hidden="true"
-                                    />
+                                    <CheckIcon className="h-5 w-5" aria-hidden="true" />
                                   </span>
                                 ) : null}
                               </>
@@ -190,15 +187,10 @@ export const NewProjectsPage = () => {
               <AutoSizer disableHeight>
                 {({ width }) => {
                   const columns = Math.floor(width / commonWidth);
-                  const columnCounter = columns
-                    ? columns > 4
-                      ? 4
-                      : columns
-                    : 1;
+                  const columnCounter = columns ? (columns > 4 ? 4 : columns) : 1;
                   const columnWidth = Math.floor(width / columnCounter);
                   const gutterSize = 20;
-                  const height =
-                    Math.ceil(projects.length / columnCounter) * 260;
+                  const height = Math.ceil(projects.length / columnCounter) * 260;
 
                   return (
                     <Grid
@@ -209,8 +201,7 @@ export const NewProjectsPage = () => {
                       columnWidth={columnWidth}
                       columnCount={columnCounter}
                       cellRenderer={({ columnIndex, key, rowIndex, style }) => {
-                        const project =
-                          projects[rowIndex * columnCounter + columnIndex];
+                        const project = projects[rowIndex * columnCounter + columnIndex];
                         return (
                           <div
                             key={key}
@@ -218,13 +209,10 @@ export const NewProjectsPage = () => {
                               ...style,
                               left:
                                 +(style.left || 0) +
-                                (columnIndex * gutterSize) /
-                                (columnCounter - 1),
+                                (columnIndex * gutterSize) / (columnCounter - 1),
                               width: +(style.width || 0) - gutterSize,
                               top:
-                                rowIndex === 0
-                                  ? +(style.top || 0)
-                                  : +(style.top || 0) + gutterSize,
+                                rowIndex === 0 ? +(style.top || 0) : +(style.top || 0) + gutterSize,
 
                               height: +(style.height || 0) - gutterSize,
                             }}

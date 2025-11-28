@@ -1,33 +1,31 @@
-import { useState } from "react";
-import { useAccount } from "wagmi";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { useStepper } from "@/store/modals/txStepper";
-import { useProjectStore, useOwnerStore } from "@/store";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
+import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
 import { useParams, useRouter } from "next/navigation";
+import { useState } from "react";
 import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import type { MilestoneCompletedFormData } from "@/components/Forms/GrantMilestoneCompletion";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { getGapClient, useGap } from "./useGap";
-import { UnifiedMilestone } from "@/types/roadmap";
-import { getProjectById } from "@/utilities/sdk";
-import { retryUntilConditionMet } from "@/utilities/retries";
-import { useAllMilestones } from "./useAllMilestones";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useStepper } from "@/store/modals/txStepper";
+import type { UnifiedMilestone } from "@/types/roadmap";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
-import { sanitizeObject } from "@/utilities/sanitize";
-import { MilestoneCompletedFormData } from "@/components/Forms/GrantMilestoneCompletion";
-import { PAGES } from "@/utilities/pages";
-import { MESSAGES } from "@/utilities/messages";
-import { sendMilestoneImpactAnswers } from "@/utilities/impact/milestoneImpactAnswers";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import fetchData from "@/utilities/fetchData";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
-import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
-import { sanitizeInput } from "@/utilities/sanitize";
-import { useWallet } from "./useWallet";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import { sendMilestoneImpactAnswers } from "@/utilities/impact/milestoneImpactAnswers";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
+import { retryUntilConditionMet } from "@/utilities/retries";
+import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
+import { getProjectById } from "@/utilities/sdk";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { useAllMilestones } from "./useAllMilestones";
+import { useGap } from "./useGap";
 import { useOffChainRevoke } from "./useOffChainRevoke";
+import { useWallet } from "./useWallet";
 
 // Helper function to send outputs and deliverables data
 const sendOutputsAndDeliverables = async (
@@ -38,24 +36,24 @@ const sendOutputsAndDeliverables = async (
     // Send outputs (metrics) data if any
     if (data.outputs && data.outputs.length > 0) {
       for (const output of data.outputs) {
-        if (output.outputId && (output.value !== undefined && output.value !== "")) {
+        if (output.outputId && output.value !== undefined && output.value !== "") {
           // Default to today's date if not specified (matching project behavior)
-          const today = new Date().toISOString().split('T')[0];
-          
-          const datapoints = [{
-            value: output.value,
-            proof: output.proof || "",
-            startDate: output.startDate || today,
-            endDate: output.endDate || today,
-          }];
-          
+          const today = new Date().toISOString().split("T")[0];
+
+          const datapoints = [
+            {
+              value: output.value,
+              proof: output.proof || "",
+              startDate: output.startDate || today,
+              endDate: output.endDate || today,
+            },
+          ];
+
           await sendMilestoneImpactAnswers(
             milestoneUID,
             output.outputId,
             datapoints,
-            () => {
-              console.log(`Successfully sent output data for indicator ${output.outputId}`);
-            },
+            () => {},
             (error) => {
               console.error(`Error sending output data for indicator ${output.outputId}:`, error);
             }
@@ -66,9 +64,6 @@ const sendOutputsAndDeliverables = async (
 
     // Send deliverables data if any
     if (data.deliverables && data.deliverables.length > 0) {
-      // For now, deliverables are just stored with the milestone completion
-      // In the future, they could be sent as separate entities to the backend
-      console.log("Deliverables included with milestone completion:", data.deliverables);
     }
   } catch (error) {
     console.error("Error sending outputs and deliverables:", error);
@@ -89,7 +84,7 @@ export const useMilestone = () => {
   const router = useRouter();
   const { isProjectOwner } = useProjectStore();
   const { isOwner: isContractOwner } = useOwnerStore();
-  const isOnChainAuthorized = isProjectOwner || isContractOwner;
+  const _isOnChainAuthorized = isProjectOwner || isContractOwner;
   const { performOffChainRevoke } = useOffChainRevoke();
 
   const multiGrantDelete = async (milestone: UnifiedMilestone) => {
@@ -100,8 +95,7 @@ export const useMilestone = () => {
       changeStepperStep("preparing");
 
       // Check if we're dealing with multiple grants
-      const isMultiGrant =
-        milestone.mergedGrants && milestone.mergedGrants.length > 1;
+      const isMultiGrant = milestone.mergedGrants && milestone.mergedGrants.length > 1;
 
       if (isMultiGrant) {
         // group milestones by chainID
@@ -129,15 +123,16 @@ export const useMilestone = () => {
         for (const chainId of arrayOfMilestonesByChains) {
           const milestoneOfChain = milestonesByChainID?.[chainId];
           const chainName = chainNameDictionary(chainId);
-          toast.loading(
-            `Deleting ${milestoneOfChain?.length} milestone(s) on ${chainName}...`,
-            {
-              id: `chain-${chainId}`,
-            }
-          );
+          toast.loading(`Deleting ${milestoneOfChain?.length} milestone(s) on ${chainName}...`, {
+            id: `chain-${chainId}`,
+          });
 
           // Switch chain if needed
-          const { success, chainId: actualChainId, gapClient } = await ensureCorrectChain({
+          const {
+            success,
+            chainId: actualChainId,
+            gapClient,
+          } = await ensureCorrectChain({
             targetChainId: chainId,
             currentChainId: chain?.id,
             switchChainAsync,
@@ -153,9 +148,7 @@ export const useMilestone = () => {
           }
 
           const walletSigner = await walletClientToSigner(walletClient);
-          const fetchedProject = await getProjectById(
-            project!.details?.data.slug || ""
-          );
+          const fetchedProject = await getProjectById(project!.details?.data.slug || "");
           if (!fetchedProject) {
             throw new Error("Failed to fetch project data");
           }
@@ -187,11 +180,8 @@ export const useMilestone = () => {
             await retryUntilConditionMet(
               async () => {
                 const projectInstance = await refreshProject();
-                const isMilestoneExists = projectInstance?.grants.some(
-                  (grant) =>
-                    grant.milestones.some((milestone) =>
-                      milestoneUIDs.includes(milestone.uid)
-                    )
+                const isMilestoneExists = projectInstance?.grants.some((grant) =>
+                  grant.milestones.some((milestone) => milestoneUIDs.includes(milestone.uid))
                 );
 
                 return !isMilestoneExists || false;
@@ -203,20 +193,12 @@ export const useMilestone = () => {
           };
 
           await milestoneInstances[0]
-            .revokeMultipleAttestations(
-              walletSigner,
-              revocationArgs,
-              changeStepperStep
-            )
+            .revokeMultipleAttestations(walletSigner, revocationArgs, changeStepperStep)
             .then(async (res) => {
               if (res.tx.length > 0) {
                 const txPromises = res.tx.map((tx: any) =>
                   tx.hash
-                    ? fetchData(
-                        INDEXER.ATTESTATION_LISTENER(tx.hash, chainId),
-                        "POST",
-                        {}
-                      )
+                    ? fetchData(INDEXER.ATTESTATION_LISTENER(tx.hash, chainId), "POST", {})
                     : Promise.resolve()
                 );
                 await Promise.all(txPromises);
@@ -250,7 +232,11 @@ export const useMilestone = () => {
           id: `milestone-${milestone.uid}`,
         });
 
-        const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        const {
+          success,
+          chainId: actualChainId,
+          gapClient: newGapClient,
+        } = await ensureCorrectChain({
           targetChainId: milestone.chainID,
           currentChainId: chain?.id,
           switchChainAsync,
@@ -262,9 +248,7 @@ export const useMilestone = () => {
 
         gapClient = newGapClient;
 
-        const { walletClient, error } = await safeGetWalletClient(
-          actualChainId
-        );
+        const { walletClient, error } = await safeGetWalletClient(actualChainId);
         if (error || !walletClient || !gapClient) {
           throw new Error("Failed to connect to wallet", { cause: error });
         }
@@ -305,9 +289,7 @@ export const useMilestone = () => {
               const projectInstance = await refreshProject();
               const isMilestoneExists = projectInstance?.grants.some((grant) =>
                 grant.milestones.some(
-                  (milestone) =>
-                    milestone.uid.toLowerCase() ===
-                    milestoneInstance.uid.toLowerCase()
+                  (milestone) => milestone.uid.toLowerCase() === milestoneInstance.uid.toLowerCase()
                 )
               );
 
@@ -321,20 +303,12 @@ export const useMilestone = () => {
 
         // Revoke the milestone
         await milestoneInstance
-          .revokeMultipleAttestations(
-            walletSigner,
-            attestationsToRevoke,
-            changeStepperStep
-          )
+          .revokeMultipleAttestations(walletSigner, attestationsToRevoke, changeStepperStep)
           .then(async (result) => {
             // Notify indexer
             const txHash = result?.tx[0]?.hash;
             if (txHash) {
-              await fetchData(
-                INDEXER.ATTESTATION_LISTENER(txHash, milestone.chainID),
-                "POST",
-                {}
-              );
+              await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, milestone.chainID), "POST", {});
             }
 
             // Poll for indexing completion
@@ -370,14 +344,13 @@ export const useMilestone = () => {
   const multiGrantUndoCompletion = async (milestone: UnifiedMilestone) => {
     setIsStepper(true);
 
-    let chains = [];
+    const chains = [];
 
     try {
       changeStepperStep("preparing");
 
       // Check if we're dealing with multiple grants
-      const isMultiGrant =
-        milestone.mergedGrants && milestone.mergedGrants.length > 1;
+      const isMultiGrant = milestone.mergedGrants && milestone.mergedGrants.length > 1;
 
       if (isMultiGrant) {
         // group milestones by chainID
@@ -414,7 +387,11 @@ export const useMilestone = () => {
           chains.push(chainId);
 
           // Switch chain if needed
-          const { success, chainId: actualChainId, gapClient } = await ensureCorrectChain({
+          const {
+            success,
+            chainId: actualChainId,
+            gapClient,
+          } = await ensureCorrectChain({
             targetChainId: chainId,
             currentChainId: chain?.id,
             switchChainAsync,
@@ -429,10 +406,8 @@ export const useMilestone = () => {
             throw new Error("Failed to connect to wallet", { cause: error });
           }
 
-          const walletSigner = await walletClientToSigner(walletClient);
-          const fetchedProject = await getProjectById(
-            project!.details?.data.slug || ""
-          );
+          const _walletSigner = await walletClientToSigner(walletClient);
+          const fetchedProject = await getProjectById(project!.details?.data.slug || "");
           if (!fetchedProject) {
             throw new Error("Failed to fetch project data");
           }
@@ -457,13 +432,10 @@ export const useMilestone = () => {
             await retryUntilConditionMet(
               async () => {
                 const projectInstance = await refreshProject();
-                const areCompletionsRemoved = projectInstance?.grants.every(
-                  (grant) =>
-                    grant.milestones
-                      .filter((milestone) =>
-                        milestoneUIDs.includes(milestone.uid)
-                      )
-                      .every((milestone) => !milestone.completed)
+                const areCompletionsRemoved = projectInstance?.grants.every((grant) =>
+                  grant.milestones
+                    .filter((milestone) => milestoneUIDs.includes(milestone.uid))
+                    .every((milestone) => !milestone.completed)
                 );
 
                 return areCompletionsRemoved || false;
@@ -478,10 +450,10 @@ export const useMilestone = () => {
           // Use off-chain revocation for each completion
           for (const milestoneInstance of milestoneInstances) {
             if (milestoneInstance.completed?.uid) {
-                await performOffChainRevoke({
-                  uid: milestoneInstance.completed.uid as `0x${string}`,
-                  chainID: milestoneInstance.chainID,
-                });
+              await performOffChainRevoke({
+                uid: milestoneInstance.completed.uid as `0x${string}`,
+                chainID: milestoneInstance.chainID,
+              });
             }
           }
 
@@ -496,7 +468,6 @@ export const useMilestone = () => {
             );
             refetch();
           });
-        
         }
       } else {
         // Handle single milestone completion revocation
@@ -506,7 +477,11 @@ export const useMilestone = () => {
           id: `milestone-${milestone.uid}`,
         });
 
-        const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        const {
+          success,
+          chainId: actualChainId,
+          gapClient: newGapClient,
+        } = await ensureCorrectChain({
           targetChainId: milestone.chainID,
           currentChainId: chain?.id,
           switchChainAsync,
@@ -518,14 +493,12 @@ export const useMilestone = () => {
 
         gapClient = newGapClient;
 
-        const { walletClient, error } = await safeGetWalletClient(
-          actualChainId
-        );
+        const { walletClient, error } = await safeGetWalletClient(actualChainId);
         if (error || !walletClient || !gapClient) {
           throw new Error("Failed to connect to wallet", { cause: error });
         }
 
-        const walletSigner = await walletClientToSigner(walletClient);
+        const _walletSigner = await walletClientToSigner(walletClient);
         const fetchedProject = await gapClient.fetch.projectById(project?.uid);
 
         if (!fetchedProject) {
@@ -556,9 +529,7 @@ export const useMilestone = () => {
           await retryUntilConditionMet(
             async () => {
               const projectInstance = await refreshProject();
-              const foundGrant = projectInstance?.grants.find(
-                (g) => g.uid === milestone.refUID
-              );
+              const foundGrant = projectInstance?.grants.find((g) => g.uid === milestone.refUID);
               const fetchedMilestone = foundGrant?.milestones.find(
                 (u: any) => u.uid === milestone.uid
               );
@@ -606,7 +577,11 @@ export const useMilestone = () => {
     let gapClient = gap;
 
     try {
-      const { success, chainId: actualChainId, gapClient: updatedGapClient } = await ensureCorrectChain({
+      const {
+        success,
+        chainId: actualChainId,
+        gapClient: updatedGapClient,
+      } = await ensureCorrectChain({
         targetChainId: milestone.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
@@ -618,9 +593,7 @@ export const useMilestone = () => {
 
       gapClient = updatedGapClient;
 
-      const { walletClient, error } = await safeGetWalletClient(
-        actualChainId
-      );
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
@@ -663,10 +636,7 @@ export const useMilestone = () => {
           const txHash = result?.tx[0]?.hash;
           if (txHash) {
             await fetchData(
-              INDEXER.ATTESTATION_LISTENER(
-                txHash,
-                milestoneInstance?.chainID as number
-              ),
+              INDEXER.ATTESTATION_LISTENER(txHash, milestoneInstance?.chainID as number),
               "POST",
               {}
             );
@@ -677,13 +647,11 @@ export const useMilestone = () => {
             async () => {
               const projectInstance = await refreshProject();
               // Check if any of the milestones have been completed
-              const areMilestonesCompleted = projectInstance?.grants.some(
-                (grant) =>
-                  grant.milestones.some(
-                    (m) =>
-                      m.uid.toLowerCase() ===
-                        milestoneInstance.uid.toLowerCase() && !!m.completed
-                  )
+              const areMilestonesCompleted = projectInstance?.grants.some((grant) =>
+                grant.milestones.some(
+                  (m) =>
+                    m.uid.toLowerCase() === milestoneInstance.uid.toLowerCase() && !!m.completed
+                )
               );
               return areMilestonesCompleted || false;
             },
@@ -691,22 +659,15 @@ export const useMilestone = () => {
               changeStepperStep("indexed");
             }
           ).then(async () => {
-            toast.success(
-              `Completed ${milestone.title} milestone successfully!`,
-              {
-                id: `milestone-${milestone.uid}`,
-              }
-            );
-            
+            toast.success(`Completed ${milestone.title} milestone successfully!`, {
+              id: `milestone-${milestone.uid}`,
+            });
+
             // Send outputs and deliverables data
             await sendOutputsAndDeliverables(milestone.uid, data);
-            
+
             refetch();
-            router.push(
-              PAGES.PROJECT.UPDATES(
-                project?.details?.data.slug || project?.uid || ""
-              )
-            );
+            router.push(PAGES.PROJECT.UPDATES(project?.details?.data.slug || project?.uid || ""));
           });
         })
         .catch(() => {
@@ -762,15 +723,16 @@ export const useMilestone = () => {
         const milestonesOfChain = milestonesByChainID[chainId];
         const chainName = chainNameDictionary(chainId);
 
-        toast.loading(
-          `Completing ${milestonesOfChain.length} milestone(s) on ${chainName}...`,
-          {
-            id: `chain-${chainId}`,
-          }
-        );
+        toast.loading(`Completing ${milestonesOfChain.length} milestone(s) on ${chainName}...`, {
+          id: `chain-${chainId}`,
+        });
 
         // Switch chain if needed
-        const { success, chainId: actualChainId, gapClient } = await ensureCorrectChain({
+        const {
+          success,
+          chainId: actualChainId,
+          gapClient,
+        } = await ensureCorrectChain({
           targetChainId: chainId,
           currentChainId: chain?.id,
           switchChainAsync,
@@ -786,9 +748,7 @@ export const useMilestone = () => {
         }
 
         const walletSigner = await walletClientToSigner(walletClient);
-        const fetchedProject = await getProjectById(
-          project!.details?.data.slug || ""
-        );
+        const fetchedProject = await getProjectById(project!.details?.data.slug || "");
 
         if (!fetchedProject) {
           throw new Error("Failed to fetch project data");
@@ -810,34 +770,21 @@ export const useMilestone = () => {
         const milestoneInstances = fetchedProject.grants
           .filter((grant) => grant.milestones.length > 0)
           .flatMap((grant) => grant.milestones)
-          .filter((m) =>
-            milestonesOfChain.includes((m as any)?._uid || m?.uid)
-          );
+          .filter((m) => milestonesOfChain.includes((m as any)?._uid || m?.uid));
 
         if (!milestoneInstances?.length) {
-          throw new Error(
-            "Milestone instances couldn't be found for this chain"
-          );
+          throw new Error("Milestone instances couldn't be found for this chain");
         }
 
         const milestoneUIDs = milestonesOfChain.map((m) => m as `0x${string}`);
 
         await milestoneInstances[0]
-          .completeForMultipleGrants(
-            walletSigner,
-            milestoneUIDs,
-            completionData,
-            changeStepperStep
-          )
+          .completeForMultipleGrants(walletSigner, milestoneUIDs, completionData, changeStepperStep)
           .then(async (result) => {
             if (result.tx?.length > 0) {
               const txPromises = result.tx.map((tx: any) =>
                 tx.hash
-                  ? fetchData(
-                      INDEXER.ATTESTATION_LISTENER(tx.hash, chainId),
-                      "POST",
-                      {}
-                    )
+                  ? fetchData(INDEXER.ATTESTATION_LISTENER(tx.hash, chainId), "POST", {})
                   : Promise.resolve()
               );
               await Promise.all(txPromises);
@@ -850,11 +797,8 @@ export const useMilestone = () => {
               async () => {
                 const projectInstance = await refreshProject();
                 // Check if any of the milestones have been completed
-                const areMilestonesCompleted = projectInstance?.grants.some(
-                  (grant) =>
-                    grant.milestones.some(
-                      (m) => milestoneUIDs.includes(m.uid) && !!m.completed
-                    )
+                const areMilestonesCompleted = projectInstance?.grants.some((grant) =>
+                  grant.milestones.some((m) => milestoneUIDs.includes(m.uid) && !!m.completed)
                 );
                 return areMilestonesCompleted || false;
               },
@@ -868,18 +812,14 @@ export const useMilestone = () => {
                   id: `chain-${chainId}`,
                 }
               );
-              
+
               // Send outputs and deliverables for each milestone
               for (const milestoneUID of milestonesOfChain) {
                 await sendOutputsAndDeliverables(milestoneUID, data);
               }
-              
+
               refetch();
-              router.push(
-                PAGES.PROJECT.UPDATES(
-                  project?.details?.data.slug || project?.uid || ""
-                )
-              );
+              router.push(PAGES.PROJECT.UPDATES(project?.details?.data.slug || project?.uid || ""));
             });
           })
           .catch(() => {
@@ -903,14 +843,13 @@ export const useMilestone = () => {
   ) => {
     setIsStepper(true);
 
-    let chains: number[] = [];
+    const chains: number[] = [];
 
     try {
       changeStepperStep("preparing");
 
       // Check if we're dealing with multiple grants
-      const isMultiGrant =
-        milestone.mergedGrants && milestone.mergedGrants.length > 1;
+      const isMultiGrant = milestone.mergedGrants && milestone.mergedGrants.length > 1;
 
       if (isMultiGrant) {
         // group milestones by chainID
@@ -947,7 +886,11 @@ export const useMilestone = () => {
           chains.push(chainId);
 
           // Switch chain if needed
-          const { success, chainId: actualChainId, gapClient } = await ensureCorrectChain({
+          const {
+            success,
+            chainId: actualChainId,
+            gapClient,
+          } = await ensureCorrectChain({
             targetChainId: chainId,
             currentChainId: chain?.id,
             switchChainAsync,
@@ -963,9 +906,7 @@ export const useMilestone = () => {
           }
 
           const walletSigner = await walletClientToSigner(walletClient);
-          const fetchedProject = await getProjectById(
-            project!.details?.data.slug || ""
-          );
+          const fetchedProject = await getProjectById(project!.details?.data.slug || "");
           if (!fetchedProject) {
             throw new Error("Failed to fetch project data");
           }
@@ -998,26 +939,23 @@ export const useMilestone = () => {
             await retryUntilConditionMet(
               async () => {
                 const projectInstance = await refreshProject();
-                const areCompletionsUpdated = projectInstance?.grants.some(
-                  (grant) =>
-                    grant.milestones
-                      .filter((milestone) =>
-                        milestoneUIDs.includes(milestone.uid)
-                      )
-                      .some((milestone) => {
-                        if (!milestone.completed) return false;
+                const areCompletionsUpdated = projectInstance?.grants.some((grant) =>
+                  grant.milestones
+                    .filter((milestone) => milestoneUIDs.includes(milestone.uid))
+                    .some((milestone) => {
+                      if (!milestone.completed) return false;
 
-                        const originalCompletion = milestoneInstances.find(
-                          (m) => m.uid === milestone.uid
-                        )?.completed;
+                      const originalCompletion = milestoneInstances.find(
+                        (m) => m.uid === milestone.uid
+                      )?.completed;
 
-                        return !!(
-                          originalCompletion &&
-                          milestone.completed &&
-                          new Date(originalCompletion.createdAt) <
-                            new Date(milestone.completed.createdAt)
-                        );
-                      })
+                      return !!(
+                        originalCompletion &&
+                        milestone.completed &&
+                        new Date(originalCompletion.createdAt) <
+                          new Date(milestone.completed.createdAt)
+                      );
+                    })
                 );
 
                 return !!areCompletionsUpdated;
@@ -1038,10 +976,7 @@ export const useMilestone = () => {
                   const txHash = res?.tx[0]?.hash;
                   if (txHash) {
                     await fetchData(
-                      INDEXER.ATTESTATION_LISTENER(
-                        txHash,
-                        milestoneInstance.chainID
-                      ),
+                      INDEXER.ATTESTATION_LISTENER(txHash, milestoneInstance.chainID),
                       "POST",
                       {}
                     );
@@ -1070,7 +1005,11 @@ export const useMilestone = () => {
           id: `milestone-${milestone.uid}`,
         });
 
-        const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        const {
+          success,
+          chainId: actualChainId,
+          gapClient: newGapClient,
+        } = await ensureCorrectChain({
           targetChainId: milestone.chainID,
           currentChainId: chain?.id,
           switchChainAsync,
@@ -1082,9 +1021,7 @@ export const useMilestone = () => {
 
         gapClient = newGapClient;
 
-        const { walletClient, error } = await safeGetWalletClient(
-          actualChainId
-        );
+        const { walletClient, error } = await safeGetWalletClient(actualChainId);
         if (error || !walletClient || !gapClient) {
           throw new Error("Failed to connect to wallet", { cause: error });
         }
@@ -1093,9 +1030,7 @@ export const useMilestone = () => {
 
         if (milestone.type === "grant") {
           // Grant milestone editing
-          const fetchedProject = await gapClient.fetch.projectById(
-            project?.uid
-          );
+          const fetchedProject = await gapClient.fetch.projectById(project?.uid);
 
           if (!fetchedProject) {
             throw new Error("Failed to fetch project data");
@@ -1135,16 +1070,13 @@ export const useMilestone = () => {
             await retryUntilConditionMet(
               async () => {
                 const projectInstance = await refreshProject();
-                const foundGrant = projectInstance?.grants.find(
-                  (g) => g.uid === milestone.refUID
-                );
+                const foundGrant = projectInstance?.grants.find((g) => g.uid === milestone.refUID);
                 const fetchedMilestone = foundGrant?.milestones.find(
                   (u: any) => u.uid === milestone.uid
                 );
                 return !!(
                   fetchedMilestone?.completed &&
-                  new Date(originalCreatedAt) <
-                    new Date(fetchedMilestone.completed.createdAt)
+                  new Date(originalCreatedAt) < new Date(fetchedMilestone.completed.createdAt)
                 );
               },
               async () => {
@@ -1160,10 +1092,7 @@ export const useMilestone = () => {
               const txHash = res?.tx[0]?.hash;
               if (txHash) {
                 await fetchData(
-                  INDEXER.ATTESTATION_LISTENER(
-                    txHash,
-                    milestoneInstance.chainID
-                  ),
+                  INDEXER.ATTESTATION_LISTENER(txHash, milestoneInstance.chainID),
                   "POST",
                   {}
                 );
@@ -1189,13 +1118,9 @@ export const useMilestone = () => {
             .projectMilestones(project?.uid as string)
             .then((res: any) => res.data);
           if (!fetchedMilestones || !gapClient?.network) return;
-          const objectivesInstances = ProjectMilestone.from(
-            fetchedMilestones,
-            gapClient?.network
-          );
+          const objectivesInstances = ProjectMilestone.from(fetchedMilestones, gapClient?.network);
           const objectiveInstance = objectivesInstances.find(
-            (item: any) =>
-              item.uid.toLowerCase() === milestone.uid.toLowerCase()
+            (item: any) => item.uid.toLowerCase() === milestone.uid.toLowerCase()
           );
           if (!objectiveInstance) return;
 
@@ -1208,18 +1133,14 @@ export const useMilestone = () => {
           const checkIfCompletionUpdated = async (callbackFn?: () => void) => {
             await retryUntilConditionMet(
               async () => {
-                const fetchedObjectives = await getProjectObjectives(
-                  project?.uid as string
-                );
+                const fetchedObjectives = await getProjectObjectives(project?.uid as string);
                 const stillExists = fetchedObjectives.find(
-                  (item: any) =>
-                    item.uid.toLowerCase() === milestone.uid.toLowerCase()
+                  (item: any) => item.uid.toLowerCase() === milestone.uid.toLowerCase()
                 );
 
                 return !!(
                   stillExists?.completed &&
-                  new Date(originalCreatedAt) <
-                    new Date(stillExists.completed.createdAt)
+                  new Date(originalCreatedAt) < new Date(stillExists.completed.createdAt)
                 );
               },
               async () => {
@@ -1243,10 +1164,7 @@ export const useMilestone = () => {
               const txHash = res?.tx[0]?.hash;
               if (txHash) {
                 await fetchData(
-                  INDEXER.ATTESTATION_LISTENER(
-                    txHash,
-                    objectiveInstance.chainID
-                  ),
+                  INDEXER.ATTESTATION_LISTENER(txHash, objectiveInstance.chainID),
                   "POST",
                   {}
                 );
@@ -1255,12 +1173,9 @@ export const useMilestone = () => {
               await checkIfCompletionUpdated(() => {
                 changeStepperStep("indexed");
               }).then(() => {
-                toast.success(
-                  MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.SUCCESS,
-                  {
-                    id: loadingToast,
-                  }
-                );
+                toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.SUCCESS, {
+                  id: loadingToast,
+                });
                 refetch();
               });
             })

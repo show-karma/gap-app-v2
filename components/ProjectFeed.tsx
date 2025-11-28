@@ -1,21 +1,20 @@
 "use client";
-/* eslint-disable @next/next/no-img-element */
-import { Feed } from "@/types";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
-import { Spinner } from "./Utilities/Spinner";
-import { ExternalLink } from "./Utilities/ExternalLink";
-import { feedIconDictionary, getFeedHref } from "@/utilities/feed";
-import { formatDate } from "@/utilities/formatDate";
-import EthereumAddressToENSName from "./EthereumAddressToENSName";
-import { MarkdownPreview } from "./Utilities/MarkdownPreview";
 import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
+/* eslint-disable @next/next/no-img-element */
+import type { Feed } from "@/types";
+import { feedIconDictionary, getFeedHref } from "@/utilities/feed";
+import fetchData from "@/utilities/fetchData";
+import { formatDate } from "@/utilities/formatDate";
+import { INDEXER } from "@/utilities/indexer";
 import { cn } from "@/utilities/tailwind";
-
 import EthereumAddressToENSAvatar from "./EthereumAddressToENSAvatar";
+import EthereumAddressToENSName from "./EthereumAddressToENSName";
+import { ExternalLink } from "./Utilities/ExternalLink";
 import { errorManager } from "./Utilities/errorManager";
+import { MarkdownPreview } from "./Utilities/MarkdownPreview";
+import { Spinner } from "./Utilities/Spinner";
 
 interface ProjectFeedProps {
   initialFeed?: Feed[];
@@ -39,7 +38,7 @@ export const ProjectFeed = ({ initialFeed = [] }: ProjectFeedProps) => {
     const callFeedAPI = async () => {
       setFeedLoading(true);
       try {
-        const [data, error, pageInfo]: any = await fetchData(
+        const [data, _error, _pageInfo]: any = await fetchData(
           `${INDEXER.PROJECT.FEED(projectId as string)}?limit=${itemsPerPage}`
         );
         if (!data || !data.length) return;
@@ -50,10 +49,7 @@ export const ProjectFeed = ({ initialFeed = [] }: ProjectFeedProps) => {
         setHasMore(canLoadMore);
       } catch (error: any) {
         console.error("Error fetching data:", error);
-        errorManager(
-          `Error fetching data feed for project ${projectId}`,
-          error
-        );
+        errorManager(`Error fetching data feed for project ${projectId}`, error);
       } finally {
         setFeedLoading(false);
       }
@@ -63,7 +59,7 @@ export const ProjectFeed = ({ initialFeed = [] }: ProjectFeedProps) => {
       callFeedAPI();
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }
-  }, [projectId, page]);
+  }, [projectId, page, feed]);
 
   return (
     <div className="w-full flex flex-col gap-2">

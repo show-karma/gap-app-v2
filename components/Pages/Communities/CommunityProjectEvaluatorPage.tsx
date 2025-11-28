@@ -1,26 +1,29 @@
 "use client";
 
-import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { ChevronRightIcon, PaperAirplaneIcon } from "@heroicons/react/24/solid";
-import { INDEXER } from "@/utilities/indexer";
-import fetchData from "@/utilities/fetchData";
-import { useChat } from "./useChat";
-import React from "react";
-import { envVars } from "@/utilities/enviromentVars";
-import Image from "next/image";
-import { SearchDropdown } from "../ProgramRegistry/SearchDropdown";
-import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/solid";
-import { cn } from "@/utilities/tailwind";
-import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
-import { formatDate } from "@/utilities/formatDate";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { PAGES } from "@/utilities/pages";
-import pluralize from "pluralize";
 import { ShareIcon } from "@heroicons/react/24/outline";
-import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import {
+  ChevronRightIcon,
+  MagnifyingGlassIcon,
+  PaperAirplaneIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/solid";
+import Image from "next/image";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import pluralize from "pluralize";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
+import { PROJECT_NAME } from "@/constants/brand";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import fetchData from "@/utilities/fetchData";
+import { formatDate } from "@/utilities/formatDate";
+import { INDEXER } from "@/utilities/indexer";
+import { PAGES } from "@/utilities/pages";
+import { cn } from "@/utilities/tailwind";
+import { SearchDropdown } from "../ProgramRegistry/SearchDropdown";
+import { useChat } from "./useChat";
 
 const sanitizeMarkdown = (text: string) => {
   return (
@@ -144,7 +147,7 @@ function MessageSkeleton() {
       <div className="flex flex-row justify-between w-full mt-2 gap-4">
         <div className="flex flex-row justify-center items-center gap-3">
           <Image
-            src="/logo/karma-gap-logo.png"
+            src="/logo/logo-dark.png"
             width={20}
             height={20}
             alt="Karma AI Logo"
@@ -180,17 +183,16 @@ function ChatInput({
     <form
       onSubmit={handleSubmit}
       className={`relative w-full ${className}`}
-      role="search"
       aria-label="Chat with Karma AI"
     >
       <input
+        type="search"
         className="w-full p-4 pr-12 text-black dark:text-zinc-200 bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-600 shadow-sm focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
         value={input}
         placeholder={isLoadingProjects ? "Loading projects..." : placeholder}
         onChange={handleInputChange}
         disabled={isLoadingChat || isLoadingProjects}
         aria-label="Chat input"
-        role="searchbox"
         aria-disabled={isLoadingChat || isLoadingProjects}
       />
       <button
@@ -218,12 +220,7 @@ function SuggestionsBlock({
   chatHook: ReturnType<typeof useChat>;
   isLoadingProjects: boolean;
 }) {
-  const {
-    input,
-    handleInputChange,
-    handleSubmit,
-    isLoading: isLoadingChat,
-  } = chatHook;
+  const { input, handleInputChange, handleSubmit, isLoading: isLoadingChat } = chatHook;
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -267,8 +264,7 @@ function SuggestionsBlock({
       description: "Track project metrics and measure impact",
       bgColor: "bg-purple-50",
       hoverColor: "hover:bg-purple-100",
-      query:
-        "Can you analyze the performance metrics and impact of these projects?",
+      query: "Can you analyze the performance metrics and impact of these projects?",
     },
     {
       title: "Milestone Tracking",
@@ -284,12 +280,7 @@ function SuggestionsBlock({
       {/* Header */}
       <div className="flex items-center justify-between py-4 px-6 border-b border-gray-200 dark:border-zinc-600">
         <div className="flex items-center gap-4">
-          <Image
-            src="/logo/karma-gap-logo.png"
-            width={32}
-            height={32}
-            alt="Karma GAP Logo"
-          />
+          <Image src="/logo/logo-dark.png" width={32} height={32} alt={`${PROJECT_NAME} Logo`} />
           <span className="text-lg font-semibold text-gray-900 dark:text-white">
             {selectedProgram.name}
           </span>
@@ -307,32 +298,24 @@ function SuggestionsBlock({
       <div className="p-6">
         <div className="grid grid-cols-3 max-md:grid-cols-1 gap-4">
           {suggestions.map((suggestion, index) => (
-            <div
+            <button
+              type="button"
               key={index}
               onClick={() => handleSuggestionClick(suggestion.query)}
               className={cn(
-                "bg-[#EEF4FF] dark:bg-gray-700 rounded-lg p-4 transition-colors",
+                "bg-[#EEF4FF] dark:bg-gray-700 rounded-lg p-4 transition-colors flex flex-col items-start text-left w-full",
                 isLoadingProjects
                   ? "opacity-50 cursor-not-allowed"
                   : "cursor-pointer hover:opacity-90"
               )}
-              role="button"
-              tabIndex={isLoadingProjects ? -1 : 0}
-              onKeyDown={(e) =>
-                !isLoadingProjects &&
-                e.key === "Enter" &&
-                handleSuggestionClick(suggestion.query)
-              }
+              disabled={isLoadingProjects}
               aria-label={suggestion.title}
-              aria-disabled={isLoadingProjects}
             >
               <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
                 {suggestion.title}
               </h3>
-              <p className="text-sm text-gray-600 dark:text-zinc-400">
-                {suggestion.description}
-              </p>
-            </div>
+              <p className="text-sm text-gray-600 dark:text-zinc-400">{suggestion.description}</p>
+            </button>
           ))}
         </div>
       </div>
@@ -380,9 +363,7 @@ const ChatMessage = React.memo(
   }: ChatMessageProps) => {
     return (
       <div
-        className={`flex flex-col w-full ${
-          m.role === "assistant" ? "items-start" : "items-end"
-        }`}
+        className={`flex flex-col w-full ${m.role === "assistant" ? "items-start" : "items-end"}`}
       >
         <div
           className={cn(
@@ -393,9 +374,7 @@ const ChatMessage = React.memo(
           <div className="w-max max-w-full flex-col flex">
             <div
               className={` p-3  rounded-xl ${
-                m.role === "assistant"
-                  ? "bg-[#EEF4FF] text-gray-900 "
-                  : "bg-indigo-500 text-white"
+                m.role === "assistant" ? "bg-[#EEF4FF] text-gray-900 " : "bg-indigo-500 text-white"
               }`}
               style={{
                 borderBottomLeftRadius: m.role === "assistant" ? "0px" : "8px",
@@ -423,7 +402,7 @@ const ChatMessage = React.memo(
                   {isLastAssistantMessage && (
                     <>
                       <Image
-                        src="/logo/karma-gap-logo.png"
+                        src="/logo/logo-dark.png"
                         width={20}
                         height={20}
                         alt="Karma AI Logo"
@@ -466,11 +445,7 @@ const ChatMessage = React.memo(
 ChatMessage.displayName = "ChatMessage";
 
 const DateSeparator = ({ firstMessageDate }: { firstMessageDate: Date }) => {
-  const formattedDate = formatDate(
-    firstMessageDate.toISOString(),
-    "local",
-    "DDD, MMM DD"
-  );
+  const formattedDate = formatDate(firstMessageDate.toISOString(), "local", "DDD, MMM DD");
   const [dayName, restOfDate] = formattedDate.split(",");
 
   return (
@@ -507,10 +482,9 @@ function ChatWithKarmaCoPilot({
   // Scroll to bottom whenever messages change or when streaming
   useEffect(() => {
     if (messageContainerRef.current) {
-      messageContainerRef.current.scrollTop =
-        messageContainerRef.current.scrollHeight;
+      messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
     }
-  }, [messages, isStreaming, input]); // Added input to dependencies
+  }, []); // Added input to dependencies
 
   // Modified handleInputChange to include scrolling
   const handleLocalInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -518,8 +492,7 @@ function ChatWithKarmaCoPilot({
     // Scroll after a short delay to ensure the DOM has updated
     setTimeout(() => {
       if (messageContainerRef.current) {
-        messageContainerRef.current.scrollTop =
-          messageContainerRef.current.scrollHeight;
+        messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
       }
     }, 0);
   };
@@ -528,9 +501,7 @@ function ChatWithKarmaCoPilot({
 
   // Find the last assistant message
   const lastAssistantMessageId = useMemo(() => {
-    const assistantMessages = messages.filter(
-      (m) => m.role === "assistant" && m.content
-    );
+    const assistantMessages = messages.filter((m) => m.role === "assistant" && m.content);
     return assistantMessages[assistantMessages.length - 1]?.id;
   }, [messages]);
 
@@ -568,10 +539,7 @@ function ChatWithKarmaCoPilot({
   }, [messages]);
 
   // Helper function to determine if a message is last in its sequence
-  const isLastInSequence = (
-    messages: typeof chatHook.messages,
-    index: number
-  ) => {
+  const isLastInSequence = (messages: typeof chatHook.messages, index: number) => {
     if (index === messages.length - 1) return true;
     const currentMessage = messages[index];
     const nextMessage = messages[index + 1];
@@ -581,8 +549,7 @@ function ChatWithKarmaCoPilot({
   useEffect(() => {
     // Only scroll when streaming is complete and there are messages
     if (!isStreaming && messages.length > 0 && messageContainerRef.current) {
-      messageContainerRef.current.scrollTop =
-        messageContainerRef.current.scrollHeight;
+      messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
     }
   }, [messages, isStreaming]);
 
@@ -595,22 +562,15 @@ function ChatWithKarmaCoPilot({
         >
           {groupedMessages.map(([date, messagesInDay]) => (
             <div key={date}>
-              <DateSeparator
-                firstMessageDate={messagesInDay.firstMessageDate}
-              />
+              <DateSeparator firstMessageDate={messagesInDay.firstMessageDate} />
               <div className="space-y-4">
                 {messagesInDay.messages.map((message, index) => (
                   <ChatMessage
                     key={message.id}
                     message={message}
-                    isLastAssistantMessage={
-                      message.id === lastAssistantMessageId
-                    }
+                    isLastAssistantMessage={message.id === lastAssistantMessageId}
                     isLastUserMessage={message.id === lastUserMessageId}
-                    isLastInSequence={isLastInSequence(
-                      messagesInDay.messages,
-                      index
-                    )}
+                    isLastInSequence={isLastInSequence(messagesInDay.messages, index)}
                   />
                 ))}
               </div>
@@ -629,9 +589,7 @@ function ChatWithKarmaCoPilot({
           isLoadingProjects={isLoadingProjects}
           placeholder="Ask anything about the participating projects"
           className={`${hasMessages ? "" : "max-w-3xl"} ${
-            projects.length > 0
-              ? ""
-              : " opacity-50 cursor-not-allowed pointer-events-none"
+            projects.length > 0 ? "" : " opacity-50 cursor-not-allowed pointer-events-none"
           }`}
         />
       </div>
@@ -639,7 +597,7 @@ function ChatWithKarmaCoPilot({
   );
 }
 
-function ProjectCardSkeleton() {
+function _ProjectCardSkeleton() {
   return (
     <div className="flex-shrink-0 w-[320px] h-[240px] rounded-2xl border border-zinc-200 bg-white dark:bg-zinc-900 p-2">
       <div className="w-full flex flex-col gap-1">
@@ -698,46 +656,39 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 
             <div className="flex flex-col gap-1 flex-1 h-[64px] w-full max-w-full">
               <div className="line-clamp-2 w-full break-normal text-sm font-normal text-black dark:text-zinc-100 max-2xl:text-sm">
-                {sanitizeMarkdown(
-                  project.projectDetails.data?.description?.slice(0, 200) || ""
-                )}
+                {sanitizeMarkdown(project.projectDetails.data?.description?.slice(0, 200) || "")}
               </div>
             </div>
           </div>
         </div>
         <div className="flex w-full flex-col gap-2">
           <div className="flex items-center justify-start gap-4 mt-2 flex-wrap">
-            {Array.from(new Set(project?.project_categories || [])).length >
-              0 && (
+            {Array.from(new Set(project?.project_categories || [])).length > 0 && (
               <div className="flex flex-wrap gap-2">
-                {Array.from(new Set(project?.project_categories || [])).map(
-                  (category, i) => (
-                    <div
-                      key={i}
-                      className="flex h-max items-center justify-start rounded-full bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2"
-                    >
-                      <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
-                        {category}
-                      </p>
-                    </div>
-                  )
-                )}
+                {Array.from(new Set(project?.project_categories || [])).map((category, i) => (
+                  <div
+                    key={i}
+                    className="flex h-max items-center justify-start rounded-full bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2"
+                  >
+                    <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
+                      {category}
+                    </p>
+                  </div>
+                ))}
               </div>
             )}
 
             {project.updates.length > 0 && (
               <div className="flex h-max items-center justify-start rounded-full bg-teal-50 dark:bg-teal-700 text-teal-600 dark:text-teal-200 px-3 py-1 max-2xl:px-2">
                 <p className="text-center text-sm font-medium text-teal-600 dark:text-teal-100 max-2xl:text-[13px]">
-                  {project.updates.length || 0}{" "}
-                  {pluralize("Updates", project.updates.length || 0)}
+                  {project.updates.length || 0} {pluralize("Updates", project.updates.length || 0)}
                 </p>
               </div>
             )}
             {project.impacts?.length > 0 && (
               <div className="flex h-max w-max items-center justify-start rounded-full bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">
                 <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
-                  {project.impacts.length || 0}{" "}
-                  {pluralize("Impacts", project.impacts.length || 0)}
+                  {project.impacts.length || 0} {pluralize("Impacts", project.impacts.length || 0)}
                 </p>
               </div>
             )}
@@ -772,11 +723,7 @@ interface ProjectsSidebarProps {
   programName: string;
 }
 
-function ProjectsSidebar({
-  projects,
-  isLoadingProjects,
-  programName,
-}: ProjectsSidebarProps) {
+function ProjectsSidebar({ projects, isLoadingProjects, programName }: ProjectsSidebarProps) {
   return (
     <div className="w-1/4 max-md:w-full max-md:h-1/2 overflow-y-auto bg-gray-50 dark:bg-zinc-900 divide-y divide-gray-200 dark:divide-zinc-600">
       <h2 className="text-zinc-800 text-sm font-bold dark:text-white px-3 py-4">
@@ -788,11 +735,7 @@ function ProjectsSidebar({
         </div>
       ) : (
         projects.map((project, index) => (
-          <MemoizedProjectCard
-            key={project.projectUID}
-            project={project}
-            index={index}
-          />
+          <MemoizedProjectCard key={project.projectUID} project={project} index={index} />
         ))
       )}
     </div>
@@ -835,7 +778,7 @@ function ChatScreen({
     isStreaming,
   } = chatHook;
 
-  const handleProjectClick = useCallback(
+  const _handleProjectClick = useCallback(
     (title: string) => {
       setInput((currentInput) => {
         if (!currentInput) return title;
@@ -857,10 +800,7 @@ function ChatScreen({
 
   if (messages.length === 0) {
     return (
-      <div
-        ref={chatScreenRef}
-        className="flex w-full h-full max-md:flex-col flex-row"
-      >
+      <div ref={chatScreenRef} className="flex w-full h-full max-md:flex-col flex-row">
         <ProjectsSidebar
           projects={projects}
           isLoadingProjects={isLoadingProjects}
@@ -881,63 +821,53 @@ function ChatScreen({
   }
 
   return (
-    <>
-      <div
-        ref={chatScreenRef}
-        className="flex w-full h-full max-md:flex-col flex-row"
-      >
-        <ProjectsSidebar
-          projects={projects}
-          isLoadingProjects={isLoadingProjects}
-          programName={selectedProgram.name}
-        />
+    <div ref={chatScreenRef} className="flex w-full h-full max-md:flex-col flex-row">
+      <ProjectsSidebar
+        projects={projects}
+        isLoadingProjects={isLoadingProjects}
+        programName={selectedProgram.name}
+      />
 
-        {selectedProgram && (
-          <div className="w-3/4 max-lg:w-full bg-white dark:bg-zinc-900 flex flex-col items-center h-full">
-            <div className="flex flex-row gap-4 items-center justify-between w-full px-3 py-4 border-b border-gray-200 dark:border-zinc-600">
-              <div className="flex flex-row gap-3 items-center">
-                <Image
-                  src="/logo/karma-gap-logo.png"
-                  width={40}
-                  height={40}
-                  alt="Karma Gap Logo"
-                  quality={75}
-                />
-                <div className="flex flex-col gap-0">
-                  <p className="text-zinc-800 dark:text-zinc-200 text-lg font-semibold">
-                    Ask Karma AI
-                  </p>
-                  <p className="text-gray-600 dark:text-zinc-400 text-sm font-normal">
-                    {messages.length > 0 && messages[0].timestamp
-                      ? `Started ${formatDate(
-                          messages[0].timestamp,
-                          "local",
-                          "DDD, MMM DD"
-                        )}`
-                      : "No messages yet"}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={handleShare}
-                className="flex flex-row rounded items-center h-max hover:opacity-80 justify-center gap-2 px-3 py-2 border border-brand-blue text-brand-blue bg-transparent"
-                aria-label="Share current page"
-              >
-                Share{" "}
-                <ShareIcon className="w-5 h-5 min-h-5 min-w-5  max-h-5 max-w-5" />
-              </button>
-            </div>
-            <div className="w-full flex-1">
-              <ChatWithKarmaCoPilot
-                projects={projects}
-                chatHook={chatHook}
-                isLoadingProjects={isLoadingProjects}
+      {selectedProgram && (
+        <div className="w-3/4 max-lg:w-full bg-white dark:bg-zinc-900 flex flex-col items-center h-full">
+          <div className="flex flex-row gap-4 items-center justify-between w-full px-3 py-4 border-b border-gray-200 dark:border-zinc-600">
+            <div className="flex flex-row gap-3 items-center">
+              <Image
+                src="/logo/logo-dark.png"
+                width={40}
+                height={40}
+                alt={`${PROJECT_NAME} Logo`}
+                quality={75}
               />
+              <div className="flex flex-col gap-0">
+                <p className="text-zinc-800 dark:text-zinc-200 text-lg font-semibold">
+                  Ask Karma AI
+                </p>
+                <p className="text-gray-600 dark:text-zinc-400 text-sm font-normal">
+                  {messages.length > 0 && messages[0].timestamp
+                    ? `Started ${formatDate(messages[0].timestamp, "local", "DDD, MMM DD")}`
+                    : "No messages yet"}
+                </p>
+              </div>
             </div>
+            <button
+              onClick={handleShare}
+              className="flex flex-row rounded items-center h-max hover:opacity-80 justify-center gap-2 px-3 py-2 border border-brand-blue text-brand-blue bg-transparent"
+              aria-label="Share current page"
+            >
+              Share <ShareIcon className="w-5 h-5 min-h-5 min-w-5  max-h-5 max-w-5" />
+            </button>
           </div>
-        )}
-      </div>
-    </>
+          <div className="w-full flex-1">
+            <ChatWithKarmaCoPilot
+              projects={projects}
+              chatHook={chatHook}
+              isLoadingProjects={isLoadingProjects}
+            />
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -968,9 +898,7 @@ export const CommunityProjectEvaluatorPage = () => {
 
         // If we have a programId in the URL, find and select that program
         if (programId && programsRes) {
-          const program = programsRes.find(
-            (p: Program) => p.programId === programId
-          );
+          const program = programsRes.find((p: Program) => p.programId === programId);
           if (program) {
             setSelectedProgram(program);
           }
@@ -984,11 +912,7 @@ export const CommunityProjectEvaluatorPage = () => {
     fetchInitialData();
   }, [communityId, programId]);
 
-  async function getProjectsByProgram(
-    programId: string,
-    chainId: number,
-    communityId: string
-  ) {
+  async function getProjectsByProgram(programId: string, chainId: number, communityId: string) {
     try {
       setIsLoadingProjects(true);
       const [projects, error] = (await fetchData(
@@ -1011,14 +935,10 @@ export const CommunityProjectEvaluatorPage = () => {
     if (selectedProgram) {
       setProjects([]);
       setIsLoading(true);
-      getProjectsByProgram(
-        selectedProgram.programId,
-        Number(selectedProgram.chainID),
-        communityId
-      );
+      getProjectsByProgram(selectedProgram.programId, Number(selectedProgram.chainID), communityId);
       setIsLoading(false);
     }
-  }, [selectedProgram, communityId]);
+  }, [selectedProgram, communityId, getProjectsByProgram]);
 
   // Function to handle program selection
   const handleProgramSelect = (program: Program) => {
@@ -1030,11 +950,7 @@ export const CommunityProjectEvaluatorPage = () => {
     newSearchParams.set("programId", program.programId);
     router.push(`${window.location.pathname}?${newSearchParams.toString()}`);
 
-    getProjectsByProgram(
-      program.programId,
-      Number(program.chainID),
-      communityId
-    );
+    getProjectsByProgram(program.programId, Number(program.chainID), communityId);
   };
 
   return (
@@ -1045,7 +961,7 @@ export const CommunityProjectEvaluatorPage = () => {
             <div className="flex flex-col items-center justify-center flex-1 h-full ">
               <div className="flex flex-col items-center justify-center gap-2">
                 <Image
-                  src="/logo/karma-gap-logo.png"
+                  src="/logo/logo-dark.png"
                   width={80}
                   height={80}
                   alt="Karma AI Logo"
@@ -1070,23 +986,13 @@ export const CommunityProjectEvaluatorPage = () => {
                   <div className="w-full flex flex-col justify-center items-center">
                     <SearchDropdown
                       onSelectFunction={(value) => {
-                        const program = programs.find(
-                          (p: Program) => p.name === value
-                        );
+                        const program = programs.find((p: Program) => p.name === value);
                         if (program) {
                           handleProgramSelect(program);
                         }
                       }}
-                      selected={
-                        selectedProgram
-                          ? [(selectedProgram as Program).name]
-                          : []
-                      }
-                      list={
-                        programs.length > 0
-                          ? programs.map((p: Program) => p.name)
-                          : []
-                      }
+                      selected={selectedProgram ? [(selectedProgram as Program).name] : []}
+                      list={programs.length > 0 ? programs.map((p: Program) => p.name) : []}
                       type="program"
                       prefixUnselected="Select a "
                       buttonClassname="w-full max-w-[684px]"
@@ -1095,7 +1001,7 @@ export const CommunityProjectEvaluatorPage = () => {
                       placeholderText="Search and select a program"
                       leftIcon={
                         <Image
-                          src="/logo/karma-gap-logo-purple.svg"
+                          src="/logo/karma-logo.svg"
                           width={24}
                           height={24}
                           alt="Karma AI Logo"

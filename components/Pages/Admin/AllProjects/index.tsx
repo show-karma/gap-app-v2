@@ -1,25 +1,23 @@
 "use client";
-import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { errorManager } from "@/components/Utilities/errorManager";
 import Pagination from "@/components/Utilities/Pagination";
+import { useAuth } from "@/hooks/useAuth";
+import { layoutTheme } from "@/src/helper/theme";
 import { useOwnerStore } from "@/store";
-import { PageInfo } from "@/types/pagination";
-import { ProjectReport } from "@/types/project";
+import type { PageInfo } from "@/types/pagination";
+import type { ProjectReport } from "@/types/project";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
-import { ReadMore } from "@/utilities/ReadMore";
-import { cn } from "@/utilities/tailwind";
-import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
-import { ProjectDescriptionDialog } from "./Dialog";
-import { ProjectContacts } from "./Contacts";
-import { AllProjectsLoadingTable } from "./Loading";
-import { useAuth } from "@/hooks/useAuth";
 import { PAGES } from "@/utilities/pages";
-import Link from "next/link";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { cn } from "@/utilities/tailwind";
+import { ProjectContacts } from "./Contacts";
+import { ProjectDescriptionDialog } from "./Dialog";
+import { AllProjectsLoadingTable } from "./Loading";
 
 const getAllProjects = async (
   offset: number,
@@ -58,9 +56,7 @@ export const AllProjects = () => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
-  const [currentPageInfo, setCurrentPageInfo] = useState<PageInfo | undefined>(
-    undefined
-  );
+  const [currentPageInfo, setCurrentPageInfo] = useState<PageInfo | undefined>(undefined);
 
   const { authenticated: isAuth } = useAuth();
   const { data, isLoading } = useQuery({
@@ -75,7 +71,7 @@ export const AllProjects = () => {
   const projects = data?.data || [];
 
   return (
-    <div className="px-4 sm:px-6 lg:px-12 py-5">
+    <div className={layoutTheme.padding}>
       {isOwner ? (
         <div className="flex flex-col gap-2">
           <div className="flex justify-between">
@@ -118,16 +114,12 @@ export const AllProjects = () => {
                         className="divide-zinc-300 divide-x"
                       >
                         <td className="w-max min-w-max max-w-1/5 px-2 py-1">
-                          <p className={cn(rowClass)}>
-                            {formatDate(project.createdAt)}
-                          </p>
+                          <p className={cn(rowClass)}>{formatDate(project.createdAt)}</p>
                         </td>
                         <td className="w-1/5 min-w-[300px] max-w-1/5 px-2 py-1">
                           <div className="flex flex-row gap-2 justify-center items-center">
                             <ExternalLink
-                              href={PAGES.PROJECT.OVERVIEW(
-                                project.slug || project.uid
-                              )}
+                              href={PAGES.PROJECT.OVERVIEW(project.slug || project.uid)}
                               className={cn(rowClass, "underline max-w-max")}
                             >
                               {project.title}
@@ -135,9 +127,7 @@ export const AllProjects = () => {
                           </div>
                         </td>
                         <td className="w-1/5 min-w-[200px] max-w-1/5 px-2 py-1">
-                          <p className={cn(rowClass)}>
-                            {project?.categories?.join(", ")}
-                          </p>
+                          <p className={cn(rowClass)}>{project?.categories?.join(", ")}</p>
                         </td>
                         <td className="w-1/5 min-w-[300px] max-w-1/5 px-2 py-1">
                           <ProjectDescriptionDialog

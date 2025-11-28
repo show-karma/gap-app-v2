@@ -2,10 +2,10 @@ import axios from "axios";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
 import {
-  validateWalletAddress,
   validateEmail,
-  validateTelegram,
   validateReviewerData as validateReviewerDataUtil,
+  validateTelegram,
+  validateWalletAddress,
 } from "@/utilities/validators";
 
 const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
@@ -83,20 +83,22 @@ export const programReviewersService = {
       );
 
       // Map the API response to the expected format
-      return (response.data.reviewers || []).map(reviewer => ({
+      return (response.data.reviewers || []).map((reviewer) => ({
         publicAddress: reviewer.publicAddress,
-        name: reviewer.userProfile?.name || '',
-        email: reviewer.userProfile?.email || '',
-        telegram: reviewer.userProfile?.telegram || '',
+        name: reviewer.userProfile?.name || "",
+        email: reviewer.userProfile?.email || "",
+        telegram: reviewer.userProfile?.telegram || "",
         assignedAt: reviewer.assignedAt,
-        assignedBy: reviewer.assignedBy
+        assignedBy: reviewer.assignedBy,
       }));
     } catch (error) {
       // Handle "No reviewers found" as an empty list, not an error
       if (error && typeof error === "object" && "response" in error) {
         const apiError = error as { response?: { data?: { error?: string; message?: string } } };
-        if (apiError.response?.data?.error === "Program Reviewer Not Found" ||
-            apiError.response?.data?.message?.includes("No reviewers found")) {
+        if (
+          apiError.response?.data?.error === "Program Reviewer Not Found" ||
+          apiError.response?.data?.message?.includes("No reviewers found")
+        ) {
           return [];
         }
       }
@@ -130,7 +132,7 @@ export const programReviewersService = {
         email: reviewerData.email,
         telegram: reviewerData.telegram,
         assignedAt: new Date().toISOString(),
-        assignedBy: undefined
+        assignedBy: undefined,
       };
     }
 
@@ -140,18 +142,14 @@ export const programReviewersService = {
       email: reviewer.userProfile?.email || reviewerData.email,
       telegram: reviewer.userProfile?.telegram || reviewerData.telegram,
       assignedAt: reviewer.assignedAt,
-      assignedBy: reviewer.assignedBy
+      assignedBy: reviewer.assignedBy,
     };
   },
 
   /**
    * Remove a reviewer from a program
    */
-  async removeReviewer(
-    programId: string,
-    chainID: number,
-    publicAddress: string
-  ): Promise<void> {
+  async removeReviewer(programId: string, chainID: number, publicAddress: string): Promise<void> {
     await apiClient.delete(
       `/v2/funding-program-configs/${programId}/${chainID}/reviewers/${publicAddress}`
     );
@@ -164,7 +162,10 @@ export const programReviewersService = {
     programId: string,
     chainID: number,
     reviewers: AddReviewerRequest[]
-  ): Promise<{ added: ProgramReviewer[]; errors: Array<{ reviewer: AddReviewerRequest; error: string }> }> {
+  ): Promise<{
+    added: ProgramReviewer[];
+    errors: Array<{ reviewer: AddReviewerRequest; error: string }>;
+  }> {
     const addedReviewers: ProgramReviewer[] = [];
     const errors: Array<{ reviewer: AddReviewerRequest; error: string }> = [];
 
@@ -179,7 +180,7 @@ export const programReviewersService = {
           errorMessage = error.response?.data?.message || error.message;
         } else if (error instanceof Error) {
           errorMessage = error.message;
-        } else if (typeof error === 'string') {
+        } else if (typeof error === "string") {
           errorMessage = error;
         }
 

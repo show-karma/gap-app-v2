@@ -65,11 +65,7 @@ export async function retryUntilCondition(
     onRetry?: (attempt: number) => void;
   } = {}
 ): Promise<boolean> {
-  const {
-    maxRetries = 60,
-    delayMs = 500,
-    onRetry,
-  } = options;
+  const { maxRetries = 60, delayMs = 500, onRetry } = options;
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     const result = await condition();

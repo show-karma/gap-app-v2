@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import Papa from "papaparse";
-import { isAddress } from "viem";
-import { FileUpload } from "@/components/UI/FileUpload";
-import toast from "react-hot-toast";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
+import Papa from "papaparse";
+import { useCallback, useState } from "react";
+import toast from "react-hot-toast";
+import { isAddress } from "viem";
+import { FileUpload } from "@/components/Utilities/FileUpload";
+import { PROJECT_NAME } from "@/constants/brand";
 import { cn } from "@/utilities/tailwind";
 
 export interface CsvPayoutData {
@@ -46,11 +47,11 @@ export function PayoutsCsvUpload({
     if (!url || typeof url !== "string") return null;
 
     // Match various KarmaGAP URL patterns
-    const patterns = [/\/project\/([^\/\s?#]+)/, /\/projects\/([^\/\s?#]+)/];
+    const patterns = [/\/project\/([^/\s?#]+)/, /\/projects\/([^/\s?#]+)/];
 
     for (const pattern of patterns) {
       const match = url.match(pattern);
-      if (match && match[1]) {
+      if (match?.[1]) {
         return match[1].trim();
       }
     }
@@ -68,9 +69,7 @@ export function PayoutsCsvUpload({
 
     for (const name of possibleNames) {
       const normalizedName = name.toLowerCase().replace(/[^a-z0-9]+/g, "");
-      const index = normalizedHeaders.findIndex((h) =>
-        h.includes(normalizedName)
-      );
+      const index = normalizedHeaders.findIndex((h) => h.includes(normalizedName));
       if (index !== -1) return index;
     }
 
@@ -88,9 +87,7 @@ export function PayoutsCsvUpload({
         complete: (results) => {
           try {
             if (!results.data || results.data.length < 2) {
-              toast.error(
-                "CSV file appears to be empty or only contains headers"
-              );
+              toast.error("CSV file appears to be empty or only contains headers");
               setIsProcessing(false);
               return;
             }
@@ -100,8 +97,8 @@ export function PayoutsCsvUpload({
 
             // Find columns with flexible naming
             const projectColIndex = findColumn(headers, [
-              "KarmaGAP Profile",
-              "KarmaGAP",
+              `${PROJECT_NAME.replace(/\s+/g, "")} Profile`,
+              PROJECT_NAME.replace(/\s+/g, ""),
               "Profile",
               "Project",
               "Project URL",
@@ -176,9 +173,7 @@ export function PayoutsCsvUpload({
                 skipped++;
                 return;
               } else if (!isAddress(address)) {
-                rowErrors.push(
-                  `Row ${rowNum}: Invalid wallet address: ${address}`
-                );
+                rowErrors.push(`Row ${rowNum}: Invalid wallet address: ${address}`);
                 hasError = true;
               }
 
@@ -188,7 +183,7 @@ export function PayoutsCsvUpload({
                 hasError = true;
               } else {
                 const numAmount = parseFloat(amount);
-                if (isNaN(numAmount) || numAmount <= 0) {
+                if (Number.isNaN(numAmount) || numAmount <= 0) {
                   rowErrors.push(`Row ${rowNum}: Invalid amount: ${amount}`);
                   hasError = true;
                 } else if (!/^\d+(\.\d{0,2})?$/.test(amount)) {
@@ -239,7 +234,7 @@ export function PayoutsCsvUpload({
         },
       });
     },
-    [onDataParsed]
+    [onDataParsed, extractProjectSlug, findColumn]
   );
 
   const handleFileSelect = useCallback(
@@ -267,9 +262,7 @@ export function PayoutsCsvUpload({
         className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
       >
         <div>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-            Upload CSV File
-          </h3>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white">Upload CSV File</h3>
           {!isExpanded && (
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
               Bulk populate payout addresses and amounts from CSV
@@ -293,8 +286,7 @@ export function PayoutsCsvUpload({
           <div className="flex items-start justify-between mb-4">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Upload a CSV file to bulk populate payout addresses and amounts.
-              <br /> The CSV should contain columns for project URLs, wallet
-              addresses, and amounts.
+              <br /> The CSV should contain columns for project URLs, wallet addresses, and amounts.
             </p>
             {onDownloadExample && (
               <button
@@ -310,9 +302,7 @@ export function PayoutsCsvUpload({
             <div className="space-y-4">
               <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-zinc-800 rounded-md">
                 <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    {file.name}
-                  </p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{file.name}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     Uploaded successfully
                   </p>
@@ -382,15 +372,12 @@ export function PayoutsCsvUpload({
                             Errors:
                           </p>
                           <div className="text-xs text-red-600 dark:text-red-400 space-y-1">
-                            {parseResults.errors
-                              .slice(0, 5)
-                              .map((error, index) => (
-                                <p key={index}>{error}</p>
-                              ))}
+                            {parseResults.errors.slice(0, 5).map((error, index) => (
+                              <p key={index}>{error}</p>
+                            ))}
                             {parseResults.errors.length > 5 && (
                               <p className="text-gray-500 dark:text-gray-400">
-                                ... and {parseResults.errors.length - 5} more
-                                errors
+                                ... and {parseResults.errors.length - 5} more errors
                               </p>
                             )}
                           </div>
@@ -403,15 +390,12 @@ export function PayoutsCsvUpload({
                             Unmatched project slugs:
                           </p>
                           <div className="text-xs text-orange-600 dark:text-orange-400 space-y-1">
-                            {unmatchedProjects
-                              .slice(0, 5)
-                              .map((slug, index) => (
-                                <p key={index}>• {slug}</p>
-                              ))}
+                            {unmatchedProjects.slice(0, 5).map((slug, index) => (
+                              <p key={index}>• {slug}</p>
+                            ))}
                             {unmatchedProjects.length > 5 && (
                               <p className="text-gray-500 dark:text-gray-400">
-                                ... and {unmatchedProjects.length - 5} more
-                                unmatched
+                                ... and {unmatchedProjects.length - 5} more unmatched
                               </p>
                             )}
                           </div>

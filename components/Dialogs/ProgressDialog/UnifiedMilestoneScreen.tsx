@@ -1,4 +1,16 @@
 "use client";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Milestone } from "@show-karma/karma-gap-sdk";
+import { GapContract } from "@show-karma/karma-gap-sdk/core/class/contract/GapContract";
+import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
+import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { Transaction } from "ethers";
+import { useParams, useRouter } from "next/navigation";
+import { useState } from "react";
+import { Controller, type SubmitHandler, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { z } from "zod";
 import { ProjectObjectiveForm } from "@/components/Forms/ProjectObjective";
 import { Button } from "@/components/Utilities/Button";
 import { DatePicker } from "@/components/Utilities/DatePicker";
@@ -6,31 +18,19 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useAllMilestones } from "@/hooks/useAllMilestones";
 import { useGap } from "@/hooks/useGap";
+import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
 import { useStepper } from "@/store/modals/txStepper";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Milestone } from "@show-karma/karma-gap-sdk";
-import { GapContract } from "@show-karma/karma-gap-sdk/core/class/contract/GapContract";
-import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
-import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { Transaction } from "ethers";
-import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
-import { Controller, SubmitHandler, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
-import { z } from "zod";
 import { MultiSelect } from "../../../components/Utilities/MultiSelect";
-import { useWallet } from "@/hooks/useWallet";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 // Helper function to wait for a specified time
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -119,7 +119,11 @@ export const UnifiedMilestoneScreen = () => {
     setIsSubmitting(true);
 
     try {
-      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+      const {
+        success,
+        chainId: actualChainId,
+        gapClient: newGapClient,
+      } = await ensureCorrectChain({
         targetChainId: project.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
@@ -143,9 +147,7 @@ export const UnifiedMilestoneScreen = () => {
         recipient: (address as `0x${string}`) || "0x00",
       });
 
-      const { walletClient, error } = await safeGetWalletClient(
-        actualChainId
-      );
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
@@ -162,11 +164,7 @@ export const UnifiedMilestoneScreen = () => {
         .then(async (res) => {
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, project.chainID),
-              "POST",
-              {}
-            );
+            await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), "POST", {});
           } else {
             await fetchData(
               INDEXER.ATTESTATION_LISTENER(newObjective.uid, project.chainID),
@@ -187,7 +185,6 @@ export const UnifiedMilestoneScreen = () => {
     } catch (error) {
       errorManager("Error creating roadmap milestone", error);
       toast.error("Failed to create roadmap milestone");
-      console.log(error);
     } finally {
       setIsSubmitting(false);
       setIsStepper(false);
@@ -212,14 +209,11 @@ export const UnifiedMilestoneScreen = () => {
     setIsSubmitting(true);
     setIsStepper(true);
 
-    let toastsToRemove: string[] = [];
+    const toastsToRemove: string[] = [];
 
     try {
       // Group grants by chain ID to process each network separately
-      const grantsByChain: Record<
-        number,
-        { grant: IGrantResponse; index: number }[]
-      > = {};
+      const grantsByChain: Record<number, { grant: IGrantResponse; index: number }[]> = {};
 
       // Build the groups by chain
       selectedGrantIds.forEach((grantId, index) => {
@@ -261,7 +255,11 @@ export const UnifiedMilestoneScreen = () => {
         toastsToRemove.push(`chain-${chainId}`);
 
         // Switch chain if needed
-        const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+        const {
+          success,
+          chainId: actualChainId,
+          gapClient: newGapClient,
+        } = await ensureCorrectChain({
           targetChainId: chainId,
           currentChainId: chain?.id,
           switchChainAsync,
@@ -281,16 +279,10 @@ export const UnifiedMilestoneScreen = () => {
           const milestone = sanitizeObject({
             title: data.title,
             description: data.description,
-            endsAt: data.dates?.endsAt
-              ? data.dates.endsAt.getTime() / 1000
-              : undefined,
-            startsAt: data.dates?.startsAt
-              ? data.dates.startsAt.getTime() / 1000
-              : undefined,
+            endsAt: data.dates?.endsAt ? data.dates.endsAt.getTime() / 1000 : undefined,
+            startsAt: data.dates?.startsAt ? data.dates.startsAt.getTime() / 1000 : undefined,
             priority:
-              data.priority !== undefined && data.priority !== null
-                ? data.priority
-                : undefined,
+              data.priority !== undefined && data.priority !== null ? data.priority : undefined,
           });
 
           const milestoneToAttest = new Milestone({
@@ -310,10 +302,7 @@ export const UnifiedMilestoneScreen = () => {
 
           const walletSigner = await walletClientToSigner(walletClient);
 
-          const result = await milestoneToAttest.attest(
-            walletSigner as any,
-            changeStepperStep
-          );
+          const result = await milestoneToAttest.attest(walletSigner as any, changeStepperStep);
 
           // Handle indexer notification
           const txHash = result?.tx[0]?.hash;
@@ -336,16 +325,10 @@ export const UnifiedMilestoneScreen = () => {
           const milestone = sanitizeObject({
             title: data.title,
             description: data.description,
-            endsAt: data.dates?.endsAt
-              ? data.dates.endsAt.getTime() / 1000
-              : undefined,
-            startsAt: data.dates?.startsAt
-              ? data.dates.startsAt.getTime() / 1000
-              : undefined,
+            endsAt: data.dates?.endsAt ? data.dates.endsAt.getTime() / 1000 : undefined,
+            startsAt: data.dates?.startsAt ? data.dates.startsAt.getTime() / 1000 : undefined,
             priority:
-              data.priority !== undefined && data.priority !== null
-                ? data.priority
-                : undefined,
+              data.priority !== undefined && data.priority !== null ? data.priority : undefined,
           });
 
           const milestoneToAttest = new Milestone({
@@ -367,9 +350,7 @@ export const UnifiedMilestoneScreen = () => {
           const walletSigner = await walletClientToSigner(walletClient);
 
           // Instead of using indices, directly use grant UIDs
-          const grantUIDs = chainGrants.map(
-            (item) => item.grant.uid as `0x${string}`
-          );
+          const grantUIDs = chainGrants.map((item) => item.grant.uid as `0x${string}`);
 
           // Create separate milestone objects for each grant
           const allPayloads: any[] = [];
@@ -386,7 +367,9 @@ export const UnifiedMilestoneScreen = () => {
             // Generate payload for this grant
             const payload = await grantMilestone.multiAttestPayload();
             // Add each item from payload to allPayloads
-            payload.forEach((item) => allPayloads.push(item));
+            payload.forEach((item) => {
+              allPayloads.push(item);
+            });
           }
 
           // Use the GapContract to submit all attestations in a single transaction
@@ -401,13 +384,10 @@ export const UnifiedMilestoneScreen = () => {
             const txPromises = result.tx.map((tx: Transaction) =>
               tx.hash
                 ? fetchData(
-                  INDEXER.ATTESTATION_LISTENER(
-                    tx.hash as `0x${string}`,
-                    chainId
-                  ),
-                  "POST",
-                  {}
-                )
+                    INDEXER.ATTESTATION_LISTENER(tx.hash as `0x${string}`, chainId),
+                    "POST",
+                    {}
+                  )
                 : Promise.resolve()
             );
             await Promise.all(txPromises);
@@ -427,14 +407,13 @@ export const UnifiedMilestoneScreen = () => {
 
       changeStepperStep("indexed");
 
-      router.push(
-        PAGES.PROJECT.UPDATES(project?.details?.data.slug || project?.uid || "")
-      );
+      router.push(PAGES.PROJECT.UPDATES(project?.details?.data.slug || project?.uid || ""));
       closeProgressModal();
     } catch (error) {
       errorManager("Error creating grant milestones", error);
-      toastsToRemove.forEach((toastId) => toast.remove(toastId));
-      console.log(error);
+      toastsToRemove.forEach((toastId) => {
+        toast.remove(toastId);
+      });
     } finally {
       setIsSubmitting(false);
       setIsStepper(false);
@@ -479,29 +458,32 @@ export const UnifiedMilestoneScreen = () => {
   }
 
   // Group grants by chain for better display
-  const grantsByChain = selectedGrantIds.reduce((acc, grantId) => {
-    const grant = grants.find((g) => g.uid === grantId);
-    if (!grant) return acc;
+  const grantsByChain = selectedGrantIds.reduce(
+    (acc, grantId) => {
+      const grant = grants.find((g) => g.uid === grantId);
+      if (!grant) return acc;
 
-    const chainId = grant.chainID;
-    if (!acc[chainId]) {
-      acc[chainId] = {
-        chainId,
-        chainName: chainNameDictionary(chainId),
-        grants: [],
-      };
-    }
+      const chainId = grant.chainID;
+      if (!acc[chainId]) {
+        acc[chainId] = {
+          chainId,
+          chainName: chainNameDictionary(chainId),
+          grants: [],
+        };
+      }
 
-    acc[chainId].grants.push(grant);
-    return acc;
-  }, {} as Record<number, { chainId: number; chainName: string; grants: IGrantResponse[] }>);
+      acc[chainId].grants.push(grant);
+      return acc;
+    },
+    {} as Record<number, { chainId: number; chainName: string; grants: IGrantResponse[] }>
+  );
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-4">
-        <label className="text-sm font-bold text-black dark:text-zinc-100">
+        <div className="text-sm font-bold text-black dark:text-zinc-100">
           Select Grant(s) (Optional)
-        </label>
+        </div>
 
         <MultiSelect
           options={grantOptions}
@@ -514,24 +496,24 @@ export const UnifiedMilestoneScreen = () => {
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         {/* Title Field - For Both Types */}
         <div className="flex flex-col gap-2">
-          <label className="text-sm font-bold text-black dark:text-zinc-100">
+          <label
+            htmlFor="milestone-title"
+            className="text-sm font-bold text-black dark:text-zinc-100"
+          >
             Title *
           </label>
           <input
+            id="milestone-title"
             className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
             placeholder="Milestone title"
             {...register("title")}
           />
-          {errors.title && (
-            <p className="text-red-500 text-sm">{errors.title.message}</p>
-          )}
+          {errors.title && <p className="text-red-500 text-sm">{errors.title.message}</p>}
         </div>
 
         {/* Description Field - For Both Types */}
         <div className="flex flex-col gap-2">
-          <label className="text-sm font-bold text-black dark:text-zinc-100">
-            Description *
-          </label>
+          <div className="text-sm font-bold text-black dark:text-zinc-100">Description *</div>
           <Controller
             name="description"
             control={control}
@@ -552,10 +534,14 @@ export const UnifiedMilestoneScreen = () => {
         {selectedGrantIds.length > 0 && (
           <>
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-bold text-black dark:text-zinc-100">
+              <label
+                htmlFor="milestone-priority"
+                className="text-sm font-bold text-black dark:text-zinc-100"
+              >
                 Priority (Optional)
               </label>
               <select
+                id="milestone-priority"
                 className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
                 {...register("priority", {
                   setValueAs: (value) => parseInt(value, 10),
@@ -572,9 +558,9 @@ export const UnifiedMilestoneScreen = () => {
             </div>
             <div className="flex flex-row gap-8">
               <div className="flex flex-col gap-2">
-                <label className="text-sm font-bold text-black dark:text-zinc-100">
+                <div className="text-sm font-bold text-black dark:text-zinc-100">
                   Start Date (Optional)
-                </label>
+                </div>
                 <Controller
                   control={control}
                   name="dates.startsAt"
@@ -592,9 +578,7 @@ export const UnifiedMilestoneScreen = () => {
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <label className="text-sm font-bold text-black dark:text-zinc-100">
-                  End Date *
-                </label>
+                <div className="text-sm font-bold text-black dark:text-zinc-100">End Date *</div>
                 <Controller
                   control={control}
                   name="dates.endsAt"
@@ -611,9 +595,7 @@ export const UnifiedMilestoneScreen = () => {
                   )}
                 />
                 {errors.dates?.endsAt && (
-                  <p className="text-red-500 text-sm">
-                    {errors.dates?.endsAt.message}
-                  </p>
+                  <p className="text-red-500 text-sm">{errors.dates?.endsAt.message}</p>
                 )}
               </div>
             </div>
@@ -621,15 +603,14 @@ export const UnifiedMilestoneScreen = () => {
         )}
 
         {/* Display warning if grants are on multiple chains */}
-        {selectedGrantIds.length > 0 &&
-          Object.keys(grantsByChain).length > 1 && (
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
-              <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                You are creating milestones across multiple chains. You will
-                need to approve transactions for each chain separately.
-              </p>
-            </div>
-          )}
+        {selectedGrantIds.length > 0 && Object.keys(grantsByChain).length > 1 && (
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
+            <p className="text-sm text-yellow-700 dark:text-yellow-300">
+              You are creating milestones across multiple chains. You will need to approve
+              transactions for each chain separately.
+            </p>
+          </div>
+        )}
 
         <div className="flex flex-row gap-2 justify-end mt-4">
           <Button

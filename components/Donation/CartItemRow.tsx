@@ -1,12 +1,12 @@
 "use client";
+import { TrashIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
-import { PAGES } from "@/utilities/pages";
 import type { SupportedToken } from "@/constants/supportedTokens";
-import { TokenSelector } from "./TokenSelector";
-import { PayoutAddressDisplay } from "./PayoutAddressDisplay";
+import { PAGES } from "@/utilities/pages";
 import { BalanceDisplay } from "./BalanceDisplay";
-import { TrashIcon } from "@heroicons/react/24/outline";
+import { PayoutAddressDisplay } from "./PayoutAddressDisplay";
+import { TokenSelector } from "./TokenSelector";
 
 interface CartItem {
   uid: string;
@@ -47,7 +47,10 @@ export function CartItemRow({
   onRemove,
 }: CartItemRowProps) {
   return (
-    <div className="group relative overflow-hidden bg-white/90 p-3 transition-all duration-200 hover:border-blue-200 dark:border-gray-800/60 dark:bg-transparent dark:hover:border-blue-800">
+    <div
+      data-testid={`cart-item-${item.uid}`}
+      className="group relative overflow-hidden bg-white/90 p-3 transition-all duration-200 hover:border-blue-200 dark:border-gray-800/60 dark:bg-transparent dark:hover:border-blue-800"
+    >
       <div className="grid grid-cols-12 gap-3 items-center">
         {/* Project Info - 4 columns */}
         <div className="col-span-4 flex items-center gap-3">
@@ -73,10 +76,7 @@ export function CartItemRow({
               </h3>
             </Link>
             <div className="flex items-center gap-1 mt-0.5">
-              <PayoutAddressDisplay
-                payoutInfo={payoutInfo}
-                formatAddress={formatAddress}
-              />
+              <PayoutAddressDisplay payoutInfo={payoutInfo} formatAddress={formatAddress} />
             </div>
           </div>
         </div>
@@ -111,17 +111,10 @@ export function CartItemRow({
                   : `Donation amount for ${item.title}`
               }
               aria-describedby={`balance-${item.uid}`}
-              aria-invalid={
-                currentAmount
-                  ? parseFloat(currentAmount) <= 0
-                  : undefined
-              }
+              aria-invalid={currentAmount ? parseFloat(currentAmount) <= 0 : undefined}
             />
             {selectedToken && (
-              <div
-                className="absolute inset-y-0 left-2 flex items-center"
-                aria-hidden="true"
-              >
+              <div className="absolute inset-y-0 left-2 flex items-center" aria-hidden="true">
                 <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
                   {selectedToken.symbol}
                 </span>
@@ -129,16 +122,15 @@ export function CartItemRow({
             )}
           </div>
           <div id={`balance-${item.uid}`}>
-            <BalanceDisplay
-              selectedToken={selectedToken}
-              balanceByTokenKey={balanceByTokenKey}
-            />
+            <BalanceDisplay selectedToken={selectedToken} balanceByTokenKey={balanceByTokenKey} />
           </div>
         </div>
 
         {/* Remove Button - 1 column */}
         <div className="col-span-1 flex justify-end">
           <button
+            type="button"
+            data-testid="remove-item"
             onClick={onRemove}
             className="text-red-500"
             aria-label={`Remove ${item.title} from donation cart`}

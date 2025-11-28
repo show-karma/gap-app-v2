@@ -1,0 +1,10 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ReasonsModal Button Content should have icon before text in trigger button 1`] = `
+<svg
+  aria-label="Check"
+  class="h-4 w-4"
+  data-testid="check-icon"
+  role="img"
+/>
+`;

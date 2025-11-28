@@ -1,4 +1,26 @@
 "use client";
+import { Dialog, Transition } from "@headlessui/react";
+import { ChevronRightIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/solid";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as Tooltip from "@radix-ui/react-tooltip";
+import {
+  type ExternalCustomLink,
+  type ExternalLink,
+  type IProjectDetails,
+  MemberOf,
+  nullRef,
+  Project,
+  ProjectDetails,
+} from "@show-karma/karma-gap-sdk";
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import debounce from "lodash.debounce";
+import { useRouter } from "next/navigation";
+import { type FC, Fragment, type ReactNode, useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { type Hex, isAddress, zeroHash } from "viem";
+import { useAccount } from "wagmi";
+import { z } from "zod";
 /* eslint-disable @next/next/no-img-element */
 import {
   DiscordIcon,
@@ -7,58 +29,32 @@ import {
   TwitterIcon,
   WebsiteIcon,
 } from "@/components/Icons";
-import { Button } from "@/components/Utilities/Button";
-import { FileUpload } from "@/components/UI/FileUpload";
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { useGap } from "@/hooks/useGap";
-import { useProjectStore } from "@/store";
-import { useOwnerStore } from "@/store/owner";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
-import { MESSAGES } from "@/utilities/messages";
-import { Dialog, Transition } from "@headlessui/react";
-import {
-  ChevronRightIcon,
-  PlusIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/solid";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as Tooltip from "@radix-ui/react-tooltip";
-import {
-  ExternalLink,
-  type IProjectDetails,
-  MemberOf,
-  Project,
-  ProjectDetails,
-  nullRef,
-  ExternalCustomLink,
-} from "@show-karma/karma-gap-sdk";
-import { useRouter } from "next/navigation";
-import {
-  type FC,
-  Fragment,
-  type ReactNode,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { type Hex, isAddress, zeroHash } from "viem";
-import { useAccount } from "wagmi";
-import { z } from "zod";
-
-import { errorManager } from "@/components/Utilities/errorManager";
+import { DeckIcon } from "@/components/Icons/Deck";
+import { FarcasterIcon } from "@/components/Icons/Farcaster";
+import { VideoIcon } from "@/components/Icons/Video";
 import { ExternalLink as ExternalLinkComponent } from "@/components/Utilities/ExternalLink";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { FileUpload } from "@/components/Utilities/FileUpload";
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { Skeleton } from "@/components/Utilities/Skeleton";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useContactInfo } from "@/hooks/useContactInfo";
+import { useGap } from "@/hooks/useGap";
+import { useWallet } from "@/hooks/useWallet";
+import { useProjectStore } from "@/store";
 import { useProjectEditModalStore } from "@/store/modals/projectEdit";
 import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
 import { useStepper } from "@/store/modals/txStepper";
+import { useOwnerStore } from "@/store/owner";
 import type { Contact } from "@/types/project";
+import { type CustomLink, isCustomLink } from "@/utilities/customLink";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
 import { gapSupportedNetworks } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
@@ -66,26 +62,16 @@ import { getProjectById } from "@/utilities/sdk";
 import { updateProject } from "@/utilities/sdk/projects/editProject";
 import { SOCIALS } from "@/utilities/socials";
 import { cn } from "@/utilities/tailwind";
-import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import debounce from "lodash.debounce";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { SimilarProjectsDialog } from "../SimilarProjectsDialog";
 import { ContactInfoSection } from "./ContactInfoSection";
-import { NetworkDropdown } from "./NetworkDropdown";
 import { FaucetSection } from "./FaucetSection";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { useContactInfo } from "@/hooks/useContactInfo";
-import { FarcasterIcon } from "@/components/Icons/Farcaster";
-import { DeckIcon } from "@/components/Icons/Deck";
-import { VideoIcon } from "@/components/Icons/Video";
-import { useWallet } from "@/hooks/useWallet";
-import { CustomLink, isCustomLink } from "@/utilities/customLink";
+import { NetworkDropdown } from "./NetworkDropdown";
 
-const inputStyle =
-  "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
+const inputStyle = "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
 const socialMediaInputStyle =
   "bg-transparent border-0 flex flex-1 p-2 focus:outline-none outline-none focus-visible:outline-none dark:bg-zinc-900 dark:text-white text-sm rounded-md";
-const labelStyle =
-  "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
+const labelStyle = "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
 
 export const projectSchema = z.object({
   title: z
@@ -184,59 +170,48 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 }) => {
   const dataToUpdate = projectToUpdate
     ? {
-      chainID: projectToUpdate?.chainID,
-      description: projectToUpdate?.details?.data?.description || "",
-      title: projectToUpdate?.details?.data?.title || "",
-      problem: projectToUpdate?.details?.data?.problem,
-      solution: projectToUpdate?.details?.data?.solution,
-      missionSummary: projectToUpdate?.details?.data?.missionSummary,
-      locationOfImpact: projectToUpdate?.details?.data?.locationOfImpact,
-      imageURL: projectToUpdate?.details?.data?.imageURL,
-      twitter: projectToUpdate?.details?.data?.links?.find(
-        (link) => link.type === "twitter"
-      )?.url,
-      github: projectToUpdate?.details?.data?.links?.find(
-        (link) => link.type === "github"
-      )?.url,
-      discord: projectToUpdate?.details?.data?.links?.find(
-        (link) => link.type === "discord"
-      )?.url,
-      website: projectToUpdate?.details?.data?.links?.find(
-        (link) => link.type === "website"
-      )?.url,
-      linkedin: projectToUpdate?.details?.data?.links?.find(
-        (link) => link.type === "linkedin"
-      )?.url,
-      pitchDeck: projectToUpdate?.details?.data?.links?.find(
-        (link) => link.type === "pitchDeck"
-      )?.url,
-      demoVideo: projectToUpdate?.details?.data?.links?.find(
-        (link) => link.type === "demoVideo"
-      )?.url,
-      farcaster: projectToUpdate?.details?.data?.links?.find(
-        (link) => link.type === "farcaster"
-      )?.url,
-      profilePicture: projectToUpdate?.details?.data?.imageURL,
-      tags: projectToUpdate?.details?.data?.tags?.map((item) => item.name),
-      recipient: projectToUpdate?.recipient,
-      businessModel: projectToUpdate?.details?.data?.businessModel,
-      stageIn: projectToUpdate?.details?.data?.stageIn,
-      raisedMoney: projectToUpdate?.details?.data?.raisedMoney,
-      pathToTake: projectToUpdate?.details?.data?.pathToTake,
-    }
+        chainID: projectToUpdate?.chainID,
+        description: projectToUpdate?.details?.data?.description || "",
+        title: projectToUpdate?.details?.data?.title || "",
+        problem: projectToUpdate?.details?.data?.problem,
+        solution: projectToUpdate?.details?.data?.solution,
+        missionSummary: projectToUpdate?.details?.data?.missionSummary,
+        locationOfImpact: projectToUpdate?.details?.data?.locationOfImpact,
+        imageURL: projectToUpdate?.details?.data?.imageURL,
+        twitter: projectToUpdate?.details?.data?.links?.find((link) => link.type === "twitter")
+          ?.url,
+        github: projectToUpdate?.details?.data?.links?.find((link) => link.type === "github")?.url,
+        discord: projectToUpdate?.details?.data?.links?.find((link) => link.type === "discord")
+          ?.url,
+        website: projectToUpdate?.details?.data?.links?.find((link) => link.type === "website")
+          ?.url,
+        linkedin: projectToUpdate?.details?.data?.links?.find((link) => link.type === "linkedin")
+          ?.url,
+        pitchDeck: projectToUpdate?.details?.data?.links?.find((link) => link.type === "pitchDeck")
+          ?.url,
+        demoVideo: projectToUpdate?.details?.data?.links?.find((link) => link.type === "demoVideo")
+          ?.url,
+        farcaster: projectToUpdate?.details?.data?.links?.find((link) => link.type === "farcaster")
+          ?.url,
+        profilePicture: projectToUpdate?.details?.data?.imageURL,
+        tags: projectToUpdate?.details?.data?.tags?.map((item) => item.name),
+        recipient: projectToUpdate?.recipient,
+        businessModel: projectToUpdate?.details?.data?.businessModel,
+        stageIn: projectToUpdate?.details?.data?.stageIn,
+        raisedMoney: projectToUpdate?.details?.data?.raisedMoney,
+        pathToTake: projectToUpdate?.details?.data?.pathToTake,
+      }
     : undefined;
 
   const [contacts, setContacts] = useState<Contact[]>(previousContacts || []);
   const [customLinks, setCustomLinks] = useState<CustomLink[]>(() => {
     // Initialize custom links from project data if editing
     if (projectToUpdate?.details?.data?.links) {
-      return projectToUpdate.details.data.links
-        .filter(isCustomLink)
-        .map((link, index) => ({
-          id: `custom-${index}`,
-          name: link.name || "",
-          url: link.url
-        }));
+      return projectToUpdate.details.data.links.filter(isCustomLink).map((link, index) => ({
+        id: `custom-${index}`,
+        name: link.name || "",
+        url: link.url,
+      }));
     }
     return [];
   });
@@ -245,20 +220,17 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const [uploadedLogoFile, setUploadedLogoFile] = useState<File | null>(null);
   const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
   const [isLogoUploading, setIsLogoUploading] = useState(false);
-  const [logoUploadProgress, setLogoUploadProgress] = useState(0);
+  const [_logoUploadProgress, setLogoUploadProgress] = useState(0);
   const [tempLogoKey, setTempLogoKey] = useState<string | null>(null);
 
   // Modal state management - use edit store or local state based on mode
-  const { isProjectEditModalOpen, setIsProjectEditModalOpen } =
-    useProjectEditModalStore();
+  const { isProjectEditModalOpen, setIsProjectEditModalOpen } = useProjectEditModalStore();
 
   const [localIsOpen, setLocalIsOpen] = useState(false);
 
   // Determine which modal state to use
   const isOpen = useEditModalStore ? isProjectEditModalOpen : localIsOpen;
-  const setIsOpen = useEditModalStore
-    ? setIsProjectEditModalOpen
-    : setLocalIsOpen;
+  const setIsOpen = useEditModalStore ? setIsProjectEditModalOpen : setLocalIsOpen;
 
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [step, setStep] = useState(0);
@@ -272,26 +244,17 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const router = useRouter();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
-  const { openSimilarProjectsModal, isSimilarProjectsModalOpen } =
-    useSimilarProjectsModalStore();
+  const { openSimilarProjectsModal, isSimilarProjectsModalOpen } = useSimilarProjectsModalStore();
   const [walletSigner, setWalletSigner] = useState<any>(null);
-  const [faucetFunded, setFaucetFunded] = useState(false);
+  const [_faucetFunded, setFaucetFunded] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    watch,
-    setValue,
-    trigger,
-    formState,
-    setError,
-  } = useForm<SchemaType>({
-    resolver: zodResolver(projectSchema),
-    reValidateMode: "onChange",
-    mode: "onChange",
-    defaultValues: dataToUpdate,
-  });
+  const { register, handleSubmit, reset, watch, setValue, trigger, formState, setError } =
+    useForm<SchemaType>({
+      resolver: zodResolver(projectSchema),
+      reValidateMode: "onChange",
+      mode: "onChange",
+      defaultValues: dataToUpdate,
+    });
   const { errors, isValid } = formState;
 
   // Watch the chainID value for the useEffect
@@ -310,7 +273,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       if (chain?.id !== networkId) {
         await switchChainAsync({ chainId: networkId });
         // Wait a bit for the chain switch to complete
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
 
       // Now get the wallet client for the new chain
@@ -439,7 +402,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         setTempLogoKey(null);
       }
     }
-  }, [isOpen, projectToUpdate, previousContacts, reset]);
+  }, [isOpen, projectToUpdate, reset, dataToUpdate]);
 
   function closeModal() {
     setIsOpen(false);
@@ -454,10 +417,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       closeModal();
       return;
     }
-  }, [isOpen, isAuth]);
+  }, [isOpen, isAuth, closeModal, login]);
 
   const validateCustomLinks = () => {
-    return customLinks.some(link => !link.name.trim() || !link.url.trim());
+    return customLinks.some((link) => !link.name.trim() || !link.url.trim());
   };
 
   const hasErrors = () => {
@@ -559,7 +522,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         return;
       }
 
-
       const project = new Project({
         data: {
           project: true,
@@ -612,10 +574,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
             type: "farcaster",
             url: data.farcaster || "",
           },
-          ...(customLinks?.map(link => ({
+          ...(customLinks?.map((link) => ({
             type: "custom",
             name: link.name.trim(),
-            url: link.url.trim()
+            url: link.url.trim(),
           })) || []),
         ],
         imageURL: data.profilePicture || "",
@@ -633,7 +595,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
           const [promoteData, promoteError] = await fetchData(
             INDEXER.PROJECT.LOGOS.PROMOTE_TO_PERMANENT(),
-            'POST',
+            "POST",
             {
               tempKey: tempLogoKey,
               projectId: projectIdentifier,
@@ -643,12 +605,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           if (!promoteError) {
             const { permanentUrl } = promoteData;
             finalImageURL = permanentUrl;
-            console.log('Logo promoted to permanent before project creation:', permanentUrl);
           } else {
-            console.warn('Failed to promote logo to permanent status, using temp URL');
+            console.warn("Failed to promote logo to permanent status, using temp URL");
           }
         } catch (error) {
-          console.warn('Error promoting logo before project creation:', error);
+          console.warn("Error promoting logo before project creation:", error);
           // Continue with temp URL if promotion fails
         }
       }
@@ -705,9 +666,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       }
 
       // Use chainId from ensureCorrectChain result to ensure we're using the correct chain
-      const { walletClient, error } = await safeGetWalletClient(
-        chainId
-      );
+      const { walletClient, error } = await safeGetWalletClient(chainId);
 
       if (error || !walletClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
@@ -715,101 +674,88 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       const walletSigner = await walletClientToSigner(walletClient);
       closeModal();
       changeStepperStep("preparing");
-      await project
-        .attest(walletSigner, changeStepperStep)
-        .then(async (res) => {
-          let retries = 1000;
-          const txHash = res?.tx[0]?.hash;
-          if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, chainId),
-              "POST",
-              {}
-            );
-          }
-          let fetchedProject: Project | null = null;
-          changeStepperStep("indexing");
-          while (retries > 0) {
-            // eslint-disable-next-line no-await-in-loop
-            fetchedProject = await (slug
-              ? gapClient.fetch.projectBySlug(slug)
-              : gapClient.fetch.projectById(project.uid as Hex)
-            ).catch(() => null);
-            if (fetchedProject?.uid && fetchedProject.uid !== zeroHash) {
-              if (data.github) {
-                const githubFromField = data.github.includes("http")
-                  ? data.github
-                  : `https://${data.github}`;
-                const repoUrl = new URL(githubFromField);
-                const pathParts = repoUrl.pathname.split("/").filter(Boolean);
-                if (
-                  repoUrl.hostname.includes("github.com") &&
-                  pathParts.length >= 2
-                ) {
-                  const owner = pathParts[0];
-                  const repoName = pathParts[1];
+      await project.attest(walletSigner, changeStepperStep).then(async (res) => {
+        let retries = 1000;
+        const txHash = res?.tx[0]?.hash;
+        if (txHash) {
+          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, chainId), "POST", {});
+        }
+        let fetchedProject: Project | null = null;
+        changeStepperStep("indexing");
+        while (retries > 0) {
+          // eslint-disable-next-line no-await-in-loop
+          fetchedProject = await (slug
+            ? gapClient.fetch.projectBySlug(slug)
+            : gapClient.fetch.projectById(project.uid as Hex)
+          ).catch(() => null);
+          if (fetchedProject?.uid && fetchedProject.uid !== zeroHash) {
+            if (data.github) {
+              const githubFromField = data.github.includes("http")
+                ? data.github
+                : `https://${data.github}`;
+              const repoUrl = new URL(githubFromField);
+              const pathParts = repoUrl.pathname.split("/").filter(Boolean);
+              if (repoUrl.hostname.includes("github.com") && pathParts.length >= 2) {
+                const owner = pathParts[0];
+                const repoName = pathParts[1];
 
-                  const response = await fetch(
-                    `https://api.github.com/repos/${owner}/${repoName}`
-                  );
+                const response = await fetch(`https://api.github.com/repos/${owner}/${repoName}`);
 
-                  if (!response.ok) {
-                    toast.error("Failed to fetch GitHub repository");
-                    throw new Error("Failed to fetch GitHub repository");
+                if (!response.ok) {
+                  toast.error("Failed to fetch GitHub repository");
+                  throw new Error("Failed to fetch GitHub repository");
+                }
+
+                const repoData = await response.json();
+                if (repoData.private) {
+                  toast.error("GitHub repository is private");
+                  throw new Error("GitHub repository is private");
+                }
+
+                const [_githubUpdateData, error] = await fetchData(
+                  INDEXER.PROJECT.EXTERNAL.UPDATE(fetchedProject.uid),
+                  "PUT",
+                  {
+                    target: "github",
+                    ids: [repoUrl.href],
                   }
-
-                  const repoData = await response.json();
-                  if (repoData.private) {
-                    toast.error("GitHub repository is private");
-                    throw new Error("GitHub repository is private");
-                  }
-
-                  const [githubUpdateData, error] = await fetchData(
-                    INDEXER.PROJECT.EXTERNAL.UPDATE(fetchedProject.uid),
-                    "PUT",
-                    {
-                      target: "github",
-                      ids: [repoUrl.href],
-                    }
-                  );
-                  if (error) {
-                    toast.error("Failed to update GitHub repository");
-                    throw new Error("Failed to update GitHub repository");
-                  }
+                );
+                if (error) {
+                  toast.error("Failed to update GitHub repository");
+                  throw new Error("Failed to update GitHub repository");
                 }
               }
-
-              await fetchData(
-                INDEXER.SUBSCRIPTION.CREATE(fetchedProject.uid),
-                "POST",
-                { contacts },
-                {},
-                {},
-                true
-              ).then(([res, error]) => {
-                if (error) {
-                  toast.error(
-                    "Something went wrong with contact info save. Please try again later.",
-                    {
-                      className: "z-[9999]",
-                    }
-                  );
-                }
-                retries = 0;
-                toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
-                router.push(
-                  PAGES.PROJECT.SCREENS.NEW_GRANT(slug || project.uid)
-                );
-                router.refresh();
-                changeStepperStep("indexed");
-                return;
-              });
             }
-            retries -= 1;
-            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-            await new Promise((resolve) => setTimeout(resolve, 1500));
+
+            await fetchData(
+              INDEXER.SUBSCRIPTION.CREATE(fetchedProject.uid),
+              "POST",
+              { contacts },
+              {},
+              {},
+              true
+            ).then(([_res, error]) => {
+              if (error) {
+                toast.error(
+                  "Something went wrong with contact info save. Please try again later.",
+                  {
+                    className: "z-[9999]",
+                  }
+                );
+              }
+              retries = 0;
+              toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
+              router.push(PAGES.PROJECT.SCREENS.NEW_GRANT(slug || project.uid));
+              router.refresh();
+              changeStepperStep("indexed");
+              return;
+            });
           }
-        });
+          retries -= 1;
+          // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+        }
+      });
 
       reset();
       setStep(0);
@@ -817,7 +763,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       setContacts([]);
       setCustomLinks([]);
     } catch (error: any) {
-      console.log({ error });
       errorManager(
         MESSAGES.PROJECT.CREATE.ERROR(data.title),
         error,
@@ -844,8 +789,18 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         login?.();
         return;
       }
-      if (!address || !projectToUpdate || !dataToUpdate) return;
-      if (!gap) return;
+      if (!address) {
+        throw new Error("Address not found");
+      }
+      if (!projectToUpdate) {
+        throw new Error("Project to update not found");
+      }
+      if (!dataToUpdate) {
+        throw new Error("Data to update not found");
+      }
+      if (!gap) {
+        throw new Error("Gap client not found");
+      }
 
       const targetChainId = projectToUpdate.chainID;
 
@@ -864,9 +819,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       const shouldRefresh = dataToUpdate.title === data.title;
 
       // Use chainId from ensureCorrectChain result
-      const { walletClient, error } = await safeGetWalletClient(
-        chainId
-      );
+      const { walletClient, error } = await safeGetWalletClient(chainId);
 
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
@@ -882,7 +835,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         try {
           const [promoteData, promoteError] = await fetchData(
             INDEXER.PROJECT.LOGOS.PROMOTE_TO_PERMANENT(),
-            'POST',
+            "POST",
             {
               tempKey: tempLogoKey,
               projectId: fetchedProject.uid,
@@ -892,12 +845,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           if (!promoteError) {
             const { permanentUrl } = promoteData;
             finalImageURL = permanentUrl;
-            console.log('Logo promoted to permanent before project update:', permanentUrl);
           } else {
-            console.warn('Failed to promote logo to permanent status, using temp URL');
+            console.warn("Failed to promote logo to permanent status, using temp URL");
           }
         } catch (error) {
-          console.warn('Error promoting logo before project update:', error);
+          console.warn("Error promoting logo before project update:", error);
           // Continue with temp URL if promotion fails
         }
       }
@@ -929,10 +881,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       };
 
       // Handle GitHub repository update if changed
-      if (
-        data.github &&
-        !(projectToUpdate as any).external?.github?.includes(data.github)
-      ) {
+      if (data.github && !(projectToUpdate as any).external?.github?.includes(data.github)) {
         const githubFromField = data.github.includes("http")
           ? data.github
           : `https://${data.github}`;
@@ -942,9 +891,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           const owner = pathParts[0];
           const repoName = pathParts[1];
 
-          const response = await fetch(
-            `https://api.github.com/repos/${owner}/${repoName}`
-          );
+          const response = await fetch(`https://api.github.com/repos/${owner}/${repoName}`);
 
           if (!response.ok) {
             throw new Error("Failed to fetch GitHub repository");
@@ -957,7 +904,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
           const ids = (fetchedProject as any).external?.github || [];
 
-          const [githubUpdateData, error] = await fetchData(
+          const [_githubUpdateData, error] = await fetchData(
             INDEXER.PROJECT.EXTERNAL.UPDATE(fetchedProject.uid),
             "PUT",
             {
@@ -991,10 +938,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         }
       });
     } catch (error: any) {
-      console.log(error);
       errorManager(
-        `Error updating project ${projectToUpdate?.details?.data?.slug || projectToUpdate?.uid
-        }`,
+        `Error updating project ${projectToUpdate?.details?.data?.slug || projectToUpdate?.uid}`,
         error,
         { ...data, address },
         {
@@ -1024,7 +969,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     if (projectToUpdate) {
       setContacts(contactsInfo || []);
     }
-  }, [contactsInfo]);
+  }, [contactsInfo, projectToUpdate]);
 
   const tooltipText = () => {
     const errors = hasErrors();
@@ -1039,29 +984,22 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   };
 
   const [isSearchingProject, setIsSearchingProject] = useState(false);
-  const [existingProjects, setExistingProjects] = useState<IProjectResponse[]>(
-    []
-  );
+  const [existingProjects, setExistingProjects] = useState<IProjectResponse[]>([]);
 
   const searchByExistingName = debounce(async (value: string) => {
     if (
       value.length < 3 ||
       (projectToUpdate &&
-        value.toLowerCase() ===
-        projectToUpdate?.details?.data?.title?.toLowerCase())
+        value.toLowerCase() === projectToUpdate?.details?.data?.title?.toLowerCase())
     ) {
       return;
     }
     try {
       setIsSearchingProject(true);
-      const result = await gapIndexerApi
-        .searchProjects(value)
-        .then((res) => res.data);
+      const result = await gapIndexerApi.searchProjects(value).then((res) => res.data);
       const hasEqualTitle =
-        result.filter(
-          (item) =>
-            item.details?.data.title.toLowerCase() === value.toLowerCase()
-        ).length > 0;
+        result.filter((item) => item.details?.data.title.toLowerCase() === value.toLowerCase())
+          .length > 0;
       if (hasEqualTitle) {
         setExistingProjects(result);
         setError("title", {
@@ -1072,8 +1010,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         setExistingProjects([]);
       }
       return;
-    } catch (error) {
-      console.log("error", error);
+    } catch (_error) {
     } finally {
       setIsSearchingProject(false);
     }
@@ -1111,13 +1048,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               ) : (
                 <p className="text-red-500">
                   {errors.title?.message}{" "}
-                  {errors.title?.message &&
-                    errors.title?.message.includes("similar") ? (
+                  {errors.title?.message?.includes("similar") ? (
                     <>
-                      <span>
-                        If you need help getting access to your project, message
-                        us{" "}
-                      </span>
+                      <span>If you need help getting access to your project, message us </span>
                       <ExternalLinkComponent
                         className="underline text-red-700 dark:text-red-300"
                         href={SOCIALS.TELEGRAM}
@@ -1128,10 +1061,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                   ) : null}
                 </p>
               )}
-              {errors.title?.message &&
-                errors.title?.message.includes("similar") ? (
-                <span
-                  className="text-blue-500 underline cursor-pointer"
+              {errors.title?.message?.includes("similar") ? (
+                <button
+                  type="button"
+                  className="text-blue-500 underline cursor-pointer bg-transparent border-none p-0"
                   style={{
                     userSelect: "none",
                   }}
@@ -1140,7 +1073,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                   }}
                 >
                   View similar projects
-                </span>
+                </button>
               ) : null}
             </div>
           </div>
@@ -1300,7 +1233,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 id="website-input"
                 type="text"
                 className={socialMediaInputStyle}
-                placeholder="https://gap.karmahq.xyz"
+                placeholder="https://karmahq.xyz"
                 {...register("website")}
               />
             </div>
@@ -1406,7 +1339,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 setTempLogoKey(tempKey);
                 setIsLogoUploading(false);
               }}
-              onS3UploadError={(error: string) => {
+              onS3UploadError={(_error: string) => {
                 setUploadedLogoFile(null);
                 setLogoPreviewUrl(null);
                 setValue("profilePicture", "", { shouldValidate: true });
@@ -1422,7 +1355,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               description="Max 5MB, Square (1:1) ratio required, JPEG/PNG/WebP"
               className="w-full"
               maxFileSize={5 * 1024 * 1024}
-              allowedFileTypes={['image/jpeg', 'image/png', 'image/webp']}
+              allowedFileTypes={["image/jpeg", "image/png", "image/webp"]}
             />
             <p className="text-red-500">{errors.profilePicture?.message}</p>
           </div>
@@ -1437,8 +1370,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 <div key={link.id} className="flex w-full flex-col gap-2 mb-4">
                   <div className="flex gap-3">
                     <div className="flex-1 flex flex-col gap-1">
-                      <label className={labelStyle}>Name</label>
+                      <label htmlFor={`custom-link-name-${index}`} className={labelStyle}>
+                        Name
+                      </label>
                       <input
+                        id={`custom-link-name-${index}`}
                         type="text"
                         value={link.name}
                         onChange={(e) => {
@@ -1451,8 +1387,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                       />
                     </div>
                     <div className="flex-1 flex flex-col gap-1">
-                      <label className={labelStyle}>URL</label>
+                      <label htmlFor={`custom-link-url-${index}`} className={labelStyle}>
+                        URL
+                      </label>
                       <input
+                        id={`custom-link-url-${index}`}
                         type="text"
                         value={link.url}
                         onChange={(e) => {
@@ -1485,7 +1424,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                   const newLink: CustomLink = {
                     id: `custom-${Date.now()}`,
                     name: "",
-                    url: ""
+                    url: "",
                   };
                   const updatedLinks = [...customLinks, newLink];
                   setCustomLinks(updatedLinks);
@@ -1506,9 +1445,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       fields: (
         <div className="flex w-full flex-col gap-8 max-w-3xl">
           <p className="text-black dark:text-white">
-            Answer few more questions below and we can help you take your
-            project to next level by either recommending grants or introduce to
-            funders/investors.
+            Answer few more questions below and we can help you take your project to next level by
+            either recommending grants or introduce to funders/investors.
           </p>
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="business-modal-input" className={labelStyle}>
@@ -1538,8 +1476,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           </div>
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="raised-money-input" className={labelStyle}>
-              How much money have you raised from grants or investors?
-              (optional)
+              How much money have you raised from grants or investors? (optional)
             </label>
             <input
               id="raised-money-input"
@@ -1589,14 +1526,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
             existingContacts={contacts}
             isEditing={!!projectToUpdate}
             addContact={(contact) => {
-              const withoutContact = contacts.filter(
-                (c) => c.id !== contact.id
-              );
+              const withoutContact = contacts.filter((c) => c.id !== contact.id);
               setContacts([...withoutContact, contact]);
             }}
-            removeContact={(contact) =>
-              setContacts(contacts.filter((c) => c.id !== contact.id))
-            }
+            removeContact={(contact) => setContacts(contacts.filter((c) => c.id !== contact.id))}
           />
           {!projectToUpdate ? (
             <div className="flex w-full flex-col gap-2 border-t border-zinc-200 dark:border-zinc-700 pt-8">
@@ -1663,7 +1596,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
                     // Refresh wallet signer after funding
                     try {
-                      await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for blockchain state
+                      await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait for blockchain state
                       const chainId = watch("chainID");
                       if (chainId) {
                         const { walletClient, error } = await safeGetWalletClient(chainId);
@@ -1688,219 +1621,198 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   return (
     <>
       {buttonElement ? (
-        <button
-          type="button"
-          onClick={openModal}
-          className={cn(
-            "flex justify-center min-w-max items-center gap-x-1 rounded-md bg-brand-blue border-2 border-brand-blue px-3 py-2 text-sm font-semibold text-white dark:text-zinc-100  hover:opacity-75 dark:hover:bg-primary-900",
-            buttonElement.styleClass
-          )}
-          id="new-project-button"
-        >
+        <Button type="button" onClick={openModal} id="new-project-button">
           {buttonElement.iconSide === "left" && buttonElement.icon}
           {buttonElement.text}
           {buttonElement.iconSide === "right" && buttonElement.icon}
-        </button>
+        </Button>
       ) : null}
 
       {isOpen && (
         <Transition appear show={true} as={Fragment}>
           <Dialog as="div" className="relative z-[100]" onClose={closeModal}>
-          <Transition.Child
-            as={Fragment}
-            enter="ease-out duration-300"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
-          >
-            <div className="fixed inset-0 bg-black/25" />
-          </Transition.Child>
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0"
+              enterTo="opacity-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100"
+              leaveTo="opacity-0"
+            >
+              <div className="fixed inset-0 bg-black/25" />
+            </Transition.Child>
 
-          <div className="fixed inset-0 overflow-y-auto">
-            <div className="flex min-h-full items-center justify-center p-4 text-center">
-              <Transition.Child
-                as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="opacity-0 scale-95"
-                enterTo="opacity-100 scale-100"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100 scale-100"
-                leaveTo="opacity-0 scale-95"
-              >
-                <Dialog.Panel className="w-max max-w-max transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle  transition-all">
-                  <Dialog.Title
-                    as="h3"
-                    className="text-xl font-bold leading-6 text-gray-900 dark:text-zinc-100"
-                  >
-                    {projectToUpdate ? "Edit project" : "Create a new project!"}
-                  </Dialog.Title>
-                  <button
-                    type="button"
-                    className="top-6 absolute right-6 hover:opacity-75 transition-all ease-in-out duration-200 dark:text-zinc-100"
-                    onClick={closeModal}
-                  >
-                    <XMarkIcon className="w-5 h-5" />
-                  </button>
-                  {!projectToUpdate && (
-                    <div className="mt-2  max-w-3xl">
-                      <p className="text-sm text-gray-600 dark:text-zinc-300">
-                        We&apos;ll start by outlining some basics about your
-                        project. Don&apos;t worry about grants right now, you
-                        can add that from your Project Page once it&apos;s been
-                        created.
-                      </p>
-                    </div>
-                  )}
+            <div className="fixed inset-0 overflow-y-auto">
+              <div className="flex min-h-full items-center justify-center p-4 text-center">
+                <Transition.Child
+                  as={Fragment}
+                  enter="ease-out duration-300"
+                  enterFrom="opacity-0 scale-95"
+                  enterTo="opacity-100 scale-100"
+                  leave="ease-in duration-200"
+                  leaveFrom="opacity-100 scale-100"
+                  leaveTo="opacity-0 scale-95"
+                >
+                  <Dialog.Panel className="w-max max-w-max transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle  transition-all">
+                    <Dialog.Title
+                      as="h3"
+                      className="text-xl font-bold leading-6 text-gray-900 dark:text-zinc-100"
+                    >
+                      {projectToUpdate ? "Edit project" : "Create a new project!"}
+                    </Dialog.Title>
+                    <button
+                      type="button"
+                      className="top-6 absolute right-6 hover:opacity-75 transition-all ease-in-out duration-200 dark:text-zinc-100"
+                      onClick={closeModal}
+                    >
+                      <XMarkIcon className="w-5 h-5" />
+                    </button>
+                    {!projectToUpdate && (
+                      <div className="mt-2  max-w-3xl">
+                        <p className="text-sm text-gray-600 dark:text-zinc-300">
+                          We&apos;ll start by outlining some basics about your project. Don&apos;t
+                          worry about grants right now, you can add that from your Project Page once
+                          it&apos;s been created.
+                        </p>
+                      </div>
+                    )}
 
-                  {/* Screens start */}
-                  <form onSubmit={handleSubmit(onSubmit)}>
-                    <div className="w-full px-2 py-4 sm:px-0 max-w-3xl">
-                      <div>
-                        <div className="flex space-x-1 rounded-xl p-1 gap-2">
-                          {categories.map((category, index) => (
-                            <button
-                              type="button"
-                              key={category.title}
-                              className={cn(
-                                "w-full pt-2.5 text-sm font-medium leading-5 items-start flex flex-col justify-start text-left duration-200 ease-in-out transition-all focus:outline-none focus-visible:outline-none focus-within:outline-none active:outline-none",
-                                index <= step
-                                  ? "text-blue-700 dark:text-blue-400 border-t-4 border-t-brand-blue"
-                                  : "text-zinc-600 dark:text-blue-100 border-t-4 border-t-zinc-400 hover:opacity-70"
-                              )}
-                              // onClick={() => setStep(index)}
-                              disabled={
-                                projectToUpdate &&
-                                index === categories.length - 1
-                              }
-                            >
-                              <h5>{category.title}</h5>
-                              <p className="text-zinc-600 dark:text-blue-100">
-                                {category.desc}
-                              </p>
-                            </button>
-                          ))}
-                        </div>
-                        <div
-                          className={cn(
-                            "rounded-xl bg-transparent py-4 px-1 text-black dark:text-white"
-                          )}
-                        >
-                          {categories[step].fields}
+                    {/* Screens start */}
+                    <form onSubmit={handleSubmit(onSubmit)}>
+                      <div className="w-full px-2 py-4 sm:px-0 max-w-3xl">
+                        <div>
+                          <div className="flex space-x-1 rounded-xl p-1 gap-2">
+                            {categories.map((category, index) => (
+                              <button
+                                type="button"
+                                key={category.title}
+                                className={cn(
+                                  "w-full pt-2.5 text-sm font-medium leading-5 items-start flex flex-col justify-start text-left duration-200 ease-in-out transition-all focus:outline-none focus-visible:outline-none focus-within:outline-none active:outline-none",
+                                  index <= step
+                                    ? "text-blue-700 dark:text-blue-400 border-t-4 border-t-brand-blue"
+                                    : "text-zinc-600 dark:text-blue-100 border-t-4 border-t-zinc-400 hover:opacity-70"
+                                )}
+                                // onClick={() => setStep(index)}
+                                disabled={projectToUpdate && index === categories.length - 1}
+                              >
+                                <h5>{category.title}</h5>
+                                <p className="text-zinc-600 dark:text-blue-100">{category.desc}</p>
+                              </button>
+                            ))}
+                          </div>
+                          <div
+                            className={cn(
+                              "rounded-xl bg-transparent py-4 px-1 text-black dark:text-white"
+                            )}
+                          >
+                            {categories[step].fields}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    {/* Screens end */}
+                      {/* Screens end */}
 
-                    <div className="mt-4 flex flex-row justify-end gap-4">
-                      <button
-                        type="button"
-                        className="flex items-center flex-row gap-2 dark:border-white dark:text-zinc-100 justify-center rounded-md border bg-transparent border-gray-200 px-4 py-2 text-md font-medium text-black hover:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                        onClick={() => {
-                          if (step === 0) {
-                            closeModal();
-                          } else {
-                            setStep((oldStep) =>
-                              oldStep > 0 ? oldStep - 1 : oldStep
-                            );
-                          }
-                        }}
-                        disabled={isLoading}
-                      >
-                        {step === 0 ? (
-                          "Cancel"
-                        ) : (
-                          <>
-                            <ChevronRightIcon className="w-4 h-4 transform rotate-180" />
-                            Back
-                          </>
-                        )}
-                      </button>
-                      {step < categories.length - 1 && (
-                        <Tooltip.Provider>
-                          <Tooltip.Root delayDuration={0}>
-                            <Tooltip.Trigger asChild>
-                              <div className="flex w-max h-max">
-                                <Button
-                                  type="button"
-                                  className="flex disabled:opacity-50 flex-row dark:bg-zinc-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                                  onClick={() => {
-                                    const nextStep = () =>
-                                      setStep((oldStep) =>
-                                        oldStep >= categories.length - 1
-                                          ? oldStep
-                                          : oldStep + 1
-                                      );
-                                    checkFormAndTriggerErrors(nextStep);
-                                  }}
-                                  disabled={hasErrors() || isLoading}
-                                  isLoading={isLoading}
-                                >
-                                  Next
-                                  <ChevronRightIcon className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </Tooltip.Trigger>
-                            <Tooltip.Portal>
-                              {hasErrors() || isLoading ? (
-                                <Tooltip.Content
-                                  className="TooltipContent bg-brand-darkblue rounded-lg text-white p-3 z-[1000]"
-                                  sideOffset={5}
-                                  side="bottom"
-                                >
-                                  {tooltipText()}
-                                  <Tooltip.Arrow className="TooltipArrow" />
-                                </Tooltip.Content>
-                              ) : null}
-                            </Tooltip.Portal>
-                          </Tooltip.Root>
-                        </Tooltip.Provider>
-                      )}
-
-                      {step === categories.length - 1 && (
-                        <Tooltip.Provider>
-                          <Tooltip.Root delayDuration={0}>
-                            <Tooltip.Trigger asChild>
-                              <div className="flex w-max h-max">
-                                <Button
-                                  type={"submit"}
-                                  className="flex disabled:opacity-50 flex-row dark:bg-zinc-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                                  disabled={hasErrors() || isLoading}
-                                  isLoading={isLoading}
-                                >
-                                  {projectToUpdate
-                                    ? "Update project"
-                                    : "Create project"}
-                                  {!projectToUpdate ? (
+                      <div className="mt-4 flex flex-row justify-end gap-4">
+                        <Button
+                          type="button"
+                          variant={"outline"}
+                          className="border-border"
+                          onClick={() => {
+                            if (step === 0) {
+                              closeModal();
+                            } else {
+                              setStep((oldStep) => (oldStep > 0 ? oldStep - 1 : oldStep));
+                            }
+                          }}
+                          disabled={isLoading}
+                        >
+                          {step === 0 ? (
+                            "Cancel"
+                          ) : (
+                            <>
+                              <ChevronRightIcon className="w-4 h-4 transform rotate-180" />
+                              Back
+                            </>
+                          )}
+                        </Button>
+                        {step < categories.length - 1 && (
+                          <Tooltip.Provider>
+                            <Tooltip.Root delayDuration={0}>
+                              <Tooltip.Trigger asChild>
+                                <div className="flex w-max h-max">
+                                  <Button
+                                    type="button"
+                                    className="flex disabled:opacity-50 flex-row dark:bg-zinc-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                                    onClick={() => {
+                                      const nextStep = () =>
+                                        setStep((oldStep) =>
+                                          oldStep >= categories.length - 1 ? oldStep : oldStep + 1
+                                        );
+                                      checkFormAndTriggerErrors(nextStep);
+                                    }}
+                                    disabled={hasErrors() || isLoading}
+                                  >
+                                    Next
                                     <ChevronRightIcon className="w-4 h-4" />
-                                  ) : null}
-                                </Button>
-                              </div>
-                            </Tooltip.Trigger>
-                            <Tooltip.Portal>
-                              {hasErrors() || isLoading ? (
-                                <Tooltip.Content
-                                  className="TooltipContent bg-brand-darkblue rounded-lg text-white p-3 z-[1000]"
-                                  sideOffset={5}
-                                  side="bottom"
-                                >
-                                  {tooltipText()}
-                                  <Tooltip.Arrow className="TooltipArrow" />
-                                </Tooltip.Content>
-                              ) : null}
-                            </Tooltip.Portal>
-                          </Tooltip.Root>
-                        </Tooltip.Provider>
-                      )}
-                    </div>
-                  </form>
-                </Dialog.Panel>
-              </Transition.Child>
+                                  </Button>
+                                </div>
+                              </Tooltip.Trigger>
+                              <Tooltip.Portal>
+                                {hasErrors() || isLoading ? (
+                                  <Tooltip.Content
+                                    className="TooltipContent bg-brand-darkblue rounded-lg text-white p-3 z-[1000]"
+                                    sideOffset={5}
+                                    side="bottom"
+                                  >
+                                    {tooltipText()}
+                                    <Tooltip.Arrow className="TooltipArrow" />
+                                  </Tooltip.Content>
+                                ) : null}
+                              </Tooltip.Portal>
+                            </Tooltip.Root>
+                          </Tooltip.Provider>
+                        )}
+
+                        {step === categories.length - 1 && (
+                          <Tooltip.Provider>
+                            <Tooltip.Root delayDuration={0}>
+                              <Tooltip.Trigger asChild>
+                                <div className="flex w-max h-max">
+                                  <Button
+                                    type={"submit"}
+                                    className="flex disabled:opacity-50 flex-row dark:bg-zinc-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                                    disabled={hasErrors() || isLoading}
+                                  >
+                                    {projectToUpdate ? "Update project" : "Create project"}
+                                    {!projectToUpdate ? (
+                                      <ChevronRightIcon className="w-4 h-4" />
+                                    ) : null}
+                                  </Button>
+                                </div>
+                              </Tooltip.Trigger>
+                              <Tooltip.Portal>
+                                {hasErrors() || isLoading ? (
+                                  <Tooltip.Content
+                                    className="TooltipContent bg-brand-darkblue rounded-lg text-white p-3 z-[1000]"
+                                    sideOffset={5}
+                                    side="bottom"
+                                  >
+                                    {tooltipText()}
+                                    <Tooltip.Arrow className="TooltipArrow" />
+                                  </Tooltip.Content>
+                                ) : null}
+                              </Tooltip.Portal>
+                            </Tooltip.Root>
+                          </Tooltip.Provider>
+                        )}
+                      </div>
+                    </form>
+                  </Dialog.Panel>
+                </Transition.Child>
+              </div>
             </div>
-          </div>
-        </Dialog>
-      </Transition>
+          </Dialog>
+        </Transition>
       )}
     </>
   );

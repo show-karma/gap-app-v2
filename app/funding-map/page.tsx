@@ -1,9 +1,10 @@
+import type { Metadata } from "next";
 import { FundingMapWrapper } from "@/components/Pages/ProgramRegistry/FundingMapWrapper";
+import { PROJECT_NAME } from "@/constants/brand";
 import { customMetadata } from "@/utilities/meta";
-import { Metadata } from "next";
 
 export const metadata: Metadata = customMetadata({
-  title: `Karma GAP - Grant Program Aggregator`,
+  title: `${PROJECT_NAME} - Grant Program Aggregator`,
   description: `Find all the funding opportunities across web3 ecosystem.`,
 });
 

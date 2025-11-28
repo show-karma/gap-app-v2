@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 type AlertType = "error" | "warning" | "info" | "success";
 
@@ -71,12 +71,7 @@ const AlertIcon = ({ type }: { type: AlertType }) => {
 
   // Default info/success icon
   return (
-    <svg
-      className={iconClass}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
+    <svg className={iconClass} fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path
         strokeLinecap="round"
         strokeLinejoin="round"

@@ -1,24 +1,24 @@
 "use client";
 
+import { ArrowLeftIcon } from "@heroicons/react/24/solid";
+import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";  
-import { useCommunityPrograms } from "@/hooks/usePrograms";
-import { useCommunityDetails } from "@/hooks/useCommunityDetails";
-import { useOwnerStore } from "@/store";
-import { useStaff } from "@/hooks/useStaff";
 import { ProgramScoresUpload } from "@/components/Pages/Admin/ProgramScoresUpload";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useCommunityDetails } from "@/hooks/useCommunityDetails";
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useCommunityPrograms } from "@/hooks/usePrograms";
+import { useStaff } from "@/hooks/useStaff";
+import { useOwnerStore } from "@/store";
 import { MESSAGES } from "@/utilities/messages";
-import Link from "next/link";
-import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 
 export default function ProgramScoresPage() {
   const { communityId } = useParams() as { communityId: string };
-  
+
   const { isCommunityAdmin, isLoading: isCheckingAdmin } = useIsCommunityAdmin(communityId);
   const isOwner = useOwnerStore((state) => state.isOwner);
   const { isStaff } = useStaff();
-  
+
   const hasAccess = isCommunityAdmin || isOwner || isStaff;
   const { data: programs, isLoading: isProgramsLoading } = useCommunityPrograms(communityId);
   const { data: community, isLoading: isCommunityLoading } = useCommunityDetails(communityId);
@@ -41,7 +41,7 @@ export default function ProgramScoresPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <div className="max-w-full w-full">
       <div className="mb-8">
         <Link
           href={`/community/${communityId}/admin`}
@@ -50,13 +50,13 @@ export default function ProgramScoresPage() {
           <ArrowLeftIcon className="h-4 w-4" />
           Back to Admin Dashboard
         </Link>
-        <h1 className="text-3xl font-bold text-gray-900">Program Scores Upload</h1>
-        <p className="text-gray-600 mt-2">
+        <h1 className="text-3xl font-bold text-primary">Program Scores Upload</h1>
+        <p className="text-foreground mt-2">
           Upload CSV files containing program participant scores for evaluation and tracking.
         </p>
       </div>
 
-      <ProgramScoresUpload 
+      <ProgramScoresUpload
         communityUID={community?.uid || communityId}
         programs={programs || []}
         defaultChainId={community?.chainID}

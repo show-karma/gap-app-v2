@@ -1,5 +1,5 @@
-import { Skeleton } from "@/components/Utilities/Skeleton";
 import { AutoSizer, Grid } from "react-virtualized";
+import { Skeleton } from "@/components/Utilities/Skeleton";
 
 const pickColor = (index: number) => {
   const cardColors = [
@@ -20,8 +20,8 @@ const pickColor = (index: number) => {
 // Responsive breakpoint function (same as CommunitiesPage)
 const getResponsiveColumns = (width: number) => {
   if (width >= 1200) return 4; // 4 columns for large screens
-  if (width >= 768) return 2;  // 2 columns for medium screens
-  return 1;                    // 1 column for small screens
+  if (width >= 768) return 2; // 2 columns for medium screens
+  return 1; // 1 column for small screens
 };
 
 const StatsSkeleton = () => (
@@ -34,7 +34,7 @@ const StatsSkeleton = () => (
 const CommunityCardSkeleton = () => (
   <div
     className="flex flex-col p-4 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-sm w-full animate-pulse"
-    style={{ height: '318px' }}
+    style={{ height: "318px" }}
   >
     {/* Community Image Skeleton */}
     <div className="flex justify-center mb-3 min-h-[72px] h-18 mx-auto">
@@ -119,7 +119,7 @@ export const CardListSkeleton = () => {
   const cardArray = Array.from({ length: 16 }, (_, index) => index);
 
   return (
-    <div className="grid w-full gap-4 grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(360px,1fr))] max-[2160px]:grid-cols-[repeat(auto-fit,minmax(360px,1fr))] min-[2160px]:grid-cols-6">
+    <div className="grid w-full gap-4 grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(360px,1fr))] xl:grid-cols-3">
       {cardArray.map((_, index) => (
         <CardSkeleton key={index} index={index} />
       ))}
@@ -264,9 +264,7 @@ export const CommunitiesLoading = () => {
           }}
         >
           <div className="flex justify-center border border-white rounded-full p-2">
-            <Skeleton
-              className={"h-14 w-14 rounded-full max-lg:h-8 max-lg:w-8"}
-            />
+            <Skeleton className={"h-14 w-14 rounded-full max-lg:h-8 max-lg:w-8"} />
           </div>
 
           <div className="flex flex-row gap-2 max-2xl:text-2xl max-lg:text-xl">

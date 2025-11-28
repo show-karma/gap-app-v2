@@ -1,6 +1,6 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo } from "react";
-import { SimplifiedGrant } from "./useGrants";
+import type { SimplifiedGrant } from "./useGrants";
 
 type SortField = "project" | "grant" | "description" | "categories";
 type SortDirection = "asc" | "desc";
@@ -10,10 +10,7 @@ interface UseGrantsTableProps {
   itemsPerPage?: number;
 }
 
-export const useGrantsTable = ({
-  grants,
-  itemsPerPage = 12,
-}: UseGrantsTableProps) => {
+export const useGrantsTable = ({ grants, itemsPerPage = 12 }: UseGrantsTableProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -23,9 +20,7 @@ export const useGrantsTable = ({
   const selectedProgramId = searchParams.get("programId");
   const sortField = searchParams.get("sortField") as SortField | null;
 
-  const sortDirection = searchParams.get(
-    "sortDirection"
-  ) as SortDirection | null;
+  const sortDirection = searchParams.get("sortDirection") as SortDirection | null;
 
   // Create URLSearchParams instance for manipulation
   const createQueryString = useCallback(
@@ -48,22 +43,25 @@ export const useGrantsTable = ({
 
   const uniquePrograms = useMemo(() => {
     const programsSet = new Set();
-    const programs = grants?.reduce((acc, grant) => {
-      const key = grant.programId;
-      if (!programsSet.has(key)) {
-        if (key) {
-          programsSet.add(key);
+    const programs = grants?.reduce(
+      (acc, grant) => {
+        const key = grant.programId;
+        if (!programsSet.has(key)) {
+          if (key) {
+            programsSet.add(key);
+          }
+          if (acc.find((program) => program.grant === grant.grant)) {
+            return acc;
+          }
+          acc.push({
+            programId: grant.programId,
+            grant: grant.grant,
+          });
         }
-        if (acc.find((program) => program.grant === grant.grant)) {
-          return acc;
-        }
-        acc.push({
-          programId: grant.programId,
-          grant: grant.grant,
-        });
-      }
-      return acc;
-    }, [] as Array<{ programId: string; grant: string }>);
+        return acc;
+      },
+      [] as Array<{ programId: string; grant: string }>
+    );
 
     return programs.sort((a, b) => a.grant.localeCompare(b.grant));
   }, [grants]);
@@ -73,9 +71,7 @@ export const useGrantsTable = ({
 
     // Apply program filter
     if (selectedProgramId) {
-      processed = processed.filter(
-        (grant) => grant.programId === selectedProgramId
-      );
+      processed = processed.filter((grant) => grant.programId === selectedProgramId);
     }
 
     // Apply sorting
@@ -119,8 +115,7 @@ export const useGrantsTable = ({
   };
 
   const handleSortChange = (field: SortField) => {
-    const newDirection =
-      field === sortField && sortDirection === "asc" ? "desc" : "asc";
+    const newDirection = field === sortField && sortDirection === "asc" ? "desc" : "asc";
 
     const query = createQueryString({
       sortField: field,

@@ -2,13 +2,13 @@
 
 "use client";
 
+import { Popover, Transition } from "@headlessui/react";
+import type { Hex } from "@show-karma/karma-gap-sdk";
+import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { type FC, Fragment, type ReactNode, useEffect, useState } from "react";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatNumberPercentage } from "@/utilities/formatNumber";
 import { isDelegateOf } from "@/utilities/karma";
-import { Popover, Transition } from "@headlessui/react";
-import type { Hex } from "@show-karma/karma-gap-sdk";
-import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { type FC, type ReactNode, useEffect, useState, Fragment } from "react";
 
 import { errorManager } from "./Utilities/errorManager";
 
@@ -25,7 +25,7 @@ export const VotingPowerPopover: FC<VotingPowerPopoverProps> = ({
 }) => {
   const [votingPower, setVotingPower] = useState<string | null>(null);
   const [delegatedVotes, setDelegatedVotes] = useState<string | null>(null);
-  const [isFetching, setIsFetching] = useState(false);
+  const [_isFetching, setIsFetching] = useState(false);
   const [isDelegate, setIsDelegate] = useState(false);
   const [canFetch, setCanFetch] = useState(false);
 
@@ -38,8 +38,7 @@ export const VotingPowerPopover: FC<VotingPowerPopoverProps> = ({
       };
       try {
         const data = await isDelegateOf(
-          daoDictionary[community.details?.data?.slug] ||
-            community.details?.data?.slug,
+          daoDictionary[community.details?.data?.slug] || community.details?.data?.slug,
           reviewer
         );
 
@@ -49,17 +48,10 @@ export const VotingPowerPopover: FC<VotingPowerPopoverProps> = ({
         }
         setIsDelegate(!!data);
       } catch (error: any) {
-        errorManager(
-          `Error fetching voting power for reviewer ${reviewer}`,
-          error,
-          {
-            reviewer,
-            community:
-              daoDictionary[community.details?.data?.slug] ||
-              community.details?.data?.slug,
-          }
-        );
-        console.log(error);
+        errorManager(`Error fetching voting power for reviewer ${reviewer}`, error, {
+          reviewer,
+          community: daoDictionary[community.details?.data?.slug] || community.details?.data?.slug,
+        });
         setVotingPower(null);
         setIsDelegate(false);
       } finally {
@@ -69,7 +61,7 @@ export const VotingPowerPopover: FC<VotingPowerPopoverProps> = ({
     if (canFetch) {
       getVotingPower();
     }
-  }, [canFetch]);
+  }, [canFetch, community.details?.data?.slug, reviewer]);
 
   return (
     <div className="w-full max-w-md">
@@ -111,9 +103,7 @@ export const VotingPowerPopover: FC<VotingPowerPopoverProps> = ({
                           <p>Voting power: </p>
                           <span>{`${formatCurrency(
                             +(delegatedVotes || 0)
-                          )} (${formatNumberPercentage(
-                            +(votingPower || 0)
-                          )})`}</span>
+                          )} (${formatNumberPercentage(+(votingPower || 0))})`}</span>
                         </div>
                       </div>
                     </div>

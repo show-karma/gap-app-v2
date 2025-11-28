@@ -1,17 +1,18 @@
 "use client";
-import { useRouter } from "next/navigation";
-import { useReviewerPrograms } from "@/hooks/usePermissions";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { Button } from "@/components/Utilities/Button";
-import { EyeIcon, BuildingOfficeIcon, DocumentTextIcon } from "@heroicons/react/24/outline";
+import { BuildingOfficeIcon, DocumentTextIcon, EyeIcon } from "@heroicons/react/24/outline";
 import { ArrowRightIcon } from "@heroicons/react/24/solid";
-import { useMemo } from "react";
-import Link from "next/link";
-import { useAccount } from "wagmi";
 import Image from "next/image";
-import { FundingProgram } from "@/services/fundingPlatformService";
-import { PAGES } from "@/utilities/pages";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useMemo } from "react";
+import { useAccount } from "wagmi";
+import { Button } from "@/components/Utilities/Button";
+import { Spinner } from "@/components/Utilities/Spinner";
 import { useAuth } from "@/hooks/useAuth";
+import { useReviewerPrograms } from "@/hooks/usePermissions";
+import type { FundingProgram } from "@/services/fundingPlatformService";
+import { layoutTheme } from "@/src/helper/theme";
+import { PAGES } from "@/utilities/pages";
 
 /**
  * My Review page
@@ -19,7 +20,7 @@ import { useAuth } from "@/hooks/useAuth";
  * Allows navigation to specific community reviewer dashboards
  */
 export default function MyReviewPage() {
-  const router = useRouter();
+  const _router = useRouter();
   const { address } = useAccount();
   const { authenticated: isAuth } = useAuth();
 
@@ -30,14 +31,17 @@ export default function MyReviewPage() {
   const communitiesWithPrograms = useMemo(() => {
     if (!reviewerPrograms || reviewerPrograms.length === 0) return [];
 
-    const communityMap = new Map<string, FundingProgram & {
-      programCount: number,
-      totalApplications: number,
-      milestoneReviewerPrograms: Array<{programId: string, chainID: number}>
-    }>();
+    const communityMap = new Map<
+      string,
+      FundingProgram & {
+        programCount: number;
+        totalApplications: number;
+        milestoneReviewerPrograms: Array<{ programId: string; chainID: number }>;
+      }
+    >();
 
     reviewerPrograms.forEach((program) => {
-      const communityId: string = program?.communitySlug || program.communityUID || '';
+      const communityId: string = program?.communitySlug || program.communityUID || "";
       const communityName = program?.communityName;
       const communityLogo = program?.communityImage;
 
@@ -49,7 +53,7 @@ export default function MyReviewPage() {
           programCount: 0,
           totalApplications: 0,
           milestoneReviewerPrograms: [],
-          ...program
+          ...program,
         });
       }
 
@@ -61,20 +65,20 @@ export default function MyReviewPage() {
       if (program.isMilestoneReviewer) {
         community.milestoneReviewerPrograms.push({
           programId: program.programId,
-          chainID: program.chainID
+          chainID: program.chainID,
         });
       }
     });
 
-    return Array.from(communityMap.values()).sort((a, b) =>
-      a.communityName?.localeCompare(b.communityName || '') || 0
+    return Array.from(communityMap.values()).sort(
+      (a, b) => a.communityName?.localeCompare(b.communityName || "") || 0
     );
   }, [reviewerPrograms]);
 
   // Check if user is authenticated
   if (!address || !isAuth) {
     return (
-      <div className="px-4 sm:px-6 lg:px-12 py-8">
+      <div className={layoutTheme.padding}>
         <div className="max-w-4xl mx-auto">
           <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6 text-center">
             <h3 className="text-lg font-medium text-yellow-800 dark:text-yellow-200 mb-2">
@@ -99,7 +103,7 @@ export default function MyReviewPage() {
 
   if (!communitiesWithPrograms || communitiesWithPrograms.length === 0) {
     return (
-      <div className="px-4 sm:px-6 lg:px-12 py-8">
+      <div className={layoutTheme.padding}>
         <div className="max-w-4xl mx-auto">
           <div className="text-center py-12">
             <div className="bg-gray-50 dark:bg-zinc-800 rounded-lg p-8">
@@ -121,13 +125,11 @@ export default function MyReviewPage() {
   }
 
   return (
-    <div className="px-4 sm:px-6 lg:px-12 py-8">
-      <div className="max-w-6xl mx-auto">
+    <div className={layoutTheme.padding}>
+      <div className="max-w-full mx-auto">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            My Reviews
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">My Reviews</h1>
           <p className="mt-2 text-gray-600 dark:text-gray-400">
             Manage and review funding applications across different communities
           </p>
@@ -168,7 +170,12 @@ export default function MyReviewPage() {
                   {community.communityImage ? (
                     <Image
                       src={community.communityImage}
-                      alt={(community.communityName || community.communitySlug || community.communityUID || '')}
+                      alt={
+                        community.communityName ||
+                        community.communitySlug ||
+                        community.communityUID ||
+                        ""
+                      }
                       width={48}
                       height={48}
                       className="rounded-full object-cover"
@@ -182,9 +189,7 @@ export default function MyReviewPage() {
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                       {community.communityName || community.communitySlug || community.communityUID}
                     </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Community
-                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Community</p>
                   </div>
                 </div>
 
@@ -207,7 +212,9 @@ export default function MyReviewPage() {
                 {/* Action Buttons */}
                 <div className="space-y-2">
                   <Link
-                    href={PAGES.REVIEWER.DASHBOARD(community.communitySlug || community.communityUID || '')}
+                    href={PAGES.REVIEWER.DASHBOARD(
+                      community.communitySlug || community.communityUID || ""
+                    )}
                     className="block"
                   >
                     <Button
@@ -220,21 +227,22 @@ export default function MyReviewPage() {
                   </Link>
 
                   {/* Show View Milestones button if user is milestone reviewer for any program in this community */}
-                  {community.milestoneReviewerPrograms && community.milestoneReviewerPrograms.length > 0 && (
-                    <Link
-                      href={`${PAGES.ADMIN.MILESTONES(community.communitySlug || community.communityUID || '')}?programIds=${community.milestoneReviewerPrograms.map(p => `${p.programId}_${p.chainID}`).join(',')}`}
-                      className="block"
-                    >
-                      <Button
-                        variant="secondary"
-                        className="w-full flex items-center justify-center group"
+                  {community.milestoneReviewerPrograms &&
+                    community.milestoneReviewerPrograms.length > 0 && (
+                      <Link
+                        href={`${PAGES.ADMIN.MILESTONES(community.communitySlug || community.communityUID || "")}?programIds=${community.milestoneReviewerPrograms.map((p) => `${p.programId}_${p.chainID}`).join(",")}`}
+                        className="block"
                       >
-                        <EyeIcon className="w-4 h-4 mr-2" />
-                        <span>View Milestones</span>
-                        <ArrowRightIcon className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                      </Button>
-                    </Link>
-                  )}
+                        <Button
+                          variant="secondary"
+                          className="w-full flex items-center justify-center group"
+                        >
+                          <EyeIcon className="w-4 h-4 mr-2" />
+                          <span>View Milestones</span>
+                          <ArrowRightIcon className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                        </Button>
+                      </Link>
+                    )}
                 </div>
               </div>
             </div>

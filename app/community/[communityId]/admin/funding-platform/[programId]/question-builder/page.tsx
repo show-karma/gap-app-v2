@@ -1,17 +1,18 @@
 "use client";
-import { useParams, useRouter } from "next/navigation";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
-import { useOwnerStore } from "@/store";
-import { useStaff } from "@/hooks/useStaff";
-import { QuestionBuilder } from "@/components/QuestionBuilder";
-import FormBuilderErrorBoundary from "@/components/ErrorBoundary/FormBuilderErrorBoundary";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { Button } from "@/components/Utilities/Button";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
-import { MESSAGES } from "@/utilities/messages";
-import { FormSchema } from "@/types/question-builder";
-import { useQuestionBuilderSchema, usePostApprovalSchema } from "@/hooks/useQuestionBuilder";
+import { useParams, useRouter } from "next/navigation";
+import FormBuilderErrorBoundary from "@/components/ErrorBoundary/FormBuilderErrorBoundary";
+import { QuestionBuilder } from "@/components/QuestionBuilder";
+import { Button } from "@/components/Utilities/Button";
+import { Spinner } from "@/components/Utilities/Spinner";
 import { useProgramConfig } from "@/hooks/useFundingPlatform";
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { usePostApprovalSchema, useQuestionBuilderSchema } from "@/hooks/useQuestionBuilder";
+import { useStaff } from "@/hooks/useStaff";
+import { layoutTheme } from "@/src/helper/theme";
+import { useOwnerStore } from "@/store";
+import type { FormSchema } from "@/types/question-builder";
+import { MESSAGES } from "@/utilities/messages";
 
 export default function QuestionBuilderPage() {
   const router = useRouter();
@@ -24,8 +25,7 @@ export default function QuestionBuilderPage() {
   const [programId, chainId] = combinedProgramId.split("_");
   const parsedChainId = parseInt(chainId, 10);
 
-  const { isCommunityAdmin, isLoading: isLoadingAdmin } =
-    useIsCommunityAdmin(communityId);
+  const { isCommunityAdmin, isLoading: isLoadingAdmin } = useIsCommunityAdmin(communityId);
   const isOwner = useOwnerStore((state) => state.isOwner);
   const { isStaff } = useStaff();
 
@@ -71,7 +71,7 @@ export default function QuestionBuilderPage() {
 
   if (!hasAccess) {
     return (
-      <div className="px-4 sm:px-6 lg:px-12 py-5">
+      <div className={layoutTheme.padding}>
         <p className="text-red-500">{MESSAGES.REVIEWS.NOT_ADMIN}</p>
       </div>
     );
@@ -85,15 +85,11 @@ export default function QuestionBuilderPage() {
             Error Loading Form Schema
           </h3>
           <p className="text-red-600 dark:text-red-400 mb-4">
-            Unable to load the form schema. This might be the first time
-            creating a form for this program.
+            Unable to load the form schema. This might be the first time creating a form for this
+            program.
           </p>
           <div className="flex space-x-3">
-            <Button
-              onClick={handleBackClick}
-              variant="secondary"
-              className="flex items-center"
-            >
+            <Button onClick={handleBackClick} variant="secondary" className="flex items-center">
               <ArrowLeftIcon className="w-4 h-4 mr-2" />
               Back to Programs
             </Button>
@@ -110,25 +106,19 @@ export default function QuestionBuilderPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen">
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="sm:px-3 md:px-4 px-6 py-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Button
-                onClick={handleBackClick}
-                variant="secondary"
-                className="flex items-center"
-              >
+              <Button onClick={handleBackClick} variant="secondary" className="flex items-center">
                 <ArrowLeftIcon className="w-4 h-4 mr-2" />
                 Back
               </Button>
 
               <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Form Builder
-                </h1>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white">Form Builder</h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Program ID: {programId} | Chain ID: {parsedChainId}
                 </p>

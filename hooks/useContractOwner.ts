@@ -1,34 +1,48 @@
 import { useQuery } from "@tanstack/react-query";
-import { useOwnerStore } from "@/store/owner";
-import { useAuth } from "@/hooks/useAuth";
+import { JsonRpcProvider } from "ethers";
 import { useEffect } from "react";
+import type { Chain } from "viem";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { getContractOwner } from "@/utilities/sdk/getContractOwner";
+import { useAuth } from "@/hooks/useAuth";
+import { useOwnerStore } from "@/store/owner";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
-import { Chain } from "viem";
+import { gapSupportedNetworks } from "@/utilities/network";
+import { getRPCUrlByChainId } from "@/utilities/rpcClient";
+import { getContractOwner } from "@/utilities/sdk/getContractOwner";
 
-const fetchContractOwner = async (
-  signer: any,
-  chain: Chain,
-  address: string
-): Promise<boolean> => {
-  if (!signer || !chain || !address) return false;
+const fetchContractOwner = async (address: string): Promise<boolean> => {
+  if (!address) return false;
+  const chain = gapSupportedNetworks[0];
+  const rpcUrl = getRPCUrlByChainId(chain.id);
 
-  const owner = await getContractOwner(signer, chain);
+  if (!rpcUrl) {
+    throw new Error(`RPC URL not configured for chain ${chain.id}`);
+  }
+
+  const provider = new JsonRpcProvider(rpcUrl, {
+    chainId: chain.id,
+    name: chain.name,
+  });
+
+  const owner = await getContractOwner(provider, chain);
   return owner?.toLowerCase() === address?.toLowerCase();
 };
 
-export const useContractOwner = (address?: string, chain?: Chain) => {
-  const { authenticated: isAuth } = useAuth();
+export const useContractOwner = (chainOverride?: Chain) => {
+  const { authenticated: isAuth, address } = useAuth();
   const { setIsOwner, setIsOwnerLoading } = useOwnerStore();
   const signer = useSigner();
+  const chain = chainOverride || gapSupportedNetworks[0];
 
   const queryResult = useQuery<boolean, Error>({
     queryKey: ["contract-owner", address, chain?.id],
-    queryFn: () => fetchContractOwner(signer, chain!, address!),
-    enabled: !!signer && !!address && !!chain && isAuth,
+    queryFn: () =>
+      fetchContractOwner(address!).catch(() => {
+        return false;
+      }),
+    enabled: !!address && isAuth,
     staleTime: 10 * 60 * 1000, // 10 minutes - contract owner changes rarely
-    retry: (failureCount, error) => {
+    retry: (failureCount, _error) => {
       // Retry up to 2 times for network errors
       return failureCount < 2;
     },
@@ -41,7 +55,6 @@ export const useContractOwner = (address?: string, chain?: Chain) => {
     setIsOwnerLoading(isLoading);
   }, [isLoading, setIsOwnerLoading]);
 
-
   useEffect(() => {
     if (!isAuth) {
       setIsOwner(false);
@@ -49,7 +62,7 @@ export const useContractOwner = (address?: string, chain?: Chain) => {
     }
     if (typeof data === "boolean") {
       setIsOwner(data);
-    } 
+    }
   }, [data, isAuth, setIsOwner]);
 
   useEffect(() => {

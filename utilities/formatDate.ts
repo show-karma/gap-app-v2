@@ -43,15 +43,7 @@ export const formatDate = (
   }
 
   if (formatOption === "DDD, MMM DD") {
-    const days = [
-      "Sunday",
-      "Monday",
-      "Tuesday",
-      "Wednesday",
-      "Thursday",
-      "Friday",
-      "Saturday",
-    ];
+    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     const dayName = days[dayOfWeek];
     const currentYear = new Date().getFullYear();
     const yearString = year !== currentYear ? ` ${year}` : "";
@@ -66,9 +58,7 @@ export const formatDate = (
 
     const today = new Date();
     const isToday =
-      today.getFullYear() === year &&
-      today.getMonth() === month &&
-      today.getDate() === day;
+      today.getFullYear() === year && today.getMonth() === month && today.getDate() === day;
 
     if (isToday) {
       return timeString;

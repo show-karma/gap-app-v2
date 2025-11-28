@@ -1,30 +1,29 @@
 "use client";
-import { useDonationCart } from "@/store";
+import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import { useParams, useRouter } from "next/navigation";
-import { useNetworkSwitching } from "@/hooks/useNetworkSwitching";
-import { useAccount } from "wagmi";
 import { useCallback, useMemo } from "react";
-import {
-  getTokensByChain,
-  type SupportedToken,
-  SUPPORTED_NETWORKS,
-  getAllSupportedChains,
-} from "@/constants/supportedTokens";
+import { useAccount } from "wagmi";
 import { DonationApprovalStatus } from "@/components/DonationApprovalStatus";
 import { DonationStepsPreview } from "@/components/DonationStepsPreview";
+import {
+  getAllSupportedChains,
+  getTokensByChain,
+  type SupportedToken,
+} from "@/constants/supportedTokens";
+import { useCrossChainBalances } from "@/hooks/donation/useCrossChainBalances";
 import { useDonationCheckout } from "@/hooks/donation/useDonationCheckout";
 import { usePayoutAddressManager } from "@/hooks/donation/usePayoutAddressManager";
-import { useCrossChainBalances } from "@/hooks/donation/useCrossChainBalances";
-import { DonationSummary } from "./DonationSummary";
-import { DonationExecutor } from "./DonationExecutor";
-import { DonationAlerts } from "./DonationAlerts";
-import { CheckoutHeader } from "./CheckoutHeader";
-import { EmptyCart } from "./EmptyCart";
-import { CartItemList } from "./CartItemList";
-import { NetworkSwitchPreview } from "./NetworkSwitchPreview";
-import { CompletedDonations } from "./CompletedDonations";
-import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import { useAuth } from "@/hooks/useAuth";
+import { useNetworkSwitching } from "@/hooks/useNetworkSwitching";
+import { useDonationCart } from "@/store";
+import { CartItemList } from "./CartItemList";
+import { CheckoutHeader } from "./CheckoutHeader";
+import { CompletedDonations } from "./CompletedDonations";
+import { DonationAlerts } from "./DonationAlerts";
+import { DonationExecutor } from "./DonationExecutor";
+import { DonationSummary } from "./DonationSummary";
+import { EmptyCart } from "./EmptyCart";
+import { NetworkSwitchPreview } from "./NetworkSwitchPreview";
 
 export function DonationCheckout() {
   const {
@@ -35,7 +34,6 @@ export function DonationCheckout() {
     setSelectedToken,
     remove,
     clear,
-    updatePayments,
     payments,
     lastCompletedSession,
     clearLastCompletedSession,
@@ -54,7 +52,7 @@ export function DonationCheckout() {
   const { isConnected } = useAuth();
 
   // Get unique chain IDs from cart items
-  const cartChainIds = useMemo(() => {
+  const _cartChainIds = useMemo(() => {
     const chainIds = new Set<number>();
     Object.values(selectedTokens).forEach((token) => {
       if (token) chainIds.add(token.chainId);
@@ -87,7 +85,6 @@ export function DonationCheckout() {
     transfers,
     isExecuting,
     executionState,
-    approvalInfo,
     validationErrors,
     showStepsPreview,
     setShowStepsPreview,
@@ -96,9 +93,7 @@ export function DonationCheckout() {
   } = useDonationCheckout();
 
   const totalItems = items.length;
-  const hasAmounts = Object.values(amounts).some(
-    (amount) => amount && parseFloat(amount) > 0
-  );
+  const hasAmounts = Object.values(amounts).some((amount) => amount && parseFloat(amount) > 0);
   const hasSelectedTokens = Object.keys(selectedTokens).length > 0;
 
   // SECURITY: Block donations if any payout addresses are missing
@@ -157,9 +152,10 @@ export function DonationCheckout() {
       switch (executionState.phase) {
         case "checking":
           return "Checking token approvals...";
-        case "approving":
+        case "approving": {
           const progress = executionState.approvalProgress || 0;
           return `Approving tokens... (${Math.round(progress)}%)`;
+        }
         case "donating":
           return "Submitting donations...";
         default:
@@ -231,16 +227,11 @@ export function DonationCheckout() {
   return (
     <div className="min-h-screen my-8">
       <div className="w-full pb-4">
-
         <div className="flex flex-col gap-8 lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(380px,1fr)] lg:items-start">
           <div className="flex flex-col gap-3">
-            <CheckoutHeader
-              communityId={communityId}
-              totalItems={totalItems}
-              onClear={clear}
-            />
+            <CheckoutHeader communityId={communityId} totalItems={totalItems} onClear={clear} />
 
-            {!canProceed ?
+            {!canProceed ? (
               <div className="flex items-center p-3 relative bg-[#EFF4FF] dark:bg-[#101828] rounded-lg overflow-hidden">
                 <div className="flex items-start gap-3 relative flex-1 grow">
                   <div className="relative w-6 h-6 aspect-[1]">
@@ -248,22 +239,21 @@ export function DonationCheckout() {
                   </div>
 
                   <div className="flex flex-col items-start justify-center relative flex-1 grow">
-                    <p className="text-sm font-semibold text-primary-500">Select tokens and amounts</p>
+                    <p className="text-sm font-semibold text-primary-500">
+                      Select tokens and amounts
+                    </p>
                     <p className="relative self-stretch font-text-sm-regular font-[number:var(--text-sm-regular-font-weight)] text-primary-500 text-[length:var(--text-sm-regular-font-size)] tracking-[var(--text-sm-regular-letter-spacing)] leading-[var(--text-sm-regular-line-height)] [font-style:var(--text-sm-regular-font-style)]">
-                      Approve each token once per network, then confirm your batch
-                      transfer. Donations across multiple chains are handled securely.
+                      Approve each token once per network, then confirm your batch transfer.
+                      Donations across multiple chains are handled securely.
                     </p>
                   </div>
                 </div>
               </div>
-              : null}
+            ) : null}
             <DonationApprovalStatus executionState={executionState} />
 
             {/* Network Switch Preview - Shows when multiple networks are involved */}
-            <NetworkSwitchPreview
-              payments={payments}
-              currentChainId={currentChainId}
-            />
+            <NetworkSwitchPreview payments={payments} currentChainId={currentChainId} />
 
             <CartItemList
               items={items}
@@ -288,25 +278,26 @@ export function DonationCheckout() {
 
             <DonationSummary payments={payments} />
 
-
-            {canProceed ? <DonationExecutor
-              transfers={transfers}
-              items={items}
-              selectedTokens={selectedTokens}
-              validationErrors={validationErrors}
-              missingPayouts={missingPayouts}
-              isExecuting={isExecuting}
-              isSwitching={isSwitching}
-              isFetchingPayouts={isFetchingPayouts}
-              isFetchingCrossChainBalances={isFetchingCrossChainBalances}
-              isConnected={isConnected}
-              address={address}
-              canProceed={canProceed}
-              isCurrentNetworkSupported={isCurrentNetworkSupported}
-              executionState={executionState}
-              executeButtonLabel={executeButtonLabel}
-              onExecute={onExecute}
-            /> : null}
+            {canProceed ? (
+              <DonationExecutor
+                transfers={transfers}
+                items={items}
+                selectedTokens={selectedTokens}
+                validationErrors={validationErrors}
+                missingPayouts={missingPayouts}
+                isExecuting={isExecuting}
+                isSwitching={isSwitching}
+                isFetchingPayouts={isFetchingPayouts}
+                isFetchingCrossChainBalances={isFetchingCrossChainBalances}
+                isConnected={isConnected}
+                address={address}
+                canProceed={canProceed}
+                isCurrentNetworkSupported={isCurrentNetworkSupported}
+                executionState={executionState}
+                executeButtonLabel={executeButtonLabel}
+                onExecute={onExecute}
+              />
+            ) : null}
           </aside>
         </div>
 

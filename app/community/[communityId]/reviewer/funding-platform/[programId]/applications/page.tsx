@@ -1,18 +1,16 @@
 "use client";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useMemo } from "react";
-import { usePermissions } from "@/hooks/usePermissions";
-import { ApplicationListWithAPI } from "@/components/FundingPlatform";
-import { IFundingApplication } from "@/types/funding-platform";
-import { IApplicationFilters } from "@/services/fundingPlatformService";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { Button } from "@/components/Utilities/Button";
 import { ArrowLeftIcon, EyeIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
-import {
-  useApplication,
-  useApplicationStatus
-} from "@/hooks/useFundingPlatform";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useMemo } from "react";
+import { ApplicationListWithAPI } from "@/components/FundingPlatform";
+import { Button } from "@/components/Utilities/Button";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { useApplication, useApplicationStatus } from "@/hooks/useFundingPlatform";
+import { usePermissions } from "@/hooks/usePermissions";
+import type { IApplicationFilters } from "@/services/fundingPlatformService";
+import { layoutTheme } from "@/src/helper/theme";
+import type { IFundingApplication } from "@/types/funding-platform";
 import { PAGES } from "@/utilities/pages";
 
 /**
@@ -40,7 +38,7 @@ export default function ReviewerApplicationsPage() {
     if (search) filters.search = search;
 
     const status = searchParams.get("status");
-    if (status) filters.status = status as any;
+    if (status) filters.status = status;
 
     const dateFrom = searchParams.get("dateFrom");
     if (dateFrom) filters.dateFrom = dateFrom;
@@ -52,10 +50,10 @@ export default function ReviewerApplicationsPage() {
     if (page) filters.page = parseInt(page, 10);
 
     const sortBy = searchParams.get("sortBy");
-    if (sortBy) filters.sortBy = sortBy as any;
+    if (sortBy) filters.sortBy = sortBy as IApplicationFilters["sortBy"];
 
     const sortOrder = searchParams.get("sortOrder");
-    if (sortOrder) filters.sortOrder = sortOrder as any;
+    if (sortOrder) filters.sortOrder = sortOrder as IApplicationFilters["sortOrder"];
 
     return filters;
   }, [searchParams]);
@@ -109,16 +107,12 @@ export default function ReviewerApplicationsPage() {
 
   if (!canView) {
     return (
-      <div className="px-4 sm:px-6 lg:px-12 py-5">
+      <div className={layoutTheme.padding}>
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
           <p className="text-red-700 dark:text-red-300">
             You don&apos;t have permission to view applications for this program.
           </p>
-          <Button
-            onClick={handleBackClick}
-            variant="secondary"
-            className="mt-4 flex items-center"
-          >
+          <Button onClick={handleBackClick} variant="secondary" className="mt-4 flex items-center">
             <ArrowLeftIcon className="w-4 h-4 mr-2" />
             Back to Programs
           </Button>
@@ -128,17 +122,13 @@ export default function ReviewerApplicationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-zinc-900">
+    <div className="min-h-screen">
       {/* Header with Reviewer Badge */}
       <div className="bg-white dark:bg-zinc-800 border-b border-gray-200 dark:border-gray-700">
         <div className="sm:px-3 md:px-4 px-6 py-2">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center space-x-4 mb-4 sm:mb-0">
-              <Button
-                onClick={handleBackClick}
-                variant="secondary"
-                className="flex items-center"
-              >
+              <Button onClick={handleBackClick} variant="secondary" className="flex items-center">
                 <ArrowLeftIcon className="w-4 h-4 mr-2" />
                 Back
               </Button>
@@ -163,9 +153,7 @@ export default function ReviewerApplicationsPage() {
               </div>
 
               {/* View Form Button */}
-              <Link
-                href={PAGES.REVIEWER.QUESTION_BUILDER(communityId, programId, parsedChainId)}
-              >
+              <Link href={PAGES.REVIEWER.QUESTION_BUILDER(communityId, programId, parsedChainId)}>
                 <Button variant="secondary" className="flex items-center">
                   <EyeIcon className="w-4 h-4 mr-2" />
                   View Form

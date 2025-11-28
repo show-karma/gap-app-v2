@@ -1,9 +1,9 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import toast from "react-hot-toast";
 
 // Types based on backend implementation
 export interface AttestationBatchUpdateItem {
@@ -25,8 +25,7 @@ export interface BatchUpdateResponse {
 // Query keys
 export const PAYOUT_QUERY_KEYS = {
   all: ["payouts"] as const,
-  community: (communityId: string) =>
-    [...PAYOUT_QUERY_KEYS.all, "community", communityId] as const,
+  community: (communityId: string) => [...PAYOUT_QUERY_KEYS.all, "community", communityId] as const,
 };
 
 /**
@@ -52,34 +51,34 @@ export const useBatchUpdatePayouts = () => {
         {},
         true
       );
-      
+
       if (error) {
         throw new Error(error);
       }
-      
+
       return data as BatchUpdateResponse;
     },
     onSuccess: (data, variables) => {
       const { success, failed } = data;
-      
+
       if (success.length > 0) {
         toast.success(`Successfully updated ${success.length} items`);
       }
-      
+
       if (failed.length > 0) {
         toast.error(`Failed to update ${failed.length} items`);
       }
-      
+
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({
         queryKey: PAYOUT_QUERY_KEYS.community(variables.communityIdOrSlug),
       });
-      
+
       // Also invalidate grants queries as they might be affected
       queryClient.invalidateQueries({
         queryKey: ["grants"],
       });
-      
+
       // Invalidate projects queries
       queryClient.invalidateQueries({
         queryKey: ["projects"],

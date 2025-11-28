@@ -1,14 +1,21 @@
+import { TrashIcon } from "@heroicons/react/24/outline";
+import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
+import type { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useQuery } from "@tanstack/react-query";
+import dynamic from "next/dynamic";
+import { useParams } from "next/navigation";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
-import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { getGapClient, useGap } from "@/hooks/useGap";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { useGap } from "@/hooks/useGap";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
 import { useWallet } from "@/hooks/useWallet";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import { useStepper } from "@/store/modals/txStepper";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
@@ -17,17 +24,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { ReadMore } from "@/utilities/ReadMore";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { getProjectById } from "@/utilities/sdk";
-import { privyConfig as config } from "@/utilities/wagmi/privy-config";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { TrashIcon } from "@heroicons/react/24/outline";
-import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
-import { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useQuery } from "@tanstack/react-query";
-
-import dynamic from "next/dynamic";
-import { useParams } from "next/navigation";
-import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
 
 const ProjectObjectiveCompletion = dynamic(
   () =>
@@ -71,7 +68,11 @@ export const ObjectiveCardComplete = ({
   const deleteObjectiveCompletion = async () => {
     let gapClient = gap;
     try {
-      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+      const {
+        success,
+        chainId: actualChainId,
+        gapClient: newGapClient,
+      } = await ensureCorrectChain({
         targetChainId: objective.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
@@ -83,9 +84,7 @@ export const ObjectiveCardComplete = ({
 
       gapClient = newGapClient;
 
-      const { walletClient, error } = await safeGetWalletClient(
-        actualChainId
-      );
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
@@ -98,10 +97,7 @@ export const ObjectiveCardComplete = ({
         .projectMilestones(projectId)
         .then((res) => res.data);
       if (!fetchedMilestones || !gapClient?.network) return;
-      const objectivesInstances = ProjectMilestone.from(
-        fetchedMilestones,
-        gapClient?.network
-      );
+      const objectivesInstances = ProjectMilestone.from(fetchedMilestones, gapClient?.network);
       const objectiveInstance = objectivesInstances.find(
         (item) => item.uid.toLowerCase() === objective.uid.toLowerCase()
       );
@@ -136,7 +132,10 @@ export const ObjectiveCardComplete = ({
         });
       } else {
         try {
-          const res = await objectiveInstance.revokeCompletion(walletSigner as any, changeStepperStep);
+          const res = await objectiveInstance.revokeCompletion(
+            walletSigner as any,
+            changeStepperStep
+          );
           changeStepperStep("indexing");
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
@@ -153,7 +152,7 @@ export const ObjectiveCardComplete = ({
         } catch (onChainError: any) {
           // Silently fallback to off-chain revoke
           setIsStepper(false); // Reset stepper since we're falling back
-          
+
           const success = await performOffChainRevoke({
             uid: objectiveInstance.completed?.uid as `0x${string}`,
             chainID: objectiveInstance.completed?.chainID || objectiveInstance.chainID,
@@ -163,7 +162,7 @@ export const ObjectiveCardComplete = ({
               loading: MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.LOADING,
             },
           });
-          
+
           if (!success) {
             // Both methods failed - throw the original error to maintain expected behavior
             throw onChainError;
@@ -189,15 +188,8 @@ export const ObjectiveCardComplete = ({
   if (objective.completed) {
     return (
       <div className="rounded-xl gap-6 flex flex-col items-start justify-start w-full">
-        <div
-          className="flex flex-col items-start w-full gap-6"
-          data-color-mode="light"
-        >
-          <ReadMore
-            readLessText="Read less"
-            readMoreText="Read more"
-            side="left"
-          >
+        <div className="flex flex-col items-start w-full gap-6" data-color-mode="light">
+          <ReadMore readLessText="Read less" readMoreText="Read more" side="left">
             {objective.completed.data?.reason || ""}
           </ReadMore>
 
@@ -216,19 +208,16 @@ export const ObjectiveCardComplete = ({
                   className="flex flex-row w-max max-w-full gap-2 bg-transparent text-sm font-semibold text-blue-600 underline dark:text-blue-100 hover:bg-transparent break-all line-clamp-3"
                 >
                   {objective?.completed?.data.proofOfWork.includes("http")
-                    ? `${objective?.completed?.data.proofOfWork.slice(0, 80)}${objective?.completed?.data.proofOfWork.slice(0, 80)
-                      .length >= 80
-                      ? "..."
-                      : ""
-                    }`
-                    : `https://${objective?.completed?.data.proofOfWork.slice(
-                      0,
-                      80
-                    )}${objective?.completed?.data.proofOfWork.slice(0, 80)
-                      .length >= 80
-                      ? "..."
-                      : ""
-                    }`}
+                    ? `${objective?.completed?.data.proofOfWork.slice(0, 80)}${
+                        objective?.completed?.data.proofOfWork.slice(0, 80).length >= 80
+                          ? "..."
+                          : ""
+                      }`
+                    : `https://${objective?.completed?.data.proofOfWork.slice(0, 80)}${
+                        objective?.completed?.data.proofOfWork.slice(0, 80).length >= 80
+                          ? "..."
+                          : ""
+                      }`}
                 </ExternalLink>
               ) : (
                 <p className="text-sm font-medium text-gray-500 dark:text-zinc-300 max-sm:text-xs">

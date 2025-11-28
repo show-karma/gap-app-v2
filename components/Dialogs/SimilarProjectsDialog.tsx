@@ -1,10 +1,11 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, Fragment, useState } from "react";
+
 import { Dialog, Transition } from "@headlessui/react";
-import { Button } from "../Utilities/Button";
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { type FC, Fragment } from "react";
 import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
-import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { PAGES } from "@/utilities/pages";
+import { Button } from "../Utilities/Button";
 import { ExternalLink } from "../Utilities/ExternalLink";
 
 type SimilarProjectsProps = {
@@ -16,10 +17,8 @@ export const SimilarProjectsDialog: FC<SimilarProjectsProps> = ({
   similarProjects,
   projectName,
 }) => {
-  const {
-    isSimilarProjectsModalOpen: isOpen,
-    closeSimilarProjectsModal: closeModal,
-  } = useSimilarProjectsModalStore();
+  const { isSimilarProjectsModalOpen: isOpen, closeSimilarProjectsModal: closeModal } =
+    useSimilarProjectsModalStore();
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -68,10 +67,7 @@ export const SimilarProjectsDialog: FC<SimilarProjectsProps> = ({
                     </thead>
                     <tbody>
                       {similarProjects.map((project) => (
-                        <tr
-                          key={project.uid}
-                          className="hover:bg-gray-200 dark:hover:bg-zinc-900"
-                        >
+                        <tr key={project.uid} className="hover:bg-gray-200 dark:hover:bg-zinc-900">
                           <td className="border border-gray-300 dark:border-zinc-600 px-4 py-2">
                             <ExternalLink
                               href={PAGES.PROJECT.OVERVIEW(
@@ -79,8 +75,7 @@ export const SimilarProjectsDialog: FC<SimilarProjectsProps> = ({
                               )}
                               className="text-blue-500 underline"
                             >
-                              {project.details?.data.title ||
-                                "Untitled Project"}
+                              {project.details?.data.title || "Untitled Project"}
                             </ExternalLink>
                           </td>
                           <td className="border border-gray-300 dark:border-zinc-600 px-4 py-2">

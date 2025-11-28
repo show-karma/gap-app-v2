@@ -1,5 +1,5 @@
-import { GrantsLayout } from "@/components/Pages/Project/Grants/Layout";
 import { Suspense } from "react";
+import { GrantsLayout } from "@/components/Pages/Project/Grants/Layout";
 import { ProjectGrantsLayoutLoading } from "@/components/Pages/Project/Loading/Grants/Layout";
 
 const Page = ({ children }: { children: React.ReactNode }) => {

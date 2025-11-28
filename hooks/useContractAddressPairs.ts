@@ -1,6 +1,6 @@
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useCallback, useEffect, useState } from "react";
-import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { NetworkAddressPair } from "@/components/Pages/Project/types";
+import type { NetworkAddressPair } from "@/components/Pages/Project/types";
 
 interface VerifiedContract {
   network: string;
@@ -20,9 +20,7 @@ interface UseContractAddressPairsProps {
 }
 
 export const useContractAddressPairs = ({ project }: UseContractAddressPairsProps) => {
-  const [networkAddressPairs, setNetworkAddressPairs] = useState<
-    NetworkAddressPair[]
-  >([]);
+  const [networkAddressPairs, setNetworkAddressPairs] = useState<NetworkAddressPair[]>([]);
 
   // Initialize pairs from project data
   useEffect(() => {
@@ -31,14 +29,17 @@ export const useContractAddressPairs = ({ project }: UseContractAddressPairsProp
 
     if (networkAddresses.length > 0 || networkAddressesVerified.length > 0) {
       // Create a map of verified contracts for quick lookup
-      const verifiedMap = new Map<string, { verified: boolean; verifiedAt?: string; verifiedBy?: string }>();
+      const verifiedMap = new Map<
+        string,
+        { verified: boolean; verifiedAt?: string; verifiedBy?: string }
+      >();
 
       networkAddressesVerified.forEach((verifiedEntry) => {
         const key = `${verifiedEntry.network}:${verifiedEntry.address}`.toLowerCase();
         verifiedMap.set(key, {
           verified: verifiedEntry.verified || false,
           verifiedAt: verifiedEntry.verifiedAt,
-          verifiedBy: verifiedEntry.verifiedBy
+          verifiedBy: verifiedEntry.verifiedBy,
         });
       });
 
@@ -57,7 +58,7 @@ export const useContractAddressPairs = ({ project }: UseContractAddressPairsProp
           address,
           verified: verificationInfo?.verified || false,
           verifiedAt: verificationInfo?.verifiedAt,
-          verifiedBy: verificationInfo?.verifiedBy
+          verifiedBy: verificationInfo?.verifiedBy,
         };
       });
 
@@ -71,7 +72,7 @@ export const useContractAddressPairs = ({ project }: UseContractAddressPairsProp
             address: verifiedEntry.address,
             verified: verifiedEntry.verified || false,
             verifiedAt: verifiedEntry.verifiedAt,
-            verifiedBy: verifiedEntry.verifiedBy
+            verifiedBy: verifiedEntry.verifiedBy,
           });
         }
       });
@@ -83,10 +84,7 @@ export const useContractAddressPairs = ({ project }: UseContractAddressPairsProp
   }, [project?.external?.network_addresses, project?.external?.network_addresses_verified]);
 
   const addPair = useCallback(() => {
-    setNetworkAddressPairs((prev) => [
-      ...prev,
-      { network: "", address: "", verified: false },
-    ]);
+    setNetworkAddressPairs((prev) => [...prev, { network: "", address: "", verified: false }]);
   }, []);
 
   const removePair = useCallback((index: number) => {

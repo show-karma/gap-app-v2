@@ -1,10 +1,11 @@
 /* eslint-disable @next/next/no-img-element */
-import { Metadata } from "next";
-import { defaultMetadata } from "@/utilities/meta";
+import type { Metadata } from "next";
 import ManageProgramsWrapper from "@/components/Pages/ProgramRegistry/ManageProgramsWrapper";
+import { PROJECT_NAME } from "@/constants/brand";
+import { defaultMetadata } from "@/utilities/meta";
 
 export const metadata: Metadata = {
-  title: `Karma GAP - Grant Program Aggregator`,
+  title: `${PROJECT_NAME} - Grant Program Aggregator`,
   description: `Find all the funding opportunities across web3 ecosystem.`,
   twitter: {
     creator: defaultMetadata.twitter.creator,
@@ -13,11 +14,11 @@ export const metadata: Metadata = {
   },
   openGraph: {
     url: defaultMetadata.openGraph.url,
-    title: `Karma GAP - Grant Program Aggregator`,
+    title: `${PROJECT_NAME} - Grant Program Aggregator`,
     description: `Find all the funding opportunities across web3 ecosystem.`,
     images: defaultMetadata.openGraph.images.map((image) => ({
       url: image,
-      alt: `Karma GAP - Grant Program Aggregator`,
+      alt: `${PROJECT_NAME} - Grant Program Aggregator`,
     })),
   },
   icons: [

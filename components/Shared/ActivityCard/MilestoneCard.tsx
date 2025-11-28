@@ -1,32 +1,30 @@
-import { FC } from "react";
-import Link from "next/link";
-import { useMilestoneActions } from "@/hooks/useMilestoneActions";
-import { useMilestone } from "@/hooks/useMilestone";
-import { useAllMilestones } from "@/hooks/useAllMilestones";
-import { useParams } from "next/navigation";
-import { ActivityStatus } from "./ActivityStatus";
-import { ActivityStatusHeader } from "./ActivityStatusHeader";
-import { ActivityAttribution } from "./ActivityAttribution";
-import { ReadMore } from "@/utilities/ReadMore";
-import { formatDate } from "@/utilities/formatDate";
-import { UnifiedMilestone } from "@/types/roadmap";
+import {
+  CheckCircleIcon,
+  PencilSquareIcon,
+  ShareIcon,
+  TrashIcon,
+} from "@heroicons/react/24/outline";
 import dynamic from "next/dynamic";
-import { cn } from "@/utilities/tailwind";
-import { containerClassName } from "../ActivityCard";
+import { useParams } from "next/navigation";
+import type { FC } from "react";
 import { MilestoneVerificationSection } from "@/components/Shared/MilestoneVerification";
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import {
-  CheckCircleIcon,
-  ShareIcon,
-  PencilSquareIcon,
-  TrashIcon,
-} from "@heroicons/react/24/outline";
-import { SHARE_TEXTS } from "@/utilities/share/text";
-import { shareOnX } from "@/utilities/share/shareOnX";
-import { useProjectStore } from "@/store";
 import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
+import { useAllMilestones } from "@/hooks/useAllMilestones";
+import { useMilestone } from "@/hooks/useMilestone";
+import { useMilestoneActions } from "@/hooks/useMilestoneActions";
 import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
+import { useProjectStore } from "@/store";
+import type { UnifiedMilestone } from "@/types/roadmap";
+import { formatDate } from "@/utilities/formatDate";
+import { ReadMore } from "@/utilities/ReadMore";
+import { shareOnX } from "@/utilities/share/shareOnX";
+import { SHARE_TEXTS } from "@/utilities/share/text";
+import { cn } from "@/utilities/tailwind";
+import { containerClassName } from "../ActivityCard";
+import { ActivityAttribution } from "./ActivityAttribution";
+import { ActivityStatusHeader } from "./ActivityStatusHeader";
 
 const ProjectObjectiveCompletion = dynamic(
   () =>
@@ -40,9 +38,9 @@ const ProjectObjectiveCompletion = dynamic(
 
 const ObjectiveSimpleOptionsMenu = dynamic(
   () =>
-    import(
-      "@/components/Pages/Project/Objective/ObjectiveSimpleOptionsMenu"
-    ).then((mod) => mod.ObjectiveSimpleOptionsMenu),
+    import("@/components/Pages/Project/Objective/ObjectiveSimpleOptionsMenu").then(
+      (mod) => mod.ObjectiveSimpleOptionsMenu
+    ),
   {
     ssr: false,
   }
@@ -70,10 +68,7 @@ const GrantMilestoneCompletion = dynamic(
 
 // Dynamic import for editing milestone completion form
 const MilestoneUpdateForm = dynamic(
-  () =>
-    import("@/components/Forms/MilestoneUpdate").then(
-      (mod) => mod.MilestoneUpdateForm
-    ),
+  () => import("@/components/Forms/MilestoneUpdate").then((mod) => mod.MilestoneUpdateForm),
   {
     ssr: false,
   }
@@ -84,18 +79,14 @@ interface MilestoneCardProps {
   isAuthorized: boolean;
 }
 
-export const MilestoneCard: FC<MilestoneCardProps> = ({
-  milestone,
-  isAuthorized,
-}) => {
-  const { isCompleting, handleCompleting, isEditing, handleEditing } =
-    useMilestoneActions();
+export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized }) => {
+  const { isCompleting, handleCompleting, isEditing, handleEditing } = useMilestoneActions();
   const { multiGrantUndoCompletion } = useMilestone();
   const { title, description, completed, type } = milestone;
   const { project } = useProjectStore();
   const { projectId } = useParams();
   const { refetch } = useAllMilestones(projectId as string);
-  
+
   // Fetch milestone impact data (outputs/metrics) if milestone is completed
   const { data: milestoneImpactData } = useMilestoneImpactAnswers({
     milestoneUID: completed ? milestone.uid : undefined,
@@ -104,34 +95,28 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
   // project milestone-specific properties
   const projectMilestone = milestone.source.projectMilestone;
   const attester =
-    projectMilestone?.attester ||
-    milestone.source.grantMilestone?.milestone.attester ||
-    "";
+    projectMilestone?.attester || milestone.source.grantMilestone?.milestone.attester || "";
   const createdAt = milestone.createdAt;
 
   // grant milestone-specific properties
   const grantMilestone = milestone.source.grantMilestone;
   const grantTitle = grantMilestone?.grant.details?.data.title;
-  const programId = grantMilestone?.grant.details?.data.programId;
-  const communityData = grantMilestone?.grant.community?.details?.data;
+  const _programId = grantMilestone?.grant.details?.data.programId;
+  const _communityData = grantMilestone?.grant.community?.details?.data;
   const endsAt = milestone.endsAt;
 
   // completion information
   const completionReason =
-    projectMilestone?.completed?.data?.reason ||
-    grantMilestone?.milestone.completed?.data?.reason;
+    projectMilestone?.completed?.data?.reason || grantMilestone?.milestone.completed?.data?.reason;
   const completionProof =
     projectMilestone?.completed?.data?.proofOfWork ||
     grantMilestone?.milestone.completed?.data?.proofOfWork;
   const completionDate =
-    projectMilestone?.completed?.createdAt ||
-    grantMilestone?.milestone.completed?.createdAt;
+    projectMilestone?.completed?.createdAt || grantMilestone?.milestone.completed?.createdAt;
   const completionAttester =
-    projectMilestone?.completed?.attester ||
-    grantMilestone?.milestone.completed?.attester;
-  const verifiedMilestones =
-    projectMilestone?.verified?.length ||
-    grantMilestone?.milestone.verified?.length;
+    projectMilestone?.completed?.attester || grantMilestone?.milestone.completed?.attester;
+  const _verifiedMilestones =
+    projectMilestone?.verified?.length || grantMilestone?.milestone.verified?.length;
   const completionDeliverables =
     (projectMilestone?.completed?.data as any)?.deliverables ||
     (grantMilestone?.milestone.completed?.data as any)?.deliverables;
@@ -148,10 +133,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
         );
       } else if (type === "grant") {
         return (
-          <GrantMilestoneCompletion
-            milestone={milestone}
-            handleCompleting={handleCompleting}
-          />
+          <GrantMilestoneCompletion milestone={milestone} handleCompleting={handleCompleting} />
         );
       }
     }
@@ -185,12 +167,10 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
 
     if (isEditing && type === "milestone") {
       return (
-        <div
-          className={cn(containerClassName, "flex flex-col gap-4 w-full p-4")}
-        >
+        <div className={cn(containerClassName, "flex flex-col gap-4 w-full p-4")}>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Project milestone editing is not yet implemented. Please use the
-            revoke and re-complete workflow for now.
+            Project milestone editing is not yet implemented. Please use the revoke and re-complete
+            workflow for now.
           </p>
           <Button
             className="w-max bg-transparent border border-gray-300 text-gray-600 hover:bg-gray-50"
@@ -255,7 +235,10 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
                 Deliverables:
               </p>
               {completionDeliverables.map((deliverable: any, index: number) => (
-                <div key={index} className="border border-gray-200 dark:border-zinc-700 rounded-lg p-3 bg-gray-50 dark:bg-zinc-800">
+                <div
+                  key={index}
+                  className="border border-gray-200 dark:border-zinc-700 rounded-lg p-3 bg-gray-50 dark:bg-zinc-800"
+                >
                   <div className="flex flex-col gap-1">
                     <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                       {deliverable.name}
@@ -282,19 +265,23 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
           ) : null}
           {milestoneImpactData && milestoneImpactData.length > 0 ? (
             <div className="flex flex-col gap-2">
-              <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-                Metrics:
-              </p>
+              <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Metrics:</p>
               {milestoneImpactData.map((metric: any, index: number) => (
-                <div key={index} className="border border-gray-200 dark:border-zinc-700 rounded-lg p-3 bg-gray-50 dark:bg-zinc-800">
+                <div
+                  key={index}
+                  className="border border-gray-200 dark:border-zinc-700 rounded-lg p-3 bg-gray-50 dark:bg-zinc-800"
+                >
                   <div className="flex flex-col gap-1">
                     <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                      {metric.name || metric.indicator?.data?.title || 'Untitled Indicator'}
+                      {metric.name || metric.indicator?.data?.title || "Untitled Indicator"}
                     </p>
                     {metric.datapoints && metric.datapoints.length > 0 && (
                       <div className="flex flex-col gap-1">
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                          Value: <span className="font-medium text-zinc-900 dark:text-zinc-100">{metric.datapoints[0].value}</span>
+                          Value:{" "}
+                          <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                            {metric.datapoints[0].value}
+                          </span>
                         </p>
                         {metric.datapoints[0].proof && (
                           <a
@@ -320,24 +307,19 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
           actions={
             isAuthorized ? (
               <div className="flex flex-row gap-3 max-sm:gap-4 items-center">
-                <MilestoneVerificationSection
-                  milestone={milestone}
-                  title={`${title} - Reviews`}
-                />
+                <MilestoneVerificationSection milestone={milestone} title={`${title} - Reviews`} />
                 {/* Share Button */}
                 <ExternalLink
                   href={shareOnX(
                     type === "grant" && grantMilestone
                       ? SHARE_TEXTS.MILESTONE_COMPLETED(
                           grantTitle || "Grant",
-                          (project?.details?.data?.slug ||
-                            project?.uid) as string,
+                          (project?.details?.data?.slug || project?.uid) as string,
                           grantMilestone.grant.uid
                         )
                       : SHARE_TEXTS.PROJECT_ACTIVITY(
                           title,
-                          (project?.details?.data?.slug ||
-                            project?.uid) as string
+                          (project?.details?.data?.slug || project?.uid) as string
                         )
                   )}
                   className="flex flex-row gap-1 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent hover:opacity-75  h-6 w-6 items-center justify-center"
@@ -378,18 +360,14 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
           <div className="flex flex-col gap-3 w-full">
             <ActivityStatusHeader
               activityType="Milestone"
-              dueDate={
-                type === "grant" && endsAt ? formatDate(endsAt * 1000) : null
-              }
+              dueDate={type === "grant" && endsAt ? formatDate(endsAt * 1000) : null}
               showCompletionStatus={true}
               completed={!!completed}
               completionStatusClassName="text-xs px-2 py-1"
               milestone={milestone}
             />
             {/* Title */}
-            <p className="text-xl font-bold text-[#101828] dark:text-zinc-100">
-              {title}
-            </p>
+            <p className="text-xl font-bold text-[#101828] dark:text-zinc-100">{title}</p>
           </div>
 
           {/* Description */}
@@ -418,9 +396,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
 
                 {/* Options Menu with only Delete */}
                 {type === "milestone" && projectMilestone ? (
-                  <ObjectiveSimpleOptionsMenu
-                    objectiveId={projectMilestone.uid}
-                  />
+                  <ObjectiveSimpleOptionsMenu objectiveId={projectMilestone.uid} />
                 ) : type === "grant" && grantMilestone ? (
                   <GrantMilestoneSimpleOptionsMenu milestone={milestone} />
                 ) : null}
@@ -429,18 +405,13 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
           }
         />
       </div>
-      {
-        isCompleting ||
-        isEditing ||
-        completionReason ||
-        completionProof ||
-        completionDeliverables ?
-        (
-          <div className="flex flex-col w-full pl-8 md:pl-[120px]">
-            {renderMilestoneCompletion()}
-          </div>
-        ) : null
-      }
+      {isCompleting ||
+      isEditing ||
+      completionReason ||
+      completionProof ||
+      completionDeliverables ? (
+        <div className="flex flex-col w-full pl-8 md:pl-[120px]">{renderMilestoneCompletion()}</div>
+      ) : null}
     </div>
   );
 };

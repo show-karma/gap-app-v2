@@ -1,31 +1,27 @@
-import { Button } from "@/components/Utilities/Button";
+import { Menu, Transition } from "@headlessui/react";
 import {
-  Category,
-  ImpactSegment,
-  ImpactIndicator,
-} from "@/types/impactMeasurement";
-import { cn } from "@/utilities/tailwind";
-import pluralize from "pluralize";
-import Image from "next/image";
-import { pickColor } from "@/components/GrantCard";
-import {
-  PlusIcon,
-  TrashIcon,
   ChevronDownIcon,
   EllipsisVerticalIcon,
+  PlusIcon,
+  TrashIcon,
 } from "@heroicons/react/24/outline";
 import { PencilSquareIcon } from "@heroicons/react/24/solid";
-import { useRef, useState, useEffect, Fragment, useMemo } from "react";
-import { ActivityOutcomeModal } from "./ActivityOutcomeModal";
-import { useGroupedIndicators } from "@/hooks/useGroupedIndicators";
-import { Menu, Transition } from "@headlessui/react";
+import Image from "next/image";
+import pluralize from "pluralize";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
 import { DeleteDialog } from "@/components/DeleteDialog";
+import { pickColor } from "@/components/GrantCard";
+import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { useGroupedIndicators } from "@/hooks/useGroupedIndicators";
+import type { Category, ImpactSegment } from "@/types/impactMeasurement";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import toast from "react-hot-toast";
-import { errorManager } from "@/components/Utilities/errorManager";
 import { MESSAGES } from "@/utilities/messages";
-import { useAccount } from "wagmi";
+import { cn } from "@/utilities/tailwind";
+import { ActivityOutcomeModal } from "./ActivityOutcomeModal";
 
 interface CategoryViewProps {
   selectedCategory: Category;
@@ -51,10 +47,7 @@ const DropdownMenu = ({
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
@@ -76,9 +69,7 @@ const DropdownMenu = ({
       >
         <span>{selectedOption?.label || "Select option"}</span>
         <ChevronDownIcon
-          className={`ml-2 h-4 w-4 transition-transform ${
-            isOpen ? "rotate-180" : ""
-          }`}
+          className={`ml-2 h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
         />
       </button>
 
@@ -117,15 +108,9 @@ export const CategoryView = ({
 }: CategoryViewProps) => {
   const { address } = useAccount();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [initialModalType, setInitialModalType] = useState<
-    "output" | "outcome"
-  >("output");
-  const [editingSegment, setEditingSegment] = useState<ImpactSegment | null>(
-    null
-  );
-  const [isDeletingSegment, setIsDeletingSegment] = useState<string | null>(
-    null
-  );
+  const [initialModalType, setInitialModalType] = useState<"output" | "outcome">("output");
+  const [editingSegment, setEditingSegment] = useState<ImpactSegment | null>(null);
+  const [isDeletingSegment, setIsDeletingSegment] = useState<string | null>(null);
 
   const {
     data: groupedIndicators = { communityAdminCreated: [], projectOwnerCreated: [] },
@@ -134,19 +119,17 @@ export const CategoryView = ({
     communityId: communityId,
   });
 
-  const impact_indicators = useMemo(() => [
-    ...groupedIndicators.communityAdminCreated,
-    ...groupedIndicators.projectOwnerCreated,
-  ], [groupedIndicators.communityAdminCreated, groupedIndicators.projectOwnerCreated]);
+  const impact_indicators = useMemo(
+    () => [...groupedIndicators.communityAdminCreated, ...groupedIndicators.projectOwnerCreated],
+    [groupedIndicators.communityAdminCreated, groupedIndicators.projectOwnerCreated]
+  );
 
   // Count activities and outcomes for a category
   const getCategoryStats = (category: Category) => {
     const outputs =
-      category.impact_segments?.filter((segment) => segment.type === "output")
-        ?.length || 0;
+      category.impact_segments?.filter((segment) => segment.type === "output")?.length || 0;
     const outcomes =
-      category.impact_segments?.filter((segment) => segment.type === "outcome")
-        ?.length || 0;
+      category.impact_segments?.filter((segment) => segment.type === "outcome")?.length || 0;
     return { outputs, outcomes };
   };
 
@@ -163,8 +146,7 @@ export const CategoryView = ({
   };
 
   const hasSegments =
-    selectedCategory?.impact_segments &&
-    selectedCategory.impact_segments.length > 0;
+    selectedCategory?.impact_segments && selectedCategory.impact_segments.length > 0;
   const filteredSegments = getFilteredSegments();
   const hasFilteredSegments = filteredSegments.length > 0;
 
@@ -244,16 +226,9 @@ export const CategoryView = ({
             <h1 className="text-2xl font-bold">{selectedCategory.name}</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               {getCategoryStats(selectedCategory).outputs}{" "}
-              {pluralize(
-                "Activity",
-                getCategoryStats(selectedCategory).outputs
-              )}{" "}
-              and {getCategoryStats(selectedCategory).outcomes}{" "}
-              {pluralize(
-                "Outcome",
-                getCategoryStats(selectedCategory).outcomes
-              )}{" "}
-              tracked
+              {pluralize("Activity", getCategoryStats(selectedCategory).outputs)} and{" "}
+              {getCategoryStats(selectedCategory).outcomes}{" "}
+              {pluralize("Outcome", getCategoryStats(selectedCategory).outcomes)} tracked
             </p>
           </div>
         </div>
@@ -277,15 +252,11 @@ export const CategoryView = ({
       {hasSegments && (
         <div className="flex justify-end mb-6">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              View
-            </span>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">View</span>
             <div className="w-36">
               <DropdownMenu
                 value={viewType}
-                onChange={(value) =>
-                  setViewType(value as "all" | "output" | "outcome")
-                }
+                onChange={(value) => setViewType(value as "all" | "output" | "outcome")}
                 options={filterOptions}
               />
             </div>
@@ -296,12 +267,7 @@ export const CategoryView = ({
       {/* Empty State */}
       {!hasSegments && (
         <div className="rounded border border-gray-300 border-dashed flex-1 h-full dark:border-zinc-700 p-6 flex flex-col gap-8 items-center justify-center text-center">
-          <Image
-            src="/icons/outcome.svg"
-            alt="Outcome"
-            width={40}
-            height={40}
-          />
+          <Image src="/icons/outcome.svg" alt="Outcome" width={40} height={40} />
           <p className="text-gray-900 text-xl text-center font-semibold dark:text-gray-400">
             No outcomes or activities have been defined yet
           </p>
@@ -322,32 +288,26 @@ export const CategoryView = ({
           </div>
           <h3 className="text-lg font-semibold mb-2">
             No{" "}
-            {viewType === "output"
-              ? "activities"
-              : viewType === "outcome"
-              ? "outcomes"
-              : "items"}{" "}
+            {viewType === "output" ? "activities" : viewType === "outcome" ? "outcomes" : "items"}{" "}
             found
           </h3>
           <p className="text-gray-500 dark:text-gray-400 mb-4">
             {viewType === "all"
               ? "This category doesn&#39;t have any activities or outcomes yet."
               : viewType === "output"
-              ? "This category doesn&#39;t have any activities yet."
-              : "This category doesn&#39;t have any outcomes yet."}
+                ? "This category doesn&#39;t have any activities yet."
+                : "This category doesn&#39;t have any outcomes yet."}
           </p>
           <Button
             className="flex items-center gap-1 text-white"
-            onClick={() =>
-              openModalWithType(viewType === "outcome" ? "outcome" : "output")
-            }
+            onClick={() => openModalWithType(viewType === "outcome" ? "outcome" : "output")}
           >
             Create{" "}
             {viewType === "outcome"
               ? "Outcome"
               : viewType === "output"
-              ? "Activity"
-              : "Activity / Outcome"}
+                ? "Activity"
+                : "Activity / Outcome"}
             <PlusIcon className="h-4 w-4" />
           </Button>
         </div>
@@ -362,10 +322,7 @@ export const CategoryView = ({
                 <Menu as="div" className="relative inline-block text-left">
                   <div>
                     <Menu.Button className="p-1 rounded-md text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800">
-                      <EllipsisVerticalIcon
-                        className="h-6 w-6"
-                        aria-hidden="true"
-                      />
+                      <EllipsisVerticalIcon className="h-6 w-6" aria-hidden="true" />
                     </Menu.Button>
                   </div>
                   <Transition
@@ -391,10 +348,7 @@ export const CategoryView = ({
                               }}
                             >
                               <PencilSquareIcon className="h-4 w-4 mr-2" />
-                              Edit{" "}
-                              {segment.type === "output"
-                                ? "Activity"
-                                : "Outcome"}
+                              Edit {segment.type === "output" ? "Activity" : "Outcome"}
                             </button>
                           )}
                         </Menu.Item>
@@ -402,17 +356,13 @@ export const CategoryView = ({
                           {({ active }) => (
                             <DeleteDialog
                               title={`Are you sure you want to delete ${segment.name}?`}
-                              deleteFunction={() =>
-                                handleDeleteSegment(segment.id)
-                              }
+                              deleteFunction={() => handleDeleteSegment(segment.id)}
                               isLoading={isDeletingSegment === segment.id}
                               buttonElement={{
                                 icon: <TrashIcon className="h-4 w-4 mr-2" />,
                                 text: "Delete",
                                 styleClass: `${
-                                  active
-                                    ? "bg-gray-100 dark:bg-zinc-700"
-                                    : "bg-transparent"
+                                  active ? "bg-gray-100 dark:bg-zinc-700" : "bg-transparent"
                                 } hover:bg-gray-100 dark:hover:bg-zinc-700 font-normal w-full px-4 py-2 text-left flex items-center text-sm text-red-500`,
                               }}
                             />
@@ -425,9 +375,7 @@ export const CategoryView = ({
               </div>
 
               <h3
-                className={cn(
-                  "text-gray-900 dark:text-white text-lg font-bold mb-2 pl-4"
-                )}
+                className={cn("text-gray-900 dark:text-white text-lg font-bold mb-2 pl-4")}
                 style={{
                   borderLeft: `4px solid ${pickColor(index)}`,
                 }}
@@ -445,9 +393,7 @@ export const CategoryView = ({
                   }`}
                 >
                   <Image
-                    src={`/icons/${
-                      segment.type === "output" ? "activity" : "outcome"
-                    }.svg`}
+                    src={`/icons/${segment.type === "output" ? "activity" : "outcome"}.svg`}
                     width={20}
                     height={20}
                     alt={segment.type}
@@ -456,19 +402,14 @@ export const CategoryView = ({
                 </span>
 
                 <div className="flex items-center flex-row gap-2 max-lg:flex-col max-lg:items-start">
-                  <span className="text-gray-900 text-base font-semibold">
+                  <span className="text-foreground text-base font-semibold">
                     Indicators ({segment.impact_indicators?.length || ""})
                   </span>
                   <div className="flex gap-1 flex-wrap flex-row">
                     {segment.impact_indicators?.map((indicator, index) => (
-                      <span
-                        key={indicator.id}
-                        className="text-gray-900 dark:text-white text-sm font-normal"
-                      >
+                      <span key={indicator.id} className="text-foreground text-sm font-normal">
                         <u>{indicator.name}</u>{" "}
-                        {(segment.impact_indicators?.length || 0) - 1 !== index
-                          ? ","
-                          : null}
+                        {(segment.impact_indicators?.length || 0) - 1 !== index ? "," : null}
                       </span>
                     ))}
                     {!segment.impact_indicators?.length || 0 ? (

@@ -47,7 +47,7 @@ export const ProjectGrantsMilestonesListLoading = () => {
   const emptyArray = Array.from({ length: 6 }, () => ({}));
   return (
     <div className="mt-3 flex w-full flex-col gap-6">
-      {emptyArray.map((item, index) => (
+      {emptyArray.map((_item, index) => (
         <div key={index}>
           <MilestoneCard />
         </div>

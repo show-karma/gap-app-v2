@@ -1,5 +1,5 @@
 "use client";
-import { type SupportedToken } from "@/constants/supportedTokens";
+import type { SupportedToken } from "@/constants/supportedTokens";
 import { TransactionStatusItem } from "./TransactionStatusItem";
 
 interface TransferResult {
@@ -32,8 +32,8 @@ export function TransactionStatus({
   if (transfers.length === 0) return null;
 
   const hasFailures = transfers.some((t) => t.status === "error");
-  const hasSuccesses = transfers.some((t) => t.status === "success");
-  const hasPending = transfers.some((t) => t.status === "pending");
+  const _hasSuccesses = transfers.some((t) => t.status === "success");
+  const _hasPending = transfers.some((t) => t.status === "pending");
 
   return (
     <div className="rounded-2xl border-2 border-gray-200 bg-white/80 p-5 shadow-sm dark:border-gray-800 dark:bg-zinc-950/70">
@@ -43,6 +43,7 @@ export function TransactionStatus({
         </h3>
         {hasFailures && canRetry && onRetry && (
           <button
+            type="button"
             onClick={onRetry}
             className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
           >

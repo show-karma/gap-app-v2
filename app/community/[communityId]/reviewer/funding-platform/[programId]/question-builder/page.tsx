@@ -1,11 +1,12 @@
 "use client";
-import { useParams, useRouter } from "next/navigation";
-import { usePermissions } from "@/hooks/usePermissions";
-import { QuestionBuilder } from "@/components/QuestionBuilder";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { Button } from "@/components/Utilities/Button";
 import { ArrowLeftIcon, EyeIcon } from "@heroicons/react/24/solid";
+import { useParams, useRouter } from "next/navigation";
+import { QuestionBuilder } from "@/components/QuestionBuilder";
+import { Button } from "@/components/Utilities/Button";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { usePermissions } from "@/hooks/usePermissions";
 import { usePostApprovalSchema, useQuestionBuilderSchema } from "@/hooks/useQuestionBuilder";
+import { layoutTheme } from "@/src/helper/theme";
 import { PAGES } from "@/utilities/pages";
 
 /**
@@ -62,16 +63,12 @@ export default function ReviewerQuestionBuilderPage() {
 
   if (!canView) {
     return (
-      <div className="px-4 sm:px-6 lg:px-12 py-5">
+      <div className={layoutTheme.padding}>
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
           <p className="text-red-700 dark:text-red-300">
             You don&apos;t have permission to view the form builder for this program.
           </p>
-          <Button
-            onClick={handleBackClick}
-            variant="secondary"
-            className="mt-4 flex items-center"
-          >
+          <Button onClick={handleBackClick} variant="secondary" className="mt-4 flex items-center">
             <ArrowLeftIcon className="w-4 h-4 mr-2" />
             Back to Programs
           </Button>
@@ -91,11 +88,7 @@ export default function ReviewerQuestionBuilderPage() {
             The form builder for this program has not been set up yet.
           </p>
           <div className="flex space-x-3">
-            <Button
-              onClick={handleBackClick}
-              variant="secondary"
-              className="flex items-center"
-            >
+            <Button onClick={handleBackClick} variant="secondary" className="flex items-center">
               <ArrowLeftIcon className="w-4 h-4 mr-2" />
               Back to Programs
             </Button>
@@ -114,25 +107,19 @@ export default function ReviewerQuestionBuilderPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen">
       {/* Header with Reviewer Badge */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="sm:px-3 md:px-4 px-6 py-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Button
-                onClick={handleBackClick}
-                variant="secondary"
-                className="flex items-center"
-              >
+              <Button onClick={handleBackClick} variant="secondary" className="flex items-center">
                 <ArrowLeftIcon className="w-4 h-4 mr-2" />
                 Back
               </Button>
 
               <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Form Builder
-                </h1>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white">Form Builder</h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Program ID: {programId} | Chain ID: {parsedChainId}
                 </p>
@@ -161,7 +148,6 @@ export default function ReviewerQuestionBuilderPage() {
           </div>
         </div>
       </div>
-
 
       {/* QuestionBuilder in Read-Only Mode */}
       <div>

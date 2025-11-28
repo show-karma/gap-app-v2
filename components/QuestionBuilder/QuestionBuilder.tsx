@@ -1,39 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import toast from "react-hot-toast";
-import { FormField, FormSchema } from "@/types/question-builder";
-import { fieldTypes, FieldTypeSelector } from "./FieldTypeSelector";
-import { FieldEditor } from "./FieldEditor";
-import { AIPromptConfiguration } from "./AIPromptConfiguration";
-import { SettingsConfiguration } from "./SettingsConfiguration";
-import { ReviewerManagementTab } from "@/components/FundingPlatform/QuestionBuilder/ReviewerManagementTab";
-import { Button } from "@/components/Utilities/Button";
-import { errorManager } from "@/components/Utilities/errorManager";
 import {
-  Cog6ToothIcon,
-  CpuChipIcon,
-  ChevronDownIcon,
-  ChevronRightIcon,
-  ExclamationTriangleIcon,
-  WrenchScrewdriverIcon,
-  CheckCircleIcon,
-  UserGroupIcon,
-  Bars3Icon,
-  PlusIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/solid";
-import { MarkdownPreview } from "../Utilities/MarkdownPreview";
-import { MarkdownEditor } from "../Utilities/MarkdownEditor";
-import {
-  DndContext,
   closestCenter,
+  DndContext,
+  type DragEndEvent,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
-  DragEndEvent,
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -43,6 +17,33 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import {
+  Bars3Icon,
+  CheckCircleIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  Cog6ToothIcon,
+  CpuChipIcon,
+  ExclamationTriangleIcon,
+  PlusIcon,
+  UserGroupIcon,
+  WrenchScrewdriverIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/solid";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import type React from "react";
+import { useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
+import { ReviewerManagementTab } from "@/components/FundingPlatform/QuestionBuilder/ReviewerManagementTab";
+import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
+import type { FormField, FormSchema } from "@/types/question-builder";
+import { MarkdownEditor } from "../Utilities/MarkdownEditor";
+import { MarkdownPreview } from "../Utilities/MarkdownPreview";
+import { AIPromptConfiguration } from "./AIPromptConfiguration";
+import { FieldEditor } from "./FieldEditor";
+import { FieldTypeSelector, fieldTypes } from "./FieldTypeSelector";
+import { SettingsConfiguration } from "./SettingsConfiguration";
 
 const TAB_KEYS = ["build", "settings", "post-approval", "ai-config", "reviewers"] as const;
 type TabKey = (typeof TAB_KEYS)[number];
@@ -51,14 +52,17 @@ const DEFAULT_TAB: TabKey = "build";
 const isTabKey = (value: string | null): value is TabKey =>
   !!value && TAB_KEYS.includes(value as TabKey);
 
-const getValidTab = (value: string | null): TabKey =>
-  isTabKey(value) ? value : DEFAULT_TAB;
+const getValidTab = (value: string | null): TabKey => (isTabKey(value) ? value : DEFAULT_TAB);
 
 // Tab configuration for rendering buttons
 const TAB_CONFIG = [
   { key: "build" as TabKey, icon: WrenchScrewdriverIcon, label: "Build" },
   { key: "settings" as TabKey, icon: Cog6ToothIcon, label: "Settings" },
-  { key: "post-approval" as TabKey, icon: CheckCircleIcon, label: "Post Approval" },
+  {
+    key: "post-approval" as TabKey,
+    icon: CheckCircleIcon,
+    label: "Post Approval",
+  },
   { key: "ai-config" as TabKey, icon: CpuChipIcon, label: "AI Config" },
   { key: "reviewers" as TabKey, icon: UserGroupIcon, label: "Reviewers" },
 ] as const;
@@ -108,6 +112,7 @@ export function QuestionBuilder({
         submitButtonText: "Submit Application",
         confirmationMessage: "Thank you for your submission!",
         privateApplications: true, // Default to private as requested
+        successPageContent: "", // Empty by default to encourage configuration
       },
     }
   );
@@ -126,9 +131,7 @@ export function QuestionBuilder({
     }
   );
 
-  const [activeTab, setActiveTab] = useState<TabKey>(() =>
-    getValidTab(searchParams.get("tab"))
-  );
+  const [activeTab, setActiveTab] = useState<TabKey>(() => getValidTab(searchParams.get("tab")));
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
   const fieldRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const [newEmail, setNewEmail] = useState<string>("");
@@ -155,11 +158,9 @@ export function QuestionBuilder({
         router.replace(url);
       }
     } catch (error) {
-      errorManager(
-        "Failed to synchronize tab state with URL",
-        error,
-        { pathname }
-      );
+      errorManager("Failed to synchronize tab state with URL", error, {
+        pathname,
+      });
       // Fallback to default tab on error
       setActiveTab(DEFAULT_TAB);
     }
@@ -178,11 +179,10 @@ export function QuestionBuilder({
       const url = params.toString() ? `${pathname}?${params}` : pathname;
       router.replace(url);
     } catch (error) {
-      errorManager(
-        `Failed to update URL for tab: ${tab}`,
-        error,
-        { tab, pathname }
-      );
+      errorManager(`Failed to update URL for tab: ${tab}`, error, {
+        tab,
+        pathname,
+      });
       toast.error("Navigation updated locally. The URL may not reflect your current view.");
     }
   };
@@ -195,7 +195,8 @@ export function QuestionBuilder({
 
     // Only update URL if it needs to change
     const currentTabParam = searchParams.get("tab");
-    const needsUrlUpdate = (tab !== DEFAULT_TAB || currentTabParam !== null) && currentTabParam !== tab;
+    const needsUrlUpdate =
+      (tab !== DEFAULT_TAB || currentTabParam !== null) && currentTabParam !== tab;
 
     if (needsUrlUpdate) {
       updateTabInUrl(tab);
@@ -218,7 +219,10 @@ export function QuestionBuilder({
       setPostApprovalSchema({
         ...initialPostApprovalSchema,
         fields: Array.isArray(initialPostApprovalSchema.fields)
-          ? initialPostApprovalSchema.fields.map(field => ({ ...field, private: true })) // Ensure all fields are private
+          ? initialPostApprovalSchema.fields.map((field) => ({
+              ...field,
+              private: true,
+            })) // Ensure all fields are private
           : [],
         settings: {
           ...initialPostApprovalSchema.settings,
@@ -247,7 +251,7 @@ export function QuestionBuilder({
       id: `field_${Date.now()}`,
       type: fieldType,
       label: `New ${fieldType} field`,
-      required: fieldType === "email" && !isPostApprovalMode ? true : false, // Email fields are required by default only in main form
+      required: !!(fieldType === "email" && !isPostApprovalMode), // Email fields are required by default only in main form
       private: isPostApprovalMode, // All fields in post-approval mode are private by default
       options: ["select", "radio", "checkbox"].includes(fieldType)
         ? ["Option 1", "Option 2"]
@@ -293,9 +297,7 @@ export function QuestionBuilder({
     if (readOnly) return; // Prevent moving fields in read-only mode
     if (!currentSchema.fields) return;
 
-    const currentIndex = currentSchema.fields.findIndex(
-      (field) => field.id === fieldId
-    );
+    const currentIndex = currentSchema.fields.findIndex((field) => field.id === fieldId);
     if (currentIndex === -1) return;
 
     const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
@@ -317,12 +319,8 @@ export function QuestionBuilder({
 
       if (!over || active.id === over.id || readOnly) return;
 
-      const oldIndex = currentSchema.fields.findIndex(
-        (field) => field.id === active.id
-      );
-      const newIndex = currentSchema.fields.findIndex(
-        (field) => field.id === over.id
-      );
+      const oldIndex = currentSchema.fields.findIndex((field) => field.id === active.id);
+      const newIndex = currentSchema.fields.findIndex((field) => field.id === over.id);
 
       if (oldIndex !== -1 && newIndex !== -1) {
         const newFields = arrayMove(currentSchema.fields, oldIndex, newIndex);
@@ -332,11 +330,10 @@ export function QuestionBuilder({
         }));
       }
     } catch (error) {
-      errorManager(
-        "Failed to reorder form fields",
-        error,
-        { activeId: event.active.id, overId: event.over?.id }
-      );
+      errorManager("Failed to reorder form fields", error, {
+        activeId: event.active.id,
+        overId: event.over?.id,
+      });
       toast.error("Failed to reorder fields. Please try again.");
     }
   };
@@ -363,8 +360,7 @@ export function QuestionBuilder({
   const hasEmailField = () => {
     if (!currentSchema.fields) return false;
     return currentSchema.fields.some(
-      (field) =>
-        field.type === "email" || field.label.toLowerCase().includes("email")
+      (field) => field.type === "email" || field.label.toLowerCase().includes("email")
     );
   };
 
@@ -390,15 +386,11 @@ export function QuestionBuilder({
         toast.success("Form saved successfully!");
       }
     } catch (error) {
-      errorManager(
-        "Failed to save form schema",
-        error,
-        {
-          isPostApprovalMode,
-          formId: isPostApprovalMode ? postApprovalSchema.id : schema.id,
-          fieldsCount: isPostApprovalMode ? postApprovalSchema.fields.length : schema.fields.length
-        }
-      );
+      errorManager("Failed to save form schema", error, {
+        isPostApprovalMode,
+        formId: isPostApprovalMode ? postApprovalSchema.id : schema.id,
+        fieldsCount: isPostApprovalMode ? postApprovalSchema.fields.length : schema.fields.length,
+      });
       toast.error("Failed to save form. Please try again.");
     }
   };
@@ -427,7 +419,7 @@ export function QuestionBuilder({
       }
 
       const currentEmails = currentSchema.emailNotifications || [];
-      
+
       if (currentEmails.includes(trimmedEmail)) {
         toast.error("This email is already in the list.");
         return;
@@ -449,7 +441,8 @@ export function QuestionBuilder({
     try {
       setCurrentSchema((prev) => ({
         ...prev,
-        emailNotifications: prev.emailNotifications?.filter((_email: string, i: number) => i !== index) || [],
+        emailNotifications:
+          prev.emailNotifications?.filter((_email: string, i: number) => i !== index) || [],
       }));
       toast.success("Email removed successfully!");
     } catch (error) {
@@ -465,46 +458,41 @@ export function QuestionBuilder({
     }
   };
 
-
   return (
-    <div
-      className={`flex flex-col h-full bg-gray-50 dark:bg-gray-900 ${className}`}
-    >
+    <div className={`flex flex-col h-full${className}`}>
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sm:px-3 md:px-4 px-6 py-2">
+      <div className="border-b border-gray-200 dark:border-gray-700 sm:px-3 md:px-4 px-6 py-2">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between flex-wrap gap-4">
           <div className="flex flex-col gap-2 mb-4 sm:mb-0">
-            {
-              readOnly ? (
-                <>
-                  <div className="text-xl font-bold text-gray-900 dark:text-white px-3 py-2">
-                    {schema.title}
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400 px-3 py-1">
-                    <MarkdownPreview source={schema.description || ""} />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <input
-                    type="text"
-                    value={currentSchema.title}
-                    onChange={(e) => handleTitleChange(e.target.value)}
-                    className="text-xl font-bold bg-transparent border-none outline-none bg-zinc-100 dark:bg-zinc-800 rounded-md text-gray-900 dark:text-white placeholder-gray-400"
-                    placeholder="Form Title"
-                  />
-                  <MarkdownEditor
-                    value={currentSchema.description || ""}
-                    onChange={(value: string) => handleDescriptionChange(value)}
-                    className="mt-1 text-sm bg-transparent border-none outline-none bg-zinc-100 dark:bg-zinc-800 rounded-md text-gray-600 dark:text-gray-400 placeholder-gray-500"
-                    placeholderText="Form Description"
-                    height={100}
-                    minHeight={100}
-                  />
-                </>
-              )
-            }
-          </div >
+            {readOnly ? (
+              <>
+                <div className="text-xl font-bold text-gray-900 dark:text-white px-3 py-2">
+                  {schema.title}
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400 px-3 py-1">
+                  <MarkdownPreview source={schema.description || ""} />
+                </div>
+              </>
+            ) : (
+              <>
+                <input
+                  type="text"
+                  value={currentSchema.title}
+                  onChange={(e) => handleTitleChange(e.target.value)}
+                  className="text-xl font-bold bg-transparent border-none outline-none bg-zinc-100 dark:bg-zinc-800 rounded-md text-gray-900 dark:text-white placeholder-gray-400"
+                  placeholder="Form Title"
+                />
+                <MarkdownEditor
+                  value={currentSchema.description || ""}
+                  onChange={(value: string) => handleDescriptionChange(value)}
+                  className="mt-1 text-sm bg-transparent border-none outline-none bg-zinc-100 dark:bg-zinc-800 rounded-md text-gray-600 dark:text-gray-400 placeholder-gray-500"
+                  placeholderText="Form Description"
+                  height={100}
+                  minHeight={100}
+                />
+              </>
+            )}
+          </div>
 
           <div className="flex items-center gap-3 flex-row flex-wrap">
             <div className="flex flex-row flex-wrap bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
@@ -520,42 +508,40 @@ export function QuestionBuilder({
               ))}
             </div>
 
-            {
-              !readOnly && (<Button
+            {!readOnly && (
+              <Button
                 onClick={handleSave}
-                className={`py-2 ${needsEmailValidation()
-                  ? "bg-yellow-600 hover:bg-yellow-700"
-                  : "bg-blue-600 hover:bg-blue-700"
-                  }`}
-                title={
+                className={`py-2 ${
                   needsEmailValidation()
-                    ? "Add an email field before saving"
-                    : undefined
-                }
+                    ? "bg-yellow-600 hover:bg-yellow-700"
+                    : "bg-blue-600 hover:bg-blue-700"
+                }`}
+                title={needsEmailValidation() ? "Add an email field before saving" : undefined}
               >
-                {needsEmailValidation() && (
-                  <ExclamationTriangleIcon className="w-4 h-4 mr-2" />
-                )}
+                {needsEmailValidation() && <ExclamationTriangleIcon className="w-4 h-4 mr-2" />}
                 {isPostApprovalMode ? "Save Post Approval Form" : "Save Form"}
-              </Button>)}
+              </Button>
+            )}
           </div>
         </div>
       </div>
 
       {/* Content */}
-      < div className="flex-1 overflow-hidden  sm:px-3 md:px-4 px-6 py-2" >
+      <div className="flex-1 overflow-hidden  sm:px-3 md:px-4 px-6 py-2">
         {activeTab === "build" || activeTab === "post-approval" ? (
           <div className="h-full grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Field Types Panel */}
             {!readOnly && (
-
               <div className="lg:col-span-1">
-                <FieldTypeSelector onFieldAdd={handleFieldAdd} isPostApprovalMode={isPostApprovalMode} />
+                <FieldTypeSelector
+                  onFieldAdd={handleFieldAdd}
+                  isPostApprovalMode={isPostApprovalMode}
+                />
               </div>
             )}
 
             {/* Form Builder */}
-            <div className={readOnly ? '' : 'lg:col-span-2 overflow-y-auto'}>
+            <div className={readOnly ? "" : "lg:col-span-2 overflow-y-auto"}>
               <div className="space-y-4">
                 {/* Email Field Warning - only for main application form */}
                 {needsEmailValidation() && (
@@ -599,8 +585,7 @@ export function QuestionBuilder({
                       No fields yet
                     </h3>
                     <p className="text-gray-600 dark:text-gray-400">
-                      Add form fields from the panel on the left to start
-                      building your form.
+                      Add form fields from the panel on the left to start building your form.
                     </p>
                   </div>
                 ) : (
@@ -634,128 +619,131 @@ export function QuestionBuilder({
                           ))}
                         </div>
                       </SortableContext>
-                     </DndContext>
-                   </>
-                 )}
+                    </DndContext>
+                  </>
+                )}
 
-                 {/* Post Approval Email Notification Section - Only show in post-approval mode */}
-                 {isPostApprovalMode && (
-                   <div className="mt-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-                     <div className="flex items-start justify-between mb-4">
-                       <div>
-                         <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                           Post Approval Email Notifications
-                         </h3>
-                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                           Add email addresses that should receive notifications when post-approval forms are submitted.
-                         </p>
-                       </div>
-                     </div>
+                {/* Post Approval Email Notification Section - Only show in post-approval mode */}
+                {isPostApprovalMode && (
+                  <div className="mt-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                          Post Approval Email Notifications
+                        </h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                          Add email addresses that should receive notifications when post-approval
+                          forms are submitted.
+                        </p>
+                      </div>
+                    </div>
 
-                     {/* Email List */}
-                     {currentSchema.emailNotifications && currentSchema.emailNotifications.length > 0 && (
-                       <div className="space-y-2 mb-4">
-                         {currentSchema.emailNotifications.map((email, index) => (
-                           <div
-                             key={index}
-                             className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 px-4 py-3 rounded-lg group hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                           >
-                             <div className="flex items-center gap-3">
-                               <div className="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                                 <svg
-                                   className="w-4 h-4 text-blue-600 dark:text-blue-400"
-                                   fill="none"
-                                   stroke="currentColor"
-                                   viewBox="0 0 24 24"
-                                 >
-                                   <path
-                                     strokeLinecap="round"
-                                     strokeLinejoin="round"
-                                     strokeWidth={2}
-                                     d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                                   />
-                                 </svg>
-                               </div>
-                               <span className="text-sm font-medium text-gray-900 dark:text-white">
-                                 {email}
-                               </span>
-                             </div>
-                             {!readOnly && (
-                               <button
-                                 type="button"
-                                 onClick={() => handleRemoveEmail(index)}
-                                 className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors opacity-0 group-hover:opacity-100"
-                                 aria-label={`Remove ${email}`}
-                               >
-                                 <XMarkIcon className="w-5 h-5" />
-                               </button>
-                             )}
-                           </div>
-                         ))}
-                       </div>
-                     )}
+                    {/* Email List */}
+                    {currentSchema.emailNotifications &&
+                      currentSchema.emailNotifications.length > 0 && (
+                        <div className="space-y-2 mb-4">
+                          {currentSchema.emailNotifications.map((email, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 px-4 py-3 rounded-lg group hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                                  <svg
+                                    className="w-4 h-4 text-blue-600 dark:text-blue-400"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                                    />
+                                  </svg>
+                                </div>
+                                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                  {email}
+                                </span>
+                              </div>
+                              {!readOnly && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveEmail(index)}
+                                  className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors opacity-0 group-hover:opacity-100"
+                                  aria-label={`Remove ${email}`}
+                                >
+                                  <XMarkIcon className="w-5 h-5" />
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
 
-                     {/* Empty state */}
-                     {(!currentSchema.emailNotifications || currentSchema.emailNotifications.length === 0) && (
-                       <div className="text-center py-8 mb-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
-                         <svg
-                           className="mx-auto h-12 w-12 text-gray-400"
-                           fill="none"
-                           stroke="currentColor"
-                           viewBox="0 0 24 24"
-                         >
-                           <path
-                             strokeLinecap="round"
-                             strokeLinejoin="round"
-                             strokeWidth={2}
-                             d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                           />
-                         </svg>
-                         <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                           No email addresses added yet
-                         </p>
-                       </div>
-                     )}
+                    {/* Empty state */}
+                    {(!currentSchema.emailNotifications ||
+                      currentSchema.emailNotifications.length === 0) && (
+                      <div className="text-center py-8 mb-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
+                        <svg
+                          className="mx-auto h-12 w-12 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                          />
+                        </svg>
+                        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                          No email addresses added yet
+                        </p>
+                      </div>
+                    )}
 
-                     {/* Add Email Input */}
-                     {!readOnly && (
-                       <div className="space-y-2">
-                         <label
-                           htmlFor="email-input"
-                           className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                         >
-                           Add Email Address
-                         </label>
-                         <div className="flex gap-2">
-                           <input
-                             id="email-input"
-                             type="email"
-                             value={newEmail}
-                             onChange={(e) => setNewEmail(e.target.value)}
-                             onKeyDown={handleEmailKeyDown}
-                             className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400 dark:placeholder-gray-500"
-                             placeholder="Enter email address (e.g., admin@example.com)"
-                           />
-                           <Button
-                             type="button"
-                             onClick={handleAddEmail}
-                             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2"
-                           >
-                             <PlusIcon className="w-5 h-5" />
-                             Add
-                           </Button>
-                         </div>
-                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                           Press Enter or click Add to include the email address
-                         </p>
-                       </div>
-                     )}
-                   </div>
-                 )}
-               </div>
-             </div>
-           </div>
-         ) : activeTab === "settings" ? (
+                    {/* Add Email Input */}
+                    {!readOnly && (
+                      <div className="space-y-2">
+                        <label
+                          htmlFor="email-input"
+                          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        >
+                          Add Email Address
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            id="email-input"
+                            type="email"
+                            value={newEmail}
+                            onChange={(e) => setNewEmail(e.target.value)}
+                            onKeyDown={handleEmailKeyDown}
+                            className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400 dark:placeholder-gray-500"
+                            placeholder="Enter email address (e.g., admin@example.com)"
+                          />
+                          <Button
+                            type="button"
+                            onClick={handleAddEmail}
+                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2"
+                          >
+                            <PlusIcon className="w-5 h-5" />
+                            Add
+                          </Button>
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          Press Enter or click Add to include the email address
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : activeTab === "settings" ? (
           <div className="h-full p-4 sm:p-6 lg:p-8 overflow-y-auto">
             <div className="max-w-4xl mx-auto">
               <SettingsConfiguration
@@ -799,7 +787,7 @@ export function QuestionBuilder({
           </div>
         ) : null}
       </div>
-    </div >
+    </div>
   );
 }
 
@@ -830,14 +818,10 @@ function SortableFieldItem({
   totalFields,
   fieldRefs,
 }: SortableFieldItemProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: field.id, disabled: readOnly });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: field.id,
+    disabled: readOnly,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -872,29 +856,21 @@ function SortableFieldItem({
             </button>
           )}
 
-          <div
-            className="flex-1 cursor-pointer"
-            onClick={() =>
-              setSelectedFieldId(selectedFieldId === field.id ? null : field.id)
-            }
+          <button
+            type="button"
+            className="flex-1 cursor-pointer bg-transparent border-none text-left w-full"
+            onClick={() => setSelectedFieldId(selectedFieldId === field.id ? null : field.id)}
           >
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <div className="flex items-center space-x-2">
                   <span className="text-xs font-medium px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded">
-                    {fieldTypes.find((item) => item.type === field.type)
-                      ?.label || field.type}
+                    {fieldTypes.find((item) => item.type === field.type)?.label || field.type}
                   </span>
-                  {field.required && (
-                    <span className="text-xs text-red-500">Required</span>
-                  )}
+                  {field.required && <span className="text-xs text-red-500">Required</span>}
                   {field.private && (
                     <span className="text-xs text-gray-600 bg-gray-100 dark:bg-gray-700 dark:text-gray-300 px-2 py-1 rounded flex items-center space-x-1">
-                      <svg
-                        className="w-3 h-3"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                         <path
                           fillRule="evenodd"
                           d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
@@ -905,9 +881,7 @@ function SortableFieldItem({
                     </span>
                   )}
                 </div>
-                <h4 className="font-medium text-gray-900 dark:text-white mt-1">
-                  {field.label}
-                </h4>
+                <h4 className="font-medium text-gray-900 dark:text-white mt-1">{field.label}</h4>
                 {field.description && (
                   <MarkdownPreview
                     className="text-sm text-gray-500 dark:text-gray-400 mt-1"
@@ -930,7 +904,7 @@ function SortableFieldItem({
                 )}
               </div>
             </div>
-          </div>
+          </button>
         </div>
 
         {/* Field Editor - appears inside the same block when expanded */}
@@ -943,9 +917,7 @@ function SortableFieldItem({
               onDelete={handleFieldDelete}
               readOnly={readOnly}
               onMoveUp={
-                index === 0
-                  ? undefined
-                  : (fieldId: string) => handleFieldMove(fieldId, "up")
+                index === 0 ? undefined : (fieldId: string) => handleFieldMove(fieldId, "up")
               }
               onMoveDown={
                 index === totalFields - 1

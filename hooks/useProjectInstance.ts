@@ -1,6 +1,6 @@
-import { getProjectById } from "@/utilities/sdk";
-import { Project } from "@show-karma/karma-gap-sdk/core/class/entities/Project";
+import type { Project } from "@show-karma/karma-gap-sdk/core/class/entities/Project";
 import { useQuery } from "@tanstack/react-query";
+import { getProjectById } from "@/utilities/sdk";
 
 export const useProjectInstance = (projectId?: string) => {
   const query = useQuery({

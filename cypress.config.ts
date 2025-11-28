@@ -1,4 +1,5 @@
 import { defineConfig } from "cypress";
+import { addMatchImageSnapshotPlugin } from "cypress-image-snapshot/plugin";
 
 export default defineConfig({
   component: {
@@ -16,6 +17,9 @@ export default defineConfig({
     baseUrl: "http://localhost:3000",
     viewportHeight: 800,
     viewportWidth: 1440,
-    setupNodeEvents(on, config) {},
+    setupNodeEvents(on, config) {
+      addMatchImageSnapshotPlugin(on, config);
+      return config;
+    },
   },
 });

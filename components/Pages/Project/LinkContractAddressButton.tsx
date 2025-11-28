@@ -1,25 +1,23 @@
 "use client";
 
-import { LinkIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import { ExclamationTriangleIcon, LinkIcon } from "@heroicons/react/24/outline";
+import { useQueryClient } from "@tanstack/react-query";
 import type { FC } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
+import { SUPPORTED_CONTRACT_NETWORKS } from "@/constants/contract-networks";
 import { useContractAddressPairs } from "@/hooks/useContractAddressPairs";
 import { useContractAddressSave } from "@/hooks/useContractAddressSave";
 import { useContractAddressValidation } from "@/hooks/useContractAddressValidation";
+import { validateNetworkAddressPair } from "@/schemas/contractAddress";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
-import { SUPPORTED_CONTRACT_NETWORKS } from "@/constants/contract-networks";
-import { validateNetworkAddressPair } from "@/schemas/contractAddress";
 import { ContractAddressDialog } from "./ContractAddressDialog";
 import { ContractAddressList } from "./ContractAddressList";
 import { ContractVerificationDialog } from "./ContractVerificationDialog";
 import type { LinkContractAddressesButtonProps } from "./types";
-import { useQueryClient } from "@tanstack/react-query";
 
-export const LinkContractAddressButton: FC<
-  LinkContractAddressesButtonProps
-> = ({
+export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = ({
   project,
   buttonClassName,
   "data-link-contracts-button": dataAttr,
@@ -28,9 +26,7 @@ export const LinkContractAddressButton: FC<
 }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isCommunityAdmin = useCommunityAdminStore(
-    (state) => state.isCommunityAdmin,
-  );
+  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
   const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
   const [isOpen, setIsOpen] = useState(false);
   const [verificationDialogOpen, setVerificationDialogOpen] = useState(false);
@@ -41,8 +37,12 @@ export const LinkContractAddressButton: FC<
   } | null>(null);
 
   // Custom hooks for state and logic management
-  const { pairs, addPair, removePair, updateAddress, updateNetwork } = useContractAddressPairs({ project });
-  const { clearError } = useContractAddressValidation({ projectUid: project.uid });
+  const { pairs, addPair, removePair, updateAddress, updateNetwork } = useContractAddressPairs({
+    project,
+  });
+  const { clearError } = useContractAddressValidation({
+    projectUid: project.uid,
+  });
   const { save, isLoading, error, setError, invalidContracts } = useContractAddressSave({
     projectUid: project.uid,
     onSuccess: () => {
@@ -69,7 +69,7 @@ export const LinkContractAddressButton: FC<
       removePair(index);
       clearError(pairToRemove);
     },
-    [pairs, removePair, clearError],
+    [pairs, removePair, clearError]
   );
 
   const handleAddressChange = useCallback(
@@ -79,7 +79,7 @@ export const LinkContractAddressButton: FC<
       clearError(oldPair);
       setError(null);
     },
-    [pairs, updateAddress, clearError, setError],
+    [pairs, updateAddress, clearError, setError]
   );
 
   const handleNetworkChange = useCallback(
@@ -89,7 +89,7 @@ export const LinkContractAddressButton: FC<
       clearError(oldPair);
       setError(null);
     },
-    [pairs, updateNetwork, clearError, setError],
+    [pairs, updateNetwork, clearError, setError]
   );
 
   const handleSave = useCallback(async () => {
@@ -115,8 +115,12 @@ export const LinkContractAddressButton: FC<
 
   const handleVerificationSuccess = useCallback(() => {
     // Invalidate and refetch project data to show updated verification status
-    queryClient.invalidateQueries({ queryKey: ["project-instance", project.uid] });
-    queryClient.invalidateQueries({ queryKey: ["project-instance", project.details?.data?.slug] });
+    queryClient.invalidateQueries({
+      queryKey: ["project-instance", project.uid],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ["project-instance", project.details?.data?.slug],
+    });
   }, [queryClient, project.uid, project.details?.data?.slug]);
 
   // Define a function to handle dialog close
@@ -150,21 +154,15 @@ export const LinkContractAddressButton: FC<
     const hasBackendErrors = invalidContracts.size > 0;
 
     // Check if all pairs are empty (at least one valid pair required)
-    const allPairsEmpty = pairs.every(
-      (pair) => !pair.address.trim() && !pair.network.trim()
-    );
+    const allPairsEmpty = pairs.every((pair) => !pair.address.trim() && !pair.network.trim());
 
     return hasFormatErrors || hasBackendErrors || allPairsEmpty;
   }, [pairs, invalidContracts]);
 
   // Count unverified contracts
   const unverifiedCount = useMemo(() => {
-    return pairs.filter(
-      (pair) =>
-        pair.address.trim() &&
-        pair.network.trim() &&
-        !pair.verified
-    ).length;
+    return pairs.filter((pair) => pair.address.trim() && pair.network.trim() && !pair.verified)
+      .length;
   }, [pairs]);
 
   if (!isAuthorized) {

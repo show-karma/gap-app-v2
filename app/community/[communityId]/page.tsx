@@ -1,15 +1,13 @@
 /* eslint-disable @next/next/no-img-element */
 import { CommunityGrants } from "@/components/CommunityGrants";
-import type { SortByOptions, MaturityStageOptions } from "@/types";
-import {
-  getCommunityCategories,
-} from "@/utilities/queries/getCommunityData";
+import type { MaturityStageOptions, SortByOptions } from "@/types";
+import { pagesOnRoot } from "@/utilities/pagesOnRoot";
+import { getCommunityCategories } from "@/utilities/queries/getCommunityData";
 import {
   getCommunityDetailsV2,
-  getCommunityStatsV2,
   getCommunityProjectsV2,
+  getCommunityStatsV2,
 } from "@/utilities/queries/getCommunityDataV2";
-import { pagesOnRoot } from "@/utilities/pagesOnRoot";
 
 type Props = {
   params: Promise<{
@@ -41,7 +39,7 @@ export default async function Page(props: Props) {
   const defaultSelectedMaturityStage = "all" as MaturityStageOptions;
 
   return (
-    <div className="flex flex-col w-full max-w-full sm:px-3 md:px-4 px-6 py-2">
+    <div className="-my-4 flex flex-col w-full max-w-full py-2">
       <CommunityGrants
         categoriesOptions={categoriesOptions}
         defaultSelectedCategories={defaultSelectedCategories}

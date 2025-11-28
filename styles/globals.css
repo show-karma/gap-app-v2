@@ -2,15 +2,85 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes infiniteScroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Inter font family with multiple weights for better Safari compatibility */
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/Inter/static/Inter-Thin.ttf") format("truetype");
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
 
 @font-face {
   font-family: "Inter";
-  src: url("/fonts/Inter/Inter.ttf") format("truetype");
+  src: url("/fonts/Inter/static/Inter-ExtraLight.ttf") format("truetype");
+  font-weight: 200;
+  font-style: normal;
   font-display: swap;
 }
+
 @font-face {
-  font-family: "Open Sans";
-  src: url("/fonts/Open_Sans/OpenSans.ttf") format("truetype");
+  font-family: "Inter";
+  src: url("/fonts/Inter/static/Inter-Light.ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/Inter/static/Inter-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/Inter/static/Inter-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/Inter/static/Inter-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/Inter/static/Inter-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/Inter/static/Inter-ExtraBold.ttf") format("truetype");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("/fonts/Inter/static/Inter-Black.ttf") format("truetype");
+  font-weight: 900;
+  font-style: normal;
   font-display: swap;
 }
 
@@ -18,11 +88,6 @@ body * {
   @apply transition-colors duration-500;
 }
 * {
-  @apply font-sans;
-}
-p,
-label,
-option {
   @apply font-body;
 }
 
@@ -36,7 +101,7 @@ option {
     display: inline;
   }
   *::after {
-    content: " \A";
+    content: " A";
     white-space: pre;
   }
   strong::after,
@@ -57,7 +122,7 @@ option {
     display: inline;
   }
   *::after {
-    content: " \A";
+    content: " A";
     white-space: pre;
   }
   strong::after,
@@ -89,7 +154,7 @@ option {
     display: list-item;
   }
   *::after {
-    content: " \A";
+    content: " A";
     white-space: pre;
   }
   strong::after,
@@ -110,7 +175,7 @@ option {
     display: inline;
   }
   *::after {
-    content: " \A";
+    content: " A";
     white-space: pre;
   }
   strong::after,
@@ -177,7 +242,9 @@ option {
 /* Debounced spinner - only shows after a delay */
 .spinner-debounced {
   opacity: 0;
-  animation: fadeIn 500ms 100ms forwards, spin 0.8s linear infinite;
+  animation:
+    fadeIn 500ms 100ms forwards,
+    spin 0.8s linear infinite;
 }
 
 @keyframes fadeIn {
@@ -232,4 +299,138 @@ option {
 
 .dark .popover-content::-webkit-scrollbar-thumb:active {
   background: rgb(63 63 70);
+}
+
+@layer base {
+  :root {
+    /* General - Base colors */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 4%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 4%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 4%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 72% 51%;
+    --border: 0 0% 90%;
+    --input: 0 0% 100%;
+    --ring: 0 0% 4%;
+
+    /* General/Unofficial - Extended colors */
+    --foreground-alt: 0 0% 26%;
+    --body-background: 0 0% 100%;
+    --destructive-border: 0 84% 60%;
+    --destructive-subtle: 0 86% 97%;
+    --contrast: 0 0% 0%;
+    --backdrop: 0 0% 0% / 0.6;
+    --mid: 0 0% 45%;
+    --mid-alt: 0 0% 32%;
+    --ghost-foreground: 0 0% 26%;
+    --ghost: 0 0% 100% / 0.01;
+    --ghost-hover: 0 0% 0% / 0.05;
+    --primary-hover: 0 0% 4%;
+    --secondary-hover: 0 0% 98%;
+    --outline: 0 0% 100% / 0.1;
+    --outline-hover: 0 0% 0% / 0.033;
+    --outline-active: 0 0% 0% / 0.05;
+    --accent-0: 0 0% 98%;
+    --accent-2: 0 0% 90%;
+    --accent-3: 0 0% 83%;
+    --border-0: 0 0% 98%;
+    --border-1: 0 0% 96%;
+    --border-3: 0 0% 83%;
+    --border-4: 0 0% 64%;
+    --border-5: 0 0% 45%;
+
+    /* Charts */
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* General - Base colors */
+    --background: 0 0% 0%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 0%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 0%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 160 84% 71%;
+    --primary-foreground: 0 0% 4%;
+    --secondary: 0 0% 9%;
+    --secondary-foreground: 0 0% 96%;
+    --muted: 0 0% 9%;
+    --muted-foreground: 0 0% 64%;
+    --accent: 0 0% 9%;
+    --accent-foreground: 0 0% 96%;
+    --destructive: 357 41% 44%;
+    --destructive-foreground: 357 41% 44%;
+    --border: 0 0% 16%;
+    --input: 0 0% 100% / 0.05;
+    --ring: 0 0% 98%;
+
+    /* General/Unofficial - Extended colors */
+    --foreground-alt: 0 0% 83%;
+    --body-background: 0 0% 4%;
+    --destructive-border: 0 84% 60%;
+    --destructive-subtle: 0 80% 10%;
+    --contrast: 0 0% 100%;
+    --backdrop: 0 0% 0% / 0.6;
+    --mid: 0 0% 45%;
+    --mid-alt: 0 0% 64%;
+    --ghost-foreground: 0 0% 90%;
+    --ghost: 0 0% 100% / 0.01;
+    --ghost-hover: 0 0% 100% / 0.1;
+    --primary-hover: 0 0% 83%;
+    --secondary-hover: 0 0% 9%;
+    --outline: 0 0% 100% / 0.05;
+    --outline-hover: 0 0% 100% / 0.1;
+    --outline-active: 0 0% 100% / 0.15;
+    --accent-0: 0 0% 4%;
+    --accent-2: 0 0% 15%;
+    --accent-3: 0 0% 26%;
+    --border-0: 0 0% 4%;
+    --border-1: 0 0% 9%;
+    --border-3: 0 0% 26%;
+    --border-4: 0 0% 32%;
+    --border-5: 0 0% 45%;
+
+    /* Charts */
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    /* Font family is now handled by Tailwind's font-body class applied globally */
+  }
+  h2 {
+    @apply tracking-tight;
+  }
+}
+
+@layer utilities {
+  .section-title {
+    @apply font-semibold text-3xl leading-tight tracking-tight md:text-4xl;
+  }
 }

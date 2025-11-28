@@ -1,34 +1,38 @@
-'use client';
+"use client";
 
-import React, { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { FormField } from '@/types/question-builder';
-import { Button } from '@/components/Utilities/Button';
-import { QuestionTooltip } from '@/components/Utilities/QuestionTooltip';
-import { TrashIcon } from '@heroicons/react/24/solid';
-import { MarkdownEditor } from '../Utilities/MarkdownEditor';
+import { TrashIcon } from "@heroicons/react/24/solid";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { Button } from "@/components/Utilities/Button";
+import { QuestionTooltip } from "@/components/Utilities/QuestionTooltip";
+import type { FormField } from "@/types/question-builder";
+import { MarkdownEditor } from "../Utilities/MarkdownEditor";
 
 const fieldSchema = z.object({
-  label: z.string().min(1, 'Label is required'),
+  label: z.string().min(1, "Label is required"),
   placeholder: z.string().optional(),
   required: z.boolean(),
   private: z.boolean(),
   description: z.string().optional(),
   options: z.array(z.string()).optional(),
-  validation: z.object({
-    min: z.number().optional(),
-    max: z.number().optional(),
-    pattern: z.string().optional(),
-    message: z.string().optional(),
-    maxMilestones: z.number().optional(),
-    minMilestones: z.number().optional(),
-  }).optional(),
+  validation: z
+    .object({
+      min: z.number().optional(),
+      max: z.number().optional(),
+      pattern: z.string().optional(),
+      message: z.string().optional(),
+      maxMilestones: z.number().optional(),
+      minMilestones: z.number().optional(),
+    })
+    .optional(),
   // AI evaluation configuration
-  aiEvaluation: z.object({
-    includeInEvaluation: z.boolean().optional(),
-  }).optional(),
+  aiEvaluation: z
+    .object({
+      includeInEvaluation: z.boolean().optional(),
+    })
+    .optional(),
 });
 
 type FieldFormData = z.infer<typeof fieldSchema>;
@@ -43,15 +47,28 @@ interface FieldEditorProps {
   readOnly?: boolean;
 }
 
-export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, readOnly = false, isPostApprovalMode = false }: FieldEditorProps) {
-  const { register, watch, setValue, formState: { errors } } = useForm<FieldFormData>({
+export function FieldEditor({
+  field,
+  onUpdate,
+  onDelete,
+  onMoveUp,
+  onMoveDown,
+  readOnly = false,
+  isPostApprovalMode = false,
+}: FieldEditorProps) {
+  const {
+    register,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<FieldFormData>({
     resolver: zodResolver(fieldSchema),
     defaultValues: {
       label: field.label,
-      placeholder: field.placeholder || '',
+      placeholder: field.placeholder || "",
       required: field.required || false,
       private: field.private || isPostApprovalMode, // Default to true for post-approval fields
-      description: field.description || '',
+      description: field.description || "",
       options: field.options || [],
       validation: field.validation || {},
       aiEvaluation: {
@@ -60,8 +77,8 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, r
     },
   });
 
-  const watchedOptions = watch('options') || [];
-  const hasOptions = ['select', 'radio', 'checkbox'].includes(field.type);
+  const watchedOptions = watch("options") || [];
+  const hasOptions = ["select", "radio", "checkbox"].includes(field.type);
 
   useEffect(() => {
     const subscription = watch((data) => {
@@ -70,11 +87,15 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, r
         const updatedField: FormField = {
           ...field,
           label: data.label,
-          placeholder: data.placeholder || '',
+          placeholder: data.placeholder || "",
           required: data.required || false,
           private: data.private || isPostApprovalMode, // Always true for post-approval fields
-          description: data.description || '',
-          options: hasOptions ? (data.options || []).filter((opt): opt is string => typeof opt === 'string' && opt.length > 0) : undefined,
+          description: data.description || "",
+          options: hasOptions
+            ? (data.options || []).filter(
+                (opt): opt is string => typeof opt === "string" && opt.length > 0
+              )
+            : undefined,
           validation: data.validation || {},
           aiEvaluation: data.aiEvaluation || {},
         };
@@ -83,32 +104,28 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, r
     });
 
     return () => subscription.unsubscribe();
-  }, [watch, onUpdate, field, hasOptions]);
-
-
+  }, [watch, onUpdate, field, hasOptions, isPostApprovalMode]);
 
   const updateOption = (index: number, value: string) => {
     const newOptions = [...watchedOptions];
     newOptions[index] = value;
-    setValue('options', newOptions);
+    setValue("options", newOptions);
   };
 
   const addOption = () => {
-    const newOptions = [...watchedOptions, ''];
-    setValue('options', newOptions);
+    const newOptions = [...watchedOptions, ""];
+    setValue("options", newOptions);
   };
 
   const removeOption = (index: number) => {
     const newOptions = watchedOptions.filter((_, i) => i !== index);
-    setValue('options', newOptions);
+    setValue("options", newOptions);
   };
 
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">
-          Field Settings
-        </h3>
+        <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">Field Settings</h3>
         <div className="flex items-center space-x-2">
           <button
             onClick={() => !readOnly && onDelete(field.id)}
@@ -123,26 +140,32 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, r
 
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label
+            htmlFor="field-label"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          >
             Field Label *
           </label>
           <input
-            {...register('label')}
+            id="field-label"
+            {...register("label")}
             disabled={readOnly}
             className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
             placeholder="Enter field label"
           />
-          {errors.label && (
-            <p className="text-red-500 text-sm mt-1">{errors.label.message}</p>
-          )}
+          {errors.label && <p className="text-red-500 text-sm mt-1">{errors.label.message}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label
+            htmlFor="field-placeholder"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          >
             Placeholder Text
           </label>
           <input
-            {...register('placeholder')}
+            id="field-placeholder"
+            {...register("placeholder")}
             disabled={readOnly}
             className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300 disabled:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
             placeholder="Enter placeholder text"
@@ -150,30 +173,33 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, r
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <div className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Description (Help Text)
-          </label>
+          </div>
           <MarkdownEditor
-            value={field.description || ''}
-            onChange={(value: string) => !readOnly && setValue('description', value)}
+            value={field.description || ""}
+            onChange={(value: string) => !readOnly && setValue("description", value)}
             placeholderText="Optional description or help text"
             height={200}
             minHeight={170}
             disabled={readOnly}
             className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300"
           />
-
         </div>
 
         <div className="space-y-3">
           <div className="flex items-center">
             <input
-              {...register('required')}
+              id="field-required"
+              {...register("required")}
               type="checkbox"
               disabled={readOnly}
               className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
             />
-            <label className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+            <label
+              htmlFor="field-required"
+              className="ml-2 text-sm text-gray-700 dark:text-gray-300"
+            >
               Required field
             </label>
           </div>
@@ -181,12 +207,16 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, r
           {!isPostApprovalMode && (
             <div className="flex items-center">
               <input
-                {...register('private')}
+                id="field-private"
+                {...register("private")}
                 type="checkbox"
                 disabled={readOnly}
                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
               />
-              <label className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+              <label
+                htmlFor="field-private"
+                className="ml-2 text-sm text-gray-700 dark:text-gray-300"
+              >
                 Private field
               </label>
               <QuestionTooltip
@@ -207,30 +237,33 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, r
             <div className="space-y-3">
               <div className="flex items-center">
                 <input
-                  {...register('aiEvaluation.includeInEvaluation')}
+                  id="field-ai-eval"
+                  {...register("aiEvaluation.includeInEvaluation")}
                   type="checkbox"
                   disabled={readOnly}
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
                 />
-                <label className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                <label
+                  htmlFor="field-ai-eval"
+                  className="ml-2 text-sm text-gray-700 dark:text-gray-300"
+                >
                   Include this field in AI evaluation context
                 </label>
               </div>
-
-
             </div>
 
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-              Real-time evaluation provides instant feedback to applicants as they complete the form.
+              Real-time evaluation provides instant feedback to applicants as they complete the
+              form.
             </p>
           </div>
         )}
 
         {hasOptions && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <div className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Options
-            </label>
+            </div>
             <div className="space-y-2">
               {watchedOptions.map((option, index) => (
                 <div key={index} className="flex items-center space-x-2">
@@ -265,18 +298,22 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, r
         )}
 
         {/* Milestone-specific validation */}
-        {field.type === 'milestone' && (
+        {field.type === "milestone" && (
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <div className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Milestone Limits
-            </label>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
+                <label
+                  htmlFor="min-milestones"
+                  className="block text-xs text-gray-600 dark:text-gray-400 mb-1"
+                >
                   Minimum Milestones
                 </label>
                 <input
-                  {...register('validation.minMilestones', { valueAsNumber: true })}
+                  id="min-milestones"
+                  {...register("validation.minMilestones", { valueAsNumber: true })}
                   type="number"
                   min="0"
                   disabled={readOnly}
@@ -285,11 +322,15 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, r
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
+                <label
+                  htmlFor="max-milestones"
+                  className="block text-xs text-gray-600 dark:text-gray-400 mb-1"
+                >
                   Maximum Milestones
                 </label>
                 <input
-                  {...register('validation.maxMilestones', { valueAsNumber: true })}
+                  id="max-milestones"
+                  {...register("validation.maxMilestones", { valueAsNumber: true })}
                   type="number"
                   min="1"
                   disabled={readOnly}
@@ -303,7 +344,6 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown, r
             </p>
           </div>
         )}
-
       </div>
     </div>
   );

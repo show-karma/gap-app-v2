@@ -1,6 +1,8 @@
-import { Skeleton } from "@/components/Utilities/Skeleton";
-import { ProgramHeader } from "../ProgramHeader";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { Skeleton } from "@/components/Utilities/Skeleton";
+import { layoutTheme } from "@/src/helper/theme";
+import { cn } from "@/utilities/tailwind";
+import { ProgramHeader } from "../ProgramHeader";
 
 export const LoadingProgramTable = () => {
   const emptyArrayHeader = Array.from({ length: 7 });
@@ -13,7 +15,7 @@ export const LoadingProgramTable = () => {
             <table className="min-w-full divide-y divide-gray-300 h-full">
               <thead>
                 <tr className="">
-                  {emptyArrayHeader.map((row, index) => {
+                  {emptyArrayHeader.map((_row, index) => {
                     return (
                       <th key={index}>
                         <Skeleton className="h-9 w-full max-lg:min-w-40 rounded-lg border-0 my-2" />
@@ -23,10 +25,10 @@ export const LoadingProgramTable = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {emptyArrayRows.map((row, index) => {
+                {emptyArrayRows.map((_row, index) => {
                   return (
                     <tr key={index}>
-                      {emptyArrayHeader.map((row, indexH) => {
+                      {emptyArrayHeader.map((_row, indexH) => {
                         return (
                           <td key={indexH}>
                             <Skeleton className="h-12 w-full max-lg:min-w-40 rounded-lg my-5" />
@@ -47,7 +49,12 @@ export const LoadingProgramTable = () => {
 
 export const LoadingPrograms = () => {
   return (
-    <section className="my-8 flex w-full max-w-full flex-col justify-between items-center gap-6 px-6 pb-7 max-2xl:px-4 max-md:px-4 max-md:pt-0 max-md:my-4">
+    <section
+      className={cn(
+        layoutTheme.padding,
+        "flex w-full max-w-full flex-col justify-between items-center gap-6 pb-7 max-md:pt-0"
+      )}
+    >
       <ProgramHeader />
 
       <div className="flex flex-row items-center justify-end max-sm:justify-start gap-2.5  flex-wrap w-full">

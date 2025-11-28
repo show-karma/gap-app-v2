@@ -1,17 +1,18 @@
 // V2 Status Types
-export type FundingApplicationStatusV2 = 
+export type FundingApplicationStatusV2 =
   | "pending"
   | "under_review"
-  | "revision_requested" 
+  | "revision_requested"
   | "approved"
-  | "rejected";
+  | "rejected"
+  | "resubmitted";
 
 // Application Comment Types
 export interface ApplicationComment {
   id: string;
   applicationId: string;
   authorAddress: string;
-  authorRole: 'applicant' | 'admin' | 'reviewer';
+  authorRole: "applicant" | "admin" | "reviewer";
   authorName?: string;
   content: string;
   isDeleted: boolean;
@@ -129,6 +130,7 @@ export interface IApplicationStatistics {
   rejectedApplications: number;
   revisionRequestedApplications?: number;
   underReviewApplications?: number;
+  resubmittedApplications?: number;
 }
 
 // V2 API Error Response
@@ -234,7 +236,7 @@ export interface IApplicationVersionLegacy {
   statusHistory: IStatusHistoryEntry[];
   editorAddress?: string;
   editorName?: string;
-  editorRole?: 'applicant' | 'admin' | 'reviewer';
+  editorRole?: "applicant" | "admin" | "reviewer";
   changesSummary?: string;
   createdAt: string | Date;
 }
@@ -252,10 +254,12 @@ export interface IApplicationListComponentProps {
 
 // Type conversion helpers
 export function isFormSchema(schema: any): boolean {
-  return schema && 
-    typeof schema === 'object' && 
+  return (
+    schema &&
+    typeof schema === "object" &&
     Array.isArray(schema.fields) &&
-    (schema.id === undefined || typeof schema.id === 'string') &&
-    (schema.title === undefined || typeof schema.title === 'string') &&
-    (schema.settings === undefined || typeof schema.settings === 'object');
+    (schema.id === undefined || typeof schema.id === "string") &&
+    (schema.title === undefined || typeof schema.title === "string") &&
+    (schema.settings === undefined || typeof schema.settings === "object")
+  );
 }

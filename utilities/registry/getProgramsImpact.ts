@@ -1,6 +1,6 @@
-import { CategoriesOptions } from "@/components/Pages/Admin/EditCategoriesPage";
+import type { CategoriesOptions } from "@/components/Pages/Admin/EditCategoriesPage";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { ProgramImpactData, ProgramImpactDataResponse } from "@/types/programs";
+import type { ProgramImpactData, ProgramImpactDataResponse } from "@/types/programs";
 import fetchData from "../fetchData";
 import { INDEXER } from "../indexer";
 import { getCommunityDetailsV2 } from "../queries/getCommunityDataV2";
@@ -8,8 +8,8 @@ import { getCommunityDetailsV2 } from "../queries/getCommunityDataV2";
 export async function getProgramsImpact(
   communityId: string,
   allCategories?: CategoriesOptions[],
-  programSelected?: string | null,
-  projectSelected?: string | null
+  _programSelected?: string | null,
+  _projectSelected?: string | null
 ): Promise<ProgramImpactData> {
   try {
     // First get the community details to obtain the UID
@@ -36,17 +36,17 @@ export async function getProgramsImpact(
 
     // Transform the new API response to match the expected ProgramImpactData structure
     const impactSegments = data || [];
-    
+
     // Group impact segments by categoryName (using the actual category names from API)
     const groupedByCategory = impactSegments.reduce((acc: any, segment: any) => {
-      const categoryName = segment.categoryName || 'Unknown Category';
+      const categoryName = segment.categoryName || "Unknown Category";
       if (!acc[categoryName]) {
         acc[categoryName] = {
           categoryName: categoryName,
-          impacts: []
+          impacts: [],
         };
       }
-      
+
       acc[categoryName].impacts.push({
         categoryName: categoryName,
         impactSegmentName: segment.name,
@@ -56,7 +56,7 @@ export async function getProgramsImpact(
         impactIndicatorIds: segment.impactIndicatorIds || [], // Current structure
         indicators: [], // Empty array for backward compatibility
       });
-      
+
       return acc;
     }, {});
 
@@ -68,14 +68,12 @@ export async function getProgramsImpact(
         totalProjects: 0, // Can't determine from current API
         totalFundingAllocated: "0", // Can't determine from current API
       },
-      data: transformedData
+      data: transformedData,
     };
 
     // If allCategories is provided, ensure all categories are included
     if (allCategories?.length) {
-      const existingCategoryNames = new Set(
-        impactData.data.map((item) => item.categoryName)
-      );
+      const existingCategoryNames = new Set(impactData.data.map((item) => item.categoryName));
 
       // Add missing categories with empty impacts array
       const missingCategories = allCategories

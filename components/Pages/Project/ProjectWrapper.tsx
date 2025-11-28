@@ -1,29 +1,29 @@
 "use client";
+import Image from "next/image";
 import React from "react";
 import { ProgressDialog } from "@/components/Dialogs/ProgressDialog";
+import { Globe } from "@/components/Icons";
 import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
 import { ProjectNavigator } from "@/components/Pages/Project/ProjectNavigator";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
-import { Globe } from "@/components/Icons";
+import { useContactInfo } from "@/hooks/useContactInfo";
+import { useProject } from "@/hooks/useProject";
+import { useProjectMembers } from "@/hooks/useProjectMembers";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
+import { useProjectSocials } from "@/hooks/useProjectSocials";
+import { useTeamProfiles } from "@/hooks/useTeamProfiles";
+import { layoutTheme } from "@/src/helper/theme";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useIntroModalStore } from "@/store/modals/intro";
 import { useProgressModalStore } from "@/store/modals/progress";
-import Image from "next/image";
-
-import { IntroDialog } from "./IntroDialog";
-
-import { useContactInfo } from "@/hooks/useContactInfo";
-import { ShareDialog } from "../GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/ShareDialog";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
-import { useProject } from "@/hooks/useProject";
-import { useTeamProfiles } from "@/hooks/useTeamProfiles";
-import { useProjectPermissions } from "@/hooks/useProjectPermissions";
-import { useProjectSocials } from "@/hooks/useProjectSocials";
-import { useProjectMembers } from "@/hooks/useProjectMembers";
 import { isCustomLink } from "@/utilities/customLink";
 import { ensureProtocol } from "@/utilities/ensureProtocol";
+import { cn } from "@/utilities/tailwind";
+import { ShareDialog } from "../GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/ShareDialog";
+import { IntroDialog } from "./IntroDialog";
 
 interface ProjectWrapperProps {
   projectId: string;
@@ -66,7 +66,12 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
       {isProgressModalOpen ? <ProgressDialog /> : null}
       {isShareDialogOpen ? <ShareDialog /> : null}
       <div className="relative border-b border-gray-200 ">
-        <div className="px-4 sm:px-6 lg:px-12 lg:flex py-5 lg:items-start lg:justify-between flex flex-row max-lg:flex-col max-lg:justify-center max-lg:items-center gap-4">
+        <div
+          className={cn(
+            layoutTheme.padding,
+            "lg:flex lg:items-start lg:justify-between flex flex-row max-lg:flex-col max-lg:justify-center max-lg:items-center gap-4"
+          )}
+        >
           <div className="flex flex-row gap-4 items-start">
             <div className="flex justify-center">
               <ProfilePicture
@@ -166,7 +171,7 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
           </div>
         </div>
         <div className="mt-4 max-sm:px-4">
-          <div className="sm:px-6 lg:px-12  sm:block">
+          <div className={cn(layoutTheme.padding, "py-0")}>
             <ProjectNavigator
               hasContactInfo={hasContactInfo}
               grantsLength={project?.grants?.length || 0}

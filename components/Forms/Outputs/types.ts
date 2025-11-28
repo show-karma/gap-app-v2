@@ -1,4 +1,4 @@
-import { ImpactIndicatorWithData } from "@/types/impactMeasurement";
+import type { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 
 export interface CategorizedIndicator extends ImpactIndicatorWithData {
   source: "project" | "community" | "unlinked";

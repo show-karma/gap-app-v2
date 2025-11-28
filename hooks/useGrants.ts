@@ -1,8 +1,8 @@
+import { useQuery } from "@tanstack/react-query";
+import type { Hex } from "viem";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { reduceText } from "@/utilities/reduceText";
-import { getGrants, GrantsFilter } from "@/utilities/sdk/communities/getGrants";
-import { useQuery } from "@tanstack/react-query";
-import { Hex } from "viem";
+import { type GrantsFilter, getGrants } from "@/utilities/sdk/communities/getGrants";
 
 export type SimplifiedGrant = {
   grant: string;
@@ -50,7 +50,7 @@ export const useGrants = (communityId: string, options?: UseGrantsOptions) => {
             project: grant.project?.details?.data?.title || "",
             description: reduceText(grant.details?.data?.description || ""),
             categories: grant.categories || [],
-            regions: grant.regions || [] ,
+            regions: grant.regions || [],
             uid: grant.uid,
             projectUid: grant.project?.uid || "",
             projectSlug: grant.project?.details?.data?.slug || "",

@@ -1,7 +1,7 @@
-import { useState, useRef } from "react";
-import { envVars } from "@/utilities/enviromentVars";
+import { useRef, useState } from "react";
 import { useAccount } from "wagmi";
-import { Project } from "./CommunityProjectEvaluatorPage";
+import { envVars } from "@/utilities/enviromentVars";
+import type { Project } from "./CommunityProjectEvaluatorPage";
 
 export interface Message {
   id: string;
@@ -62,41 +62,32 @@ export function useChat(options: UseChatOptions) {
 
     // Filter out tool-related messages
     const messagesToSend = allMessages
-      .filter(
-        (msg) =>
-          (msg.role === "user" || msg.role === "assistant") && !msg.tool_calls
-      )
+      .filter((msg) => (msg.role === "user" || msg.role === "assistant") && !msg.tool_calls)
       .map(({ role, content }) => ({ role, content }));
 
     setAllMessages((prev) => [...prev, userMessage]);
 
     try {
-      const response = await fetch(
-        `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}/karma-beacon`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            messages: [
-              ...messagesToSend,
-              { role: userMessage.role, content: userMessage.content },
-            ],
-            projects: options.body.projects,
-            projectsInProgram: options.body.projectsInProgram,
-            sessionId: sessionIdRef.current,
-            programId: options.body.programId,
-            chainId: options.body.chainId,
-            communityId: options.body.communityId,
-          }),
-        }
-      );
+      const response = await fetch(`${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}/karma-beacon`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [...messagesToSend, { role: userMessage.role, content: userMessage.content }],
+          projects: options.body.projects,
+          projectsInProgram: options.body.projectsInProgram,
+          sessionId: sessionIdRef.current,
+          programId: options.body.programId,
+          chainId: options.body.chainId,
+          communityId: options.body.communityId,
+        }),
+      });
 
       if (!response.ok) throw new Error("Stream response not ok");
       const reader = response.body?.getReader();
       if (!reader) throw new Error("No reader available");
 
       const decoder = new TextDecoder();
-      let currentLoopMessages = new Map<string, Partial<Message>>();
+      const currentLoopMessages = new Map<string, Partial<Message>>();
 
       while (true) {
         const { done, value } = await reader.read();
@@ -109,7 +100,6 @@ export function useChat(options: UseChatOptions) {
           if (message.trim().startsWith("data: ")) {
             const data = message.slice(5).trim();
             if (data === "[DONE]") {
-              console.log("Stream completed");
               continue;
             }
 

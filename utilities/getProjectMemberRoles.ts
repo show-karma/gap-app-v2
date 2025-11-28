@@ -1,7 +1,7 @@
-import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { getRPCClient } from "./rpcClient";
-import { Project } from "@show-karma/karma-gap-sdk/core/class/entities/Project";
+import type { Project } from "@show-karma/karma-gap-sdk/core/class/entities/Project";
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { SignerOrProvider } from "@show-karma/karma-gap-sdk/core/types";
+import { getRPCClient } from "./rpcClient";
 
 export interface Member {
   uid: string;
@@ -23,25 +23,26 @@ export const getProjectMemberRoles = async (
 
     await Promise.all(
       project.members
-        .filter((member) => member.recipient).map(async (member) => {
-        const isProjectOwner = await projectInstance
-          .isOwner(signer, member.recipient)
-          .catch((error) => {
-            return false;
-          });
-        const isProjectAdmin = await projectInstance
-          .isAdmin(signer, member.recipient)
-          .catch((error) => {
-            return false;
-          });
-        if (!roles[member.recipient.toLowerCase()]) {
-          roles[member.recipient.toLowerCase()] = isProjectOwner
-            ? "Owner"
-            : isProjectAdmin
-            ? "Admin"
-            : "Member";
-        }
-      })
+        .filter((member) => member.recipient)
+        .map(async (member) => {
+          const isProjectOwner = await projectInstance
+            .isOwner(signer, member.recipient)
+            .catch((_error) => {
+              return false;
+            });
+          const isProjectAdmin = await projectInstance
+            .isAdmin(signer, member.recipient)
+            .catch((_error) => {
+              return false;
+            });
+          if (!roles[member.recipient.toLowerCase()]) {
+            roles[member.recipient.toLowerCase()] = isProjectOwner
+              ? "Owner"
+              : isProjectAdmin
+                ? "Admin"
+                : "Member";
+          }
+        })
     );
   }
   if (project?.recipient && !roles[project.recipient.toLowerCase()]) {

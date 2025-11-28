@@ -1,6 +1,5 @@
 "use client";
 
-import { ChevronLeftIcon } from "@heroicons/react/20/solid";
 import { useRouter } from "next/navigation";
 
 interface CheckoutHeaderProps {
@@ -9,11 +8,7 @@ interface CheckoutHeaderProps {
   onClear: () => void;
 }
 
-export function CheckoutHeader({
-  communityId,
-  totalItems,
-  onClear,
-}: CheckoutHeaderProps) {
+export function CheckoutHeader({ onClear }: CheckoutHeaderProps) {
   const router = useRouter();
   return (
     <div className="mb-4 -mt-3">
@@ -25,12 +20,14 @@ export function CheckoutHeader({
         </div>
         <div className="gap-4 flex flex-row flex-wrap">
           <button
+            type="button"
             onClick={() => router.back()}
             className="px-4 py-2.5 rounded font-semibold flex items-center justify-center border border-brand-blue text-sm text-brand-blue"
           >
             Continue exploring
           </button>
           <button
+            data-testid="clear-cart"
             onClick={onClear}
             className="px-4 py-2.5 rounded font-semibold flex items-center justify-center border border-red-600 text-sm text-red-600"
           >

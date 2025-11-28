@@ -1,50 +1,30 @@
-import {
-  IGrantResponse,
-  IProjectResponse,
-  IProjectUpdate,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import {
-  FilteredOutputsAndOutcomes,
-  filterIndicators,
-} from "../Impact/FilteredOutputsAndOutcomes";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import type { IProjectUpdate } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useMemo } from "react";
-import { PAGES } from "@/utilities/pages";
-import { useImpactAnswers } from "@/hooks/useImpactAnswers";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useAccount } from "wagmi";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { useImpactAnswers } from "@/hooks/useImpactAnswers";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useCommunityAdminStore } from "@/store/communityAdmin";
+import { PAGES } from "@/utilities/pages";
+import { FilteredOutputsAndOutcomes, filterIndicators } from "../Impact/FilteredOutputsAndOutcomes";
 
-export const ProjectActivityBlock = ({
-  activity,
-}: {
-  activity: IProjectUpdate;
-}) => {
+export const ProjectActivityBlock = ({ activity }: { activity: IProjectUpdate }) => {
   const { project, isProjectOwner } = useProjectStore();
 
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isCommunityAdmin = useCommunityAdminStore(
-    (state) => state.isCommunityAdmin
-  );
+  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
 
-  const indicatorIds = activity.data?.indicators?.map(
-    (indicator) => indicator.indicatorId
-  );
+  const indicatorIds = activity.data?.indicators?.map((indicator) => indicator.indicatorId);
 
-  const indicatorNames = activity.data?.indicators?.map(
-    (indicator) => indicator.name
-  );
+  const indicatorNames = activity.data?.indicators?.map((indicator) => indicator.name);
 
   const { isConnected } = useAccount();
-  const isAuthorized =
-    isConnected && (isProjectOwner || isContractOwner || isCommunityAdmin);
+  const isAuthorized = isConnected && (isProjectOwner || isContractOwner || isCommunityAdmin);
 
-  const { data: impactAnswers = [], isLoading: isLoadingImpactAnswers } =
-    useImpactAnswers({
-      projectIdentifier: project?.uid as string,
-      enabled:
-        !!project?.uid && !!indicatorIds?.length && !!indicatorNames?.length,
-    });
+  const { data: impactAnswers = [], isLoading: isLoadingImpactAnswers } = useImpactAnswers({
+    projectIdentifier: project?.uid as string,
+    enabled: !!project?.uid && !!indicatorIds?.length && !!indicatorNames?.length,
+  });
 
   // Filter indicators based on IDs and names
   const filteredAnswers = useMemo(() => {
@@ -57,18 +37,11 @@ export const ProjectActivityBlock = ({
     : filteredAnswers.filter((item) => item.datapoints?.length);
 
   const relatedGrants = useMemo(() => {
-    if (
-      !project ||
-      !activity?.data?.grants ||
-      activity?.data?.grants?.length === 0
-    )
-      return [];
+    if (!project || !activity?.data?.grants || activity?.data?.grants?.length === 0) return [];
 
     // Find grants that match the activity's grants
     return project.grants.filter((grant) =>
-      activity?.data?.grants?.some(
-        (grantId) => grantId.toLowerCase() === grant.uid.toLowerCase()
-      )
+      activity?.data?.grants?.some((grantId) => grantId.toLowerCase() === grant.uid.toLowerCase())
     );
   }, [project, activity?.data?.grants]);
 
@@ -81,17 +54,12 @@ export const ProjectActivityBlock = ({
 
   return (
     <div className="flex flex-col gap-6 max-sm:gap-4">
-      <h3 className="font-bold text-black dark:text-zinc-100 text-xl">
-        Outputs
-      </h3>
+      <h3 className="font-bold text-black dark:text-zinc-100 text-xl">Outputs</h3>
       {activity.data?.deliverables?.length ? (
         <div className="flex w-full flex-col gap-2 p-6 bg-white dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-md">
-          <p className="text-sm font-bold text-black dark:text-zinc-100">
-            Deliverables
-          </p>
+          <p className="text-sm font-bold text-black dark:text-zinc-100">Deliverables</p>
           <div className="w-full">
-            {activity.data?.deliverables &&
-            activity.data?.deliverables?.length > 0 ? (
+            {activity.data?.deliverables && activity.data?.deliverables?.length > 0 ? (
               <div className="grid grid-cols-1 gap-4">
                 {activity.data.deliverables.map((deliverable, index) => (
                   <div
@@ -147,9 +115,7 @@ export const ProjectActivityBlock = ({
               </div>
             ) : (
               <div className="flex items-center justify-center p-6 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg">
-                <p className="text-sm text-gray-500 dark:text-zinc-400">
-                  No deliverables found
-                </p>
+                <p className="text-sm text-gray-500 dark:text-zinc-400">No deliverables found</p>
               </div>
             )}
           </div>
@@ -157,20 +123,13 @@ export const ProjectActivityBlock = ({
       ) : null}
       {activity.data?.indicators?.length && project ? (
         <div className="flex w-full flex-col gap-2 p-6 bg-white dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-md">
-          <p className="text-sm font-bold text-black dark:text-zinc-100">
-            Metrics
-          </p>
-          <FilteredOutputsAndOutcomes
-            indicatorIds={indicatorIds}
-            indicatorNames={indicatorNames}
-          />
+          <p className="text-sm font-bold text-black dark:text-zinc-100">Metrics</p>
+          <FilteredOutputsAndOutcomes indicatorIds={indicatorIds} indicatorNames={indicatorNames} />
 
           {/* Grants Section */}
           {relatedGrants?.length > 0 ? (
             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-zinc-700">
-              <p className="text-sm font-bold text-black dark:text-zinc-100 mb-3">
-                Related Grants
-              </p>
+              <p className="text-sm font-bold text-black dark:text-zinc-100 mb-3">Related Grants</p>
 
               <div className="grid grid-cols-1 gap-2">
                 {relatedGrants.map((grant) => (
@@ -195,9 +154,7 @@ export const ProjectActivityBlock = ({
                         grant.uid
                       )}
                       className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium"
-                      aria-label={`View grant: ${
-                        grant.details?.data?.title || grant.uid
-                      }`}
+                      aria-label={`View grant: ${grant.details?.data?.title || grant.uid}`}
                       tabIndex={0}
                     >
                       {grant.details?.data?.title || grant.uid}

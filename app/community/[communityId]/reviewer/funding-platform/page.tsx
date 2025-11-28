@@ -1,36 +1,36 @@
 "use client";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useReviewerPrograms } from "@/hooks/usePermissions";
-import { useFundingPrograms } from "@/hooks/useFundingPlatform";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { Button } from "@/components/Utilities/Button";
-import {
-  EyeIcon,
-  ChevronDownIcon,
-  ArrowTrendingUpIcon,
-  Cog6ToothIcon,
-  ArrowLeftIcon,
-} from "@heroicons/react/24/solid";
-import { PAGES } from "@/utilities/pages";
-import { cn } from "@/utilities/tailwind";
-import { useState, useMemo, useEffect } from "react";
-import { FundingProgram } from "@/services/fundingPlatformService";
-import { FundingPlatformStatsCard } from "@/components/FundingPlatform/Dashboard/card";
 import {
   CalendarIcon,
   CheckCircleIcon,
   ClockIcon,
   CurrencyDollarIcon,
+  EyeIcon as EyeIconOutline,
+  MagnifyingGlassIcon,
   UsersIcon,
   XCircleIcon,
-  MagnifyingGlassIcon,
-  EyeIcon as EyeIconOutline,
 } from "@heroicons/react/24/outline";
+import {
+  ArrowLeftIcon,
+  ArrowTrendingUpIcon,
+  ChevronDownIcon,
+  Cog6ToothIcon,
+  EyeIcon,
+} from "@heroicons/react/24/solid";
+import { Line } from "@rc-component/progress";
+import Link from "next/link";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import pluralize from "pluralize";
+import { useEffect, useMemo, useState } from "react";
+import { Button } from "@/components/Utilities/Button";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { useFundingPrograms } from "@/hooks/useFundingPlatform";
+import { useReviewerPrograms } from "@/hooks/usePermissions";
+import type { FundingProgram } from "@/services/fundingPlatformService";
+import { layoutTheme } from "@/src/helper/theme";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
-import { Line } from "@rc-component/progress";
-import pluralize from "pluralize";
-import Link from "next/link";
+import { PAGES } from "@/utilities/pages";
+import { cn } from "@/utilities/tailwind";
 
 /**
  * Reviewer funding platform page
@@ -57,23 +57,19 @@ export default function ReviewerFundingPlatformPage() {
     if (!allPrograms || !reviewerPrograms) return [];
 
     // Create a Set of program keys for quick lookup
-    const reviewerProgramKeys = new Set(
-      reviewerPrograms.map(p => `${p.programId}_${p.chainID}`)
-    );
+    const reviewerProgramKeys = new Set(reviewerPrograms.map((p) => `${p.programId}_${p.chainID}`));
 
     // Filter all programs to only include those in reviewer programs
-    return allPrograms.filter(program =>
+    return allPrograms.filter((program) =>
       reviewerProgramKeys.has(`${program.programId}_${program.chainID}`)
     );
   }, [allPrograms, reviewerPrograms]);
 
   // Initialize from URL params
-  const [searchTerm, setSearchTerm] = useState(
-    searchParams.get("search") || ""
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
+  const [enabledFilter, setEnabledFilter] = useState<"all" | "enabled" | "disabled">(
+    (searchParams.get("status") as "all" | "enabled" | "disabled") || "all"
   );
-  const [enabledFilter, setEnabledFilter] = useState<
-    "all" | "enabled" | "disabled"
-  >((searchParams.get("status") as "all" | "enabled" | "disabled") || "all");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   // Calculate statistics from programs
@@ -103,16 +99,13 @@ export default function ReviewerFundingPlatformPage() {
         const programStats = program.metrics || undefined;
         return {
           totalPrograms: acc.totalPrograms + 1,
-          totalApplications:
-            acc.totalApplications + (programStats?.totalApplications || 0),
+          totalApplications: acc.totalApplications + (programStats?.totalApplications || 0),
           approved: acc.approved + (programStats?.approvedApplications || 0),
           rejected: acc.rejected + (programStats?.rejectedApplications || 0),
           pending: acc.pending + (programStats?.pendingApplications || 0),
           revisionRequested:
-            acc.revisionRequested +
-            (programStats?.revisionRequestedApplications || 0),
-          underReview:
-            acc.underReview + (programStats?.underReviewApplications || 0),
+            acc.revisionRequested + (programStats?.revisionRequestedApplications || 0),
+          underReview: acc.underReview + (programStats?.underReviewApplications || 0),
         };
       },
       {
@@ -184,7 +177,7 @@ export default function ReviewerFundingPlatformPage() {
 
   if (programsError) {
     return (
-      <div className="px-4 sm:px-6 lg:px-12 py-5">
+      <div className={layoutTheme.padding}>
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
           <p className="text-red-700 dark:text-red-300">
             Error loading funding programs. Please try again later.
@@ -194,33 +187,27 @@ export default function ReviewerFundingPlatformPage() {
     );
   }
 
-  const stats = [
+  const _stats = [
     {
       title: "Total Programs",
       value: formatCurrency(statistics.totalPrograms),
       color: "text-blue-600",
       bgColor: "bg-blue-50 dark:bg-blue-900",
-      icon: (
-        <ArrowTrendingUpIcon className="w-5 h-5 text-blue-700 dark:text-blue-100" />
-      ),
+      icon: <ArrowTrendingUpIcon className="w-5 h-5 text-blue-700 dark:text-blue-100" />,
     },
     {
       title: "Total Applications",
       value: formatCurrency(statistics.totalApplications),
       color: "text-purple-600",
       bgColor: "bg-purple-50 dark:bg-purple-900",
-      icon: (
-        <UsersIcon className="h-5 w-5 text-purple-700 dark:text-purple-100" />
-      ),
+      icon: <UsersIcon className="h-5 w-5 text-purple-700 dark:text-purple-100" />,
     },
     {
       title: "Approved",
       value: formatCurrency(statistics.approved),
       color: "text-green-600",
       bgColor: "bg-green-50 dark:bg-green-900",
-      icon: (
-        <CheckCircleIcon className="h-5 w-5 text-green-700 dark:text-green-100" />
-      ),
+      icon: <CheckCircleIcon className="h-5 w-5 text-green-700 dark:text-green-100" />,
     },
     {
       title: "Rejected",
@@ -234,48 +221,37 @@ export default function ReviewerFundingPlatformPage() {
       value: formatCurrency(statistics.pending),
       color: "text-orange-600",
       bgColor: "bg-orange-50 dark:bg-orange-900",
-      icon: (
-        <ClockIcon className="h-5 w-5 text-orange-700 dark:text-orange-100" />
-      ),
+      icon: <ClockIcon className="h-5 w-5 text-orange-700 dark:text-orange-100" />,
     },
     {
       title: "Under Review",
       value: formatCurrency(statistics.underReview),
       color: "text-pink-600",
       bgColor: "bg-pink-50 dark:bg-pink-900",
-      icon: (
-        <EyeIconOutline className="h-5 w-5 text-pink-700 dark:text-pink-100" />
-      ),
+      icon: <EyeIconOutline className="h-5 w-5 text-pink-700 dark:text-pink-100" />,
     },
     {
       title: "Revision Requested",
       value: formatCurrency(statistics.revisionRequested),
       color: "text-indigo-600",
       bgColor: "bg-indigo-50 dark:bg-indigo-900",
-      icon: (
-        <MagnifyingGlassIcon className="h-5 w-5 text-indigo-700 dark:text-indigo-100" />
-      ),
+      icon: <MagnifyingGlassIcon className="h-5 w-5 text-indigo-700 dark:text-indigo-100" />,
     },
   ];
 
   const cardStats = (program: any) => [
     {
       title: "Funding Amount",
-      value:
-        formatCurrency(
-          program.totalAmount || program.metadata?.totalAmount || 0
-        ) || 0,
-      icon: (
-        <CurrencyDollarIcon className="w-5 h-5 text-blue-700 dark:text-blue-100" />
-      ),
+      value: formatCurrency(program.totalAmount || program.metadata?.totalAmount || 0) || 0,
+      icon: <CurrencyDollarIcon className="w-5 h-5 text-blue-700 dark:text-blue-100" />,
     },
     {
       title: "Applicants",
       value: formatCurrency(
         program.metrics?.totalApplications ||
-        program.metrics?.applicationCount ||
-        program.grantPlatform?.stats?.total ||
-        0
+          program.metrics?.applicationCount ||
+          program.grantPlatform?.stats?.total ||
+          0
       ),
       icon: <UsersIcon className="w-5 h-5 text-blue-700 dark:text-blue-100" />,
     },
@@ -285,17 +261,14 @@ export default function ReviewerFundingPlatformPage() {
     const totalApplications = program.metrics?.totalApplications || 0;
     const approvedApplications = program.metrics?.approvedApplications || 0;
 
-    return (
-      Number(((approvedApplications / totalApplications) * 100).toFixed(2)) || 0
-    );
+    return Number(((approvedApplications / totalApplications) * 100).toFixed(2)) || 0;
   };
 
   const applicationProgress = (program: FundingProgram) => {
     const approvedApplications = program.metrics?.approvedApplications || 0;
     const rejectedApplications = program.metrics?.rejectedApplications || 0;
     const pendingApplications = program.metrics?.pendingApplications || 0;
-    const revisionRequestedApplications =
-      program.metrics?.revisionRequestedApplications || 0;
+    const revisionRequestedApplications = program.metrics?.revisionRequestedApplications || 0;
     const underReviewApplications = program.metrics?.underReviewApplications || 0;
 
     return [
@@ -337,10 +310,7 @@ export default function ReviewerFundingPlatformPage() {
       {/* Back Button */}
       <div>
         <Link href={PAGES.MY_REVIEWS}>
-          <Button
-            variant="secondary"
-            className="flex items-center gap-2"
-          >
+          <Button variant="secondary" className="flex items-center gap-2">
             <ArrowLeftIcon className="w-4 h-4" />
             Back to My Reviews
           </Button>
@@ -387,6 +357,7 @@ export default function ReviewerFundingPlatformPage() {
           {/* Enabled/Disabled Filter Dropdown */}
           <div className="relative">
             <button
+              type="button"
               className="flex items-center justify-between min-w-[160px] px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             >
@@ -407,6 +378,7 @@ export default function ReviewerFundingPlatformPage() {
                 {["all", "enabled", "disabled"].map((status) => (
                   <button
                     key={status}
+                    type="button"
                     onClick={() => {
                       setEnabledFilter(status as typeof enabledFilter);
                       setIsDropdownOpen(false);
@@ -460,9 +432,7 @@ export default function ReviewerFundingPlatformPage() {
                     <div
                       className={cn(
                         "w-2 h-2 rounded-full",
-                        program.applicationConfig?.isEnabled
-                          ? "bg-green-600"
-                          : "bg-gray-400"
+                        program.applicationConfig?.isEnabled ? "bg-green-600" : "bg-gray-400"
                       )}
                     />
                     <span className="font-medium">
@@ -505,9 +475,7 @@ export default function ReviewerFundingPlatformPage() {
                       >
                         <div className="flex flex-row gap-2 items-center">
                           {item.icon}
-                          <p className="text-blue-600 dark:text-blue-100 text-sm">
-                            {item.title}
-                          </p>
+                          <p className="text-blue-600 dark:text-blue-100 text-sm">{item.title}</p>
                         </div>
                         <p className="text-blue-600 font-bold dark:text-blue-200 text-lg">
                           {item.value}
@@ -540,9 +508,7 @@ export default function ReviewerFundingPlatformPage() {
                               item.bgColor
                             )}
                           />
-                          <p className={cn("text-sm", item.color)}>
-                            {item.title}
-                          </p>
+                          <p className={cn("text-sm", item.color)}>{item.title}</p>
                         </div>
                         <p className={cn("text-sm", item.color)}>
                           {formatCurrency(item.value || 0)}
@@ -562,7 +528,11 @@ export default function ReviewerFundingPlatformPage() {
                 {/* Action Buttons - View Applications and View Form */}
                 <div className="flex flex-row gap-2">
                   <Link
-                    href={PAGES.REVIEWER.APPLICATIONS(communityId, program.programId, program.chainID)}
+                    href={PAGES.REVIEWER.APPLICATIONS(
+                      communityId,
+                      program.programId,
+                      program.chainID
+                    )}
                     className="w-full"
                   >
                     <Button
@@ -574,7 +544,11 @@ export default function ReviewerFundingPlatformPage() {
                     </Button>
                   </Link>
                   <Link
-                    href={PAGES.REVIEWER.QUESTION_BUILDER(communityId, program.programId, program.chainID)}
+                    href={PAGES.REVIEWER.QUESTION_BUILDER(
+                      communityId,
+                      program.programId,
+                      program.chainID
+                    )}
                     className="w-full"
                   >
                     <Button
@@ -589,19 +563,23 @@ export default function ReviewerFundingPlatformPage() {
 
                 {/* Pending Applications Alert */}
                 {program?.metrics?.pendingApplications &&
-                  program.metrics.pendingApplications > 0 ? (
+                program.metrics.pendingApplications > 0 ? (
                   <div className="mt-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
                     <Link
-                      href={PAGES.REVIEWER.APPLICATIONS(communityId, program.programId, program.chainID)}
+                      href={PAGES.REVIEWER.APPLICATIONS(
+                        communityId,
+                        program.programId,
+                        program.chainID
+                      )}
                     >
-                      <button className="rounded-lg px-2 py-2 w-full border-none text-left flex items-center justify-between text-orange-700 dark:text-orange-300 text-sm hover:text-orange-800 dark:hover:text-orange-200">
+                      <button
+                        type="button"
+                        className="rounded-lg px-2 py-2 w-full border-none text-left flex items-center justify-between text-orange-700 dark:text-orange-300 text-sm hover:text-orange-800 dark:hover:text-orange-200"
+                      >
                         <span>
                           {program.metrics?.pendingApplications}{" "}
-                          {pluralize(
-                            "application",
-                            program.metrics?.pendingApplications
-                          )}{" "}
-                          pending review
+                          {pluralize("application", program.metrics?.pendingApplications)} pending
+                          review
                         </span>
                         <EyeIcon className="w-4 h-4" />
                       </button>
@@ -619,8 +597,7 @@ export default function ReviewerFundingPlatformPage() {
                 No Programs Found
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                No programs match your search criteria. Try adjusting your
-                filters.
+                No programs match your search criteria. Try adjusting your filters.
               </p>
             </div>
           </div>

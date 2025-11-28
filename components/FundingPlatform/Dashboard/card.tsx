@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 import { cn } from "@/utilities/tailwind";
 
 interface FundingPlatformStatsCardProps {
@@ -24,12 +24,7 @@ export const FundingPlatformStatsCard = ({
     <div className="border-0 ring-1 ring-gray-200 dark:bg-zinc-900 hover:shadow-md transition-shadow p-6 rounded-md">
       <div className="flex items-center justify-between">
         <div>
-          <p
-            className={cn(
-              "text-sm font-medium text-gray-600 dark:text-zinc-400",
-              titleClassname
-            )}
-          >
+          <p className={cn("text-sm font-medium text-gray-600 dark:text-zinc-400", titleClassname)}>
             {title}
           </p>
           <p

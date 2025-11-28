@@ -1,37 +1,28 @@
 "use client";
 
-import { Button } from "@/components/Utilities/Button";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { useCommunityDetails } from "@/hooks/useCommunityDetails";
-import { useGrants } from "@/hooks/useGrants";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
-import {
-  useBatchUpdatePayouts,
-  AttestationBatchUpdateItem,
-} from "@/hooks/useCommunityPayouts";
-import { MESSAGES } from "@/utilities/messages";
-import { PAGES } from "@/utilities/pages";
 import { ChevronLeftIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
-import {
-  useParams,
-  useRouter,
-  useSearchParams,
-  usePathname,
-} from "next/navigation";
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
 import { isAddress } from "viem";
-import { cn } from "@/utilities/tailwind";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import TablePagination from "@/components/Utilities/TablePagination";
+import { useAccount } from "wagmi";
 import { ProgramFilter } from "@/components/Pages/Communities/Impact/ProgramFilter";
+import { Button } from "@/components/Utilities/Button";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { Spinner } from "@/components/Utilities/Spinner";
+import TablePagination from "@/components/Utilities/TablePagination";
+import { useCommunityDetails } from "@/hooks/useCommunityDetails";
 import {
-  PayoutsCsvUpload,
-  CsvPayoutData,
-  CsvParseResult,
-} from "./PayoutsCsvUpload";
+  type AttestationBatchUpdateItem,
+  useBatchUpdatePayouts,
+} from "@/hooks/useCommunityPayouts";
+import { useGrants } from "@/hooks/useGrants";
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
+import { cn } from "@/utilities/tailwind";
+import { type CsvParseResult, PayoutsCsvUpload } from "./PayoutsCsvUpload";
 
 // Component-specific types
 interface EditableFields {
@@ -61,9 +52,7 @@ export default function PayoutsAdminPage() {
   const communityId = params.communityId as string;
 
   // State for tracking edits
-  const [editedFields, setEditedFields] = useState<
-    Record<string, EditableFields>
-  >({});
+  const [editedFields, setEditedFields] = useState<Record<string, EditableFields>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Get values from URL params or use defaults
@@ -97,8 +86,10 @@ export default function PayoutsAdminPage() {
   } = useCommunityDetails(communityId);
 
   // Check if user is admin of this community
-  const { isCommunityAdmin: isAdmin, isLoading: loadingAdmin } =
-    useIsCommunityAdmin(community?.uid, address);
+  const { isCommunityAdmin: isAdmin, isLoading: loadingAdmin } = useIsCommunityAdmin(
+    community?.uid,
+    address
+  );
 
   // Extract the actual programId from the composite value (programId_chainId)
   const actualProgramId = selectedProgramId?.split("_")[0] || null;
@@ -109,9 +100,7 @@ export default function PayoutsAdminPage() {
     isLoading: isLoadingGrants,
     refetch: refreshGrants,
   } = useGrants(communityId, {
-    filter: actualProgramId
-      ? { selectedProgramId: actualProgramId }
-      : undefined,
+    filter: actualProgramId ? { selectedProgramId: actualProgramId } : undefined,
     paginationOps: {
       page: currentPage - 1, // Backend expects 0-based page index
       pageLimit: itemsPerPage,
@@ -188,11 +177,7 @@ export default function PayoutsAdminPage() {
   };
 
   // Handle field changes
-  const handleFieldChange = (
-    uid: string,
-    field: keyof EditableFields,
-    value: string
-  ) => {
+  const handleFieldChange = (uid: string, field: keyof EditableFields, value: string) => {
     setEditedFields((prev) => ({
       ...prev,
       [uid]: {
@@ -210,11 +195,7 @@ export default function PayoutsAdminPage() {
   };
 
   // Validate a single field
-  const validateField = (
-    uid: string,
-    field: keyof EditableFields,
-    value: string
-  ): boolean => {
+  const validateField = (uid: string, field: keyof EditableFields, value: string): boolean => {
     if (field === "payoutAddress" && value) {
       if (!isAddress(value)) {
         setErrors((prev) => ({
@@ -229,8 +210,7 @@ export default function PayoutsAdminPage() {
       if (!/^\d+(\.\d{1,2})?$/.test(value)) {
         setErrors((prev) => ({
           ...prev,
-          [`${uid}-${field}`]:
-            "Must be a valid number with up to 2 decimal places",
+          [`${uid}-${field}`]: "Must be a valid number with up to 2 decimal places",
         }));
         return false;
       }
@@ -259,9 +239,7 @@ export default function PayoutsAdminPage() {
 
         parseResult.data.forEach((csvRow) => {
           // Find matching project in table data
-          const matchingProject = tableData.find(
-            (item) => item.projectSlug === csvRow.projectSlug
-          );
+          const matchingProject = tableData.find((item) => item.projectSlug === csvRow.projectSlug);
 
           if (matchingProject) {
             matchedCount++;
@@ -306,17 +284,17 @@ export default function PayoutsAdminPage() {
     if (exampleData.length === 0) {
       exampleData.push(
         {
-          projectSlug: "https://gap.karmahq.xyz/project/example-project-1",
+          projectSlug: "https://karmahq.xyz/project/example-project-1",
           payoutAddress: "0x1111111111111111111111111111111111111111",
           amount: "100.00",
         },
         {
-          projectSlug: "https://gap.karmahq.xyz/project/example-project-2",
+          projectSlug: "https://karmahq.xyz/project/example-project-2",
           payoutAddress: "0x2222222222222222222222222222222222222222",
           amount: "200.00",
         },
         {
-          projectSlug: "https://gap.karmahq.xyz/project/example-project-3",
+          projectSlug: "https://karmahq.xyz/project/example-project-3",
           payoutAddress: "0x3333333333333333333333333333333333333333",
           amount: "300.00",
         }
@@ -357,12 +335,9 @@ export default function PayoutsAdminPage() {
       if (!item) return;
 
       // Validate fields
-      if (fields.hasOwnProperty("payoutAddress")) {
+      if (Object.hasOwn(fields, "payoutAddress")) {
         // Allow empty string to clear the field
-        if (
-          fields.payoutAddress &&
-          !validateField(uid, "payoutAddress", fields.payoutAddress)
-        ) {
+        if (fields.payoutAddress && !validateField(uid, "payoutAddress", fields.payoutAddress)) {
           hasValidationError = true;
           return;
         }
@@ -375,7 +350,7 @@ export default function PayoutsAdminPage() {
         });
       }
 
-      if (fields.hasOwnProperty("amount")) {
+      if (Object.hasOwn(fields, "amount")) {
         // Allow empty string to clear the field
         if (fields.amount && !validateField(uid, "amount", fields.amount)) {
           hasValidationError = true;
@@ -449,9 +424,7 @@ export default function PayoutsAdminPage() {
   if (!isAdmin) {
     return (
       <div className="flex w-full items-center justify-center h-96">
-        <p className="text-lg">
-          {MESSAGES.ADMIN.NOT_AUTHORIZED(community?.uid || "")}
-        </p>
+        <p className="text-lg">{MESSAGES.ADMIN.NOT_AUTHORIZED(community?.uid || "")}</p>
       </div>
     );
   }
@@ -463,9 +436,7 @@ export default function PayoutsAdminPage() {
       <div className="w-full flex flex-col gap-8">
         <div className="w-full flex flex-wrap flex-row items-center justify-between px-4">
           <Link
-            href={PAGES.ADMIN.ROOT(
-              community?.details?.data?.slug || (community?.uid as string)
-            )}
+            href={PAGES.ADMIN.ROOT(community?.details?.data?.slug || (community?.uid as string))}
           >
             <Button className="flex flex-row items-center gap-2 px-0 py-2 bg-transparent text-black dark:text-white dark:bg-transparent hover:bg-transparent rounded-md transition-all ease-in-out duration-200">
               <ChevronLeftIcon className="h-5 w-5" />
@@ -481,18 +452,14 @@ export default function PayoutsAdminPage() {
               <select
                 className="border border-gray-300 dark:border-zinc-700 rounded-md px-3 py-1.5 pr-8 bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
                 value={itemsPerPage}
-                onChange={(e) =>
-                  handleItemsPerPageChange(Number(e.target.value))
-                }
+                onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
               >
                 <option value={20}>20</option>
                 <option value={50}>50</option>
                 <option value={100}>100</option>
                 <option value={200}>200</option>
               </select>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                entries
-              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">entries</p>
             </div>
           </div>
         </div>
@@ -513,28 +480,16 @@ export default function PayoutsAdminPage() {
             <table className="pt-3 min-w-full divide-y dark:bg-zinc-900 divide-gray-300 dark:divide-zinc-800 dark:text-white">
               <thead>
                 <tr className="border-b transition-colors text-gray-500 dark:text-gray-200 hover:bg-muted/50">
-                  <th
-                    scope="col"
-                    className="h-12 px-4 text-left align-middle font-medium"
-                  >
+                  <th scope="col" className="h-12 px-4 text-left align-middle font-medium">
                     Project
                   </th>
-                  <th
-                    scope="col"
-                    className="h-12 px-4 text-left align-middle font-medium"
-                  >
+                  <th scope="col" className="h-12 px-4 text-left align-middle font-medium">
                     Grant
                   </th>
-                  <th
-                    scope="col"
-                    className="h-12 px-4 text-left align-middle font-medium"
-                  >
+                  <th scope="col" className="h-12 px-4 text-left align-middle font-medium">
                     Payout Address
                   </th>
-                  <th
-                    scope="col"
-                    className="h-12 px-4 text-left align-middle font-medium"
-                  >
+                  <th scope="col" className="h-12 px-4 text-left align-middle font-medium">
                     Payout Amount
                   </th>
                 </tr>
@@ -552,9 +507,7 @@ export default function PayoutsAdminPage() {
                     >
                       <td className="px-4 py-2 font-medium h-16">
                         <ExternalLink
-                          href={PAGES.PROJECT.OVERVIEW(
-                            item.projectSlug || item.projectUid
-                          )}
+                          href={PAGES.PROJECT.OVERVIEW(item.projectSlug || item.projectUid)}
                           className="max-w-full line-clamp-2 underline"
                         >
                           {item.projectName}
@@ -562,10 +515,7 @@ export default function PayoutsAdminPage() {
                       </td>
                       <td className="px-4 py-2">
                         <ExternalLink
-                          href={PAGES.PROJECT.GRANT(
-                            item.projectSlug || item.projectUid,
-                            item.uid
-                          )}
+                          href={PAGES.PROJECT.GRANT(item.projectSlug || item.projectUid, item.uid)}
                           className="max-w-full line-clamp-2 underline"
                         >
                           {item.grantName}
@@ -583,25 +533,17 @@ export default function PayoutsAdminPage() {
                             )}
                             placeholder="Enter payout address"
                             value={
-                              editedFields[fieldId]?.hasOwnProperty(
-                                "payoutAddress"
-                              )
+                              editedFields[fieldId]?.hasOwnProperty("payoutAddress")
                                 ? editedFields[fieldId].payoutAddress
                                 : item.currentPayoutAddress || ""
                             }
                             onChange={(e) =>
-                              handleFieldChange(
-                                fieldId,
-                                "payoutAddress",
-                                e.target.value
-                              )
+                              handleFieldChange(fieldId, "payoutAddress", e.target.value)
                             }
                             disabled={isSaving}
                           />
                           {payoutError && (
-                            <span className="text-red-500 text-sm">
-                              {payoutError}
-                            </span>
+                            <span className="text-red-500 text-sm">{payoutError}</span>
                           )}
                         </div>
                       </td>
@@ -621,19 +563,11 @@ export default function PayoutsAdminPage() {
                                 ? editedFields[fieldId].amount
                                 : item.currentAmount || ""
                             }
-                            onChange={(e) =>
-                              handleFieldChange(
-                                fieldId,
-                                "amount",
-                                e.target.value
-                              )
-                            }
+                            onChange={(e) => handleFieldChange(fieldId, "amount", e.target.value)}
                             disabled={isSaving}
                           />
                           {amountError && (
-                            <span className="text-red-500 text-sm">
-                              {amountError}
-                            </span>
+                            <span className="text-red-500 text-sm">{amountError}</span>
                           )}
                         </div>
                       </td>
@@ -654,9 +588,7 @@ export default function PayoutsAdminPage() {
                 />
               </div>
               <Button
-                disabled={
-                  isSaving || !hasChanges || Object.keys(errors).length > 0
-                }
+                disabled={isSaving || !hasChanges || Object.keys(errors).length > 0}
                 onClick={handleSave}
                 className="w-max mx-4 px-8 py-2 bg-blue-400 text-white rounded-md disabled:opacity-25 dark:bg-blue-900"
               >

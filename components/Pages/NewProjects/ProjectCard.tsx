@@ -1,13 +1,10 @@
-/* eslint-disable @next/next/no-img-element */
-import { Grant, GrantDetails, ProjectDetails } from "@show-karma/karma-gap-sdk";
-import pluralize from "pluralize";
-import formatCurrency from "@/utilities/formatCurrency";
-import { MarkdownPreview } from "../../Utilities/MarkdownPreview";
-import { formatPercentage } from "@/utilities/formatNumber";
-import { PAGES } from "@/utilities/pages";
-import { formatDate } from "@/utilities/formatDate";
-import { ProjectFromList } from "@/types/project";
 import Link from "next/link";
+import pluralize from "pluralize";
+import type { ProjectFromList } from "@/types/project";
+import formatCurrency from "@/utilities/formatCurrency";
+import { formatDate } from "@/utilities/formatDate";
+import { PAGES } from "@/utilities/pages";
+import { MarkdownPreview } from "../../Utilities/MarkdownPreview";
 import { ProfilePicture } from "../../Utilities/ProfilePicture";
 
 interface ProjectCardProps {
@@ -77,8 +74,8 @@ export const ProjectCard = ({ project, index }: ProjectCardProps) => {
         <div className="flex w-full flex-row justify-start items-center gap-1">
           <div className="flex h-max w-full items-center justify-start rounded-full bg-slate-50   dark:bg-slate-700 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">
             <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
-              {formatCurrency(project.noOfGrants)}{" "}
-              {pluralize("Grants", project.noOfGrants)} received
+              {formatCurrency(project.noOfGrants)} {pluralize("Grants", project.noOfGrants)}{" "}
+              received
             </p>
           </div>
           {project.noOfGrantMilestones && project.noOfGrantMilestones > 0 ? (

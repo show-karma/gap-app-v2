@@ -1,8 +1,8 @@
 "use client";
 
-import { Button } from "@/components/Utilities/Button";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/Utilities/Button";
 
 export type TimeframeOption = "1_month" | "3_months" | "6_months" | "1_year";
 
@@ -33,7 +33,7 @@ export function TimeframeSelector({
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const selectedOption = timeframeOptions.find(option => option.value === selectedTimeframe);
+  const selectedOption = timeframeOptions.find((option) => option.value === selectedTimeframe);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -54,9 +54,7 @@ export function TimeframeSelector({
         className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
       >
         {selectedOption?.label}
-        <ChevronDownIcon 
-          className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} 
-        />
+        <ChevronDownIcon className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
       </Button>
 
       {isOpen && (

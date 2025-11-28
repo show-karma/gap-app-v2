@@ -1,5 +1,5 @@
-import { z } from "zod";
 import { isAddress } from "viem";
+import { z } from "zod";
 
 /**
  * Validates that a string is a valid Ethereum address
@@ -44,7 +44,9 @@ export type ValidatedNetworkAddressPair = z.infer<typeof networkAddressPairSchem
 /**
  * Validates a single contract address and returns validation result
  */
-export const validateContractAddress = (address: string): {
+export const validateContractAddress = (
+  address: string
+): {
   isValid: boolean;
   error?: string;
 } => {

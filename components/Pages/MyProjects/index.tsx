@@ -1,32 +1,31 @@
 "use client";
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useQuery } from "@tanstack/react-query";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { useTheme } from "next-themes";
+import pluralize from "pluralize";
+import { useState } from "react";
+import { useAccount } from "wagmi";
 /* eslint-disable @next/next/no-img-element */
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import Pagination from "@/components/Utilities/Pagination";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
-import { useMixpanel } from "@/hooks/useMixpanel";
+import { PROJECT_NAME } from "@/constants/brand";
 import { useAuth } from "@/hooks/useAuth";
+import { useMixpanel } from "@/hooks/useMixpanel";
+import { layoutTheme } from "@/src/helper/theme";
 import { useOnboarding } from "@/store/modals/onboarding";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { fetchMyProjects } from "@/utilities/sdk/projects/fetchMyProjects";
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useQuery } from "@tanstack/react-query";
-import { useTheme } from "next-themes";
-import dynamic from "next/dynamic";
-import Link from "next/link";
-import pluralize from "pluralize";
-import { useState } from "react";
-import { useAccount } from "wagmi";
 import { LoadingCard } from "./LoadingCard";
 
 const ProjectDialog = dynamic(
-  () =>
-    import("@/components/Dialogs/ProjectDialog/index").then(
-      (mod) => mod.ProjectDialog
-    ),
+  () => import("@/components/Dialogs/ProjectDialog/index").then((mod) => mod.ProjectDialog),
   { ssr: false }
 );
 
@@ -68,7 +67,7 @@ const OnboardingButton = () => {
       }}
       className="w-max h-max bg-transparent dark:bg-transparent hover:bg-transparent text-black border border-black"
     >
-      GAP Platform Walkthrough
+      {PROJECT_NAME} Platform Walkthrough
     </Button>
   );
 };
@@ -98,7 +97,7 @@ export default function MyProjects() {
   const loadingArray = Array.from({ length: 12 }, (_, index) => index);
 
   return (
-    <div className="px-4 sm:px-6 lg:px-12 py-5">
+    <div className={layoutTheme.padding}>
       <div className="mt-5 w-full gap-5">
         {isConnected && isAuth ? (
           <div className="flex flex-col gap-4">
@@ -115,7 +114,7 @@ export default function MyProjects() {
                 <div className="grid grid-cols-4 gap-7 pb-4 max-xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1">
                   {myProjects.map((card, index) => {
                     let active = 0;
-                    let total = card.grants?.length || 0;
+                    const total = card.grants?.length || 0;
                     card.grants?.forEach((grant) => {
                       if (grant.completed) return;
                       const hasActive = grant.milestones.find(
@@ -129,9 +128,7 @@ export default function MyProjects() {
                         className="h-full bg-white dark:bg-zinc-900 dark:border-gray-900 border border-gray-200 rounded-xl   pb-5 w-full transition-all ease-in-out duration-200"
                       >
                         <Link
-                          href={PAGES.PROJECT.OVERVIEW(
-                            card.details?.data.slug || card.uid
-                          )}
+                          href={PAGES.PROJECT.OVERVIEW(card.details?.data.slug || card.uid)}
                           className="w-full flex flex-1 flex-col justify-start gap-3"
                         >
                           <div className="px-2 w-full mt-2.5">
@@ -169,17 +166,12 @@ export default function MyProjects() {
                                 source={card.details?.data.description || ""}
                                 style={{
                                   backgroundColor: "transparent",
-                                  color:
-                                    currentTheme === "dark"
-                                      ? "white"
-                                      : "rgb(71, 85, 105)",
+                                  color: currentTheme === "dark" ? "white" : "rgb(71, 85, 105)",
                                   width: "100%",
                                   fontSize: "16px",
                                 }}
                                 components={{
-                                  a: ({ children, href }) => (
-                                    <span>{children}</span>
-                                  ),
+                                  a: ({ children, href }) => <span>{children}</span>,
                                 }}
                               />
                             </div>
@@ -189,8 +181,7 @@ export default function MyProjects() {
                             {total ? (
                               <div className="flex h-7 items-center justify-start rounded-2xl bg-slate-50 px-3 py-1">
                                 <p className="text-center text-sm font-semibold leading-tight text-slate-600">
-                                  {formatCurrency(total)} total{" "}
-                                  {pluralize("grants", total)}
+                                  {formatCurrency(total)} total {pluralize("grants", total)}
                                 </p>
                               </div>
                             ) : null}
@@ -200,8 +191,7 @@ export default function MyProjects() {
                                   <div className="absolute left-[1px] top-[1px] h-1.5 w-1.5 rounded-full bg-teal-600" />
                                 </div>
                                 <p className="text-center text-sm font-medium leading-tight text-teal-600">
-                                  {formatCurrency(active)} active{" "}
-                                  {pluralize("grants", active)}
+                                  {formatCurrency(active)} active {pluralize("grants", active)}
                                 </p>
                               </div>
                             ) : null}
@@ -232,11 +222,10 @@ export default function MyProjects() {
                 >
                   <p className="text-lg font-bold text-black">Attention!</p>
                   <p className="w-max max-w-md break-normal max-sm:break-keep max-sm:whitespace-break-spaces text-left text-lg max-sm:max-w-full max-sm:text-center max-sm:text-base max-sm:w-full font-normal text-black">
-                    We were unable to locate any projects associated with your
-                    wallet address: {address}. <br />
-                    To find your project, please use the search function above.
-                    If your project isn&apos;t listed, feel free to create a new
-                    one.
+                    We were unable to locate any projects associated with your wallet address:{" "}
+                    {address}. <br />
+                    To find your project, please use the search function above. If your project
+                    isn&apos;t listed, feel free to create a new one.
                   </p>
                   <ProjectDialog />
                 </div>

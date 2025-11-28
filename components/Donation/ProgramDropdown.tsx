@@ -1,8 +1,8 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useCommunityPrograms } from "@/hooks/usePrograms";
 import { useMemo } from "react";
+import { useCommunityPrograms } from "@/hooks/usePrograms";
 
 export function DonationProgramDropdown() {
   const params = useParams();
@@ -62,9 +62,10 @@ export function DonationProgramDropdown() {
         aria-label="Select program"
       >
         {sortedPrograms.map((program) => {
-          const combinedId = program.programId && program.chainID
-            ? `${program.programId}_${program.chainID}`
-            : program.programId || "";
+          const combinedId =
+            program.programId && program.chainID
+              ? `${program.programId}_${program.chainID}`
+              : program.programId || "";
 
           return (
             <option key={program.programId} value={combinedId}>

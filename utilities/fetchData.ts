@@ -1,7 +1,7 @@
-import axios, { Method } from "axios";
+import axios, { type Method } from "axios";
+import { TokenManager } from "@/utilities/auth/token-manager";
 import { envVars } from "./enviromentVars";
 import { sanitizeObject } from "./sanitize";
-import { TokenManager } from "@/utilities/auth/token-manager";
 
 /**
  * Fetch data utility that uses Privy's TokenManager for authentication
@@ -50,8 +50,8 @@ export default async function fetchData(
     }
 
     const res = await axios.request(requestConfig);
-    let resData = res.data;
-    let pageInfo = res.data.pageInfo || null;
+    const resData = res.data;
+    const pageInfo = res.data.pageInfo || null;
     return [resData, null, pageInfo];
   } catch (err: any) {
     let error = "";

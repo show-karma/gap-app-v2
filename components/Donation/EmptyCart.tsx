@@ -6,7 +6,7 @@ interface EmptyCartProps {
 
 export function EmptyCart({ onBrowseProjects }: EmptyCartProps) {
   return (
-    <div className="flex flex-col items-center gap-6 py-16">
+    <div data-testid="empty-cart" className="flex flex-col items-center gap-6 py-16">
       <div className="bg-gray-50 dark:bg-gray-800 rounded-full p-6">
         <svg
           width="48"
@@ -29,6 +29,7 @@ export function EmptyCart({ onBrowseProjects }: EmptyCartProps) {
           Add some projects to your donation cart to get started
         </p>
         <button
+          type="button"
           onClick={onBrowseProjects}
           className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
         >

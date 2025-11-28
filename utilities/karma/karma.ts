@@ -1,7 +1,7 @@
 import { envVars } from "../enviromentVars";
 
 export const karmaLinks = {
-  website: "https://karmahq.xyz",
+  website: "https://gov.karmahq.xyz",
   githubSDK: "https://github.com/show-karma/karma-gap-sdk",
   apiDocs: "https://documenter.getpostman.com/view/36647319/2sAXxQdrkZ",
 };

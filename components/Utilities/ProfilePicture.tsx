@@ -1,3 +1,5 @@
+"use client";
+
 import Avatar from "boring-avatars";
 import { cn } from "@/utilities/tailwind";
 
@@ -19,15 +21,15 @@ const isValidUrl = (url?: string): boolean => {
   }
 };
 
-export const ProfilePicture = ({ 
-  imageURL, 
-  name, 
-  size = "32", 
+export const ProfilePicture = ({
+  imageURL,
+  name,
+  size = "32",
   className,
-  alt 
+  alt,
 }: ProfilePictureProps) => {
   const isValid = isValidUrl(imageURL);
-  
+
   if (isValid && imageURL) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
@@ -49,4 +51,4 @@ export const ProfilePicture = ({
       />
     </div>
   );
-}; 
+};

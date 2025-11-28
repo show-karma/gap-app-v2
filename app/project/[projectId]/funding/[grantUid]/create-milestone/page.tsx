@@ -1,11 +1,11 @@
 "use client";
-import { useGrantStore } from "@/store/grant";
-import dynamic from "next/dynamic";
-import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
-import Link from "next/link";
 import { XMarkIcon } from "@heroicons/react/24/solid";
-import { PAGES } from "@/utilities/pages";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
 import { useProjectStore } from "@/store";
+import { useGrantStore } from "@/store/grant";
+import { PAGES } from "@/utilities/pages";
 
 const MilestoneForm = dynamic(
   () => import("@/components/Forms/Milestone").then((mod) => mod.MilestoneForm),
@@ -16,7 +16,7 @@ const MilestoneForm = dynamic(
 export default function Page() {
   const { grant } = useGrantStore();
   const project = useProjectStore((state) => state.project);
-  
+
   if (!grant) {
     return null;
   }
@@ -25,9 +25,7 @@ export default function Page() {
       <div className="flex flex-1">
         <div className="flex w-full max-w-3xl flex-col gap-6 rounded-md bg-gray-200 dark:bg-zinc-900 px-4 py-6 max-lg:max-w-full">
           <div className="flex w-full flex-row items-center justify-between">
-            <h4 className="text-2xl font-bold text-black dark:text-zinc-100">
-              Add milestone
-            </h4>
+            <h4 className="text-2xl font-bold text-black dark:text-zinc-100">Add milestone</h4>
             <Link
               href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
                 project?.details?.data?.slug || project?.uid || "",

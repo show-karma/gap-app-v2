@@ -1,24 +1,20 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { GrantOverview } from "@/components/Pages/Project/Grants/Overview";
 import { ProjectGrantsOverviewLoading } from "@/components/Pages/Project/Loading/Grants/Overview";
+import { PROJECT_NAME } from "@/constants/brand";
 import { zeroUID } from "@/utilities/commons";
 import { envVars } from "@/utilities/enviromentVars";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
 import { defaultMetadata } from "@/utilities/meta";
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
-import { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { Suspense } from "react";
 
 type Params = Promise<{
   projectId: string;
 }>;
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Params;
-}): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { projectId } = await params;
 
   const projectInfo = await getProjectCachedData(projectId);
@@ -27,11 +23,8 @@ export async function generateMetadata({
     notFound();
   }
   const metadata = {
-    title: `${projectInfo?.details?.data?.title} Grants | Karma GAP`,
-    description: cleanMarkdownForPlainText(
-      projectInfo?.details?.data?.description || "",
-      80
-    ),
+    title: `${projectInfo?.details?.data?.title} Grants | ${PROJECT_NAME}`,
+    description: cleanMarkdownForPlainText(projectInfo?.details?.data?.description || "", 80),
     twitter: defaultMetadata.twitter,
     openGraph: defaultMetadata.openGraph,
     icons: defaultMetadata.icons,
