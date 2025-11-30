@@ -55,10 +55,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   };
 }
 
-export default async function Layout(props: {
-  children: React.ReactNode;
-  params: Promise<Params>;
-}) {
+export default async function Layout(props: { children: React.ReactNode; params: Params }) {
   const { communityId } = await props.params;
 
   const { children } = props;

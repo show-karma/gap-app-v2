@@ -1,9 +1,11 @@
 "use client";
 
-import { LinkIcon } from "@heroicons/react/24/outline";
+import { ExclamationTriangleIcon, LinkIcon } from "@heroicons/react/24/outline";
+import { useQueryClient } from "@tanstack/react-query";
 import type { FC } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Button } from "@/components/Utilities/Button";
 import { SUPPORTED_CONTRACT_NETWORKS } from "@/constants/contract-networks";
 import { useContractAddressPairs } from "@/hooks/useContractAddressPairs";
 import { useContractAddressSave } from "@/hooks/useContractAddressSave";
@@ -13,6 +15,7 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { ContractAddressDialog } from "./ContractAddressDialog";
 import { ContractAddressList } from "./ContractAddressList";
+import { ContractVerificationDialog } from "./ContractVerificationDialog";
 import type { LinkContractAddressesButtonProps } from "./types";
 
 export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = ({
@@ -27,12 +30,20 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
   const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
   const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
   const [isOpen, setIsOpen] = useState(false);
+  const [verificationDialogOpen, setVerificationDialogOpen] = useState(false);
+  const [contractToVerify, setContractToVerify] = useState<{
+    index: number;
+    network: string;
+    address: string;
+  } | null>(null);
 
   // Custom hooks for state and logic management
   const { pairs, addPair, removePair, updateAddress, updateNetwork } = useContractAddressPairs({
     project,
   });
-  const { clearError } = useContractAddressValidation({ projectUid: project.uid });
+  const { clearError } = useContractAddressValidation({
+    projectUid: project.uid,
+  });
   const { save, isLoading, error, setError, invalidContracts } = useContractAddressSave({
     projectUid: project.uid,
     onSuccess: () => {
@@ -86,6 +97,33 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
     await save(pairs);
   }, [pairs, save]);
 
+  const handleVerify = useCallback(
+    (index: number) => {
+      const pair = pairs[index];
+      if (pair && pair.network && pair.address) {
+        setContractToVerify({
+          index,
+          network: pair.network,
+          address: pair.address,
+        });
+        setVerificationDialogOpen(true);
+      }
+    },
+    [pairs]
+  );
+
+  const queryClient = useQueryClient();
+
+  const handleVerificationSuccess = useCallback(() => {
+    // Invalidate and refetch project data to show updated verification status
+    queryClient.invalidateQueries({
+      queryKey: ["project-instance", project.uid],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ["project-instance", project.details?.data?.slug],
+    });
+  }, [queryClient, project.uid, project.details?.data?.slug]);
+
   // Define a function to handle dialog close
   const handleClose = useCallback(() => {
     setIsOpen(false);
@@ -122,6 +160,12 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
     return hasFormatErrors || hasBackendErrors || allPairsEmpty;
   }, [pairs, invalidContracts]);
 
+  // Count unverified contracts
+  const unverifiedCount = useMemo(() => {
+    return pairs.filter((pair) => pair.address.trim() && pair.network.trim() && !pair.verified)
+      .length;
+  }, [pairs]);
+
   if (!isAuthorized) {
     return null;
   }
@@ -131,11 +175,17 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
       {buttonElement !== null && (
         <Button
           onClick={() => setIsOpen(true)}
-          className={buttonClassName}
+          className={`${buttonClassName} relative`}
           data-link-contracts-button={dataAttr}
         >
           <LinkIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
           Link Contracts
+          {unverifiedCount > 0 && (
+            <span className="ml-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+              <ExclamationTriangleIcon className="h-3 w-3" />
+              {unverifiedCount} Unverified
+            </span>
+          )}
         </Button>
       )}
       <ContractAddressDialog
@@ -151,18 +201,51 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
           onAddressChange={handleAddressChange}
           onRemove={handleRemovePair}
           onAdd={handleAddPair}
+          onVerify={handleVerify}
           supportedNetworks={SUPPORTED_CONTRACT_NETWORKS}
           error={error}
         />
-        <div className="flex flex-col sm:flex-row gap-4 mt-10 justify-end">
-          <Button onClick={handleSave} type="button" disabled={isLoading || hasValidationErrors}>
+        <div className="flex flex-row gap-4 mt-10 justify-end">
+          <Button
+            onClick={handleSave}
+            disabled={isLoading || hasValidationErrors}
+            className="bg-primary-500 text-white hover:bg-primary-600"
+          >
             {isLoading ? "Saving..." : "Save All"}
           </Button>
-          <Button variant="secondary" type="button" onClick={handleClose}>
+          <Button
+            className="text-zinc-900 text-lg bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-zinc-900 hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900"
+            onClick={handleClose}
+          >
             Close
           </Button>
         </div>
       </ContractAddressDialog>
+      {contractToVerify && (
+        <ErrorBoundary
+          fallback={
+            <div className="p-4 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <p className="font-medium">Verification dialog encountered an error</p>
+              <p className="text-sm mt-1">Please close and try again</p>
+            </div>
+          }
+          onError={(error) => {
+            console.error("Contract verification dialog error:", error);
+          }}
+        >
+          <ContractVerificationDialog
+            isOpen={verificationDialogOpen}
+            onClose={() => {
+              setVerificationDialogOpen(false);
+              setContractToVerify(null);
+            }}
+            network={contractToVerify.network}
+            contractAddress={contractToVerify.address}
+            projectUid={project.uid}
+            onSuccess={handleVerificationSuccess}
+          />
+        </ErrorBoundary>
+      )}
     </>
   );
 };
