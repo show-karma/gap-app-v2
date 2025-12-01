@@ -56,6 +56,11 @@ import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { gapSupportedNetworks } from "@/utilities/network";
+import {
+  getCustomLinks,
+  getLinkByType,
+  normalizeProjectData,
+} from "@/utilities/normalizeProjectData";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { getProjectById } from "@/utilities/sdk";
@@ -190,104 +195,46 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
    *
    * Once both are migrated, we can simplify this component to only handle V2.
    */
-  const dataToUpdate = useMemo(
-    () =>
-      projectToUpdate
-        ? {
-            chainID: projectToUpdate?.chainID,
-            // Handle both V1 (details.data.*) and V2 (details.*) structures
-            description:
-              (projectToUpdate as ProjectV2Response).details?.description ||
-              (projectToUpdate as IProjectResponse).details?.data?.description ||
-              "",
-            title:
-              (projectToUpdate as ProjectV2Response).details?.title ||
-              (projectToUpdate as IProjectResponse).details?.data?.title ||
-              "",
-            problem:
-              (projectToUpdate as ProjectV2Response).details?.problem ||
-              (projectToUpdate as IProjectResponse).details?.data?.problem,
-            solution:
-              (projectToUpdate as ProjectV2Response).details?.solution ||
-              (projectToUpdate as IProjectResponse).details?.data?.solution,
-            missionSummary:
-              (projectToUpdate as ProjectV2Response).details?.missionSummary ||
-              (projectToUpdate as IProjectResponse).details?.data?.missionSummary,
-            locationOfImpact:
-              (projectToUpdate as ProjectV2Response).details?.locationOfImpact ||
-              (projectToUpdate as IProjectResponse).details?.data?.locationOfImpact,
-            imageURL:
-              (projectToUpdate as ProjectV2Response).details?.logoUrl ||
-              (projectToUpdate as IProjectResponse).details?.data?.imageURL,
-            twitter: (
-              (projectToUpdate as ProjectV2Response).details?.links ||
-              (projectToUpdate as IProjectResponse).details?.data?.links
-            )?.find((link) => link.type === "twitter")?.url,
-            github: (
-              (projectToUpdate as ProjectV2Response).details?.links ||
-              (projectToUpdate as IProjectResponse).details?.data?.links
-            )?.find((link) => link.type === "github")?.url,
-            discord: (
-              (projectToUpdate as ProjectV2Response).details?.links ||
-              (projectToUpdate as IProjectResponse).details?.data?.links
-            )?.find((link) => link.type === "discord")?.url,
-            website: (
-              (projectToUpdate as ProjectV2Response).details?.links ||
-              (projectToUpdate as IProjectResponse).details?.data?.links
-            )?.find((link) => link.type === "website")?.url,
-            linkedin: (
-              (projectToUpdate as ProjectV2Response).details?.links ||
-              (projectToUpdate as IProjectResponse).details?.data?.links
-            )?.find((link) => link.type === "linkedin")?.url,
-            pitchDeck: (
-              (projectToUpdate as ProjectV2Response).details?.links ||
-              (projectToUpdate as IProjectResponse).details?.data?.links
-            )?.find((link) => link.type === "pitchDeck")?.url,
-            demoVideo: (
-              (projectToUpdate as ProjectV2Response).details?.links ||
-              (projectToUpdate as IProjectResponse).details?.data?.links
-            )?.find((link) => link.type === "demoVideo")?.url,
-            farcaster: (
-              (projectToUpdate as ProjectV2Response).details?.links ||
-              (projectToUpdate as IProjectResponse).details?.data?.links
-            )?.find((link) => link.type === "farcaster")?.url,
-            profilePicture:
-              (projectToUpdate as ProjectV2Response).details?.logoUrl ||
-              (projectToUpdate as IProjectResponse).details?.data?.imageURL,
-            tags:
-              (projectToUpdate as ProjectV2Response).details?.tags?.map((tag) =>
-                typeof tag === "string" ? tag : (tag as any).name
-              ) ||
-              (projectToUpdate as IProjectResponse).details?.data?.tags?.map((item) => item.name),
-            recipient:
-              (projectToUpdate as ProjectV2Response).owner ||
-              (projectToUpdate as IProjectResponse).recipient,
-            businessModel:
-              (projectToUpdate as ProjectV2Response).details?.businessModel ||
-              (projectToUpdate as IProjectResponse).details?.data?.businessModel,
-            stageIn:
-              (projectToUpdate as ProjectV2Response).details?.stageIn ||
-              (projectToUpdate as IProjectResponse).details?.data?.stageIn,
-            raisedMoney:
-              (projectToUpdate as ProjectV2Response).details?.raisedMoney ||
-              (projectToUpdate as IProjectResponse).details?.data?.raisedMoney,
-            pathToTake:
-              (projectToUpdate as ProjectV2Response).details?.pathToTake ||
-              (projectToUpdate as IProjectResponse).details?.data?.pathToTake,
-          }
-        : undefined,
-    [projectToUpdate]
-  );
+  const dataToUpdate = useMemo(() => {
+    if (!projectToUpdate) return undefined;
+
+    // Use normalization helper to handle V1/V2 differences
+    const normalized = normalizeProjectData(projectToUpdate);
+    if (!normalized) return undefined;
+
+    return {
+      chainID: projectToUpdate.chainID,
+      description: normalized.description,
+      title: normalized.title,
+      problem: normalized.problem,
+      solution: normalized.solution,
+      missionSummary: normalized.missionSummary,
+      locationOfImpact: normalized.locationOfImpact,
+      imageURL: normalized.imageURL,
+      twitter: getLinkByType(normalized.links, "twitter"),
+      github: getLinkByType(normalized.links, "github"),
+      discord: getLinkByType(normalized.links, "discord"),
+      website: getLinkByType(normalized.links, "website"),
+      linkedin: getLinkByType(normalized.links, "linkedin"),
+      pitchDeck: getLinkByType(normalized.links, "pitchDeck"),
+      demoVideo: getLinkByType(normalized.links, "demoVideo"),
+      farcaster: getLinkByType(normalized.links, "farcaster"),
+      profilePicture: normalized.imageURL,
+      tags: normalized.tags?.map((tag) => (typeof tag === "string" ? tag : tag.name)),
+      recipient: normalized.recipient,
+      businessModel: normalized.businessModel,
+      stageIn: normalized.stageIn,
+      raisedMoney: normalized.raisedMoney,
+      pathToTake: normalized.pathToTake,
+    };
+  }, [projectToUpdate]);
 
   const [contacts, setContacts] = useState<Contact[]>(previousContacts || []);
   const [customLinks, setCustomLinks] = useState<CustomLink[]>(() => {
     // Initialize custom links from project data if editing
-    const links = projectToUpdate
-      ? (projectToUpdate as ProjectV2Response).details?.links ||
-        (projectToUpdate as IProjectResponse).details?.data?.links
-      : undefined;
-    if (links) {
-      return links.filter(isCustomLink).map((link: any, index: number) => ({
+    const normalized = normalizeProjectData(projectToUpdate);
+    if (normalized?.links) {
+      return normalized.links.filter(isCustomLink).map((link: any, index: number) => ({
         id: `custom-${index}`,
         name: link.name || "",
         url: link.url,

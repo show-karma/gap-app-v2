@@ -20,7 +20,7 @@ export async function getGrantMilestones(
         return null;
       });
 
-    if (!project || !project.grants || project.grants.length === 0) {
+    if (!project || !project.grants?.length) {
       return [];
     }
 
@@ -30,7 +30,7 @@ export async function getGrantMilestones(
       grant: IGrantResponse;
     }[] = [];
 
-    project.grants.forEach((grant) => {
+    project.grants?.forEach((grant) => {
       if (grant.milestones && grant.milestones.length > 0) {
         grant.milestones.forEach((milestone) => {
           allGrantMilestones.push({

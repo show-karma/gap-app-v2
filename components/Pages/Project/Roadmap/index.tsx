@@ -100,7 +100,7 @@ export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) =>
     const impacts: IProjectImpact[] = project?.impacts || [];
 
     if (project?.grants) {
-      project.grants.forEach((grant) => {
+      project.grants?.forEach((grant) => {
         if (grant.updates) grantUpdates.push(...grant.updates);
         if (grant.milestones) grantMilestones.push(...grant.milestones);
       });

@@ -63,7 +63,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
 
     const communityMap = new Map<string, CommunityOption>();
 
-    project.grants.forEach((grant) => {
+    project.grants?.forEach((grant) => {
       if (grant.community?.uid) {
         const communityUID = grant.community.uid;
         const payoutAddresses =

@@ -4,7 +4,6 @@ import { create } from "zustand";
 import type { ProjectV2Response } from "@/types/project";
 import { getProjectGrants } from "@/utilities/api/projectGrants";
 import { envVars } from "@/utilities/enviromentVars";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { useGrantStore } from "./grant";
