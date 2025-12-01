@@ -1,6 +1,6 @@
 /**
  * Infrastructure verification tests for funders page testing setup
- * 
+ *
  * These tests verify that the testing infrastructure is correctly configured
  * and all necessary mocks are in place.
  */
@@ -33,9 +33,7 @@ describe("Funders Testing Infrastructure", () => {
     it("should wrap components with QueryClientProvider", () => {
       // This test verifies the QueryClientProvider is available
       // by rendering a component that would need it
-      renderWithProviders(
-        <div data-testid="query-test">Query Client Test</div>
-      );
+      renderWithProviders(<div data-testid="query-test">Query Client Test</div>);
       expect(screen.getByTestId("query-test")).toBeInTheDocument();
     });
   });
@@ -63,4 +61,3 @@ describe("Funders Testing Infrastructure", () => {
     });
   });
 });
-

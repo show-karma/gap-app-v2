@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
-import { APIContact } from "@/types/project";
+import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useAccount } from "wagmi";
+import type { APIContact } from "@/types/project";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 
 interface Contact {
@@ -14,10 +14,7 @@ interface Contact {
   telegram: string;
 }
 
-export const useContactInfo = (
-  projectId: string | undefined,
-  isAuthorized?: boolean
-) => {
+export const useContactInfo = (projectId: string | undefined, isAuthorized?: boolean) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isDefaultAuthorized = isOwner || isProjectAdmin;
@@ -51,14 +48,10 @@ export const useContactInfo = (
         return contacts;
       } catch (error: any) {
         console.error(error);
-        errorManager(
-          `Error fetching project contacts info from project ${projectId}`,
-          error,
-          {
-            projectUID: projectId,
-            address,
-          }
-        );
+        errorManager(`Error fetching project contacts info from project ${projectId}`, error, {
+          projectUID: projectId,
+          address,
+        });
         return null;
       }
     },

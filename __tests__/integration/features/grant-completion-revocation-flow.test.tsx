@@ -14,175 +14,173 @@
  * - UI state changes (button disabled states, spinner visibility, text changes)
  */
 
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import { renderHook, act } from '@testing-library/react';
-import { GrantCompleteButton } from '@/components/Pages/GrantMilestonesAndUpdates/GrantCompleteButton';
-import { useGrantCompletionRevoke } from '@/hooks/useGrantCompletionRevoke';
-import { useStepper } from '@/store/modals/txStepper';
-import toast from 'react-hot-toast';
 import type {
   IGrantResponse,
-  IProjectResponse
-} from '@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types';
+  IProjectResponse,
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { act, fireEvent, render, renderHook, screen, waitFor } from "@testing-library/react";
+import toast from "react-hot-toast";
+import { GrantCompleteButton } from "@/components/Pages/GrantMilestonesAndUpdates/GrantCompleteButton";
+import { useGrantCompletionRevoke } from "@/hooks/useGrantCompletionRevoke";
 
 // Mock dependencies
-jest.mock('wagmi', () => ({
-  useAccount: jest.fn()
+jest.mock("wagmi", () => ({
+  useAccount: jest.fn(),
 }));
 
-jest.mock('@/hooks/useWallet', () => ({
+jest.mock("@/hooks/useWallet", () => ({
   useWallet: jest.fn(() => ({
-    switchChainAsync: jest.fn()
-  }))
+    switchChainAsync: jest.fn(),
+  })),
 }));
 
-jest.mock('@/hooks/useGap', () => ({
+jest.mock("@/hooks/useGap", () => ({
   useGap: jest.fn(() => ({
     gap: {
       fetch: {
-        projectById: jest.fn()
-      }
-    }
-  }))
+        projectById: jest.fn(),
+      },
+    },
+  })),
 }));
 
-jest.mock('@/store/modals/txStepper', () => ({
+jest.mock("@/store/modals/txStepper", () => ({
   useStepper: jest.fn(() => ({
     changeStepperStep: jest.fn(),
-    setIsStepper: jest.fn()
-  }))
+    setIsStepper: jest.fn(),
+  })),
 }));
 
-jest.mock('@/utilities/ensureCorrectChain', () => ({
-  ensureCorrectChain: jest.fn()
+jest.mock("@/utilities/ensureCorrectChain", () => ({
+  ensureCorrectChain: jest.fn(),
 }));
 
-jest.mock('@/utilities/wallet-helpers', () => ({
-  safeGetWalletClient: jest.fn()
+jest.mock("@/utilities/wallet-helpers", () => ({
+  safeGetWalletClient: jest.fn(),
 }));
 
-jest.mock('@/utilities/eas-wagmi-utils', () => ({
-  walletClientToSigner: jest.fn()
+jest.mock("@/utilities/eas-wagmi-utils", () => ({
+  walletClientToSigner: jest.fn(),
 }));
 
-jest.mock('@/utilities/fetchData', () => ({
+jest.mock("@/utilities/fetchData", () => ({
   __esModule: true,
-  default: jest.fn()
+  default: jest.fn(),
 }));
 
-jest.mock('@/hooks/useOffChainRevoke', () => ({
+jest.mock("@/hooks/useOffChainRevoke", () => ({
   useOffChainRevoke: jest.fn(() => ({
-    performOffChainRevoke: jest.fn()
-  }))
+    performOffChainRevoke: jest.fn(),
+  })),
 }));
 
-jest.mock('@/utilities/grantCompletionHelpers', () => ({
+jest.mock("@/utilities/grantCompletionHelpers", () => ({
   createCheckIfCompletionExists: jest.fn(),
   validateGrantCompletion: jest.fn(),
-  buildRevocationPayload: jest.fn()
+  buildRevocationPayload: jest.fn(),
 }));
 
-jest.mock('@show-karma/karma-gap-sdk', () => ({
+jest.mock("@show-karma/karma-gap-sdk", () => ({
   GAP: {
-    getMulticall: jest.fn()
-  }
+    getMulticall: jest.fn(),
+  },
 }));
 
-jest.mock('react-hot-toast', () => ({
+jest.mock("react-hot-toast", () => ({
   __esModule: true,
-  default: jest.fn()
+  default: jest.fn(),
 }));
 
-jest.mock('@/components/Utilities/errorManager', () => ({
-  errorManager: jest.fn()
+jest.mock("@/components/Utilities/errorManager", () => ({
+  errorManager: jest.fn(),
 }));
 
-jest.mock('@/store/grant', () => ({
+jest.mock("@/store/grant", () => ({
   useGrantStore: jest.fn(() => ({
-    refreshGrant: jest.fn()
-  }))
+    refreshGrant: jest.fn(),
+  })),
 }));
 
-jest.mock('@/store', () => ({
+jest.mock("@/store", () => ({
   useProjectStore: jest.fn(),
-  useOwnerStore: jest.fn()
+  useOwnerStore: jest.fn(),
 }));
 
-jest.mock('@/store/communityAdmin', () => ({
-  useCommunityAdminStore: jest.fn()
+jest.mock("@/store/communityAdmin", () => ({
+  useCommunityAdminStore: jest.fn(),
 }));
 
 // Note: We don't mock useGrantCompletionRevoke here - we want to test the actual hook
 // All its dependencies are mocked above
 
 // Mock Spinner component
-jest.mock('@/components/ui/spinner', () => ({
+jest.mock("@/components/ui/spinner", () => ({
   Spinner: ({ className }: { className?: string }) => (
     <div data-testid="spinner" className={className}>
       Loading...
     </div>
-  )
+  ),
 }));
 
 // Mock Heroicons
-jest.mock('@heroicons/react/24/outline', () => ({
+jest.mock("@heroicons/react/24/outline", () => ({
   CheckCircleIcon: ({ className }: { className?: string }) => (
     <svg data-testid="check-circle-icon" className={className} />
   ),
   XCircleIcon: ({ className }: { className?: string }) => (
     <svg data-testid="x-circle-icon" className={className} />
-  )
+  ),
 }));
 
-describe('Integration: Grant Completion Revocation Flow', () => {
+describe("Integration: Grant Completion Revocation Flow", () => {
   const mockGrant: IGrantResponse = {
-    uid: 'grant-123',
+    uid: "grant-123",
     chainID: 42161,
     completed: {
-      uid: '0xcompletion123',
+      uid: "0xcompletion123",
       chainID: 42161,
       schema: {
-        uid: '0xschema123',
+        uid: "0xschema123",
         revocable: true,
-        multiRevoke: jest.fn()
+        multiRevoke: jest.fn(),
       },
-      revoked: false
-    }
+      revoked: false,
+    },
   } as any;
 
   const mockProject: IProjectResponse = {
-    uid: 'project-456',
+    uid: "project-456",
     details: {
       data: {
-        slug: 'test-project'
-      }
-    }
+        slug: "test-project",
+      },
+    },
   } as any;
 
   const mockGrantInstance = {
-    uid: 'grant-123',
+    uid: "grant-123",
     chainID: 42161,
     completed: {
-      uid: '0xcompletion123',
+      uid: "0xcompletion123",
       schema: {
-        uid: '0xschema123',
+        uid: "0xschema123",
         revocable: true,
-        multiRevoke: jest.fn()
+        multiRevoke: jest.fn(),
       },
-      revoked: false
-    }
+      revoked: false,
+    },
   };
 
   const mockInstanceProject = {
-    grants: [mockGrantInstance]
+    grants: [mockGrantInstance],
   };
 
   const mockMulticallContract = {
-    multiRevoke: jest.fn()
+    multiRevoke: jest.fn(),
   };
 
   const mockTransaction = {
-    wait: jest.fn()
+    wait: jest.fn(),
   };
 
   const mockCheckIfCompletionExists = jest.fn();
@@ -191,20 +189,20 @@ describe('Integration: Grant Completion Revocation Flow', () => {
     jest.clearAllMocks();
 
     // Setup default mocks
-    const wagmi = require('wagmi');
+    const wagmi = require("wagmi");
     wagmi.useAccount.mockReturnValue({ chain: { id: 42161 } });
 
-    const { useStepper } = require('@/store/modals/txStepper');
+    const { useStepper } = require("@/store/modals/txStepper");
     const mockChangeStepperStep = jest.fn();
     const mockSetIsStepper = jest.fn();
     useStepper.mockReturnValue({
       changeStepperStep: mockChangeStepperStep,
-      setIsStepper: mockSetIsStepper
+      setIsStepper: mockSetIsStepper,
     });
 
-    const { useProjectStore } = require('@/store');
-    const { useOwnerStore } = require('@/store');
-    const { useCommunityAdminStore } = require('@/store/communityAdmin');
+    const { useProjectStore } = require("@/store");
+    const { useOwnerStore } = require("@/store");
+    const { useCommunityAdminStore } = require("@/store/communityAdmin");
     const mockRefreshProject = jest.fn();
     const mockIsProjectOwner = jest.fn(() => false);
     const mockIsOwner = jest.fn(() => false);
@@ -216,21 +214,21 @@ describe('Integration: Grant Completion Revocation Flow', () => {
         return {
           refreshProject: mockRefreshProject,
           isProjectOwner: mockIsProjectOwner(),
-          isProjectAdmin: mockIsProjectAdmin()
+          isProjectAdmin: mockIsProjectAdmin(),
         };
       }
-      if (typeof selector === 'function') {
+      if (typeof selector === "function") {
         const state = {
           refreshProject: mockRefreshProject,
           isProjectOwner: mockIsProjectOwner(),
-          isProjectAdmin: mockIsProjectAdmin()
+          isProjectAdmin: mockIsProjectAdmin(),
         };
         return selector(state);
       }
       return {
         refreshProject: mockRefreshProject,
         isProjectOwner: mockIsProjectOwner(),
-        isProjectAdmin: mockIsProjectAdmin()
+        isProjectAdmin: mockIsProjectAdmin(),
       };
     });
 
@@ -238,7 +236,7 @@ describe('Integration: Grant Completion Revocation Flow', () => {
       if (!selector) {
         return { isOwner: mockIsOwner() };
       }
-      if (typeof selector === 'function') {
+      if (typeof selector === "function") {
         const state = { isOwner: mockIsOwner() };
         return selector(state);
       }
@@ -249,43 +247,39 @@ describe('Integration: Grant Completion Revocation Flow', () => {
       if (!selector) {
         return { isCommunityAdmin: mockIsCommunityAdmin() };
       }
-      if (typeof selector === 'function') {
+      if (typeof selector === "function") {
         const state = { isCommunityAdmin: mockIsCommunityAdmin() };
         return selector(state);
       }
       return { isCommunityAdmin: mockIsCommunityAdmin() };
     });
 
-    const { useGrantStore } = require('@/store/grant');
+    const { useGrantStore } = require("@/store/grant");
     const mockRefreshGrant = jest.fn();
     useGrantStore.mockReturnValue({ refreshGrant: mockRefreshGrant });
 
-    const {
-      createCheckIfCompletionExists
-    } = require('@/utilities/grantCompletionHelpers');
+    const { createCheckIfCompletionExists } = require("@/utilities/grantCompletionHelpers");
     // Mock checkIfCompletionExists to invoke the callback when called
-    mockCheckIfCompletionExists.mockImplementation(
-      async (callback?: () => void) => {
-        // Simulate async completion check
-        await new Promise((resolve) => setTimeout(resolve, 10));
-        // Invoke callback if provided (this triggers the 'indexed' stepper step)
-        callback?.();
-        return undefined;
-      }
-    );
+    mockCheckIfCompletionExists.mockImplementation(async (callback?: () => void) => {
+      // Simulate async completion check
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      // Invoke callback if provided (this triggers the 'indexed' stepper step)
+      callback?.();
+      return undefined;
+    });
     createCheckIfCompletionExists.mockReturnValue(mockCheckIfCompletionExists);
 
-    const { useOffChainRevoke } = require('@/hooks/useOffChainRevoke');
+    const { useOffChainRevoke } = require("@/hooks/useOffChainRevoke");
     const mockPerformOffChainRevoke = jest.fn();
     useOffChainRevoke.mockReturnValue({
-      performOffChainRevoke: mockPerformOffChainRevoke
+      performOffChainRevoke: mockPerformOffChainRevoke,
     });
 
-    const { useGap } = require('@/hooks/useGap');
+    const { useGap } = require("@/hooks/useGap");
     const mockGapClient = {
       fetch: {
-        projectById: jest.fn().mockResolvedValue(mockInstanceProject)
-      }
+        projectById: jest.fn().mockResolvedValue(mockInstanceProject),
+      },
     };
     useGap.mockReturnValue({ gap: mockGapClient });
 
@@ -300,12 +294,12 @@ describe('Integration: Grant Completion Revocation Flow', () => {
     toast.error = mockToastFn.error;
   });
 
-  describe('1. Complete On-Chain Revocation Flow', () => {
-    it('should complete full on-chain revocation flow with UI state changes', async () => {
+  describe("1. Complete On-Chain Revocation Flow", () => {
+    it("should complete full on-chain revocation flow with UI state changes", async () => {
       // Setup: Authorized user (project owner)
-      const { useProjectStore } = require('@/store');
-      const { useOwnerStore } = require('@/store');
-      const { useCommunityAdminStore } = require('@/store/communityAdmin');
+      const { useProjectStore } = require("@/store");
+      const { useOwnerStore } = require("@/store");
+      const { useCommunityAdminStore } = require("@/store/communityAdmin");
       const mockIsProjectOwner = jest.fn(() => true);
       const mockRefreshProject = jest.fn();
 
@@ -313,12 +307,12 @@ describe('Integration: Grant Completion Revocation Flow', () => {
         const state = {
           refreshProject: mockRefreshProject,
           isProjectOwner: mockIsProjectOwner(),
-          isProjectAdmin: false
+          isProjectAdmin: false,
         };
         if (!selector) {
           return state;
         }
-        if (typeof selector === 'function') {
+        if (typeof selector === "function") {
           return selector(state);
         }
         return state;
@@ -329,7 +323,7 @@ describe('Integration: Grant Completion Revocation Flow', () => {
         if (!selector) {
           return state;
         }
-        if (typeof selector === 'function') {
+        if (typeof selector === "function") {
           return selector(state);
         }
         return state;
@@ -340,63 +334,59 @@ describe('Integration: Grant Completion Revocation Flow', () => {
         if (!selector) {
           return state;
         }
-        if (typeof selector === 'function') {
+        if (typeof selector === "function") {
           return selector(state);
         }
         return state;
       });
 
       // Setup: On-chain path mocks
-      const { ensureCorrectChain } = require('@/utilities/ensureCorrectChain');
+      const { ensureCorrectChain } = require("@/utilities/ensureCorrectChain");
       const mockGapClient = {
         fetch: {
-          projectById: jest.fn().mockResolvedValue(mockInstanceProject)
-        }
+          projectById: jest.fn().mockResolvedValue(mockInstanceProject),
+        },
       };
       ensureCorrectChain.mockResolvedValue({
         success: true,
         chainId: 42161,
-        gapClient: mockGapClient
+        gapClient: mockGapClient,
       });
 
-      const { safeGetWalletClient } = require('@/utilities/wallet-helpers');
+      const { safeGetWalletClient } = require("@/utilities/wallet-helpers");
       safeGetWalletClient.mockResolvedValue({
         walletClient: {},
-        error: null
+        error: null,
       });
 
-      const { walletClientToSigner } = require('@/utilities/eas-wagmi-utils');
+      const { walletClientToSigner } = require("@/utilities/eas-wagmi-utils");
       walletClientToSigner.mockResolvedValue({});
 
-      const { GAP } = require('@show-karma/karma-gap-sdk');
+      const { GAP } = require("@show-karma/karma-gap-sdk");
       GAP.getMulticall.mockResolvedValue(mockMulticallContract);
       mockMulticallContract.multiRevoke.mockResolvedValue(mockTransaction);
       mockTransaction.wait.mockResolvedValue({
-        transactionHash: '0xtxhash123'
+        transactionHash: "0xtxhash123",
       });
 
-      const {
-        buildRevocationPayload
-      } = require('@/utilities/grantCompletionHelpers');
-      buildRevocationPayload.mockReturnValue([
-        { schema: '0xschema123', data: [] }
-      ]);
+      const { buildRevocationPayload } = require("@/utilities/grantCompletionHelpers");
+      buildRevocationPayload.mockReturnValue([{ schema: "0xschema123", data: [] }]);
 
-      const fetchData = require('@/utilities/fetchData').default;
+      const fetchData = require("@/utilities/fetchData").default;
       fetchData.mockResolvedValue({});
 
       // Render component
       render(<GrantCompleteButton grant={mockGrant} project={mockProject} />);
 
       // Verify initial state: button should be visible and enabled
-      const button = screen.getByRole('button', {
-        name: /revoke grant completion/i
+      const button = screen.getByRole("button", {
+        name: /revoke grant completion/i,
       });
       expect(button).toBeInTheDocument();
       expect(button).not.toBeDisabled();
 
       // Verify initial text
-      expect(screen.getByText('Marked as complete')).toBeInTheDocument();
+      expect(screen.getByText("Marked as complete")).toBeInTheDocument();
 
       // Click button to trigger revocation
       fireEvent.click(button);
@@ -404,12 +394,12 @@ describe('Integration: Grant Completion Revocation Flow', () => {
       // Verify loading state: button should be disabled and show spinner
       await waitFor(() => {
         expect(button).toBeDisabled();
-        expect(screen.getByTestId('spinner')).toBeInTheDocument();
-        expect(screen.getByText('Revoking...')).toBeInTheDocument();
+        expect(screen.getByTestId("spinner")).toBeInTheDocument();
+        expect(screen.getByText("Revoking...")).toBeInTheDocument();
       });
 
       // Verify stepper was activated
-      const { useStepper } = require('@/store/modals/txStepper');
+      const { useStepper } = require("@/store/modals/txStepper");
       const stepper = useStepper();
       await waitFor(() => {
         expect(stepper.setIsStepper).toHaveBeenCalledWith(true);
@@ -423,8 +413,8 @@ describe('Integration: Grant Completion Revocation Flow', () => {
 
       // Verify stepper transitions
       await waitFor(() => {
-        expect(stepper.changeStepperStep).toHaveBeenCalledWith('pending');
-        expect(stepper.changeStepperStep).toHaveBeenCalledWith('indexing');
+        expect(stepper.changeStepperStep).toHaveBeenCalledWith("pending");
+        expect(stepper.changeStepperStep).toHaveBeenCalledWith("indexing");
       });
 
       // Verify success toast
@@ -439,24 +429,24 @@ describe('Integration: Grant Completion Revocation Flow', () => {
     });
   });
 
-  describe('2. Complete Off-Chain Revocation Flow', () => {
-    it('should complete full off-chain revocation flow for unauthorized user', async () => {
+  describe("2. Complete Off-Chain Revocation Flow", () => {
+    it("should complete full off-chain revocation flow for unauthorized user", async () => {
       // Setup: Unauthorized user
-      const { useProjectStore } = require('@/store');
-      const { useOwnerStore } = require('@/store');
-      const { useCommunityAdminStore } = require('@/store/communityAdmin');
+      const { useProjectStore } = require("@/store");
+      const { useOwnerStore } = require("@/store");
+      const { useCommunityAdminStore } = require("@/store/communityAdmin");
       const mockRefreshProject = jest.fn();
 
       useProjectStore.mockImplementation((selector?: any) => {
         const state = {
           refreshProject: mockRefreshProject,
           isProjectOwner: false,
-          isProjectAdmin: false
+          isProjectAdmin: false,
         };
         if (!selector) {
           return state;
         }
-        if (typeof selector === 'function') {
+        if (typeof selector === "function") {
           return selector(state);
         }
         return state;
@@ -467,7 +457,7 @@ describe('Integration: Grant Completion Revocation Flow', () => {
         if (!selector) {
           return state;
         }
-        if (typeof selector === 'function') {
+        if (typeof selector === "function") {
           return selector(state);
         }
         return state;
@@ -478,34 +468,32 @@ describe('Integration: Grant Completion Revocation Flow', () => {
         if (!selector) {
           return state;
         }
-        if (typeof selector === 'function') {
+        if (typeof selector === "function") {
           return selector(state);
         }
         return state;
       });
 
-      const { useOffChainRevoke } = require('@/hooks/useOffChainRevoke');
-      const mockPerformOffChainRevoke = jest
-        .fn()
-        .mockImplementation(async (options: any) => {
-          // Simulate async operation
-          await new Promise((resolve) => setTimeout(resolve, 10));
-          // Call onSuccess callback if provided
-          if (options?.onSuccess) {
-            options.onSuccess();
-          }
-          return true;
-        });
+      const { useOffChainRevoke } = require("@/hooks/useOffChainRevoke");
+      const mockPerformOffChainRevoke = jest.fn().mockImplementation(async (options: any) => {
+        // Simulate async operation
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        // Call onSuccess callback if provided
+        if (options?.onSuccess) {
+          options.onSuccess();
+        }
+        return true;
+      });
       useOffChainRevoke.mockReturnValue({
-        performOffChainRevoke: mockPerformOffChainRevoke
+        performOffChainRevoke: mockPerformOffChainRevoke,
       });
 
       // Render component
       render(<GrantCompleteButton grant={mockGrant} project={mockProject} />);
 
       // Verify button is visible but disabled (unauthorized)
-      const button = screen.getByRole('button', {
-        name: /revoke grant completion/i
+      const button = screen.getByRole("button", {
+        name: /revoke grant completion/i,
       });
       expect(button).toBeInTheDocument();
       expect(button).toBeDisabled();
@@ -516,7 +504,7 @@ describe('Integration: Grant Completion Revocation Flow', () => {
       const { result } = renderHook(() =>
         useGrantCompletionRevoke({
           grant: mockGrant,
-          project: mockProject
+          project: mockProject,
         })
       );
 
@@ -531,11 +519,11 @@ describe('Integration: Grant Completion Revocation Flow', () => {
       });
 
       // Verify stepper was used
-      const { useStepper } = require('@/store/modals/txStepper');
+      const { useStepper } = require("@/store/modals/txStepper");
       const stepper = useStepper();
       await waitFor(() => {
         expect(stepper.setIsStepper).toHaveBeenCalledWith(true);
-        expect(stepper.changeStepperStep).toHaveBeenCalledWith('indexed');
+        expect(stepper.changeStepperStep).toHaveBeenCalledWith("indexed");
         expect(stepper.setIsStepper).toHaveBeenCalledWith(false);
       });
 
@@ -544,24 +532,24 @@ describe('Integration: Grant Completion Revocation Flow', () => {
     });
   });
 
-  describe('3. Fallback Flow (On-Chain Failure → Off-Chain Success)', () => {
-    it('should fallback to off-chain when on-chain fails', async () => {
+  describe("3. Fallback Flow (On-Chain Failure → Off-Chain Success)", () => {
+    it("should fallback to off-chain when on-chain fails", async () => {
       // Setup: Authorized user
-      const { useProjectStore } = require('@/store');
-      const { useOwnerStore } = require('@/store');
-      const { useCommunityAdminStore } = require('@/store/communityAdmin');
+      const { useProjectStore } = require("@/store");
+      const { useOwnerStore } = require("@/store");
+      const { useCommunityAdminStore } = require("@/store/communityAdmin");
       const mockRefreshProject = jest.fn();
 
       useProjectStore.mockImplementation((selector?: any) => {
         const state = {
           refreshProject: mockRefreshProject,
           isProjectOwner: true,
-          isProjectAdmin: false
+          isProjectAdmin: false,
         };
         if (!selector) {
           return state;
         }
-        if (typeof selector === 'function') {
+        if (typeof selector === "function") {
           return selector(state);
         }
         return state;
@@ -572,7 +560,7 @@ describe('Integration: Grant Completion Revocation Flow', () => {
         if (!selector) {
           return state;
         }
-        if (typeof selector === 'function') {
+        if (typeof selector === "function") {
           return selector(state);
         }
         return state;
@@ -583,60 +571,58 @@ describe('Integration: Grant Completion Revocation Flow', () => {
         if (!selector) {
           return state;
         }
-        if (typeof selector === 'function') {
+        if (typeof selector === "function") {
           return selector(state);
         }
         return state;
       });
 
       // Setup: On-chain fails
-      const { ensureCorrectChain } = require('@/utilities/ensureCorrectChain');
+      const { ensureCorrectChain } = require("@/utilities/ensureCorrectChain");
       const mockGapClient = {
         fetch: {
-          projectById: jest.fn().mockResolvedValue(mockInstanceProject)
-        }
+          projectById: jest.fn().mockResolvedValue(mockInstanceProject),
+        },
       };
       ensureCorrectChain.mockResolvedValue({
         success: true,
         chainId: 42161,
-        gapClient: mockGapClient
+        gapClient: mockGapClient,
       });
 
-      const { safeGetWalletClient } = require('@/utilities/wallet-helpers');
+      const { safeGetWalletClient } = require("@/utilities/wallet-helpers");
       safeGetWalletClient.mockResolvedValue({
         walletClient: {},
-        error: null
+        error: null,
       });
 
-      const { walletClientToSigner } = require('@/utilities/eas-wagmi-utils');
+      const { walletClientToSigner } = require("@/utilities/eas-wagmi-utils");
       walletClientToSigner.mockResolvedValue({});
 
-      const { GAP } = require('@show-karma/karma-gap-sdk');
+      const { GAP } = require("@show-karma/karma-gap-sdk");
       GAP.getMulticall.mockResolvedValue(mockMulticallContract);
-      const onChainError = new Error('On-chain error');
+      const onChainError = new Error("On-chain error");
       mockMulticallContract.multiRevoke.mockRejectedValue(onChainError);
 
       // Setup: Off-chain succeeds
-      const { useOffChainRevoke } = require('@/hooks/useOffChainRevoke');
-      const mockPerformOffChainRevoke = jest
-        .fn()
-        .mockImplementation(async (options: any) => {
-          // Simulate async operation
-          await new Promise((resolve) => setTimeout(resolve, 10));
-          // Call onSuccess callback if provided
-          if (options?.onSuccess) {
-            options.onSuccess();
-          }
-          return true;
-        });
+      const { useOffChainRevoke } = require("@/hooks/useOffChainRevoke");
+      const mockPerformOffChainRevoke = jest.fn().mockImplementation(async (options: any) => {
+        // Simulate async operation
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        // Call onSuccess callback if provided
+        if (options?.onSuccess) {
+          options.onSuccess();
+        }
+        return true;
+      });
       useOffChainRevoke.mockReturnValue({
-        performOffChainRevoke: mockPerformOffChainRevoke
+        performOffChainRevoke: mockPerformOffChainRevoke,
       });
 
       // Render component
       render(<GrantCompleteButton grant={mockGrant} project={mockProject} />);
 
-      const button = screen.getByRole('button');
+      const button = screen.getByRole("button");
       fireEvent.click(button);
 
       // Verify on-chain was attempted
@@ -654,76 +640,76 @@ describe('Integration: Grant Completion Revocation Flow', () => {
       // The mock is set up in beforeEach, so we check the mock function directly
       await waitFor(() => {
         // Get the actual toast mock from the module
-        const toastModule = require('react-hot-toast');
+        const toastModule = require("react-hot-toast");
         const toastMock = toastModule.default;
         expect(toastMock).toHaveBeenCalled();
         const toastCalls = (toastMock as jest.Mock).mock.calls;
         const hasFallbackMessage = toastCalls.some((call: any[]) =>
-          call[0]?.includes('On-chain revocation unavailable')
+          call[0]?.includes("On-chain revocation unavailable")
         );
         expect(hasFallbackMessage).toBe(true);
       });
 
       // Verify stepper transitions
-      const { useStepper } = require('@/store/modals/txStepper');
+      const { useStepper } = require("@/store/modals/txStepper");
       const stepper = useStepper();
       await waitFor(() => {
         expect(stepper.setIsStepper).toHaveBeenCalledWith(false); // Reset before fallback
-        expect(stepper.changeStepperStep).toHaveBeenCalledWith('indexed');
+        expect(stepper.changeStepperStep).toHaveBeenCalledWith("indexed");
       });
     });
   });
 
-  describe('4. Error Handling Flow', () => {
-    it('should handle errors when both paths fail', async () => {
+  describe("4. Error Handling Flow", () => {
+    it("should handle errors when both paths fail", async () => {
       // Setup: Authorized user
-      const { useProjectStore } = require('@/store');
+      const { useProjectStore } = require("@/store");
       useProjectStore.mockImplementation(() => ({
         refreshProject: jest.fn(),
         isProjectOwner: true,
-        isProjectAdmin: false
+        isProjectAdmin: false,
       }));
 
       // Setup: On-chain fails
-      const { ensureCorrectChain } = require('@/utilities/ensureCorrectChain');
+      const { ensureCorrectChain } = require("@/utilities/ensureCorrectChain");
       const mockGapClient = {
         fetch: {
-          projectById: jest.fn().mockResolvedValue(mockInstanceProject)
-        }
+          projectById: jest.fn().mockResolvedValue(mockInstanceProject),
+        },
       };
       ensureCorrectChain.mockResolvedValue({
         success: true,
         chainId: 42161,
-        gapClient: mockGapClient
+        gapClient: mockGapClient,
       });
 
-      const { safeGetWalletClient } = require('@/utilities/wallet-helpers');
+      const { safeGetWalletClient } = require("@/utilities/wallet-helpers");
       safeGetWalletClient.mockResolvedValue({
         walletClient: {},
-        error: null
+        error: null,
       });
 
-      const { walletClientToSigner } = require('@/utilities/eas-wagmi-utils');
+      const { walletClientToSigner } = require("@/utilities/eas-wagmi-utils");
       walletClientToSigner.mockResolvedValue({});
 
-      const { GAP } = require('@show-karma/karma-gap-sdk');
+      const { GAP } = require("@show-karma/karma-gap-sdk");
       GAP.getMulticall.mockResolvedValue(mockMulticallContract);
-      const onChainError = new Error('On-chain error');
+      const onChainError = new Error("On-chain error");
       mockMulticallContract.multiRevoke.mockRejectedValue(onChainError);
 
       // Setup: Off-chain also fails
-      const { useOffChainRevoke } = require('@/hooks/useOffChainRevoke');
+      const { useOffChainRevoke } = require("@/hooks/useOffChainRevoke");
       const mockPerformOffChainRevoke = jest.fn().mockResolvedValue(false);
       useOffChainRevoke.mockReturnValue({
-        performOffChainRevoke: mockPerformOffChainRevoke
+        performOffChainRevoke: mockPerformOffChainRevoke,
       });
 
-      const { errorManager } = require('@/components/Utilities/errorManager');
+      const { errorManager } = require("@/components/Utilities/errorManager");
 
       // Render component
       render(<GrantCompleteButton grant={mockGrant} project={mockProject} />);
 
-      const button = screen.getByRole('button');
+      const button = screen.getByRole("button");
       fireEvent.click(button);
 
       // Verify both paths were attempted
@@ -734,12 +720,12 @@ describe('Integration: Grant Completion Revocation Flow', () => {
 
       // Verify error handling
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith('On-chain error');
+        expect(toast.error).toHaveBeenCalledWith("On-chain error");
         expect(errorManager).toHaveBeenCalled();
       });
 
       // Verify stepper was reset
-      const { useStepper } = require('@/store/modals/txStepper');
+      const { useStepper } = require("@/store/modals/txStepper");
       const stepper = useStepper();
       await waitFor(() => {
         expect(stepper.setIsStepper).toHaveBeenCalledWith(false);
@@ -747,68 +733,64 @@ describe('Integration: Grant Completion Revocation Flow', () => {
     });
   });
 
-  describe('5. State Transitions', () => {
-    it('should transition through all stepper states during on-chain flow', async () => {
+  describe("5. State Transitions", () => {
+    it("should transition through all stepper states during on-chain flow", async () => {
       // Setup: Authorized user
-      const { useProjectStore } = require('@/store');
+      const { useProjectStore } = require("@/store");
       useProjectStore.mockImplementation(() => ({
         refreshProject: jest.fn(),
         isProjectOwner: true,
-        isProjectAdmin: false
+        isProjectAdmin: false,
       }));
 
       // Setup: On-chain path
-      const { ensureCorrectChain } = require('@/utilities/ensureCorrectChain');
+      const { ensureCorrectChain } = require("@/utilities/ensureCorrectChain");
       const mockGapClient = {
         fetch: {
-          projectById: jest.fn().mockResolvedValue(mockInstanceProject)
-        }
+          projectById: jest.fn().mockResolvedValue(mockInstanceProject),
+        },
       };
       ensureCorrectChain.mockResolvedValue({
         success: true,
         chainId: 42161,
-        gapClient: mockGapClient
+        gapClient: mockGapClient,
       });
 
-      const { safeGetWalletClient } = require('@/utilities/wallet-helpers');
+      const { safeGetWalletClient } = require("@/utilities/wallet-helpers");
       safeGetWalletClient.mockResolvedValue({
         walletClient: {},
-        error: null
+        error: null,
       });
 
-      const { walletClientToSigner } = require('@/utilities/eas-wagmi-utils');
+      const { walletClientToSigner } = require("@/utilities/eas-wagmi-utils");
       walletClientToSigner.mockResolvedValue({});
 
-      const { GAP } = require('@show-karma/karma-gap-sdk');
+      const { GAP } = require("@show-karma/karma-gap-sdk");
       GAP.getMulticall.mockResolvedValue(mockMulticallContract);
       mockMulticallContract.multiRevoke.mockResolvedValue(mockTransaction);
       mockTransaction.wait.mockResolvedValue({
-        transactionHash: '0xtxhash123'
+        transactionHash: "0xtxhash123",
       });
 
-      const {
-        buildRevocationPayload
-      } = require('@/utilities/grantCompletionHelpers');
-      buildRevocationPayload.mockReturnValue([
-        { schema: '0xschema123', data: [] }
-      ]);
+      const { buildRevocationPayload } = require("@/utilities/grantCompletionHelpers");
+      buildRevocationPayload.mockReturnValue([{ schema: "0xschema123", data: [] }]);
 
-      const fetchData = require('@/utilities/fetchData').default;
+      const fetchData = require("@/utilities/fetchData").default;
       fetchData.mockResolvedValue({});
 
-      const { useStepper } = require('@/store/modals/txStepper');
+      const { useStepper } = require("@/store/modals/txStepper");
       const mockChangeStepperStep = jest.fn();
       const mockSetIsStepper = jest.fn();
       useStepper.mockReturnValue({
         changeStepperStep: mockChangeStepperStep,
-        setIsStepper: mockSetIsStepper
+        setIsStepper: mockSetIsStepper,
       });
 
       // Test via hook to verify state transitions
       const { result } = renderHook(() =>
         useGrantCompletionRevoke({
           grant: mockGrant,
-          project: mockProject
+          project: mockProject,
         })
       );
 
@@ -823,15 +805,15 @@ describe('Integration: Grant Completion Revocation Flow', () => {
       // Verify all stepper state transitions
       await waitFor(() => {
         expect(mockSetIsStepper).toHaveBeenCalledWith(true);
-        expect(mockChangeStepperStep).toHaveBeenCalledWith('pending');
-        expect(mockChangeStepperStep).toHaveBeenCalledWith('indexing');
+        expect(mockChangeStepperStep).toHaveBeenCalledWith("pending");
+        expect(mockChangeStepperStep).toHaveBeenCalledWith("indexing");
       });
 
       // The 'indexed' step is called in the checkIfCompletionExists callback
       // which is invoked asynchronously, so we wait for it separately
       await waitFor(
         () => {
-          expect(mockChangeStepperStep).toHaveBeenCalledWith('indexed');
+          expect(mockChangeStepperStep).toHaveBeenCalledWith("indexed");
           expect(mockSetIsStepper).toHaveBeenCalledWith(false);
         },
         { timeout: 3000 }
@@ -842,12 +824,12 @@ describe('Integration: Grant Completion Revocation Flow', () => {
     });
   });
 
-  describe('6. Authorization Checks', () => {
-    it('should render GrantCompletedButton when user is authorized', () => {
+  describe("6. Authorization Checks", () => {
+    it("should render GrantCompletedButton when user is authorized", () => {
       // Setup: Authorized user (project owner) - set up mocks before rendering
-      const { useProjectStore } = require('@/store');
-      const { useOwnerStore } = require('@/store');
-      const { useCommunityAdminStore } = require('@/store/communityAdmin');
+      const { useProjectStore } = require("@/store");
+      const { useOwnerStore } = require("@/store");
+      const { useCommunityAdminStore } = require("@/store/communityAdmin");
 
       // Override mocks for this test with proper selector handling
       // Component uses: useProjectStore((state) => state.isProjectAdmin)
@@ -857,14 +839,14 @@ describe('Integration: Grant Completion Revocation Flow', () => {
           return {
             refreshProject: jest.fn(),
             isProjectOwner: true,
-            isProjectAdmin: false
+            isProjectAdmin: false,
           };
         }
-        if (typeof selector === 'function') {
+        if (typeof selector === "function") {
           const state = {
             refreshProject: jest.fn(),
             isProjectOwner: true,
-            isProjectAdmin: false
+            isProjectAdmin: false,
           };
           // Execute the selector function with the state
           return selector(state);
@@ -872,7 +854,7 @@ describe('Integration: Grant Completion Revocation Flow', () => {
         return {
           refreshProject: jest.fn(),
           isProjectOwner: true,
-          isProjectAdmin: false
+          isProjectAdmin: false,
         };
       });
 
@@ -881,7 +863,7 @@ describe('Integration: Grant Completion Revocation Flow', () => {
         if (!selector) {
           return state;
         }
-        if (typeof selector === 'function') {
+        if (typeof selector === "function") {
           return selector(state);
         }
         return state;
@@ -891,7 +873,7 @@ describe('Integration: Grant Completion Revocation Flow', () => {
         if (!selector) {
           return { isCommunityAdmin: false };
         }
-        if (typeof selector === 'function') {
+        if (typeof selector === "function") {
           const state = { isCommunityAdmin: false };
           return selector(state);
         }
@@ -901,18 +883,18 @@ describe('Integration: Grant Completion Revocation Flow', () => {
       render(<GrantCompleteButton grant={mockGrant} project={mockProject} />);
 
       // Verify completed button is rendered
-      const button = screen.getByRole('button', {
-        name: /revoke grant completion/i
+      const button = screen.getByRole("button", {
+        name: /revoke grant completion/i,
       });
       expect(button).toBeInTheDocument();
       expect(button).not.toBeDisabled();
     });
 
-    it('should disable button when user is not authorized', () => {
+    it("should disable button when user is not authorized", () => {
       // Setup: Unauthorized user - need to set up mocks before rendering
-      const { useProjectStore } = require('@/store');
-      const { useOwnerStore } = require('@/store');
-      const { useCommunityAdminStore } = require('@/store/communityAdmin');
+      const { useProjectStore } = require("@/store");
+      const { useOwnerStore } = require("@/store");
+      const { useCommunityAdminStore } = require("@/store/communityAdmin");
 
       // Override mocks for this test - all authorization flags should be false
       useProjectStore.mockImplementation((selector?: any) => {
@@ -920,21 +902,21 @@ describe('Integration: Grant Completion Revocation Flow', () => {
           return {
             refreshProject: jest.fn(),
             isProjectOwner: false,
-            isProjectAdmin: false
+            isProjectAdmin: false,
           };
         }
-        if (typeof selector === 'function') {
+        if (typeof selector === "function") {
           const state = {
             refreshProject: jest.fn(),
             isProjectOwner: false,
-            isProjectAdmin: false
+            isProjectAdmin: false,
           };
           return selector(state);
         }
         return {
           refreshProject: jest.fn(),
           isProjectOwner: false,
-          isProjectAdmin: false
+          isProjectAdmin: false,
         };
       });
 
@@ -943,7 +925,7 @@ describe('Integration: Grant Completion Revocation Flow', () => {
         if (!selector) {
           return state;
         }
-        if (typeof selector === 'function') {
+        if (typeof selector === "function") {
           return selector(state);
         }
         return state;
@@ -954,7 +936,7 @@ describe('Integration: Grant Completion Revocation Flow', () => {
         if (!selector) {
           return state;
         }
-        if (typeof selector === 'function') {
+        if (typeof selector === "function") {
           return selector(state);
         }
         return state;
@@ -964,18 +946,18 @@ describe('Integration: Grant Completion Revocation Flow', () => {
 
       // Verify button is disabled (disabled={isRevoking || !isAuthorized})
       // Since isAuthorized is false, button should be disabled
-      const button = screen.getByRole('button', {
-        name: /revoke grant completion/i
+      const button = screen.getByRole("button", {
+        name: /revoke grant completion/i,
       });
       expect(button).toBeInTheDocument();
       expect(button).toBeDisabled();
     });
 
-    it('should render GrantNotCompletedButton when grant is not completed and user is authorized', () => {
+    it("should render GrantNotCompletedButton when grant is not completed and user is authorized", () => {
       // Setup: Authorized user - set up mocks before rendering
-      const { useProjectStore } = require('@/store');
-      const { useOwnerStore } = require('@/store');
-      const { useCommunityAdminStore } = require('@/store/communityAdmin');
+      const { useProjectStore } = require("@/store");
+      const { useOwnerStore } = require("@/store");
+      const { useCommunityAdminStore } = require("@/store/communityAdmin");
 
       // Override mocks for this test with proper selector handling
       useProjectStore.mockImplementation((selector?: any) => {
@@ -983,21 +965,21 @@ describe('Integration: Grant Completion Revocation Flow', () => {
           return {
             refreshProject: jest.fn(),
             isProjectOwner: true,
-            isProjectAdmin: false
+            isProjectAdmin: false,
           };
         }
-        if (typeof selector === 'function') {
+        if (typeof selector === "function") {
           const state = {
             refreshProject: jest.fn(),
             isProjectOwner: true,
-            isProjectAdmin: false
+            isProjectAdmin: false,
           };
           return selector(state);
         }
         return {
           refreshProject: jest.fn(),
           isProjectOwner: true,
-          isProjectAdmin: false
+          isProjectAdmin: false,
         };
       });
 
@@ -1006,7 +988,7 @@ describe('Integration: Grant Completion Revocation Flow', () => {
         if (!selector) {
           return state;
         }
-        if (typeof selector === 'function') {
+        if (typeof selector === "function") {
           return selector(state);
         }
         return state;
@@ -1016,7 +998,7 @@ describe('Integration: Grant Completion Revocation Flow', () => {
         if (!selector) {
           return { isCommunityAdmin: false };
         }
-        if (typeof selector === 'function') {
+        if (typeof selector === "function") {
           const state = { isCommunityAdmin: false };
           return selector(state);
         }
@@ -1026,23 +1008,15 @@ describe('Integration: Grant Completion Revocation Flow', () => {
       // Grant without completion
       const grantWithoutCompletion = {
         ...mockGrant,
-        completed: null
+        completed: null,
       };
 
-      render(
-        <GrantCompleteButton
-          grant={grantWithoutCompletion}
-          project={mockProject}
-        />
-      );
+      render(<GrantCompleteButton grant={grantWithoutCompletion} project={mockProject} />);
 
       // Verify not completed button is rendered
-      const link = screen.getByRole('link');
+      const link = screen.getByRole("link");
       expect(link).toBeInTheDocument();
-      expect(link).toHaveAttribute(
-        'href',
-        expect.stringContaining('complete-grant')
-      );
+      expect(link).toHaveAttribute("href", expect.stringContaining("complete-grant"));
     });
   });
 });

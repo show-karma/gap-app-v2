@@ -1,34 +1,13 @@
 "use client";
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { Button } from "@/components/Utilities/Button";
-import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { urlRegex } from "@/utilities/regexs/urlRegex";
-import { useAccount } from "wagmi";
-import { useGap, getGapClient } from "@/hooks/useGap";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { sanitizeObject } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { useStepper } from "@/store/modals/txStepper";
-import { useProjectStore } from "@/store";
-import toast from "react-hot-toast";
-import { MESSAGES } from "@/utilities/messages";
-import { GapContract } from "@show-karma/karma-gap-sdk/core/class/contract/GapContract";
-import { errorManager } from "@/components/Utilities/errorManager";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
-import { useRouter } from "next/navigation";
-import { PAGES } from "@/utilities/pages";
-import { Hex } from "viem";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { cn } from "@/utilities/tailwind";
-import { Milestone } from "@show-karma/karma-gap-sdk/core/class/entities/Milestone";
-import { MilestoneCompleted } from "@show-karma/karma-gap-sdk/core/class/types/attestations";
-import { UnifiedMilestone } from "@/types/roadmap";
-import { useMilestone } from "@/hooks/useMilestone";
 import { OutputsSection } from "@/components/Forms/Outputs/OutputsSection";
+import { Button } from "@/components/Utilities/Button";
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { useMilestone } from "@/hooks/useMilestone";
+import type { UnifiedMilestone } from "@/types/roadmap";
 
 // Create form schema with zod
 const formSchema = z.object({
@@ -43,7 +22,7 @@ const formSchema = z.object({
       (value) => {
         if (!value) return true; // Allow empty value
         const num = Number(value);
-        return !isNaN(num) && num >= 0 && num <= 100;
+        return !Number.isNaN(num) && num >= 0 && num <= 100;
       },
       {
         message: "Please enter a number between 0 and 100",
@@ -99,7 +78,6 @@ export const GrantMilestoneCompletionForm = ({
     },
   });
 
-
   const onSubmit = async (data: MilestoneCompletedFormData) => {
     setIsCompleting(true);
     try {
@@ -118,23 +96,18 @@ export const GrantMilestoneCompletionForm = ({
   };
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="flex flex-col gap-4 w-full"
-    >
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 w-full">
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+        <div className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
           Description (optional)
-        </label>
+        </div>
         <MarkdownEditor
           value={watch("description") || ""}
           onChange={(value: string) => setValue("description", value)}
           placeholderText="Describe what has been completed..."
         />
         {errors.description && (
-          <span className="text-red-500 text-xs">
-            {errors.description.message}
-          </span>
+          <span className="text-red-500 text-xs">{errors.description.message}</span>
         )}
       </div>
 
@@ -156,9 +129,7 @@ export const GrantMilestoneCompletionForm = ({
             {...register("completionPercentage")}
           />
           {errors.completionPercentage && (
-            <p className="text-red-500 text-xs mt-1">
-              {errors.completionPercentage.message}
-            </p>
+            <p className="text-red-500 text-xs mt-1">{errors.completionPercentage.message}</p>
           )}
         </div>
       </div>
@@ -191,11 +162,7 @@ export const GrantMilestoneCompletionForm = ({
         <Button
           type="submit"
           isLoading={isSubmitting || isCompleting}
-          disabled={
-            isSubmitting ||
-            isCompleting ||
-            !isValid
-          }
+          disabled={isSubmitting || isCompleting || !isValid}
           className="px-3 py-2 bg-brand-blue text-white"
         >
           Complete

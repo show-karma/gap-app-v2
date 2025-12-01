@@ -1,9 +1,9 @@
 "use client";
-/* eslint-disable @next/next/no-img-element */
-import { FC, Fragment, ReactNode, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { PlusIcon } from "@heroicons/react/24/solid";
-import { Button } from "./Utilities/Button";
+/* eslint-disable @next/next/no-img-element */
+import { type FC, Fragment, type ReactNode, useState } from "react";
+import { Button } from "./ui/button";
 
 type DeleteDialogProps = {
   title?: ReactNode;
@@ -27,7 +27,7 @@ export const DeleteDialog: FC<DeleteDialogProps> = ({
     icon: <PlusIcon className="h-4 w-4 text-primary-600" />,
     text: "Delete Project",
     styleClass:
-      "flex justify-center items-center gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100  hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900",
+      "flex justify-center items-center gap-x-1 rounded-md px-3 py-2 text-sm font-semibold",
   },
   isLoading,
   afterFunction,
@@ -35,7 +35,7 @@ export const DeleteDialog: FC<DeleteDialogProps> = ({
   externalIsOpen,
   externalSetIsOpen,
 }) => {
-  let [isOpen, setIsOpen] = useState(externalIsOpen || false);
+  const [isOpen, setIsOpen] = useState(externalIsOpen || false);
 
   function closeModal() {
     setIsOpen(false);
@@ -52,9 +52,7 @@ export const DeleteDialog: FC<DeleteDialogProps> = ({
         afterFunction?.();
       });
       closeModal();
-    } catch (error: any) {
-      console.log(error);
-    }
+    } catch (_error: any) {}
   };
 
   return (

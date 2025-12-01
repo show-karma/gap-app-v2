@@ -75,4 +75,4 @@ export interface CommunityProjectsV2Response {
     hasNextPage: boolean;
     hasPrevPage: boolean;
   };
-} 
+}

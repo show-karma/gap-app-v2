@@ -1,11 +1,11 @@
-import { useProjectStore } from "@/store";
 import { Tab } from "@headlessui/react";
-import { Fragment, useState } from "react";
-import { cn } from "@/utilities/tailwind";
-import { ActivityList } from "@/components/Shared/ActivityList";
-import { UnifiedMilestone } from "@/types/roadmap";
-import { useAllMilestones } from "@/hooks/useAllMilestones";
 import { useParams } from "next/navigation";
+import { useState } from "react";
+import { ActivityList } from "@/components/Shared/ActivityList";
+import { useAllMilestones } from "@/hooks/useAllMilestones";
+import { useProjectStore } from "@/store";
+import type { UnifiedMilestone } from "@/types/roadmap";
+import { cn } from "@/utilities/tailwind";
 
 export const ProjectActivity = () => {
   const { project, isProjectAdmin } = useProjectStore();
@@ -61,15 +61,12 @@ export const ProjectActivity = () => {
     }
   };
 
-  const { updates: filteredUpdates, milestones: filteredMilestones } =
-    getFilteredActivities();
+  const { updates: filteredUpdates, milestones: filteredMilestones } = getFilteredActivities();
 
   return (
     <div className="w-full flex flex-col gap-8">
       <div className="flex flex-col gap-4">
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Project Activity
-        </h2>
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Project Activity</h2>
         <p className="text-gray-500 dark:text-gray-400">
           View all updates and milestones for this project
         </p>
@@ -95,7 +92,7 @@ export const ProjectActivity = () => {
           ))}
         </Tab.List>
         <Tab.Panels className="mt-2">
-          {tabs.map((tab, idx) => (
+          {tabs.map((_tab, idx) => (
             <Tab.Panel
               key={idx}
               className={cn(

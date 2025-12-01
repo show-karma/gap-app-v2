@@ -1,7 +1,7 @@
 /**
  * FAQ Component Tests
  * Tests the FAQ section with accordion functionality
- * 
+ *
  * Target: 25 tests
  * - Rendering (5)
  * - Accordion Behavior (8)
@@ -11,16 +11,8 @@
  */
 
 import { FAQ } from "@/src/features/homepage/components/faq";
-import {
-  renderWithProviders,
-  screen,
-  within,
-  userEvent,
-  waitFor,
-  fireEvent,
-} from "../utils/test-helpers";
+import { renderWithProviders, screen, userEvent } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
-import { mockFAQItems } from "../fixtures/faq";
 
 // Mock the SOCIALS utility
 jest.mock("@/utilities/socials", () => ({
@@ -35,18 +27,14 @@ jest.mock("@/src/components/shared/faq-accordion", () => ({
     <div data-testid="faq-accordion" role="region" aria-label="FAQ Accordion">
       {items.map((item: any) => (
         <div key={item.id} data-testid={`faq-item-${item.id}`}>
-          <button 
+          <button
             data-testid={`faq-question-${item.id}`}
             aria-expanded="false"
             aria-controls={`faq-answer-${item.id}`}
           >
             {item.question}
           </button>
-          <div 
-            id={`faq-answer-${item.id}`}
-            data-testid={`faq-answer-${item.id}`}
-            hidden
-          >
+          <div id={`faq-answer-${item.id}`} data-testid={`faq-answer-${item.id}`} hidden>
             {item.answer}
           </div>
         </div>
@@ -60,8 +48,8 @@ describe("FAQ Component", () => {
     it("should render section heading", () => {
       renderWithProviders(<FAQ />);
 
-      const heading = screen.getByRole("heading", { 
-        name: /frequently asked questions/i 
+      const heading = screen.getByRole("heading", {
+        name: /frequently asked questions/i,
       });
       expect(heading).toBeInTheDocument();
     });
@@ -84,8 +72,8 @@ describe("FAQ Component", () => {
     it("should render Discord support link", () => {
       renderWithProviders(<FAQ />);
 
-      const discordLink = screen.getByRole("link", { 
-        name: /ask in discord/i 
+      const discordLink = screen.getByRole("link", {
+        name: /ask in discord/i,
       });
       expect(discordLink).toBeInTheDocument();
       expect(discordLink).toHaveAttribute("href", "https://discord.gg/karma");
@@ -126,9 +114,9 @@ describe("FAQ Component", () => {
 
       const firstQuestion = screen.getByTestId("faq-question-what-is-karma");
       const controlsId = firstQuestion.getAttribute("aria-controls");
-      
+
       expect(controlsId).toBe("faq-answer-what-is-karma");
-      
+
       const answer = screen.getByTestId("faq-answer-what-is-karma");
       expect(answer).toHaveAttribute("id", "faq-answer-what-is-karma");
     });
@@ -145,10 +133,10 @@ describe("FAQ Component", () => {
       renderWithProviders(<FAQ />);
 
       const questionButton = screen.getByTestId("faq-question-what-is-karma");
-      
+
       // Click to expand
       await user.click(questionButton);
-      
+
       // Button should still exist and be clickable
       expect(questionButton).toBeInTheDocument();
     });
@@ -159,7 +147,9 @@ describe("FAQ Component", () => {
       // Check for some key questions
       expect(screen.getByText(/what is karma and how can it help my project/i)).toBeInTheDocument();
       expect(screen.getByText(/do i need to be part of a specific program/i)).toBeInTheDocument();
-      expect(screen.getByText(/how does karma track and verify project progress/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/how does karma track and verify project progress/i)
+      ).toBeInTheDocument();
     });
 
     it("should show multiple FAQ sections", () => {
@@ -176,7 +166,9 @@ describe("FAQ Component", () => {
 
       // Verify key questions are displayed
       expect(screen.getByText(/what is karma and how can it help my project/i)).toBeInTheDocument();
-      expect(screen.getByText(/can i receive funding or donations directly through karma/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/can i receive funding or donations directly through karma/i)
+      ).toBeInTheDocument();
       expect(screen.getByText(/do i need to pay gas fees/i)).toBeInTheDocument();
     });
 
@@ -204,7 +196,7 @@ describe("FAQ Component", () => {
 
       const firstQuestion = screen.getByTestId("faq-question-what-is-karma");
       firstQuestion.focus();
-      
+
       expect(firstQuestion).toHaveFocus();
     });
 
@@ -212,8 +204,8 @@ describe("FAQ Component", () => {
       const user = userEvent.setup();
       renderWithProviders(<FAQ />);
 
-      const questions = screen.getAllByTestId(/^faq-question-/);
-      
+      const _questions = screen.getAllByTestId(/^faq-question-/);
+
       // Tab should move through questions
       await user.tab();
       // One of the questions or links should be focused
@@ -226,10 +218,10 @@ describe("FAQ Component", () => {
 
       const firstQuestion = screen.getByTestId("faq-question-what-is-karma");
       firstQuestion.focus();
-      
+
       // Press Enter
       await user.keyboard("{Enter}");
-      
+
       // Button should still exist (accordion would toggle in real component)
       expect(firstQuestion).toBeInTheDocument();
     });
@@ -240,10 +232,10 @@ describe("FAQ Component", () => {
 
       const firstQuestion = screen.getByTestId("faq-question-what-is-karma");
       firstQuestion.focus();
-      
+
       // Press Space
       await user.keyboard(" ");
-      
+
       // Button should still exist
       expect(firstQuestion).toBeInTheDocument();
     });
@@ -252,10 +244,10 @@ describe("FAQ Component", () => {
       renderWithProviders(<FAQ />);
 
       const firstQuestion = screen.getByTestId("faq-question-what-is-karma");
-      
+
       // Focus the button
       firstQuestion.focus();
-      
+
       // Should be focused
       expect(firstQuestion).toHaveFocus();
     });
@@ -266,10 +258,10 @@ describe("FAQ Component", () => {
       renderWithProviders(<FAQ />);
 
       const firstQuestion = screen.getByTestId("faq-question-what-is-karma");
-      
+
       // Should have aria-expanded
       expect(firstQuestion).toHaveAttribute("aria-expanded");
-      
+
       // Should have aria-controls
       expect(firstQuestion).toHaveAttribute("aria-controls");
     });
@@ -285,8 +277,8 @@ describe("FAQ Component", () => {
       renderWithProviders(<FAQ />);
 
       // Main heading should be h2
-      const heading = screen.getByRole("heading", { 
-        name: /frequently asked questions/i 
+      const heading = screen.getByRole("heading", {
+        name: /frequently asked questions/i,
       });
       expect(heading).toBeInTheDocument();
     });
@@ -294,14 +286,13 @@ describe("FAQ Component", () => {
     it("should have accessible external links", () => {
       renderWithProviders(<FAQ />);
 
-      const discordLink = screen.getByRole("link", { 
-        name: /ask in discord/i 
+      const discordLink = screen.getByRole("link", {
+        name: /ask in discord/i,
       });
-      
+
       // External links should open in new tab
       expect(discordLink).toHaveAttribute("target", "_blank");
       expect(discordLink).toHaveAttribute("rel", "noopener noreferrer");
     });
   });
 });
-

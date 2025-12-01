@@ -1,16 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
-import { Button } from "@/components/Utilities/Button";
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { getGapClient, useGap } from "@/hooks/useGap";
-import { useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { MESSAGES } from "@/utilities/messages";
-import { PAGES } from "@/utilities/pages";
-import { cn } from "@/utilities/tailwind";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { GrantUpdate } from "@show-karma/karma-gap-sdk";
-import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useRouter } from "next/navigation";
 import type { FC } from "react";
 import { useState } from "react";
@@ -19,26 +11,33 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { z } from "zod";
-import { errorManager } from "../Utilities/errorManager";
-import { urlRegex } from "@/utilities/regexs/urlRegex";
-import { sanitizeObject } from "@/utilities/sanitize";
+import { Button } from "@/components/Utilities/Button";
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { useGap } from "@/hooks/useGap";
+import { useWallet } from "@/hooks/useWallet";
+import { useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
+import { useShareDialogStore } from "@/store/modals/shareDialog";
+import { useStepper } from "@/store/modals/txStepper";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { useShareDialogStore } from "@/store/modals/shareDialog";
+import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
+import { urlRegex } from "@/utilities/regexs/urlRegex";
+import { sanitizeObject } from "@/utilities/sanitize";
 import { SHARE_TEXTS } from "@/utilities/share/text";
-import { useWallet } from "@/hooks/useWallet";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import { cn } from "@/utilities/tailwind";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { errorManager } from "../Utilities/errorManager";
 
 const updateSchema = z.object({
   title: z
     .string()
     .min(3, { message: MESSAGES.GRANT.UPDATE.FORM.TITLE.MIN })
     .max(50, { message: MESSAGES.GRANT.UPDATE.FORM.TITLE.MAX }),
-  description: z
-    .string()
-    .min(3, { message: MESSAGES.GRANT.UPDATE.FORM.DESCRIPTION }),
+  description: z.string().min(3, { message: MESSAGES.GRANT.UPDATE.FORM.DESCRIPTION }),
   proofOfWork: z
     .string()
     .refine((value) => urlRegex.test(value), {
@@ -49,7 +48,7 @@ const updateSchema = z.object({
   completionPercentage: z.string().refine(
     (value) => {
       const num = Number(value);
-      return !isNaN(num) && num >= 0 && num <= 100;
+      return !Number.isNaN(num) && num >= 0 && num <= 100;
     },
     {
       message: "Please enter a number between 0 and 100",
@@ -117,14 +116,15 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
 
   const router = useRouter();
 
-  const createGrantUpdate = async (
-    grantToUpdate: IGrantResponse,
-    data: UpdateType
-  ) => {
+  const createGrantUpdate = async (grantToUpdate: IGrantResponse, data: UpdateType) => {
     let gapClient = gap;
     if (!address || !project) return;
     try {
-      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+      const {
+        success,
+        chainId: actualChainId,
+        gapClient: newGapClient,
+      } = await ensureCorrectChain({
         targetChainId: grantToUpdate.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
@@ -137,9 +137,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
 
       gapClient = newGapClient;
 
-      const { walletClient, error } = await safeGetWalletClient(
-        actualChainId
-      );
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
@@ -161,67 +159,56 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
         schema: gapClient.findSchema("GrantDetails"),
       });
 
-      await grantUpdate
-        .attest(walletSigner as any, changeStepperStep)
-        .then(async (res) => {
-          let retries = 1000;
-          const txHash = res?.tx[0]?.hash;
-          if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, grantToUpdate.chainID),
-              "POST",
-              {}
-            );
-          }
-          changeStepperStep("indexing");
-          while (retries > 0) {
-            await refreshProject()
-              .then(async (fetchedProject) => {
-                const attestUID = grantUpdate.uid;
-                const updatedGrant = fetchedProject?.grants.find(
-                  (g) => g.uid === grantToUpdate.uid
-                );
+      await grantUpdate.attest(walletSigner as any, changeStepperStep).then(async (res) => {
+        let retries = 1000;
+        const txHash = res?.tx[0]?.hash;
+        if (txHash) {
+          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, grantToUpdate.chainID), "POST", {});
+        }
+        changeStepperStep("indexing");
+        while (retries > 0) {
+          await refreshProject()
+            .then(async (fetchedProject) => {
+              const attestUID = grantUpdate.uid;
+              const updatedGrant = fetchedProject?.grants.find((g) => g.uid === grantToUpdate.uid);
 
-                const alreadyExists = updatedGrant?.updates.find(
-                  (u: any) => u.uid === attestUID
+              const alreadyExists = updatedGrant?.updates.find((u: any) => u.uid === attestUID);
+              if (alreadyExists) {
+                retries = 0;
+                changeStepperStep("indexed");
+                afterSubmit?.();
+                toast.success(MESSAGES.GRANT.GRANT_UPDATE.SUCCESS);
+                router.push(
+                  PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
+                    project.uid,
+                    grantToUpdate.uid,
+                    "milestones-and-updates"
+                  )
                 );
-                if (alreadyExists) {
-                  retries = 0;
-                  changeStepperStep("indexed");
-                  afterSubmit?.();
-                  toast.success(MESSAGES.GRANT.GRANT_UPDATE.SUCCESS);
-                  router.push(
-                    PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-                      project.uid,
-                      grantToUpdate.uid,
-                      "milestones-and-updates"
-                    )
-                  );
-                  openShareDialog({
-                    modalShareText: `🎉 Update posted for your ${grant.details?.data?.title}!`,
-                    modalShareSecondText: `Your progress is now onchain. Every update builds your reputation and brings your vision closer to reality. Keep building—we’re here for it. 💪`,
-                    shareText: SHARE_TEXTS.GRANT_UPDATE(
-                      grant.details?.data?.title as string,
-                      project.uid,
-                      grantToUpdate.uid
-                    ),
-                  });
+                openShareDialog({
+                  modalShareText: `🎉 Update posted for your ${grant.details?.data?.title}!`,
+                  modalShareSecondText: `Your progress is now onchain. Every update builds your reputation and brings your vision closer to reality. Keep building—we’re here for it. 💪`,
+                  shareText: SHARE_TEXTS.GRANT_UPDATE(
+                    grant.details?.data?.title as string,
+                    project.uid,
+                    grantToUpdate.uid
+                  ),
+                });
 
-                  router.refresh();
-                }
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-              })
-              .catch(async () => {
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-              });
-          }
-        });
+                router.refresh();
+              }
+              retries -= 1;
+              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+              await new Promise((resolve) => setTimeout(resolve, 1500));
+            })
+            .catch(async () => {
+              retries -= 1;
+              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+              await new Promise((resolve) => setTimeout(resolve, 1500));
+            });
+        }
+      });
     } catch (error) {
-      console.log(error);
       errorManager(
         `Error creating grant update for grant ${grantToUpdate.uid} from project ${project.uid}`,
         error,
@@ -247,10 +234,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
 
   return (
     <div className="flex flex-1">
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="flex w-full flex-col gap-4"
-      >
+      <form onSubmit={handleSubmit(onSubmit)} className="flex w-full flex-col gap-4">
         <div className="flex w-full flex-col">
           <label htmlFor="update-title" className={labelStyle}>
             Title *
@@ -286,10 +270,9 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
             Output of your work *
           </label>
           <p className="text-sm text-gray-500">
-            Provide a link that demonstrates your work. This could be a link to
-            a tweet announcement, a dashboard, a Google Doc, a blog post, a
-            video, or any other resource that highlights the progress or result
-            of your work
+            Provide a link that demonstrates your work. This could be a link to a tweet
+            announcement, a dashboard, a Google Doc, a blog post, a video, or any other resource
+            that highlights the progress or result of your work
           </p>
           <div className="flex flex-row gap-2 items-center py-2">
             <input
@@ -312,9 +295,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
             placeholder="Add links to charts, videos, dashboards etc. that evaluators can verify your work"
             {...register("proofOfWork")}
           />
-          <p className="text-base text-red-400">
-            {errors.proofOfWork?.message}
-          </p>
+          <p className="text-base text-red-400">{errors.proofOfWork?.message}</p>
         </div>
         <div className="flex w-full flex-row items-center gap-4 py-2">
           <label htmlFor="completion-percentage" className={labelStyle}>
@@ -330,20 +311,14 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
               className={cn(inputStyle, "w-24 mt-0")}
               {...register("completionPercentage")}
             />
-            <p className="text-xs text-red-400 mt-1">
-              {errors.completionPercentage?.message}
-            </p>
+            <p className="text-xs text-red-400 mt-1">{errors.completionPercentage?.message}</p>
           </div>
         </div>
         <div className="flex w-full flex-row-reverse">
           <Button
             type="submit"
             className="flex w-max flex-row bg-slate-600 text-slate-200 hover:bg-slate-800 hover:text-slate-200"
-            disabled={
-              isSubmitting ||
-              !isValid ||
-              (!noProofCheckbox && !watch("proofOfWork"))
-            }
+            disabled={isSubmitting || !isValid || (!noProofCheckbox && !watch("proofOfWork"))}
             isLoading={isSubmitting || isLoading}
           >
             Post update

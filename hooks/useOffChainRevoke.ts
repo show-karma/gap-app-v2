@@ -1,8 +1,6 @@
+import toast from "react-hot-toast";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { MESSAGES } from "@/utilities/messages";
-import toast from "react-hot-toast";
-import { retryUntilConditionMet } from "@/utilities/retries";
 
 interface UseOffChainRevokeOptions {
   uid: `0x${string}`;
@@ -25,14 +23,10 @@ export const useOffChainRevoke = () => {
     onError,
     toastMessages,
   }: UseOffChainRevokeOptions): Promise<boolean> => {
-    const toastLoading = toast.loading(toastMessages?.loading || 'Revoking attestation...');
+    const toastLoading = toast.loading(toastMessages?.loading || "Revoking attestation...");
     try {
-      const res = await fetchData(
-        INDEXER.PROJECT.REVOKE_ATTESTATION(uid, chainID),
-        "POST",
-        {}
-      );
-      
+      const res = await fetchData(INDEXER.PROJECT.REVOKE_ATTESTATION(uid, chainID), "POST", {});
+
       if (res[1]) {
         if (toastLoading) {
           toast.dismiss(toastLoading);
@@ -49,7 +43,7 @@ export const useOffChainRevoke = () => {
           id: toastLoading!,
         });
       }
-      
+
       onSuccess?.();
       return true;
     } catch (error) {

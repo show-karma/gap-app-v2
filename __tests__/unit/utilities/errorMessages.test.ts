@@ -1,7 +1,7 @@
 import {
-  parseDonationError,
-  getShortErrorMessage,
   DonationErrorCode,
+  getShortErrorMessage,
+  parseDonationError,
 } from "@/utilities/donations/errorMessages";
 
 describe("parseDonationError", () => {
@@ -44,15 +44,11 @@ describe("parseDonationError", () => {
 
       expect(parsed.code).toBe(DonationErrorCode.INSUFFICIENT_GAS);
       expect(parsed.message).toContain("gas");
-      expect(parsed.actionableSteps).toContainEqual(
-        expect.stringContaining("ETH")
-      );
+      expect(parsed.actionableSteps).toContainEqual(expect.stringContaining("ETH"));
     });
 
     it("should parse 'insufficient funds for intrinsic transaction cost' error", () => {
-      const error = new Error(
-        "Insufficient funds for intrinsic transaction cost"
-      );
+      const error = new Error("Insufficient funds for intrinsic transaction cost");
       const parsed = parseDonationError(error);
 
       expect(parsed.code).toBe(DonationErrorCode.INSUFFICIENT_GAS);
@@ -73,9 +69,7 @@ describe("parseDonationError", () => {
 
       expect(parsed.code).toBe(DonationErrorCode.INSUFFICIENT_BALANCE);
       expect(parsed.message).toContain("balance");
-      expect(parsed.actionableSteps).toContainEqual(
-        expect.stringContaining("balance")
-      );
+      expect(parsed.actionableSteps).toContainEqual(expect.stringContaining("balance"));
     });
 
     it("should parse 'insufficient funds' error", () => {
@@ -100,9 +94,7 @@ describe("parseDonationError", () => {
 
       expect(parsed.code).toBe(DonationErrorCode.NETWORK_MISMATCH);
       expect(parsed.message).toContain("Network");
-      expect(parsed.actionableSteps).toContainEqual(
-        expect.stringContaining("Switch")
-      );
+      expect(parsed.actionableSteps).toContainEqual(expect.stringContaining("Switch"));
     });
 
     it("should parse 'wrong network' error", () => {
@@ -137,9 +129,7 @@ describe("parseDonationError", () => {
     });
 
     it("should extract revert reason when available", () => {
-      const error = new Error(
-        "Execution reverted: reason: Invalid recipient address"
-      );
+      const error = new Error("Execution reverted: reason: Invalid recipient address");
       const parsed = parseDonationError(error);
 
       expect(parsed.code).toBe(DonationErrorCode.CONTRACT_ERROR);
@@ -332,9 +322,7 @@ describe("parseDonationError", () => {
 
   describe("technical messages", () => {
     it("should preserve technical message for debugging", () => {
-      const technicalError = new Error(
-        "Contract call failed: 0x1234567890abcdef..."
-      );
+      const technicalError = new Error("Contract call failed: 0x1234567890abcdef...");
       const parsed = parseDonationError(technicalError);
 
       expect(parsed.technicalMessage).toBe(technicalError.message);
@@ -388,9 +376,7 @@ describe("getShortErrorMessage", () => {
   });
 
   it("should not include technical details", () => {
-    const error = new Error(
-      "Contract error: 0x1234567890abcdef with long technical details"
-    );
+    const error = new Error("Contract error: 0x1234567890abcdef with long technical details");
     const message = getShortErrorMessage(error);
 
     expect(message).not.toContain("0x1234567890abcdef");

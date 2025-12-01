@@ -1,33 +1,76 @@
 "use client";
-import { ObjectivesSub } from "@/components/Pages/Project/Objective/ObjectivesSub";
-import { RoadmapListLoading } from "../Loading/Roadmap";
-import {
+import type {
   IGrantUpdate,
   IMilestoneResponse,
   IProjectImpact,
-  IProjectMilestoneResponse,
   IProjectResponse,
   IProjectUpdate,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useAllMilestones } from "@/hooks/useAllMilestones";
-import { MilestonesList } from "@/components/Milestone/MilestonesList";
 import { useParams, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
-import { useQuery } from "@tanstack/react-query";
-import { useProgressModalStore } from "@/store/modals/progress";
+import { useMemo } from "react";
+import { MilestonesList } from "@/components/Milestone/MilestonesList";
 import { Button } from "@/components/Utilities/Button";
+import { useAllMilestones } from "@/hooks/useAllMilestones";
 import { useOwnerStore, useProjectStore } from "@/store";
+import { useProgressModalStore } from "@/store/modals/progress";
+import type { UnifiedMilestone } from "@/types/roadmap";
 import { MESSAGES } from "@/utilities/messages";
-import { UnifiedMilestone } from "@/types/roadmap";
+import { RoadmapListLoading } from "../Loading/Roadmap";
 
 interface ProjectRoadmapProps {
   project?: IProjectResponse;
 }
 
-export const ProjectRoadmap = ({
-  project: propProject,
-}: ProjectRoadmapProps) => {
+// Pure utility functions moved outside the component to avoid recreating on each render
+const normalizeToMilliseconds = (timestamp: unknown): number | null => {
+  if (timestamp === null || timestamp === undefined) {
+    return null;
+  }
+
+  // If it's already a number
+  if (typeof timestamp === "number") {
+    // Detect if it's seconds (Unix timestamps in seconds typically have 10 digits or less)
+    // While millisecond timestamps have 13 digits
+    const isSeconds = timestamp < 10000000000; // If less than 11 digits, assume seconds
+    return isSeconds ? timestamp * 1000 : timestamp;
+  }
+
+  // If it's a string date or anything else, try to parse it
+  try {
+    // Only parse data types that Date constructor can handle
+    if (
+      typeof timestamp === "string" ||
+      timestamp instanceof Date ||
+      (typeof timestamp === "object" && timestamp !== null)
+    ) {
+      const parsed = new Date(timestamp as string | number | Date).getTime();
+      return !Number.isNaN(parsed) ? parsed : null;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+};
+
+const getSortTimestamp = (item: UnifiedMilestone): number => {
+  try {
+    // Check dates in priority order - end date is most important for milestones
+    const dates = [
+      normalizeToMilliseconds(item?.endsAt),
+      normalizeToMilliseconds(item?.startsAt),
+      item?.completed && typeof item.completed === "object" && "createdAt" in item.completed
+        ? normalizeToMilliseconds(item.completed.createdAt)
+        : null,
+      normalizeToMilliseconds(item?.createdAt),
+    ];
+
+    return dates.find((date) => date !== null) || Date.now();
+  } catch (_error) {
+    return Date.now();
+  }
+};
+
+export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) => {
   const { projectId } = useParams();
   const searchParams = useSearchParams();
 
@@ -37,80 +80,18 @@ export const ProjectRoadmap = ({
 
   const { milestones = [], isLoading } = useAllMilestones(projectId as string);
 
-  const { setIsProgressModalOpen, setProgressModalScreen } =
-    useProgressModalStore();
+  const { setIsProgressModalOpen, setProgressModalScreen } = useProgressModalStore();
 
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isAuthorized = isOwner || isProjectAdmin;
 
-  // Parse filters from URL
-  const getActiveFilters = () => {
+  // Derive active filters directly from URL params - no state synchronization needed
+  const activeFilters = useMemo(() => {
     const filterParam = searchParams.get("filter");
     if (!filterParam) return ["all"];
     return filterParam.split(",");
-  };
-
-  const [activeFilters, setActiveFilters] = useState<string[]>(
-    getActiveFilters()
-  );
-
-  // Sync with URL params when they change
-  useEffect(() => {
-    setActiveFilters(getActiveFilters());
   }, [searchParams]);
-
-  // Helper function to normalize any timestamp format to milliseconds
-  const normalizeToMilliseconds = (timestamp: unknown): number | null => {
-    if (timestamp === null || timestamp === undefined) {
-      return null;
-    }
-
-    // If it's already a number
-    if (typeof timestamp === "number") {
-      // Detect if it's seconds (Unix timestamps in seconds typically have 10 digits or less)
-      // While millisecond timestamps have 13 digits
-      const isSeconds = timestamp < 10000000000; // If less than 11 digits, assume seconds
-      return isSeconds ? timestamp * 1000 : timestamp;
-    }
-
-    // If it's a string date or anything else, try to parse it
-    try {
-      // Only parse data types that Date constructor can handle
-      if (
-        typeof timestamp === "string" ||
-        timestamp instanceof Date ||
-        (typeof timestamp === "object" && timestamp !== null)
-      ) {
-        const parsed = new Date(timestamp as string | number | Date).getTime();
-        return !isNaN(parsed) ? parsed : null;
-      }
-      return null;
-    } catch {
-      return null;
-    }
-  };
-
-  // Create a function to get sortable timestamp for any item
-  const getSortTimestamp = (item: UnifiedMilestone): number => {
-    try {
-      // Check dates in priority order - end date is most important for milestones
-      const dates = [
-        normalizeToMilliseconds(item?.endsAt),
-        normalizeToMilliseconds(item?.startsAt),
-        item?.completed &&
-        typeof item.completed === "object" &&
-        "createdAt" in item.completed
-          ? normalizeToMilliseconds(item.completed.createdAt)
-          : null,
-        normalizeToMilliseconds(item?.createdAt),
-      ];
-
-      return dates.find((date) => date !== null) || Date.now();
-    } catch (error) {
-      return Date.now();
-    }
-  };
 
   const combinedUpdatesAndMilestones = useMemo(() => {
     const updates: IProjectUpdate[] = project?.updates || [];
@@ -133,13 +114,13 @@ export const ProjectRoadmap = ({
       let startDate: number | undefined;
       if (update.data?.startDate) {
         const parsedDate = new Date(update.data.startDate).getTime();
-        startDate = !isNaN(parsedDate) ? parsedDate : undefined;
+        startDate = !Number.isNaN(parsedDate) ? parsedDate : undefined;
       }
 
       let endDate: number | undefined;
       if (update.data?.endDate) {
         const parsedDate = new Date(update.data.endDate).getTime();
-        endDate = !isNaN(parsedDate) ? parsedDate : undefined;
+        endDate = !Number.isNaN(parsedDate) ? parsedDate : undefined;
       }
 
       let type = "update";
@@ -147,15 +128,13 @@ export const ProjectRoadmap = ({
       if (
         update.data?.type === "impact" ||
         update.data?.type === "project-impact" ||
-        (update.data?.title &&
-          update.data.title.toLowerCase().includes("impact")) ||
+        update.data?.title?.toLowerCase().includes("impact") ||
         (update.__typename && update.__typename === "Impact")
       ) {
         type = "impact";
       } else if (
         update.source === "grant" ||
-        (update.data?.title &&
-          update.data.title.toLowerCase().includes("grant")) ||
+        update.data?.title?.toLowerCase().includes("grant") ||
         (update.refUID && update.refUID !== project?.uid) // If referencing something other than the project, likely a grant
       ) {
         type = "grant_update";
@@ -196,13 +175,7 @@ export const ProjectRoadmap = ({
     });
 
     return allSortedItems;
-  }, [
-    project?.grants,
-    project?.updates,
-    project?.impacts,
-    project?.uid,
-    milestones,
-  ]);
+  }, [project?.grants, project?.updates, project?.impacts, project?.uid, milestones]);
 
   // Filter items based on active filters
   const filteredItems = useMemo(() => {
@@ -221,9 +194,7 @@ export const ProjectRoadmap = ({
         if (item.completed === false) {
           // For pending, check the underlying schema matches a milestone type
           const isMilestoneType =
-            item.type === "milestone" ||
-            item.type === "grant" ||
-            item.type === "project";
+            item.type === "milestone" || item.type === "grant" || item.type === "project";
 
           if (isMilestoneType) {
             return true;
@@ -235,14 +206,11 @@ export const ProjectRoadmap = ({
       if (activeFilters.includes("completed")) {
         // Both boolean true and object {"createdAt": ...} should be treated as completed
         const isItemCompleted =
-          item.completed === true ||
-          (item.completed && typeof item.completed === "object");
+          item.completed === true || (item.completed && typeof item.completed === "object");
 
         // Check if it's a milestone or grant type
         const isMilestoneType =
-          item.type === "milestone" ||
-          item.type === "grant" ||
-          item.type === "project";
+          item.type === "milestone" || item.type === "grant" || item.type === "project";
 
         if (isItemCompleted && isMilestoneType) {
           return true;
@@ -307,8 +275,7 @@ export const ProjectRoadmap = ({
                     }}
                   >
                     <p className="w-full text-center text-lg break-words h-max font-semibold text-black dark:text-zinc-200">
-                      Go ahead and create your first project activity or
-                      milestone
+                      Go ahead and create your first project activity or milestone
                     </p>
                     <Button
                       type="button"

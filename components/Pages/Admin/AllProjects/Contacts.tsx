@@ -1,10 +1,10 @@
 "use client";
+import { AtSymbolIcon } from "@heroicons/react/24/solid";
+import { type FC, useState } from "react";
 import { TelegramIcon } from "@/components/Icons";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { Contact } from "@/types/project";
+import type { Contact } from "@/types/project";
 import { cn } from "@/utilities/tailwind";
-import { AtSymbolIcon, InboxArrowDownIcon } from "@heroicons/react/24/solid";
-import { FC, useState } from "react";
 
 interface ContactsProps {
   contacts: Contact[];
@@ -16,20 +16,13 @@ const rowClass =
 const ContactLine = ({ contact }: { contact: Contact }) => {
   const isLink = (link?: string) => {
     if (!link) return false;
-    if (
-      link.includes("http://") ||
-      link.includes("https://") ||
-      link.includes("www.")
-    ) {
+    if (link.includes("http://") || link.includes("https://") || link.includes("www.")) {
       return true;
     }
     return false;
   };
   return (
-    <div
-      key={contact.id + contact.name + contact.email}
-      className="flex flex-col gap-1 my-2"
-    >
+    <div key={contact.id + contact.name + contact.email} className="flex flex-col gap-1 my-2">
       <p className={cn(rowClass, "pb-0 font-semibold")}>{contact?.name}</p>
       <div className="flex flex-col gap-1">
         {contact?.email ? (
@@ -73,14 +66,8 @@ export const ProjectContacts: FC<ContactsProps> = ({ contacts }) => {
   return (
     <div className="flex flex-col gap-1 w-full">
       {isContactExpanded
-        ? contacts.map((contact) => (
-            <ContactLine key={contact.id} contact={contact} />
-          ))
-        : contacts
-            .slice(0, 2)
-            .map((contact) => (
-              <ContactLine key={contact.id} contact={contact} />
-            ))}
+        ? contacts.map((contact) => <ContactLine key={contact.id} contact={contact} />)
+        : contacts.slice(0, 2).map((contact) => <ContactLine key={contact.id} contact={contact} />)}
       {contacts.length > 2 ? (
         <div className="flex w-full justify-start items-start">
           <button

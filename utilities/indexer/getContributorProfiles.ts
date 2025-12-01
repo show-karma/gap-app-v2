@@ -1,15 +1,13 @@
-import { ContributorProfile } from "@show-karma/karma-gap-sdk";
+import type { ContributorProfile } from "@show-karma/karma-gap-sdk";
+import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "../fetchData";
 import { INDEXER } from "../indexer";
-import { errorManager } from "@/components/Utilities/errorManager";
 
 export const getContributorProfiles = async (
   addresses: string[]
 ): Promise<ContributorProfile[] | undefined> => {
   try {
-    const [data, error] = await fetchData(
-      INDEXER.PROFILE.GET(addresses.join(","))
-    );
+    const [data, error] = await fetchData(INDEXER.PROFILE.GET(addresses.join(",")));
     if (error || !data) throw error;
     return data;
   } catch (e) {

@@ -1,8 +1,7 @@
-import { defaultMetadata } from "@/utilities/meta";
-import { Presentation } from "@/components/Pages/Home/Presentation";
-import { NewFeatureBanner } from "@/components/Pages/Home/NewFeatureBanner";
 import { Communities } from "@/components/Pages/Home/Communities";
+import { Presentation } from "@/components/Pages/Home/Presentation";
 import { WhatIsSolving } from "@/components/Pages/Home/WhatIsSolving";
+import { defaultMetadata } from "@/utilities/meta";
 
 export const metadata = defaultMetadata;
 

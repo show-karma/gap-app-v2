@@ -1,17 +1,16 @@
 "use client";
-import { Button } from "@/components/Utilities/Button";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { Spinner } from "@/components/Utilities/Spinner";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
-import { useState, useTransition } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
+import { useState } from "react";
+import { type SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { isAddress } from "viem";
 import { z } from "zod";
+import { Button } from "@/components/Utilities/Button";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { errorManager } from "@/components/Utilities/errorManager";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 const lookupSchema = z.object({
   address: z.string().refine((str) => isAddress(str), {
@@ -47,21 +46,15 @@ const SubscribeForm = ({ address, changeIsSubscribed }: SubscribeFormProps) => {
   const onSubmit: SubmitHandler<SubscribeFormType> = async (data) => {
     setIsLoading(true);
     try {
-      const [res, error] = await fetchData(
-        INDEXER.COMMUNITY.SUBSCRIBE.BULK,
-        "POST",
-        {
-          publicAddress: address.toLowerCase(),
-          email: data.email,
-        }
-      );
+      const [_res, error] = await fetchData(INDEXER.COMMUNITY.SUBSCRIBE.BULK, "POST", {
+        publicAddress: address.toLowerCase(),
+        email: data.email,
+      });
       if (error) {
         throw error;
       }
       changeIsSubscribed(true);
-      toast.success(
-        "You have subscribed to all the projects funded by your wallet"
-      );
+      toast.success("You have subscribed to all the projects funded by your wallet");
     } catch (error: any) {
       console.error(error);
       errorManager(
@@ -108,11 +101,7 @@ interface StepNavigatorProps {
   setStep: (step: "lookup" | "subscribe") => void;
 }
 
-export const ReceiveProjectUpdates = ({
-  communityName,
-}: {
-  communityName: string;
-}) => {
+export const ReceiveProjectUpdates = ({ communityName }: { communityName: string }) => {
   const {
     register,
     handleSubmit,
@@ -138,9 +127,7 @@ export const ReceiveProjectUpdates = ({
     setIsLoading(true);
     changeIsSubscribed(false);
     try {
-      const [res, error] = await fetchData(
-        INDEXER.PROJECT.FUNDEDBY(data.address.toLowerCase())
-      );
+      const [res, error] = await fetchData(INDEXER.PROJECT.FUNDEDBY(data.address.toLowerCase()));
       if (error) {
         throw error;
       }
@@ -166,13 +153,7 @@ export const ReceiveProjectUpdates = ({
       {step === "lookup" ? (
         <div className="flex flex-col gap-4">
           <div className="flex flex-row gap-2 items-start">
-            <Image
-              src="/icons/mail.png"
-              width={24}
-              height={24}
-              alt="Mail"
-              className="w-6 h-6"
-            />
+            <Image src="/icons/mail.png" width={24} height={24} alt="Mail" className="w-6 h-6" />
             <p className="text-brand-darkblue text-sm font-semibold dark:text-zinc-300">
               Receive updates from your funded projects
             </p>
@@ -180,13 +161,9 @@ export const ReceiveProjectUpdates = ({
 
           <div className="flex flex-col gap-3">
             <p className="text-brand-darkblue text-base font-semibold dark:text-zinc-300 max-lg:text-sm max-lg:mt-2">
-              Enter the wallet you’ve used to fund projects on {communityName}{" "}
-              to track them.
+              Enter the wallet you’ve used to fund projects on {communityName} to track them.
             </p>
-            <form
-              className="flex flex-col gap-4"
-              onSubmit={handleSubmit(onSubmit)}
-            >
+            <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
               <div className="flex flex-col gap-2">
                 <input
                   className="rounded text-black dark:text-white dark:bg-zinc-700 placeholder:text-zinc-500 dark:placeholder:text-zinc-100 border-black border"
@@ -208,12 +185,7 @@ export const ReceiveProjectUpdates = ({
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          <Image
-            src="/icons/congratulations.png"
-            width={24}
-            height={24}
-            alt="Congratulations"
-          />
+          <Image src="/icons/congratulations.png" width={24} height={24} alt="Congratulations" />
           <p className="text-brand-darkblue dark:text-white font-semibold text-base">
             You’ve funded {projectsFunded} projects. You can see the full list{" "}
             <ExternalLink
@@ -226,8 +198,7 @@ export const ReceiveProjectUpdates = ({
           {projectsFunded > 0 ? (
             subscribed ? (
               <p className="text-green-600 dark:text-green-500">
-                Successfully subscribed to all the projects funded by your
-                wallet.
+                Successfully subscribed to all the projects funded by your wallet.
               </p>
             ) : (
               <SubscribeForm
@@ -244,8 +215,7 @@ export const ReceiveProjectUpdates = ({
           onClick={() => setStep("lookup")}
           style={{
             backgroundColor: step === "lookup" ? "#155EEF" : "transparent",
-            border:
-              step === "lookup" ? "2px solid transparent" : "2px solid #155EEF",
+            border: step === "lookup" ? "2px solid transparent" : "2px solid #155EEF",
           }}
         />
         <Button
@@ -254,10 +224,7 @@ export const ReceiveProjectUpdates = ({
           disabled={!(projectsFunded > 0)}
           style={{
             backgroundColor: step === "subscribe" ? "#155EEF" : "transparent",
-            border:
-              step === "subscribe"
-                ? "2px solid transparent"
-                : "2px solid #155EEF",
+            border: step === "subscribe" ? "2px solid transparent" : "2px solid #155EEF",
           }}
         />
       </div>

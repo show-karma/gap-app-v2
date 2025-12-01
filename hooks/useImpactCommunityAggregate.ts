@@ -1,7 +1,7 @@
 "use client";
-import { getAllProgramsImpactAggregate } from "@/utilities/registry/getAllProgramsImpactAggregate";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
+import { getAllProgramsImpactAggregate } from "@/utilities/registry/getAllProgramsImpactAggregate";
 import { useCommunityCategory } from "./useCommunityCategory";
 
 export function useImpactCommunityAggregate() {

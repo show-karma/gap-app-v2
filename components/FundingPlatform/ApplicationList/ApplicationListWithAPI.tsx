@@ -1,21 +1,18 @@
 "use client";
 
-import { FC, useState, useCallback, useEffect, useMemo } from "react";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { ArrowDownTrayIcon, FunnelIcon } from "@heroicons/react/24/outline";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import debounce from "lodash.debounce";
-import InfiniteScroll from "react-infinite-scroll-component";
-import ApplicationList from "./ApplicationList";
-import {
-  useFundingApplications,
-  useApplicationExport,
-} from "@/hooks/useFundingPlatform";
-import { IApplicationFilters } from "@/services/fundingPlatformService";
-import { IFundingApplication } from "@/types/funding-platform";
-import { Button } from "@/components/Utilities/Button";
-import { ArrowDownTrayIcon, FunnelIcon } from "@heroicons/react/24/outline";
-import formatCurrency from "@/utilities/formatCurrency";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import pluralize from "pluralize";
+import { type FC, useCallback, useEffect, useMemo, useState } from "react";
+import InfiniteScroll from "react-infinite-scroll-component";
+import { Button } from "@/components/Utilities/Button";
+import { useApplicationExport, useFundingApplications } from "@/hooks/useFundingPlatform";
+import type { IApplicationFilters } from "@/services/fundingPlatformService";
+import type { IFundingApplication } from "@/types/funding-platform";
+import formatCurrency from "@/utilities/formatCurrency";
+import ApplicationList from "./ApplicationList";
 
 interface IApplicationListWithAPIProps {
   programId: string;
@@ -45,10 +42,10 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
   // Initialize filters from URL params (excluding page for infinite scroll)
   const [filters, setFilters] = useState<IApplicationFilters>(() => {
     const urlFilters = { ...initialFilters };
-    if (searchParams.get('search')) urlFilters.search = searchParams.get('search')!;
-    if (searchParams.get('status')) urlFilters.status = searchParams.get('status')!;
-    if (searchParams.get('dateFrom')) urlFilters.dateFrom = searchParams.get('dateFrom')!;
-    if (searchParams.get('dateTo')) urlFilters.dateTo = searchParams.get('dateTo')!;
+    if (searchParams.get("search")) urlFilters.search = searchParams.get("search")!;
+    if (searchParams.get("status")) urlFilters.status = searchParams.get("status")!;
+    if (searchParams.get("dateFrom")) urlFilters.dateFrom = searchParams.get("dateFrom")!;
+    if (searchParams.get("dateTo")) urlFilters.dateTo = searchParams.get("dateTo")!;
     // Remove page handling for infinite scroll
     return urlFilters;
   });
@@ -56,14 +53,14 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
   // Local state for search input (immediate UI updates)
   const [searchInput, setSearchInput] = useState(filters.search || "");
 
-  const [sortBy, setSortBy] = useState<IApplicationFilters['sortBy']>(() => {
-    const urlSortBy = searchParams.get('sortBy');
-    return (urlSortBy as IApplicationFilters['sortBy']) || 'status';
+  const [sortBy, setSortBy] = useState<IApplicationFilters["sortBy"]>(() => {
+    const urlSortBy = searchParams.get("sortBy");
+    return (urlSortBy as IApplicationFilters["sortBy"]) || "status";
   });
 
-  const [sortOrder, setSortOrder] = useState<IApplicationFilters['sortOrder']>(() => {
-    const urlSortOrder = searchParams.get('sortOrder');
-    return (urlSortOrder as IApplicationFilters['sortOrder']) || 'asc';
+  const [sortOrder, setSortOrder] = useState<IApplicationFilters["sortOrder"]>(() => {
+    const urlSortOrder = searchParams.get("sortOrder");
+    return (urlSortOrder as IApplicationFilters["sortOrder"]) || "asc";
   });
 
   // Debounced search function (waits 500ms after user stops typing)
@@ -98,11 +95,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  const { exportApplications, isExporting } = useApplicationExport(
-    programId,
-    chainId,
-    isAdmin
-  );
+  const { exportApplications, isExporting } = useApplicationExport(programId, chainId, isAdmin);
 
   // Sync filters and sorting with URL
   useEffect(() => {
@@ -136,7 +129,7 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
     // Remove page handling for infinite scroll
 
     // Add sorting params
-    if (sortBy && sortBy !== 'createdAt') {
+    if (sortBy && sortBy !== "createdAt") {
       params.set("sortBy", sortBy);
     } else {
       params.delete("sortBy");
@@ -195,17 +188,20 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
     };
   }, [debouncedSearch]);
 
-  const handleSortChange = useCallback((newSortBy: string) => {
-    const typedSortBy = newSortBy as IApplicationFilters['sortBy'];
-    if (sortBy === typedSortBy) {
-      // Toggle sort order if clicking the same column
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      // Set new sort column with default desc order
-      setSortBy(typedSortBy);
-      setSortOrder('desc');
-    }
-  }, [sortBy, sortOrder]);
+  const handleSortChange = useCallback(
+    (newSortBy: string) => {
+      const typedSortBy = newSortBy as IApplicationFilters["sortBy"];
+      if (sortBy === typedSortBy) {
+        // Toggle sort order if clicking the same column
+        setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+      } else {
+        // Set new sort column with default desc order
+        setSortBy(typedSortBy);
+        setSortOrder("desc");
+      }
+    },
+    [sortBy, sortOrder]
+  );
 
   // Show error state
   if (error) {
@@ -282,10 +278,14 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
       <div className="bg-white dark:bg-zinc-800 p-4 rounded-lg border">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="app-list-search"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
               Search
             </label>
             <input
+              id="app-list-search"
               type="text"
               placeholder="Search by email, reference, or project title..."
               value={searchInput}
@@ -295,10 +295,14 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="app-list-status"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
               Status
             </label>
             <select
+              id="app-list-status"
               value={filters.status || ""}
               onChange={(e) => handleFilterChange({ status: e.target.value })}
               className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100"
@@ -314,10 +318,14 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="app-list-date-from"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
               From Date
             </label>
             <input
+              id="app-list-date-from"
               type="date"
               value={filters.dateFrom || ""}
               onChange={(e) => handleFilterChange({ dateFrom: e.target.value })}
@@ -326,10 +334,14 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="app-list-date-to"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
               To Date
             </label>
             <input
+              id="app-list-date-to"
               type="date"
               value={filters.dateTo || ""}
               onChange={(e) => handleFilterChange({ dateTo: e.target.value })}
@@ -364,7 +376,6 @@ const ApplicationListWithAPI: FC<IApplicationListWithAPIProps> = ({
               <ArrowDownTrayIcon className="w-5 h-5" />
               {isExporting ? "Exporting..." : "Export CSV"}
             </Button>
-
           </div>
         </div>
       </div>

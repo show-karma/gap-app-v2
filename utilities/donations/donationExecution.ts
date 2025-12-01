@@ -16,12 +16,12 @@ export function validatePayoutAddresses(
   payments: DonationPayment[],
   payoutAddresses: Record<string, string>
 ): { valid: boolean; missingAddresses: DonationPayment[] } {
-  const missingAddresses = payments.filter(
-    (payment) => !payoutAddresses[payment.projectId]
-  );
+  const missingAddresses = payments.filter((payment) => !payoutAddresses[payment.projectId]);
 
   if (missingAddresses.length > 0) {
-    toast.error("Cannot proceed: Some projects are missing payout addresses. Donation blocked for security.");
+    toast.error(
+      "Cannot proceed: Some projects are missing payout addresses. Donation blocked for security."
+    );
     return { valid: false, missingAddresses };
   }
 
@@ -54,7 +54,7 @@ export async function ensureCorrectNetwork(
     try {
       await switchToNetwork(targetChainId);
       activeChainId = targetChainId;
-    } catch (error) {
+    } catch (_error) {
       toast.error("Switch to the required network to continue.");
       return null;
     }
@@ -90,9 +90,7 @@ export async function waitForWalletSync(
       }
 
       attempts++;
-      await new Promise((resolve) =>
-        setTimeout(resolve, NETWORK_CONSTANTS.WALLET_SYNC_DELAY_MS)
-      );
+      await new Promise((resolve) => setTimeout(resolve, NETWORK_CONSTANTS.WALLET_SYNC_DELAY_MS));
     }
 
     throw new Error(

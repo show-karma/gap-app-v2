@@ -1,32 +1,31 @@
 "use client";
-import { MESSAGES } from "@/utilities/messages";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { SubmitHandler, useForm } from "react-hook-form";
+import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
+import type { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useParams, useRouter } from "next/navigation";
+import { useState } from "react";
+import { type SubmitHandler, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
 import { z } from "zod";
-import { MarkdownEditor } from "../Utilities/MarkdownEditor";
+import { useAllMilestones } from "@/hooks/useAllMilestones";
+import { useGap } from "@/hooks/useGap";
+import { useWallet } from "@/hooks/useWallet";
+import { useProjectStore } from "@/store";
+import { useStepper } from "@/store/modals/txStepper";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import fetchData from "@/utilities/fetchData";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
+import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { Button } from "../Utilities/Button";
 import { errorManager } from "../Utilities/errorManager";
-import { useAccount } from "wagmi";
-import { useProjectStore } from "@/store";
-import { getGapClient, useGap } from "@/hooks/useGap";
-import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
-
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { useStepper } from "@/store/modals/txStepper";
-import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
-import toast from "react-hot-toast";
-import { useState } from "react";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
-import { useParams, useRouter } from "next/navigation";
-import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
-import { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { useAllMilestones } from "@/hooks/useAllMilestones";
-import { PAGES } from "@/utilities/pages";
-import { useWallet } from "@/hooks/useWallet";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import { MarkdownEditor } from "../Utilities/MarkdownEditor";
 
 const objectiveSchema = z.object({
   title: z
@@ -87,7 +86,11 @@ export const ProjectObjectiveForm = ({
     let gapClient = gap;
     setIsLoading(true);
     try {
-      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+      const {
+        success,
+        chainId: actualChainId,
+        gapClient: newGapClient,
+      } = await ensureCorrectChain({
         targetChainId: project?.chainID as number,
         currentChainId: chain?.id,
         switchChainAsync,
@@ -107,13 +110,10 @@ export const ProjectObjectiveForm = ({
         }),
         schema: gapClient.findSchema("ProjectMilestone"),
         refUID: project?.uid,
-        recipient: (address ||
-          "0x0000000000000000000000000000000000000000") as `0x${string}`,
+        recipient: (address || "0x0000000000000000000000000000000000000000") as `0x${string}`,
       });
 
-      const { walletClient, error } = await safeGetWalletClient(
-        actualChainId
-      );
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
@@ -127,7 +127,7 @@ export const ProjectObjectiveForm = ({
       await newObjective
         .attest(walletSigner as any, sanitizedData, changeStepperStep)
         .then(async (res) => {
-          let fetchedObjectives = null;
+          const _fetchedObjectives = null;
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
             await fetchData(
@@ -137,10 +137,7 @@ export const ProjectObjectiveForm = ({
             );
           } else {
             await fetchData(
-              INDEXER.ATTESTATION_LISTENER(
-                newObjective.uid,
-                project?.chainID as number
-              ),
+              INDEXER.ATTESTATION_LISTENER(newObjective.uid, project?.chainID as number),
               "POST",
               {}
             );
@@ -151,9 +148,7 @@ export const ProjectObjectiveForm = ({
             await getProjectObjectives(projectId)
               .then(async (fetchedObjectives) => {
                 const attestUID = newObjective.uid;
-                const alreadyExists = fetchedObjectives.find(
-                  (m) => m.uid === attestUID
-                );
+                const alreadyExists = fetchedObjectives.find((m) => m.uid === attestUID);
 
                 if (alreadyExists) {
                   retries = 0;
@@ -162,9 +157,7 @@ export const ProjectObjectiveForm = ({
                   await refetch();
                   stateHandler?.(false);
                   router.push(
-                    PAGES.PROJECT.UPDATES(
-                      project?.details?.data.slug || project?.uid || ""
-                    )
+                    PAGES.PROJECT.UPDATES(project?.details?.data.slug || project?.uid || "")
                   );
                 }
                 retries -= 1;
@@ -202,7 +195,11 @@ export const ProjectObjectiveForm = ({
     let gapClient = gap;
     setIsLoading(true);
     try {
-      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+      const {
+        success,
+        chainId: actualChainId,
+        gapClient: newGapClient,
+      } = await ensureCorrectChain({
         targetChainId: project?.chainID as number,
         currentChainId: chain?.id,
         switchChainAsync,
@@ -215,9 +212,7 @@ export const ProjectObjectiveForm = ({
 
       gapClient = newGapClient;
 
-      const { walletClient, error } = await safeGetWalletClient(
-        actualChainId
-      );
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
@@ -231,20 +226,16 @@ export const ProjectObjectiveForm = ({
         .projectMilestones(projectId)
         .then((res) => res.data);
       if (!fetchedMilestones || !gapClient?.network) return;
-      const objectivesInstances = ProjectMilestone.from(
-        fetchedMilestones,
-        gapClient?.network
-      );
+      const objectivesInstances = ProjectMilestone.from(fetchedMilestones, gapClient?.network);
       const objectiveInstance = objectivesInstances.find(
-        (item) =>
-          item.uid.toLowerCase() === previousObjective?.uid.toLowerCase()
+        (item) => item.uid.toLowerCase() === previousObjective?.uid.toLowerCase()
       );
       if (!objectiveInstance) return;
       objectiveInstance.setValues(sanitizedData);
       await objectiveInstance
         .attest(walletSigner as any, sanitizedData, changeStepperStep)
         .then(async (res) => {
-          let fetchedObjectives = null;
+          const _fetchedObjectives = null;
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
             await fetchData(
@@ -254,10 +245,7 @@ export const ProjectObjectiveForm = ({
             );
           } else {
             await fetchData(
-              INDEXER.ATTESTATION_LISTENER(
-                objectiveInstance.uid,
-                project?.chainID as number
-              ),
+              INDEXER.ATTESTATION_LISTENER(objectiveInstance.uid, project?.chainID as number),
               "POST",
               {}
             );
@@ -268,9 +256,7 @@ export const ProjectObjectiveForm = ({
             await getProjectObjectives(projectId)
               .then(async (fetchedObjectives) => {
                 const attestUID = objectiveInstance.uid;
-                const alreadyExists = fetchedObjectives.find(
-                  (m) => m.uid === attestUID
-                );
+                const alreadyExists = fetchedObjectives.find((m) => m.uid === attestUID);
 
                 if (alreadyExists) {
                   retries = 0;
@@ -338,9 +324,7 @@ export const ProjectObjectiveForm = ({
             placeholder={MESSAGES.PROJECT_OBJECTIVE_FORM.TITLE.MIN}
             {...register("title")}
           />
-          {errors.title && (
-            <p className="text-red-500">{errors.title.message}</p>
-          )}
+          {errors.title && <p className="text-red-500">{errors.title.message}</p>}
         </div>
         <div className="flex flex-col gap-1 items-start justify-start w-full">
           <label htmlFor="text" className={labelStyle}>

@@ -1,11 +1,10 @@
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { getContributorProfiles } from "@/utilities/indexer/getContributorProfiles";
-import { ContributorProfile } from "@show-karma/karma-gap-sdk";
-import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { create } from "zustand";
-import { useGrantStore } from "./grant";
+import type { ContributorProfile } from "@show-karma/karma-gap-sdk";
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { QueryClient } from "@tanstack/react-query";
+import { create } from "zustand";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
+import { useGrantStore } from "./grant";
 
 interface ProjectStore {
   project: IProjectResponse | undefined;
@@ -27,9 +26,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   refreshProject: async () => {
     const { project } = get();
     if (!project) return;
-    const refreshedProject = await gapIndexerApi
-      .projectBySlug(project.uid)
-      .then((res) => res.data);
+    const refreshedProject = await gapIndexerApi.projectBySlug(project.uid).then((res) => res.data);
     const currentGrantState = useGrantStore.getState();
     const shareSameGrant = refreshedProject.grants.find(
       (g) => g.uid.toLowerCase() === currentGrantState.grant?.uid?.toLowerCase()

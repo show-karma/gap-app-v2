@@ -1,33 +1,34 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
 import Papa from "papaparse";
+import type React from "react";
+import { useCallback, useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { isAddress } from "viem";
-import { useAccount, useWalletClient, useChainId } from "wagmi";
-import { DisbursementReview } from "./DisbursementReview";
-import { DisbursementRecipient } from "../../types/disbursement";
-import { DisbursementStepper, DisbursementStep } from "./DisbursementStepper";
-import { SupportedChainId } from "../../config/tokens";
+import { useAccount, useChainId, useWalletClient } from "wagmi";
+import { useWallet } from "@/hooks/useWallet";
+import type { SupportedChainId } from "../../config/tokens";
+import type { DisbursementRecipient } from "../../types/disbursement";
 import {
-  isSafeOwner,
   getSafeTokenBalance,
-  signAndProposeDisbursement,
   isSafeDeployed,
+  isSafeOwner,
+  signAndProposeDisbursement,
 } from "../../utilities/safe";
-// Import our new reusable components
-import { StatusAlert } from "./components/StatusAlert";
 import { Button } from "./components/Button";
 import { Card } from "./components/Card";
 import {
-  CheckIcon,
   CheckCircleIcon,
-  ExternalLinkIcon,
-  PlusIcon,
+  CheckIcon,
   ConfigIcon,
   DocumentIcon,
+  ExternalLinkIcon,
+  PlusIcon,
 } from "./components/Icons";
-import { useWallet } from "@/hooks/useWallet";
-import toast from "react-hot-toast";
+// Import our new reusable components
+import { StatusAlert } from "./components/StatusAlert";
+import { DisbursementReview } from "./DisbursementReview";
+import { type DisbursementStep, DisbursementStepper } from "./DisbursementStepper";
 
 const NETWORK_OPTIONS = [
   { id: 42220, name: "Celo" },
@@ -125,17 +126,17 @@ export const DisbursementForm = () => {
         toast.error(
           "Failed to switch network. Please manually switch to the correct network in your wallet."
         );
-        setPreflightChecks(prev => ({
+        setPreflightChecks((prev) => ({
           ...prev,
           isCorrectNetwork: false,
-          error: "Network switch failed - please switch manually"
+          error: "Network switch failed - please switch manually",
         }));
       }
     }
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
+    if (event.target.files?.[0]) {
       const selectedFile = event.target.files[0];
       processFile(selectedFile);
     }
@@ -164,7 +165,7 @@ export const DisbursementForm = () => {
       setIsDragOver(false);
 
       const files = e.dataTransfer.files;
-      if (files && files[0] && files[0].type === "text/csv") {
+      if (files?.[0] && files[0].type === "text/csv") {
         processFile(files[0]);
       }
     },
@@ -186,7 +187,7 @@ export const DisbursementForm = () => {
 
           if (!isAddress(address)) {
             error = "Invalid address";
-          } else if (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+          } else if (Number.isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
             error = "Invalid amount";
           }
 
@@ -199,12 +200,7 @@ export const DisbursementForm = () => {
 
   // Run pre-flight checks
   const runPreflightChecks = useCallback(async () => {
-    if (
-      !safeAddress ||
-      !userAddress ||
-      !isConnected ||
-      recipients.length === 0
-    ) {
+    if (!safeAddress || !userAddress || !isConnected || recipients.length === 0) {
       return;
     }
 
@@ -222,8 +218,9 @@ export const DisbursementForm = () => {
           hasSufficientBalance: null,
           safeBalance: "0",
           isChecking: false,
-          error: `Please switch your wallet to ${NETWORK_OPTIONS.find((n) => n.id === network)?.name
-            } network.`,
+          error: `Please switch your wallet to ${
+            NETWORK_OPTIONS.find((n) => n.id === network)?.name
+          } network.`,
         });
         return;
       }
@@ -239,8 +236,9 @@ export const DisbursementForm = () => {
           hasSufficientBalance: null,
           safeBalance: "0",
           isChecking: false,
-          error: `Safe is not deployed on ${NETWORK_OPTIONS.find((n) => n.id === network)?.name
-            }. Please check the address and network.`,
+          error: `Safe is not deployed on ${
+            NETWORK_OPTIONS.find((n) => n.id === network)?.name
+          }. Please check the address and network.`,
         });
         return;
       }
@@ -249,11 +247,7 @@ export const DisbursementForm = () => {
       const isOwner = await isSafeOwner(safeAddress, userAddress, network);
 
       // Get Safe token balance
-      const balanceInfo = await getSafeTokenBalance(
-        safeAddress,
-        token,
-        network
-      );
+      const balanceInfo = await getSafeTokenBalance(safeAddress, token, network);
 
       // Calculate total amount needed
       const totalAmount = recipients.reduce((sum, r) => {
@@ -263,8 +257,7 @@ export const DisbursementForm = () => {
         return sum;
       }, 0);
 
-      const hasSufficientBalance =
-        parseFloat(balanceInfo.balanceFormatted) >= totalAmount;
+      const hasSufficientBalance = parseFloat(balanceInfo.balanceFormatted) >= totalAmount;
 
       setPreflightChecks({
         isCorrectNetwork: true,
@@ -283,15 +276,7 @@ export const DisbursementForm = () => {
         error: "Failed to verify Safe. Please check the address and network.",
       }));
     }
-  }, [
-    safeAddress,
-    userAddress,
-    isConnected,
-    recipients,
-    network,
-    token,
-    walletChainId,
-  ]);
+  }, [safeAddress, userAddress, isConnected, recipients, network, token, walletChainId]);
 
   // Handle disbursement execution
   const handleDisbursement = async () => {
@@ -337,14 +322,7 @@ export const DisbursementForm = () => {
     if (safeAddress && userAddress && isConnected && recipients.length > 0) {
       runPreflightChecks();
     }
-  }, [
-    runPreflightChecks,
-    safeAddress,
-    userAddress,
-    isConnected,
-    recipients,
-    walletChainId,
-  ]);
+  }, [runPreflightChecks, safeAddress, userAddress, isConnected, recipients]);
 
   // Update step based on form completion
   useEffect(() => {
@@ -381,10 +359,9 @@ export const DisbursementForm = () => {
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
           <div className="px-8 py-12 text-center">
             <div
-              className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full ${transactionState.result.executed
-                  ? "bg-green-100"
-                  : "bg-blue-100"
-                }`}
+              className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full ${
+                transactionState.result.executed ? "bg-green-100" : "bg-blue-100"
+              }`}
             >
               {transactionState.result.executed ? (
                 <CheckIcon className="h-8 w-8 text-green-600" />
@@ -425,12 +402,10 @@ export const DisbursementForm = () => {
                         />
                       </svg>
                       <div>
-                        <p className="text-sm font-medium text-amber-800">
-                          Manual Action Required
-                        </p>
+                        <p className="text-sm font-medium text-amber-800">Manual Action Required</p>
                         <p className="text-sm text-amber-700 mt-1">
-                          The Safe Transaction Service is unavailable. Please
-                          use the Safe app to manually create this transaction.
+                          The Safe Transaction Service is unavailable. Please use the Safe app to
+                          manually create this transaction.
                         </p>
                       </div>
                     </div>
@@ -496,9 +471,7 @@ export const DisbursementForm = () => {
       <div className="mx-auto max-w-6xl px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            💰 Safe Disbursement
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">💰 Safe Disbursement</h1>
           <p className="text-gray-600">
             Distribute USDC tokens to multiple recipients using Gnosis Safe
           </p>
@@ -506,10 +479,7 @@ export const DisbursementForm = () => {
 
         {/* Stepper */}
         <div className="mb-8">
-          <DisbursementStepper
-            currentStep={currentStep}
-            completedSteps={completedSteps}
-          />
+          <DisbursementStepper currentStep={currentStep} completedSteps={completedSteps} />
         </div>
 
         <div className="space-y-6">
@@ -565,21 +535,14 @@ export const DisbursementForm = () => {
 
               {/* Network Selection */}
               <div>
-                <label
-                  htmlFor="network"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
+                <label htmlFor="network" className="block text-sm font-medium text-gray-700 mb-2">
                   🌐 Network
                 </label>
                 <select
                   id="network"
                   name="network"
                   value={network}
-                  onChange={(e) =>
-                    handleNetworkChange(
-                      Number(e.target.value) as SupportedChainId
-                    )
-                  }
+                  onChange={(e) => handleNetworkChange(Number(e.target.value) as SupportedChainId)}
                   className="block w-full rounded-lg border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm transition-colors"
                   disabled={transactionState.isProcessing || isSwitchingNetwork}
                 >
@@ -593,10 +556,7 @@ export const DisbursementForm = () => {
 
               {/* Token Selection */}
               <div>
-                <label
-                  htmlFor="token"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
+                <label htmlFor="token" className="block text-sm font-medium text-gray-700 mb-2">
                   💰 Token
                 </label>
                 <select
@@ -623,28 +583,25 @@ export const DisbursementForm = () => {
             titleEmoji="📄"
           >
             <div>
-              <label
-                htmlFor="csv-upload"
-                className="block text-sm font-medium text-gray-700 mb-3"
-              >
+              <label htmlFor="csv-upload" className="block text-sm font-medium text-gray-700 mb-3">
                 📊 Upload CSV File
               </label>
-              <div
-                className={`flex justify-center rounded-xl border-2 border-dashed px-6 pb-6 pt-5 transition-all duration-200 ${isDragOver
+              <section
+                aria-label="CSV file drop zone"
+                className={`flex justify-center rounded-xl border-2 border-dashed px-6 pb-6 pt-5 transition-all duration-200 ${
+                  isDragOver
                     ? "border-indigo-400 bg-indigo-50 scale-105"
                     : "border-gray-300 hover:border-gray-400"
-                  } ${transactionState.isProcessing
-                    ? "opacity-50 pointer-events-none"
-                    : ""
-                  }`}
+                } ${transactionState.isProcessing ? "opacity-50 pointer-events-none" : ""}`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
               >
                 <div className="space-y-2 text-center">
                   <svg
-                    className={`mx-auto h-16 w-16 transition-colors ${isDragOver ? "text-indigo-500" : "text-gray-400"
-                      }`}
+                    className={`mx-auto h-16 w-16 transition-colors ${
+                      isDragOver ? "text-indigo-500" : "text-gray-400"
+                    }`}
                     stroke="currentColor"
                     fill="none"
                     viewBox="0 0 48 48"
@@ -681,7 +638,7 @@ export const DisbursementForm = () => {
                     📋 CSV format: address, amount
                   </p>
                 </div>
-              </div>
+              </section>
             </div>
           </Card>
 
@@ -706,9 +663,7 @@ export const DisbursementForm = () => {
                     />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900">
-                  🔍 Pre-flight Checks
-                </h3>
+                <h3 className="text-xl font-semibold text-gray-900">🔍 Pre-flight Checks</h3>
               </div>
               <div className="space-y-4">
                 {preflightChecks.isChecking ? (
@@ -721,12 +676,13 @@ export const DisbursementForm = () => {
                 ) : (
                   <>
                     <div
-                      className={`flex items-center p-3 rounded-lg border ${preflightChecks.isCorrectNetwork === true
+                      className={`flex items-center p-3 rounded-lg border ${
+                        preflightChecks.isCorrectNetwork === true
                           ? "bg-green-50 border-green-200 text-green-700"
                           : preflightChecks.isCorrectNetwork === false
                             ? "bg-red-50 border-red-200 text-red-700"
                             : "bg-gray-50 border-gray-200 text-gray-600"
-                        }`}
+                      }`}
                     >
                       <span className="text-lg mr-3">
                         {preflightChecks.isCorrectNetwork === true
@@ -741,9 +697,9 @@ export const DisbursementForm = () => {
                           {preflightChecks.isCorrectNetwork === true
                             ? "Connected to correct network"
                             : preflightChecks.isCorrectNetwork === false
-                              ? `Auto-switching to ${NETWORK_OPTIONS.find((n) => n.id === network)
-                                ?.name
-                              }...`
+                              ? `Auto-switching to ${
+                                  NETWORK_OPTIONS.find((n) => n.id === network)?.name
+                                }...`
                               : isSwitchingNetwork
                                 ? "Switching networks..."
                                 : "Checking network..."}
@@ -752,12 +708,13 @@ export const DisbursementForm = () => {
                     </div>
 
                     <div
-                      className={`flex items-center p-3 rounded-lg border ${preflightChecks.isDeployed === true
+                      className={`flex items-center p-3 rounded-lg border ${
+                        preflightChecks.isDeployed === true
                           ? "bg-green-50 border-green-200 text-green-700"
                           : preflightChecks.isDeployed === false
                             ? "bg-red-50 border-red-200 text-red-700"
                             : "bg-gray-50 border-gray-200 text-gray-600"
-                        }`}
+                      }`}
                     >
                       <span className="text-lg mr-3">
                         {preflightChecks.isDeployed === true
@@ -779,12 +736,13 @@ export const DisbursementForm = () => {
                     </div>
 
                     <div
-                      className={`flex items-center p-3 rounded-lg border ${preflightChecks.isOwner === true
+                      className={`flex items-center p-3 rounded-lg border ${
+                        preflightChecks.isOwner === true
                           ? "bg-green-50 border-green-200 text-green-700"
                           : preflightChecks.isOwner === false
                             ? "bg-red-50 border-red-200 text-red-700"
                             : "bg-gray-50 border-gray-200 text-gray-600"
-                        }`}
+                      }`}
                     >
                       <span className="text-lg mr-3">
                         {preflightChecks.isOwner === true
@@ -806,12 +764,13 @@ export const DisbursementForm = () => {
                     </div>
 
                     <div
-                      className={`flex items-center p-3 rounded-lg border ${preflightChecks.hasSufficientBalance === true
+                      className={`flex items-center p-3 rounded-lg border ${
+                        preflightChecks.hasSufficientBalance === true
                           ? "bg-green-50 border-green-200 text-green-700"
                           : preflightChecks.hasSufficientBalance === false
                             ? "bg-red-50 border-red-200 text-red-700"
                             : "bg-gray-50 border-gray-200 text-gray-600"
-                        }`}
+                      }`}
                     >
                       <span className="text-lg mr-3">
                         {preflightChecks.hasSufficientBalance === true
@@ -823,12 +782,9 @@ export const DisbursementForm = () => {
                       <div>
                         <div className="font-medium">💰 Balance</div>
                         <div className="text-sm">
-                          {formatNumber(
-                            parseFloat(preflightChecks.safeBalance) || 0
-                          )}{" "}
-                          USDC available
-                          {totalAmount > 0 &&
-                            ` (${formatNumber(totalAmount)} USDC needed)`}
+                          {formatNumber(parseFloat(preflightChecks.safeBalance) || 0)} USDC
+                          available
+                          {totalAmount > 0 && ` (${formatNumber(totalAmount)} USDC needed)`}
                         </div>
                       </div>
                     </div>
@@ -867,12 +823,10 @@ export const DisbursementForm = () => {
                       </svg>
                     </div>
                     <div>
-                      <div className="text-lg font-semibold text-gray-900">
-                        📊 Summary
-                      </div>
+                      <div className="text-lg font-semibold text-gray-900">📊 Summary</div>
                       <div className="text-sm text-gray-600">
-                        👥 {recipients.length} recipients • 💰{" "}
-                        {formatNumber(totalAmount)} USDC total
+                        👥 {recipients.length} recipients • 💰 {formatNumber(totalAmount)} USDC
+                        total
                       </div>
                     </div>
                   </div>
@@ -881,12 +835,13 @@ export const DisbursementForm = () => {
                   type="button"
                   disabled={!canDisburse}
                   onClick={handleDisbursement}
-                  className={`inline-flex items-center px-8 py-4 border border-transparent text-lg font-semibold rounded-xl shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${!canDisburse
+                  className={`inline-flex items-center px-8 py-4 border border-transparent text-lg font-semibold rounded-xl shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                    !canDisburse
                       ? "bg-gray-400 text-white cursor-not-allowed"
                       : transactionState.isProcessing
                         ? "bg-blue-600 text-white"
                         : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white focus:ring-indigo-500 transform hover:scale-105"
-                    }`}
+                  }`}
                 >
                   {transactionState.isProcessing ? (
                     <>

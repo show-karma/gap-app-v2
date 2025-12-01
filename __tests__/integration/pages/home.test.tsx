@@ -52,7 +52,14 @@ describe("Homepage", () => {
 
     const mainContainer = screen.getByRole("main");
     expect(mainContainer).toBeInTheDocument();
-    expect(mainContainer).toHaveClass("flex", "w-full", "flex-col", "flex-1", "items-center", "bg-background");
+    expect(mainContainer).toHaveClass(
+      "flex",
+      "w-full",
+      "flex-col",
+      "flex-1",
+      "items-center",
+      "bg-background"
+    );
   });
 
   it("renders sections in the correct order", () => {

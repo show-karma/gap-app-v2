@@ -1,11 +1,11 @@
 "use client";
 
-import { FC, Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import ApplicationSubmission from "./ApplicationSubmission";
-import { IFormSchema, IFundingApplication } from "@/types/funding-platform";
+import { type FC, Fragment } from "react";
 import { useApplicationUpdateV2 } from "@/hooks/useFundingPlatform";
+import type { IFormSchema, IFundingApplication } from "@/types/funding-platform";
+import ApplicationSubmission from "./ApplicationSubmission";
 
 interface EditApplicationModalProps {
   isOpen: boolean;
@@ -45,7 +45,7 @@ const EditApplicationModal: FC<EditApplicationModalProps> = ({
     } catch (error) {
       // Error is handled by the hook (shows toast with specific message)
       // Modal stays open to allow user to retry or cancel
-      console.error('Failed to update application:', error);
+      console.error("Failed to update application:", error);
     }
   };
 
@@ -119,4 +119,3 @@ const EditApplicationModal: FC<EditApplicationModalProps> = ({
 };
 
 export default EditApplicationModal;
-

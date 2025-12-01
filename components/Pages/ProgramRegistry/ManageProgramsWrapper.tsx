@@ -5,9 +5,7 @@ import { LoadingManagePrograms } from "@/components/Pages/ProgramRegistry/Loadin
 
 const ManagePrograms = dynamic(
   () =>
-    import("@/components/Pages/ProgramRegistry/ManagePrograms").then(
-      (mod) => mod.ManagePrograms
-    ),
+    import("@/components/Pages/ProgramRegistry/ManagePrograms").then((mod) => mod.ManagePrograms),
   {
     loading: () => <LoadingManagePrograms />,
   }

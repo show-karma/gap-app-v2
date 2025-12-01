@@ -1,20 +1,24 @@
+import type { WalletClient } from "viem";
 import {
+  getCurrentChainId,
   validateChainSync,
   waitForChainSync,
-  getCurrentChainId,
 } from "@/utilities/chainSyncValidation";
-import type { WalletClient } from "viem";
 
-// Mock console methods
-const mockConsoleLog = jest.spyOn(console, "log").mockImplementation(() => {});
-const mockConsoleWarn = jest.spyOn(console, "warn").mockImplementation(() => {});
+// Mock console methods to prevent test output clutter
+const _mockConsoleLog = jest.spyOn(console, "log").mockImplementation(() => {});
+const _mockConsoleWarn = jest.spyOn(console, "warn").mockImplementation(() => {});
 
 describe("chainSyncValidation utilities", () => {
   const mockAccount = {
     address: "0x1234567890123456789012345678901234567890" as const,
   };
 
-  const createMockWalletClient = (chainId: number, hasAccount = true, hasChain = true): WalletClient => {
+  const createMockWalletClient = (
+    chainId: number,
+    hasAccount = true,
+    hasChain = true
+  ): WalletClient => {
     return {
       account: hasAccount ? mockAccount : undefined,
       chain: hasChain ? { id: chainId } : undefined,
@@ -40,20 +44,15 @@ describe("chainSyncValidation utilities", () => {
         validateChainSync(walletClient, expectedChainId, "donation")
       ).resolves.not.toThrow();
 
-      expect(mockConsoleLog).toHaveBeenCalledWith(
-        expect.stringContaining("Validating chain sync")
-      );
-      expect(mockConsoleLog).toHaveBeenCalledWith(
-        expect.stringContaining("Chain sync validated")
-      );
+      // validateChainSync completes silently when chains match
     });
 
     it("should throw error when wallet client is null", async () => {
       const expectedChainId = 10;
 
-      await expect(
-        validateChainSync(null, expectedChainId, "donation")
-      ).rejects.toThrow("Wallet client is not available");
+      await expect(validateChainSync(null, expectedChainId, "donation")).rejects.toThrow(
+        "Wallet client is not available"
+      );
 
       // Console.log is called but may be cleared, verify by checking the error
     });
@@ -61,36 +60,36 @@ describe("chainSyncValidation utilities", () => {
     it("should throw error when wallet client is undefined", async () => {
       const expectedChainId = 10;
 
-      await expect(
-        validateChainSync(undefined, expectedChainId, "donation")
-      ).rejects.toThrow("Wallet client is not available");
+      await expect(validateChainSync(undefined, expectedChainId, "donation")).rejects.toThrow(
+        "Wallet client is not available"
+      );
     });
 
     it("should throw error when wallet client has no account", async () => {
       const walletClient = createMockWalletClient(10, false);
       const expectedChainId = 10;
 
-      await expect(
-        validateChainSync(walletClient, expectedChainId, "donation")
-      ).rejects.toThrow("No account connected to wallet");
+      await expect(validateChainSync(walletClient, expectedChainId, "donation")).rejects.toThrow(
+        "No account connected to wallet"
+      );
     });
 
     it("should throw error when wallet client has no chain information", async () => {
       const walletClient = createMockWalletClient(10, true, false);
       const expectedChainId = 10;
 
-      await expect(
-        validateChainSync(walletClient, expectedChainId, "donation")
-      ).rejects.toThrow("Wallet client has no chain information");
+      await expect(validateChainSync(walletClient, expectedChainId, "donation")).rejects.toThrow(
+        "Wallet client has no chain information"
+      );
     });
 
     it("should throw error when wallet is on wrong chain", async () => {
       const walletClient = createMockWalletClient(8453); // Base
       const expectedChainId = 10; // Optimism
 
-      await expect(
-        validateChainSync(walletClient, expectedChainId, "donation")
-      ).rejects.toThrow("Chain mismatch");
+      await expect(validateChainSync(walletClient, expectedChainId, "donation")).rejects.toThrow(
+        "Chain mismatch"
+      );
 
       const error = await validateChainSync(walletClient, expectedChainId, "donation").catch(
         (e) => e
@@ -103,9 +102,9 @@ describe("chainSyncValidation utilities", () => {
       const walletClient = createMockWalletClient(8453);
       const expectedChainId = 10;
 
-      await expect(
-        validateChainSync(walletClient, expectedChainId, "approval")
-      ).rejects.toThrow("approval");
+      await expect(validateChainSync(walletClient, expectedChainId, "approval")).rejects.toThrow(
+        "approval"
+      );
 
       const error = await validateChainSync(walletClient, expectedChainId, "approval").catch(
         (e) => e
@@ -117,9 +116,7 @@ describe("chainSyncValidation utilities", () => {
       const walletClient = createMockWalletClient(8453);
       const expectedChainId = 10;
 
-      await expect(
-        validateChainSync(walletClient, expectedChainId)
-      ).rejects.toThrow("transaction");
+      await expect(validateChainSync(walletClient, expectedChainId)).rejects.toThrow("transaction");
     });
   });
 
@@ -164,7 +161,7 @@ describe("chainSyncValidation utilities", () => {
         .mockReturnValueOnce(correctChainClient);
 
       const result = await waitForChainSync(getWalletClient, 10, 30000, "donation");
-      
+
       expect(result).toBe(correctChainClient);
       expect(getWalletClient).toHaveBeenCalledTimes(3);
     }, 35000);
@@ -193,7 +190,7 @@ describe("chainSyncValidation utilities", () => {
 
       const maxWaitMs = 1000;
       const result = await waitForChainSync(getWalletClient, 10, maxWaitMs, "donation");
-      
+
       expect(result).toBe(correctChainClient);
     }, 35000);
 
@@ -203,9 +200,9 @@ describe("chainSyncValidation utilities", () => {
       const getWalletClient = jest.fn().mockReturnValue(wrongChainClient);
       const maxWaitMs = 100;
 
-      await expect(
-        waitForChainSync(getWalletClient, 10, maxWaitMs, "approval")
-      ).rejects.toThrow("approval");
+      await expect(waitForChainSync(getWalletClient, 10, maxWaitMs, "approval")).rejects.toThrow(
+        "approval"
+      );
     }, 35000);
 
     it("should handle wallet client becoming null during wait", async () => {
@@ -216,9 +213,7 @@ describe("chainSyncValidation utilities", () => {
         .mockReturnValueOnce(wrongChainClient)
         .mockReturnValueOnce(null);
 
-      await expect(
-        waitForChainSync(getWalletClient, 10, 1000, "donation")
-      ).rejects.toThrow();
+      await expect(waitForChainSync(getWalletClient, 10, 1000, "donation")).rejects.toThrow();
     }, 35000);
 
     it("should cap exponential backoff delay at 5000ms", async () => {
@@ -227,9 +222,9 @@ describe("chainSyncValidation utilities", () => {
       const getWalletClient = jest.fn().mockReturnValue(wrongChainClient);
       const maxWaitMs = 100;
 
-      await expect(
-        waitForChainSync(getWalletClient, 10, maxWaitMs, "donation")
-      ).rejects.toThrow("Timed out");
+      await expect(waitForChainSync(getWalletClient, 10, maxWaitMs, "donation")).rejects.toThrow(
+        "Timed out"
+      );
     }, 35000);
   });
 
@@ -362,7 +357,7 @@ describe("chainSyncValidation utilities", () => {
         .mockReturnValueOnce(optimismClient);
 
       const result = await waitForChainSync(getWalletClient, 10, 30000, "donation");
-      
+
       expect(result).toBe(optimismClient);
     }, 35000);
 
@@ -375,10 +370,7 @@ describe("chainSyncValidation utilities", () => {
         .mockReturnValueOnce(connectedClient)
         .mockReturnValueOnce(disconnectedClient);
 
-      await expect(
-        waitForChainSync(getWalletClient, 10, 1000, "donation")
-      ).rejects.toThrow();
+      await expect(waitForChainSync(getWalletClient, 10, 1000, "donation")).rejects.toThrow();
     }, 35000);
   });
 });
-

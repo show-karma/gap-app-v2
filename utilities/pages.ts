@@ -10,13 +10,13 @@ export const PAGES = {
       `/community/${community}${programId ? `?programId=${programId}` : ""}`,
     IMPACT: (community: string) => `/community/${community}/impact`,
     DONATE: (community: string) => `/community/${community}/donate`,
-    DONATE_PROGRAM: (community: string, programId: string) => `/community/${community}/donate/${programId}`,
-    DONATE_PROGRAM_CHECKOUT: (community: string, programId: string) => `/community/${community}/donate/${programId}/checkout`,
-    PROJECT_DISCOVERY: (community: string) =>
-      `/community/${community}/impact/project-discovery`,
+    DONATE_PROGRAM: (community: string, programId: string) =>
+      `/community/${community}/donate/${programId}`,
+    DONATE_PROGRAM_CHECKOUT: (community: string, programId: string) =>
+      `/community/${community}/donate/${programId}/checkout`,
+    PROJECT_DISCOVERY: (community: string) => `/community/${community}/impact/project-discovery`,
     UPDATES: (community: string) => `/community/${community}/updates`,
-    RECEIVEPROJECTUPDATES: (community: string) =>
-      `/community/${community}/receive-project-updates`,
+    RECEIVEPROJECTUPDATES: (community: string) => `/community/${community}/receive-project-updates`,
     FUNDING_PLATFORM_APPLY: (community: string, programId: string) =>
       `/community/${community}/funding-platform/${programId}/apply`,
   },
@@ -26,7 +26,12 @@ export const PAGES = {
     DASHBOARD: (community: string) => `/community/${community}/reviewer/funding-platform`,
     APPLICATIONS: (community: string, programId: string, chainId: number) =>
       `/community/${community}/reviewer/funding-platform/${programId}_${chainId}/applications`,
-    APPLICATION_DETAIL: (community: string, programId: string, chainId: number, applicationId: string) =>
+    APPLICATION_DETAIL: (
+      community: string,
+      programId: string,
+      chainId: number,
+      applicationId: string
+    ) =>
       `/community/${community}/reviewer/funding-platform/${programId}_${chainId}/applications/${applicationId}`,
     QUESTION_BUILDER: (community: string, programId: string, chainId: number) =>
       `/community/${community}/reviewer/funding-platform/${programId}_${chainId}/question-builder`,
@@ -34,19 +39,15 @@ export const PAGES = {
   ADMIN: {
     LIST: `/admin`,
     ROOT: (community: string) => `/community/${community}/admin`,
-    EDIT_CATEGORIES: (community: string) =>
-      `/community/${community}/admin/edit-categories`,
-    EDIT_PROJECTS: (community: string) =>
-      `/community/${community}/admin/edit-projects`,
-    MILESTONES: (community: string) =>
-      `/community/${community}/admin/milestones-report`,
-    MANAGE_INDICATORS: (community: string) =>
-      `/community/${community}/admin/manage-indicators`,
+    EDIT_CATEGORIES: (community: string) => `/community/${community}/admin/edit-categories`,
+    EDIT_PROJECTS: (community: string) => `/community/${community}/admin/edit-projects`,
+    MILESTONES: (community: string) => `/community/${community}/admin/milestones-report`,
+    MANAGE_INDICATORS: (community: string) => `/community/${community}/admin/manage-indicators`,
     TRACKS: (community: string) => `/community/${community}/admin/tracks`,
     FUNDING_PLATFORM: (community: string) => `/community/${community}/admin/funding-platform`,
-    FUNDING_PLATFORM_QUESTION_BUILDER: (community: string, programId: string) => 
+    FUNDING_PLATFORM_QUESTION_BUILDER: (community: string, programId: string) =>
       `/community/${community}/admin/funding-platform/${programId}/question-builder`,
-    FUNDING_PLATFORM_APPLICATIONS: (community: string, programId: string) => 
+    FUNDING_PLATFORM_APPLICATIONS: (community: string, programId: string) =>
       `/community/${community}/admin/funding-platform/${programId}/applications`,
     COMMUNITIES: `/admin/communities`,
     COMMUNITY_STATS: `/admin/communities/stats`,
@@ -61,15 +62,13 @@ export const PAGES = {
     UPDATES: (project: string) => `/project/${project}/updates`,
     GRANTS: (project: string) => `/project/${project}/funding`,
 
-    GRANT: (project: string, grant: string) =>
-      `/project/${project}/funding/${grant}`,
+    GRANT: (project: string, grant: string) => `/project/${project}/funding/${grant}`,
     CONTACT_INFO: (project: string) => `/project/${project}/contact-info`,
     MILESTONES_AND_UPDATES: (project: string, grant: string) =>
       `/project/${project}/funding/${grant}/milestones-and-updates`,
     IMPACT: {
       ROOT: (project: string) => `/project/${project}/impact`,
-      ADD_IMPACT: (project: string) =>
-        `/project/${project}/impact?tab=add-impact`,
+      ADD_IMPACT: (project: string) => `/project/${project}/impact?tab=add-impact`,
     },
     SCREENS: {
       NEW_GRANT: (project: string) => `/project/${project}/funding/new`,
@@ -87,9 +86,10 @@ export const PAGES = {
   STATS: `/stats`,
   SUMUP_CONFIG: `/admin/sumup`,
   FUNDERS: `/funders`,
-  FUNDING_APP: process.env.NODE_ENV === "production" 
-    ? "https://app.karmahq.xyz" 
-    : "https://testapp.karmahq.xyz",
+  FUNDING_APP:
+    process.env.NODE_ENV === "production"
+      ? "https://app.karmahq.xyz"
+      : "https://testapp.karmahq.xyz",
   EXTERNAL_PROGRAM: {
     DETAIL: (communitySlug: string, programId: string) =>
       `${PAGES.FUNDING_APP}/${communitySlug}/programs/${programId}`,

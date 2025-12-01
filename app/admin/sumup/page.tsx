@@ -1,8 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
-import { defaultMetadata } from "@/utilities/meta";
+
 import { Suspense } from "react";
-import { Spinner } from "@/components/Utilities/Spinner";
 import SumupAdminPage from "@/components/Pages/Admin/SumupAdmin";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { defaultMetadata } from "@/utilities/meta";
 
 export const metadata = defaultMetadata;
 

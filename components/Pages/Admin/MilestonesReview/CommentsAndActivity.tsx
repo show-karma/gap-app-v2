@@ -2,16 +2,10 @@
 
 import { useCallback, useMemo } from "react";
 import CommentsTimeline from "@/components/FundingPlatform/ApplicationView/CommentsTimeline";
-import {
-  useApplicationComments,
-  useApplicationVersions,
-} from "@/hooks/useFundingPlatform";
+import { useApplicationComments, useApplicationVersions } from "@/hooks/useFundingPlatform";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { useOwnerStore } from "@/store";
-import type {
-  FundingApplicationStatusV2,
-  IStatusHistoryEntry,
-} from "@/types/funding-platform";
+import type { FundingApplicationStatusV2, IStatusHistoryEntry } from "@/types/funding-platform";
 
 interface CommentsAndActivityProps {
   referenceNumber: string;
@@ -30,13 +24,8 @@ export function CommentsAndActivity({
   communityId,
   currentUserAddress,
 }: CommentsAndActivityProps) {
-  const {
-    comments,
-    isLoading,
-    createCommentAsync,
-    editCommentAsync,
-    deleteCommentAsync,
-  } = useApplicationComments(referenceNumber);
+  const { comments, isLoading, createCommentAsync, editCommentAsync, deleteCommentAsync } =
+    useApplicationComments(referenceNumber);
   const { versions } = useApplicationVersions(referenceNumber);
   const { isCommunityAdmin } = useIsCommunityAdmin(communityId);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
@@ -52,7 +41,7 @@ export function CommentsAndActivity({
 
   const isAdmin = useMemo(
     () => isCommunityAdmin || isContractOwner,
-    [isCommunityAdmin, isContractOwner],
+    [isCommunityAdmin, isContractOwner]
   );
 
   // Handler for adding a new comment
@@ -60,7 +49,7 @@ export function CommentsAndActivity({
     async (content: string) => {
       await createCommentAsync({ content });
     },
-    [createCommentAsync],
+    [createCommentAsync]
   );
 
   // Handler for editing an existing comment
@@ -68,7 +57,7 @@ export function CommentsAndActivity({
     async (commentId: string, content: string) => {
       await editCommentAsync({ commentId, content });
     },
-    [editCommentAsync],
+    [editCommentAsync]
   );
 
   // Handler for deleting a comment
@@ -76,7 +65,7 @@ export function CommentsAndActivity({
     async (commentId: string) => {
       await deleteCommentAsync(commentId);
     },
-    [deleteCommentAsync],
+    [deleteCommentAsync]
   );
 
   return (
@@ -86,9 +75,7 @@ export function CommentsAndActivity({
         comments={comments}
         statusHistory={mappedStatusHistory}
         versionHistory={versions}
-        currentStatus={
-          mappedStatusHistory[mappedStatusHistory.length - 1]?.status
-        }
+        currentStatus={mappedStatusHistory[mappedStatusHistory.length - 1]?.status}
         isAdmin={isAdmin}
         currentUserAddress={currentUserAddress}
         isLoading={isLoading}

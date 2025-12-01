@@ -72,7 +72,7 @@ export function validateChainId(chainID: number | string): boolean {
   }
   if (typeof chainID === "string") {
     const parsed = parseInt(chainID, 10);
-    return !isNaN(parsed) && parsed > 0 && parsed.toString() === chainID.trim();
+    return !Number.isNaN(parsed) && parsed > 0 && parsed.toString() === chainID.trim();
   }
   return false;
 }
@@ -262,9 +262,7 @@ export function validateReviewerData(data: {
   }
 
   if (data.telegram && !validateTelegram(data.telegram)) {
-    errors.push(
-      "Invalid Telegram handle format (5-32 alphanumeric characters, optional @ prefix)",
-    );
+    errors.push("Invalid Telegram handle format (5-32 alphanumeric characters, optional @ prefix)");
   }
 
   return {

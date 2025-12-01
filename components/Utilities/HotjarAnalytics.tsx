@@ -1,6 +1,6 @@
 "use client";
-import { useEffect } from "react";
 import Hotjar from "@hotjar/browser";
+import { useEffect } from "react";
 
 export default function HotjarAnalytics() {
   useEffect(() => {
@@ -15,7 +15,6 @@ export default function HotjarAnalytics() {
         console.error("Failed to initialize Hotjar:", error);
       } finally {
         if (process.env.NEXT_PUBLIC_ENV !== "production") {
-          console.log("Hotjar initiated");
         }
       }
 

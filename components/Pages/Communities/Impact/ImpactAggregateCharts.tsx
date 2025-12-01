@@ -8,9 +8,7 @@ export const CommunityImpactAggregateCharts = () => {
 
   const outputs = data?.data;
 
-  const orderedData = outputs?.sort((a, b) =>
-    a.categoryName.localeCompare(b.categoryName)
-  );
+  const orderedData = outputs?.sort((a, b) => a.categoryName.localeCompare(b.categoryName));
 
   return (
     <div className="flex flex-col gap-4 flex-1 mb-10">
@@ -21,10 +19,7 @@ export const CommunityImpactAggregateCharts = () => {
       ) : orderedData?.length ? (
         orderedData.map((program, index) => (
           <>
-            <AggregateCategoryRow
-              key={program.categoryName}
-              program={program}
-            />
+            <AggregateCategoryRow key={program.categoryName} program={program} />
             {index !== orderedData.length - 1 && (
               <div className="w-full my-8 h-px bg-gradient-to-r from-transparent via-gray-300 dark:via-gray-700 to-transparent" />
             )}

@@ -1,26 +1,23 @@
-import { DeleteDialog } from "@/components/DeleteDialog";
-import { getGapClient, useGap } from "@/hooks/useGap";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
-import { MESSAGES } from "@/utilities/messages";
-import { privyConfig as config } from "@/utilities/wagmi/privy-config";
 import { TrashIcon } from "@heroicons/react/24/outline";
-import { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import type { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { type FC, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
-
+import { DeleteDialog } from "@/components/DeleteDialog";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { retryUntilConditionMet } from "@/utilities/retries";
-import { useWallet } from "@/hooks/useWallet";
-import { useCommunityAdminStore } from "@/store/communityAdmin";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import { useGap } from "@/hooks/useGap";
 import { useOffChainRevoke } from "@/hooks/useOffChainRevoke";
+import { useWallet } from "@/hooks/useWallet";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useStepper } from "@/store/modals/txStepper";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { retryUntilConditionMet } from "@/utilities/retries";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+
 interface MilestoneDeleteProps {
   milestone: IMilestoneResponse;
 }
@@ -33,7 +30,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
-  const selectedProject = useProjectStore((state) => state.project);
+  const _selectedProject = useProjectStore((state) => state.project);
 
   const { project, isProjectOwner } = useProjectStore();
   const { isOwner: isContractOwner } = useOwnerStore();
@@ -44,7 +41,11 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
     setIsDeletingMilestone(true);
     let gapClient = gap;
     try {
-      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+      const {
+        success,
+        chainId: actualChainId,
+        gapClient: newGapClient,
+      } = await ensureCorrectChain({
         targetChainId: milestone.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
@@ -58,9 +59,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
       gapClient = newGapClient;
       const milestoneUID = milestone.uid;
 
-      const { walletClient, error } = await safeGetWalletClient(
-        actualChainId
-      );
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
@@ -81,12 +80,8 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
         await retryUntilConditionMet(
           async () => {
             const fetchedProject = await refreshProject();
-            const grant = fetchedProject?.grants.find(
-              (g) => g.uid === milestone.refUID
-            );
-            const stillExists = grant?.milestones.find(
-              (m) => m.uid === milestoneUID
-            );
+            const grant = fetchedProject?.grants.find((g) => g.uid === milestone.refUID);
+            const stillExists = grant?.milestones.find((m) => m.uid === milestoneUID);
             return !stillExists && !!grant?.milestones;
           },
           () => {
@@ -99,11 +94,16 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
           uid: milestoneInstance.uid,
           chainID: milestoneInstance.chainID,
           onError: (error) => {
-            errorManager(MESSAGES.MILESTONES.DELETE.ERROR(milestone.data.title), error, {
-              milestone: milestone.uid,
-              grant: milestone.refUID,
-              address: address,
-            }, { error: MESSAGES.MILESTONES.DELETE.ERROR(milestone.data.title) });
+            errorManager(
+              MESSAGES.MILESTONES.DELETE.ERROR(milestone.data.title),
+              error,
+              {
+                milestone: milestone.uid,
+                grant: milestone.refUID,
+                address: address,
+              },
+              { error: MESSAGES.MILESTONES.DELETE.ERROR(milestone.data.title) }
+            );
           },
           onSuccess: () => {
             changeStepperStep("indexed");
@@ -173,15 +173,13 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
       isLoading={isDeletingMilestone}
       title={
         <p className="font-normal">
-          Are you sure you want to delete <b>{milestone.data.title}</b>{" "}
-          milestone?
+          Are you sure you want to delete <b>{milestone.data.title}</b> milestone?
         </p>
       }
       buttonElement={{
         text: "",
         icon: <TrashIcon className="text-red-500 w-5 h-5" />,
-        styleClass:
-          "bg-transparent p-0 w-max h-max text-red-500 hover:bg-transparent",
+        styleClass: "bg-transparent p-0 w-max h-max text-red-500 hover:bg-transparent",
       }}
     />
   );

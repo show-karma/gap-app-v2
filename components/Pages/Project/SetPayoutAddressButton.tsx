@@ -1,26 +1,26 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Dialog, Transition } from "@headlessui/react";
+import { CheckIcon, ChevronDownIcon, CurrencyDollarIcon } from "@heroicons/react/24/outline";
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import debounce from "lodash.debounce";
+import type { FC, ReactNode } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
+import { isAddress } from "viem";
+import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { Button } from "@/components/ui/button";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
-import { Dialog, Transition } from "@headlessui/react";
-import { CurrencyDollarIcon, CheckIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
-import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import type { FC, ReactNode } from "react";
-import { Fragment, useEffect, useState, useCallback, useMemo } from "react";
-import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
-import { isAddress } from "viem";
-import debounce from "lodash.debounce";
 
 // Updated interface to handle new JSON payoutAddress structure
 interface SetPayoutAddressButtonProps {
   buttonClassName?: string;
-  project: IProjectResponse & { 
+  project: IProjectResponse & {
     payoutAddress?: string | { [communityUID: string]: string };
   };
   "data-set-payout-button"?: string;
@@ -46,9 +46,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const setProject = useProjectStore((state) => state.setProject);
-  const isCommunityAdmin = useCommunityAdminStore(
-    (state) => state.isCommunityAdmin
-  );
+  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
   const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
   const { address } = useAccount();
 
@@ -66,19 +64,20 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
     if (!project?.grants) return [];
 
     const communityMap = new Map<string, CommunityOption>();
-    
+
     project.grants.forEach((grant) => {
       if (grant.community?.uid) {
         const communityUID = grant.community.uid;
-        const payoutAddresses = typeof project.payoutAddress === 'object' && project.payoutAddress 
-          ? project.payoutAddress as { [key: string]: string }
-          : {};
-        
+        const payoutAddresses =
+          typeof project.payoutAddress === "object" && project.payoutAddress
+            ? (project.payoutAddress as { [key: string]: string })
+            : {};
+
         communityMap.set(communityUID, {
           uid: communityUID,
-          name: grant.community.details?.data?.name || 'Unknown Community',
+          name: grant.community.details?.data?.name || "Unknown Community",
           imageURL: grant.community.details?.data?.imageURL,
-          currentPayoutAddress: payoutAddresses[communityUID]
+          currentPayoutAddress: payoutAddresses[communityUID],
         });
       }
     });
@@ -153,9 +152,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
 
     // Check exact format: must be exactly 42 characters including '0x' prefix
     if (address.length !== 42) {
-      setValidationError(
-        "Ethereum address must be exactly 42 characters including '0x' prefix"
-      );
+      setValidationError("Ethereum address must be exactly 42 characters including '0x' prefix");
       setIsValidated(false);
       return false;
     }
@@ -170,9 +167,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
     // Check if the rest are hexadecimal characters
     const hexPart = address.slice(2);
     if (!/^[a-fA-F0-9]{40}$/.test(hexPart)) {
-      setValidationError(
-        "Ethereum address must contain only hexadecimal characters after '0x'"
-      );
+      setValidationError("Ethereum address must contain only hexadecimal characters after '0x'");
       setIsValidated(false);
       return false;
     }
@@ -246,9 +241,10 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
         toast.success(data.message || MESSAGES.PROJECT.PAYOUT_ADDRESS.SUCCESS);
 
         // Update project store with new payout address structure
-        const currentPayoutAddresses = typeof project.payoutAddress === 'object' && project.payoutAddress 
-          ? { ...(project.payoutAddress as { [key: string]: string }) } 
-          : ({} as { [key: string]: string });
+        const currentPayoutAddresses =
+          typeof project.payoutAddress === "object" && project.payoutAddress
+            ? { ...(project.payoutAddress as { [key: string]: string }) }
+            : ({} as { [key: string]: string });
 
         if (payoutAddress.trim()) {
           currentPayoutAddresses[selectedCommunity.uid] = payoutAddress.trim();
@@ -265,7 +261,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
         // Update selected community's current address
         setSelectedCommunity({
           ...selectedCommunity,
-          currentPayoutAddress: payoutAddress.trim() || undefined
+          currentPayoutAddress: payoutAddress.trim() || undefined,
         });
 
         // Close modal
@@ -277,8 +273,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
 
       if (error) {
         // Use the error message from the API, with fallbacks for different status codes
-        const errorMessage =
-          error.message || getDefaultErrorMessage(error.status);
+        const errorMessage = error.message || getDefaultErrorMessage(error.status);
         setError(errorMessage);
         throw new Error(errorMessage);
       }
@@ -286,8 +281,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
       // Only show errorManager for unexpected errors
       if (!error) {
         errorManager(
-          MESSAGES.PROJECT.PAYOUT_ADDRESS.ERROR ||
-            "Error setting payout address",
+          MESSAGES.PROJECT.PAYOUT_ADDRESS.ERROR || "Error setting payout address",
           err,
           {
             projectUID: project.uid,
@@ -327,17 +321,17 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
         toast.success(data.message || "Payout address removed successfully");
 
         // Update project store to remove payout address for this community
-        const currentPayoutAddresses = typeof project.payoutAddress === 'object' && project.payoutAddress 
-          ? { ...(project.payoutAddress as { [key: string]: string }) } 
-          : {};
-        
+        const currentPayoutAddresses =
+          typeof project.payoutAddress === "object" && project.payoutAddress
+            ? { ...(project.payoutAddress as { [key: string]: string }) }
+            : {};
+
         delete currentPayoutAddresses[selectedCommunity.uid];
 
-        const updatedProject = { 
-          ...project, 
-          payoutAddress: Object.keys(currentPayoutAddresses).length > 0 
-            ? currentPayoutAddresses 
-            : undefined 
+        const updatedProject = {
+          ...project,
+          payoutAddress:
+            Object.keys(currentPayoutAddresses).length > 0 ? currentPayoutAddresses : undefined,
         };
         setProject(updatedProject as any);
 
@@ -346,7 +340,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
         setIsValidated(false);
         setSelectedCommunity({
           ...selectedCommunity,
-          currentPayoutAddress: undefined
+          currentPayoutAddress: undefined,
         });
 
         // Close modal
@@ -358,8 +352,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
 
       if (error) {
         // Use the error message from the API, with fallbacks for different status codes
-        const errorMessage =
-          error.message || getDefaultErrorMessage(error.status);
+        const errorMessage = error.message || getDefaultErrorMessage(error.status);
         setError(errorMessage);
         throw new Error(errorMessage);
       }
@@ -391,10 +384,10 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
 
   // Check if project has any payout addresses
   const hasAnyPayoutAddress = useMemo(() => {
-    if (typeof project?.payoutAddress === 'string') {
+    if (typeof project?.payoutAddress === "string") {
       return !!project.payoutAddress;
     }
-    if (typeof project?.payoutAddress === 'object' && project.payoutAddress) {
+    if (typeof project?.payoutAddress === "object" && project.payoutAddress) {
       return Object.keys(project.payoutAddress).length > 0;
     }
     return false;
@@ -418,9 +411,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
           data-set-payout-button={dataAttr}
         >
           <CurrencyDollarIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
-          {hasAnyPayoutAddress
-            ? "Manage Payout Address"
-            : "Set Payout Address"}
+          {hasAnyPayoutAddress ? "Manage Payout Address" : "Set Payout Address"}
         </Button>
       )}
       <Transition appear show={isOpen} as={Fragment}>
@@ -453,9 +444,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
                     as="h2"
                     className="text-gray-900 dark:text-zinc-100 text-2xl font-bold leading-6"
                   >
-                    {hasAnyPayoutAddress
-                      ? "Manage Payout Address"
-                      : "Set Payout Address"}
+                    {hasAnyPayoutAddress ? "Manage Payout Address" : "Set Payout Address"}
                   </Dialog.Title>
                   <p className="text-md text-gray-500 dark:text-gray-400 mt-2">
                     {hasAnyPayoutAddress
@@ -467,19 +456,24 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
                     {/* Community Selection */}
                     <div className="flex flex-col gap-4">
                       <div className="relative">
-                        <label className="text-md font-bold text-gray-900 dark:text-zinc-100 mb-2 block">
+                        <label
+                          htmlFor="community-dropdown"
+                          className="text-md font-bold text-gray-900 dark:text-zinc-100 mb-2 block"
+                        >
                           Select Community
                         </label>
-                        <div 
-                          className="flex items-center justify-between p-3 bg-gray-100 dark:bg-zinc-700 rounded-lg cursor-pointer border border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400 transition-colors"
+                        <button
+                          id="community-dropdown"
+                          type="button"
+                          className="flex items-center justify-between p-3 bg-gray-100 dark:bg-zinc-700 rounded-lg cursor-pointer border border-gray-300 dark:border-gray-600 hover:border-blue-500 dark:hover:border-blue-400 transition-colors w-full text-left"
                           onClick={() => setShowDropdown(!showDropdown)}
                         >
                           <div className="flex items-center space-x-3">
                             {selectedCommunity ? (
                               <>
                                 {selectedCommunity.imageURL && (
-                                  <img 
-                                    src={selectedCommunity.imageURL} 
+                                  <img
+                                    src={selectedCommunity.imageURL}
                                     alt={selectedCommunity.name}
                                     className="w-8 h-8 rounded-full object-cover"
                                   />
@@ -501,28 +495,29 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
                               </span>
                             )}
                           </div>
-                          <ChevronDownIcon 
+                          <ChevronDownIcon
                             className={`h-5 w-5 text-gray-400 transition-transform ${
-                              showDropdown ? 'rotate-180' : ''
-                            }`} 
+                              showDropdown ? "rotate-180" : ""
+                            }`}
                           />
-                        </div>
+                        </button>
 
                         {/* Dropdown */}
                         {showDropdown && (
                           <div className="absolute z-50 w-full mt-1 bg-white dark:bg-zinc-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                             {communities.map((community) => (
-                              <div
+                              <button
                                 key={community.uid}
-                                className="flex items-center space-x-3 p-3 hover:bg-gray-50 dark:hover:bg-zinc-600 cursor-pointer transition-colors"
+                                type="button"
+                                className="flex items-center space-x-3 p-3 hover:bg-gray-50 dark:hover:bg-zinc-600 cursor-pointer transition-colors w-full text-left"
                                 onClick={() => {
                                   setSelectedCommunity(community);
                                   setShowDropdown(false);
                                 }}
                               >
                                 {community.imageURL && (
-                                  <img 
-                                    src={community.imageURL} 
+                                  <img
+                                    src={community.imageURL}
                                     alt={community.name}
                                     className="w-8 h-8 rounded-full object-cover"
                                   />
@@ -541,7 +536,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
                                     </span>
                                   )}
                                 </div>
-                              </div>
+                              </button>
                             ))}
                           </div>
                         )}
@@ -559,9 +554,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
                                 <input
                                   type="text"
                                   value={payoutAddress}
-                                  onChange={(e) =>
-                                    handleAddressChange(e.target.value)
-                                  }
+                                  onChange={(e) => handleAddressChange(e.target.value)}
                                   className="text-sm rounded-md w-full flex-1 text-gray-600 dark:text-gray-300 bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none focus:border-blue-500"
                                   placeholder="0x1234567890abcdef1234567890abcdef12345678"
                                 />
@@ -582,16 +575,12 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
                             </div>
                           </div>
                           {validationError && (
-                            <p className="text-red-500 text-sm mt-1 ml-4">
-                              {validationError}
-                            </p>
+                            <p className="text-red-500 text-sm mt-1 ml-4">{validationError}</p>
                           )}
                         </div>
                       )}
                     </div>
-                    {error && (
-                      <p className="text-red-500 text-sm mt-4">{error}</p>
-                    )}
+                    {error && <p className="text-red-500 text-sm mt-4">{error}</p>}
                   </div>
                   <div className="flex flex-col sm:flex-row gap-4 mt-10 justify-end">
                     <Button
@@ -607,8 +596,8 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
                       {isLoading
                         ? "Saving..."
                         : selectedCommunity?.currentPayoutAddress
-                        ? "Update Payout Address"
-                        : "Set Payout Address"}
+                          ? "Update Payout Address"
+                          : "Set Payout Address"}
                     </Button>
                     {selectedCommunity?.currentPayoutAddress && (
                       <Button

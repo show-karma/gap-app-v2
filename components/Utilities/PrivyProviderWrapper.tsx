@@ -1,13 +1,13 @@
 "use client";
 
 import { PrivyProvider } from "@privy-io/react-auth";
+import { WagmiProvider } from "@privy-io/wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { appNetwork } from "@/utilities/network";
-import { privyConfig } from "@/utilities/wagmi/privy-config";
-import { WagmiProvider } from '@privy-io/wagmi';
-import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
-import { envVars } from "@/utilities/enviromentVars";
 import { PROJECT_NAME } from "@/constants/brand";
+import { envVars } from "@/utilities/enviromentVars";
+import { appNetwork } from "@/utilities/network";
+import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
+import { privyConfig } from "@/utilities/wagmi/privy-config";
 
 export const queryClient = new QueryClient({
   defaultOptions: {
@@ -19,9 +19,7 @@ interface PrivyProviderWrapperProps {
   children: React.ReactNode;
 }
 
-export default function PrivyProviderWrapper({
-  children,
-}: PrivyProviderWrapperProps) {
+export default function PrivyProviderWrapper({ children }: PrivyProviderWrapperProps) {
   const privyAppId = envVars.PRIVY_APP_ID;
 
   if (!privyAppId) {
@@ -43,7 +41,14 @@ export default function PrivyProviderWrapper({
           logo: "https://karmahq.xyz/logo/karma-logo-light.svg",
           landingHeader: `Connect to ${PROJECT_NAME}`,
           showWalletLoginFirst: false,
-          walletList: ['detected_wallets', 'metamask', 'wallet_connect_qr', 'rainbow', 'rabby_wallet', 'wallet_connect']
+          walletList: [
+            "detected_wallets",
+            "metamask",
+            "wallet_connect_qr",
+            "rainbow",
+            "rabby_wallet",
+            "wallet_connect",
+          ],
         },
         loginMethods: ["wallet"],
         defaultChain: defaultChain,
@@ -53,14 +58,11 @@ export default function PrivyProviderWrapper({
             enabled: true,
           },
         },
-        walletConnectCloudProjectId:
-          envVars.PROJECT_ID || undefined,
+        walletConnectCloudProjectId: envVars.PROJECT_ID || undefined,
       }}
     >
       <QueryClientProvider client={queryClient}>
-        <WagmiProvider config={privyConfig}>
-          {children}
-        </WagmiProvider>
+        <WagmiProvider config={privyConfig}>{children}</WagmiProvider>
       </QueryClientProvider>
     </PrivyProvider>
   );

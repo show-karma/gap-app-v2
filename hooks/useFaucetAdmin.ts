@@ -1,21 +1,21 @@
 "use client";
 
-import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
-import {faucetService} from "@/utilities/faucet/faucetService";
-import {useAccount} from "wagmi";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { faucetService } from "@/utilities/faucet/faucetService";
 
 /**
  * Check if current wallet is the faucet owner
  */
 export const useFaucetAdmin = () => {
   const { address, isConnecting } = useAccount();
-  const { config, isLoading } = useFaucetConfig()
+  const { config, isLoading } = useFaucetConfig();
 
-    return {
-      isAdmin: address?.toLowerCase() === config?.faucetAddress.toLowerCase(),
-      isLoading: isConnecting || isLoading
-    }
+  return {
+    isAdmin: address?.toLowerCase() === config?.faucetAddress.toLowerCase(),
+    isLoading: isConnecting || isLoading,
+  };
 };
 
 /**
@@ -30,7 +30,7 @@ export const useFaucetConfig = () => {
       return faucetService.getConfiguration();
     },
     staleTime: 60000, // 1 minute
-    retry: 1
+    retry: 1,
   });
 
   const updateGlobalConfigMutation = useMutation({
@@ -41,7 +41,7 @@ export const useFaucetConfig = () => {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to update global configuration");
-    }
+    },
   });
 
   const updateChainSettingsMutation = useMutation({
@@ -54,7 +54,7 @@ export const useFaucetConfig = () => {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to update chain settings");
-    }
+    },
   });
 
   const createChainSettingsMutation = useMutation({
@@ -65,7 +65,7 @@ export const useFaucetConfig = () => {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to create chain settings");
-    }
+    },
   });
 
   const deleteChainSettingsMutation = useMutation({
@@ -76,7 +76,7 @@ export const useFaucetConfig = () => {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to delete chain settings");
-    }
+    },
   });
 
   return {
@@ -92,7 +92,7 @@ export const useFaucetConfig = () => {
       updateGlobalConfigMutation.isPending ||
       updateChainSettingsMutation.isPending ||
       createChainSettingsMutation.isPending ||
-      deleteChainSettingsMutation.isPending
+      deleteChainSettingsMutation.isPending,
   };
 };
 
@@ -105,7 +105,7 @@ export const useWhitelistedContracts = (chainId?: number) => {
   const contractsQuery = useQuery({
     queryKey: ["faucet", "admin", "whitelist", chainId ? chainId : ""],
     queryFn: async () => {
-        return await faucetService.getWhitelistedContracts(chainId);
+      return await faucetService.getWhitelistedContracts(chainId);
     },
   });
 
@@ -117,7 +117,7 @@ export const useWhitelistedContracts = (chainId?: number) => {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to whitelist contract");
-    }
+    },
   });
 
   const removeFromWhitelistMutation = useMutation({
@@ -130,7 +130,7 @@ export const useWhitelistedContracts = (chainId?: number) => {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to remove from whitelist");
-    }
+    },
   });
 
   return {
@@ -140,8 +140,7 @@ export const useWhitelistedContracts = (chainId?: number) => {
     refetch: contractsQuery.refetch,
     whitelistContract: whitelistContractMutation.mutate,
     removeFromWhitelist: removeFromWhitelistMutation.mutate,
-    isUpdating:
-      whitelistContractMutation.isPending || removeFromWhitelistMutation.isPending
+    isUpdating: whitelistContractMutation.isPending || removeFromWhitelistMutation.isPending,
   };
 };
 
@@ -156,28 +155,24 @@ export const useBlockedAddresses = () => {
     queryFn: async () => {
       return faucetService.getBlockedAddresses();
     },
-    staleTime: 60000 // 1 minute
+    staleTime: 60000, // 1 minute
   });
 
   const blockAddressMutation = useMutation({
     mutationFn: (params: {
-        address: string,
-        reason: string,
-        chainId?: number | undefined,
-        expiresAt?: string | undefined,
-  })=>  faucetService.blockAddress(
-      params.address,
-        params.reason,
-        params.chainId,
-        params.expiresAt,
-    ),
+      address: string;
+      reason: string;
+      chainId?: number | undefined;
+      expiresAt?: string | undefined;
+    }) =>
+      faucetService.blockAddress(params.address, params.reason, params.chainId, params.expiresAt),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["faucet", "admin", "blocked"] });
       toast.success("Address blocked");
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to block address");
-    }
+    },
   });
 
   const unblockAddressMutation = useMutation({
@@ -190,7 +185,7 @@ export const useBlockedAddresses = () => {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to unblock address");
-    }
+    },
   });
 
   return {
@@ -200,7 +195,7 @@ export const useBlockedAddresses = () => {
     refetch: addressesQuery.refetch,
     blockAddress: blockAddressMutation.mutate,
     unblockAddress: unblockAddressMutation.mutate,
-    isUpdating: blockAddressMutation.isPending || unblockAddressMutation.isPending
+    isUpdating: blockAddressMutation.isPending || unblockAddressMutation.isPending,
   };
 };
 
@@ -218,7 +213,7 @@ export const useFaucetEmergency = () => {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to activate emergency stop");
-    }
+    },
   });
 
   const resumeOperationsMutation = useMutation({
@@ -229,7 +224,7 @@ export const useFaucetEmergency = () => {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to resume operations");
-    }
+    },
   });
 
   const expireRequestsMutation = useMutation({
@@ -240,7 +235,7 @@ export const useFaucetEmergency = () => {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to expire requests");
-    }
+    },
   });
 
   return {
@@ -250,7 +245,7 @@ export const useFaucetEmergency = () => {
     isLoading:
       emergencyStopMutation.isPending ||
       resumeOperationsMutation.isPending ||
-      expireRequestsMutation.isPending
+      expireRequestsMutation.isPending,
   };
 };
 
@@ -265,7 +260,7 @@ export const useChains = () => {
     queryFn: async () => {
       return faucetService.getAllChains();
     },
-    staleTime: 60000 // 1 minute
+    staleTime: 60000, // 1 minute
   });
 
   const createChainMutation = useMutation({
@@ -276,7 +271,7 @@ export const useChains = () => {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to create chain");
-    }
+    },
   });
 
   const updateChainMutation = useMutation({
@@ -289,7 +284,7 @@ export const useChains = () => {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to update chain");
-    }
+    },
   });
 
   const deleteChainMutation = useMutation({
@@ -301,7 +296,7 @@ export const useChains = () => {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to delete chain");
-    }
+    },
   });
 
   return {
@@ -316,7 +311,7 @@ export const useChains = () => {
     isUpdating:
       createChainMutation.isPending ||
       updateChainMutation.isPending ||
-      deleteChainMutation.isPending
+      deleteChainMutation.isPending,
   };
 };
 
@@ -324,30 +319,30 @@ export const useChains = () => {
  * Get pending requests
  */
 export const useRequests = ({
-                                page=1,
-                                limit=10,
-    offset=0,
-                                status,
-                                chainId
-                            }: {
-    page?: number,
-    limit?: number,
-    offset?: number,
-    status?: 'PENDING' | "FAILED" | "CLAIMED" | "EXPIRED",
-    chainId?: number
+  page = 1,
+  limit = 10,
+  offset = 0,
+  status,
+  chainId,
+}: {
+  page?: number;
+  limit?: number;
+  offset?: number;
+  status?: "PENDING" | "FAILED" | "CLAIMED" | "EXPIRED";
+  chainId?: number;
 }) => {
   return useQuery({
-    queryKey: ["faucet", "admin", "requests", page, limit,  offset, status, chainId],
+    queryKey: ["faucet", "admin", "requests", page, limit, offset, status, chainId],
     queryFn: async () => {
       return faucetService.getRequests({
-          page,
-          limit,
-          offset,
-          status,
-          chainId
+        page,
+        limit,
+        offset,
+        status,
+        chainId,
       });
     },
-    staleTime: 60000*5, // 30 seconds
-    refetchInterval: 60000*5 // Refetch every 30 seconds
+    staleTime: 60000 * 5, // 30 seconds
+    refetchInterval: 60000 * 5, // Refetch every 30 seconds
   });
 };

@@ -1,8 +1,8 @@
 "use client";
-import { useEffect } from "react";
-import { getDetailedErrorInfo } from "@/utilities/donations/errorMessages";
-import { errorManager } from "@/components/Utilities/errorManager";
 import Link from "next/link";
+import { useEffect } from "react";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { getDetailedErrorInfo } from "@/utilities/donations/errorMessages";
 
 /**
  * Next.js App Router error page for donation checkout route
@@ -59,9 +59,7 @@ export default function DonationCheckoutError({
             <h2 className="mb-2 text-sm font-semibold text-red-900 dark:text-red-200">
               Error Details
             </h2>
-            <p className="text-sm text-red-800 dark:text-red-300">
-              {parsedError.message}
-            </p>
+            <p className="text-sm text-red-800 dark:text-red-300">{parsedError.message}</p>
           </div>
 
           {parsedError.actionableSteps.length > 0 && (
@@ -97,6 +95,7 @@ export default function DonationCheckoutError({
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <button
+            type="button"
             onClick={reset}
             className="flex-1 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
           >

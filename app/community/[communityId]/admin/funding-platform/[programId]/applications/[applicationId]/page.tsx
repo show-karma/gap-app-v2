@@ -1,17 +1,15 @@
 "use client";
 
-import { ArrowLeftIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { PencilIcon } from "@heroicons/react/24/outline";
+import { ArrowLeftIcon, TrashIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 import ApplicationContent from "@/components/FundingPlatform/ApplicationView/ApplicationContent";
 import CommentsSection from "@/components/FundingPlatform/ApplicationView/CommentsSection";
-import PostApprovalData from "@/components/FundingPlatform/ApplicationView/PostApprovalData";
 import DeleteApplicationModal from "@/components/FundingPlatform/ApplicationView/DeleteApplicationModal";
 import EditApplicationModal from "@/components/FundingPlatform/ApplicationView/EditApplicationModal";
-import { IFundingApplication } from "@/types/funding-platform";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import {
@@ -19,20 +17,25 @@ import {
   useApplicationComments,
   useApplicationStatus,
   useApplicationVersions,
-  useProgramConfig,
   useDeleteApplication,
+  useProgramConfig,
 } from "@/hooks/useFundingPlatform";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { useStaff } from "@/hooks/useStaff";
+import { layoutTheme } from "@/src/helper/theme";
 import { useOwnerStore } from "@/store";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
+import type { IFundingApplication } from "@/types/funding-platform";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
-import { layoutTheme } from "@/src/helper/theme";
 
 export default function ApplicationDetailPage() {
   const router = useRouter();
-  const { communityId, programId: combinedProgramId, applicationId } = useParams() as {
+  const {
+    communityId,
+    programId: combinedProgramId,
+    applicationId,
+  } = useParams() as {
     communityId: string;
     programId: string;
     applicationId: string;
@@ -99,7 +102,7 @@ export default function ApplicationDetailPage() {
     await updateStatusAsync({
       applicationId: application.referenceNumber,
       status,
-      note
+      note,
     });
   };
 
@@ -129,13 +132,11 @@ export default function ApplicationDetailPage() {
       await deleteApplicationAsync(application.referenceNumber);
       // Only close modal and navigate on success
       setIsDeleteModalOpen(false);
-      router.push(
-        `${PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, combinedProgramId)}`
-      );
+      router.push(`${PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, combinedProgramId)}`);
     } catch (error) {
       // Error is handled by the hook (shows toast with specific message and logs to Sentry)
       // Modal stays open to allow user to retry or cancel
-      console.error('Failed to delete application:', error);
+      console.error("Failed to delete application:", error);
     }
   };
 
@@ -145,7 +146,7 @@ export default function ApplicationDetailPage() {
 
   // Helper function to check if editing is allowed
   const canEditApplication = (app: IFundingApplication) => {
-    const restrictedStatuses = ['under_review', 'approved'];
+    const restrictedStatuses = ["under_review", "approved"];
     return !restrictedStatuses.includes(app.status.toLowerCase());
   };
 
@@ -178,9 +179,7 @@ export default function ApplicationDetailPage() {
   };
 
   const handleBackClick = () => {
-    router.push(
-      `${PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, combinedProgramId)}`
-    );
+    router.push(`${PAGES.ADMIN.FUNDING_PLATFORM_APPLICATIONS(communityId, combinedProgramId)}`);
   };
 
   // Memoized milestone review URL - only returns URL if approved and has projectUID
@@ -214,11 +213,7 @@ export default function ApplicationDetailPage() {
     return (
       <div className="min-h-screen">
         <div className={layoutTheme.padding}>
-          <Button
-            onClick={handleBackClick}
-            variant="secondary"
-            className="flex items-center mb-4"
-          >
+          <Button onClick={handleBackClick} variant="secondary" className="flex items-center mb-4">
             <ArrowLeftIcon className="w-4 h-4 mr-2" />
             Back to Applications
           </Button>
@@ -235,11 +230,7 @@ export default function ApplicationDetailPage() {
         <div className="px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4 max-sm:gap-1 max-sm:flex-col max-sm:items-start">
-              <Button
-                onClick={handleBackClick}
-                variant="secondary"
-                className="flex items-center"
-              >
+              <Button onClick={handleBackClick} variant="secondary" className="flex items-center">
                 <ArrowLeftIcon className="w-4 h-4 mr-2" />
                 Back to Applications
               </Button>
@@ -300,8 +291,7 @@ export default function ApplicationDetailPage() {
                       Review Project Milestones
                     </h3>
                     <p className="text-xs text-green-700 dark:text-green-300">
-                      View and verify milestone completions for this approved
-                      application
+                      View and verify milestone completions for this approved application
                     </p>
                   </div>
                   <Link href={milestoneReviewUrl}>
@@ -370,4 +360,3 @@ export default function ApplicationDetailPage() {
     </div>
   );
 }
-

@@ -1,39 +1,39 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, Fragment, ReactNode, useState, useEffect } from "react";
-import { Dialog, Transition } from "@headlessui/react";
-import { PlusIcon } from "@heroicons/react/24/solid";
-import { Button } from "../Utilities/Button";
-import toast from "react-hot-toast";
-import { useProjectStore } from "@/store";
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 
-import { useStepper } from "@/store/modals/txStepper";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import debounce from "lodash.debounce";
+import { Dialog, Transition } from "@headlessui/react";
 import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
-import { Spinner } from "../Utilities/Spinner";
-import { PAGES } from "@/utilities/pages";
-import {
+import { PlusIcon } from "@heroicons/react/24/solid";
+import { ProjectPointer } from "@show-karma/karma-gap-sdk";
+import type {
   IProjectResponse,
   ISearchResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useAccount } from "wagmi";
-import { MESSAGES } from "@/utilities/messages";
-import { z } from "zod";
-import { getGapClient, useGap } from "@/hooks/useGap";
-import { ProjectPointer } from "@show-karma/karma-gap-sdk";
+import debounce from "lodash.debounce";
 import { useRouter } from "next/navigation";
-import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";
-import { errorManager } from "../Utilities/errorManager";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
-import { sanitizeInput } from "@/utilities/sanitize";
-import { useMergeModalStore } from "@/store/modals/merge";
-import EthereumAddressToENSName from "../EthereumAddressToENSName";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { useWallet } from "@/hooks/useWallet";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import { type FC, Fragment, type ReactNode, useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { z } from "zod";
+import { useGap } from "@/hooks/useGap";
 import { useStaff } from "@/hooks/useStaff";
+import { useWallet } from "@/hooks/useWallet";
+import { useProjectStore } from "@/store";
+import { useMergeModalStore } from "@/store/modals/merge";
+import { useStepper } from "@/store/modals/txStepper";
+import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import fetchData from "@/utilities/fetchData";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
+import { sanitizeInput } from "@/utilities/sanitize";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";
+import EthereumAddressToENSName from "../EthereumAddressToENSName";
+import { errorManager } from "../Utilities/errorManager";
+import { Spinner } from "../Utilities/Spinner";
+import { Button } from "../ui/button";
 
 type MergeProjectProps = {
   buttonElement?: {
@@ -73,8 +73,7 @@ function SearchProject({
     setIsSearchListOpen(true);
     const result = await gapIndexerApi.search(sanitizedValue);
     const projectsData = result.data.projects.filter(
-      (project) =>
-        project?.uid?.toLowerCase() !== currentProject?.uid?.toLowerCase()
+      (project) => project?.uid?.toLowerCase() !== currentProject?.uid?.toLowerCase()
     );
 
     const finalData = {
@@ -86,15 +85,14 @@ function SearchProject({
     return setIsLoading(false);
   }, 500);
 
-  const renderItem = (item: IProjectResponse, href: string) => {
+  const renderItem = (item: IProjectResponse, _href: string) => {
+    const handleSelect = () => {
+      setPrimaryProject(item);
+      closeSearchList();
+    };
+
     return (
-      <div
-        key={item.uid}
-        onClick={() => {
-          setPrimaryProject(item);
-          closeSearchList();
-        }}
-      >
+      <button key={item.uid} type="button" onClick={handleSelect} className="w-full text-left">
         <div className=":last:border-b-0 cursor-pointer select-none border-b border-slate-100 px-4 py-2 transition hover:bg-slate-200 dark:hover:bg-zinc-700">
           <div className="flex justify-between max-w-full text-ellipsis text-black dark:text-zinc-100">
             <span className="font-bold">{item?.details?.data.title}</span>
@@ -113,15 +111,12 @@ function SearchProject({
             </div>
           </div>
         </div>
-      </div>
+      </button>
     );
   };
 
   return (
-    <div
-      className="relative mb-20 pb-20 flex flex-row items-center gap-3 rounded-lg h-max w-full bg-zinc-100 px-4 max-2xl:gap-1 max-2xl:px-2 text-gray-600 dark:text-gray-200 dark:bg-zinc-800"
-      onBlur={() => closeSearchList()}
-    >
+    <div className="relative mb-20 pb-20 flex flex-row items-center gap-3 rounded-lg h-max w-full bg-zinc-100 px-4 max-2xl:gap-1 max-2xl:px-2 text-gray-600 dark:text-gray-200 dark:bg-zinc-800">
       <MagnifyingGlassIcon className="h-5 w-5" />
       <input
         type="text"
@@ -129,18 +124,15 @@ function SearchProject({
         className="w-full min-w-[160px] bg-transparent placeholder:text-gray-400 px-1 py-2 text-gray-600 dark:text-gray-200 border-none border-b-zinc-800 outline-none focus:ring-0"
         onChange={(e) => debouncedSearch(e.target.value)}
         onFocus={() =>
-          [...results.projects, ...results.communities].length > 0 &&
-          setIsSearchListOpen(true)
+          [...results.projects, ...results.communities].length > 0 && setIsSearchListOpen(true)
         }
+        onBlur={() => closeSearchList()}
       />
       {isSearchListOpen && (
         <div className="absolute left-0 top-10 mt-3 max-h-32 min-w-full overflow-y-scroll rounded-md bg-white dark:bg-zinc-800 py-4 border border-zinc-200">
           {results.projects.length > 0 &&
             results.projects.map((project) =>
-              renderItem(
-                project,
-                PAGES.PROJECT.GRANTS(project.details?.data.slug || project.uid)
-              )
+              renderItem(project, PAGES.PROJECT.GRANTS(project.details?.data.slug || project.uid))
             )}
 
           {isLoading && (
@@ -167,17 +159,13 @@ type PointerType = z.infer<typeof pointerSchema>;
 
 export const MergeProjectDialog: FC<MergeProjectProps> = ({
   buttonElement = {
-    icon: <PlusIcon className="h-4 w-4 text-primary-600" />,
+    icon: <PlusIcon className="h-4 w-4" />,
     text: "Merge",
-    styleClass:
-      "flex items-center gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100  hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900",
+    styleClass: "flex items-center gap-x-1 rounded-md px-3 py-2 text-sm font-semibold",
   },
 }) => {
-  const { isMergeModalOpen: isOpen, setIsMergeModalOpen: setIsOpen } =
-    useMergeModalStore();
-  const [primaryProject, setPrimaryProject] = useState<IProjectResponse | null>(
-    null
-  );
+  const { isMergeModalOpen: isOpen, setIsMergeModalOpen: setIsOpen } = useMergeModalStore();
+  const [primaryProject, setPrimaryProject] = useState<IProjectResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [validAddress, setValidAddress] = useState(true);
 
@@ -190,11 +178,11 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
   function openModal() {
     setIsOpen(true);
   }
-  const signer = useSigner();
+  const _signer = useSigner();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const setIsProjectAdmin = useProjectStore((state) => state.setIsProjectAdmin);
+  const _setIsProjectAdmin = useProjectStore((state) => state.setIsProjectAdmin);
   const { switchChainAsync } = useWallet();
   const { changeStepperStep, setIsStepper } = useStepper();
   const { isStaff } = useStaff();
@@ -203,7 +191,11 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
     let gapClient = gap;
     if (!address || !project) return;
     try {
-      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+      const {
+        success,
+        chainId: actualChainId,
+        gapClient: newGapClient,
+      } = await ensureCorrectChain({
         targetChainId: project.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
@@ -216,9 +208,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
       gapClient = newGapClient;
       // Replace direct getWalletClient call with safeGetWalletClient
 
-      const { walletClient, error } = await safeGetWalletClient(
-        actualChainId
-      );
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
@@ -235,57 +225,44 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
         schema: gapClient.findSchema("ProjectPointer"),
       });
 
-      await projectPointer
-        .attest(walletSigner as any, changeStepperStep)
-        .then(async (res) => {
-          let retries = 1000;
-          changeStepperStep("indexing");
-          const txHash = res?.tx[0]?.hash;
-          if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, project.chainID),
-              "POST",
-              {}
-            );
-          }
-          while (retries > 0) {
-            await refreshProject()
-              .then(async (fetchedProject) => {
-                const attestUID = projectPointer.uid;
-                const alreadyExists = fetchedProject?.pointers.find(
-                  (g) => g.uid === attestUID
-                );
+      await projectPointer.attest(walletSigner as any, changeStepperStep).then(async (res) => {
+        let retries = 1000;
+        changeStepperStep("indexing");
+        const txHash = res?.tx[0]?.hash;
+        if (txHash) {
+          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, project.chainID), "POST", {});
+        }
+        while (retries > 0) {
+          await refreshProject()
+            .then(async (fetchedProject) => {
+              const attestUID = projectPointer.uid;
+              const alreadyExists = fetchedProject?.pointers.find((g) => g.uid === attestUID);
 
-                if (alreadyExists) {
-                  retries = 0;
-                  console.log("Redirecting to the primary project");
-                  router.push(
-                    `/project/${primaryProject?.details?.data?.slug}`
-                  );
-                  router.refresh();
-                  changeStepperStep("indexed");
-                  toast.success(MESSAGES.PROJECT_POINTER_FORM.SUCCESS);
-                }
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-              })
-              .catch(async () => {
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-              });
-          }
-        });
+              if (alreadyExists) {
+                retries = 0;
+                router.push(`/project/${primaryProject?.details?.data?.slug}`);
+                router.refresh();
+                changeStepperStep("indexed");
+                toast.success(MESSAGES.PROJECT_POINTER_FORM.SUCCESS);
+              }
+              retries -= 1;
+              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+              await new Promise((resolve) => setTimeout(resolve, 1500));
+            })
+            .catch(async () => {
+              retries -= 1;
+              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+              await new Promise((resolve) => setTimeout(resolve, 1500));
+            });
+        }
+      });
     } catch (error: any) {
-      console.log(error);
       errorManager(
         `Error creating project pointer`,
         error,
         {
           project: project?.details?.data?.slug || project?.uid,
-          primaryProject:
-            primaryProject?.details?.data?.slug || primaryProject?.uid,
+          primaryProject: primaryProject?.details?.data?.slug || primaryProject?.uid,
           address: address,
         },
         {
@@ -352,19 +329,17 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
                         ? `The current project is already primary project. Cannot be merged with another project. Please delete existing pointers to enable merging.`
                         : null}
                     </p>
-                    {project && project.symlinks.length == 0 && (
-                      <>
-                        {primaryProject ? (
-                          <div>
-                            <p className="mb-2">Selected Primary Project:</p>
-                            <p className="font-bold text-2xl">{`${primaryProject?.details?.data.title}`}</p>
-                            <p className="text-md">{`/${primaryProject?.details?.data.slug}`}</p>
-                          </div>
-                        ) : (
-                          <div>Select a primary project to merge with.</div>
-                        )}
-                      </>
-                    )}
+                    {project &&
+                      project.symlinks.length === 0 &&
+                      (primaryProject ? (
+                        <div>
+                          <p className="mb-2">Selected Primary Project:</p>
+                          <p className="font-bold text-2xl">{`${primaryProject?.details?.data.title}`}</p>
+                          <p className="text-md">{`/${primaryProject?.details?.data.slug}`}</p>
+                        </div>
+                      ) : (
+                        <div>Select a primary project to merge with.</div>
+                      ))}
 
                     <p className="text-red-500 mb-2">
                       {!validAddress && primaryProject
@@ -378,23 +353,22 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
                         ? `This project has already been merged.
                                                 Are you sure you want to add another pointer to this project?`
                         : null}
-
                     </p>
                   </div>
-                  {project?.symlinks?.length == 0 && (
+                  {project?.symlinks?.length === 0 && (
                     <SearchProject setPrimaryProject={setPrimaryProject} />
                   )}
                   <div className="flex flex-row gap-4 justify-end">
                     <Button
-                      className="text-zinc-900 text-lg bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-zinc-900 hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900"
+                      className="text-zinc-900 bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-zinc-900 hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900"
                       onClick={closeModal}
                       disabled={isLoading}
                     >
                       Cancel
                     </Button>
-                    {project?.symlinks?.length == 0 && (
+                    {project?.symlinks?.length === 0 && (
                       <Button
-                        className="text-white text-lg bg-red-600 border-black  hover:bg-red-600 hover:text-white"
+                        className=" bg-red-600 border-black  hover:bg-red-600 hover:text-white"
                         onClick={async () => {
                           if (!validAddress) return;
                           setIsLoading(true);
@@ -405,9 +379,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
                           }
                         }}
                         disabled={
-                          isLoading ||
-                          !primaryProject ||
-                          Boolean(project?.symlinks?.length)
+                          isLoading || !primaryProject || Boolean(project?.symlinks?.length)
                         }
                         isLoading={isLoading}
                         type="button"

@@ -1,11 +1,11 @@
 import { create } from "zustand";
-import { IApplicationVersion } from "@/types/funding-platform";
+import type { IApplicationVersion } from "@/types/funding-platform";
 
 interface ApplicationVersionsState {
   // UI State only - data fetching moved to React Query
   selectedVersionId: string | null;
   selectedVersion: IApplicationVersion | null;
-  
+
   // Actions
   selectVersion: (versionId: string, versions: IApplicationVersion[]) => void;
   clearSelection: () => void;
@@ -19,10 +19,10 @@ export const useApplicationVersionsStore = create<ApplicationVersionsState>((set
 
   // Select a version to view
   selectVersion: (versionId: string, versions: IApplicationVersion[]) => {
-    const version = versions.find(v => v.id === versionId);
-    
+    const version = versions.find((v) => v.id === versionId);
+
     if (version) {
-      set({ 
+      set({
         selectedVersionId: versionId,
         selectedVersion: version,
       });
@@ -31,7 +31,7 @@ export const useApplicationVersionsStore = create<ApplicationVersionsState>((set
 
   // Clear current selection
   clearSelection: () => {
-    set({ 
+    set({
       selectedVersionId: null,
       selectedVersion: null,
     });

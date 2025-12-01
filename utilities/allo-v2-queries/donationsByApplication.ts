@@ -1,9 +1,9 @@
 export const donationsByApplicationQuery = (
-    chainId: number,
-    applicationId: string,
-    roundId: string
+  chainId: number,
+  applicationId: string,
+  roundId: string
 ) => ({
-    query: `
+  query: `
     query Donations(
 $chainId: Int!
 $applicationId: String!
@@ -35,9 +35,9 @@ $roundId: String!
         }
     }
     `,
-    variables: {
-        chainId: chainId,
-        roundId: roundId,
-        applicationId: applicationId,
-    }
-})
+  variables: {
+    chainId: chainId,
+    roundId: roundId,
+    applicationId: applicationId,
+  },
+});

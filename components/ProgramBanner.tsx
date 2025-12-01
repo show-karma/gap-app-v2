@@ -1,19 +1,16 @@
-import { useCommunityPrograms } from "@/hooks/usePrograms";
-import { useParams, useSearchParams } from "next/navigation";
-import { ArrowInIcon } from "./Icons/ArrowIn";
-import Link from "next/link";
-import { ExternalLink } from "./Utilities/ExternalLink";
 import Image from "next/image";
+import { useParams, useSearchParams } from "next/navigation";
+import { useCommunityPrograms } from "@/hooks/usePrograms";
 import { ReadMore } from "@/utilities/ReadMore";
+import { ArrowInIcon } from "./Icons/ArrowIn";
+import { ExternalLink } from "./Utilities/ExternalLink";
 
 export const ProgramBanner = () => {
   const searchParams = useSearchParams();
   const { communityId } = useParams();
   const { data, isLoading } = useCommunityPrograms(communityId as string);
   const programId = searchParams.get("programId");
-  const program = data?.find(
-    (program) => `${program.programId}_${program.chainID}` === programId
-  );
+  const program = data?.find((program) => `${program.programId}_${program.chainID}` === programId);
 
   if (!programId || !program) return null;
   return (
@@ -28,9 +25,7 @@ export const ProgramBanner = () => {
         />
       </div>
       <div className="flex flex-1 flex-col gap-0">
-        <p className="text-brand-darkblue text-base font-semibold">
-          {program.metadata?.title}
-        </p>
+        <p className="text-brand-darkblue text-base font-semibold">{program.metadata?.title}</p>
         <ReadMore
           readLessText="Read less"
           readMoreText="Read more"

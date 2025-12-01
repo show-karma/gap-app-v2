@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { DisbursementForm } from "../../../components/Disbursement/DisbursementForm";
 
 const DisbursePage = () => {
@@ -13,4 +12,4 @@ const DisbursePage = () => {
   );
 };
 
-export default DisbursePage; 
+export default DisbursePage;

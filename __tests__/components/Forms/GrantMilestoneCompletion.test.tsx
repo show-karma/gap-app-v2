@@ -3,10 +3,10 @@
  * @description Tests for grant milestone completion form component covering rendering, validation, and submission
  */
 
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { GrantMilestoneCompletionForm } from "@/components/Forms/GrantMilestoneCompletion";
 import { useMilestone } from "@/hooks/useMilestone";
-import { UnifiedMilestone } from "@/types/roadmap";
+import type { UnifiedMilestone } from "@/types/roadmap";
 
 jest.mock("@/hooks/useMilestone", () => ({
   useMilestone: jest.fn(),
@@ -294,4 +294,3 @@ describe("GrantMilestoneCompletionForm", () => {
     });
   });
 });
-

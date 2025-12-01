@@ -1,7 +1,7 @@
 /**
  * WhereBuildersGrow Component Tests
  * Tests the final CTA section
- * 
+ *
  * Target: 7 tests
  * - Rendering (3)
  * - Button Display (2)
@@ -10,17 +10,12 @@
  */
 
 import { WhereBuildersGrow } from "@/src/features/homepage/components/where-builders-grow";
-import {
-  renderWithProviders,
-  screen,
-} from "../utils/test-helpers";
+import { renderWithProviders, screen } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
 
 // Mock CreateProjectButton
 jest.mock("@/src/features/homepage/components/create-project-button", () => ({
-  CreateProjectButton: () => (
-    <button data-testid="create-project-button">Create project</button>
-  ),
+  CreateProjectButton: () => <button data-testid="create-project-button">Create project</button>,
 }));
 
 // Mock PAGES utility
@@ -41,9 +36,7 @@ describe("WhereBuildersGrow Component", () => {
   it("should render section description with user count", () => {
     renderWithProviders(<WhereBuildersGrow />);
 
-    const description = screen.getByText(
-      /Join over 4,000\+ startups already growing with Karma/i
-    );
+    const description = screen.getByText(/Join over 4,000\+ startups already growing with Karma/i);
     expect(description).toBeInTheDocument();
   });
 
@@ -73,7 +66,7 @@ describe("WhereBuildersGrow Component", () => {
 
     const section = container.querySelector("section");
     const innerDiv = section?.querySelector("div");
-    
+
     expect(innerDiv).toHaveClass("items-center");
   });
 
@@ -88,4 +81,3 @@ describe("WhereBuildersGrow Component", () => {
     expect(heading).toHaveTextContent(/Where builders grow/i);
   });
 });
-

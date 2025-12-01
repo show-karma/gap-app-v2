@@ -1,5 +1,5 @@
-import { FC } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+import type { FC } from "react";
 import { cn } from "@/utilities/tailwind";
 
 interface SimplePaginationProps {
@@ -28,7 +28,7 @@ export const SimplePagination: FC<SimplePaginationProps> = ({
   const getPageNumbers = () => {
     const pages = [];
     const maxVisiblePages = 5;
-    
+
     if (totalPages <= maxVisiblePages) {
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
@@ -37,20 +37,20 @@ export const SimplePagination: FC<SimplePaginationProps> = ({
       const sidePages = Math.floor((maxVisiblePages - 1) / 2);
       let startPage = Math.max(1, currentPage - sidePages);
       let endPage = Math.min(totalPages, currentPage + sidePages);
-      
+
       if (currentPage <= sidePages) {
         endPage = maxVisiblePages;
       }
-      
+
       if (currentPage > totalPages - sidePages) {
         startPage = totalPages - maxVisiblePages + 1;
       }
-      
+
       for (let i = startPage; i <= endPage; i++) {
         pages.push(i);
       }
     }
-    
+
     return pages;
   };
 

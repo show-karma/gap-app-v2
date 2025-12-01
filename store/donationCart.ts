@@ -1,8 +1,12 @@
 "use client";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { SupportedToken } from "@/constants/supportedTokens";
-import { DONATION_CONSTANTS, isCartFull as checkIsCartFull, isCartSizeWarning as checkIsCartSizeWarning } from "@/constants/donation";
+import {
+  isCartFull as checkIsCartFull,
+  isCartSizeWarning as checkIsCartSizeWarning,
+  DONATION_CONSTANTS,
+} from "@/constants/donation";
+import type { SupportedToken } from "@/constants/supportedTokens";
 
 export type DonationCartItem = {
   uid: string;
@@ -89,7 +93,7 @@ export const useDonationCart = create<DonationCartState>()(
           const newSelectedTokens = { ...state.selectedTokens };
           delete newAmounts[uid];
           delete newSelectedTokens[uid];
-          
+
           return {
             items: state.items.filter((i) => i.uid !== uid),
             amounts: newAmounts,
@@ -108,12 +112,13 @@ export const useDonationCart = create<DonationCartState>()(
           return state.add(item); // Returns true if added, false if cart full
         }
       },
-      clear: () => set({ 
-        items: [], 
-        amounts: {}, 
-        selectedTokens: {},
-        payments: []
-      }),
+      clear: () =>
+        set({
+          items: [],
+          amounts: {},
+          selectedTokens: {},
+          payments: [],
+        }),
       setAmount: (uid, amount) => {
         set((state) => ({ amounts: { ...state.amounts, [uid]: amount } }));
         // Auto-update payments when amount changes
@@ -121,7 +126,7 @@ export const useDonationCart = create<DonationCartState>()(
       },
       setSelectedToken: (projectId, token) => {
         set((state) => ({
-          selectedTokens: { ...state.selectedTokens, [projectId]: token }
+          selectedTokens: { ...state.selectedTokens, [projectId]: token },
         }));
         // Auto-update payments when token changes
         get().updatePayments();
@@ -174,4 +179,3 @@ export const useDonationCart = create<DonationCartState>()(
     }
   )
 );
-
