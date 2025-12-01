@@ -15,16 +15,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
+import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/useAuth";
 import { useCommunityDetails } from "@/hooks/useCommunityDetails";
 import { ProgramRegistryService } from "@/services/programRegistry.service";
-import { Input } from "@/src/components/ui/input";
 import type { CreateProgramFormData } from "@/types/program-registry";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
-import { cn } from "@/utilities/tailwind";
 
 const createProgramSchema = z.object({
   name: z
@@ -230,11 +230,9 @@ export function CreateProgramModal({
               <Label htmlFor="program-description">
                 Program Description <span className="text-destructive">*</span>
               </Label>
-              <textarea
+              <Textarea
                 id="program-description"
-                className={cn(
-                  "flex min-h-[120px] max-h-[240px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 resize-y"
-                )}
+                className="min-h-[120px] max-h-[240px] resize-y"
                 placeholder="Please provide a description of this program"
                 {...register("description")}
                 disabled={isSubmitting}
