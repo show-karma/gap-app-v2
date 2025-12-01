@@ -12,7 +12,6 @@ import {
   Project,
   ProjectDetails,
 } from "@show-karma/karma-gap-sdk";
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import debounce from "lodash.debounce";
 import { useRouter } from "next/navigation";
 import { type FC, Fragment, type ReactNode, useEffect, useMemo, useState } from "react";
@@ -48,6 +47,7 @@ import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
 import { useStepper } from "@/store/modals/txStepper";
 import { useOwnerStore } from "@/store/owner";
 import type { Contact, ProjectV2Response } from "@/types/project";
+import { searchProjectsV2 } from "@/utilities/api/projectSearch";
 import { type CustomLink, isCustomLink } from "@/utilities/customLink";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
@@ -56,11 +56,7 @@ import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { gapSupportedNetworks } from "@/utilities/network";
-import {
-  getCustomLinks,
-  getLinkByType,
-  normalizeProjectData,
-} from "@/utilities/normalizeProjectData";
+import { getLinkByType, normalizeProjectData } from "@/utilities/normalizeProjectData";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { getProjectById } from "@/utilities/sdk";
@@ -157,7 +153,7 @@ type ProjectDialogProps = {
     iconSide?: "left" | "right";
     styleClass: string;
   } | null;
-  projectToUpdate?: IProjectResponse | ProjectV2Response;
+  projectToUpdate?: ProjectV2Response;
   previousContacts?: Contact[];
   useEditModalStore?: boolean; // New prop to control which modal state to use
 };
@@ -174,26 +170,15 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   useEditModalStore = false, // Default to false for create mode
 }) => {
   /**
-   * Dual V1/V2 Handling:
+   * V2 Project Structure:
    *
-   * This component handles both IProjectResponse (V1) and ProjectV2Response (V2) structures
-   * for the following reasons:
+   * This component uses the V2 ProjectV2Response structure:
+   * - details.title, details.slug, details.description, etc.
+   * - owner instead of recipient
    *
-   * 1. Store Migration: The project store now uses V2 (ProjectV2Response), so when editing
-   *    projects, we receive V2 data from useProjectStore().
-   *
-   * 2. Search API: The search functionality (gapIndexerApi.searchProjects) still returns
-   *    V1 (IProjectResponse[]) results, so we need to handle V1 when searching.
-   *
-   * 3. SDK Compatibility: The SDK methods (new Project(), new ProjectDetails(), etc.) still
-   *    expect V1 structure when creating/updating projects, so we convert to V1 when
-   *    calling SDK methods.
-   *
-   * This is a transitional approach until:
-   * - The SDK fully supports V2 structure
-   * - The search API is migrated to V2
-   *
-   * Once both are migrated, we can simplify this component to only handle V2.
+   * The SDK methods (new Project(), new ProjectDetails(), etc.) still
+   * expect V1 structure when creating/updating projects, so we convert
+   * from V2 to V1 when calling SDK methods.
    */
   const dataToUpdate = useMemo(() => {
     if (!projectToUpdate) return undefined;
@@ -384,9 +369,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         };
         reset(updateData);
         // Reset logo state to project's existing logo
-        const imageURL =
-          (projectToUpdate as ProjectV2Response).details?.logoUrl ||
-          (projectToUpdate as IProjectResponse).details?.data?.imageURL;
+        const imageURL = projectToUpdate.details?.logoUrl;
         if (imageURL) {
           setLogoPreviewUrl(imageURL);
         } else {
@@ -968,7 +951,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       });
     } catch (error: any) {
       errorManager(
-        `Error updating project ${(projectToUpdate as ProjectV2Response).details?.slug || (projectToUpdate as IProjectResponse).details?.data?.slug || projectToUpdate?.uid}`,
+        `Error updating project ${projectToUpdate?.details?.slug || projectToUpdate?.uid}`,
         error,
         { ...data, address },
         {
@@ -1016,26 +999,23 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   };
 
   const [isSearchingProject, setIsSearchingProject] = useState(false);
-  const [existingProjects, setExistingProjects] = useState<IProjectResponse[]>([]);
+  const [existingProjects, setExistingProjects] = useState<ProjectV2Response[]>([]);
 
   const searchByExistingName = debounce(async (value: string) => {
     if (
       value.length < 3 ||
       (projectToUpdate &&
         value.toLowerCase() ===
-          (
-            (projectToUpdate as ProjectV2Response).details?.title ||
-            (projectToUpdate as IProjectResponse).details?.data?.title
-          )?.toLowerCase())
+          (projectToUpdate as ProjectV2Response).details?.title?.toLowerCase())
     ) {
       return;
     }
     try {
       setIsSearchingProject(true);
-      const result = await gapIndexerApi.searchProjects(value).then((res) => res.data);
+      const result = await searchProjectsV2(value);
       const hasEqualTitle =
-        result.filter((item) => item.details?.data.title.toLowerCase() === value.toLowerCase())
-          .length > 0;
+        result.filter((item) => item.details?.title?.toLowerCase() === value.toLowerCase()).length >
+        0;
       if (hasEqualTitle) {
         setExistingProjects(result);
         setError("title", {
