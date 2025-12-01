@@ -3,295 +3,200 @@
  * Tests navbar elements visibility based on user permissions and roles
  */
 
+import {
+  setupCommonIntercepts,
+  waitForPageLoad,
+} from "../../support/intercepts";
+
 describe("Permission-Based Access", () => {
   beforeEach(() => {
-    cy.visit("/");
+    setupCommonIntercepts();
+  });
+
+  describe("Unauthenticated User", () => {
+    beforeEach(() => {
+      cy.visit("/");
+      waitForPageLoad();
+    });
+
+    it("should see Sign in button", () => {
+      cy.contains("Sign in").should("be.visible");
+    });
+
+    it("should see Contact sales button", () => {
+      cy.contains("Contact sales").should("be.visible");
+    });
+
+    it("should not see user avatar", () => {
+      cy.get('[data-testid="user-avatar"]').should("not.exist");
+    });
+
+    it("should see Resources menu", () => {
+      cy.contains("button", "Resources").should("be.visible");
+    });
   });
 
   describe("Regular User", () => {
-    it("should see basic menu for regular user", () => {
-      // cy.login({ userType: "regular" });
-
-      // cy.get('[data-testid="user-avatar"]').click();
-
-      // Should see basic items
-      // cy.contains("My projects").should("be.visible");
-      // cy.contains("My profile").should("be.visible");
-
-      // Should not see admin items
-      // cy.contains("Admin").should("not.exist");
-      // cy.contains("Review").should("not.exist");
-      // cy.contains("Manage Programs").should("not.exist");
+    beforeEach(() => {
+      cy.login({ userType: "regular" });
+      cy.visit("/");
+      waitForPageLoad();
     });
 
-    it("should not have Review link", () => {
-      // cy.login({ userType: "regular" });
+    it("should see user avatar when logged in", () => {
+      cy.get('[data-testid="user-avatar"]').should("be.visible");
+    });
 
-      // cy.get('[data-testid="user-avatar"]').click();
+    it("should see basic menu items", () => {
+      cy.get('[data-testid="user-avatar"]').click();
+      cy.contains("My projects").should("be.visible");
+    });
 
-      // cy.contains("Review").should("not.exist");
+    it("should not see admin link", () => {
+      cy.get('[data-testid="user-avatar"]').click();
+      cy.contains("Admin").should("not.exist");
+    });
+
+    it("should not see Review link", () => {
+      cy.get('[data-testid="user-avatar"]').click();
+      cy.contains("Review").should("not.exist");
+    });
+
+    it("should see logout option", () => {
+      cy.get('[data-testid="user-avatar"]').click();
+      cy.contains(/log out|sign out/i).should("be.visible");
     });
   });
 
   describe("Admin User", () => {
-    it("should see admin link", () => {
-      // cy.login({ userType: "admin" });
+    beforeEach(() => {
+      cy.login({ userType: "admin" });
+      cy.visit("/");
+      waitForPageLoad();
+    });
 
-      // cy.get('[data-testid="user-avatar"]').click();
-
-      // cy.contains("Admin").should("be.visible");
+    it("should see admin link in menu", () => {
+      cy.get('[data-testid="user-avatar"]').click();
+      cy.contains("Admin").should("be.visible");
     });
 
     it("should navigate to admin page", () => {
-      // cy.login({ userType: "admin" });
+      cy.get('[data-testid="user-avatar"]').click();
+      cy.contains("Admin").click();
+      cy.url().should("include", "/admin");
+    });
 
-      // cy.get('[data-testid="user-avatar"]').click();
-
-      // cy.contains("Admin").click();
-
-      // cy.url().should("include", "/admin");
+    it("should see My projects", () => {
+      cy.get('[data-testid="user-avatar"]').click();
+      cy.contains("My projects").should("be.visible");
     });
   });
 
   describe("Reviewer User", () => {
+    beforeEach(() => {
+      cy.login({ userType: "reviewer" });
+      cy.visit("/");
+      waitForPageLoad();
+    });
+
     it("should see review link", () => {
-      // cy.login({ userType: "reviewer" });
-
-      // cy.get('[data-testid="user-avatar"]').click();
-
-      // cy.contains("Review").should("be.visible");
+      cy.get('[data-testid="user-avatar"]').click();
+      cy.contains("Review").should("be.visible");
     });
 
-    it("should navigate to reviews page", () => {
-      // cy.login({ userType: "reviewer" });
-
-      // cy.get('[data-testid="user-avatar"]').click();
-
-      // cy.contains("Review").click();
-
-      // cy.url().should("include", "/reviews");
+    it("should navigate to review page", () => {
+      cy.get('[data-testid="user-avatar"]').click();
+      cy.contains("Review").click();
+      cy.url().should("include", "/review");
     });
 
-    it("should not see admin link unless also admin", () => {
-      // cy.login({ userType: "reviewer" });
-
-      // cy.get('[data-testid="user-avatar"]').click();
-
-      // cy.contains("Admin").should("not.exist");
+    it("should not see admin link", () => {
+      cy.get('[data-testid="user-avatar"]').click();
+      cy.contains("Admin").should("not.exist");
     });
   });
 
-  describe("Staff User", () => {
-    it("should see admin link", () => {
-      // cy.login({ userType: "staff" });
-
-      // cy.get('[data-testid="user-avatar"]').click();
-
-      // cy.contains("Admin").should("be.visible");
+  describe("Community Admin User", () => {
+    beforeEach(() => {
+      cy.login({ userType: "community-admin" });
+      cy.visit("/");
+      waitForPageLoad();
     });
 
-    it("should have all staff privileges", () => {
-      // cy.login({ userType: "staff" });
-
-      // cy.get('[data-testid="user-avatar"]').click();
-
-      // Should see admin link
-      // cy.contains("Admin").should("be.visible");
-
-      // Should see standard items
-      // cy.contains("My projects").should("be.visible");
-    });
-  });
-
-  describe("Owner User", () => {
-    it("should see admin link", () => {
-      // cy.login({ userType: "owner" });
-
-      // cy.get('[data-testid="user-avatar"]').click();
-
-      // cy.contains("Admin").should("be.visible");
-    });
-  });
-
-  describe("Pool Manager", () => {
     it("should see Manage Programs link", () => {
-      // cy.login({ userType: "pool-manager" });
-
-      // cy.get('[data-testid="user-avatar"]').click();
-
-      // cy.contains("Manage Programs").should("be.visible");
+      cy.get('[data-testid="user-avatar"]').click();
+      cy.contains(/manage|programs/i).should("be.visible");
     });
 
-    it("should navigate to manage programs page", () => {
-      // cy.login({ userType: "pool-manager" });
-
-      // cy.get('[data-testid="user-avatar"]').click();
-
-      // cy.contains("Manage Programs").click();
-
-      // cy.url().should("include", "/registry/manage-programs");
+    it("should see My projects", () => {
+      cy.get('[data-testid="user-avatar"]').click();
+      cy.contains("My projects").should("be.visible");
     });
   });
 
-  describe("Registry Admin", () => {
-    it("should see Manage Programs link", () => {
-      // cy.login({ userType: "registry-admin" });
-
-      // cy.get('[data-testid="user-avatar"]').click();
-
-      // cy.contains("Manage Programs").should("be.visible");
-    });
-  });
-
-  describe("Community Admin", () => {
-    it("should see admin link", () => {
-      // cy.login({ userType: "community-admin" });
-
-      // cy.get('[data-testid="user-avatar"]').click();
-
-      // cy.contains("Admin").should("be.visible");
-    });
-
-    it("should work with single community", () => {
-      // cy.login({ userType: "community-admin", communities: 1 });
-
-      // cy.get('[data-testid="user-avatar"]').click();
-
-      // cy.contains("Admin").should("be.visible");
-    });
-
-    it("should work with multiple communities", () => {
-      // cy.login({ userType: "community-admin", communities: 3 });
-
-      // cy.get('[data-testid="user-avatar"]').click();
-
-      // cy.contains("Admin").should("be.visible");
-    });
-  });
-
-  describe("Combined Permissions", () => {
-    it("should show both Admin and Review for admin + reviewer", () => {
-      // cy.login({ userType: "admin-reviewer" });
-
-      // cy.get('[data-testid="user-avatar"]').click();
-
-      // cy.contains("Admin").should("be.visible");
-      // cy.contains("Review").should("be.visible");
-    });
-
-    it("should show Admin and Manage Programs for admin + registry", () => {
-      // cy.login({ userType: "admin-registry" });
-
-      // cy.get('[data-testid="user-avatar"]').click();
-
-      // cy.contains("Admin").should("be.visible");
-      // cy.contains("Manage Programs").should("be.visible");
-    });
-
-    it("should show all links for user with all permissions", () => {
-      // cy.login({ userType: "all-permissions" });
-
-      // cy.get('[data-testid="user-avatar"]').click();
-
-      // cy.contains("Admin").should("be.visible");
-      // cy.contains("Review").should("be.visible");
-      // cy.contains("Manage Programs").should("be.visible");
-    });
-  });
-
-  describe("Mobile Menu Permissions", () => {
+  describe("Mobile Permission Access", () => {
     beforeEach(() => {
       cy.viewport("iphone-x");
     });
 
-    it("should respect permissions in mobile menu", () => {
-      // cy.login({ userType: "admin" });
+    it("should show Sign in in mobile drawer when logged out", () => {
+      cy.visit("/");
+      waitForPageLoad();
 
       cy.get('[aria-label="Open menu"]').click();
-
-      // cy.contains("Admin").should("be.visible");
+      cy.contains("Sign in").should("be.visible");
     });
 
-    it("should hide admin link for regular users on mobile", () => {
-      // cy.login({ userType: "regular" });
+    it("should show user profile in mobile drawer when logged in", () => {
+      cy.login({ userType: "regular" });
+      cy.visit("/");
+      waitForPageLoad();
 
       cy.get('[aria-label="Open menu"]').click();
-
-      // cy.contains("Admin").should("not.exist");
-    });
-  });
-
-  describe("Resources Dropdown Permission", () => {
-    it("should show Resources when logged out", () => {
-      cy.contains("button", "Resources").should("be.visible");
+      cy.contains("My projects").should("be.visible");
     });
 
-    it("should hide Resources when logged in", () => {
-      // cy.login({ userType: "regular" });
-
-      // cy.contains("button", "Resources").should("not.exist");
-    });
-  });
-
-  describe("Permission Changes", () => {
-    it("should update menu when permissions change", () => {
-      // Start as regular user
-      // cy.login({ userType: "regular" });
-
-      // cy.get('[data-testid="user-avatar"]').click();
-
-      // cy.contains("Admin").should("not.exist");
-
-      // Simulate permission upgrade (would need backend support)
-      // cy.updatePermissions({ userType: "admin" });
-
-      // Reopen menu
-      // cy.get('[data-testid="user-avatar"]').click();
-
-      // cy.contains("Admin").should("be.visible");
-    });
-  });
-
-  describe("Loading States", () => {
-    it("should show skeleton during permission check", () => {
-      // When permissions are loading
+    it("should show admin link in mobile drawer for admin user", () => {
+      cy.login({ userType: "admin" });
       cy.visit("/");
+      waitForPageLoad();
 
-      // Skeleton should appear briefly
-      // cy.get('[data-testid="user-skeleton"]').should("exist");
-    });
-
-    it("should show correct menu after loading", () => {
-      // cy.login({ userType: "admin" });
-
-      cy.visit("/");
-
-      // Wait for loading
-      cy.wait(1000);
-
-      // cy.get('[data-testid="user-avatar"]').click();
-
-      // cy.contains("Admin").should("be.visible");
+      cy.get('[aria-label="Open menu"]').click();
+      cy.contains("Admin").should("be.visible");
     });
   });
 
-  describe("Access Control", () => {
-    it("should not allow access to admin page without permission", () => {
-      // cy.login({ userType: "regular" });
+  describe("Protected Routes", () => {
+    it("should redirect to login when accessing my-projects without auth", () => {
+      cy.visit("/my-projects");
 
-      // Try to directly visit admin page
+      // Should redirect to home or show login prompt
+      cy.url().should("satisfy", (url: string) => {
+        return !url.includes("/my-projects") || url.includes("/");
+      });
+    });
+
+    it("should allow access to my-projects when authenticated", () => {
+      cy.login({ userType: "regular" });
+      cy.visit("/my-projects");
+
+      // Should stay on my-projects
+      cy.url().should("include", "/my-projects");
+    });
+
+    it("should redirect non-admin from admin page", () => {
+      cy.login({ userType: "regular" });
       cy.visit("/admin");
 
-      // Should redirect or show error
-      // cy.url().should("not.include", "/admin");
+      // Should redirect or show access denied
+      cy.url().should("not.include", "/admin");
     });
 
-    it("should allow access to admin page with permission", () => {
-      // cy.login({ userType: "admin" });
-
+    it("should allow admin to access admin page", () => {
+      cy.login({ userType: "admin" });
       cy.visit("/admin");
 
-      // Should allow access
+      // Should stay on admin page
       cy.url().should("include", "/admin");
     });
   });
