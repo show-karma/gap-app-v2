@@ -3,7 +3,7 @@
  * Tests modal interactions triggered from navbar (profile modal, create project modal)
  */
 
-import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Navbar } from "@/src/components/navbar/navbar";
 import { NavbarDesktopNavigation } from "@/src/components/navbar/navbar-desktop-navigation";
