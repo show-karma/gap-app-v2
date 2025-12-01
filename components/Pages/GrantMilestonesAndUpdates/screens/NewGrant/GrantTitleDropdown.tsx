@@ -1,19 +1,13 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, useEffect, useState, useRef } from "react";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "cmdk";
-import { CheckIcon } from "@heroicons/react/24/solid";
+
+import { CheckIcon, ChevronDownIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
-import { cn } from "@/utilities/tailwind";
+import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "cmdk";
 import pluralize from "pluralize";
-import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
-import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { ChevronDownIcon } from "@heroicons/react/24/solid";
+import { type FC, useEffect, useRef, useState } from "react";
+import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import { cn } from "@/utilities/tailwind";
 
 export const GrantTitleDropdown: FC<{
   setValue: (
@@ -60,7 +54,7 @@ export const GrantTitleDropdown: FC<{
     if (triggerRef.current) {
       setTriggerWidth(triggerRef.current.offsetWidth);
     }
-  }, [open]);
+  }, []);
 
   const addCustom = async (custom: string) => {
     const trimmedCustom = custom.trim();
@@ -89,7 +83,7 @@ export const GrantTitleDropdown: FC<{
         shouldValidate: true,
       });
     } else {
-      const timestamp = new Date().getTime().toString();
+      const timestamp = Date.now().toString();
 
       requestProgram = {
         metadata: {
@@ -106,7 +100,7 @@ export const GrantTitleDropdown: FC<{
         updatedAt: timestamp,
       };
 
-      setList(prevList => [...prevList, requestProgram]);
+      setList((prevList) => [...prevList, requestProgram]);
 
       setValue("programId", undefined);
       setValue("title", trimmedCustom, {
@@ -121,7 +115,7 @@ export const GrantTitleDropdown: FC<{
     if (search.length) {
       setSearch("");
       setTimeout(() => {
-        setSearch(trimmedCustom)
+        setSearch(trimmedCustom);
       }, 100);
     }
 
@@ -142,8 +136,8 @@ export const GrantTitleDropdown: FC<{
             {selectedProgram?.metadata?.title
               ? selectedProgram.metadata.title
               : grantToEdit
-              ? grantToEdit?.details?.data?.title
-              : `${prefixUnselected} ${type}`}
+                ? grantToEdit?.details?.data?.title
+                : `${prefixUnselected} ${type}`}
           </p>
           <ChevronDownIcon className="h-4 w-4" />
         </div>
@@ -219,11 +213,12 @@ export const GrantTitleDropdown: FC<{
           <CommandGroup>
             {cleanFunction ? (
               <CommandItem>
-                <div
+                <button
+                  type="button"
                   onClick={() => {
                     cleanFunction();
                   }}
-                  className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
+                  className="w-full my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 bg-transparent border-none text-left"
                 >
                   <div className="flex flex-row gap-2 items-center justify-start w-full">
                     <div className="flex flex-row gap-1  items-center justify-start  flex-1">
@@ -232,33 +227,30 @@ export const GrantTitleDropdown: FC<{
                       </p>
                     </div>
                     <CheckIcon
-                      className={cn(
-                        "mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white"
-                      )}
+                      className={cn("mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white")}
                       style={{
                         display: selectedProgram ? "none" : "block",
                       }}
                     />
                   </div>
-                </div>
+                </button>
               </CommandItem>
             ) : null}
             {list.map((item, index) => (
               <CommandItem key={index}>
-                <div
+                <button
+                  type="button"
                   onClick={() => {
                     setSelectedProgram(item);
                     setValue(
                       "programId",
-                      !item?.programId
-                        ? undefined
-                        : `${item.programId}_${item.chainID}`
+                      !item?.programId ? undefined : `${item.programId}_${item.chainID}`
                     );
                     setValue("title", item?.metadata?.title, {
                       shouldValidate: true,
                     });
                   }}
-                  className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
+                  className="w-full my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 bg-transparent border-none text-left"
                 >
                   <div className="flex flex-row gap-2 items-center justify-start w-full">
                     <div className="flex flex-row gap-1  items-center justify-start  flex-1">
@@ -268,23 +260,19 @@ export const GrantTitleDropdown: FC<{
                     </div>
                   </div>
                   <CheckIcon
-                    className={cn(
-                      "mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white"
-                    )}
+                    className={cn("mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white")}
                     style={{
                       display:
                         grantToEdit && !selectedProgram
-                          ? grantToEdit?.details?.data?.title ==
-                            item?.metadata?.title
+                          ? grantToEdit?.details?.data?.title === item?.metadata?.title
                             ? "block"
                             : "none"
-                          : selectedProgram?.metadata?.title ==
-                            item?.metadata?.title
-                          ? "block"
-                          : "none",
+                          : selectedProgram?.metadata?.title === item?.metadata?.title
+                            ? "block"
+                            : "none",
                     }}
                   />
-                </div>
+                </button>
               </CommandItem>
             ))}
           </CommandGroup>

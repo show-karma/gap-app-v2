@@ -17,16 +17,12 @@ export const GrantImpactCriteria = () => {
               key={item.query + item.explanation}
             >
               <h3>{item.query}</h3>
-              <p className="text-normal font-normal break-words">
-                {item.explanation}
-              </p>
+              <p className="text-normal font-normal break-words">{item.explanation}</p>
             </div>
           ))}
         </div>
       ) : (
-        <p className="text-black dark:text-zinc-100">
-          {MESSAGES.GRANT.IMPACT_CRITERIA.EMPTY}
-        </p>
+        <p className="text-black dark:text-zinc-100">{MESSAGES.GRANT.IMPACT_CRITERIA.EMPTY}</p>
       )}
     </div>
   );

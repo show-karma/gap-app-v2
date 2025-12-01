@@ -1,6 +1,6 @@
-import { fetchENS } from "@/utilities/fetchENS";
-import { Hex, isAddress } from "viem";
+import { type Hex, isAddress } from "viem";
 import { create } from "zustand";
+import { fetchENS } from "@/utilities/fetchENS";
 
 // Define the structure for ENS names and avatars
 export interface EnsData {
@@ -23,9 +23,7 @@ export const useENS = create<EnsStore>((set, get) => ({
 
   populateEns: async (addresses: string[]) => {
     const ensData = get().ensData;
-    const lowercasedAddresses = addresses.map(
-      (address) => address.toLowerCase() as Hex
-    );
+    const lowercasedAddresses = addresses.map((address) => address.toLowerCase() as Hex);
     const notTriedAddresses = lowercasedAddresses.filter((address) => {
       return !ensData[address] || !ensData[address]?.isFetching;
     });

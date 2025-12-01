@@ -1,25 +1,22 @@
 "use client";
-import {
-  ProgramImpactDataResponse,
-  ProgramImpactSegment,
-} from "@/types/programs";
-import { cn } from "@/utilities/tailwind";
 import { AreaChart, Card } from "@tremor/react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import pluralize from "pluralize";
-import { useAggregatedIndicators } from "@/hooks/useAggregatedIndicators";
-import formatCurrency from "@/utilities/formatCurrency";
+import { useEffect, useState } from "react";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useAggregatedIndicators } from "@/hooks/useAggregatedIndicators";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
+import type { ProgramImpactDataResponse, ProgramImpactSegment } from "@/types/programs";
+import formatCurrency from "@/utilities/formatCurrency";
+import { cn } from "@/utilities/tailwind";
 import { SegmentSkeleton } from "./SegmentSkeleton";
-import { TimeframeSelector, TimeframeOption, timeframeOptions } from "./TimeframeSelector";
-import { useState, useEffect } from "react";
+import { type TimeframeOption, TimeframeSelector, timeframeOptions } from "./TimeframeSelector";
 
 export const fundedAmountFormatter = (value: string) => {
   const amount = Number(value.includes(" ") ? value.split(" ")[0] : value);
   const formattedAmount = Number(amount.toFixed(2));
-  if (isNaN(formattedAmount)) {
+  if (Number.isNaN(formattedAmount)) {
     return value;
   }
   return formattedAmount;
@@ -27,13 +24,13 @@ export const fundedAmountFormatter = (value: string) => {
 
 const prepareAggregatedChartData = (indicators: any[]) => {
   if (!indicators.length) return [];
-  
+
   // Combine all datapoints from all indicators into a single timeline
   const allDatapoints: any[] = [];
-  
-  indicators.forEach(indicator => {
+
+  indicators.forEach((indicator) => {
     indicator.aggregatedData.forEach((datapoint: any) => {
-      const existingIndex = allDatapoints.findIndex(dp => dp.date === datapoint.timestamp);
+      const existingIndex = allDatapoints.findIndex((dp) => dp.date === datapoint.timestamp);
       if (existingIndex >= 0) {
         // Add this indicator's value to existing timestamp
         allDatapoints[existingIndex][indicator.name] = datapoint.value;
@@ -45,14 +42,16 @@ const prepareAggregatedChartData = (indicators: any[]) => {
       }
     });
   });
-  
+
   // Sort by date and fill missing values with 0
-  const sortedData = allDatapoints.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  const indicatorNames = indicators.map(ind => ind.name);
-  
-  return sortedData.map(datapoint => {
+  const sortedData = allDatapoints.sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+  const indicatorNames = indicators.map((ind) => ind.name);
+
+  return sortedData.map((datapoint) => {
     const filledDatapoint = { ...datapoint };
-    indicatorNames.forEach(name => {
+    indicatorNames.forEach((name) => {
       if (!(name in filledDatapoint)) {
         filledDatapoint[name] = 0;
       }
@@ -61,23 +60,25 @@ const prepareAggregatedChartData = (indicators: any[]) => {
   });
 };
 
-const AggregatedSegmentCard = ({
-  segment,
-}: {
-  segment: ProgramImpactSegment;
-}) => {
+const AggregatedSegmentCard = ({ segment }: { segment: ProgramImpactSegment }) => {
   const [selectedTimeframe, setSelectedTimeframe] = useState<TimeframeOption>("1_month");
-  
+
   const { isVisible, ref } = useIntersectionObserver({
     threshold: 0.1,
-    rootMargin: '200px', // Start loading 200px before segment comes into view
+    rootMargin: "200px", // Start loading 200px before segment comes into view
     triggerOnce: true, // Once loaded, don't unload
   });
 
-  const selectedTimeframeConfig = timeframeOptions.find(option => option.value === selectedTimeframe);
+  const selectedTimeframeConfig = timeframeOptions.find(
+    (option) => option.value === selectedTimeframe
+  );
   const timeframeMonths = selectedTimeframeConfig?.months || 1;
 
-  const { data: aggregatedIndicators, isLoading, error } = useAggregatedIndicators(
+  const {
+    data: aggregatedIndicators,
+    isLoading,
+    error,
+  } = useAggregatedIndicators(
     segment.impactIndicatorIds,
     isVisible && segment.impactIndicatorIds.length > 0,
     timeframeMonths
@@ -85,16 +86,16 @@ const AggregatedSegmentCard = ({
 
   // Listen for filter changes to reset timeframe
   const searchParams = useSearchParams();
-  const projectSelected = searchParams.get("projectId");
-  const programSelected = searchParams.get("programId");
-  
+  const _projectSelected = searchParams.get("projectId");
+  const _programSelected = searchParams.get("programId");
+
   useEffect(() => {
     // Reset timeframe to 1 month when filters change
     setSelectedTimeframe("1_month");
-  }, [projectSelected, programSelected]);
-  
+  }, []);
+
   const chartData = aggregatedIndicators ? prepareAggregatedChartData(aggregatedIndicators) : [];
-  const indicatorNames = aggregatedIndicators?.map(ind => ind.name) || [];
+  const indicatorNames = aggregatedIndicators?.map((ind) => ind.name) || [];
   const colors = ["blue", "green", "yellow", "purple", "red", "pink"];
 
   // If not visible yet, show skeleton
@@ -148,7 +149,7 @@ const AggregatedSegmentCard = ({
               {pluralize("metric", segment.impactIndicatorIds.length)}
             </p>
           </div>
-          
+
           {/* Aggregated Chart Display */}
           {isLoading ? (
             <div className="flex justify-center items-center h-32 bg-white dark:bg-zinc-700 rounded-lg">
@@ -162,7 +163,9 @@ const AggregatedSegmentCard = ({
           ) : segment.impactIndicatorIds.length === 0 ? (
             <div className="p-8 text-center text-gray-500 dark:text-gray-400 bg-white dark:bg-zinc-700 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
               <p className="text-lg font-medium">No metrics available yet</p>
-              <p className="text-sm mt-1">Impact indicators will appear here once projects start reporting data</p>
+              <p className="text-sm mt-1">
+                Impact indicators will appear here once projects start reporting data
+              </p>
             </div>
           ) : aggregatedIndicators && aggregatedIndicators.length > 0 && chartData.length > 0 ? (
             <Card className="bg-white dark:bg-zinc-700">
@@ -177,12 +180,13 @@ const AggregatedSegmentCard = ({
                   />
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {aggregatedIndicators.map((indicator, index) => (
+                  {aggregatedIndicators.map((indicator, _index) => (
                     <span
                       key={indicator.id}
                       className="px-2 py-1 text-xs rounded-full bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200"
                     >
-                      {indicator.name} ({indicator.totalProjects} {pluralize("project", indicator.totalProjects)})
+                      {indicator.name} ({indicator.totalProjects}{" "}
+                      {pluralize("project", indicator.totalProjects)})
                     </span>
                   ))}
                 </div>
@@ -202,7 +206,9 @@ const AggregatedSegmentCard = ({
           ) : (
             <div className="p-8 text-center text-gray-500 dark:text-gray-400 bg-white dark:bg-zinc-700 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
               <p className="text-lg font-medium">No data available</p>
-              <p className="text-sm mt-1">Metrics are configured but no data has been reported yet</p>
+              <p className="text-sm mt-1">
+                Metrics are configured but no data has been reported yet
+              </p>
             </div>
           )}
         </div>
@@ -222,9 +228,7 @@ export const EmptySegment = ({
     <div className="p-6 bg-[#f8f9fb] dark:bg-zinc-800 flex flex-col justify-center items-center w-full h-full">
       <div className="flex flex-col justify-center items-center gap-8 h-full w-full border border-dashed border-gray-400 dark:border-gray-600 rounded-xl px-12 py-6">
         <Image
-          src={
-            type === "outcome" ? "/icons/outcome.svg" : "/icons/activity.svg"
-          }
+          src={type === "outcome" ? "/icons/outcome.svg" : "/icons/activity.svg"}
           alt={type}
           width={32}
           height={32}
@@ -234,8 +238,7 @@ export const EmptySegment = ({
             No {type}s have been defined yet
           </p>
           <p className="text-center text-gray-900 dark:text-zinc-200 text-base font-normal">
-            No {type}s have been defined for projects funded within the{" "}
-            {category}
+            No {type}s have been defined for projects funded within the {category}
           </p>
         </div>
       </div>
@@ -243,18 +246,14 @@ export const EmptySegment = ({
   );
 };
 
-const CategoryBlocks = ({
-  category,
-}: {
-  category: ProgramImpactDataResponse;
-}) => {
-  const outputSegments = category.impacts.filter(
-    (impact) => impact?.impactSegmentType === "output"
-  ).sort((a, b) => a.impactSegmentName.localeCompare(b.impactSegmentName));
-  
-  const outcomeSegments = category.impacts.filter(
-    (impact) => impact?.impactSegmentType === "outcome"
-  ).sort((a, b) => a.impactSegmentName.localeCompare(b.impactSegmentName));
+const CategoryBlocks = ({ category }: { category: ProgramImpactDataResponse }) => {
+  const outputSegments = category.impacts
+    .filter((impact) => impact?.impactSegmentType === "output")
+    .sort((a, b) => a.impactSegmentName.localeCompare(b.impactSegmentName));
+
+  const outcomeSegments = category.impacts
+    .filter((impact) => impact?.impactSegmentType === "outcome")
+    .sort((a, b) => a.impactSegmentName.localeCompare(b.impactSegmentName));
 
   return (
     <div className={`grid grid-cols-2 gap-6 max-md:flex max-md:flex-col`}>
@@ -289,16 +288,12 @@ const CategoryBlocks = ({
   );
 };
 
-export const CategoryRow = ({
-  category,
-}: {
-  category: ProgramImpactDataResponse;
-}) => {
+export const CategoryRow = ({ category }: { category: ProgramImpactDataResponse }) => {
   const searchParams = useSearchParams();
   const projectSelected = searchParams.get("projectId");
 
   // Calculate total number of projects based on unique indicator IDs across all segments
-  const allIndicatorIds = category.impacts.flatMap(impact => impact.impactIndicatorIds || []);
+  const allIndicatorIds = category.impacts.flatMap((impact) => impact.impactIndicatorIds || []);
   const uniqueIndicatorCount = new Set(allIndicatorIds).size;
 
   return (
@@ -309,8 +304,7 @@ export const CategoryRow = ({
         </h2>
         {!projectSelected ? (
           <p className="text-lg leading-6 text-gray-500 dark:text-zinc-200 font-medium">
-            {uniqueIndicatorCount}{" "}
-            {pluralize("indicator", uniqueIndicatorCount)}
+            {uniqueIndicatorCount} {pluralize("indicator", uniqueIndicatorCount)}
           </p>
         ) : null}
       </div>

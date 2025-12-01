@@ -28,22 +28,17 @@ export class TokenManager {
       // Dynamically import cookies to avoid build issues
       const { cookies } = await import("next/headers");
       const cookieStore = await cookies();
-  
+
       // Check common Privy token cookie names
-      const tokenNames = [
-        "privy-token",
-        "privy-access-token",
-        "privy-id-token",
-        "privy-jwt",
-      ];
-  
+      const tokenNames = ["privy-token", "privy-access-token", "privy-id-token", "privy-jwt"];
+
       for (const name of tokenNames) {
         const token = cookieStore.get(name)?.value;
         if (token) {
           return token;
         }
       }
-  
+
       // Also check for any cookie that contains 'privy' and 'token'
       const allCookies = cookieStore.getAll();
       for (const cookie of allCookies) {
@@ -55,7 +50,7 @@ export class TokenManager {
           return cookie.value;
         }
       }
-  
+
       return null;
     } catch (error) {
       console.error("Failed to get JWT from cookies:", error);

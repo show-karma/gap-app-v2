@@ -1,9 +1,9 @@
 "use client";
 
-import { useAllFaucetBalances } from "@/hooks/useFaucet";
-import { Spinner } from "@/components/Utilities/Spinner";
+import { CheckCircleIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { formatEther } from "viem";
-import { ExclamationTriangleIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { useAllFaucetBalances } from "@/hooks/useFaucet";
 
 export function ChainBalances() {
   const { data, isLoading, error, refetch } = useAllFaucetBalances();
@@ -19,10 +19,9 @@ export function ChainBalances() {
   if (error) {
     return (
       <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-6 text-center">
-        <p className="text-red-800 dark:text-red-200">
-          Failed to load balances. Please try again.
-        </p>
+        <p className="text-red-800 dark:text-red-200">Failed to load balances. Please try again.</p>
         <button
+          type="button"
           onClick={() => refetch()}
           className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
         >
@@ -41,6 +40,7 @@ export function ChainBalances() {
           Faucet Balances by Chain
         </h2>
         <button
+          type="button"
           onClick={() => refetch()}
           className="px-4 py-2 bg-gray-100 dark:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-600 transition-colors"
         >
@@ -53,8 +53,8 @@ export function ChainBalances() {
           <div
             key={balance.chainId}
             className={`bg-white dark:bg-zinc-800 rounded-lg shadow-sm p-6 border-2 ${
-              balance.isLow 
-                ? "border-red-300 dark:border-red-700" 
+              balance.isLow
+                ? "border-red-300 dark:border-red-700"
                 : "border-green-300 dark:border-green-700"
             }`}
           >
@@ -106,9 +106,7 @@ export function ChainBalances() {
 
       {balances.length === 0 && (
         <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm p-8 text-center">
-          <p className="text-gray-500 dark:text-gray-400">
-            No balance data available
-          </p>
+          <p className="text-gray-500 dark:text-gray-400">No balance data available</p>
         </div>
       )}
     </div>

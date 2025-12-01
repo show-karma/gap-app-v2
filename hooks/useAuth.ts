@@ -1,11 +1,11 @@
 "use client";
 
 import { usePrivy, useWallets } from "@privy-io/react-auth";
-import { useCallback, useEffect, useMemo, useRef } from "react";
-import { TokenManager } from "@/utilities/auth/token-manager";
-import { Hex } from "viem";
-import { useAccount } from "wagmi";
 import { watchAccount } from "@wagmi/core";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import type { Hex } from "viem";
+import { useAccount } from "wagmi";
+import { TokenManager } from "@/utilities/auth/token-manager";
 import { privyConfig } from "@/utilities/wagmi/privy-config";
 
 /**
@@ -19,8 +19,7 @@ import { privyConfig } from "@/utilities/wagmi/privy-config";
  * - Wallet connections
  */
 export const useAuth = () => {
-  const { ready, authenticated, user, login, logout, getAccessToken } =
-    usePrivy();
+  const { ready, authenticated, user, login, logout, getAccessToken } = usePrivy();
 
   const { isConnected } = useAccount();
 

@@ -1,7 +1,6 @@
+import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { envVars } from "@/utilities/enviromentVars";
-import { errorManager } from "@/components/Utilities/errorManager";
 
 export interface Track {
   id: string;
@@ -77,11 +76,7 @@ export const trackService = {
   },
 
   // Create a new track
-  createTrack: async (
-    name: string,
-    description: string,
-    communityUID: string
-  ): Promise<Track> => {
+  createTrack: async (name: string, description: string, communityUID: string): Promise<Track> => {
     try {
       const [data, error] = await fetchData(
         INDEXER.TRACKS.CREATE(),

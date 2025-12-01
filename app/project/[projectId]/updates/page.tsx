@@ -1,26 +1,18 @@
+import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
+import type { Metadata } from "next";
 import { ProjectRoadmap } from "@/components/Pages/Project/Roadmap";
+import { PROJECT_NAME } from "@/constants/brand";
 import { envVars } from "@/utilities/enviromentVars";
 import { getAllMilestones } from "@/utilities/gapIndexerApi/getAllMilestones";
 import { defaultMetadata } from "@/utilities/meta";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
-import { PROJECT_NAME } from "@/constants/brand";
-import {
-  dehydrate,
-  HydrationBoundary,
-  QueryClient,
-} from "@tanstack/react-query";
-import { Metadata } from "next";
 
 type Params = Promise<{
   projectId: string;
 }>;
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Params;
-}): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { projectId } = await params;
   const projectInfo = await getProjectCachedData(projectId);
 
@@ -68,9 +60,7 @@ export async function generateMetadata({
   };
 }
 
-export default async function RoadmapPage(props: {
-  params: Promise<{ projectId: string }>;
-}) {
+export default async function RoadmapPage(props: { params: Promise<{ projectId: string }> }) {
   const { projectId } = await props.params;
   const projectInfo = await getProjectCachedData(projectId);
 

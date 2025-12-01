@@ -3,7 +3,7 @@
  * @description Tests media query matching hook with resize event handling
  */
 
-import { renderHook, act } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import useMediaQuery from "@/hooks/useMediaQuery";
 
 describe("useMediaQuery", () => {
@@ -69,10 +69,7 @@ describe("useMediaQuery", () => {
     it("should add resize event listener on mount", () => {
       renderHook(() => useMediaQuery("(min-width: 768px)"));
 
-      expect(window.addEventListener).toHaveBeenCalledWith(
-        "resize",
-        expect.any(Function)
-      );
+      expect(window.addEventListener).toHaveBeenCalledWith("resize", expect.any(Function));
     });
 
     it("should remove resize event listener on unmount", () => {
@@ -80,10 +77,7 @@ describe("useMediaQuery", () => {
 
       unmount();
 
-      expect(window.removeEventListener).toHaveBeenCalledWith(
-        "resize",
-        expect.any(Function)
-      );
+      expect(window.removeEventListener).toHaveBeenCalledWith("resize", expect.any(Function));
     });
 
     it("should update matches state on resize", () => {
@@ -96,8 +90,7 @@ describe("useMediaQuery", () => {
       // Simulate resize that changes the match
       act(() => {
         matchMediaResult.matches = true;
-        const resizeHandler = (window.addEventListener as jest.Mock).mock
-          .calls[0][1];
+        const resizeHandler = (window.addEventListener as jest.Mock).mock.calls[0][1];
         resizeHandler();
       });
 
@@ -133,12 +126,9 @@ describe("useMediaQuery", () => {
 
   describe("Query Changes", () => {
     it("should update when query changes", () => {
-      const { result, rerender } = renderHook(
-        ({ query }) => useMediaQuery(query),
-        {
-          initialProps: { query: "(min-width: 768px)" },
-        }
-      );
+      const { result, rerender } = renderHook(({ query }) => useMediaQuery(query), {
+        initialProps: { query: "(min-width: 768px)" },
+      });
 
       expect(mockMatchMedia).toHaveBeenCalledWith("(min-width: 768px)");
 
@@ -151,12 +141,9 @@ describe("useMediaQuery", () => {
     it("should handle query change and match state update", () => {
       matchMediaResult.matches = false;
 
-      const { result, rerender } = renderHook(
-        ({ query }) => useMediaQuery(query),
-        {
-          initialProps: { query: "(min-width: 768px)" },
-        }
-      );
+      const { result, rerender } = renderHook(({ query }) => useMediaQuery(query), {
+        initialProps: { query: "(min-width: 768px)" },
+      });
 
       expect(result.current).toBe(false);
 
@@ -198,9 +185,7 @@ describe("useMediaQuery", () => {
     it("should handle orientation queries", () => {
       matchMediaResult.matches = true;
 
-      const { result } = renderHook(() =>
-        useMediaQuery("(orientation: portrait)")
-      );
+      const { result } = renderHook(() => useMediaQuery("(orientation: portrait)"));
 
       expect(result.current).toBe(true);
       expect(mockMatchMedia).toHaveBeenCalledWith("(orientation: portrait)");
@@ -209,9 +194,7 @@ describe("useMediaQuery", () => {
     it("should handle prefer-color-scheme queries", () => {
       matchMediaResult.matches = true;
 
-      const { result } = renderHook(() =>
-        useMediaQuery("(prefers-color-scheme: dark)")
-      );
+      const { result } = renderHook(() => useMediaQuery("(prefers-color-scheme: dark)"));
 
       expect(result.current).toBe(true);
     });
@@ -231,9 +214,7 @@ describe("useMediaQuery", () => {
       matchMediaResult.matches = true;
 
       const { result } = renderHook(() =>
-        useMediaQuery(
-          "(min-width: 768px) and (max-width: 1024px) and (orientation: landscape)"
-        )
+        useMediaQuery("(min-width: 768px) and (max-width: 1024px) and (orientation: landscape)")
       );
 
       expect(result.current).toBe(true);
@@ -249,8 +230,7 @@ describe("useMediaQuery", () => {
       // Simulate resize where matches stays the same
       act(() => {
         matchMediaResult.matches = true;
-        const resizeHandler = (window.addEventListener as jest.Mock).mock
-          .calls[0][1];
+        const resizeHandler = (window.addEventListener as jest.Mock).mock.calls[0][1];
         resizeHandler();
       });
 
@@ -260,12 +240,8 @@ describe("useMediaQuery", () => {
 
   describe("Multiple Hook Instances", () => {
     it("should handle multiple hooks with different queries", () => {
-      const { result: result1 } = renderHook(() =>
-        useMediaQuery("(min-width: 768px)")
-      );
-      const { result: result2 } = renderHook(() =>
-        useMediaQuery("(max-width: 640px)")
-      );
+      const { result: result1 } = renderHook(() => useMediaQuery("(min-width: 768px)"));
+      const { result: result2 } = renderHook(() => useMediaQuery("(max-width: 640px)"));
 
       expect(mockMatchMedia).toHaveBeenCalledWith("(min-width: 768px)");
       expect(mockMatchMedia).toHaveBeenCalledWith("(max-width: 640px)");
@@ -274,12 +250,8 @@ describe("useMediaQuery", () => {
     it("should handle multiple hooks with same query", () => {
       matchMediaResult.matches = true;
 
-      const { result: result1 } = renderHook(() =>
-        useMediaQuery("(min-width: 768px)")
-      );
-      const { result: result2 } = renderHook(() =>
-        useMediaQuery("(min-width: 768px)")
-      );
+      const { result: result1 } = renderHook(() => useMediaQuery("(min-width: 768px)"));
+      const { result: result2 } = renderHook(() => useMediaQuery("(min-width: 768px)"));
 
       expect(result1.current).toBe(true);
       expect(result2.current).toBe(true);
@@ -290,33 +262,24 @@ describe("useMediaQuery", () => {
     it("should cleanup event listeners on unmount", () => {
       const { unmount } = renderHook(() => useMediaQuery("(min-width: 768px)"));
 
-      const addEventListenerCalls = (window.addEventListener as jest.Mock).mock
-        .calls.length;
+      const addEventListenerCalls = (window.addEventListener as jest.Mock).mock.calls.length;
 
       unmount();
 
-      expect(window.removeEventListener).toHaveBeenCalledTimes(
-        addEventListenerCalls
-      );
+      expect(window.removeEventListener).toHaveBeenCalledTimes(addEventListenerCalls);
     });
 
     it("should cleanup and re-setup on query change", () => {
-      const { rerender, unmount } = renderHook(
-        ({ query }) => useMediaQuery(query),
-        {
-          initialProps: { query: "(min-width: 768px)" },
-        }
-      );
+      const { rerender, unmount } = renderHook(({ query }) => useMediaQuery(query), {
+        initialProps: { query: "(min-width: 768px)" },
+      });
 
-      const initialAddCalls = (window.addEventListener as jest.Mock).mock.calls
-        .length;
+      const initialAddCalls = (window.addEventListener as jest.Mock).mock.calls.length;
 
       rerender({ query: "(min-width: 1024px)" });
 
       // Should have added new listeners
-      expect((window.addEventListener as jest.Mock).mock.calls.length).toBe(
-        initialAddCalls + 1
-      );
+      expect((window.addEventListener as jest.Mock).mock.calls.length).toBe(initialAddCalls + 1);
 
       unmount();
 
@@ -335,8 +298,7 @@ describe("useMediaQuery", () => {
 
       act(() => {
         matchMediaResult.matches = true;
-        const resizeHandler = (window.addEventListener as jest.Mock).mock
-          .calls[0][1];
+        const resizeHandler = (window.addEventListener as jest.Mock).mock.calls[0][1];
         resizeHandler();
       });
 
@@ -346,9 +308,7 @@ describe("useMediaQuery", () => {
     it("should maintain state between renders if no changes", () => {
       matchMediaResult.matches = true;
 
-      const { result, rerender } = renderHook(() =>
-        useMediaQuery("(min-width: 768px)")
-      );
+      const { result, rerender } = renderHook(() => useMediaQuery("(min-width: 768px)"));
 
       expect(result.current).toBe(true);
 

@@ -1,67 +1,63 @@
 "use client";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
-import { useOwnerStore } from "@/store";
-import { useStaff } from "@/hooks/useStaff";
-import { useFundingPrograms } from "@/hooks/useFundingPlatform";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { Button } from "@/components/Utilities/Button";
-import { LoadingOverlay } from "@/components/Utilities/LoadingOverlay";
-import {
-  PlusIcon,
-  CogIcon,
-  EyeIcon,
-  ChevronDownIcon,
-  ArrowTrendingUpIcon,
-  ChevronRightIcon,
-  ArrowLeftIcon,
-} from "@heroicons/react/24/solid";
-import { MESSAGES } from "@/utilities/messages";
-import { PAGES } from "@/utilities/pages";
-import { cn } from "@/utilities/tailwind";
-import { useState, useMemo, useEffect } from "react";
-import {
-  fundingPlatformService,
-  FundingProgram,
-} from "@/services/fundingPlatformService";
-import toast from "react-hot-toast";
-import { FundingPlatformStatsCard } from "@/components/FundingPlatform/Dashboard/card";
 import {
   CalendarIcon,
   CheckCircleIcon,
   ClockIcon,
   Cog6ToothIcon,
   CurrencyDollarIcon,
+  EyeIcon as EyeIconOutline,
+  MagnifyingGlassIcon,
   UsersIcon,
   XCircleIcon,
-  MagnifyingGlassIcon,
-  EyeIcon as EyeIconOutline,
 } from "@heroicons/react/24/outline";
+import {
+  ArrowLeftIcon,
+  ArrowTrendingUpIcon,
+  ChevronDownIcon,
+  EyeIcon,
+  PlusIcon,
+} from "@heroicons/react/24/solid";
+import Link from "next/link";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
+import { FundingPlatformStatsCard } from "@/components/FundingPlatform/Dashboard/card";
+import { Button } from "@/components/Utilities/Button";
+import { LoadingOverlay } from "@/components/Utilities/LoadingOverlay";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { useFundingPrograms } from "@/hooks/useFundingPlatform";
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useStaff } from "@/hooks/useStaff";
+import { type FundingProgram, fundingPlatformService } from "@/services/fundingPlatformService";
+import { layoutTheme } from "@/src/helper/theme";
+import { useOwnerStore } from "@/store";
+import { envVars } from "@/utilities/enviromentVars";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
-import { Line } from "@rc-component/progress";
-import pluralize from "pluralize";
-import Link from "next/link";
-import { envVars } from "@/utilities/enviromentVars";
 import { fundingPlatformDomains } from "@/utilities/fundingPlatformDomains";
-import { layoutTheme } from "@/src/helper/theme";
+import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
+import { cn } from "@/utilities/tailwind";
 
 const getApplyUrlByCommunityId = (communityId: string, programId: string) => {
   if (communityId in fundingPlatformDomains) {
     const domain = fundingPlatformDomains[communityId as keyof typeof fundingPlatformDomains];
-    return envVars.isDev ? `${domain.dev}/programs/${programId}/apply` : `${domain.prod}/programs/${programId}/apply`;
+    return envVars.isDev
+      ? `${domain.dev}/programs/${programId}/apply`
+      : `${domain.prod}/programs/${programId}/apply`;
   } else {
-    return envVars.isDev ? `${fundingPlatformDomains.shared.dev}/${communityId}/programs/${programId}/apply` : `${fundingPlatformDomains.shared.prod}/${communityId}/programs/${programId}/apply`;
+    return envVars.isDev
+      ? `${fundingPlatformDomains.shared.dev}/${communityId}/programs/${programId}/apply`
+      : `${fundingPlatformDomains.shared.prod}/${communityId}/programs/${programId}/apply`;
   }
-}
+};
 
 export default function FundingPlatformAdminPage() {
   const { communityId } = useParams() as { communityId: string };
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const { isCommunityAdmin, isLoading: isLoadingAdmin } =
-    useIsCommunityAdmin(communityId);
+  const { isCommunityAdmin, isLoading: isLoadingAdmin } = useIsCommunityAdmin(communityId);
   const isOwner = useOwnerStore((state) => state.isOwner);
   const { isStaff } = useStaff();
 
@@ -75,17 +71,13 @@ export default function FundingPlatformAdminPage() {
   } = useFundingPrograms(communityId);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [togglingPrograms, setTogglingPrograms] = useState<Set<string>>(
-    new Set()
-  );
+  const [togglingPrograms, setTogglingPrograms] = useState<Set<string>>(new Set());
 
   // Initialize from URL params
-  const [searchTerm, setSearchTerm] = useState(
-    searchParams.get("search") || ""
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
+  const [enabledFilter, setEnabledFilter] = useState<"all" | "enabled" | "disabled">(
+    (searchParams.get("status") as "all" | "enabled" | "disabled") || "all"
   );
-  const [enabledFilter, setEnabledFilter] = useState<
-    "all" | "enabled" | "disabled"
-  >((searchParams.get("status") as "all" | "enabled" | "disabled") || "all");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const handleToggleProgram = async (
@@ -102,9 +94,7 @@ export default function FundingPlatformAdminPage() {
         chainId,
         !currentEnabled
       );
-      toast.success(
-        `Program ${!currentEnabled ? "enabled" : "disabled"} successfully`
-      );
+      toast.success(`Program ${!currentEnabled ? "enabled" : "disabled"} successfully`);
       // Refresh the programs list
       await refetch();
     } catch (error) {
@@ -148,16 +138,13 @@ export default function FundingPlatformAdminPage() {
         const programStats = program.metrics || undefined;
         return {
           totalPrograms: acc.totalPrograms + 1,
-          totalApplications:
-            acc.totalApplications + (programStats?.totalApplications || 0),
+          totalApplications: acc.totalApplications + (programStats?.totalApplications || 0),
           approved: acc.approved + (programStats?.approvedApplications || 0),
           rejected: acc.rejected + (programStats?.rejectedApplications || 0),
           pending: acc.pending + (programStats?.pendingApplications || 0),
           revisionRequested:
-            acc.revisionRequested +
-            (programStats?.revisionRequestedApplications || 0),
-          underReview:
-            acc.underReview + (programStats?.underReviewApplications || 0),
+            acc.revisionRequested + (programStats?.revisionRequestedApplications || 0),
+          underReview: acc.underReview + (programStats?.underReviewApplications || 0),
         };
       },
       {
@@ -253,27 +240,21 @@ export default function FundingPlatformAdminPage() {
       value: formatCurrency(statistics.totalPrograms),
       color: "text-blue-600",
       bgColor: "bg-blue-50 dark:bg-blue-900",
-      icon: (
-        <ArrowTrendingUpIcon className="w-5 h-5 text-blue-700 dark:text-blue-100" />
-      ),
+      icon: <ArrowTrendingUpIcon className="w-5 h-5 text-blue-700 dark:text-blue-100" />,
     },
     {
       title: "Total Applications",
       value: formatCurrency(statistics.totalApplications),
       color: "text-purple-600",
       bgColor: "bg-purple-50 dark:bg-purple-900",
-      icon: (
-        <UsersIcon className="h-5 w-5 text-purple-700 dark:text-purple-100" />
-      ),
+      icon: <UsersIcon className="h-5 w-5 text-purple-700 dark:text-purple-100" />,
     },
     {
       title: "Approved",
       value: formatCurrency(statistics.approved),
       color: "text-green-600",
       bgColor: "bg-green-50 dark:bg-green-900",
-      icon: (
-        <CheckCircleIcon className="h-5 w-5 text-green-700 dark:text-green-100" />
-      ),
+      icon: <CheckCircleIcon className="h-5 w-5 text-green-700 dark:text-green-100" />,
     },
     {
       title: "Rejected",
@@ -287,46 +268,33 @@ export default function FundingPlatformAdminPage() {
       value: formatCurrency(statistics.pending),
       color: "text-orange-600",
       bgColor: "bg-orange-50 dark:bg-orange-900",
-      icon: (
-        <ClockIcon className="h-5 w-5 text-orange-700 dark:text-orange-100" />
-      ),
+      icon: <ClockIcon className="h-5 w-5 text-orange-700 dark:text-orange-100" />,
     },
     {
       title: "Under Review",
       value: formatCurrency(statistics.underReview),
       color: "text-pink-600",
       bgColor: "bg-pink-50 dark:bg-pink-900",
-      icon: (
-        <EyeIconOutline className="h-5 w-5 text-pink-700 dark:text-pink-100" />
-      ),
+      icon: <EyeIconOutline className="h-5 w-5 text-pink-700 dark:text-pink-100" />,
     },
     {
       title: "Revision Requested",
       value: formatCurrency(statistics.revisionRequested),
       color: "text-indigo-600",
       bgColor: "bg-indigo-50 dark:bg-indigo-900",
-      icon: (
-        <MagnifyingGlassIcon className="h-5 w-5 text-indigo-700 dark:text-indigo-100" />
-      ),
+      icon: <MagnifyingGlassIcon className="h-5 w-5 text-indigo-700 dark:text-indigo-100" />,
     },
   ];
 
-  const cardStats = (program: any) => [
+  const _cardStats = (program: Record<string, any>) => [
     {
       title: "Funding Amount",
-      value:
-        formatCurrency(
-          program.totalAmount || program.metadata?.totalAmount || 0
-        ) || 0,
-      icon: (
-        <CurrencyDollarIcon className="w-5 h-5 text-blue-700 dark:text-blue-100" />
-      ),
+      value: formatCurrency(program.totalAmount || program.metadata?.totalAmount || 0) || 0,
+      icon: <CurrencyDollarIcon className="w-5 h-5 text-blue-700 dark:text-blue-100" />,
     },
     {
       title: "Applicants",
-      value: formatCurrency(
-        program.metrics?.totalApplications || 0
-      ),
+      value: formatCurrency(program.metrics?.totalApplications || 0),
       icon: <UsersIcon className="w-5 h-5 text-blue-700 dark:text-blue-100" />,
     },
   ];
@@ -335,17 +303,14 @@ export default function FundingPlatformAdminPage() {
     const totalApplications = program.metrics?.totalApplications || 0;
     const approvedApplications = program.metrics?.approvedApplications || 0;
 
-    return (
-      Number(((approvedApplications / totalApplications) * 100).toFixed(2)) || 0
-    );
+    return Number(((approvedApplications / totalApplications) * 100).toFixed(2)) || 0;
   };
 
   const applicationProgress = (program: FundingProgram) => {
     const approvedApplications = program.metrics?.approvedApplications || 0;
     const rejectedApplications = program.metrics?.rejectedApplications || 0;
     const pendingApplications = program.metrics?.pendingApplications || 0;
-    const revisionRequestedApplications =
-      program.metrics?.revisionRequestedApplications || 0;
+    const revisionRequestedApplications = program.metrics?.revisionRequestedApplications || 0;
     const underReviewApplications = program.metrics?.underReviewApplications || 0;
 
     return [
@@ -425,6 +390,7 @@ export default function FundingPlatformAdminPage() {
           {/* Enabled/Disabled Filter Dropdown */}
           <div className="relative">
             <button
+              type="button"
               className="flex items-center justify-between min-w-[160px] px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
             >
@@ -445,6 +411,7 @@ export default function FundingPlatformAdminPage() {
                 {["all", "enabled", "disabled"].map((status) => (
                   <button
                     key={status}
+                    type="button"
                     onClick={() => {
                       setEnabledFilter(status as typeof enabledFilter);
                       setIsDropdownOpen(false);
@@ -486,14 +453,9 @@ export default function FundingPlatformAdminPage() {
                 className="px-4 py-4 shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-1 rounded-lg border border-gray-200 bg-white dark:bg-zinc-800 dark:border-gray-700 relative"
               >
                 {/* Loading Overlay */}
-                {togglingPrograms.has(
-                  `${program.programId}_${program.chainID}`
-                ) && (
-                    <LoadingOverlay
-                      message="Updating program status..."
-                      isLoading={true}
-                    />
-                  )}
+                {togglingPrograms.has(`${program.programId}_${program.chainID}`) && (
+                  <LoadingOverlay message="Updating program status..." isLoading={true} />
+                )}
 
                 {/* Header with Toggle and Quick Actions */}
                 <div className="flex items-center justify-between mb-3 gap-2">
@@ -509,12 +471,13 @@ export default function FundingPlatformAdminPage() {
                       )}
                       title={
                         !program.applicationConfig ||
-                          Object.keys(program.applicationConfig).length === 1
+                        Object.keys(program.applicationConfig).length === 1
                           ? "Program doesn't have configured form"
                           : undefined
                       }
                     >
                       <button
+                        type="button"
                         className={cn(
                           "flex items-center space-x-2 text-sm text-zinc-900 px-2 py-1 rounded-full",
                           program.applicationConfig?.isEnabled
@@ -537,9 +500,7 @@ export default function FundingPlatformAdminPage() {
                         disabled={
                           !program.applicationConfig ||
                           Object.keys(program.applicationConfig).length === 1 ||
-                          togglingPrograms.has(
-                            `${program.programId}_${program.chainID}`
-                          )
+                          togglingPrograms.has(`${program.programId}_${program.chainID}`)
                         }
                       >
                         <div
@@ -549,9 +510,8 @@ export default function FundingPlatformAdminPage() {
                               ? "bg-green-600 dark:bg-green-600"
                               : "bg-gray-200 dark:bg-gray-400",
                             (!program.applicationConfig ||
-                              Object.keys(program.applicationConfig).length ===
-                              1) &&
-                            "bg-gray-300 dark:bg-gray-600"
+                              Object.keys(program.applicationConfig).length === 1) &&
+                              "bg-gray-300 dark:bg-gray-600"
                           )}
                         >
                           <span
@@ -571,9 +531,7 @@ export default function FundingPlatformAdminPage() {
                               : "text-gray-500 dark:text-gray-400"
                           )}
                         >
-                          {togglingPrograms.has(
-                            `${program.programId}_${program.chainID}`
-                          )
+                          {togglingPrograms.has(`${program.programId}_${program.chainID}`)
                             ? "Updating..."
                             : program.applicationConfig?.isEnabled
                               ? "Enabled"
@@ -583,13 +541,13 @@ export default function FundingPlatformAdminPage() {
                       {/* Tooltip for disabled state */}
                       {(!program.applicationConfig ||
                         Object.keys(program.applicationConfig).length === 1) && (
-                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                            Program doesn&apos;t have configured form
-                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
-                              <div className="border-4 border-transparent border-t-gray-900"></div>
-                            </div>
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                          Program doesn&apos;t have configured form
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                            <div className="border-4 border-transparent border-t-gray-900"></div>
                           </div>
-                        )}
+                        </div>
+                      )}
                     </div>
                     <span className="text-xs text-zinc-600 bg-gray-100 dark:bg-zinc-900 dark:text-zinc-400 px-2 py-1 rounded-full">
                       ID {program.programId}
@@ -608,7 +566,10 @@ export default function FundingPlatformAdminPage() {
                       )}
                       title="Configure Form"
                     >
-                      <button className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-md transition-colors">
+                      <button
+                        type="button"
+                        className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-md transition-colors"
+                      >
                         <Cog6ToothIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                       </button>
                     </Link>
@@ -633,9 +594,7 @@ export default function FundingPlatformAdminPage() {
                       <p className="text-xs text-purple-600 dark:text-purple-400">Applicants</p>
                     </div>
                     <p className="text-sm font-bold text-purple-700 dark:text-purple-300">
-                      {formatCurrency(
-                        program.metrics?.totalApplications || 0
-                      )}
+                      {formatCurrency(program.metrics?.totalApplications || 0)}
                     </p>
                   </div>
                   <div className="bg-green-50 dark:bg-green-900/20 p-2 rounded-md">
@@ -653,9 +612,8 @@ export default function FundingPlatformAdminPage() {
                 <div className="flex flex-row gap-2 items-center text-xs text-gray-500 dark:text-gray-400 bg-orange-50 dark:bg-orange-900/20 p-2 rounded-md mb-3">
                   <CalendarIcon className="w-4 h-4 text-orange-700 dark:text-orange-300" />
                   <span className="text-orange-700 dark:text-orange-300">
-                    Deadline: {program.metadata?.endsAt
-                      ? formatDate(program.metadata?.endsAt || "")
-                      : "N/A"}
+                    Deadline:{" "}
+                    {program.metadata?.endsAt ? formatDate(program.metadata?.endsAt || "") : "N/A"}
                   </span>
                 </div>
 
@@ -664,11 +622,9 @@ export default function FundingPlatformAdminPage() {
                   <div className="grid grid-cols-5 gap-2">
                     {applicationProgress(program).map((item) => (
                       <div key={item.title} className="text-center">
-                        <p className={cn("text-xs font-bold", item.color)}>
-                          {item.value}
-                        </p>
+                        <p className={cn("text-xs font-bold", item.color)}>{item.value}</p>
                         <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
-                          {item.title.split(' ')[0]}
+                          {item.title.split(" ")[0]}
                         </p>
                       </div>
                     ))}
@@ -726,8 +682,7 @@ export default function FundingPlatformAdminPage() {
                 No Programs Found
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                No programs match your search criteria. Try adjusting your
-                filters.
+                No programs match your search criteria. Try adjusting your filters.
               </p>
             </div>
           </div>
@@ -740,13 +695,9 @@ export default function FundingPlatformAdminPage() {
               No Funding Programs Yet
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Create your first funding program to start accepting applications
-              from your community.
+              Create your first funding program to start accepting applications from your community.
             </p>
-            <Button
-              onClick={() => setShowCreateModal(true)}
-              className="inline-flex items-center"
-            >
+            <Button onClick={() => setShowCreateModal(true)} className="inline-flex items-center">
               <PlusIcon className="w-4 h-4 mr-2" />
               Create Your First Program
             </Button>
@@ -763,10 +714,7 @@ export default function FundingPlatformAdminPage() {
               Program creation will be implemented in the next task phase.
             </p>
             <div className="flex justify-end space-x-3">
-              <Button
-                variant="secondary"
-                onClick={() => setShowCreateModal(false)}
-              >
+              <Button variant="secondary" onClick={() => setShowCreateModal(false)}>
                 Close
               </Button>
             </div>

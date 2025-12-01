@@ -1,16 +1,11 @@
-import { FC, Fragment, useState, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import { Button } from "@/components/Utilities/Button";
-import { useProjectStore } from "@/store";
-import { useAccount } from "wagmi";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { ContributorProfile } from "@show-karma/karma-gap-sdk";
-import { Twitter2Icon } from "@/components/Icons/Twitter2";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import type { ContributorProfile } from "@show-karma/karma-gap-sdk";
+import { type FC, Fragment, useState } from "react";
 import { GithubIcon, LinkedInIcon } from "@/components/Icons";
 import { FarcasterIcon } from "@/components/Icons/Farcaster";
+import { Twitter2Icon } from "@/components/Icons/Twitter2";
+import { Button } from "@/components/Utilities/Button";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { formatFarcasterLink } from "@/utilities/farcaster";
 
 interface MemberDialogProps {
@@ -22,15 +17,10 @@ interface MemberDialogProps {
 const iconsClassnames = {
   light: "text-black dark:text-white dark:hidden ",
   dark: "text-black dark:text-white hidden dark:block ",
-  general:
-    "w-6 h-6 text-black dark:text-white  hover:text-zinc-400 dark:hover:text-zinc-400",
+  general: "w-6 h-6 text-black dark:text-white  hover:text-zinc-400 dark:hover:text-zinc-400",
 };
 
-export const MemberDialog: FC<MemberDialogProps> = ({
-  profile,
-  buttonText,
-  buttonClassName,
-}) => {
+export const MemberDialog: FC<MemberDialogProps> = ({ profile, buttonText, buttonClassName }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   function closeModal() {
@@ -54,7 +44,7 @@ export const MemberDialog: FC<MemberDialogProps> = ({
 
   return (
     <>
-      <button className={buttonClassName} onClick={openModal}>
+      <button type="button" className={buttonClassName} onClick={openModal}>
         {buttonText}
       </button>
       {isOpen ? (
@@ -94,11 +84,10 @@ export const MemberDialog: FC<MemberDialogProps> = ({
                             href={
                               profile?.data.twitter.includes("http")
                                 ? profile?.data.twitter
-                                : profile?.data.twitter.includes(
-                                    "twitter.com"
-                                  ) || profile?.data.twitter.includes("x.com")
-                                ? `https://${profile?.data.twitter}`
-                                : `https://x.com/${profile?.data.twitter}`
+                                : profile?.data.twitter.includes("twitter.com") ||
+                                    profile?.data.twitter.includes("x.com")
+                                  ? `https://${profile?.data.twitter}`
+                                  : `https://x.com/${profile?.data.twitter}`
                             }
                             className="w-max"
                           >
@@ -111,8 +100,8 @@ export const MemberDialog: FC<MemberDialogProps> = ({
                               profile?.data.github.includes("http")
                                 ? profile?.data.github
                                 : profile?.data.github.includes("github.com")
-                                ? `https://${profile?.data.github}`
-                                : `https://github.com/${profile?.data.github}`
+                                  ? `https://${profile?.data.github}`
+                                  : `https://github.com/${profile?.data.github}`
                             }
                             className="w-max"
                           >
@@ -124,11 +113,9 @@ export const MemberDialog: FC<MemberDialogProps> = ({
                             href={
                               profile?.data.linkedin.includes("http")
                                 ? profile?.data.linkedin
-                                : profile?.data.linkedin.includes(
-                                    "linkedin.com"
-                                  )
-                                ? `https://${profile?.data.linkedin}`
-                                : `https://linkedin.com/in/${profile?.data.linkedin}`
+                                : profile?.data.linkedin.includes("linkedin.com")
+                                  ? `https://${profile?.data.linkedin}`
+                                  : `https://linkedin.com/in/${profile?.data.linkedin}`
                             }
                             className="w-max"
                           >
@@ -140,9 +127,7 @@ export const MemberDialog: FC<MemberDialogProps> = ({
                             href={formatFarcasterLink(profile?.data.farcaster)}
                             className="w-max"
                           >
-                            <FarcasterIcon
-                              className={iconsClassnames.general}
-                            />
+                            <FarcasterIcon className={iconsClassnames.general} />
                           </ExternalLink>
                         ) : null}
                       </div>

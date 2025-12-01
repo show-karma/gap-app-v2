@@ -1,36 +1,30 @@
 /* eslint-disable @next/next/no-img-element */
-import { Button } from "@/components/Utilities/Button";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { getGapClient, useGap } from "@/hooks/useGap";
-import { useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import fetchData from "@/utilities/fetchData";
-import { formatDate } from "@/utilities/formatDate";
-import { INDEXER } from "@/utilities/indexer";
-import { MESSAGES } from "@/utilities/messages";
-import { sanitizeObject } from "@/utilities/sanitize";
-import { privyConfig as config } from "@/utilities/wagmi/privy-config";
-import { Popover } from "@headlessui/react";
-import { CalendarIcon } from "@heroicons/react/24/outline";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ProjectImpact } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact";
-import { getWalletClient } from "@wagmi/core";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useQueryState } from "nuqs";
 import type { FC } from "react";
 import { useState } from "react";
-import { DayPicker } from "react-day-picker";
 import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { Hex } from "viem";
+import type { Hex } from "viem";
 import { useAccount } from "wagmi";
 import { z } from "zod";
+import { Button } from "@/components/Utilities/Button";
 import { DatePicker } from "@/components/Utilities/DatePicker";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectStore } from "@/store";
+import { useStepper } from "@/store/modals/txStepper";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { sanitizeObject } from "@/utilities/sanitize";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 const updateSchema = z.object({
   startedAt: z.date({
@@ -42,12 +36,12 @@ const updateSchema = z.object({
 });
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
-const inputStyle =
+const _inputStyle =
   "mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300";
 
 type UpdateType = z.infer<typeof updateSchema>;
 
-interface AddImpactScreenProps {}
+type AddImpactScreenProps = {};
 
 export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
   const [proof, setProof] = useState("");
@@ -88,7 +82,11 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
     setIsLoading(true);
     let gapClient = gap;
     try {
-      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+      const {
+        success,
+        chainId: actualChainId,
+        gapClient: newGapClient,
+      } = await ensureCorrectChain({
         targetChainId: project.chainID,
         currentChainId: chain?.id,
         switchChainAsync,
@@ -101,9 +99,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
 
       gapClient = newGapClient;
 
-      const { walletClient, error } = await safeGetWalletClient(
-        actualChainId
-      );
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
@@ -126,39 +122,27 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
         refUID: project.uid,
         createdAt: new Date(),
       });
-      await newImpact
-        .attest(walletSigner as any, changeStepperStep)
-        .then(async (res) => {
-          const txHash = res?.tx[0]?.hash;
-          if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, newImpact.chainID),
-              "POST",
-              {}
-            );
+      await newImpact.attest(walletSigner as any, changeStepperStep).then(async (res) => {
+        const txHash = res?.tx[0]?.hash;
+        if (txHash) {
+          await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, newImpact.chainID), "POST", {});
+        }
+        let retries = 1000;
+        changeStepperStep("indexing");
+        let fetchedProject = null;
+        while (retries > 0) {
+          fetchedProject = await gapClient!.fetch.projectById(project.uid as Hex).catch(() => null);
+          if (fetchedProject?.impacts?.find((impact) => impact.uid === newImpact.uid)) {
+            retries = 0;
+            changeStepperStep("indexed");
+            changeTab(null);
+            await refreshProject();
           }
-          let retries = 1000;
-          changeStepperStep("indexing");
-          let fetchedProject = null;
-          while (retries > 0) {
-            fetchedProject = await gapClient!.fetch
-              .projectById(project.uid as Hex)
-              .catch(() => null);
-            if (
-              fetchedProject?.impacts?.find(
-                (impact) => impact.uid === newImpact.uid
-              )
-            ) {
-              retries = 0;
-              changeStepperStep("indexed");
-              changeTab(null);
-              await refreshProject();
-            }
-            retries -= 1;
-            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-            await new Promise((resolve) => setTimeout(resolve, 1500));
-          }
-        });
+          retries -= 1;
+          // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+        }
+      });
     } catch (error: any) {
       errorManager(
         MESSAGES.PROJECT.IMPACT.ERROR,
@@ -183,9 +167,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
     <div className="flex flex-1">
       <div className="flex w-full max-w-3xl flex-col gap-6 rounded-md bg-gray-200 dark:bg-zinc-900  px-4 py-6 max-lg:max-w-full">
         <div className="flex w-full flex-row justify-between">
-          <h4 className="text-2xl font-bold text-black dark:text-zinc-100">
-            Add impact work
-          </h4>
+          <h4 className="text-2xl font-bold text-black dark:text-zinc-100">Add impact work</h4>
           <button
             className="bg-transparent p-4 hover:bg-transparent hover:opacity-75"
             onClick={() => {
@@ -195,10 +177,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
             <img src="/icons/close.svg" alt="Close" className="h-5 w-5 " />
           </button>
         </div>
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="flex w-full flex-col gap-4"
-        >
+        <form onSubmit={handleSubmit(onSubmit)} className="flex w-full flex-col gap-4">
           <div className="flex w-full flex-col">
             <label htmlFor="work" className={labelStyle}>
               Explain the work you did *
@@ -217,7 +196,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
               control={control}
               render={({ field, formState }) => (
                 <div className="flex w-full flex-col gap-2 mr-2">
-                  <label className={labelStyle}>Started at *</label>
+                  <div className={labelStyle}>Started at *</div>
                   <DatePicker
                     selected={field.value}
                     onSelect={(date) => {
@@ -230,9 +209,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
                     placeholder="Pick a date"
                     buttonClassName="w-full text-base bg-white dark:bg-zinc-800"
                   />
-                  <p className="text-base text-red-400">
-                    {formState.errors.startedAt?.message}
-                  </p>
+                  <p className="text-base text-red-400">{formState.errors.startedAt?.message}</p>
                 </div>
               )}
             />
@@ -242,7 +219,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
               control={control}
               render={({ field, formState }) => (
                 <div className="flex w-full flex-col gap-2">
-                  <label className={labelStyle}>Completed at *</label>
+                  <div className={labelStyle}>Completed at *</div>
                   <DatePicker
                     selected={field.value}
                     onSelect={(date) => {
@@ -255,9 +232,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
                     placeholder="Pick a date"
                     buttonClassName="w-full text-base bg-white dark:bg-zinc-800"
                   />
-                  <p className="text-base text-red-400">
-                    {formState.errors.completedAt?.message}
-                  </p>
+                  <p className="text-base text-red-400">{formState.errors.completedAt?.message}</p>
                 </div>
               )}
             />

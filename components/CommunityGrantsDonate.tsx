@@ -1,19 +1,17 @@
 "use client";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useMemo } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { AutoSizer, Grid } from "react-virtualized";
-import { CommunityProjectsV2Response } from "@/types/community";
+import { ShoppingCartIcon as ShoppingCartIconCustom } from "@/components/Icons/ShoppingCartIcon";
+import { useCommunityProjectsPaginated } from "@/hooks/useCommunityProjectsPaginated";
+import useMediaQuery from "@/hooks/useMediaQuery";
+import { useDonationCart } from "@/store";
+import type { CommunityProjectsV2Response } from "@/types/community";
 import { projectV2ToGrant } from "@/utilities/adapters/projectV2ToGrant";
 import { GrantCard } from "./GrantCard";
 import { CardListSkeleton } from "./Pages/Communities/Loading";
-import { useDonationCart } from "@/store";
-import Link from "next/link";
-import { PAGES } from "@/utilities/pages";
-import { DonationProgramDropdown } from "./Donation/ProgramDropdown";
-import { useCommunityProjectsPaginated } from "@/hooks/useCommunityProjectsPaginated";
-import { ShoppingCartIcon as ShoppingCartIconCustom } from "@/components/Icons/ShoppingCartIcon";
-import useMediaQuery from "@/hooks/useMediaQuery";
 
 interface CommunityGrantsDonateProps {
   initialProjects: CommunityProjectsV2Response;
@@ -26,17 +24,12 @@ export const CommunityGrantsDonate = ({ initialProjects }: CommunityGrantsDonate
   const { items, toggle } = useDonationCart();
   const isLargeViewport = useMediaQuery("(min-width: 80rem)");
 
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-  } = useCommunityProjectsPaginated({
-    communityId,
-    programId,
-    itemsPerPage: 12,
-  });
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
+    useCommunityProjectsPaginated({
+      communityId,
+      programId,
+      itemsPerPage: 12,
+    });
 
   // Flatten all pages into a single array
   const projects = useMemo(() => {
@@ -105,6 +98,7 @@ export const CommunityGrantsDonate = ({ initialProjects }: CommunityGrantsDonate
                                     const inCart = items.some((i) => i.uid === project.uid);
                                     return (
                                       <button
+                                        type="button"
                                         onClick={(e) => {
                                           e.preventDefault();
                                           toggle({
@@ -114,15 +108,25 @@ export const CommunityGrantsDonate = ({ initialProjects }: CommunityGrantsDonate
                                             imageURL: project.details?.logoUrl,
                                           });
                                         }}
-                                        className={`group relative flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 shadow-sm border ${inCart
-                                          ? "bg-red-100 hover:bg-red-200 text-red-700 border-red-200 hover:border-red-300"
-                                          : "bg-[#F0FDF4] hover:bg-emerald-100 text-emerald-700 border-[#BDEFE2] hover:border-emerald-300"
-                                          } hover:shadow-md`}
-                                        aria-label={inCart ? "Remove from donation cart" : "Add to donation cart"}
+                                        className={`group relative flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 shadow-sm border ${
+                                          inCart
+                                            ? "bg-red-100 hover:bg-red-200 text-red-700 border-red-200 hover:border-red-300"
+                                            : "bg-[#F0FDF4] hover:bg-emerald-100 text-emerald-700 border-[#BDEFE2] hover:border-emerald-300"
+                                        } hover:shadow-md`}
+                                        aria-label={
+                                          inCart
+                                            ? "Remove from donation cart"
+                                            : "Add to donation cart"
+                                        }
                                       >
-                                        <div className={`w-5 h-5 flex items-center justify-center transition-transform duration-200 ${inCart ? "group-hover:rotate-90" : ""
-                                          }`}>
-                                          <ShoppingCartIconCustom className={inCart ? "text-red-700" : "text-emerald-700"} />
+                                        <div
+                                          className={`w-5 h-5 flex items-center justify-center transition-transform duration-200 ${
+                                            inCart ? "group-hover:rotate-90" : ""
+                                          }`}
+                                        >
+                                          <ShoppingCartIconCustom
+                                            className={inCart ? "text-red-700" : "text-emerald-700"}
+                                          />
                                         </div>
                                         {inCart ? "Remove" : "Add to Cart"}
                                         {inCart && (
@@ -143,7 +147,7 @@ export const CommunityGrantsDonate = ({ initialProjects }: CommunityGrantsDonate
               </AutoSizer>
             </InfiniteScroll>
           ) : null}
-          {(isLoading || isFetchingNextPage) ? (
+          {isLoading || isFetchingNextPage ? (
             <div className="w-full flex items-center justify-center">
               <CardListSkeleton />
             </div>
@@ -162,7 +166,7 @@ export const CommunityGrantsDonate = ({ initialProjects }: CommunityGrantsDonate
               <ShoppingCartIconCustom className="text-white" width="21" height="21" />
             </div>
             <span className="font-semibold whitespace-nowrap">
-              Checkout ({items.length} {items.length === 1 ? 'item' : 'items'})
+              Checkout ({items.length} {items.length === 1 ? "item" : "items"})
             </span>
           </Link>
         </div>

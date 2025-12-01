@@ -1,24 +1,19 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Dialog, Transition } from "@headlessui/react";
+import { FingerPrintIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { FC, ReactNode } from "react";
+import { Fragment, useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { Button } from "@/components/ui/button";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
-import { Dialog, Transition } from "@headlessui/react";
-import {
-  LinkIcon,
-  FingerPrintIcon,
-  PlusIcon,
-  TrashIcon,
-} from "@heroicons/react/24/outline";
-import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import type { FC, ReactNode } from "react";
-import { Fragment, useEffect, useState } from "react";
-import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
 
 interface LinkOSOProfileButtonProps {
   buttonClassName?: string;
@@ -37,9 +32,7 @@ export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
 }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isCommunityAdmin = useCommunityAdminStore(
-    (state) => state.isCommunityAdmin
-  );
+  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
   const { address } = useAccount();
   const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
   const { refreshProject } = useProjectStore();
@@ -93,14 +86,10 @@ export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
     setError(null);
     const validIds = ids.filter((id) => id.trim() !== "");
     try {
-      const [data, error] = await fetchData(
-        INDEXER.PROJECT.EXTERNAL.UPDATE(project.uid),
-        "PUT",
-        {
-          target: "oso",
-          ids: validIds,
-        }
-      );
+      const [data, error] = await fetchData(INDEXER.PROJECT.EXTERNAL.UPDATE(project.uid), "PUT", {
+        target: "oso",
+        ids: validIds,
+      });
 
       if (data) {
         setIds(validIds);
@@ -171,16 +160,11 @@ export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
                 leaveTo="opacity-0 scale-95"
               >
                 <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-4 sm:p-6 text-left align-middle transition-all ease-in-out duration-300">
-                  <Dialog.Title
-                    as="h3"
-                    className="text-gray-900 dark:text-zinc-100"
-                  >
-                    <h2 className="text-2xl font-bold leading-6">
-                      Link OSO Profiles
-                    </h2>
+                  <Dialog.Title as="h3" className="text-gray-900 dark:text-zinc-100">
+                    <h2 className="text-2xl font-bold leading-6">Link OSO Profiles</h2>
                     <p className="text-md text-gray-500 dark:text-gray-400 mt-2">
-                      Add one or more OSO profile IDs for the project. This will
-                      enable the project to retrieve its OSO profile metrics.
+                      Add one or more OSO profile IDs for the project. This will enable the project
+                      to retrieve its OSO profile metrics.
                     </p>
                   </Dialog.Title>
                   <div className="max-h-[60vh] flex flex-col gap-4 mt-8 overflow-y-auto">
@@ -194,9 +178,7 @@ export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
                             <input
                               type="text"
                               value={id}
-                              onChange={(e) =>
-                                handleIdChange(index, e.target.value)
-                              }
+                              onChange={(e) => handleIdChange(index, e.target.value)}
                               className="text-sm rounded-md w-full text-gray-600 dark:text-gray-300 bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none focus:border-blue-500"
                               placeholder="Enter OSO profile ID"
                             />
@@ -207,6 +189,7 @@ export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
                             onClick={() => handleRemoveId(index)}
                             className="p-2 text-red-500 hover:text-red-700 self-end sm:self-auto"
                             aria-label="Remove ID"
+                            variant="outline"
                           >
                             <TrashIcon className="h-5 w-5" />
                           </Button>
@@ -215,7 +198,7 @@ export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
                     ))}
                     <Button
                       onClick={handleAddId}
-                      className="flex items-center justify-center text-white gap-2 border border-primary-500 bg-primary-500 hover:bg-primary-600"
+                      className="flex items-center justify-center text-white gap-2 border border-primary-500"
                     >
                       <PlusIcon className="h-5 w-5" />
                       Add Another ID
@@ -223,18 +206,10 @@ export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
                     {error && <p className="text-red-500 mt-2">{error}</p>}
                   </div>
                   <div className="flex flex-col sm:flex-row gap-4 mt-10 justify-end">
-                    <Button
-                      onClick={handleSave}
-                      disabled={isLoading}
-                      className="w-full sm:w-auto"
-                    >
+                    <Button onClick={handleSave} disabled={isLoading} className="w-full sm:w-auto">
                       {isLoading ? "Saving..." : "Save All"}
                     </Button>
-                    <Button
-                      variant="secondary"
-                      className="w-full sm:w-auto"
-                      onClick={handleClose}
-                    >
+                    <Button variant="secondary" className="w-full sm:w-auto" onClick={handleClose}>
                       Close
                     </Button>
                   </div>

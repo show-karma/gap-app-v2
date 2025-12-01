@@ -1,22 +1,19 @@
 "use client";
 
+import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { DeleteDialog } from "@/components/DeleteDialog";
+import { IndicatorForm, type IndicatorFormData } from "@/components/Forms/IndicatorForm";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useIndicators } from "@/hooks/useIndicators";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { TrashIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
-import { useState } from "react";
-import toast from "react-hot-toast";
-import { DeleteDialog } from "@/components/DeleteDialog";
-import {
-  IndicatorForm,
-  IndicatorFormData,
-} from "@/components/Forms/IndicatorForm";
-import { Indicator } from "@/utilities/queries/getIndicatorsByCommunity";
-import { ProgramCard } from "./ProgramCard";
 import { MESSAGES } from "@/utilities/messages";
-import { useAccount } from "wagmi";
+import type { Indicator } from "@/utilities/queries/getIndicatorsByCommunity";
+import { ProgramCard } from "./ProgramCard";
 
 interface Program {
   programId: string;
@@ -113,19 +110,13 @@ interface IndicatorsHubProps {
   communityId: string;
 }
 
-export const IndicatorsHub = ({
-  communitySlug,
-  communityId,
-}: IndicatorsHubProps) => {
+export const IndicatorsHub = ({ communitySlug, communityId }: IndicatorsHubProps) => {
   const { address } = useAccount();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, _setIsLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [editingIndicator, setEditingIndicator] =
-    useState<IndicatorWithPrograms | null>(null);
+  const [editingIndicator, setEditingIndicator] = useState<IndicatorWithPrograms | null>(null);
   const [selectedAutosynced, setSelectedAutosynced] = useState<string>("");
-  const [formDefaultValues, setFormDefaultValues] = useState<
-    Partial<IndicatorFormData>
-  >({
+  const [formDefaultValues, setFormDefaultValues] = useState<Partial<IndicatorFormData>>({
     name: "",
     description: "",
     unitOfMeasure: "int",
@@ -206,10 +197,7 @@ export const IndicatorsHub = ({
   const handleDelete = async (id: string) => {
     try {
       setDeletingId(id);
-      const [, error] = await fetchData(
-        INDEXER.INDICATORS.DELETE(id),
-        "DELETE"
-      );
+      const [, error] = await fetchData(INDEXER.INDICATORS.DELETE(id), "DELETE");
       if (error) throw error;
 
       refetch();
@@ -238,10 +226,11 @@ export const IndicatorsHub = ({
         <div className="space-y-4">
           {!editingIndicator && (
             <div>
-              <label className="block text-sm font-medium mb-1">
+              <label htmlFor="indicators-hub-autosynced" className="block text-sm font-medium mb-1">
                 Select Autosynced Indicator (Optional)
               </label>
               <select
+                id="indicators-hub-autosynced"
                 value={selectedAutosynced}
                 onChange={(e) => handleAutosyncedSelect(e.target.value)}
                 className="w-full p-2 border rounded-md bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-700"
@@ -267,21 +256,15 @@ export const IndicatorsHub = ({
               name:
                 !!selectedAutosynced ||
                 (!!editingIndicator &&
-                  autosyncedIndicators.some(
-                    (i) => i.name === editingIndicator.name
-                  )),
+                  autosyncedIndicators.some((i) => i.name === editingIndicator.name)),
               description:
                 !!selectedAutosynced ||
                 (!!editingIndicator &&
-                  autosyncedIndicators.some(
-                    (i) => i.name === editingIndicator.name
-                  )),
+                  autosyncedIndicators.some((i) => i.name === editingIndicator.name)),
               unitOfMeasure:
                 !!selectedAutosynced ||
                 (!!editingIndicator &&
-                  autosyncedIndicators.some(
-                    (i) => i.name === editingIndicator.name
-                  )),
+                  autosyncedIndicators.some((i) => i.name === editingIndicator.name)),
             }}
           />
 
@@ -326,9 +309,7 @@ export const IndicatorsHub = ({
                     <span className="text-xs bg-white dark:bg-zinc-800 px-2 py-0.5 rounded-full border border-gray-200 dark:border-zinc-700 inline-block">
                       {indicator.unitOfMeasure}
                     </span>
-                    {autosyncedIndicators.find(
-                      (i) => i.name === indicator.name
-                    ) && (
+                    {autosyncedIndicators.find((i) => i.name === indicator.name) && (
                       <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 rounded-full">
                         Autosynced
                       </span>

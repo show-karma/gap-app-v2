@@ -1,6 +1,6 @@
-import { IGrantResponse } from '@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types';
-import { envVars } from '../enviromentVars';
-import { INDEXER } from '../indexer';
+import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { envVars } from "../enviromentVars";
+import { INDEXER } from "../indexer";
 
 /**
  * Fetches grants (funding applications) for a project from v2 endpoint
@@ -14,9 +14,9 @@ export const getProjectGrants = async (
     const response = await fetch(
       `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${INDEXER.V2.APPLICATIONS.BY_PROJECT_UID(projectUID)}`,
       {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         ...fetchOptions,
       }
@@ -31,7 +31,7 @@ export const getProjectGrants = async (
     }
 
     const data = await response.json();
-    
+
     // Handle both single application and array of applications
     if (Array.isArray(data)) {
       // If it's an array, we may need to transform each item
@@ -47,8 +47,7 @@ export const getProjectGrants = async (
     return [];
   } catch (error) {
     // Return empty array on error to prevent breaking the project page
-    console.error('Error fetching project grants:', error);
+    console.error("Error fetching project grants:", error);
     return [];
   }
 };
-

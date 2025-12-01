@@ -1,6 +1,9 @@
-const roundNumberWithPlus = (value: string | number, shouldRound: boolean = false): string | number => {
+const roundNumberWithPlus = (
+  value: string | number,
+  shouldRound: boolean = false
+): string | number => {
   // If it's already a string, return as-is
-  if (typeof value === 'string') {
+  if (typeof value === "string") {
     return value;
   }
 

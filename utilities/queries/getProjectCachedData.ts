@@ -1,56 +1,54 @@
-import { zeroUID } from "@/utilities/commons";
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { notFound, redirect } from "next/navigation";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { cache } from "react";
-import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { zeroUID } from "@/utilities/commons";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { getProjectData } from "../api/project";
 
-export const getProjectCachedData = cache(
-  async (projectId: string): Promise<IProjectResponse> => {
-    let project: IProjectResponse | undefined;
-    
-    try {
-      const projectData = await getProjectData(projectId, {
-        cache: "reload",
-        next: { revalidate: 60 },
-      });
+export const getProjectCachedData = cache(async (projectId: string): Promise<IProjectResponse> => {
+  let project: IProjectResponse | undefined;
 
-      project = projectData;
-    } catch (error) {
-      notFound();
-    }
+  try {
+    const projectData = await getProjectData(projectId, {
+      cache: "reload",
+      next: { revalidate: 60 },
+    });
 
-    if (!project || project.uid === zeroUID) {
-      notFound();
-    }
-
-    const isUid = /^0x[0-9a-fA-F]{64}$/.test(projectId);
-    const canonicalSlug = project?.details?.data?.slug;
-
-    if (!isUid && canonicalSlug && canonicalSlug.toLowerCase() !== projectId.toLowerCase()) {
-      redirect(`/project/${canonicalSlug}`);
-    }
-
-    // Pointers are not available in v2 API response (excluded from mapper)
-    // Skip pointers check for v2 responses - project merges/redirects handled differently
-    // TODO: Implement alternative mechanism for project redirects if needed
-    if (
-      project?.pointers?.length &&
-      project.pointers[0]?.data?.ogProjectUID &&
-      project.pointers[0].data.ogProjectUID !== project.uid
-    ) {
-      const original = await gapIndexerApi
-        .projectBySlug(project.pointers[0].data.ogProjectUID)
-        .then((res) => res.data)
-        .catch(() => null);
-
-      const originalSlug = original?.details?.data?.slug;
-
-      if (original && originalSlug && originalSlug !== projectId) {
-        redirect(`/project/${originalSlug}`);
-      }
-    }
-
-    return project;
+    project = projectData;
+  } catch (_error) {
+    notFound();
   }
-);
+
+  if (!project || project.uid === zeroUID) {
+    notFound();
+  }
+
+  const isUid = /^0x[0-9a-fA-F]{64}$/.test(projectId);
+  const canonicalSlug = project?.details?.data?.slug;
+
+  if (!isUid && canonicalSlug && canonicalSlug.toLowerCase() !== projectId.toLowerCase()) {
+    redirect(`/project/${canonicalSlug}`);
+  }
+
+  // Pointers are not available in v2 API response (excluded from mapper)
+  // Skip pointers check for v2 responses - project merges/redirects handled differently
+  // TODO: Implement alternative mechanism for project redirects if needed
+  if (
+    project?.pointers?.length &&
+    project.pointers[0]?.data?.ogProjectUID &&
+    project.pointers[0].data.ogProjectUID !== project.uid
+  ) {
+    const original = await gapIndexerApi
+      .projectBySlug(project.pointers[0].data.ogProjectUID)
+      .then((res) => res.data)
+      .catch(() => null);
+
+    const originalSlug = original?.details?.data?.slug;
+
+    if (original && originalSlug && originalSlug !== projectId) {
+      redirect(`/project/${originalSlug}`);
+    }
+  }
+
+  return project;
+});

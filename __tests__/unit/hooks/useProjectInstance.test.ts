@@ -3,11 +3,11 @@
  * @description Tests for project instance fetching hook
  */
 
-import { renderHook, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { act, renderHook, waitFor } from "@testing-library/react";
+import React from "react";
 import { useProjectInstance } from "@/hooks/useProjectInstance";
 import { getProjectById } from "@/utilities/sdk";
-import React from "react";
 
 jest.mock("@/utilities/sdk", () => ({
   getProjectById: jest.fn(),
@@ -30,7 +30,7 @@ describe("useProjectInstance", () => {
     const Wrapper = ({ children }: { children: React.ReactNode }) =>
       React.createElement(QueryClientProvider, { client: queryClient }, children);
 
-    Wrapper.displayName = 'QueryClientWrapper';
+    Wrapper.displayName = "QueryClientWrapper";
 
     return Wrapper;
   };
@@ -142,4 +142,3 @@ describe("useProjectInstance", () => {
     expect(mockGetProjectById).toHaveBeenCalledTimes(1);
   });
 });
-

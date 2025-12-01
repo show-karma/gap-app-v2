@@ -2,16 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { useFaucetAdmin } from "@/hooks/useFaucetAdmin";
-import { Spinner } from "@/components/Utilities/Spinner";
 import { useAccount } from "wagmi";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { useFaucetAdmin } from "@/hooks/useFaucetAdmin";
 import { PAGES } from "@/utilities/pages";
 
-export default function FaucetAdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function FaucetAdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { isConnected } = useAccount();
   const { isAdmin, isLoading } = useFaucetAdmin();

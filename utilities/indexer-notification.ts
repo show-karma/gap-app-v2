@@ -32,11 +32,7 @@ export const notifyIndexer = async ({
   invalidateQueries,
 }: NotifyIndexerParams): Promise<void> => {
   if (txHash) {
-    await fetchData(
-      INDEXER.ATTESTATION_LISTENER(txHash, chainId),
-      "POST",
-      {}
-    );
+    await fetchData(INDEXER.ATTESTATION_LISTENER(txHash, chainId), "POST", {});
   }
 
   // Optional: caller can provide custom cache invalidation
@@ -78,10 +74,7 @@ export const notifyIndexerForGrant = async (
       // Invalidate grant milestones if programId provided
       if (programId) {
         await queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES(
-            projectUid,
-            programId
-          ),
+          queryKey: QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES(projectUid, programId),
         });
       }
     },
@@ -122,10 +115,7 @@ export const notifyIndexerForMilestone = async (
     chainId,
     invalidateQueries: async () => {
       await queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES(
-          projectUid,
-          programId
-        ),
+        queryKey: QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES(projectUid, programId),
       });
 
       if (communityUID) {

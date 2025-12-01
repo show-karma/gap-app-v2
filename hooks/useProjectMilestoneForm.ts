@@ -1,8 +1,16 @@
+import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
+import type { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useQuery } from "@tanstack/react-query";
+import { useParams } from "next/navigation";
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { getGapClient, useGap } from "@/hooks/useGap";
+import { useGap } from "@/hooks/useGap";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
@@ -10,15 +18,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
-import { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useQuery } from "@tanstack/react-query";
-import { useParams } from "next/navigation";
-import { useState } from "react";
-import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
 import { useWallet } from "./useWallet";
-import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 
 export interface ProjectMilestoneFormData {
   title: string;
@@ -55,7 +55,11 @@ export function useProjectMilestoneForm({
     let gapClient = gap;
     setIsLoading(true);
     try {
-      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+      const {
+        success,
+        chainId: actualChainId,
+        gapClient: newGapClient,
+      } = await ensureCorrectChain({
         targetChainId: project?.chainID as number,
         currentChainId: chain?.id,
         switchChainAsync,
@@ -79,9 +83,7 @@ export function useProjectMilestoneForm({
         recipient: (address as `0x${string}`) || "0x00",
       });
 
-      const { walletClient, error } = await safeGetWalletClient(
-        actualChainId
-      );
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
@@ -96,7 +98,7 @@ export function useProjectMilestoneForm({
       await newMilestone
         .attest(walletSigner as any, sanitizedData, changeStepperStep)
         .then(async (res) => {
-          let fetchedMilestones = null;
+          const _fetchedMilestones = null;
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
             await fetchData(
@@ -106,10 +108,7 @@ export function useProjectMilestoneForm({
             );
           } else {
             await fetchData(
-              INDEXER.ATTESTATION_LISTENER(
-                newMilestone.uid,
-                project?.chainID as number
-              ),
+              INDEXER.ATTESTATION_LISTENER(newMilestone.uid, project?.chainID as number),
               "POST",
               {}
             );
@@ -122,9 +121,7 @@ export function useProjectMilestoneForm({
             await getProjectObjectives(projectId)
               .then(async (fetchedMilestones) => {
                 const attestUID = newMilestone.uid;
-                const alreadyExists = fetchedMilestones.find(
-                  (m) => m.uid === attestUID
-                );
+                const alreadyExists = fetchedMilestones.find((m) => m.uid === attestUID);
 
                 if (alreadyExists) {
                   retries = 0;
@@ -163,7 +160,11 @@ export function useProjectMilestoneForm({
     setIsLoading(true);
 
     try {
-      const { success, chainId: actualChainId, gapClient: newGapClient } = await ensureCorrectChain({
+      const {
+        success,
+        chainId: actualChainId,
+        gapClient: newGapClient,
+      } = await ensureCorrectChain({
         targetChainId: project?.chainID as number,
         currentChainId: chain?.id,
         switchChainAsync,
@@ -176,9 +177,7 @@ export function useProjectMilestoneForm({
 
       gapClient = newGapClient;
 
-      const { walletClient, error } = await safeGetWalletClient(
-        actualChainId
-      );
+      const { walletClient, error } = await safeGetWalletClient(actualChainId);
 
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
@@ -196,14 +195,10 @@ export function useProjectMilestoneForm({
 
       if (!fetchedMilestones || !gapClient?.network) return;
 
-      const milestonesInstances = ProjectMilestone.from(
-        fetchedMilestones,
-        gapClient?.network
-      );
+      const milestonesInstances = ProjectMilestone.from(fetchedMilestones, gapClient?.network);
 
       const milestoneInstance = milestonesInstances.find(
-        (item) =>
-          item.uid.toLowerCase() === previousMilestone?.uid.toLowerCase()
+        (item) => item.uid.toLowerCase() === previousMilestone?.uid.toLowerCase()
       );
 
       if (!milestoneInstance) return;
@@ -213,7 +208,7 @@ export function useProjectMilestoneForm({
       await milestoneInstance
         .attest(walletSigner as any, sanitizedData, changeStepperStep)
         .then(async (res) => {
-          let fetchedMilestones = null;
+          const _fetchedMilestones = null;
           const txHash = res?.tx[0]?.hash;
 
           if (txHash) {
@@ -224,10 +219,7 @@ export function useProjectMilestoneForm({
             );
           } else {
             await fetchData(
-              INDEXER.ATTESTATION_LISTENER(
-                milestoneInstance.uid,
-                project?.chainID as number
-              ),
+              INDEXER.ATTESTATION_LISTENER(milestoneInstance.uid, project?.chainID as number),
               "POST",
               {}
             );
@@ -240,9 +232,7 @@ export function useProjectMilestoneForm({
             await getProjectObjectives(projectId)
               .then(async (fetchedMilestones) => {
                 const attestUID = milestoneInstance.uid;
-                const alreadyExists = fetchedMilestones.find(
-                  (m) => m.uid === attestUID
-                );
+                const alreadyExists = fetchedMilestones.find((m) => m.uid === attestUID);
 
                 if (alreadyExists) {
                   retries = 0;

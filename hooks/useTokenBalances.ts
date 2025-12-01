@@ -1,12 +1,8 @@
 "use client";
-import { useAccount, useBalance, useReadContracts } from "wagmi";
 import { useCallback, useMemo } from "react";
 import { formatUnits } from "viem";
-import { 
-  SUPPORTED_TOKENS, 
-  getTokensByChain, 
-  SupportedToken 
-} from "@/constants/supportedTokens";
+import { useAccount, useBalance, useReadContracts } from "wagmi";
+import { getTokensByChain, type SupportedToken } from "@/constants/supportedTokens";
 
 interface TokenBalance {
   token: SupportedToken;
@@ -44,13 +40,13 @@ export function useTokenBalances(chainId?: number) {
   });
 
   // Get ERC20 token balances
-  const erc20Tokens = useMemo(() => 
-    tokensForChain.filter(token => !token.isNative),
+  const erc20Tokens = useMemo(
+    () => tokensForChain.filter((token) => !token.isNative),
     [tokensForChain]
   );
 
   const { data: erc20Balances } = useReadContracts({
-    contracts: erc20Tokens.map(token => ({
+    contracts: erc20Tokens.map((token) => ({
       address: token.address as `0x${string}`,
       abi: ERC20_ABI,
       functionName: "balanceOf",
@@ -69,11 +65,11 @@ export function useTokenBalances(chainId?: number) {
     const results: TokenBalance[] = [];
 
     // Add native token balances
-    const nativeTokens = tokensForChain.filter(token => token.isNative);
-    nativeTokens.forEach(token => {
+    const nativeTokens = tokensForChain.filter((token) => token.isNative);
+    nativeTokens.forEach((token) => {
       const balance = nativeBalance?.value?.toString() || "0";
       const formattedBalance = formatUnits(BigInt(balance), token.decimals);
-      
+
       results.push({
         token,
         balance,
@@ -85,9 +81,8 @@ export function useTokenBalances(chainId?: number) {
     // Add ERC20 token balances
     erc20Tokens.forEach((token, index) => {
       const balanceResult = erc20Balances?.[index];
-      const balance = balanceResult?.status === "success" 
-        ? balanceResult.result?.toString() || "0"
-        : "0";
+      const balance =
+        balanceResult?.status === "success" ? balanceResult.result?.toString() || "0" : "0";
       const formattedBalance = formatUnits(BigInt(balance), token.decimals);
 
       results.push({
@@ -99,32 +94,24 @@ export function useTokenBalances(chainId?: number) {
     });
 
     return results;
-  }, [
-    address,
-    chainId,
-    isConnected,
-    tokensForChain,
-    nativeBalance,
-    erc20Balances,
-    erc20Tokens,
-  ]);
+  }, [address, chainId, isConnected, tokensForChain, nativeBalance, erc20Balances, erc20Tokens]);
 
   // Get tokens with balance
-  const tokensWithBalance = useMemo(() => 
-    tokenBalances.filter(item => item.hasBalance),
+  const tokensWithBalance = useMemo(
+    () => tokenBalances.filter((item) => item.hasBalance),
     [tokenBalances]
   );
 
   // Get balance for specific token
-  const getTokenBalance = useCallback((tokenSymbol: string): TokenBalance | undefined => {
-    return tokenBalances.find(item => item.token.symbol === tokenSymbol);
-  }, [tokenBalances]);
+  const getTokenBalance = useCallback(
+    (tokenSymbol: string): TokenBalance | undefined => {
+      return tokenBalances.find((item) => item.token.symbol === tokenSymbol);
+    },
+    [tokenBalances]
+  );
 
   // Check if user has any supported tokens
-  const hasAnyTokens = useMemo(() => 
-    tokensWithBalance.length > 0,
-    [tokensWithBalance]
-  );
+  const hasAnyTokens = useMemo(() => tokensWithBalance.length > 0, [tokensWithBalance]);
 
   return {
     tokenBalances,
@@ -157,7 +144,7 @@ export function useMultiChainTokenBalances(chainIds: number[] = []) {
           const tokensForChain = getTokensByChain(chainId);
 
           // Get native token balance
-          const nativeTokens = tokensForChain.filter(token => token.isNative);
+          const nativeTokens = tokensForChain.filter((token) => token.isNative);
           for (const token of nativeTokens) {
             try {
               const balance = await publicClient.getBalance({ address: address as `0x${string}` });
@@ -170,26 +157,31 @@ export function useMultiChainTokenBalances(chainIds: number[] = []) {
                 hasBalance: balance > 0n,
               });
             } catch (error) {
-              console.warn(`Failed to fetch native balance for ${token.symbol} on chain ${chainId}:`, error);
+              console.warn(
+                `Failed to fetch native balance for ${token.symbol} on chain ${chainId}:`,
+                error
+              );
             }
           }
 
           // Get ERC20 token balances
-          const erc20Tokens = tokensForChain.filter(token => !token.isNative);
+          const erc20Tokens = tokensForChain.filter((token) => !token.isNative);
           for (const token of erc20Tokens) {
             try {
-              const balance = await publicClient.readContract({
+              const balance = (await publicClient.readContract({
                 address: token.address as `0x${string}`,
-                abi: [{
-                  name: "balanceOf",
-                  type: "function",
-                  stateMutability: "view",
-                  inputs: [{ name: "account", type: "address" }],
-                  outputs: [{ name: "", type: "uint256" }],
-                }],
+                abi: [
+                  {
+                    name: "balanceOf",
+                    type: "function",
+                    stateMutability: "view",
+                    inputs: [{ name: "account", type: "address" }],
+                    outputs: [{ name: "", type: "uint256" }],
+                  },
+                ],
                 functionName: "balanceOf",
                 args: [address as `0x${string}`],
-              }) as bigint;
+              })) as bigint;
 
               const formattedBalance = formatUnits(balance, token.decimals);
 
@@ -200,7 +192,10 @@ export function useMultiChainTokenBalances(chainIds: number[] = []) {
                 hasBalance: balance > 0n,
               });
             } catch (error) {
-              console.warn(`Failed to fetch ERC20 balance for ${token.symbol} on chain ${chainId}:`, error);
+              console.warn(
+                `Failed to fetch ERC20 balance for ${token.symbol} on chain ${chainId}:`,
+                error
+              );
             }
           }
         } catch (error) {

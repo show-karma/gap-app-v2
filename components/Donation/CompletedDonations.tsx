@@ -1,9 +1,10 @@
 "use client";
-import { DonationSession } from "@/store/donationCart";
-import { useMemo } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { getExplorerUrl } from "@/utilities/network";
 import { useParams } from "next/navigation";
+import { useMemo } from "react";
+import type { DonationSession } from "@/store/donationCart";
+import { getExplorerUrl } from "@/utilities/network";
 
 interface CompletedDonationsProps {
   session: DonationSession;
@@ -13,7 +14,6 @@ interface CompletedDonationsProps {
 export function CompletedDonations({ session, onStartNewDonation }: CompletedDonationsProps) {
   const params = useParams();
   const communityId = params.communityId as string;
-
 
   const successfulDonations = useMemo(
     () => session.donations.filter((d) => d.status === "success"),
@@ -53,6 +53,7 @@ export function CompletedDonations({ session, onStartNewDonation }: CompletedDon
         <div className="text-center">
           <p className="text-gray-600 dark:text-gray-400">No donation data available</p>
           <button
+            type="button"
             onClick={onStartNewDonation}
             className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
           >
@@ -62,7 +63,6 @@ export function CompletedDonations({ session, onStartNewDonation }: CompletedDon
       </div>
     );
   }
-
 
   return (
     <div className="min-h-screen my-8">
@@ -86,7 +86,8 @@ export function CompletedDonations({ session, onStartNewDonation }: CompletedDon
             Donation{successfulDonations.length > 1 ? "s" : ""} Complete!
           </h1>
           <p className="text-gray-600 dark:text-gray-400 text-lg">
-            Thank you for supporting {session.totalProjects} project{session.totalProjects > 1 ? "s" : ""}
+            Thank you for supporting {session.totalProjects} project
+            {session.totalProjects > 1 ? "s" : ""}
           </p>
         </div>
 
@@ -138,9 +139,11 @@ export function CompletedDonations({ session, onStartNewDonation }: CompletedDon
                 >
                   <div className="flex items-center gap-4 flex-1">
                     {donation.projectImageURL && (
-                      <img
+                      <Image
                         src={donation.projectImageURL}
                         alt={donation.projectTitle}
+                        width={48}
+                        height={48}
                         className="h-12 w-12 rounded-lg object-cover"
                       />
                     )}
@@ -165,7 +168,14 @@ export function CompletedDonations({ session, onStartNewDonation }: CompletedDon
                       className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
                     >
                       View TX
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
                         <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
                         <path d="M15 3h6v6" />
                         <path d="M10 14L21 3" />
@@ -192,9 +202,11 @@ export function CompletedDonations({ session, onStartNewDonation }: CompletedDon
                 >
                   <div className="flex items-center gap-4">
                     {donation.projectImageURL && (
-                      <img
+                      <Image
                         src={donation.projectImageURL}
                         alt={donation.projectTitle}
+                        width={48}
+                        height={48}
                         className="h-12 w-12 rounded-lg object-cover opacity-60"
                       />
                     )}
@@ -219,10 +231,18 @@ export function CompletedDonations({ session, onStartNewDonation }: CompletedDon
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <button
+            type="button"
             onClick={onStartNewDonation}
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-base font-medium text-white hover:bg-blue-700 transition-colors"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="M12 5v14" />
               <path d="M5 12h14" />
             </svg>

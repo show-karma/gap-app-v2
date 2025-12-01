@@ -1,8 +1,8 @@
-import { IProjectResponse } from '@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types';
-import { envVars } from '../enviromentVars';
-import { projectV2ToV1, ProjectV2Response } from '../adapters/projectV2ToV1';
-import { getProjectGrants } from './projectGrants';
-import { INDEXER } from '../indexer';
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { type ProjectV2Response, projectV2ToV1 } from "../adapters/projectV2ToV1";
+import { envVars } from "../enviromentVars";
+import { INDEXER } from "../indexer";
+import { getProjectGrants } from "./projectGrants";
 
 export const getProjectData = async (
   projectId: string,
@@ -12,11 +12,11 @@ export const getProjectData = async (
   const projectResponse = await fetch(
     `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${INDEXER.V2.PROJECTS.GET(projectId)}`,
     {
-      method: 'GET',
+      method: "GET",
       headers: {
-        'Content-Type': 'application/json'
+        "Content-Type": "application/json",
       },
-      ...fetchOptions
+      ...fetchOptions,
     }
   );
 

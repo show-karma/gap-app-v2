@@ -1,10 +1,5 @@
 "use client";
-import {
-  BrowserProvider,
-  FallbackProvider,
-  JsonRpcProvider,
-  JsonRpcSigner,
-} from "ethers";
+import { BrowserProvider, FallbackProvider, JsonRpcProvider, JsonRpcSigner } from "ethers";
 import { useEffect, useState } from "react";
 import type { Account, Chain, Client, Transport } from "viem";
 import { usePublicClient, useWalletClient } from "wagmi";
@@ -27,9 +22,7 @@ export function publicClientToProvider(client: Client<Transport, Chain>) {
   return new JsonRpcProvider(transport.url, network);
 }
 
-export async function walletClientToSigner(
-  client: Client<Transport, Chain, Account>
-) {
+export async function walletClientToSigner(client: Client<Transport, Chain, Account>) {
   const { account, chain, transport } = client;
   if (!chain) return;
   const network = {
@@ -63,9 +56,7 @@ export function useSigner() {
 export function useProvider() {
   const publicClient = usePublicClient();
 
-  const [provider, setProvider] = useState<JsonRpcProvider | undefined>(
-    undefined
-  );
+  const [provider, setProvider] = useState<JsonRpcProvider | undefined>(undefined);
   useEffect(() => {
     async function getSigner() {
       if (!publicClient) return;

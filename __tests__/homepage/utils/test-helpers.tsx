@@ -6,9 +6,9 @@
 // Import homepage setup to ensure mocks are loaded
 import "../setup";
 
-import React from "react";
-import { render, RenderResult, RenderOptions } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { type RenderOptions, type RenderResult, render } from "@testing-library/react";
+import type React from "react";
 import { mockAuthState } from "../setup";
 
 /**
@@ -48,11 +48,7 @@ const AllProviders: React.FC<{
 }> = ({ children, queryClient }) => {
   const testQueryClient = queryClient || createTestQueryClient();
 
-  return (
-    <QueryClientProvider client={testQueryClient}>
-      {children}
-    </QueryClientProvider>
-  );
+  return <QueryClientProvider client={testQueryClient}>{children}</QueryClientProvider>;
 };
 
 /**
@@ -62,12 +58,7 @@ export const renderWithProviders = (
   ui: React.ReactElement,
   options: CustomRenderOptions = {}
 ): RenderResult => {
-  const {
-    queryClient,
-    mockUseAuth,
-    mockRouter,
-    ...renderOptions
-  } = options;
+  const { queryClient, mockUseAuth, mockRouter, ...renderOptions } = options;
 
   // Setup mocks if provided
   if (mockUseAuth) {
@@ -193,13 +184,12 @@ export const expectNoA11yViolations = async (container: HTMLElement) => {
  * Re-export commonly used testing utilities
  */
 export {
+  act,
+  cleanup,
+  fireEvent,
   screen,
   waitFor,
   within,
-  fireEvent,
-  act,
-  cleanup,
 } from "@testing-library/react";
 
 export { default as userEvent } from "@testing-library/user-event";
-

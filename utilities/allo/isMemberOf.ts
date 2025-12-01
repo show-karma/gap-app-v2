@@ -1,17 +1,15 @@
-import { Hex, createPublicClient, http } from "viem";
-import { envVars } from "../enviromentVars";
-import { arbitrum, sepolia } from "viem/chains";
-import AlloRegistryABI from "@show-karma/karma-gap-sdk/core/abi/AlloRegistry.json";
 import { AlloContracts } from "@show-karma/karma-gap-sdk";
+import AlloRegistryABI from "@show-karma/karma-gap-sdk/core/abi/AlloRegistry.json";
+import { createPublicClient, type Hex, http } from "viem";
+import { arbitrum, sepolia } from "viem/chains";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { envVars } from "../enviromentVars";
 
 export const isMemberOfProfile = async (address: string): Promise<boolean> => {
   try {
     const wallet = createPublicClient({
       chain: envVars.isDev ? sepolia : arbitrum,
-      transport: http(
-        envVars.isDev ? envVars.RPC.SEPOLIA : envVars.RPC.ARBITRUM
-      ),
+      transport: http(envVars.isDev ? envVars.RPC.SEPOLIA : envVars.RPC.ARBITRUM),
     });
 
     const call = await wallet.readContract({

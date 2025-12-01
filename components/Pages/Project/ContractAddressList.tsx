@@ -3,8 +3,8 @@
 import { PlusIcon } from "@heroicons/react/24/outline";
 import type { FC } from "react";
 import { ContractAddressItem } from "@/components/Pages/Project/ContractAddressItem";
-import { Button } from "@/components/Utilities/Button";
-import type { NetworkAddressPair, InvalidInfo } from "./types";
+import { Button } from "@/components/ui/button";
+import type { InvalidInfo, NetworkAddressPair } from "./types";
 
 interface ContractAddressListProps {
   pairs: NetworkAddressPair[];
@@ -44,7 +44,7 @@ export const ContractAddressList: FC<ContractAddressListProps> = ({
       ))}
       <Button
         onClick={onAdd}
-        className="flex items-center justify-center text-white gap-2 border border-primary-500 bg-primary-500 hover:bg-primary-600"
+        className="flex items-center justify-center gap-2 border border-primary-500"
       >
         <PlusIcon className="h-5 w-5" />
         Add Another Contract

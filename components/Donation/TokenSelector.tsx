@@ -47,9 +47,7 @@ export function TokenSelector({
           {tokenOptions.map((token) => {
             const key = `${token.symbol}-${token.chainId}`;
             const balanceValue = balanceByTokenKey[key];
-            const balanceDisplay = balanceValue
-              ? parseFloat(balanceValue).toFixed(6)
-              : "0";
+            const balanceDisplay = balanceValue ? parseFloat(balanceValue).toFixed(6) : "0";
             const networkName = SUPPORTED_NETWORKS[token.chainId]?.chainName || token.chainName;
             return (
               <option key={key} value={key}>
@@ -58,19 +56,14 @@ export function TokenSelector({
             );
           })}
         </select>
-
       </div>
       {selectedToken && (
         <div className="flex items-center gap-1 mt-1" id={`${selectId}-network`}>
           <span
             className="inline-flex items-center gap-1 rounded bg-gradient-to-r from-blue-50 to-indigo-50 px-1.5 py-0.5 text-xs font-medium text-blue-700 dark:from-blue-950/50 dark:to-indigo-950/50 dark:text-blue-300"
-            role="status"
-            aria-label={`Selected network: ${networkName}`}
+            title={`Selected network: ${networkName}`}
           >
-            <div
-              className="h-1.5 w-1.5 rounded-full bg-blue-500"
-              aria-hidden="true"
-            ></div>
+            <div className="h-1.5 w-1.5 rounded-full bg-blue-500" aria-hidden="true"></div>
             {networkName}
           </span>
         </div>

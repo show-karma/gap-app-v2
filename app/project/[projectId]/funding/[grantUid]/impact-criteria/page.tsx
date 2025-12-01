@@ -1,24 +1,20 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { GrantImpactCriteria } from "@/components/Pages/Grants/ImpactCriteria";
+import { PROJECT_NAME } from "@/constants/brand";
 import { zeroUID } from "@/utilities/commons";
 import { envVars } from "@/utilities/enviromentVars";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
 import { defaultMetadata } from "@/utilities/meta";
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
-import { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { PROJECT_NAME } from "@/constants/brand";
 
 type Params = Promise<{
   projectId: string;
   grantUid: string;
 }>;
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Params;
-}): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { projectId, grantUid } = await params;
   const projectInfo = await getProjectCachedData(projectId);
 
@@ -54,10 +50,7 @@ export async function generateMetadata({
       ...metadata,
       title: `${projectInfo?.details?.data?.title} | ${PROJECT_NAME}`,
       description:
-        cleanMarkdownForPlainText(
-          projectInfo?.details?.data?.description || "",
-          80
-        ) || "",
+        cleanMarkdownForPlainText(projectInfo?.details?.data?.description || "", 80) || "",
     };
   }
 

@@ -14,9 +14,7 @@ function getTokenOptionsWithSelected(
   if (
     selectedToken &&
     !base.some(
-      (token) =>
-        token.symbol === selectedToken.symbol &&
-        token.chainId === selectedToken.chainId
+      (token) => token.symbol === selectedToken.symbol && token.chainId === selectedToken.chainId
     )
   ) {
     base.push(selectedToken);

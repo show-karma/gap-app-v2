@@ -32,4 +32,3 @@ export function Logo({ className, href = "/" }: LogoProps) {
     </Link>
   );
 }
-

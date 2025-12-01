@@ -1,0 +1,354 @@
+name: Claude Code
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  issues:
+    types: [opened, assigned, labeled]
+  pull_request_review:
+    types: [submitted]
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  claude:
+    if: |
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
+      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude'))) ||
+      (github.event_name == 'pull_request' && github.event.pull_request.draft == false)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+      deployments: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Wait for Vercel deployment and extract URL
+      - name: Wait for Vercel Deployment
+        id: deployment
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            let pr_number;
+            let head_sha;
+
+            // Determine PR number and head SHA based on event type
+            if (context.eventName === 'pull_request') {
+              pr_number = context.payload.pull_request.number;
+              head_sha = context.payload.pull_request.head.sha;
+            } else if (context.eventName === 'issue_comment' && context.payload.issue.pull_request) {
+              pr_number = context.payload.issue.number;
+              // Get PR details to find head SHA
+              const { data: pr } = await github.rest.pulls.get({
+                owner,
+                repo,
+                pull_number: pr_number
+              });
+              head_sha = pr.head.sha;
+            } else if (context.eventName === 'pull_request_review') {
+              pr_number = context.payload.pull_request.number;
+              head_sha = context.payload.pull_request.head.sha;
+            } else if (context.eventName === 'pull_request_review_comment') {
+              pr_number = context.payload.pull_request.number;
+              head_sha = context.payload.pull_request.head.sha;
+            }
+
+            if (!pr_number) {
+              console.log('No PR number found, skipping deployment wait');
+              core.setOutput('deployment_ready', 'false');
+              return;
+            }
+
+            console.log(`Checking Vercel deployment for PR #${pr_number}, SHA: ${head_sha}`);
+            core.setOutput('pr_number', pr_number);
+
+            // Wait for Vercel deployment (max 10 minutes)
+            let deploymentUrl = '';
+            let attempts = 0;
+            const maxAttempts = 60; // 60 * 10 seconds = 10 minutes
+
+            while (attempts < maxAttempts && !deploymentUrl) {
+              attempts++;
+
+              // Check deployments API for Vercel deployment
+              try {
+                const { data: deployments } = await github.rest.repos.listDeployments({
+                  owner,
+                  repo,
+                  sha: head_sha,
+                  environment: 'Preview',
+                  per_page: 5
+                });
+
+                for (const deployment of deployments) {
+                  const { data: statuses } = await github.rest.repos.listDeploymentStatuses({
+                    owner,
+                    repo,
+                    deployment_id: deployment.id,
+                    per_page: 1
+                  });
+
+                  if (statuses.length > 0 && statuses[0].state === 'success') {
+                    deploymentUrl = statuses[0].environment_url || statuses[0].target_url;
+                    if (deploymentUrl) {
+                      console.log(`Found Vercel deployment URL: ${deploymentUrl}`);
+                      break;
+                    }
+                  }
+                }
+              } catch (e) {
+                console.log(`Deployment API check failed: ${e.message}`);
+              }
+
+              // Fallback: Check PR comments for Vercel bot comment
+              if (!deploymentUrl) {
+                const { data: comments } = await github.rest.issues.listComments({
+                  owner,
+                  repo,
+                  issue_number: pr_number
+                });
+
+                const vercelComment = comments.find(comment =>
+                  (comment.user.login === 'vercel[bot]' || comment.user.login === 'vercel') &&
+                  comment.body.includes('vercel.app')
+                );
+
+                if (vercelComment) {
+                  // Extract Preview URL from Vercel comment
+                  const urlMatch = vercelComment.body.match(/https:\/\/[a-z0-9-]+\.vercel\.app/i);
+                  if (urlMatch) {
+                    deploymentUrl = urlMatch[0];
+                    console.log(`Found Vercel URL from comment: ${deploymentUrl}`);
+                  }
+                }
+              }
+
+              if (deploymentUrl) break;
+
+              console.log(`Waiting for Vercel deployment... (attempt ${attempts}/${maxAttempts})`);
+              await new Promise(resolve => setTimeout(resolve, 10000)); // Wait 10 seconds
+            }
+
+            if (deploymentUrl) {
+              core.setOutput('deployment_url', deploymentUrl);
+
+              // Health check - wait for the deployment to be ready
+              console.log('Performing health check...');
+              let healthy = false;
+              for (let i = 0; i < 12; i++) {
+                try {
+                  const response = await fetch(deploymentUrl, {
+                    method: 'HEAD',
+                    redirect: 'follow'
+                  });
+                  if (response.ok || response.status === 308) {
+                    console.log('✅ Vercel deployment is ready');
+                    healthy = true;
+                    break;
+                  }
+                } catch (e) {
+                  console.log(`Health check attempt ${i + 1} failed: ${e.message}`);
+                }
+                await new Promise(resolve => setTimeout(resolve, 5000));
+              }
+              core.setOutput('deployment_ready', healthy ? 'true' : 'false');
+            } else {
+              console.log('⚠️ No Vercel deployment URL found');
+              core.setOutput('deployment_ready', 'false');
+            }
+
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Run Claude Code
+        uses: anthropics/claude-code-action@beta
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ steps.app-token.outputs.token }}
+
+          # Tool permissions for frontend development
+          allowed_tools: |
+            Bash(curl:*),
+            Bash(pnpm:*),
+            Bash(npx:*),
+            Bash(node:*),
+            Bash(git:*),
+            Bash(jest:*),
+            Bash(biome:*),
+            Bash(tsc:*),
+            Bash(playwright:*),
+            Bash(cypress:*),
+            Bash(lighthouse:*),
+            Edit,
+            MultiEdit,
+            Read,
+            Write,
+            NotebookEditCell,
+            mcp__sequential-thinking__sequentialthinking,
+            mcp__filesystem__*,
+            mcp__fetch__*
+
+          # Environment variables
+          claude_env: |
+            NODE_ENV: test
+            PREVIEW_URL: ${{ steps.deployment.outputs.deployment_url || '' }}
+            PR_NUMBER: ${{ steps.deployment.outputs.pr_number || github.event.pull_request.number || '' }}
+            DEPLOYMENT_READY: ${{ steps.deployment.outputs.deployment_ready || 'false' }}
+            NEXT_PUBLIC_PRIVY_APP_ID: ${{ secrets.NEXT_PUBLIC_PRIVY_APP_ID || 'test-app-id' }}
+            CI: true
+
+          # MCP servers configuration
+          mcp_config: |
+            {
+              "mcpServers": {
+                "sequential-thinking": {
+                  "command": "npx",
+                  "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+                },
+                "filesystem": {
+                  "command": "npx",
+                  "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]
+                },
+                "fetch": {
+                  "command": "npx",
+                  "args": ["-y", "@modelcontextprotocol/server-fetch"],
+                  "env": {
+                    "ALLOWED_DOMAINS": "${{ steps.deployment.outputs.deployment_url && format('{0},api.github.com', steps.deployment.outputs.deployment_url) || 'localhost,api.github.com' }}"
+                  }
+                }
+              }
+            }
+
+          # Custom instructions for frontend code review
+          custom_instructions: |
+            ## Project Information
+            This is **gap-app-v2**, a Next.js 15 frontend application for Karma GAP (Grantee Accountability Protocol).
+
+            ### Tech Stack
+            - Next.js 15 with App Router and Turbopack
+            - React 19
+            - TypeScript
+            - TailwindCSS with Tremor components
+            - Zustand for state management
+            - React Query for data fetching
+            - Wagmi/RainbowKit for Web3 integration
+            - Radix UI components
+            - Biome for linting/formatting
+
+            ## Deployment Information
+            - Preview URL: ${{ steps.deployment.outputs.deployment_url || 'Not yet deployed' }}
+            - Deployment status: ${{ steps.deployment.outputs.deployment_ready == 'true' && 'Ready ✅' || 'Pending ⏳' }}
+
+            ## Code Review Guidelines
+
+            ### 1. React & Next.js Best Practices
+            - Verify proper use of Server Components vs Client Components
+            - Check for "use client" directive where needed
+            - Ensure proper data fetching patterns (Server Components, React Query)
+            - Validate proper use of Next.js App Router conventions
+            - Check for proper metadata and SEO implementation
+
+            ### 2. TypeScript Standards
+            - Ensure proper typing (no `any` types without justification)
+            - Check for proper interface/type definitions
+            - Validate prop types for components
+
+            ### 3. Component Architecture
+            - Verify components follow single responsibility principle
+            - Check for proper component composition
+            - Ensure reusable components are properly abstracted
+            - Validate proper use of hooks
+
+            ### 4. Styling & Accessibility
+            - Check TailwindCSS usage follows project patterns
+            - Verify accessibility attributes (ARIA labels, roles)
+            - Ensure keyboard navigation support
+            - Check for proper semantic HTML
+
+            ### 5. State Management
+            - Verify proper use of Zustand stores
+            - Check React Query usage for server state
+            - Ensure proper loading/error states
+
+            ### 6. Web3 Integration
+            - Validate Wagmi hook usage
+            - Check wallet connection handling
+            - Verify transaction error handling
+
+            ### 7. Performance
+            - Check for unnecessary re-renders
+            - Verify proper use of React.memo where beneficial
+            - Ensure images use Next.js Image component
+            - Check for proper code splitting
+
+            ## PR Documentation Requirements
+
+            ### Generate Mermaid.js Diagrams
+            Create visual diagrams for significant changes:
+
+            **IMPORTANT MERMAID RULES:**
+            - Wrap ANY node labels containing special characters in double quotes
+            - Use proper syntax: node["label"] --> node2["label2"]
+
+            ```mermaid
+            graph TB
+              subgraph "Component Changes"
+                A["New Components"] --> B["Modified Components"]
+              end
+
+              subgraph "Data Flow"
+                C["Props"] --> D["State"]
+                D --> E["Effects"]
+              end
+            ```
+
+            ### Code Review Checklist
+            For every PR, evaluate:
+            1. **Architecture**: Does the change follow established patterns?
+            2. **Types**: Are TypeScript types properly defined?
+            3. **Components**: Are React components well-structured?
+            4. **Styling**: Does it follow TailwindCSS conventions?
+            5. **Accessibility**: Are a11y requirements met?
+            6. **Performance**: Any potential performance issues?
+            7. **Testing**: Are tests included for new functionality?
+
+            ## Automated Tasks Based on Event
+
+            ### For New PRs:
+            1. Perform comprehensive code review
+            2. Check for TypeScript errors
+            3. Validate component patterns
+            4. Generate architectural diagrams if significant changes
+            5. Provide actionable feedback
+
+            ### For Comments (@claude trigger):
+            1. Address specific questions or requests
+            2. Provide code suggestions when asked
+            3. Explain architectural decisions
+
+            ### For Code Reviews:
+            1. Analyze changes in detail
+            2. Check against coding standards
+            3. Provide constructive feedback
+            4. Suggest improvements
+
+          max_turns: '30'
+          timeout_minutes: '45'
+

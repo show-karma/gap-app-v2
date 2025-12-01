@@ -1,6 +1,6 @@
 /**
  * Tests for DonationErrorBoundary component
- * 
+ *
  * Tests error boundary functionality including:
  * - Error catching and display
  * - Error recovery flows
@@ -8,47 +8,55 @@
  * - Error reporting integration
  */
 
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { DonationErrorBoundary } from '@/components/Donation/DonationErrorBoundary';
-import { errorManager } from '@/components/Utilities/errorManager';
-import { getDetailedErrorInfo } from '@/utilities/donations/errorMessages';
+import { fireEvent, render, screen } from "@testing-library/react";
+import type React from "react";
+import { DonationErrorBoundary } from "@/components/Donation/DonationErrorBoundary";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { getDetailedErrorInfo } from "@/utilities/donations/errorMessages";
 
 // Mock dependencies
-jest.mock('@/components/Utilities/errorManager');
-jest.mock('@/utilities/donations/errorMessages');
-jest.mock('next/link', () => {
+jest.mock("@/components/Utilities/errorManager");
+jest.mock("@/utilities/donations/errorMessages");
+jest.mock("next/link", () => {
   return ({ children, href }: { children: React.ReactNode; href: string }) => {
     return <a href={href}>{children}</a>;
   };
 });
 
 // Component that throws an error for testing
-const ThrowError = ({ shouldThrow = false, errorMessage = 'Test error' }: { shouldThrow?: boolean; errorMessage?: string }) => {
+const ThrowError = ({
+  shouldThrow = false,
+  errorMessage = "Test error",
+}: {
+  shouldThrow?: boolean;
+  errorMessage?: string;
+}) => {
   if (shouldThrow) {
     throw new Error(errorMessage);
   }
   return <div>No error</div>;
 };
 
-describe('DonationErrorBoundary', () => {
+describe("DonationErrorBoundary", () => {
   const mockErrorManager = errorManager as jest.MockedFunction<typeof errorManager>;
-  const mockGetDetailedErrorInfo = getDetailedErrorInfo as jest.MockedFunction<typeof getDetailedErrorInfo>;
+  const mockGetDetailedErrorInfo = getDetailedErrorInfo as jest.MockedFunction<
+    typeof getDetailedErrorInfo
+  >;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.spyOn(console, 'error').mockImplementation(() => {}); // Suppress React error boundary console errors
-    
+    jest.spyOn(console, "error").mockImplementation(() => {}); // Suppress React error boundary console errors
+
     // Setup default mock return for getDetailedErrorInfo
     mockGetDetailedErrorInfo.mockReturnValue({
-      code: 'UNKNOWN_ERROR' as any,
-      message: 'An unexpected error occurred',
-      technicalMessage: 'Test error',
-      actionableSteps: ['Try again', 'Contact support'],
+      code: "UNKNOWN_ERROR" as any,
+      message: "An unexpected error occurred",
+      technicalMessage: "Test error",
+      actionableSteps: ["Try again", "Contact support"],
     });
 
     // Mock localStorage
-    Object.defineProperty(window, 'localStorage', {
+    Object.defineProperty(window, "localStorage", {
       value: {
         getItem: jest.fn(),
         setItem: jest.fn(),
@@ -63,21 +71,23 @@ describe('DonationErrorBoundary', () => {
     jest.restoreAllMocks();
   });
 
-  describe('Error Catching', () => {
-    it('should catch errors thrown by children', () => {
+  describe("Error Catching", () => {
+    it("should catch errors thrown by children", () => {
       render(
         <DonationErrorBoundary>
           <ThrowError shouldThrow={true} />
         </DonationErrorBoundary>
       );
 
-      expect(screen.getByText('Something went wrong')).toBeInTheDocument();
-      expect(screen.getByText(/Don't worry - your donation cart has been saved/)).toBeInTheDocument();
+      expect(screen.getByText("Something went wrong")).toBeInTheDocument();
+      expect(
+        screen.getByText(/Don't worry - your donation cart has been saved/)
+      ).toBeInTheDocument();
     });
 
-    it('should call errorManager when an error is caught', () => {
-      const testError = new Error('Test error');
-      
+    it("should call errorManager when an error is caught", () => {
+      const _testError = new Error("Test error");
+
       render(
         <DonationErrorBoundary>
           <ThrowError shouldThrow={true} errorMessage="Test error" />
@@ -85,15 +95,15 @@ describe('DonationErrorBoundary', () => {
       );
 
       expect(mockErrorManager).toHaveBeenCalledWith(
-        'DonationErrorBoundary caught an error',
+        "DonationErrorBoundary caught an error",
         expect.any(Error),
         expect.objectContaining({
-          errorBoundary: 'donation-flow',
+          errorBoundary: "donation-flow",
         })
       );
     });
 
-    it('should call getDetailedErrorInfo to parse error', () => {
+    it("should call getDetailedErrorInfo to parse error", () => {
       render(
         <DonationErrorBoundary>
           <ThrowError shouldThrow={true} errorMessage="Insufficient balance" />
@@ -104,12 +114,12 @@ describe('DonationErrorBoundary', () => {
     });
   });
 
-  describe('Error Display', () => {
-    it('should display parsed error message', () => {
+  describe("Error Display", () => {
+    it("should display parsed error message", () => {
       mockGetDetailedErrorInfo.mockReturnValue({
-        code: 'INSUFFICIENT_BALANCE' as any,
-        message: 'Insufficient token balance',
-        actionableSteps: ['Check your wallet balance', 'Reduce the donation amount'],
+        code: "INSUFFICIENT_BALANCE" as any,
+        message: "Insufficient token balance",
+        actionableSteps: ["Check your wallet balance", "Reduce the donation amount"],
       });
 
       render(
@@ -118,14 +128,14 @@ describe('DonationErrorBoundary', () => {
         </DonationErrorBoundary>
       );
 
-      expect(screen.getByText('Insufficient token balance')).toBeInTheDocument();
+      expect(screen.getByText("Insufficient token balance")).toBeInTheDocument();
     });
 
-    it('should display actionable steps when available', () => {
+    it("should display actionable steps when available", () => {
       mockGetDetailedErrorInfo.mockReturnValue({
-        code: 'NETWORK_MISMATCH' as any,
-        message: 'Network mismatch detected',
-        actionableSteps: ['Switch to the correct network', 'Try again'],
+        code: "NETWORK_MISMATCH" as any,
+        message: "Network mismatch detected",
+        actionableSteps: ["Switch to the correct network", "Try again"],
       });
 
       render(
@@ -134,16 +144,16 @@ describe('DonationErrorBoundary', () => {
         </DonationErrorBoundary>
       );
 
-      expect(screen.getByText('What you can do')).toBeInTheDocument();
-      expect(screen.getByText('Switch to the correct network')).toBeInTheDocument();
-      expect(screen.getByText('Try again')).toBeInTheDocument();
+      expect(screen.getByText("What you can do")).toBeInTheDocument();
+      expect(screen.getByText("Switch to the correct network")).toBeInTheDocument();
+      expect(screen.getByText("Try again")).toBeInTheDocument();
     });
 
-    it('should display technical details when available', () => {
+    it("should display technical details when available", () => {
       mockGetDetailedErrorInfo.mockReturnValue({
-        code: 'CONTRACT_ERROR' as any,
-        message: 'Contract execution failed',
-        technicalMessage: 'Error: execution reverted',
+        code: "CONTRACT_ERROR" as any,
+        message: "Contract execution failed",
+        technicalMessage: "Error: execution reverted",
         actionableSteps: [],
       });
 
@@ -153,17 +163,17 @@ describe('DonationErrorBoundary', () => {
         </DonationErrorBoundary>
       );
 
-      const detailsElement = screen.getByText('Technical Details');
+      const detailsElement = screen.getByText("Technical Details");
       expect(detailsElement).toBeInTheDocument();
-      
+
       fireEvent.click(detailsElement);
-      expect(screen.getByText('Error: execution reverted')).toBeInTheDocument();
+      expect(screen.getByText("Error: execution reverted")).toBeInTheDocument();
     });
 
-    it('should not display actionable steps section when empty', () => {
+    it("should not display actionable steps section when empty", () => {
       mockGetDetailedErrorInfo.mockReturnValue({
-        code: 'UNKNOWN_ERROR' as any,
-        message: 'An error occurred',
+        code: "UNKNOWN_ERROR" as any,
+        message: "An error occurred",
         actionableSteps: [],
       });
 
@@ -173,15 +183,15 @@ describe('DonationErrorBoundary', () => {
         </DonationErrorBoundary>
       );
 
-      expect(screen.queryByText('What you can do')).not.toBeInTheDocument();
+      expect(screen.queryByText("What you can do")).not.toBeInTheDocument();
     });
   });
 
-  describe('Error Recovery - Try Again', () => {
-    it('should reset error state when Try Again is clicked', () => {
+  describe("Error Recovery - Try Again", () => {
+    it("should reset error state when Try Again is clicked", () => {
       const ThrowErrorComponent = ({ shouldThrow }: { shouldThrow: boolean }) => {
         if (shouldThrow) {
-          throw new Error('Test error');
+          throw new Error("Test error");
         }
         return <div>No error</div>;
       };
@@ -192,9 +202,9 @@ describe('DonationErrorBoundary', () => {
         </DonationErrorBoundary>
       );
 
-      expect(screen.getByText('Something went wrong')).toBeInTheDocument();
+      expect(screen.getByText("Something went wrong")).toBeInTheDocument();
 
-      const tryAgainButton = screen.getByText('Try Again');
+      const tryAgainButton = screen.getByText("Try Again");
       fireEvent.click(tryAgainButton);
 
       // Rerender with error cleared - need to use a key to force remount or use different component
@@ -205,13 +215,13 @@ describe('DonationErrorBoundary', () => {
       );
 
       // After clicking Try Again, error state is reset, so children should render
-      expect(screen.getByText('No error')).toBeInTheDocument();
+      expect(screen.getByText("No error")).toBeInTheDocument();
     });
 
-    it('should allow children to render again after reset', () => {
+    it("should allow children to render again after reset", () => {
       const ThrowErrorComponent = ({ shouldThrow }: { shouldThrow: boolean }) => {
         if (shouldThrow) {
-          throw new Error('Test error');
+          throw new Error("Test error");
         }
         return <div>Recovered content</div>;
       };
@@ -222,7 +232,7 @@ describe('DonationErrorBoundary', () => {
         </DonationErrorBoundary>
       );
 
-      const tryAgainButton = screen.getByText('Try Again');
+      const tryAgainButton = screen.getByText("Try Again");
       fireEvent.click(tryAgainButton);
 
       // Rerender with non-throwing children
@@ -232,11 +242,11 @@ describe('DonationErrorBoundary', () => {
         </DonationErrorBoundary>
       );
 
-      expect(screen.getByText('Recovered content')).toBeInTheDocument();
+      expect(screen.getByText("Recovered content")).toBeInTheDocument();
     });
   });
 
-  describe('Error Recovery - Clear Cart', () => {
+  describe("Error Recovery - Clear Cart", () => {
     const originalLocation = window.location;
 
     beforeEach(() => {
@@ -250,12 +260,12 @@ describe('DonationErrorBoundary', () => {
       window.location = originalLocation;
     });
 
-    it('should clear localStorage and reload page when Clear Cart is clicked', () => {
-      const removeItemSpy = jest.spyOn(window.localStorage, 'removeItem');
-      
+    it("should clear localStorage and reload page when Clear Cart is clicked", () => {
+      const removeItemSpy = jest.spyOn(window.localStorage, "removeItem");
+
       // Mock window.location.href assignment
       const hrefSetter = jest.fn();
-      Object.defineProperty(window.location, 'href', {
+      Object.defineProperty(window.location, "href", {
         set: hrefSetter,
         get: () => originalLocation.href,
         configurable: true,
@@ -267,19 +277,19 @@ describe('DonationErrorBoundary', () => {
         </DonationErrorBoundary>
       );
 
-      const clearCartButton = screen.getByText('Clear Cart and Start Over');
+      const clearCartButton = screen.getByText("Clear Cart and Start Over");
       fireEvent.click(clearCartButton);
 
-      expect(removeItemSpy).toHaveBeenCalledWith('donation-cart-storage');
+      expect(removeItemSpy).toHaveBeenCalledWith("donation-cart-storage");
       expect(hrefSetter).toHaveBeenCalled();
     });
 
-    it('should handle localStorage errors gracefully', () => {
-      const removeItemSpy = jest.spyOn(window.localStorage, 'removeItem');
+    it("should handle localStorage errors gracefully", () => {
+      const removeItemSpy = jest.spyOn(window.localStorage, "removeItem");
       removeItemSpy.mockImplementation(() => {
-        throw new Error('localStorage error');
+        throw new Error("localStorage error");
       });
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
       render(
         <DonationErrorBoundary>
@@ -287,32 +297,32 @@ describe('DonationErrorBoundary', () => {
         </DonationErrorBoundary>
       );
 
-      const clearCartButton = screen.getByText('Clear Cart and Start Over');
+      const clearCartButton = screen.getByText("Clear Cart and Start Over");
       fireEvent.click(clearCartButton);
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Failed to clear cart:', expect.any(Error));
+      expect(consoleErrorSpy).toHaveBeenCalledWith("Failed to clear cart:", expect.any(Error));
     });
   });
 
-  describe('Navigation', () => {
-    it('should provide link to return home', () => {
+  describe("Navigation", () => {
+    it("should provide link to return home", () => {
       render(
         <DonationErrorBoundary>
           <ThrowError shouldThrow={true} />
         </DonationErrorBoundary>
       );
 
-      const homeLink = screen.getByText('Return to Home');
+      const homeLink = screen.getByText("Return to Home");
       expect(homeLink).toBeInTheDocument();
-      expect(homeLink.closest('a')).toHaveAttribute('href', '/');
+      expect(homeLink.closest("a")).toHaveAttribute("href", "/");
     });
   });
 
-  describe('Error Info Storage', () => {
-    it('should store error info in state', () => {
-      const testError = new Error('Test error');
-      const testErrorInfo = {
-        componentStack: 'at Component (test.js:1:1)',
+  describe("Error Info Storage", () => {
+    it("should store error info in state", () => {
+      const _testError = new Error("Test error");
+      const _testErrorInfo = {
+        componentStack: "at Component (test.js:1:1)",
       } as React.ErrorInfo;
 
       render(
@@ -322,34 +332,36 @@ describe('DonationErrorBoundary', () => {
       );
 
       // Error info should be available for display in technical details
-      const detailsElement = screen.getByText('Technical Details');
+      const detailsElement = screen.getByText("Technical Details");
       expect(detailsElement).toBeInTheDocument();
     });
   });
 
-  describe('Cart State Preservation', () => {
-    it('should inform user that cart is saved', () => {
+  describe("Cart State Preservation", () => {
+    it("should inform user that cart is saved", () => {
       render(
         <DonationErrorBoundary>
           <ThrowError shouldThrow={true} />
         </DonationErrorBoundary>
       );
 
-      expect(screen.getByText(/Don't worry - your donation cart has been saved/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Don't worry - your donation cart has been saved/)
+      ).toBeInTheDocument();
     });
   });
 
-  describe('Edge Cases', () => {
-    it('should handle multiple errors sequentially', () => {
+  describe("Edge Cases", () => {
+    it("should handle multiple errors sequentially", () => {
       const { rerender } = render(
         <DonationErrorBoundary>
           <ThrowError shouldThrow={true} errorMessage="First error" />
         </DonationErrorBoundary>
       );
 
-      expect(screen.getByText('Something went wrong')).toBeInTheDocument();
+      expect(screen.getByText("Something went wrong")).toBeInTheDocument();
 
-      const tryAgainButton = screen.getByText('Try Again');
+      const tryAgainButton = screen.getByText("Try Again");
       fireEvent.click(tryAgainButton);
 
       rerender(
@@ -358,21 +370,20 @@ describe('DonationErrorBoundary', () => {
         </DonationErrorBoundary>
       );
 
-      expect(screen.getByText('Something went wrong')).toBeInTheDocument();
+      expect(screen.getByText("Something went wrong")).toBeInTheDocument();
       expect(mockErrorManager).toHaveBeenCalledTimes(2);
     });
 
-    it('should render children normally when no error occurs', () => {
+    it("should render children normally when no error occurs", () => {
       render(
         <DonationErrorBoundary>
           <div>Normal content</div>
         </DonationErrorBoundary>
       );
 
-      expect(screen.getByText('Normal content')).toBeInTheDocument();
-      expect(screen.queryByText('Something went wrong')).not.toBeInTheDocument();
+      expect(screen.getByText("Normal content")).toBeInTheDocument();
+      expect(screen.queryByText("Something went wrong")).not.toBeInTheDocument();
       expect(mockErrorManager).not.toHaveBeenCalled();
     });
   });
 });
-

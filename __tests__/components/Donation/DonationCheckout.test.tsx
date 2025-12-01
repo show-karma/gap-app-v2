@@ -4,7 +4,7 @@
  * covering UI rendering, user interactions, validation, and edge cases
  */
 
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { DonationCheckout } from "@/components/Donation/DonationCheckout";
 import "@testing-library/jest-dom";
 import type { SupportedToken } from "@/constants/supportedTokens";
@@ -330,7 +330,9 @@ describe("DonationCheckout", () => {
 
       render(<DonationCheckout />);
 
-      expect(screen.getByTestId("donation-executor")).toHaveTextContent("Loading cross-chain balances...");
+      expect(screen.getByTestId("donation-executor")).toHaveTextContent(
+        "Loading cross-chain balances..."
+      );
     });
 
     it("should show execution phase labels", () => {
@@ -343,7 +345,9 @@ describe("DonationCheckout", () => {
 
       render(<DonationCheckout />);
 
-      expect(screen.getByTestId("donation-executor")).toHaveTextContent("Checking token approvals...");
+      expect(screen.getByTestId("donation-executor")).toHaveTextContent(
+        "Checking token approvals..."
+      );
     });
 
     it("should show approval progress", () => {
@@ -356,7 +360,9 @@ describe("DonationCheckout", () => {
 
       render(<DonationCheckout />);
 
-      expect(screen.getByTestId("donation-executor")).toHaveTextContent("Approving tokens... (50%)");
+      expect(screen.getByTestId("donation-executor")).toHaveTextContent(
+        "Approving tokens... (50%)"
+      );
     });
 
     it("should show 'Select tokens and amounts' when cannot proceed", () => {
@@ -694,4 +700,3 @@ describe("DonationCheckout", () => {
     });
   });
 });
-

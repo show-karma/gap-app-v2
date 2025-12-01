@@ -1,13 +1,13 @@
+import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useQuery } from "@tanstack/react-query";
-import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
-import { useAccount } from "wagmi";
-import type { Hex } from "viem";
 import { useEffect, useState } from "react";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import type { Hex } from "viem";
+import { useAccount } from "wagmi";
 import { useAuth } from "@/hooks/useAuth";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
+import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
 
 /**
  * Options for configuring the useIsCommunityAdmin hook
@@ -55,8 +55,7 @@ export const useIsCommunityAdmin = (
   const { address: accountAddress } = useAccount();
   const signer = useSigner();
   const { authenticated: isAuth } = useAuth();
-  const [resolvedCommunity, setResolvedCommunity] =
-    useState<ICommunityResponse | null>(null);
+  const [resolvedCommunity, setResolvedCommunity] = useState<ICommunityResponse | null>(null);
 
   // Use provided address or connected account address
   const checkAddress = address || accountAddress;
@@ -79,9 +78,7 @@ export const useIsCommunityAdmin = (
 
     const resolveCommunity = async () => {
       try {
-        const response = await gapIndexerApi
-          .communityBySlug(communityUID)
-          .catch(() => null);
+        const response = await gapIndexerApi.communityBySlug(communityUID).catch(() => null);
 
         // Only update state if this effect hasn't been cancelled
         if (!cancelled) {

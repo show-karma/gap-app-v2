@@ -1,6 +1,6 @@
-import { appNetwork } from "@/utilities/network";
-import { IMilestone } from "@show-karma/karma-gap-sdk";
+import type { IMilestone } from "@show-karma/karma-gap-sdk";
 import { create } from "zustand";
+import { appNetwork } from "@/utilities/network";
 
 export interface MilestonesForms {
   isValid: boolean;
@@ -111,14 +111,12 @@ export const useGrantFormStore = create<GrantFormStore>((set, get) => ({
     milestonesForms[index] = newValue;
     set({ milestonesForms: milestonesForms });
   },
-  setMilestonesForms: (milestonesForms: MilestonesForms[]) =>
-    set({ milestonesForms }),
+  setMilestonesForms: (milestonesForms: MilestonesForms[]) => set({ milestonesForms }),
   isMilestonesFormsLoading: true,
   setIsMilestonesFormsLoading: (isMilestonesFormsLoading: boolean) =>
     set({ isMilestonesFormsLoading }),
   formPriorities: [],
-  setFormPriorities: (priorities: number[]) =>
-    set({ formPriorities: priorities }),
+  setFormPriorities: (priorities: number[]) => set({ formPriorities: priorities }),
 
   // Multi-step flow management
   currentStep: 1,
@@ -133,6 +131,5 @@ export const useGrantFormStore = create<GrantFormStore>((set, get) => ({
   resetFormData: () => set({ formData: initialFormData }),
 
   communityNetworkId: appNetwork[0].id,
-  setCommunityNetworkId: (networkId: number) =>
-    set({ communityNetworkId: networkId }),
+  setCommunityNetworkId: (networkId: number) => set({ communityNetworkId: networkId }),
 }));

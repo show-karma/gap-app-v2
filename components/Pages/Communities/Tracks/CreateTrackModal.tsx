@@ -1,6 +1,6 @@
-import { Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
+import { Fragment } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 
@@ -106,11 +106,7 @@ export const CreateTrackModal = ({
                       rows={3}
                     />
                   </div>
-                  <Button
-                    onClick={onSubmit}
-                    disabled={isSubmitting}
-                    className="w-full"
-                  >
+                  <Button onClick={onSubmit} disabled={isSubmitting} className="w-full">
                     {isSubmitting ? <Spinner className="w-4 h-4 mr-2" /> : null}
                     Create Track
                   </Button>

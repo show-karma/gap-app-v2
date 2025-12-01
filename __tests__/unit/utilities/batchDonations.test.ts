@@ -1,10 +1,10 @@
 import {
-  PERMIT2_ADDRESS,
   BATCH_DONATIONS_CONTRACTS,
-  getBatchDonationsContractAddress,
-  isBatchDonationsSupportedOnChain,
-  getSupportedBatchDonationsChains,
   BatchDonationsABI,
+  getBatchDonationsContractAddress,
+  getSupportedBatchDonationsChains,
+  isBatchDonationsSupportedOnChain,
+  PERMIT2_ADDRESS,
 } from "@/utilities/donations/batchDonations";
 
 type HexAddress = `0x${string}`;
@@ -38,9 +38,7 @@ describe("batchDonations utilities", () => {
     });
 
     it("should have same contract address for all chains", () => {
-      const addresses = Object.values(BATCH_DONATIONS_CONTRACTS).filter(
-        (addr) => addr !== null
-      );
+      const addresses = Object.values(BATCH_DONATIONS_CONTRACTS).filter((addr) => addr !== null);
       const uniqueAddresses = new Set(addresses);
       expect(uniqueAddresses.size).toBeGreaterThan(0);
     });
@@ -217,8 +215,7 @@ describe("batchDonations utilities", () => {
 
     it("should contain MAX_PROJECTS_PER_BATCH constant", () => {
       const maxProjectsConstant = BatchDonationsABI.find(
-        (item) =>
-          item.type === "function" && item.name === "MAX_PROJECTS_PER_BATCH"
+        (item) => item.type === "function" && item.name === "MAX_PROJECTS_PER_BATCH"
       );
       expect(maxProjectsConstant).toBeDefined();
     });
@@ -280,7 +277,7 @@ describe("batchDonations utilities", () => {
 
   describe("Contract address validation per chain", () => {
     it("should validate contract addresses are valid hex addresses", () => {
-      Object.entries(BATCH_DONATIONS_CONTRACTS).forEach(([chainId, address]) => {
+      Object.entries(BATCH_DONATIONS_CONTRACTS).forEach(([_chainId, address]) => {
         if (address !== null) {
           expect(address).toMatch(/^0x[a-fA-F0-9]{40}$/);
           expect(address.length).toBe(42); // 0x + 40 hex chars
@@ -289,7 +286,7 @@ describe("batchDonations utilities", () => {
     });
 
     it("should validate contract addresses are not zero address", () => {
-      Object.entries(BATCH_DONATIONS_CONTRACTS).forEach(([chainId, address]) => {
+      Object.entries(BATCH_DONATIONS_CONTRACTS).forEach(([_chainId, address]) => {
         if (address !== null) {
           expect(address).not.toBe("0x0000000000000000000000000000000000000000");
         }
@@ -332,4 +329,3 @@ describe("batchDonations utilities", () => {
     });
   });
 });
-

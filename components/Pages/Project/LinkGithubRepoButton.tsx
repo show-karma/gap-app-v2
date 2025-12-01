@@ -1,19 +1,19 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Dialog, Transition } from "@headlessui/react";
+import { CheckIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { FC, ReactNode } from "react";
+import { Fragment, useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { Button } from "@/components/ui/button";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
-import { Dialog, Transition } from "@headlessui/react";
-import { PlusIcon, TrashIcon, CheckIcon } from "@heroicons/react/24/outline";
-import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import type { FC, ReactNode } from "react";
-import { Fragment, useEffect, useState } from "react";
-import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
 
 // GitHub icon SVG component
 const GitHubIcon: FC<{ className?: string }> = ({ className }) => (
@@ -49,23 +49,17 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
 }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isCommunityAdmin = useCommunityAdminStore(
-    (state) => state.isCommunityAdmin
-  );
+  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
   const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
   const { address } = useAccount();
 
   const [isOpen, setIsOpen] = useState(false);
   const [repos, setRepos] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<
-    Record<number, string>
-  >({});
+  const [validationErrors, setValidationErrors] = useState<Record<number, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [validatingRepo, setValidatingRepo] = useState<number | null>(null);
-  const [validatedRepos, setValidatedRepos] = useState<Record<number, boolean>>(
-    {}
-  );
+  const [validatedRepos, setValidatedRepos] = useState<Record<number, boolean>>({});
   const { refreshProject } = useProjectStore();
 
   // Auto open the dialog if buttonElement is null
@@ -156,7 +150,7 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
         setValidatedRepos((prev) => ({ ...prev, [index]: false }));
         return false;
       }
-    } catch (e) {
+    } catch (_e) {
       setValidationErrors((prev) => ({
         ...prev,
         [index]: "Invalid URL format",
@@ -182,9 +176,7 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
     // Check if repo exists and is public
     setValidatingRepo(index);
     try {
-      const response = await fetch(
-        `https://api.github.com/repos/${owner}/${repoName}`
-      );
+      const response = await fetch(`https://api.github.com/repos/${owner}/${repoName}`);
 
       if (!response.ok) {
         if (response.status === 404) {
@@ -206,8 +198,7 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
       if (repoData.private) {
         setValidationErrors((prev) => ({
           ...prev,
-          [index]:
-            "Repository is private. Only public repositories are supported.",
+          [index]: "Repository is private. Only public repositories are supported.",
         }));
         setValidatedRepos((prev) => ({ ...prev, [index]: false }));
         return false;
@@ -245,9 +236,7 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
     const nonEmptyRepos = repos.filter((repo) => repo.trim() !== "");
 
     // Check if all non-empty repos are validated
-    const allValidated = nonEmptyRepos.every(
-      (_, index) => validatedRepos[index]
-    );
+    const allValidated = nonEmptyRepos.every((_, index) => validatedRepos[index]);
 
     if (!allValidated) {
       setError("Please validate all repositories before saving.");
@@ -256,14 +245,10 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
     }
 
     try {
-      const [data, error] = await fetchData(
-        INDEXER.PROJECT.EXTERNAL.UPDATE(project.uid),
-        "PUT",
-        {
-          target: "github",
-          ids: nonEmptyRepos,
-        }
-      );
+      const [data, error] = await fetchData(INDEXER.PROJECT.EXTERNAL.UPDATE(project.uid), "PUT", {
+        target: "github",
+        ids: nonEmptyRepos,
+      });
 
       if (data) {
         setRepos(nonEmptyRepos.length ? nonEmptyRepos : [""]);
@@ -298,9 +283,7 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
 
   // Check if all non-empty repos are validated
   const areAllReposValidated = () => {
-    return repos
-      .filter((repo) => repo.trim() !== "")
-      .every((_, index) => validatedRepos[index]);
+    return repos.filter((repo) => repo.trim() !== "").every((_, index) => validatedRepos[index]);
   };
 
   const handleClose = () => {
@@ -352,16 +335,11 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
                 leaveTo="opacity-0 scale-95"
               >
                 <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-4 sm:p-6 text-left align-middle transition-all ease-in-out duration-300">
-                  <Dialog.Title
-                    as="h3"
-                    className="text-gray-900 dark:text-zinc-100"
-                  >
-                    <h2 className="text-2xl font-bold leading-6">
-                      Link GitHub Repositories
-                    </h2>
+                  <Dialog.Title as="h3" className="text-gray-900 dark:text-zinc-100">
+                    <h2 className="text-2xl font-bold leading-6">Link GitHub Repositories</h2>
                     <p className="text-md text-gray-500 dark:text-gray-400 mt-2">
-                      Add one or more GitHub repository URLs for the project.
-                      Only public repositories are supported.
+                      Add one or more GitHub repository URLs for the project. Only public
+                      repositories are supported.
                     </p>
                   </Dialog.Title>
                   <div className="max-h-[60vh] flex flex-col gap-4 mt-8 overflow-y-auto">
@@ -376,18 +354,14 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
                               <input
                                 type="text"
                                 value={repo}
-                                onChange={(e) =>
-                                  handleRepoChange(index, e.target.value)
-                                }
+                                onChange={(e) => handleRepoChange(index, e.target.value)}
                                 className="text-sm rounded-md w-full text-gray-600 dark:text-gray-300 bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none focus:border-blue-500"
                                 placeholder="https://github.com/username/repository"
                               />
                             </div>
                             <div className="flex items-center self-end sm:self-auto mt-2 sm:mt-0">
                               {validatingRepo === index ? (
-                                <span className="text-sm animate-pulse mx-2">
-                                  Validating...
-                                </span>
+                                <span className="text-sm animate-pulse mx-2">Validating...</span>
                               ) : validatedRepos[index] ? (
                                 <div className="relative group">
                                   <CheckIcon
@@ -400,9 +374,7 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
                                 </div>
                               ) : (
                                 <Button
-                                  onClick={() =>
-                                    validateGithubRepo(repo, index)
-                                  }
+                                  onClick={() => validateGithubRepo(repo, index)}
                                   className="p-2 ml-2"
                                   aria-label="Validate repository"
                                   disabled={!repo.trim()}
@@ -431,14 +403,12 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
                     ))}
                     <Button
                       onClick={handleAddRepo}
-                      className="flex items-center justify-center text-white gap-2 border border-primary-500 bg-primary-500 hover:bg-primary-600"
+                      className="flex items-center justify-center gap-2 border border-primary-500"
                     >
                       <PlusIcon className="h-5 w-5" />
                       Add Another Repository
                     </Button>
-                    {error && (
-                      <p className="text-red-500 text-sm mt-2">{error}</p>
-                    )}
+                    {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
                   </div>
                   <div className="flex flex-col sm:flex-row gap-4 mt-10 justify-end">
                     <Button

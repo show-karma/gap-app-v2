@@ -1,5 +1,5 @@
+import type { FC } from "react";
 import { cn } from "@/utilities/tailwind";
-import { FC } from "react";
 
 interface SpinnerProps {
   className?: string;

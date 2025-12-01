@@ -5,8 +5,7 @@ interface EndorsementStore {
   setIsEndorsementOpen: (isEndorsementOpen: boolean) => void;
 }
 
-export const useEndorsementStore = create<EndorsementStore>((set, get) => ({
+export const useEndorsementStore = create<EndorsementStore>((set, _get) => ({
   isEndorsementOpen: false,
-  setIsEndorsementOpen: (isEndorsementOpen: boolean) =>
-    set({ isEndorsementOpen }),
+  setIsEndorsementOpen: (isEndorsementOpen: boolean) => set({ isEndorsementOpen }),
 }));

@@ -1,10 +1,10 @@
 "use client";
 
-import { FC, useState } from "react";
-import { Button } from "@/components/Utilities/Button";
 import { SparklesIcon } from "@heroicons/react/24/outline";
-import { fundingApplicationsAPI } from "@/services/fundingPlatformService";
+import { type FC, useState } from "react";
 import toast from "react-hot-toast";
+import { Button } from "@/components/Utilities/Button";
+import { fundingApplicationsAPI } from "@/services/fundingPlatformService";
 
 interface AIEvaluationButtonProps {
   referenceNumber: string;
@@ -25,9 +25,9 @@ const AIEvaluationButton: FC<AIEvaluationButtonProps> = ({
     }
 
     setIsEvaluating(true);
-    
+
     try {
-      const result = await fundingApplicationsAPI.runAIEvaluation(referenceNumber);
+      const _result = await fundingApplicationsAPI.runAIEvaluation(referenceNumber);
 
       toast.success("AI evaluation completed successfully!");
 
@@ -37,16 +37,18 @@ const AIEvaluationButton: FC<AIEvaluationButtonProps> = ({
           await onEvaluationComplete();
         } catch (refreshError) {
           console.error("Failed to refresh application after AI evaluation:", refreshError);
-          toast.error("Evaluation completed but failed to refresh the display. Please reload the page.");
+          toast.error(
+            "Evaluation completed but failed to refresh the display. Please reload the page."
+          );
         }
       }
     } catch (error) {
       console.error("Failed to run AI evaluation:", error);
-      
+
       let errorMessage = "Failed to run AI evaluation";
       if (error instanceof Error) {
         errorMessage = error.message;
-      } else if (error && typeof error === 'object' && 'response' in error) {
+      } else if (error && typeof error === "object" && "response" in error) {
         const responseError = error as { response?: { data?: { message?: string } } };
         errorMessage = responseError.response?.data?.message || errorMessage;
       }
@@ -63,9 +65,9 @@ const AIEvaluationButton: FC<AIEvaluationButtonProps> = ({
       disabled={disabled || isEvaluating}
       aria-label={isEvaluating ? "AI evaluation in progress" : "Run AI evaluation"}
       aria-busy={isEvaluating}
-      className={`flex items-center space-x-2 px-3 py-2 text-sm ${isEvaluating ? 'animate-pulse' : ''}`}
+      className={`flex items-center space-x-2 px-3 py-2 text-sm ${isEvaluating ? "animate-pulse" : ""}`}
     >
-      <SparklesIcon className={`w-4 h-4 ${isEvaluating ? 'animate-spin' : ''}`} />
+      <SparklesIcon className={`w-4 h-4 ${isEvaluating ? "animate-spin" : ""}`} />
       <span>{isEvaluating ? "Running AI Evaluation..." : "Run AI Evaluation"}</span>
     </Button>
   );

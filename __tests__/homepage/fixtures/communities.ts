@@ -68,4 +68,3 @@ export const createMockCommunity = (overrides: Partial<ChosenCommunity> = {}): C
 export const getMockCommunities = (count: number): ChosenCommunity[] => {
   return mockCommunities.slice(0, count);
 };
-

@@ -1,26 +1,22 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
+import type {
+  IGrantResponse,
+  IMilestoneResponse,
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import Image from "next/image";
+import { useState } from "react";
 import { MilestoneUpdateForm } from "@/components/Forms/MilestoneUpdate";
 import { Button } from "@/components/Utilities/Button";
 import { useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
-import {
-  IGrantResponse,
-  IMilestoneResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useState } from "react";
 import { Dropdown } from "./Dropdown";
 import { NoGrant } from "./NoGrant";
 
 export const MilestoneUpdateScreen = () => {
   const { project } = useProjectStore();
   const { closeProgressModal } = useProgressModalStore();
-  const [selectedGrant, setSelectedGrant] = useState<
-    IGrantResponse | undefined
-  >();
-  const [selectedMilestone, setSelectedMilestone] = useState<
-    IMilestoneResponse | undefined
-  >();
+  const [selectedGrant, setSelectedGrant] = useState<IGrantResponse | undefined>();
+  const [selectedMilestone, setSelectedMilestone] = useState<IMilestoneResponse | undefined>();
   const grants: IGrantResponse[] = project?.grants || [];
   const { setProgressModalScreen } = useProgressModalStore();
 
@@ -35,9 +31,7 @@ export const MilestoneUpdateScreen = () => {
   const GrantSelection = () => {
     return (
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-bold text-black dark:text-zinc-100">
-          Select Grant
-        </label>
+        <div className="text-sm font-bold text-black dark:text-zinc-100">Select Grant</div>
         <Dropdown
           list={grants.map((grant) => ({
             value: grant.details?.data.title || "",
@@ -69,9 +63,7 @@ export const MilestoneUpdateScreen = () => {
     );
     return (
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-bold text-black dark:text-zinc-100">
-          Select Milestone
-        </label>
+        <div className="text-sm font-bold text-black dark:text-zinc-100">Select Milestone</div>
         {possibleMilestones?.length ? (
           <Dropdown
             list={possibleMilestones.map((milestone) => ({
@@ -80,9 +72,7 @@ export const MilestoneUpdateScreen = () => {
               timestamp: milestone.createdAt,
             }))}
             onSelectFunction={(value: string) => {
-              const newMilestone = possibleMilestones.find(
-                (milestone) => milestone.uid === value
-              );
+              const newMilestone = possibleMilestones.find((milestone) => milestone.uid === value);
               setSelectedMilestone(newMilestone);
             }}
             type={"Milestones"}
@@ -98,9 +88,11 @@ export const MilestoneUpdateScreen = () => {
       <div className="flex flex-col gap-2">
         <GrantSelection />
         <div className="flex w-full flex-col items-center justify-center gap-4 rounded border border-gray-200 bg-blue-50 dark:bg-zinc-800 p-4">
-          <img
+          <Image
             src="/images/comments.png"
             alt="Milestone achievements"
+            width={438}
+            height={185}
             className="h-[185px] w-[438px] object-cover"
           />
           <p className="text-base font-normal text-black max-sm:text-sm dark:text-white">

@@ -3,12 +3,12 @@ import {
   arbitrum,
   baseSepolia,
   celo,
+  lisk,
   optimism,
   optimismSepolia,
+  scroll,
   sei,
   sepolia,
-  lisk,
-  scroll,
 } from "viem/chains";
 import { envVars } from "./enviromentVars";
 import { getChainNameById } from "./network";

@@ -1,9 +1,9 @@
-import { renderHook, act, waitFor } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
+import { type Address, getAddress, parseUnits } from "viem";
+import * as wagmi from "wagmi";
+import type { SupportedToken } from "@/constants/supportedTokens";
 import { useDonationTransfer, useTransactionStatus } from "@/hooks/useDonationTransfer";
 import type { DonationPayment } from "@/store/donationCart";
-import type { SupportedToken } from "@/constants/supportedTokens";
-import * as wagmi from "wagmi";
-import { parseUnits, getAddress, type Address } from "viem";
 
 // Mock wagmi hooks
 jest.mock("wagmi", () => ({
@@ -34,7 +34,9 @@ jest.mock("@/utilities/donations/batchDonations", () => ({
   },
   PERMIT2_ADDRESS: "0x000000000022D473030F116dDEE9F6B43aC78BA3" as Address,
   getBatchDonationsContractAddress: jest.fn((chainId: number) =>
-    chainId === 10 ? "0x1111111111111111111111111111111111111111" : "0x2222222222222222222222222222222222222222"
+    chainId === 10
+      ? "0x1111111111111111111111111111111111111111"
+      : "0x2222222222222222222222222222222222222222"
   ),
 }));
 
@@ -153,7 +155,10 @@ describe("useDonationTransfer", () => {
     const { getRPCClient } = require("@/utilities/rpcClient");
     getRPCClient.mockResolvedValue(mockPublicClient);
 
-    const { getWalletClientWithFallback, isWalletClientGoodEnough } = require("@/utilities/walletClientFallback");
+    const {
+      getWalletClientWithFallback,
+      isWalletClientGoodEnough,
+    } = require("@/utilities/walletClientFallback");
     getWalletClientWithFallback.mockResolvedValue(mockWalletClient);
     isWalletClientGoodEnough.mockReturnValue(true);
 
@@ -171,7 +176,7 @@ describe("useDonationTransfer", () => {
   afterEach(() => {
     // Reset all mocks to prevent state accumulation
     jest.clearAllMocks();
-    
+
     // Reset mock implementations to defaults
     mockWalletClient.signTypedData.mockResolvedValue("0xsignature");
     mockWriteContractAsync.mockResolvedValue("0xtxhash");
@@ -261,9 +266,9 @@ describe("useDonationTransfer", () => {
 
       const { result } = renderHook(() => useDonationTransfer());
 
-      await expect(
-        result.current.checkApprovals([mockPayment])
-      ).rejects.toThrow("Wallet not connected");
+      await expect(result.current.checkApprovals([mockPayment])).rejects.toThrow(
+        "Wallet not connected"
+      );
     });
 
     it("should throw error when public client unavailable", async () => {
@@ -271,23 +276,18 @@ describe("useDonationTransfer", () => {
 
       const { result } = renderHook(() => useDonationTransfer());
 
-      await expect(
-        result.current.checkApprovals([mockPayment])
-      ).rejects.toThrow();
+      await expect(result.current.checkApprovals([mockPayment])).rejects.toThrow();
     });
   });
 
   describe("executeDonations", () => {
-    const getRecipientAddress = jest.fn((projectId: string) => mockRecipientAddress);
+    const getRecipientAddress = jest.fn((_projectId: string) => mockRecipientAddress);
 
     it("should execute donation for native token", async () => {
       const { result } = renderHook(() => useDonationTransfer());
 
       await act(async () => {
-        await result.current.executeDonations(
-          [mockNativePayment],
-          getRecipientAddress
-        );
+        await result.current.executeDonations([mockNativePayment], getRecipientAddress);
       });
 
       expect(mockWriteContractAsync).toHaveBeenCalled();
@@ -310,10 +310,7 @@ describe("useDonationTransfer", () => {
       ]);
 
       await act(async () => {
-        await result.current.executeDonations(
-          [mockPayment],
-          getRecipientAddress
-        );
+        await result.current.executeDonations([mockPayment], getRecipientAddress);
       });
 
       expect(mockWriteContractAsync).toHaveBeenCalled();
@@ -344,10 +341,7 @@ describe("useDonationTransfer", () => {
       ]);
 
       await act(async () => {
-        await result.current.executeDonations(
-          [mockPayment],
-          getRecipientAddress
-        );
+        await result.current.executeDonations([mockPayment], getRecipientAddress);
       });
 
       expect(executeApprovals).toHaveBeenCalled();
@@ -360,10 +354,7 @@ describe("useDonationTransfer", () => {
 
       await expect(
         act(async () => {
-          await result.current.executeDonations(
-            [mockPayment],
-            invalidGetRecipient
-          );
+          await result.current.executeDonations([mockPayment], invalidGetRecipient);
         })
       ).rejects.toThrow("Missing payout address");
     });
@@ -374,10 +365,7 @@ describe("useDonationTransfer", () => {
 
       await expect(
         act(async () => {
-          await result.current.executeDonations(
-            [mockPayment],
-            getInvalidRecipient
-          );
+          await result.current.executeDonations([mockPayment], getInvalidRecipient);
         })
       ).rejects.toThrow("Missing payout address");
     });
@@ -397,10 +385,7 @@ describe("useDonationTransfer", () => {
 
       await expect(
         act(async () => {
-          await result.current.executeDonations(
-            [mockPayment],
-            getBadRecipient
-          );
+          await result.current.executeDonations([mockPayment], getBadRecipient);
         })
       ).rejects.toThrow("Invalid payout address");
     });
@@ -415,10 +400,7 @@ describe("useDonationTransfer", () => {
 
       await expect(
         act(async () => {
-          await result.current.executeDonations(
-            [mockPayment],
-            getRecipientAddress
-          );
+          await result.current.executeDonations([mockPayment], getRecipientAddress);
         })
       ).rejects.toThrow("Wallet not connected");
     });
@@ -426,17 +408,12 @@ describe("useDonationTransfer", () => {
     it("should handle user rejection error", async () => {
       const { result } = renderHook(() => useDonationTransfer());
 
-      mockWriteContractAsync.mockRejectedValue(
-        new Error("User rejected the request")
-      );
+      mockWriteContractAsync.mockRejectedValue(new Error("User rejected the request"));
 
       // User rejection should throw an error
       await expect(
         act(async () => {
-          await result.current.executeDonations(
-            [mockNativePayment],
-            getRecipientAddress
-          );
+          await result.current.executeDonations([mockNativePayment], getRecipientAddress);
         })
       ).rejects.toThrow("User rejected the request");
     });
@@ -451,10 +428,7 @@ describe("useDonationTransfer", () => {
 
       await expect(
         act(async () => {
-          await result.current.executeDonations(
-            [mockNativePayment],
-            getRecipientAddress
-          );
+          await result.current.executeDonations([mockNativePayment], getRecipientAddress);
         })
       ).rejects.toThrow();
     });
@@ -482,10 +456,7 @@ describe("useDonationTransfer", () => {
       };
 
       await act(async () => {
-        await result.current.executeDonations(
-          [mockPayment, payment2],
-          getRecipientAddress
-        );
+        await result.current.executeDonations([mockPayment, payment2], getRecipientAddress);
       });
 
       // Should be called twice (once per chain)
@@ -501,10 +472,7 @@ describe("useDonationTransfer", () => {
 
       await expect(
         act(async () => {
-          await result.current.executeDonations(
-            [invalidChainPayment],
-            getRecipientAddress
-          );
+          await result.current.executeDonations([invalidChainPayment], getRecipientAddress);
         })
       ).rejects.toThrow("Batch donations contract not deployed");
     });
@@ -514,11 +482,7 @@ describe("useDonationTransfer", () => {
       const beforeTransfer = jest.fn().mockResolvedValue(undefined);
 
       await act(async () => {
-        await result.current.executeDonations(
-          [mockPayment],
-          getRecipientAddress,
-          beforeTransfer
-        );
+        await result.current.executeDonations([mockPayment], getRecipientAddress, beforeTransfer);
       });
 
       expect(beforeTransfer).toHaveBeenCalledWith(mockPayment);
@@ -533,10 +497,7 @@ describe("useDonationTransfer", () => {
 
       await expect(
         act(async () => {
-          await result.current.executeDonations(
-            [negativePayment],
-            getRecipientAddress
-          );
+          await result.current.executeDonations([negativePayment], getRecipientAddress);
         })
       ).rejects.toThrow();
     });
@@ -547,10 +508,7 @@ describe("useDonationTransfer", () => {
       const states: string[] = [];
 
       const executionPromise = act(async () => {
-        await result.current.executeDonations(
-          [mockNativePayment],
-          getRecipientAddress
-        );
+        await result.current.executeDonations([mockNativePayment], getRecipientAddress);
       });
 
       // Check initial state
@@ -572,10 +530,7 @@ describe("useDonationTransfer", () => {
     it("should validate sufficient balance", async () => {
       const { result } = renderHook(() => useDonationTransfer());
 
-      const validation = await result.current.validatePayments(
-        [mockPayment],
-        balanceByTokenKey
-      );
+      const validation = await result.current.validatePayments([mockPayment], balanceByTokenKey);
 
       expect(validation.valid).toBe(true);
       expect(validation.errors).toHaveLength(0);
@@ -589,10 +544,7 @@ describe("useDonationTransfer", () => {
         amount: "10000", // More than available
       };
 
-      const validation = await result.current.validatePayments(
-        [largePayment],
-        balanceByTokenKey
-      );
+      const validation = await result.current.validatePayments([largePayment], balanceByTokenKey);
 
       expect(validation.valid).toBe(false);
       expect(validation.errors).toHaveLength(1);
@@ -607,10 +559,7 @@ describe("useDonationTransfer", () => {
         amount: "0",
       };
 
-      const validation = await result.current.validatePayments(
-        [zeroPayment],
-        balanceByTokenKey
-      );
+      const validation = await result.current.validatePayments([zeroPayment], balanceByTokenKey);
 
       expect(validation.valid).toBe(false);
       expect(validation.errors).toHaveLength(1);
@@ -686,10 +635,7 @@ describe("useDonationTransfer", () => {
     it("should return true when balance is sufficient", async () => {
       const { result } = renderHook(() => useDonationTransfer());
 
-      const hasSufficient = await result.current.checkSufficientBalance(
-        mockPayment,
-        "1000"
-      );
+      const hasSufficient = await result.current.checkSufficientBalance(mockPayment, "1000");
 
       expect(hasSufficient).toBe(true);
     });
@@ -697,10 +643,7 @@ describe("useDonationTransfer", () => {
     it("should return false when balance is insufficient", async () => {
       const { result } = renderHook(() => useDonationTransfer());
 
-      const hasSufficient = await result.current.checkSufficientBalance(
-        mockPayment,
-        "50"
-      );
+      const hasSufficient = await result.current.checkSufficientBalance(mockPayment, "50");
 
       expect(hasSufficient).toBe(false);
     });
@@ -708,10 +651,7 @@ describe("useDonationTransfer", () => {
     it("should return true when balance equals amount", async () => {
       const { result } = renderHook(() => useDonationTransfer());
 
-      const hasSufficient = await result.current.checkSufficientBalance(
-        mockPayment,
-        "100"
-      );
+      const hasSufficient = await result.current.checkSufficientBalance(mockPayment, "100");
 
       expect(hasSufficient).toBe(true);
     });
@@ -725,10 +665,7 @@ describe("useDonationTransfer", () => {
         amount: "invalid-amount",
       };
 
-      const hasSufficient = await result.current.checkSufficientBalance(
-        invalidPayment,
-        "100"
-      );
+      const hasSufficient = await result.current.checkSufficientBalance(invalidPayment, "100");
 
       expect(hasSufficient).toBe(false);
     });
@@ -763,10 +700,7 @@ describe("useDonationTransfer", () => {
         chainId: 8453,
       };
 
-      const estimate = result.current.getEstimatedGasCost([
-        mockPayment,
-        payment2,
-      ]);
+      const estimate = result.current.getEstimatedGasCost([mockPayment, payment2]);
 
       // 95,000 (ERC20) + 95,000 (ERC20) + 240,000 (2 chains * 120,000) = 430,000
       expect(estimate).toContain("gas units");
@@ -776,10 +710,7 @@ describe("useDonationTransfer", () => {
     it("should estimate gas for mixed native and ERC20 transfers", () => {
       const { result } = renderHook(() => useDonationTransfer());
 
-      const estimate = result.current.getEstimatedGasCost([
-        mockPayment,
-        mockNativePayment,
-      ]);
+      const estimate = result.current.getEstimatedGasCost([mockPayment, mockNativePayment]);
 
       // Both on same chain: 95,000 (ERC20) + 21,000 (native) + 120,000 (1 chain) = 236,000
       expect(estimate).toContain("gas units");
@@ -789,7 +720,6 @@ describe("useDonationTransfer", () => {
 
   // TODO: These tests need proper mock isolation - currently failing due to mock state leakage between tests
   describe.skip("execution state management", () => {
-
     it("should set isExecuting to true during execution", async () => {
       const { result } = renderHook(() => useDonationTransfer());
 
@@ -818,7 +748,7 @@ describe("useDonationTransfer", () => {
             jest.fn(() => mockRecipientAddress)
           );
         });
-      } catch (error) {
+      } catch (_error) {
         // Error expected
       }
 
@@ -893,11 +823,11 @@ describe("useDonationTransfer", () => {
 
     it("should handle chain mismatch detection", async () => {
       const { result } = renderHook(() => useDonationTransfer());
-      
+
       // Ensure hook is initialized
       expect(result.current).toBeDefined();
       expect(result.current.executeDonations).toBeDefined();
-      
+
       const invalidPayment: DonationPayment = {
         ...mockPayment,
         chainId: 10,
@@ -1013,17 +943,19 @@ describe("useDonationTransfer", () => {
         token: { ...mockToken, chainId: 8453 },
       };
 
-      checkTokenAllowances.mockImplementation((client: any, address: Address, spender: Address, tokens: any[], chainId: number) => {
-        return Promise.resolve([
-          {
-            needsApproval: true,
-            tokenAddress: mockToken.address as Address,
-            tokenSymbol: mockToken.symbol,
-            requiredAmount: BigInt("100000000"),
-            chainId,
-          },
-        ]);
-      });
+      checkTokenAllowances.mockImplementation(
+        (_client: any, _address: Address, _spender: Address, _tokens: any[], chainId: number) => {
+          return Promise.resolve([
+            {
+              needsApproval: true,
+              tokenAddress: mockToken.address as Address,
+              tokenSymbol: mockToken.symbol,
+              requiredAmount: BigInt("100000000"),
+              chainId,
+            },
+          ]);
+        }
+      );
 
       executeApprovals.mockResolvedValue([
         {
@@ -1048,7 +980,6 @@ describe("useDonationTransfer", () => {
 
   // TODO: These tests need proper wagmi mock setup - useWaitForTransactionReceipt not properly mocked
   describe.skip("useTransactionStatus", () => {
-
     it("should return pending status when loading", () => {
       (wagmi.useWaitForTransactionReceipt as jest.Mock).mockReturnValue({
         data: null,
