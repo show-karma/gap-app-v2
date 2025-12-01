@@ -1,6 +1,6 @@
+import type { Metadata } from "next";
 import { MilestonesReviewPage } from "@/components/Pages/Admin/MilestonesReview";
 import { defaultMetadata } from "@/utilities/meta";
-import { Metadata } from "next";
 
 export const metadata: Metadata = defaultMetadata;
 
@@ -14,10 +14,7 @@ type SearchParams = Promise<{
   from?: string;
 }>;
 
-export default async function Page(props: {
-  params: Params;
-  searchParams: SearchParams;
-}) {
+export default async function Page(props: { params: Params; searchParams: SearchParams }) {
   const { communityId, projectId } = await props.params;
   const { programIds, from } = await props.searchParams;
 

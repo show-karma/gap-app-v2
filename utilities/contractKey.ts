@@ -4,5 +4,4 @@
  * @param address - The contract address
  * @returns A string key in the format "network:address"
  */
-export const getContractKey = (network: string, address: string): string =>
-  `${network}:${address}`;
+export const getContractKey = (network: string, address: string): string => `${network}:${address}`;

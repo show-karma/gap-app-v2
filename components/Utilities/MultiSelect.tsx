@@ -1,7 +1,7 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
-import { CheckIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { CheckIcon, XMarkIcon } from "@heroicons/react/24/solid";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/utilities/tailwind";
 
 interface Option {
@@ -32,10 +32,7 @@ export const MultiSelect = ({
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     };
@@ -68,8 +65,9 @@ export const MultiSelect = ({
   return (
     <div className={cn("relative", className)} ref={containerRef}>
       {/* Selected items display */}
-      <div
-        className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-zinc-800 cursor-pointer min-h-[42px] flex flex-wrap gap-2 items-center"
+      <button
+        type="button"
+        className="w-full border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 bg-white dark:bg-zinc-800 cursor-pointer min-h-[42px] flex flex-wrap gap-2 items-center text-left"
         onClick={() => {
           setIsOpen(!isOpen);
           if (!isOpen && inputRef.current) {
@@ -80,34 +78,28 @@ export const MultiSelect = ({
         }}
       >
         {value.length === 0 ? (
-          <span className="text-gray-400 dark:text-gray-500">
-            {placeholder}
-          </span>
+          <span className="text-gray-400 dark:text-gray-500">{placeholder}</span>
         ) : (
-          <>
-            {selectedLabels.map((label) => (
-              <span
-                key={label}
-                className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-md text-sm flex items-center"
-              >
-                {label}
-                <XMarkIcon
-                  className="h-3.5 w-3.5 ml-1 cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const optionToRemove = options.find(
-                      (o) => o.label === label
-                    );
-                    if (optionToRemove) {
-                      onChange(value.filter((v) => v !== optionToRemove.value));
-                    }
-                  }}
-                />
-              </span>
-            ))}
-          </>
+          selectedLabels.map((label) => (
+            <span
+              key={label}
+              className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-md text-sm flex items-center"
+            >
+              {label}
+              <XMarkIcon
+                className="h-3.5 w-3.5 ml-1 cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const optionToRemove = options.find((o) => o.label === label);
+                  if (optionToRemove) {
+                    onChange(value.filter((v) => v !== optionToRemove.value));
+                  }
+                }}
+              />
+            </span>
+          ))
         )}
-      </div>
+      </button>
 
       {/* Dropdown */}
       {isOpen && (
@@ -136,11 +128,15 @@ export const MultiSelect = ({
                   key={option.value}
                   className={cn(
                     "px-3 py-2 hover:bg-gray-100 dark:hover:bg-zinc-700 cursor-pointer flex items-center justify-between",
-                    value.includes(option.value)
-                      ? "bg-blue-50 dark:bg-blue-900/20"
-                      : ""
+                    value.includes(option.value) ? "bg-blue-50 dark:bg-blue-900/20" : ""
                   )}
                   onClick={() => toggleOption(option.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      toggleOption(option.value);
+                    }
+                  }}
                 >
                   <span>{option.label}</span>
                   {value.includes(option.value) && (

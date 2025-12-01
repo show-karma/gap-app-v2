@@ -1,12 +1,10 @@
-import { errorManager } from "@/components/Utilities/errorManager";
-import { getGapClient, getDefaultGapChainId } from "@/hooks/useGap";
-import { zeroUID } from "@/utilities/commons";
 import type { Project } from "@show-karma/karma-gap-sdk/core/class/entities/Project";
-import { Hex } from "viem";
+import type { Hex } from "viem";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { getDefaultGapChainId, getGapClient } from "@/hooks/useGap";
+import { zeroUID } from "@/utilities/commons";
 
-export const getProjectById = async (
-  projectId: string
-): Promise<Project | undefined> => {
+export const getProjectById = async (projectId: string): Promise<Project | undefined> => {
   try {
     const defaultChainId = getDefaultGapChainId();
     if (!defaultChainId) return;
@@ -20,9 +18,8 @@ export const getProjectById = async (
       return;
     }
     return fetchedProject;
-  } catch (error: any) {
-    console.log(error);
+  } catch (error: unknown) {
     errorManager(`Error getting project: ${projectId}`, error);
-    throw new Error(error);
+    throw error instanceof Error ? error : new Error(String(error));
   }
 };

@@ -1,16 +1,16 @@
 "use client";
-import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
-import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
-import { formatDate } from "@/utilities/formatDate";
-import { ReadMore } from "@/utilities/ReadMore";
-import { useState } from "react";
-import { cn } from "@/utilities/tailwind";
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { UnifiedMilestone } from "@/types/roadmap";
-import { ExternalLink } from "../Utilities/ExternalLink";
-import { PAGES } from "@/utilities/pages";
+import { useState } from "react";
+import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
 import { useMilestoneImpactAnswers } from "@/hooks/useMilestoneImpactAnswers";
+import type { UnifiedMilestone } from "@/types/roadmap";
+import { formatDate } from "@/utilities/formatDate";
+import { PAGES } from "@/utilities/pages";
+import { ReadMore } from "@/utilities/ReadMore";
+import { cn } from "@/utilities/tailwind";
+import { ExternalLink } from "../Utilities/ExternalLink";
 
 const ProjectObjectiveCompletion = dynamic(
   () =>
@@ -24,19 +24,14 @@ const ProjectObjectiveCompletion = dynamic(
 
 const ObjectiveOptionsMenu = dynamic(
   () =>
-    import("@/components/Pages/Project/Objective/Options").then(
-      (mod) => mod.ObjectiveOptionsMenu
-    ),
+    import("@/components/Pages/Project/Objective/Options").then((mod) => mod.ObjectiveOptionsMenu),
   {
     ssr: false,
   }
 );
 
 const GrantMilestoneOptionsMenu = dynamic(
-  () =>
-    import("./GrantMilestoneOptionsMenu").then(
-      (mod) => mod.GrantMilestoneOptionsMenu
-    ),
+  () => import("./GrantMilestoneOptionsMenu").then((mod) => mod.GrantMilestoneOptionsMenu),
   {
     ssr: false,
   }
@@ -57,10 +52,7 @@ interface MilestoneCardProps {
   isAuthorized: boolean;
 }
 
-export const MilestoneCard = ({
-  milestone,
-  isAuthorized,
-}: MilestoneCardProps) => {
+export const MilestoneCard = ({ milestone, isAuthorized }: MilestoneCardProps) => {
   const [isCompleting, setIsCompleting] = useState(false);
 
   const handleCompleting = (isCompleting: boolean) => {
@@ -77,9 +69,7 @@ export const MilestoneCard = ({
   // project milestone-specific properties
   const projectMilestone = milestone.source.projectMilestone;
   const attester =
-    projectMilestone?.attester ||
-    milestone.source.grantMilestone?.milestone.attester ||
-    "";
+    projectMilestone?.attester || milestone.source.grantMilestone?.milestone.attester || "";
   const createdAt = milestone.createdAt;
 
   // grant milestone-specific properties
@@ -91,8 +81,7 @@ export const MilestoneCard = ({
 
   // completion information
   const completionReason =
-    projectMilestone?.completed?.data?.reason ||
-    grantMilestone?.milestone.completed?.data?.reason;
+    projectMilestone?.completed?.data?.reason || grantMilestone?.milestone.completed?.data?.reason;
   const completionProof =
     projectMilestone?.completed?.data?.proofOfWork ||
     grantMilestone?.milestone.completed?.data?.proofOfWork;
@@ -106,7 +95,7 @@ export const MilestoneCard = ({
     return "border-gray-300 dark:border-zinc-400";
   };
 
-  const getLeftBorderColor = () => {
+  const _getLeftBorderColor = () => {
     if (completed) return "#2ED3B7";
     return "#FDB022";
   };
@@ -171,9 +160,7 @@ export const MilestoneCard = ({
         {/* Title and Controls */}
         <div className="flex flex-row gap-3 items-start justify-between w-full">
           <div className="flex flex-row gap-3 items-center max-lg:flex-col-reverse max-lg:items-start max-lg:gap-2 w-full">
-            <p className="text-xl font-bold text-[#101828] dark:text-zinc-100">
-              {title}
-            </p>
+            <p className="text-xl font-bold text-[#101828] dark:text-zinc-100">{title}</p>
             <p
               className={cn(
                 "px-2 py-0.5 rounded-full text-xs",
@@ -235,106 +222,112 @@ export const MilestoneCard = ({
         </div>
 
         {/* Completion Information */}
-        {isCompleting || completionReason || completionProof || (completionDeliverables && completionDeliverables.length > 0) || (milestoneImpactData && milestoneImpactData.length > 0) ? (
-          <>
-            {type === "project" ? (
-              handleProjectMilestoneCompletion()
-            ) : type === "grant" && isCompleting ? (
-              <div className="w-full flex-col flex gap-2 px-4 py-2 bg-[#F8F9FC] dark:bg-zinc-700 rounded-lg">
-                <GrantMilestoneCompletion
-                  milestone={milestone}
-                  handleCompleting={handleCompleting}
-                />
-              </div>
-            ) : (
-              <div className="w-full flex-col flex gap-2 px-4 py-2 bg-[#F8F9FC] dark:bg-zinc-700 rounded-lg">
-                {completionReason ? (
-                  <div className="flex flex-col gap-1">
-                    <ReadMore side="left">{completionReason}</ReadMore>
-                  </div>
-                ) : null}
-                {completionProof ? (
-                  <div className="flex flex-col gap-1">
-                    <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-                      Proof of Work
-                    </p>
-                    <a
-                      href={completionProof}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-brand-blue hover:underline break-all"
+        {isCompleting ||
+        completionReason ||
+        completionProof ||
+        (completionDeliverables && completionDeliverables.length > 0) ||
+        (milestoneImpactData && milestoneImpactData.length > 0) ? (
+          type === "project" ? (
+            handleProjectMilestoneCompletion()
+          ) : type === "grant" && isCompleting ? (
+            <div className="w-full flex-col flex gap-2 px-4 py-2 bg-[#F8F9FC] dark:bg-zinc-700 rounded-lg">
+              <GrantMilestoneCompletion milestone={milestone} handleCompleting={handleCompleting} />
+            </div>
+          ) : (
+            <div className="w-full flex-col flex gap-2 px-4 py-2 bg-[#F8F9FC] dark:bg-zinc-700 rounded-lg">
+              {completionReason ? (
+                <div className="flex flex-col gap-1">
+                  <ReadMore side="left">{completionReason}</ReadMore>
+                </div>
+              ) : null}
+              {completionProof ? (
+                <div className="flex flex-col gap-1">
+                  <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                    Proof of Work
+                  </p>
+                  <a
+                    href={completionProof}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-brand-blue hover:underline break-all"
+                  >
+                    {completionProof}
+                  </a>
+                </div>
+              ) : null}
+              {completionDeliverables && completionDeliverables.length > 0 ? (
+                <div className="flex flex-col gap-2">
+                  <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                    Deliverables:
+                  </p>
+                  {completionDeliverables.map((deliverable: any, index: number) => (
+                    <div
+                      key={index}
+                      className="border border-gray-200 dark:border-zinc-600 rounded-lg p-3 bg-white dark:bg-zinc-800"
                     >
-                      {completionProof}
-                    </a>
-                  </div>
-                ) : null}
-                {completionDeliverables && completionDeliverables.length > 0 ? (
-                  <div className="flex flex-col gap-2">
-                    <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-                      Deliverables:
-                    </p>
-                    {completionDeliverables.map((deliverable: any, index: number) => (
-                      <div key={index} className="border border-gray-200 dark:border-zinc-600 rounded-lg p-3 bg-white dark:bg-zinc-800">
-                        <div className="flex flex-col gap-1">
-                          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                            {deliverable.name}
+                      <div className="flex flex-col gap-1">
+                        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                          {deliverable.name}
+                        </p>
+                        {deliverable.description && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {deliverable.description}
                           </p>
-                          {deliverable.description && (
+                        )}
+                        {deliverable.proof && (
+                          <a
+                            href={deliverable.proof}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-brand-blue hover:underline text-sm break-all"
+                          >
+                            {deliverable.proof}
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+              {milestoneImpactData && milestoneImpactData.length > 0 ? (
+                <div className="flex flex-col gap-2">
+                  <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Metrics:</p>
+                  {milestoneImpactData.map((metric: any, index: number) => (
+                    <div
+                      key={index}
+                      className="border border-gray-200 dark:border-zinc-600 rounded-lg p-3 bg-white dark:bg-zinc-800"
+                    >
+                      <div className="flex flex-col gap-1">
+                        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                          {metric.name || metric.indicator?.data?.title || "Untitled Indicator"}
+                        </p>
+                        {metric.datapoints && metric.datapoints.length > 0 && (
+                          <div className="flex flex-col gap-1">
                             <p className="text-sm text-gray-600 dark:text-gray-400">
-                              {deliverable.description}
+                              Value:{" "}
+                              <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                                {metric.datapoints[0].value}
+                              </span>
                             </p>
-                          )}
-                          {deliverable.proof && (
-                            <a
-                              href={deliverable.proof}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-brand-blue hover:underline text-sm break-all"
-                            >
-                              {deliverable.proof}
-                            </a>
-                          )}
-                        </div>
+                            {metric.datapoints[0].proof && (
+                              <a
+                                href={metric.datapoints[0].proof}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-brand-blue hover:underline text-sm break-all"
+                              >
+                                {metric.datapoints[0].proof}
+                              </a>
+                            )}
+                          </div>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                ) : null}
-                {milestoneImpactData && milestoneImpactData.length > 0 ? (
-                  <div className="flex flex-col gap-2">
-                    <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-                      Metrics:
-                    </p>
-                    {milestoneImpactData.map((metric: any, index: number) => (
-                      <div key={index} className="border border-gray-200 dark:border-zinc-600 rounded-lg p-3 bg-white dark:bg-zinc-800">
-                        <div className="flex flex-col gap-1">
-                          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                            {metric.name || metric.indicator?.data?.title || 'Untitled Indicator'}
-                          </p>
-                          {metric.datapoints && metric.datapoints.length > 0 && (
-                            <div className="flex flex-col gap-1">
-                              <p className="text-sm text-gray-600 dark:text-gray-400">
-                                Value: <span className="font-medium text-zinc-900 dark:text-zinc-100">{metric.datapoints[0].value}</span>
-                              </p>
-                              {metric.datapoints[0].proof && (
-                                <a
-                                  href={metric.datapoints[0].proof}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-brand-blue hover:underline text-sm break-all"
-                                >
-                                  {metric.datapoints[0].proof}
-                                </a>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-            )}
-          </>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          )
         ) : null}
       </>
     );
@@ -354,12 +347,7 @@ export const MilestoneCard = ({
             "bg-[#FFEFE0] text-black dark:bg-[#FFEFE0] dark:text-black"
           )}
         >
-          <Image
-            src={"/icons/milestone.svg"}
-            alt={"Milestone"}
-            width={20}
-            height={20}
-          />
+          <Image src={"/icons/milestone.svg"} alt={"Milestone"} width={20} height={20} />
           Milestone
         </span>
         {/* Multiple grants display */}
@@ -376,10 +364,7 @@ export const MilestoneCard = ({
                 })
                 .map((grant, index) => (
                   <ExternalLink
-                    href={PAGES.COMMUNITY.ALL_GRANTS(
-                      communityData?.slug || "",
-                      grant.programId
-                    )}
+                    href={PAGES.COMMUNITY.ALL_GRANTS(communityData?.slug || "", grant.programId)}
                     key={`${grant.grantUID}-${grant.grantTitle}-${milestone.uid}-${milestone.title}-${index}`}
                     className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1"
                   >
@@ -393,18 +378,13 @@ export const MilestoneCard = ({
                         />
                       </div>
                     ) : null}
-                    <span className="font-medium">
-                      {grant.grantTitle || "Untitled Grant"}
-                    </span>
+                    <span className="font-medium">{grant.grantTitle || "Untitled Grant"}</span>
                   </ExternalLink>
                 ))
             ) : // Single grant display with community image
             grantTitle ? (
               <ExternalLink
-                href={PAGES.COMMUNITY.ALL_GRANTS(
-                  communityData?.slug || "",
-                  programId
-                )}
+                href={PAGES.COMMUNITY.ALL_GRANTS(communityData?.slug || "", programId)}
                 className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1"
               >
                 {communityData?.imageURL ? (

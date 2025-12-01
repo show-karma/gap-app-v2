@@ -1,39 +1,37 @@
 "use client";
-import { useState } from "react";
-import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Button } from "@/components/ui/button";
-import { DatePicker } from "@/components/Utilities/DatePicker";
-import { formatDate } from "@/utilities/formatDate";
+import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { MESSAGES } from "@/utilities/messages";
 import { useAccount } from "wagmi";
-import { useAuth } from "@/hooks/useAuth";
-import { useCommunityDetails } from "@/hooks/useCommunityDetails";
-import { Spinner } from "@/components/ui/spinner";
+import { z } from "zod";
+import { DatePicker } from "@/components/Utilities/DatePicker";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/src/components/ui/input";
-import { cn } from "@/utilities/tailwind";
+import { Spinner } from "@/components/ui/spinner";
+import { useAuth } from "@/hooks/useAuth";
+import { useCommunityDetails } from "@/hooks/useCommunityDetails";
 import { ProgramRegistryService } from "@/services/programRegistry.service";
+import { Input } from "@/src/components/ui/input";
 import type { CreateProgramFormData } from "@/types/program-registry";
+import { formatDate } from "@/utilities/formatDate";
+import { MESSAGES } from "@/utilities/messages";
+import { cn } from "@/utilities/tailwind";
 
 const createProgramSchema = z.object({
   name: z
     .string()
     .min(3, { message: "Program name must be at least 3 characters" })
     .max(50, { message: "Program name must be at most 50 characters" }),
-  description: z
-    .string()
-    .min(3, { message: "Description is required" }),
+  description: z.string().min(3, { message: "Description is required" }),
   shortDescription: z
     .string()
     .max(100, { message: "Short description must be at most 100 characters" })
@@ -76,7 +74,11 @@ export function CreateProgramModal({
   const { address, isConnected } = useAccount();
   const { authenticated: isAuth, login } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { data: community, isLoading: isLoadingCommunity, error: communityError } = useCommunityDetails(communityId);
+  const {
+    data: community,
+    isLoading: isLoadingCommunity,
+    error: communityError,
+  } = useCommunityDetails(communityId);
 
   const {
     register,
@@ -162,14 +164,10 @@ export function CreateProgramModal({
       if (errorMessage?.includes("already exists")) {
         toast.error("A program with this name already exists");
       } else {
-        errorManager(
-          MESSAGES.PROGRAM_REGISTRY.CREATE.ERROR(data.name),
-          error,
-          {
-            address,
-            data,
-          }
-        );
+        errorManager(MESSAGES.PROGRAM_REGISTRY.CREATE.ERROR(data.name), error, {
+          address,
+          data,
+        });
         toast.error("Failed to create program. Please try again.");
       }
     } finally {
@@ -178,11 +176,14 @@ export function CreateProgramModal({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      if (!open && !isSubmitting) {
-        onClose();
-      }
-    }}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open && !isSubmitting) {
+          onClose();
+        }
+      }}
+    >
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Program</DialogTitle>
@@ -197,22 +198,14 @@ export function CreateProgramModal({
             <p className="text-sm text-destructive mb-4">
               Failed to load community data. Please try again.
             </p>
-            <Button
-              variant="secondary"
-              onClick={onClose}
-            >
+            <Button variant="secondary" onClick={onClose}>
               Close
             </Button>
           </div>
         ) : !community ? (
           <div className="flex flex-col items-center justify-center py-8">
-            <p className="text-sm text-muted-foreground mb-4">
-              Community not found.
-            </p>
-            <Button
-              variant="secondary"
-              onClick={onClose}
-            >
+            <p className="text-sm text-muted-foreground mb-4">Community not found.</p>
+            <Button variant="secondary" onClick={onClose}>
               Close
             </Button>
           </div>
@@ -229,9 +222,7 @@ export function CreateProgramModal({
                 {...register("name")}
                 disabled={isSubmitting}
               />
-              {errors.name && (
-                <p className="text-sm text-destructive">{errors.name.message}</p>
-              )}
+              {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
             </div>
 
             {/* Program Description */}
@@ -249,9 +240,7 @@ export function CreateProgramModal({
                 disabled={isSubmitting}
               />
               {errors.description && (
-                <p className="text-sm text-destructive">
-                  {errors.description.message}
-                </p>
+                <p className="text-sm text-destructive">{errors.description.message}</p>
               )}
             </div>
 
@@ -272,9 +261,7 @@ export function CreateProgramModal({
               />
               <div className="flex justify-between items-center">
                 {errors.shortDescription && (
-                  <p className="text-sm text-destructive">
-                    {errors.shortDescription.message}
-                  </p>
+                  <p className="text-sm text-destructive">{errors.shortDescription.message}</p>
                 )}
                 <p className="text-xs text-muted-foreground">
                   {watch("shortDescription")?.length || 0}/100
@@ -368,9 +355,7 @@ export function CreateProgramModal({
 
             {/* Budget */}
             <div className="flex w-full flex-col gap-1">
-              <Label htmlFor="program-budget">
-                Program Budget (optional)
-              </Label>
+              <Label htmlFor="program-budget">Program Budget (optional)</Label>
               <Input
                 id="program-budget"
                 type="number"
@@ -380,25 +365,15 @@ export function CreateProgramModal({
                 {...register("budget")}
                 disabled={isSubmitting}
               />
-              {errors.budget && (
-                <p className="text-sm text-destructive">{errors.budget.message}</p>
-              )}
+              {errors.budget && <p className="text-sm text-destructive">{errors.budget.message}</p>}
             </div>
 
             {/* Actions */}
             <DialogFooter>
-              <Button
-                variant="secondary"
-                onClick={onClose}
-                disabled={isSubmitting}
-              >
+              <Button variant="secondary" onClick={onClose} disabled={isSubmitting}>
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                isLoading={isSubmitting}
-              >
+              <Button type="submit" disabled={isSubmitting} isLoading={isSubmitting}>
                 Create Program
               </Button>
             </DialogFooter>
@@ -408,4 +383,3 @@ export function CreateProgramModal({
     </Dialog>
   );
 }
-

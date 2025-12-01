@@ -3,44 +3,44 @@
  * Tests user menu rendering states, permission-based items, theme toggle, and social links
  */
 
-import { screen, waitFor, fireEvent, cleanup } from "@testing-library/react";
+import { cleanup, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NavbarUserMenu } from "@/src/components/navbar/navbar-user-menu";
+import { getAuthFixture } from "../fixtures/auth-fixtures";
 import {
-  renderWithProviders,
-  createMockUseAuth,
   createMockPermissions,
+  createMockUseAuth,
   createMockUseCommunitiesStore,
-  createMockUseReviewerPrograms,
-  createMockUseStaff,
+  createMockUseContributorProfileModalStore,
   createMockUseOwnerStore,
   createMockUseRegistryStore,
+  createMockUseReviewerPrograms,
+  createMockUseStaff,
   createMockUseTheme,
-  createMockUseContributorProfileModalStore,
+  renderWithProviders,
   resetMockAuthState,
   resetMockThemeState,
   resetPermissionMocks,
 } from "../utils/test-helpers";
-import { getAuthFixture } from "../fixtures/auth-fixtures";
 
 describe("NavbarUserMenu", () => {
   // Helper to setup auth and open menu
   const setupAuthAndOpenMenu = async (fixtureName: string) => {
     const authFixture = getAuthFixture(fixtureName);
     const user = userEvent.setup();
-    
+
     const result = renderWithProviders(<NavbarUserMenu />, {
       mockUseAuth: createMockUseAuth(authFixture.authState),
       mockPermissions: createMockPermissions(authFixture.permissions),
     });
-    
+
     // Click avatar to open menu
     const avatar = screen.getByRole("img");
     await user.click(avatar);
-    
+
     return { user, authFixture, ...result };
   };
-  
+
   afterEach(() => {
     cleanup();
     resetMockAuthState();
@@ -56,7 +56,7 @@ describe("NavbarUserMenu", () => {
       });
 
       // Skeleton should be present (test by presence of loading indicators)
-      const skeleton = container.querySelector('[data-testid="user-skeleton"]');
+      const _skeleton = container.querySelector('[data-testid="user-skeleton"]');
       // If skeleton component adds specific test IDs, verify them
       // Otherwise verify the component renders something
       expect(container.firstChild).toBeInTheDocument();
@@ -76,31 +76,26 @@ describe("NavbarUserMenu", () => {
     it("should show avatar and menu when logged in", async () => {
       await setupAuthAndOpenMenu("authenticated-basic");
 
-      // Menu should be open with "My profile" visible
-      expect(screen.getByText("My profile")).toBeInTheDocument();
+      // Menu should be open with "Edit profile" visible
+      expect(screen.getByText("Edit profile")).toBeInTheDocument();
     });
 
     it("should have desktop-only visibility (hidden on mobile/tablet)", () => {
       const authFixture = getAuthFixture("authenticated-basic");
       const { container } = renderWithProviders(<NavbarUserMenu />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
-        mockUseCommunitiesStore: createMockUseCommunitiesStore(
-          authFixture.permissions.communities
-        ),
+        mockUseCommunitiesStore: createMockUseCommunitiesStore(authFixture.permissions.communities),
         mockUseReviewerPrograms: createMockUseReviewerPrograms(
           authFixture.permissions.reviewerPrograms
         ),
         mockUseStaff: createMockUseStaff(authFixture.permissions.isStaff),
-        mockUseOwnerStore: createMockUseOwnerStore(
-          authFixture.permissions.isOwner
-        ),
+        mockUseOwnerStore: createMockUseOwnerStore(authFixture.permissions.isOwner),
         mockUseRegistryStore: createMockUseRegistryStore(
           authFixture.permissions.isPoolManager,
           authFixture.permissions.isRegistryAdmin
         ),
         mockUseTheme: createMockUseTheme(),
-        mockUseContributorProfileModalStore:
-          createMockUseContributorProfileModalStore(),
+        mockUseContributorProfileModalStore: createMockUseContributorProfileModalStore(),
       });
 
       // Should have hidden lg:flex class
@@ -113,8 +108,9 @@ describe("NavbarUserMenu", () => {
     it("should render avatar with correct address prop", async () => {
       await setupAuthAndOpenMenu("authenticated-basic");
 
-      // Should show formatted address in menu
-      expect(screen.getByText(/0x1234/i)).toBeInTheDocument();
+      // Should show formatted address in menu (may have multiple with short/long formats)
+      const addressElements = screen.getAllByText(/0x1234/i);
+      expect(addressElements.length).toBeGreaterThan(0);
     });
 
     it("should format wallet address correctly (0x1234...5678)", async () => {
@@ -131,14 +127,14 @@ describe("NavbarUserMenu", () => {
       await setupAuthAndOpenMenu("authenticated-basic");
 
       // Menu should be open with items visible
-      expect(screen.getByText("My profile")).toBeInTheDocument();
+      expect(screen.getByText("Edit profile")).toBeInTheDocument();
     });
   });
 
   describe("Always Visible Menu Items", () => {
-    it('should display "My profile" button', async () => {
+    it('should display "Edit profile" button', async () => {
       await setupAuthAndOpenMenu("authenticated-basic");
-      expect(screen.getByText("My profile")).toBeInTheDocument();
+      expect(screen.getByText("Edit profile")).toBeInTheDocument();
     });
 
     it("should display theme toggle", async () => {
@@ -170,11 +166,11 @@ describe("NavbarUserMenu", () => {
   });
 
   describe("Profile Modal Tests", () => {
-    it('should call openModal() when "My profile" is clicked', async () => {
+    it('should call openModal() when "Edit profile" is clicked', async () => {
       const mockOpenModal = jest.fn();
       const authFixture = getAuthFixture("authenticated-basic");
       const user = userEvent.setup();
-      
+
       renderWithProviders(<NavbarUserMenu />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
@@ -189,8 +185,8 @@ describe("NavbarUserMenu", () => {
       const avatar = screen.getByRole("img");
       await user.click(avatar);
 
-      // Click "My profile" button
-      const profileButton = await screen.findByText("My profile");
+      // Click "Edit profile" button
+      const profileButton = await screen.findByText("Edit profile");
       await user.click(profileButton);
 
       expect(mockOpenModal).toHaveBeenCalledTimes(1);
@@ -201,7 +197,7 @@ describe("NavbarUserMenu", () => {
     it('should show "Dark mode" text when theme is light', async () => {
       const authFixture = getAuthFixture("authenticated-basic");
       const user = userEvent.setup();
-      
+
       renderWithProviders(<NavbarUserMenu />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
@@ -217,7 +213,7 @@ describe("NavbarUserMenu", () => {
     it('should show "Light mode" text when theme is dark', async () => {
       const authFixture = getAuthFixture("authenticated-basic");
       const user = userEvent.setup();
-      
+
       renderWithProviders(<NavbarUserMenu />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
@@ -234,7 +230,7 @@ describe("NavbarUserMenu", () => {
       const mockSetTheme = jest.fn();
       const authFixture = getAuthFixture("authenticated-basic");
       const user = userEvent.setup();
-      
+
       renderWithProviders(<NavbarUserMenu />, {
         mockUseAuth: createMockUseAuth(authFixture.authState),
         mockPermissions: createMockPermissions(authFixture.permissions),
@@ -315,7 +311,7 @@ describe("NavbarUserMenu", () => {
   describe("Social Media Links", () => {
     it("should render all 4 social media platforms", async () => {
       await setupAuthAndOpenMenu("authenticated-basic");
-      
+
       expect(screen.getByLabelText("Twitter")).toBeInTheDocument();
       expect(screen.getByLabelText("Telegram")).toBeInTheDocument();
       expect(screen.getByLabelText("Discord")).toBeInTheDocument();
@@ -332,12 +328,12 @@ describe("NavbarUserMenu", () => {
     it('should call logout() when "Log out" button is clicked', async () => {
       const mockLogout = jest.fn();
       const authFixture = getAuthFixture("authenticated-basic");
-      
+
       // Use the helper but with a custom logout mock
       const user = userEvent.setup();
       const authMock = createMockUseAuth(authFixture.authState);
       authMock.logout = mockLogout;
-      
+
       renderWithProviders(<NavbarUserMenu />, {
         mockUseAuth: authMock,
         mockPermissions: createMockPermissions(authFixture.permissions),
@@ -360,9 +356,9 @@ describe("NavbarUserMenu", () => {
       await setupAuthAndOpenMenu("authenticated-basic");
 
       // Verify menu is fully open by checking for menu items
-      expect(screen.getByText("My profile")).toBeInTheDocument();
+      expect(screen.getByText("Edit profile")).toBeInTheDocument();
       expect(screen.getByText("Log out")).toBeInTheDocument();
-      
+
       // Check for separators - the component has 3 <hr> elements
       // but we check the actual structure which shows clear section divisions
       const followSection = screen.getByText("Follow");
@@ -370,4 +366,3 @@ describe("NavbarUserMenu", () => {
     });
   });
 });
-

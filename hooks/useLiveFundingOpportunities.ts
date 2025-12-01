@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { fundingProgramsAPI } from "@/services/fundingPlatformService";
 import { transformLiveFundingOpportunities } from "@/utilities/funding-programs";
-import { errorManager } from "@/components/Utilities/errorManager";
 
 export function useLiveFundingOpportunities() {
   return useQuery({
@@ -9,7 +9,7 @@ export function useLiveFundingOpportunities() {
     queryFn: async () => {
       try {
         // Fetch enabled programs using the existing service
-        const programs = await fundingProgramsAPI.getEnabledPrograms() as any[];
+        const programs = (await fundingProgramsAPI.getEnabledPrograms()) as any[];
         // Use shared transformation utility for consistency
         return transformLiveFundingOpportunities(programs);
       } catch (error) {
@@ -26,4 +26,3 @@ export function useLiveFundingOpportunities() {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
-

@@ -1,8 +1,8 @@
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useQuery } from "@tanstack/react-query";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useProjectStore } from "@/store";
 import { useEffect } from "react";
+import { useProjectStore } from "@/store";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 
 export const useProject = (projectId: string) => {

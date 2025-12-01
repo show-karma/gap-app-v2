@@ -12,9 +12,7 @@ export const StatsCard = ({ title, value, shouldRound = false }: StatsCardProps)
       <div className="text-4xl font-semibold text-black dark:text-white">
         {roundNumberWithPlus(value, shouldRound)}
       </div>
-      <div className="text-lg font-semibold text-black dark:text-white text-center">
-        {title}
-      </div>
+      <div className="text-lg font-semibold text-black dark:text-white text-center">{title}</div>
     </div>
   );
-}; 
+};

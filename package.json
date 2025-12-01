@@ -6,7 +6,9 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
     "postbuild": "next-sitemap",
     "build-stats": "cross-env ANALYZE=true yarn build",
     "test": "cross-env NODE_OPTIONS=--max-old-space-size=4096 jest --maxWorkers=50%",
@@ -134,6 +136,7 @@
     "zustand": "^4.5.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.3.5",
     "@chromatic-com/storybook": "^4.1.2",
     "@lhci/cli": "^0.15.1",
     "@storybook/addon-a11y": "^10.0.5",
@@ -168,13 +171,11 @@
     "cross-env": "^7.0.3",
     "cypress": "^13.15.0",
     "cypress-image-snapshot": "^4.0.1",
-    "eslint": "8.42.0",
-    "eslint-config-next": "15.4.7",
-    "eslint-plugin-storybook": "^10.0.5",
     "husky": "^9.1.6",
     "jest": "^29.7.0",
     "jest-axe": "^10.0.0",
     "jest-environment-jsdom": "^29.7.0",
+    "lint-staged": "^16.2.7",
     "msw": "^2.12.0",
     "playwright": "^1.56.1",
     "postcss": "^8.4.24",
@@ -189,5 +190,10 @@
     "@noble/curves": "^1.4.2",
     "@types/react": "19.1.8",
     "@types/react-dom": "19.1.6"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json,css,md}": [
+      "biome check --write --diagnostic-level=error"
+    ]
   }
 }

@@ -3,10 +3,10 @@
  * @description Tests clipboard utility hook with toast notifications
  */
 
-import { renderHook, act } from "@testing-library/react";
-import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { act, renderHook } from "@testing-library/react";
 import toast from "react-hot-toast";
 import * as errorManagerModule from "@/components/Utilities/errorManager";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 
 // Mock dependencies
 jest.mock("react-hot-toast");
@@ -174,17 +174,12 @@ describe("useCopyToClipboard", () => {
       });
 
       expect(result.current[0]).toBeNull();
-      expect(mockErrorManager).toHaveBeenCalledWith(
-        "Copy to clipboard failed",
-        error
-      );
+      expect(mockErrorManager).toHaveBeenCalledWith("Copy to clipboard failed", error);
       expect(copyResult).toBe(false);
     });
 
     it("should reset copiedText to null on error", async () => {
-      mockWriteText
-        .mockResolvedValueOnce(undefined)
-        .mockRejectedValueOnce(new Error("Failed"));
+      mockWriteText.mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error("Failed"));
 
       const { result } = renderHook(() => useCopyToClipboard());
 
@@ -213,10 +208,7 @@ describe("useCopyToClipboard", () => {
       });
 
       expect(copyResult).toBe(false);
-      expect(mockErrorManager).toHaveBeenCalledWith(
-        "Copy to clipboard failed",
-        permissionError
-      );
+      expect(mockErrorManager).toHaveBeenCalledWith("Copy to clipboard failed", permissionError);
     });
   });
 

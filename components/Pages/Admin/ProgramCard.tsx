@@ -1,10 +1,9 @@
-import { INDEXER } from "@/utilities/indexer";
-import fetchData from "@/utilities/fetchData";
-import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { useEffect, useState } from "react";
-import { cn } from "@/utilities/tailwind";
-import { chainIdToNetwork } from "@show-karma/karma-gap-sdk";
+import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { cn } from "@/utilities/tailwind";
 
 interface ProgramCardProps {
   programId: string;
@@ -12,11 +11,7 @@ interface ProgramCardProps {
   minimal?: boolean;
 }
 
-export const ProgramCard = ({
-  programId,
-  chainID,
-  minimal = false,
-}: ProgramCardProps) => {
+export const ProgramCard = ({ programId, chainID, minimal = false }: ProgramCardProps) => {
   const [program, setProgram] = useState<GrantProgram | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -24,9 +19,7 @@ export const ProgramCard = ({
     async function loadProgram() {
       try {
         setIsLoading(true);
-        const [result, error] = await fetchData(
-          INDEXER.REGISTRY.FIND_BY_ID(programId, chainID)
-        );
+        const [result, error] = await fetchData(INDEXER.REGISTRY.FIND_BY_ID(programId, chainID));
         if (error) throw error;
         setProgram(result);
       } catch (error) {
@@ -45,16 +38,11 @@ export const ProgramCard = ({
   return (
     <div className="inline-flex items-center gap-2 text-xs bg-gray-100 dark:bg-zinc-800 px-2 py-1 rounded-full border border-gray-200 dark:border-zinc-700">
       <span
-        className={cn(
-          "font-medium max-w-[150px]",
-          minimal ? "w-max max-w-[full] truncate" : ""
-        )}
+        className={cn("font-medium max-w-[150px]", minimal ? "w-max max-w-[full] truncate" : "")}
       >
         {program.metadata?.title || "Untitled Program"}
       </span>
-      <span className="text-gray-500 dark:text-gray-400">
-        Chain {chainNameDictionary(chainID)}
-      </span>
+      <span className="text-gray-500 dark:text-gray-400">Chain {chainNameDictionary(chainID)}</span>
     </div>
   );
 };

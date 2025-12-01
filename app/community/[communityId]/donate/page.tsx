@@ -1,12 +1,12 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
-import { useState, useEffect, useMemo } from "react";
-import { useCommunityPrograms } from "@/hooks/usePrograms";
-import { getCommunityDetailsV2 } from "@/utilities/queries/getCommunityDataV2";
-import { CommunityDetailsV2 } from "@/types/community";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { useCommunityPrograms } from "@/hooks/usePrograms";
+import type { CommunityDetailsV2 } from "@/types/community";
+import { getCommunityDetailsV2 } from "@/utilities/queries/getCommunityDataV2";
 
 export default function DonateProgramSelectPage() {
   const params = useParams();
@@ -16,8 +16,16 @@ export default function DonateProgramSelectPage() {
   const [selectedProgramId, setSelectedProgramId] = useState<string>("");
 
   // Use React Query hooks
-  const { data: programs, isLoading: programsLoading, error: programsError } = useCommunityPrograms(communityId);
-  const { data: community, isLoading: communityLoading, error: communityError } = useQuery<CommunityDetailsV2 | null>({
+  const {
+    data: programs,
+    isLoading: programsLoading,
+    error: programsError,
+  } = useCommunityPrograms(communityId);
+  const {
+    data: community,
+    isLoading: communityLoading,
+    error: communityError,
+  } = useQuery<CommunityDetailsV2 | null>({
     queryKey: ["communityDetailsV2", communityId],
     queryFn: () => getCommunityDetailsV2(communityId),
     enabled: !!communityId,
@@ -63,7 +71,8 @@ export default function DonateProgramSelectPage() {
   }
 
   if (error) {
-    const errorMessage = error instanceof Error ? error.message : "Failed to load data. Please try again.";
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to load data. Please try again.";
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 max-w-md text-center">
@@ -80,9 +89,7 @@ export default function DonateProgramSelectPage() {
               d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
             />
           </svg>
-          <h2 className="text-lg font-semibold text-red-900 dark:text-red-100 mb-2">
-            Error
-          </h2>
+          <h2 className="text-lg font-semibold text-red-900 dark:text-red-100 mb-2">Error</h2>
           <p className="text-red-700 dark:text-red-300">{errorMessage}</p>
         </div>
       </div>
@@ -138,9 +145,7 @@ export default function DonateProgramSelectPage() {
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
               {community.details?.name}
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Support projects in this community
-            </p>
+            <p className="text-gray-600 dark:text-gray-400">Support projects in this community</p>
           </div>
         )}
 
@@ -168,16 +173,16 @@ export default function DonateProgramSelectPage() {
                 className="w-full px-4 py-3 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 dark:text-zinc-100 transition-colors text-base"
                 onChange={handleProgramSelect}
                 value={selectedProgramId}
-                autoFocus
               >
                 <option value="" disabled>
                   Select a program...
                 </option>
                 {sortedPrograms.map((program) => {
                   // Combine programId and chainID for the value
-                  const combinedId = program.programId && program.chainID
-                    ? `${program.programId}_${program.chainID}`
-                    : program.programId || "";
+                  const combinedId =
+                    program.programId && program.chainID
+                      ? `${program.programId}_${program.chainID}`
+                      : program.programId || "";
 
                   return (
                     <option key={program.programId} value={combinedId}>
@@ -190,7 +195,8 @@ export default function DonateProgramSelectPage() {
 
             <div className="pt-2">
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                {sortedPrograms.length} {sortedPrograms.length === 1 ? "program" : "programs"} available
+                {sortedPrograms.length} {sortedPrograms.length === 1 ? "program" : "programs"}{" "}
+                available
               </p>
             </div>
           </div>
@@ -214,7 +220,8 @@ export default function DonateProgramSelectPage() {
             </svg>
             <div className="flex-1">
               <p className="text-sm text-blue-900 dark:text-blue-100">
-                After selecting a program, you will be able to browse projects and add them to your donation cart.
+                After selecting a program, you will be able to browse projects and add them to your
+                donation cart.
               </p>
             </div>
           </div>

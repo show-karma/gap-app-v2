@@ -1,13 +1,11 @@
-import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useProjectStore, useOwnerStore } from "@/store";
-import { useAuth } from "@/hooks/useAuth";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { getRPCClient } from "@/utilities/rpcClient";
-import type { Project } from "@show-karma/karma-gap-sdk/core/class/entities/Project";
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useEffect } from "react";
 import { useAccount } from "wagmi";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { useAuth } from "@/hooks/useAuth";
+import { useProjectStore } from "@/store";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
+import { getRPCClient } from "@/utilities/rpcClient";
 import { useProjectInstance } from "./useProjectInstance";
 
 interface ProjectPermissionsResult {
@@ -43,22 +41,13 @@ export const useProjectPermissions = () => {
         isProjectAdmin: isAdminResult,
       };
     } catch (error: any) {
-      errorManager(
-        `Error checking permissions for user ${address} on project ${projectId}`,
-        error
-      );
+      errorManager(`Error checking permissions for user ${address} on project ${projectId}`, error);
       return { isProjectOwner: false, isProjectAdmin: false };
     }
   };
 
   const query = useQuery({
-    queryKey: [
-      "project-permissions",
-      address,
-      projectId,
-      project?.chainID,
-      isAuth,
-    ],
+    queryKey: ["project-permissions", address, projectId, project?.chainID, isAuth],
     queryFn: checkPermissions,
     enabled: !!projectInstance && !!project?.chainID && !!isAuth && !!address,
     ...defaultQueryOptions,

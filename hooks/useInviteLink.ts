@@ -1,10 +1,10 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+import { keccak256, toHex } from "viem";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { queryClient } from "@/components/Utilities/PrivyProviderWrapper";
-import { keccak256, toHex } from "viem";
-import toast from "react-hot-toast";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 
 interface InviteCode {
@@ -52,7 +52,7 @@ export const useInviteLink = (projectIdOrSlug: string | undefined) => {
     mutationFn: async () => {
       if (!projectIdOrSlug) throw new Error("Project ID is required");
 
-      const messageToSign = new Date().getTime();
+      const messageToSign = Date.now();
       const hexedMessage = keccak256(toHex(messageToSign));
 
       const [data, error] = await fetchData(
@@ -134,9 +134,7 @@ export const useInviteUrl = (
 ) => {
   if (!project || !inviteCode) return null;
 
-  const isDev =
-    process.env.NEXT_PUBLIC_ENV === "dev" ||
-    process.env.NODE_ENV === "development";
+  const isDev = process.env.NEXT_PUBLIC_ENV === "dev" || process.env.NODE_ENV === "development";
   const baseUrl = isDev ? "staging.karmahq.xyz" : "www.karmahq.xyz";
   const projectIdentifier = project.details?.data.slug || project.uid;
 

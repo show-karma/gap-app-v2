@@ -5,9 +5,9 @@
  * These functions handle common tasks like formatting, validation, and data transformation.
  */
 
-import { parseUnits, formatUnits } from "viem";
-import type { SupportedToken } from "@/constants/supportedTokens";
+import { formatUnits, parseUnits } from "viem";
 import { VALIDATION_CONSTANTS } from "@/constants/donation";
+import type { SupportedToken } from "@/constants/supportedTokens";
 
 /**
  * Payment interface for donation transactions
@@ -36,10 +36,7 @@ export function getTokenKey(symbol: string, chainId: number): string {
 /**
  * Format donation amount string to bigint for contract interaction
  */
-export function formatDonationAmount(
-  amount: string,
-  decimals: number
-): bigint {
+export function formatDonationAmount(amount: string, decimals: number): bigint {
   try {
     if (!amount || amount === "0" || parseFloat(amount) === 0) {
       return BigInt(0);
@@ -80,7 +77,7 @@ export function validateDonationAmount(amount: string): {
 } {
   const numAmount = parseFloat(amount);
 
-  if (isNaN(numAmount) || numAmount <= 0) {
+  if (Number.isNaN(numAmount) || numAmount <= 0) {
     return {
       valid: false,
       error: "Amount must be greater than 0",
@@ -107,15 +104,12 @@ export function validateDonationAmount(amount: string): {
 /**
  * Check if user has sufficient balance for a donation
  */
-export function hasSufficientBalance(
-  amount: string,
-  balance: string
-): boolean {
+export function hasSufficientBalance(amount: string, balance: string): boolean {
   try {
     const amountNum = parseFloat(amount);
     const balanceNum = parseFloat(balance);
 
-    if (isNaN(amountNum) || isNaN(balanceNum)) {
+    if (Number.isNaN(amountNum) || Number.isNaN(balanceNum)) {
       return false;
     }
 
@@ -129,9 +123,7 @@ export function hasSufficientBalance(
 /**
  * Group payments by chain ID for efficient processing
  */
-export function groupPaymentsByChain(
-  payments: DonationPayment[]
-): Map<number, DonationPayment[]> {
+export function groupPaymentsByChain(payments: DonationPayment[]): Map<number, DonationPayment[]> {
   const grouped = new Map<number, DonationPayment[]>();
 
   payments.forEach((payment) => {
@@ -178,8 +170,7 @@ export function countNetworkSwitches(
 
   // Otherwise, we need to switch to each unique network
   // If current network is not in the list, add 1 for initial switch
-  const needsInitialSwitch =
-    currentChainId === null || !uniqueChains.includes(currentChainId);
+  const needsInitialSwitch = currentChainId === null || !uniqueChains.includes(currentChainId);
 
   return uniqueChains.length - (needsInitialSwitch ? 0 : 1);
 }
@@ -187,10 +178,7 @@ export function countNetworkSwitches(
 /**
  * Calculate total donation amount in a specific token
  */
-export function calculateTotalByToken(
-  payments: DonationPayment[],
-  tokenKey: string
-): string {
+export function calculateTotalByToken(payments: DonationPayment[], tokenKey: string): string {
   let total = 0;
 
   payments.forEach((payment) => {
@@ -245,9 +233,7 @@ export function getDonationSummaryByNetwork(
 /**
  * Check if payments require cross-chain donations
  */
-export function requiresCrossChainDonations(
-  payments: DonationPayment[]
-): boolean {
+export function requiresCrossChainDonations(payments: DonationPayment[]): boolean {
   const uniqueChains = getUniqueChainIds(payments);
   return uniqueChains.length > 1;
 }
@@ -256,9 +242,7 @@ export function requiresCrossChainDonations(
  * Sort payments to minimize network switches
  * Groups payments by chain ID
  */
-export function sortPaymentsByChain(
-  payments: DonationPayment[]
-): DonationPayment[] {
+export function sortPaymentsByChain(payments: DonationPayment[]): DonationPayment[] {
   return [...payments].sort((a, b) => a.chainId - b.chainId);
 }
 
@@ -288,9 +272,10 @@ export function isValidAddress(address?: string): boolean {
 /**
  * Validate all payments have required fields
  */
-export function validatePayments(
-  payments: DonationPayment[]
-): { valid: boolean; errors: string[] } {
+export function validatePayments(payments: DonationPayment[]): {
+  valid: boolean;
+  errors: string[];
+} {
   const errors: string[] = [];
 
   if (payments.length === 0) {
@@ -348,9 +333,7 @@ export function needsTokenApproval(token: SupportedToken): boolean {
 /**
  * Count how many tokens need approval from payments
  */
-export function countTokensNeedingApproval(
-  payments: DonationPayment[]
-): number {
+export function countTokensNeedingApproval(payments: DonationPayment[]): number {
   const uniqueTokens = getUniqueTokens(payments);
   return uniqueTokens.filter(needsTokenApproval).length;
 }

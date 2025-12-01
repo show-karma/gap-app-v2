@@ -1,7 +1,6 @@
-import axios from "axios";
 import { createAuthenticatedApiClient } from "@/utilities/auth/api-client";
 import { envVars } from "@/utilities/enviromentVars";
-import { FundingProgram } from "./fundingPlatformService";
+import type { FundingProgram } from "./fundingPlatformService";
 
 const API_URL = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
 
@@ -61,7 +60,6 @@ export interface ReviewerProgram {
  * Service for handling permission checks and role management
  */
 export class PermissionsService {
-  constructor() {}
   /**
    * Check if a user has permission for a specific action
    */
@@ -124,7 +122,7 @@ export class PermissionsService {
     if (resource) {
       // Check specific resource permission
       const permissions = await this.getUserPermissions(resource);
-      return permissions.permissions.some(p => p.role === role && p.resource === resource);
+      return permissions.permissions.some((p) => p.role === role && p.resource === resource);
     }
 
     return false;
@@ -135,7 +133,7 @@ export class PermissionsService {
    */
   async canPerformAction(resource: string, action: string): Promise<boolean> {
     const permissions = await this.getUserPermissions(resource);
-    const resourcePermissions = permissions.permissions.find(p => p.resource === resource);
+    const resourcePermissions = permissions.permissions.find((p) => p.resource === resource);
     return resourcePermissions?.actions.includes(action) ?? false;
   }
 
@@ -156,23 +154,20 @@ export class PermissionsService {
           chainID: number;
           hasPermission: boolean;
           permissions: string[];
-        }>
+        }>;
       }>("/v2/funding-program-configs/batch-check-permissions", {
-        programs: programIds
+        programs: programIds,
       });
 
       // Map results
-      response.data.permissions.forEach(item => {
+      response.data.permissions.forEach((item) => {
         const key = `${item.programId}-${item.chainID}`;
         results.set(key, {
           hasPermission: item.hasPermission,
-          permissions: item.permissions
+          permissions: item.permissions,
         });
       });
-    } catch (error) {
-      // Fall back to parallel calls if batch endpoint doesn't exist
-      console.log("Batch endpoint not available, falling back to parallel calls");
-
+    } catch (_error) {
       const promises = programIds.map(async ({ programId, chainID, action }) => {
         try {
           const result = await this.checkPermission({ programId, chainID, action });
@@ -181,14 +176,14 @@ export class PermissionsService {
           console.error(`Error checking permission for ${programId}-${chainID}:`, err);
           return {
             key: `${programId}-${chainID}`,
-            result: { hasPermission: false, permissions: [] }
+            result: { hasPermission: false, permissions: [] },
           };
         }
       });
 
       const responses = await Promise.allSettled(promises);
-      responses.forEach(response => {
-        if (response.status === 'fulfilled' && response.value) {
+      responses.forEach((response) => {
+        if (response.status === "fulfilled" && response.value) {
           results.set(response.value.key, response.value.result);
         }
       });
@@ -196,5 +191,4 @@ export class PermissionsService {
 
     return results;
   }
-
-};
+}

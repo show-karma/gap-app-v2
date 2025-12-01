@@ -4,9 +4,9 @@
  * covering UI rendering, form validation, user interactions, and submission
  */
 
-import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type React from "react";
 import { CreateProgramModal } from "@/components/FundingPlatform/CreateProgramModal";
 import "@testing-library/jest-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -71,11 +71,11 @@ jest.mock("@radix-ui/react-dialog", () => {
   };
 });
 
+import toast from "react-hot-toast";
 // Import mocked modules
 import { useAccount } from "wagmi";
 import { useAuth } from "@/hooks/useAuth";
 import { useCommunityDetails } from "@/hooks/useCommunityDetails";
-import toast from "react-hot-toast";
 
 const INDEXER_API_BASE_URL = process.env.NEXT_PUBLIC_GAP_INDEXER_URL || "http://localhost:4000";
 
@@ -226,9 +226,7 @@ describe("CreateProgramModal", () => {
         />
       );
 
-      expect(
-        screen.getByText(/failed to load community data/i)
-      ).toBeInTheDocument();
+      expect(screen.getByText(/failed to load community data/i)).toBeInTheDocument();
     });
 
     it("should show form when community is loaded", () => {
@@ -285,9 +283,7 @@ describe("CreateProgramModal", () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(
-          screen.getByText(/program name must be at least 3 characters/i)
-        ).toBeInTheDocument();
+        expect(screen.getByText(/program name must be at least 3 characters/i)).toBeInTheDocument();
       });
     });
 
@@ -309,9 +305,7 @@ describe("CreateProgramModal", () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(
-          screen.getByText(/program name must be at most 50 characters/i)
-        ).toBeInTheDocument();
+        expect(screen.getByText(/program name must be at most 50 characters/i)).toBeInTheDocument();
       });
     });
 
@@ -352,10 +346,7 @@ describe("CreateProgramModal", () => {
 
       // Fill required fields
       await user.type(screen.getByLabelText(/program name/i), "Test Program");
-      await user.type(
-        screen.getByLabelText(/program description/i),
-        "Test Description"
-      );
+      await user.type(screen.getByLabelText(/program description/i), "Test Description");
       await user.type(screen.getByLabelText(/short description/i), "Short desc");
 
       // Set dates - end before start
@@ -443,10 +434,7 @@ describe("CreateProgramModal", () => {
 
       // Fill form
       await user.type(screen.getByLabelText(/program name/i), "Test Program");
-      await user.type(
-        screen.getByLabelText(/program description/i),
-        "Test Description"
-      );
+      await user.type(screen.getByLabelText(/program description/i), "Test Description");
       await user.type(screen.getByLabelText(/short description/i), "Short desc");
 
       // Submit
@@ -470,7 +458,10 @@ describe("CreateProgramModal", () => {
     it("should show loading state during submission", async () => {
       const user = userEvent.setup();
       (ProgramRegistryService.createProgram as jest.Mock).mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve({ programId: "123", success: true }), 100))
+        () =>
+          new Promise((resolve) =>
+            setTimeout(() => resolve({ programId: "123", success: true }), 100)
+          )
       );
 
       renderWithProviders(
@@ -484,10 +475,7 @@ describe("CreateProgramModal", () => {
 
       // Fill form
       await user.type(screen.getByLabelText(/program name/i), "Test Program");
-      await user.type(
-        screen.getByLabelText(/program description/i),
-        "Test Description"
-      );
+      await user.type(screen.getByLabelText(/program description/i), "Test Description");
       await user.type(screen.getByLabelText(/short description/i), "Short desc");
 
       // Submit
@@ -511,10 +499,7 @@ describe("CreateProgramModal", () => {
 
       // Fill form
       await user.type(screen.getByLabelText(/program name/i), "Test Program");
-      await user.type(
-        screen.getByLabelText(/program description/i),
-        "Test Description"
-      );
+      await user.type(screen.getByLabelText(/program description/i), "Test Description");
       await user.type(screen.getByLabelText(/short description/i), "Short desc");
 
       // Submit
@@ -546,10 +531,7 @@ describe("CreateProgramModal", () => {
 
       // Fill form
       await user.type(screen.getByLabelText(/program name/i), "Test Program");
-      await user.type(
-        screen.getByLabelText(/program description/i),
-        "Test Description"
-      );
+      await user.type(screen.getByLabelText(/program description/i), "Test Description");
       await user.type(screen.getByLabelText(/short description/i), "Short desc");
 
       // Submit
@@ -557,9 +539,7 @@ describe("CreateProgramModal", () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(toast.success).toHaveBeenCalledWith(
-          expect.stringContaining("auto-approval failed")
-        );
+        expect(toast.success).toHaveBeenCalledWith(expect.stringContaining("auto-approval failed"));
         expect(mockOnSuccess).toHaveBeenCalled();
         expect(mockOnClose).toHaveBeenCalled();
       });
@@ -582,10 +562,7 @@ describe("CreateProgramModal", () => {
 
       // Fill form
       await user.type(screen.getByLabelText(/program name/i), "Test Program");
-      await user.type(
-        screen.getByLabelText(/program description/i),
-        "Test Description"
-      );
+      await user.type(screen.getByLabelText(/program description/i), "Test Description");
       await user.type(screen.getByLabelText(/short description/i), "Short desc");
 
       // Submit
@@ -593,9 +570,7 @@ describe("CreateProgramModal", () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(
-          "Failed to create program. Please try again."
-        );
+        expect(toast.error).toHaveBeenCalledWith("Failed to create program. Please try again.");
       });
     });
 
@@ -616,10 +591,7 @@ describe("CreateProgramModal", () => {
 
       // Fill form
       await user.type(screen.getByLabelText(/program name/i), "Test Program");
-      await user.type(
-        screen.getByLabelText(/program description/i),
-        "Test Description"
-      );
+      await user.type(screen.getByLabelText(/program description/i), "Test Description");
       await user.type(screen.getByLabelText(/short description/i), "Short desc");
 
       // Submit
@@ -627,9 +599,7 @@ describe("CreateProgramModal", () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(
-          "A program with this name already exists"
-        );
+        expect(toast.error).toHaveBeenCalledWith("A program with this name already exists");
       });
     });
 
@@ -646,10 +616,7 @@ describe("CreateProgramModal", () => {
 
       const nameInput = screen.getByLabelText(/program name/i);
       await user.type(nameInput, "Test Program");
-      await user.type(
-        screen.getByLabelText(/program description/i),
-        "Test Description"
-      );
+      await user.type(screen.getByLabelText(/program description/i), "Test Description");
       await user.type(screen.getByLabelText(/short description/i), "Short desc");
 
       // Submit
@@ -681,10 +648,7 @@ describe("CreateProgramModal", () => {
 
       // Fill form
       await user.type(screen.getByLabelText(/program name/i), "Test Program");
-      await user.type(
-        screen.getByLabelText(/program description/i),
-        "Test Description"
-      );
+      await user.type(screen.getByLabelText(/program description/i), "Test Description");
       await user.type(screen.getByLabelText(/short description/i), "Short desc");
 
       // Submit
@@ -713,10 +677,7 @@ describe("CreateProgramModal", () => {
 
       // Fill form
       await user.type(screen.getByLabelText(/program name/i), "Test Program");
-      await user.type(
-        screen.getByLabelText(/program description/i),
-        "Test Description"
-      );
+      await user.type(screen.getByLabelText(/program description/i), "Test Description");
       await user.type(screen.getByLabelText(/short description/i), "Short desc");
 
       // Submit
@@ -748,10 +709,7 @@ describe("CreateProgramModal", () => {
 
       // Fill form
       await user.type(screen.getByLabelText(/program name/i), "Test Program");
-      await user.type(
-        screen.getByLabelText(/program description/i),
-        "Test Description"
-      );
+      await user.type(screen.getByLabelText(/program description/i), "Test Description");
       await user.type(screen.getByLabelText(/short description/i), "Short desc");
 
       // Submit
@@ -770,4 +728,3 @@ describe("CreateProgramModal", () => {
     });
   });
 });
-

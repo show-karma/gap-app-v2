@@ -1,41 +1,41 @@
-import { Address, PublicClient, WalletClient } from "viem";
+import type { Address, PublicClient, WalletClient } from "viem";
 
 // Standard ERC20 ABI for allowance and approve functions
 export const ERC20_ABI = [
   {
     inputs: [
       { name: "owner", type: "address" },
-      { name: "spender", type: "address" }
+      { name: "spender", type: "address" },
     ],
     name: "allowance",
     outputs: [{ name: "", type: "uint256" }],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [
       { name: "spender", type: "address" },
-      { name: "amount", type: "uint256" }
+      { name: "amount", type: "uint256" },
     ],
     name: "approve",
     outputs: [{ name: "", type: "bool" }],
     stateMutability: "nonpayable",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [{ name: "account", type: "address" }],
     name: "balanceOf",
     outputs: [{ name: "", type: "uint256" }],
     stateMutability: "view",
-    type: "function"
+    type: "function",
   },
   {
     inputs: [],
     name: "decimals",
     outputs: [{ name: "", type: "uint8" }],
     stateMutability: "view",
-    type: "function"
-  }
+    type: "function",
+  },
 ] as const;
 
 export interface TokenApprovalInfo {
@@ -69,7 +69,7 @@ export async function checkTokenAllowance(
       address: tokenAddress,
       abi: ERC20_ABI,
       functionName: "allowance",
-      args: [ownerAddress, spenderAddress]
+      args: [ownerAddress, spenderAddress],
     });
 
     return allowance as bigint;
@@ -108,7 +108,7 @@ export async function checkTokenAllowances(
       currentAllowance,
       requiredAmount: req.requiredAmount,
       needsApproval: currentAllowance < req.requiredAmount,
-      chainId: req.chainId ?? chainId ?? publicClient.chain?.id ?? 0
+      chainId: req.chainId ?? chainId ?? publicClient.chain?.id ?? 0,
     };
   });
 
@@ -131,7 +131,7 @@ export async function approveToken(
     functionName: "approve",
     args: [spenderAddress, amount],
     account,
-    chain: null
+    chain: null,
   });
 
   return hash;
@@ -170,7 +170,7 @@ export async function executeApprovals(
         tokenSymbol: approval.tokenSymbol,
         amount: approval.amount,
         hash,
-        status: "pending"
+        status: "pending",
       };
 
       results.push(transaction);
@@ -178,7 +178,7 @@ export async function executeApprovals(
 
       // Wait for transaction confirmation
       const receipt = await publicClient.waitForTransactionReceipt({
-        hash: hash as `0x${string}`
+        hash: hash as `0x${string}`,
       });
 
       // Update status based on receipt
@@ -188,7 +188,6 @@ export async function executeApprovals(
       if (receipt.status !== "success") {
         throw new Error(`Approval transaction failed for ${approval.tokenSymbol}`);
       }
-
     } catch (error) {
       console.error(`Failed to approve ${approval.tokenSymbol}:`, error);
 
@@ -196,7 +195,7 @@ export async function executeApprovals(
         tokenAddress: approval.tokenAddress,
         tokenSymbol: approval.tokenSymbol,
         amount: approval.amount,
-        status: "failed"
+        status: "failed",
       };
 
       results.push(failedTransaction);

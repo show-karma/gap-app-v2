@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { FC, useState } from 'react';
-import { PaperAirplaneIcon } from '@heroicons/react/24/outline';
-import { cn } from '@/utilities/tailwind';
-import { Spinner } from '@/components/Utilities/Spinner';
-import { MarkdownEditor } from '@/components/Utilities/MarkdownEditor';
+import { PaperAirplaneIcon } from "@heroicons/react/24/outline";
+import { type FC, useState } from "react";
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { cn } from "@/utilities/tailwind";
 
 interface CommentInputProps {
   onSubmit: (content: string) => Promise<void>;
@@ -15,11 +15,11 @@ interface CommentInputProps {
 
 const CommentInput: FC<CommentInputProps> = ({
   onSubmit,
-  placeholder = 'Add a comment...',
+  placeholder = "Add a comment...",
   disabled = false,
-  className = ''
+  className = "",
 }) => {
-  const [content, setContent] = useState('');
+  const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -30,18 +30,18 @@ const CommentInput: FC<CommentInputProps> = ({
     setIsSubmitting(true);
     try {
       await onSubmit(content.trim());
-      setContent('');
+      setContent("");
     } catch (error) {
-      console.error('Failed to submit comment:', error);
+      console.error("Failed to submit comment:", error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className={cn('relative', className)}>
+    <form onSubmit={handleSubmit} className={cn("relative", className)}>
       <div className="flex flex-col space-y-3">
-        <div className="w-full" style={{ minHeight: '200px' }}>
+        <div className="w-full" style={{ minHeight: "200px" }}>
           <MarkdownEditor
             value={content}
             onChange={setContent}
@@ -58,13 +58,13 @@ const CommentInput: FC<CommentInputProps> = ({
             type="submit"
             disabled={!content.trim() || disabled || isSubmitting}
             className={cn(
-              'inline-flex items-center px-4 py-2 border border-transparent',
-              'text-sm font-medium rounded-lg shadow-sm',
-              'text-white bg-blue-600 hover:bg-blue-700',
-              'dark:bg-blue-500 dark:hover:bg-blue-600',
-              'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500',
-              'disabled:opacity-50 disabled:cursor-not-allowed',
-              'transition-colors duration-200'
+              "inline-flex items-center px-4 py-2 border border-transparent",
+              "text-sm font-medium rounded-lg shadow-sm",
+              "text-white bg-blue-600 hover:bg-blue-700",
+              "dark:bg-blue-500 dark:hover:bg-blue-600",
+              "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500",
+              "disabled:opacity-50 disabled:cursor-not-allowed",
+              "transition-colors duration-200"
             )}
           >
             {isSubmitting ? (

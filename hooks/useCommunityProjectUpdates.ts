@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { QUERY_KEYS } from "@/utilities/queryKeys";
 import { fetchCommunityProjectUpdates } from "@/services/community-project-updates.service";
 import type { CommunityUpdatesResponse } from "@/types/community-updates";
+import { QUERY_KEYS } from "@/utilities/queryKeys";
 
 export interface UseCommunityProjectUpdatesOptions {
   page?: number;

@@ -1,7 +1,7 @@
 /**
  * PlatformFeatures Component Tests
  * Tests the platform features section with feature cards grid
- * 
+ *
  * Target: 15 tests
  * - Rendering (5)
  * - Responsive Behavior (5)
@@ -10,12 +10,7 @@
  */
 
 import { PlatformFeatures } from "@/src/features/homepage/components/platform-features";
-import {
-  renderWithProviders,
-  screen,
-  within,
-  setViewportSize,
-} from "../utils/test-helpers";
+import { renderWithProviders, screen, setViewportSize } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
 
 // Define viewports locally
@@ -36,9 +31,7 @@ jest.mock("@/components/ui/badge", () => ({
 
 // Mock ThemeImage component
 jest.mock("@/src/components/ui/theme-image", () => ({
-  ThemeImage: ({ alt, src }: any) => (
-    <img data-testid="theme-image" src={src} alt={alt} />
-  ),
+  ThemeImage: ({ alt, src }: any) => <img data-testid="theme-image" src={src} alt={alt} />,
 }));
 
 describe("PlatformFeatures Component", () => {
@@ -61,9 +54,7 @@ describe("PlatformFeatures Component", () => {
     it("should render section description", () => {
       renderWithProviders(<PlatformFeatures />);
 
-      const description = screen.getByText(
-        /We support builders across their lifecycle/i
-      );
+      const description = screen.getByText(/We support builders across their lifecycle/i);
       expect(description).toBeInTheDocument();
     });
 
@@ -86,9 +77,7 @@ describe("PlatformFeatures Component", () => {
       const firstCardTitle = screen.getByText("Onchain Project Profile");
       expect(firstCardTitle).toBeInTheDocument();
 
-      const firstCardDescription = screen.getByText(
-        /Create a comprehensive project profile/i
-      );
+      const firstCardDescription = screen.getByText(/Create a comprehensive project profile/i);
       expect(firstCardDescription).toBeInTheDocument();
 
       // Check for images
@@ -142,9 +131,7 @@ describe("PlatformFeatures Component", () => {
       expect(directFundingCard).toBeInTheDocument();
 
       // Check that "Milestones & Updates" card has double size
-      const milestonesCard = screen
-        .getByText("Milestones & Updates")
-        .closest(".lg\\:col-span-2");
+      const milestonesCard = screen.getByText("Milestones & Updates").closest(".lg\\:col-span-2");
       expect(milestonesCard).toBeInTheDocument();
     });
   });
@@ -155,9 +142,7 @@ describe("PlatformFeatures Component", () => {
 
       // "Direct Funding & Donations" has a checklist
       expect(screen.getByText("Accept fiat donations")).toBeInTheDocument();
-      expect(
-        screen.getByText("Support for multiple chains and tokens")
-      ).toBeInTheDocument();
+      expect(screen.getByText("Support for multiple chains and tokens")).toBeInTheDocument();
       expect(screen.getByText("Track and manage payouts")).toBeInTheDocument();
     });
 
@@ -166,16 +151,14 @@ describe("PlatformFeatures Component", () => {
 
       // "Milestones & Updates" has a checklist
       expect(screen.getByText("Add project deliverables")).toBeInTheDocument();
-      expect(
-        screen.getByText("Add custom metrics to show impact")
-      ).toBeInTheDocument();
+      expect(screen.getByText("Add custom metrics to show impact")).toBeInTheDocument();
     });
 
     it("should render feature images with correct alt text", () => {
       renderWithProviders(<PlatformFeatures />);
 
       const images = screen.getAllByTestId("theme-image");
-      
+
       // Check that first image has correct alt text
       const firstImage = images[0];
       expect(firstImage).toHaveAttribute("alt", "Onchain Project Profile");
@@ -209,4 +192,3 @@ describe("PlatformFeatures Component", () => {
     });
   });
 });
-

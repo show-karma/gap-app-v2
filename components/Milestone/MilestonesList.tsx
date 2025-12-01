@@ -1,24 +1,22 @@
 "use client";
 
-import { ActivityCard } from "@/components/Shared/ActivityCard";
-import { useQueryState } from "nuqs";
-import { StatusOptions } from "@/utilities/gapIndexerApi/getProjectObjectives";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { SetAnObjective } from "@/components/Pages/Project/Objective/SetAnObjective";
-import { UnifiedMilestone } from "@/types/roadmap";
-import {
+import { Listbox, Transition } from "@headlessui/react";
+import { CheckIcon } from "@heroicons/react/20/solid";
+import { ChevronDownIcon } from "@heroicons/react/24/solid";
+import type {
   IGrantUpdate,
   IProjectImpact,
   IProjectUpdate,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { ObjectivesSub } from "../Pages/Project/Objective/ObjectivesSub";
-import { Listbox, Transition } from "@headlessui/react";
-import { CheckIcon } from "@heroicons/react/20/solid";
-import { ChevronDownIcon } from "@heroicons/react/24/solid";
-import { Fragment, useState, useEffect, useMemo } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useQueryState } from "nuqs";
+import { Fragment, useMemo } from "react";
+import { ActivityCard } from "@/components/Shared/ActivityCard";
+import { useOwnerStore, useProjectStore } from "@/store";
+import type { UnifiedMilestone } from "@/types/roadmap";
+import type { StatusOptions } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { cn } from "@/utilities/tailwind";
-import pluralize from "pluralize";
+import { ObjectivesSub } from "../Pages/Project/Objective/ObjectivesSub";
 
 // Filter options for the content type filter
 const CONTENT_TYPE_OPTIONS: Record<string, string> = {
@@ -48,23 +46,19 @@ export const MilestonesList = ({
   const [status] = useQueryState<StatusOptions>("status", {
     defaultValue: "all",
     serialize: (value) => value,
-    parse: (value) =>
-      value ? (value as StatusOptions) : ("all" as StatusOptions),
+    parse: (value) => (value ? (value as StatusOptions) : ("all" as StatusOptions)),
   });
 
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const _router = useRouter();
+  const _pathname = usePathname();
+  const _searchParams = useSearchParams();
 
   // Content type filter with URL search params support
-  const [selectedContentType, setSelectedContentTypeQuery] = useQueryState(
-    "contentType",
-    {
-      defaultValue: "all",
-      serialize: (value) => value,
-      parse: (value) => value || "all",
-    }
-  );
+  const [selectedContentType, setSelectedContentTypeQuery] = useQueryState("contentType", {
+    defaultValue: "all",
+    serialize: (value) => value,
+    parse: (value) => value || "all",
+  });
 
   // Handle content type filter change
   const handleContentTypeChange = (newContentType: string) => {
@@ -72,9 +66,7 @@ export const MilestonesList = ({
   };
 
   // Merge duplicate milestones based on content
-  const mergeDuplicateMilestones = (
-    milestones: UnifiedMilestone[]
-  ): UnifiedMilestone[] => {
+  const mergeDuplicateMilestones = (milestones: UnifiedMilestone[]): UnifiedMilestone[] => {
     const mergedMap = new Map<string, UnifiedMilestone>();
 
     milestones.forEach((milestone) => {
@@ -101,12 +93,12 @@ export const MilestonesList = ({
       }
 
       // Create a unique key based on title, description, and dates
-      const startDate =
-        milestone.source.grantMilestone?.milestone.data.startsAt;
+      const startDate = milestone.source.grantMilestone?.milestone.data.startsAt;
       const endDate = milestone.source.grantMilestone?.milestone.data.endsAt;
 
-      const key = `${milestone.title}|${milestone.description || ""}|${startDate || ""
-        }|${endDate || ""}`;
+      const key = `${milestone.title}|${milestone.description || ""}|${
+        startDate || ""
+      }|${endDate || ""}`;
 
       if (mergedMap.has(key)) {
         // Milestone exists, add this grant to the merged list
@@ -120,8 +112,7 @@ export const MilestonesList = ({
               grantUID: firstGrant?.grant.uid || "",
               grantTitle: firstGrant?.grant.details?.data.title,
               communityName: firstGrant?.grant.community?.details?.data.name,
-              communityImage:
-                firstGrant?.grant.community?.details?.data.imageURL,
+              communityImage: firstGrant?.grant.community?.details?.data.imageURL,
               chainID: firstGrant?.grant.chainID || 0,
               milestoneUID: firstGrant?.milestone.uid || "",
               programId: firstGrant?.grant.details?.data.programId,
@@ -132,18 +123,12 @@ export const MilestonesList = ({
         // Add the current grant to the merged list
         existingMilestone.mergedGrants.push({
           grantUID: milestone.source.grantMilestone?.grant.uid || "",
-          grantTitle:
-            milestone.source.grantMilestone?.grant.details?.data.title,
-          communityName:
-            milestone.source.grantMilestone?.grant.community?.details?.data
-              .name,
-          communityImage:
-            milestone.source.grantMilestone?.grant.community?.details?.data
-              .imageURL,
+          grantTitle: milestone.source.grantMilestone?.grant.details?.data.title,
+          communityName: milestone.source.grantMilestone?.grant.community?.details?.data.name,
+          communityImage: milestone.source.grantMilestone?.grant.community?.details?.data.imageURL,
           chainID: milestone.source.grantMilestone?.grant.chainID || 0,
           milestoneUID: milestone.source.grantMilestone?.milestone.uid || "",
-          programId:
-            milestone.source.grantMilestone?.grant.details?.data.programId,
+          programId: milestone.source.grantMilestone?.grant.details?.data.programId,
         });
 
         // Sort the merged grants alphabetically
@@ -191,7 +176,7 @@ export const MilestonesList = ({
   // Memoize the filtered and unified milestones for better performance
   const unifiedMilestones = useMemo(() => {
     // Filter milestones based on status and content type
-    let filteredMilestones = milestones.filter((milestone) => {
+    const filteredMilestones = milestones.filter((milestone) => {
       if (!showAllTypes && milestone.type === "update") return false;
 
       // Apply status filter
@@ -208,15 +193,16 @@ export const MilestonesList = ({
       // Apply content type filter
       if (selectedContentType !== "all") {
         switch (selectedContentType) {
-          case "pending":
+          case "pending": {
             const isPending = milestone.completed === false;
             const isMilestoneType =
               milestone.type === "milestone" ||
               milestone.type === "grant" ||
               milestone.type === "project";
             return isPending && isMilestoneType;
+          }
 
-          case "completed":
+          case "completed": {
             const isCompleted =
               milestone.completed === true ||
               (milestone.completed && typeof milestone.completed === "object");
@@ -225,6 +211,7 @@ export const MilestonesList = ({
               milestone.type === "grant" ||
               milestone.type === "project";
             return isCompleted && isMilestoneTypeCompleted;
+          }
 
           case "impacts":
             return milestone.type === "impact";
@@ -245,18 +232,14 @@ export const MilestonesList = ({
 
     // Merge duplicates for regular milestones
     return mergeDuplicateMilestones(filteredMilestones);
-  }, [milestones, showAllTypes, status, selectedContentType]);
+  }, [milestones, showAllTypes, status, selectedContentType, mergeDuplicateMilestones]);
 
   return (
     <div className="flex flex-col gap-6 w-full">
-
       <div className="flex w-full flex-col gap-6 rounded-xl max-lg:px-2 max-lg:py-4">
         <div className="flex flex-col gap-2 flex-wrap justify-start items-start mb-2">
           <div className="flex flex-row gap-4 flex-wrap justify-between items-center w-full">
-            <Listbox
-              value={selectedContentType}
-              onChange={handleContentTypeChange}
-            >
+            <Listbox value={selectedContentType} onChange={handleContentTypeChange}>
               <div className="relative">
                 <Listbox.Button className="cursor-pointer items-center relative w-full rounded-md pr-8 text-left sm:text-sm sm:leading-6 text-base font-semibold bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100 px-3 py-2">
                   <span className="flex flex-row gap-1 ">
@@ -307,10 +290,7 @@ export const MilestonesList = ({
                                   "absolute inset-y-0 right-0 flex items-center pr-4"
                                 )}
                               >
-                                <CheckIcon
-                                  className="h-5 w-5"
-                                  aria-hidden="true"
-                                />
+                                <CheckIcon className="h-5 w-5" aria-hidden="true" />
                               </span>
                             ) : null}
                           </>
@@ -352,8 +332,9 @@ export const MilestonesList = ({
               {showAllTypes ? "No content found!" : "No milestones found!"}
             </p>
             <p className="text-zinc-900 dark:text-zinc-300 w-full text-center">
-              {`The project owner is working on setting ${showAllTypes ? "milestones and activities" : "milestones"
-                }. Check back in a few days :)`}
+              {`The project owner is working on setting ${
+                showAllTypes ? "milestones and activities" : "milestones"
+              }. Check back in a few days :)`}
             </p>
           </div>
         ) : null}

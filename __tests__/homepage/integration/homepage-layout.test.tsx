@@ -1,7 +1,7 @@
 /**
  * Homepage Layout Integration Tests
  * Tests the overall layout structure and section rendering
- * 
+ *
  * Target: 15 tests
  * - Section Rendering (7)
  * - Scroll Behavior (4)
@@ -9,11 +9,7 @@
  */
 
 import HomePage from "@/app/page";
-import {
-  renderWithProviders,
-  screen,
-  waitFor,
-} from "../utils/test-helpers";
+import { renderWithProviders, screen, waitFor } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
 
 describe("Homepage Layout Integration", () => {
@@ -117,7 +113,7 @@ describe("Homepage Layout Integration", () => {
 
       const hero = screen.getByText(/Where builders get funded/i);
       expect(hero).toBeInTheDocument();
-      
+
       // Hero should render quickly (allow 15000ms for test environment, especially CI/CD)
       expect(endTime - startTime).toBeLessThan(15000);
     });
@@ -137,7 +133,7 @@ describe("Homepage Layout Integration", () => {
 
       // No errors should be thrown
       expect(container).toBeInTheDocument();
-      
+
       // All major sections should be present
       const sections = container.querySelectorAll("section");
       expect(sections.length).toBeGreaterThanOrEqual(7);
@@ -149,11 +145,10 @@ describe("Homepage Layout Integration", () => {
       const main = container.querySelector("main");
       expect(main).toHaveClass("flex");
       expect(main).toHaveClass("flex-col");
-      
+
       // Should enable proper responsive layout
       const innerContainer = container.querySelector(".flex-col.flex-1");
       expect(innerContainer).toBeInTheDocument();
     });
   });
 });
-

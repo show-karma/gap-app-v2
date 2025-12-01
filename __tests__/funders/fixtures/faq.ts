@@ -20,7 +20,7 @@ export const mockFAQItems: FAQItem[] = [
   {
     id: "try-out-platform",
     question: "Can I try out the platform before committing to it?",
-    answer: "Absolutely. Just [reach out to us](https://tally.so/r/3NKZEl) and we can help you get started right away.",
+    answer:
+      "Absolutely. Just [reach out to us](https://tally.so/r/3NKZEl) and we can help you get started right away.",
   },
 ];
-

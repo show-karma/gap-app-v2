@@ -4,7 +4,7 @@
  */
 
 import { renderHook } from "@testing-library/react";
-import { usePagination, DOTS } from "@/hooks/usePagination";
+import { DOTS, usePagination } from "@/hooks/usePagination";
 
 describe("usePagination", () => {
   describe("Basic Pagination", () => {
@@ -406,9 +406,7 @@ describe("usePagination", () => {
 
       expect(Array.isArray(result.current)).toBe(true);
       result.current?.forEach((item) => {
-        expect(
-          typeof item === "number" || item === DOTS
-        ).toBe(true);
+        expect(typeof item === "number" || item === DOTS).toBe(true);
       });
     });
 

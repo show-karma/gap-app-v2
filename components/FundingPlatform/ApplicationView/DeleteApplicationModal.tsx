@@ -1,8 +1,8 @@
 "use client";
 
-import { FC, Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import { XMarkIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import { ExclamationTriangleIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { type FC, Fragment } from "react";
 import { Button } from "@/components/Utilities/Button";
 
 interface DeleteApplicationModalProps {
@@ -80,9 +80,8 @@ const DeleteApplicationModal: FC<DeleteApplicationModalProps> = ({
                     </Dialog.Title>
                     <div className="mt-2">
                       <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Are you sure you want to delete this application? This
-                        action cannot be undone and the application will be
-                        permanently deleted.
+                        Are you sure you want to delete this application? This action cannot be
+                        undone and the application will be permanently deleted.
                       </p>
                       <div className="mt-3 rounded-md bg-gray-50 dark:bg-zinc-900 px-3 py-2">
                         <p className="text-xs font-medium text-gray-700 dark:text-gray-300">

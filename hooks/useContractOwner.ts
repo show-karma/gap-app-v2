@@ -1,23 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
-import { useOwnerStore } from "@/store/owner";
-import { useAuth } from "@/hooks/useAuth";
-import { useEffect } from "react";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { getContractOwner } from "@/utilities/sdk/getContractOwner";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
-import { Chain } from "viem";
-import { useAccount, useChainId } from "wagmi";
-import { gapSupportedNetworks } from "@/utilities/network";
 import { JsonRpcProvider } from "ethers";
+import { useEffect } from "react";
+import type { Chain } from "viem";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { useAuth } from "@/hooks/useAuth";
+import { useOwnerStore } from "@/store/owner";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { gapSupportedNetworks } from "@/utilities/network";
 import { getRPCUrlByChainId } from "@/utilities/rpcClient";
+import { getContractOwner } from "@/utilities/sdk/getContractOwner";
 
-const fetchContractOwner = async (
-  address: string
-): Promise<boolean> => {
+const fetchContractOwner = async (address: string): Promise<boolean> => {
   if (!address) return false;
   const chain = gapSupportedNetworks[0];
   const rpcUrl = getRPCUrlByChainId(chain.id);
-  
+
   if (!rpcUrl) {
     throw new Error(`RPC URL not configured for chain ${chain.id}`);
   }
@@ -39,17 +36,17 @@ export const useContractOwner = (chainOverride?: Chain) => {
 
   const queryResult = useQuery<boolean, Error>({
     queryKey: ["contract-owner", address, chain?.id],
-    queryFn: () => fetchContractOwner(address!).catch(() => {
-      return false;
-    }),
+    queryFn: () =>
+      fetchContractOwner(address!).catch(() => {
+        return false;
+      }),
     enabled: !!address && isAuth,
     staleTime: 10 * 60 * 1000, // 10 minutes - contract owner changes rarely
-    retry: (failureCount, error) => {
+    retry: (failureCount, _error) => {
       // Retry up to 2 times for network errors
       return failureCount < 2;
     },
   });
-
 
   const { data, isLoading, error, refetch } = queryResult;
 
@@ -58,7 +55,6 @@ export const useContractOwner = (chainOverride?: Chain) => {
     setIsOwnerLoading(isLoading);
   }, [isLoading, setIsOwnerLoading]);
 
-
   useEffect(() => {
     if (!isAuth) {
       setIsOwner(false);
@@ -66,7 +62,7 @@ export const useContractOwner = (chainOverride?: Chain) => {
     }
     if (typeof data === "boolean") {
       setIsOwner(data);
-    } 
+    }
   }, [data, isAuth, setIsOwner]);
 
   useEffect(() => {

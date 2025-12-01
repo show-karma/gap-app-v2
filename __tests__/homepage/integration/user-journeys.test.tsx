@@ -1,7 +1,7 @@
 /**
  * Homepage User Journeys Integration Tests
  * Tests complete user flows through the homepage
- * 
+ *
  * Target: 13 tests
  * - First-Time Visitor (5)
  * - Authenticated Builder (4)
@@ -9,11 +9,7 @@
  */
 
 import HomePage from "@/app/page";
-import {
-  renderWithProviders,
-  screen,
-  waitFor,
-} from "../utils/test-helpers";
+import { renderWithProviders, screen, waitFor } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
 import { mockFundingOpportunities } from "../fixtures/funding-opportunities";
 
@@ -53,7 +49,7 @@ describe("Homepage User Journeys", () => {
 
       // Hero
       expect(screen.getByText(/Where builders get funded/i)).toBeInTheDocument();
-      
+
       // Funding opportunities
       await waitFor(() => {
         expect(screen.getByText(/Live funding opportunities/i)).toBeInTheDocument();
@@ -83,7 +79,7 @@ describe("Homepage User Journeys", () => {
       const main = container.querySelector("main");
       expect(main).toHaveClass("flex-1");
       expect(main).toHaveClass("flex-col");
-      
+
       // All sections should be in the DOM for scrolling
       const sections = container.querySelectorAll("section");
       expect(sections.length).toBeGreaterThanOrEqual(7);
@@ -119,7 +115,7 @@ describe("Homepage User Journeys", () => {
 
       // FAQ section should be visible
       expect(screen.getByText(/What is Karma/i)).toBeInTheDocument();
-      
+
       // Discord support link should be present
       const discordLinks = screen.getAllByRole("link", { name: /Discord/i });
       expect(discordLinks.length).toBeGreaterThanOrEqual(1);
@@ -214,7 +210,7 @@ describe("Homepage User Journeys", () => {
 
       const fundersLinks = screen.getAllByRole("link", { name: /funders|Grow your ecosystem/i });
       expect(fundersLinks.length).toBeGreaterThanOrEqual(1);
-      
+
       fundersLinks.forEach((link) => {
         expect(link).toHaveAttribute("href", "/funders");
       });
@@ -242,4 +238,3 @@ describe("Homepage User Journeys", () => {
     });
   });
 });
-

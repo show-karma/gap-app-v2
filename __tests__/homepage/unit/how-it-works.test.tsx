@@ -1,7 +1,7 @@
 /**
  * HowItWorks Component Tests
  * Tests the "How It Works" section with step cards
- * 
+ *
  * Target: 7 tests
  * - Rendering (3)
  * - Content Display (2)
@@ -9,10 +9,7 @@
  */
 
 import { HowItWorks } from "@/src/features/homepage/components/how-it-works";
-import {
-  renderWithProviders,
-  screen,
-} from "../utils/test-helpers";
+import { renderWithProviders, screen } from "../utils/test-helpers";
 import "@testing-library/jest-dom";
 
 // Mock Badge component
@@ -45,9 +42,7 @@ describe("HowItWorks Component", () => {
 
     expect(screen.getByText("Create project")).toBeInTheDocument();
     expect(screen.getByText("Apply and get funded")).toBeInTheDocument();
-    expect(
-      screen.getByText("Add milestones, metrics and updates")
-    ).toBeInTheDocument();
+    expect(screen.getByText("Add milestones, metrics and updates")).toBeInTheDocument();
   });
 
   it("should render outcome cards", () => {
@@ -63,7 +58,7 @@ describe("HowItWorks Component", () => {
 
     // There should be check icons (4 for step cards + 1 for outcomes card = 5 total)
     // Using a more flexible selector that works with lucide-react icons
-    const checkIcons = container.querySelectorAll('svg');
+    const checkIcons = container.querySelectorAll("svg");
     expect(checkIcons.length).toBeGreaterThanOrEqual(4);
   });
 
@@ -91,4 +86,3 @@ describe("HowItWorks Component", () => {
     expect(connectorLine).toBeInTheDocument();
   });
 });
-

@@ -117,9 +117,7 @@ export function parseDonationError(error: unknown): ParsedError {
 
     return {
       code: DonationErrorCode.CONTRACT_ERROR,
-      message: revertReason
-        ? `Contract error: ${revertReason}`
-        : "Contract execution failed",
+      message: revertReason ? `Contract error: ${revertReason}` : "Contract execution failed",
       technicalMessage: error instanceof Error ? error.message : undefined,
       actionableSteps: [
         "Check that the contract supports this donation",

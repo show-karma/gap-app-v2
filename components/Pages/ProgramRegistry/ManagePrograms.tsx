@@ -1,14 +1,24 @@
 "use client";
+import { ChevronLeftIcon, MagnifyingGlassIcon } from "@heroicons/react/24/solid";
+import { useQuery } from "@tanstack/react-query";
+import debounce from "lodash.debounce";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useQueryState } from "nuqs";
+import type React from "react";
+import { type Dispatch, useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
 import AddProgram from "@/components/Pages/ProgramRegistry/AddProgram";
+import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
 import { ManageProgramList } from "@/components/Pages/ProgramRegistry/ManageProgramList";
 import { MyProgramList } from "@/components/Pages/ProgramRegistry/MyProgramList";
 import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
-import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
-import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
+import type { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
 import Pagination from "@/components/Utilities/Pagination";
 import { useAuth } from "@/hooks/useAuth";
-import { useStepper } from "@/store/modals/txStepper";
 import { useRegistryStore } from "@/store/registry";
 import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
@@ -16,20 +26,6 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
 import { checkIsPoolManager } from "@/utilities/registry/checkIsPoolManager";
-import {
-  ChevronLeftIcon,
-  MagnifyingGlassIcon,
-} from "@heroicons/react/24/solid";
-import { useQuery } from "@tanstack/react-query";
-import debounce from "lodash.debounce";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { useQueryState } from "nuqs";
-import React, { Dispatch, useEffect, useState } from "react";
-import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
-
-import { errorManager } from "@/components/Utilities/errorManager";
 import { LoadingProgramTable } from "./Loading/Programs";
 import { SearchDropdown } from "./SearchDropdown";
 
@@ -58,23 +54,17 @@ export const ManagePrograms = () => {
     parse: (value) => (value.length > 0 ? value.split(",") : []),
   });
 
-  const [selectedEcosystems, setSelectedEcosystems] = useQueryState(
-    "ecosystems",
-    {
-      defaultValue: defaultEcosystems,
-      serialize: (value) => (value.length ? value?.join(",") : ""),
-      parse: (value) => (value.length > 0 ? value.split(",") : []),
-    }
-  );
+  const [selectedEcosystems, setSelectedEcosystems] = useQueryState("ecosystems", {
+    defaultValue: defaultEcosystems,
+    serialize: (value) => (value.length ? value?.join(",") : ""),
+    parse: (value) => (value.length > 0 ? value.split(",") : []),
+  });
 
-  const [selectedGrantTypes, setSelectedGrantTypes] = useQueryState(
-    "grantTypes",
-    {
-      defaultValue: defaultGrantTypes,
-      serialize: (value) => (value.length ? value?.join(",") : ""),
-      parse: (value) => (value.length > 0 ? value.split(",") : []),
-    }
-  );
+  const [selectedGrantTypes, setSelectedGrantTypes] = useQueryState("grantTypes", {
+    defaultValue: defaultGrantTypes,
+    serialize: (value) => (value.length ? value?.join(",") : ""),
+    parse: (value) => (value.length > 0 ? value.split(",") : []),
+  });
 
   const [isEditing, setIsEditing] = useState(false);
   const [programToEdit, setProgramToEdit] = useState<GrantProgram | null>(null);
@@ -82,7 +72,7 @@ export const ManagePrograms = () => {
   const { address, isConnected } = useAccount();
   const { authenticated: isAuth, login } = useAuth();
 
-  const signer = useSigner();
+  const _signer = useSigner();
 
   const {
     setIsRegistryAdmin,
@@ -120,14 +110,20 @@ export const ManagePrograms = () => {
           `Error while checking if ${address} is a registry admin or pool manager`,
           error
         );
-        console.log(error);
       } finally {
         setIsRegistryAdminLoading(false);
         setIsPoolManagerLoading(false);
       }
     };
     getMemberOf();
-  }, [address]);
+  }, [
+    address,
+    isConnected,
+    setIsPoolManager,
+    setIsPoolManagerLoading,
+    setIsRegistryAdmin,
+    setIsRegistryAdminLoading,
+  ]);
 
   const [tab, setTab] = useQueryState("tab", {
     defaultValue: defaultTab || "pending",
@@ -136,7 +132,7 @@ export const ManagePrograms = () => {
   const [page, setPage] = useQueryState("page", {
     defaultValue: 1,
     serialize: (value) => value.toString(),
-    parse: (value) => parseInt(value),
+    parse: (value) => parseInt(value, 10),
   });
   const pageSize = 10;
 
@@ -158,9 +154,7 @@ export const ManagePrograms = () => {
     defaultValue: defaultSortOrder,
   });
 
-  const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(
-    null
-  );
+  const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(null);
 
   useEffect(() => {
     const searchProgramById = async (id: string) => {
@@ -194,12 +188,9 @@ export const ManagePrograms = () => {
   const getGrantPrograms = async () => {
     try {
       const baseUrl = INDEXER.REGISTRY.GET_ALL;
-      const queryParams = `?isValid=${tab}&limit=${pageSize}&offset=${(page - 1) * pageSize
-        }`;
+      const queryParams = `?isValid=${tab}&limit=${pageSize}&offset=${(page - 1) * pageSize}`;
       const searchParam = searchInput ? `&name=${searchInput}` : "";
-      const networkParam = selectedNetworks.length
-        ? `&networks=${selectedNetworks.join(",")}`
-        : "";
+      const networkParam = selectedNetworks.length ? `&networks=${selectedNetworks.join(",")}` : "";
       const ecosystemParam = selectedEcosystems.length
         ? `&ecosystems=${selectedEcosystems.join(",")}`
         : "";
@@ -209,10 +200,8 @@ export const ManagePrograms = () => {
         : "";
 
       const sortParams = `&sortField=${sortField}&sortOrder=${sortOrder}`;
-      const filterParams =
-        networkParam + ecosystemParam + grantTypeParam + sortParams;
-      const ownerParam =
-        address && !isRegistryAdmin ? `&owners=${address}` : "";
+      const filterParams = networkParam + ecosystemParam + grantTypeParam + sortParams;
+      const ownerParam = address && !isRegistryAdmin ? `&owners=${address}` : "";
       const url = isRegistryAdmin
         ? `${baseUrl}${queryParams}${searchParam}${filterParams}`
         : `${baseUrl}${queryParams}${ownerParam}${searchParam}${filterParams}`;
@@ -233,7 +222,6 @@ export const ManagePrograms = () => {
       }
     } catch (error: any) {
       errorManager(`Error while fetching grant programs`, error);
-      console.log(error);
       return {
         programs: [] as GrantProgram[],
         count: 0,
@@ -302,19 +290,13 @@ export const ManagePrograms = () => {
 
       await refreshPrograms();
     } catch (error: any) {
-      errorManager(
-        `Error ${messageDict[value]} program ${program._id.$oid}`,
-        error,
-        {
-          program: program._id.$oid,
-          isValid: value,
-          address,
-        }
-      );
-      console.log(`Error ${messageDict[value]} program ${program._id.$oid}`);
+      errorManager(`Error ${messageDict[value]} program ${program._id.$oid}`, error, {
+        program: program._id.$oid,
+        isValid: value,
+        address,
+      });
     }
   };
-
 
   const onChangeGeneric = (
     value: string,
@@ -370,9 +352,7 @@ export const ManagePrograms = () => {
             <Link href={PAGES.REGISTRY.ROOT}>
               <Button className="flex flex-row gap-2 bg-transparent hover:bg-transparent text-[#004EEB] text-sm p-0">
                 <ChevronLeftIcon className="w-4 h-4" />
-                <p className="border-b border-b-[#004EEB]">
-                  Back to Programs Explorer
-                </p>
+                <p className="border-b border-b-[#004EEB]">Back to Programs Explorer</p>
               </Button>
             </Link>
           </div>
@@ -407,8 +387,7 @@ export const ManagePrograms = () => {
                       setTab("pending");
                     }}
                     style={{
-                      backgroundColor:
-                        tab === "pending" ? "white" : "transparent",
+                      backgroundColor: tab === "pending" ? "white" : "transparent",
                       color: tab === "pending" ? "black" : "gray",
                     }}
                   >
@@ -421,8 +400,7 @@ export const ManagePrograms = () => {
                       setTab("accepted");
                     }}
                     style={{
-                      backgroundColor:
-                        tab === "accepted" ? "white" : "transparent",
+                      backgroundColor: tab === "accepted" ? "white" : "transparent",
                       color: tab === "accepted" ? "black" : "gray",
                     }}
                   >
@@ -435,8 +413,7 @@ export const ManagePrograms = () => {
                       setTab("rejected");
                     }}
                     style={{
-                      backgroundColor:
-                        tab === "rejected" ? "white" : "transparent",
+                      backgroundColor: tab === "rejected" ? "white" : "transparent",
                       color: tab === "rejected" ? "black" : "gray",
                     }}
                   >
@@ -490,7 +467,7 @@ export const ManagePrograms = () => {
                       }}
                       type={"Ecosystems"}
                       selected={selectedEcosystems}
-                    // imageDictionary={}
+                      // imageDictionary={}
                     />
                     <SearchDropdown
                       list={registryHelper.grantTypes}
@@ -502,7 +479,7 @@ export const ManagePrograms = () => {
                       }}
                       type={"Funding Mechanisms"}
                       selected={selectedGrantTypes}
-                    // imageDictionary={}
+                      // imageDictionary={}
                     />
                   </div>
                 </div>
@@ -521,9 +498,7 @@ export const ManagePrograms = () => {
                                 setProgramToEdit(program);
                               }}
                               selectProgram={(program: GrantProgram) => {
-                                setProgramId(
-                                  program._id.$oid || program.programId || ""
-                                );
+                                setProgramId(program._id.$oid || program.programId || "");
                                 setSelectedProgram(program);
                               }}
                               isAllowed={isAllowed}
@@ -537,9 +512,7 @@ export const ManagePrograms = () => {
                                 setProgramToEdit(program);
                               }}
                               selectProgram={(program: GrantProgram) => {
-                                setProgramId(
-                                  program._id.$oid || program.programId || ""
-                                );
+                                setProgramId(program._id.$oid || program.programId || "");
                                 setSelectedProgram(program);
                               }}
                               isAllowed={isAllowed}

@@ -1,9 +1,9 @@
-import { useRef, useEffect, useState } from "react";
-import Link from "next/link";
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
+import type { CommunityWithStats } from "@/hooks/useCommunities";
 import { PAGES } from "@/utilities/pages";
-import { CommunityWithStats } from "@/hooks/useCommunities";
 
 interface CommunityCardProps {
   community: CommunityWithStats;
@@ -11,7 +11,7 @@ interface CommunityCardProps {
 
 export const CommunityCard = ({ community }: CommunityCardProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
-  const [cardWidth, setCardWidth] = useState<number>(0);
+  const [_cardWidth, setCardWidth] = useState<number>(0);
 
   useEffect(() => {
     const updateWidth = () => {
@@ -40,12 +40,11 @@ export const CommunityCard = ({ community }: CommunityCardProps) => {
     members: community.stats?.totalMembers || 0,
   };
 
-
   return (
     <div
       ref={cardRef}
       className="flex flex-col p-4 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-sm hover:shadow-md transition-all duration-300 ease-in-out w-full min-w-0"
-      style={{ height: '318px' }}
+      style={{ height: "318px" }}
     >
       <div className="flex justify-center mb-3 min-h-[72px] h-18 mx-auto">
         <ProfilePicture
@@ -62,7 +61,6 @@ export const CommunityCard = ({ community }: CommunityCardProps) => {
           {name}
         </h3>
       </div>
-
 
       <div className="flex justify-center space-x-4 mb-3 min-w-0">
         <div className="text-center min-w-0">
@@ -102,4 +100,4 @@ export const CommunityCard = ({ community }: CommunityCardProps) => {
       </div>
     </div>
   );
-}; 
+};

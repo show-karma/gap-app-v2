@@ -1,14 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { programService } from "@/services/programs";
-import { useAuth } from "./useAuth";
 
 // Query keys
 export const PROGRAM_QUERY_KEYS = {
   all: ["programs"] as const,
   community: (communityId: string) =>
     [...PROGRAM_QUERY_KEYS.all, "community", communityId] as const,
-  program: (programId: string) =>
-    [...PROGRAM_QUERY_KEYS.all, "details", programId] as const,
+  program: (programId: string) => [...PROGRAM_QUERY_KEYS.all, "details", programId] as const,
 };
 
 /**

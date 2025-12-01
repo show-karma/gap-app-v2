@@ -1,13 +1,13 @@
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
+import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type {
-  ProgramMetadata,
+  CreateProgramFormData,
+  ProgramApprovalRequest,
   ProgramCreationRequest,
   ProgramCreationResult,
-  ProgramApprovalRequest,
-  CreateProgramFormData,
+  ProgramMetadata,
 } from "@/types/program-registry";
-import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 /**
  * Program Registry Service
@@ -84,14 +84,10 @@ export class ProgramRegistryService {
       typeof response === "object" &&
       response !== null &&
       "program" in response &&
-      typeof (response as { program?: { _id?: { $oid?: string } } })
-        .program === "object" &&
-      (response as { program: { _id: { $oid?: string } } }).program?._id
-        ?.$oid
+      typeof (response as { program?: { _id?: { $oid?: string } } }).program === "object" &&
+      (response as { program: { _id: { $oid?: string } } }).program?._id?.$oid
     ) {
-      return (
-        response as { program: { _id: { $oid: string } } }
-      ).program._id.$oid;
+      return (response as { program: { _id: { $oid: string } } }).program._id.$oid;
     }
 
     // 3. { id: "..." }
@@ -139,7 +135,7 @@ export class ProgramRegistryService {
       throw new Error(createError);
     }
 
-    const programId = this.extractProgramId(createResponse);
+    const programId = ProgramRegistryService.extractProgramId(createResponse);
 
     if (!programId) {
       // If we can't get the ID immediately, return success but indicate manual approval needed
@@ -180,4 +176,3 @@ export class ProgramRegistryService {
     }
   }
 }
-

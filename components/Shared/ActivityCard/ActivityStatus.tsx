@@ -1,6 +1,6 @@
-import { cn } from "@/utilities/tailwind";
 import Image from "next/image";
-import { ActivityType } from "./ActivityTypes";
+import { cn } from "@/utilities/tailwind";
+import type { ActivityType } from "./ActivityTypes";
 
 interface ActivityStatusProps {
   type: ActivityType;
@@ -8,11 +8,7 @@ interface ActivityStatusProps {
   className?: string;
 }
 
-export const ActivityStatus = ({
-  type,
-  completed,
-  className,
-}: ActivityStatusProps) => {
+export const ActivityStatus = ({ type, completed, className }: ActivityStatusProps) => {
   const getStatusColor = (label: string) => {
     switch (label) {
       case "ProjectUpdate":
@@ -64,8 +60,7 @@ export const ActivityStatus = ({
   // For milestones, handle completion status differently
   if (type === "Milestone" && completed !== undefined) {
     const getCompletionStatusColor = () => {
-      if (completed)
-        return "text-[#067647] bg-[#ECFDF3] dark:text-green-400 dark:bg-zinc-900";
+      if (completed) return "text-[#067647] bg-[#ECFDF3] dark:text-green-400 dark:bg-zinc-900";
       return "bg-[#FFFAEB] text-[#B54708] dark:bg-zinc-900 dark:text-orange-300";
     };
 
@@ -94,12 +89,7 @@ export const ActivityStatus = ({
         className
       )}
     >
-      <Image
-        src={getStatusIcon(type)}
-        alt={getStatusText()}
-        width={20}
-        height={20}
-      />
+      <Image src={getStatusIcon(type)} alt={getStatusText()} width={20} height={20} />
       {getStatusText()}
     </span>
   );

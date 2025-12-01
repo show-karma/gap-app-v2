@@ -1,35 +1,27 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, Fragment, ReactNode, useState } from "react";
-import { Dialog, Transition } from "@headlessui/react";
-import {
-  ChevronRightIcon,
-  PlusIcon,
-  TrashIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/solid";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useAccount } from "wagmi";
-import { GAP } from "@show-karma/karma-gap-sdk";
-import { Button } from "../../Utilities/Button";
-import { MESSAGES } from "@/utilities/messages";
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { useStepper } from "@/store/modals/txStepper";
-import toast from "react-hot-toast";
-import { privyConfig as config } from "@/utilities/wagmi/privy-config";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
 
+import { Dialog, Transition } from "@headlessui/react";
+import { TrashIcon, XMarkIcon } from "@heroicons/react/24/solid";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { GAP } from "@show-karma/karma-gap-sdk";
+import { type FC, Fragment, useState } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { z } from "zod";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useWallet } from "@/hooks/useWallet";
+import { useStepper } from "@/store/modals/txStepper";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { Button } from "../../Utilities/Button";
 
-const inputStyle =
-  "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
-const labelStyle =
-  "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
+const _inputStyle = "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
+const labelStyle = "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
 
 const schema = z.object({
   address: z
@@ -51,12 +43,7 @@ type RemoveAdminDialogProps = {
   fetchAdmins: () => void;
 };
 
-export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
-  UUID,
-  chainid,
-  Admin,
-  fetchAdmins,
-}) => {
+export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({ UUID, chainid, Admin, fetchAdmins }) => {
   const [isOpen, setIsOpen] = useState(false);
   const { address } = useAccount();
   function closeModal() {
@@ -102,9 +89,7 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
     if (!walletClient) return;
     const walletSigner = await walletClientToSigner(walletClient);
     try {
-      const communityResolver = (await GAP.getCommunityResolver(
-        walletSigner
-      )) as any;
+      const communityResolver = (await GAP.getCommunityResolver(walletSigner)) as any;
       changeStepperStep("preparing");
       const communityResponse = await communityResolver.delist(UUID, Admin);
 
@@ -112,11 +97,7 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
       const { hash } = communityResponse;
       await communityResponse.wait().then(async () => {
         if (hash) {
-          await fetchData(
-            INDEXER.ATTESTATION_LISTENER(hash, chainid),
-            "POST",
-            {}
-          );
+          await fetchData(INDEXER.ATTESTATION_LISTENER(hash, chainid), "POST", {});
         }
         changeStepperStep("indexing");
         let retries = 1000;
@@ -136,8 +117,7 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
             }
 
             addressRemoved = !response.admins.some(
-              (admin: any) =>
-                admin.user.id.toLowerCase() === Admin.toLowerCase()
+              (admin: any) => admin.user.id.toLowerCase() === Admin.toLowerCase()
             );
 
             if (addressRemoved) {
@@ -147,9 +127,7 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
               closeModal(); // Close the dialog upon successful submission
               break;
             }
-          } catch (error: any) {
-            console.log("Retrying...");
-          }
+          } catch (_error: any) {}
 
           retries -= 1;
           // eslint-disable-next-line no-await-in-loop
@@ -162,7 +140,6 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
         community: UUID,
         address,
       });
-      console.log(error);
     } finally {
       setIsStepper(false);
       setIsLoading(false);
@@ -216,8 +193,7 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
                   {
                     <div className="mt-2">
                       <p className="text-sm text-gray-600 dark:text-zinc-300">
-                        Note : Removing an admin will remove their ability to
-                        manage the community.
+                        Note : Removing an admin will remove their ability to manage the community.
                       </p>
                     </div>
                   }
@@ -225,13 +201,13 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
                   <form onSubmit={handleSubmit(onSubmit)}>
                     <div className="w-full px-2 py-4 sm:px-0">
                       <div className="flex w-full flex-col gap-2">
-                        <label className={labelStyle}>Community UUID</label>
+                        <div className={labelStyle}>Community UUID</div>
                         <div>{UUID}</div>
                       </div>
                     </div>
                     <div className="w-full px-2 py-4 sm:px-0">
                       <div className="flex w-full flex-col gap-2">
-                        <label className={labelStyle}>Admin</label>
+                        <div className={labelStyle}>Admin</div>
                         <div>{Admin}</div>
                       </div>
                     </div>

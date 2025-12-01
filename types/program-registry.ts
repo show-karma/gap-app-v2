@@ -67,4 +67,3 @@ export interface CreateProgramFormData {
   };
   budget?: number;
 }
-

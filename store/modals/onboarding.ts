@@ -1,13 +1,8 @@
-import { mixpanelEvent } from "@/utilities/mixpanelEvent";
-import { Hex } from "viem";
+import type { Hex } from "viem";
 import { create } from "zustand";
+import { mixpanelEvent } from "@/utilities/mixpanelEvent";
 
-export type OnboardingSteps =
-  | "welcome"
-  | "project"
-  | "grants"
-  | "updates-milestones"
-  | "structure";
+export type OnboardingSteps = "welcome" | "project" | "grants" | "updates-milestones" | "structure";
 
 interface OnboardingStore {
   isOnboardingOpen: boolean;

@@ -19,8 +19,13 @@ export function EmergencyControls({
     <div className="flex space-x-2">
       {enabled ? (
         <button
+          type="button"
           onClick={() => {
-            if (confirm(`Are you sure you want to emergency stop the faucet for chain ${chainId}? This will disable all operations and expire pending requests.`)) {
+            if (
+              confirm(
+                `Are you sure you want to emergency stop the faucet for chain ${chainId}? This will disable all operations and expire pending requests.`
+              )
+            ) {
               onEmergencyStop();
             }
           }}
@@ -31,6 +36,7 @@ export function EmergencyControls({
         </button>
       ) : (
         <button
+          type="button"
           onClick={() => {
             if (confirm(`Are you sure you want to resume operations for chain ${chainId}?`)) {
               onResume();

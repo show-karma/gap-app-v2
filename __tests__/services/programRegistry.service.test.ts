@@ -4,11 +4,11 @@
  * covering business logic, error handling, and response parsing
  */
 
+import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { ProgramRegistryService } from "@/services/programRegistry.service";
+import type { CreateProgramFormData } from "@/types/program-registry";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import type { CreateProgramFormData } from "@/types/program-registry";
-import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 // Mock fetchData utility
 jest.mock("@/utilities/fetchData", () => ({
@@ -41,10 +41,7 @@ describe("ProgramRegistryService", () => {
 
   describe("buildProgramMetadata", () => {
     it("should build metadata correctly from form data and community", () => {
-      const metadata = ProgramRegistryService.buildProgramMetadata(
-        mockFormData,
-        mockCommunity
-      );
+      const metadata = ProgramRegistryService.buildProgramMetadata(mockFormData, mockCommunity);
 
       expect(metadata).toEqual({
         title: "Test Program",
@@ -103,10 +100,7 @@ describe("ProgramRegistryService", () => {
     });
 
     it("should use community UID in communityRef", () => {
-      const metadata = ProgramRegistryService.buildProgramMetadata(
-        mockFormData,
-        mockCommunity
-      );
+      const metadata = ProgramRegistryService.buildProgramMetadata(mockFormData, mockCommunity);
 
       expect(metadata.communityRef).toEqual([mockCommunity.uid]);
       expect(metadata.communityRef).not.toContain(mockCommunity.slug);
@@ -165,10 +159,7 @@ describe("ProgramRegistryService", () => {
   describe("createProgram", () => {
     const mockOwner = "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd";
     const mockChainId = 1;
-    const mockMetadata = ProgramRegistryService.buildProgramMetadata(
-      mockFormData,
-      mockCommunity
-    );
+    const mockMetadata = ProgramRegistryService.buildProgramMetadata(mockFormData, mockCommunity);
 
     it("should create program successfully", async () => {
       const mockResponse = {
@@ -288,18 +279,18 @@ describe("ProgramRegistryService", () => {
       const mockError = "Approval failed";
       (fetchData as jest.Mock).mockResolvedValue([null, mockError]);
 
-      await expect(
-        ProgramRegistryService.approveProgram(mockProgramId)
-      ).rejects.toThrow("Approval failed");
+      await expect(ProgramRegistryService.approveProgram(mockProgramId)).rejects.toThrow(
+        "Approval failed"
+      );
     });
 
     it("should throw error when fetchData throws", async () => {
       const mockError = new Error("Network error");
       (fetchData as jest.Mock).mockRejectedValue(mockError);
 
-      await expect(
-        ProgramRegistryService.approveProgram(mockProgramId)
-      ).rejects.toThrow("Network error");
+      await expect(ProgramRegistryService.approveProgram(mockProgramId)).rejects.toThrow(
+        "Network error"
+      );
     });
   });
 
@@ -307,17 +298,11 @@ describe("ProgramRegistryService", () => {
     it("should handle complete program creation and approval flow", async () => {
       const mockOwner = "0xabcdefabcdefabcdefabcdefabcdefabcdefabcd";
       const mockChainId = 1;
-      const mockMetadata = ProgramRegistryService.buildProgramMetadata(
-        mockFormData,
-        mockCommunity
-      );
+      const mockMetadata = ProgramRegistryService.buildProgramMetadata(mockFormData, mockCommunity);
 
       // Mock creation response
       (fetchData as jest.Mock)
-        .mockResolvedValueOnce([
-          { _id: { $oid: "program-123" } },
-          null,
-        ])
+        .mockResolvedValueOnce([{ _id: { $oid: "program-123" } }, null])
         .mockResolvedValueOnce([{ success: true }, null]);
 
       const createResult = await ProgramRegistryService.createProgram(
@@ -359,4 +344,3 @@ describe("ProgramRegistryService", () => {
     });
   });
 });
-

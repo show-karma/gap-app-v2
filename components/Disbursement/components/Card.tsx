@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 
 interface CardProps {
   children: React.ReactNode;
@@ -32,12 +32,8 @@ export const Card: React.FC<CardProps> = ({
   titleEmoji,
 }) => {
   return (
-    <div
-      className={`bg-white rounded-xl shadow-sm border border-gray-200 p-6 ${className}`}
-    >
-      {title && (
-        <CardHeader title={title} icon={titleIcon} emoji={titleEmoji} />
-      )}
+    <div className={`bg-white rounded-xl shadow-sm border border-gray-200 p-6 ${className}`}>
+      {title && <CardHeader title={title} icon={titleIcon} emoji={titleEmoji} />}
       {children}
     </div>
   );

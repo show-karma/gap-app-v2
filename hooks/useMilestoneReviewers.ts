@@ -49,7 +49,8 @@ export function useMilestoneReviewers(programId: string, chainID: number) {
     },
     onError: (error) => {
       console.error("Error adding milestone reviewer:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to add milestone reviewer";
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to add milestone reviewer";
       toast.error(errorMessage);
     },
   });
@@ -57,11 +58,7 @@ export function useMilestoneReviewers(programId: string, chainID: number) {
   // Mutation for removing a milestone reviewer
   const removeMutation = useMutation({
     mutationFn: async (publicAddress: string) => {
-      return milestoneReviewersService.removeReviewer(
-        programId,
-        chainID,
-        publicAddress,
-      );
+      return milestoneReviewersService.removeReviewer(programId, chainID, publicAddress);
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
@@ -71,7 +68,8 @@ export function useMilestoneReviewers(programId: string, chainID: number) {
     },
     onError: (error) => {
       console.error("Error removing milestone reviewer:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to remove milestone reviewer";
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to remove milestone reviewer";
       toast.error(errorMessage);
     },
   });
@@ -93,6 +91,6 @@ export function useMilestoneReviewers(programId: string, chainID: number) {
       removeReviewer: removeMutation.mutateAsync,
       isRemoving: removeMutation.isPending,
     }),
-    [query, addMutation, removeMutation],
+    [query, addMutation, removeMutation]
   );
 }

@@ -1,12 +1,11 @@
 "use client";
 import { useMemo } from "react";
-import { SUPPORTED_NETWORKS, type SupportedToken } from "@/constants/supportedTokens";
+import { estimateDonationTime, formatEstimatedTime } from "@/constants/donation";
 import {
-  getDonationSummaryByNetwork,
   countNetworkSwitches,
   type DonationPayment,
+  getDonationSummaryByNetwork,
 } from "@/utilities/donations/helpers";
-import { estimateDonationTime, formatEstimatedTime } from "@/constants/donation";
 import { NetworkSwitchItem } from "./NetworkSwitchItem";
 
 interface NetworkSwitchPreviewProps {
@@ -43,11 +42,7 @@ export function NetworkSwitchPreview({
   const estimatedTime = useMemo(() => {
     const approvalCount = payments.filter((p) => !p.token.isNative).length;
     const donationCount = payments.length;
-    const totalSeconds = estimateDonationTime(
-      switchCount,
-      approvalCount,
-      donationCount
-    );
+    const totalSeconds = estimateDonationTime(switchCount, approvalCount, donationCount);
     return formatEstimatedTime(totalSeconds);
   }, [switchCount, payments]);
 
@@ -91,15 +86,10 @@ export function NetworkSwitchPreview({
           </h3>
 
           <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
-            Your wallet will prompt you to switch networks during the donation
-            process.
+            Your wallet will prompt you to switch networks during the donation process.
           </p>
 
-          <div
-            className="mt-3 space-y-2"
-            role="list"
-            aria-label="Network donation summary"
-          >
+          <ul className="mt-3 space-y-2" aria-label="Network donation summary">
             {networkSummary.map((summary, index) => (
               <NetworkSwitchItem
                 key={summary.chainId}
@@ -109,16 +99,11 @@ export function NetworkSwitchPreview({
                 needsSwitch={summary.needsSwitch}
               />
             ))}
-          </div>
+          </ul>
 
           <div className="mt-3 flex items-center justify-between border-t border-amber-200 pt-3 text-xs dark:border-amber-900/50">
-            <span className="font-medium text-amber-900 dark:text-amber-100">
-              Estimated time:
-            </span>
-            <span
-              className="font-semibold text-amber-700 dark:text-amber-300"
-              aria-label={`Estimated time: ${estimatedTime}`}
-            >
+            <span className="font-medium text-amber-900 dark:text-amber-100">Estimated time:</span>
+            <span className="font-semibold text-amber-700 dark:text-amber-300">
               {estimatedTime}
             </span>
           </div>

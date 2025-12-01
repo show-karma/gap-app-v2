@@ -4,10 +4,7 @@ import dynamic from "next/dynamic";
 import { OutputsAndOutcomesLoading } from "../Loading/OutputsAndOutcomes";
 
 const ImpactComponent = dynamic(
-  () =>
-    import("@/components/Pages/Project/Impact").then(
-      (mod) => mod.ImpactComponent
-    ),
+  () => import("@/components/Pages/Project/Impact").then((mod) => mod.ImpactComponent),
   {
     loading: () => <OutputsAndOutcomesLoading />,
   }

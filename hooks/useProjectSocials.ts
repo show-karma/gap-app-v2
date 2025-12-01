@@ -1,3 +1,4 @@
+import type { IProjectDetails } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import React from "react";
 import {
   DiscordIcon,
@@ -7,7 +8,6 @@ import {
   WebsiteIcon,
 } from "@/components/Icons";
 import { FarcasterIcon } from "@/components/Icons/Farcaster";
-import type { IProjectDetails } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { formatFarcasterLink } from "@/utilities/farcaster";
 
 interface SocialLink {
@@ -16,9 +16,7 @@ interface SocialLink {
   icon: React.FC<{ className?: string }>;
 }
 
-export const useProjectSocials = (
-  links?: IProjectDetails["data"]["links"]
-): SocialLink[] => {
+export const useProjectSocials = (links?: IProjectDetails["data"]["links"]): SocialLink[] => {
   return React.useMemo(() => {
     if (!links) return [];
 
@@ -35,17 +33,13 @@ export const useProjectSocials = (
       {
         name: "Farcaster",
         prefix: ["warpcast.com/", "farcaster.xyz/"],
-        icon: FarcasterIcon
+        icon: FarcasterIcon,
       },
     ];
 
     const hasHttpOrWWW = (link?: string) => {
       if (!link) return false;
-      if (
-        link.includes("http://") ||
-        link.includes("https://") ||
-        link.includes("www.")
-      ) {
+      if (link.includes("http://") || link.includes("https://") || link.includes("www.")) {
         return true;
       }
       return false;
@@ -66,22 +60,16 @@ export const useProjectSocials = (
         return addPrefix(link);
       }
 
-      return hasHttpOrWWW(prefix + link)
-        ? prefix + link
-        : addPrefix(prefix + link);
+      return hasHttpOrWWW(prefix + link) ? prefix + link : addPrefix(prefix + link);
     };
 
     return types
       .map(({ name, prefix, icon }) => {
-        const socialLink = links?.find(
-          (link) => link.type === name.toLowerCase()
-        )?.url;
+        const socialLink = links?.find((link) => link.type === name.toLowerCase())?.url;
 
         if (socialLink) {
           if (name === "Twitter") {
-            const url = socialLink?.includes("@")
-              ? socialLink?.replace("@", "") || ""
-              : socialLink;
+            const url = socialLink?.includes("@") ? socialLink?.replace("@", "") || "" : socialLink;
 
             if (Array.isArray(prefix)) {
               if (url.includes("twitter.com/") || url.includes("x.com/")) {
@@ -109,18 +97,13 @@ export const useProjectSocials = (
 
           return {
             name,
-            url: formatPrefix(
-              typeof prefix === "string" ? prefix : prefix[0],
-              socialLink
-            ),
+            url: formatPrefix(typeof prefix === "string" ? prefix : prefix[0], socialLink),
             icon,
           };
         }
 
         return undefined;
       })
-      .filter(
-        (social): social is NonNullable<typeof social> => social !== undefined
-      );
+      .filter((social): social is NonNullable<typeof social> => social !== undefined);
   }, [links]);
 };

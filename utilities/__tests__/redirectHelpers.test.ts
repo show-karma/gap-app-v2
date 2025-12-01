@@ -8,8 +8,8 @@ jest.mock("next/server", () => ({
   },
 }));
 
-import { shouldRedirectToGov, redirectToGov } from "../redirectHelpers";
 import type { NextRequest } from "next/server";
+import { redirectToGov, shouldRedirectToGov } from "../redirectHelpers";
 
 describe("redirectHelpers", () => {
   describe("shouldRedirectToGov", () => {
@@ -191,9 +191,7 @@ describe("redirectHelpers", () => {
         const response = redirectToGov(mockRequest);
 
         expect(response.status).toBe(308); // Permanent Redirect
-        expect(response.headers.get("location")).toBe(
-          "http://gov.karmahq.xyz/dao/optimism"
-        );
+        expect(response.headers.get("location")).toBe("http://gov.karmahq.xyz/dao/optimism");
       });
 
       it("should preserve query parameters", () => {
@@ -231,9 +229,7 @@ describe("redirectHelpers", () => {
         const response = redirectToGov(mockRequest);
 
         expect(response.status).toBe(308); // Permanent Redirect
-        expect(response.headers.get("location")).toBe(
-          "http://govstag.karmahq.xyz/dao/optimism"
-        );
+        expect(response.headers.get("location")).toBe("http://govstag.karmahq.xyz/dao/optimism");
       });
 
       it("should preserve query parameters in staging", () => {

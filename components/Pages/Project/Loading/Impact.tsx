@@ -46,7 +46,7 @@ export const ProjectImpactLoading = () => {
         </tr>
       </thead>
       <tbody className="">
-        {emptyArray.map((item, index) => (
+        {emptyArray.map((_item, index) => (
           <SkeletonRow key={index} />
         ))}
       </tbody>
