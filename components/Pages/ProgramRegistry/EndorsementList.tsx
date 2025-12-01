@@ -1,5 +1,4 @@
 "use client";
-import type { IProjectEndorsement } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 /* eslint-disable @next/next/no-img-element */
 import { type FC, useEffect, useMemo, useState } from "react";
 import type { Hex } from "viem";
@@ -12,27 +11,41 @@ import { formatDate } from "@/utilities/formatDate";
 import { shortAddress } from "@/utilities/shortAddress";
 import { EmptyEndorsmentList } from "../Project/Impact/EmptyEndorsmentList";
 
+// V2 API endorsement structure
+interface ProjectEndorsementV2 {
+  uid: string;
+  endorsedBy: Hex;
+  comment?: string;
+  createdAt: string;
+}
+
 interface EndorsementRowProps {
-  endorsement: IProjectEndorsement;
+  endorsement: ProjectEndorsementV2;
 }
 
 const EndorsementRow: FC<EndorsementRowProps> = ({ endorsement }) => {
   const { ensData, populateEns } = useENS();
+  const endorserAddress = endorsement.endorsedBy?.toLowerCase() as Hex;
+
   useEffect(() => {
-    populateEns([endorsement.recipient]);
-  }, [endorsement.recipient, populateEns]);
+    if (endorsement.endorsedBy) {
+      populateEns([endorsement.endorsedBy]);
+    }
+  }, [endorsement.endorsedBy, populateEns]);
+
+  const displayName = ensData[endorserAddress]?.name || shortAddress(endorsement.endorsedBy);
 
   return (
     <div className="flex flex-col w-full p-4 gap-3">
       <div className="flex flex-row gap-2 w-full items-start">
         <div className="flex flex-row gap-2 w-full items-center">
           <EthereumAddressToENSAvatar
-            address={endorsement.recipient}
+            address={endorsement.endorsedBy}
             className="h-6 w-6 rounded-full"
           />
           <div className="flex flex-row gap-3 w-full items-start justify-between">
             <p className="text-sm font-bold text-brand-darkblue dark:text-zinc-100">
-              {ensData[endorsement?.recipient]?.name || shortAddress(endorsement.recipient)}
+              {displayName}
               {` `}
               <span className="text-sm font-normal text-brand-gray dark:text-zinc-200">
                 endorsed this on {formatDate(endorsement.createdAt)}
@@ -41,16 +54,14 @@ const EndorsementRow: FC<EndorsementRowProps> = ({ endorsement }) => {
           </div>
         </div>
       </div>
-      {endorsement.data.comment ? (
+      {endorsement.comment ? (
         <div className="text-left px-0 flex flex-row items-start">
-          <p className="text-sm text-brand-gray dark:text-zinc-100  font-normal">
-            <div
-              className="w-full break-normal text-base font-normal text-black dark:text-zinc-100 max-2xl:text-sm"
-              data-color-mode="light"
-            >
-              <MarkdownPreview source={endorsement.data.comment} />
-            </div>
-          </p>
+          <div
+            className="text-sm text-brand-gray dark:text-zinc-100 font-normal w-full break-normal text-base text-black dark:text-zinc-100 max-2xl:text-sm"
+            data-color-mode="light"
+          >
+            <MarkdownPreview source={endorsement.comment} />
+          </div>
         </div>
       ) : null}
     </div>
@@ -59,29 +70,29 @@ const EndorsementRow: FC<EndorsementRowProps> = ({ endorsement }) => {
 
 export const EndorsementList: FC = () => {
   const project = useProjectStore((state) => state.project);
-  const [handledEndorsements, setHandledEndorsements] = useState<IProjectEndorsement[]>([]);
-  const itemsPerPage = 12; // Set the total number of items you want returned from the API
+  const [handledEndorsements, setHandledEndorsements] = useState<ProjectEndorsementV2[]>([]);
+  const itemsPerPage = 12;
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
 
   const { populateEns } = useENS();
 
   useMemo(() => {
-    const endorsements = project?.endorsements || [];
-    const allAddresses = endorsements.map((endorsement) => endorsement.recipient);
+    const endorsements = (project?.endorsements || []) as ProjectEndorsementV2[];
+    const allAddresses = endorsements.map((endorsement) => endorsement.endorsedBy);
     populateEns(allAddresses);
 
     const checkUniqueEndorsements = () => {
-      const addresses: Record<Hex, IProjectEndorsement> = {};
+      const addresses: Record<Hex, ProjectEndorsementV2> = {};
       endorsements.forEach((endorsement) => {
-        if (addresses[endorsement.recipient]) {
+        if (addresses[endorsement.endorsedBy]) {
           if (
-            new Date(addresses[endorsement.recipient].createdAt) < new Date(endorsement.createdAt)
+            new Date(addresses[endorsement.endorsedBy].createdAt) < new Date(endorsement.createdAt)
           ) {
-            addresses[endorsement.recipient] = endorsement;
+            addresses[endorsement.endorsedBy] = endorsement;
           }
         } else {
-          addresses[endorsement.recipient] = endorsement;
+          addresses[endorsement.endorsedBy] = endorsement;
         }
       });
       const uniqueEndorsements = Object.values(addresses);

@@ -8,7 +8,7 @@ import { getContributorProfiles } from "@/utilities/indexer/getContributorProfil
 export const useTeamProfiles = (project: ProjectV2Response | undefined) => {
   const setTeamProfiles = useProjectStore((state) => state.setTeamProfiles);
 
-  const rawAddresses = project?.members?.map((member) => member.address) || [];
+  const rawAddresses = project?.members?.map((member) => member.address).filter(Boolean) || [];
   const uniqueLowercasedAddresses = Array.from(
     new Set(rawAddresses.map((address) => address.toLowerCase()))
   );

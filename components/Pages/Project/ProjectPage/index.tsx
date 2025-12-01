@@ -74,7 +74,10 @@ function ProjectPage() {
 
   useEffect(() => {
     if (project?.members) {
-      populateEns(project?.members?.map((v) => v.address));
+      const addresses = project.members
+        .map((v) => v.address)
+        .filter((address): address is string => !!address);
+      populateEns(addresses);
     }
   }, [project?.members, populateEns]);
 
@@ -96,7 +99,7 @@ function ProjectPage() {
       });
     }
     const alreadyHasOwner = project?.members?.find(
-      (member) => member.address.toLowerCase() === project.owner.toLowerCase()
+      (member) => member.address?.toLowerCase() === project?.owner?.toLowerCase()
     );
     if (!alreadyHasOwner && project?.owner) {
       members.push({
@@ -263,7 +266,7 @@ function ProjectPage() {
 
   useEffect(() => {
     const isAlreadyMember = project?.members?.some(
-      (member) => member.address.toLowerCase() === address?.toLowerCase()
+      (member) => member.address?.toLowerCase() === address?.toLowerCase()
     );
     if (isAlreadyMember) return;
     checkCodeValidation().then((isValid) => {

@@ -196,7 +196,7 @@ export const ContributorProfileDialog: FC = () => {
               // Check if the member is already in the project
               const hasMember = refreshedProject?.members.find(
                 (item: { address: string; role: string; joinedAt: string }) =>
-                  item.address.toLowerCase() === address.toLowerCase()
+                  item.address?.toLowerCase() === address?.toLowerCase()
               );
               // If the member is already in the project, update the profile
               if (hasMember) {
