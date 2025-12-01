@@ -258,9 +258,7 @@ export const MilestonesScreen: React.FC = () => {
               await refreshProject();
               router.push(
                 PAGES.PROJECT.GRANT(
-                  (selectedProject as any)?.details?.slug ||
-                    (selectedProject as any)?.details?.data?.slug ||
-                    selectedProject.uid,
+                  selectedProject?.details?.slug || selectedProject.uid,
                   grant.uid
                 )
               );

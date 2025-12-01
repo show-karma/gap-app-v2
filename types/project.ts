@@ -61,7 +61,7 @@ export interface ProjectFromList {
 export interface ProjectV2Response {
   uid: `0x${string}`;
   chainID: number;
-  owner: string;
+  owner: `0x${string}`;
   payoutAddress?: string;
   details: {
     title: string;
@@ -101,4 +101,6 @@ export interface ProjectV2Response {
   updates?: any[];
   communities?: string[];
   grants?: any[]; // Grants are fetched separately and added to the response
+  symlinks?: any[];
+  pointers?: any[];
 }

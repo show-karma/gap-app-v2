@@ -74,7 +74,6 @@ export async function GET(
       >
         <div tw="flex flex-col items-start justify-start w-[520px] pb-[40px]">
           {community?.details?.data.imageURL ? (
-            // biome-ignore lint/performance/noImgElement: Using <img> is required for next/og ImageResponse
             <img
               alt={community?.details?.data.name}
               src={community?.details?.data.imageURL}
@@ -93,7 +92,6 @@ export async function GET(
             {`Discover how ${community?.details?.data.name} is fueling innovation: ${projects}+ projects supported through grants!`}
           </p>
           <div tw="flex flex-row items-center justify-end w-full pr-[80px]">
-            {/* biome-ignore lint/performance/noImgElement: Using <img> is required for next/og ImageResponse */}
             <img
               alt={`${PROJECT_NAME} Logo`}
               src="https://karmahq.xyz/logo/karma-logo-dark.svg"
@@ -120,7 +118,6 @@ export async function GET(
               </p>
               <div tw="flex flex-row items-center h-[40px]">
                 <p tw="font-normal text-brand-gray text-[26px] h-max mr-3">{item.title}</p>
-                {/* biome-ignore lint/performance/noImgElement: Using <img> is required for next/og ImageResponse */}
                 <img src={item.icon} alt={item.title} width={35} height={35} />
               </div>
             </div>

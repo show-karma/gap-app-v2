@@ -168,6 +168,28 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   previousContacts,
   useEditModalStore = false, // Default to false for create mode
 }) => {
+  /**
+   * Dual V1/V2 Handling:
+   *
+   * This component handles both IProjectResponse (V1) and ProjectV2Response (V2) structures
+   * for the following reasons:
+   *
+   * 1. Store Migration: The project store now uses V2 (ProjectV2Response), so when editing
+   *    projects, we receive V2 data from useProjectStore().
+   *
+   * 2. Search API: The search functionality (gapIndexerApi.searchProjects) still returns
+   *    V1 (IProjectResponse[]) results, so we need to handle V1 when searching.
+   *
+   * 3. SDK Compatibility: The SDK methods (new Project(), new ProjectDetails(), etc.) still
+   *    expect V1 structure when creating/updating projects, so we convert to V1 when
+   *    calling SDK methods.
+   *
+   * This is a transitional approach until:
+   * - The SDK fully supports V2 structure
+   * - The search API is migrated to V2
+   *
+   * Once both are migrated, we can simplify this component to only handle V2.
+   */
   const dataToUpdate = useMemo(
     () =>
       projectToUpdate
@@ -260,9 +282,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const [contacts, setContacts] = useState<Contact[]>(previousContacts || []);
   const [customLinks, setCustomLinks] = useState<CustomLink[]>(() => {
     // Initialize custom links from project data if editing
-    const links =
-      (projectToUpdate as ProjectV2Response).details?.links ||
-      (projectToUpdate as IProjectResponse).details?.data?.links;
+    const links = projectToUpdate
+      ? (projectToUpdate as ProjectV2Response).details?.links ||
+        (projectToUpdate as IProjectResponse).details?.data?.links
+      : undefined;
     if (links) {
       return links.filter(isCustomLink).map((link: any, index: number) => ({
         id: `custom-${index}`,
@@ -697,7 +720,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         },
         refUID: project.uid,
         schema: gapClient.findSchema("ProjectDetails"),
-        recipient: (project as any)?.owner || (project as any)?.recipient,
+        recipient: project.recipient,
         uid: nullRef,
       });
 
@@ -745,7 +768,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           // eslint-disable-next-line no-await-in-loop
           fetchedProject = await (slug
             ? gapClient.fetch.projectBySlug(slug)
-            : gapClient.fetch.projectById(project.uid as Hex)
+            : gapClient.fetch.projectById(project.uid)
           ).catch(() => null);
           if (fetchedProject?.uid && fetchedProject.uid !== zeroHash) {
             if (data.github) {

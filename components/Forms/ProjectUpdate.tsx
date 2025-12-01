@@ -183,10 +183,7 @@ const GrantSearchDropdown: FC<{
       <div className="flex w-full h-full">
         <ExternalLink
           href={PAGES.PROJECT.SCREENS.NEW_GRANT(
-            (project as ProjectV2Response)?.details?.slug ||
-              (project as IProjectResponse)?.details?.data?.slug ||
-              project?.uid ||
-              ""
+            (project as ProjectV2Response)?.details?.slug || project?.uid || ""
           )}
           className="text-sm h-full w-full px-2 py-2 rounded bg-zinc-700 text-white text-center hover:bg-zinc-600 transition-colors"
         >
