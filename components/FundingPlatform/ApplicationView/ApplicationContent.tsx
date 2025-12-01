@@ -421,19 +421,17 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
               <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                 Internal AI Evaluation
               </h3>
-              {showAIEvaluationButton && (
-                <div
-                  className="flex-shrink-0"
-                  title={!canRunInternalEvaluation ? internalPromptHelpText : undefined}
-                >
-                  <AIEvaluationButton
-                    referenceNumber={application.referenceNumber}
-                    onEvaluationComplete={handleAIEvaluationComplete}
-                    disabled={isUpdatingStatus || !canRunInternalEvaluation}
-                    isInternal={true}
-                  />
-                </div>
-              )}
+              <div
+                className="flex-shrink-0"
+                title={!canRunInternalEvaluation ? internalPromptHelpText : undefined}
+              >
+                <AIEvaluationButton
+                  referenceNumber={application.referenceNumber}
+                  onEvaluationComplete={handleAIEvaluationComplete}
+                  disabled={isUpdatingStatus || !canRunInternalEvaluation}
+                  isInternal={true}
+                />
+              </div>
             </div>
 
             {showMissingInternalPromptWarning && (
