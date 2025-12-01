@@ -3,7 +3,17 @@
  * @description Tests grant and milestone instance fetching utilities
  */
 
+import * as projectApiModule from "@/utilities/api/project";
 import { fetchGrantInstance, fetchMilestoneInstance } from "@/utilities/grant-helpers";
+
+// Mock getProjectData
+jest.mock("@/utilities/api/project", () => ({
+  getProjectData: jest.fn(),
+}));
+
+const mockGetProjectData = projectApiModule.getProjectData as jest.MockedFunction<
+  typeof projectApiModule.getProjectData
+>;
 
 describe("fetchGrantInstance", () => {
   const mockProject = {
@@ -27,7 +37,7 @@ describe("fetchGrantInstance", () => {
 
   describe("Successful Fetch", () => {
     it("should fetch and return grant instance", async () => {
-      mockGapClient.fetch.projectById.mockResolvedValue(mockProject);
+      mockGetProjectData.mockResolvedValue(mockProject as any);
 
       const result = await fetchGrantInstance({
         gapClient: mockGapClient,
@@ -35,12 +45,12 @@ describe("fetchGrantInstance", () => {
         grantUid: "grant-1",
       });
 
-      expect(mockGapClient.fetch.projectById).toHaveBeenCalledWith("project-123");
+      expect(mockGetProjectData).toHaveBeenCalledWith("project-123");
       expect(result).toEqual(mockProject.grants[0]);
     });
 
     it("should handle case-insensitive grant UID matching", async () => {
-      mockGapClient.fetch.projectById.mockResolvedValue(mockProject);
+      mockGetProjectData.mockResolvedValue(mockProject as any);
 
       const result = await fetchGrantInstance({
         gapClient: mockGapClient,
@@ -52,7 +62,7 @@ describe("fetchGrantInstance", () => {
     });
 
     it("should find grant in middle of array", async () => {
-      mockGapClient.fetch.projectById.mockResolvedValue(mockProject);
+      mockGetProjectData.mockResolvedValue(mockProject as any);
 
       const result = await fetchGrantInstance({
         gapClient: mockGapClient,
@@ -64,7 +74,7 @@ describe("fetchGrantInstance", () => {
     });
 
     it("should find grant at end of array", async () => {
-      mockGapClient.fetch.projectById.mockResolvedValue(mockProject);
+      mockGetProjectData.mockResolvedValue(mockProject as any);
 
       const result = await fetchGrantInstance({
         gapClient: mockGapClient,
@@ -78,7 +88,7 @@ describe("fetchGrantInstance", () => {
 
   describe("Error Cases", () => {
     it("should throw error when project not found", async () => {
-      mockGapClient.fetch.projectById.mockResolvedValue(null);
+      mockGetProjectData.mockResolvedValue(null as any);
 
       await expect(
         fetchGrantInstance({
@@ -90,7 +100,7 @@ describe("fetchGrantInstance", () => {
     });
 
     it("should throw error when grant not found in project", async () => {
-      mockGapClient.fetch.projectById.mockResolvedValue(mockProject);
+      mockGetProjectData.mockResolvedValue(mockProject as any);
 
       await expect(
         fetchGrantInstance({
@@ -103,7 +113,7 @@ describe("fetchGrantInstance", () => {
 
     it("should throw error when project has no grants", async () => {
       const emptyProject = { uid: "project-123", grants: [] };
-      mockGapClient.fetch.projectById.mockResolvedValue(emptyProject);
+      mockGetProjectData.mockResolvedValue(emptyProject as any);
 
       await expect(
         fetchGrantInstance({
@@ -121,7 +131,7 @@ describe("fetchGrantInstance", () => {
         uid: "project-123",
         grants: [{ uid: "GrAnT-123", details: {} }],
       };
-      mockGapClient.fetch.projectById.mockResolvedValue(mixedCaseProject);
+      mockGetProjectData.mockResolvedValue(mixedCaseProject as any);
 
       const result = await fetchGrantInstance({
         gapClient: mockGapClient,
@@ -138,7 +148,7 @@ describe("fetchGrantInstance", () => {
         details: {},
       }));
       const largeProject = { uid: "project-123", grants: manyGrants };
-      mockGapClient.fetch.projectById.mockResolvedValue(largeProject);
+      mockGetProjectData.mockResolvedValue(largeProject as any);
 
       const result = await fetchGrantInstance({
         gapClient: mockGapClient,
@@ -182,7 +192,7 @@ describe("fetchMilestoneInstance", () => {
 
   describe("Successful Fetch", () => {
     it("should fetch and return milestone instance with community UID", async () => {
-      mockGapClient.fetch.projectById.mockResolvedValue(mockProject);
+      mockGetProjectData.mockResolvedValue(mockProject as any);
 
       const result = await fetchMilestoneInstance({
         gapClient: mockGapClient,
@@ -191,7 +201,7 @@ describe("fetchMilestoneInstance", () => {
         milestoneUid: "milestone-1",
       });
 
-      expect(mockGapClient.fetch.projectById).toHaveBeenCalledWith("project-123");
+      expect(mockGetProjectData).toHaveBeenCalledWith("project-123");
       expect(result).toEqual({
         milestoneInstance: mockMilestone,
         communityUID: "community-123",
@@ -209,7 +219,7 @@ describe("fetchMilestoneInstance", () => {
           },
         ],
       };
-      mockGapClient.fetch.projectById.mockResolvedValue(projectWithoutCommunity);
+      mockGetProjectData.mockResolvedValue(projectWithoutCommunity as any);
 
       const result = await fetchMilestoneInstance({
         gapClient: mockGapClient,
@@ -222,7 +232,7 @@ describe("fetchMilestoneInstance", () => {
     });
 
     it("should handle case-insensitive milestone UID matching", async () => {
-      mockGapClient.fetch.projectById.mockResolvedValue(mockProject);
+      mockGetProjectData.mockResolvedValue(mockProject as any);
 
       const result = await fetchMilestoneInstance({
         gapClient: mockGapClient,
@@ -237,7 +247,7 @@ describe("fetchMilestoneInstance", () => {
 
   describe("Error Cases", () => {
     it("should throw error when project not found", async () => {
-      mockGapClient.fetch.projectById.mockResolvedValue(null);
+      mockGetProjectData.mockResolvedValue(null as any);
 
       await expect(
         fetchMilestoneInstance({
@@ -250,7 +260,7 @@ describe("fetchMilestoneInstance", () => {
     });
 
     it("should throw error when grant not found", async () => {
-      mockGapClient.fetch.projectById.mockResolvedValue(mockProject);
+      mockGetProjectData.mockResolvedValue(mockProject as any);
 
       await expect(
         fetchMilestoneInstance({
@@ -263,7 +273,7 @@ describe("fetchMilestoneInstance", () => {
     });
 
     it("should throw error when milestone not found", async () => {
-      mockGapClient.fetch.projectById.mockResolvedValue(mockProject);
+      mockGetProjectData.mockResolvedValue(mockProject as any);
 
       await expect(
         fetchMilestoneInstance({
@@ -284,7 +294,7 @@ describe("fetchMilestoneInstance", () => {
         ...mockProject,
         grants: [grantWithoutMilestones],
       };
-      mockGapClient.fetch.projectById.mockResolvedValue(projectWithoutMilestones);
+      mockGetProjectData.mockResolvedValue(projectWithoutMilestones as any);
 
       await expect(
         fetchMilestoneInstance({
@@ -312,7 +322,7 @@ describe("fetchMilestoneInstance", () => {
           { uid: "grant-3", details: { programId: "program-3" }, milestones: [] },
         ],
       };
-      mockGapClient.fetch.projectById.mockResolvedValue(multiGrantProject);
+      mockGetProjectData.mockResolvedValue(multiGrantProject as any);
 
       const result = await fetchMilestoneInstance({
         gapClient: mockGapClient,
@@ -339,7 +349,7 @@ describe("fetchMilestoneInstance", () => {
         ...mockProject,
         grants: [multiMilestoneGrant],
       };
-      mockGapClient.fetch.projectById.mockResolvedValue(projectWithMultipleMilestones);
+      mockGetProjectData.mockResolvedValue(projectWithMultipleMilestones as any);
 
       const result = await fetchMilestoneInstance({
         gapClient: mockGapClient,
