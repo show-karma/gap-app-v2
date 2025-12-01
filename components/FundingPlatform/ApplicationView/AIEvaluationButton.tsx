@@ -1,7 +1,6 @@
 "use client";
 
 import { SparklesIcon } from "@heroicons/react/24/outline";
-import type { AxiosError } from "axios";
 import { type FC, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
@@ -12,15 +11,6 @@ interface AIEvaluationButtonProps {
   onEvaluationComplete?: () => void;
   disabled?: boolean;
   isInternal?: boolean;
-}
-
-/**
- * Type guard to check if error is an Axios error with response data
- */
-function isAxiosErrorWithResponse(error: unknown): error is AxiosError<{ message?: string }> {
-  return (
-    typeof error === "object" && error !== null && "response" in error && "isAxiosError" in error
-  );
 }
 
 /**

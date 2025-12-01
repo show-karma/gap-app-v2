@@ -16,7 +16,6 @@ export type InternalAIEvaluationData = string;
 
 interface InternalAIEvaluationDisplayProps {
   evaluation: InternalAIEvaluationData | null;
-  isLoading: boolean;
   className?: string;
   programName?: string;
 }
@@ -71,13 +70,11 @@ function EvaluationContent({
  * This evaluation is only visible to reviewers and admins, not to applicants.
  *
  * @param evaluation - The evaluation JSON string to parse and display
- * @param isLoading - Whether the evaluation is currently being loaded
  * @param className - Additional CSS classes to apply
  * @param programName - Optional program name for context
  */
 export function InternalAIEvaluationDisplay({
   evaluation,
-  isLoading,
   className = "",
   programName,
 }: InternalAIEvaluationDisplayProps) {

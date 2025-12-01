@@ -269,3 +269,22 @@ export function isFormSchema(schema: any): boolean {
     (schema.settings === undefined || typeof schema.settings === "object")
   );
 }
+
+/**
+ * Type for program prop that supports both IFundingProgramConfig and FormSchema structures.
+ * Used in components that need to handle programs from different sources (API vs config).
+ */
+export type ProgramWithFormSchema =
+  | (Partial<IFundingProgramConfig> & {
+      formSchema?:
+        | IFormSchema
+        | {
+            fields?: Array<{ id?: string; label?: string }>;
+            aiConfig?: {
+              internalLangfusePromptId?: string;
+              langfusePromptId?: string;
+            };
+          };
+      name?: string;
+    })
+  | null;

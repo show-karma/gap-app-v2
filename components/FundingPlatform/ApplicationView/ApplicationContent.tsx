@@ -13,8 +13,7 @@ import toast from "react-hot-toast";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { useApplicationVersions } from "@/hooks/useFundingPlatform";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
-import type { IFundingApplication, IFundingProgramConfig } from "@/types/funding-platform";
-import type { FormSchema } from "@/types/question-builder";
+import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import { getProjectTitle } from "../helper/getProjecTitle";
@@ -26,22 +25,6 @@ import { InternalAIEvaluationDisplay } from "./InternalAIEvaluation";
 import PostApprovalData from "./PostApprovalData";
 import { StatusActionButtons } from "./StatusActionButtons";
 import StatusChangeModal from "./StatusChangeModal";
-
-// Type for program prop that supports both IFundingProgramConfig and FormSchema structures
-type ProgramWithFormSchema =
-  | (Partial<IFundingProgramConfig> & {
-      formSchema?:
-        | FormSchema
-        | {
-            fields?: Array<{ id?: string; label?: string }>;
-            aiConfig?: {
-              internalLangfusePromptId?: string;
-              langfusePromptId?: string;
-            };
-          };
-      name?: string;
-    })
-  | null;
 
 interface ApplicationContentProps {
   application: IFundingApplication;
@@ -472,7 +455,6 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
 
             <InternalAIEvaluationDisplay
               evaluation={application.internalAIEvaluation?.evaluation || null}
-              isLoading={false}
               programName={program?.name || ""}
             />
           </div>

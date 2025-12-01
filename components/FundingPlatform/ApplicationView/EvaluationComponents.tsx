@@ -1,16 +1,10 @@
 "use client";
 
 import { CheckCircleIcon, ExclamationTriangleIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import type { JSX } from "react";
+import { type JSX, useMemo } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { cn } from "@/utilities/tailwind";
-import {
-  type GenericJSON,
-  getPriorityColor,
-  getScoreColor,
-  getScoreIcon,
-  getStatusColor,
-} from "./evaluationUtils";
+import type { GenericJSON } from "./evaluationUtils";
 
 // Small component for score display
 export function ScoreDisplay({
@@ -297,7 +291,9 @@ export function EvaluationDisplay({
   getPriorityColor,
   footerDisclaimer,
 }: EvaluationDisplayProps) {
-  // Check if program is audit grants or growth grants
+  // These flags control program-specific display modes.
+  // Currently disabled as the generic evaluation display handles all programs.
+  // Enable when audit/growth grant specific UI is needed (e.g., probability labels, different decision text).
   const isAuditGrants = false;
   const isGrowthGrants = false;
 
@@ -358,7 +354,44 @@ export function EvaluationDisplay({
   };
 
   const evalData = data as any;
-  const renderedFields = new Set<string>();
+
+  // Compute which fields have been rendered by specialized components upfront
+  // This avoids side effects in JSX and makes the rendering logic clearer
+  const renderedFields = useMemo(() => {
+    const fields = new Set<string>();
+
+    if (evalData.final_score !== undefined || evalData.score !== undefined) {
+      fields.add("final_score");
+      fields.add("score");
+      fields.add("evaluation_status");
+    }
+
+    if (evalData.decision) {
+      fields.add("decision");
+    }
+
+    if (evalData.disqualification_reason && evalData.disqualification_reason !== "null") {
+      fields.add("disqualification_reason");
+    }
+
+    if (evalData.evaluation_summary) {
+      fields.add("evaluation_summary");
+    }
+
+    if (evalData.improvement_recommendations?.length > 0) {
+      fields.add("improvement_recommendations");
+    }
+
+    if (evalData.additional_notes) {
+      fields.add("additional_notes");
+    }
+
+    if (evalData.reviewer_confidence) {
+      fields.add("reviewer_confidence");
+    }
+
+    return fields;
+  }, [evalData]);
 
   return (
     <div className="space-y-4">
@@ -367,7 +400,7 @@ export function EvaluationDisplay({
         <>
           <ScoreDisplay
             score={evalData.final_score || evalData.score || 0}
-            isGrowthGrants={isGrowthGrants || false}
+            isGrowthGrants={isGrowthGrants}
             getScoreIcon={getScoreIcon}
             getScoreColor={getScoreColor}
           />
@@ -376,86 +409,40 @@ export function EvaluationDisplay({
               <StatusChip status={evalData.evaluation_status} getStatusColor={getStatusColor} />
             </div>
           )}
-          {(() => {
-            renderedFields.add("final_score");
-            renderedFields.add("score");
-            renderedFields.add("evaluation_status");
-            return null;
-          })()}
         </>
       )}
 
       {/* Decision display */}
       {evalData.decision && (
-        <>
-          <DecisionDisplay decision={evalData.decision} isAuditGrants={isAuditGrants || false} />
-          {(() => {
-            renderedFields.add("decision");
-            return null;
-          })()}
-        </>
+        <DecisionDisplay decision={evalData.decision} isAuditGrants={isAuditGrants} />
       )}
 
       {/* Disqualification reason */}
       {evalData.disqualification_reason && evalData.disqualification_reason !== "null" && (
-        <>
-          <DisqualificationReason reason={evalData.disqualification_reason} />
-          {(() => {
-            renderedFields.add("disqualification_reason");
-            return null;
-          })()}
-        </>
+        <DisqualificationReason reason={evalData.disqualification_reason} />
       )}
 
       {/* Evaluation Summary */}
-      {evalData.evaluation_summary && (
-        <>
-          <EvaluationSummary summary={evalData.evaluation_summary} />
-          {(() => {
-            renderedFields.add("evaluation_summary");
-            return null;
-          })()}
-        </>
-      )}
+      {evalData.evaluation_summary && <EvaluationSummary summary={evalData.evaluation_summary} />}
 
       {/* Improvement Recommendations */}
       {evalData.improvement_recommendations?.length > 0 && (
-        <>
-          <ImprovementRecommendations
-            recommendations={evalData.improvement_recommendations}
-            getPriorityColor={getPriorityColor}
-          />
-          {(() => {
-            renderedFields.add("improvement_recommendations");
-            return null;
-          })()}
-        </>
+        <ImprovementRecommendations
+          recommendations={evalData.improvement_recommendations}
+          getPriorityColor={getPriorityColor}
+        />
       )}
 
       {/* Additional Notes */}
-      {evalData.additional_notes && (
-        <>
-          <AdditionalNotes notes={evalData.additional_notes} />
-          {(() => {
-            renderedFields.add("additional_notes");
-            return null;
-          })()}
-        </>
-      )}
+      {evalData.additional_notes && <AdditionalNotes notes={evalData.additional_notes} />}
 
       {/* Reviewer confidence */}
       {evalData.reviewer_confidence && (
-        <>
-          <p className="text-xs text-gray-400 dark:text-gray-500">
-            Reviewer Confidence:{" "}
-            {evalData.reviewer_confidence?.charAt(0).toUpperCase() +
-              evalData.reviewer_confidence?.slice(1)}
-          </p>
-          {(() => {
-            renderedFields.add("reviewer_confidence");
-            return null;
-          })()}
-        </>
+        <p className="text-xs text-gray-400 dark:text-gray-500">
+          Reviewer Confidence:{" "}
+          {evalData.reviewer_confidence?.charAt(0).toUpperCase() +
+            evalData.reviewer_confidence?.slice(1)}
+        </p>
       )}
 
       {/* Generic rendering for any remaining fields */}
