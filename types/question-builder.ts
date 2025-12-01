@@ -53,6 +53,7 @@ export interface FormSchema {
     aiModel?: string;
     enableRealTimeEvaluation?: boolean;
     langfusePromptId?: string;
+    internalLangfusePromptId?: string;
   };
   // Email addresses that should receive post-approval notifications (only for post-approval forms)
   emailNotifications?: string[];

@@ -13,7 +13,7 @@ import toast from "react-hot-toast";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { useApplicationVersions } from "@/hooks/useFundingPlatform";
 import { useApplicationVersionsStore } from "@/store/applicationVersions";
-import type { IFundingApplication } from "@/types/funding-platform";
+import type { IFundingApplication, ProgramWithFormSchema } from "@/types/funding-platform";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import { getProjectTitle } from "../helper/getProjecTitle";
@@ -21,15 +21,17 @@ import { AIEvaluationDisplay } from "./AIEvaluation";
 import AIEvaluationButton from "./AIEvaluationButton";
 import ApplicationVersionSelector from "./ApplicationVersionSelector";
 import ApplicationVersionViewer from "./ApplicationVersionViewer";
+import { InternalAIEvaluationDisplay } from "./InternalAIEvaluation";
 import PostApprovalData from "./PostApprovalData";
 import { StatusActionButtons } from "./StatusActionButtons";
 import StatusChangeModal from "./StatusChangeModal";
 
 interface ApplicationContentProps {
   application: IFundingApplication;
-  program?: any;
+  program?: ProgramWithFormSchema;
   showStatusActions?: boolean;
   showAIEvaluationButton?: boolean;
+  showInternalEvaluation?: boolean;
   onStatusChange?: (status: string, note?: string) => Promise<void>;
   viewMode?: "details" | "changes";
   onViewModeChange?: (mode: "details" | "changes") => void;
@@ -64,11 +66,23 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
   program,
   showStatusActions = false,
   showAIEvaluationButton = false,
+  showInternalEvaluation,
   onStatusChange,
   viewMode: controlledViewMode,
   onViewModeChange,
   onRefresh,
 }) => {
+  // Resolve form schema from program object (handling both FundingProgram and IFundingProgramConfig structures)
+  const formSchema = (program as any)?.applicationConfig?.formSchema || program?.formSchema;
+
+  // Show internal evaluation section if user has access (don't require config check)
+  const shouldShowInternalEvaluation = showInternalEvaluation ?? showAIEvaluationButton;
+
+  // Check if internal evaluation is configured (for button functionality)
+  const canRunInternalEvaluation = Boolean(formSchema?.aiConfig?.internalLangfusePromptId);
+  const showMissingInternalPromptWarning = showAIEvaluationButton && !canRunInternalEvaluation;
+  const internalPromptHelpText =
+    "Configure the internal Langfuse prompt under the program's AI Evaluation settings to enable manual runs.";
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string>("");
@@ -98,15 +112,15 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
   // Create field labels mapping from program schema
   const fieldLabels = useMemo(() => {
     const labels: Record<string, string> = {};
-    if (program?.formSchema?.fields) {
-      program.formSchema.fields.forEach((field: any) => {
+    if (formSchema?.fields) {
+      formSchema.fields.forEach((field: any) => {
         if (field.id && field.label) {
           labels[field.id] = field.label;
         }
       });
     }
     return labels;
-  }, [program]);
+  }, [formSchema]);
 
   const StatusIcon = statusIcons[application.status as keyof typeof statusIcons] || ClockIcon;
 
@@ -399,6 +413,52 @@ const ApplicationContent: FC<ApplicationContentProps> = ({
             programName={program?.name || ""}
           />
         </div>
+
+        {/* Internal AI Evaluation */}
+        {shouldShowInternalEvaluation && (
+          <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div className="flex items-center justify-between gap-4 mb-4">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                Internal AI Evaluation
+              </h3>
+              {showAIEvaluationButton && (
+                <div
+                  className="flex-shrink-0"
+                  title={!canRunInternalEvaluation ? internalPromptHelpText : undefined}
+                >
+                  <AIEvaluationButton
+                    referenceNumber={application.referenceNumber}
+                    onEvaluationComplete={handleAIEvaluationComplete}
+                    disabled={isUpdatingStatus || !canRunInternalEvaluation}
+                    isInternal={true}
+                  />
+                </div>
+              )}
+            </div>
+
+            {showMissingInternalPromptWarning && (
+              <div className="mb-4 flex items-start gap-3 rounded-lg border border-yellow-200 bg-yellow-50 p-3 dark:border-yellow-900/50 dark:bg-yellow-900/20">
+                <ExclamationTriangleIcon className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
+                <div className="space-y-1 text-sm">
+                  <p className="font-medium text-yellow-900 dark:text-yellow-200">
+                    Internal prompt not configured
+                  </p>
+                  <p className="text-yellow-800 dark:text-yellow-200/80 text-xs leading-relaxed">
+                    Set the{" "}
+                    <span className="font-semibold">Internal AI Evaluation Prompt Name</span> in the
+                    program&apos;s AI configuration (Form Builder → AI Evaluation Configuration) to
+                    enable manual internal runs.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <InternalAIEvaluationDisplay
+              evaluation={application.internalAIEvaluation?.evaluation || null}
+              programName={program?.name || ""}
+            />
+          </div>
+        )}
       </div>
 
       {/* Status Change Modal */}
