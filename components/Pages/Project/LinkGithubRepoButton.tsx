@@ -2,7 +2,6 @@
 
 import { Dialog, Transition } from "@headlessui/react";
 import { CheckIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { FC, ReactNode } from "react";
 import { Fragment, useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -11,6 +10,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { Button } from "@/components/ui/button";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
+import type { ProjectV2Response } from "@/types/project";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -34,7 +34,7 @@ const GitHubIcon: FC<{ className?: string }> = ({ className }) => (
 
 interface LinkGithubRepoButtonProps {
   buttonClassName?: string;
-  project: IProjectResponse & { external: Record<string, string[]> };
+  project: ProjectV2Response;
   "data-link-github-button"?: string;
   buttonElement?: { text: string; icon: ReactNode; styleClass: string } | null;
   onClose?: () => void;

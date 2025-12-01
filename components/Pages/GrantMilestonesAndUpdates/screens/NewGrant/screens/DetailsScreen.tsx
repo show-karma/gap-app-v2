@@ -111,7 +111,7 @@ export const DetailsScreen: React.FC = () => {
       description: formData.description || "",
       amount: formData.amount || "",
       linkToProposal: formData.linkToProposal || "",
-      recipient: formData.recipient || selectedProject?.recipient || "",
+      recipient: formData.recipient || selectedProject?.owner || "",
     },
     mode: "onChange",
   });
@@ -125,7 +125,7 @@ export const DetailsScreen: React.FC = () => {
 
   const handleCancel = () => {
     if (!selectedProject) return;
-    router.push(PAGES.PROJECT.GRANTS(selectedProject.details?.data?.slug || selectedProject?.uid));
+    router.push(PAGES.PROJECT.GRANTS(selectedProject.details?.slug || selectedProject?.uid));
   };
 
   const handleNext = () => {

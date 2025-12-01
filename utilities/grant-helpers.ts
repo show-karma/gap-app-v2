@@ -1,5 +1,6 @@
 import type { GAP } from "@show-karma/karma-gap-sdk";
-import type { Hex } from "viem";
+import type { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { getProjectData } from "@/utilities/api/project";
 
 interface FetchGrantInstanceParams {
   gapClient: GAP;
@@ -32,7 +33,7 @@ export const fetchGrantInstance = async ({
   projectUid,
   grantUid,
 }: FetchGrantInstanceParams) => {
-  const fetchedProject = await gapClient.fetch.projectById(projectUid as Hex);
+  const fetchedProject = await getProjectData(projectUid);
 
   if (!fetchedProject) {
     throw new Error(
@@ -40,7 +41,7 @@ export const fetchGrantInstance = async ({
     );
   }
 
-  const grantInstance = fetchedProject.grants.find(
+  const grantInstance = fetchedProject.grants?.find(
     (g) => g.uid.toLowerCase() === grantUid.toLowerCase()
   );
 
@@ -85,19 +86,21 @@ export const fetchMilestoneInstance = async ({
   programId,
   milestoneUid,
 }: FetchMilestoneInstanceParams) => {
-  const fetchedProject = await gapClient.fetch.projectById(projectUid);
+  const fetchedProject = await getProjectData(projectUid);
   if (!fetchedProject) {
     throw new Error("Failed to fetch project data");
   }
 
-  const grantInstance = fetchedProject.grants.find((g) => g.details?.programId === programId);
+  const grantInstance = fetchedProject.grants?.find(
+    (g: any) => g.details?.programId === programId || g.details?.data?.programId === programId
+  );
 
   if (!grantInstance) {
     throw new Error("Grant not found");
   }
 
   const milestoneInstance = grantInstance.milestones?.find(
-    (m) => m.uid.toLowerCase() === milestoneUid.toLowerCase()
+    (m: IMilestoneResponse) => m.uid.toLowerCase() === milestoneUid.toLowerCase()
   );
 
   if (!milestoneInstance) {

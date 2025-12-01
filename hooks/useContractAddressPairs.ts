@@ -1,9 +1,9 @@
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useCallback, useEffect, useState } from "react";
 import type { NetworkAddressPair } from "@/components/Pages/Project/types";
+import type { ProjectV2Response } from "@/types/project";
 
 interface UseContractAddressPairsProps {
-  project: IProjectResponse & { external: Record<string, string[]> };
+  project: ProjectV2Response;
 }
 
 export const useContractAddressPairs = ({ project }: UseContractAddressPairsProps) => {

@@ -41,7 +41,7 @@ export const UpdatesPage: FC = () => {
     const grantMilestones: IMilestoneResponse[] = [];
     const impacts: IProjectImpact[] = project?.impacts || [];
 
-    project?.grants.forEach((grant) => {
+    project?.grants?.forEach((grant) => {
       grantUpdates.push(...grant.updates);
       grantMilestones.push(...grant.milestones);
     });

@@ -1,4 +1,5 @@
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
+import type { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -148,7 +149,7 @@ export const useMilestone = () => {
           }
 
           const walletSigner = await walletClientToSigner(walletClient);
-          const fetchedProject = await getProjectById(project!.details?.data.slug || "");
+          const fetchedProject = await getProjectById(project!.details?.slug || "");
           if (!fetchedProject) {
             throw new Error("Failed to fetch project data");
           }
@@ -180,8 +181,8 @@ export const useMilestone = () => {
             await retryUntilConditionMet(
               async () => {
                 const projectInstance = await refreshProject();
-                const isMilestoneExists = projectInstance?.grants.some((grant) =>
-                  grant.milestones.some((milestone) => milestoneUIDs.includes(milestone.uid))
+                const isMilestoneExists = projectInstance?.grants?.some((grant) =>
+                  grant.milestones?.some((milestone: any) => milestoneUIDs.includes(milestone.uid))
                 );
 
                 return !isMilestoneExists || false;
@@ -287,9 +288,10 @@ export const useMilestone = () => {
           await retryUntilConditionMet(
             async () => {
               const projectInstance = await refreshProject();
-              const isMilestoneExists = projectInstance?.grants.some((grant) =>
-                grant.milestones.some(
-                  (milestone) => milestone.uid.toLowerCase() === milestoneInstance.uid.toLowerCase()
+              const isMilestoneExists = projectInstance?.grants?.some((grant) =>
+                grant.milestones?.some(
+                  (milestone: IMilestoneResponse) =>
+                    milestone.uid.toLowerCase() === milestoneInstance.uid.toLowerCase()
                 )
               );
 
@@ -407,7 +409,7 @@ export const useMilestone = () => {
           }
 
           const _walletSigner = await walletClientToSigner(walletClient);
-          const fetchedProject = await getProjectById(project!.details?.data.slug || "");
+          const fetchedProject = await getProjectById(project!.details?.slug || "");
           if (!fetchedProject) {
             throw new Error("Failed to fetch project data");
           }
@@ -432,10 +434,10 @@ export const useMilestone = () => {
             await retryUntilConditionMet(
               async () => {
                 const projectInstance = await refreshProject();
-                const areCompletionsRemoved = projectInstance?.grants.every((grant) =>
+                const areCompletionsRemoved = projectInstance?.grants?.every((grant) =>
                   grant.milestones
-                    .filter((milestone) => milestoneUIDs.includes(milestone.uid))
-                    .every((milestone) => !milestone.completed)
+                    ?.filter((milestone: any) => milestoneUIDs.includes(milestone.uid))
+                    .every((milestone: any) => !milestone.completed)
                 );
 
                 return areCompletionsRemoved || false;
@@ -529,7 +531,7 @@ export const useMilestone = () => {
           await retryUntilConditionMet(
             async () => {
               const projectInstance = await refreshProject();
-              const foundGrant = projectInstance?.grants.find((g) => g.uid === milestone.refUID);
+              const foundGrant = projectInstance?.grants?.find((g) => g.uid === milestone.refUID);
               const fetchedMilestone = foundGrant?.milestones.find(
                 (u: any) => u.uid === milestone.uid
               );
@@ -647,9 +649,9 @@ export const useMilestone = () => {
             async () => {
               const projectInstance = await refreshProject();
               // Check if any of the milestones have been completed
-              const areMilestonesCompleted = projectInstance?.grants.some((grant) =>
-                grant.milestones.some(
-                  (m) =>
+              const areMilestonesCompleted = projectInstance?.grants?.some((grant) =>
+                grant.milestones?.some(
+                  (m: IMilestoneResponse) =>
                     m.uid.toLowerCase() === milestoneInstance.uid.toLowerCase() && !!m.completed
                 )
               );
@@ -667,7 +669,7 @@ export const useMilestone = () => {
             await sendOutputsAndDeliverables(milestone.uid, data);
 
             refetch();
-            router.push(PAGES.PROJECT.UPDATES(project?.details?.data.slug || project?.uid || ""));
+            router.push(PAGES.PROJECT.UPDATES(project?.details?.slug || project?.uid || ""));
           });
         })
         .catch(() => {
@@ -748,7 +750,7 @@ export const useMilestone = () => {
         }
 
         const walletSigner = await walletClientToSigner(walletClient);
-        const fetchedProject = await getProjectById(project!.details?.data.slug || "");
+        const fetchedProject = await getProjectById(project!.details?.slug || "");
 
         if (!fetchedProject) {
           throw new Error("Failed to fetch project data");
@@ -796,9 +798,10 @@ export const useMilestone = () => {
             await retryUntilConditionMet(
               async () => {
                 const projectInstance = await refreshProject();
+                if (!projectInstance?.grants) return false;
                 // Check if any of the milestones have been completed
                 const areMilestonesCompleted = projectInstance?.grants.some((grant) =>
-                  grant.milestones.some((m) => milestoneUIDs.includes(m.uid) && !!m.completed)
+                  grant.milestones.some((m: any) => milestoneUIDs.includes(m.uid) && !!m.completed)
                 );
                 return areMilestonesCompleted || false;
               },
@@ -819,7 +822,7 @@ export const useMilestone = () => {
               }
 
               refetch();
-              router.push(PAGES.PROJECT.UPDATES(project?.details?.data.slug || project?.uid || ""));
+              router.push(PAGES.PROJECT.UPDATES(project?.details?.slug || project?.uid || ""));
             });
           })
           .catch(() => {
@@ -906,7 +909,7 @@ export const useMilestone = () => {
           }
 
           const walletSigner = await walletClientToSigner(walletClient);
-          const fetchedProject = await getProjectById(project!.details?.data.slug || "");
+          const fetchedProject = await getProjectById(project!.details?.slug || "");
           if (!fetchedProject) {
             throw new Error("Failed to fetch project data");
           }
@@ -939,10 +942,11 @@ export const useMilestone = () => {
             await retryUntilConditionMet(
               async () => {
                 const projectInstance = await refreshProject();
+                if (!projectInstance?.grants) return false;
                 const areCompletionsUpdated = projectInstance?.grants.some((grant) =>
                   grant.milestones
-                    .filter((milestone) => milestoneUIDs.includes(milestone.uid))
-                    .some((milestone) => {
+                    .filter((milestone: any) => milestoneUIDs.includes(milestone.uid))
+                    .some((milestone: any) => {
                       if (!milestone.completed) return false;
 
                       const originalCompletion = milestoneInstances.find(
@@ -1070,7 +1074,8 @@ export const useMilestone = () => {
             await retryUntilConditionMet(
               async () => {
                 const projectInstance = await refreshProject();
-                const foundGrant = projectInstance?.grants.find((g) => g.uid === milestone.refUID);
+                if (!projectInstance?.grants) return false;
+                const foundGrant = projectInstance?.grants?.find((g) => g.uid === milestone.refUID);
                 const fetchedMilestone = foundGrant?.milestones.find(
                   (u: any) => u.uid === milestone.uid
                 );

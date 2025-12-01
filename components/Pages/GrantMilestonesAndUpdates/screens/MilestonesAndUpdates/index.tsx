@@ -1,8 +1,5 @@
 "use client";
-import type {
-  IGrantResponse,
-  IProjectResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { GrantCompletionCard } from "@/components/Pages/Grants/MilestonesAndUpdates";
@@ -12,6 +9,7 @@ import { useOwnerStore, useProjectStore } from "@/store";
 // import { MilestonesList } from "./MilestonesList";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useGrantStore } from "@/store/grant";
+import type { ProjectV2Response } from "@/types/project";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 
@@ -30,7 +28,7 @@ export const EmptyMilestone = ({
   project,
 }: {
   grant?: IGrantResponse;
-  project?: IProjectResponse;
+  project?: ProjectV2Response;
 }) => {
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
@@ -66,7 +64,7 @@ export const EmptyMilestone = ({
           <div className="flex w-max flex-row flex-wrap gap-6 max-sm:w-full max-sm:flex-col">
             <Link
               href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-                project?.details?.data.slug || project?.uid || "",
+                project?.details?.slug || project?.uid || "",
                 grant?.uid || "",
                 "create-milestone"
               )}
@@ -113,7 +111,7 @@ export const MilestonesAndUpdates = () => {
                     {isAuthorized && (
                       <Link
                         href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-                          project?.details?.data.slug || project?.uid || "",
+                          project?.details?.slug || project?.uid || "",
                           grant?.uid || "",
                           "create-milestone"
                         )}

@@ -23,7 +23,9 @@ interface NotUpdatingCaseProps {
 
 const NotUpdatingCase: FC<NotUpdatingCaseProps> = ({ milestone, isAuthorized, setIsUpdating }) => {
   const project = useProjectStore((state) => state.project);
-  const grant = project?.grants.find((g) => g.uid.toLowerCase() === milestone.refUID.toLowerCase());
+  const grant = project?.grants?.find(
+    (g) => g.uid.toLowerCase() === milestone.refUID.toLowerCase()
+  );
 
   if (!isAuthorized) {
     return undefined;
@@ -37,7 +39,7 @@ const NotUpdatingCase: FC<NotUpdatingCaseProps> = ({ milestone, isAuthorized, se
             href={shareOnX(
               SHARE_TEXTS.MILESTONE_PENDING(
                 grant?.details?.data?.title as string,
-                (project?.details?.data?.slug || project?.uid) as string,
+                (project?.details?.slug || project?.uid) as string,
                 grant?.uid as string
               )
             )}

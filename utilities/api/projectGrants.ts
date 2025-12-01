@@ -3,16 +3,28 @@ import { envVars } from "../enviromentVars";
 import { INDEXER } from "../indexer";
 
 /**
- * Fetches grants (funding applications) for a project from v2 endpoint
- * Returns empty array if no grants found or on error
+ * Fetches grants for a project using v1 endpoint temporarily
+ *
+ * NOTE: Grants and Funding Applications are different concepts
+ * - Funding Applications: /v2/funding-applications/project/${projectUID} (returns IFundingApplication)
+ * - Grants: /projects/:idOrSlug/grants (v1 endpoint, returns IGrantResponse[])
+ *
+ * TODO: Once v2 grants endpoint is available (/v2/projects/${projectUID}/grants),
+ * update this to use v2 endpoint and handle v2 grant structure (details.title instead of details.data.title)
+ *
+ * Current v1 endpoint: /projects/:idOrSlug/grants
+ * - Returns IGrantResponse[] with v1 structure (details.data.title)
+ * - This is temporary until v2 endpoint is created
  */
 export const getProjectGrants = async (
-  projectUID: string,
+  projectIdOrSlug: string,
   fetchOptions?: RequestInit
 ): Promise<IGrantResponse[]> => {
   try {
+    // Using v1 endpoint temporarily: /projects/:idOrSlug/grants
+    // TODO: Update to v2 endpoint once available: /v2/projects/${projectUID}/grants
     const response = await fetch(
-      `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${INDEXER.V2.APPLICATIONS.BY_PROJECT_UID(projectUID)}`,
+      `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${INDEXER.PROJECT.GRANTS(projectIdOrSlug)}`,
       {
         method: "GET",
         headers: {
@@ -34,14 +46,12 @@ export const getProjectGrants = async (
 
     // Handle both single application and array of applications
     if (Array.isArray(data)) {
-      // If it's an array, we may need to transform each item
-      // For now, return empty array as grants structure may differ from funding applications
-      // This will be handled when we understand the exact response structure
-      return [];
-    } else if (data) {
-      // Single application - may need transformation to IGrantResponse
-      // For now, return empty array until we understand the mapping
-      return [];
+      return data as IGrantResponse[];
+    }
+
+    // Handle single grant object
+    if (data) {
+      return [data as IGrantResponse];
     }
 
     return [];

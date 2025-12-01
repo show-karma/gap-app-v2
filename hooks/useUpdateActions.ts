@@ -65,7 +65,7 @@ export const useUpdateActions = (update: UpdateType) => {
           queryKey: ["project", project?.uid],
         }),
         queryClient.invalidateQueries({
-          queryKey: ["project", project?.details?.data?.slug],
+          queryKey: ["project", project?.details?.slug],
         }),
         // Refresh the project data from the store
         refreshProject(),
@@ -182,7 +182,7 @@ export const useUpdateActions = (update: UpdateType) => {
                   (grant) => grant.uid.toLowerCase() === update.refUID.toLowerCase()
                 );
                 stillExists = !!grant?.updates?.find(
-                  (grantUpdate) => grantUpdate.uid.toLowerCase() === update.uid.toLowerCase()
+                  (grantUpdate: any) => grantUpdate.uid.toLowerCase() === update.uid.toLowerCase()
                 );
                 break;
               }
@@ -270,25 +270,25 @@ export const useUpdateActions = (update: UpdateType) => {
   const getShareText = () => {
     const shareDictionary = {
       ProjectUpdate: SHARE_TEXTS.PROJECT_ACTIVITY(
-        project?.details?.data?.title as string,
+        project?.details?.title as string,
         project?.uid as string
       ),
       GrantUpdate: SHARE_TEXTS.GRANT_UPDATE(
-        project?.details?.data?.title as string,
+        project?.details?.title as string,
         project?.uid as string,
         update.uid
       ),
       ProjectMilestone: SHARE_TEXTS.GRANT_UPDATE(
-        project?.details?.data?.title as string,
+        project?.details?.title as string,
         project?.uid as string,
         update.uid
       ),
       ProjectImpact: SHARE_TEXTS.PROJECT_ACTIVITY(
-        project?.details?.data?.title as string,
+        project?.details?.title as string,
         project?.uid as string
       ),
       Milestone: SHARE_TEXTS.PROJECT_ACTIVITY(
-        project?.details?.data?.title as string,
+        project?.details?.title as string,
         project?.uid as string
       ),
     };

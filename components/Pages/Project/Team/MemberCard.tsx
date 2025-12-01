@@ -39,7 +39,7 @@ export const MemberCard = ({ member }: { member: string }) => {
   const isAuthorized = isProjectOwner || isContractOwner;
   const _isAdminOrAbove = isProjectOwner || isContractOwner || isProjectAdmin;
   const { project: projectInstance } = useProjectInstance(
-    project?.details?.data.slug || project?.uid || ""
+    project?.details?.slug || project?.uid || ""
   );
   const { openModal } = useContributorProfileModalStore();
 

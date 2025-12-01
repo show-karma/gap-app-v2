@@ -1,10 +1,10 @@
 import { CheckCircleIcon } from "@heroicons/react/24/outline";
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Link from "next/link";
+import type { ProjectV2Response } from "@/types/project";
 import { PAGES } from "@/utilities/pages";
 
 interface GrantNotCompletedButtonProps {
-  project: IProjectResponse;
+  project: ProjectV2Response;
   grantUID: string;
   text?: string;
 }
@@ -17,7 +17,7 @@ export const GrantNotCompletedButton: React.FC<GrantNotCompletedButtonProps> = (
   return (
     <Link
       href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-        project.details?.data.slug || project.uid,
+        project.details?.slug || project.uid,
         grantUID,
         "complete-grant"
       )}

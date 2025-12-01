@@ -126,7 +126,7 @@ export const GrantAssociation = ({
     (grant) => grant.uid?.toLowerCase() === update.refUID?.toLowerCase()
   );
 
-  const multipleGrants = project?.grants.filter((grant) =>
+  const multipleGrants = project?.grants?.filter((grant) =>
     (update as IProjectUpdate)?.data?.grants?.some(
       (grantId: string) => grantId.toLowerCase() === grant.uid.toLowerCase()
     )

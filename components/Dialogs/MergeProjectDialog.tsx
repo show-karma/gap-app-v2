@@ -220,8 +220,8 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
           ogProjectUID,
           type: "project-pointer",
         },
-        recipient: project.recipient,
-        refUID: project.uid,
+        recipient: project.owner as `0x${string}`,
+        refUID: project.uid as `0x${string}`,
         schema: gapClient.findSchema("ProjectPointer"),
       });
 
@@ -236,7 +236,9 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
           await refreshProject()
             .then(async (fetchedProject) => {
               const attestUID = projectPointer.uid;
-              const alreadyExists = fetchedProject?.pointers.find((g) => g.uid === attestUID);
+              const alreadyExists = (fetchedProject as any)?.pointers?.find(
+                (g: { uid: string }) => g.uid === attestUID
+              );
 
               if (alreadyExists) {
                 retries = 0;
@@ -261,7 +263,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
         `Error creating project pointer`,
         error,
         {
-          project: project?.details?.data?.slug || project?.uid,
+          project: project?.details?.slug || project?.uid,
           primaryProject: primaryProject?.details?.data?.slug || primaryProject?.uid,
           address: address,
         },
@@ -325,12 +327,12 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
                   </Dialog.Title>
                   <div className="flex flex-col gap-2 mt-2">
                     <p className="text-red-500 mb-2">
-                      {project?.symlinks?.length
+                      {"symlinks" in (project || {}) && (project as any)?.symlinks?.length
                         ? `The current project is already primary project. Cannot be merged with another project. Please delete existing pointers to enable merging.`
                         : null}
                     </p>
                     {project &&
-                      project.symlinks.length === 0 &&
+                      (!("symlinks" in project) || (project as any).symlinks?.length === 0) &&
                       (primaryProject ? (
                         <div>
                           <p className="mb-2">Selected Primary Project:</p>
@@ -349,13 +351,14 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
                     </p>
 
                     <p className="text-zinc-500 mb-2">
-                      {project && project?.pointers?.length > 0
+                      {project && "pointers" in project && (project as any)?.pointers?.length > 0
                         ? `This project has already been merged.
                                                 Are you sure you want to add another pointer to this project?`
                         : null}
                     </p>
                   </div>
-                  {project?.symlinks?.length === 0 && (
+                  {(!("symlinks" in (project || {})) ||
+                    (project as any)?.symlinks?.length === 0) && (
                     <SearchProject setPrimaryProject={setPrimaryProject} />
                   )}
                   <div className="flex flex-row gap-4 justify-end">
@@ -366,7 +369,8 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
                     >
                       Cancel
                     </Button>
-                    {project?.symlinks?.length === 0 && (
+                    {(!("symlinks" in (project || {})) ||
+                      (project as any)?.symlinks?.length === 0) && (
                       <Button
                         className=" bg-red-600 border-black  hover:bg-red-600 hover:text-white"
                         onClick={async () => {
@@ -379,7 +383,11 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
                           }
                         }}
                         disabled={
-                          isLoading || !primaryProject || Boolean(project?.symlinks?.length)
+                          isLoading ||
+                          !primaryProject ||
+                          Boolean(
+                            "symlinks" in (project || {}) && (project as any)?.symlinks?.length
+                          )
                         }
                         isLoading={isLoading}
                         type="button"

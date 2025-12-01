@@ -67,7 +67,7 @@ export const UpdateCard: FC<UpdateCardProps> = ({ update, index, isAuthorized })
     if (update.type === "ProjectImpact") {
       return (
         <Link
-          href={PAGES.PROJECT.IMPACT.ROOT(project?.details?.data.slug || project?.uid || "")}
+          href={PAGES.PROJECT.IMPACT.ROOT(project?.details?.slug || project?.uid || "")}
           className="underline text-blue-600 dark:text-blue-400 font-semibold text-sm hover:underline"
         >
           See impact

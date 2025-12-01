@@ -3,7 +3,6 @@ import type {
   IGrantUpdate,
   IMilestoneResponse,
   IProjectImpact,
-  IProjectResponse,
   IProjectUpdate,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useParams, useSearchParams } from "next/navigation";
@@ -13,12 +12,13 @@ import { Button } from "@/components/Utilities/Button";
 import { useAllMilestones } from "@/hooks/useAllMilestones";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
+import type { ProjectV2Response } from "@/types/project";
 import type { UnifiedMilestone } from "@/types/roadmap";
 import { MESSAGES } from "@/utilities/messages";
 import { RoadmapListLoading } from "../Loading/Roadmap";
 
 interface ProjectRoadmapProps {
-  project?: IProjectResponse;
+  project?: ProjectV2Response;
 }
 
 // Pure utility functions moved outside the component to avoid recreating on each render

@@ -62,16 +62,14 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
         }
 
         const [_, error] = await fetchData(
-          INDEXER.PROJECT.ENDORSEMENT.NOTIFY(
-            project.details?.data?.slug || (project.uid as string)
-          ),
+          INDEXER.PROJECT.ENDORSEMENT.NOTIFY(project.details?.slug || (project.uid as string)),
           "POST",
           {
             email: contact.email,
             name: contact.name,
             endorsementId: endorsement.uid,
             endorserAddress: address,
-            projectTitle: project.details?.data?.title || project.uid,
+            projectTitle: project.details?.title || project.uid,
             comment: comment || undefined,
           }
         );
@@ -139,13 +137,11 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
 
             await notifyProjectOwner(endorsement);
 
-            router.push(
-              PAGES.PROJECT.OVERVIEW((project.details?.data?.slug || project?.uid) as string)
-            );
+            router.push(PAGES.PROJECT.OVERVIEW((project.details?.slug || project?.uid) as string));
             openShareDialog({
-              modalShareText: `Well played! Project ${project?.details?.data?.title} now has your epic endorsement 🎯🐉!`,
+              modalShareText: `Well played! Project ${project?.details?.title} now has your epic endorsement 🎯🐉!`,
               shareText: SHARE_TEXTS.PROJECT_ENDORSEMENT(
-                project?.details?.data?.title as string,
+                project?.details?.title as string,
                 project?.uid as string
               ),
               modalShareSecondText: ` `,
@@ -202,7 +198,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
                 >
                   You are endorsing{" "}
                   <b>
-                    {project?.details?.data?.title ||
+                    {project?.details?.title ||
                       (project?.uid ? shortAddress(project?.uid as string) : "this project")}
                   </b>
                 </Dialog.Title>

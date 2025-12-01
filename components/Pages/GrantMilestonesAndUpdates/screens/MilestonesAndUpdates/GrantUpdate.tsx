@@ -128,7 +128,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
               (item) => item.uid.toLowerCase() === update.refUID.toLowerCase()
             );
             const stillExists = grant?.updates?.find(
-              (grantUpdate) => grantUpdate.uid.toLowerCase() === update.uid.toLowerCase()
+              (grantUpdate: any) => grantUpdate.uid.toLowerCase() === update.uid.toLowerCase()
             );
             return !stillExists;
           },
@@ -225,7 +225,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({ title, description, index, d
 
   const isAfterProofLaunch = checkProofLaunch();
 
-  const grant = project?.grants.find((g) => g.uid.toLowerCase() === update.refUID.toLowerCase());
+  const grant = project?.grants?.find((g) => g.uid.toLowerCase() === update.refUID.toLowerCase());
 
   return (
     <div className="flex w-full flex-1 max-w-full flex-col gap-4 rounded-lg border border-zinc-200 dark:bg-zinc-800 dark:border-zinc-700 bg-white p-4 transition-all duration-200 ease-in-out  max-sm:px-2">

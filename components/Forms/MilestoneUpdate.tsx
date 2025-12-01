@@ -155,7 +155,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
       modalShareSecondText: ` `,
       shareText: SHARE_TEXTS.MILESTONE_COMPLETED(
         grant?.details?.data?.title as string,
-        (project?.details?.data?.slug || project?.uid) as string,
+        (project?.details?.slug || project?.uid) as string,
         grant?.uid as string
       ),
     });
@@ -290,7 +290,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           while (retries > 0) {
             await refreshProject()
               .then(async (fetchedProject) => {
-                const foundGrant = fetchedProject?.grants.find((g) => g.uid === milestone.refUID);
+                const foundGrant = fetchedProject?.grants?.find((g) => g.uid === milestone.refUID);
 
                 const fetchedMilestone = foundGrant?.milestones.find(
                   (u: any) => u.uid === milestone.uid
@@ -413,7 +413,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           while (retries > 0) {
             await refreshProject()
               .then(async (fetchedProject) => {
-                const foundGrant = fetchedProject?.grants.find((g) => g.uid === milestone.refUID);
+                const foundGrant = fetchedProject?.grants?.find((g) => g.uid === milestone.refUID);
 
                 const fetchedMilestone = foundGrant?.milestones.find(
                   (u: any) => u.uid === milestone.uid
@@ -478,7 +478,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
     }
   };
 
-  const grant = project?.grants.find(
+  const grant = project?.grants?.find(
     (item) => item.uid.toLowerCase() === milestone.refUID?.toLowerCase()
   );
 

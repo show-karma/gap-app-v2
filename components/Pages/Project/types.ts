@@ -1,5 +1,5 @@
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { ReactNode } from "react";
+import type { ProjectV2Response } from "@/types/project";
 
 export interface NetworkAddressPair {
   network: string;
@@ -14,7 +14,7 @@ export interface InvalidInfo {
 
 export interface LinkContractAddressesButtonProps {
   buttonClassName?: string;
-  project: IProjectResponse & { external: Record<string, string[]> };
+  project: ProjectV2Response;
   "data-link-contracts-button"?: string;
   buttonElement?: { text: string; icon: ReactNode; styleClass: string } | null;
   onClose?: () => void;

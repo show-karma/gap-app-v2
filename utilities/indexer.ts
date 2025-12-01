@@ -71,6 +71,7 @@ export const INDEXER = {
     FEED: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/feed`,
     FUNDEDBY: (address: string) => `/projects/fundedby/${address}`,
     GRANTS_GENIE: (projectId: string) => `/projects/${projectId}/grants-genie`,
+    GRANTS: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/grants`,
     REQUEST_INTRO: (projectIdOrSlug: string) => `/projects/requestintro/${projectIdOrSlug}`,
     ENDORSEMENT: {
       NOTIFY: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/endorsements/notify`,

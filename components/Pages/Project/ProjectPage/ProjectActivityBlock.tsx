@@ -40,7 +40,7 @@ export const ProjectActivityBlock = ({ activity }: { activity: IProjectUpdate })
     if (!project || !activity?.data?.grants || activity?.data?.grants?.length === 0) return [];
 
     // Find grants that match the activity's grants
-    return project.grants.filter((grant) =>
+    return project.grants?.filter((grant) =>
       activity?.data?.grants?.some((grantId) => grantId.toLowerCase() === grant.uid.toLowerCase())
     );
   }, [project, activity?.data?.grants]);
@@ -127,7 +127,7 @@ export const ProjectActivityBlock = ({ activity }: { activity: IProjectUpdate })
           <FilteredOutputsAndOutcomes indicatorIds={indicatorIds} indicatorNames={indicatorNames} />
 
           {/* Grants Section */}
-          {relatedGrants?.length > 0 ? (
+          {relatedGrants && relatedGrants.length > 0 ? (
             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-zinc-700">
               <p className="text-sm font-bold text-black dark:text-zinc-100 mb-3">Related Grants</p>
 
@@ -150,7 +150,7 @@ export const ProjectActivityBlock = ({ activity }: { activity: IProjectUpdate })
                     </svg>
                     <ExternalLink
                       href={PAGES.PROJECT.GRANT(
-                        project?.details?.data.slug || (project?.uid as string),
+                        project?.details?.slug || (project?.uid as string),
                         grant.uid
                       )}
                       className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium"

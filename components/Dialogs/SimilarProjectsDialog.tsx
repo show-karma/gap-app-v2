@@ -4,12 +4,13 @@ import { Dialog, Transition } from "@headlessui/react";
 import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { type FC, Fragment } from "react";
 import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
+import type { ProjectV2Response } from "@/types/project";
 import { PAGES } from "@/utilities/pages";
 import { Button } from "../Utilities/Button";
 import { ExternalLink } from "../Utilities/ExternalLink";
 
 type SimilarProjectsProps = {
-  similarProjects: IProjectResponse[];
+  similarProjects: (ProjectV2Response | IProjectResponse)[];
   projectName: string;
 };
 
@@ -66,23 +67,37 @@ export const SimilarProjectsDialog: FC<SimilarProjectsProps> = ({
                       </tr>
                     </thead>
                     <tbody>
-                      {similarProjects.map((project) => (
-                        <tr key={project.uid} className="hover:bg-gray-200 dark:hover:bg-zinc-900">
-                          <td className="border border-gray-300 dark:border-zinc-600 px-4 py-2">
-                            <ExternalLink
-                              href={PAGES.PROJECT.OVERVIEW(
-                                project.details?.data.slug || project.uid
-                              )}
-                              className="text-blue-500 underline"
-                            >
-                              {project.details?.data.title || "Untitled Project"}
-                            </ExternalLink>
-                          </td>
-                          <td className="border border-gray-300 dark:border-zinc-600 px-4 py-2">
-                            {project.recipient}
-                          </td>
-                        </tr>
-                      ))}
+                      {similarProjects.map((project) => {
+                        // Handle both V1 and V2 structures
+                        const projectTitle =
+                          (project as ProjectV2Response).details?.title ||
+                          (project as IProjectResponse).details?.data?.title;
+                        const projectSlug =
+                          (project as ProjectV2Response).details?.slug ||
+                          (project as IProjectResponse).details?.data?.slug;
+                        const projectOwner =
+                          (project as ProjectV2Response).owner ||
+                          (project as IProjectResponse).recipient;
+
+                        return (
+                          <tr
+                            key={project.uid}
+                            className="hover:bg-gray-200 dark:hover:bg-zinc-900"
+                          >
+                            <td className="border border-gray-300 dark:border-zinc-600 px-4 py-2">
+                              <ExternalLink
+                                href={PAGES.PROJECT.OVERVIEW(projectSlug || project.uid)}
+                                className="text-blue-500 underline"
+                              >
+                                {projectTitle || "Untitled Project"}
+                              </ExternalLink>
+                            </td>
+                            <td className="border border-gray-300 dark:border-zinc-600 px-4 py-2">
+                              {projectOwner}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

@@ -314,12 +314,12 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({ milestone, isAuthorized 
                     type === "grant" && grantMilestone
                       ? SHARE_TEXTS.MILESTONE_COMPLETED(
                           grantTitle || "Grant",
-                          (project?.details?.data?.slug || project?.uid) as string,
+                          (project?.details?.slug || project?.uid) as string,
                           grantMilestone.grant.uid
                         )
                       : SHARE_TEXTS.PROJECT_ACTIVITY(
                           title,
-                          (project?.details?.data?.slug || project?.uid) as string
+                          (project?.details?.slug || project?.uid) as string
                         )
                   )}
                   className="flex flex-row gap-1 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent hover:opacity-75  h-6 w-6 items-center justify-center"

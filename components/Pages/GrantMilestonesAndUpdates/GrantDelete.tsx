@@ -82,14 +82,12 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
         await retryUntilConditionMet(
           async () => {
             const fetchedProject = await refreshProject();
-            const stillExist = fetchedProject?.grants.find(
+            const stillExist = fetchedProject?.grants?.find(
               (g) => g.uid?.toLowerCase() === grantUID?.toLowerCase()
             );
             if (!stillExist) {
               if (fetchedProject?.grants && fetchedProject?.grants?.length > 0) {
-                router.push(
-                  PAGES.PROJECT.GRANTS(project?.uid || project?.details?.data.slug || "")
-                );
+                router.push(PAGES.PROJECT.GRANTS(project?.uid || project?.details?.slug || ""));
               }
             }
 

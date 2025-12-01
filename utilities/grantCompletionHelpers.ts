@@ -1,4 +1,4 @@
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { ProjectV2Response } from "@/types/project";
 import { retryUntilConditionMet } from "@/utilities/retries";
 
 /**
@@ -6,7 +6,7 @@ import { retryUntilConditionMet } from "@/utilities/retries";
  */
 export const createCheckIfCompletionExists = (
   grantUID: string,
-  refreshProject: () => Promise<IProjectResponse | null | undefined>
+  refreshProject: () => Promise<ProjectV2Response | null | undefined>
 ) => {
   return async (callbackFn?: () => void) => {
     await retryUntilConditionMet(

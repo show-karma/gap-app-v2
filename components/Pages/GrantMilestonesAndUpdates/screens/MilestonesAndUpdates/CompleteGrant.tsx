@@ -245,7 +245,9 @@ export const GrantCompletion: FC = () => {
               await refreshProject().then(() => {
                 router.push(
                   PAGES.PROJECT.GRANT(
-                    project?.details?.data.slug || (project?.uid as Hex),
+                    (project as any)?.details?.slug ||
+                      (project as any)?.details?.data?.slug ||
+                      (project?.uid as Hex),
                     grant?.uid as Hex
                   )
                 );
@@ -356,7 +358,9 @@ export const GrantCompletion: FC = () => {
           </h4>
           <Link
             href={PAGES.PROJECT.GRANT(
-              project?.details?.data.slug || (project?.uid as Hex),
+              (project as any)?.details?.slug ||
+                (project as any)?.details?.data?.slug ||
+                (project?.uid as Hex),
               grant?.uid as Hex
             )}
             className="bg-transparent p-4 hover:bg-transparent hover:opacity-75"

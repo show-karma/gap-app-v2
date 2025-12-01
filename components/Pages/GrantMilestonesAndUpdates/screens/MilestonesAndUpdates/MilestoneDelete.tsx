@@ -80,8 +80,10 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
         await retryUntilConditionMet(
           async () => {
             const fetchedProject = await refreshProject();
-            const grant = fetchedProject?.grants.find((g) => g.uid === milestone.refUID);
-            const stillExists = grant?.milestones.find((m) => m.uid === milestoneUID);
+            const grant = fetchedProject?.grants?.find((g) => g.uid === milestone.refUID);
+            const stillExists = grant?.milestones?.find(
+              (m: IMilestoneResponse) => m.uid === milestoneUID
+            );
             return !stillExists && !!grant?.milestones;
           },
           () => {

@@ -171,7 +171,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
         while (retries > 0) {
           await refreshProject()
             .then(async (fetchedProject) => {
-              const fetchedGrant = fetchedProject?.grants.find((g) => g.uid === uid);
+              const fetchedGrant = fetchedProject?.grants?.find((g) => g.uid === uid);
               const milestoneExists = fetchedGrant?.milestones.find(
                 (g: any) => g.uid === milestoneToAttest.uid
               );
@@ -181,7 +181,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
                 toast.success(MESSAGES.MILESTONES.CREATE.SUCCESS);
                 router.push(
                   PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-                    (fetchedProject?.details?.data.slug || fetchedProject?.uid) as string,
+                    (fetchedProject?.details?.slug || fetchedProject?.uid) as string,
                     fetchedGrant?.uid as string,
                     "milestones-and-updates"
                   )

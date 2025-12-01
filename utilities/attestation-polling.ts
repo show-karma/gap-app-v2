@@ -1,4 +1,6 @@
 import type { GAP } from "@show-karma/karma-gap-sdk";
+import type { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { getProjectData } from "@/utilities/api/project";
 import { retryUntilConditionMet } from "@/utilities/retries";
 
 interface PollForGrantCompletionParams {
@@ -35,7 +37,7 @@ export const pollForGrantCompletion = async ({
 }: PollForGrantCompletionParams): Promise<void> => {
   await retryUntilConditionMet(
     async () => {
-      const updatedProject = await gapClient.fetch.projectById(projectUid);
+      const updatedProject = await getProjectData(projectUid);
       if (!updatedProject) return false;
 
       const completedGrant = updatedProject.grants?.find(
@@ -103,17 +105,21 @@ export const pollForMilestoneStatus = async ({
 }: PollForMilestoneStatusParams): Promise<void> => {
   await retryUntilConditionMet(
     async () => {
-      const updatedProject = await gapClient.fetch.projectById(projectUid);
+      const updatedProject = await getProjectData(projectUid);
       if (!updatedProject) return false;
 
-      const updatedGrant = updatedProject.grants.find((g) => g.details?.programId === programId);
+      const updatedGrant = updatedProject.grants?.find(
+        (g: any) => g.details?.programId === programId || g.details?.data?.programId === programId
+      );
       if (!updatedGrant) return false;
 
-      const updatedMilestone = updatedGrant.milestones?.find((m) => m.uid === milestoneUid);
+      const updatedMilestone = updatedGrant.milestones?.find(
+        (m: IMilestoneResponse) => m.uid === milestoneUid
+      );
       if (!updatedMilestone) return false;
 
       const isVerified = updatedMilestone.verified?.find(
-        (v) => v.attester?.toLowerCase() === userAddress.toLowerCase()
+        (v: any) => v.attester?.toLowerCase() === userAddress.toLowerCase()
       );
 
       // If checking completion, ensure both are indexed

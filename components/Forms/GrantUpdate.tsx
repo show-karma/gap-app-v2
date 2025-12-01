@@ -170,7 +170,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
           await refreshProject()
             .then(async (fetchedProject) => {
               const attestUID = grantUpdate.uid;
-              const updatedGrant = fetchedProject?.grants.find((g) => g.uid === grantToUpdate.uid);
+              const updatedGrant = fetchedProject?.grants?.find((g) => g.uid === grantToUpdate.uid);
 
               const alreadyExists = updatedGrant?.updates.find((u: any) => u.uid === attestUID);
               if (alreadyExists) {

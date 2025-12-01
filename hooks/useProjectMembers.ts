@@ -1,5 +1,5 @@
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import React from "react";
+import type { ProjectV2Response } from "@/types/project";
 
 interface Member {
   uid: string;
@@ -9,7 +9,7 @@ interface Member {
   };
 }
 
-export const useProjectMembers = (project?: IProjectResponse): Member[] => {
+export const useProjectMembers = (project?: ProjectV2Response): Member[] => {
   return React.useMemo(() => {
     if (!project) return [];
 
@@ -28,13 +28,13 @@ export const useProjectMembers = (project?: IProjectResponse): Member[] => {
     }
 
     const alreadyHasOwner = project.members?.find(
-      (member: any) => member.recipient === project.recipient
+      (member: any) => member.recipient === project.owner
     );
 
     if (!alreadyHasOwner) {
       members.push({
-        uid: project.recipient || "",
-        recipient: project.recipient || "",
+        uid: project.owner || "",
+        recipient: project.owner || "",
       });
     }
 

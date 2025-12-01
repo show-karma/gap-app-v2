@@ -1,3 +1,5 @@
+import type { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+
 export type Contact = {
   id: string;
   name?: string;
@@ -53,4 +55,50 @@ export interface ProjectFromList {
   noOfProjectMilestones: number;
   noOfGrantMilestones: number;
   imageURL?: string;
+}
+
+// V2 Project API Response structure
+export interface ProjectV2Response {
+  uid: `0x${string}`;
+  chainID: number;
+  owner: string;
+  payoutAddress?: string;
+  details: {
+    title: string;
+    description: string;
+    problem?: string;
+    solution?: string;
+    missionSummary?: string;
+    locationOfImpact?: string;
+    slug: string;
+    logoUrl?: string;
+    businessModel?: string;
+    stageIn?: string;
+    raisedMoney?: string;
+    pathToTake?: string;
+    tags?: string[];
+    links?: Array<{
+      url: string;
+      type: string;
+    }>;
+    lastDetailsUpdate?: string;
+  };
+  external?: {
+    gitcoin?: any[];
+    oso?: any[];
+    divvi_wallets?: any[];
+    github?: any[];
+    network_addresses?: any[];
+  };
+  members: Array<{
+    address: string;
+    role: string;
+    joinedAt: string;
+  }>;
+  endorsements?: any[];
+  milestones?: IProjectMilestoneResponse;
+  impacts?: any[];
+  updates?: any[];
+  communities?: string[];
+  grants?: any[]; // Grants are fetched separately and added to the response
 }

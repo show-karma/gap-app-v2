@@ -139,7 +139,7 @@ export function useGrant() {
               await refreshProject().then(() => {
                 router.push(
                   PAGES.PROJECT.GRANT(
-                    selectedProject.details?.data?.slug || selectedProject.uid,
+                    selectedProject.details?.slug || selectedProject.uid,
                     oldGrant.uid
                   )
                 );

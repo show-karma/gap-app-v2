@@ -1,7 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { type FC, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -9,6 +8,7 @@ import { useAccount } from "wagmi";
 import { z } from "zod";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
+import type { ProjectV2Response } from "@/types/project";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -32,7 +32,7 @@ const schema = z.object({
 type SchemaType = z.infer<typeof schema>;
 
 interface ProjectSubscriptionProps {
-  project: IProjectResponse;
+  project: ProjectV2Response;
 }
 
 export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({ project }) => {
@@ -58,7 +58,7 @@ export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({ project }) =
       );
       if (error) throw error;
       toast.success(
-        `You have successfully subscribed to ${project?.details?.data?.title || "this project"}.`
+        `You have successfully subscribed to ${project?.details?.title || "this project"}.`
       );
     } catch (error: any) {
       const isAlreadySubscribed = error?.includes("422");
@@ -67,18 +67,14 @@ export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({ project }) =
           type: "manual",
           message: `You have already subscribed to this project.`,
         });
-        toast.error(
-          `User already subscribed to ${project?.details?.data?.title || "this project"}.`
-        );
+        toast.error(`User already subscribed to ${project?.details?.title || "this project"}.`);
       } else {
         errorManager(
-          `Error subscribing to ${project?.details?.data?.title || "this project"}`,
+          `Error subscribing to ${project?.details?.title || "this project"}`,
           error,
           { projectUID: project.uid, address },
           {
-            error: MESSAGES.PROJECT.SUBSCRIPTION.ERROR(
-              project?.details?.data?.title || "this project"
-            ),
+            error: MESSAGES.PROJECT.SUBSCRIPTION.ERROR(project?.details?.title || "this project"),
           }
         );
       }

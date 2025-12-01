@@ -47,12 +47,12 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
   useTeamProfiles(project);
 
   // Use custom hooks for socials and members
-  const socials = useProjectSocials(project?.details?.data.links);
+  const socials = useProjectSocials(project?.details?.links);
   useProjectMembers(project);
 
   const customLinks = React.useMemo(() => {
-    return project?.details?.data.links?.filter(isCustomLink) || [];
-  }, [project?.details?.data.links]);
+    return project?.details?.links?.filter(isCustomLink) || [];
+  }, [project?.details?.links]);
 
   const { isIntroModalOpen } = useIntroModalStore();
   const { isEndorsementOpen } = useEndorsementStore();
@@ -75,11 +75,11 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
           <div className="flex flex-row gap-4 items-start">
             <div className="flex justify-center">
               <ProfilePicture
-                imageURL={project?.details?.data?.imageURL}
+                imageURL={project?.details?.logoUrl}
                 name={project?.uid || ""}
                 size="56"
                 className="h-14 w-14 min-w-14 min-h-14 border-2 border-white shadow-lg max-lg:h-12 max-lg:w-12 max-lg:min-h-12 max-lg:min-w-12"
-                alt={project?.details?.data?.title || "Project"}
+                alt={project?.details?.title || "Project"}
               />
             </div>
             <div className="flex flex-col gap-4">
@@ -88,7 +88,7 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
                   "text-[32px] font-bold leading-tight text-black dark:text-zinc-100 line-clamp-2"
                 }
               >
-                {project?.details?.data?.title}
+                {project?.details?.title}
               </h1>
               <div className="flex flex-row gap-10 max-lg:gap-4 flex-wrap max-lg:flex-col items-center max-lg:justify-center">
                 {(socials.length > 0 || customLinks.length > 0) && (
@@ -132,15 +132,15 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
                   </div>
                 )}
               </div>
-              {project?.details?.data?.tags?.length ? (
+              {project?.details?.tags?.length ? (
                 <div className="flex flex-col gap-2 max-md:hidden">
                   <div className="flex items-center gap-x-1">
-                    {project?.details?.data?.tags?.map((tag) => (
+                    {project?.details?.tags?.map((tag) => (
                       <span
-                        key={tag.name}
+                        key={tag}
                         className="rounded bg-gray-100 px-2 py-1 text-sm  font-normal text-slate-700"
                       >
-                        {tag.name}
+                        {tag}
                       </span>
                     ))}
                   </div>

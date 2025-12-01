@@ -1,13 +1,12 @@
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { type ProjectV2Response, projectV2ToV1 } from "../adapters/projectV2ToV1";
+import type { ProjectV2Response } from "@/types/project";
 import { envVars } from "../enviromentVars";
 import { INDEXER } from "../indexer";
 import { getProjectGrants } from "./projectGrants";
 
 export const getProjectData = async (
   projectId: string,
-  fetchOptions: RequestInit
-): Promise<IProjectResponse | undefined> => {
+  fetchOptions: RequestInit = {}
+): Promise<ProjectV2Response> => {
   // Fetch v2 project data
   const projectResponse = await fetch(
     `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${INDEXER.V2.PROJECTS.GET(projectId)}`,
@@ -27,10 +26,15 @@ export const getProjectData = async (
   const v2ProjectData: ProjectV2Response = await projectResponse.json();
 
   // Fetch grants separately (v2 doesn't include grants in project response)
-  const grants = await getProjectGrants(v2ProjectData.uid, fetchOptions);
+  // NOTE: Grants and Funding Applications are different concepts
+  // - Funding Applications: /v2/funding-applications/project/${projectUID} (returns IFundingApplication)
+  // - Grants: Using v1 endpoint temporarily /projects/:idOrSlug/grants (returns IGrantResponse[])
+  //   TODO: Update to v2 endpoint once available: /v2/projects/${projectUID}/grants
+  const grants = await getProjectGrants(v2ProjectData.details?.slug || projectId, fetchOptions);
 
-  // Transform v2 response to v1 format
-  const v1ProjectData = projectV2ToV1(v2ProjectData, grants);
-
-  return v1ProjectData;
+  // Add grants to the project data
+  return {
+    ...v2ProjectData,
+    grants: grants || [],
+  };
 };

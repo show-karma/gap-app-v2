@@ -133,7 +133,9 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
           while (retries > 0) {
             await refreshProject()
               .then(async (fetchedProject) => {
-                const foundGrant = fetchedProject?.grants.find((g) => g.uid === grantUpdate.refUID);
+                const foundGrant = fetchedProject?.grants?.find(
+                  (g) => g.uid === grantUpdate.refUID
+                );
 
                 const fetchedGrantUpdate = foundGrant?.updates.find(
                   (u: any) => u.uid === grantUpdate.uid

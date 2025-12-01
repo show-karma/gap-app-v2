@@ -64,7 +64,7 @@ export const MilestonesScreen: React.FC = () => {
 
   const handleCancel = () => {
     if (!selectedProject) return;
-    router.push(PAGES.PROJECT.GRANTS(selectedProject.details?.data?.slug || selectedProject?.uid));
+    router.push(PAGES.PROJECT.GRANTS(selectedProject.details?.slug || selectedProject?.uid));
   };
 
   // Check if all milestones are valid
@@ -258,7 +258,9 @@ export const MilestonesScreen: React.FC = () => {
               await refreshProject();
               router.push(
                 PAGES.PROJECT.GRANT(
-                  selectedProject.details?.data.slug || selectedProject.uid,
+                  (selectedProject as any)?.details?.slug ||
+                    (selectedProject as any)?.details?.data?.slug ||
+                    selectedProject.uid,
                   grant.uid
                 )
               );

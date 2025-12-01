@@ -87,7 +87,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         title: grantToEdit?.details?.data?.title || "",
         amount: grantToEdit?.details?.data?.amount || "",
         community: grantToEdit?.data?.communityUID || "",
-        recipient: grantToEdit?.recipient || selectedProject?.recipient || "",
+        recipient: grantToEdit?.recipient || selectedProject?.owner || "",
         linkToProposal: grantToEdit?.details?.data?.proposalURL || "",
         description: grantToEdit?.details?.data?.description || "",
         programId: grantToEdit?.details?.data?.programId,

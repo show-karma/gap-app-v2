@@ -407,7 +407,7 @@ export const UnifiedMilestoneScreen = () => {
 
       changeStepperStep("indexed");
 
-      router.push(PAGES.PROJECT.UPDATES(project?.details?.data.slug || project?.uid || ""));
+      router.push(PAGES.PROJECT.UPDATES(project?.details?.slug || project?.uid || ""));
       closeProgressModal();
     } catch (error) {
       errorManager("Error creating grant milestones", error);

@@ -93,7 +93,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
         await retryUntilConditionMet(
           async () => {
             const fetchedProject = await refreshProject();
-            const foundGrant = fetchedProject?.grants.find((g) => g.uid === milestone.refUID);
+            const foundGrant = fetchedProject?.grants?.find((g) => g.uid === milestone.refUID);
             const fetchedMilestone = foundGrant?.milestones.find(
               (u: any) => u.uid === milestone.uid
             );
@@ -196,7 +196,9 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
 
   const isAfterProofLaunch = checkProofLaunch();
 
-  const grant = project?.grants.find((g) => g.uid.toLowerCase() === milestone.refUID.toLowerCase());
+  const grant = project?.grants?.find(
+    (g) => g.uid.toLowerCase() === milestone.refUID.toLowerCase()
+  );
 
   // Fetch milestone impact data (outputs/metrics) if milestone is completed
   const { data: milestoneImpactData } = useMilestoneImpactAnswers({
@@ -274,7 +276,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
                       href={shareOnX(
                         SHARE_TEXTS.MILESTONE_COMPLETED(
                           grant?.details?.data?.title as string,
-                          (project?.details?.data?.slug || project?.uid) as string,
+                          (project?.details?.slug || project?.uid) as string,
                           grant?.uid as string
                         )
                       )}

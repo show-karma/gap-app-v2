@@ -132,7 +132,7 @@ export const VerifyMilestoneUpdateDialog: FC<VerifyMilestoneUpdateDialogProps> =
           while (retries > 0) {
             await refreshProject()
               .then(async (fetchedProject) => {
-                const foundGrant = fetchedProject?.grants.find((g) => g.uid === milestone.refUID);
+                const foundGrant = fetchedProject?.grants?.find((g) => g.uid === milestone.refUID);
 
                 const fetchedMilestone = foundGrant?.milestones.find(
                   (u: any) => u.uid === milestone.uid

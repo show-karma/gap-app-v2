@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
         }
       > = {
         overview: {
-          title: `${grantInfo?.details?.data?.title} Grant Overview | ${projectInfo?.details?.data?.title} | ${PROJECT_NAME}`,
+          title: `${grantInfo?.details?.data?.title} Grant Overview | ${projectInfo?.details?.title} | ${PROJECT_NAME}`,
           description:
             `${cleanMarkdownForPlainText(grantInfo?.details?.data?.description || "", 160)}` || "",
         },
@@ -62,8 +62,8 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   } else {
     metadata = {
       ...metadata,
-      title: `${projectInfo?.details?.data?.title} | ${PROJECT_NAME}`,
-      description: cleanMarkdownForPlainText(projectInfo?.details?.data?.description || "", 80),
+      title: `${projectInfo?.details?.title} | ${PROJECT_NAME}`,
+      description: cleanMarkdownForPlainText(projectInfo?.details?.description || "", 80),
     };
   }
 

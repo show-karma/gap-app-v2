@@ -47,7 +47,7 @@ import { useProjectEditModalStore } from "@/store/modals/projectEdit";
 import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
 import { useStepper } from "@/store/modals/txStepper";
 import { useOwnerStore } from "@/store/owner";
-import type { Contact } from "@/types/project";
+import type { Contact, ProjectV2Response } from "@/types/project";
 import { type CustomLink, isCustomLink } from "@/utilities/customLink";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
@@ -152,7 +152,7 @@ type ProjectDialogProps = {
     iconSide?: "left" | "right";
     styleClass: string;
   } | null;
-  projectToUpdate?: IProjectResponse;
+  projectToUpdate?: IProjectResponse | ProjectV2Response;
   previousContacts?: Contact[];
   useEditModalStore?: boolean; // New prop to control which modal state to use
 };
@@ -173,40 +173,85 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       projectToUpdate
         ? {
             chainID: projectToUpdate?.chainID,
-            description: projectToUpdate?.details?.data?.description || "",
-            title: projectToUpdate?.details?.data?.title || "",
-            problem: projectToUpdate?.details?.data?.problem,
-            solution: projectToUpdate?.details?.data?.solution,
-            missionSummary: projectToUpdate?.details?.data?.missionSummary,
-            locationOfImpact: projectToUpdate?.details?.data?.locationOfImpact,
-            imageURL: projectToUpdate?.details?.data?.imageURL,
-            twitter: projectToUpdate?.details?.data?.links?.find((link) => link.type === "twitter")
-              ?.url,
-            github: projectToUpdate?.details?.data?.links?.find((link) => link.type === "github")
-              ?.url,
-            discord: projectToUpdate?.details?.data?.links?.find((link) => link.type === "discord")
-              ?.url,
-            website: projectToUpdate?.details?.data?.links?.find((link) => link.type === "website")
-              ?.url,
-            linkedin: projectToUpdate?.details?.data?.links?.find(
-              (link) => link.type === "linkedin"
-            )?.url,
-            pitchDeck: projectToUpdate?.details?.data?.links?.find(
-              (link) => link.type === "pitchDeck"
-            )?.url,
-            demoVideo: projectToUpdate?.details?.data?.links?.find(
-              (link) => link.type === "demoVideo"
-            )?.url,
-            farcaster: projectToUpdate?.details?.data?.links?.find(
-              (link) => link.type === "farcaster"
-            )?.url,
-            profilePicture: projectToUpdate?.details?.data?.imageURL,
-            tags: projectToUpdate?.details?.data?.tags?.map((item) => item.name),
-            recipient: projectToUpdate?.recipient,
-            businessModel: projectToUpdate?.details?.data?.businessModel,
-            stageIn: projectToUpdate?.details?.data?.stageIn,
-            raisedMoney: projectToUpdate?.details?.data?.raisedMoney,
-            pathToTake: projectToUpdate?.details?.data?.pathToTake,
+            // Handle both V1 (details.data.*) and V2 (details.*) structures
+            description:
+              (projectToUpdate as ProjectV2Response).details?.description ||
+              (projectToUpdate as IProjectResponse).details?.data?.description ||
+              "",
+            title:
+              (projectToUpdate as ProjectV2Response).details?.title ||
+              (projectToUpdate as IProjectResponse).details?.data?.title ||
+              "",
+            problem:
+              (projectToUpdate as ProjectV2Response).details?.problem ||
+              (projectToUpdate as IProjectResponse).details?.data?.problem,
+            solution:
+              (projectToUpdate as ProjectV2Response).details?.solution ||
+              (projectToUpdate as IProjectResponse).details?.data?.solution,
+            missionSummary:
+              (projectToUpdate as ProjectV2Response).details?.missionSummary ||
+              (projectToUpdate as IProjectResponse).details?.data?.missionSummary,
+            locationOfImpact:
+              (projectToUpdate as ProjectV2Response).details?.locationOfImpact ||
+              (projectToUpdate as IProjectResponse).details?.data?.locationOfImpact,
+            imageURL:
+              (projectToUpdate as ProjectV2Response).details?.logoUrl ||
+              (projectToUpdate as IProjectResponse).details?.data?.imageURL,
+            twitter: (
+              (projectToUpdate as ProjectV2Response).details?.links ||
+              (projectToUpdate as IProjectResponse).details?.data?.links
+            )?.find((link) => link.type === "twitter")?.url,
+            github: (
+              (projectToUpdate as ProjectV2Response).details?.links ||
+              (projectToUpdate as IProjectResponse).details?.data?.links
+            )?.find((link) => link.type === "github")?.url,
+            discord: (
+              (projectToUpdate as ProjectV2Response).details?.links ||
+              (projectToUpdate as IProjectResponse).details?.data?.links
+            )?.find((link) => link.type === "discord")?.url,
+            website: (
+              (projectToUpdate as ProjectV2Response).details?.links ||
+              (projectToUpdate as IProjectResponse).details?.data?.links
+            )?.find((link) => link.type === "website")?.url,
+            linkedin: (
+              (projectToUpdate as ProjectV2Response).details?.links ||
+              (projectToUpdate as IProjectResponse).details?.data?.links
+            )?.find((link) => link.type === "linkedin")?.url,
+            pitchDeck: (
+              (projectToUpdate as ProjectV2Response).details?.links ||
+              (projectToUpdate as IProjectResponse).details?.data?.links
+            )?.find((link) => link.type === "pitchDeck")?.url,
+            demoVideo: (
+              (projectToUpdate as ProjectV2Response).details?.links ||
+              (projectToUpdate as IProjectResponse).details?.data?.links
+            )?.find((link) => link.type === "demoVideo")?.url,
+            farcaster: (
+              (projectToUpdate as ProjectV2Response).details?.links ||
+              (projectToUpdate as IProjectResponse).details?.data?.links
+            )?.find((link) => link.type === "farcaster")?.url,
+            profilePicture:
+              (projectToUpdate as ProjectV2Response).details?.logoUrl ||
+              (projectToUpdate as IProjectResponse).details?.data?.imageURL,
+            tags:
+              (projectToUpdate as ProjectV2Response).details?.tags?.map((tag) =>
+                typeof tag === "string" ? tag : (tag as any).name
+              ) ||
+              (projectToUpdate as IProjectResponse).details?.data?.tags?.map((item) => item.name),
+            recipient:
+              (projectToUpdate as ProjectV2Response).owner ||
+              (projectToUpdate as IProjectResponse).recipient,
+            businessModel:
+              (projectToUpdate as ProjectV2Response).details?.businessModel ||
+              (projectToUpdate as IProjectResponse).details?.data?.businessModel,
+            stageIn:
+              (projectToUpdate as ProjectV2Response).details?.stageIn ||
+              (projectToUpdate as IProjectResponse).details?.data?.stageIn,
+            raisedMoney:
+              (projectToUpdate as ProjectV2Response).details?.raisedMoney ||
+              (projectToUpdate as IProjectResponse).details?.data?.raisedMoney,
+            pathToTake:
+              (projectToUpdate as ProjectV2Response).details?.pathToTake ||
+              (projectToUpdate as IProjectResponse).details?.data?.pathToTake,
           }
         : undefined,
     [projectToUpdate]
@@ -215,8 +260,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const [contacts, setContacts] = useState<Contact[]>(previousContacts || []);
   const [customLinks, setCustomLinks] = useState<CustomLink[]>(() => {
     // Initialize custom links from project data if editing
-    if (projectToUpdate?.details?.data?.links) {
-      return projectToUpdate.details.data.links.filter(isCustomLink).map((link, index) => ({
+    const links =
+      (projectToUpdate as ProjectV2Response).details?.links ||
+      (projectToUpdate as IProjectResponse).details?.data?.links;
+    if (links) {
+      return links.filter(isCustomLink).map((link: any, index: number) => ({
         id: `custom-${index}`,
         name: link.name || "",
         url: link.url,
@@ -366,8 +414,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         };
         reset(updateData);
         // Reset logo state to project's existing logo
-        if (projectToUpdate.details?.data?.imageURL) {
-          setLogoPreviewUrl(projectToUpdate.details.data.imageURL);
+        const imageURL =
+          (projectToUpdate as ProjectV2Response).details?.logoUrl ||
+          (projectToUpdate as IProjectResponse).details?.data?.imageURL;
+        if (imageURL) {
+          setLogoPreviewUrl(imageURL);
         } else {
           setLogoPreviewUrl(null);
         }
@@ -646,7 +697,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         },
         refUID: project.uid,
         schema: gapClient.findSchema("ProjectDetails"),
-        recipient: project.recipient,
+        recipient: (project as any)?.owner || (project as any)?.recipient,
         uid: nullRef,
       });
 
@@ -947,7 +998,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       });
     } catch (error: any) {
       errorManager(
-        `Error updating project ${projectToUpdate?.details?.data?.slug || projectToUpdate?.uid}`,
+        `Error updating project ${(projectToUpdate as ProjectV2Response).details?.slug || (projectToUpdate as IProjectResponse).details?.data?.slug || projectToUpdate?.uid}`,
         error,
         { ...data, address },
         {
@@ -1001,7 +1052,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     if (
       value.length < 3 ||
       (projectToUpdate &&
-        value.toLowerCase() === projectToUpdate?.details?.data?.title?.toLowerCase())
+        value.toLowerCase() ===
+          (
+            (projectToUpdate as ProjectV2Response).details?.title ||
+            (projectToUpdate as IProjectResponse).details?.data?.title
+          )?.toLowerCase())
     ) {
       return;
     }

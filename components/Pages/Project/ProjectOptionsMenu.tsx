@@ -186,11 +186,7 @@ export const ProjectOptionsMenu = () => {
             <LinkContractAddressButton
               buttonElement={null}
               buttonClassName={buttonClassName}
-              project={
-                project as IProjectResponse & {
-                  external: Record<string, string[]>;
-                }
-              }
+              project={project}
               onClose={handleLinkContractsDialogClose}
             />
           )}
@@ -198,11 +194,7 @@ export const ProjectOptionsMenu = () => {
             <LinkGithubRepoButton
               buttonElement={null}
               buttonClassName={buttonClassName}
-              project={
-                project as IProjectResponse & {
-                  external: Record<string, string[]>;
-                }
-              }
+              project={project}
               onClose={handleLinkGithubDialogClose}
             />
           )}
@@ -210,11 +202,7 @@ export const ProjectOptionsMenu = () => {
             <LinkOSOProfileButton
               buttonElement={null}
               buttonClassName={buttonClassName}
-              project={
-                project as IProjectResponse & {
-                  external: Record<string, string[]>;
-                }
-              }
+              project={project}
               onClose={handleLinkOSODialogClose}
             />
           )}
@@ -222,11 +210,7 @@ export const ProjectOptionsMenu = () => {
             <LinkDivviWalletButton
               buttonElement={null}
               buttonClassName={buttonClassName}
-              project={
-                project as IProjectResponse & {
-                  external: Record<string, string[]>;
-                }
-              }
+              project={project}
               onClose={handleLinkDivviDialogClose}
             />
           )}
@@ -234,7 +218,7 @@ export const ProjectOptionsMenu = () => {
             <SetPayoutAddressButton
               buttonElement={null}
               buttonClassName={buttonClassName}
-              project={project as IProjectResponse & { payoutAddress?: string }}
+              project={project}
               onClose={handleSetPayoutDialogClose}
             />
           )}

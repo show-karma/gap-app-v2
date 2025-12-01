@@ -58,9 +58,9 @@ export function usePayoutAddressManager(items: CartItem[], communityId?: string)
         if (grantPayout) {
           candidateAddress = grantPayout;
         }
-        // Priority 4: Recipient address
-        else if (project.recipient) {
-          candidateAddress = project.recipient as string;
+        // Priority 4: Owner address (V2) or recipient (V1)
+        else if ((project as any).owner || (project as any).recipient) {
+          candidateAddress = ((project as any).owner || (project as any).recipient) as string;
         }
       }
 

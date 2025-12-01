@@ -1,8 +1,5 @@
 import { GAP } from "@show-karma/karma-gap-sdk";
-import type {
-  IGrantResponse,
-  IProjectResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
@@ -13,6 +10,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
 import { useStepper } from "@/store/modals/txStepper";
+import type { ProjectV2Response } from "@/types/project";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { ensureCorrectChain } from "@/utilities/ensureCorrectChain";
 import fetchData from "@/utilities/fetchData";
@@ -27,7 +25,7 @@ import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 interface UseGrantCompletionRevokeProps {
   grant: IGrantResponse;
-  project: IProjectResponse;
+  project: ProjectV2Response;
 }
 
 /**

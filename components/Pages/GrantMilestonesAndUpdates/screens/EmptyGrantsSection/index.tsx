@@ -24,7 +24,7 @@ export const EmptyGrantsSection: FC = () => {
     if (project?.grants?.length === 0) {
       if (isAuthorized) {
         router.push(
-          PAGES.PROJECT.SCREENS.NEW_GRANT((project?.details?.data?.slug || project?.uid) as string)
+          PAGES.PROJECT.SCREENS.NEW_GRANT((project?.details?.slug || project?.uid) as string)
         );
       }
     }
@@ -59,7 +59,7 @@ export const EmptyGrantsSection: FC = () => {
           Go ahead and create your first funding
         </p>
         <Link
-          href={PAGES.PROJECT.SCREENS.NEW_GRANT(project?.details?.data.slug || project?.uid || "")}
+          href={PAGES.PROJECT.SCREENS.NEW_GRANT(project?.details?.slug || project?.uid || "")}
           className="items-center flex flex-row justify-center gap-2 rounded border border-blue-600 bg-blue-600 px-4 py-2.5 text-base font-semibold text-white hover:bg-blue-600"
         >
           <img src="/icons/plus.svg" alt="Add" className="relative h-5 w-5" />

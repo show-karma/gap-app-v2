@@ -1,14 +1,14 @@
 import type { ContributorProfile } from "@show-karma/karma-gap-sdk";
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useProjectStore } from "@/store";
+import type { ProjectV2Response } from "@/types/project";
 import { getContributorProfiles } from "@/utilities/indexer/getContributorProfiles";
 
-export const useTeamProfiles = (project: IProjectResponse | undefined) => {
+export const useTeamProfiles = (project: ProjectV2Response | undefined) => {
   const setTeamProfiles = useProjectStore((state) => state.setTeamProfiles);
 
-  const rawAddresses = project?.members?.map((member) => member.recipient) || [];
+  const rawAddresses = project?.members?.map((member) => member.address) || [];
   const uniqueLowercasedAddresses = Array.from(
     new Set(rawAddresses.map((address) => address.toLowerCase()))
   );
