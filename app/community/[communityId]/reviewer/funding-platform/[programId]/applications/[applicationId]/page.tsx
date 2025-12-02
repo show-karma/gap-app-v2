@@ -242,6 +242,7 @@ export default function ReviewerApplicationDetailPage() {
               program={program}
               showStatusActions={false} // Reviewers cannot change status
               showAIEvaluationButton={false} // Reviewers cannot run AI evaluation
+              showInternalEvaluation={true} // Reviewers can view internal evaluation
               onStatusChange={handleStatusChange}
               viewMode={applicationViewMode}
               onViewModeChange={setApplicationViewMode}

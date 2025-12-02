@@ -14,6 +14,7 @@ import {
 } from "@/components/Icons";
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import formatCurrency from "@/utilities/formatCurrency";
 import { cn } from "@/utilities/tailwind";
 import { registryHelper } from "./helper";
@@ -223,10 +224,11 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                   </Dialog.Title>
                 </div>
                 <div className="flex flex-col gap-4 mb-6 px-6">
-                  <div className="whitespace-nowrap pt-2 pb-4 text-sm text-black dark:text-zinc-400 ">
-                    <p className="w-full max-w-full text-wrap font-body">
-                      {program.metadata?.description ?? ""}
-                    </p>
+                  <div className="pt-2 pb-4 text-sm text-black dark:text-zinc-400">
+                    <MarkdownPreview
+                      source={program.metadata?.description ?? ""}
+                      className="w-full max-w-full text-wrap font-body text-sm"
+                    />
                   </div>
                   <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-4 py-3">
                     {program.metadata?.categories?.length ? (

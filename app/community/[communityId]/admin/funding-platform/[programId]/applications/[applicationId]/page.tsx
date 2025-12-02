@@ -308,6 +308,7 @@ export default function ApplicationDetailPage() {
               program={program}
               showStatusActions={hasAccess}
               showAIEvaluationButton={hasAccess}
+              showInternalEvaluation={hasAccess}
               onStatusChange={handleStatusChange}
               viewMode={applicationViewMode}
               onViewModeChange={setApplicationViewMode}
