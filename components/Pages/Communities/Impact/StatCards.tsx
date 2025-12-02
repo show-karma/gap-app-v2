@@ -1,4 +1,5 @@
 "use client";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
@@ -154,9 +155,10 @@ export const CommunityStatCards = () => {
   ];
 
   // Filter out "Total Grants" card when programId is present
-  const filteredStats = programId
-    ? stats.filter((stat) => stat.title !== "Total Grants")
-    : stats;
+  const filteredStats = useMemo(
+    () => (programId ? stats.filter((stat) => stat.title !== "Total Grants") : stats),
+    [programId, stats]
+  );
 
   return filteredStats.map((item) => (
     <div
