@@ -13,6 +13,7 @@ const aiConfigSchema = z.object({
   aiModel: z.string().min(1, "AI model is required"),
   enableRealTimeEvaluation: z.boolean(),
   langfusePromptId: z.string().optional(),
+  internalLangfusePromptId: z.string().optional(),
 });
 
 type AIConfigFormData = z.infer<typeof aiConfigSchema>;
@@ -57,11 +58,13 @@ export function AIPromptConfiguration({
       aiModel: schema.aiConfig?.aiModel || "gpt-4o",
       enableRealTimeEvaluation: schema.aiConfig?.enableRealTimeEvaluation || false,
       langfusePromptId: defaultLangfusePromptId || recommendedPrompt,
+      internalLangfusePromptId: schema.aiConfig?.internalLangfusePromptId || "",
     },
   });
 
   const watchedValues = watch();
   const currentLangfusePromptId = watchedValues.langfusePromptId || "";
+  const currentInternalLangfusePromptId = watchedValues.internalLangfusePromptId || "";
 
   const displayValue =
     currentLangfusePromptId === recommendedPrompt ? recommendedPrompt : currentLangfusePromptId;
@@ -87,6 +90,7 @@ export function AIPromptConfiguration({
           aiModel: data.aiModel || "gpt-4o",
           enableRealTimeEvaluation: data.enableRealTimeEvaluation || false,
           langfusePromptId: data.langfusePromptId || "",
+          internalLangfusePromptId: data.internalLangfusePromptId || "",
         },
       };
       onUpdate(updatedSchema);
@@ -161,6 +165,35 @@ export function AIPromptConfiguration({
           </p>
         </div>
 
+        {/* Internal AI Evaluation Prompt Name */}
+        <div>
+          <label
+            htmlFor="internal-langfuse-prompt"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          >
+            Internal AI Evaluation Prompt Name
+          </label>
+          <input
+            id="internal-langfuse-prompt"
+            type="text"
+            value={currentInternalLangfusePromptId}
+            disabled={readOnly}
+            onChange={(e) => {
+              const value = e.target.value;
+              setValue("internalLangfusePromptId", value);
+            }}
+            className={`w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300 ${readOnly ? "opacity-50 cursor-not-allowed" : ""}`}
+            placeholder=""
+          />
+          {errors.internalLangfusePromptId && (
+            <p className="text-red-500 text-sm mt-1">{errors.internalLangfusePromptId.message}</p>
+          )}
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            Langfuse prompt name for internal reviewer evaluation (not visible to applicants). This
+            evaluation runs automatically after application submission.
+          </p>
+        </div>
+
         {/* Real-time Evaluation Toggle */}
         <div className="border-t border-gray-200 dark:border-gray-600 pt-4">
           <div className="flex items-center justify-between">
@@ -211,6 +244,12 @@ export function AIPromptConfiguration({
                 <dt className="text-gray-600 dark:text-gray-400">Langfuse Prompt:</dt>
                 <dd className="text-gray-900 dark:text-white font-mono text-xs">
                   {schema.aiConfig.langfusePromptId || "Default from registry"}
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-gray-600 dark:text-gray-400">Internal Prompt:</dt>
+                <dd className="text-gray-900 dark:text-white font-mono text-xs">
+                  {schema.aiConfig.internalLangfusePromptId || "Not configured"}
                 </dd>
               </div>
               <div className="flex justify-between">

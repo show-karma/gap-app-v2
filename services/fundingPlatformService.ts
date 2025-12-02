@@ -452,7 +452,7 @@ export const fundingApplicationsAPI = {
 
     if (contentDisposition) {
       const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-      if (filenameMatch?.[1]) {
+      if (filenameMatch && filenameMatch[1]) {
         filename = filenameMatch[1].replace(/['"]/g, "");
       }
     }
@@ -491,7 +491,7 @@ export const fundingApplicationsAPI = {
 
     if (contentDisposition) {
       const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-      if (filenameMatch?.[1]) {
+      if (filenameMatch && filenameMatch[1]) {
         filename = filenameMatch[1].replace(/['"]/g, "");
       }
     }
@@ -531,7 +531,11 @@ export const fundingApplicationsAPI = {
   },
 
   /**
-   * Run AI evaluation on an existing application by reference number (Admin only)
+   * Run AI evaluation on an existing application by reference number (Admin only).
+   * This evaluation is visible to applicants and helps them improve their application.
+   *
+   * @param referenceNumber - The application reference number
+   * @returns Promise resolving to evaluation results
    */
   async runAIEvaluation(referenceNumber: string): Promise<{
     success: boolean;
@@ -541,6 +545,29 @@ export const fundingApplicationsAPI = {
     updatedAt: string;
   }> {
     const response = await apiClient.post(`/v2/funding-applications/${referenceNumber}/evaluate`);
+    return response.data;
+  },
+
+  /**
+   * Run internal AI evaluation on an existing application by reference number (Admin/Reviewer only).
+   * This evaluation is NOT visible to applicants and is used for internal review purposes only.
+   * Requires internalLangfusePromptId to be configured in the program's AI config.
+   *
+   * @param referenceNumber - The application reference number
+   * @returns Promise resolving to internal evaluation results
+   */
+  async runInternalAIEvaluation(referenceNumber: string): Promise<{
+    success: boolean;
+    referenceNumber: string;
+    evaluation: string;
+    promptId: string;
+    updatedAt: string;
+  }> {
+    const response = await apiClient.post(
+      `/v2/funding-applications/${referenceNumber}/evaluate-internal`,
+      {},
+      { timeout: 90000 }
+    );
     return response.data;
   },
 };
