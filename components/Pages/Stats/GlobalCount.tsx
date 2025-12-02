@@ -1,6 +1,5 @@
 "use client";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
-import { Card, Title } from "@tremor/react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -48,11 +47,9 @@ export function GlobalCount() {
 
   return (
     <div className="container mx-auto sm:px-0 lg:px-20 w-full flex-col items-center justify-center">
-      <Card className="min-w-[400px]">
+      <div className="min-w-[400px]">
         <div className="flex justify-between items-center mb-2 pb-2 border-b-2 border-zinc-300">
-          <Title className="flex flex-row flex-wrap items-center gap-2">
-            Global Attestations Stats
-          </Title>
+          <h1 className="flex flex-row flex-wrap items-center gap-2">Global Attestations Stats</h1>
           <Button onClick={fetchStats} className="bg-zinc-400">
             <ArrowPathIcon className="h-5 w-5" />
           </Button>
@@ -71,7 +68,7 @@ export function GlobalCount() {
             ))}
           </div>
         )}
-      </Card>
+      </div>
     </div>
   );
 }
