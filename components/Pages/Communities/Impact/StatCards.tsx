@@ -1,6 +1,6 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
-import { useParams, usePathname } from "next/navigation";
+import { useParams, usePathname, useSearchParams } from "next/navigation";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useImpactMeasurement } from "@/hooks/useImpactMeasurement";
@@ -69,7 +69,9 @@ export const ImpactStatCards = () => {
 
 export const CommunityStatCards = () => {
   const params = useParams();
+  const searchParams = useSearchParams();
   const communityId = params.communityId as string;
+  const programId = searchParams.get("programId");
   const {
     totalProjects: filteredProjectsCount,
     totalGrants: filteredGrantsCount,
@@ -150,7 +152,13 @@ export const CommunityStatCards = () => {
       ) : null,
     },
   ];
-  return stats.map((item) => (
+
+  // Filter out "Total Grants" card when programId is present
+  const filteredStats = programId
+    ? stats.filter((stat) => stat.title !== "Total Grants")
+    : stats;
+
+  return filteredStats.map((item) => (
     <div
       key={item.title}
       className="flex flex-1 rounded-lg border border-gray-300 dark:border-zinc-600"
