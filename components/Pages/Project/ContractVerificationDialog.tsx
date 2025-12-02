@@ -6,6 +6,12 @@ import { Fragment } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { useContractVerification, VerificationStep } from "@/hooks/useContractVerification";
 
+// Utility function to mask wallet address
+const maskAddress = (address: string): string => {
+  if (!address || address.length < 10) return address;
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+};
+
 interface ContractVerificationDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -141,9 +147,9 @@ export const ContractVerificationDialog: React.FC<ContractVerificationDialogProp
                         <span className="font-medium">Contract:</span> {contractAddress}
                       </p>
                       {deployerInfo && (
-                        <p className="text-gray-600 dark:text-gray-300 break-all mt-2">
+                        <p className="text-gray-600 dark:text-gray-300 mt-2">
                           <span className="font-medium">Deployer:</span>{" "}
-                          {deployerInfo.deployerAddress}
+                          <span className="font-mono">{maskAddress(deployerInfo.deployerAddress)}</span>
                         </p>
                       )}
                     </div>
@@ -171,8 +177,8 @@ export const ContractVerificationDialog: React.FC<ContractVerificationDialogProp
                     <p className="text-sm text-gray-700 dark:text-gray-200">{getStepMessage()}</p>
                   </div>
 
-                  {/* Error Message */}
-                  {error && (
+                  {/* Error Message - Don't show if it's just a wallet switch warning */}
+                  {error && !needsWalletSwitch && (
                     <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 p-4 rounded">
                       <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
                     </div>
@@ -181,11 +187,11 @@ export const ContractVerificationDialog: React.FC<ContractVerificationDialogProp
                   {/* Wallet Switch Warning */}
                   {needsWalletSwitch && deployerInfo && (
                     <div className="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-500 p-4 rounded">
-                      <p className="text-sm text-yellow-700 dark:text-yellow-400">
-                        Please switch to the deployer wallet to continue:
+                      <p className="text-sm text-yellow-700 dark:text-yellow-400 font-medium mb-2">
+                        Log in with contract deployer wallet to proceed
                       </p>
-                      <p className="text-sm text-yellow-700 dark:text-yellow-400 font-mono mt-1 break-all">
-                        {deployerInfo.deployerAddress}
+                      <p className="text-sm text-yellow-700 dark:text-yellow-400 font-mono">
+                        {maskAddress(deployerInfo.deployerAddress)}
                       </p>
                     </div>
                   )}
