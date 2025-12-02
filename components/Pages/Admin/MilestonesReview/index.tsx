@@ -17,12 +17,8 @@ import { useAccount } from "wagmi";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { useIsReviewer, useReviewerPrograms } from "@/hooks/usePermissions";
 import { useOwnerStore } from "@/store";
-import { fundingPlatformService } from "@/services/fundingPlatformService";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { MESSAGES } from "@/utilities/messages";
-import { useQueryClient } from "@tanstack/react-query";
-import { QUERY_KEYS } from "@/utilities/queryKeys";
-import type { ProjectGrantMilestonesResponse } from "@/services/milestones";
+import { useDeleteMilestone } from "@/hooks/useDeleteMilestone";
+import { useStaff } from "@/hooks/useStaff";
 
 interface MilestonesReviewPageProps {
   communityId: string;
@@ -38,7 +34,6 @@ export function MilestonesReviewPage({
   referrer,
 }: MilestonesReviewPageProps) {
   const { data, isLoading, error, refetch } = useProjectGrantMilestones(projectId, programId);
-  const queryClient = useQueryClient();
   const [verifyingMilestoneId, setVerifyingMilestoneId] = useState<string | null>(null);
   const [verificationComment, setVerificationComment] = useState("");
   const [deletingMilestoneId, setDeletingMilestoneId] = useState<string | null>(null);
@@ -49,6 +44,7 @@ export function MilestonesReviewPage({
   );
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isOwnerLoading = useOwnerStore((state) => state.isOwnerLoading);
+  const { isStaff, isLoading: isLoadingStaff } = useStaff();
 
   // Extract programId and chainId from combined format (e.g., "959_42161")
   const { parsedProgramId, parsedChainId } = useMemo(() => {
@@ -84,11 +80,20 @@ export function MilestonesReviewPage({
   );
 
   // Determine if user can delete milestones
-  // Only milestone reviewers can delete milestones (same permission as verification)
+  // Contract owners, community admins, staff, and milestone reviewers can delete milestones
   const canDeleteMilestones = useMemo(
-    () => isMilestoneReviewer || false,
-    [isMilestoneReviewer]
+    () => isCommunityAdmin || isContractOwner || isStaff || (isMilestoneReviewer || false),
+    [isCommunityAdmin, isContractOwner, isStaff, isMilestoneReviewer]
   );
+
+  // Delete milestone hook with proper React Query mutation/query relationship
+  const { deleteMilestoneAsync, isDeleting } = useDeleteMilestone({
+    projectId,
+    programId,
+    onSuccess: async () => {
+      await refetch();
+    },
+  });
 
   // Get the actual project UID from the data (projectId might be a slug)
   const projectUID = data?.project?.uid;
@@ -204,75 +209,22 @@ export function MilestonesReviewPage({
   }, [refetch]);
 
   const handleDeleteMilestone = useCallback(async (milestone: GrantMilestoneWithCompletion) => {
-    if (!milestone.fundingApplicationCompletion) {
-      toast.error("Cannot delete milestone: missing application data");
-      throw new Error("Missing application data");
-    }
-
     const milestoneId = milestone.uid;
     setDeletingMilestoneId(milestoneId);
 
     try {
-      const result = await fundingPlatformService.applications.deleteMilestone(
-        milestone.fundingApplicationCompletion.referenceNumber,
-        milestone.fundingApplicationCompletion.milestoneFieldLabel,
-        milestone.fundingApplicationCompletion.milestoneTitle
-      );
-
-      if (result.milestoneRemoved) {
-        toast.success(`Milestone "${milestone.title}" deleted successfully`);
-        
-        // Optimistically update the React Query cache to remove the deleted milestone
-        const queryKey = QUERY_KEYS.MILESTONES.PROJECT_GRANT_MILESTONES(projectId, programId);
-        queryClient.setQueryData<ProjectGrantMilestonesResponse | null>(
-          queryKey,
-          (oldData) => {
-            if (!oldData) return oldData;
-            
-            return {
-              ...oldData,
-              grantMilestones: oldData.grantMilestones.filter(
-                (m) => m.uid !== milestoneId
-              ),
-            };
-          }
-        );
-      } else {
-        const errorMessage = "Failed to delete milestone";
-        toast.error(errorMessage);
-        errorManager(
-          `Failed to delete milestone "${milestone.title}"`,
-          new Error(errorMessage),
-          {
-            milestoneUID: milestone.uid,
-            referenceNumber: milestone.fundingApplicationCompletion.referenceNumber,
-            milestoneTitle: milestone.title,
-          },
-          { error: errorMessage }
-        );
-        throw new Error(errorMessage);
-      }
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || error?.message || "Failed to delete milestone";
-      errorManager(
-        `Failed to delete milestone "${milestone.title}"`,
-        error,
-        {
-          milestoneUID: milestone.uid,
-          referenceNumber: milestone.fundingApplicationCompletion.referenceNumber,
-          milestoneTitle: milestone.title,
-        },
-        { error: errorMessage }
-      );
+      await deleteMilestoneAsync(milestone);
+    } catch (error) {
+      // Error is already handled in the hook (toast + errorManager)
       // Re-throw so DeleteDialog can handle it (it will log and keep modal open)
       throw error;
     } finally {
       setDeletingMilestoneId(null);
     }
-  }, [projectId, programId, queryClient]);
+  }, [deleteMilestoneAsync]);
 
   // Show loading while checking authorization
-  if (isLoading || isLoadingCommunityAdmin || isOwnerLoading || isLoadingReviewer) {
+  if (isLoading || isLoadingCommunityAdmin || isOwnerLoading || isLoadingReviewer || isLoadingStaff) {
     return (
       <div className="min-h-screen">
         <div className="px-4 sm:px-6 lg:px-8 py-6">
@@ -417,7 +369,7 @@ export function MilestonesReviewPage({
                       onSubmitVerification={handleSubmitVerification}
                       onSyncVerification={handleSyncVerification}
                       onDeleteMilestone={handleDeleteMilestone}
-                      isDeleting={deletingMilestoneId === milestone.uid}
+                      isDeleting={isDeleting && deletingMilestoneId === milestone.uid}
                     />
                   ))
                 )}
