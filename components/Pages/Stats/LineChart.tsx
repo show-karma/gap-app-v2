@@ -73,7 +73,7 @@ export const LineChart: FC<StatChartProps> = ({
 
   useMemo(() => {
     groupBy(period);
-  }, [period, groupBy]);
+  }, [period]);
 
   return (
     <div className={divStyle}>

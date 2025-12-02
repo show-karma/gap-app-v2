@@ -2,13 +2,19 @@
 import type React from "react";
 import { useEffect } from "react";
 import { useENS } from "@/store/ens";
+import { cn } from "@/utilities/tailwind";
 
 interface Props {
   address: any;
   shouldTruncate?: boolean;
+  className?: string;
 }
 
-const EthereumAddressToENSName: React.FC<Props> = ({ address, shouldTruncate = true }) => {
+const EthereumAddressToENSName: React.FC<Props> = ({
+  address,
+  shouldTruncate = true,
+  className,
+}) => {
   const ensNames = useENS((state) => state.ensData);
   const populateEns = useENS((state) => state.populateEns);
   const lowerCasedAddress = address?.toLowerCase();
@@ -24,7 +30,7 @@ const EthereumAddressToENSName: React.FC<Props> = ({ address, shouldTruncate = t
     : lowerCasedAddress;
 
   return (
-    <span className="font-body">
+    <span className={cn("font-body", className)}>
       {!lowerCasedAddress || !ensNames[lowerCasedAddress]?.name
         ? addressToDisplay
         : ensNames[lowerCasedAddress].name}

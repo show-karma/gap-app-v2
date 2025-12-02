@@ -17,6 +17,7 @@ import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useState } from "react";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
 import { DiscordIcon, TelegramIcon, TwitterIcon } from "@/components/Icons";
 import { ParagraphIcon } from "@/components/Icons/Paragraph";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -30,6 +31,7 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { useAuth } from "@/hooks/useAuth";
+import { useContributorProfile } from "@/hooks/useContributorProfile";
 import { useReviewerPrograms } from "@/hooks/usePermissions";
 import { useStaff } from "@/hooks/useStaff";
 import { useOwnerStore } from "@/store";
@@ -89,12 +91,8 @@ export function NavbarMobileMenu() {
   };
 
   const { openModal: openProfileModal } = useContributorProfileModalStore();
-  const account = address
-    ? {
-        address,
-        displayName: formatAddress(address),
-      }
-    : undefined;
+
+  const { profile } = useContributorProfile(address);
 
   // Check admin and reviewer permissions
   const { communities } = useCommunitiesStore();
@@ -152,18 +150,21 @@ export function NavbarMobileMenu() {
         ) : (
           <button
             type="button"
-            className="flex items-center gap-2 rounded-full border border-border p-1"
+            className="flex items-center gap-1 rounded-full border border-border p-1"
             onClick={() => openProfileModal({ isGlobal: true })}
             aria-label="Open profile"
           >
             <EthereumAddressToENSAvatar
-              address={account?.address}
+              address={address}
               className="h-8 w-8 min-h-8 min-w-8 max-h-8 max-w-8 rounded-full"
             />
-            {address && (
-              <span className="text-sm text-muted-foreground inline px-1">
-                {formatAddress(address)}
-              </span>
+            {profile?.data?.name ? (
+              <span className="text-sm text-muted-foreground px-2">{profile?.data?.name}</span>
+            ) : (
+              <EthereumAddressToENSName
+                address={address}
+                className="text-sm text-muted-foreground px-2"
+              />
             )}
           </button>
         )}
