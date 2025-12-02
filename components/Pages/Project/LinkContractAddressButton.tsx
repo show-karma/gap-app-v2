@@ -18,7 +18,9 @@ import { ContractAddressList } from "./ContractAddressList";
 import { ContractVerificationDialog } from "./ContractVerificationDialog";
 import type { LinkContractAddressesButtonProps } from "./types";
 
-export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = ({
+export const LinkContractAddressButton: FC<
+  LinkContractAddressesButtonProps
+> = ({
   project,
   buttonClassName,
   "data-link-contracts-button": dataAttr,
@@ -27,7 +29,9 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
 }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isCommunityAdmin = useCommunityAdminStore((state) => state.isCommunityAdmin);
+  const isCommunityAdmin = useCommunityAdminStore(
+    (state) => state.isCommunityAdmin
+  );
   const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
   const [isOpen, setIsOpen] = useState(false);
   const [verificationDialogOpen, setVerificationDialogOpen] = useState(false);
@@ -38,21 +42,23 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
   } | null>(null);
 
   // Custom hooks for state and logic management
-  const { pairs, addPair, removePair, updateAddress, updateNetwork } = useContractAddressPairs({
-    project,
-  });
+  const { pairs, addPair, removePair, updateAddress, updateNetwork } =
+    useContractAddressPairs({
+      project,
+    });
   const { clearError } = useContractAddressValidation({
     projectUid: project.uid,
   });
-  const { save, isLoading, error, setError, invalidContracts } = useContractAddressSave({
-    projectUid: project.uid,
-    onSuccess: () => {
-      if (buttonElement === null && onClose) {
-        setIsOpen(false);
-        onClose();
-      }
-    },
-  });
+  const { save, isLoading, error, setError, invalidContracts } =
+    useContractAddressSave({
+      projectUid: project.uid,
+      onSuccess: () => {
+        if (buttonElement === null && onClose) {
+          setIsOpen(false);
+          onClose();
+        }
+      },
+    });
 
   useEffect(() => {
     if (buttonElement === null) {
@@ -155,15 +161,18 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
     const hasBackendErrors = invalidContracts.size > 0;
 
     // Check if all pairs are empty (at least one valid pair required)
-    const allPairsEmpty = pairs.every((pair) => !pair.address.trim() && !pair.network.trim());
+    const allPairsEmpty = pairs.every(
+      (pair) => !pair.address.trim() && !pair.network.trim()
+    );
 
     return hasFormatErrors || hasBackendErrors || allPairsEmpty;
   }, [pairs, invalidContracts]);
 
   // Count unverified contracts
   const unverifiedCount = useMemo(() => {
-    return pairs.filter((pair) => pair.address.trim() && pair.network.trim() && !pair.verified)
-      .length;
+    return pairs.filter(
+      (pair) => pair.address.trim() && pair.network.trim() && !pair.verified
+    ).length;
   }, [pairs]);
 
   if (!isAuthorized) {
@@ -209,7 +218,7 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
           <Button
             onClick={handleSave}
             disabled={isLoading || hasValidationErrors}
-            className="bg-primary-500 text-white hover:bg-primary-600"
+            className="bg-brand-blue text-white hover:opacity-90"
           >
             {isLoading ? "Saving..." : "Save All"}
           </Button>
@@ -225,7 +234,9 @@ export const LinkContractAddressButton: FC<LinkContractAddressesButtonProps> = (
         <ErrorBoundary
           fallback={
             <div className="p-4 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-              <p className="font-medium">Verification dialog encountered an error</p>
+              <p className="font-medium">
+                Verification dialog encountered an error
+              </p>
               <p className="text-sm mt-1">Please close and try again</p>
             </div>
           }

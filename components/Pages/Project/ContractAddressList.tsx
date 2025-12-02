@@ -34,7 +34,9 @@ export const ContractAddressList: FC<ContractAddressListProps> = ({
       {pairs.map((pair, index) => {
         // Use network:address as key for filled pairs, fallback to index for empty ones
         const key =
-          pair.network && pair.address ? `${pair.network}:${pair.address}` : `empty-${index}`;
+          pair.network && pair.address
+            ? `${pair.network}:${pair.address}`
+            : `empty-${index}`;
 
         return (
           <ContractAddressItem
@@ -53,7 +55,7 @@ export const ContractAddressList: FC<ContractAddressListProps> = ({
       })}
       <Button
         onClick={onAdd}
-        className="flex items-center justify-center text-white gap-2 border border-primary-500 bg-primary-500 hover:bg-primary-600"
+        className="flex items-center justify-center text-white gap-2 border border-brand-blue bg-brand-blue hover:opacity-90"
       >
         <PlusIcon className="h-5 w-5" />
         Add Another Contract
