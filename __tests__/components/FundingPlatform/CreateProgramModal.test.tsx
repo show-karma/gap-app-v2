@@ -4,7 +4,7 @@
  * covering UI rendering, form validation, user interactions, and submission
  */
 
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type React from "react";
 import { CreateProgramModal } from "@/components/FundingPlatform/CreateProgramModal";
@@ -45,6 +45,7 @@ jest.mock("react-hot-toast", () => ({
 // Mock Radix UI Dialog
 jest.mock("@radix-ui/react-dialog", () => {
   const React = require("react");
+
   return {
     Root: ({ children, open, onOpenChange }: any) => (
       <div data-testid="dialog-root" data-open={open}>
@@ -58,13 +59,25 @@ jest.mock("@radix-ui/react-dialog", () => {
       </div>
     ),
     Portal: ({ children }: any) => <>{children}</>,
-    Overlay: ({ children }: any) => <div data-testid="dialog-overlay">{children}</div>,
-    Content: ({ children, className }: any) => (
-      <div data-testid="dialog-content-wrapper" className={className}>
-        {children}
-      </div>
+    Overlay: Object.assign(
+      ({ children }: any) => <div data-testid="dialog-overlay">{children}</div>,
+      { displayName: "DialogOverlay" }
     ),
-    Title: ({ children }: any) => <h2 data-testid="dialog-title">{children}</h2>,
+    Content: Object.assign(
+      ({ children, className }: any) => (
+        <div data-testid="dialog-content-wrapper" className={className}>
+          {children}
+        </div>
+      ),
+      { displayName: "DialogContent" }
+    ),
+    Title: Object.assign(({ children }: any) => <h2 data-testid="dialog-title">{children}</h2>, {
+      displayName: "DialogTitle",
+    }),
+    Description: Object.assign(
+      ({ children }: any) => <p data-testid="dialog-description">{children}</p>,
+      { displayName: "DialogDescription" }
+    ),
     Header: ({ children }: any) => <div data-testid="dialog-header">{children}</div>,
     Footer: ({ children }: any) => <div data-testid="dialog-footer">{children}</div>,
     Close: ({ children }: any) => <button data-testid="dialog-close">{children}</button>,
@@ -320,8 +333,15 @@ describe("CreateProgramModal", () => {
         />
       );
 
-      const shortDescInput = screen.getByLabelText(/short description/i);
-      await user.type(shortDescInput, "a".repeat(101));
+      // Fill required fields first
+      await user.type(screen.getByLabelText(/program name/i), "Test Program");
+      await user.type(screen.getByLabelText(/program description/i), "Test Description");
+
+      const shortDescInput = screen.getByLabelText(/short description/i) as HTMLInputElement;
+      // Bypass HTML maxLength restriction by directly setting the value via fireEvent
+      // This allows us to test the zod validation
+      fireEvent.change(shortDescInput, { target: { value: "a".repeat(101) } });
+      fireEvent.blur(shortDescInput);
 
       const submitButton = screen.getByRole("button", { name: /create program/i });
       await user.click(submitButton);
@@ -482,8 +502,16 @@ describe("CreateProgramModal", () => {
       const submitButton = screen.getByRole("button", { name: /create program/i });
       await user.click(submitButton);
 
-      // Button should show loading state
-      expect(submitButton).toBeDisabled();
+      // Button should be replaced by Spinner when loading
+      // The Button component replaces the button with a Spinner when isLoading is true
+      await waitFor(
+        () => {
+          // Check that the submit button is no longer present (replaced by Spinner)
+          const buttonAfterClick = screen.queryByRole("button", { name: /create program/i });
+          expect(buttonAfterClick).not.toBeInTheDocument();
+        },
+        { timeout: 2000 }
+      );
     });
 
     it("should handle successful creation", async () => {
@@ -539,7 +567,10 @@ describe("CreateProgramModal", () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(toast.success).toHaveBeenCalledWith(expect.stringContaining("auto-approval failed"));
+        expect(toast.success).toHaveBeenCalledWith(
+          expect.stringContaining("auto-approval failed"),
+          expect.any(Object)
+        );
         expect(mockOnSuccess).toHaveBeenCalled();
         expect(mockOnClose).toHaveBeenCalled();
       });
