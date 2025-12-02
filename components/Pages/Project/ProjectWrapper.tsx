@@ -69,81 +69,80 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
         <div
           className={cn(
             layoutTheme.padding,
-            "lg:flex lg:items-start lg:justify-between flex flex-row max-lg:flex-col max-lg:justify-center max-lg:items-center gap-4"
+            "flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:justify-between"
           )}
         >
-          <div className="flex flex-row gap-4 items-start">
-            <div className="flex justify-center">
-              <ProfilePicture
-                imageURL={project?.details?.data?.imageURL}
-                name={project?.uid || ""}
-                size="56"
-                className="h-14 w-14 min-w-14 min-h-14 border-2 border-white shadow-lg max-lg:h-12 max-lg:w-12 max-lg:min-h-12 max-lg:min-w-12"
-                alt={project?.details?.data?.title || "Project"}
-              />
-            </div>
-            <div className="flex flex-col gap-4">
-              <h1
-                className={
-                  "text-[32px] font-bold leading-tight text-black dark:text-zinc-100 line-clamp-2"
-                }
-              >
-                {project?.details?.data?.title}
-              </h1>
-              <div className="flex flex-row gap-10 max-lg:gap-4 flex-wrap max-lg:flex-col items-center max-lg:justify-center">
-                {(socials.length > 0 || customLinks.length > 0) && (
-                  <div className="flex flex-row gap-4 items-center">
-                    {socials
-                      .filter((social) => social?.url)
-                      .map((social, index) => (
-                        <a
-                          key={social?.url || index}
-                          href={social?.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {social?.icon && (
-                            <social.icon className="h-5 w-5 fill-black text-black dark:text-white dark:fill-zinc-200" />
-                          )}
-                        </a>
-                      ))}
+          <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+            <ProfilePicture
+              imageURL={project?.details?.data?.imageURL}
+              name={project?.uid || ""}
+              size="56"
+              className="hidden sm:block h-14 w-14 min-w-14 min-h-14 shrink-0 border-2 border-white shadow-lg"
+              alt={project?.details?.data?.title || "Project"}
+            />
+            <div className="flex flex-col gap-3 items-center sm:items-start">
+              <div className="flex flex-row gap-3 items-center">
+                <ProfilePicture
+                  imageURL={project?.details?.data?.imageURL}
+                  name={project?.uid || ""}
+                  size="48"
+                  className="sm:hidden h-12 w-12 min-w-12 min-h-12 shrink-0 border-2 border-white shadow-lg"
+                  alt={project?.details?.data?.title || "Project"}
+                />
+                <h1 className={"text-xl font-bold leading-tight line-clamp-2 sm:text-3xl"}>
+                  {project?.details?.data?.title}
+                </h1>
+              </div>
+              {(socials.length > 0 || customLinks.length > 0) && (
+                <div className="flex flex-row gap-4 items-center">
+                  {socials
+                    .filter((social) => social?.url)
+                    .map((social, index) => (
+                      <a
+                        key={social?.url || index}
+                        href={social?.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {social?.icon && (
+                          <social.icon className="h-5 w-5 fill-black text-black dark:text-white dark:fill-zinc-200" />
+                        )}
+                      </a>
+                    ))}
 
-                    {customLinks.length > 0 && (
-                      <div className="relative group">
-                        <Globe className="h-5 w-5 text-black dark:text-white dark:fill-zinc-200 cursor-pointer" />
+                  {customLinks.length > 0 && (
+                    <div className="relative group">
+                      <Globe className="h-5 w-5 text-black dark:text-white dark:fill-zinc-200 cursor-pointer" />
 
-                        <div className="absolute left-0 top-6 mt-1 w-48 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-                          <div className="py-2">
-                            {customLinks.map((link, index) => (
-                              <a
-                                key={link.url || index}
-                                href={ensureProtocol(link.url)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="block px-4 py-2 text-sm text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors duration-150"
-                              >
-                                {link.name}
-                              </a>
-                            ))}
-                          </div>
+                      <div className="absolute left-0 top-6 mt-1 w-48 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                        <div className="py-2">
+                          {customLinks.map((link, index) => (
+                            <a
+                              key={link.url || index}
+                              href={ensureProtocol(link.url)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block px-4 py-2 text-sm text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors duration-150"
+                            >
+                              {link.name}
+                            </a>
+                          ))}
                         </div>
                       </div>
-                    )}
-                  </div>
-                )}
-              </div>
+                    </div>
+                  )}
+                </div>
+              )}
               {project?.details?.data?.tags?.length ? (
-                <div className="flex flex-col gap-2 max-md:hidden">
-                  <div className="flex items-center gap-x-1">
-                    {project?.details?.data?.tags?.map((tag) => (
-                      <span
-                        key={tag.name}
-                        className="rounded bg-gray-100 px-2 py-1 text-sm  font-normal text-slate-700"
-                      >
-                        {tag.name}
-                      </span>
-                    ))}
-                  </div>
+                <div className="flex items-center gap-1 flex-wrap justify-center sm:justify-start">
+                  {project?.details?.data?.tags?.map((tag) => (
+                    <span
+                      key={tag.name}
+                      className="rounded bg-gray-100 px-2 py-1 text-sm font-normal text-slate-700"
+                    >
+                      {tag.name}
+                    </span>
+                  ))}
                 </div>
               ) : null}
             </div>
