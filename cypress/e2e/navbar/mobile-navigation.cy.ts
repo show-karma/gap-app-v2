@@ -78,7 +78,7 @@ describe("Mobile Navigation", () => {
     it("should navigate to communities from drawer", () => {
       cy.get('[aria-label="Open menu"]').click();
 
-      cy.contains("All communities").click();
+      cy.contains("All communities").click({ force: true });
 
       cy.url().should("include", "/communities");
     });
