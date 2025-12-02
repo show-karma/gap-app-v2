@@ -1,7 +1,7 @@
 "use client";
 import type { MarkdownPreviewProps } from "@uiw/react-markdown-preview";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 
 interface Props {
@@ -32,7 +32,7 @@ export const ReadMore = ({
 
   const text = children ? children : "";
 
-  const getMinimumText = () => {
+  const getMinimumText = useCallback(() => {
     let wordsCounter = 400;
     for (let i = words || 400; i < text.length; i++) {
       const regex = /\s/;
@@ -44,7 +44,7 @@ export const ReadMore = ({
       }
     }
     return wordsCounter;
-  };
+  }, [words, text]);
 
   // Function to safely truncate markdown without breaking syntax elements
   const safelyTruncateMarkdown = (text: string, cutoffLength: number) => {

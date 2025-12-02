@@ -15,7 +15,7 @@ type Tab = "completed" | "pending" | "all";
 interface TabButtonProps {
   handleSelection: (text: Tab) => void;
   tab: Tab;
-  selectedType?: Tab;
+  selectedType: Tab;
   tabName: string;
   length: number;
 }
@@ -47,159 +47,95 @@ const TabButton: FC<TabButtonProps> = ({ handleSelection, tab, tabName, selected
 };
 
 export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
-  const { milestones } = grant;
-  const { updates } = grant;
+  const { milestones, updates } = grant;
 
-  const [generalArray, setGeneralArray] = useState([] as any[]);
-  const [selectedTabArray, setSelectedTabArray] = useState([] as any[]);
-  const [pendingMilestones, setPendingMilestones] = useState([] as any[]);
-  const [completedMilestones, setCompletedMilestones] = useState([] as any[]);
-  const [allMilestones, setAllMilestones] = useState([] as any[]);
+  const [selectedMilestoneType, setSelectedMilestoneType] = useState<Tab>("completed");
 
-  const [selectedMilestoneType, setSelectedMilestoneType] = useState<Tab | undefined>(undefined);
+  // Initialize selection from hash on mount
+  useEffect(() => {
+    if (typeof window === "undefined") return;
 
-  const getOrderedMerge = () => {
+    const hash = window.location.hash.replace("#", "") as Tab;
+    if (hash && ["completed", "pending", "all"].includes(hash)) {
+      setSelectedMilestoneType(hash);
+    }
+  }, []);
+
+  // Compute merged and ordered array from props (no state needed)
+  const generalArray = useMemo(() => {
     const merged: any[] = [];
 
-    if (updates) {
-      updates.forEach((update) => {
-        merged.push({
-          object: update,
-          date: new Date(update.createdAt).getTime() / 1000,
-          type: "update",
-        });
+    updates?.forEach((update) => {
+      merged.push({
+        object: update,
+        date: new Date(update.createdAt).getTime() / 1000,
+        type: "update",
       });
-    }
-    if (milestones) {
-      grant.milestones?.forEach((milestone) => {
-        merged.push({
-          object: milestone,
-          date: milestone.data.endsAt || milestone.createdAt,
-          type: "milestone",
-        });
-      });
-    }
-
-    const ordered = merged.sort((a, b) => {
-      return new Date(b.date).getTime() - new Date(a.date).getTime();
-    });
-    setGeneralArray(ordered);
-    return ordered;
-  };
-
-  useEffect(() => {
-    getOrderedMerge();
-  }, [getOrderedMerge]);
-
-  const getUnsortedMilestones = () => {
-    const unsortedCompletedMilestones = generalArray.filter((item) => {
-      return item.object.completed || item.type === "update";
     });
 
-    const unsortedPendingMilestones = generalArray.filter(
+    milestones?.forEach((milestone) => {
+      merged.push({
+        object: milestone,
+        date: milestone.data.endsAt || milestone.createdAt,
+        type: "milestone",
+      });
+    });
+
+    return merged.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [updates, milestones]);
+
+  // Compute sorted milestone arrays (derived from generalArray)
+  const { completedMilestones, pendingMilestones, allMilestones } = useMemo(() => {
+    const unsortedCompleted = generalArray.filter(
+      (item) => item.object.completed || item.type === "update"
+    );
+    const unsortedPending = generalArray.filter(
       (item) => !item.object.completed && item.type !== "update"
     );
 
-    const unsortedAllMilestones = [...generalArray];
+    const getCompletedDate = (item: any) => {
+      if (item.type === "update") return new Date(item.object.createdAt).getTime();
+      if (item.object.completed) return new Date(item.object.completed.createdAt).getTime();
+      return new Date(item.object.endsAt).getTime() || new Date(item.object.createdAt).getTime();
+    };
+
+    const getPendingDate = (item: any) => {
+      return new Date(item.object.endsAt).getTime() || new Date(item.object.createdAt).getTime();
+    };
+
+    const getAllDate = (item: any) => {
+      if (item.type === "update") return new Date(item.object.createdAt).getTime() / 1000;
+      if (item.object.completed) return new Date(item.object.completed.createdAt).getTime() / 1000;
+      return new Date(item.object.endsAt).getTime() || new Date(item.object.createdAt).getTime();
+    };
+
     return {
-      unsortedCompletedMilestones,
-      unsortedPendingMilestones,
-      unsortedAllMilestones,
+      completedMilestones: [...unsortedCompleted].sort(
+        (a, b) => getCompletedDate(b) - getCompletedDate(a)
+      ),
+      pendingMilestones: [...unsortedPending].sort((a, b) => getPendingDate(a) - getPendingDate(b)),
+      allMilestones: [...generalArray].sort((a, b) => getAllDate(b) - getAllDate(a)),
     };
-  };
+  }, [generalArray]);
 
-  const rearrangeArrayByType = () => {
-    const { unsortedCompletedMilestones, unsortedPendingMilestones, unsortedAllMilestones } =
-      getUnsortedMilestones();
-
-    const completedMilestonesToSet = unsortedCompletedMilestones.sort((a, b) => {
-      const getDate = (item: any) => {
-        if (item.type === "update") {
-          return new Date(item.object.createdAt).getTime();
-        }
-        if (item.object.completed) return new Date(item.object.completed.createdAt).getTime();
-        return new Date(item.object.endsAt).getTime() || new Date(item.object.createdAt).getTime();
-      };
-      const bDate = getDate(b);
-      const aDate = getDate(a);
-      return bDate - aDate;
-    });
-
-    const pendingMilestonesToSet = unsortedPendingMilestones.sort((a, b) => {
-      const getDate = (item: any) => {
-        return new Date(item.object.endsAt) || new Date(item.object.createdAt);
-      };
-      const bDate = getDate(b);
-      const aDate = getDate(a);
-
-      return aDate < bDate ? -1 : 1;
-    });
-
-    const allMilestonesToSet = unsortedAllMilestones.sort((a, b) => {
-      const getDate = (item: any) => {
-        if (item.type === "update") {
-          return new Date(item.object.createdAt).getTime() / 1000;
-        }
-        if (item.object.completed) {
-          return new Date(item.object.completed.createdAt).getTime() / 1000;
-        }
-        return new Date(item.object.endsAt).getTime() || new Date(item.object.createdAt).getTime();
-      };
-      const bDate = getDate(b);
-      const aDate = getDate(a);
-      return bDate - aDate;
-    });
-
-    setPendingMilestones(pendingMilestonesToSet);
-    setCompletedMilestones(completedMilestonesToSet);
-    setAllMilestones(allMilestonesToSet);
-
-    const setDictionary = {
-      completed: completedMilestonesToSet,
-      pending: pendingMilestonesToSet,
-      all: allMilestonesToSet,
+  // Derive selected tab array directly (no state needed)
+  const selectedTabArray = useMemo(() => {
+    const tabArrays = {
+      completed: completedMilestones,
+      pending: pendingMilestones,
+      all: allMilestones,
     };
-
-    const ordered = selectedMilestoneType ? setDictionary[selectedMilestoneType] : [];
-
-    setSelectedTabArray(ordered);
-  };
+    return tabArrays[selectedMilestoneType];
+  }, [selectedMilestoneType, completedMilestones, pendingMilestones, allMilestones]);
 
   const handleSelection = (text: Tab) => {
     setSelectedMilestoneType(text);
-    window.location.hash = text;
+    if (typeof window !== "undefined") {
+      window.location.hash = text;
+    }
   };
 
-  // useEffect(() => {
-  //   const { unsortedCompletedMilestones, unsortedPendingMilestones } =
-  //     getUnsortedMilestones();
-
-  //   if (
-  //     unsortedPendingMilestones.length &&
-  //     !unsortedCompletedMilestones.length
-  //   ) {
-  //     handleSelection("pending");
-  //   } else {
-  //     handleSelection("completed");
-  //   }
-  // }, [grant.uid, generalArray]);
-
-  const hash = window.location.hash.replace("#", "") as Tab;
-  useEffect(() => {
-    if (!hash) {
-      setSelectedMilestoneType("completed");
-    } else {
-      if (["completed", "pending", "all"].includes(hash)) {
-        setSelectedMilestoneType(hash);
-      }
-    }
-  }, [hash]);
-
-  useMemo(() => {
-    rearrangeArrayByType();
-  }, [rearrangeArrayByType]);
-
-  const updatesLength = grant.milestones.filter((i) => i.completed).length + updates.length;
+  const updatesLength = milestones.filter((i) => i.completed).length + updates.length;
   const milestonesCounter = milestones.length;
 
   return (

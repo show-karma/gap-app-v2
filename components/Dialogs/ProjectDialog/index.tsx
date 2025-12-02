@@ -168,40 +168,49 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   previousContacts,
   useEditModalStore = false, // Default to false for create mode
 }) => {
-  const dataToUpdate = projectToUpdate
-    ? {
-        chainID: projectToUpdate?.chainID,
-        description: projectToUpdate?.details?.data?.description || "",
-        title: projectToUpdate?.details?.data?.title || "",
-        problem: projectToUpdate?.details?.data?.problem,
-        solution: projectToUpdate?.details?.data?.solution,
-        missionSummary: projectToUpdate?.details?.data?.missionSummary,
-        locationOfImpact: projectToUpdate?.details?.data?.locationOfImpact,
-        imageURL: projectToUpdate?.details?.data?.imageURL,
-        twitter: projectToUpdate?.details?.data?.links?.find((link) => link.type === "twitter")
-          ?.url,
-        github: projectToUpdate?.details?.data?.links?.find((link) => link.type === "github")?.url,
-        discord: projectToUpdate?.details?.data?.links?.find((link) => link.type === "discord")
-          ?.url,
-        website: projectToUpdate?.details?.data?.links?.find((link) => link.type === "website")
-          ?.url,
-        linkedin: projectToUpdate?.details?.data?.links?.find((link) => link.type === "linkedin")
-          ?.url,
-        pitchDeck: projectToUpdate?.details?.data?.links?.find((link) => link.type === "pitchDeck")
-          ?.url,
-        demoVideo: projectToUpdate?.details?.data?.links?.find((link) => link.type === "demoVideo")
-          ?.url,
-        farcaster: projectToUpdate?.details?.data?.links?.find((link) => link.type === "farcaster")
-          ?.url,
-        profilePicture: projectToUpdate?.details?.data?.imageURL,
-        tags: projectToUpdate?.details?.data?.tags?.map((item) => item.name),
-        recipient: projectToUpdate?.recipient,
-        businessModel: projectToUpdate?.details?.data?.businessModel,
-        stageIn: projectToUpdate?.details?.data?.stageIn,
-        raisedMoney: projectToUpdate?.details?.data?.raisedMoney,
-        pathToTake: projectToUpdate?.details?.data?.pathToTake,
-      }
-    : undefined;
+  const dataToUpdate = useMemo(
+    () =>
+      projectToUpdate
+        ? {
+            chainID: projectToUpdate?.chainID,
+            description: projectToUpdate?.details?.data?.description || "",
+            title: projectToUpdate?.details?.data?.title || "",
+            problem: projectToUpdate?.details?.data?.problem,
+            solution: projectToUpdate?.details?.data?.solution,
+            missionSummary: projectToUpdate?.details?.data?.missionSummary,
+            locationOfImpact: projectToUpdate?.details?.data?.locationOfImpact,
+            imageURL: projectToUpdate?.details?.data?.imageURL,
+            twitter: projectToUpdate?.details?.data?.links?.find((link) => link.type === "twitter")
+              ?.url,
+            github: projectToUpdate?.details?.data?.links?.find((link) => link.type === "github")
+              ?.url,
+            discord: projectToUpdate?.details?.data?.links?.find((link) => link.type === "discord")
+              ?.url,
+            website: projectToUpdate?.details?.data?.links?.find((link) => link.type === "website")
+              ?.url,
+            linkedin: projectToUpdate?.details?.data?.links?.find(
+              (link) => link.type === "linkedin"
+            )?.url,
+            pitchDeck: projectToUpdate?.details?.data?.links?.find(
+              (link) => link.type === "pitchDeck"
+            )?.url,
+            demoVideo: projectToUpdate?.details?.data?.links?.find(
+              (link) => link.type === "demoVideo"
+            )?.url,
+            farcaster: projectToUpdate?.details?.data?.links?.find(
+              (link) => link.type === "farcaster"
+            )?.url,
+            profilePicture: projectToUpdate?.details?.data?.imageURL,
+            tags: projectToUpdate?.details?.data?.tags?.map((item) => item.name),
+            recipient: projectToUpdate?.recipient,
+            businessModel: projectToUpdate?.details?.data?.businessModel,
+            stageIn: projectToUpdate?.details?.data?.stageIn,
+            raisedMoney: projectToUpdate?.details?.data?.raisedMoney,
+            pathToTake: projectToUpdate?.details?.data?.pathToTake,
+          }
+        : undefined,
+    [projectToUpdate]
+  );
 
   const [contacts, setContacts] = useState<Contact[]>(previousContacts || []);
   const [customLinks, setCustomLinks] = useState<CustomLink[]>(() => {
@@ -411,11 +420,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     setIsOpen(true);
   }
 
-  useMemo(() => {
+  useEffect(() => {
     if (isOpen && !isAuth) {
       login?.();
       closeModal();
-      return;
     }
   }, [isOpen, isAuth, closeModal, login]);
 
@@ -965,9 +973,12 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
   const { data: contactsInfo } = useContactInfo(projectToUpdate?.uid);
 
-  useMemo(() => {
+  useEffect(() => {
     if (projectToUpdate) {
-      setContacts(contactsInfo || []);
+      setContacts((prev) => {
+        if (JSON.stringify(prev) === JSON.stringify(contactsInfo || [])) return prev;
+        return contactsInfo || [];
+      });
     }
   }, [contactsInfo, projectToUpdate]);
 
