@@ -1,9 +1,10 @@
 "use client";
 
+import { Dialog, Transition } from "@headlessui/react";
 import { ExclamationTriangleIcon, LinkIcon } from "@heroicons/react/24/outline";
 import { useQueryClient } from "@tanstack/react-query";
 import type { FC } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Button } from "@/components/Utilities/Button";
 import { SUPPORTED_CONTRACT_NETWORKS } from "@/constants/contract-networks";
@@ -35,6 +36,7 @@ export const LinkContractAddressButton: FC<
   const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
   const [isOpen, setIsOpen] = useState(false);
   const [verificationDialogOpen, setVerificationDialogOpen] = useState(false);
+  const [showUnsavedWarning, setShowUnsavedWarning] = useState(false);
   const [contractToVerify, setContractToVerify] = useState<{
     index: number;
     network: string;
@@ -42,7 +44,7 @@ export const LinkContractAddressButton: FC<
   } | null>(null);
 
   // Custom hooks for state and logic management
-  const { pairs, addPair, removePair, updateAddress, updateNetwork } =
+  const { pairs, addPair, removePair, updateAddress, updateNetwork, updateVerified } =
     useContractAddressPairs({
       project,
     });
@@ -120,18 +122,68 @@ export const LinkContractAddressButton: FC<
 
   const queryClient = useQueryClient();
 
-  const handleVerificationSuccess = useCallback(() => {
-    // Invalidate and refetch project data to show updated verification status
-    queryClient.invalidateQueries({
-      queryKey: ["project-instance", project.uid],
+  // Detect unsaved changes (must be before handleClose)
+  const hasUnsavedChanges = useMemo(() => {
+    const projectNetworkAddresses = project?.external?.network_addresses || [];
+
+    // Create a set of saved contract keys
+    const savedKeys = new Set<string>();
+    projectNetworkAddresses.forEach((entry: string) => {
+      savedKeys.add(entry.toLowerCase());
     });
-    queryClient.invalidateQueries({
-      queryKey: ["project-instance", project.details?.data?.slug],
+
+    // Check if there are any new or modified pairs
+    const currentValidPairs = pairs.filter(
+      (pair) => pair.address.trim() && pair.network.trim()
+    );
+
+    // If the number of valid pairs is different, there are changes
+    if (currentValidPairs.length !== projectNetworkAddresses.length) {
+      return true;
+    }
+
+    // Check if any current pair is not in saved pairs or has different values
+    return currentValidPairs.some((pair) => {
+      const key = `${pair.network}:${pair.address}`.toLowerCase();
+      return !savedKeys.has(key);
     });
-  }, [queryClient, project.uid, project.details?.data?.slug]);
+  }, [pairs, project?.external?.network_addresses]);
+
+  const handleVerificationSuccess = useCallback(
+    (result: { verified: boolean; verifiedAt?: string; verifiedBy?: string }) => {
+      // Update local state with verification result
+      if (contractToVerify) {
+        updateVerified(contractToVerify.network, contractToVerify.address, result);
+      }
+
+      // Also invalidate queries to keep cache in sync
+      queryClient.invalidateQueries({
+        queryKey: ["project-instance", project.uid],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["project-instance", project.details?.data?.slug],
+      });
+    },
+    [contractToVerify, updateVerified, queryClient, project.uid, project.details?.data?.slug]
+  );
 
   // Define a function to handle dialog close
   const handleClose = useCallback(() => {
+    // Check for unsaved changes
+    if (hasUnsavedChanges) {
+      setShowUnsavedWarning(true);
+      return;
+    }
+
+    setIsOpen(false);
+    if (buttonElement === null && onClose) {
+      onClose();
+    }
+  }, [hasUnsavedChanges, buttonElement, onClose]);
+
+  // Force close without checking for unsaved changes
+  const handleForceClose = useCallback(() => {
+    setShowUnsavedWarning(false);
     setIsOpen(false);
     if (buttonElement === null && onClose) {
       onClose();
@@ -257,6 +309,74 @@ export const LinkContractAddressButton: FC<
           />
         </ErrorBoundary>
       )}
+      {/* Unsaved Changes Warning Dialog */}
+      <Transition appear show={showUnsavedWarning} as={Fragment}>
+        <Dialog
+          as="div"
+          className="relative z-50"
+          onClose={() => setShowUnsavedWarning(false)}
+        >
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black/25 dark:bg-black/50" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white dark:bg-zinc-800 p-6 text-left align-middle shadow-xl transition-all">
+                  <div className="flex items-center gap-3 mb-4">
+                    <ExclamationTriangleIcon className="h-6 w-6 text-yellow-600 dark:text-yellow-500" />
+                    <Dialog.Title
+                      as="h3"
+                      className="text-lg font-medium leading-6 text-gray-900 dark:text-white"
+                    >
+                      Unsaved Changes
+                    </Dialog.Title>
+                  </div>
+
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      You have unsaved changes to contract addresses. If you
+                      close now, these changes will be lost.
+                    </p>
+                  </div>
+
+                  <div className="mt-6 flex justify-end gap-3">
+                    <Button
+                      onClick={() => setShowUnsavedWarning(false)}
+                      className="bg-brand-blue text-white hover:opacity-90"
+                    >
+                      Continue Editing
+                    </Button>
+                    <Button
+                      onClick={handleForceClose}
+                      className="text-zinc-900 text-lg bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-zinc-900 hover:text-white"
+                    >
+                      Discard Changes
+                    </Button>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
     </>
   );
 };

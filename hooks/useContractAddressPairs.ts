@@ -115,12 +115,38 @@ export const useContractAddressPairs = ({ project }: UseContractAddressPairsProp
     });
   }, []);
 
+  const updateVerified = useCallback(
+    (network: string, address: string, verifiedData: { verified: boolean; verifiedAt?: string; verifiedBy?: string }) => {
+      setNetworkAddressPairs((prev) => {
+        const newPairs = [...prev];
+        const index = newPairs.findIndex(
+          (pair) =>
+            pair.network.toLowerCase() === network.toLowerCase() &&
+            pair.address.toLowerCase() === address.toLowerCase()
+        );
+
+        if (index !== -1) {
+          newPairs[index] = {
+            ...newPairs[index],
+            verified: verifiedData.verified,
+            verifiedAt: verifiedData.verifiedAt,
+            verifiedBy: verifiedData.verifiedBy,
+          };
+        }
+
+        return newPairs;
+      });
+    },
+    []
+  );
+
   return {
     pairs: networkAddressPairs,
     addPair,
     removePair,
     updateAddress,
     updateNetwork,
+    updateVerified,
     setPairs: setNetworkAddressPairs,
   };
 };
