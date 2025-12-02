@@ -41,7 +41,7 @@ export function MilestonesReviewPage({
   const { isCommunityAdmin, isLoading: isLoadingCommunityAdmin } = useIsCommunityAdmin(
     communityId
   );
-  const { isStaff } = useStaff();
+  const { isStaff, isLoading: isStaffLoading } = useStaff();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isOwnerLoading = useOwnerStore((state) => state.isOwnerLoading);
 
@@ -192,7 +192,7 @@ export function MilestonesReviewPage({
   }, [refetch]);
 
   // Show loading while checking authorization
-  if (isLoading || isLoadingCommunityAdmin || isOwnerLoading || isLoadingReviewer) {
+  if (isLoading || isLoadingCommunityAdmin || isOwnerLoading || isLoadingReviewer || isStaffLoading) {
     return (
       <div className="min-h-screen">
         <div className="px-4 sm:px-6 lg:px-8 py-6">

@@ -100,7 +100,7 @@ export default function PayoutsAdminPage() {
   // Check if user is admin of this community
   const { isCommunityAdmin: isAdmin, isLoading: loadingAdmin } =
     useIsCommunityAdmin(community?.uid, address);
-  const { isStaff } = useStaff();
+  const { isStaff, isLoading: isStaffLoading } = useStaff();
 
   // Extract the actual programId from the composite value (programId_chainId)
   const actualProgramId = selectedProgramId?.split("_")[0] || null;
@@ -439,7 +439,7 @@ export default function PayoutsAdminPage() {
   }, [communityError, router]);
 
   // Loading state
-  if (loadingAdmin || isLoadingGrants || isLoadingCommunity) {
+  if (loadingAdmin || isLoadingGrants || isLoadingCommunity || isStaffLoading) {
     return (
       <div className="flex w-full items-center justify-center h-96">
         <Spinner />

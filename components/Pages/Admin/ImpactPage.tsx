@@ -34,7 +34,7 @@ export default function ProgramImpactPage() {
   // Check if user is admin of this community
   const { isCommunityAdmin: isAdmin, isLoading: adminLoading } =
     useIsCommunityAdmin(community?.uid, address);
-  const { isStaff } = useStaff();
+  const { isStaff, isLoading: isStaffLoading } = useStaff();
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -77,7 +77,7 @@ export default function ProgramImpactPage() {
 
   return (
     <div className="mt-12 flex flex-row max-lg:flex-col-reverse w-full">
-      {loading || adminLoading ? (
+      {loading || adminLoading || isStaffLoading ? (
         <div className="flex w-full min-h-screen h-full items-center justify-center">
           <Spinner />
         </div>
