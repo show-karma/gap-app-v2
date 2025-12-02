@@ -6,12 +6,7 @@ import { Fragment, useEffect, useRef } from "react";
 import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { useContractVerification, VerificationStep } from "@/hooks/useContractVerification";
-
-// Utility function to mask wallet address
-const maskAddress = (address: string): string => {
-  if (!address || address.length < 10) return address;
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
-};
+import { formatAddressForDisplay } from "@/utilities/donations/helpers";
 
 interface ContractVerificationDialogProps {
   isOpen: boolean;
@@ -36,13 +31,20 @@ export const ContractVerificationDialog: React.FC<ContractVerificationDialogProp
   const autoRetryAttemptedRef = useRef(false);
 
   const handleVerify = async () => {
-    const result = await verifyContract(network, contractAddress, projectUid);
-    if (result && onSuccess) {
-      await onSuccess({
-        verified: result.verified,
-        verifiedAt: result.contract.verifiedAt,
-        verifiedBy: result.contract.verifiedBy,
-      });
+    try {
+      const result = await verifyContract(network, contractAddress, projectUid);
+      if (result && onSuccess) {
+        await onSuccess({
+          verified: result.verified,
+          verifiedAt: result.contract.verifiedAt,
+          verifiedBy: result.contract.verifiedBy,
+        });
+      }
+    } catch (error) {
+      // Reset auto-retry flag on failure to allow retry
+      autoRetryAttemptedRef.current = false;
+      // Re-throw to let the error propagate
+      throw error;
     }
   };
 
@@ -181,7 +183,7 @@ export const ContractVerificationDialog: React.FC<ContractVerificationDialogProp
                       {deployerInfo && (
                         <p className="text-gray-600 dark:text-gray-300 mt-2">
                           <span className="font-medium">Deployer:</span>{" "}
-                          <span className="font-mono">{maskAddress(deployerInfo.deployerAddress)}</span>
+                          <span className="font-mono">{formatAddressForDisplay(deployerInfo.deployerAddress)}</span>
                         </p>
                       )}
                     </div>
@@ -223,7 +225,7 @@ export const ContractVerificationDialog: React.FC<ContractVerificationDialogProp
                         Log in with contract deployer wallet to proceed
                       </p>
                       <p className="text-sm text-yellow-700 dark:text-yellow-400 font-mono mb-2">
-                        {maskAddress(deployerInfo.deployerAddress)}
+                        {formatAddressForDisplay(deployerInfo.deployerAddress)}
                       </p>
                       <p className="text-xs text-yellow-600 dark:text-yellow-500 italic">
                         Verification will continue automatically once you switch wallets

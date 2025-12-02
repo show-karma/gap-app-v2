@@ -116,10 +116,15 @@ describe("ContractVerificationDialog - User Experience", () => {
       render(<ContractVerificationDialog {...defaultProps} />);
 
       expect(
-        screen.getByText(/Please switch to the deployer wallet to continue/)
+        screen.getByText(/Log in with contract deployer wallet to proceed/)
       ).toBeInTheDocument();
-      const deployerAddresses = screen.getAllByText("0xDeployer123");
-      expect(deployerAddresses.length).toBeGreaterThan(0);
+      // Check for masked address format (appears in deployer info and warning)
+      const maskedAddresses = screen.getAllByText("0xDepl...r123");
+      expect(maskedAddresses.length).toBeGreaterThan(0);
+      // Check for auto-continue message
+      expect(
+        screen.getByText(/Verification will continue automatically once you switch wallets/)
+      ).toBeInTheDocument();
     });
 
     it("should disable verify button when wallet switch needed", () => {

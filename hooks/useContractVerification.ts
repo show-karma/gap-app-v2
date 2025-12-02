@@ -172,12 +172,13 @@ export const useContractVerification = () => {
         signature = await signMessageAsync({
           message: verificationMessage.message,
         });
-      } catch (signError: any) {
+      } catch (signError: unknown) {
         // Handle user rejection specifically
-        if (signError.name === "UserRejectedRequestError" || signError.code === 4001) {
+        const error = signError as { name?: string; code?: number; message?: string };
+        if (error.name === "UserRejectedRequestError" || error.code === 4001) {
           throw new Error("Signature request was cancelled. Please try again when ready.");
         }
-        throw new Error("Failed to sign message: " + (signError.message || "Unknown error"));
+        throw new Error("Failed to sign message: " + (error.message || "Unknown error"));
       }
 
       // Step 5: Verify signature on backend
@@ -232,9 +233,10 @@ export const useContractVerification = () => {
       }));
 
       return result;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { message?: string };
       const errorMessage =
-        error?.message || "An error occurred during verification";
+        err.message || "An error occurred during verification";
 
       setState((prev) => ({
         ...prev,

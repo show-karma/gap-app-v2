@@ -64,9 +64,10 @@ export const useDeployerLookup = () => {
 
       setState({ data: deployerInfo, loading: false, error: null });
       return deployerInfo;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { message?: string };
       const errorMessage =
-        error?.message || error || "An error occurred while looking up the deployer";
+        err.message || (typeof error === 'string' ? error : "An error occurred while looking up the deployer");
 
       setState({ data: null, loading: false, error: errorMessage });
       return null;

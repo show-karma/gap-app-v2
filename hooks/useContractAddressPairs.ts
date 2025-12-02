@@ -10,7 +10,7 @@ interface VerifiedContract {
   verifiedBy?: string;
 }
 
-interface ProjectExternalData extends Record<string, any> {
+interface ProjectExternalData extends Record<string, unknown> {
   network_addresses?: string[];
   network_addresses_verified?: VerifiedContract[];
 }
