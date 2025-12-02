@@ -2,7 +2,8 @@
 
 import { Dialog, Transition } from "@headlessui/react";
 import { CheckCircleIcon, ExclamationCircleIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { Fragment } from "react";
+import { Fragment, useEffect, useRef } from "react";
+import { useAccount } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { useContractVerification, VerificationStep } from "@/hooks/useContractVerification";
 
@@ -29,8 +30,10 @@ export const ContractVerificationDialog: React.FC<ContractVerificationDialogProp
   projectUid,
   onSuccess,
 }) => {
+  const { address: currentWalletAddress } = useAccount();
   const { step, deployerInfo, error, needsWalletSwitch, verifyContract, reset } =
     useContractVerification();
+  const autoRetryAttemptedRef = useRef(false);
 
   const handleVerify = async () => {
     const result = await verifyContract(network, contractAddress, projectUid);
@@ -45,8 +48,37 @@ export const ContractVerificationDialog: React.FC<ContractVerificationDialogProp
 
   const handleClose = () => {
     reset();
+    autoRetryAttemptedRef.current = false;
     onClose();
   };
+
+  // Auto-detect wallet changes and retry verification if correct wallet is connected
+  useEffect(() => {
+    if (
+      needsWalletSwitch &&
+      deployerInfo &&
+      currentWalletAddress &&
+      !autoRetryAttemptedRef.current
+    ) {
+      // Check if the user switched to the correct wallet
+      const isCorrectWallet =
+        currentWalletAddress.toLowerCase() === deployerInfo.deployerAddress.toLowerCase();
+
+      if (isCorrectWallet) {
+        // Mark that we've attempted auto-retry to prevent infinite loops
+        autoRetryAttemptedRef.current = true;
+        // Automatically retry verification with the correct wallet
+        handleVerify();
+      }
+    }
+  }, [currentWalletAddress, needsWalletSwitch, deployerInfo]);
+
+  // Reset auto-retry flag when dialog closes or step changes
+  useEffect(() => {
+    if (step === VerificationStep.IDLE || step === VerificationStep.SUCCESS) {
+      autoRetryAttemptedRef.current = false;
+    }
+  }, [step]);
 
   const getStepMessage = () => {
     switch (step) {
@@ -190,8 +222,11 @@ export const ContractVerificationDialog: React.FC<ContractVerificationDialogProp
                       <p className="text-sm text-yellow-700 dark:text-yellow-400 font-medium mb-2">
                         Log in with contract deployer wallet to proceed
                       </p>
-                      <p className="text-sm text-yellow-700 dark:text-yellow-400 font-mono">
+                      <p className="text-sm text-yellow-700 dark:text-yellow-400 font-mono mb-2">
                         {maskAddress(deployerInfo.deployerAddress)}
+                      </p>
+                      <p className="text-xs text-yellow-600 dark:text-yellow-500 italic">
+                        Verification will continue automatically once you switch wallets
                       </p>
                     </div>
                   )}
