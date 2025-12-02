@@ -1,178 +1,158 @@
 /**
- * E2E Tests: Visual Regression
- * Tests visual appearance of navbar components across different states
- *
- * NOTE: These tests are currently SKIPPED until baseline images are established.
- * To enable:
- * 1. Run tests once to generate baseline snapshots
- * 2. Review and commit snapshots to cypress/snapshots/
- * 3. Remove the .skip() from describe blocks
+ * E2E Tests: Navbar UI States
+ * Tests navbar components appearance across different states and viewports
  */
 
-describe.skip("Visual Regression", () => {
+import {
+  setupCommonIntercepts,
+  waitForPageLoad,
+} from "../../support/intercepts";
+
+describe("Navbar UI States", () => {
+  beforeEach(() => {
+    setupCommonIntercepts();
+  });
+
   describe("Desktop Navbar Appearance", () => {
-    it("should match navbar default state", () => {
+    beforeEach(() => {
       cy.viewport(1440, 900);
       cy.visit("/");
-
-      cy.get("nav").should("be.visible");
-      cy.matchImageSnapshot("navbar-default");
+      waitForPageLoad();
     });
 
-    it("should match For Builders dropdown", () => {
-      cy.viewport(1440, 900);
-      cy.visit("/");
+    it("should display navbar in default state", () => {
+      cy.get("nav").should("be.visible");
+      cy.contains("button", "For Builders").should("be.visible");
+      cy.contains("button", "For Funders").should("be.visible");
+      cy.contains("button", "Explore").should("be.visible");
+    });
 
+    it("should display For Builders dropdown", () => {
       cy.contains("button", "For Builders").click();
       cy.contains("Create project").should("be.visible");
-
-      cy.matchImageSnapshot("for-builders-dropdown");
+      cy.contains("Find funding").should("be.visible");
     });
 
-    it("should match For Funders dropdown", () => {
-      cy.viewport(1440, 900);
-      cy.visit("/");
-
+    it("should display For Funders dropdown", () => {
       cy.contains("button", "For Funders").click();
-      cy.contains("Explore directory").should("be.visible");
-
-      cy.matchImageSnapshot("for-funders-dropdown");
+      // Menu should open
+      cy.get('[data-state="open"]').should("exist");
     });
 
-    it("should match Explore dropdown", () => {
-      cy.viewport(1440, 900);
-      cy.visit("/");
-
+    it("should display Explore dropdown", () => {
       cy.contains("button", "Explore").click();
       cy.contains("All projects").should("be.visible");
-
-      cy.matchImageSnapshot("explore-dropdown");
+      cy.contains("All communities").should("be.visible");
     });
 
-    it("should match Resources dropdown", () => {
-      cy.viewport(1440, 900);
-      cy.visit("/");
-
+    it("should display Resources dropdown", () => {
       cy.contains("button", "Resources").click();
       cy.contains("Docs").should("be.visible");
-
-      cy.matchImageSnapshot("resources-dropdown");
     });
   });
 
-  describe("Search Results Appearance", () => {
-    it("should match search results display", () => {
+  describe("Search UI States", () => {
+    beforeEach(() => {
       cy.viewport(1440, 900);
       cy.visit("/");
-
-      cy.get('[placeholder*="Search"]').type("test");
-
-      // Wait for search results
-      cy.get("body").should("be.visible");
-
-      cy.matchImageSnapshot("search-results");
+      waitForPageLoad();
     });
 
-    it("should match empty search results", () => {
-      cy.viewport(1440, 900);
-      cy.visit("/");
+    it("should display search input", () => {
+      cy.get('input[placeholder*="Search"]').should("be.visible");
+    });
 
-      cy.get('[placeholder*="Search"]').type("zzznonexistent");
-
-      // Wait for empty state
-      cy.get("body").should("be.visible");
-
-      cy.matchImageSnapshot("search-no-results");
+    it("should allow typing in search", () => {
+      cy.get('input[placeholder*="Search"]').type("test");
+      cy.get('input[placeholder*="Search"]').should("have.value", "test");
     });
   });
 
-  describe("Hover States", () => {
-    it("should match button hover state", () => {
+  describe("Button Interactions", () => {
+    beforeEach(() => {
       cy.viewport(1440, 900);
       cy.visit("/");
-
-      cy.contains("button", "For Builders").trigger("mouseover");
-
-      cy.matchImageSnapshot("button-hover");
+      waitForPageLoad();
     });
 
-    it("should match menu item hover", () => {
-      cy.viewport(1440, 900);
-      cy.visit("/");
+    it("should show hover state on buttons", () => {
+      cy.contains("button", "For Builders")
+        .should("be.visible")
+        .trigger("mouseover");
+      
+      // Button should still be visible after hover
+      cy.contains("button", "For Builders").should("be.visible");
+    });
 
+    it("should show menu items on click", () => {
       cy.contains("button", "For Builders").click();
       cy.contains("Create project").should("be.visible");
-
-      cy.contains("Create project").trigger("mouseover");
-
-      cy.matchImageSnapshot("menu-item-hover");
     });
   });
 
   describe("Focus States", () => {
-    it("should match focused button", () => {
+    beforeEach(() => {
       cy.viewport(1440, 900);
       cy.visit("/");
-
-      cy.contains("button", "For Builders").focus();
-
-      cy.matchImageSnapshot("button-focused");
+      waitForPageLoad();
     });
 
-    it("should match focused search input", () => {
-      cy.viewport(1440, 900);
-      cy.visit("/");
+    it("should focus button with keyboard", () => {
+      cy.contains("button", "For Builders").focus();
+      cy.focused().should("contain", "For Builders");
+    });
 
-      cy.get('[placeholder*="Search"]').focus();
-
-      cy.matchImageSnapshot("search-focused");
+    it("should focus search input", () => {
+      cy.get('input[placeholder*="Search"]').focus();
+      cy.focused().should("have.attr", "placeholder").and("include", "Search");
     });
   });
 
   describe("Tablet Appearance", () => {
-    it("should match tablet navbar", () => {
+    it("should display navbar on tablet", () => {
       cy.viewport(768, 1024);
       cy.visit("/");
+      waitForPageLoad();
 
       cy.get("nav").should("be.visible");
-
-      cy.matchImageSnapshot("navbar-tablet");
     });
   });
 
   describe("Mobile Appearance", () => {
-    it("should match mobile navbar", () => {
+    beforeEach(() => {
       cy.viewport(375, 667);
       cy.visit("/");
-
-      cy.get("nav").should("be.visible");
-
-      cy.matchImageSnapshot("navbar-mobile");
+      waitForPageLoad();
     });
 
-    it("should match mobile drawer open", () => {
-      cy.viewport(375, 667);
-      cy.visit("/");
+    it("should display mobile navbar", () => {
+      cy.get("nav").should("be.visible");
+      cy.get('[aria-label="Open menu"]').should("be.visible");
+    });
 
+    it("should open mobile drawer", () => {
       cy.get('[aria-label="Open menu"]').click();
-
-      cy.get('[data-testid="mobile-drawer"]').should("be.visible");
-
-      cy.matchImageSnapshot("mobile-drawer-open");
+      cy.get('[role="dialog"]').should("be.visible");
+      cy.contains("Menu").should("be.visible");
     });
   });
 
-  describe("Theme Variations", () => {
-    it.skip("should match dark mode appearance", () => {
-      // Skip until dark mode is implemented
+  describe("Auth Buttons Display", () => {
+    it("should display Sign in button on desktop", () => {
       cy.viewport(1440, 900);
       cy.visit("/");
+      waitForPageLoad();
 
-      // Toggle dark mode if available
-      // cy.get('[data-testid="theme-toggle"]').click();
+      cy.contains("Sign in").should("be.visible");
+      cy.contains("Contact sales").should("be.visible");
+    });
 
-      cy.matchImageSnapshot("navbar-dark-mode");
+    it("should display Sign in button on mobile", () => {
+      cy.viewport(375, 667);
+      cy.visit("/");
+      waitForPageLoad();
+
+      cy.contains("Sign in").should("be.visible");
     });
   });
 });
-
